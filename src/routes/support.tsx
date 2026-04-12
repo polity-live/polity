@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Button } from '@/features/shared/ui/ui/button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/features/shared/ui/ui/card'
+import { GITHUB_REPOSITORY_URL } from '@/features/shared/constants.ts'
 import { useTranslation } from '@/features/shared/hooks/use-translation'
 
 export const Route = createFileRoute('/support')({
@@ -12,7 +13,7 @@ const areaIcons = ['💰', '🎨', '💻'] as const
 const areaCtaLinks: Record<number, { href: string; external?: boolean }> = {
   0: { href: '/pricing' },
   1: { href: 'https://www.figma.com/proto/cAT8Aonu8P7ojwgnKcVlkz/Polity?node-id=51357-32189&starting-point-node-id=51098%3A4683', external: true },
-  2: { href: 'https://github.com/Donnerstagnacht/polity-instant', external: true },
+  2: { href: GITHUB_REPOSITORY_URL, external: true },
 }
 
 function SupportPage() {

@@ -1,9 +1,7 @@
 import { Link, useRouter } from '@tanstack/react-router'
 import { Button } from '@/features/shared/ui/ui/button.tsx'
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts'
-
-const GITHUB_ISSUES_URL = 'https://github.com/Donnerstagnacht/polity-instant/issues'
-const CONTACT_EMAIL = 'polity.live@gmail.com'
+import { GITHUB_ISSUES_URL, SUPPORT_EMAIL } from '@/features/shared/constants'
 
 export function NotFound() {
   const { t } = useTranslation()
@@ -27,8 +25,8 @@ export function NotFound() {
       <div className="border-t pt-4 mt-2 max-w-md">
         <p className="text-sm text-muted-foreground">
           {t('errors.contactHint')}{' '}
-          <a href={`mailto:${CONTACT_EMAIL}`} className="underline hover:text-foreground">
-            {CONTACT_EMAIL}
+          <a href={`mailto:${SUPPORT_EMAIL}`} className="underline hover:text-foreground">
+            {SUPPORT_EMAIL}
           </a>{' '}
           {t('errors.contactHintOr')}{' '}
           <a href={GITHUB_ISSUES_URL} target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">

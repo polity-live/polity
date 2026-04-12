@@ -11,9 +11,7 @@ import {
 import { Home, ArrowLeft, ShieldAlert } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
-
-const GITHUB_ISSUES_URL = 'https://github.com/Donnerstagnacht/polity-instant/issues';
-const CONTACT_EMAIL = 'polity.live@gmail.com';
+import { GITHUB_ISSUES_URL, SUPPORT_EMAIL } from '@/features/shared/constants.ts';
 
 export function AccessDenied() {
   const { t } = useTranslation();
@@ -49,8 +47,8 @@ export function AccessDenied() {
           <div className="border-t pt-4">
             <p className="text-muted-foreground mb-3 text-sm">
               {t('errors.contactHint')}{' '}
-              <a href={`mailto:${CONTACT_EMAIL}`} className="hover:text-foreground underline">
-                {CONTACT_EMAIL}
+              <a href={`mailto:${SUPPORT_EMAIL}`} className="hover:text-foreground underline">
+                {SUPPORT_EMAIL}
               </a>{' '}
               {t('errors.contactHintOr')}{' '}
               <a

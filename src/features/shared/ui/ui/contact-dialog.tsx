@@ -10,9 +10,7 @@ import {
   DialogTrigger,
 } from '@/features/shared/ui/ui/dialog.tsx'
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts'
-
-const GITHUB_ISSUES_URL = 'https://github.com/Donnerstagnacht/polity-instant/issues'
-const CONTACT_EMAIL = 'polity.live@gmail.com'
+import { GITHUB_ISSUES_URL, GITHUB_REPOSITORY_PATH, SUPPORT_EMAIL } from '@/features/shared/constants.ts'
 
 interface ContactDialogProps {
   children: React.ReactNode
@@ -34,11 +32,11 @@ export function ContactDialog({ children }: ContactDialogProps) {
         </DialogHeader>
         <div className="flex flex-col gap-3 pt-2">
           <Button variant="outline" className="w-full justify-start gap-3" asChild>
-            <a href={`mailto:${CONTACT_EMAIL}`}>
+            <a href={`mailto:${SUPPORT_EMAIL}`}>
               <Mail className="h-4 w-4 shrink-0" />
               <div className="text-left">
                 <div className="text-sm font-medium">{t('common.contactDialog.email')}</div>
-                <div className="text-xs text-muted-foreground">{CONTACT_EMAIL}</div>
+                <div className="text-xs text-muted-foreground">{SUPPORT_EMAIL}</div>
               </div>
             </a>
           </Button>
@@ -47,7 +45,7 @@ export function ContactDialog({ children }: ContactDialogProps) {
               <ExternalLink className="h-4 w-4 shrink-0" />
               <div className="text-left">
                 <div className="text-sm font-medium">{t('common.contactDialog.github')}</div>
-                <div className="text-xs text-muted-foreground">github.com/Donnerstagnacht/polity-instant</div>
+                <div className="text-xs text-muted-foreground">github.com/{GITHUB_REPOSITORY_PATH}</div>
               </div>
             </a>
           </Button>

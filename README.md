@@ -2,7 +2,7 @@
 
 > **Empowering communities, organizations, and governments with collaborative decision-making tools for the digital age.**
 
-[![Open Source](https://img.shields.io/badge/Open%20Source-%E2%9D%A4%EF%B8%8F-green)](https://github.com/Donnerstagnacht/polity-instant)
+[![Open Source](https://img.shields.io/badge/Open%20Source-%E2%9D%A4%EF%B8%8F-green)](https://github.com/polity-live/polity)
 [![Early Alpha](https://img.shields.io/badge/Status-Early%20Alpha-orange)](#)
 
 ---
