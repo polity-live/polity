@@ -1,0 +1,51 @@
+name: "🧪 - Test"
+description: Track a single test case or targeted test coverage task
+title: "🧪 -"
+labels: []
+assignees:
+  - Donnerstagnacht
+projects:
+  - polity-live/3
+type: Test
+body:
+- type: textarea
+  id: test
+  attributes:
+    label: Description
+    value: |
+      ## 🎯 Goal
+      A brief description of the exact behavior this test should verify.
+
+      ## 📘 Description
+      Explain the scenario, why coverage is needed, and whether this test covers a bug, regression, or new functionality.
+
+      ## 🔁 Steps / Scenario
+      1. ...
+      2. ...
+      3. ...
+
+      ## ✅ Expected Assertions
+      - [ ] Assertion 1
+      - [ ] Assertion 2
+
+      ## 🧩 Notes
+      Add technical notes, related routes/components, fixtures, or edge cases here.
+- type: dropdown
+  id: execution_type
+  attributes:
+    label: Execution Type
+    description: Select whether this test is intended to be automated or manual.
+    options:
+      - Automated
+      - Manual
+  validations:
+    required: true
+- type: checkboxes
+  id: viewports
+  attributes:
+    label: Viewports
+    description: Select the viewports this test should cover.
+    options:
+      - label: Mobile
+      - label: Tablet
+      - label: Desktop

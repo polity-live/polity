@@ -1,0 +1,54 @@
+name: "🧪🧱 - Test Suite"
+description: Plan or track a collection of related tests
+title: "🧪🧱 -"
+labels: []
+assignees:
+  - Donnerstagnacht
+projects:
+  - polity-live/3
+type: Test Suite
+body:
+- type: textarea
+  id: test_suite
+  attributes:
+    label: Description
+    value: |
+      ## 🎯 Goal
+      A brief, high-level description of what this test suite should validate.
+
+      ## 📘 Description
+      Explain the feature area, why grouped coverage is needed, and what level of confidence this suite should provide.
+
+      ## 🧪 Included Tests
+      - [ ] Test 1
+      - [ ] Test 2
+      - [ ] Test 3
+
+      ## 🛠️ Implementation Notes
+      1. Add or reuse fixtures/helpers.
+      2. Create or extend the relevant spec files.
+      3. Stabilize setup, data, and assertions.
+
+      ## ✅ Definition of Done
+      - [ ] The suite covers the intended scenarios.
+      - [ ] Tests are deterministic and maintainable.
+      - [ ] The suite passes locally and in CI.
+- type: dropdown
+  id: execution_type
+  attributes:
+    label: Execution Type
+    description: Select whether this suite is intended to be automated or manual.
+    options:
+      - Automated
+      - Manual
+  validations:
+    required: true
+- type: checkboxes
+  id: viewports
+  attributes:
+    label: Viewports
+    description: Select the viewports this suite should cover.
+    options:
+      - label: Mobile
+      - label: Tablet
+      - label: Desktop
