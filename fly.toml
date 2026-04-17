@@ -41,8 +41,8 @@ primary_region = "fra"
   initial_size = "1gb"
 
 [[vm]]
-  size = "shared-cpu-1x"
-  memory = "512mb"
+  size = "shared-cpu-2x"
+  memory = "1gb"
 
 [[restart]]
   policy = "on-failure"
