@@ -5,12 +5,11 @@
 
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import { createClient } from '@/lib/supabase/client';
 import { useAuthStore } from '../auth';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface SignUpResult {
-  success: boolean;
+  status: 'authenticated' | 'confirmation_required' | 'error';
   error?: string;
 }
 
@@ -32,26 +31,21 @@ export function useAuthSignUp(): UseAuthSignUpReturn {
       setIsSigningUp(true);
 
       try {
-        const success = await signUpWithPassword(email, password);
+        const result = await signUpWithPassword(email, password);
 
-        if (!success) {
-          return { success: false, error: t('auth.signUp.signUpFailed') };
+        if (result.status === 'error') {
+          return { status: 'error', error: result.error ?? t('auth.signUp.signUpFailed') };
         }
 
-        // After sign-up, Supabase auto-signs in (when confirmations are disabled).
-        // Verify we have a session.
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-
-        if (!user?.id) {
-          return { success: false, error: t('features.auth.errors.authenticationFailed') };
+        if (result.status === 'confirmation_required') {
+          return { status: 'confirmation_required' };
         }
 
-        return { success: true };
+        return { status: 'authenticated' };
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : t('features.auth.errors.unexpectedError');
         toast.error(errorMessage);
-        return { success: false, error: errorMessage };
+        return { status: 'error', error: errorMessage };
       } finally {
         setIsSigningUp(false);
       }

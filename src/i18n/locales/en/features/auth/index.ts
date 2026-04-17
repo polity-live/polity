@@ -70,6 +70,11 @@ export const authTranslations = {
     hasAccount: 'Already have an account?',
     signInLink: 'Sign in',
     signUpFailed: 'Failed to create account',
+    confirmationPendingTitle: 'Check your email',
+    confirmationPendingDescription: 'We sent a confirmation link to {{email}}.',
+    confirmationPendingInstructions:
+      'Open the email and click the confirmation link to finish creating your account.',
+    useDifferentEmail: 'Use a different email',
     passwordMismatch: 'Passwords do not match',
     passwordTooShort: 'Password must be at least 6 characters',
   },

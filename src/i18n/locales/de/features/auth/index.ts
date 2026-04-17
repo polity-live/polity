@@ -73,6 +73,11 @@ export const authTranslations = {
     hasAccount: 'Bereits ein Konto?',
     signInLink: 'Anmelden',
     signUpFailed: 'Konto konnte nicht erstellt werden',
+    confirmationPendingTitle: 'Prüfe deine E-Mails',
+    confirmationPendingDescription: 'Wir haben einen Bestätigungslink an {{email}} gesendet.',
+    confirmationPendingInstructions:
+      'Öffne die E-Mail und klicke auf den Bestätigungslink, um dein Konto fertig einzurichten.',
+    useDifferentEmail: 'Andere E-Mail verwenden',
     passwordMismatch: 'Passwörter stimmen nicht überein',
     passwordTooShort: 'Passwort muss mindestens 6 Zeichen lang sein',
   },

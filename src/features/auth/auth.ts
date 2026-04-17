@@ -19,7 +19,7 @@ interface AuthState {
   pendingEmail: string | null;
 
   // Actions — password auth
-  signUpWithPassword: (email: string, password: string) => Promise<boolean>;
+  signUpWithPassword: (email: string, password: string) => Promise<SignUpWithPasswordResult>;
   signInWithPassword: (email: string, password: string) => Promise<boolean>;
   signInWithGoogle: () => Promise<boolean>;
   resetPassword: (email: string) => Promise<boolean>;
@@ -32,6 +32,11 @@ interface AuthState {
   signOut: () => Promise<void>;
   clearError: () => void;
   setLoading: (loading: boolean) => void;
+}
+
+export interface SignUpWithPasswordResult {
+  status: 'authenticated' | 'confirmation_required' | 'error';
+  error?: string;
 }
 
 // Create the authentication store (no persistence — Supabase manages auth tokens)
@@ -51,7 +56,7 @@ export const useAuthStore = create<AuthState>()(
 
       try {
         const supabase = createClient();
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { data, error } = await supabase.auth.signUp({ email, password });
 
         if (error) {
           throw error;
@@ -61,14 +66,29 @@ export const useAuthStore = create<AuthState>()(
           state.isLoading = false;
         });
 
-        return true;
+        if (data.session && data.user?.id) {
+          return { status: 'authenticated' };
+        }
+
+        if (data.user?.id) {
+          return { status: 'confirmation_required' };
+        }
+
+        return {
+          status: 'error',
+          error: 'Failed to create account',
+        };
       } catch (error) {
         console.error('Failed to sign up:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Failed to sign up';
         set(state => {
           state.isLoading = false;
-          state.error = error instanceof Error ? error.message : 'Failed to sign up';
+          state.error = errorMessage;
         });
-        return false;
+        return {
+          status: 'error',
+          error: errorMessage,
+        };
       }
     },
 

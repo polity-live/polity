@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from '@/features/shared/ui/ui/card';
 import { Alert, AlertDescription } from '@/features/shared/ui/ui/alert';
-import { Loader2, UserPlus, ArrowRight } from 'lucide-react';
+import { Loader2, UserPlus, ArrowRight, MailCheck } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { useAuthSignUp } from '@/features/auth/hooks/useAuthSignUp';
@@ -39,6 +39,7 @@ export function SignUpForm() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
+  const [pendingConfirmationEmail, setPendingConfirmationEmail] = useState<string | null>(null);
   const [emailTouched, setEmailTouched] = useState(false);
   const [passwordTouched, setPasswordTouched] = useState(false);
   const [confirmPasswordTouched, setConfirmPasswordTouched] = useState(false);
@@ -77,6 +78,7 @@ export function SignUpForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLocalError(null);
+    setPendingConfirmationEmail(null);
     clearError();
     setEmailTouched(true);
     setPasswordTouched(true);
@@ -101,9 +103,11 @@ export function SignUpForm() {
 
     const result = await signUp(trimmedEmail, password);
 
-    if (result.success) {
+    if (result.status === 'authenticated') {
       sessionStorage.setItem('polity_onboarding', 'true');
       navigate({ to: '/' });
+    } else if (result.status === 'confirmation_required') {
+      setPendingConfirmationEmail(trimmedEmail);
     } else {
       setLocalError(result.error ?? null);
     }
@@ -117,6 +121,52 @@ export function SignUpForm() {
 
   const displayError = localError || error;
   const isLoading = isSigningUp || isRedirecting;
+
+  if (pendingConfirmationEmail) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4 dark:from-gray-900 dark:to-gray-800">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mb-4 flex justify-center">
+              <MailCheck className="h-12 w-12 text-blue-500" />
+            </div>
+            <CardTitle className="text-2xl font-bold">
+              {t('auth.signUp.confirmationPendingTitle')}
+            </CardTitle>
+            <CardDescription>
+              {t('auth.signUp.confirmationPendingDescription', {
+                email: pendingConfirmationEmail,
+              })}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Alert>
+              <AlertDescription>
+                {t('auth.signUp.confirmationPendingInstructions')}
+              </AlertDescription>
+            </Alert>
+
+            <Button className="w-full" onClick={() => navigate({ to: '/auth/sign-in' })}>
+              {t('auth.signUp.signInLink')}
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                setPendingConfirmationEmail(null);
+                setPassword('');
+                setConfirmPassword('');
+              }}
+            >
+              {t('auth.signUp.useDifferentEmail')}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4 dark:from-gray-900 dark:to-gray-800">
