@@ -18,6 +18,13 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { useAuthSignUp } from '@/features/auth/hooks/useAuthSignUp';
 import { useGoogleAuth } from '@/features/auth/hooks/useGoogleAuth';
+import { useDebounce } from '@/features/shared/hooks/use-debounce';
+import { cn } from '@/features/shared/utils/utils.ts';
+import {
+  isValidEmailAddress,
+  isValidPassword,
+  passwordsMatch,
+} from '@/features/auth/logic/authValidation';
 import { GoogleIcon } from './GoogleIcon';
 import { Link } from '@tanstack/react-router';
 
@@ -32,25 +39,67 @@ export function SignUpForm() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [passwordTouched, setPasswordTouched] = useState(false);
+  const [confirmPasswordTouched, setConfirmPasswordTouched] = useState(false);
+
+  const trimmedEmail = email.trim();
+  const debouncedEmail = useDebounce(trimmedEmail);
+  const debouncedPassword = useDebounce(password);
+  const debouncedConfirmPassword = useDebounce(confirmPassword);
+
+  const emailIsValid = isValidEmailAddress(trimmedEmail);
+  const passwordIsValid = isValidPassword(password);
+  const passwordsAreMatching = passwordsMatch(password, confirmPassword);
+  const isFormValid =
+    trimmedEmail.length > 0 &&
+    password.length > 0 &&
+    confirmPassword.length > 0 &&
+    emailIsValid &&
+    passwordIsValid &&
+    passwordsAreMatching;
+
+  const showEmailError =
+    emailTouched && debouncedEmail.length > 0 && !isValidEmailAddress(debouncedEmail);
+  const showEmailSuccess =
+    emailTouched && debouncedEmail.length > 0 && isValidEmailAddress(debouncedEmail);
+  const showPasswordError =
+    passwordTouched && debouncedPassword.length > 0 && !isValidPassword(debouncedPassword);
+  const showPasswordSuccess =
+    passwordTouched && debouncedPassword.length > 0 && isValidPassword(debouncedPassword);
+  const showConfirmPasswordError =
+    confirmPasswordTouched &&
+    debouncedConfirmPassword.length > 0 &&
+    !passwordsMatch(debouncedPassword, debouncedConfirmPassword);
+  const showConfirmPasswordSuccess =
+    confirmPasswordTouched && passwordsMatch(debouncedPassword, debouncedConfirmPassword);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLocalError(null);
     clearError();
+    setEmailTouched(true);
+    setPasswordTouched(true);
+    setConfirmPasswordTouched(true);
 
-    if (!email || !password || !confirmPassword) return;
+    if (!trimmedEmail || !password || !confirmPassword) return;
 
-    if (password.length < 6) {
+    if (!emailIsValid) {
+      setLocalError(t('auth.signUp.emailHint'));
+      return;
+    }
+
+    if (!passwordIsValid) {
       setLocalError(t('auth.signUp.passwordTooShort'));
       return;
     }
 
-    if (password !== confirmPassword) {
+    if (!passwordsAreMatching) {
       setLocalError(t('auth.signUp.passwordMismatch'));
       return;
     }
 
-    const result = await signUp(email, password);
+    const result = await signUp(trimmedEmail, password);
 
     if (result.success) {
       sessionStorage.setItem('polity_onboarding', 'true');
@@ -90,12 +139,24 @@ export function SignUpForm() {
                 value={email}
                 onChange={e => {
                   setEmail(e.target.value);
+                  setEmailTouched(true);
                   setLocalError(null);
                 }}
+                onBlur={() => setEmailTouched(true)}
                 required
                 disabled={isLoading}
                 autoComplete="email"
+                aria-invalid={showEmailError}
               />
+              <p
+                className={cn(
+                  'text-xs text-muted-foreground',
+                  showEmailError && 'text-destructive',
+                  showEmailSuccess && 'text-emerald-600 dark:text-emerald-400'
+                )}
+              >
+                {t('auth.signUp.emailHint')}
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -107,13 +168,25 @@ export function SignUpForm() {
                 value={password}
                 onChange={e => {
                   setPassword(e.target.value);
+                  setPasswordTouched(true);
                   setLocalError(null);
                 }}
+                onBlur={() => setPasswordTouched(true)}
                 required
                 minLength={6}
                 disabled={isLoading}
                 autoComplete="new-password"
+                aria-invalid={showPasswordError}
               />
+              <p
+                className={cn(
+                  'text-xs text-muted-foreground',
+                  showPasswordError && 'text-destructive',
+                  showPasswordSuccess && 'text-emerald-600 dark:text-emerald-400'
+                )}
+              >
+                {t('auth.signUp.passwordHint')}
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -125,13 +198,25 @@ export function SignUpForm() {
                 value={confirmPassword}
                 onChange={e => {
                   setConfirmPassword(e.target.value);
+                  setConfirmPasswordTouched(true);
                   setLocalError(null);
                 }}
+                onBlur={() => setConfirmPasswordTouched(true)}
                 required
                 minLength={6}
                 disabled={isLoading}
                 autoComplete="new-password"
+                aria-invalid={showConfirmPasswordError}
               />
+              <p
+                className={cn(
+                  'text-xs text-muted-foreground',
+                  showConfirmPasswordError && 'text-destructive',
+                  showConfirmPasswordSuccess && 'text-emerald-600 dark:text-emerald-400'
+                )}
+              >
+                {t('auth.signUp.confirmPasswordHint')}
+              </p>
             </div>
 
             {displayError && (
@@ -143,7 +228,7 @@ export function SignUpForm() {
             <Button
               type="submit"
               className="w-full"
-              disabled={isLoading || !email || !password || !confirmPassword}
+              disabled={isLoading || !isFormValid}
             >
               {isSigningUp ? (
                 <>

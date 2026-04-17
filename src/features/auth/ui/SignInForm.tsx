@@ -18,6 +18,9 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { useAuthSignIn } from '@/features/auth/hooks/useAuthSignIn';
 import { useGoogleAuth } from '@/features/auth/hooks/useGoogleAuth';
+import { useDebounce } from '@/features/shared/hooks/use-debounce';
+import { cn } from '@/features/shared/utils/utils.ts';
+import { isValidEmailAddress } from '@/features/auth/logic/authValidation';
 import { GoogleIcon } from './GoogleIcon';
 import { Link } from '@tanstack/react-router';
 
@@ -32,15 +35,30 @@ export function SignInForm() {
   const [password, setPassword] = useState('');
   const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [emailTouched, setEmailTouched] = useState(false);
+
+  const trimmedEmail = email.trim();
+  const debouncedEmail = useDebounce(trimmedEmail);
+  const emailIsValid = isValidEmailAddress(trimmedEmail);
+  const showEmailError =
+    emailTouched && debouncedEmail.length > 0 && !isValidEmailAddress(debouncedEmail);
+  const showEmailSuccess =
+    emailTouched && debouncedEmail.length > 0 && isValidEmailAddress(debouncedEmail);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLocalError(null);
     clearError();
+    setEmailTouched(true);
 
-    if (!email || !password) return;
+    if (!trimmedEmail || !password) return;
 
-    const result = await signIn(email, password);
+    if (!emailIsValid) {
+      setLocalError(t('auth.signIn.emailHint'));
+      return;
+    }
+
+    const result = await signIn(trimmedEmail, password);
 
     if (result.success) {
       if (result.isNewUser) {
@@ -53,19 +71,21 @@ export function SignInForm() {
   };
 
   const handleMagicLink = async () => {
-    if (!email) {
-      setLocalError(t('auth.signIn.emailLabel'));
+    setEmailTouched(true);
+
+    if (!trimmedEmail || !emailIsValid) {
+      setLocalError(t('auth.signIn.emailHint'));
       return;
     }
     setLocalError(null);
     clearError();
     setMagicLinkSent(false);
 
-    const result = await sendMagicLink(email);
+    const result = await sendMagicLink(trimmedEmail);
 
     if (result.success) {
       setMagicLinkSent(true);
-      navigate({ to: '/auth/verify', search: { email } });
+      navigate({ to: '/auth/verify', search: { email: trimmedEmail } });
     } else {
       setLocalError(result.error ?? null);
     }
@@ -101,12 +121,25 @@ export function SignInForm() {
                 value={email}
                 onChange={e => {
                   setEmail(e.target.value);
+                  setEmailTouched(true);
+                  setMagicLinkSent(false);
                   setLocalError(null);
                 }}
+                onBlur={() => setEmailTouched(true)}
                 required
                 disabled={isLoading}
                 autoComplete="email"
+                aria-invalid={showEmailError}
               />
+              <p
+                className={cn(
+                  'text-xs text-muted-foreground',
+                  showEmailError && 'text-destructive',
+                  showEmailSuccess && 'text-emerald-600 dark:text-emerald-400'
+                )}
+              >
+                {t('auth.signIn.emailHint')}
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -147,7 +180,11 @@ export function SignInForm() {
               </Alert>
             )}
 
-            <Button type="submit" className="w-full" disabled={isLoading || !email || !password}>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isLoading || !trimmedEmail || !password || !emailIsValid}
+            >
               {isSigningIn ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -191,7 +228,7 @@ export function SignInForm() {
             variant="outline"
             className="w-full"
             onClick={handleMagicLink}
-            disabled={isLoading || !email}
+            disabled={isLoading || !trimmedEmail || !emailIsValid}
           >
             <Mail className="mr-2 h-4 w-4" />
             {isSigningIn ? t('auth.signIn.magicLinkSending') : t('auth.signIn.sendCode')}

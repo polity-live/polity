@@ -17,10 +17,7 @@ test.describe('Email Entry and Magic Code Request', () => {
     // 4. Locate submit button
     const sendButton = page.getByRole('button', { name: 'Send magic code' });
 
-    // 5. Click the submit button
-    await sendButton.click();
-
-    // 6. Verify HTML5 validation message appears and form does not submit
-    await expect(page).toHaveURL('/auth');
+    // 5. Verify invalid email keeps the submit action disabled
+    await expect(sendButton).toBeDisabled();
   });
 });
