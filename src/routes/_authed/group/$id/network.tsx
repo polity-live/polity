@@ -17,7 +17,11 @@ function GroupNetworkPage() {
       <NetworkTabs
         activeTab={np.activeTab}
         onTabChange={np.setActiveTab}
-        currentNetworkContent={<CurrentNetworkTab groupId={groupId} />}
+        currentNetworkContent={(
+          <div className="min-h-[32rem]">
+            <CurrentNetworkTab groupId={groupId} />
+          </div>
+        )}
         manageNetworkContent={
           <ManageNetworkTab
             groupId={groupId}

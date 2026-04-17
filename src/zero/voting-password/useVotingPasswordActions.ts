@@ -3,40 +3,25 @@ import { useZero } from '@rocicorp/zero/react'
 import { toast } from 'sonner'
 import { useTranslation } from '@/features/shared/hooks/use-translation'
 import { mutators } from '../mutators'
-import { serverConfirmed } from '../mutate-with-server-check'
+import { onServerError } from '../mutate-with-server-check'
 
 export function useVotingPasswordActions() {
   const zero = useZero()
   const { t } = useTranslation()
 
   const setVotingPassword = useCallback(
-    async (password: string) => {
-      try {
-        const result = zero.mutate(mutators.votingPassword.setVotingPassword({ password }))
-        await serverConfirmed(result)
-        toast.success(t('common.votingPassword.setSuccess'))
-      } catch (error) {
-        console.error('Failed to set voting password:', error)
-        toast.error(t('common.votingPassword.setFailed'))
-        throw error
-      }
+    (password: string) => {
+      const result = zero.mutate(mutators.votingPassword.setVotingPassword({ password }))
+      toast.success(t('common.votingPassword.setSuccess'))
+      onServerError(result, () => toast.error(t('common.votingPassword.setFailed')))
     },
     [zero, t]
   )
 
   const verifyVotingPassword = useCallback(
-    async (password: string) => {
-      try {
-        const result = zero.mutate(mutators.votingPassword.verifyVotingPassword({ password }))
-        await serverConfirmed(result)
-      } catch (error) {
-        const message = error instanceof Error
-          ? error.message
-          : t('common.votingPassword.verifyFailed', 'Incorrect password')
-        console.error('Failed to verify voting password:', error)
-        toast.error(message)
-        throw error
-      }
+    (password: string) => {
+      const result = zero.mutate(mutators.votingPassword.verifyVotingPassword({ password }))
+      onServerError(result, (message) => toast.error(message || t('common.votingPassword.verifyFailed', 'Incorrect password')))
     },
     [zero, t]
   )

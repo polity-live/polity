@@ -3,13 +3,14 @@ import { useZero } from '@rocicorp/zero/react'
 import { toast } from 'sonner'
 import { useTranslation } from '@/features/shared/hooks/use-translation'
 import { mutators } from '../mutators'
-import { serverConfirmed } from '../mutate-with-server-check'
+import { onServerError } from '../mutate-with-server-check'
 import { usePreferenceState } from './usePreferenceState'
 import type { CreateFormStyle, Theme, PreferenceLanguage, PreferenceNavigationView } from './schema'
 
 /**
  * Action hook for user preference mutations.
  * Every function wraps a custom mutator + sonner toast.
+ * Mutations are optimistic — toasts show instantly, server errors appear in the background.
  */
 export function usePreferenceActions() {
   const zero = useZero()
@@ -17,7 +18,7 @@ export function usePreferenceActions() {
   const { preference, isLoading } = usePreferenceState()
 
   const upsertPreference = useCallback(
-    async (fields: {
+    (fields: {
       create_form_style?: CreateFormStyle
       theme?: Theme
       language?: PreferenceLanguage
@@ -35,7 +36,7 @@ export function usePreferenceActions() {
             ...fields,
           })
         )
-        await serverConfirmed(result)
+        onServerError(result, (msg) => console.error('Preference update failed:', msg))
       } else {
         const result = zero.mutate(
           mutators.preferences.create({
@@ -46,55 +47,37 @@ export function usePreferenceActions() {
             navigation_view: fields.navigation_view ?? 'asButtonList',
           })
         )
-        await serverConfirmed(result)
+        onServerError(result, (msg) => console.error('Preference create failed:', msg))
       }
     },
     [zero, preference, isLoading]
   )
 
   const updateFormStyle = useCallback(
-    async (style: CreateFormStyle) => {
-      try {
-        await upsertPreference({ create_form_style: style })
-        toast.success(t('pages.create.preferences.formStyleUpdated'))
-      } catch (error) {
-        console.error('Failed to update form style:', error)
-        toast.error(t('pages.create.preferences.formStyleUpdateFailed'))
-        throw error
-      }
+    (style: CreateFormStyle) => {
+      upsertPreference({ create_form_style: style })
+      toast.success(t('pages.create.preferences.formStyleUpdated'))
     },
     [upsertPreference, t]
   )
 
   const updateTheme = useCallback(
-    async (theme: Theme) => {
-      try {
-        await upsertPreference({ theme })
-      } catch (error) {
-        console.error('Failed to update theme preference:', error)
-      }
+    (theme: Theme) => {
+      upsertPreference({ theme })
     },
     [upsertPreference]
   )
 
   const updateLanguage = useCallback(
-    async (language: PreferenceLanguage) => {
-      try {
-        await upsertPreference({ language })
-      } catch (error) {
-        console.error('Failed to update language preference:', error)
-      }
+    (language: PreferenceLanguage) => {
+      upsertPreference({ language })
     },
     [upsertPreference]
   )
 
   const updateNavigationView = useCallback(
-    async (navigationView: PreferenceNavigationView) => {
-      try {
-        await upsertPreference({ navigation_view: navigationView })
-      } catch (error) {
-        console.error('Failed to update navigation view preference:', error)
-      }
+    (navigationView: PreferenceNavigationView) => {
+      upsertPreference({ navigation_view: navigationView })
     },
     [upsertPreference]
   )

@@ -66,6 +66,7 @@ export const selectMessageSchema = baseMessageSchema
 export const createMessageSchema = baseMessageSchema
   .omit({ id: true, created_at: true, updated_at: true, sender_id: true, is_read: true })
   .extend({ id: z.string() })
+export const createAssistantMessageSchema = createMessageSchema
 export const updateMessageSchema = baseMessageSchema
   .pick({ content: true, is_read: true })
   .partial()

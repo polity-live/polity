@@ -3,48 +3,37 @@ import { useZero } from '@rocicorp/zero/react'
 import { toast } from 'sonner'
 import { useTranslation } from '@/features/shared/hooks/use-translation'
 import { mutators } from '../mutators'
-import { serverConfirmed } from '../mutate-with-server-check'
+import { onServerError } from '../mutate-with-server-check'
 
 /**
  * Action hook for meeting bookings (meetings as events).
  * Every function wraps a mutator + toast feedback.
+ * Mutations are optimistic — toasts show instantly, server errors appear in the background.
  */
 export function useMeetingActions() {
   const zero = useZero()
   const { t } = useTranslation()
 
   const bookMeeting = useCallback(
-    async (eventId: string, instanceDate?: number | null) => {
-      try {
-        const result = zero.mutate(mutators.events.bookMeeting({
-          event_id: eventId,
-          instance_date: instanceDate ?? null,
-        }))
-        await serverConfirmed(result)
-        toast.success(t('features.meet.toasts.booked'))
-      } catch (error) {
-        console.error('Failed to book meeting:', error)
-        toast.error(t('features.meet.toasts.bookFailed'))
-        throw error
-      }
+    (eventId: string, instanceDate?: number | null) => {
+      const result = zero.mutate(mutators.events.bookMeeting({
+        event_id: eventId,
+        instance_date: instanceDate ?? null,
+      }))
+      toast.success(t('features.meet.toasts.booked'))
+      onServerError(result, () => toast.error(t('features.meet.toasts.bookFailed')))
     },
     [zero],
   )
 
   const cancelMeetingBooking = useCallback(
-    async (eventId: string, instanceDate?: number | null) => {
-      try {
-        const result = zero.mutate(mutators.events.cancelMeetingBooking({
-          event_id: eventId,
-          instance_date: instanceDate ?? null,
-        }))
-        await serverConfirmed(result)
-        toast.success(t('features.meet.toasts.bookingCancelled'))
-      } catch (error) {
-        console.error('Failed to cancel meeting booking:', error)
-        toast.error(t('features.meet.toasts.cancelFailed'))
-        throw error
-      }
+    (eventId: string, instanceDate?: number | null) => {
+      const result = zero.mutate(mutators.events.cancelMeetingBooking({
+        event_id: eventId,
+        instance_date: instanceDate ?? null,
+      }))
+      toast.success(t('features.meet.toasts.bookingCancelled'))
+      onServerError(result, () => toast.error(t('features.meet.toasts.cancelFailed')))
     },
     [zero],
   )

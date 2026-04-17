@@ -7,5 +7,9 @@ export const Route = createFileRoute('/_authed/event/$id/network')({
 
 function EventNetworkPage() {
   const { id } = Route.useParams()
-  return <EventNetworkFlow eventId={id} />
+  return (
+    <div className="h-[calc(100dvh-12rem)] min-h-[24rem]">
+      <EventNetworkFlow eventId={id} />
+    </div>
+  )
 }

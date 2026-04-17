@@ -340,7 +340,7 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
 
   if (!event) {
     return (
-      <div className="flex h-[calc(100dvh-12rem)] min-h-[400px] items-center justify-center">
+      <div className="flex h-full min-h-0 items-center justify-center rounded-lg border bg-background">
         <p className="text-muted-foreground">Event not found</p>
       </div>
     );
@@ -348,7 +348,7 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
 
   if (!group) {
     return (
-      <div className="flex h-[calc(100dvh-12rem)] min-h-[400px] items-center justify-center px-4">
+      <div className="flex h-full min-h-0 items-center justify-center rounded-lg border bg-background px-4">
         <div className="text-center">
           <p className="text-muted-foreground">This event is not associated with a group</p>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -390,6 +390,7 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
       onNodeClick={onNodeClick}
       onEdgeClick={onEdgeClick}
       onInteractiveChange={handleInteractiveChange}
+      containerClassName="h-full min-h-0"
       panel={
         <NetworkControlPanel
           title={t('common.network.eventNetwork', 'Event Network')}

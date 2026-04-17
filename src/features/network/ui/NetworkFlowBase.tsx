@@ -12,7 +12,6 @@ import {
   OnNodesChange,
   OnEdgesChange,
 } from '@xyflow/react';
-import '@xyflow/react/dist/style.css';
 import { RightsLabelEdge } from '@/features/network/ui/RightsLabelEdge';
 
 // Context to allow custom edge components to trigger onEdgeClick
@@ -35,6 +34,7 @@ interface NetworkFlowBaseProps<T extends Node = Node> {
   panel: ReactNode;
   onInteractiveChange?: (interactive: boolean) => void;
   children?: ReactNode;
+  containerClassName?: string;
 }
 
 export function NetworkFlowBase<T extends Node = Node>({
@@ -51,6 +51,7 @@ export function NetworkFlowBase<T extends Node = Node>({
   panel,
   onInteractiveChange,
   children,
+  containerClassName = 'h-[32rem] min-h-[24rem]',
 }: NetworkFlowBaseProps<T>) {
   const handleEdgeLabelClick = useCallback(
     (edgeId: string) => {
@@ -66,7 +67,7 @@ export function NetworkFlowBase<T extends Node = Node>({
 
   return (
     <EdgeClickContext.Provider value={handleEdgeLabelClick}>
-      <div className="h-[calc(100dvh-12rem)] min-h-[400px] w-full rounded-lg border bg-background">
+      <div className={`w-full rounded-lg border bg-background ${containerClassName}`}>
         <style>{`
         /* Dark mode styles for ReactFlow controls */
         .dark .react-flow__controls {
@@ -103,6 +104,7 @@ export function NetworkFlowBase<T extends Node = Node>({
         }
       `}</style>
       <ReactFlow
+        className="h-full w-full"
         nodes={nodes}
         edges={edges}
         edgeTypes={edgeTypes}

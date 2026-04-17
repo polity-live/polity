@@ -3,23 +3,12 @@ import { useZero } from '@rocicorp/zero/react'
 import { toast } from 'sonner'
 import { useTranslation } from '@/features/shared/hooks/use-translation'
 import { mutators } from '../mutators'
-import { serverConfirmed } from '../mutate-with-server-check'
-
-function isConnectivityFailure(error: unknown): boolean {
-  if (!(error instanceof Error)) return false
-
-  const message = error.message.toLowerCase()
-  return (
-    message.includes('econnrefused') ||
-    message.includes('failed to open database transaction') ||
-    message.includes('protocolerror') ||
-    message.includes('websocket')
-  )
-}
+import { onServerError } from '../mutate-with-server-check'
 
 /**
  * Action hook for amendment mutations.
  * Every function is a thin wrapper around a custom mutator + sonner toast.
+ * Mutations are optimistic — toasts show instantly, server errors appear in the background.
  */
 export function useAmendmentActions() {
   const zero = useZero()
@@ -27,400 +16,240 @@ export function useAmendmentActions() {
 
   // ── CRUD ───────────────────────────────────────────────────────────
   const createAmendment = useCallback(
-    async (args: Parameters<typeof mutators.amendments.create>[0]) => {
-      try {
-        const result = zero.mutate(mutators.amendments.create(args))
-        await serverConfirmed(result)
-        toast.success(t('features.amendments.toasts.created'))
-      } catch (error) {
-        console.error('Failed to create amendment:', error)
-        if (isConnectivityFailure(error)) {
-          toast.error('Connection issue while creating amendment. Please check your connection and retry.')
-        } else {
-          toast.error(t('features.amendments.toasts.createFailed'))
-        }
-        throw error
-      }
+    (args: Parameters<typeof mutators.amendments.create>[0]) => {
+      const result = zero.mutate(mutators.amendments.create(args))
+      toast.success(t('features.amendments.toasts.created'))
+      onServerError(result, () => toast.error(t('features.amendments.toasts.createFailed')))
     },
     [zero]
   )
 
   const updateAmendment = useCallback(
-    async (args: Parameters<typeof mutators.amendments.update>[0]) => {
-      try {
-        const result = zero.mutate(mutators.amendments.update(args))
-        await serverConfirmed(result)
-      } catch (error) {
-        console.error('Failed to update amendment:', error)
-        toast.error(t('features.amendments.toasts.updateFailed'))
-        throw error
-      }
+    (args: Parameters<typeof mutators.amendments.update>[0]) => {
+      const result = zero.mutate(mutators.amendments.update(args))
+      onServerError(result, () => toast.error(t('features.amendments.toasts.updateFailed')))
     },
     [zero]
   )
 
   const deleteAmendment = useCallback(
-    async (id: string) => {
-      try {
-        const result = zero.mutate(mutators.amendments.delete({ id }))
-        await serverConfirmed(result)
-        toast.success(t('features.amendments.toasts.deleted'))
-      } catch (error) {
-        console.error('Failed to delete amendment:', error)
-        toast.error(t('features.amendments.toasts.deleteFailed'))
-        throw error
-      }
+    (id: string) => {
+      const result = zero.mutate(mutators.amendments.delete({ id }))
+      toast.success(t('features.amendments.toasts.deleted'))
+      onServerError(result, () => toast.error(t('features.amendments.toasts.deleteFailed')))
     },
     [zero]
   )
 
   // ── Collaboration ──────────────────────────────────────────────────
   const requestCollaboration = useCallback(
-    async (args: Parameters<typeof mutators.amendments.addCollaborator>[0]) => {
-      try {
-        const result = zero.mutate(mutators.amendments.addCollaborator(args))
-        await serverConfirmed(result)
-        toast.success(t('features.amendments.toasts.collaborationRequested'))
-      } catch (error) {
-        console.error('Failed to request collaboration:', error)
-        toast.error(t('features.amendments.toasts.collaborationRequestFailed'))
-        throw error
-      }
+    (args: Parameters<typeof mutators.amendments.addCollaborator>[0]) => {
+      const result = zero.mutate(mutators.amendments.addCollaborator(args))
+      toast.success(t('features.amendments.toasts.collaborationRequested'))
+      onServerError(result, () => toast.error(t('features.amendments.toasts.collaborationRequestFailed')))
     },
     [zero]
   )
 
   const leaveCollaboration = useCallback(
-    async (id: string) => {
-      try {
-        const result = zero.mutate(mutators.amendments.removeCollaborator({ id }))
-        await serverConfirmed(result)
-        toast.success(t('features.amendments.toasts.leftCollaboration'))
-      } catch (error) {
-        console.error('Failed to leave collaboration:', error)
-        toast.error(t('features.amendments.toasts.leaveCollaborationFailed'))
-        throw error
-      }
+    (id: string) => {
+      const result = zero.mutate(mutators.amendments.removeCollaborator({ id }))
+      toast.success(t('features.amendments.toasts.leftCollaboration'))
+      onServerError(result, () => toast.error(t('features.amendments.toasts.leaveCollaborationFailed')))
     },
     [zero]
   )
 
   const acceptInvitation = useCallback(
-    async (id: string) => {
-      try {
-        const result = zero.mutate(
-          mutators.amendments.updateCollaborator({ id, status: 'member' })
-        )
-        await serverConfirmed(result)
-        toast.success(t('features.amendments.toasts.joinedCollaboration'))
-      } catch (error) {
-        console.error('Failed to accept invitation:', error)
-        toast.error(t('features.amendments.toasts.joinCollaborationFailed'))
-        throw error
-      }
+    (id: string) => {
+      const result = zero.mutate(
+        mutators.amendments.updateCollaborator({ id, status: 'member' })
+      )
+      toast.success(t('features.amendments.toasts.joinedCollaboration'))
+      onServerError(result, () => toast.error(t('features.amendments.toasts.joinCollaborationFailed')))
     },
     [zero]
   )
 
   const updateCollaborator = useCallback(
-    async (args: Parameters<typeof mutators.amendments.updateCollaborator>[0]) => {
-      try {
-        const result = zero.mutate(mutators.amendments.updateCollaborator(args))
-        await serverConfirmed(result)
-      } catch (error) {
-        console.error('Failed to update collaborator:', error)
-        toast.error(t('features.amendments.toasts.updateCollaboratorFailed'))
-        throw error
-      }
+    (args: Parameters<typeof mutators.amendments.updateCollaborator>[0]) => {
+      const result = zero.mutate(mutators.amendments.updateCollaborator(args))
+      onServerError(result, () => toast.error(t('features.amendments.toasts.updateCollaboratorFailed')))
     },
     [zero]
   )
 
   // ── Workflow ────────────────────────────────────────────────────────
   const updateEditingMode = useCallback(
-    async (id: string, editingMode: string) => {
-      try {
-        console.info('[useAmendmentActions] Persisting amendment editing mode', {
-          amendmentId: id,
-          editingMode,
-        })
-        const result = zero.mutate(
-          mutators.amendments.update({ id, editing_mode: editingMode })
-        )
-        await serverConfirmed(result)
-        console.info('[useAmendmentActions] Amendment editing mode persisted', {
-          amendmentId: id,
-          editingMode,
-        })
-        toast.success(t('features.amendments.toasts.workflowChanged', { status: editingMode }))
-      } catch (error) {
-        console.error('[useAmendmentActions] Failed to update editing mode', {
-          amendmentId: id,
-          editingMode,
-          error,
-        })
-        toast.error(t('features.amendments.toasts.workflowChangeFailed'))
-        throw error
-      }
+    (id: string, editingMode: string) => {
+      const result = zero.mutate(
+        mutators.amendments.update({ id, editing_mode: editingMode })
+      )
+      toast.success(t('features.amendments.toasts.workflowChanged', { status: editingMode }))
+      onServerError(result, () => toast.error(t('features.amendments.toasts.workflowChangeFailed')))
     },
     [zero]
   )
 
   const submitToEvent = useCallback(
-    async (id: string, eventId: string) => {
-      try {
-        const result = zero.mutate(
-          mutators.amendments.update({
-            id,
-            editing_mode: 'suggest_event',
-            event_id: eventId,
-          })
-        )
-        await serverConfirmed(result)
-        toast.success(t('features.amendments.toasts.submittedToEvent'))
-      } catch (error) {
-        console.error('Failed to submit to event:', error)
-        toast.error(t('features.amendments.toasts.submitToEventFailed'))
-        throw error
-      }
+    (id: string, eventId: string) => {
+      const result = zero.mutate(
+        mutators.amendments.update({
+          id,
+          editing_mode: 'suggest_event',
+          event_id: eventId,
+        })
+      )
+      toast.success(t('features.amendments.toasts.submittedToEvent'))
+      onServerError(result, () => toast.error(t('features.amendments.toasts.submitToEventFailed')))
     },
     [zero]
   )
 
   const finalizeAmendment = useCallback(
-    async (id: string, result: 'passed' | 'rejected') => {
-      try {
-        const mutationResult = zero.mutate(
-          mutators.amendments.update({
-            id,
-            editing_mode: result,
-          })
-        )
-        await serverConfirmed(mutationResult)
-        toast.success(
-          result === 'passed'
-            ? t('features.amendments.toasts.passed')
-            : t('features.amendments.toasts.rejected')
-        )
-      } catch (error) {
-        console.error('Failed to finalize amendment:', error)
-        toast.error(t('features.amendments.toasts.finalizeFailed'))
-        throw error
-      }
+    (id: string, finalResult: 'passed' | 'rejected') => {
+      const mutationResult = zero.mutate(
+        mutators.amendments.update({
+          id,
+          editing_mode: finalResult,
+        })
+      )
+      toast.success(
+        finalResult === 'passed'
+          ? t('features.amendments.toasts.passed')
+          : t('features.amendments.toasts.rejected')
+      )
+      onServerError(mutationResult, () => toast.error(t('features.amendments.toasts.finalizeFailed')))
     },
     [zero]
   )
 
   // ── Change Requests ────────────────────────────────────────────────
   const createChangeRequest = useCallback(
-    async (args: Parameters<typeof mutators.amendments.createChangeRequest>[0]) => {
-      try {
-        const result = zero.mutate(mutators.amendments.createChangeRequest(args))
-        await serverConfirmed(result)
-        toast.success(t('features.amendments.toasts.changeRequestCreated'))
-      } catch (error) {
-        console.error('Failed to create change request:', error)
-        toast.error(t('features.amendments.toasts.changeRequestCreateFailed'))
-        throw error
-      }
+    (args: Parameters<typeof mutators.amendments.createChangeRequest>[0]) => {
+      const result = zero.mutate(mutators.amendments.createChangeRequest(args))
+      toast.success(t('features.amendments.toasts.changeRequestCreated'))
+      onServerError(result, () => toast.error(t('features.amendments.toasts.changeRequestCreateFailed')))
     },
     [zero]
   )
 
   const updateChangeRequest = useCallback(
-    async (args: Parameters<typeof mutators.amendments.updateChangeRequest>[0]) => {
-      try {
-        const result = zero.mutate(mutators.amendments.updateChangeRequest(args))
-        await serverConfirmed(result)
-      } catch (error) {
-        console.error('Failed to update change request:', error)
-        toast.error(t('features.amendments.toasts.changeRequestUpdateFailed'))
-        throw error
-      }
+    (args: Parameters<typeof mutators.amendments.updateChangeRequest>[0]) => {
+      const result = zero.mutate(mutators.amendments.updateChangeRequest(args))
+      onServerError(result, () => toast.error(t('features.amendments.toasts.changeRequestUpdateFailed')))
     },
     [zero]
   )
 
   const voteOnChangeRequest = useCallback(
-    async (args: Parameters<typeof mutators.amendments.voteOnChangeRequest>[0]) => {
-      try {
-        const result = zero.mutate(mutators.amendments.voteOnChangeRequest(args))
-        await serverConfirmed(result)
-      } catch (error) {
-        console.error('Failed to vote on change request:', error)
-        toast.error(t('features.amendments.toasts.voteOnChangeRequestFailed'))
-        throw error
-      }
+    (args: Parameters<typeof mutators.amendments.voteOnChangeRequest>[0]) => {
+      const result = zero.mutate(mutators.amendments.voteOnChangeRequest(args))
+      onServerError(result, () => toast.error(t('features.amendments.toasts.voteOnChangeRequestFailed')))
     },
     [zero]
   )
 
   // ── Support ────────────────────────────────────────────────────────
   const supportAmendment = useCallback(
-    async (args: Parameters<typeof mutators.amendments.supportAmendment>[0]) => {
-      try {
-        const result = zero.mutate(mutators.amendments.supportAmendment(args))
-        await serverConfirmed(result)
-      } catch (error) {
-        console.error('Failed to support amendment:', error)
-        toast.error(t('features.amendments.toasts.supportAddFailed'))
-        throw error
-      }
+    (args: Parameters<typeof mutators.amendments.supportAmendment>[0]) => {
+      const result = zero.mutate(mutators.amendments.supportAmendment(args))
+      onServerError(result, () => toast.error(t('features.amendments.toasts.supportAddFailed')))
     },
     [zero]
   )
 
   const updateSupportVote = useCallback(
-    async (args: Parameters<typeof mutators.amendments.updateSupportVote>[0]) => {
-      try {
-        const result = zero.mutate(mutators.amendments.updateSupportVote(args))
-        await serverConfirmed(result)
-      } catch (error) {
-        console.error('Failed to update amendment support vote:', error)
-        toast.error(t('common.voteToasts.voteUpdateFailed', 'Failed to update vote'))
-        throw error
-      }
+    (args: Parameters<typeof mutators.amendments.updateSupportVote>[0]) => {
+      const result = zero.mutate(mutators.amendments.updateSupportVote(args))
+      onServerError(result, () => toast.error(t('common.voteToasts.voteUpdateFailed', 'Failed to update vote')))
     },
     [zero]
   )
 
   const deleteSupportVote = useCallback(
-    async (id: string) => {
-      try {
-        const result = zero.mutate(mutators.amendments.deleteSupportVote({ id }))
-        await serverConfirmed(result)
-      } catch (error) {
-        console.error('Failed to delete amendment support vote:', error)
-        toast.error(t('common.voteToasts.voteDeleteFailed', 'Failed to delete vote'))
-        throw error
-      }
+    (id: string) => {
+      const result = zero.mutate(mutators.amendments.deleteSupportVote({ id }))
+      onServerError(result, () => toast.error(t('common.voteToasts.voteDeleteFailed', 'Failed to delete vote')))
     },
     [zero]
   )
 
   const createSupportConfirmation = useCallback(
-    async (args: Parameters<typeof mutators.amendments.createSupportConfirmation>[0]) => {
-      try {
-        const result = zero.mutate(mutators.amendments.createSupportConfirmation(args))
-        await serverConfirmed(result)
-      } catch (error) {
-        console.error('Failed to create support confirmation:', error)
-        toast.error(t('features.amendments.toasts.supportConfirmationFailed'))
-        throw error
-      }
+    (args: Parameters<typeof mutators.amendments.createSupportConfirmation>[0]) => {
+      const result = zero.mutate(mutators.amendments.createSupportConfirmation(args))
+      onServerError(result, () => toast.error(t('features.amendments.toasts.supportConfirmationFailed')))
     },
     [zero]
   )
 
   const updateSupportConfirmation = useCallback(
-    async (args: Parameters<typeof mutators.amendments.updateSupportConfirmation>[0]) => {
-      try {
-        const result = zero.mutate(mutators.amendments.updateSupportConfirmation(args))
-        await serverConfirmed(result)
-        const status = args.status
-        toast.success(status === 'confirmed' ? t('features.amendments.toasts.supportConfirmed') : t('features.amendments.toasts.supportDeclined'))
-      } catch (error) {
-        console.error('Failed to update support confirmation:', error)
-        toast.error(t('features.amendments.toasts.supportConfirmationUpdateFailed'))
-        throw error
-      }
+    (args: Parameters<typeof mutators.amendments.updateSupportConfirmation>[0]) => {
+      const result = zero.mutate(mutators.amendments.updateSupportConfirmation(args))
+      const status = args.status
+      toast.success(status === 'confirmed' ? t('features.amendments.toasts.supportConfirmed') : t('features.amendments.toasts.supportDeclined'))
+      onServerError(result, () => toast.error(t('features.amendments.toasts.supportConfirmationUpdateFailed')))
     },
     [zero]
   )
 
   // ── Subscription (delegates to common mutators) ────────────────────
   const subscribe = useCallback(
-    async (args: { id: string; amendment_id: string }) => {
-      try {
-        const result = zero.mutate(
-          mutators.common.subscribe({
-            id: args.id,
-            amendment_id: args.amendment_id,
-            user_id: null,
-            group_id: null,
-            event_id: null,
-            blog_id: null,
-          })
-        )
-        await serverConfirmed(result)
-        toast.success(t('features.amendments.toasts.subscribed'))
-      } catch (error) {
-        console.error('Failed to subscribe:', error)
-        toast.error(t('features.amendments.toasts.subscribeFailed'))
-        throw error
-      }
+    (args: { id: string; amendment_id: string }) => {
+      const result = zero.mutate(
+        mutators.common.subscribe({
+          id: args.id,
+          amendment_id: args.amendment_id,
+          user_id: null,
+          group_id: null,
+          event_id: null,
+          blog_id: null,
+        })
+      )
+      toast.success(t('features.amendments.toasts.subscribed'))
+      onServerError(result, () => toast.error(t('features.amendments.toasts.subscribeFailed')))
     },
     [zero]
   )
 
   const unsubscribe = useCallback(
-    async (id: string) => {
-      try {
-        const result = zero.mutate(mutators.common.unsubscribe({ id }))
-        await serverConfirmed(result)
-        toast.success(t('features.amendments.toasts.unsubscribed'))
-      } catch (error) {
-        console.error('Failed to unsubscribe:', error)
-        toast.error(t('features.amendments.toasts.unsubscribeFailed'))
-        throw error
-      }
+    (id: string) => {
+      const result = zero.mutate(mutators.common.unsubscribe({ id }))
+      toast.success(t('features.amendments.toasts.unsubscribed'))
+      onServerError(result, () => toast.error(t('features.amendments.toasts.unsubscribeFailed')))
     },
     [zero]
   )
 
   // ── Amendment Paths ────────────────────────────────────────────────
   const createPath = useCallback(
-    async (args: Parameters<typeof mutators.amendments.createPath>[0]) => {
-      try {
-        const result = zero.mutate(mutators.amendments.createPath(args))
-        await serverConfirmed(result)
-      } catch (error) {
-        console.error('Failed to create path:', error)
-        toast.error(t('features.amendments.toasts.pathCreateFailed', 'Failed to create path'))
-        throw error
-      }
+    (args: Parameters<typeof mutators.amendments.createPath>[0]) => {
+      const result = zero.mutate(mutators.amendments.createPath(args))
+      onServerError(result, () => toast.error(t('features.amendments.toasts.pathCreateFailed', 'Failed to create path')))
     },
     [zero]
   )
 
   const deletePath = useCallback(
-    async (args: Parameters<typeof mutators.amendments.deletePath>[0]) => {
-      try {
-        const result = zero.mutate(mutators.amendments.deletePath(args))
-        await serverConfirmed(result)
-      } catch (error) {
-        console.error('Failed to delete path:', error)
-        toast.error(t('features.amendments.toasts.pathDeleteFailed', 'Failed to delete path'))
-        throw error
-      }
+    (args: Parameters<typeof mutators.amendments.deletePath>[0]) => {
+      const result = zero.mutate(mutators.amendments.deletePath(args))
+      onServerError(result, () => toast.error(t('features.amendments.toasts.pathDeleteFailed', 'Failed to delete path')))
     },
     [zero]
   )
 
   const createPathSegment = useCallback(
-    async (args: Parameters<typeof mutators.amendments.createPathSegment>[0]) => {
-      try {
-        const result = zero.mutate(mutators.amendments.createPathSegment(args))
-        await serverConfirmed(result)
-      } catch (error) {
-        console.error('Failed to create path segment:', error)
-        toast.error(t('features.amendments.toasts.pathSegmentCreateFailed', 'Failed to create path segment'))
-        throw error
-      }
+    (args: Parameters<typeof mutators.amendments.createPathSegment>[0]) => {
+      const result = zero.mutate(mutators.amendments.createPathSegment(args))
+      onServerError(result, () => toast.error(t('features.amendments.toasts.pathSegmentCreateFailed', 'Failed to create path segment')))
     },
     [zero]
   )
 
   const deletePathSegment = useCallback(
-    async (args: Parameters<typeof mutators.amendments.deletePathSegment>[0]) => {
-      try {
-        const result = zero.mutate(mutators.amendments.deletePathSegment(args))
-        await serverConfirmed(result)
-      } catch (error) {
-        console.error('Failed to delete path segment:', error)
-        toast.error(t('features.amendments.toasts.pathSegmentDeleteFailed', 'Failed to delete path segment'))
-        throw error
-      }
+    (args: Parameters<typeof mutators.amendments.deletePathSegment>[0]) => {
+      const result = zero.mutate(mutators.amendments.deletePathSegment(args))
+      onServerError(result, () => toast.error(t('features.amendments.toasts.pathSegmentDeleteFailed', 'Failed to delete path segment')))
     },
     [zero]
   )

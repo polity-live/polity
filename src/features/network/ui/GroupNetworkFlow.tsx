@@ -308,7 +308,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
 
   if (!group) {
     return (
-      <div className="flex h-[calc(100dvh-12rem)] min-h-[400px] w-full items-center justify-center rounded-lg border bg-background">
+      <div className="flex h-[32rem] min-h-[24rem] w-full items-center justify-center rounded-lg border bg-background">
         <p className="text-muted-foreground">{t('common.network.loadingGroupNetwork')}</p>
       </div>
     );
@@ -347,7 +347,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
           </Select>
         </div>
         {groupWorkflows.length === 0 ? (
-          <div className="flex h-[calc(100dvh-12rem)] min-h-[400px] w-full items-center justify-center rounded-lg border bg-background">
+          <div className="flex h-[32rem] min-h-[24rem] w-full items-center justify-center rounded-lg border bg-background">
             <p className="text-muted-foreground text-sm">
               {t('features.network.workflows.empty', 'No workflows defined yet.')}
             </p>
@@ -355,7 +355,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
         ) : selectedWorkflow ? (
           <WorkflowFlowVisualization workflow={selectedWorkflow} />
         ) : (
-          <div className="flex h-[calc(100dvh-12rem)] min-h-[400px] w-full items-center justify-center rounded-lg border bg-background">
+          <div className="flex h-[32rem] min-h-[24rem] w-full items-center justify-center rounded-lg border bg-background">
             <p className="text-muted-foreground text-sm">
               {t('features.network.workflows.selectWorkflow', 'Select a workflow...')}
             </p>

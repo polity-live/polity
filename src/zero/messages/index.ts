@@ -11,6 +11,7 @@ export {
   updateConversationParticipantSchema,
   selectMessageSchema,
   createMessageSchema,
+  createAssistantMessageSchema,
   deleteMessageSchema,
   type Conversation,
   type ConversationParticipant,

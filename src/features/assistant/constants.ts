@@ -48,4 +48,34 @@ export const ENTITY_DESCRIPTIONS = {
   },
 } as const;
 
+export const ENTITY_TUTORIAL_ACTIONS = {
+  overview: {
+    labelKey: 'components.ariaKaiActions.showMe',
+    tutorial_step: 1,
+  },
+  groups: {
+    labelKey: 'components.ariaKaiActions.groups',
+    tutorial_step: 2,
+  },
+  events: {
+    labelKey: 'components.ariaKaiActions.events',
+    tutorial_step: 3,
+  },
+  amendments: {
+    labelKey: 'components.ariaKaiActions.amendments',
+    tutorial_step: 4,
+  },
+  blogs: {
+    labelKey: 'components.ariaKaiActions.blogs',
+    tutorial_step: 5,
+  },
+  elections: {
+    labelKey: 'components.ariaKaiActions.elections',
+    tutorial_step: 6,
+  },
+} as const;
+
+export const ENTITY_TUTORIAL_TOPICS = ['groups', 'events', 'amendments', 'blogs', 'elections'] as const;
+
 export type EntityTopic = keyof typeof ENTITY_DESCRIPTIONS;
+export type EntityTutorialTopic = (typeof ENTITY_TUTORIAL_TOPICS)[number];

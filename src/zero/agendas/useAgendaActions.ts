@@ -3,11 +3,12 @@ import { useZero } from '@rocicorp/zero/react'
 import { toast } from 'sonner'
 import { useTranslation } from '@/features/shared/hooks/use-translation'
 import { mutators } from '../mutators'
-import { serverConfirmed } from '../mutate-with-server-check'
+import { onServerError } from '../mutate-with-server-check'
 
 /**
  * Action hook for agenda mutations.
  * Every function is a thin wrapper around a custom mutator + sonner toast.
+ * Mutations are optimistic — toasts show instantly, server errors appear in the background.
  */
 export function useAgendaActions() {
   const zero = useZero()
@@ -15,104 +16,62 @@ export function useAgendaActions() {
 
   // ── Agenda Items ───────────────────────────────────────────────────
   const createAgendaItem = useCallback(
-    async (args: Parameters<typeof mutators.agendas.createAgendaItem>[0]) => {
-      try {
-        const result = zero.mutate(mutators.agendas.createAgendaItem(args))
-        await serverConfirmed(result)
-        toast.success(t('common.agendaToasts.itemCreated'))
-      } catch (error) {
-        console.error('Failed to create agenda item:', error)
-        toast.error(t('common.agendaToasts.itemCreateFailed'))
-        throw error
-      }
+    (args: Parameters<typeof mutators.agendas.createAgendaItem>[0]) => {
+      const result = zero.mutate(mutators.agendas.createAgendaItem(args))
+      toast.success(t('common.agendaToasts.itemCreated'))
+      onServerError(result, () => toast.error(t('common.agendaToasts.itemCreateFailed')))
     },
     [zero]
   )
 
   const updateAgendaItem = useCallback(
-    async (args: Parameters<typeof mutators.agendas.updateAgendaItem>[0]) => {
-      try {
-        const result = zero.mutate(mutators.agendas.updateAgendaItem(args))
-        await serverConfirmed(result)
-      } catch (error) {
-        console.error('Failed to update agenda item:', error)
-        toast.error(t('common.agendaToasts.itemUpdateFailed'))
-        throw error
-      }
+    (args: Parameters<typeof mutators.agendas.updateAgendaItem>[0]) => {
+      const result = zero.mutate(mutators.agendas.updateAgendaItem(args))
+      onServerError(result, () => toast.error(t('common.agendaToasts.itemUpdateFailed')))
     },
     [zero]
   )
 
   const deleteAgendaItem = useCallback(
-    async (id: string) => {
-      try {
-        const result = zero.mutate(mutators.agendas.deleteAgendaItem({ id }))
-        await serverConfirmed(result)
-        toast.success(t('common.agendaToasts.itemDeleted'))
-      } catch (error) {
-        console.error('Failed to delete agenda item:', error)
-        toast.error(t('common.agendaToasts.itemDeleteFailed'))
-        throw error
-      }
+    (id: string) => {
+      const result = zero.mutate(mutators.agendas.deleteAgendaItem({ id }))
+      toast.success(t('common.agendaToasts.itemDeleted'))
+      onServerError(result, () => toast.error(t('common.agendaToasts.itemDeleteFailed')))
     },
     [zero]
   )
 
   const reorderAgendaItems = useCallback(
-    async (args: Parameters<typeof mutators.agendas.reorderAgendaItems>[0]) => {
-      try {
-        const result = zero.mutate(mutators.agendas.reorderAgendaItems(args))
-        await serverConfirmed(result)
-      } catch (error) {
-        console.error('Failed to reorder agenda items:', error)
-        toast.error(t('common.agendaToasts.reorderFailed'))
-        throw error
-      }
+    (args: Parameters<typeof mutators.agendas.reorderAgendaItems>[0]) => {
+      const result = zero.mutate(mutators.agendas.reorderAgendaItems(args))
+      onServerError(result, () => toast.error(t('common.agendaToasts.reorderFailed')))
     },
     [zero]
   )
 
   // ── Speaker List ───────────────────────────────────────────────────
   const addSpeaker = useCallback(
-    async (args: Parameters<typeof mutators.agendas.addSpeaker>[0]) => {
-      try {
-        const result = zero.mutate(mutators.agendas.addSpeaker(args))
-        await serverConfirmed(result)
-        toast.success(t('common.agendaToasts.speakerAdded'))
-      } catch (error) {
-        console.error('Failed to add speaker:', error)
-        toast.error(t('common.agendaToasts.speakerAddFailed'))
-        throw error
-      }
+    (args: Parameters<typeof mutators.agendas.addSpeaker>[0]) => {
+      const result = zero.mutate(mutators.agendas.addSpeaker(args))
+      toast.success(t('common.agendaToasts.speakerAdded'))
+      onServerError(result, () => toast.error(t('common.agendaToasts.speakerAddFailed')))
     },
     [zero]
   )
 
   const updateSpeaker = useCallback(
-    async (args: Parameters<typeof mutators.agendas.updateSpeaker>[0]) => {
-      try {
-        const result = zero.mutate(mutators.agendas.updateSpeaker(args))
-        await serverConfirmed(result)
-      } catch (error) {
-        console.error('Failed to update speaker:', error)
-        toast.error(t('common.agendaToasts.speakerUpdateFailed'))
-        throw error
-      }
+    (args: Parameters<typeof mutators.agendas.updateSpeaker>[0]) => {
+      const result = zero.mutate(mutators.agendas.updateSpeaker(args))
+      onServerError(result, () => toast.error(t('common.agendaToasts.speakerUpdateFailed')))
     },
     [zero]
   )
 
   const removeSpeaker = useCallback(
-    async (id: string) => {
-      try {
-        const result = zero.mutate(mutators.agendas.removeSpeaker({ id }))
-        await serverConfirmed(result)
-        toast.success(t('common.agendaToasts.speakerRemoved'))
-      } catch (error) {
-        console.error('Failed to remove speaker:', error)
-        toast.error(t('common.agendaToasts.speakerRemoveFailed'))
-        throw error
-      }
+    (id: string) => {
+      const result = zero.mutate(mutators.agendas.removeSpeaker({ id }))
+      toast.success(t('common.agendaToasts.speakerRemoved'))
+      onServerError(result, () => toast.error(t('common.agendaToasts.speakerRemoveFailed')))
     },
     [zero]
   )
@@ -120,87 +79,51 @@ export function useAgendaActions() {
   // ── Agenda Item Change Requests ────────────────────────────────────
 
   const createAgendaItemChangeRequest = useCallback(
-    async (args: Parameters<typeof mutators.agendas.createAgendaItemChangeRequest>[0]) => {
-      try {
-        const result = zero.mutate(mutators.agendas.createAgendaItemChangeRequest(args))
-        await serverConfirmed(result)
-      } catch (error) {
-        console.error('Failed to create agenda item change request:', error)
-        toast.error(t('common.agendaToasts.crCreateFailed'))
-        throw error
-      }
+    (args: Parameters<typeof mutators.agendas.createAgendaItemChangeRequest>[0]) => {
+      const result = zero.mutate(mutators.agendas.createAgendaItemChangeRequest(args))
+      onServerError(result, () => toast.error(t('common.agendaToasts.crCreateFailed')))
     },
     [zero]
   )
 
   const updateAgendaItemChangeRequest = useCallback(
-    async (args: Parameters<typeof mutators.agendas.updateAgendaItemChangeRequest>[0]) => {
-      try {
-        const result = zero.mutate(mutators.agendas.updateAgendaItemChangeRequest(args))
-        await serverConfirmed(result)
-      } catch (error) {
-        console.error('Failed to update agenda item change request:', error)
-        toast.error(t('common.agendaToasts.crUpdateFailed'))
-        throw error
-      }
+    (args: Parameters<typeof mutators.agendas.updateAgendaItemChangeRequest>[0]) => {
+      const result = zero.mutate(mutators.agendas.updateAgendaItemChangeRequest(args))
+      onServerError(result, () => toast.error(t('common.agendaToasts.crUpdateFailed')))
     },
     [zero]
   )
 
   const reorderAgendaItemChangeRequests = useCallback(
-    async (args: Parameters<typeof mutators.agendas.reorderAgendaItemChangeRequests>[0]) => {
-      try {
-        const result = zero.mutate(mutators.agendas.reorderAgendaItemChangeRequests(args))
-        await serverConfirmed(result)
-      } catch (error) {
-        console.error('Failed to reorder change requests:', error)
-        toast.error(t('common.agendaToasts.crReorderFailed'))
-        throw error
-      }
+    (args: Parameters<typeof mutators.agendas.reorderAgendaItemChangeRequests>[0]) => {
+      const result = zero.mutate(mutators.agendas.reorderAgendaItemChangeRequests(args))
+      onServerError(result, () => toast.error(t('common.agendaToasts.crReorderFailed')))
     },
     [zero]
   )
 
   const deleteAgendaItemChangeRequest = useCallback(
-    async (id: string) => {
-      try {
-        const result = zero.mutate(mutators.agendas.deleteAgendaItemChangeRequest({ id }))
-        await serverConfirmed(result)
-      } catch (error) {
-        console.error('Failed to delete agenda item change request:', error)
-        toast.error(t('common.agendaToasts.crDeleteFailed'))
-        throw error
-      }
+    (id: string) => {
+      const result = zero.mutate(mutators.agendas.deleteAgendaItemChangeRequest({ id }))
+      onServerError(result, () => toast.error(t('common.agendaToasts.crDeleteFailed')))
     },
     [zero]
   )
 
   const initializeChangeRequestVoting = useCallback(
-    async (args: { amendment_id: string; agenda_item_id: string; voting_context?: 'event' | 'internal'; group_id?: string }) => {
-      try {
-        const result = zero.mutate(mutators.agendas.initializeChangeRequestVoting(args))
-        await serverConfirmed(result)
-        toast.success(t('common.agendaToasts.crVotingInitialized'))
-      } catch (error) {
-        console.error('Failed to initialize change request voting:', error)
-        toast.error(t('common.agendaToasts.crVotingInitFailed'))
-        throw error
-      }
+    (args: { amendment_id: string; agenda_item_id: string; voting_context?: 'event' | 'internal'; group_id?: string }) => {
+      const result = zero.mutate(mutators.agendas.initializeChangeRequestVoting(args))
+      toast.success(t('common.agendaToasts.crVotingInitialized'))
+      onServerError(result, () => toast.error(t('common.agendaToasts.crVotingInitFailed')))
     },
     [zero]
   )
 
   const processCRVoteResult = useCallback(
-    async (args: { agenda_item_change_request_id: string; vote_result: 'passed' | 'rejected' | 'tie' }) => {
-      try {
-        const result = zero.mutate(mutators.agendas.processCRVoteResult(args))
-        await serverConfirmed(result)
-        toast.success(t('common.agendaToasts.crVoteProcessed'))
-      } catch (error) {
-        console.error('Failed to process CR vote result:', error)
-        toast.error(t('common.agendaToasts.crVoteProcessFailed'))
-        throw error
-      }
+    (args: { agenda_item_change_request_id: string; vote_result: 'passed' | 'rejected' | 'tie' }) => {
+      const result = zero.mutate(mutators.agendas.processCRVoteResult(args))
+      toast.success(t('common.agendaToasts.crVoteProcessed'))
+      onServerError(result, () => toast.error(t('common.agendaToasts.crVoteProcessFailed')))
     },
     [zero]
   )

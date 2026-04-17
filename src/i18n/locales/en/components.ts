@@ -125,12 +125,12 @@ export const componentsTranslations = {
     showLocation: 'Show me my assistant location',
   },
   ariaKaiActions: {
-    showMe: 'Show me',
-    groups: 'Groups',
-    events: 'Events',
-    amendments: 'Amendments',
-    blogs: 'Blogs',
-    elections: 'Elections & Positions',
+    showMe: 'Show me more',
+    groups: 'Tell me more about groups',
+    events: 'Tell me more about events',
+    amendments: 'Tell me more about amendments',
+    blogs: 'Tell me more about blogs',
+    elections: 'Tell me more about elections and positions',
   },
   linkPreview: {
     externalLink: 'External Link',

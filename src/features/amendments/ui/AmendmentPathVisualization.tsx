@@ -215,6 +215,7 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
               nodes={nodes}
               edges={edges}
               nodesDraggable={false}
+              containerClassName="h-full min-h-0"
               panel={
                 <Panel
                   position="top-right"

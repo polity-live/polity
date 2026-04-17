@@ -381,7 +381,7 @@ export function FilteredNetworkFlow({
 
   if (!user) {
     return (
-      <div className="flex h-[calc(100dvh-12rem)] min-h-[400px] w-full items-center justify-center rounded-lg border bg-background">
+      <div className="flex h-[32rem] min-h-[24rem] w-full items-center justify-center rounded-lg border bg-background">
         <p className="text-muted-foreground">{t('common.network.loadingNetwork')}</p>
       </div>
     );

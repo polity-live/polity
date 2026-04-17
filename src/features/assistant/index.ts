@@ -7,6 +7,7 @@ export { isAssistantUser, isAssistantConversation } from './logic/assistantHelpe
 
 // Hooks
 export { useAssistantConversation } from './hooks/useAssistantConversation';
+export { useAriaKaiTutorialActions } from './hooks/useAriaKaiTutorialActions';
 
 // UI
 export { AriaKaiStep } from './ui/AriaKaiStep';

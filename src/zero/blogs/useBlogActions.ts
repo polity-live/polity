@@ -3,11 +3,12 @@ import { useZero } from '@rocicorp/zero/react'
 import { toast } from 'sonner'
 import { useTranslation } from '@/features/shared/hooks/use-translation'
 import { mutators } from '../mutators'
-import { serverConfirmed } from '../mutate-with-server-check'
+import { onServerError } from '../mutate-with-server-check'
 
 /**
  * Action hook for blog mutations.
  * Every function wraps a custom mutator + sonner toast.
+ * Mutations are optimistic — toasts show instantly, server errors appear in the background.
  */
 export function useBlogActions() {
   const zero = useZero()
@@ -15,135 +16,81 @@ export function useBlogActions() {
 
   // ── CRUD ───────────────────────────────────────────────────────────
   const createBlog = useCallback(
-    async (args: Parameters<typeof mutators.blogs.create>[0]) => {
-      try {
-        const result = zero.mutate(mutators.blogs.create(args))
-        await serverConfirmed(result)
-        toast.success(t('features.blogs.toasts.created'))
-      } catch (error) {
-        console.error('Failed to create blog:', error)
-        toast.error(t('features.blogs.toasts.createFailed', 'Failed to create blog'))
-        throw error
-      }
+    (args: Parameters<typeof mutators.blogs.create>[0]) => {
+      const result = zero.mutate(mutators.blogs.create(args))
+      toast.success(t('features.blogs.toasts.created'))
+      onServerError(result, () => toast.error(t('features.blogs.toasts.createFailed', 'Failed to create blog')))
     },
     [zero]
   )
 
   const updateBlog = useCallback(
-    async (args: Parameters<typeof mutators.blogs.update>[0]) => {
-      try {
-        const result = zero.mutate(mutators.blogs.update(args))
-        await serverConfirmed(result)
-      } catch (error) {
-        console.error('Failed to update blog:', error)
-        toast.error(t('features.blogs.toasts.updateFailed'))
-        throw error
-      }
+    (args: Parameters<typeof mutators.blogs.update>[0]) => {
+      const result = zero.mutate(mutators.blogs.update(args))
+      onServerError(result, () => toast.error(t('features.blogs.toasts.updateFailed')))
     },
     [zero]
   )
 
   const deleteBlog = useCallback(
-    async (id: string) => {
-      try {
-        const result = zero.mutate(mutators.blogs.delete({ id }))
-        await serverConfirmed(result)
-        toast.success(t('features.blogs.toasts.deleted'))
-      } catch (error) {
-        console.error('Failed to delete blog:', error)
-        toast.error(t('features.blogs.toasts.deleteFailed'))
-        throw error
-      }
+    (id: string) => {
+      const result = zero.mutate(mutators.blogs.delete({ id }))
+      toast.success(t('features.blogs.toasts.deleted'))
+      onServerError(result, () => toast.error(t('features.blogs.toasts.deleteFailed')))
     },
     [zero]
   )
 
   // ── Entries ────────────────────────────────────────────────────────
   const createEntry = useCallback(
-    async (args: Parameters<typeof mutators.blogs.createEntry>[0]) => {
-      try {
-        const result = zero.mutate(mutators.blogs.createEntry(args))
-        await serverConfirmed(result)
-        toast.success(t('features.blogs.toasts.entryCreated'))
-      } catch (error) {
-        console.error('Failed to create blog entry:', error)
-        toast.error(t('features.blogs.toasts.entryCreateFailed'))
-        throw error
-      }
+    (args: Parameters<typeof mutators.blogs.createEntry>[0]) => {
+      const result = zero.mutate(mutators.blogs.createEntry(args))
+      toast.success(t('features.blogs.toasts.entryCreated'))
+      onServerError(result, () => toast.error(t('features.blogs.toasts.entryCreateFailed')))
     },
     [zero]
   )
 
   const updateEntry = useCallback(
-    async (args: Parameters<typeof mutators.blogs.updateEntry>[0]) => {
-      try {
-        const result = zero.mutate(mutators.blogs.updateEntry(args))
-        await serverConfirmed(result)
-      } catch (error) {
-        console.error('Failed to update blog entry:', error)
-        toast.error(t('features.blogs.toasts.entryUpdateFailed'))
-        throw error
-      }
+    (args: Parameters<typeof mutators.blogs.updateEntry>[0]) => {
+      const result = zero.mutate(mutators.blogs.updateEntry(args))
+      onServerError(result, () => toast.error(t('features.blogs.toasts.entryUpdateFailed')))
     },
     [zero]
   )
 
   const deleteEntry = useCallback(
-    async (id: string) => {
-      try {
-        const result = zero.mutate(mutators.blogs.deleteEntry({ id }))
-        await serverConfirmed(result)
-        toast.success(t('features.blogs.toasts.entryDeleted'))
-      } catch (error) {
-        console.error('Failed to delete blog entry:', error)
-        toast.error(t('features.blogs.toasts.entryDeleteFailed'))
-        throw error
-      }
+    (id: string) => {
+      const result = zero.mutate(mutators.blogs.deleteEntry({ id }))
+      toast.success(t('features.blogs.toasts.entryDeleted'))
+      onServerError(result, () => toast.error(t('features.blogs.toasts.entryDeleteFailed')))
     },
     [zero]
   )
 
   // ── Support Votes ──────────────────────────────────────────────────
   const createSupportVote = useCallback(
-    async (args: Parameters<typeof mutators.blogs.createSupportVote>[0]) => {
-      try {
-        const result = zero.mutate(mutators.blogs.createSupportVote(args))
-        await serverConfirmed(result)
-        toast.success(t('features.blogs.toasts.supportVoteAdded'))
-      } catch (error) {
-        console.error('Failed to create support vote:', error)
-        toast.error(t('features.blogs.toasts.supportVoteAddFailed'))
-        throw error
-      }
+    (args: Parameters<typeof mutators.blogs.createSupportVote>[0]) => {
+      const result = zero.mutate(mutators.blogs.createSupportVote(args))
+      toast.success(t('features.blogs.toasts.supportVoteAdded'))
+      onServerError(result, () => toast.error(t('features.blogs.toasts.supportVoteAddFailed')))
     },
     [zero]
   )
 
   const updateSupportVote = useCallback(
-    async (args: Parameters<typeof mutators.blogs.updateSupportVote>[0]) => {
-      try {
-        const result = zero.mutate(mutators.blogs.updateSupportVote(args))
-        await serverConfirmed(result)
-      } catch (error) {
-        console.error('Failed to update support vote:', error)
-        toast.error(t('features.blogs.toasts.supportVoteUpdateFailed'))
-        throw error
-      }
+    (args: Parameters<typeof mutators.blogs.updateSupportVote>[0]) => {
+      const result = zero.mutate(mutators.blogs.updateSupportVote(args))
+      onServerError(result, () => toast.error(t('features.blogs.toasts.supportVoteUpdateFailed')))
     },
     [zero]
   )
 
   const deleteSupportVote = useCallback(
-    async (id: string) => {
-      try {
-        const result = zero.mutate(mutators.blogs.deleteSupportVote({ id }))
-        await serverConfirmed(result)
-        toast.success(t('features.blogs.toasts.supportVoteRemoved'))
-      } catch (error) {
-        console.error('Failed to delete support vote:', error)
-        toast.error(t('features.blogs.toasts.supportVoteRemoveFailed'))
-        throw error
-      }
+    (id: string) => {
+      const result = zero.mutate(mutators.blogs.deleteSupportVote({ id }))
+      toast.success(t('features.blogs.toasts.supportVoteRemoved'))
+      onServerError(result, () => toast.error(t('features.blogs.toasts.supportVoteRemoveFailed')))
     },
     [zero]
   )
@@ -152,51 +99,51 @@ export function useBlogActions() {
 
   /** Update blog without toast — for auto-save scenarios */
   const updateBlogSilent = useCallback(
-    async (args: Parameters<typeof mutators.blogs.update>[0]) => {
+    (args: Parameters<typeof mutators.blogs.update>[0]) => {
       const result = zero.mutate(mutators.blogs.update(args))
-      await serverConfirmed(result)
+      onServerError(result, (msg) => console.error('Silent blog update failed:', msg))
     },
     [zero]
   )
 
   /** Full blog creation orchestration (blog + roles + action rights + entry) */
   const createBlogFull = useCallback(
-    async (args: {
+    (args: {
       blog: Parameters<typeof mutators.blogs.create>[0]
       roles: Array<Parameters<typeof mutators.blogs.createRole>[0]>
       actionRights: Array<Parameters<typeof mutators.blogs.assignActionRight>[0]>
       entry: Parameters<typeof mutators.blogs.createEntry>[0]
     }) => {
       const result1 = zero.mutate(mutators.blogs.create(args.blog))
-      await serverConfirmed(result1)
+      onServerError(result1, (msg) => console.error('Failed to create blog:', msg))
       for (const role of args.roles) {
         const result2 = zero.mutate(mutators.blogs.createRole(role))
-        await serverConfirmed(result2)
+        onServerError(result2, (msg) => console.error('Failed to create blog role:', msg))
       }
       for (const right of args.actionRights) {
         const result3 = zero.mutate(mutators.blogs.assignActionRight(right))
-        await serverConfirmed(result3)
+        onServerError(result3, (msg) => console.error('Failed to assign blog action right:', msg))
       }
       const result4 = zero.mutate(mutators.blogs.createEntry(args.entry))
-      await serverConfirmed(result4)
+      onServerError(result4, (msg) => console.error('Failed to create blog entry:', msg))
     },
     [zero]
   )
 
   /** Subscribe to a blog without toast (caller manages UX) */
   const subscribeToBlog = useCallback(
-    async (args: Parameters<typeof mutators.common.subscribe>[0]) => {
+    (args: Parameters<typeof mutators.common.subscribe>[0]) => {
       const result = zero.mutate(mutators.common.subscribe(args))
-      await serverConfirmed(result)
+      onServerError(result, (msg) => console.error('Failed to subscribe to blog:', msg))
     },
     [zero]
   )
 
   /** Unsubscribe from a blog without toast (caller manages UX) */
   const unsubscribeFromBlog = useCallback(
-    async (id: string) => {
+    (id: string) => {
       const result = zero.mutate(mutators.common.unsubscribe({ id }))
-      await serverConfirmed(result)
+      onServerError(result, (msg) => console.error('Failed to unsubscribe from blog:', msg))
     },
     [zero]
   )

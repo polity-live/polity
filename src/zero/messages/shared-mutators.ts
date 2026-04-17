@@ -1,5 +1,4 @@
 import { defineMutator } from '@rocicorp/zero'
-import { zql } from '../schema'
 import {
   createConversationSchema,
   updateConversationSchema,
@@ -7,12 +6,15 @@ import {
   updateConversationParticipantSchema,
   deleteConversationParticipantSchema,
   createMessageSchema,
+  createAssistantMessageSchema,
   updateMessageSchema,
   deleteMessageSchema,
   deleteConversationSchema,
 } from './schema'
 
 /** Shared mutators — run on both client and server. Server mutators may override these. */
+const ASSISTANT_SYSTEM_USER_ID = 'a12a0000-0000-4000-a000-000000000001'
+
 export const messageSharedMutators = {
   // Create a new conversation
   createConversation: defineMutator(
@@ -41,6 +43,25 @@ export const messageSharedMutators = {
       })
 
       // Update conversation last_message_at
+      await tx.mutate.conversation.update({
+        id: args.conversation_id,
+        last_message_at: now,
+      })
+    }
+  ),
+
+  sendAssistantMessage: defineMutator(
+    createAssistantMessageSchema,
+    async ({ tx, args }) => {
+      const now = Date.now()
+      await tx.mutate.message.insert({
+        ...args,
+        sender_id: ASSISTANT_SYSTEM_USER_ID,
+        is_read: false,
+        created_at: now,
+        updated_at: now,
+      })
+
       await tx.mutate.conversation.update({
         id: args.conversation_id,
         last_message_at: now,

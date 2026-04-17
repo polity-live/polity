@@ -411,7 +411,7 @@ export function UserNetworkFlow({ userId, onGroupClick, filterRight }: UserNetwo
 
   if (!user) {
     return (
-      <div className="flex h-[calc(100dvh-12rem)] min-h-[400px] w-full items-center justify-center rounded-lg border bg-background">
+      <div className="flex h-full min-h-0 w-full items-center justify-center rounded-lg border bg-background">
         <p className="text-muted-foreground">Loading user network...</p>
       </div>
     );
@@ -436,6 +436,7 @@ export function UserNetworkFlow({ userId, onGroupClick, filterRight }: UserNetwo
       onNodeClick={onNodeClick}
       onEdgeClick={onEdgeClick}
       onInteractiveChange={handleInteractiveChange}
+      containerClassName="h-full min-h-0"
       panel={
         <NetworkControlPanel
           title={t('common.network.userNetwork', 'User Network')}

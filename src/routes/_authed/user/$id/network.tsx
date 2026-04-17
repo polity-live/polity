@@ -9,7 +9,7 @@ function UserNetworkPage() {
   const { id } = Route.useParams()
 
   return (
-    <div>
+    <div className="h-[calc(100dvh-12rem)] min-h-[24rem]">
       <UserNetworkFlow userId={id} />
     </div>
   )

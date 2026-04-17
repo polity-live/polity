@@ -230,6 +230,51 @@ test.describe('First-Time User Authentication & Onboarding', () => {
 
     // Verify the Aria & Kai welcome message appears in the chat window (use .last() to get the full message, not the preview)
     await expect(page.getByText(/Hey.*we.*are Aria.*Kai/i).last()).toBeVisible({ timeout: 5000 });
+
+    const showMoreButton = page.getByRole('button', { name: /show me more/i });
+    await expect(showMoreButton).toBeVisible({ timeout: 5000 });
+    await showMoreButton.click();
+
+    const userPromptBubble = page
+      .locator('[class*="rounded-lg px-4 py-2"]')
+      .filter({ hasText: /Show me more/i })
+      .last();
+    await expect(userPromptBubble).toBeVisible({ timeout: 5000 });
+
+    const userPromptContainer = userPromptBubble.locator('..');
+    const userPromptAlignedRight = await userPromptContainer.evaluate(el => {
+      return el.className.includes('flex-row-reverse');
+    });
+    expect(userPromptAlignedRight).toBeTruthy();
+
+    const assistantOverviewBubble = page
+      .locator('[class*="rounded-lg px-4 py-2"]')
+      .filter({ hasText: /Here's what you can do/i })
+      .last();
+    await expect(assistantOverviewBubble).toBeVisible({ timeout: 5000 });
+
+    const assistantOverviewContainer = assistantOverviewBubble.locator('..');
+    const assistantOverviewAlignedRight = await assistantOverviewContainer.evaluate(el => {
+      return el.className.includes('flex-row-reverse');
+    });
+    expect(assistantOverviewAlignedRight).toBeFalsy();
+
+    const groupsButton = page.getByRole('button', { name: /tell me more about groups/i });
+    await expect(groupsButton).toBeVisible({ timeout: 5000 });
+    await groupsButton.click();
+
+    await expect(
+      page
+        .locator('[class*="rounded-lg px-4 py-2"]')
+        .filter({ hasText: /Tell me more about groups/i })
+        .last()
+    ).toBeVisible({ timeout: 5000 });
+    await expect(
+      page
+        .locator('[class*="rounded-lg px-4 py-2"]')
+        .filter({ hasText: /^Groups$/ })
+        .last()
+    ).toBeVisible({ timeout: 5000 });
   });
 
   test('Complete onboarding: skip group search + navigate to profile', async ({ page }) => {

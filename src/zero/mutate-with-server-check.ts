@@ -1,12 +1,10 @@
 /**
- * Utility to properly await Zero mutation server confirmation.
+ * Utilities for Zero mutation server interaction.
  *
  * `zero.mutate(...)` returns `{ client: Promise, server: Promise }` — NOT a
  * plain Promise. When code does `await zero.mutate(...)`, JavaScript resolves
  * immediately because the return value is not thenable. The `.server` promise
  * must be explicitly awaited to detect server-side rejections.
- *
- * This helper awaits the server result and throws if the mutation was rejected.
  */
 
 interface MutationResultLike {
@@ -35,4 +33,35 @@ export async function serverConfirmed(result: MutationResultLike): Promise<void>
   if (serverResult.type === 'error') {
     throw new Error(serverResult.error?.message ?? 'Mutation failed on server');
   }
+}
+
+/**
+ * Fire-and-forget background error monitor for a Zero mutation.
+ * The mutation is applied optimistically on the client. If the server
+ * later rejects it, `onError` is called with the error message so the
+ * caller can show a toast or other feedback.
+ *
+ * This function is **synchronous** — it does NOT block. It schedules
+ * a background `.server` listener and returns immediately.
+ *
+ * @example
+ * ```ts
+ * const result = zero.mutate(mutators.foo.bar(args));
+ * toast.success('Done!');
+ * onServerError(result, (msg) => toast.error(msg));
+ * ```
+ */
+export function onServerError(
+  result: MutationResultLike,
+  onError: (message: string) => void,
+): void {
+  result.server
+    .then((serverResult) => {
+      if (serverResult.type === 'error') {
+        onError(serverResult.error?.message ?? 'Mutation failed on server');
+      }
+    })
+    .catch((err: unknown) => {
+      onError(err instanceof Error ? err.message : 'Mutation failed on server');
+    });
 }

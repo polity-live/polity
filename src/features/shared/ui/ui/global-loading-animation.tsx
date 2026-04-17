@@ -1,4 +1,3 @@
-import '@/styles/animations.css';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 
 type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'syncing';

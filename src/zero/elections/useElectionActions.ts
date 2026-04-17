@@ -3,11 +3,12 @@ import { useZero } from '@rocicorp/zero/react'
 import { toast } from 'sonner'
 import { useTranslation } from '@/features/shared/hooks/use-translation'
 import { mutators } from '../mutators'
-import { serverConfirmed } from '../mutate-with-server-check'
+import { onServerError } from '../mutate-with-server-check'
 
 /**
  * Action hook for election mutations.
  * Every function is a thin wrapper around a custom mutator + sonner toast.
+ * Mutations are optimistic — toasts show instantly, server errors appear in the background.
  */
 export function useElectionActions() {
   const zero = useZero()
@@ -16,45 +17,27 @@ export function useElectionActions() {
   // ── Elections ──────────────────────────────────────────────────────
 
   const createElection = useCallback(
-    async (args: Parameters<typeof mutators.elections.createElection>[0]) => {
-      try {
-        const result = zero.mutate(mutators.elections.createElection(args))
-        await serverConfirmed(result)
-        toast.success(t('common.agendaToasts.electionCreated'))
-      } catch (error) {
-        console.error('Failed to create election:', error)
-        toast.error(t('common.agendaToasts.electionCreateFailed'))
-        throw error
-      }
+    (args: Parameters<typeof mutators.elections.createElection>[0]) => {
+      const result = zero.mutate(mutators.elections.createElection(args))
+      toast.success(t('common.agendaToasts.electionCreated'))
+      onServerError(result, () => toast.error(t('common.agendaToasts.electionCreateFailed')))
     },
     [zero]
   )
 
   const updateElection = useCallback(
-    async (args: Parameters<typeof mutators.elections.updateElection>[0]) => {
-      try {
-        const result = zero.mutate(mutators.elections.updateElection(args))
-        await serverConfirmed(result)
-      } catch (error) {
-        console.error('Failed to update election:', error)
-        toast.error(t('common.agendaToasts.electionUpdateFailed'))
-        throw error
-      }
+    (args: Parameters<typeof mutators.elections.updateElection>[0]) => {
+      const result = zero.mutate(mutators.elections.updateElection(args))
+      onServerError(result, () => toast.error(t('common.agendaToasts.electionUpdateFailed')))
     },
     [zero]
   )
 
   const deleteElection = useCallback(
-    async (id: string) => {
-      try {
-        const result = zero.mutate(mutators.elections.deleteElection({ id }))
-        await serverConfirmed(result)
-        toast.success(t('common.agendaToasts.electionDeleted'))
-      } catch (error) {
-        console.error('Failed to delete election:', error)
-        toast.error(t('common.agendaToasts.electionDeleteFailed'))
-        throw error
-      }
+    (id: string) => {
+      const result = zero.mutate(mutators.elections.deleteElection({ id }))
+      toast.success(t('common.agendaToasts.electionDeleted'))
+      onServerError(result, () => toast.error(t('common.agendaToasts.electionDeleteFailed')))
     },
     [zero]
   )
@@ -62,45 +45,27 @@ export function useElectionActions() {
   // ── Candidates ─────────────────────────────────────────────────────
 
   const addCandidate = useCallback(
-    async (args: Parameters<typeof mutators.elections.addCandidate>[0]) => {
-      try {
-        const result = zero.mutate(mutators.elections.addCandidate(args))
-        await serverConfirmed(result)
-        toast.success(t('common.agendaToasts.candidateAdded'))
-      } catch (error) {
-        console.error('Failed to add candidate:', error)
-        toast.error(t('common.agendaToasts.candidateAddFailed'))
-        throw error
-      }
+    (args: Parameters<typeof mutators.elections.addCandidate>[0]) => {
+      const result = zero.mutate(mutators.elections.addCandidate(args))
+      toast.success(t('common.agendaToasts.candidateAdded'))
+      onServerError(result, () => toast.error(t('common.agendaToasts.candidateAddFailed')))
     },
     [zero]
   )
 
   const updateCandidate = useCallback(
-    async (args: Parameters<typeof mutators.elections.updateCandidate>[0]) => {
-      try {
-        const result = zero.mutate(mutators.elections.updateCandidate(args))
-        await serverConfirmed(result)
-      } catch (error) {
-        console.error('Failed to update candidate:', error)
-        toast.error(t('common.agendaToasts.candidateUpdateFailed'))
-        throw error
-      }
+    (args: Parameters<typeof mutators.elections.updateCandidate>[0]) => {
+      const result = zero.mutate(mutators.elections.updateCandidate(args))
+      onServerError(result, () => toast.error(t('common.agendaToasts.candidateUpdateFailed')))
     },
     [zero]
   )
 
   const deleteCandidate = useCallback(
-    async (id: string) => {
-      try {
-        const result = zero.mutate(mutators.elections.deleteCandidate({ id }))
-        await serverConfirmed(result)
-        toast.success(t('common.agendaToasts.candidateRemoved'))
-      } catch (error) {
-        console.error('Failed to delete candidate:', error)
-        toast.error(t('common.agendaToasts.candidateRemoveFailed'))
-        throw error
-      }
+    (id: string) => {
+      const result = zero.mutate(mutators.elections.deleteCandidate({ id }))
+      toast.success(t('common.agendaToasts.candidateRemoved'))
+      onServerError(result, () => toast.error(t('common.agendaToasts.candidateRemoveFailed')))
     },
     [zero]
   )
@@ -108,27 +73,17 @@ export function useElectionActions() {
   // ── Electors ───────────────────────────────────────────────────────
 
   const createElector = useCallback(
-    async (args: Parameters<typeof mutators.elections.createElector>[0]) => {
-      try {
-        const result = zero.mutate(mutators.elections.createElector(args))
-        await serverConfirmed(result)
-      } catch (error) {
-        console.error('Failed to create elector:', error)
-        throw error
-      }
+    (args: Parameters<typeof mutators.elections.createElector>[0]) => {
+      const result = zero.mutate(mutators.elections.createElector(args))
+      onServerError(result, (msg) => console.error('Failed to create elector:', msg))
     },
     [zero]
   )
 
   const deleteElector = useCallback(
-    async (id: string) => {
-      try {
-        const result = zero.mutate(mutators.elections.deleteElector({ id }))
-        await serverConfirmed(result)
-      } catch (error) {
-        console.error('Failed to delete elector:', error)
-        throw error
-      }
+    (id: string) => {
+      const result = zero.mutate(mutators.elections.deleteElector({ id }))
+      onServerError(result, (msg) => console.error('Failed to delete elector:', msg))
     },
     [zero]
   )
@@ -136,29 +91,23 @@ export function useElectionActions() {
   // ── Indicative Voting ──────────────────────────────────────────────
 
   const castIndicativeVote = useCallback(
-    async (
+    (
       participationArgs: Parameters<typeof mutators.elections.castIndicativeElectionVote>[0],
       selections: Parameters<typeof mutators.elections.createIndicativeCandidateSelection>[0][]
     ) => {
-      try {
-        const participationResult = zero.mutate(
-          mutators.elections.castIndicativeElectionVote(participationArgs)
+      const participationResult = zero.mutate(
+        mutators.elections.castIndicativeElectionVote(participationArgs)
+      )
+      onServerError(participationResult, () => toast.error(t('common.agendaToasts.voteCastFailed')))
+
+      for (const selection of selections) {
+        const selectionResult = zero.mutate(
+          mutators.elections.createIndicativeCandidateSelection(selection)
         )
-        await serverConfirmed(participationResult)
-
-        for (const selection of selections) {
-          const selectionResult = zero.mutate(
-            mutators.elections.createIndicativeCandidateSelection(selection)
-          )
-          await serverConfirmed(selectionResult)
-        }
-
-        toast.success(t('common.agendaToasts.voteCast'))
-      } catch (error) {
-        console.error('Failed to cast indicative vote:', error)
-        toast.error(t('common.agendaToasts.voteCastFailed'))
-        throw error
+        onServerError(selectionResult, () => toast.error(t('common.agendaToasts.voteCastFailed')))
       }
+
+      toast.success(t('common.agendaToasts.voteCast'))
     },
     [zero]
   )
@@ -166,29 +115,23 @@ export function useElectionActions() {
   // ── Final Voting ───────────────────────────────────────────────────
 
   const castFinalVote = useCallback(
-    async (
+    (
       participationArgs: Parameters<typeof mutators.elections.castFinalElectionVote>[0],
       selections: Parameters<typeof mutators.elections.createFinalCandidateSelection>[0][]
     ) => {
-      try {
-        const participationResult = zero.mutate(
-          mutators.elections.castFinalElectionVote(participationArgs)
+      const participationResult = zero.mutate(
+        mutators.elections.castFinalElectionVote(participationArgs)
+      )
+      onServerError(participationResult, () => toast.error(t('common.agendaToasts.voteCastFailed')))
+
+      for (const selection of selections) {
+        const selectionResult = zero.mutate(
+          mutators.elections.createFinalCandidateSelection(selection)
         )
-        await serverConfirmed(participationResult)
-
-        for (const selection of selections) {
-          const selectionResult = zero.mutate(
-            mutators.elections.createFinalCandidateSelection(selection)
-          )
-          await serverConfirmed(selectionResult)
-        }
-
-        toast.success(t('common.agendaToasts.voteCast'))
-      } catch (error) {
-        console.error('Failed to cast final vote:', error)
-        toast.error(t('common.agendaToasts.voteCastFailed'))
-        throw error
+        onServerError(selectionResult, () => toast.error(t('common.agendaToasts.voteCastFailed')))
       }
+
+      toast.success(t('common.agendaToasts.voteCast'))
     },
     [zero]
   )

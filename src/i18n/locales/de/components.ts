@@ -125,12 +125,12 @@ export const componentsTranslations = {
     showLocation: 'Zeig mir meinen Assistenten-Standort',
   },
   ariaKaiActions: {
-    showMe: 'Zeig mir',
-    groups: 'Gruppen',
-    events: 'Veranstaltungen',
-    amendments: 'Anträge',
-    blogs: 'Blogs',
-    elections: 'Wahlen & Positionen',
+    showMe: 'Zeig mir mehr',
+    groups: 'Erzähl mir mehr über Gruppen',
+    events: 'Erzähl mir mehr über Veranstaltungen',
+    amendments: 'Erzähl mir mehr über Anträge',
+    blogs: 'Erzähl mir mehr über Blogs',
+    elections: 'Erzähl mir mehr über Wahlen und Positionen',
   },
   linkPreview: {
     externalLink: 'Externer Link',
