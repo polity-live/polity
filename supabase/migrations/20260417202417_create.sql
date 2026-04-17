@@ -1,14 +1,23 @@
--- =============================================================================
--- 22_functions.sql — Database functions and triggers
--- =============================================================================
+alter table "public"."conversation" add column "assistant_for_user_id" uuid;
 
--- Handle new user creation from Supabase Auth
--- Automatically creates a user profile, default notification settings, and user preferences
+CREATE INDEX idx_conversation_assistant_for_user ON public.conversation USING btree (assistant_for_user_id);
+
+CREATE UNIQUE INDEX idx_conversation_assistant_for_user_unique ON public.conversation USING btree (assistant_for_user_id) WHERE (assistant_for_user_id IS NOT NULL);
+
+CREATE UNIQUE INDEX idx_conversation_participant_unique_membership ON public.conversation_participant USING btree (conversation_id, user_id);
+
+alter table "public"."conversation" add constraint "conversation_assistant_for_user_id_fkey" FOREIGN KEY (assistant_for_user_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
+
+alter table "public"."conversation" validate constraint "conversation_assistant_for_user_id_fkey";
+
+set check_function_bodies = off;
+
 CREATE OR REPLACE FUNCTION public.ensure_aria_kai_user()
-RETURNS UUID
-LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = ''
-AS $$
+ RETURNS uuid
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
 DECLARE
   assistant_user_id CONSTANT UUID := 'a12a0000-0000-4000-a000-000000000001';
 BEGIN
@@ -42,13 +51,15 @@ BEGIN
 
   RETURN assistant_user_id;
 END;
-$$;
+$function$
+;
 
-CREATE OR REPLACE FUNCTION public.ensure_assistant_conversation(target_user_id UUID)
-RETURNS UUID
-LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = ''
-AS $$
+CREATE OR REPLACE FUNCTION public.ensure_assistant_conversation(target_user_id uuid)
+ RETURNS uuid
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
 DECLARE
   assistant_user_id UUID;
   assistant_conversation_id UUID;
@@ -153,13 +164,15 @@ BEGIN
 
   RETURN assistant_conversation_id;
 END;
-$$;
+$function$
+;
 
 CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = ''
-AS $$
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
 BEGIN
   INSERT INTO public."user" (id, email)
   VALUES (NEW.id, NEW.email);
@@ -174,9 +187,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$$;
+$function$
+;
 
-CREATE OR REPLACE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW
-  EXECUTE FUNCTION public.handle_new_user();
+

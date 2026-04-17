@@ -20,7 +20,6 @@ export { DelegateAllocationInput } from './DelegateAllocationInput'
 // Composite inputs
 export { DateTimeRangeInput } from './DateTimeRangeInput'
 export { DeadlinesInput } from './DeadlinesInput'
-export { TagsInput } from './TagsInput'
 export { GroupRelationshipsInput } from './GroupRelationshipsInput'
 export { ConstitutionalEventInput } from './ConstitutionalEventInput'
 

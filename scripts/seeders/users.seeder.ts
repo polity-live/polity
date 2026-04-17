@@ -6,7 +6,7 @@ import { SEED_CONFIG, USER_HASHTAGS, ARIA_KAI_EMAIL } from '../config/seed.confi
 import { randomInt, randomItem, randomItems } from '../helpers/random.helpers';
 import { batchTransact, InsertOp } from '../helpers/transaction.helpers';
 import { createHashtagRows } from '../helpers/entity.helpers';
-import { ARIA_KAI_USER_ID, ARIA_KAI_WELCOME_MESSAGE } from '../../e2e/aria-kai';
+import { ARIA_KAI_USER_ID } from '../../e2e/aria-kai';
 
 export const usersSeeder: EntitySeeder = {
   name: 'users',
@@ -96,53 +96,6 @@ export const usersSeeder: EntitySeeder = {
     transactions.push(...createHashtagRows(mainUserId, 'user', mainUserHashtags));
     hashtagsToUsers += mainUserHashtags.length;
 
-    // Create Aria & Kai welcome conversation for main user
-    const mainUserConversationId = id();
-    const mainUserMessageId = id();
-    conversationIds.push(mainUserConversationId);
-    messageIds.push(mainUserMessageId);
-
-    transactions.push(
-      tx.conversations[mainUserConversationId].update({
-        lastMessageAt: now,
-        createdAt: now,
-        type: 'direct',
-        status: 'accepted',
-      }),
-      tx.conversations[mainUserConversationId].link({
-        requestedBy: ARIA_KAI_USER_ID,
-      }),
-      tx.conversationParticipants[id()]
-        .update({
-          lastReadAt: null,
-          joinedAt: now,
-          leftAt: null,
-        })
-        .link({ user: mainUserId, conversation: mainUserConversationId }),
-      tx.conversationParticipants[id()]
-        .update({
-          lastReadAt: now,
-          joinedAt: now,
-          leftAt: null,
-        })
-        .link({ user: ARIA_KAI_USER_ID, conversation: mainUserConversationId }),
-      tx.messages[mainUserMessageId]
-        .update({
-          content: ARIA_KAI_WELCOME_MESSAGE,
-          isRead: false,
-          createdAt: now,
-          updatedAt: null,
-          deletedAt: null,
-        })
-        .link({ conversation: mainUserConversationId, sender: ARIA_KAI_USER_ID })
-    );
-
-    directConversationsToRequestedBy++;
-    directParticipantsToConversations += 2;
-    directParticipantsToUsers += 2;
-    directMessagesToConversations++;
-    directMessagesToSenders++;
-
     // Create Tobias's user account
     const tobiasUserId = SEED_CONFIG.tobiasUserId;
     userIds.push(tobiasUserId);
@@ -200,53 +153,6 @@ export const usersSeeder: EntitySeeder = {
     const tobiasHashtags = randomItems(USER_HASHTAGS, 2);
     transactions.push(...createHashtagRows(tobiasUserId, 'user', tobiasHashtags));
     hashtagsToUsers += tobiasHashtags.length;
-
-    // Create Aria & Kai welcome conversation for Tobias
-    const tobiasConversationId = id();
-    const tobiasMessageId = id();
-    conversationIds.push(tobiasConversationId);
-    messageIds.push(tobiasMessageId);
-
-    transactions.push(
-      tx.conversations[tobiasConversationId].update({
-        lastMessageAt: now,
-        createdAt: now,
-        type: 'direct',
-        status: 'accepted',
-      }),
-      tx.conversations[tobiasConversationId].link({
-        requestedBy: ARIA_KAI_USER_ID,
-      }),
-      tx.conversationParticipants[id()]
-        .update({
-          lastReadAt: null,
-          joinedAt: now,
-          leftAt: null,
-        })
-        .link({ user: tobiasUserId, conversation: tobiasConversationId }),
-      tx.conversationParticipants[id()]
-        .update({
-          lastReadAt: now,
-          joinedAt: now,
-          leftAt: null,
-        })
-        .link({ user: ARIA_KAI_USER_ID, conversation: tobiasConversationId }),
-      tx.messages[tobiasMessageId]
-        .update({
-          content: ARIA_KAI_WELCOME_MESSAGE,
-          isRead: false,
-          createdAt: now,
-          updatedAt: null,
-          deletedAt: null,
-        })
-        .link({ conversation: tobiasConversationId, sender: ARIA_KAI_USER_ID })
-    );
-
-    directConversationsToRequestedBy++;
-    directParticipantsToConversations += 2;
-    directParticipantsToUsers += 2;
-    directMessagesToConversations++;
-    directMessagesToSenders++;
 
     // Create Aria & Kai assistant user (must be created first for conversations)
     const ariaKaiUserId = SEED_CONFIG.ariaKaiUserId;
@@ -358,58 +264,12 @@ export const usersSeeder: EntitySeeder = {
       transactions.push(...createHashtagRows(userId, 'user', userHashtags));
       hashtagsToUsers += userHashtags.length;
 
-      // Create Aria & Kai welcome conversation for this user
-      const userConversationId = id();
-      const userMessageId = id();
-      conversationIds.push(userConversationId);
-      messageIds.push(userMessageId);
-
-      transactions.push(
-        tx.conversations[userConversationId].update({
-          lastMessageAt: now,
-          createdAt: now,
-          type: 'direct',
-          status: 'accepted',
-        }),
-        tx.conversations[userConversationId].link({
-          requestedBy: ARIA_KAI_USER_ID,
-        }),
-        tx.conversationParticipants[id()]
-          .update({
-            lastReadAt: null,
-            joinedAt: now,
-            leftAt: null,
-          })
-          .link({ user: userId, conversation: userConversationId }),
-        tx.conversationParticipants[id()]
-          .update({
-            lastReadAt: now,
-            joinedAt: now,
-            leftAt: null,
-          })
-          .link({ user: ARIA_KAI_USER_ID, conversation: userConversationId }),
-        tx.messages[userMessageId]
-          .update({
-            content: ARIA_KAI_WELCOME_MESSAGE,
-            isRead: false,
-            createdAt: now,
-            updatedAt: null,
-            deletedAt: null,
-          })
-          .link({ conversation: userConversationId, sender: ARIA_KAI_USER_ID })
-      );
-
-      directConversationsToRequestedBy++;
-      directParticipantsToConversations += 2;
-      directParticipantsToUsers += 2;
-      directMessagesToConversations++;
-      directMessagesToSenders++;
     }
 
     // Batch transact
     await batchTransact(db, transactions);
     console.log(`✅ Seeded ${userIds.length} users`);
-    console.log(`✅ Created ${conversationIds.length} Aria & Kai welcome conversations`);
+    console.log('✅ Assistant welcome conversations are now created by database bootstrap logic');
 
     return {
       ...context,

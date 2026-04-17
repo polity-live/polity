@@ -42,10 +42,14 @@ export function useMessageState(options: MessageStateOptions = {}) {
       : undefined
   )
 
-  const [conversationsForUnread, conversationsForUnreadResult] = useQuery(
+  const [conversationsForUnreadRows, conversationsForUnreadResult] = useQuery(
     includeForUnread
       ? queries.messages.conversationsForUnread({})
       : undefined
+  )
+
+  const conversationsForUnread = (conversationsForUnreadRows ?? []).flatMap((row) =>
+    row.conversation ? [row.conversation] : []
   )
 
   // ── Conversations by user with relations (opt-in) ──────────────────
@@ -78,7 +82,7 @@ export function useMessageState(options: MessageStateOptions = {}) {
     conversation,
     unread: unread ?? [],
     conversationsWithRelations: conversationsWithRelations ?? [],
-    conversationsForUnread: conversationsForUnread ?? [],
+    conversationsForUnread,
     conversationsByUser: conversationsByUser ?? [],
     groupConversation: groupConversation ?? undefined,
     isLoading,

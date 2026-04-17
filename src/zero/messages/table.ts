@@ -8,6 +8,7 @@ export const conversation = table('conversation')
     status: string().optional(),
     pinned: boolean().optional(),
     last_message_at: number().optional(),
+    assistant_for_user_id: string().optional(),
     group_id: string().optional(),
     requested_by_id: string().optional(),
     created_at: number(),

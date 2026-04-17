@@ -7,10 +7,10 @@ import { toast } from 'sonner'
 import { Input } from '@/features/shared/ui/ui/input'
 import { Textarea } from '@/features/shared/ui/ui/textarea'
 import { Label } from '@/features/shared/ui/ui/label'
+import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor'
 import { PriorityInput } from '../ui/inputs/PriorityInput'
 import { StatusInput } from '../ui/inputs/StatusInput'
 import { VisibilityInput } from '../ui/inputs/VisibilityInput'
-import { TagsInput } from '../ui/inputs/TagsInput'
 import { UserSearchInput } from '../ui/inputs/UserSearchInput'
 import { CreateSummaryStep } from '../ui/CreateSummaryStep'
 import type { CreateFormConfig } from '../types/create-form.types'
@@ -41,6 +41,7 @@ export function useCreateTodoForm(): CreateFormConfig {
         priority,
         status,
         dueDate: dueDate ? new Date(dueDate).getTime() : undefined,
+        tags,
         visibility,
       })
       toast.success(t('pages.create.success.created'))
@@ -121,7 +122,7 @@ export function useCreateTodoForm(): CreateFormConfig {
               <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
             </div>
             <VisibilityInput value={visibility} onChange={setVisibility} />
-            <TagsInput
+            <HashtagEditor
               value={tags}
               onChange={setTags}
               label={t('pages.create.todo.tagsOptional')}

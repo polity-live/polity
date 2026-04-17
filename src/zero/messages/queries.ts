@@ -56,9 +56,13 @@ export const messageQueries = {
   conversationsForUnread: defineQuery(
     z.object({}),
     ({ ctx: { userID } }) =>
-      zql.conversation
-        .related('participants', q => q.where('user_id', userID).related('user'))
-        .related('messages', q => q.orderBy('created_at', 'asc').related('sender'))
+      zql.conversation_participant
+        .where('user_id', userID)
+        .related('conversation', q =>
+          q.related('participants', pq => pq.related('user'))
+            .related('messages', mq => mq.orderBy('created_at', 'asc').related('sender'))
+            .orderBy('last_message_at', 'desc')
+        )
   ),
 
   conversationsByUserWithRelations: defineQuery(

@@ -2,62 +2,40 @@
 // seed: e2e/seed.spec.ts
 
 import { test, expect } from '../fixtures/test-base';
+import { ARIA_KAI_USER_ID } from '../aria-kai';
+
 test.describe('Chat/Messages - Unread Message Count', () => {
-  test('Unread messages show count badge', async ({ authenticatedPage: page }) => {
-    // 1. Authenticate as test user
-    // 2. Navigate to messages page
+  test('Unread messages show count badge', async ({
+    authenticatedPage: page,
+    conversationFactory,
+    mainUserId,
+  }) => {
+    const conversationId = (await conversationFactory.createConversation(mainUserId, [ARIA_KAI_USER_ID], {
+      status: 'accepted',
+      type: 'direct',
+    })).id;
+    await conversationFactory.addMessage(
+      conversationId,
+      ARIA_KAI_USER_ID,
+      'Unread assistant welcome message for badge verification'
+    );
+
     await page.goto('/messages');
 
-    // 3. Check for unread message badges
-    const unreadBadge = page.locator('[class*="Badge"]').first();
-    const hasUnread = await unreadBadge.isVisible().catch(() => false);
+    const messagesNav = page.locator('a').filter({ hasText: /Messages/i }).first();
+    await expect(messagesNav.getByText(/^1$/)).toBeVisible({ timeout: 10000 });
 
-    if (hasUnread) {
-      // 4. Verify red badge shows count
-      await expect(unreadBadge).toBeVisible();
+    const assistantConversation = page.getByRole('button').filter({ hasText: /Aria\s*&\s*Kai/i }).first();
+    await expect(assistantConversation).toBeVisible({ timeout: 10000 });
+    await expect(assistantConversation.getByText(/^1$/)).toBeVisible();
 
-      // 5. Badge appears on conversation item
-      const conversationWithBadge = page.locator('button').filter({ has: unreadBadge });
-      await expect(conversationWithBadge).toBeVisible();
+    await assistantConversation.click();
+    await expect(
+      page.getByText(/Unread assistant welcome message for badge verification/i)
+    ).toBeVisible({ timeout: 10000 });
 
-      // 6. Verify count is a number
-      const badgeText = await unreadBadge.textContent();
-      expect(badgeText).toMatch(/^\d+(\+)?$/);
-
-      // 7. Select conversation to mark as read
-      await conversationWithBadge.click();
-
-      // 8. Wait for read status to update
-      await page.waitForLoadState('networkidle');
-
-      // 9. Go back to conversation list
-      const backButton = page
-        .getByRole('button')
-        .filter({ has: page.locator('svg[class*="h-4 w-4"]') })
-        .first();
-      const isBackVisible = await backButton.isVisible().catch(() => false);
-
-      if (isBackVisible) {
-        await backButton.click();
-      } else {
-        await page.goto('/messages');
-      }
-
-      // 10. Count should update when messages read
-    } else {
-      // No unread messages - all conversations read
-      const conversations = page.locator('button').filter({ hasText: /Unknown User|@/ });
-      const count = await conversations.count();
-
-      // Verify no badges present
-      const badges = page.locator('[class*="Badge"]');
-      const badgeCount = await badges.count();
-
-      if (count > 0) {
-        // If there are conversations, we just verify the badge logic works
-        expect(badgeCount).toBe(0);
-      }
-    }
+    await expect(messagesNav.getByText(/^1$/)).not.toBeVisible({ timeout: 10000 });
+    await expect(assistantConversation.getByText(/^1$/)).not.toBeVisible({ timeout: 10000 });
   });
 
   test('Badge shows 99+ for high unread counts', async ({ authenticatedPage: page }) => {

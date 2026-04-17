@@ -10,7 +10,6 @@ import { GroupSearchStep } from './GroupSearchStep.tsx';
 import { MembershipConfirmStep } from './MembershipConfirmStep.tsx';
 import { SummaryStep } from './SummaryStep.tsx';
 import { AriaKaiStep } from '@/features/assistant/ui/AriaKaiStep.tsx';
-import { useAssistantConversation } from '@/features/assistant/hooks/useAssistantConversation.ts';
 import { useUserActions } from '@/zero/users/useUserActions.ts';
 import { useAuth } from '@/providers/auth-provider.tsx';
 
@@ -35,7 +34,6 @@ export function OnboardingWizard({ userId, userEmail, onComplete }: OnboardingWi
   const navigate = useNavigate();
   const { user } = useAuth();
   const { updateProfile } = useUserActions();
-  const { createAssistantConversation } = useAssistantConversation(userId);
 
   const {
     step,
@@ -80,13 +78,6 @@ export function OnboardingWizard({ userId, userEmail, onComplete }: OnboardingWi
   };
 
   const handleAriaKaiNext = async () => {
-    // Create the assistant conversation for this user
-    try {
-      await createAssistantConversation();
-    } catch (error) {
-      console.error('Failed to create assistant conversation:', error);
-    }
-
     // Save the "don't show again" preference if user checked it
     if (data.dontShowAriaKaiAgain && user?.id) {
       try {

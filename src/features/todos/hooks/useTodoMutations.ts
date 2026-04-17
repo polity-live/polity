@@ -22,6 +22,7 @@ export function useTodoMutations() {
     status?: string;
     priority?: string;
     dueDate?: number;
+    tags?: string[];
     groupId?: string;
     eventId?: string;
     amendmentId?: string;
@@ -40,7 +41,7 @@ export function useTodoMutations() {
         priority: todoData.priority || 'medium',
         due_date: todoData.dueDate ?? 0,
         completed_at: 0,
-        tags: [],
+        tags: todoData.tags ?? [],
         visibility: todoData.visibility || 'private',
         group_id: todoData.groupId ?? null,
         event_id: todoData.eventId ?? null,

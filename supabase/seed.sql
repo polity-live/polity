@@ -30,3 +30,11 @@ INSERT INTO public."user" (
   now(),
   now()
 ) ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.notification_setting (user_id)
+VALUES ('a12a0000-0000-4000-a000-000000000001')
+ON CONFLICT (user_id) DO NOTHING;
+
+INSERT INTO public.user_preference (user_id)
+VALUES ('a12a0000-0000-4000-a000-000000000001')
+ON CONFLICT (user_id) DO NOTHING;

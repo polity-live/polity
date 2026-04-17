@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS public.conversation (
   status TEXT,
   pinned BOOLEAN,
   last_message_at TIMESTAMPTZ,
+  assistant_for_user_id UUID REFERENCES public."user" (id) ON DELETE CASCADE,
   group_id UUID,
   requested_by_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -17,6 +18,10 @@ CREATE TABLE IF NOT EXISTS public.conversation (
 
 CREATE INDEX idx_conversation_group ON public.conversation (group_id);
 CREATE INDEX idx_conversation_requested_by ON public.conversation (requested_by_id);
+CREATE INDEX IF NOT EXISTS idx_conversation_assistant_for_user ON public.conversation (assistant_for_user_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_conversation_assistant_for_user_unique
+  ON public.conversation (assistant_for_user_id)
+  WHERE assistant_for_user_id IS NOT NULL;
 
 ALTER TABLE public.conversation ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.conversation FOR ALL TO service_role USING (true);
@@ -33,6 +38,8 @@ CREATE TABLE IF NOT EXISTS public.conversation_participant (
 
 CREATE INDEX idx_conversation_participant_conversation ON public.conversation_participant (conversation_id);
 CREATE INDEX idx_conversation_participant_user ON public.conversation_participant (user_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_conversation_participant_unique_membership
+  ON public.conversation_participant (conversation_id, user_id);
 
 ALTER TABLE public.conversation_participant ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.conversation_participant FOR ALL TO service_role USING (true);
