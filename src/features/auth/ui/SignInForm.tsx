@@ -130,10 +130,11 @@ export function SignInForm() {
                 disabled={isLoading}
                 autoComplete="email"
                 aria-invalid={showEmailError}
+                data-valid={showEmailSuccess ? 'true' : undefined}
               />
               <p
                 className={cn(
-                  'text-xs text-muted-foreground',
+                  'text-muted-foreground text-xs',
                   showEmailError && 'text-destructive',
                   showEmailSuccess && 'text-emerald-600 dark:text-emerald-400'
                 )}

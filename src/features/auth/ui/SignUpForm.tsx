@@ -147,6 +147,7 @@ export function SignUpForm() {
                 disabled={isLoading}
                 autoComplete="email"
                 aria-invalid={showEmailError}
+                data-valid={showEmailSuccess ? 'true' : undefined}
               />
               <p
                 className={cn(
@@ -177,6 +178,7 @@ export function SignUpForm() {
                 disabled={isLoading}
                 autoComplete="new-password"
                 aria-invalid={showPasswordError}
+                data-valid={showPasswordSuccess ? 'true' : undefined}
               />
               <p
                 className={cn(
@@ -207,6 +209,7 @@ export function SignUpForm() {
                 disabled={isLoading}
                 autoComplete="new-password"
                 aria-invalid={showConfirmPasswordError}
+                data-valid={showConfirmPasswordSuccess ? 'true' : undefined}
               />
               <p
                 className={cn(
