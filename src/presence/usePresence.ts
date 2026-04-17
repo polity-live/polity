@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { createClient } from "@/lib/supabase/client";
-import type { RealtimeChannel } from "@supabase/supabase-js";
+import * as channelManager from "./channelManager";
 
 export interface PeerData {
   userId: string;
@@ -31,9 +30,8 @@ export function usePresence(
   const { initialData, enabled = true } = options;
   const [peers, setPeers] = useState<PeerData[]>([]);
   const [isConnected, setIsConnected] = useState(false);
-  const channelRef = useRef<RealtimeChannel | null>(null);
   const currentDataRef = useRef<Partial<PeerData> | undefined>(initialData);
-  const topicListenersRef = useRef<Map<string, Set<TopicCallback>>>(new Map());
+  const roomIdRef = useRef(roomId);
 
   // Keep ref in sync so publishPresence always has latest data
   useEffect(() => {
@@ -42,73 +40,52 @@ export function usePresence(
 
   useEffect(() => {
     if (!enabled || !roomId) return;
+    roomIdRef.current = roomId;
 
-    const supabase = createClient();
-    const channel = supabase.channel(`presence:${roomId}`, {
-      config: { presence: { key: initialData?.userId ?? "anon" } },
-    });
-    channelRef.current = channel;
+    const presenceKey = initialData?.userId ?? "anon";
+    const managed = channelManager.acquire(roomId, presenceKey);
 
-    channel.on("presence", { event: "sync" }, () => {
-      const state = channel.presenceState<PeerData>();
-      const allPeers: PeerData[] = [];
-      for (const presences of Object.values(state)) {
-        for (const p of presences) {
-          if (p.userId) {
-            allPeers.push({
-              userId: p.userId,
-              name: p.name || "Anonymous",
-              avatar: p.avatar,
-              color: p.color || "#888888",
-            });
-          }
-        }
-      }
-      setPeers(allPeers);
+    // Register for presence sync updates
+    const unsubPresence = channelManager.onPresenceSync(roomId, (newPeers) => {
+      setPeers(newPeers);
     });
 
-    // Listen for broadcast events and dispatch to registered topic callbacks
-    channel.on("broadcast", { event: "*" }, (message) => {
-      const event = (message as { event?: string }).event;
-      if (!event) return;
-      const listeners = topicListenersRef.current.get(event);
-      if (listeners) {
-        const payload = (message as { payload?: Record<string, unknown> }).payload ?? {};
-        for (const cb of listeners) {
-          cb(payload);
-        }
+    // Register for connection status updates
+    const unsubStatus = channelManager.onStatusChange(roomId, (connected) => {
+      setIsConnected(connected);
+      if (connected && currentDataRef.current) {
+        managed.channel.track(currentDataRef.current);
       }
     });
 
-    channel.subscribe(async (status) => {
-      if (status === "SUBSCRIBED") {
-        setIsConnected(true);
-        if (currentDataRef.current) {
-          await channel.track(currentDataRef.current);
-        }
-      } else if (status === "CLOSED" || status === "CHANNEL_ERROR") {
-        setIsConnected(false);
+    // If channel is already subscribed (from a prior acquire), sync immediately
+    if (managed.isSubscribed) {
+      setIsConnected(true);
+      if (currentDataRef.current) {
+        managed.channel.track(currentDataRef.current);
       }
-    });
+    }
 
     return () => {
-      channelRef.current = null;
-      topicListenersRef.current.clear();
-      supabase.removeChannel(channel);
+      unsubPresence();
+      unsubStatus();
+      channelManager.release(roomId);
     };
   }, [roomId, enabled]);
 
   const publishPresence = useCallback(
     (data: Partial<PeerData>) => {
       currentDataRef.current = { ...currentDataRef.current, ...data };
-      channelRef.current?.track(currentDataRef.current);
+      const channel = channelManager.getChannel(roomIdRef.current);
+      channel?.track(currentDataRef.current);
     },
     []
   );
 
   const publishTopic = useCallback(
     (topic: string, payload: Record<string, unknown>) => {
-      channelRef.current?.send({
+      const channel = channelManager.getChannel(roomIdRef.current);
+      channel?.send({
         type: "broadcast",
         event: topic,
         payload,
@@ -119,19 +96,7 @@ export function usePresence(
 
   const subscribeTopic = useCallback(
     (topic: string, callback: TopicCallback): (() => void) => {
-      let listeners = topicListenersRef.current.get(topic);
-      if (!listeners) {
-        listeners = new Set();
-        topicListenersRef.current.set(topic, listeners);
-      }
-      listeners.add(callback);
-
-      return () => {
-        listeners.delete(callback);
-        if (listeners.size === 0) {
-          topicListenersRef.current.delete(topic);
-        }
-      };
+      return channelManager.subscribeTopic(roomIdRef.current, topic, callback);
     },
     []
   );
