@@ -24,16 +24,14 @@ body:
 
       ## 🧩 Notes
       Add technical notes, related routes/components, fixtures, or edge cases here.
-- type: dropdown
+- type: checkboxes
   id: execution_type
   attributes:
     label: Execution Type
     description: Select whether this test is intended to be automated or manual.
     options:
-      - Automated
-      - Manual
-  validations:
-    required: true
+      - label: Automated
+      - label: Manual
 - type: checkboxes
   id: viewports
   attributes:
