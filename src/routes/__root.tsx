@@ -1,9 +1,9 @@
-import { createRootRoute, HeadContent, Outlet, Scripts } from '@tanstack/react-router'
-import { AuthProvider } from '@/providers/auth-provider'
-import { ZeroAppProvider } from '@/providers/zero-provider'
-import { AppShell } from '@/layout/app-shell'
-import { NotFound } from '@/features/shared/ui/ui/not-found'
-import appCss from '../styles.css?url'
+import { createRootRoute, HeadContent, Outlet, Scripts } from '@tanstack/react-router';
+import { AuthProvider } from '@/providers/auth-provider';
+import { ZeroAppProvider } from '@/providers/zero-provider';
+import { AppShell } from '@/layout/app-shell';
+import { NotFound } from '@/features/shared/ui/ui/not-found';
+import appCss from '../styles.css?url';
 
 export const Route = createRootRoute({
   notFoundComponent: NotFound,
@@ -12,6 +12,10 @@ export const Route = createRootRoute({
       { charSet: 'UTF-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1.0' },
       { name: 'theme-color', content: '#ffffff' },
+      {
+        name: 'google-site-verification',
+        content: 'nIqXCPvlgZ-T0vUb9DimlNa8oLmNZbj5VLIYfN_s08g',
+      },
       { title: 'Polity' },
     ],
     links: [
@@ -38,7 +42,7 @@ export const Route = createRootRoute({
     ],
   }),
   component: RootLayout,
-})
+});
 
 function RootLayout() {
   return (
@@ -50,7 +54,7 @@ function RootLayout() {
         {/* Blocking script to apply dark class before first paint — prevents flash */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme');var d=t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme:dark)').matches);if(d)document.documentElement.classList.add('dark')}catch(e){}})()`
+            __html: `(function(){try{var t=localStorage.getItem('theme');var d=t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme:dark)').matches);if(d)document.documentElement.classList.add('dark')}catch(e){}})()`,
           }}
         />
         <AuthProvider>
@@ -63,5 +67,5 @@ function RootLayout() {
         <Scripts />
       </body>
     </html>
-  )
+  );
 }
