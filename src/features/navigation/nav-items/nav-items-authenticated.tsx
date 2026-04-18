@@ -106,7 +106,11 @@ export const navItemsAuthenticated = (
   ];
 
   // Function to create event secondary navigation items for a specific event
-  const getEventSecondaryNavItems = (eventId: string, isAdmin = false, canViewNotifications = false): NavigationItem[] => {
+  const getEventSecondaryNavItems = (
+    eventId: string,
+    isAdmin = false,
+    canViewNotifications = false
+  ): NavigationItem[] => {
     const items: NavigationItem[] = [
       {
         id: 'overview',
@@ -147,7 +151,7 @@ export const navItemsAuthenticated = (
           icon: 'Users',
           href: `/event/${eventId}/participants`,
           onClick: () => navigate({ to: `/event/${eventId}/participants` }),
-        },
+        }
       );
     }
 
@@ -231,29 +235,26 @@ export const navItemsAuthenticated = (
     });
 
     if (isOwnUser) {
-      items.push(
-        {
-          id: 'notification-settings',
-          label: t ? t('navigation.secondary.user.notificationSettings') : 'Notification Settings',
-          icon: 'Bell',
-          href: `/user/${userId}/notification-settings`,
-          onClick: () => navigate({ to: `/user/${userId}/notification-settings` }),
-        },
-        {
-          id: 'edit',
-          label: t ? t('navigation.secondary.user.edit') : 'Edit User',
-          icon: 'Settings',
-          href: `/user/${userId}/settings`,
-          onClick: () => navigate({ to: `/user/${userId}/settings` }),
-        }
-      );
+      items.push({
+        id: 'edit',
+        label: t ? t('navigation.secondary.user.edit') : 'Edit User',
+        icon: 'Settings',
+        href: `/user/${userId}/settings`,
+        onClick: () => navigate({ to: `/user/${userId}/settings` }),
+      });
     }
 
     return items;
   };
 
   // Function to create group secondary navigation items for a specific group
-  const getGroupSecondaryNavItems = (groupId: string, isAdmin = false, isMember = false, canManageMembers = false, canViewNotifications = false): NavigationItem[] => {
+  const getGroupSecondaryNavItems = (
+    groupId: string,
+    isAdmin = false,
+    isMember = false,
+    canManageMembers = false,
+    canViewNotifications = false
+  ): NavigationItem[] => {
     const items: NavigationItem[] = [
       {
         id: 'overview',
@@ -398,15 +399,13 @@ export const navItemsAuthenticated = (
 
     // Add items requiring manage permission
     if (canUpdate || canManage) {
-      items.push(
-        {
-          id: 'text',
-          label: t ? t('navigation.secondary.amendment.text') : 'Full Text',
-          icon: 'File',
-          href: `/amendment/${amendmentId}/text`,
-          onClick: () => navigate({ to: `/amendment/${amendmentId}/text` }),
-        },
-      );
+      items.push({
+        id: 'text',
+        label: t ? t('navigation.secondary.amendment.text') : 'Full Text',
+        icon: 'File',
+        href: `/amendment/${amendmentId}/text`,
+        onClick: () => navigate({ to: `/amendment/${amendmentId}/text` }),
+      });
     }
 
     if (canManage) {
@@ -442,7 +441,12 @@ export const navItemsAuthenticated = (
     return items;
   };
 
-  const getBlogSecondaryNavItems = (blogId: string, isOwner = false, groupId?: string, userId?: string): NavigationItem[] => {
+  const getBlogSecondaryNavItems = (
+    blogId: string,
+    isOwner = false,
+    groupId?: string,
+    userId?: string
+  ): NavigationItem[] => {
     const blogBase = groupId
       ? `/group/${groupId}/blog/${blogId}`
       : userId
@@ -528,17 +532,39 @@ export const navItemsAuthenticated = (
         case 'projects':
           return projectSecondaryNavItems;
         case 'event':
-          return eventId ? getEventSecondaryNavItems(eventId, isEventAdmin ?? false, canViewNotifications ?? false) : null;
+          return eventId
+            ? getEventSecondaryNavItems(
+                eventId,
+                isEventAdmin ?? false,
+                canViewNotifications ?? false
+              )
+            : null;
         case 'user':
           return userId ? getUserSecondaryNavItems(userId, isOwnUser ?? false) : null;
         case 'group':
-          return groupId ? getGroupSecondaryNavItems(groupId, isGroupAdmin ?? false, isGroupMember ?? false, canManageMembers ?? false, canViewNotifications ?? false) : null;
+          return groupId
+            ? getGroupSecondaryNavItems(
+                groupId,
+                isGroupAdmin ?? false,
+                isGroupMember ?? false,
+                canManageMembers ?? false,
+                canViewNotifications ?? false
+              )
+            : null;
         case 'amendment':
           return amendmentId
-            ? getAmendmentSecondaryNavItems(amendmentId, canViewAmendment ?? false, canUpdateAmendment ?? false, canManageAmendment ?? false, canViewNotifications ?? false)
+            ? getAmendmentSecondaryNavItems(
+                amendmentId,
+                canViewAmendment ?? false,
+                canUpdateAmendment ?? false,
+                canManageAmendment ?? false,
+                canViewNotifications ?? false
+              )
             : null;
         case 'blog':
-          return blogId ? getBlogSecondaryNavItems(blogId, isBlogOwner ?? false, groupId, userId) : null;
+          return blogId
+            ? getBlogSecondaryNavItems(blogId, isBlogOwner ?? false, groupId, userId)
+            : null;
         default:
           return null;
       }

@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import { useZero } from '@rocicorp/zero/react'
-import { toast } from 'sonner'
+import { gatedToast as toast } from '@/features/notifications/utils/gated-toast'
 import { useTranslation } from '@/features/shared/hooks/use-translation'
 import { mutators } from '../mutators'
 import { onServerError } from '../mutate-with-server-check'

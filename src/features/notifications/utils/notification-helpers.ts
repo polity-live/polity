@@ -462,7 +462,7 @@ export async function createNotification(config: NotificationConfig): Promise<st
 }
 
 /**
- * Send push notification via API
+ * Send push notification via TanStack server function
  */
 async function sendPushNotification(
   userId: string,
@@ -475,23 +475,13 @@ async function sendPushNotification(
   }
 ): Promise<void> {
   try {
-    const response = await fetch('/api/push/send', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    const { pushSendFn } = await import('@/server/push-send');
+    const result = await pushSendFn({
+      data: {
         userId,
         notification,
-      }),
+      },
     });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to send push notification');
-    }
-
-    const result = await response.json();
     console.log('[Notification] Push notification sent:', result);
   } catch (error) {
     console.error('[Notification] Error sending push notification:', error);

@@ -100,26 +100,31 @@ export function PushNotificationToggle({
   // Minimal variant - just a button
   if (variant === 'minimal') {
     return (
-      <Button
-        variant={isSubscribed ? 'default' : 'outline'}
-        size="sm"
-        onClick={handleToggle}
-        disabled={isLoading}
-      >
-        {isLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : isSubscribed ? (
-          <>
-            <Bell className="mr-2 h-4 w-4" />
-            {t('components.pushNotifications.active')}
-          </>
-        ) : (
-          <>
-            <BellOff className="mr-2 h-4 w-4" />
-            {t('components.pushNotifications.activate')}
-          </>
+      <div className="flex items-center gap-2">
+        <Button
+          variant={isSubscribed ? 'default' : 'outline'}
+          size="sm"
+          onClick={handleToggle}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : isSubscribed ? (
+            <>
+              <Bell className="mr-2 h-4 w-4" />
+              {t('components.pushNotifications.active')}
+            </>
+          ) : (
+            <>
+              <BellOff className="mr-2 h-4 w-4" />
+              {t('components.pushNotifications.activate')}
+            </>
+          )}
+        </Button>
+        {error && (
+          <span className="text-xs text-destructive">{error}</span>
         )}
-      </Button>
+      </div>
     );
   }
 

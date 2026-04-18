@@ -114,8 +114,16 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
     setError(null);
 
     try {
-      // Request permission if not already granted (read directly from API, not state)
+      // Read permission directly from the browser API (not React state)
       let currentPermission = Notification.permission;
+
+      // If already denied, don't bother calling requestPermission — the browser
+      // won't show a dialog and will just return 'denied' immediately.
+      if (currentPermission === 'denied') {
+        const errorMsg = tRef.current('components.pushNotifications.errors.permissionBlocked');
+        setError(errorMsg);
+        throw new Error(errorMsg);
+      }
 
       if (currentPermission !== 'granted') {
         currentPermission = await requestPermission();
@@ -127,7 +135,6 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
             ? tRef.current('components.pushNotifications.errors.permissionBlocked')
             : tRef.current('components.pushNotifications.errors.permissionDismissed');
         setError(errorMsg);
-        setIsLoading(false);
         throw new Error(errorMsg);
       }
 
@@ -207,6 +214,10 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
       setIsSubscribed(false);
       throw err;
     } finally {
+      // Always sync permission state from the browser so the UI reflects reality
+      if ('Notification' in window) {
+        setPermission(Notification.permission);
+      }
       setIsLoading(false);
     }
   }, [isSupported, user, requestPermission]);

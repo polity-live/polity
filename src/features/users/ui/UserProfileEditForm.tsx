@@ -18,12 +18,14 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { VotingPasswordTab } from './VotingPasswordTab';
 import { AccountPasswordSection } from './AccountPasswordSection';
 import { AccountEmailSection } from './AccountEmailSection';
+import { NotificationSettingsContent } from '@/features/notifications/ui/NotificationSettingsContent';
 import type { UserProfileFormData } from '../hooks/useUserProfileForm';
 
 interface UserProfileEditFormProps {
   formData: UserProfileFormData;
   isSubmitting: boolean;
   userId: string;
+  defaultTab?: string;
   activeSubscriptionAmount: number;
   isCheckoutLoading: boolean;
   isPlanActive: (amount: number) => boolean;
@@ -44,6 +46,7 @@ export function UserProfileEditForm({
   formData,
   isSubmitting,
   userId,
+  defaultTab,
   activeSubscriptionAmount,
   isCheckoutLoading,
   isPlanActive,
@@ -66,7 +69,7 @@ export function UserProfileEditForm({
         <p className="text-muted-foreground">{t('pages.user.settingsDescription')}</p>
       </div>
 
-      <Tabs defaultValue="basic-info">
+      <Tabs defaultValue={defaultTab || 'basic-info'}>
         <TabsList className="mb-6">
           <TabsTrigger value="basic-info">
             {t('pages.user.settingsTabs.basicInfo')}
@@ -79,6 +82,9 @@ export function UserProfileEditForm({
           </TabsTrigger>
           <TabsTrigger value="passwords">
             {t('pages.user.settingsTabs.passwords')}
+          </TabsTrigger>
+          <TabsTrigger value="notifications">
+            {t('pages.user.settingsTabs.notifications')}
           </TabsTrigger>
         </TabsList>
 
@@ -212,6 +218,11 @@ export function UserProfileEditForm({
             <AccountEmailSection />
             <VotingPasswordTab userId={userId} />
           </div>
+        </TabsContent>
+
+        {/* Notifications Tab */}
+        <TabsContent value="notifications">
+          <NotificationSettingsContent userId={userId} />
         </TabsContent>
       </Tabs>
     </div>

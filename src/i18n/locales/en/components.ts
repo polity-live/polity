@@ -103,7 +103,7 @@ export const componentsTranslations = {
       notSupported: 'Push notifications are not supported in this browser',
       notLoggedIn: 'You must be logged in to enable notifications',
       permissionBlocked: 'Notifications have been blocked. Please enable them in your browser settings.',
-      permissionDismissed: 'Please allow notifications in the browser dialog.',
+      permissionDismissed: 'Notification permission was not granted. Please allow notifications in your browser settings (click the lock icon in the address bar).',
       permissionRequest: 'Error requesting notification permission',
       swRegistration: 'Service worker could not be registered. Please reload the page.',
       swTimeout: 'Service worker timeout — please reload the page',

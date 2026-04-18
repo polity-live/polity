@@ -6,6 +6,7 @@ export const userPageTranslations = {
     preferences: 'Preferences',
     subscriptions: 'Subscriptions',
     passwords: 'Passwords',
+    notifications: 'Notifications',
     votingPassword: 'Voting Password',
     saving: 'Saving...',
     saveProfile: 'Save Profile',

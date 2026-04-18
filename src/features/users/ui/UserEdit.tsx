@@ -8,9 +8,10 @@ import { UserProfileEditForm } from './UserProfileEditForm';
 
 interface UserEditProps {
   userId: string;
+  defaultTab?: string;
 }
 
-export function UserEdit({ userId }: UserEditProps) {
+export function UserEdit({ userId, defaultTab }: UserEditProps) {
   const { user, isLoading } = useUserData(userId);
 
   const { formData, isSubmitting, handleSubmit, updateField } = useUserProfileForm({
@@ -47,6 +48,7 @@ export function UserEdit({ userId }: UserEditProps) {
       formData={formData}
       isSubmitting={isSubmitting}
       userId={userId}
+      defaultTab={defaultTab}
       activeSubscriptionAmount={getActivePlanAmount()}
       isCheckoutLoading={isCheckoutLoading}
       isPlanActive={isPlanActive}

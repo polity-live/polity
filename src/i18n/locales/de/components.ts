@@ -103,7 +103,7 @@ export const componentsTranslations = {
       notSupported: 'Push-Benachrichtigungen werden in diesem Browser nicht unterstützt',
       notLoggedIn: 'Sie müssen angemeldet sein, um Benachrichtigungen zu aktivieren',
       permissionBlocked: 'Benachrichtigungen wurden blockiert. Bitte in den Browser-Einstellungen aktivieren.',
-      permissionDismissed: 'Bitte erlauben Sie Benachrichtigungen im Browser-Dialog.',
+      permissionDismissed: 'Benachrichtigungsberechtigung wurde nicht erteilt. Bitte erlauben Sie Benachrichtigungen in den Browser-Einstellungen (klicken Sie auf das Schloss-Symbol in der Adressleiste).',
       permissionRequest: 'Fehler beim Anfordern der Benachrichtigungsberechtigung',
       swRegistration: 'Service Worker konnte nicht registriert werden. Bitte laden Sie die Seite neu.',
       swTimeout: 'Service Worker Timeout — bitte Seite neu laden',
