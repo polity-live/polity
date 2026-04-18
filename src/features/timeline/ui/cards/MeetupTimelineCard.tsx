@@ -75,11 +75,11 @@ function getStateClassName(options: {
   isFull: boolean;
 }) {
   if (options.isBookedByMe) {
-    return 'border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-950';
+    return 'border-green-300 dark:border-green-800';
   }
 
   if (options.isBookable && !options.isFull && !options.isPast) {
-    return 'border-dashed border-blue-300 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/50';
+    return 'border-dashed border-blue-300 dark:border-blue-800';
   }
 
   if (options.isPast) {

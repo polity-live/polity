@@ -63,10 +63,10 @@ export const CONTENT_TYPE_CONFIG: Record<ContentType, ContentTypeConfig> = {
   meetup: {
     icon: Video,
     labelKey: 'features.timeline.contentTypes.meetup',
-    gradient: 'from-cyan-100 to-teal-100',
-    gradientDark: 'dark:from-cyan-900/40 dark:to-teal-900/50',
-    accentColor: 'text-cyan-700 dark:text-cyan-300',
-    borderColor: 'border-cyan-500',
+    gradient: 'from-cyan-100 via-sky-100 to-indigo-100',
+    gradientDark: 'dark:from-cyan-900/40 dark:via-sky-900/40 dark:to-indigo-900/50',
+    accentColor: 'text-sky-700 dark:text-sky-300',
+    borderColor: 'border-sky-500',
   },
   amendment: {
     icon: ScrollText,
