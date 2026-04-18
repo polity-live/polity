@@ -1,18 +1,13 @@
 import { useState, useMemo } from 'react';
+import { useCommonState } from '@/zero/common/useCommonState';
 
-// Co-located types
 export type FilterType = 'all' | 'users' | 'groups' | 'amendments' | 'events' | 'blogs';
 
-interface SubscriptionItem {
-  user?: { name?: string; handle?: string };
-  group?: { name?: string; description?: string };
-  amendment?: { title?: string; subtitle?: string };
-  event?: { title?: string; description?: string };
-  blog?: { title?: string };
-}
+type SubscriptionItem = NonNullable<ReturnType<typeof useCommonState>['userSubscriptions']>[number];
+type SubscriberItem = NonNullable<ReturnType<typeof useCommonState>['userSubscribers']>[number];
 
-interface SubscriberItem {
-  subscriber?: { name?: string; handle?: string };
+function createSearchText(parts: (string | null | undefined)[]) {
+  return parts.filter((part): part is string => Boolean(part)).join(' ').toLowerCase();
 }
 
 export interface UseSubscriptionsFiltersOptions {
@@ -46,82 +41,89 @@ export function useSubscriptionsFilters({
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<FilterType>('all');
 
-  // Filter subscriptions based on type and search query
-  const filteredSubscriptions = useMemo(() => {
-    let filtered = subscriptions;
+  const searchFilteredSubscriptions = useMemo(() => {
+    if (!searchQuery.trim()) return subscriptions;
 
-    // Filter by type
-    if (filterType !== 'all') {
-      filtered = filtered.filter(sub => {
-        switch (filterType) {
-          case 'users':
-            return !!sub.user;
-          case 'groups':
-            return !!sub.group;
-          case 'amendments':
-            return !!sub.amendment;
-          case 'events':
-            return !!sub.event;
-          case 'blogs':
-            return !!sub.blog;
-          default:
-            return true;
-        }
-      });
-    }
-
-    // Filter by search query
-    if (!searchQuery.trim()) return filtered;
-
-    const query = searchQuery.toLowerCase();
-    return filtered.filter(sub => {
-      if (sub.user) {
-        const name = sub.user.name?.toLowerCase() || '';
-        const handle = sub.user.handle?.toLowerCase() || '';
-        return name.includes(query) || handle.includes(query);
-      } else if (sub.group) {
-        const name = sub.group.name?.toLowerCase() || '';
-        const description = sub.group.description?.toLowerCase() || '';
-        return name.includes(query) || description.includes(query);
-      } else if (sub.amendment) {
-        const title = sub.amendment.title?.toLowerCase() || '';
-        const subtitle = sub.amendment.subtitle?.toLowerCase() || '';
-        return title.includes(query) || subtitle.includes(query);
-      } else if (sub.event) {
-        const title = sub.event.title?.toLowerCase() || '';
-        const description = sub.event.description?.toLowerCase() || '';
-        return title.includes(query) || description.includes(query);
-      } else if (sub.blog) {
-        const title = sub.blog.title?.toLowerCase() || '';
-        return title.includes(query);
+    const query = searchQuery.trim().toLowerCase();
+    return subscriptions.filter((subscription) => {
+      if (subscription.user) {
+        return createSearchText([
+          subscription.user.first_name,
+          subscription.user.last_name,
+        ]).includes(query);
       }
+
+      if (subscription.group) {
+        return createSearchText([
+          subscription.group.name,
+          subscription.group.description,
+        ]).includes(query);
+      }
+
+      if (subscription.amendment) {
+        return createSearchText([subscription.amendment.title]).includes(query);
+      }
+
+      if (subscription.event) {
+        return createSearchText([
+          subscription.event.title,
+          subscription.event.description,
+        ]).includes(query);
+      }
+
+      if (subscription.blog) {
+        return createSearchText([subscription.blog.title]).includes(query);
+      }
+
       return false;
     });
-  }, [subscriptions, searchQuery, filterType]);
+  }, [subscriptions, searchQuery]);
 
-  // Filter subscribers based on search query
+  const filteredSubscriptions = useMemo(() => {
+    if (filterType === 'all') {
+      return searchFilteredSubscriptions;
+    }
+
+    return searchFilteredSubscriptions.filter((subscription) => {
+      switch (filterType) {
+        case 'users':
+          return !!subscription.user;
+        case 'groups':
+          return !!subscription.group;
+        case 'amendments':
+          return !!subscription.amendment;
+        case 'events':
+          return !!subscription.event;
+        case 'blogs':
+          return !!subscription.blog;
+        default:
+          return true;
+      }
+    });
+  }, [searchFilteredSubscriptions, filterType]);
+
   const filteredSubscribers = useMemo(() => {
     if (!searchQuery.trim()) return subscribers;
 
-    const query = searchQuery.toLowerCase();
-    return subscribers.filter(sub => {
-      const name = sub.subscriber?.name?.toLowerCase() || '';
-      const handle = sub.subscriber?.handle?.toLowerCase() || '';
-      return name.includes(query) || handle.includes(query);
-    });
+    const query = searchQuery.trim().toLowerCase();
+    return subscribers.filter((subscription) =>
+      createSearchText([
+        subscription.subscriber_user?.first_name,
+        subscription.subscriber_user?.last_name,
+      ]).includes(query)
+    );
   }, [subscribers, searchQuery]);
 
-  // Calculate counts for each type
   const subscriptionCounts: SubscriptionCounts = useMemo(() => {
     return {
-      all: subscriptions.length,
-      users: subscriptions.filter(sub => !!sub.user).length,
-      groups: subscriptions.filter(sub => !!sub.group).length,
-      amendments: subscriptions.filter(sub => !!sub.amendment).length,
-      events: subscriptions.filter(sub => !!sub.event).length,
-      blogs: subscriptions.filter(sub => !!sub.blog).length,
+      all: searchFilteredSubscriptions.length,
+      users: searchFilteredSubscriptions.filter((subscription) => !!subscription.user).length,
+      groups: searchFilteredSubscriptions.filter((subscription) => !!subscription.group).length,
+      amendments: searchFilteredSubscriptions.filter((subscription) => !!subscription.amendment).length,
+      events: searchFilteredSubscriptions.filter((subscription) => !!subscription.event).length,
+      blogs: searchFilteredSubscriptions.filter((subscription) => !!subscription.blog).length,
     };
-  }, [subscriptions]);
+  }, [searchFilteredSubscriptions]);
 
   return {
     searchQuery,

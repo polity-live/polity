@@ -1,12 +1,11 @@
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
-import { CalendarIcon, Video, Users } from 'lucide-react';
+import { CalendarIcon } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { CalendarEvent } from '@/features/events/hooks/useCalendarView';
 import { getBaseEventId } from '@/features/calendar/logic/eventIdUtils';
 import { EventTimelineCard } from '@/features/timeline/ui/cards/EventTimelineCard';
-import { Badge } from '@/features/shared/ui/ui/badge';
-import { cn } from '@/features/shared/utils/utils';
+import { MeetupTimelineCard } from '@/features/timeline/ui/cards/MeetupTimelineCard';
 
 interface SharedListViewProps {
   events: CalendarEvent[];
@@ -21,8 +20,14 @@ function groupByDate(events: CalendarEvent[]): Map<string, CalendarEvent[]> {
   for (const event of sorted) {
     const d = new Date(event.start_date);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    if (!map.has(key)) map.set(key, []);
-    map.get(key)!.push(event);
+    const currentEvents = map.get(key);
+
+    if (currentEvents) {
+      currentEvents.push(event);
+      continue;
+    }
+
+    map.set(key, [event]);
   }
   return map;
 }
@@ -42,50 +47,26 @@ function toTimelineEvent(event: CalendarEvent) {
   };
 }
 
-function MeetingBadge({ event, t }: { event: CalendarEvent; t: (key: string) => string }) {
-  if (!event.isMeeting || !event.is_bookable) return null;
-  const maxBookings = event.max_bookings ?? 1;
-  const bookingCount = event.bookingCount ?? 0;
-  const isFull = bookingCount >= maxBookings;
-
-  if (event.isBookedByMe) {
-    return (
-      <Badge variant="default" className="gap-1 text-[10px]">
-        <Users className="h-3 w-3" />
-        {t('features.calendar.meeting.booked')}
-      </Badge>
-    );
-  }
-  if (isFull) {
-    return (
-      <Badge variant="secondary" className="gap-1 text-[10px]">
-        {t('features.calendar.meeting.fullyBooked')}
-      </Badge>
-    );
-  }
-  return (
-    <Badge variant="outline" className="gap-1 border-dashed text-[10px]">
-      <Video className="h-3 w-3" />
-      {t('features.calendar.meeting.available')}
-    </Badge>
-  );
+function toMeetupEvent(event: CalendarEvent) {
+  return {
+    id: getBaseEventId(event.id),
+    title: event.title,
+    description: event.description,
+    startDate: event.start_date,
+    endDate: event.end_date,
+    meetingType: event.meeting_type,
+    organizerName: event.organizer?.name || event.organizerName,
+    location: event.location,
+    onlineUrl: event.location_url ?? event.stream_url,
+    bookingCount: event.bookingCount,
+    maxBookings: event.max_bookings,
+    isBookedByMe: event.isBookedByMe,
+    isOwner: event.isOwner,
+    isBookable: event.is_bookable,
+  };
 }
 
-function getMeetingCardClassName(event: CalendarEvent) {
-  if (!event.isMeeting) return undefined;
-
-  if (event.isBookedByMe) {
-    return 'rounded-lg border-green-300 bg-green-50 shadow-sm dark:border-green-800 dark:bg-green-950';
-  }
-
-  if (event.is_bookable) {
-    return 'rounded-lg border-dashed border-blue-300 bg-blue-50/50 shadow-sm dark:border-blue-800 dark:bg-blue-950/50';
-  }
-
-  return 'rounded-lg border-green-300 bg-green-50 shadow-sm dark:border-green-800 dark:bg-green-950';
-}
-
-export function SharedListView({ events, selectedDate }: SharedListViewProps) {
+export function SharedListView({ events }: SharedListViewProps) {
   const { t, language } = useTranslation();
   const grouped = groupByDate(events);
 
@@ -123,19 +104,21 @@ export function SharedListView({ events, selectedDate }: SharedListViewProps) {
                 )}
               </h3>
               <div className="space-y-3">
-                {dayEvents.map(event => (
-                  <div key={event.id} className={cn('relative', getMeetingCardClassName(event))}>
-                    <EventTimelineCard
-                      event={toTimelineEvent(event)}
-                      className={event.isMeeting ? 'bg-transparent' : undefined}
-                    />
-                    {event.isMeeting && (
-                      <div className="absolute right-3 top-3">
-                        <MeetingBadge event={event} t={t} />
-                      </div>
-                    )}
-                  </div>
-                ))}
+                {dayEvents.map(event => {
+                  const baseEventId = getBaseEventId(event.id);
+
+                  if (event.isMeeting) {
+                    return (
+                      <MeetupTimelineCard
+                        key={event.id}
+                        meetup={toMeetupEvent(event)}
+                        href={`/meet/${baseEventId}`}
+                      />
+                    );
+                  }
+
+                  return <EventTimelineCard key={event.id} event={toTimelineEvent(event)} />;
+                })}
               </div>
             </div>
           );

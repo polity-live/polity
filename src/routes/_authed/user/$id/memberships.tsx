@@ -6,7 +6,8 @@ import { GroupMembershipsTab } from '@/features/users/ui/GroupMembershipsTab'
 import { EventParticipationsTab } from '@/features/users/ui/EventParticipationsTab'
 import { AmendmentCollaborationsTab } from '@/features/users/ui/AmendmentCollaborationsTab'
 import { BlogRelationsTab } from '@/features/users/ui/BlogRelationsTab'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs'
+import { Tabs, TabsContent, TabsTrigger } from '@/features/shared/ui/ui/tabs'
+import { ScrollableTabsList } from '@/features/shared/ui/ui/scrollable-tabs'
 import { EntitySearchBar } from '@/features/shared/ui/ui/entity-search-bar'
 import { Users, Calendar, FileEdit, BookOpen } from 'lucide-react'
 
@@ -56,6 +57,77 @@ function UserMembershipsPage() {
     filteredBlogRelations,
   } = useUserMembershipsFilters({ memberships, participations, collaborations, blogRelations })
 
+  const allMembershipCount =
+    filteredMemberships.length +
+    filteredParticipations.length +
+    filteredCollaborations.length +
+    filteredBlogRelations.length
+
+  const handleLeaveGroup = (membershipId: string) => {
+    const membership = memberships.find((item) => item.id === membershipId)
+    if (membership) {
+      leaveGroup(membershipId, membership.group?.id || '')
+    }
+  }
+
+  const handleLeaveEvent = (participationId: string) => {
+    const participation = participations.find((item) => item.id === participationId)
+    if (participation) {
+      withdrawFromEvent(participationId, participation.event?.id || '')
+    }
+  }
+
+  const handleLeaveCollaboration = (collaborationId: string) => {
+    const collaboration = collaborations.find((item) => item.id === collaborationId)
+    if (collaboration) {
+      leaveCollaboration(collaborationId, collaboration.amendment?.id || '')
+    }
+  }
+
+  const renderGroupMembershipsTab = () => (
+    <GroupMembershipsTab
+      membershipsByStatus={membershipsByStatus}
+      onAcceptInvitation={acceptGroupInvitation}
+      onDeclineInvitation={declineGroupInvitation}
+      onLeave={handleLeaveGroup}
+      onWithdrawRequest={withdrawGroupRequest}
+      onNavigate={(groupId) => navigate({ to: `/group/${groupId}` })}
+    />
+  )
+
+  const renderEventParticipationsTab = () => (
+    <EventParticipationsTab
+      participationsByStatus={participationsByStatus}
+      onAcceptInvitation={acceptEventInvitation}
+      onDeclineInvitation={declineEventInvitation}
+      onLeave={handleLeaveEvent}
+      onWithdrawRequest={withdrawEventRequest}
+      onNavigate={(eventId) => navigate({ to: `/event/${eventId}` })}
+    />
+  )
+
+  const renderAmendmentCollaborationsTab = () => (
+    <AmendmentCollaborationsTab
+      collaborationsByStatus={collaborationsByStatus}
+      onAcceptInvitation={acceptCollaborationInvitation}
+      onDeclineInvitation={declineCollaborationInvitation}
+      onLeave={handleLeaveCollaboration}
+      onWithdrawRequest={withdrawCollaborationRequest}
+      onNavigate={(amendmentId) => navigate({ to: `/amendment/${amendmentId}` })}
+    />
+  )
+
+  const renderBlogRelationsTab = () => (
+    <BlogRelationsTab
+      blogRelationsByStatus={blogRelationsByStatus}
+      onAcceptInvitation={acceptBlogInvitation}
+      onDeclineInvitation={declineBlogInvitation}
+      onLeave={leaveBlog}
+      onWithdrawRequest={withdrawBlogRequest}
+      onNavigate={(blogId) => navigate({ to: '/user/$id/blog/$entryId', params: { id, entryId: blogId } })}
+    />
+  )
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Memberships</h1>
@@ -64,8 +136,11 @@ function UserMembershipsPage() {
         onSearchQueryChange={setSearchQuery}
         placeholder="Search memberships..."
       />
-      <Tabs defaultValue="groups">
-        <TabsList>
+      <Tabs defaultValue="all">
+        <ScrollableTabsList>
+          <TabsTrigger value="all" className="flex items-center gap-2">
+            All ({allMembershipCount})
+          </TabsTrigger>
           <TabsTrigger value="groups" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             Groups ({filteredMemberships.length})
@@ -82,59 +157,31 @@ function UserMembershipsPage() {
             <BookOpen className="h-4 w-4" />
             Blogs ({filteredBlogRelations.length})
           </TabsTrigger>
-        </TabsList>
+        </ScrollableTabsList>
+
+        <TabsContent value="all">
+          <div className="space-y-6">
+            {renderGroupMembershipsTab()}
+            {renderEventParticipationsTab()}
+            {renderAmendmentCollaborationsTab()}
+            {renderBlogRelationsTab()}
+          </div>
+        </TabsContent>
 
         <TabsContent value="groups">
-          <GroupMembershipsTab
-            membershipsByStatus={membershipsByStatus}
-            onAcceptInvitation={acceptGroupInvitation}
-            onDeclineInvitation={declineGroupInvitation}
-            onLeave={(membershipId) => {
-              const m = memberships.find((mem) => mem.id === membershipId)
-              if (m) leaveGroup(membershipId, m.group?.id || '')
-            }}
-            onWithdrawRequest={withdrawGroupRequest}
-            onNavigate={(groupId) => navigate({ to: `/group/${groupId}` })}
-          />
+          {renderGroupMembershipsTab()}
         </TabsContent>
 
         <TabsContent value="events">
-          <EventParticipationsTab
-            participationsByStatus={participationsByStatus}
-            onAcceptInvitation={acceptEventInvitation}
-            onDeclineInvitation={declineEventInvitation}
-            onLeave={(participationId) => {
-              const p = participations.find((par) => par.id === participationId)
-              if (p) withdrawFromEvent(participationId, (p).event?.id || '')
-            }}
-            onWithdrawRequest={withdrawEventRequest}
-            onNavigate={(eventId) => navigate({ to: `/event/${eventId}` })}
-          />
+          {renderEventParticipationsTab()}
         </TabsContent>
 
         <TabsContent value="amendments">
-          <AmendmentCollaborationsTab
-            collaborationsByStatus={collaborationsByStatus}
-            onAcceptInvitation={acceptCollaborationInvitation}
-            onDeclineInvitation={declineCollaborationInvitation}
-            onLeave={(collaborationId) => {
-              const c = collaborations.find((col) => col.id === collaborationId)
-              if (c) leaveCollaboration(collaborationId, (c).amendment?.id || '')
-            }}
-            onWithdrawRequest={withdrawCollaborationRequest}
-            onNavigate={(amendmentId) => navigate({ to: `/amendment/${amendmentId}` })}
-          />
+          {renderAmendmentCollaborationsTab()}
         </TabsContent>
 
         <TabsContent value="blogs">
-          <BlogRelationsTab
-            blogRelationsByStatus={blogRelationsByStatus}
-            onAcceptInvitation={acceptBlogInvitation}
-            onDeclineInvitation={declineBlogInvitation}
-            onLeave={leaveBlog}
-            onWithdrawRequest={withdrawBlogRequest}
-            onNavigate={(blogId) => navigate({ to: '/user/$id/blog/$entryId', params: { id, entryId: blogId } })}
-          />
+          {renderBlogRelationsTab()}
         </TabsContent>
       </Tabs>
     </div>

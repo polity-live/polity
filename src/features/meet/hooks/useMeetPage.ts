@@ -99,10 +99,16 @@ export function useMeetPage(userId: string) {
 
   // Expand all meetings (recurring + one-time) into instances within a generous window
   const allInstances = useMemo(() => {
-    const rangeStart = new Date(selectedDate);
-    rangeStart.setMonth(rangeStart.getMonth() - 1);
-    const rangeEnd = new Date(selectedDate);
-    rangeEnd.setMonth(rangeEnd.getMonth() + 3);
+    const rangeStart = view === 'list' ? new Date() : new Date(selectedDate);
+    const rangeEnd = view === 'list' ? new Date() : new Date(selectedDate);
+
+    if (view === 'list') {
+      rangeStart.setFullYear(rangeStart.getFullYear() - 1);
+      rangeEnd.setFullYear(rangeEnd.getFullYear() + 1);
+    } else {
+      rangeStart.setMonth(rangeStart.getMonth() - 1);
+      rangeEnd.setMonth(rangeEnd.getMonth() + 3);
+    }
 
     const instances: MeetingInstance[] = [];
 
@@ -143,10 +149,14 @@ export function useMeetPage(userId: string) {
     }
 
     return instances.sort((a, b) => a.startDate - b.startDate);
-  }, [meetings, selectedDate, currentUser]);
+  }, [meetings, selectedDate, currentUser, view]);
 
   // Filter instances based on current view
   const filteredInstances = useMemo(() => {
+    if (view === 'list') {
+      return allInstances;
+    }
+
     if (view === 'week') {
       const start = startOfWeek(selectedDate);
       const end = endOfWeek(selectedDate);
@@ -157,15 +167,6 @@ export function useMeetPage(userId: string) {
     return allInstances.filter(inst => isDateInRange(inst.startDate, start, end));
   }, [allInstances, view, selectedDate]);
 
-  // Next public meeting
-  const nextPublicMeeting = useMemo(() => {
-    const now = Date.now();
-    return (
-      allInstances.find(inst => inst.meetingType === 'public-meeting' && inst.startDate > now) ??
-      null
-    );
-  }, [allInstances]);
-
   // Get instances for a specific date
   const getInstancesForDate = useCallback(
     (date: Date) => allInstances.filter(inst => isSameDay(inst.startDate, date)),
@@ -175,6 +176,8 @@ export function useMeetPage(userId: string) {
   // Navigation
   const goToPrevious = useCallback(() => {
     setSelectedDate(prev => {
+      if (view === 'list') return prev;
+
       const d = new Date(prev);
       if (view === 'week') d.setDate(d.getDate() - 7);
       else d.setMonth(d.getMonth() - 1);
@@ -184,6 +187,8 @@ export function useMeetPage(userId: string) {
 
   const goToNext = useCallback(() => {
     setSelectedDate(prev => {
+      if (view === 'list') return prev;
+
       const d = new Date(prev);
       if (view === 'week') d.setDate(d.getDate() + 7);
       else d.setMonth(d.getMonth() + 1);
@@ -194,6 +199,7 @@ export function useMeetPage(userId: string) {
   const goToToday = useCallback(() => setSelectedDate(new Date()), []);
 
   const currentViewTitle = useMemo(() => {
+    if (view === 'list') return 'All meeting offers';
     if (view === 'week') return formatWeekRange(selectedDate);
     return formatMonth(selectedDate);
   }, [view, selectedDate]);
@@ -317,7 +323,6 @@ export function useMeetPage(userId: string) {
     meetings,
     allInstances,
     filteredInstances,
-    nextPublicMeeting,
     getInstancesForDate,
 
     // Dialogs

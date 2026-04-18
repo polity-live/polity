@@ -24,7 +24,7 @@ export function AlphaWarningDialog() {
           <div className="flex items-center gap-2">
             <AlertDialogTitle>{t('common.alphaWarning.title')}</AlertDialogTitle>
             <Badge className="border-0 bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400 font-bold text-slate-950 shadow-sm">
-              0.1
+              0.2
             </Badge>
           </div>
           <AlertDialogDescription>{t('common.alphaWarning.description')}</AlertDialogDescription>

@@ -24,6 +24,7 @@ interface SubscriptionsTableProps {
   onNavigateToAmendment: (id: string) => void;
   onNavigateToEvent: (id: string) => void;
   onNavigateToBlog: (id: string, groupId?: string | null) => void;
+  emptyMessage?: string;
 }
 
 export function SubscriptionsTable({
@@ -34,6 +35,7 @@ export function SubscriptionsTable({
   onNavigateToAmendment,
   onNavigateToEvent,
   onNavigateToBlog,
+  emptyMessage,
 }: SubscriptionsTableProps) {
   const getEntityInfo = (subscription: SubscriptionRow) => {
     if (subscription.user) {
@@ -94,8 +96,8 @@ export function SubscriptionsTable({
         </CardHeader>
         <CardContent>
           <p className="py-8 text-center text-muted-foreground">
-            No subscriptions found. Start following users, groups, amendments, events, or blogs to
-            see them here.
+            {emptyMessage ||
+              'No subscriptions found. Start following users, groups, amendments, events, or blogs to see them here.'}
           </p>
         </CardContent>
       </Card>

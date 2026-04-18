@@ -187,57 +187,56 @@ export const navItemsAuthenticated = (
         href: `/user/${userId}`,
         onClick: () => navigate({ to: `/user/${userId}` }),
       },
+      {
+        id: 'blogs-and-statements',
+        label: t ? t('navigation.secondary.user.blogsAndStatements') : 'Blogs & Statements',
+        icon: 'BookOpen',
+        href: `/user/${userId}/blogs-and-statements`,
+        onClick: () => navigate({ to: `/user/${userId}/blogs-and-statements` }),
+      },
     ];
 
     // Only show subscriptions and memberships for own user profile
     if (isOwnUser) {
       items.push(
         {
-          id: 'subscriptions',
-          label: t ? t('navigation.secondary.user.subscriptions') : 'Subscriptions',
-          icon: 'Bell',
-          href: `/user/${userId}/subscriptions`,
-          onClick: () => navigate({ to: `/user/${userId}/subscriptions` }),
-        },
-        {
           id: 'memberships',
           label: t ? t('navigation.secondary.user.memberships') : 'Memberships',
           icon: 'Users',
           href: `/user/${userId}/memberships`,
           onClick: () => navigate({ to: `/user/${userId}/memberships` }),
+        },
+        {
+          id: 'subscriptions',
+          label: t ? t('navigation.secondary.user.subscriptions') : 'Subscriptions',
+          icon: 'Bell',
+          href: `/user/${userId}/subscriptions`,
+          onClick: () => navigate({ to: `/user/${userId}/subscriptions` }),
         }
       );
     }
 
     items.push(
       {
-        id: 'network',
-        label: t ? t('navigation.secondary.user.network') : 'Network',
-        icon: 'Network',
-        href: `/user/${userId}/network`,
-        onClick: () => navigate({ to: `/user/${userId}/network` }),
-      },
-      {
         id: 'meet',
         label: t ? t('navigation.secondary.user.meet') : 'Meet',
         icon: 'Calendar',
         href: `/user/${userId}/meet`,
         onClick: () => navigate({ to: `/user/${userId}/meet` }),
+      },
+      {
+        id: 'network',
+        label: t ? t('navigation.secondary.user.network') : 'Network',
+        icon: 'Network',
+        href: `/user/${userId}/network`,
+        onClick: () => navigate({ to: `/user/${userId}/network` }),
       }
     );
-
-    items.push({
-      id: 'blogs-and-statements',
-      label: t ? t('navigation.secondary.user.blogsAndStatements') : 'Blogs & Statements',
-      icon: 'BookOpen',
-      href: `/user/${userId}/blogs-and-statements`,
-      onClick: () => navigate({ to: `/user/${userId}/blogs-and-statements` }),
-    });
 
     if (isOwnUser) {
       items.push({
         id: 'edit',
-        label: t ? t('navigation.secondary.user.edit') : 'Edit User',
+        label: t ? t('navigation.secondary.user.edit') : 'Settings',
         icon: 'Settings',
         href: `/user/${userId}/settings`,
         onClick: () => navigate({ to: `/user/${userId}/settings` }),

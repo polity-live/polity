@@ -1,0 +1,291 @@
+'use client';
+
+import { format, isToday, isTomorrow } from 'date-fns';
+import { Clock, ExternalLink, MapPin, Trash2, Users, Video } from 'lucide-react';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Button } from '@/features/shared/ui/ui/button';
+import { cn } from '@/features/shared/utils/utils';
+import {
+  TimelineCardBase,
+  TimelineCardHeader,
+  TimelineCardContent,
+  TimelineCardActions,
+  TimelineCardBadge,
+} from './TimelineCardBase';
+
+type MeetupDate = string | number | Date;
+
+export interface MeetupTimelineCardProps {
+  meetup: {
+    id: string;
+    title: string;
+    description?: string | null;
+    startDate: MeetupDate;
+    endDate?: MeetupDate;
+    meetingType?: string | null;
+    organizerName?: string;
+    location?: string | null;
+    onlineUrl?: string | null;
+    bookingCount?: number;
+    maxBookings?: number | null;
+    isBookedByMe?: boolean;
+    isOwner?: boolean;
+    isBookable?: boolean;
+    isRecurringInstance?: boolean;
+    participants?: {
+      id: string;
+      name?: string | null;
+      avatar?: string | null;
+    }[];
+  };
+  href?: string;
+  onSelect?: () => void;
+  onBook?: () => void;
+  onCancel?: () => void;
+  onDelete?: () => void;
+  className?: string;
+}
+
+function getDateLabel(date: Date): string | null {
+  if (isToday(date)) return 'Today';
+  if (isTomorrow(date)) return 'Tomorrow';
+  return null;
+}
+
+function getMeetupState(startDate: Date, endDate: Date): 'live' | 'upcoming' | 'past' {
+  const now = Date.now();
+
+  if (endDate.getTime() < now) {
+    return 'past';
+  }
+
+  if (startDate.getTime() <= now && endDate.getTime() >= now) {
+    return 'live';
+  }
+
+  return 'upcoming';
+}
+
+function getStateClassName(options: {
+  isPast: boolean;
+  isBookedByMe: boolean;
+  isBookable: boolean;
+  isFull: boolean;
+}) {
+  if (options.isBookedByMe) {
+    return 'border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-950';
+  }
+
+  if (options.isBookable && !options.isFull && !options.isPast) {
+    return 'border-dashed border-blue-300 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/50';
+  }
+
+  if (options.isPast) {
+    return 'opacity-70';
+  }
+
+  return undefined;
+}
+
+export function MeetupTimelineCard({
+  meetup,
+  href,
+  onSelect,
+  onBook,
+  onCancel,
+  onDelete,
+  className,
+}: MeetupTimelineCardProps) {
+  const { t } = useTranslation();
+
+  const startDate = new Date(meetup.startDate);
+  const endDate = meetup.endDate ? new Date(meetup.endDate) : startDate;
+  const bookingCount = meetup.bookingCount ?? meetup.participants?.length ?? 0;
+  const maxBookings = Math.max(1, meetup.maxBookings ?? 1);
+  const state = getMeetupState(startDate, endDate);
+  const isPast = state === 'past';
+  const isFull = bookingCount >= maxBookings;
+  const isBookedByMe = Boolean(meetup.isBookedByMe);
+  const isOwner = Boolean(meetup.isOwner);
+  const isBookable = Boolean(meetup.isBookable);
+  const canBook = Boolean(onBook) && !isOwner && isBookable && !isBookedByMe && !isFull && !isPast;
+  const canCancel = Boolean(onCancel) && !isOwner && isBookedByMe && !isPast;
+  const canDelete = Boolean(onDelete) && isOwner && !isPast && !meetup.isRecurringInstance;
+  const dateLabel = getDateLabel(startDate);
+  const participantLabel =
+    bookingCount === 1
+      ? t('features.calendar.eventCard.participant', { count: bookingCount })
+      : t('features.calendar.eventCard.participantPlural', { count: bookingCount });
+  const meetingTypeLabel =
+    meetup.meetingType === 'public-meeting'
+      ? t('features.calendar.eventCard.publicMeeting')
+      : t('features.calendar.eventCard.privateMeeting');
+  const participants = meetup.participants ?? [];
+
+  return (
+    <TimelineCardBase
+      contentType="meetup"
+      className={cn(
+        getStateClassName({
+          isPast,
+          isBookedByMe,
+          isBookable,
+          isFull,
+        }),
+        className,
+      )}
+      onClick={onSelect}
+      href={href}
+    >
+      <TimelineCardHeader
+        contentType="meetup"
+        title={meetup.title || t('features.calendar.eventCard.meeting')}
+        href={href}
+        subtitle={meetup.organizerName}
+        badge={
+          state === 'live' ? (
+            <Badge variant="destructive" className="animate-pulse">
+              <span className="mr-1.5 h-2 w-2 animate-pulse rounded-full bg-white" />
+              {t('features.timeline.cards.happeningNow')}
+            </Badge>
+          ) : (
+            <TimelineCardBadge
+              label={meetingTypeLabel}
+              icon={meetup.meetingType === 'public-meeting' ? Users : Video}
+            />
+          )
+        }
+      >
+        <div className="mt-3 flex justify-center">
+          <div
+            className={cn(
+              'flex flex-col items-center rounded-xl bg-white/80 px-4 py-2 shadow-sm dark:bg-gray-900/80',
+              isPast && 'opacity-60',
+            )}
+          >
+            <span className="text-xs font-medium uppercase text-muted-foreground">
+              {format(startDate, 'MMM').toUpperCase()}
+            </span>
+            <span className="text-2xl font-bold leading-none">{format(startDate, 'd')}</span>
+            <span className="mt-0.5 text-xs text-muted-foreground">{format(startDate, 'p')}</span>
+            {dateLabel && (
+              <Badge variant="secondary" className="mt-1 text-xs">
+                {dateLabel}
+              </Badge>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-3 space-y-1.5 text-xs text-muted-foreground">
+          <div className="flex items-center justify-center gap-1.5">
+            <Clock className="h-3.5 w-3.5 flex-shrink-0" />
+            <span>
+              {format(startDate, 'p')} - {format(endDate, 'p')}
+            </span>
+          </div>
+
+          {meetup.location && (
+            <div className="flex items-center justify-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+              <span className="truncate">{meetup.location}</span>
+            </div>
+          )}
+
+          {meetup.onlineUrl && (
+            <div className="flex items-center justify-center gap-1.5">
+              <Video className="h-3.5 w-3.5 flex-shrink-0" />
+              <span>Online meeting available</span>
+            </div>
+          )}
+        </div>
+      </TimelineCardHeader>
+
+      <TimelineCardContent>
+        {meetup.description && (
+          <p className="mb-3 line-clamp-2 text-sm text-muted-foreground">{meetup.description}</p>
+        )}
+
+        <div className="mb-3 flex flex-wrap gap-2">
+          {isOwner && (
+            <Badge variant="secondary">{t('features.calendar.eventCard.yourMeeting')}</Badge>
+          )}
+          {!isOwner && isBookedByMe && (
+            <Badge className="bg-green-500/15 text-green-700 dark:text-green-400">
+              {t('features.calendar.meeting.booked')}
+            </Badge>
+          )}
+          {!isBookedByMe && isFull && (
+            <Badge variant="outline">{t('features.calendar.meeting.fullyBooked')}</Badge>
+          )}
+          {!isBookedByMe && !isFull && !isPast && isBookable && (
+            <Badge variant="outline" className="border-dashed">
+              {t('features.calendar.meeting.available')}
+            </Badge>
+          )}
+          {isPast && <Badge variant="secondary">Past</Badge>}
+        </div>
+
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Users className="h-4 w-4" />
+          <span>
+            {participantLabel}
+            {maxBookings > 1 ? ` / ${maxBookings}` : ''}
+          </span>
+        </div>
+
+        {participants.length > 0 && (
+          <div className="mt-3 flex items-center gap-2">
+            <div className="flex -space-x-2">
+              {participants.slice(0, 5).map(participant => (
+                <Avatar key={participant.id} className="h-7 w-7 border-2 border-background">
+                  <AvatarImage src={participant.avatar ?? undefined} />
+                  <AvatarFallback className="text-xs">
+                    {participant.name?.[0]?.toUpperCase() || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {meetup.onlineUrl && (
+          <div className="mt-3">
+            <a
+              href={meetup.onlineUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm text-primary underline-offset-4 hover:underline"
+              onClick={event => event.stopPropagation()}
+            >
+              <Video className="h-4 w-4" />
+              Open online meeting link
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          </div>
+        )}
+      </TimelineCardContent>
+
+      {(canBook || canCancel || canDelete) && (
+        <TimelineCardActions>
+          {canBook && (
+            <Button size="sm" onClick={onBook}>
+              Book meeting
+            </Button>
+          )}
+          {canCancel && (
+            <Button size="sm" variant="outline" onClick={onCancel}>
+              Cancel booking
+            </Button>
+          )}
+          {canDelete && (
+            <Button size="sm" variant="ghost" onClick={onDelete}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </TimelineCardActions>
+      )}
+    </TimelineCardBase>
+  );
+}

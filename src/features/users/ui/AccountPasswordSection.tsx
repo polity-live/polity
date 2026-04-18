@@ -41,7 +41,7 @@ export function AccountPasswordSection() {
   };
 
   return (
-    <Card>
+    <Card className="border-destructive ring-[3px] ring-destructive/20 dark:ring-destructive/40">
       <CardHeader>
         <div className="flex items-center gap-2">
           <KeyRound className="h-5 w-5" />

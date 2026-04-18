@@ -98,6 +98,16 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
         {group.location && <p className="text-muted-foreground">{group.location}</p>}
       </div>
 
+      {group.image_url && (
+        <div className="mb-8">
+          <img
+            src={group.image_url}
+            alt={group.name ?? 'Group'}
+            className="mx-auto h-64 w-full max-w-4xl rounded-lg object-cover shadow-lg"
+          />
+        </div>
+      )}
+
       {/* Stats Bar with Events and Amendments */}
       <StatsBar
         stats={[

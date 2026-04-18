@@ -9,7 +9,6 @@ import { MeetingInstanceCard } from './MeetingInstanceCard'
 
 interface MeetingListViewProps {
   instances: MeetingInstance[]
-  selectedDate: Date
   isOwner: boolean
   onBook: (instance: MeetingInstance) => void
   onCancel: (instance: MeetingInstance) => void
@@ -50,11 +49,14 @@ function groupByDate(instances: MeetingInstance[]): Map<string, MeetingInstance[
       date.getDate(),
     ).padStart(2, '0')}`
 
-    if (!map.has(key)) {
-      map.set(key, [])
+    const currentInstances = map.get(key)
+
+    if (currentInstances) {
+      currentInstances.push(instance)
+      continue
     }
 
-    map.get(key)!.push(instance)
+    map.set(key, [instance])
   }
 
   return map
@@ -160,7 +162,6 @@ function CompactMeetingCard({
 
 export function MeetingListView({
   instances,
-  selectedDate,
   isOwner,
   onBook,
   onCancel,
@@ -187,17 +188,11 @@ export function MeetingListView({
       <div className="space-y-6">
         {Array.from(grouped.entries()).map(([dateKey, dayInstances]) => {
           const date = new Date(`${dateKey}T00:00:00`)
-          const isCurrentMonth = date.getMonth() === selectedDate.getMonth()
           const isToday = isSameDay(date, new Date())
 
           return (
             <div key={dateKey}>
-              <h3
-                className={cn(
-                  'mb-3 text-sm font-semibold text-muted-foreground',
-                  !isCurrentMonth && 'opacity-70',
-                )}
-              >
+              <h3 className="mb-3 text-sm font-semibold text-muted-foreground">
                 {date.toLocaleDateString(locale, {
                   weekday: 'long',
                   day: 'numeric',

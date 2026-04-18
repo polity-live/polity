@@ -22,6 +22,7 @@ import {
 export type ContentType =
   | 'group'
   | 'event'
+  | 'meetup'
   | 'amendment'
   | 'vote'
   | 'election'
@@ -58,6 +59,14 @@ export const CONTENT_TYPE_CONFIG: Record<ContentType, ContentTypeConfig> = {
     gradientDark: 'dark:from-orange-900/40 dark:to-yellow-900/50',
     accentColor: 'text-amber-600 dark:text-amber-400',
     borderColor: 'border-amber-500',
+  },
+  meetup: {
+    icon: Video,
+    labelKey: 'features.timeline.contentTypes.meetup',
+    gradient: 'from-cyan-100 to-teal-100',
+    gradientDark: 'dark:from-cyan-900/40 dark:to-teal-900/50',
+    accentColor: 'text-cyan-700 dark:text-cyan-300',
+    borderColor: 'border-cyan-500',
   },
   amendment: {
     icon: ScrollText,
@@ -155,6 +164,7 @@ export function getContentTypeGradient(type: ContentType): string {
 export const CONTENT_TYPE_LABELS: Record<ContentType, string> = {
   group: 'features.timeline.contentTypes.group',
   event: 'features.timeline.contentTypes.event',
+  meetup: 'features.timeline.contentTypes.meetup',
   amendment: 'features.timeline.contentTypes.amendment',
   vote: 'features.timeline.contentTypes.vote',
   election: 'features.timeline.contentTypes.election',

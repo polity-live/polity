@@ -79,6 +79,7 @@ export const timelineTranslations = {
   contentTypes: {
     group: 'Gruppe',
     event: 'Veranstaltung',
+    meetup: 'Treffen',
     amendment: 'Antrag',
     vote: 'Abstimmung',
     election: 'Wahl',
