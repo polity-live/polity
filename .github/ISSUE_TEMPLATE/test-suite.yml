@@ -13,12 +13,6 @@ body:
   attributes:
     label: Description
     value: |
-      ## 🎯 Goal
-      A brief, high-level description of what this test suite should validate.
-
-      ## 📘 Description
-      Explain the feature area, why grouped coverage is needed, and what level of confidence this suite should provide.
-
       ## 🧪 Included Tests
       - [ ] Test 1
       - [ ] Test 2

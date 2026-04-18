@@ -13,12 +13,6 @@ body:
   attributes:
     label: Description
     value: |
-      ## 🎯 Goal
-      A brief description of the exact behavior this test should verify.
-
-      ## 📘 Description
-      Explain the scenario, why coverage is needed, and whether this test covers a bug, regression, or new functionality.
-
       ## 🔁 Steps / Scenario
       1. ...
       2. ...
