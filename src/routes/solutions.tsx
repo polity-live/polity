@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { PublicSiteFooter } from '@/features/shared/ui/PublicSiteFooter'
 import { Button } from '@/features/shared/ui/ui/button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/features/shared/ui/ui/card'
 import { useTranslation } from '@/features/shared/hooks/use-translation'
@@ -68,6 +69,8 @@ function SolutionsPage() {
           </Button>
         </div>
       </section>
+
+      <PublicSiteFooter />
     </div>
   )
 }

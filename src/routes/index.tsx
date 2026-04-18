@@ -8,6 +8,7 @@ import {
   CardDescription,
   CardContent,
 } from '@/features/shared/ui/ui/card';
+import { PublicSiteFooter } from '@/features/shared/ui/PublicSiteFooter';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useAuth } from '@/providers/auth-provider';
 import { useZeroReady } from '@/providers/zero-provider';
@@ -72,6 +73,23 @@ function HomePage() {
     <div className="flex min-h-screen flex-col">
       {/* Hero */}
       <section className="from-primary/5 to-background flex flex-col items-center justify-center gap-6 bg-gradient-to-b px-4 py-24 text-center">
+        <div className="inline-flex items-center gap-4 rounded-full border bg-background/80 px-5 py-3 shadow-sm backdrop-blur-sm">
+          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-950 shadow-sm ring-1 ring-zinc-950/10">
+            <img
+              src="/apple-touch-icon.png"
+              alt="Polity logo"
+              width={40}
+              height={40}
+              className="h-10 w-10 rounded-xl"
+            />
+          </span>
+          <div className="text-left">
+            <p className="text-sm font-medium uppercase tracking-[0.3em] text-muted-foreground">
+              Polity
+            </p>
+            <p className="text-lg font-semibold tracking-tight">Collaborative civic software</p>
+          </div>
+        </div>
         <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
           {t('pages.home.hero.title')}
         </h1>
@@ -117,6 +135,8 @@ function HomePage() {
           ))}
         </div>
       </section>
+
+      <PublicSiteFooter />
     </div>
   );
 }
