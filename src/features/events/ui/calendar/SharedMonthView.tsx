@@ -1,16 +1,15 @@
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
-import { useNavigate } from '@tanstack/react-router';
 import { cn } from '@/features/shared/utils/utils';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { CalendarEvent } from '@/features/events/hooks/useCalendarView';
-import { getBaseEventId } from '@/features/calendar/logic/eventIdUtils';
 import { MapPin } from 'lucide-react';
 
 interface SharedMonthViewProps {
   selectedDate: Date;
   onDateSelect: (date: Date) => void;
   events: CalendarEvent[];
+  onEventSelect: (event: CalendarEvent) => void;
 }
 
 function isSameDay(d1: Date | string | number, d2: Date): boolean {
@@ -65,9 +64,13 @@ function getMonthGrid(selectedDate: Date): (Date | null)[][] {
 const WEEKDAY_LABELS_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const WEEKDAY_LABELS_DE = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 
-export function SharedMonthView({ selectedDate, onDateSelect, events }: SharedMonthViewProps) {
-  const navigate = useNavigate();
-  const { t, language } = useTranslation();
+export function SharedMonthView({
+  selectedDate,
+  onDateSelect,
+  events,
+  onEventSelect,
+}: SharedMonthViewProps) {
+  const { language } = useTranslation();
   const weeks = getMonthGrid(selectedDate);
   const today = new Date();
   const weekdayLabels = language === 'de' ? WEEKDAY_LABELS_DE : WEEKDAY_LABELS_EN;
@@ -137,12 +140,7 @@ export function SharedMonthView({ selectedDate, onDateSelect, events }: SharedMo
                           )}
                           onClick={e => {
                             e.stopPropagation();
-                            const baseEventId = getBaseEventId(event.id);
-                            if (event.isMeeting) {
-                              navigate({ to: `/meet/${baseEventId}` });
-                            } else {
-                              navigate({ to: `/event/${baseEventId}` });
-                            }
+                            onEventSelect(event);
                           }}
                         >
                           <p className="truncate font-medium">

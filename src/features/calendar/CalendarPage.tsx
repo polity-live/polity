@@ -10,6 +10,7 @@ import { SharedCalendarHeader } from '@/features/events/ui/calendar/SharedCalend
 import { CalendarViewContainer } from '@/features/events/ui/calendar/CalendarViewContainer';
 import { CalendarExportButton } from '@/features/events/ui/calendar/CalendarExportButton';
 import { CalendarSearchFilter } from '@/features/events/ui/calendar/CalendarSearchFilter';
+import { CalendarItemDetailsDialog } from './ui/CalendarItemDetailsDialog';
 
 export default function CalendarPage() {
   const cp = useCalendarPage();
@@ -62,6 +63,13 @@ export default function CalendarPage() {
           events={cp.filteredEvents}
           allEvents={cp.events}
           onDateSelect={cp.setSelectedDate}
+          onEventSelect={cp.selectItem}
+        />
+
+        <CalendarItemDetailsDialog
+          item={cp.selectedItem}
+          open={cp.selectedItem !== null}
+          onOpenChange={cp.handleDetailsOpenChange}
         />
       </PageWrapper>
     </AuthGuard>

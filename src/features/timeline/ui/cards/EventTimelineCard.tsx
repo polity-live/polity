@@ -49,6 +49,10 @@ export interface EventTimelineCardProps {
     /** Whether user is subscribed to this event */
     isSubscribed?: boolean;
   };
+  /** Optional card destination override */
+  href?: string;
+  /** Optional card selection handler, used when the card should not navigate directly */
+  onSelect?: () => void;
   /** Called when user requests participation */
   onRequestParticipation?: () => void;
   /** Called when user leaves event */
@@ -159,6 +163,8 @@ function buildLocationDisplay(location?: string, city?: string, postcode?: strin
  */
 export function EventTimelineCard({
   event,
+  href,
+  onSelect,
   onRequestParticipation,
   onLeave,
   onAcceptInvitation,
@@ -179,6 +185,7 @@ export function EventTimelineCard({
 
   const locationDisplay = buildLocationDisplay(event.location, event.city, event.postcode);
   const eventStyle = CONTENT_TYPE_CONFIG.event;
+  const eventHref = href ?? (onSelect ? undefined : `/event/${event.id}`);
 
   const resolvedParticipationStatus = event.participationStatus ?? participation.status;
   const isParticipant =
@@ -233,11 +240,16 @@ export function EventTimelineCard({
   ];
 
   return (
-    <TimelineCardBase contentType="event" className={className} href={`/event/${event.id}`}>
+    <TimelineCardBase
+      contentType="event"
+      className={className}
+      onClick={onSelect}
+      href={eventHref}
+    >
       <TimelineCardHeader
         contentType="event"
         title={event.title}
-        href={`/event/${event.id}`}
+        href={eventHref}
         subtitle={event.organizerName}
         subtitleHref={event.groupId ? `/group/${event.groupId}` : undefined}
         badge={

@@ -10,6 +10,7 @@ import { MeetupTimelineCard } from '@/features/timeline/ui/cards/MeetupTimelineC
 interface SharedListViewProps {
   events: CalendarEvent[];
   selectedDate: Date;
+  onEventSelect: (event: CalendarEvent) => void;
 }
 
 function groupByDate(events: CalendarEvent[]): Map<string, CalendarEvent[]> {
@@ -66,7 +67,7 @@ function toMeetupEvent(event: CalendarEvent) {
   };
 }
 
-export function SharedListView({ events }: SharedListViewProps) {
+export function SharedListView({ events, onEventSelect }: SharedListViewProps) {
   const { t, language } = useTranslation();
   const grouped = groupByDate(events);
 
@@ -105,19 +106,23 @@ export function SharedListView({ events }: SharedListViewProps) {
               </h3>
               <div className="space-y-3">
                 {dayEvents.map(event => {
-                  const baseEventId = getBaseEventId(event.id);
-
                   if (event.isMeeting) {
                     return (
                       <MeetupTimelineCard
                         key={event.id}
                         meetup={toMeetupEvent(event)}
-                        href={`/meet/${baseEventId}`}
+                        onSelect={() => onEventSelect(event)}
                       />
                     );
                   }
 
-                  return <EventTimelineCard key={event.id} event={toTimelineEvent(event)} />;
+                  return (
+                    <EventTimelineCard
+                      key={event.id}
+                      event={toTimelineEvent(event)}
+                      onSelect={() => onEventSelect(event)}
+                    />
+                  );
                 })}
               </div>
             </div>

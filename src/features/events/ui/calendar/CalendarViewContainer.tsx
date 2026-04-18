@@ -9,6 +9,7 @@ interface CalendarViewContainerProps {
   events: CalendarEvent[];
   allEvents: CalendarEvent[];
   onDateSelect: (date: Date) => void;
+  onEventSelect: (event: CalendarEvent) => void;
 }
 
 export function CalendarViewContainer({
@@ -17,13 +18,14 @@ export function CalendarViewContainer({
   events,
   allEvents,
   onDateSelect,
+  onEventSelect,
 }: CalendarViewContainerProps) {
   if (viewMode === 'list') {
-    return <SharedListView events={events} selectedDate={selectedDate} />;
+    return <SharedListView events={events} selectedDate={selectedDate} onEventSelect={onEventSelect} />;
   }
 
   if (viewMode === 'week') {
-    return <SharedWeekView selectedDate={selectedDate} events={allEvents} />;
+    return <SharedWeekView selectedDate={selectedDate} events={allEvents} onEventSelect={onEventSelect} />;
   }
 
   return (
@@ -31,6 +33,7 @@ export function CalendarViewContainer({
       selectedDate={selectedDate}
       onDateSelect={onDateSelect}
       events={allEvents}
+      onEventSelect={onEventSelect}
     />
   );
 }

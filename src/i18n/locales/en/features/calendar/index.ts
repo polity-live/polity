@@ -41,6 +41,9 @@ export const calendarTranslations = {
     export: 'Export Calendar',
     sync: 'Sync with Calendar',
   },
+  details: {
+    openEventWiki: 'Open event wiki',
+  },
   viewEvent: 'View Event',
   dayView: {
     eventsFor: 'Events for {{date}}',

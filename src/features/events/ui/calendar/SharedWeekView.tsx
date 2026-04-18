@@ -1,15 +1,14 @@
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
-import { useNavigate } from '@tanstack/react-router';
 import { cn } from '@/features/shared/utils/utils';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { CalendarEvent } from '@/features/events/hooks/useCalendarView';
-import { getBaseEventId } from '@/features/calendar/logic/eventIdUtils';
 import { MapPin } from 'lucide-react';
 
 interface SharedWeekViewProps {
   selectedDate: Date;
   events: CalendarEvent[];
+  onEventSelect: (event: CalendarEvent) => void;
 }
 
 function getWeekDays(selectedDate: Date): Date[] {
@@ -39,8 +38,7 @@ function formatTime(date: string | number | Date): string {
   return new Date(date).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
 }
 
-export function SharedWeekView({ selectedDate, events }: SharedWeekViewProps) {
-  const navigate = useNavigate();
+export function SharedWeekView({ selectedDate, events, onEventSelect }: SharedWeekViewProps) {
   const { language } = useTranslation();
   const weekDays = getWeekDays(selectedDate);
 
@@ -83,22 +81,15 @@ export function SharedWeekView({ selectedDate, events }: SharedWeekViewProps) {
                     {dayEvents.map(event => (
                       <div
                         key={event.id}
-                          className={cn(
-                            'cursor-pointer rounded-md border p-1.5 text-xs shadow-sm transition-colors hover:bg-accent',
-                            event.isMeeting && event.isBookedByMe
-                              ? 'border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-950'
-                              : event.isMeeting && event.is_bookable
-                                ? 'border-dashed border-blue-300 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/50'
-                                : 'bg-card',
-                          )}
-                        onClick={() => {
-                          const baseEventId = getBaseEventId(event.id);
-                          if (event.isMeeting) {
-                            navigate({ to: `/meet/${baseEventId}` });
-                          } else {
-                            navigate({ to: `/event/${baseEventId}` });
-                          }
-                        }}
+                        className={cn(
+                          'cursor-pointer rounded-md border p-1.5 text-xs shadow-sm transition-colors hover:bg-accent',
+                          event.isMeeting && event.isBookedByMe
+                            ? 'border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-950'
+                            : event.isMeeting && event.is_bookable
+                              ? 'border-dashed border-blue-300 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/50'
+                              : 'bg-card',
+                        )}
+                        onClick={() => onEventSelect(event)}
                       >
                         <p className="truncate font-medium">
                           {event.isMeeting && '📅 '}
