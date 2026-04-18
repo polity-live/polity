@@ -2,21 +2,21 @@ import { Link, createFileRoute } from '@tanstack/react-router'
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card'
 import { useTranslation } from '@/features/shared/hooks/use-translation'
 
-export const Route = createFileRoute('/privacy')({
-  component: PrivacyPage,
+export const Route = createFileRoute('/terms-and-conditions')({
+  component: TermsPage,
 })
 
 const sectionKeys = [
-  'overview',
-  'dataCollection',
-  'usage',
-  'sharing',
-  'retention',
-  'rights',
-  'security',
+  'scope',
+  'accounts',
+  'acceptableUse',
+  'content',
+  'availability',
+  'liability',
+  'changes',
 ] as const
 
-function PrivacyPage() {
+function TermsPage() {
   const { t, tArray } = useTranslation()
 
   return (
@@ -24,24 +24,24 @@ function PrivacyPage() {
       <section className="bg-gradient-to-b from-primary/5 to-background">
         <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 px-4 py-20 text-center">
           <p className="text-xs font-medium uppercase tracking-[0.3em] text-muted-foreground">
-            {t('pages.privacy.lastUpdated')}
+            {t('pages.terms.lastUpdated')}
           </p>
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">{t('pages.privacy.title')}</h1>
-          <p className="max-w-2xl text-lg text-muted-foreground">{t('pages.privacy.subtitle')}</p>
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">{t('pages.terms.title')}</h1>
+          <p className="max-w-2xl text-lg text-muted-foreground">{t('pages.terms.subtitle')}</p>
         </div>
       </section>
 
       <section className="mx-auto grid w-full max-w-5xl gap-6 px-4 py-16 md:grid-cols-2">
         {sectionKeys.map((key) => {
-          const items = tArray(`pages.privacy.sections.${key}.items`)
+          const items = tArray(`pages.terms.sections.${key}.items`)
 
           return (
             <Card key={key} className="h-full">
               <CardHeader>
-                <CardTitle className="text-xl">{t(`pages.privacy.sections.${key}.title`)}</CardTitle>
+                <CardTitle className="text-xl">{t(`pages.terms.sections.${key}.title`)}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {tArray(`pages.privacy.sections.${key}.paragraphs`).map((paragraph) => (
+                {tArray(`pages.terms.sections.${key}.paragraphs`).map((paragraph) => (
                   <p key={paragraph} className="text-sm leading-6 text-muted-foreground">
                     {paragraph}
                   </p>
@@ -64,34 +64,34 @@ function PrivacyPage() {
 
       <section className="bg-muted/50 px-4 py-16">
         <div className="mx-auto flex max-w-4xl flex-col items-center gap-4 text-center">
-          <h2 className="text-2xl font-bold">{t('pages.privacy.related.title')}</h2>
-          <p className="max-w-2xl text-muted-foreground">{t('pages.privacy.related.description')}</p>
+          <h2 className="text-2xl font-bold">{t('pages.terms.related.title')}</h2>
+          <p className="max-w-2xl text-muted-foreground">{t('pages.terms.related.description')}</p>
           <div className="grid w-full gap-4 md:grid-cols-3">
             <Link
-              to="/terms"
+              to="/privacy-policy"
               className="hover:bg-accent rounded-lg border bg-background p-5 text-left transition-colors"
             >
-              <p className="font-semibold">{t('pages.privacy.related.terms.title')}</p>
+              <p className="font-semibold">{t('pages.terms.related.privacy.title')}</p>
               <p className="mt-2 text-sm text-muted-foreground">
-                {t('pages.privacy.related.terms.description')}
+                {t('pages.terms.related.privacy.description')}
               </p>
             </Link>
             <Link
               to="/imprint"
               className="hover:bg-accent rounded-lg border bg-background p-5 text-left transition-colors"
             >
-              <p className="font-semibold">{t('pages.privacy.related.imprint.title')}</p>
+              <p className="font-semibold">{t('pages.terms.related.imprint.title')}</p>
               <p className="mt-2 text-sm text-muted-foreground">
-                {t('pages.privacy.related.imprint.description')}
+                {t('pages.terms.related.imprint.description')}
               </p>
             </Link>
             <Link
-              to="/support"
+              to="/auth"
               className="hover:bg-accent rounded-lg border bg-background p-5 text-left transition-colors"
             >
-              <p className="font-semibold">{t('pages.privacy.related.support.title')}</p>
+              <p className="font-semibold">{t('pages.terms.related.auth.title')}</p>
               <p className="mt-2 text-sm text-muted-foreground">
-                {t('pages.privacy.related.support.description')}
+                {t('pages.terms.related.auth.description')}
               </p>
             </Link>
           </div>

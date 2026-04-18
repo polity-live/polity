@@ -11,10 +11,10 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
-import { Route as TermsImport } from './routes/terms'
+import { Route as TermsAndConditionsImport } from './routes/terms-and-conditions'
 import { Route as SupportImport } from './routes/support'
 import { Route as SolutionsImport } from './routes/solutions'
-import { Route as PrivacyImport } from './routes/privacy'
+import { Route as PrivacyPolicyImport } from './routes/privacy-policy'
 import { Route as PricingImport } from './routes/pricing'
 import { Route as ImprintImport } from './routes/imprint'
 import { Route as FeaturesImport } from './routes/features'
@@ -108,9 +108,9 @@ import { Route as AuthedGroupIdBlogEntryIdEditorImport } from './routes/_authed/
 
 // Create/Update Routes
 
-const TermsRoute = TermsImport.update({
-  id: '/terms',
-  path: '/terms',
+const TermsAndConditionsRoute = TermsAndConditionsImport.update({
+  id: '/terms-and-conditions',
+  path: '/terms-and-conditions',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -126,9 +126,9 @@ const SolutionsRoute = SolutionsImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const PrivacyRoute = PrivacyImport.update({
-  id: '/privacy',
-  path: '/privacy',
+const PrivacyPolicyRoute = PrivacyPolicyImport.update({
+  id: '/privacy-policy',
+  path: '/privacy-policy',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -750,11 +750,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PricingImport
       parentRoute: typeof rootRoute
     }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyImport
+    '/privacy-policy': {
+      id: '/privacy-policy'
+      path: '/privacy-policy'
+      fullPath: '/privacy-policy'
+      preLoaderRoute: typeof PrivacyPolicyImport
       parentRoute: typeof rootRoute
     }
     '/solutions': {
@@ -771,11 +771,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SupportImport
       parentRoute: typeof rootRoute
     }
-    '/terms': {
-      id: '/terms'
-      path: '/terms'
-      fullPath: '/terms'
-      preLoaderRoute: typeof TermsImport
+    '/terms-and-conditions': {
+      id: '/terms-and-conditions'
+      path: '/terms-and-conditions'
+      fullPath: '/terms-and-conditions'
+      preLoaderRoute: typeof TermsAndConditionsImport
       parentRoute: typeof rootRoute
     }
     '/_authed/calendar': {
@@ -1673,10 +1673,10 @@ export interface FileRoutesByFullPath {
   '/features': typeof FeaturesRoute
   '/imprint': typeof ImprintRoute
   '/pricing': typeof PricingRoute
-  '/privacy': typeof PrivacyRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
   '/solutions': typeof SolutionsRoute
   '/support': typeof SupportRoute
-  '/terms': typeof TermsRoute
+  '/terms-and-conditions': typeof TermsAndConditionsRoute
   '/calendar': typeof AuthedCalendarRoute
   '/home': typeof AuthedHomeRoute
   '/messages': typeof AuthedMessagesRoute
@@ -1768,10 +1768,10 @@ export interface FileRoutesByTo {
   '/features': typeof FeaturesRoute
   '/imprint': typeof ImprintRoute
   '/pricing': typeof PricingRoute
-  '/privacy': typeof PrivacyRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
   '/solutions': typeof SolutionsRoute
   '/support': typeof SupportRoute
-  '/terms': typeof TermsRoute
+  '/terms-and-conditions': typeof TermsAndConditionsRoute
   '/calendar': typeof AuthedCalendarRoute
   '/home': typeof AuthedHomeRoute
   '/messages': typeof AuthedMessagesRoute
@@ -1857,10 +1857,10 @@ export interface FileRoutesById {
   '/features': typeof FeaturesRoute
   '/imprint': typeof ImprintRoute
   '/pricing': typeof PricingRoute
-  '/privacy': typeof PrivacyRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
   '/solutions': typeof SolutionsRoute
   '/support': typeof SupportRoute
-  '/terms': typeof TermsRoute
+  '/terms-and-conditions': typeof TermsAndConditionsRoute
   '/_authed/calendar': typeof AuthedCalendarRoute
   '/_authed/home': typeof AuthedHomeRoute
   '/_authed/messages': typeof AuthedMessagesRoute
@@ -1956,10 +1956,10 @@ export interface FileRouteTypes {
     | '/features'
     | '/imprint'
     | '/pricing'
-    | '/privacy'
+    | '/privacy-policy'
     | '/solutions'
     | '/support'
-    | '/terms'
+    | '/terms-and-conditions'
     | '/calendar'
     | '/home'
     | '/messages'
@@ -2050,10 +2050,10 @@ export interface FileRouteTypes {
     | '/features'
     | '/imprint'
     | '/pricing'
-    | '/privacy'
+    | '/privacy-policy'
     | '/solutions'
     | '/support'
-    | '/terms'
+    | '/terms-and-conditions'
     | '/calendar'
     | '/home'
     | '/messages'
@@ -2137,10 +2137,10 @@ export interface FileRouteTypes {
     | '/features'
     | '/imprint'
     | '/pricing'
-    | '/privacy'
+    | '/privacy-policy'
     | '/solutions'
     | '/support'
-    | '/terms'
+    | '/terms-and-conditions'
     | '/_authed/calendar'
     | '/_authed/home'
     | '/_authed/messages'
@@ -2235,10 +2235,10 @@ export interface RootRouteChildren {
   FeaturesRoute: typeof FeaturesRoute
   ImprintRoute: typeof ImprintRoute
   PricingRoute: typeof PricingRoute
-  PrivacyRoute: typeof PrivacyRoute
+  PrivacyPolicyRoute: typeof PrivacyPolicyRoute
   SolutionsRoute: typeof SolutionsRoute
   SupportRoute: typeof SupportRoute
-  TermsRoute: typeof TermsRoute
+  TermsAndConditionsRoute: typeof TermsAndConditionsRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -2250,10 +2250,10 @@ const rootRouteChildren: RootRouteChildren = {
   FeaturesRoute: FeaturesRoute,
   ImprintRoute: ImprintRoute,
   PricingRoute: PricingRoute,
-  PrivacyRoute: PrivacyRoute,
+  PrivacyPolicyRoute: PrivacyPolicyRoute,
   SolutionsRoute: SolutionsRoute,
   SupportRoute: SupportRoute,
-  TermsRoute: TermsRoute,
+  TermsAndConditionsRoute: TermsAndConditionsRoute,
 }
 
 export const routeTree = rootRoute
@@ -2274,10 +2274,10 @@ export const routeTree = rootRoute
         "/features",
         "/imprint",
         "/pricing",
-        "/privacy",
+        "/privacy-policy",
         "/solutions",
         "/support",
-        "/terms"
+        "/terms-and-conditions"
       ]
     },
     "/": {
@@ -2340,8 +2340,8 @@ export const routeTree = rootRoute
     "/pricing": {
       "filePath": "pricing.tsx"
     },
-    "/privacy": {
-      "filePath": "privacy.tsx"
+    "/privacy-policy": {
+      "filePath": "privacy-policy.tsx"
     },
     "/solutions": {
       "filePath": "solutions.tsx"
@@ -2349,8 +2349,8 @@ export const routeTree = rootRoute
     "/support": {
       "filePath": "support.tsx"
     },
-    "/terms": {
-      "filePath": "terms.tsx"
+    "/terms-and-conditions": {
+      "filePath": "terms-and-conditions.tsx"
     },
     "/_authed/calendar": {
       "filePath": "_authed/calendar.tsx",
