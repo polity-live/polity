@@ -15,6 +15,9 @@ import { pricingPageTranslations } from './pricing';
 import { featuresPageTranslations } from './features';
 import { docsPageTranslations } from './docs';
 import { supportPageTranslations } from './support';
+import { imprintPageTranslations } from './imprint';
+import { privacyPageTranslations } from './privacy';
+import { termsPageTranslations } from './terms';
 import { editorPageTranslations } from './editor';
 import { meetPageTranslations } from './meet';
 import { statementPageTranslations } from './statement';
@@ -45,6 +48,9 @@ export const pagesTranslations = {
   features: featuresPageTranslations,
   docs: docsPageTranslations,
   support: supportPageTranslations,
+  imprint: imprintPageTranslations,
+  privacy: privacyPageTranslations,
+  terms: termsPageTranslations,
   editor: editorPageTranslations,
   meet: meetPageTranslations,
   statement: statementPageTranslations,

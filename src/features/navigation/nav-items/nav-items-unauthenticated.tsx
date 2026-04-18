@@ -53,6 +53,13 @@ export const createNavItemsUnauthenticated = (
       onClick: () => navigate({ to: '/support' }),
     },
     {
+      id: 'imprint',
+      icon: 'FileText',
+      label: t ? t('navigation.primary.imprint') : 'Imprint',
+      href: '/imprint',
+      onClick: () => navigate({ to: '/imprint' }),
+    },
+    {
       id: 'auth',
       icon: 'User',
       label: 'Login',
@@ -92,5 +99,6 @@ export const navItemsUnauthenticated: NavigationItem[] = [
   { id: 'docs', icon: 'BookOpen', label: 'Docs', href: '/docs' },
   { id: 'pricing', icon: 'CreditCard', label: 'Pricing', href: '/pricing' },
   { id: 'support', icon: 'Heart', label: 'Support', href: '/support' },
+  { id: 'imprint', icon: 'FileText', label: 'Imprint', href: '/imprint' },
   { id: 'auth', icon: 'User', label: 'Login', href: '/auth' },
 ];

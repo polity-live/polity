@@ -6,6 +6,7 @@ export const navigationTranslations = {
     docs: 'Docs',
     pricing: 'Preise',
     support: 'Unterstützen',
+    imprint: 'Impressum',
     create: 'Erstellen',
     search: 'Suchen',
     dashboard: 'Dashboard',

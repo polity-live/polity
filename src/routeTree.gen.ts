@@ -11,9 +11,12 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as TermsImport } from './routes/terms'
 import { Route as SupportImport } from './routes/support'
 import { Route as SolutionsImport } from './routes/solutions'
+import { Route as PrivacyImport } from './routes/privacy'
 import { Route as PricingImport } from './routes/pricing'
+import { Route as ImprintImport } from './routes/imprint'
 import { Route as FeaturesImport } from './routes/features'
 import { Route as DocsImport } from './routes/docs'
 import { Route as AuthImport } from './routes/auth'
@@ -105,6 +108,12 @@ import { Route as AuthedGroupIdBlogEntryIdEditorImport } from './routes/_authed/
 
 // Create/Update Routes
 
+const TermsRoute = TermsImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRoute,
+} as any)
+
 const SupportRoute = SupportImport.update({
   id: '/support',
   path: '/support',
@@ -117,9 +126,21 @@ const SolutionsRoute = SolutionsImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
+const PrivacyRoute = PrivacyImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRoute,
+} as any)
+
 const PricingRoute = PricingImport.update({
   id: '/pricing',
   path: '/pricing',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const ImprintRoute = ImprintImport.update({
+  id: '/imprint',
+  path: '/imprint',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -715,11 +736,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FeaturesImport
       parentRoute: typeof rootRoute
     }
+    '/imprint': {
+      id: '/imprint'
+      path: '/imprint'
+      fullPath: '/imprint'
+      preLoaderRoute: typeof ImprintImport
+      parentRoute: typeof rootRoute
+    }
     '/pricing': {
       id: '/pricing'
       path: '/pricing'
       fullPath: '/pricing'
       preLoaderRoute: typeof PricingImport
+      parentRoute: typeof rootRoute
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyImport
       parentRoute: typeof rootRoute
     }
     '/solutions': {
@@ -734,6 +769,13 @@ declare module '@tanstack/react-router' {
       path: '/support'
       fullPath: '/support'
       preLoaderRoute: typeof SupportImport
+      parentRoute: typeof rootRoute
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsImport
       parentRoute: typeof rootRoute
     }
     '/_authed/calendar': {
@@ -1629,9 +1671,12 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRouteWithChildren
   '/docs': typeof DocsRouteWithChildren
   '/features': typeof FeaturesRoute
+  '/imprint': typeof ImprintRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
   '/solutions': typeof SolutionsRoute
   '/support': typeof SupportRoute
+  '/terms': typeof TermsRoute
   '/calendar': typeof AuthedCalendarRoute
   '/home': typeof AuthedHomeRoute
   '/messages': typeof AuthedMessagesRoute
@@ -1721,9 +1766,12 @@ export interface FileRoutesByTo {
   '/$': typeof SplatRoute
   '': typeof AuthedRouteWithChildren
   '/features': typeof FeaturesRoute
+  '/imprint': typeof ImprintRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
   '/solutions': typeof SolutionsRoute
   '/support': typeof SupportRoute
+  '/terms': typeof TermsRoute
   '/calendar': typeof AuthedCalendarRoute
   '/home': typeof AuthedHomeRoute
   '/messages': typeof AuthedMessagesRoute
@@ -1807,9 +1855,12 @@ export interface FileRoutesById {
   '/auth': typeof AuthRouteWithChildren
   '/docs': typeof DocsRouteWithChildren
   '/features': typeof FeaturesRoute
+  '/imprint': typeof ImprintRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
   '/solutions': typeof SolutionsRoute
   '/support': typeof SupportRoute
+  '/terms': typeof TermsRoute
   '/_authed/calendar': typeof AuthedCalendarRoute
   '/_authed/home': typeof AuthedHomeRoute
   '/_authed/messages': typeof AuthedMessagesRoute
@@ -1903,9 +1954,12 @@ export interface FileRouteTypes {
     | '/auth'
     | '/docs'
     | '/features'
+    | '/imprint'
     | '/pricing'
+    | '/privacy'
     | '/solutions'
     | '/support'
+    | '/terms'
     | '/calendar'
     | '/home'
     | '/messages'
@@ -1994,9 +2048,12 @@ export interface FileRouteTypes {
     | '/$'
     | ''
     | '/features'
+    | '/imprint'
     | '/pricing'
+    | '/privacy'
     | '/solutions'
     | '/support'
+    | '/terms'
     | '/calendar'
     | '/home'
     | '/messages'
@@ -2078,9 +2135,12 @@ export interface FileRouteTypes {
     | '/auth'
     | '/docs'
     | '/features'
+    | '/imprint'
     | '/pricing'
+    | '/privacy'
     | '/solutions'
     | '/support'
+    | '/terms'
     | '/_authed/calendar'
     | '/_authed/home'
     | '/_authed/messages'
@@ -2173,9 +2233,12 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRouteWithChildren
   DocsRoute: typeof DocsRouteWithChildren
   FeaturesRoute: typeof FeaturesRoute
+  ImprintRoute: typeof ImprintRoute
   PricingRoute: typeof PricingRoute
+  PrivacyRoute: typeof PrivacyRoute
   SolutionsRoute: typeof SolutionsRoute
   SupportRoute: typeof SupportRoute
+  TermsRoute: typeof TermsRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -2185,9 +2248,12 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRouteWithChildren,
   DocsRoute: DocsRouteWithChildren,
   FeaturesRoute: FeaturesRoute,
+  ImprintRoute: ImprintRoute,
   PricingRoute: PricingRoute,
+  PrivacyRoute: PrivacyRoute,
   SolutionsRoute: SolutionsRoute,
   SupportRoute: SupportRoute,
+  TermsRoute: TermsRoute,
 }
 
 export const routeTree = rootRoute
@@ -2206,9 +2272,12 @@ export const routeTree = rootRoute
         "/auth",
         "/docs",
         "/features",
+        "/imprint",
         "/pricing",
+        "/privacy",
         "/solutions",
-        "/support"
+        "/support",
+        "/terms"
       ]
     },
     "/": {
@@ -2265,14 +2334,23 @@ export const routeTree = rootRoute
     "/features": {
       "filePath": "features.tsx"
     },
+    "/imprint": {
+      "filePath": "imprint.tsx"
+    },
     "/pricing": {
       "filePath": "pricing.tsx"
+    },
+    "/privacy": {
+      "filePath": "privacy.tsx"
     },
     "/solutions": {
       "filePath": "solutions.tsx"
     },
     "/support": {
       "filePath": "support.tsx"
+    },
+    "/terms": {
+      "filePath": "terms.tsx"
     },
     "/_authed/calendar": {
       "filePath": "_authed/calendar.tsx",
