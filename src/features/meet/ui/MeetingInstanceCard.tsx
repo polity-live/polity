@@ -1,8 +1,9 @@
 import { Button } from '@/features/shared/ui/ui/button'
 import { Badge } from '@/features/shared/ui/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar'
-import { Clock, Users, Trash2, Video } from 'lucide-react'
+import { Clock, ExternalLink, MapPin, Trash2, Users, Video } from 'lucide-react'
 import { cn } from '@/features/shared/utils/utils'
+import { useTranslation } from '@/features/shared/hooks/use-translation'
 import { formatTime } from '@/features/meet/logic/date-helpers.ts'
 import type { MeetingInstance } from '../hooks/useMeetPage'
 
@@ -12,6 +13,7 @@ interface MeetingInstanceCardProps {
   onBook: (instance: MeetingInstance) => void
   onCancel: (instance: MeetingInstance) => void
   onDelete: (eventId: string) => void
+  onSelect?: (instance: MeetingInstance) => void
 }
 
 export function MeetingInstanceCard({
@@ -20,21 +22,26 @@ export function MeetingInstanceCard({
   onBook,
   onCancel,
   onDelete,
+  onSelect,
 }: MeetingInstanceCardProps) {
+  const { t } = useTranslation()
   const isPast = instance.endDate < Date.now()
   const isFull = instance.bookingCount >= instance.maxBookings
   const isAvailable = instance.isBookable && !isPast && !isFull
   const canBook = !isOwner && isAvailable && !instance.isBookedByMe
   const canCancel = !isOwner && instance.isBookedByMe && !isPast
+  const onlineUrl = instance.locationUrl ?? instance.streamUrl
 
   return (
     <div
       className={cn(
         'rounded-lg border p-4 transition-colors',
         isPast && 'opacity-50',
-        instance.isBookedByMe && 'border-green-500/50 bg-green-500/5',
-        canBook && 'hover:border-primary hover:bg-accent',
+        instance.isBookedByMe && 'border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-950',
+        canBook && 'border-dashed border-blue-300 bg-blue-50/50 hover:border-primary hover:bg-accent dark:border-blue-800 dark:bg-blue-950/50',
+        onSelect && 'cursor-pointer hover:border-primary hover:bg-accent/40',
       )}
+      onClick={() => onSelect?.(instance)}
     >
       <div className="flex items-start justify-between">
         <div className="space-y-2">
@@ -43,16 +50,21 @@ export function MeetingInstanceCard({
             {instance.meetingType === 'public-meeting' && (
               <Badge variant="secondary">
                 <Users className="mr-1 h-3 w-3" />
-                Public
+                Public offer
               </Badge>
             )}
             {instance.isBookedByMe && (
               <Badge className="bg-green-500/15 text-green-700 dark:text-green-400">
-                Booked
+                {t('features.calendar.meeting.booked')}
               </Badge>
             )}
             {isFull && !instance.isBookedByMe && (
-              <Badge variant="outline">Fully Booked</Badge>
+              <Badge variant="outline">{t('features.calendar.meeting.fullyBooked')}</Badge>
+            )}
+            {!instance.isBookedByMe && !isFull && !isPast && instance.isBookable && (
+              <Badge variant="outline" className="border-dashed">
+                {t('features.calendar.meeting.available')}
+              </Badge>
             )}
             {isPast && <Badge variant="secondary">Past</Badge>}
           </div>
@@ -66,10 +78,26 @@ export function MeetingInstanceCard({
             {formatTime(instance.startDate)} - {formatTime(instance.endDate)}
           </div>
 
-          {instance.streamUrl && (
+          {instance.locationName && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <MapPin className="h-4 w-4" />
+              {instance.locationName}
+            </div>
+          )}
+
+          {onlineUrl && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Video className="h-4 w-4" />
-              Video call available
+              <a
+                href={onlineUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 underline-offset-4 hover:text-foreground hover:underline"
+                onClick={event => event.stopPropagation()}
+              >
+                Open online meeting link
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
             </div>
           )}
 
@@ -104,20 +132,29 @@ export function MeetingInstanceCard({
 
         <div className="flex gap-2">
           {canBook && (
-            <Button size="sm" onClick={() => onBook(instance)}>
-              Book
+            <Button size="sm" onClick={event => {
+              event.stopPropagation()
+              onBook(instance)
+            }}>
+              Book meeting
             </Button>
           )}
           {canCancel && (
-            <Button size="sm" variant="outline" onClick={() => onCancel(instance)}>
-              Cancel
+            <Button size="sm" variant="outline" onClick={event => {
+              event.stopPropagation()
+              onCancel(instance)
+            }}>
+              Cancel booking
             </Button>
           )}
           {isOwner && !isPast && !instance.isRecurringInstance && (
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => onDelete(instance.parentEventId)}
+              onClick={event => {
+                event.stopPropagation()
+                onDelete(instance.parentEventId)
+              }}
             >
               <Trash2 className="h-4 w-4" />
             </Button>
