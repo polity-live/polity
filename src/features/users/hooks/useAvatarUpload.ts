@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { toast } from 'sonner';
 import { useUserActions } from '@/zero/users/useUserActions';
 import { createClient } from '@/lib/supabase/client';
@@ -10,22 +9,17 @@ export interface UseAvatarUploadOptions {
 }
 
 export interface UseAvatarUploadReturn {
-  isUploading: boolean;
-  handleAvatarUpload: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
+  uploadAvatar: (file: File) => Promise<string>;
 }
 
 export function useAvatarUpload({ userId, onSuccess }: UseAvatarUploadOptions): UseAvatarUploadReturn {
   const userActions = useUserActions();
-  const [isUploading, setIsUploading] = useState(false);
 
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !userId) return;
+  const uploadAvatar = async (file: File) => {
+    if (!file || !userId) {
+      throw new Error('Avatar uploads require a file and userId.');
+    }
 
-    // Reset file input so picking the same file again triggers onChange
-    const input = e.target;
-
-    setIsUploading(true);
     try {
       const supabase = createClient();
       const avatarPath = `${userId}/avatar`;
@@ -45,17 +39,15 @@ export function useAvatarUpload({ userId, onSuccess }: UseAvatarUploadOptions): 
       });
 
       onSuccess?.(avatarUrl);
+      return avatarUrl;
     } catch (error) {
       toast.error('Failed to upload avatar');
       console.error('Avatar upload error:', error);
-    } finally {
-      setIsUploading(false);
-      input.value = '';
+      throw error;
     }
   };
 
   return {
-    isUploading,
-    handleAvatarUpload,
+    uploadAvatar,
   };
 }

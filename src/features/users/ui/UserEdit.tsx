@@ -18,7 +18,7 @@ export function UserEdit({ userId }: UserEditProps) {
     user,
   });
 
-  const { isUploading, handleAvatarUpload } = useAvatarUpload({
+  const { uploadAvatar } = useAvatarUpload({
     userId,
     onSuccess: (avatarUrl) => updateField('avatar', avatarUrl),
   });
@@ -46,7 +46,6 @@ export function UserEdit({ userId }: UserEditProps) {
     <UserProfileEditForm
       formData={formData}
       isSubmitting={isSubmitting}
-      isUploading={isUploading}
       userId={userId}
       activeSubscriptionAmount={getActivePlanAmount()}
       isCheckoutLoading={isCheckoutLoading}
@@ -54,7 +53,7 @@ export function UserEdit({ userId }: UserEditProps) {
       hasCustomPlan={hasCustomPlan()}
       onSubmit={handleSubmit}
       onCancel={() => window.history.back()}
-      onAvatarUpload={handleAvatarUpload}
+      onAvatarUpload={uploadAvatar}
       onFieldChange={updateField}
       onSubscribe={handleSubscribe}
       onCustomAmount={handleCustomAmount}

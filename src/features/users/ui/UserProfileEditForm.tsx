@@ -2,7 +2,7 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { Loader2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
-import { AvatarUploadSection } from './AvatarUploadSection';
+import { ImageUpload } from '@/features/file-upload/ui/ImageUpload';
 import { BasicInformationSection } from './BasicInformationSection';
 import { AboutSection } from './AboutSection';
 import { ContactInformationSection } from './ContactInformationSection';
@@ -23,7 +23,6 @@ import type { UserProfileFormData } from '../hooks/useUserProfileForm';
 interface UserProfileEditFormProps {
   formData: UserProfileFormData;
   isSubmitting: boolean;
-  isUploading: boolean;
   userId: string;
   activeSubscriptionAmount: number;
   isCheckoutLoading: boolean;
@@ -31,7 +30,7 @@ interface UserProfileEditFormProps {
   hasCustomPlan: boolean;
   onSubmit: (e: React.FormEvent) => void;
   onCancel: () => void;
-  onAvatarUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onAvatarUpload: (file: File) => Promise<string>;
   onFieldChange: <K extends keyof UserProfileFormData>(
     field: K,
     value: UserProfileFormData[K]
@@ -44,7 +43,6 @@ interface UserProfileEditFormProps {
 export function UserProfileEditForm({
   formData,
   isSubmitting,
-  isUploading,
   userId,
   activeSubscriptionAmount,
   isCheckoutLoading,
@@ -87,11 +85,15 @@ export function UserProfileEditForm({
         {/* Basic Information Tab */}
         <TabsContent value="basic-info">
           <form onSubmit={onSubmit} className="space-y-6">
-            <AvatarUploadSection
-              avatar={formData.avatar}
-              userName={[formData.firstName, formData.lastName].filter(Boolean).join(' ')}
-              isUploading={isUploading}
-              onUpload={onAvatarUpload}
+            <ImageUpload
+              currentImage={formData.avatar}
+              onImageChange={url => onFieldChange('avatar', url)}
+              onFileUpload={onAvatarUpload}
+              label={t('pages.user.settingsForm.avatar.title', 'Profile image')}
+              description={t(
+                'pages.user.settingsForm.avatar.description',
+                'Upload a profile image or provide a URL.'
+              )}
             />
 
             <BasicInformationSection

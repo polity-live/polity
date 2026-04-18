@@ -6,26 +6,16 @@ import { navigateToProfileEdit } from '../helpers/navigation';
 
 test.describe('Avatar Management', () => {
   test('Access Avatar Upload Interface', async ({ authenticatedPage: page }) => {
-    // 1. Use loginAsTestUser(page) to authenticate
-    // 2. Use navigateToProfileEdit(page) helper to open edit page
     await navigateToProfileEdit(page);
 
-    // 3. Locate avatar upload label
-    const avatarLabel = page.locator('label[for="avatar-upload"]');
-    const labelCount = await avatarLabel.count();
+    const uploadCard = page.locator('[data-testid="image-upload"]').first();
+    const dropzone = page.locator('[data-testid="image-upload-dropzone"]').first();
+    const fileInput = page.locator('[data-testid="image-upload-input"]').first();
 
-    // 4. If label visible, verify it is displayed
-    if (labelCount > 0) {
-      await expect(avatarLabel).toBeVisible();
-    }
-
-    // 5. Locate file input
-    const fileInput = page.locator('input[type="file"][accept*="image"]');
-
-    // 6. Verify file input is attached to DOM
+    await expect(uploadCard).toBeVisible();
+    await expect(dropzone).toBeVisible();
     await expect(fileInput).toBeAttached();
 
-    // Verify accept attribute includes image types
     const acceptAttr = await fileInput.getAttribute('accept');
     expect(acceptAttr).toMatch(/image/);
   });

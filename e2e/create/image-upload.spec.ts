@@ -3,26 +3,20 @@ import path from 'path';
 
 test.describe('Create Feature', () => {
   test('Image Upload', async ({ authenticatedPage: page }) => {
-    // Navigate to create event page
     await page.goto('/create/event');
 
-    // Fill required fields first
     const titleInput = page.locator('input[name="title"]').first();
     if (await titleInput.isVisible()) {
       await titleInput.fill('Test Event with Image');
     }
 
-    // Navigate to image upload field
     const nextButton = page
       .locator('[data-testid="next-button"]')
       .or(page.locator('button:has-text("Next")'))
       .first();
-    const imageInput = page
-      .locator('input[type="file"]')
-      .or(page.locator('[accept*="image"]'))
-      .first();
+    const imageInput = page.locator('[data-testid="image-upload-input"]').first();
+    const dropzone = page.locator('[data-testid="image-upload-dropzone"]').first();
 
-    // Try to find image upload field
     for (let i = 0; i < 5; i++) {
       if (await imageInput.isVisible()) break;
       if (await nextButton.isVisible()) {
@@ -32,15 +26,14 @@ test.describe('Create Feature', () => {
       }
     }
 
-    // Check for image upload area (might be hidden file input with clickable label)
     if ((await imageInput.isVisible()) || (await imageInput.count()) > 0) {
-      // Create a test image file
+      await expect(dropzone).toBeVisible();
+      await expect(dropzone).toContainText(/drag|drop|browse/i);
+
       const testImagePath = path.join(__dirname, '../fixtures/test-image.jpg');
 
-      // Try to upload image
       try {
         await imageInput.setInputFiles(testImagePath).catch(async () => {
-          // If file doesn't exist, create a buffer
           const buffer = Buffer.from('fake-image-data');
           await imageInput.setInputFiles({
             name: 'test-image.jpg',
@@ -49,14 +42,11 @@ test.describe('Create Feature', () => {
           });
         });
 
-
-
         await page.waitForLoadState('networkidle');
 
-        // Verify image preview displays
         const imagePreview = page
-          .locator('img[src*="blob:"]')
-          .or(page.locator('[data-testid="image-preview"]'))
+          .locator('[data-testid="image-upload-preview"]')
+          .or(page.locator('img[src*="blob:"]'))
           .first();
         const previewVisible = await imagePreview.isVisible().catch(() => false);
 
