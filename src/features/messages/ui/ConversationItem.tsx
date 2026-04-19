@@ -26,7 +26,7 @@ export function ConversationItem({
     <button
       onClick={() => onSelect(conversation.id)}
       className={cn(
-        'flex w-full items-start gap-3 rounded-lg p-3 text-left transition-colors hover:bg-accent',
+        'hover:bg-accent flex w-full items-start gap-3 rounded-lg p-3 text-left transition-colors',
         isSelected && 'bg-accent'
       )}
     >
@@ -35,27 +35,25 @@ export function ConversationItem({
         <AvatarFallback>{display.name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
       </Avatar>
       <div className="min-w-0 flex-1">
-        <div className="mb-1 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1">
-            {conversation.pinned && (
-              <Pin className="h-3.5 w-3.5 flex-shrink-0 text-primary" />
-            )}
+        <div className="mb-1 flex items-start justify-between gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-1">
+            {conversation.pinned && <Pin className="text-primary h-3.5 w-3.5 flex-shrink-0" />}
             <p className="truncate font-semibold">{display.name}</p>
             {display.isGroup && (
-              <Badge variant="secondary" className="ml-1 text-xs">
+              <Badge variant="secondary" className="ml-1 flex-shrink-0 text-xs">
                 {display.participantCount}
               </Badge>
             )}
           </div>
           {lastMessage && (
-            <span className="flex-shrink-0 whitespace-nowrap text-xs text-muted-foreground">
+            <span className="text-muted-foreground flex-shrink-0 pt-0.5 text-xs whitespace-nowrap">
               {formatTime(lastMessage.created_at)}
             </span>
           )}
         </div>
         <div className="flex items-center justify-between gap-2">
           {lastMessage && (
-            <p className="truncate text-sm text-muted-foreground">
+            <p className="text-muted-foreground min-w-0 flex-1 truncate text-sm">
               {(lastMessage.content ?? '').length > 40
                 ? `${(lastMessage.content ?? '').substring(0, 40)}...`
                 : lastMessage.content}
