@@ -3,7 +3,13 @@
 import { useState, useMemo } from 'react';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { Input } from '@/features/shared/ui/ui/input.tsx';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card.tsx';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card.tsx';
 import { Badge } from '@/features/shared/ui/ui/badge.tsx';
 import { Search, Users, MapPin, ArrowRight, ArrowLeft, Check, SkipForward } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
@@ -41,7 +47,7 @@ export function GroupSearchStep({
 
     const term = searchTerm.toLowerCase();
     return groups.filter(
-      (group) =>
+      group =>
         group.name?.toLowerCase().includes(term) ||
         group.description?.toLowerCase().includes(term) ||
         group.location?.toLowerCase().includes(term)
@@ -77,12 +83,12 @@ export function GroupSearchStep({
           </div>
         </div>
         <h2 className="text-2xl font-bold">{t('onboarding.groupStep.title')}</h2>
-        <p className="mt-2 text-muted-foreground">{t('onboarding.groupStep.description')}</p>
+        <p className="text-muted-foreground mt-2">{t('onboarding.groupStep.description')}</p>
       </div>
 
       {/* Search Input */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
         <Input
           placeholder={t('onboarding.groupStep.searchPlaceholder')}
           value={searchTerm}
@@ -95,21 +101,21 @@ export function GroupSearchStep({
       {/* Group Cards */}
       <div className="max-h-[300px] space-y-3 overflow-y-auto pr-1">
         {groupsLoading ? (
-          <div className="py-8 text-center text-muted-foreground">
-            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
+          <div className="text-muted-foreground py-8 text-center">
+            <div className="border-primary mx-auto h-8 w-8 animate-spin rounded-full border-b-2" />
           </div>
         ) : filteredGroups.length === 0 ? (
-          <div className="py-8 text-center text-muted-foreground">
+          <div className="text-muted-foreground py-8 text-center">
             {t('onboarding.groupStep.noResults')}
           </div>
         ) : (
-          filteredGroups.map((group) => (
+          filteredGroups.map(group => (
             <Card
               key={group.id}
               className={cn(
                 'cursor-pointer transition-all hover:shadow-md',
                 selectedGroup?.id === group.id &&
-                  'ring-2 ring-primary ring-offset-2 dark:ring-offset-gray-900'
+                  'border-emerald-500 ring-2 ring-emerald-500/20 ring-offset-2 dark:border-emerald-400 dark:ring-emerald-400/25 dark:ring-offset-gray-900'
               )}
               onClick={() => handleSelectGroup(group)}
             >
@@ -118,8 +124,8 @@ export function GroupSearchStep({
                   <CardTitle className="text-base">{group.name}</CardTitle>
                   <div className="flex items-center gap-2">
                     {selectedGroup?.id === group.id && (
-                      <div className="rounded-full bg-primary p-1">
-                        <Check className="h-3 w-3 text-primary-foreground" />
+                      <div className="rounded-full bg-emerald-500 p-1 dark:bg-emerald-400">
+                        <Check className="h-3 w-3 text-white dark:text-emerald-950" />
                       </div>
                     )}
                     <Badge variant="outline" className="flex-shrink-0">
@@ -136,7 +142,7 @@ export function GroupSearchStep({
               </CardHeader>
               {group.location && (
                 <CardContent className="pt-0">
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <div className="text-muted-foreground flex items-center gap-1 text-xs">
                     <MapPin className="h-3 w-3" />
                     <span className="truncate">{group.location}</span>
                   </div>

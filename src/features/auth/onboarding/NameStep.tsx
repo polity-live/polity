@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { Input } from '@/features/shared/ui/ui/input.tsx';
 import { Label } from '@/features/shared/ui/ui/label.tsx';
-import { Alert, AlertDescription } from '@/features/shared/ui/ui/alert.tsx';
 import { ArrowRight, User } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
+import { cn } from '@/features/shared/utils/utils.ts';
 
 interface NameStepProps {
   firstName: string;
@@ -26,33 +26,43 @@ export function NameStep({
   isLoading,
 }: NameStepProps) {
   const { t } = useTranslation();
-  const [errors, setErrors] = useState<{ firstName?: string; lastName?: string }>({});
+
+  const [firstNameTouched, setFirstNameTouched] = useState(false);
+  const [lastNameTouched, setLastNameTouched] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+
+  const trimmedFirstName = firstName.trim();
+  const trimmedLastName = lastName.trim();
+  const firstNameIsValid = trimmedFirstName.length >= 2 && trimmedFirstName.length <= 50;
+  const lastNameIsValid = trimmedLastName.length >= 2 && trimmedLastName.length <= 50;
+  const isFormValid = firstNameIsValid && lastNameIsValid;
+
+  const firstNameShowError = (firstNameTouched || hasSubmitted) && !firstNameIsValid;
+  const lastNameShowError = (lastNameTouched || hasSubmitted) && !lastNameIsValid;
+  const firstNameShowSuccess = firstNameIsValid;
+  const lastNameShowSuccess = lastNameIsValid;
+
+  const getRequirementText = (value: string) => {
+    const trimmedValue = value.trim();
+
+    if (trimmedValue.length > 50) {
+      return t('onboarding.nameStep.validation.tooLong');
+    }
+
+    return t('onboarding.nameStep.validation.tooShort');
+  };
 
   const validate = (): boolean => {
-    const newErrors: { firstName?: string; lastName?: string } = {};
-
-    if (!firstName.trim()) {
-      newErrors.firstName = t('onboarding.nameStep.validation.required');
-    } else if (firstName.trim().length < 2) {
-      newErrors.firstName = t('onboarding.nameStep.validation.tooShort');
-    } else if (firstName.trim().length > 50) {
-      newErrors.firstName = t('onboarding.nameStep.validation.tooLong');
-    }
-
-    if (!lastName.trim()) {
-      newErrors.lastName = t('onboarding.nameStep.validation.required');
-    } else if (lastName.trim().length < 2) {
-      newErrors.lastName = t('onboarding.nameStep.validation.tooShort');
-    } else if (lastName.trim().length > 50) {
-      newErrors.lastName = t('onboarding.nameStep.validation.tooLong');
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return isFormValid;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    setHasSubmitted(true);
+    setFirstNameTouched(true);
+    setLastNameTouched(true);
+
     if (validate()) {
       onNext();
     }
@@ -80,17 +90,24 @@ export function NameStep({
             value={firstName}
             onChange={e => {
               onFirstNameChange(e.target.value);
-              if (errors.firstName) setErrors(prev => ({ ...prev, firstName: undefined }));
+              setFirstNameTouched(true);
             }}
+            onBlur={() => setFirstNameTouched(true)}
             disabled={isLoading}
-            className={errors.firstName ? 'border-destructive' : ''}
+            autoComplete="given-name"
+            aria-invalid={firstNameShowError}
+            data-valid={firstNameShowSuccess ? 'true' : undefined}
             autoFocus
           />
-          {errors.firstName && (
-            <Alert variant="destructive" className="py-2">
-              <AlertDescription className="text-sm">{errors.firstName}</AlertDescription>
-            </Alert>
-          )}
+          <p
+            className={cn(
+              'text-xs text-muted-foreground',
+              firstNameShowError && 'text-destructive',
+              firstNameShowSuccess && 'text-emerald-600 dark:text-emerald-400'
+            )}
+          >
+            {getRequirementText(firstName)}
+          </p>
         </div>
 
         <div className="space-y-2">
@@ -102,19 +119,26 @@ export function NameStep({
             value={lastName}
             onChange={e => {
               onLastNameChange(e.target.value);
-              if (errors.lastName) setErrors(prev => ({ ...prev, lastName: undefined }));
+              setLastNameTouched(true);
             }}
+            onBlur={() => setLastNameTouched(true)}
             disabled={isLoading}
-            className={errors.lastName ? 'border-destructive' : ''}
+            autoComplete="family-name"
+            aria-invalid={lastNameShowError}
+            data-valid={lastNameShowSuccess ? 'true' : undefined}
           />
-          {errors.lastName && (
-            <Alert variant="destructive" className="py-2">
-              <AlertDescription className="text-sm">{errors.lastName}</AlertDescription>
-            </Alert>
-          )}
+          <p
+            className={cn(
+              'text-xs text-muted-foreground',
+              lastNameShowError && 'text-destructive',
+              lastNameShowSuccess && 'text-emerald-600 dark:text-emerald-400'
+            )}
+          >
+            {getRequirementText(lastName)}
+          </p>
         </div>
 
-        <Button type="submit" className="w-full" disabled={isLoading}>
+        <Button type="submit" className="w-full" disabled={isLoading || !isFormValid}>
           {t('onboarding.nameStep.continue')}
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
