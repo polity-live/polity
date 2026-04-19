@@ -1,7 +1,13 @@
 'use client';
 
 import { Button } from '@/features/shared/ui/ui/button.tsx';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card.tsx';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card.tsx';
 import { Badge } from '@/features/shared/ui/ui/badge.tsx';
 import { Users, MapPin, ArrowLeft, Check, X, Loader2, UserPlus } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
@@ -39,11 +45,11 @@ export function MembershipConfirmStep({
           </div>
         </div>
         <h2 className="text-2xl font-bold">{t('onboarding.confirmStep.title')}</h2>
-        <p className="mt-2 text-muted-foreground">{t('onboarding.confirmStep.description')}</p>
+        <p className="text-muted-foreground mt-2">{t('onboarding.confirmStep.description')}</p>
       </div>
 
       {/* Selected Group Card */}
-      <Card className="border-2 border-primary/20 bg-primary/5">
+      <Card className="border-emerald-500 bg-emerald-50/50 ring-2 ring-emerald-500/20 ring-offset-2 dark:border-emerald-400 dark:bg-emerald-950/20 dark:ring-emerald-400/25 dark:ring-offset-gray-900">
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between gap-2">
             <CardTitle className="text-lg">{group.name}</CardTitle>
@@ -58,7 +64,7 @@ export function MembershipConfirmStep({
         </CardHeader>
         {group.location && (
           <CardContent className="pt-0">
-            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+            <div className="text-muted-foreground flex items-center gap-1 text-sm">
               <MapPin className="h-4 w-4" />
               <span>{group.location}</span>
             </div>
