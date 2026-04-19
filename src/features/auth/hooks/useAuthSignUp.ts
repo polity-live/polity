@@ -15,7 +15,9 @@ interface SignUpResult {
 
 interface UseAuthSignUpReturn {
   isSigningUp: boolean;
+  isSendingMagicLink: boolean;
   signUp: (email: string, password: string) => Promise<SignUpResult>;
+  sendMagicLink: (email: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 /**
@@ -24,7 +26,8 @@ interface UseAuthSignUpReturn {
 export function useAuthSignUp(): UseAuthSignUpReturn {
   const { t } = useTranslation();
   const [isSigningUp, setIsSigningUp] = useState(false);
-  const { signUpWithPassword } = useAuthStore();
+  const [isSendingMagicLink, setIsSendingMagicLink] = useState(false);
+  const { signUpWithPassword, requestMagicCode } = useAuthStore();
 
   const signUp = useCallback(
     async (email: string, password: string): Promise<SignUpResult> => {
@@ -43,15 +46,40 @@ export function useAuthSignUp(): UseAuthSignUpReturn {
 
         return { status: 'authenticated' };
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : t('features.auth.errors.unexpectedError');
+        const errorMessage =
+          error instanceof Error ? error.message : t('features.auth.errors.unexpectedError');
         toast.error(errorMessage);
         return { status: 'error', error: errorMessage };
       } finally {
         setIsSigningUp(false);
       }
     },
-    [signUpWithPassword, t],
+    [signUpWithPassword, t]
   );
 
-  return { isSigningUp, signUp };
+  const sendMagicLink = useCallback(
+    async (email: string): Promise<{ success: boolean; error?: string }> => {
+      setIsSendingMagicLink(true);
+
+      try {
+        const success = await requestMagicCode(email);
+
+        if (!success) {
+          return { success: false, error: t('features.auth.errors.magicLinkFailed') };
+        }
+
+        return { success: true };
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : t('features.auth.errors.unexpectedError');
+        toast.error(errorMessage);
+        return { success: false, error: errorMessage };
+      } finally {
+        setIsSendingMagicLink(false);
+      }
+    },
+    [requestMagicCode, t]
+  );
+
+  return { isSigningUp, isSendingMagicLink, signUp, sendMagicLink };
 }

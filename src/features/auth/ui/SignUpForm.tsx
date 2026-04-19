@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from '@/features/shared/ui/ui/card';
 import { Alert, AlertDescription } from '@/features/shared/ui/ui/alert';
-import { Loader2, UserPlus, ArrowRight, MailCheck } from 'lucide-react';
+import { Loader2, UserPlus, ArrowRight, Mail, MailCheck } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { useAuthSignUp } from '@/features/auth/hooks/useAuthSignUp';
@@ -32,7 +32,7 @@ export function SignUpForm() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { error, clearError } = useAuthStore();
-  const { isSigningUp, signUp } = useAuthSignUp();
+  const { isSigningUp, isSendingMagicLink, signUp, sendMagicLink } = useAuthSignUp();
   const { isRedirecting, continueWithGoogle } = useGoogleAuth();
 
   const [email, setEmail] = useState('');
@@ -119,8 +119,28 @@ export function SignUpForm() {
     await continueWithGoogle('sign-up');
   };
 
+  const handleMagicLink = async () => {
+    setEmailTouched(true);
+
+    if (!trimmedEmail || !emailIsValid) {
+      setLocalError(t('auth.signUp.emailHint'));
+      return;
+    }
+
+    setLocalError(null);
+    clearError();
+
+    const result = await sendMagicLink(trimmedEmail);
+
+    if (result.success) {
+      navigate({ to: '/auth/verify', search: { email: trimmedEmail } });
+    } else {
+      setLocalError(result.error ?? null);
+    }
+  };
+
   const displayError = localError || error;
-  const isLoading = isSigningUp || isRedirecting;
+  const isLoading = isSigningUp || isSendingMagicLink || isRedirecting;
 
   if (pendingConfirmationEmail) {
     return (
@@ -309,6 +329,30 @@ export function SignUpForm() {
               <GoogleIcon className="mr-2 h-5 w-5" />
             )}
             {isRedirecting ? t('auth.signUp.googleLoading') : t('auth.signUp.googleButton')}
+          </Button>
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card text-muted-foreground px-2">
+                {t('auth.signUp.magicLinkAlt')}
+              </span>
+            </div>
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={handleMagicLink}
+            disabled={isLoading || !trimmedEmail || !emailIsValid}
+          >
+            <Mail className="mr-2 h-4 w-4" />
+            {isSendingMagicLink
+              ? t('auth.signUp.magicLinkSending')
+              : t('auth.signUp.sendCode')}
           </Button>
 
           <div className="text-muted-foreground mt-6 text-center text-sm">
