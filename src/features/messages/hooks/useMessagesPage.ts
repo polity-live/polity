@@ -32,8 +32,11 @@ export function useMessagesPage() {
   const mutations = useMessageMutations();
   const { searchQuery, setSearchQuery, filteredConversations } =
     useConversationFilters(conversations);
+  const shouldOpenAriaKai = searchParams.openAriaKai === 'true';
   const { selectedConversationId, setSelectedConversationId, selectedConversation } =
-    useConversationSelection(conversations);
+    useConversationSelection(conversations, {
+      openAriaKai: shouldOpenAriaKai,
+    });
 
   // Existing direct conversation user IDs (for new conversation dialog)
   const existingConversationUserIds = useMemo(() => {

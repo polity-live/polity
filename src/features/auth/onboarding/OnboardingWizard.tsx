@@ -109,8 +109,8 @@ export function OnboardingWizard({ userId, userEmail, onComplete }: OnboardingWi
   };
 
   const handleGoToAssistant = () => {
-    console.log('💬 handleGoToAssistant called — navigating to /messages');
-    navigate({ to: '/messages' });
+    console.log('💬 handleGoToAssistant called — navigating to /messages?openAriaKai=true');
+    navigate({ to: '/messages', search: { openAriaKai: 'true' } });
     onComplete();
   };
 

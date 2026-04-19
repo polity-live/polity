@@ -1,36 +1,42 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Conversation } from '../types/message.types';
 import { ARIA_KAI_USER_ID } from '@/features/assistant/constants';
 
-export function useConversationSelection(conversations: Conversation[]) {
+interface ConversationSelectionOptions {
+  openAriaKai?: boolean;
+}
+
+export function useConversationSelection(
+  conversations: Conversation[],
+  options?: ConversationSelectionOptions
+) {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+  const openAriaKai = options?.openAriaKai === true;
+  const hasHandledAriaKaiIntentRef = useRef(false);
 
-  // Check URL params for auto-opening Aria & Kai conversation
+  // Auto-open the assistant conversation once when explicitly requested.
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const shouldOpenAriaKai = params.get('openAriaKai') === 'true';
+    if (!openAriaKai || conversations.length === 0 || hasHandledAriaKaiIntentRef.current) {
+      return;
+    }
 
-      if (shouldOpenAriaKai && conversations.length > 0) {
-        // Find Aria & Kai conversation
-        const ariaKaiConversation = conversations.find((conv) =>
-          conv.participants.some((p) => p.user?.id === ARIA_KAI_USER_ID)
-        );
+    const ariaKaiConversation = conversations.find(conv =>
+      conv.participants.some(p => p.user?.id === ARIA_KAI_USER_ID)
+    );
 
-        if (ariaKaiConversation) {
-          setSelectedConversationId(ariaKaiConversation.id);
-          // Clean up URL
-          window.history.replaceState({}, '', '/messages');
-        }
+    if (ariaKaiConversation) {
+      hasHandledAriaKaiIntentRef.current = true;
+      setSelectedConversationId(ariaKaiConversation.id);
+
+      if (typeof window !== 'undefined') {
+        window.history.replaceState({}, '', window.location.pathname);
       }
     }
-  }, [conversations]);
+  }, [conversations, openAriaKai]);
 
   // Get selected conversation with sorted messages
   const selectedConversation = useMemo(() => {
-    const conversation = conversations.find(
-      (conv) => conv.id === selectedConversationId
-    );
+    const conversation = conversations.find(conv => conv.id === selectedConversationId);
     if (!conversation) return undefined;
 
     // Sort messages by created_at timestamp (oldest to newest, like WhatsApp)
