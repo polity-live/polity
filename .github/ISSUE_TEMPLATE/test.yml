@@ -13,6 +13,9 @@ body:
   attributes:
     label: Description
     value: |
+      ## 📋 Prerequisites
+      1. ...
+
       ## 🔁 Steps / Scenario
       1. ...
       2. ...
