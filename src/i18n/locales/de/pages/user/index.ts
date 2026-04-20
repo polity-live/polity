@@ -22,7 +22,7 @@ export const userPageTranslations = {
     newPasswordPlaceholder: 'Mindestens 6 Zeichen',
     confirmPassword: 'Passwort bestätigen',
     confirmPasswordPlaceholder: 'Neues Passwort wiederholen',
-    update: 'Passwort aktualisieren',
+    update: 'Konto-Passwort aktualisieren',
     setInitialPassword: 'Initiales Passwort festlegen',
     updating: 'Wird aktualisiert...',
     mismatch: 'Passwörter stimmen nicht überein',
@@ -32,7 +32,8 @@ export const userPageTranslations = {
   },
   accountEmail: {
     title: 'Konto-E-Mail',
-    description: 'Aktualisiere deine Anmelde-E-Mail-Adresse. Eine Bestätigung wird an die neue Adresse gesendet.',
+    description:
+      'Aktualisiere deine Anmelde-E-Mail-Adresse. Eine Bestätigung wird an die neue Adresse gesendet.',
     currentEmail: 'Aktuelle E-Mail',
     newEmail: 'Neue E-Mail',
     newEmailPlaceholder: 'neue.email@beispiel.de',
@@ -162,7 +163,7 @@ export const userPageTranslations = {
     passwordHint: 'Verwende genau 4 Ziffern.',
     confirmPassword: 'Abstimmungs-Passwort bestätigen',
     confirmPasswordHint: 'Die Abstimmungs-Passwörter müssen übereinstimmen.',
-    update: 'Passwort aktualisieren',
+    update: 'Abstimmungs-Passwort aktualisieren',
     save: 'Passwort speichern',
     invalidFormat: 'Muss genau 4 Ziffern enthalten',
     mismatch: 'Die Passwörter stimmen nicht überein',
