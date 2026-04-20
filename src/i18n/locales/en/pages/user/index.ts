@@ -5,7 +5,7 @@ export const userPageTranslations = {
     basicInfo: 'Basic Information',
     preferences: 'Preferences',
     subscriptions: 'Subscriptions',
-    passwords: 'Passwords',
+    passwords: 'Account & Passwords',
     notifications: 'Notifications',
     votingPassword: 'Voting Password',
     saving: 'Saving...',
@@ -14,11 +14,16 @@ export const userPageTranslations = {
   accountPassword: {
     title: 'Account Password',
     description: 'Update the password you use to sign in to Polity',
+    initialDescription:
+      'Set an initial account password to enable email and password sign-in and unlock the rest of your account security settings.',
+    initialHelp:
+      'After you set an account password, you can still sign in with magic links or Google, and you can also sign in with your email and password.',
     newPassword: 'New Password',
     newPasswordPlaceholder: 'At least 6 characters',
     confirmPassword: 'Confirm Password',
     confirmPasswordPlaceholder: 'Repeat your new password',
     update: 'Update Password',
+    setInitialPassword: 'Set Initial Password',
     updating: 'Updating...',
     mismatch: 'Passwords do not match',
     tooShort: 'Password must be at least 6 characters',
@@ -33,8 +38,23 @@ export const userPageTranslations = {
     newEmailPlaceholder: 'new.email@example.com',
     update: 'Update Email',
     updating: 'Updating...',
+    success: 'Email updated successfully',
     confirmationSent: 'Confirmation email sent to the new address',
     failed: 'Failed to update email',
+    initialPasswordRequired:
+      'Set an initial account password in the section above before changing your account email.',
+  },
+  securityConfirmation: {
+    title: 'Confirm Change',
+    description: 'Enter your current account password to continue.',
+    currentPassword: 'Current Account Password',
+    currentPasswordPlaceholder: 'Enter your current password',
+    confirm: 'Confirm',
+    confirming: 'Confirming...',
+    passwordRequired: 'Current password is required',
+    invalidPassword: 'Current password is incorrect',
+    initialPasswordRequired: 'Set an initial account password first',
+    unavailable: 'Unable to verify your current password right now',
   },
   settingsForm: {
     avatar: {
@@ -139,12 +159,16 @@ export const userPageTranslations = {
     oldPassword: 'Current Voting Password',
     newPassword: 'New Voting Password',
     setPassword: 'Set Voting Password',
+    passwordHint: 'Use exactly 4 digits.',
     confirmPassword: 'Confirm Voting Password',
+    confirmPasswordHint: 'Voting passwords must match.',
     update: 'Update Password',
     save: 'Save Password',
     invalidFormat: 'Must be exactly 4 digits',
     mismatch: 'Passwords do not match',
     verifyOrSaveFailed: 'Current password incorrect or failed to save',
     saveFailed: 'Failed to save voting password',
+    initialPasswordRequired:
+      'Set an initial account password in the section above before setting or changing your voting password.',
   },
 } as const;

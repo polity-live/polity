@@ -176,6 +176,25 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION public.current_user_has_password()
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER SET search_path = ''
+AS $$
+  SELECT COALESCE(
+    (
+      SELECT NULLIF(u.encrypted_password, '') IS NOT NULL
+      FROM auth.users AS u
+      WHERE u.id = auth.uid()
+    ),
+    false
+  );
+$$;
+
+REVOKE ALL ON FUNCTION public.current_user_has_password() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.current_user_has_password() TO authenticated;
+
 CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW

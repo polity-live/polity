@@ -5,7 +5,7 @@ export const userPageTranslations = {
     basicInfo: 'Grundlegende Informationen',
     preferences: 'Einstellungen',
     subscriptions: 'Abonnements',
-    passwords: 'Passwörter',
+    passwords: 'Konto & Passwörter',
     notifications: 'Benachrichtigungen',
     votingPassword: 'Abstimmungs-Passwort',
     saving: 'Speichern...',
@@ -14,11 +14,16 @@ export const userPageTranslations = {
   accountPassword: {
     title: 'Konto-Passwort',
     description: 'Aktualisiere das Passwort, mit dem du dich bei Polity anmeldest',
+    initialDescription:
+      'Lege zuerst ein initiales Konto-Passwort fest, um die Anmeldung per E-Mail und Passwort zu aktivieren und weitere Sicherheitseinstellungen freizuschalten.',
+    initialHelp:
+      'Nachdem du ein Konto-Passwort gesetzt hast, kannst du dich weiterhin per Magic Link oder Google anmelden und zusätzlich per E-Mail und Passwort.',
     newPassword: 'Neues Passwort',
     newPasswordPlaceholder: 'Mindestens 6 Zeichen',
     confirmPassword: 'Passwort bestätigen',
     confirmPasswordPlaceholder: 'Neues Passwort wiederholen',
     update: 'Passwort aktualisieren',
+    setInitialPassword: 'Initiales Passwort festlegen',
     updating: 'Wird aktualisiert...',
     mismatch: 'Passwörter stimmen nicht überein',
     tooShort: 'Passwort muss mindestens 6 Zeichen lang sein',
@@ -33,8 +38,23 @@ export const userPageTranslations = {
     newEmailPlaceholder: 'neue.email@beispiel.de',
     update: 'E-Mail aktualisieren',
     updating: 'Wird aktualisiert...',
+    success: 'E-Mail wurde erfolgreich aktualisiert',
     confirmationSent: 'Bestätigungs-E-Mail an die neue Adresse gesendet',
     failed: 'E-Mail konnte nicht aktualisiert werden',
+    initialPasswordRequired:
+      'Lege zuerst im oberen Bereich ein initiales Konto-Passwort fest, bevor du deine Konto-E-Mail änderst.',
+  },
+  securityConfirmation: {
+    title: 'Änderung bestätigen',
+    description: 'Gib dein aktuelles Konto-Passwort ein, um fortzufahren.',
+    currentPassword: 'Aktuelles Konto-Passwort',
+    currentPasswordPlaceholder: 'Aktuelles Passwort eingeben',
+    confirm: 'Bestätigen',
+    confirming: 'Wird bestätigt...',
+    passwordRequired: 'Das aktuelle Passwort ist erforderlich',
+    invalidPassword: 'Das aktuelle Passwort ist falsch',
+    initialPasswordRequired: 'Lege zuerst ein initiales Konto-Passwort fest',
+    unavailable: 'Dein aktuelles Passwort kann gerade nicht überprüft werden',
   },
   settingsForm: {
     avatar: {
@@ -139,12 +159,16 @@ export const userPageTranslations = {
     oldPassword: 'Aktuelles Abstimmungs-Passwort',
     newPassword: 'Neues Abstimmungs-Passwort',
     setPassword: 'Abstimmungs-Passwort festlegen',
+    passwordHint: 'Verwende genau 4 Ziffern.',
     confirmPassword: 'Abstimmungs-Passwort bestätigen',
+    confirmPasswordHint: 'Die Abstimmungs-Passwörter müssen übereinstimmen.',
     update: 'Passwort aktualisieren',
     save: 'Passwort speichern',
     invalidFormat: 'Muss genau 4 Ziffern enthalten',
     mismatch: 'Die Passwörter stimmen nicht überein',
     verifyOrSaveFailed: 'Aktuelles Passwort ist falsch oder konnte nicht gespeichert werden',
     saveFailed: 'Abstimmungs-Passwort konnte nicht gespeichert werden',
+    initialPasswordRequired:
+      'Lege zuerst im oberen Bereich ein initiales Konto-Passwort fest, bevor du dein Abstimmungs-Passwort setzt oder änderst.',
   },
 } as const;

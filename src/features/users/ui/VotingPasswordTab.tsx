@@ -10,6 +10,11 @@ import { CheckCircle2, AlertCircle, Loader2, KeyRound } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useVotingPasswordActions } from '@/zero/voting-password/useVotingPasswordActions';
 import { useVotingPasswordState } from '@/zero/voting-password/useVotingPasswordState';
+import { useAccountActions } from '@/features/auth/hooks/useAccountActions';
+import { CurrentPasswordConfirmationDialog } from './CurrentPasswordConfirmationDialog';
+import { useAuth } from '@/providers/auth-provider';
+import { useDebounce } from '@/features/shared/hooks/use-debounce';
+import { cn } from '@/features/shared/utils/utils.ts';
 
 interface VotingPasswordTabProps {
   userId: string;
@@ -17,51 +22,99 @@ interface VotingPasswordTabProps {
 
 export function VotingPasswordTab({ userId }: VotingPasswordTabProps) {
   const { t } = useTranslation();
-  const { setVotingPassword, verifyVotingPassword } = useVotingPasswordActions();
+  const { user, authStateLoading } = useAuth();
+  const { setVotingPassword } = useVotingPasswordActions();
+  const { verifyCurrentPassword } = useAccountActions();
   const { hasVotingPassword, isLoading: stateLoading } = useVotingPasswordState({ userId });
 
-  const [oldPassword, setOldPassword] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [dialogError, setDialogError] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [passwordTouched, setPasswordTouched] = useState(false);
+  const [confirmPasswordTouched, setConfirmPasswordTouched] = useState(false);
+  const requiresInitialPassword = user?.hasPassword === false;
+  const debouncedPassword = useDebounce(password);
+  const debouncedConfirmPassword = useDebounce(confirmPassword);
+  const passwordIsValid = /^\d{4}$/.test(password);
+  const passwordsAreMatching = password.length > 0 && confirmPassword.length > 0 && password === confirmPassword;
 
-  const isOldPasswordValid = !hasVotingPassword || (oldPassword.length === 4 && /^\d{4}$/.test(oldPassword));
-  const isValid =
-    isOldPasswordValid && password.length === 4 && /^\d{4}$/.test(password) && password === confirmPassword;
+  const isValid = password.length === 4 && passwordIsValid && passwordsAreMatching;
+  const showPasswordError =
+    passwordTouched && debouncedPassword.length > 0 && !/^\d{4}$/.test(debouncedPassword);
+  const showPasswordSuccess =
+    passwordTouched && debouncedPassword.length > 0 && /^\d{4}$/.test(debouncedPassword);
+  const showConfirmPasswordError =
+    confirmPasswordTouched &&
+    debouncedConfirmPassword.length > 0 &&
+    !(debouncedPassword.length > 0 && debouncedConfirmPassword.length > 0 && debouncedPassword === debouncedConfirmPassword);
+  const showConfirmPasswordSuccess =
+    confirmPasswordTouched &&
+    debouncedPassword.length > 0 &&
+    debouncedConfirmPassword.length > 0 &&
+    debouncedPassword === debouncedConfirmPassword;
+
+  const resetForm = () => {
+    setPassword('');
+    setConfirmPassword('');
+    setError(null);
+    setPasswordTouched(false);
+    setConfirmPasswordTouched(false);
+  };
+
+  const handleDialogOpenChange = (open: boolean) => {
+    if (isSubmitting) {
+      return;
+    }
+
+    setIsDialogOpen(open);
+
+    if (!open) {
+      setCurrentPassword('');
+      setDialogError(null);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setPasswordTouched(true);
+    setConfirmPasswordTouched(true);
 
-    if (hasVotingPassword && !/^\d{4}$/.test(oldPassword)) {
-      setError(t('pages.user.votingPassword.invalidFormat', 'Must be exactly 4 digits'));
-      return;
-    }
-
-    if (password !== confirmPassword) {
+    if (!passwordsAreMatching) {
       setError(t('pages.user.votingPassword.mismatch', 'Passwords do not match'));
       return;
     }
 
-    if (!/^\d{4}$/.test(password)) {
+    if (!passwordIsValid) {
       setError(t('pages.user.votingPassword.invalidFormat', 'Must be exactly 4 digits'));
       return;
     }
 
+    setCurrentPassword('');
+    setDialogError(null);
+    setIsDialogOpen(true);
+  };
+
+  const handleConfirm = async () => {
     setIsSubmitting(true);
     try {
-      if (hasVotingPassword) {
-        await verifyVotingPassword(oldPassword);
+      const verificationResult = await verifyCurrentPassword(currentPassword);
+      if (!verificationResult.success) {
+        setDialogError(verificationResult.error ?? null);
+        return;
       }
+
       await setVotingPassword(password);
-      setOldPassword('');
-      setPassword('');
-      setConfirmPassword('');
-    } catch {
-      setError(
-        hasVotingPassword
-          ? t('pages.user.votingPassword.verifyOrSaveFailed', 'Old password incorrect or failed to save')
+      resetForm();
+      handleDialogOpenChange(false);
+    } catch (submitError) {
+      setDialogError(
+        submitError instanceof Error
+          ? submitError.message
           : t('pages.user.votingPassword.saveFailed', 'Failed to save voting password'),
       );
     } finally {
@@ -102,84 +155,114 @@ export function VotingPasswordTab({ userId }: VotingPasswordTabProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {hasVotingPassword && (
+          {requiresInitialPassword ? (
+            <p className="text-sm text-muted-foreground">
+              {t('pages.user.votingPassword.initialPasswordRequired')}
+            </p>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="old-voting-password">
-                  {t('pages.user.votingPassword.oldPassword', 'Current Voting Password')}
+                <Label htmlFor="voting-password">
+                  {hasVotingPassword
+                    ? t('pages.user.votingPassword.newPassword', 'New Voting Password')
+                    : t('pages.user.votingPassword.setPassword', 'Set Voting Password')}
                 </Label>
                 <Input
-                  id="old-voting-password"
+                  id="voting-password"
                   type="password"
                   inputMode="numeric"
                   maxLength={4}
                   pattern="\d{4}"
                   placeholder="••••"
-                  value={oldPassword}
+                  value={password}
                   onChange={(e) => {
                     const val = e.target.value.replace(/\D/g, '').slice(0, 4);
-                    setOldPassword(val);
+                    setPassword(val);
+                    setPasswordTouched(true);
                     setError(null);
                   }}
+                  onBlur={() => setPasswordTouched(true)}
+                  required
+                  disabled={isSubmitting || authStateLoading}
+                  aria-invalid={showPasswordError}
+                  data-valid={showPasswordSuccess ? 'true' : undefined}
                 />
+                <p
+                  className={cn(
+                    'text-xs text-muted-foreground',
+                    showPasswordError && 'text-destructive',
+                    showPasswordSuccess && 'text-emerald-600 dark:text-emerald-400'
+                  )}
+                >
+                  {t('pages.user.votingPassword.passwordHint')}
+                </p>
               </div>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="voting-password">
+              <div className="space-y-2">
+                <Label htmlFor="confirm-voting-password">
+                  {t('pages.user.votingPassword.confirmPassword', 'Confirm Voting Password')}
+                </Label>
+                <Input
+                  id="confirm-voting-password"
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={4}
+                  pattern="\d{4}"
+                  placeholder="••••"
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '').slice(0, 4);
+                    setConfirmPassword(val);
+                    setConfirmPasswordTouched(true);
+                    setError(null);
+                  }}
+                  onBlur={() => setConfirmPasswordTouched(true)}
+                  required
+                  disabled={isSubmitting || authStateLoading}
+                  aria-invalid={showConfirmPasswordError}
+                  data-valid={showConfirmPasswordSuccess ? 'true' : undefined}
+                />
+                <p
+                  className={cn(
+                    'text-xs text-muted-foreground',
+                    showConfirmPasswordError && 'text-destructive',
+                    showConfirmPasswordSuccess && 'text-emerald-600 dark:text-emerald-400'
+                  )}
+                >
+                  {t('pages.user.votingPassword.confirmPasswordHint')}
+                </p>
+              </div>
+
+              {error && (
+                <p className="text-sm text-destructive">{error}</p>
+              )}
+
+              <Button type="submit" disabled={!isValid || isSubmitting || authStateLoading}>
+                {isSubmitting ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : null}
                 {hasVotingPassword
-                  ? t('pages.user.votingPassword.newPassword', 'New Voting Password')
-                  : t('pages.user.votingPassword.setPassword', 'Set Voting Password')}
-              </Label>
-              <Input
-                id="voting-password"
-                type="password"
-                inputMode="numeric"
-                maxLength={4}
-                pattern="\d{4}"
-                placeholder="••••"
-                value={password}
-                onChange={(e) => {
-                  const val = e.target.value.replace(/\D/g, '').slice(0, 4);
-                  setPassword(val);
-                  setError(null);
-                }}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirm-voting-password">
-                {t('pages.user.votingPassword.confirmPassword', 'Confirm Voting Password')}
-              </Label>
-              <Input
-                id="confirm-voting-password"
-                type="password"
-                inputMode="numeric"
-                maxLength={4}
-                pattern="\d{4}"
-                placeholder="••••"
-                value={confirmPassword}
-                onChange={(e) => {
-                  const val = e.target.value.replace(/\D/g, '').slice(0, 4);
-                  setConfirmPassword(val);
-                  setError(null);
-                }}
-              />
-            </div>
-
-            {error && (
-              <p className="text-sm text-destructive">{error}</p>
-            )}
-
-            <Button type="submit" disabled={!isValid || isSubmitting}>
-              {isSubmitting ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : null}
-              {hasVotingPassword
-                ? t('pages.user.votingPassword.update', 'Update Password')
-                : t('pages.user.votingPassword.save', 'Save Password')}
-            </Button>
-          </form>
+                  ? t('pages.user.votingPassword.update', 'Update Password')
+                  : t('pages.user.votingPassword.save', 'Save Password')}
+              </Button>
+            </form>
+          )}
         </CardContent>
       </Card>
+
+      {requiresInitialPassword ? null : (
+        <CurrentPasswordConfirmationDialog
+          open={isDialogOpen}
+          isSubmitting={isSubmitting}
+          password={currentPassword}
+          error={dialogError}
+          onOpenChange={handleDialogOpenChange}
+          onPasswordChange={value => {
+            setCurrentPassword(value);
+            setDialogError(null);
+          }}
+          onConfirm={handleConfirm}
+        />
+      )}
     </div>
   );
 }

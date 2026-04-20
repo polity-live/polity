@@ -7,25 +7,106 @@ import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { useAuth } from '@/providers/auth-provider';
+
+interface AccountActionResult {
+  success: boolean;
+  error?: string;
+}
 
 interface UseAccountActionsReturn {
   isUpdating: boolean;
-  updateAccountPassword: (newPassword: string) => Promise<boolean>;
-  updateAccountEmail: (newEmail: string) => Promise<boolean>;
+  verifyCurrentPassword: (currentPassword: string) => Promise<AccountActionResult>;
+  updateAccountPassword: (
+    newPassword: string,
+    currentPassword?: string
+  ) => Promise<AccountActionResult>;
+  updateAccountEmail: (newEmail: string, currentPassword?: string) => Promise<AccountActionResult>;
 }
 
 /**
  * Hook for updating account password and email
- * Uses Supabase session-based auth — no current password required
+ * Sensitive account changes require verifying the current account password first.
  */
 export function useAccountActions(): UseAccountActionsReturn {
   const { t } = useTranslation();
+  const { user, authStateLoading, refreshAuthState } = useAuth();
   const [isUpdating, setIsUpdating] = useState(false);
 
+  const verifyCurrentPassword = useCallback(
+    async (currentPassword: string): Promise<AccountActionResult> => {
+      if (authStateLoading || user?.hasPassword === null) {
+        return {
+          success: false,
+          error: t('pages.user.securityConfirmation.unavailable'),
+        };
+      }
+
+      if (user?.hasPassword === false) {
+        return {
+          success: false,
+          error: t('pages.user.securityConfirmation.initialPasswordRequired'),
+        };
+      }
+
+      if (currentPassword.length === 0) {
+        return {
+          success: false,
+          error: t('pages.user.securityConfirmation.passwordRequired'),
+        };
+      }
+
+      if (!user?.email) {
+        return {
+          success: false,
+          error: t('pages.user.securityConfirmation.unavailable'),
+        };
+      }
+
+      try {
+        const supabase = createClient();
+        const { error } = await supabase.auth.signInWithPassword({
+          email: user.email,
+          password: currentPassword,
+        });
+
+        if (error) {
+          return {
+            success: false,
+            error: t('pages.user.securityConfirmation.invalidPassword'),
+          };
+        }
+
+        return { success: true };
+      } catch (error) {
+        console.error('Failed to verify current password:', error);
+        return {
+          success: false,
+          error: t('pages.user.securityConfirmation.unavailable'),
+        };
+      }
+    },
+    [authStateLoading, t, user?.email, user?.hasPassword]
+  );
+
   const updateAccountPassword = useCallback(
-    async (newPassword: string): Promise<boolean> => {
+    async (newPassword: string, currentPassword?: string): Promise<AccountActionResult> => {
       setIsUpdating(true);
       try {
+        if (authStateLoading || !user || user.hasPassword === null) {
+          return {
+            success: false,
+            error: t('pages.user.securityConfirmation.unavailable'),
+          };
+        }
+
+        if (user.hasPassword) {
+          const verificationResult = await verifyCurrentPassword(currentPassword ?? '');
+          if (!verificationResult.success) {
+            return verificationResult;
+          }
+        }
+
         const supabase = createClient();
         const { error } = await supabase.auth.updateUser({ password: newPassword });
 
@@ -33,44 +114,79 @@ export function useAccountActions(): UseAccountActionsReturn {
           throw error;
         }
 
+        await refreshAuthState();
         toast.success(t('pages.user.accountPassword.success'));
-        return true;
+        return { success: true };
       } catch (error) {
         console.error('Failed to update password:', error);
-        const errorMessage = error instanceof Error ? error.message : t('pages.user.accountPassword.failed');
+        const errorMessage =
+          error instanceof Error ? error.message : t('pages.user.accountPassword.failed');
         toast.error(errorMessage);
-        return false;
+        return {
+          success: false,
+          error: errorMessage,
+        };
       } finally {
         setIsUpdating(false);
       }
     },
-    [t],
+    [authStateLoading, refreshAuthState, t, user?.hasPassword, verifyCurrentPassword]
   );
 
   const updateAccountEmail = useCallback(
-    async (newEmail: string): Promise<boolean> => {
+    async (newEmail: string, currentPassword?: string): Promise<AccountActionResult> => {
       setIsUpdating(true);
       try {
+        if (authStateLoading || !user || user.hasPassword === null) {
+          return {
+            success: false,
+            error: t('pages.user.securityConfirmation.unavailable'),
+          };
+        }
+
+        if (!user.hasPassword) {
+          return {
+            success: false,
+            error: t('pages.user.securityConfirmation.initialPasswordRequired'),
+          };
+        }
+
+        const verificationResult = await verifyCurrentPassword(currentPassword ?? '');
+        if (!verificationResult.success) {
+          return verificationResult;
+        }
+
         const supabase = createClient();
-        const { error } = await supabase.auth.updateUser({ email: newEmail });
+        const { data, error } = await supabase.auth.updateUser({ email: newEmail });
 
         if (error) {
           throw error;
         }
 
-        toast.success(t('pages.user.accountEmail.confirmationSent'));
-        return true;
+        await refreshAuthState();
+
+        const emailUpdatedImmediately = data.user?.email === newEmail;
+        toast.success(
+          emailUpdatedImmediately
+            ? t('pages.user.accountEmail.success')
+            : t('pages.user.accountEmail.confirmationSent')
+        );
+        return { success: true };
       } catch (error) {
         console.error('Failed to update email:', error);
-        const errorMessage = error instanceof Error ? error.message : t('pages.user.accountEmail.failed');
+        const errorMessage =
+          error instanceof Error ? error.message : t('pages.user.accountEmail.failed');
         toast.error(errorMessage);
-        return false;
+        return {
+          success: false,
+          error: errorMessage,
+        };
       } finally {
         setIsUpdating(false);
       }
     },
-    [t],
+    [authStateLoading, refreshAuthState, t, user?.hasPassword, verifyCurrentPassword]
   );
 
-  return { isUpdating, updateAccountPassword, updateAccountEmail };
+  return { isUpdating, verifyCurrentPassword, updateAccountPassword, updateAccountEmail };
 }
