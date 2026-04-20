@@ -22,7 +22,7 @@ export const userPageTranslations = {
     newPasswordPlaceholder: 'At least 6 characters',
     confirmPassword: 'Confirm Password',
     confirmPasswordPlaceholder: 'Repeat your new password',
-    update: 'Update account password',
+    update: 'Update Account Password',
     setInitialPassword: 'Set Initial Password',
     updating: 'Updating...',
     mismatch: 'Passwords do not match',
@@ -32,7 +32,8 @@ export const userPageTranslations = {
   },
   accountEmail: {
     title: 'Account Email',
-    description: 'Update your sign-in email address. A confirmation will be sent to the new address.',
+    description:
+      'Update your sign-in email address. A confirmation will be sent to the new address.',
     currentEmail: 'Current Email',
     newEmail: 'New Email',
     newEmailPlaceholder: 'new.email@example.com',
