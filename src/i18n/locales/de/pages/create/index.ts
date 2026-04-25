@@ -154,6 +154,8 @@ export const createPageTranslations = {
     eventTypeDescription:
       'Alle eingeladenen Mitglieder werden zu diesem Event eingeladen. Du wirst der Event-Organisator sein.',
     untitledGroup: 'Unbenannte Gruppe',
+    emailLabel: 'E-Mail',
+    emailPlaceholder: 'gruppe@beispiel.de',
     visibilityLabel: 'Sichtbarkeit',
     hashtagsLabel: 'Hashtags',
     hashtagsPlaceholder: 'Hashtags hinzufügen (z.B. Politik, Gemeinschaft)',

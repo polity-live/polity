@@ -67,6 +67,7 @@ export function GroupEdit({ groupId }: GroupEditProps) {
             ? {
                 name: group.name ?? '',
                 description: group.description ?? '',
+                email: group.email ?? '',
                 country: group.country ?? '',
                 region: group.region ?? '',
                 post_code: group.post_code ?? '',

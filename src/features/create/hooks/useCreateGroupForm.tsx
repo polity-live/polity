@@ -102,6 +102,7 @@ export function useCreateGroupForm(): CreateFormConfig {
   const [groupType, setGroupType] = useState<GroupType>('base');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [email, setEmail] = useState('');
   const [country, setCountry] = useState('');
   const [region, setRegion] = useState('');
   const [post_code, setPostCode] = useState('');
@@ -239,6 +240,7 @@ export function useCreateGroupForm(): CreateFormConfig {
         id: groupId,
         name: name.trim(),
         description: description || null,
+        email: email || null,
         country: country || null,
         region: region || null,
         post_code: post_code || null,
@@ -358,6 +360,15 @@ export function useCreateGroupForm(): CreateFormConfig {
                   onChange={e => setDescription(e.target.value)}
                   placeholder={t('pages.create.group.descriptionPlaceholder')}
                   rows={4}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t('pages.create.group.emailLabel')}</Label>
+                <Input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder={t('pages.create.group.emailPlaceholder')}
                 />
               </div>
               <div className="space-y-2">
@@ -893,6 +904,9 @@ export function useCreateGroupForm(): CreateFormConfig {
               hashtags={hashtags.length > 0 ? hashtags : undefined}
               fields={[
                 {
+                  ...(email ? [{ label: t('pages.create.group.emailLabel'), value: email }] : []),
+                },
+                {
                   label: t('pages.create.group.groupType'),
                   value:
                     groupType === 'base'
@@ -931,6 +945,7 @@ export function useCreateGroupForm(): CreateFormConfig {
     [
       name,
       description,
+      email,
       country,
       region,
       post_code,

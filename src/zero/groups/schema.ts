@@ -8,6 +8,7 @@ const groupBaseSchema = z.object({
   id: z.string(),
   name: z.string().nullable(),
   description: z.string().nullable(),
+  email: z.string().nullable(),
   country: z.string().nullable(),
   region: z.string().nullable(),
   post_code: z.string().nullable(),
@@ -54,6 +55,7 @@ export const groupUpdateSchema = groupBaseSchema
   .pick({
     name: true,
     description: true,
+    email: true,
     country: true,
     region: true,
     whatsapp: true,

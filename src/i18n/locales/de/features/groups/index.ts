@@ -34,6 +34,8 @@ export const groupsTranslations = {
     socialTitle: 'Soziale Profile',
     socialDescription:
       'Füge die Kanäle hinzu, über die Mitglieder und Besucher Updates verfolgen können.',
+    emailLabel: 'E-Mail',
+    emailPlaceholder: 'gruppe@beispiel.de',
     websiteLabel: 'Webseite',
     websitePlaceholder: 'https://deinegruppe.org',
     youtubeLabel: 'YouTube',

@@ -5,6 +5,7 @@ export const group = table('group')
     id: string(),
     name: string().optional(),
     description: string().optional(),
+    email: string().optional(),
     country: string().optional(),
     region: string().optional(),
     post_code: string().optional(),

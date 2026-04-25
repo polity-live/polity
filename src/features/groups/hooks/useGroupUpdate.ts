@@ -19,6 +19,7 @@ export type GroupType = 'base' | 'hierarchical';
 export interface GroupFormData {
   name: string;
   description: string;
+  email: string;
   country: string;
   region: string;
   post_code: string;
@@ -52,6 +53,7 @@ interface UseGroupUpdateResult {
 const initialFormState: GroupFormData = {
   name: '',
   description: '',
+  email: '',
   country: '',
   region: '',
   post_code: '',
@@ -130,6 +132,7 @@ export function useGroupUpdate(
       const newFormData = {
         name: initialData.name || '',
         description: initialData.description || '',
+        email: initialData.email || '',
         country: initialData.country || '',
         region: initialData.region || '',
         post_code: initialData.post_code || '',
@@ -180,6 +183,7 @@ export function useGroupUpdate(
       const resetData = {
         name: initialData.name || '',
         description: initialData.description || '',
+        email: initialData.email || '',
         country: initialData.country || '',
         region: initialData.region || '',
         post_code: initialData.post_code || '',
@@ -233,6 +237,7 @@ export function useGroupUpdate(
           id: groupId,
           name: formData.name,
           description: formData.description || null,
+          email: formData.email || null,
           country: formData.country || null,
           region: formData.region || null,
           post_code: formData.post_code || null,
@@ -259,6 +264,7 @@ export function useGroupUpdate(
           id: groupId,
           name: formData.name,
           description: formData.description,
+          email: formData.email || null,
           country: formData.country || null,
           region: formData.region || null,
           post_code: formData.post_code || null,

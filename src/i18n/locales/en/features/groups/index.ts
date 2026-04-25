@@ -33,6 +33,8 @@ export const groupsTranslations = {
     description: 'Share the best ways to discover and reach this group online.',
     socialTitle: 'Social profiles',
     socialDescription: 'Add the channels where members and visitors can follow updates.',
+    emailLabel: 'Email',
+    emailPlaceholder: 'group@example.org',
     websiteLabel: 'Website',
     websitePlaceholder: 'https://yourgroup.org',
     youtubeLabel: 'YouTube',

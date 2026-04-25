@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS public."group" (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT,
   description TEXT,
+  email TEXT,
   country TEXT,
   region TEXT,
   post_code TEXT,

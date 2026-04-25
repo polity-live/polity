@@ -4,6 +4,7 @@ import {
   Ghost,
   Instagram,
   Linkedin,
+  Mail,
   MessageSquare,
   Music2,
   Twitter,
@@ -26,6 +27,15 @@ export function SocialMediaSection({ formData, onChange }: SocialMediaSectionPro
       title={t('features.groups.contact.title')}
       description={t('features.groups.contact.description')}
       primaryFields={[
+        {
+          id: 'group-email',
+          label: t('features.groups.contact.emailLabel'),
+          placeholder: t('features.groups.contact.emailPlaceholder'),
+          value: formData.email,
+          onChange: value => onChange('email', value),
+          icon: <Mail className="h-4 w-4" />,
+          type: 'email',
+        },
         {
           id: 'group-website',
           label: t('features.groups.contact.websiteLabel'),

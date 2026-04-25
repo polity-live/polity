@@ -179,6 +179,7 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
       <InfoTabs
         about={group.description ?? undefined}
         contact={{
+          email: group.email ?? undefined,
           website: group.website ?? undefined,
           youtube: group.youtube ?? undefined,
           linkedin: group.linkedin ?? undefined,
