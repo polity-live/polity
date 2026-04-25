@@ -14,8 +14,8 @@ import {
   CardTitle,
 } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Label } from '@/features/shared/ui/ui/label';
+import { hasMinLength } from '@/features/shared/logic/inputValidation';
+import { ValidatedInputField } from '@/features/shared/ui/form/ValidatedInputField';
 import { Textarea } from '@/features/shared/ui/ui/textarea';
 import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
 import { Loader2 } from 'lucide-react';
@@ -101,18 +101,20 @@ export function BlogEdit({ blogId }: BlogEditProps) {
             <CardDescription>{t('features.blogs.editPage.basicInfoDescription')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <ValidatedInputField
+              id="title"
+              label={t('features.blogs.editPage.blogTitleRequired')}
+              value={formData.title}
+              onChange={value => updateField('title', value)}
+              placeholder={t('features.blogs.editPage.blogTitlePlaceholder')}
+              validator={value => hasMinLength(value, 3)}
+              hint={t('common.validation.titleHint')}
+              required
+            />
             <div className="space-y-2">
-              <Label htmlFor="title">{t('features.blogs.editPage.blogTitleRequired')}</Label>
-              <Input
-                id="title"
-                value={formData.title}
-                onChange={e => updateField('title', e.target.value)}
-                placeholder={t('features.blogs.editPage.blogTitlePlaceholder')}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">{t('features.blogs.editPage.descriptionLabel')}</Label>
+              <label htmlFor="description" className="text-sm leading-none font-medium">
+                {t('features.blogs.editPage.descriptionLabel')}
+              </label>
               <Textarea
                 id="description"
                 value={formData.description}

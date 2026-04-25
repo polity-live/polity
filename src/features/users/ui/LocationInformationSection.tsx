@@ -5,9 +5,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/features/shared/ui/ui/card';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Label } from '@/features/shared/ui/ui/label';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { GeoAddressFields } from '@/features/shared/ui/form/GeoAddressFields';
 
 interface LocationInformationSectionProps {
   country: string;
@@ -47,66 +46,55 @@ export function LocationInformationSection({
         <CardDescription>{t('pages.user.settingsForm.location.description')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="country">{t('pages.user.settingsForm.location.countryLabel')}</Label>
-          <Input
-            id="country"
-            value={country}
-            onChange={e => onCountryChange(e.target.value)}
-            placeholder={t('pages.user.settingsForm.location.countryPlaceholder')}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="region">{t('pages.user.settingsForm.location.regionLabel')}</Label>
-          <Input
-            id="region"
-            value={region}
-            onChange={e => onRegionChange(e.target.value)}
-            placeholder={t('pages.user.settingsForm.location.regionPlaceholder')}
-          />
-        </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="post_code">{t('pages.user.settingsForm.location.postCodeLabel')}</Label>
-            <Input
-              id="post_code"
-              value={post_code}
-              onChange={e => onPostCodeChange(e.target.value)}
-              placeholder={t('pages.user.settingsForm.location.postCodePlaceholder')}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="city">{t('pages.user.settingsForm.location.cityLabel')}</Label>
-            <Input
-              id="city"
-              value={city}
-              onChange={e => onCityChange(e.target.value)}
-              placeholder={t('pages.user.settingsForm.location.cityPlaceholder')}
-            />
-          </div>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="street">{t('pages.user.settingsForm.location.streetLabel')}</Label>
-            <Input
-              id="street"
-              value={street}
-              onChange={e => onStreetChange(e.target.value)}
-              placeholder={t('pages.user.settingsForm.location.streetPlaceholder')}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="house_number">
-              {t('pages.user.settingsForm.location.houseNumberLabel')}
-            </Label>
-            <Input
-              id="house_number"
-              value={house_number}
-              onChange={e => onHouseNumberChange(e.target.value)}
-              placeholder={t('pages.user.settingsForm.location.houseNumberPlaceholder')}
-            />
-          </div>
-        </div>
+        <GeoAddressFields
+          idPrefix="user-location"
+          values={{
+            country,
+            region,
+            city,
+            post_code,
+            street,
+            house_number,
+          }}
+          onFieldChange={(field, value) => {
+            switch (field) {
+              case 'country':
+                onCountryChange(value);
+                break;
+              case 'region':
+                onRegionChange(value);
+                break;
+              case 'city':
+                onCityChange(value);
+                break;
+              case 'post_code':
+                onPostCodeChange(value);
+                break;
+              case 'street':
+                onStreetChange(value);
+                break;
+              case 'house_number':
+                onHouseNumberChange(value);
+                break;
+            }
+          }}
+          labels={{
+            country: t('pages.user.settingsForm.location.countryLabel'),
+            region: t('pages.user.settingsForm.location.regionLabel'),
+            city: t('pages.user.settingsForm.location.cityLabel'),
+            post_code: t('pages.user.settingsForm.location.postCodeLabel'),
+            street: t('pages.user.settingsForm.location.streetLabel'),
+            house_number: t('pages.user.settingsForm.location.houseNumberLabel'),
+          }}
+          placeholders={{
+            country: t('pages.user.settingsForm.location.countryPlaceholder'),
+            region: t('pages.user.settingsForm.location.regionPlaceholder'),
+            city: t('pages.user.settingsForm.location.cityPlaceholder'),
+            post_code: t('pages.user.settingsForm.location.postCodePlaceholder'),
+            street: t('pages.user.settingsForm.location.streetPlaceholder'),
+            house_number: t('pages.user.settingsForm.location.houseNumberPlaceholder'),
+          }}
+        />
       </CardContent>
     </Card>
   );

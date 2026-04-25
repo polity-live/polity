@@ -11,6 +11,11 @@ import {
   Youtube,
 } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  isValidOptionalEmailAddress,
+  isValidOptionalSocialInput,
+  isValidOptionalUrlLike,
+} from '@/features/shared/logic/inputValidation';
 import { ContactLinksSection } from '@/features/shared/ui/contact/ContactLinksSection';
 
 interface ContactInformationSectionProps {
@@ -73,6 +78,9 @@ export function ContactInformationSection({
           onChange: onEmailChange,
           icon: <Mail className="h-4 w-4" />,
           type: 'email',
+          helpText: t('common.validation.emailHint'),
+          validator: isValidOptionalEmailAddress,
+          autoComplete: 'email',
         },
         {
           id: 'website',
@@ -81,7 +89,9 @@ export function ContactInformationSection({
           value: website,
           onChange: onWebsiteChange,
           icon: <Globe className="h-4 w-4" />,
-          helpText: t('pages.user.settingsForm.contact.websiteHint'),
+          helpText: t('common.validation.urlHint'),
+          validator: isValidOptionalUrlLike,
+          autoComplete: 'url',
         },
       ]}
       socialTitle={t('pages.user.settingsForm.contact.socialTitle')}
@@ -94,6 +104,8 @@ export function ContactInformationSection({
           value: whatsapp,
           onChange: onWhatsappChange,
           icon: <MessageSquare className="h-4 w-4" />,
+          helpText: t('common.validation.whatsappHint'),
+          validator: value => isValidOptionalSocialInput('whatsapp', value),
         },
         {
           id: 'instagram',
@@ -102,6 +114,8 @@ export function ContactInformationSection({
           value: instagram,
           onChange: onInstagramChange,
           icon: <Instagram className="h-4 w-4" />,
+          helpText: t('common.validation.socialHandleOrUrlHint'),
+          validator: value => isValidOptionalSocialInput('instagram', value),
         },
         {
           id: 'twitter',
@@ -110,6 +124,8 @@ export function ContactInformationSection({
           value: twitter,
           onChange: onTwitterChange,
           icon: <Twitter className="h-4 w-4" />,
+          helpText: t('common.validation.socialHandleOrUrlHint'),
+          validator: value => isValidOptionalSocialInput('twitter', value),
         },
         {
           id: 'facebook',
@@ -118,6 +134,8 @@ export function ContactInformationSection({
           value: facebook,
           onChange: onFacebookChange,
           icon: <Facebook className="h-4 w-4" />,
+          helpText: t('common.validation.socialHandleOrUrlHint'),
+          validator: value => isValidOptionalSocialInput('facebook', value),
         },
         {
           id: 'snapchat',
@@ -126,6 +144,8 @@ export function ContactInformationSection({
           value: snapchat,
           onChange: onSnapchatChange,
           icon: <Ghost className="h-4 w-4" />,
+          helpText: t('common.validation.socialHandleOrUrlHint'),
+          validator: value => isValidOptionalSocialInput('snapchat', value),
         },
         {
           id: 'tiktok',
@@ -134,6 +154,8 @@ export function ContactInformationSection({
           value: tiktok,
           onChange: onTiktokChange,
           icon: <Music2 className="h-4 w-4" />,
+          helpText: t('common.validation.socialHandleOrUrlHint'),
+          validator: value => isValidOptionalSocialInput('tiktok', value),
         },
         {
           id: 'youtube',
@@ -142,6 +164,8 @@ export function ContactInformationSection({
           value: youtube,
           onChange: onYoutubeChange,
           icon: <Youtube className="h-4 w-4" />,
+          helpText: t('common.validation.socialHandleOrUrlHint'),
+          validator: value => isValidOptionalSocialInput('youtube', value),
         },
         {
           id: 'linkedin',
@@ -150,6 +174,8 @@ export function ContactInformationSection({
           value: linkedin,
           onChange: onLinkedinChange,
           icon: <Linkedin className="h-4 w-4" />,
+          helpText: t('common.validation.socialHandleOrUrlHint'),
+          validator: value => isValidOptionalSocialInput('linkedin', value),
         },
       ]}
     />

@@ -8,6 +8,7 @@ interface HashtagEditorProps {
   value: string[];
   onChange: (hashtags: string[]) => void;
   label?: string;
+  showLabel?: boolean;
   placeholder?: string;
   maxTags?: number;
 }
@@ -20,21 +21,20 @@ export function HashtagEditor({
   value,
   onChange,
   label,
+  showLabel,
   placeholder,
   maxTags,
 }: HashtagEditorProps) {
   const { allHashtags } = useCommonState({ loadAllHashtags: true });
 
-  const suggestions = useMemo(
-    () => (allHashtags ?? []).map(h => h.tag),
-    [allHashtags]
-  );
+  const suggestions = useMemo(() => (allHashtags ?? []).map(h => h.tag), [allHashtags]);
 
   return (
     <HashtagInput
       value={value}
       onChange={onChange}
       label={label}
+      showLabel={showLabel}
       placeholder={placeholder}
       maxTags={maxTags}
       suggestions={suggestions}

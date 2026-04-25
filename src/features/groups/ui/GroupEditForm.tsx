@@ -135,6 +135,8 @@ export function GroupEditForm({
         <HashtagEditor
           value={formData.hashtags}
           onChange={tags => setFormData({ ...formData, hashtags: tags })}
+          label="Hashtags"
+          showLabel={false}
           placeholder="Add hashtags..."
         />
       </div>

@@ -23,7 +23,8 @@ export const commonTranslations = {
     conversations: 'Konversationen werden geladen...',
     sync: {
       headline: 'Daten werden lokal geladen...',
-      coffeeMessage: 'Hol dir einen Kaffee — danach sind wir blitzschnell, keine Zeit für Kaffeepausen!',
+      coffeeMessage:
+        'Hol dir einen Kaffee — danach sind wir blitzschnell, keine Zeit für Kaffeepausen!',
       connecting: 'Verbindung wird hergestellt...',
       connected: 'Verbunden',
       disconnected: 'Offline — erneuter Versuch...',
@@ -38,7 +39,8 @@ export const commonTranslations = {
     },
     accessDenied: {
       title: 'Zugriff verweigert',
-      description: 'Sie haben keine Berechtigung, diese Seite anzuzeigen oder diese Aktion auszuführen.',
+      description:
+        'Sie haben keine Berechtigung, diese Seite anzuzeigen oder diese Aktion auszuführen.',
       helpText: 'Glauben Sie, das ist ein Fehler?',
     },
     contactHint: 'Wenn Sie glauben, dass dies nicht korrekt ist, können Sie eine E-Mail senden an',
@@ -69,6 +71,40 @@ export const commonTranslations = {
     uploading: 'Wird hochgeladen...',
     actions: 'Aktionen',
     clear: 'Löschen',
+  },
+  validation: {
+    firstNameHint: 'Gib mindestens 2 Zeichen für den Vornamen ein.',
+    lastNameHint: 'Gib einen Nachnamen mit mindestens 2 Zeichen ein oder lass das Feld leer.',
+    subtitleHint:
+      'Gib einen kurzen Untertitel mit mindestens 3 Zeichen ein oder lass das Feld leer.',
+    nameHint: 'Gib mindestens 3 Zeichen ein.',
+    titleHint: 'Gib mindestens 3 Zeichen für den Titel ein.',
+    emailHint: 'Gib eine gültige E-Mail-Adresse ein.',
+    urlHint: 'Gib eine gültige URL oder Domain ein, zum Beispiel https://example.com.',
+    onlineLinkHint: 'Gib einen gültigen Meeting-Link oder eine Domain ein.',
+    socialHandleOrUrlHint:
+      'Gib einen öffentlichen Benutzernamen/Handle oder eine vollständige Profil-URL ein.',
+    whatsappHint: 'Gib eine Telefonnummer oder einen vollständigen WhatsApp-Link ein.',
+    locationNameHint:
+      'Gib mindestens 3 Zeichen für den Veranstaltungsort ein oder lass das Feld leer.',
+    positiveIntegerHint: 'Gib eine ganze Zahl größer als 0 ein.',
+    nonNegativeIntegerHint: 'Gib eine ganze Zahl größer oder gleich 0 ein.',
+    dateHint: 'Wähle ein gültiges Datum.',
+    timeHint: 'Wähle eine gültige Uhrzeit oder lass das Feld leer.',
+    dateTimeHint: 'Wähle ein gültiges Datum mit Uhrzeit oder lass das Feld leer.',
+    location: {
+      countryHint: 'Beginne zu tippen und wähle ein verifiziertes Land.',
+      regionHint:
+        'Beginne zu tippen und wähle eine verifizierte Region innerhalb des gewählten Landes.',
+      cityHint:
+        'Beginne zu tippen und wähle eine verifizierte Stadt innerhalb der gewählten Region.',
+      postCodeHint:
+        'Beginne zu tippen und wähle eine verifizierte Postleitzahl für die gewählte Stadt oder Region.',
+      streetHint:
+        'Beginne zu tippen und wähle eine verifizierte Straße für die gewählte Postleitzahl oder Stadt.',
+      houseNumberHint:
+        'Gib eine Hausnummer wie 12 oder 12a ein und gleiche sie mit der gewählten Straße ab.',
+    },
   },
   visibility: {
     label: 'Sichtbarkeit',

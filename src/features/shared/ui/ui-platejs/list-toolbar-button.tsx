@@ -34,7 +34,7 @@ export function BulletedListToolbarButton() {
   return (
     <ToolbarSplitButton pressed={open}>
       <ToolbarSplitButtonPrimary
-        className="data-[state=on]:bg-accent data-[state=on]:text-accent-foreground"
+        className="data-[state=on]:bg-success data-[state=on]:text-success-foreground"
         onClick={() => {
           toggleList(editor, {
             listStyleType: ListStyleType.Disc,
@@ -115,7 +115,7 @@ export function NumberedListToolbarButton() {
   return (
     <ToolbarSplitButton pressed={open}>
       <ToolbarSplitButtonPrimary
-        className="data-[state=on]:bg-accent data-[state=on]:text-accent-foreground"
+        className="data-[state=on]:bg-success data-[state=on]:text-success-foreground"
         onClick={() =>
           toggleList(editor, {
             listStyleType: ListStyleType.Decimal,

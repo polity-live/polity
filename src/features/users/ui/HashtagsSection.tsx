@@ -1,4 +1,10 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
@@ -20,6 +26,8 @@ export function HashtagsSection({ hashtags, onHashtagsChange }: HashtagsSectionP
         <HashtagEditor
           value={hashtags}
           onChange={onHashtagsChange}
+          label={t('pages.user.settingsForm.hashtags.title')}
+          showLabel={false}
           placeholder={t('pages.user.settingsForm.hashtags.placeholder')}
         />
       </CardContent>

@@ -11,6 +11,7 @@ interface HashtagInputProps {
   value: string[];
   onChange: (hashtags: string[]) => void;
   label?: string;
+  showLabel?: boolean;
   placeholder?: string;
   maxTags?: number;
   suggestions?: string[];
@@ -20,6 +21,7 @@ export function HashtagInput({
   value,
   onChange,
   label = 'Hashtags',
+  showLabel = true,
   placeholder = 'Add a hashtag',
   maxTags,
   suggestions = [],
@@ -91,7 +93,7 @@ export function HashtagInput({
 
   return (
     <div className="space-y-2" ref={containerRef}>
-      <Label htmlFor="hashtag-input">{label}</Label>
+      {showLabel && <Label htmlFor="hashtag-input">{label}</Label>}
       {value.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {value.map(tag => (
@@ -117,6 +119,7 @@ export function HashtagInput({
           <Hash className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <Input
             id="hashtag-input"
+            aria-label={showLabel ? undefined : label}
             placeholder={placeholder}
             value={inputValue}
             onChange={e => {

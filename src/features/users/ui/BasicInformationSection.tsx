@@ -1,6 +1,12 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Label } from '@/features/shared/ui/ui/label';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
+import { hasMinLength, isOptionalMinLength } from '@/features/shared/logic/inputValidation';
+import { ValidatedInputField } from '@/features/shared/ui/form/ValidatedInputField';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface BasicInformationSectionProps {
@@ -30,35 +36,37 @@ export function BasicInformationSection({
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="firstName">{t('pages.user.settingsForm.basicInfo.firstNameLabel')}</Label>
-            <Input
-              id="firstName"
-              value={firstName}
-              onChange={e => onFirstNameChange(e.target.value)}
-              placeholder={t('pages.user.settingsForm.basicInfo.firstNamePlaceholder')}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="lastName">{t('pages.user.settingsForm.basicInfo.lastNameLabel')}</Label>
-            <Input
-              id="lastName"
-              value={lastName}
-              onChange={e => onLastNameChange(e.target.value)}
-              placeholder={t('pages.user.settingsForm.basicInfo.lastNamePlaceholder')}
-            />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="subtitle">{t('pages.user.settingsForm.basicInfo.subtitleLabel')}</Label>
-          <Input
-            id="subtitle"
-            value={subtitle}
-            onChange={e => onSubtitleChange(e.target.value)}
-            placeholder={t('pages.user.settingsForm.basicInfo.subtitlePlaceholder')}
+          <ValidatedInputField
+            id="firstName"
+            label={t('pages.user.settingsForm.basicInfo.firstNameLabel')}
+            value={firstName}
+            onChange={onFirstNameChange}
+            placeholder={t('pages.user.settingsForm.basicInfo.firstNamePlaceholder')}
+            validator={value => hasMinLength(value, 2)}
+            hint={t('common.validation.firstNameHint')}
+            autoComplete="given-name"
+            required
+          />
+          <ValidatedInputField
+            id="lastName"
+            label={t('pages.user.settingsForm.basicInfo.lastNameLabel')}
+            value={lastName}
+            onChange={onLastNameChange}
+            placeholder={t('pages.user.settingsForm.basicInfo.lastNamePlaceholder')}
+            validator={value => isOptionalMinLength(value, 2)}
+            hint={t('common.validation.lastNameHint')}
+            autoComplete="family-name"
           />
         </div>
+        <ValidatedInputField
+          id="subtitle"
+          label={t('pages.user.settingsForm.basicInfo.subtitleLabel')}
+          value={subtitle}
+          onChange={onSubtitleChange}
+          placeholder={t('pages.user.settingsForm.basicInfo.subtitlePlaceholder')}
+          validator={value => isOptionalMinLength(value, 3)}
+          hint={t('common.validation.subtitleHint')}
+        />
       </CardContent>
     </Card>
   );

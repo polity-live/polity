@@ -4,8 +4,16 @@
  * Form section for editing basic group information (name and description).
  */
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
-import { Input } from '@/features/shared/ui/ui/input';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
+import { hasMinLength } from '@/features/shared/logic/inputValidation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { ValidatedInputField } from '@/features/shared/ui/form/ValidatedInputField';
 import { Label } from '@/features/shared/ui/ui/label';
 import { Textarea } from '@/features/shared/ui/ui/textarea';
 import type { GroupFormData } from '../hooks/useGroupUpdate';
@@ -16,6 +24,8 @@ interface BasicInfoSectionProps {
 }
 
 export function BasicInfoSection({ formData, onChange }: BasicInfoSectionProps) {
+  const { t } = useTranslation();
+
   return (
     <Card>
       <CardHeader>
@@ -23,16 +33,16 @@ export function BasicInfoSection({ formData, onChange }: BasicInfoSectionProps) 
         <CardDescription>Public group information</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Group Name *</Label>
-          <Input
-            id="name"
-            value={formData.name}
-            onChange={e => onChange('name', e.target.value)}
-            placeholder="Group name"
-            required
-          />
-        </div>
+        <ValidatedInputField
+          id="name"
+          label="Group Name *"
+          value={formData.name}
+          onChange={value => onChange('name', value)}
+          placeholder="Group name"
+          validator={value => hasMinLength(value, 3)}
+          hint={t('common.validation.nameHint')}
+          required
+        />
         <div className="space-y-2">
           <Label htmlFor="description">Description</Label>
           <Textarea

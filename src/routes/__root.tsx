@@ -3,7 +3,7 @@ import { AuthProvider } from '@/providers/auth-provider';
 import { ZeroAppProvider } from '@/providers/zero-provider';
 import { AppShell } from '@/layout/app-shell';
 import { NotFound } from '@/features/shared/ui/ui/not-found';
-import appCss from '../styles.css?url';
+import '../styles.css';
 
 export const Route = createRootRoute({
   notFoundComponent: NotFound,
@@ -19,7 +19,6 @@ export const Route = createRootRoute({
       { title: 'Polity' },
     ],
     links: [
-      { rel: 'stylesheet', href: appCss },
       { rel: 'manifest', href: '/manifest.json' },
       { rel: 'icon', href: '/favicon.ico', sizes: 'any' },
       {

@@ -9,7 +9,6 @@ import {
   CardTitle,
 } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
 import { Textarea } from '@/features/shared/ui/ui/textarea';
 import { useNavigate } from '@tanstack/react-router';
@@ -40,6 +39,12 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 import { notifyAmendmentProfileUpdated } from '@/features/notifications/utils/notification-helpers.ts';
 import { CreateReviewCard, SummaryField } from '@/features/shared/ui/ui/create-review-card';
+import {
+  hasMinLength,
+  isNonNegativeInteger,
+  isOptionalMinLength,
+} from '@/features/shared/logic/inputValidation';
+import { ValidatedInputField } from '@/features/shared/ui/form/ValidatedInputField';
 import {
   EditingModeMenuItems,
   getEditingModeOption,
@@ -477,25 +482,25 @@ export function AmendmentEditContent({
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">{t('features.amendments.editContent.titleLabel')}</Label>
-              <Input
-                id="title"
-                value={formData.title}
-                onChange={e => setFormData({ ...formData, title: e.target.value })}
-                placeholder={t('features.amendments.editContent.titlePlaceholder')}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="subtitle">{t('features.amendments.editContent.subtitleLabel')}</Label>
-              <Input
-                id="subtitle"
-                value={formData.subtitle}
-                onChange={e => setFormData({ ...formData, subtitle: e.target.value })}
-                placeholder={t('features.amendments.editContent.subtitlePlaceholder')}
-              />
-            </div>
+            <ValidatedInputField
+              id="title"
+              label={t('features.amendments.editContent.titleLabel')}
+              value={formData.title}
+              onChange={value => setFormData({ ...formData, title: value })}
+              placeholder={t('features.amendments.editContent.titlePlaceholder')}
+              validator={value => hasMinLength(value, 3)}
+              hint={t('common.validation.titleHint')}
+              required
+            />
+            <ValidatedInputField
+              id="subtitle"
+              label={t('features.amendments.editContent.subtitleLabel')}
+              value={formData.subtitle}
+              onChange={value => setFormData({ ...formData, subtitle: value })}
+              placeholder={t('features.amendments.editContent.subtitlePlaceholder')}
+              validator={value => isOptionalMinLength(value, 3)}
+              hint={t('common.validation.subtitleHint')}
+            />
             <div className="space-y-2">
               <Label htmlFor="code">{t('features.amendments.editContent.codeLabel')}</Label>
               <Textarea
@@ -521,30 +526,31 @@ export function AmendmentEditContent({
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="date">{t('features.amendments.editContent.dateLabel')}</Label>
-              <Input
-                id="date"
-                value={formData.date}
-                onChange={e => setFormData({ ...formData, date: e.target.value })}
-                placeholder={t('features.amendments.editContent.datePlaceholder')}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="supporters">
-                {t('features.amendments.editContent.supportersLabel')}
-              </Label>
-              <Input
-                id="supporters"
-                type="number"
-                min="0"
-                value={formData.supporters}
-                onChange={e =>
-                  setFormData({ ...formData, supporters: parseInt(e.target.value, 10) || 0 })
-                }
-                placeholder={t('features.amendments.editContent.supportersPlaceholder')}
-              />
-            </div>
+            <ValidatedInputField
+              id="date"
+              label={t('features.amendments.editContent.dateLabel')}
+              value={formData.date}
+              onChange={value => setFormData({ ...formData, date: value })}
+              placeholder={t('features.amendments.editContent.datePlaceholder')}
+              validator={value => isOptionalMinLength(value, 4)}
+              hint={t('common.validation.dateHint')}
+            />
+            <ValidatedInputField
+              id="supporters"
+              type="number"
+              min="0"
+              label={t('features.amendments.editContent.supportersLabel')}
+              value={String(formData.supporters)}
+              onChange={value =>
+                setFormData({
+                  ...formData,
+                  supporters: Number.parseInt(value, 10) || 0,
+                })
+              }
+              placeholder={t('features.amendments.editContent.supportersPlaceholder')}
+              validator={value => isNonNegativeInteger(value)}
+              hint={t('common.validation.nonNegativeIntegerHint')}
+            />
           </CardContent>
         </Card>
 
@@ -645,6 +651,8 @@ export function AmendmentEditContent({
             <HashtagEditor
               value={formData.hashtags}
               onChange={tags => setFormData({ ...formData, hashtags: tags })}
+              label={t('features.amendments.editContent.tagsTitle')}
+              showLabel={false}
               placeholder={t('features.amendments.editContent.addTagPlaceholder')}
             />
           </CardContent>

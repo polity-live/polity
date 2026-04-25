@@ -1,15 +1,14 @@
 'use client';
 
 import { Button } from '@/features/shared/ui/ui/button.tsx';
-import { Label } from '@/features/shared/ui/ui/label.tsx';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-  TooltipProvider,
-} from '@/features/shared/ui/ui/tooltip.tsx';
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from '@/features/shared/ui/ui/hover-card.tsx';
+import { Label } from '@/features/shared/ui/ui/label.tsx';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { Info, Check, Globe, Lock, Users } from 'lucide-react';
+import { Check, CircleHelp, Globe, Lock, Users } from 'lucide-react';
 
 type Visibility = 'public' | 'authenticated' | 'private';
 
@@ -54,44 +53,54 @@ export function VisibilitySelector({
       icon: <Lock className="h-4 w-4" />,
     },
   ];
-  const selectedOption = visibilityOptions.find(opt => opt.value === value);
   const resolvedLabel = label ?? t('common.visibility.label');
 
   const content = (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <Label>{resolvedLabel}</Label>
-        {showTooltip && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Info className="text-muted-foreground h-4 w-4 cursor-help" />
-            </TooltipTrigger>
-            <TooltipContent className="max-w-xs">
-              <p className="text-sm">{selectedOption?.description}</p>
-            </TooltipContent>
-          </Tooltip>
-        )}
       </div>
       <div className="grid grid-cols-3 gap-2">
         {visibilityOptions.map(option => (
-          <Button
-            key={option.value}
-            type="button"
-            variant={value === option.value ? 'default' : 'outline'}
-            onClick={() => onChange(option.value)}
-            className="flex items-center gap-2"
-          >
-            {value === option.value ? <Check className="h-4 w-4" /> : option.icon}
-            {option.label}
-          </Button>
+          <div key={option.value} className="relative">
+            <Button
+              type="button"
+              variant={value === option.value ? 'default' : 'outline'}
+              onClick={() => onChange(option.value)}
+              className={
+                showTooltip
+                  ? 'flex w-full items-center gap-2 pr-9'
+                  : 'flex w-full items-center gap-2'
+              }
+            >
+              {value === option.value ? <Check className="h-4 w-4" /> : option.icon}
+              <span className="truncate">{option.label}</span>
+            </Button>
+            {showTooltip && (
+              <HoverCard openDelay={150}>
+                <HoverCardTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={option.description}
+                    className="text-muted-foreground hover:text-foreground absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 rounded-full"
+                    onClick={event => event.preventDefault()}
+                    onMouseDown={event => event.preventDefault()}
+                  >
+                    <CircleHelp className="h-4 w-4" />
+                  </Button>
+                </HoverCardTrigger>
+                <HoverCardContent side="top" className="w-56 p-3 text-sm">
+                  <p>{option.description}</p>
+                </HoverCardContent>
+              </HoverCard>
+            )}
+          </div>
         ))}
       </div>
     </div>
   );
-
-  if (showTooltip) {
-    return <TooltipProvider>{content}</TooltipProvider>;
-  }
 
   return content;
 }

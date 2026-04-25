@@ -11,6 +11,11 @@ import {
   Youtube,
 } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  isValidOptionalEmailAddress,
+  isValidOptionalSocialInput,
+  isValidOptionalUrlLike,
+} from '@/features/shared/logic/inputValidation';
 import { ContactLinksSection } from '@/features/shared/ui/contact/ContactLinksSection';
 import type { GroupFormData } from '../hooks/useGroupUpdate';
 
@@ -35,6 +40,9 @@ export function SocialMediaSection({ formData, onChange }: SocialMediaSectionPro
           onChange: value => onChange('email', value),
           icon: <Mail className="h-4 w-4" />,
           type: 'email',
+          helpText: t('common.validation.emailHint'),
+          validator: isValidOptionalEmailAddress,
+          autoComplete: 'email',
         },
         {
           id: 'group-website',
@@ -43,6 +51,9 @@ export function SocialMediaSection({ formData, onChange }: SocialMediaSectionPro
           value: formData.website,
           onChange: value => onChange('website', value),
           icon: <Globe className="h-4 w-4" />,
+          helpText: t('common.validation.urlHint'),
+          validator: isValidOptionalUrlLike,
+          autoComplete: 'url',
         },
       ]}
       socialTitle={t('features.groups.contact.socialTitle')}
@@ -55,6 +66,8 @@ export function SocialMediaSection({ formData, onChange }: SocialMediaSectionPro
           value: formData.whatsapp,
           onChange: value => onChange('whatsapp', value),
           icon: <MessageSquare className="h-4 w-4" />,
+          helpText: t('common.validation.whatsappHint'),
+          validator: value => isValidOptionalSocialInput('whatsapp', value),
         },
         {
           id: 'group-instagram',
@@ -63,6 +76,8 @@ export function SocialMediaSection({ formData, onChange }: SocialMediaSectionPro
           value: formData.instagram,
           onChange: value => onChange('instagram', value),
           icon: <Instagram className="h-4 w-4" />,
+          helpText: t('common.validation.socialHandleOrUrlHint'),
+          validator: value => isValidOptionalSocialInput('instagram', value),
         },
         {
           id: 'group-twitter',
@@ -71,6 +86,8 @@ export function SocialMediaSection({ formData, onChange }: SocialMediaSectionPro
           value: formData.twitter,
           onChange: value => onChange('twitter', value),
           icon: <Twitter className="h-4 w-4" />,
+          helpText: t('common.validation.socialHandleOrUrlHint'),
+          validator: value => isValidOptionalSocialInput('twitter', value),
         },
         {
           id: 'group-facebook',
@@ -79,6 +96,8 @@ export function SocialMediaSection({ formData, onChange }: SocialMediaSectionPro
           value: formData.facebook,
           onChange: value => onChange('facebook', value),
           icon: <Facebook className="h-4 w-4" />,
+          helpText: t('common.validation.socialHandleOrUrlHint'),
+          validator: value => isValidOptionalSocialInput('facebook', value),
         },
         {
           id: 'group-snapchat',
@@ -87,6 +106,8 @@ export function SocialMediaSection({ formData, onChange }: SocialMediaSectionPro
           value: formData.snapchat,
           onChange: value => onChange('snapchat', value),
           icon: <Ghost className="h-4 w-4" />,
+          helpText: t('common.validation.socialHandleOrUrlHint'),
+          validator: value => isValidOptionalSocialInput('snapchat', value),
         },
         {
           id: 'group-tiktok',
@@ -95,6 +116,8 @@ export function SocialMediaSection({ formData, onChange }: SocialMediaSectionPro
           value: formData.tiktok,
           onChange: value => onChange('tiktok', value),
           icon: <Music2 className="h-4 w-4" />,
+          helpText: t('common.validation.socialHandleOrUrlHint'),
+          validator: value => isValidOptionalSocialInput('tiktok', value),
         },
         {
           id: 'group-youtube',
@@ -103,6 +126,8 @@ export function SocialMediaSection({ formData, onChange }: SocialMediaSectionPro
           value: formData.youtube,
           onChange: value => onChange('youtube', value),
           icon: <Youtube className="h-4 w-4" />,
+          helpText: t('common.validation.socialHandleOrUrlHint'),
+          validator: value => isValidOptionalSocialInput('youtube', value),
         },
         {
           id: 'group-linkedin',
@@ -111,6 +136,8 @@ export function SocialMediaSection({ formData, onChange }: SocialMediaSectionPro
           value: formData.linkedin,
           onChange: value => onChange('linkedin', value),
           icon: <Linkedin className="h-4 w-4" />,
+          helpText: t('common.validation.socialHandleOrUrlHint'),
+          validator: value => isValidOptionalSocialInput('linkedin', value),
         },
       ]}
     />

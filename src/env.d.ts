@@ -5,6 +5,7 @@ interface ImportMetaEnv {
   readonly VITE_SUPABASE_ANON_KEY: string
   readonly VITE_ZERO_CACHE_URL: string
   readonly VITE_APP_URL: string
+  readonly VITE_GEOAPIFY_API_KEY: string
   readonly VITE_PRESENCE_WS_URL: string
   readonly VITE_STRIPE_PRICE_RUNNING: string
   readonly VITE_STRIPE_PRICE_DEVELOPMENT: string

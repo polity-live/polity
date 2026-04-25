@@ -14,7 +14,6 @@ import {
   CardTitle,
 } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
 import { Textarea } from '@/features/shared/ui/ui/textarea';
 import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
@@ -33,6 +32,14 @@ import { useUserGroupsWithManageEvents } from '@/zero/groups/useGroupState';
 import { TypeaheadSearch } from '@/features/shared/ui/typeahead';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import { formatNamedLocation } from '@/features/shared/logic/locationHelpers';
+import {
+  hasMinLength,
+  isOptionalMinLength,
+  isPositiveInteger,
+  isValidOptionalUrlLike,
+} from '@/features/shared/logic/inputValidation';
+import { GeoAddressFields } from '@/features/shared/ui/form/GeoAddressFields';
+import { ValidatedInputField } from '@/features/shared/ui/form/ValidatedInputField';
 
 interface EventEditProps {
   eventId: string;
@@ -220,16 +227,16 @@ export function EventEdit({ eventId, mode = 'edit' }: EventEditProps) {
             <CardDescription>{t('features.events.editPage.basicInfo.description')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">{t('features.events.editPage.eventTitle')}</Label>
-              <Input
-                id="title"
-                value={formData.title}
-                onChange={e => updateField('title', e.target.value)}
-                placeholder={t('features.events.editPage.eventTitlePlaceholder')}
-                required
-              />
-            </div>
+            <ValidatedInputField
+              id="title"
+              label={t('features.events.editPage.eventTitle')}
+              value={formData.title}
+              onChange={value => updateField('title', value)}
+              placeholder={t('features.events.editPage.eventTitlePlaceholder')}
+              validator={value => hasMinLength(value, 3)}
+              hint={t('common.validation.titleHint')}
+              required
+            />
             <div className="space-y-2">
               <Label htmlFor="description">{t('features.events.editPage.eventDescription')}</Label>
               <Textarea
@@ -285,47 +292,43 @@ export function EventEdit({ eventId, mode = 'edit' }: EventEditProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="startDate">
-                  {t('features.events.editPage.dateTime.startDate')}
-                </Label>
-                <Input
-                  id="startDate"
-                  type="date"
-                  value={formData.startDate}
-                  onChange={e => updateField('startDate', e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="startTime">
-                  {t('features.events.editPage.dateTime.startTime')}
-                </Label>
-                <Input
-                  id="startTime"
-                  type="time"
-                  value={formData.startTime}
-                  onChange={e => updateField('startTime', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="endDate">{t('features.events.editPage.dateTime.endDate')}</Label>
-                <Input
-                  id="endDate"
-                  type="date"
-                  value={formData.endDate}
-                  onChange={e => updateField('endDate', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="endTime">{t('features.events.editPage.dateTime.endTime')}</Label>
-                <Input
-                  id="endTime"
-                  type="time"
-                  value={formData.endTime}
-                  onChange={e => updateField('endTime', e.target.value)}
-                />
-              </div>
+              <ValidatedInputField
+                id="startDate"
+                type="date"
+                label={t('features.events.editPage.dateTime.startDate')}
+                value={formData.startDate}
+                onChange={value => updateField('startDate', value)}
+                validator={value => hasMinLength(value, 1)}
+                hint={t('common.validation.dateHint')}
+                required
+              />
+              <ValidatedInputField
+                id="startTime"
+                type="time"
+                label={t('features.events.editPage.dateTime.startTime')}
+                value={formData.startTime}
+                onChange={value => updateField('startTime', value)}
+                validator={value => isOptionalMinLength(value, 1)}
+                hint={t('common.validation.timeHint')}
+              />
+              <ValidatedInputField
+                id="endDate"
+                type="date"
+                label={t('features.events.editPage.dateTime.endDate')}
+                value={formData.endDate}
+                onChange={value => updateField('endDate', value)}
+                validator={value => isOptionalMinLength(value, 1)}
+                hint={t('common.validation.dateHint')}
+              />
+              <ValidatedInputField
+                id="endTime"
+                type="time"
+                label={t('features.events.editPage.dateTime.endTime')}
+                value={formData.endTime}
+                onChange={value => updateField('endTime', value)}
+                validator={value => isOptionalMinLength(value, 1)}
+                hint={t('common.validation.timeHint')}
+              />
             </div>
           </CardContent>
         </Card>
@@ -352,100 +355,90 @@ export function EventEdit({ eventId, mode = 'edit' }: EventEditProps) {
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="physical" className="space-y-4 pt-2">
-                <div className="space-y-2">
-                  <Label htmlFor="locationName">{t('pages.create.event.venueName')}</Label>
-                  <Input
-                    id="locationName"
-                    value={formData.locationName}
-                    onChange={e => updateField('locationName', e.target.value)}
-                    placeholder={t('pages.create.event.venueNamePlaceholder')}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="country">{t('pages.create.event.country')}</Label>
-                  <Input
-                    id="country"
-                    value={formData.country}
-                    onChange={e => updateField('country', e.target.value)}
-                    placeholder={t('pages.create.event.country')}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="region">{t('pages.create.event.region')}</Label>
-                  <Input
-                    id="region"
-                    value={formData.region}
-                    onChange={e => updateField('region', e.target.value)}
-                    placeholder={t('pages.create.event.region')}
-                  />
-                </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="postCode">{t('pages.create.event.postalCode')}</Label>
-                    <Input
-                      id="postCode"
-                      value={formData.postCode}
-                      onChange={e => updateField('postCode', e.target.value)}
-                      placeholder={t('pages.create.event.postalCode')}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="city">{t('pages.create.event.city')}</Label>
-                    <Input
-                      id="city"
-                      value={formData.city}
-                      onChange={e => updateField('city', e.target.value)}
-                      placeholder={t('pages.create.event.city')}
-                    />
-                  </div>
-                </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="street">{t('pages.create.event.street')}</Label>
-                    <Input
-                      id="street"
-                      value={formData.street}
-                      onChange={e => updateField('street', e.target.value)}
-                      placeholder={t('pages.create.event.street')}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="houseNumber">{t('pages.create.event.houseNumber')}</Label>
-                    <Input
-                      id="houseNumber"
-                      value={formData.houseNumber}
-                      onChange={e => updateField('houseNumber', e.target.value)}
-                      placeholder={t('pages.create.event.houseNumber')}
-                    />
-                  </div>
-                </div>
+                <ValidatedInputField
+                  id="locationName"
+                  label={t('pages.create.event.venueName')}
+                  value={formData.locationName}
+                  onChange={value => updateField('locationName', value)}
+                  placeholder={t('pages.create.event.venueNamePlaceholder')}
+                  validator={value => isOptionalMinLength(value, 3)}
+                  hint={t('common.validation.locationNameHint')}
+                />
+                <GeoAddressFields
+                  idPrefix="event-location"
+                  values={{
+                    country: formData.country,
+                    region: formData.region,
+                    city: formData.city,
+                    post_code: formData.postCode,
+                    street: formData.street,
+                    house_number: formData.houseNumber,
+                  }}
+                  onFieldChange={(field, value) => {
+                    switch (field) {
+                      case 'country':
+                        updateField('country', value);
+                        break;
+                      case 'region':
+                        updateField('region', value);
+                        break;
+                      case 'city':
+                        updateField('city', value);
+                        break;
+                      case 'post_code':
+                        updateField('postCode', value);
+                        break;
+                      case 'street':
+                        updateField('street', value);
+                        break;
+                      case 'house_number':
+                        updateField('houseNumber', value);
+                        break;
+                    }
+                  }}
+                  labels={{
+                    country: t('pages.create.event.country'),
+                    region: t('pages.create.event.region'),
+                    city: t('pages.create.event.city'),
+                    post_code: t('pages.create.event.postalCode'),
+                    street: t('pages.create.event.street'),
+                    house_number: t('pages.create.event.houseNumber'),
+                  }}
+                  placeholders={{
+                    country: t('pages.create.event.country'),
+                    region: t('pages.create.event.region'),
+                    city: t('pages.create.event.city'),
+                    post_code: t('pages.create.event.postalCode'),
+                    street: t('pages.create.event.street'),
+                    house_number: t('pages.create.event.houseNumber'),
+                  }}
+                />
               </TabsContent>
               <TabsContent value="online" className="space-y-4 pt-2">
-                <div className="space-y-2">
-                  <Label htmlFor="onlineLink">{t('pages.create.event.meetingLink')}</Label>
-                  <Input
-                    id="onlineLink"
-                    type="url"
-                    value={formData.onlineLink}
-                    onChange={e => updateField('onlineLink', e.target.value)}
-                    placeholder={t('pages.create.event.meetingLinkPlaceholder')}
-                  />
-                </div>
+                <ValidatedInputField
+                  id="onlineLink"
+                  type="url"
+                  label={t('pages.create.event.meetingLink')}
+                  value={formData.onlineLink}
+                  onChange={value => updateField('onlineLink', value)}
+                  placeholder={t('pages.create.event.meetingLinkPlaceholder')}
+                  validator={isValidOptionalUrlLike}
+                  hint={t('common.validation.onlineLinkHint')}
+                  autoComplete="url"
+                />
               </TabsContent>
             </Tabs>
-            <div className="space-y-2">
-              <Label htmlFor="capacity">
-                {t('features.events.editPage.locationCapacity.capacity')}
-              </Label>
-              <Input
-                id="capacity"
-                type="number"
-                min="1"
-                value={formData.capacity}
-                onChange={e => updateField('capacity', e.target.value)}
-                placeholder={t('features.events.editPage.locationCapacity.capacityPlaceholder')}
-              />
-            </div>
+            <ValidatedInputField
+              id="capacity"
+              type="number"
+              min="1"
+              label={t('features.events.editPage.locationCapacity.capacity')}
+              value={formData.capacity}
+              onChange={value => updateField('capacity', value)}
+              placeholder={t('features.events.editPage.locationCapacity.capacityPlaceholder')}
+              validator={isPositiveInteger}
+              hint={t('common.validation.positiveIntegerHint')}
+            />
           </CardContent>
         </Card>
 
@@ -459,6 +452,8 @@ export function EventEdit({ eventId, mode = 'edit' }: EventEditProps) {
             <HashtagEditor
               value={formData.tags}
               onChange={tags => setFormData({ ...formData, tags })}
+              label={t('features.events.editPage.tags.title')}
+              showLabel={false}
               placeholder={t('features.events.editPage.tags.placeholder')}
             />
           </CardContent>
@@ -476,39 +471,33 @@ export function EventEdit({ eventId, mode = 'edit' }: EventEditProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="registrationDeadline">
-                {t('features.events.deadlines.registration', 'Registration Deadline')}
-              </Label>
-              <Input
-                id="registrationDeadline"
-                type="datetime-local"
-                value={formData.registrationDeadline}
-                onChange={e => updateField('registrationDeadline', e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="amendmentDeadline">
-                {t('features.events.deadlines.amendment', 'Amendment Deadline')}
-              </Label>
-              <Input
-                id="amendmentDeadline"
-                type="datetime-local"
-                value={formData.amendmentDeadline}
-                onChange={e => updateField('amendmentDeadline', e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="candidacyDeadline">
-                {t('features.events.deadlines.candidacy', 'Candidacy Deadline')}
-              </Label>
-              <Input
-                id="candidacyDeadline"
-                type="datetime-local"
-                value={formData.candidacyDeadline}
-                onChange={e => updateField('candidacyDeadline', e.target.value)}
-              />
-            </div>
+            <ValidatedInputField
+              id="registrationDeadline"
+              type="datetime-local"
+              label={t('features.events.deadlines.registration', 'Registration Deadline')}
+              value={formData.registrationDeadline}
+              onChange={value => updateField('registrationDeadline', value)}
+              validator={value => isOptionalMinLength(value, 1)}
+              hint={t('common.validation.dateTimeHint')}
+            />
+            <ValidatedInputField
+              id="amendmentDeadline"
+              type="datetime-local"
+              label={t('features.events.deadlines.amendment', 'Amendment Deadline')}
+              value={formData.amendmentDeadline}
+              onChange={value => updateField('amendmentDeadline', value)}
+              validator={value => isOptionalMinLength(value, 1)}
+              hint={t('common.validation.dateTimeHint')}
+            />
+            <ValidatedInputField
+              id="candidacyDeadline"
+              type="datetime-local"
+              label={t('features.events.deadlines.candidacy', 'Candidacy Deadline')}
+              value={formData.candidacyDeadline}
+              onChange={value => updateField('candidacyDeadline', value)}
+              validator={value => isOptionalMinLength(value, 1)}
+              hint={t('common.validation.dateTimeHint')}
+            />
           </CardContent>
         </Card>
 

@@ -6,8 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/features/shared/ui/ui/card';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Label } from '@/features/shared/ui/ui/label';
+import { ValidatedInputField } from '@/features/shared/ui/form/ValidatedInputField';
 
 export interface ContactLinksField {
   id: string;
@@ -18,6 +17,8 @@ export interface ContactLinksField {
   icon: ReactNode;
   type?: HTMLInputTypeAttribute;
   helpText?: string;
+  validator?: (value: string) => boolean;
+  autoComplete?: string;
 }
 
 interface ContactLinksSectionProps {
@@ -38,25 +39,22 @@ function ContactLinksFieldInput({
   icon,
   type = 'text',
   helpText,
+  validator,
+  autoComplete,
 }: ContactLinksField) {
   return (
-    <div className="space-y-2">
-      <Label htmlFor={id}>{label}</Label>
-      <div className="relative">
-        <div className="text-muted-foreground pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-          {icon}
-        </div>
-        <Input
-          id={id}
-          type={type}
-          value={value}
-          onChange={event => onChange(event.target.value)}
-          placeholder={placeholder}
-          className="pl-10"
-        />
-      </div>
-      {helpText && <p className="text-muted-foreground text-xs">{helpText}</p>}
-    </div>
+    <ValidatedInputField
+      id={id}
+      type={type}
+      label={label}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      icon={icon}
+      hint={helpText}
+      validator={validator}
+      autoComplete={autoComplete}
+    />
   );
 }
 
