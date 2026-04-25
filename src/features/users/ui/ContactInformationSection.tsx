@@ -83,22 +83,6 @@ export function ContactInformationSection({
           icon: <Globe className="h-4 w-4" />,
           helpText: t('pages.user.settingsForm.contact.websiteHint'),
         },
-        {
-          id: 'youtube',
-          label: t('pages.user.settingsForm.contact.youtubeLabel'),
-          placeholder: t('pages.user.settingsForm.contact.youtubePlaceholder'),
-          value: youtube,
-          onChange: onYoutubeChange,
-          icon: <Youtube className="h-4 w-4" />,
-        },
-        {
-          id: 'linkedin',
-          label: t('pages.user.settingsForm.contact.linkedinLabel'),
-          placeholder: t('pages.user.settingsForm.contact.linkedinPlaceholder'),
-          value: linkedin,
-          onChange: onLinkedinChange,
-          icon: <Linkedin className="h-4 w-4" />,
-        },
       ]}
       socialTitle={t('pages.user.settingsForm.contact.socialTitle')}
       socialDescription={t('pages.user.settingsForm.contact.socialDescription')}
@@ -150,6 +134,22 @@ export function ContactInformationSection({
           value: tiktok,
           onChange: onTiktokChange,
           icon: <Music2 className="h-4 w-4" />,
+        },
+        {
+          id: 'youtube',
+          label: t('pages.user.settingsForm.contact.youtubeLabel'),
+          placeholder: t('pages.user.settingsForm.contact.youtubePlaceholder'),
+          value: youtube,
+          onChange: onYoutubeChange,
+          icon: <Youtube className="h-4 w-4" />,
+        },
+        {
+          id: 'linkedin',
+          label: t('pages.user.settingsForm.contact.linkedinLabel'),
+          placeholder: t('pages.user.settingsForm.contact.linkedinPlaceholder'),
+          value: linkedin,
+          onChange: onLinkedinChange,
+          icon: <Linkedin className="h-4 w-4" />,
         },
       ]}
     />

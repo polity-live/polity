@@ -34,22 +34,6 @@ export function SocialMediaSection({ formData, onChange }: SocialMediaSectionPro
           onChange: value => onChange('website', value),
           icon: <Globe className="h-4 w-4" />,
         },
-        {
-          id: 'group-youtube',
-          label: t('features.groups.contact.youtubeLabel'),
-          placeholder: t('features.groups.contact.youtubePlaceholder'),
-          value: formData.youtube,
-          onChange: value => onChange('youtube', value),
-          icon: <Youtube className="h-4 w-4" />,
-        },
-        {
-          id: 'group-linkedin',
-          label: t('features.groups.contact.linkedinLabel'),
-          placeholder: t('features.groups.contact.linkedinPlaceholder'),
-          value: formData.linkedin,
-          onChange: value => onChange('linkedin', value),
-          icon: <Linkedin className="h-4 w-4" />,
-        },
       ]}
       socialTitle={t('features.groups.contact.socialTitle')}
       socialDescription={t('features.groups.contact.socialDescription')}
@@ -101,6 +85,22 @@ export function SocialMediaSection({ formData, onChange }: SocialMediaSectionPro
           value: formData.tiktok,
           onChange: value => onChange('tiktok', value),
           icon: <Music2 className="h-4 w-4" />,
+        },
+        {
+          id: 'group-youtube',
+          label: t('features.groups.contact.youtubeLabel'),
+          placeholder: t('features.groups.contact.youtubePlaceholder'),
+          value: formData.youtube,
+          onChange: value => onChange('youtube', value),
+          icon: <Youtube className="h-4 w-4" />,
+        },
+        {
+          id: 'group-linkedin',
+          label: t('features.groups.contact.linkedinLabel'),
+          placeholder: t('features.groups.contact.linkedinPlaceholder'),
+          value: formData.linkedin,
+          onChange: value => onChange('linkedin', value),
+          icon: <Linkedin className="h-4 w-4" />,
         },
       ]}
     />

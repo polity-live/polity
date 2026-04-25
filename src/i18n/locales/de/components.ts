@@ -21,6 +21,10 @@ export const componentsTranslations = {
       location: 'Standort',
       region: 'Region',
       country: 'Land',
+      postCode: 'Postleitzahl',
+      city: 'Stadt',
+      street: 'Straße',
+      houseNumber: 'Hausnummer',
     },
   },
   actionBar: {

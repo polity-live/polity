@@ -68,7 +68,6 @@ interface ContactCardItem {
 
 export const InfoTabs: React.FC<InfoTabsProps> = ({ about, contact, eventDetails, className }) => {
   const { t } = useTranslation();
-  const contactLocation = contact?.location || formatLocation(contact);
   const primaryContactItems: ContactCardItem[] = [
     {
       key: 'email',
@@ -86,23 +85,59 @@ export const InfoTabs: React.FC<InfoTabsProps> = ({ about, contact, eventDetails
       icon: <Globe className="h-4 w-4" />,
       accentClass: 'bg-cyan-50 text-cyan-700 dark:bg-cyan-950/50 dark:text-cyan-300',
     },
+  ].filter(item => item.value);
+  const locationItems: ContactCardItem[] = [
     {
-      key: 'youtube',
-      label: t('components.infoTabs.labels.youtube'),
-      value: contact?.youtube,
-      href: buildContactLinkHref('youtube', contact?.youtube),
-      icon: <Youtube className="h-4 w-4" />,
-      accentClass: 'bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300',
+      key: 'country',
+      label: t('components.infoTabs.labels.country'),
+      value: contact?.country,
+      icon: <MapPin className="h-4 w-4" />,
+      accentClass: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300',
     },
     {
-      key: 'linkedin',
-      label: t('components.infoTabs.labels.linkedin'),
-      value: contact?.linkedin,
-      href: buildContactLinkHref('linkedin', contact?.linkedin),
-      icon: <Linkedin className="h-4 w-4" />,
-      accentClass: 'bg-sky-50 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300',
+      key: 'region',
+      label: t('components.infoTabs.labels.region'),
+      value: contact?.region,
+      icon: <MapPin className="h-4 w-4" />,
+      accentClass: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300',
+    },
+    {
+      key: 'post_code',
+      label: t('components.infoTabs.labels.postCode'),
+      value: contact?.post_code,
+      icon: <MapPin className="h-4 w-4" />,
+      accentClass: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300',
+    },
+    {
+      key: 'city',
+      label: t('components.infoTabs.labels.city'),
+      value: contact?.city,
+      icon: <MapPin className="h-4 w-4" />,
+      accentClass: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300',
+    },
+    {
+      key: 'street',
+      label: t('components.infoTabs.labels.street'),
+      value: [contact?.street, contact?.house_number].filter(Boolean).join(' ') || undefined,
+      icon: <MapPin className="h-4 w-4" />,
+      accentClass: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300',
     },
   ].filter(item => item.value);
+
+  if (locationItems.length === 0) {
+    const fallbackLocation = contact?.location || formatLocation(contact);
+
+    if (fallbackLocation) {
+      locationItems.push({
+        key: 'location',
+        label: t('components.infoTabs.labels.location'),
+        value: fallbackLocation,
+        icon: <MapPin className="h-4 w-4" />,
+        accentClass: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300',
+      });
+    }
+  }
+
   const socialItems: ContactCardItem[] = [
     {
       key: 'whatsapp',
@@ -151,6 +186,22 @@ export const InfoTabs: React.FC<InfoTabsProps> = ({ about, contact, eventDetails
       href: buildContactLinkHref('tiktok', contact?.tiktok),
       icon: <Music2 className="h-4 w-4" />,
       accentClass: 'bg-zinc-100 text-zinc-900 dark:bg-zinc-900/70 dark:text-zinc-100',
+    },
+    {
+      key: 'youtube',
+      label: t('components.infoTabs.labels.youtube'),
+      value: contact?.youtube,
+      href: buildContactLinkHref('youtube', contact?.youtube),
+      icon: <Youtube className="h-4 w-4" />,
+      accentClass: 'bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300',
+    },
+    {
+      key: 'linkedin',
+      label: t('components.infoTabs.labels.linkedin'),
+      value: contact?.linkedin,
+      href: buildContactLinkHref('linkedin', contact?.linkedin),
+      icon: <Linkedin className="h-4 w-4" />,
+      accentClass: 'bg-sky-50 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300',
     },
   ].filter(item => item.value);
 
@@ -290,6 +341,17 @@ export const InfoTabs: React.FC<InfoTabsProps> = ({ about, contact, eventDetails
               </div>
             )}
 
+            {locationItems.length > 0 && (
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">{t('components.infoTabs.labels.location')}</p>
+                </div>
+                <div className="grid gap-3 md:grid-cols-2">
+                  {locationItems.map(item => renderContactCard(item))}
+                </div>
+              </div>
+            )}
+
             {socialItems.length > 0 && (
               <div className="space-y-3">
                 <div className="space-y-1">
@@ -304,19 +366,11 @@ export const InfoTabs: React.FC<InfoTabsProps> = ({ about, contact, eventDetails
               </div>
             )}
 
-            {contactLocation &&
-              renderContactCard({
-                key: 'location',
-                label: t('components.infoTabs.labels.location'),
-                value: contactLocation,
-                icon: <MapPin className="h-4 w-4" />,
-                accentClass:
-                  'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300',
-              })}
-
-            {primaryContactItems.length === 0 && socialItems.length === 0 && !contactLocation && (
-              <p className="text-muted-foreground">{t('components.infoTabs.noContact')}</p>
-            )}
+            {primaryContactItems.length === 0 &&
+              socialItems.length === 0 &&
+              locationItems.length === 0 && (
+                <p className="text-muted-foreground">{t('components.infoTabs.noContact')}</p>
+              )}
           </CardContent>
         </Card>
       </TabsContent>
