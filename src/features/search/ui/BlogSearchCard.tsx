@@ -1,6 +1,7 @@
 import React from 'react';
 import { BlogsCard } from '@/features/users/ui/BlogsCard';
 import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
+import { SEARCH_CARD_GRADIENTS } from '@/features/shared/utils/search-card-gradients';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
 
 import { type SearchBlog } from '../types/search.types';
@@ -12,7 +13,7 @@ interface BlogSearchCardProps {
 
 export function BlogSearchCard({
   blog,
-  gradientClass = 'bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950',
+  gradientClass = SEARCH_CARD_GRADIENTS.blog,
 }: BlogSearchCardProps) {
   // Calculate supporters from upvotes and downvotes
   const supporters = (blog.upvotes || 0) - (blog.downvotes || 0);

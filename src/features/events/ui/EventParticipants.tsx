@@ -49,6 +49,8 @@ import {
   CommandItem,
   CommandList,
 } from '@/features/shared/ui/ui/command';
+import { getTableTagSurfaceClassName } from '@/features/shared/ui/ui/table-tag';
+import { cn } from '@/features/shared/utils/utils';
 import { useEventParticipants, ACTION_RIGHTS } from '../hooks/useEventParticipants';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
@@ -353,7 +355,9 @@ export function EventParticipants({ eventId }: { eventId: string }) {
                         value={selectedRoleId}
                         onValueChange={roleId => actions.changeRole(participant.id, roleId)}
                       >
-                        <SelectTrigger className="w-40">
+                        <SelectTrigger
+                          className={cn('w-40', getTableTagSurfaceClassName('event'))}
+                        >
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>

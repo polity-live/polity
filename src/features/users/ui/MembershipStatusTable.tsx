@@ -9,7 +9,7 @@ import {
   TableRow,
 } from '@/features/shared/ui/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { Badge } from '@/features/shared/ui/ui/badge';
+import { TableTag } from '@/features/shared/ui/ui/table-tag';
 import { Check, X, Trash2, LucideIcon } from 'lucide-react';
 import type { FilterableRecord } from '../hooks/useUserMembershipsFilters';
 import type { GroupMembershipsByUserRow } from '@/zero/groups/queries';
@@ -168,7 +168,7 @@ export function MembershipStatusTable({
                   </TableCell>
                   {(statusType === 'active' || statusType === 'invited' || statusType === 'requested') && (
                     <TableCell>
-                      <Badge variant="outline">{role}</Badge>
+                      <TableTag entityType={entityKey}>{role}</TableTag>
                     </TableCell>
                   )}
                   <TableCell className="text-muted-foreground">{createdAt}</TableCell>

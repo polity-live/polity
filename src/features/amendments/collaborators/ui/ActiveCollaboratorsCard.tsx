@@ -3,7 +3,13 @@
  */
 
 import { Button } from '@/features/shared/ui/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import {
   Table,
@@ -20,6 +26,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/features/shared/ui/ui/select';
+import { getTableTagSurfaceClassName } from '@/features/shared/ui/ui/table-tag';
+import { cn } from '@/features/shared/utils/utils';
 import { Users, Shield, Trash2 } from 'lucide-react';
 import type { Collaborator, Role } from '../hooks/useCollaborators';
 
@@ -53,7 +61,7 @@ export function ActiveCollaboratorsCard({
       </CardHeader>
       <CardContent>
         {collaborators.length === 0 ? (
-          <p className="py-8 text-center text-muted-foreground">No active collaborators found</p>
+          <p className="text-muted-foreground py-8 text-center">No active collaborators found</p>
         ) : (
           <Table>
             <TableHeader>
@@ -102,7 +110,7 @@ export function ActiveCollaboratorsCard({
                         >
                           <div className="font-medium">{userName}</div>
                           {userHandle && (
-                            <div className="text-sm text-muted-foreground">@{userHandle}</div>
+                            <div className="text-muted-foreground text-sm">@{userHandle}</div>
                           )}
                         </div>
                       </div>
@@ -110,11 +118,11 @@ export function ActiveCollaboratorsCard({
                     <TableCell>
                       <Select
                         value={roleId}
-                        onValueChange={newRoleId =>
-                          onChangeRole(collaboration.id, newRoleId)
-                        }
+                        onValueChange={newRoleId => onChangeRole(collaboration.id, newRoleId)}
                       >
-                        <SelectTrigger className="w-40">
+                        <SelectTrigger
+                          className={cn('w-40', getTableTagSurfaceClassName('amendment'))}
+                        >
                           <SelectValue placeholder={roleName} />
                         </SelectTrigger>
                         <SelectContent>

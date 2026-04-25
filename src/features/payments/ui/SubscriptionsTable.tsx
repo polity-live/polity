@@ -9,8 +9,9 @@ import {
   TableRow,
 } from '@/features/shared/ui/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { Badge } from '@/features/shared/ui/ui/badge';
+import { TableTag } from '@/features/shared/ui/ui/table-tag';
 import { Trash2, User, Users, Scale, Calendar, BookOpen } from 'lucide-react';
+import type { SearchCardGradientEntity } from '@/features/shared/utils/search-card-gradients';
 
 import { useCommonState } from '@/zero/common/useCommonState';
 
@@ -45,6 +46,7 @@ export function SubscriptionsTable({
         type: 'User',
         icon: User,
         avatar: u.avatar,
+        entityType: 'user' as const,
         onNavigate: () => onNavigateToUser(u.id),
       };
     } else if (subscription.group) {
@@ -54,6 +56,7 @@ export function SubscriptionsTable({
         type: 'Group',
         icon: Users,
         avatar: g.image_url,
+        entityType: 'group' as const,
         onNavigate: () => onNavigateToGroup(g.id),
       };
     } else if (subscription.amendment) {
@@ -63,6 +66,7 @@ export function SubscriptionsTable({
         type: 'Amendment',
         icon: Scale,
         avatar: a.image_url,
+        entityType: 'amendment' as const,
         onNavigate: () => onNavigateToAmendment(a.id),
       };
     } else if (subscription.event) {
@@ -72,6 +76,7 @@ export function SubscriptionsTable({
         type: 'Event',
         icon: Calendar,
         avatar: e.image_url,
+        entityType: 'event' as const,
         onNavigate: () => onNavigateToEvent(e.id),
       };
     } else if (subscription.blog) {
@@ -81,6 +86,7 @@ export function SubscriptionsTable({
         type: 'Blog',
         icon: BookOpen,
         avatar: b.image_url,
+        entityType: 'blog' as const,
         onNavigate: () => onNavigateToBlog(b.id, b.group_id),
       };
     }
@@ -125,7 +131,7 @@ export function SubscriptionsTable({
               const entityInfo = getEntityInfo(subscription);
               if (!entityInfo) return null;
 
-              const { name, type, icon: Icon, avatar, onNavigate } = entityInfo;
+              const { name, type, icon: Icon, avatar, entityType, onNavigate } = entityInfo;
               const createdAt = subscription.created_at
                 ? new Date(subscription.created_at).toLocaleDateString()
                 : 'N/A';
@@ -146,7 +152,7 @@ export function SubscriptionsTable({
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{type}</Badge>
+                    <TableTag entityType={entityType}>{type}</TableTag>
                   </TableCell>
                   <TableCell className="text-muted-foreground">{createdAt}</TableCell>
                   <TableCell className="text-right">

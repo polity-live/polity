@@ -15,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/features/shared/ui/ui/table';
+import { TableTag } from '@/features/shared/ui/ui/table-tag';
 import { ArrowUpDown, Trash2, Users } from 'lucide-react';
 import type { GroupMembershipWithUser, GroupRole } from '../types/group.types';
 
@@ -99,7 +100,7 @@ export function ActiveMembersTable({
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className="text-sm font-medium">{role}</span>
+                      <TableTag entityType="group">{role}</TableTag>
                     </TableCell>
                     <TableCell className="text-muted-foreground">{createdAt}</TableCell>
                     <TableCell className="text-right">
