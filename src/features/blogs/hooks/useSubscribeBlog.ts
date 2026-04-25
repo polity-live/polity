@@ -12,7 +12,10 @@ import { toast } from 'sonner';
  */
 export function useSubscribeBlog(targetBlogId?: string) {
   const { user: authUser } = useAuth();
-  const { blog, subscribers } = useBlogState({ blogId: targetBlogId, includeSubscribers: true });
+  const { blog, subscribers, subscriberCount: persistedSubscriberCount } = useBlogState({
+    blogId: targetBlogId,
+    includeSubscribers: true,
+  });
   const { subscribeToBlog, unsubscribeFromBlog } = useBlogActions();
   const { currentUser } = useUserState();
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -40,14 +43,14 @@ export function useSubscribeBlog(targetBlogId?: string) {
       if (subscribed === optimisticTargetRef.current) {
         optimisticTargetRef.current = null;
         createdSubscriptionIdRef.current = null;
-        setSubscriberCount(blog?.subscriber_count ?? subs.length);
+        setSubscriberCount(persistedSubscriberCount);
       }
       return;
     }
 
     setIsSubscribed(subscribed);
-    setSubscriberCount(blog?.subscriber_count ?? subs.length);
-  }, [subscriptionData, authUser?.id, targetBlogId, subscriptionLoading, blog?.subscriber_count]);
+    setSubscriberCount(persistedSubscriberCount);
+  }, [subscriptionData, authUser?.id, subscriptionLoading, persistedSubscriberCount]);
 
   // Subscribe to a blog
   const subscribe = async () => {

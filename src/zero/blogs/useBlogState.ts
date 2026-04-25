@@ -90,6 +90,10 @@ export function useBlogState(options: BlogStateOptions = {}) {
       : undefined
   )
 
+  const subscriberCount = subscribersResult.type === 'unknown'
+    ? blog?.subscriber_count ?? 0
+    : subscribers?.length ?? blog?.subscriber_count ?? 0
+
   const comments = blogThread?.comments ?? []
 
   // ── Group blogs with hashtags (opt-in) ─────────────────────────────
@@ -129,6 +133,7 @@ export function useBlogState(options: BlogStateOptions = {}) {
     blogWithHashtags,
     blogForEditor,
     versions: versions ?? [],
+    subscriberCount,
     subscribers: subscribers ?? [],
     comments: comments ?? [],
     blogThread: blogThread ?? null,

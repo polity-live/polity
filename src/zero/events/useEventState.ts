@@ -324,9 +324,11 @@ export function useEventSubscribers(eventId?: string) {
     eventId ? queries.events.subscribersByEvent({ eventId }) : undefined
   )
 
+  const subscriberCount = subscribersData?.length ?? eventRows?.subscriber_count ?? 0
+
   return {
     event: eventRows || null,
-    subscriberCount: eventRows?.subscriber_count ?? subscribersData?.length ?? 0,
+    subscriberCount,
     subscribers: subscribersData || [],
     isLoading: eventResult.type === 'unknown' || subscribersResult.type === 'unknown',
   }

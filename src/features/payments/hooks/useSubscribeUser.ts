@@ -29,6 +29,7 @@ export function useSubscribeUser(targetUserId?: string) {
     subscriberUserId: targetUserId,
   });
   const subscriptionLoading = false;
+  const persistedSubscriberCount = subscriptionRows?.length ?? targetUser?.subscriber_count ?? 0;
 
   // Update subscription state when data changes
   useEffect(() => {
@@ -44,14 +45,14 @@ export function useSubscribeUser(targetUserId?: string) {
       if (subscribed === optimisticTargetRef.current) {
         optimisticTargetRef.current = null;
         createdSubscriptionIdRef.current = null;
-        setSubscriberCount(targetUser?.subscriber_count ?? subscribers.length);
+        setSubscriberCount(persistedSubscriberCount);
       }
       return;
     }
 
     setIsSubscribed(subscribed);
-    setSubscriberCount(targetUser?.subscriber_count ?? subscribers.length);
-  }, [subscriptionRows, authUser?.id, targetUserId, subscriptionLoading, targetUser?.subscriber_count]);
+    setSubscriberCount(persistedSubscriberCount);
+  }, [subscriptionRows, authUser?.id, subscriptionLoading, persistedSubscriberCount]);
 
   // Subscribe to a user
   const subscribe = async () => {

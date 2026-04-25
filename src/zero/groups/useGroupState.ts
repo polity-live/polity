@@ -170,9 +170,11 @@ export function useGroupSubscribers(groupId: string | undefined) {
     groupId ? queries.groups.subscribersByGroup({ groupId }) : undefined
   );
 
+  const subscriberCount = subscribersData?.length ?? groupsData?.[0]?.subscriber_count ?? 0;
+
   return {
     groupName: groupsData?.[0]?.name || 'Group',
-    subscriberCount: groupsData?.[0]?.subscriber_count ?? subscribersData?.length ?? 0,
+    subscriberCount,
     subscribers: subscribersData || [],
     isLoading: groupsResult.type === 'unknown' || subscribersResult.type === 'unknown',
   };

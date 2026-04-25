@@ -286,7 +286,9 @@ export function useAmendmentState(options: AmendmentStateOptions = {}) {
     [subscribers, userId]
   )
 
-  const subscriberCount = subscribers?.length ?? 0
+  const subscriberCount = subscriberResult.type === 'unknown'
+    ? amendment?.subscriber_count ?? 0
+    : subscribers?.length ?? amendment?.subscriber_count ?? 0
 
   const isLoading =
     (amendmentId !== undefined && amendmentResult.type === 'unknown') ||

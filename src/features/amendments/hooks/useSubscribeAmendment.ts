@@ -21,6 +21,7 @@ export function useSubscribeAmendment(targetAmendmentId?: string) {
   // Use facade state for amendment data and subscribers
   const {
     amendment: amendmentRows,
+    subscriberCount: persistedSubscriberCount,
     subscribers: subscriptionData,
     isLoading: subscriptionLoading,
   } = useAmendmentState({
@@ -48,14 +49,14 @@ export function useSubscribeAmendment(targetAmendmentId?: string) {
       if (subscribed === optimisticTargetRef.current) {
         optimisticTargetRef.current = null;
         createdSubscriptionIdRef.current = null;
-        setSubscriberCount(amendmentRows?.subscriber_count ?? subscribers.length);
+        setSubscriberCount(persistedSubscriberCount);
       }
       return;
     }
 
     setIsSubscribed(subscribed);
-    setSubscriberCount(amendmentRows?.subscriber_count ?? subscribers.length);
-  }, [subscriptionData, authUser?.id, targetAmendmentId, subscriptionLoading, amendmentRows?.subscriber_count]);
+    setSubscriberCount(persistedSubscriberCount);
+  }, [subscriptionData, authUser?.id, subscriptionLoading, persistedSubscriberCount]);
 
   // Subscribe to an amendment
   const subscribe = async () => {
@@ -64,9 +65,7 @@ export function useSubscribeAmendment(targetAmendmentId?: string) {
     }
 
     // Prevent duplicate subscriptions
-    const existing = (subscriptionData || []).find(
-      sub => sub.subscriber_user?.id === authUser.id
-    );
+    const existing = (subscriptionData || []).find(sub => sub.subscriber_user?.id === authUser.id);
     if (existing) return;
 
     // Optimistic update
@@ -91,7 +90,9 @@ export function useSubscribeAmendment(targetAmendmentId?: string) {
           amendmentId: targetAmendmentId,
           amendmentTitle: amendmentTitle,
         });
-      } catch { /* notification delivery is best-effort */ }
+      } catch {
+        /* notification delivery is best-effort */
+      }
       toast.success('Successfully subscribed to amendment');
     } catch (error) {
       // Revert optimistic update
