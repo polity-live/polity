@@ -10,6 +10,7 @@ import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
 import { Button } from '@/features/shared/ui/ui/button';
 import { useSubscribeUser } from '@/features/payments/hooks/useSubscribeUser';
 import { CONTENT_TYPE_CONFIG } from '../../constants/content-type-config';
+import { formatLocation } from '@/features/shared/logic/locationHelpers';
 import {
   TimelineCardBase,
   TimelineCardHeader,
@@ -27,6 +28,12 @@ export interface UserTimelineCardProps {
     subtitle?: string;
     avatarUrl?: string;
     location?: string;
+    country?: string;
+    region?: string;
+    post_code?: string;
+    city?: string;
+    street?: string;
+    house_number?: string;
     groupCount?: number;
     amendmentCount?: number;
     hashtags?: { id: string; tag: string }[];
@@ -50,6 +57,7 @@ export function UserTimelineCard({ user, onFollow, onMessage, className }: UserT
   const { t } = useTranslation();
   const subscription = useSubscribeUser(user.id);
   const amendmentStyle = CONTENT_TYPE_CONFIG.amendment;
+  const location = user.location || formatLocation(user);
 
   const initials = user.name
     ? user.name
@@ -72,7 +80,7 @@ export function UserTimelineCard({ user, onFollow, onMessage, className }: UserT
       <TimelineCardContent>
         {/* Centered avatar and handle */}
         <div className="mb-3 flex flex-col items-center gap-2 text-center">
-          <Avatar className="h-16 w-16 border-2 border-background shadow-md">
+          <Avatar className="border-background h-16 w-16 border-2 shadow-md">
             <AvatarImage src={user.avatarUrl} alt={user.name} />
             <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white">
               {initials}
@@ -80,16 +88,16 @@ export function UserTimelineCard({ user, onFollow, onMessage, className }: UserT
           </Avatar>
           <div className="min-w-0">
             {user.handle && (
-              <p className="truncate text-xs text-muted-foreground">@{user.handle}</p>
+              <p className="text-muted-foreground truncate text-xs">@{user.handle}</p>
             )}
             {user.subtitle && (
-              <p className="truncate text-xs text-muted-foreground">{user.subtitle}</p>
+              <p className="text-muted-foreground truncate text-xs">{user.subtitle}</p>
             )}
           </div>
         </div>
 
         {/* Bio */}
-        {user.bio && <p className="mb-3 line-clamp-3 text-sm text-muted-foreground">{user.bio}</p>}
+        {user.bio && <p className="text-muted-foreground mb-3 line-clamp-3 text-sm">{user.bio}</p>}
 
         {/* Hashtags */}
         {user.hashtags && user.hashtags.length > 0 && (
@@ -103,11 +111,11 @@ export function UserTimelineCard({ user, onFollow, onMessage, className }: UserT
         )}
 
         {/* Meta info */}
-        <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-          {user.location && (
+        <div className="text-muted-foreground flex flex-wrap gap-3 text-xs">
+          {location && (
             <div className="flex items-center gap-1">
               <MapPin className="h-3 w-3" />
-              <span>{user.location}</span>
+              <span>{location}</span>
             </div>
           )}
           {user.groupCount !== undefined && user.groupCount > 0 && (
@@ -121,7 +129,7 @@ export function UserTimelineCard({ user, onFollow, onMessage, className }: UserT
         </div>
 
         {/* Stats Bar with Tooltips */}
-        <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
+        <div className="text-muted-foreground mt-3 flex items-center gap-4 text-xs">
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="flex cursor-help items-center gap-1">

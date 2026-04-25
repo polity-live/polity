@@ -19,16 +19,23 @@ export type GroupType = 'base' | 'hierarchical';
 export interface GroupFormData {
   name: string;
   description: string;
-  location: string;
-  region: string;
   country: string;
+  region: string;
+  post_code: string;
+  city: string;
+  street: string;
+  house_number: string;
   imageURL: string;
   visibility: Visibility;
+  website: string;
+  youtube: string;
+  linkedin: string;
   whatsapp: string;
   instagram: string;
   twitter: string;
   facebook: string;
   snapchat: string;
+  tiktok: string;
   hashtags: string[];
 }
 
@@ -45,16 +52,23 @@ interface UseGroupUpdateResult {
 const initialFormState: GroupFormData = {
   name: '',
   description: '',
-  location: '',
-  region: '',
   country: '',
+  region: '',
+  post_code: '',
+  city: '',
+  street: '',
+  house_number: '',
   imageURL: '',
   visibility: 'public' as Visibility,
+  website: '',
+  youtube: '',
+  linkedin: '',
   whatsapp: '',
   instagram: '',
   twitter: '',
   facebook: '',
   snapchat: '',
+  tiktok: '',
   hashtags: [],
 };
 
@@ -116,16 +130,23 @@ export function useGroupUpdate(
       const newFormData = {
         name: initialData.name || '',
         description: initialData.description || '',
-        location: initialData.location || '',
-        region: initialData.region || '',
         country: initialData.country || '',
+        region: initialData.region || '',
+        post_code: initialData.post_code || '',
+        city: initialData.city || '',
+        street: initialData.street || '',
+        house_number: initialData.house_number || '',
         imageURL: initialData.imageURL || '',
         visibility: initialData.visibility ?? 'public',
+        website: initialData.website || '',
+        youtube: initialData.youtube || '',
+        linkedin: initialData.linkedin || '',
         whatsapp: initialData.whatsapp || '',
         instagram: initialData.instagram || '',
         twitter: initialData.twitter || '',
         facebook: initialData.facebook || '',
         snapchat: initialData.snapchat || '',
+        tiktok: initialData.tiktok || '',
         hashtags: initialData.hashtags || existingTags,
       };
       setFormData(newFormData);
@@ -159,16 +180,23 @@ export function useGroupUpdate(
       const resetData = {
         name: initialData.name || '',
         description: initialData.description || '',
-        location: initialData.location || '',
-        region: initialData.region || '',
         country: initialData.country || '',
+        region: initialData.region || '',
+        post_code: initialData.post_code || '',
+        city: initialData.city || '',
+        street: initialData.street || '',
+        house_number: initialData.house_number || '',
         imageURL: initialData.imageURL || '',
         visibility: initialData.visibility ?? 'public',
+        website: initialData.website || '',
+        youtube: initialData.youtube || '',
+        linkedin: initialData.linkedin || '',
         whatsapp: initialData.whatsapp || '',
         instagram: initialData.instagram || '',
         twitter: initialData.twitter || '',
         facebook: initialData.facebook || '',
         snapchat: initialData.snapchat || '',
+        tiktok: initialData.tiktok || '',
         hashtags: existingTags,
       };
       setFormData(resetData);
@@ -205,12 +233,23 @@ export function useGroupUpdate(
           id: groupId,
           name: formData.name,
           description: formData.description || null,
-          location: formData.location || null,
+          country: formData.country || null,
+          region: formData.region || null,
+          post_code: formData.post_code || null,
+          city: formData.city || null,
+          street: formData.street || null,
+          house_number: formData.house_number || null,
           image_url: formData.imageURL || null,
           x: formData.twitter || null,
-          youtube: null,
-          linkedin: null,
-          website: null,
+          website: formData.website || null,
+          youtube: formData.youtube || null,
+          linkedin: formData.linkedin || null,
+          whatsapp: formData.whatsapp || null,
+          instagram: formData.instagram || null,
+          twitter: formData.twitter || null,
+          facebook: formData.facebook || null,
+          snapchat: formData.snapchat || null,
+          tiktok: formData.tiktok || null,
           visibility: formData.visibility,
           group_type: options.groupType,
           owner_id: null,
@@ -220,9 +259,23 @@ export function useGroupUpdate(
           id: groupId,
           name: formData.name,
           description: formData.description,
-          location: formData.location,
+          country: formData.country || null,
+          region: formData.region || null,
+          post_code: formData.post_code || null,
+          city: formData.city || null,
+          street: formData.street || null,
+          house_number: formData.house_number || null,
           image_url: formData.imageURL || null,
           x: formData.twitter,
+          website: formData.website || null,
+          youtube: formData.youtube || null,
+          linkedin: formData.linkedin || null,
+          whatsapp: formData.whatsapp || null,
+          instagram: formData.instagram || null,
+          twitter: formData.twitter || null,
+          facebook: formData.facebook || null,
+          snapchat: formData.snapchat || null,
+          tiktok: formData.tiktok || null,
           visibility: formData.visibility,
         });
 

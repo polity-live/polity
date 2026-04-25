@@ -13,9 +13,21 @@ export interface UserProfileFormData {
   subtitle: string;
   about: string;
   email: string;
+  youtube: string;
+  linkedin: string;
+  whatsapp: string;
+  instagram: string;
   twitter: string;
+  facebook: string;
+  snapchat: string;
+  tiktok: string;
   website: string;
-  location: string;
+  country: string;
+  region: string;
+  post_code: string;
+  city: string;
+  street: string;
+  house_number: string;
   avatar: string;
   visibility: Visibility;
   hashtags: string[];
@@ -62,9 +74,21 @@ export function useUserProfileForm({
     subtitle: '',
     about: '',
     email: '',
+    youtube: '',
+    linkedin: '',
+    whatsapp: '',
+    instagram: '',
     twitter: '',
+    facebook: '',
+    snapchat: '',
+    tiktok: '',
     website: '',
-    location: '',
+    country: '',
+    region: '',
+    post_code: '',
+    city: '',
+    street: '',
+    house_number: '',
     avatar: '',
     visibility: 'public' as Visibility,
     hashtags: [],
@@ -84,9 +108,21 @@ export function useUserProfileForm({
         subtitle: user.bio || '',
         about: user.about || '',
         email: user.email || '',
-        twitter: user.x || '',
+        youtube: user.youtube || '',
+        linkedin: user.linkedin || '',
+        whatsapp: user.whatsapp || '',
+        instagram: user.instagram || '',
+        twitter: user.twitter || user.x || '',
+        facebook: user.facebook || '',
+        snapchat: user.snapchat || '',
+        tiktok: user.tiktok || '',
         website: user.website || '',
-        location: user.location || '',
+        country: user.country || '',
+        region: user.region || '',
+        post_code: user.post_code || '',
+        city: user.city || '',
+        street: user.street || '',
+        house_number: user.house_number || '',
         avatar: user.avatar || '',
         visibility: (user.visibility as Visibility) ?? 'public',
         hashtags: [],
@@ -126,9 +162,21 @@ export function useUserProfileForm({
         bio: formData.subtitle,
         about: formData.about,
         avatar: formData.avatar,
-        x: formData.twitter,
+        youtube: formData.youtube,
+        linkedin: formData.linkedin,
+        whatsapp: formData.whatsapp,
+        instagram: formData.instagram,
+        twitter: formData.twitter,
+        facebook: formData.facebook,
+        snapchat: formData.snapchat,
+        tiktok: formData.tiktok,
         website: formData.website,
-        location: formData.location,
+        country: formData.country,
+        region: formData.region,
+        post_code: formData.post_code,
+        city: formData.city,
+        street: formData.street,
+        house_number: formData.house_number,
         visibility: formData.visibility,
         hashtags: formData.hashtags,
         existingJunctions: userHashtags ?? [],

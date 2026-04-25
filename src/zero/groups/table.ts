@@ -1,11 +1,16 @@
-import { table, string, number } from '@rocicorp/zero'
+import { table, string, number } from '@rocicorp/zero';
 
 export const group = table('group')
   .columns({
     id: string(),
     name: string().optional(),
     description: string().optional(),
-    location: string().optional(),
+    country: string().optional(),
+    region: string().optional(),
+    post_code: string().optional(),
+    city: string().optional(),
+    street: string().optional(),
+    house_number: string().optional(),
     image_url: string().optional(),
     member_count: number(),
     subscriber_count: number(),
@@ -16,13 +21,19 @@ export const group = table('group')
     youtube: string().optional(),
     linkedin: string().optional(),
     website: string().optional(),
+    whatsapp: string().optional(),
+    instagram: string().optional(),
+    twitter: string().optional(),
+    facebook: string().optional(),
+    snapchat: string().optional(),
+    tiktok: string().optional(),
     visibility: string(),
     group_type: string(),
     owner_id: string().optional(),
     created_at: number(),
     updated_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const groupMembership = table('group_membership')
   .columns({
@@ -36,7 +47,7 @@ export const groupMembership = table('group_membership')
     source_group_id: string().optional(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const role = table('role')
   .columns({
@@ -51,7 +62,7 @@ export const role = table('role')
     sort_order: number(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const actionRight = table('action_right')
   .columns({
@@ -65,6 +76,4 @@ export const actionRight = table('action_right')
     blog_id: string().optional(),
     created_at: number(),
   })
-  .primaryKey('id')
-
-
+  .primaryKey('id');

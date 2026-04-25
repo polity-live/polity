@@ -16,6 +16,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import { usePublicGroups } from '@/zero/groups/useGroupState.ts';
 import type { Group } from '../hooks/useOnboarding.ts';
 import { cn } from '@/features/shared/utils/utils.ts';
+import { buildLocationSearchValue, formatLocation } from '@/features/shared/logic/locationHelpers';
 
 interface GroupSearchStepProps {
   selectedGroup: Group | null;
@@ -50,11 +51,13 @@ export function GroupSearchStep({
       group =>
         group.name?.toLowerCase().includes(term) ||
         group.description?.toLowerCase().includes(term) ||
-        group.location?.toLowerCase().includes(term)
+        buildLocationSearchValue(group).includes(term)
     );
   }, [groupsData, searchTerm]);
 
   const handleSelectGroup = (group: (typeof filteredGroups)[number]) => {
+    const location = formatLocation(group);
+
     if (selectedGroup?.id === group.id) {
       onSelectGroup(null); // Deselect
     } else {
@@ -63,7 +66,7 @@ export function GroupSearchStep({
         name: group.name ?? '',
         description: group.description ?? undefined,
         member_count: group.member_count || 0,
-        location: group.location ?? undefined,
+        location: location || undefined,
         visibility: group.visibility ?? 'public',
       });
     }
@@ -119,35 +122,43 @@ export function GroupSearchStep({
               )}
               onClick={() => handleSelectGroup(group)}
             >
-              <CardHeader className="pb-2">
-                <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="text-base">{group.name}</CardTitle>
-                  <div className="flex items-center gap-2">
-                    {selectedGroup?.id === group.id && (
-                      <div className="rounded-full bg-emerald-500 p-1 dark:bg-emerald-400">
-                        <Check className="h-3 w-3 text-white dark:text-emerald-950" />
+              {(() => {
+                const location = formatLocation(group);
+
+                return (
+                  <>
+                    <CardHeader className="pb-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <CardTitle className="text-base">{group.name}</CardTitle>
+                        <div className="flex items-center gap-2">
+                          {selectedGroup?.id === group.id && (
+                            <div className="rounded-full bg-emerald-500 p-1 dark:bg-emerald-400">
+                              <Check className="h-3 w-3 text-white dark:text-emerald-950" />
+                            </div>
+                          )}
+                          <Badge variant="outline" className="flex-shrink-0">
+                            <Users className="mr-1 h-3 w-3" />
+                            {group.member_count || 0}
+                          </Badge>
+                        </div>
                       </div>
+                      {group.description && (
+                        <CardDescription className="line-clamp-2 text-xs">
+                          {group.description}
+                        </CardDescription>
+                      )}
+                    </CardHeader>
+                    {location && (
+                      <CardContent className="pt-0">
+                        <div className="text-muted-foreground flex items-center gap-1 text-xs">
+                          <MapPin className="h-3 w-3" />
+                          <span className="truncate">{location}</span>
+                        </div>
+                      </CardContent>
                     )}
-                    <Badge variant="outline" className="flex-shrink-0">
-                      <Users className="mr-1 h-3 w-3" />
-                      {group.member_count || 0}
-                    </Badge>
-                  </div>
-                </div>
-                {group.description && (
-                  <CardDescription className="line-clamp-2 text-xs">
-                    {group.description}
-                  </CardDescription>
-                )}
-              </CardHeader>
-              {group.location && (
-                <CardContent className="pt-0">
-                  <div className="text-muted-foreground flex items-center gap-1 text-xs">
-                    <MapPin className="h-3 w-3" />
-                    <span className="truncate">{group.location}</span>
-                  </div>
-                </CardContent>
-              )}
+                  </>
+                );
+              })()}
             </Card>
           ))
         )}

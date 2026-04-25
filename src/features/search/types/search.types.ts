@@ -1,4 +1,3 @@
-import { type ContentType } from '@/features/timeline/constants/content-type-config';
 import type { useSearchState } from '@/zero/shared/useSearchState';
 import type { ElectionForSearchRow } from '@/zero/elections/queries';
 
@@ -10,30 +9,30 @@ type ElectionCandidateRow = ElectionForSearchRow['candidates'][number];
 // ============================================
 
 /** Return type of useSearchState() */
-type SearchState = ReturnType<typeof useSearchState>
+type SearchState = ReturnType<typeof useSearchState>;
 
 /** Single user row from the searchableUsers query (with relations) */
-export type SearchUser = SearchState['users'][number] & { readonly _type: 'user' }
+export type SearchUser = SearchState['users'][number] & { readonly _type: 'user' };
 /** Single group row from the searchableGroups query (with relations) */
-export type SearchGroup = SearchState['groups'][number] & { readonly _type: 'group' }
+export type SearchGroup = SearchState['groups'][number] & { readonly _type: 'group' };
 /** Single statement row from the searchableStatements query (with relations) */
-export type SearchStatement = SearchState['statements'][number] & { readonly _type: 'statement' }
+export type SearchStatement = SearchState['statements'][number] & { readonly _type: 'statement' };
 /** Single blog row from the searchableBlogs query (with relations) */
-export type SearchBlog = SearchState['blogs'][number] & { readonly _type: 'blog' }
+export type SearchBlog = SearchState['blogs'][number] & { readonly _type: 'blog' };
 /** Single amendment row from the searchableAmendments query (with relations) */
-export type SearchAmendment = SearchState['amendments'][number] & { readonly _type: 'amendment' }
+export type SearchAmendment = SearchState['amendments'][number] & { readonly _type: 'amendment' };
 /** Single event row from the searchableEvents query (with relations) */
-export type SearchEvent = SearchState['events'][number] & { readonly _type: 'event' }
+export type SearchEvent = SearchState['events'][number] & { readonly _type: 'event' };
 /** Single todo row from the searchableTodos query (with relations) */
-export type SearchTodo = SearchState['todos'][number] & { readonly _type: 'todo' }
+export type SearchTodo = SearchState['todos'][number] & { readonly _type: 'todo' };
 /** Single election row from electionsForSearch query (with relations) */
-export type SearchElection = SearchState['elections'][number] & { readonly _type: 'election' }
+export type SearchElection = SearchState['elections'][number] & { readonly _type: 'election' };
 /** Single event voting session row (with relations) */
-export type SearchVote = SearchState['eventVotingSessions'][number] & { readonly _type: 'vote' }
+export type SearchVote = SearchState['eventVotingSessions'][number] & { readonly _type: 'vote' };
 /** Single timeline event row used for video search results */
-export type SearchVideo = SearchState['timelineEvents'][number] & { readonly _type: 'video' }
+export type SearchVideo = SearchState['timelineEvents'][number] & { readonly _type: 'video' };
 /** Single timeline event row used for image search results */
-export type SearchImage = SearchState['timelineEvents'][number] & { readonly _type: 'image' }
+export type SearchImage = SearchState['timelineEvents'][number] & { readonly _type: 'image' };
 
 /**
  * Discriminated union of all search result types.
@@ -50,7 +49,7 @@ export type SearchResultItem =
   | SearchElection
   | SearchVote
   | SearchVideo
-  | SearchImage
+  | SearchImage;
 
 // ============================================
 // Other search types
@@ -76,9 +75,9 @@ export interface SearchFilters {
   topics: string[];
 }
 
-export type SearchContentItem = {
+export interface SearchContentItem {
   id: string;
-  type: ContentType;
+  type: SearchResultItem['_type'];
   title: string;
   description?: string | null;
   imageUrl?: string | null;
@@ -135,4 +134,4 @@ export type SearchContentItem = {
     views?: number;
     members?: number;
   };
-};
+}

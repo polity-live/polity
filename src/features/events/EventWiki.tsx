@@ -50,6 +50,7 @@ import {
 } from '@/features/shared/ui/ui/carousel';
 import { useEventWikiPage } from './hooks/useEventWikiPage';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
+import { formatNamedLocation } from '@/features/shared/logic/locationHelpers';
 
 interface EventWikiProps {
   eventId: string;
@@ -100,6 +101,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
   }
 
   const { electionsCount, amendmentsCount, openChangeRequestsCount } = agendaStats;
+  const formattedLocation = formatNamedLocation(event.location_name, event);
 
   return (
     <div>
@@ -237,10 +239,10 @@ export function EventWiki({ eventId }: EventWikiProps) {
           eventDetails={{
             startDate: event.start_date ?? undefined,
             endDate: event.end_date ?? undefined,
-            location: event.location_name ?? undefined,
+            location: formattedLocation || undefined,
           }}
           contact={{
-            location: event.location_name ?? undefined,
+            location: formattedLocation || undefined,
           }}
           className="mb-12"
         />

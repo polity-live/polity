@@ -5,10 +5,19 @@ export const componentsTranslations = {
     locationAndDate: 'Ort & Zeit',
     noInformation: 'Keine Informationen verfügbar',
     noContact: 'Keine Kontaktinformationen verfügbar',
+    socialTitle: 'Soziale Profile',
+    socialDescription: 'Öffentliche Links und Kanäle, die mit diesem Profil verbunden sind.',
     labels: {
       email: 'E-Mail',
       twitter: 'Twitter',
       website: 'Webseite',
+      youtube: 'YouTube',
+      linkedin: 'LinkedIn',
+      whatsapp: 'WhatsApp',
+      instagram: 'Instagram',
+      facebook: 'Facebook',
+      snapchat: 'Snapchat',
+      tiktok: 'TikTok',
       location: 'Standort',
       region: 'Region',
       country: 'Land',
@@ -93,7 +102,8 @@ export const componentsTranslations = {
     disabledDescriptionShort: 'Aktivieren Sie Benachrichtigungen für dieses Gerät',
     notSupported: 'Ihr Browser unterstützt keine Push-Benachrichtigungen.',
     blocked: 'Benachrichtigungen blockiert. Bitte in den Browser-Einstellungen aktivieren.',
-    blockedLong: 'Push-Benachrichtigungen wurden blockiert. Bitte aktivieren Sie diese in Ihren Browser-Einstellungen.',
+    blockedLong:
+      'Push-Benachrichtigungen wurden blockiert. Bitte aktivieren Sie diese in Ihren Browser-Einstellungen.',
     success: {
       enabled: 'Push-Benachrichtigungen aktiviert',
       disabled: 'Push-Benachrichtigungen deaktiviert',
@@ -102,10 +112,13 @@ export const componentsTranslations = {
       changeFailed: 'Fehler beim Ändern der Einstellung',
       notSupported: 'Push-Benachrichtigungen werden in diesem Browser nicht unterstützt',
       notLoggedIn: 'Sie müssen angemeldet sein, um Benachrichtigungen zu aktivieren',
-      permissionBlocked: 'Benachrichtigungen wurden blockiert. Bitte in den Browser-Einstellungen aktivieren.',
-      permissionDismissed: 'Benachrichtigungsberechtigung wurde nicht erteilt. Bitte erlauben Sie Benachrichtigungen in den Browser-Einstellungen (klicken Sie auf das Schloss-Symbol in der Adressleiste).',
+      permissionBlocked:
+        'Benachrichtigungen wurden blockiert. Bitte in den Browser-Einstellungen aktivieren.',
+      permissionDismissed:
+        'Benachrichtigungsberechtigung wurde nicht erteilt. Bitte erlauben Sie Benachrichtigungen in den Browser-Einstellungen (klicken Sie auf das Schloss-Symbol in der Adressleiste).',
       permissionRequest: 'Fehler beim Anfordern der Benachrichtigungsberechtigung',
-      swRegistration: 'Service Worker konnte nicht registriert werden. Bitte laden Sie die Seite neu.',
+      swRegistration:
+        'Service Worker konnte nicht registriert werden. Bitte laden Sie die Seite neu.',
       swTimeout: 'Service Worker Timeout — bitte Seite neu laden',
       vapidMissing: 'VAPID Public Key nicht konfiguriert',
       invalidKeys: 'Ungültige Abonnement-Schlüssel',
@@ -116,10 +129,13 @@ export const componentsTranslations = {
   ariaKaiWelcome: {
     title: 'Willkommen bei Polity!',
     subtitle: 'Lerne Aria & Kai kennen, deine persönlichen Assistenten',
-    intro: 'Hey! Wir sind Aria & Kai und wir sind hier, um dir bei der Navigation durch Polity zu helfen und das Beste aus allen Funktionen herauszuholen.',
-    helpText: 'Wann immer du Hilfe, Tipps oder Informationen zu Gruppen, Veranstaltungen, Anträgen und mehr benötigst, findest du uns in deinen Nachrichtenkonversationen. Wir sind immer bereit zu helfen!',
+    intro:
+      'Hey! Wir sind Aria & Kai und wir sind hier, um dir bei der Navigation durch Polity zu helfen und das Beste aus allen Funktionen herauszuholen.',
+    helpText:
+      'Wann immer du Hilfe, Tipps oder Informationen zu Gruppen, Veranstaltungen, Anträgen und mehr benötigst, findest du uns in deinen Nachrichtenkonversationen. Wir sind immer bereit zu helfen!',
     quickTip: 'Kurzer Tipp:',
-    quickTipText: 'Wir haben bereits eine Unterhaltung mit dir gestartet. Klicke unten, um zu sehen, wo du uns immer finden kannst!',
+    quickTipText:
+      'Wir haben bereits eine Unterhaltung mit dir gestartet. Klicke unten, um zu sehen, wo du uns immer finden kannst!',
     dontShowAgain: 'Diese Nachricht nicht mehr anzeigen',
     findLater: 'Ich finde euch später',
     showLocation: 'Zeig mir meinen Assistenten-Standort',

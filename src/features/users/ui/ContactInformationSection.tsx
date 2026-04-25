@@ -1,80 +1,157 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Label } from '@/features/shared/ui/ui/label';
+import {
+  Facebook,
+  Globe,
+  Ghost,
+  Instagram,
+  Linkedin,
+  Mail,
+  MessageSquare,
+  Music2,
+  Twitter,
+  Youtube,
+} from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { ContactLinksSection } from '@/features/shared/ui/contact/ContactLinksSection';
 
 interface ContactInformationSectionProps {
   email: string;
-  twitter: string;
   website: string;
-  location: string;
+  youtube: string;
+  linkedin: string;
+  whatsapp: string;
+  instagram: string;
+  twitter: string;
+  facebook: string;
+  snapchat: string;
+  tiktok: string;
   onEmailChange: (value: string) => void;
-  onTwitterChange: (value: string) => void;
   onWebsiteChange: (value: string) => void;
-  onLocationChange: (value: string) => void;
+  onYoutubeChange: (value: string) => void;
+  onLinkedinChange: (value: string) => void;
+  onWhatsappChange: (value: string) => void;
+  onInstagramChange: (value: string) => void;
+  onTwitterChange: (value: string) => void;
+  onFacebookChange: (value: string) => void;
+  onSnapchatChange: (value: string) => void;
+  onTiktokChange: (value: string) => void;
 }
 
 export function ContactInformationSection({
   email,
-  twitter,
   website,
-  location,
+  youtube,
+  linkedin,
+  whatsapp,
+  instagram,
+  twitter,
+  facebook,
+  snapchat,
+  tiktok,
   onEmailChange,
-  onTwitterChange,
   onWebsiteChange,
-  onLocationChange,
+  onYoutubeChange,
+  onLinkedinChange,
+  onWhatsappChange,
+  onInstagramChange,
+  onTwitterChange,
+  onFacebookChange,
+  onSnapchatChange,
+  onTiktokChange,
 }: ContactInformationSectionProps) {
   const { t } = useTranslation();
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t('pages.user.settingsForm.contact.title')}</CardTitle>
-        <CardDescription>{t('pages.user.settingsForm.contact.description')}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="email">{t('pages.user.settingsForm.contact.emailLabel')}</Label>
-          <Input
-            id="email"
-            type="email"
-            value={email}
-            onChange={e => onEmailChange(e.target.value)}
-            placeholder={t('pages.user.settingsForm.contact.emailPlaceholder')}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="twitter">{t('pages.user.settingsForm.contact.twitterLabel')}</Label>
-          <Input
-            id="twitter"
-            value={twitter}
-            onChange={e => onTwitterChange(e.target.value)}
-            placeholder={t('pages.user.settingsForm.contact.twitterPlaceholder')}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="website">{t('pages.user.settingsForm.contact.websiteLabel')}</Label>
-          <Input
-            id="website"
-            type="text"
-            value={website}
-            onChange={e => onWebsiteChange(e.target.value)}
-            placeholder={t('pages.user.settingsForm.contact.websitePlaceholder')}
-          />
-          <p className="text-xs text-muted-foreground">
-            {t('pages.user.settingsForm.contact.websiteHint')}
-          </p>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="location">{t('pages.user.settingsForm.contact.locationLabel')}</Label>
-          <Input
-            id="location"
-            value={location}
-            onChange={e => onLocationChange(e.target.value)}
-            placeholder={t('pages.user.settingsForm.contact.locationPlaceholder')}
-          />
-        </div>
-      </CardContent>
-    </Card>
+    <ContactLinksSection
+      title={t('pages.user.settingsForm.contact.title')}
+      description={t('pages.user.settingsForm.contact.description')}
+      primaryFields={[
+        {
+          id: 'email',
+          label: t('pages.user.settingsForm.contact.emailLabel'),
+          placeholder: t('pages.user.settingsForm.contact.emailPlaceholder'),
+          value: email,
+          onChange: onEmailChange,
+          icon: <Mail className="h-4 w-4" />,
+          type: 'email',
+        },
+        {
+          id: 'website',
+          label: t('pages.user.settingsForm.contact.websiteLabel'),
+          placeholder: t('pages.user.settingsForm.contact.websitePlaceholder'),
+          value: website,
+          onChange: onWebsiteChange,
+          icon: <Globe className="h-4 w-4" />,
+          helpText: t('pages.user.settingsForm.contact.websiteHint'),
+        },
+        {
+          id: 'youtube',
+          label: t('pages.user.settingsForm.contact.youtubeLabel'),
+          placeholder: t('pages.user.settingsForm.contact.youtubePlaceholder'),
+          value: youtube,
+          onChange: onYoutubeChange,
+          icon: <Youtube className="h-4 w-4" />,
+        },
+        {
+          id: 'linkedin',
+          label: t('pages.user.settingsForm.contact.linkedinLabel'),
+          placeholder: t('pages.user.settingsForm.contact.linkedinPlaceholder'),
+          value: linkedin,
+          onChange: onLinkedinChange,
+          icon: <Linkedin className="h-4 w-4" />,
+        },
+      ]}
+      socialTitle={t('pages.user.settingsForm.contact.socialTitle')}
+      socialDescription={t('pages.user.settingsForm.contact.socialDescription')}
+      socialFields={[
+        {
+          id: 'whatsapp',
+          label: t('pages.user.settingsForm.contact.whatsappLabel'),
+          placeholder: t('pages.user.settingsForm.contact.whatsappPlaceholder'),
+          value: whatsapp,
+          onChange: onWhatsappChange,
+          icon: <MessageSquare className="h-4 w-4" />,
+        },
+        {
+          id: 'instagram',
+          label: t('pages.user.settingsForm.contact.instagramLabel'),
+          placeholder: t('pages.user.settingsForm.contact.instagramPlaceholder'),
+          value: instagram,
+          onChange: onInstagramChange,
+          icon: <Instagram className="h-4 w-4" />,
+        },
+        {
+          id: 'twitter',
+          label: t('pages.user.settingsForm.contact.twitterLabel'),
+          placeholder: t('pages.user.settingsForm.contact.twitterPlaceholder'),
+          value: twitter,
+          onChange: onTwitterChange,
+          icon: <Twitter className="h-4 w-4" />,
+        },
+        {
+          id: 'facebook',
+          label: t('pages.user.settingsForm.contact.facebookLabel'),
+          placeholder: t('pages.user.settingsForm.contact.facebookPlaceholder'),
+          value: facebook,
+          onChange: onFacebookChange,
+          icon: <Facebook className="h-4 w-4" />,
+        },
+        {
+          id: 'snapchat',
+          label: t('pages.user.settingsForm.contact.snapchatLabel'),
+          placeholder: t('pages.user.settingsForm.contact.snapchatPlaceholder'),
+          value: snapchat,
+          onChange: onSnapchatChange,
+          icon: <Ghost className="h-4 w-4" />,
+        },
+        {
+          id: 'tiktok',
+          label: t('pages.user.settingsForm.contact.tiktokLabel'),
+          placeholder: t('pages.user.settingsForm.contact.tiktokPlaceholder'),
+          value: tiktok,
+          onChange: onTiktokChange,
+          icon: <Music2 className="h-4 w-4" />,
+        },
+      ]}
+    />
   );
 }

@@ -22,6 +22,7 @@ import { Loader2, XCircle } from 'lucide-react';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
 import { Badge } from '@/features/shared/ui/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import { useEventUpdate } from '../hooks/useEventUpdate';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { CancelEventDialog } from './CancelEventDialog';
@@ -31,6 +32,7 @@ import { CreateReviewCard, SummaryField } from '@/features/shared/ui/ui/create-r
 import { useUserGroupsWithManageEvents } from '@/zero/groups/useGroupState';
 import { TypeaheadSearch } from '@/features/shared/ui/typeahead';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
+import { formatNamedLocation } from '@/features/shared/logic/locationHelpers';
 
 interface EventEditProps {
   eventId: string;
@@ -58,6 +60,14 @@ export function EventEdit({ eventId, mode = 'edit' }: EventEditProps) {
     isLoading,
     isCreating,
   } = useEventUpdate(eventId, mode);
+  const locationSummary = formatNamedLocation(formData.locationName, {
+    country: formData.country,
+    region: formData.region,
+    post_code: formData.postCode,
+    city: formData.city,
+    street: formData.street,
+    house_number: formData.houseNumber,
+  });
 
   // Loading state
   if (isLoading) {
@@ -136,10 +146,16 @@ export function EventEdit({ eventId, mode = 'edit' }: EventEditProps) {
                 value={formData.endDate}
               />
             )}
-            {formData.location && (
+            {formData.locationType === 'physical' && locationSummary && (
               <SummaryField
                 label={t('features.events.editPage.locationCapacity.location')}
-                value={formData.location}
+                value={locationSummary}
+              />
+            )}
+            {formData.locationType === 'online' && formData.onlineLink && (
+              <SummaryField
+                label={t('pages.create.event.meetingLink')}
+                value={formData.onlineLink}
               />
             )}
             {formData.capacity && (
@@ -323,17 +339,100 @@ export function EventEdit({ eventId, mode = 'edit' }: EventEditProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="location">
-                {t('features.events.editPage.locationCapacity.location')}
-              </Label>
-              <Input
-                id="location"
-                value={formData.location}
-                onChange={e => updateField('location', e.target.value)}
-                placeholder={t('features.events.editPage.locationCapacity.locationPlaceholder')}
-              />
-            </div>
+            <Tabs
+              value={formData.locationType}
+              onValueChange={value => updateField('locationType', value as 'physical' | 'online')}
+            >
+              <TabsList className="w-full">
+                <TabsTrigger value="physical" className="flex-1">
+                  {t('pages.create.event.locationTypes.physical')}
+                </TabsTrigger>
+                <TabsTrigger value="online" className="flex-1">
+                  {t('pages.create.event.locationTypes.online')}
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="physical" className="space-y-4 pt-2">
+                <div className="space-y-2">
+                  <Label htmlFor="locationName">{t('pages.create.event.venueName')}</Label>
+                  <Input
+                    id="locationName"
+                    value={formData.locationName}
+                    onChange={e => updateField('locationName', e.target.value)}
+                    placeholder={t('pages.create.event.venueNamePlaceholder')}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="country">{t('pages.create.event.country')}</Label>
+                  <Input
+                    id="country"
+                    value={formData.country}
+                    onChange={e => updateField('country', e.target.value)}
+                    placeholder={t('pages.create.event.country')}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="region">{t('pages.create.event.region')}</Label>
+                  <Input
+                    id="region"
+                    value={formData.region}
+                    onChange={e => updateField('region', e.target.value)}
+                    placeholder={t('pages.create.event.region')}
+                  />
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="postCode">{t('pages.create.event.postalCode')}</Label>
+                    <Input
+                      id="postCode"
+                      value={formData.postCode}
+                      onChange={e => updateField('postCode', e.target.value)}
+                      placeholder={t('pages.create.event.postalCode')}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="city">{t('pages.create.event.city')}</Label>
+                    <Input
+                      id="city"
+                      value={formData.city}
+                      onChange={e => updateField('city', e.target.value)}
+                      placeholder={t('pages.create.event.city')}
+                    />
+                  </div>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="street">{t('pages.create.event.street')}</Label>
+                    <Input
+                      id="street"
+                      value={formData.street}
+                      onChange={e => updateField('street', e.target.value)}
+                      placeholder={t('pages.create.event.street')}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="houseNumber">{t('pages.create.event.houseNumber')}</Label>
+                    <Input
+                      id="houseNumber"
+                      value={formData.houseNumber}
+                      onChange={e => updateField('houseNumber', e.target.value)}
+                      placeholder={t('pages.create.event.houseNumber')}
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+              <TabsContent value="online" className="space-y-4 pt-2">
+                <div className="space-y-2">
+                  <Label htmlFor="onlineLink">{t('pages.create.event.meetingLink')}</Label>
+                  <Input
+                    id="onlineLink"
+                    type="url"
+                    value={formData.onlineLink}
+                    onChange={e => updateField('onlineLink', e.target.value)}
+                    placeholder={t('pages.create.event.meetingLinkPlaceholder')}
+                  />
+                </div>
+              </TabsContent>
+            </Tabs>
             <div className="space-y-2">
               <Label htmlFor="capacity">
                 {t('features.events.editPage.locationCapacity.capacity')}

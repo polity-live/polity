@@ -1,5 +1,4 @@
 import { useCallback } from 'react';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useSearchPage } from './hooks/useSearchPage';
 import { SearchHeader } from './ui/SearchHeader';
 import { MasonryGrid } from '@/features/timeline/ui/MasonryGrid';
@@ -8,7 +7,6 @@ import { DynamicTimelineCard } from '@/features/timeline/ui/LazyCardComponents';
 import type { SearchContentItem } from './types/search.types';
 
 export function SearchPage() {
-  const { t } = useTranslation();
   const {
     searchQuery,
     setSearchQuery,
@@ -34,11 +32,11 @@ export function SearchPage() {
 
   const renderTimelineCard = useCallback(
     (item: SearchContentItem) => {
-      const { cardType, cardProps } = buildCardProps(item, t);
+      const { cardType, cardProps } = buildCardProps(item);
       if (!cardType || !cardProps) return null;
       return <DynamicTimelineCard cardType={cardType} cardProps={cardProps} />;
     },
-    [buildCardProps, t],
+    [buildCardProps]
   );
 
   return (

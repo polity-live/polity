@@ -27,7 +27,7 @@ export function GroupEdit({ groupId }: GroupEditProps) {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="text-primary h-8 w-8 animate-spin" />
         <p className="text-muted-foreground">{t('features.groups.editPage.loading')}</p>
       </div>
     );
@@ -39,7 +39,9 @@ export function GroupEdit({ groupId }: GroupEditProps) {
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <p className="text-lg font-semibold">{t('features.groups.editPage.notFound')}</p>
-          <p className="text-muted-foreground">{t('features.groups.editPage.notFoundDescription')}</p>
+          <p className="text-muted-foreground">
+            {t('features.groups.editPage.notFoundDescription')}
+          </p>
           <div className="mt-6">
             <Button onClick={() => navigate({ to: '/home' })} variant="default">
               {t('features.groups.backToGroups')}
@@ -60,12 +62,30 @@ export function GroupEdit({ groupId }: GroupEditProps) {
 
       <GroupEditForm
         groupId={groupId}
-        initialData={group ? {
-          name: group.name ?? '',
-          description: group.description ?? '',
-          location: group.location ?? '',
-          imageURL: group.image_url ?? '',
-        } : undefined}
+        initialData={
+          group
+            ? {
+                name: group.name ?? '',
+                description: group.description ?? '',
+                country: group.country ?? '',
+                region: group.region ?? '',
+                post_code: group.post_code ?? '',
+                website: group.website ?? '',
+                youtube: group.youtube ?? '',
+                linkedin: group.linkedin ?? '',
+                whatsapp: group.whatsapp ?? '',
+                instagram: group.instagram ?? '',
+                twitter: group.twitter ?? group.x ?? '',
+                facebook: group.facebook ?? '',
+                snapchat: group.snapchat ?? '',
+                tiktok: group.tiktok ?? '',
+                city: group.city ?? '',
+                street: group.street ?? '',
+                house_number: group.house_number ?? '',
+                imageURL: group.image_url ?? '',
+              }
+            : undefined
+        }
         onCancel={() => navigate({ to: `/group/${groupId}` })}
         actorId={user?.id ?? undefined}
         visibility={group?.visibility as 'public' | 'private' | 'authenticated' | undefined}

@@ -1,5 +1,6 @@
 import type { SearchContentItem, SearchResultItem } from '../types/search.types';
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
+import { formatLocation } from '@/features/shared/logic/locationHelpers';
 import { getUserAvatar, getUserDisplayName } from '../utils/searchUtils';
 
 export function toTags(hashtags?: { tag?: string | null }[]): string[] {
@@ -180,7 +181,10 @@ export function mapMosaicToContentItems(
           authorName: getUserDisplayName(item),
           authorAvatar: getUserAvatar(item),
           handle: item.handle,
-          location: item.location,
+          location:
+            'location' in item && typeof item.location === 'string'
+              ? item.location
+              : formatLocation(item),
           groupCount: item.group_count ?? item.group_memberships?.length,
           amendmentCount: item.amendment_count ?? item.amendment_collaborations?.length,
         });

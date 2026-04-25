@@ -11,7 +11,15 @@ import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
 export interface EventFormData {
   title: string;
   description: string;
-  location: string;
+  locationType: 'physical' | 'online';
+  locationName: string;
+  onlineLink: string;
+  country: string;
+  region: string;
+  postCode: string;
+  city: string;
+  street: string;
+  houseNumber: string;
   startDate: string;
   startTime: string;
   endDate: string;
@@ -37,7 +45,15 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
   const [formData, setFormData] = useState<EventFormData>({
     title: '',
     description: '',
-    location: '',
+    locationType: 'physical',
+    locationName: '',
+    onlineLink: '',
+    country: '',
+    region: '',
+    postCode: '',
+    city: '',
+    street: '',
+    houseNumber: '',
     startDate: '',
     startTime: '',
     endDate: '',
@@ -96,7 +112,18 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
       setFormData({
         title: event.title || '',
         description: event.description || '',
-        location: event.location_name || '',
+        locationType:
+          event.location_type === 'online' || (!!event.location_url && !event.location_name)
+            ? 'online'
+            : 'physical',
+        locationName: event.location_name || '',
+        onlineLink: event.location_url || '',
+        country: event.country || '',
+        region: event.region || '',
+        postCode: event.post_code || '',
+        city: event.city || '',
+        street: event.street || '',
+        houseNumber: event.house_number || '',
         startDate: formatDatePart(event.start_date),
         startTime: formatTimePart(event.start_date),
         endDate: formatDatePart(event.end_date),
@@ -151,7 +178,16 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
           id: eventId,
           title: formData.title,
           description: formData.description || null,
-          location_name: formData.location || null,
+          location_type: formData.locationType,
+          location_name:
+            formData.locationType === 'physical' ? formData.locationName || null : null,
+          location_url: formData.locationType === 'online' ? formData.onlineLink || null : null,
+          country: formData.locationType === 'physical' ? formData.country || null : null,
+          region: formData.locationType === 'physical' ? formData.region || null : null,
+          post_code: formData.locationType === 'physical' ? formData.postCode || null : null,
+          city: formData.locationType === 'physical' ? formData.city || null : null,
+          street: formData.locationType === 'physical' ? formData.street || null : null,
+          house_number: formData.locationType === 'physical' ? formData.houseNumber || null : null,
           start_date: formData.startDate
             ? new Date(`${formData.startDate}T${formData.startTime || '00:00'}`).getTime()
             : null,
@@ -176,7 +212,16 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
           id: eventId,
           title: formData.title,
           description: formData.description,
-          location_name: formData.location,
+          location_type: formData.locationType,
+          location_name:
+            formData.locationType === 'physical' ? formData.locationName || null : null,
+          location_url: formData.locationType === 'online' ? formData.onlineLink || null : null,
+          country: formData.locationType === 'physical' ? formData.country || null : null,
+          region: formData.locationType === 'physical' ? formData.region || null : null,
+          post_code: formData.locationType === 'physical' ? formData.postCode || null : null,
+          city: formData.locationType === 'physical' ? formData.city || null : null,
+          street: formData.locationType === 'physical' ? formData.street || null : null,
+          house_number: formData.locationType === 'physical' ? formData.houseNumber || null : null,
           start_date: formData.startDate
             ? new Date(`${formData.startDate}T${formData.startTime || '00:00'}`).getTime()
             : undefined,

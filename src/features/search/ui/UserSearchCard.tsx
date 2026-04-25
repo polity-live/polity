@@ -1,7 +1,14 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Users } from 'lucide-react';
 import { GRADIENTS } from '@/features/users/state/gradientColors';
+import { formatLocation } from '@/features/shared/logic/locationHelpers';
 
 import { type SearchUser } from '../types/search.types';
 
@@ -18,10 +25,14 @@ export function UserSearchCard({ user, index }: UserSearchCardProps) {
   const avatar = user.avatar || '';
 
   // Build display name from first_name + last_name
-  const displayName = [user.first_name, user.last_name].filter(Boolean).join(' ').trim() || user.handle || 'Unknown User';
+  const displayName =
+    [user.first_name, user.last_name].filter(Boolean).join(' ').trim() ||
+    user.handle ||
+    'Unknown User';
 
   // Get gradient class for this user card
   const gradientClass = GRADIENTS[(index || 0) % GRADIENTS.length];
+  const location = formatLocation(user);
 
   return (
     <a href={`/user/${userId}`} className="block">
@@ -31,10 +42,10 @@ export function UserSearchCard({ user, index }: UserSearchCardProps) {
           <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/20" />
         </div>
 
-        <CardHeader className="pb-3 pt-4">
+        <CardHeader className="pt-4 pb-3">
           <div className="mb-3 flex items-start gap-3">
             {/* Avatar next to name */}
-            <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border-2 border-background shadow-md">
+            <div className="border-background h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border-2 shadow-md">
               {avatar ? (
                 <img
                   src={avatar}
@@ -63,10 +74,8 @@ export function UserSearchCard({ user, index }: UserSearchCardProps) {
         </CardHeader>
 
         <CardContent className="pt-0">
-          {user.bio && <p className="line-clamp-2 text-sm text-muted-foreground">{user.bio}</p>}
-          {user.location && (
-            <p className="mt-2 text-xs text-muted-foreground">{user.location}</p>
-          )}
+          {user.bio && <p className="text-muted-foreground line-clamp-2 text-sm">{user.bio}</p>}
+          {location && <p className="text-muted-foreground mt-2 text-xs">{location}</p>}
         </CardContent>
       </Card>
     </a>

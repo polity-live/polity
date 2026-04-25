@@ -21,6 +21,7 @@ import { TypeaheadSearch } from '@/features/shared/ui/typeahead';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import type { CreateFormConfig } from '../types/create-form.types';
 import { buildRRule, type RecurrencePattern } from '@/features/events/logic/rruleHelpers';
+import { formatNamedLocation } from '@/features/shared/logic/locationHelpers';
 
 type EventType = 'delegate_assembly' | 'general_assembly' | 'open' | 'on_invite';
 
@@ -45,9 +46,15 @@ export function useCreateEventForm(): CreateFormConfig {
   const [startTime, setStartTime] = useState('');
   const [endDate, setEndDate] = useState('');
   const [endTime, setEndTime] = useState('');
-  const [location, setLocation] = useState('');
   const [locationType, setLocationType] = useState<'physical' | 'online'>('physical');
+  const [locationName, setLocationName] = useState('');
   const [onlineLink, setOnlineLink] = useState('');
+  const [country, setCountry] = useState('');
+  const [region, setRegion] = useState('');
+  const [postCode, setPostCode] = useState('');
+  const [city, setCity] = useState('');
+  const [street, setStreet] = useState('');
+  const [houseNumber, setHouseNumber] = useState('');
   const [capacity, setCapacity] = useState('');
   const [imageURL, setImageURL] = useState('');
   const [visibility, setVisibility] = useState<Visibility>('public');
@@ -62,6 +69,14 @@ export function useCreateEventForm(): CreateFormConfig {
   const [recurrenceWeekdays, setRecurrenceWeekdays] = useState<number[]>([]);
   const [recurrenceEndDate, setRecurrenceEndDate] = useState('');
   const isRecurring = recurrencePattern !== 'none';
+  const locationSummary = formatNamedLocation(locationName, {
+    country,
+    region,
+    post_code: postCode,
+    city,
+    street,
+    house_number: houseNumber,
+  });
   const rruleString = useMemo(
     () =>
       buildRRule({
@@ -86,8 +101,14 @@ export function useCreateEventForm(): CreateFormConfig {
         title: title.trim(),
         description: description || null,
         location_type: locationType,
-        location_name: locationType === 'physical' ? location || null : null,
+        location_name: locationType === 'physical' ? locationName || null : null,
         location_url: locationType === 'online' ? onlineLink || null : null,
+        country: locationType === 'physical' ? country || null : null,
+        region: locationType === 'physical' ? region || null : null,
+        post_code: locationType === 'physical' ? postCode || null : null,
+        city: locationType === 'physical' ? city || null : null,
+        street: locationType === 'physical' ? street || null : null,
+        house_number: locationType === 'physical' ? houseNumber || null : null,
         start_date: startDate ? new Date(`${startDate}T${startTime || '00:00'}`).getTime() : null,
         end_date: endDate ? new Date(`${endDate}T${endTime || '00:00'}`).getTime() : null,
         visibility,
@@ -286,10 +307,40 @@ export function useCreateEventForm(): CreateFormConfig {
                       {t('pages.create.event.tips.venueName')}
                     </p>
                     <Input
-                      value={location}
-                      onChange={e => setLocation(e.target.value)}
+                      value={locationName}
+                      onChange={e => setLocationName(e.target.value)}
                       placeholder={t('pages.create.event.venueNamePlaceholder')}
                     />
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>{t('pages.create.event.country')}</Label>
+                      <Input value={country} onChange={e => setCountry(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{t('pages.create.event.region')}</Label>
+                      <Input value={region} onChange={e => setRegion(e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>{t('pages.create.event.postalCode')}</Label>
+                      <Input value={postCode} onChange={e => setPostCode(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{t('pages.create.event.city')}</Label>
+                      <Input value={city} onChange={e => setCity(e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>{t('pages.create.event.street')}</Label>
+                      <Input value={street} onChange={e => setStreet(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{t('pages.create.event.houseNumber')}</Label>
+                      <Input value={houseNumber} onChange={e => setHouseNumber(e.target.value)} />
+                    </div>
                   </div>
                 </TabsContent>
                 <TabsContent value="online" className="space-y-4 pt-2">
@@ -424,7 +475,7 @@ export function useCreateEventForm(): CreateFormConfig {
                   value:
                     locationType === 'online'
                       ? t('pages.create.event.onlineMeeting')
-                      : location || t('pages.create.event.inPerson'),
+                      : locationSummary || t('pages.create.event.inPerson'),
                 },
                 ...(locationType === 'online' && onlineLink
                   ? [{ label: t('pages.create.event.meetingLink'), value: onlineLink }]
@@ -478,9 +529,16 @@ export function useCreateEventForm(): CreateFormConfig {
       startTime,
       endDate,
       endTime,
-      location,
       locationType,
+      locationName,
       onlineLink,
+      country,
+      region,
+      postCode,
+      city,
+      street,
+      houseNumber,
+      locationSummary,
       capacity,
       imageURL,
       visibility,

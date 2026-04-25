@@ -47,6 +47,7 @@ import {
 } from '@/features/shared/ui/ui/table';
 import { cn } from '@/features/shared/utils/utils.ts';
 import { matchInviteCsvUsers, type InviteCsvMatchResult } from '../logic/groupInviteCsv';
+import { formatLocation } from '@/features/shared/logic/locationHelpers';
 import { X, Upload, Link2, FileSpreadsheet } from 'lucide-react';
 import { toast } from 'sonner';
 import type { CreateFormConfig } from '../types/create-form.types';
@@ -101,9 +102,12 @@ export function useCreateGroupForm(): CreateFormConfig {
   const [groupType, setGroupType] = useState<GroupType>('base');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [location, setLocation] = useState('');
-  const [region, setRegion] = useState('');
   const [country, setCountry] = useState('');
+  const [region, setRegion] = useState('');
+  const [post_code, setPostCode] = useState('');
+  const [city, setCity] = useState('');
+  const [street, setStreet] = useState('');
+  const [house_number, setHouseNumber] = useState('');
   const [imageURL, setImageURL] = useState('');
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [visibility, setVisibility] = useState<'public' | 'authenticated' | 'private'>('public');
@@ -235,7 +239,12 @@ export function useCreateGroupForm(): CreateFormConfig {
         id: groupId,
         name: name.trim(),
         description: description || null,
-        location: location || null,
+        country: country || null,
+        region: region || null,
+        post_code: post_code || null,
+        city: city || null,
+        street: street || null,
+        house_number: house_number || null,
         image_url: imageURL || null,
         x: null,
         youtube: null,
@@ -300,6 +309,15 @@ export function useCreateGroupForm(): CreateFormConfig {
       setIsSubmitting(false);
     }
   };
+
+  const locationSummary = formatLocation({
+    country,
+    region,
+    post_code,
+    city,
+    street,
+    house_number,
+  });
 
   const config = useMemo(
     (): CreateFormConfig => ({
@@ -391,14 +409,14 @@ export function useCreateGroupForm(): CreateFormConfig {
           content: (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>{t('pages.create.group.locationLabel')}</Label>
+                <Label>{t('pages.create.group.countryLabel')}</Label>
                 <p className="text-muted-foreground text-xs">
                   {t('pages.create.group.tips.location')}
                 </p>
                 <Input
-                  value={location}
-                  onChange={e => setLocation(e.target.value)}
-                  placeholder={t('pages.create.group.locationPlaceholder')}
+                  value={country}
+                  onChange={e => setCountry(e.target.value)}
+                  placeholder={t('pages.create.group.countryPlaceholder')}
                 />
               </div>
               <div className="space-y-2">
@@ -409,13 +427,41 @@ export function useCreateGroupForm(): CreateFormConfig {
                   placeholder={t('pages.create.group.regionPlaceholder')}
                 />
               </div>
-              <div className="space-y-2">
-                <Label>{t('pages.create.group.countryLabel')}</Label>
-                <Input
-                  value={country}
-                  onChange={e => setCountry(e.target.value)}
-                  placeholder={t('pages.create.group.countryPlaceholder')}
-                />
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>{t('pages.create.event.postalCode')}</Label>
+                  <Input
+                    value={post_code}
+                    onChange={e => setPostCode(e.target.value)}
+                    placeholder={t('pages.create.event.postalCode')}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('pages.create.event.city')}</Label>
+                  <Input
+                    value={city}
+                    onChange={e => setCity(e.target.value)}
+                    placeholder={t('pages.create.event.city')}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>{t('pages.create.event.street')}</Label>
+                  <Input
+                    value={street}
+                    onChange={e => setStreet(e.target.value)}
+                    placeholder={t('pages.create.event.street')}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('pages.create.event.houseNumber')}</Label>
+                  <Input
+                    value={house_number}
+                    onChange={e => setHouseNumber(e.target.value)}
+                    placeholder={t('pages.create.event.houseNumber')}
+                  />
+                </div>
               </div>
             </div>
           ),
@@ -847,12 +893,8 @@ export function useCreateGroupForm(): CreateFormConfig {
                       ? t('pages.create.group.groupTypes.base')
                       : t('pages.create.group.groupTypes.hierarchical'),
                 },
-                ...(location
-                  ? [{ label: t('pages.create.group.locationLabel'), value: location }]
-                  : []),
-                ...(region ? [{ label: t('pages.create.group.regionLabel'), value: region }] : []),
-                ...(country
-                  ? [{ label: t('pages.create.group.countryLabel'), value: country }]
+                ...(locationSummary
+                  ? [{ label: t('pages.create.group.locationLabel'), value: locationSummary }]
                   : []),
                 { label: t('pages.create.common.visibility'), value: visibility },
                 ...(invitedUserIds.length > 0
@@ -883,9 +925,12 @@ export function useCreateGroupForm(): CreateFormConfig {
     [
       name,
       description,
-      location,
-      region,
       country,
+      region,
+      post_code,
+      city,
+      street,
+      house_number,
       imageURL,
       hashtags,
       visibility,

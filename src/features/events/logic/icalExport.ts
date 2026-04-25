@@ -1,11 +1,17 @@
 import ical, { ICalCalendarMethod, ICalEventRepeatingFreq } from 'ical-generator';
+import { formatNamedLocation } from '@/features/shared/logic/locationHelpers';
 
 interface ICalEventInput {
   id: string;
   title: string;
   description?: string | null;
   location_name?: string | null;
-  location_address?: string | null;
+  country?: string | null;
+  region?: string | null;
+  post_code?: string | null;
+  city?: string | null;
+  street?: string | null;
+  house_number?: string | null;
   start_date?: number | null;
   end_date?: number | null;
   is_recurring?: boolean;
@@ -21,7 +27,7 @@ interface ICalEventInput {
  */
 export function generateICalString(
   events: ICalEventInput[],
-  calendarName = 'Polity Calendar',
+  calendarName = 'Polity Calendar'
 ): string {
   const cal = ical({ name: calendarName, method: ICalCalendarMethod.PUBLISH });
 
@@ -34,11 +40,14 @@ export function generateICalString(
       end: event.end_date ? new Date(event.end_date) : undefined,
       summary: event.title,
       description: event.description ?? undefined,
-      location: [event.location_name, event.location_address].filter(Boolean).join(', ') || undefined,
+      location: formatNamedLocation(event.location_name, event) || undefined,
     });
 
     if (event.creator?.name) {
-      icalEvent.organizer({ name: event.creator.name, email: event.creator.email || 'noreply@polity.app' });
+      icalEvent.organizer({
+        name: event.creator.name,
+        email: event.creator.email || 'noreply@polity.app',
+      });
     }
 
     // Add RRULE if recurring
@@ -66,9 +75,16 @@ export function generateICalString(
         icalEvent.repeating({
           freq: freqMap[parts.FREQ],
           interval: parts.INTERVAL ? parseInt(parts.INTERVAL, 10) : undefined,
-          until: parts.UNTIL ? new Date(
-            parts.UNTIL.replace(/(\d{4})(\d{2})(\d{2})T?(\d{2})?(\d{2})?(\d{2})?/, '$1-$2-$3T$4:$5:$6')
-          ) : (event.recurrence_end_date ? new Date(event.recurrence_end_date) : undefined),
+          until: parts.UNTIL
+            ? new Date(
+                parts.UNTIL.replace(
+                  /(\d{4})(\d{2})(\d{2})T?(\d{2})?(\d{2})?(\d{2})?/,
+                  '$1-$2-$3T$4:$5:$6'
+                )
+              )
+            : event.recurrence_end_date
+              ? new Date(event.recurrence_end_date)
+              : undefined,
         });
       }
     }
@@ -80,10 +96,7 @@ export function generateICalString(
 /**
  * Trigger a browser download of an iCal file.
  */
-export function downloadICalFile(
-  events: ICalEventInput[],
-  filename = 'polity-calendar.ics',
-): void {
+export function downloadICalFile(events: ICalEventInput[], filename = 'polity-calendar.ics'): void {
   const icsContent = generateICalString(events);
   const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
   const url = URL.createObjectURL(blob);

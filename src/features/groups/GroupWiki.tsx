@@ -32,6 +32,7 @@ import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx
 import { useGroupWikiPage } from '@/features/groups/hooks/useGroupWikiPage';
 import { groupRelationshipsByGroup } from '@/features/groups/logic/groupWikiHelpers';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
+import { formatLocation } from '@/features/shared/logic/locationHelpers';
 
 interface GroupWikiProps {
   groupId: string;
@@ -78,6 +79,8 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
     return <AccessDenied />;
   }
 
+  const groupLocation = formatLocation(group);
+
   return (
     <div>
       {/* Header with centered title and subtitle */}
@@ -95,7 +98,7 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
               : t('components.badges.baseGroup')}
           </Badge>
         </div>
-        {group.location && <p className="text-muted-foreground">{group.location}</p>}
+        {groupLocation && <p className="text-muted-foreground">{groupLocation}</p>}
       </div>
 
       {group.image_url && (
@@ -160,7 +163,15 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
       {/* Social Media */}
       <SocialBar
         socialMedia={{
-          twitter: group.x ?? undefined,
+          website: group.website ?? undefined,
+          youtube: group.youtube ?? undefined,
+          linkedin: group.linkedin ?? undefined,
+          whatsapp: group.whatsapp ?? undefined,
+          instagram: group.instagram ?? undefined,
+          twitter: group.twitter ?? group.x ?? undefined,
+          facebook: group.facebook ?? undefined,
+          snapchat: group.snapchat ?? undefined,
+          tiktok: group.tiktok ?? undefined,
         }}
       />
 
@@ -168,8 +179,21 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
       <InfoTabs
         about={group.description ?? undefined}
         contact={{
-          location: group.location ?? undefined,
           website: group.website ?? undefined,
+          youtube: group.youtube ?? undefined,
+          linkedin: group.linkedin ?? undefined,
+          whatsapp: group.whatsapp ?? undefined,
+          instagram: group.instagram ?? undefined,
+          twitter: group.twitter ?? group.x ?? undefined,
+          facebook: group.facebook ?? undefined,
+          snapchat: group.snapchat ?? undefined,
+          tiktok: group.tiktok ?? undefined,
+          country: group.country ?? undefined,
+          region: group.region ?? undefined,
+          post_code: group.post_code ?? undefined,
+          city: group.city ?? undefined,
+          street: group.street ?? undefined,
+          house_number: group.house_number ?? undefined,
         }}
         className="mb-12"
       />

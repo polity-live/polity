@@ -6,6 +6,7 @@ import { ImageUpload } from '@/features/file-upload/ui/ImageUpload';
 import { BasicInformationSection } from './BasicInformationSection';
 import { AboutSection } from './AboutSection';
 import { ContactInformationSection } from './ContactInformationSection';
+import { LocationInformationSection } from './LocationInformationSection';
 import { HashtagsSection } from './HashtagsSection';
 import { SubscriptionPlansGrid } from '@/features/payments/ui/SubscriptionPlansGrid';
 import { SubscriptionStatus } from '@/features/payments/ui/SubscriptionStatus';
@@ -71,18 +72,12 @@ export function UserProfileEditForm({
 
       <Tabs defaultValue={defaultTab || 'basic-info'}>
         <TabsList className="mb-6">
-          <TabsTrigger value="basic-info">
-            {t('pages.user.settingsTabs.basicInfo')}
-          </TabsTrigger>
-          <TabsTrigger value="preferences">
-            {t('pages.user.settingsTabs.preferences')}
-          </TabsTrigger>
+          <TabsTrigger value="basic-info">{t('pages.user.settingsTabs.basicInfo')}</TabsTrigger>
+          <TabsTrigger value="preferences">{t('pages.user.settingsTabs.preferences')}</TabsTrigger>
           <TabsTrigger value="subscriptions">
             {t('pages.user.settingsTabs.subscriptions')}
           </TabsTrigger>
-          <TabsTrigger value="passwords">
-            {t('pages.user.settingsTabs.passwords')}
-          </TabsTrigger>
+          <TabsTrigger value="passwords">{t('pages.user.settingsTabs.passwords')}</TabsTrigger>
           <TabsTrigger value="notifications">
             {t('pages.user.settingsTabs.notifications')}
           </TabsTrigger>
@@ -111,7 +106,10 @@ export function UserProfileEditForm({
               onSubtitleChange={value => onFieldChange('subtitle', value)}
             />
 
-            <VisibilityInput value={formData.visibility} onChange={v => onFieldChange('visibility', v)} />
+            <VisibilityInput
+              value={formData.visibility}
+              onChange={v => onFieldChange('visibility', v)}
+            />
 
             <AboutSection
               about={formData.about}
@@ -120,13 +118,40 @@ export function UserProfileEditForm({
 
             <ContactInformationSection
               email={formData.email}
-              twitter={formData.twitter}
               website={formData.website}
-              location={formData.location}
+              youtube={formData.youtube}
+              linkedin={formData.linkedin}
+              whatsapp={formData.whatsapp}
+              instagram={formData.instagram}
+              twitter={formData.twitter}
+              facebook={formData.facebook}
+              snapchat={formData.snapchat}
+              tiktok={formData.tiktok}
               onEmailChange={value => onFieldChange('email', value)}
-              onTwitterChange={value => onFieldChange('twitter', value)}
               onWebsiteChange={value => onFieldChange('website', value)}
-              onLocationChange={value => onFieldChange('location', value)}
+              onYoutubeChange={value => onFieldChange('youtube', value)}
+              onLinkedinChange={value => onFieldChange('linkedin', value)}
+              onWhatsappChange={value => onFieldChange('whatsapp', value)}
+              onInstagramChange={value => onFieldChange('instagram', value)}
+              onTwitterChange={value => onFieldChange('twitter', value)}
+              onFacebookChange={value => onFieldChange('facebook', value)}
+              onSnapchatChange={value => onFieldChange('snapchat', value)}
+              onTiktokChange={value => onFieldChange('tiktok', value)}
+            />
+
+            <LocationInformationSection
+              country={formData.country}
+              region={formData.region}
+              post_code={formData.post_code}
+              city={formData.city}
+              street={formData.street}
+              house_number={formData.house_number}
+              onCountryChange={value => onFieldChange('country', value)}
+              onRegionChange={value => onFieldChange('region', value)}
+              onPostCodeChange={value => onFieldChange('post_code', value)}
+              onCityChange={value => onFieldChange('city', value)}
+              onStreetChange={value => onFieldChange('street', value)}
+              onHouseNumberChange={value => onFieldChange('house_number', value)}
             />
 
             <HashtagsSection
@@ -156,19 +181,15 @@ export function UserProfileEditForm({
         <TabsContent value="preferences">
           <div className="space-y-6">
             <div className="rounded-lg border p-4">
-              <h3 className="mb-1 text-sm font-medium">
-                {t('pages.user.preferences.theme')}
-              </h3>
-              <p className="mb-3 text-sm text-muted-foreground">
+              <h3 className="mb-1 text-sm font-medium">{t('pages.user.preferences.theme')}</h3>
+              <p className="text-muted-foreground mb-3 text-sm">
                 {t('pages.user.preferences.themeDescription')}
               </p>
               <ThemeToggle />
             </div>
             <div className="rounded-lg border p-4">
-              <h3 className="mb-1 text-sm font-medium">
-                {t('pages.user.preferences.language')}
-              </h3>
-              <p className="mb-3 text-sm text-muted-foreground">
+              <h3 className="mb-1 text-sm font-medium">{t('pages.user.preferences.language')}</h3>
+              <p className="text-muted-foreground mb-3 text-sm">
                 {t('pages.user.preferences.languageDescription')}
               </p>
               <LanguageToggle side="bottom" />
@@ -177,7 +198,7 @@ export function UserProfileEditForm({
               <h3 className="mb-1 text-sm font-medium">
                 {t('pages.user.preferences.navigationStyle')}
               </h3>
-              <p className="mb-3 text-sm text-muted-foreground">
+              <p className="text-muted-foreground mb-3 text-sm">
                 {t('pages.user.preferences.navigationStyleDescription')}
               </p>
               <StateToggle currentState={navigationView} onStateChange={setNavigationView} />
@@ -186,7 +207,7 @@ export function UserProfileEditForm({
               <h3 className="mb-1 text-sm font-medium">
                 {t('pages.create.preferences.formStyle')}
               </h3>
-              <p className="mb-3 text-sm text-muted-foreground">
+              <p className="text-muted-foreground mb-3 text-sm">
                 {t('pages.create.preferences.formStyleDescription')}
               </p>
               <FormStyleSelector />

@@ -6,6 +6,70 @@ import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { createClient } from '@/lib/supabase/client';
 
+const AUTH_SERVICE_UNAVAILABLE_MESSAGE =
+  'Authentication service is temporarily unavailable. Please try again in a moment.';
+const AUTH_RETRY_DELAY_MS = 750;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function getErrorMessage(error: unknown): string | null {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (isRecord(error) && typeof error.message === 'string') {
+    return error.message;
+  }
+
+  return null;
+}
+
+function getErrorStatus(error: unknown): number | null {
+  if (isRecord(error) && typeof error.status === 'number') {
+    return error.status;
+  }
+
+  return null;
+}
+
+function isTransientAuthInfrastructureError(error: unknown): boolean {
+  const message = getErrorMessage(error)?.toLowerCase() ?? '';
+  const status = getErrorStatus(error);
+
+  return (
+    status === 502 ||
+    message.includes('upstream server') ||
+    message.includes('authretryablefetcherror') ||
+    message.includes('bad gateway') ||
+    message.includes('failed to fetch') ||
+    message.includes('connection refused') ||
+    message.includes('network request failed')
+  );
+}
+
+function normalizeAuthErrorMessage(error: unknown, fallback: string): string {
+  if (isTransientAuthInfrastructureError(error)) {
+    return AUTH_SERVICE_UNAVAILABLE_MESSAGE;
+  }
+
+  return getErrorMessage(error) ?? fallback;
+}
+
+async function retryTransientAuthFailure<T extends { error: unknown | null }>(
+  operation: () => Promise<T>
+): Promise<T> {
+  const result = await operation();
+
+  if (!result.error || !isTransientAuthInfrastructureError(result.error)) {
+    return result;
+  }
+
+  await new Promise(resolve => setTimeout(resolve, AUTH_RETRY_DELAY_MS));
+  return operation();
+}
+
 // Define the authentication store state interface
 // Note: Auth session state is managed by Supabase + AuthProvider.
 // This store handles imperative auth operations (sign up, sign in, send OTP, verify, sign out)
@@ -56,7 +120,9 @@ export const useAuthStore = create<AuthState>()(
 
       try {
         const supabase = createClient();
-        const { data, error } = await supabase.auth.signUp({ email, password });
+        const { data, error } = await retryTransientAuthFailure(() =>
+          supabase.auth.signUp({ email, password })
+        );
 
         if (error) {
           throw error;
@@ -80,7 +146,7 @@ export const useAuthStore = create<AuthState>()(
         };
       } catch (error) {
         console.error('Failed to sign up:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Failed to sign up';
+        const errorMessage = normalizeAuthErrorMessage(error, 'Failed to sign up');
         set(state => {
           state.isLoading = false;
           state.error = errorMessage;
@@ -100,7 +166,9 @@ export const useAuthStore = create<AuthState>()(
 
       try {
         const supabase = createClient();
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await retryTransientAuthFailure(() =>
+          supabase.auth.signInWithPassword({ email, password })
+        );
 
         if (error) {
           throw error;
@@ -115,7 +183,7 @@ export const useAuthStore = create<AuthState>()(
         console.error('Failed to sign in:', error);
         set(state => {
           state.isLoading = false;
-          state.error = error instanceof Error ? error.message : 'Invalid email or password';
+          state.error = normalizeAuthErrorMessage(error, 'Invalid email or password');
         });
         return false;
       }
@@ -129,12 +197,14 @@ export const useAuthStore = create<AuthState>()(
 
       try {
         const supabase = createClient();
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            redirectTo: `${window.location.origin}/auth/callback`,
-          },
-        });
+        const { error } = await retryTransientAuthFailure(() =>
+          supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+              redirectTo: `${window.location.origin}/auth/callback`,
+            },
+          })
+        );
 
         if (error) {
           throw error;
@@ -149,7 +219,7 @@ export const useAuthStore = create<AuthState>()(
         console.error('Failed to start Google sign in:', error);
         set(state => {
           state.isLoading = false;
-          state.error = error instanceof Error ? error.message : 'Failed to start Google sign in';
+          state.error = normalizeAuthErrorMessage(error, 'Failed to start Google sign in');
         });
         return false;
       }
@@ -163,9 +233,11 @@ export const useAuthStore = create<AuthState>()(
 
       try {
         const supabase = createClient();
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/auth/sign-in`,
-        });
+        const { error } = await retryTransientAuthFailure(() =>
+          supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: `${window.location.origin}/auth/sign-in`,
+          })
+        );
 
         if (error) {
           throw error;
@@ -180,7 +252,7 @@ export const useAuthStore = create<AuthState>()(
         console.error('Failed to send reset email:', error);
         set(state => {
           state.isLoading = false;
-          state.error = error instanceof Error ? error.message : 'Failed to send reset email';
+          state.error = normalizeAuthErrorMessage(error, 'Failed to send reset email');
         });
         return false;
       }
@@ -196,7 +268,9 @@ export const useAuthStore = create<AuthState>()(
 
       try {
         const supabase = createClient();
-        const { error } = await supabase.auth.signInWithOtp({ email });
+        const { error } = await retryTransientAuthFailure(() =>
+          supabase.auth.signInWithOtp({ email })
+        );
 
         if (error) {
           throw error;
@@ -211,7 +285,7 @@ export const useAuthStore = create<AuthState>()(
         console.error('Failed to send magic link:', error);
         set(state => {
           state.isLoading = false;
-          state.error = error instanceof Error ? error.message : 'Failed to send magic link';
+          state.error = normalizeAuthErrorMessage(error, 'Failed to send magic link');
         });
         return false;
       }
@@ -225,11 +299,13 @@ export const useAuthStore = create<AuthState>()(
 
       try {
         const supabase = createClient();
-        const { data, error } = await supabase.auth.verifyOtp({
-          email,
-          token: code,
-          type: 'magiclink',
-        });
+        const { data, error } = await retryTransientAuthFailure(() =>
+          supabase.auth.verifyOtp({
+            email,
+            token: code,
+            type: 'magiclink',
+          })
+        );
 
         if (error) {
           throw error;
@@ -249,7 +325,7 @@ export const useAuthStore = create<AuthState>()(
         console.error('Failed to verify magic code:', error);
         set(state => {
           state.isLoading = false;
-          state.error = error instanceof Error ? error.message : 'Invalid or expired code';
+          state.error = normalizeAuthErrorMessage(error, 'Invalid or expired code');
         });
         return false;
       }

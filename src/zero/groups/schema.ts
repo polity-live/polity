@@ -1,14 +1,19 @@
-import { z } from 'zod'
-import { timestampSchema, nullableTimestampSchema } from '../shared/helpers'
+import { z } from 'zod';
+import { timestampSchema } from '../shared/helpers';
 
-const groupTypeSchema = z.enum(['base', 'hierarchical'])
+const groupTypeSchema = z.enum(['base', 'hierarchical']);
 
 // ── group ─────────────────────────────────────────────────────────────
 const groupBaseSchema = z.object({
   id: z.string(),
   name: z.string().nullable(),
   description: z.string().nullable(),
-  location: z.string().nullable(),
+  country: z.string().nullable(),
+  region: z.string().nullable(),
+  post_code: z.string().nullable(),
+  city: z.string().nullable(),
+  street: z.string().nullable(),
+  house_number: z.string().nullable(),
   image_url: z.string().nullable(),
   member_count: z.number(),
   subscriber_count: z.number(),
@@ -19,22 +24,48 @@ const groupBaseSchema = z.object({
   youtube: z.string().nullable(),
   linkedin: z.string().nullable(),
   website: z.string().nullable(),
+  whatsapp: z.string().nullable(),
+  instagram: z.string().nullable(),
+  twitter: z.string().nullable(),
+  facebook: z.string().nullable(),
+  snapchat: z.string().nullable(),
+  tiktok: z.string().nullable(),
   visibility: z.string(),
   group_type: groupTypeSchema,
   owner_id: z.string().nullable(),
   created_at: timestampSchema,
   updated_at: timestampSchema,
-})
+});
 
-export const groupSelectSchema = groupBaseSchema
+export const groupSelectSchema = groupBaseSchema;
 export const groupCreateSchema = groupBaseSchema
-  .omit({ id: true, created_at: true, updated_at: true, member_count: true, subscriber_count: true, event_count: true, amendment_count: true, document_count: true })
-  .extend({ id: z.string() })
+  .omit({
+    id: true,
+    created_at: true,
+    updated_at: true,
+    member_count: true,
+    subscriber_count: true,
+    event_count: true,
+    amendment_count: true,
+    document_count: true,
+  })
+  .extend({ id: z.string() });
 export const groupUpdateSchema = groupBaseSchema
   .pick({
     name: true,
     description: true,
-    location: true,
+    country: true,
+    region: true,
+    whatsapp: true,
+    instagram: true,
+    twitter: true,
+    facebook: true,
+    snapchat: true,
+    tiktok: true,
+    post_code: true,
+    city: true,
+    street: true,
+    house_number: true,
     image_url: true,
     x: true,
     youtube: true,
@@ -44,9 +75,9 @@ export const groupUpdateSchema = groupBaseSchema
     group_type: true,
   })
   .partial()
-  .extend({ id: z.string() })
-export const groupDeleteSchema = z.object({ id: z.string() })
-export type Group = z.infer<typeof groupSelectSchema>
+  .extend({ id: z.string() });
+export const groupDeleteSchema = z.object({ id: z.string() });
+export type Group = z.infer<typeof groupSelectSchema>;
 
 // ── group_membership ──────────────────────────────────────────────────
 const groupMembershipBaseSchema = z.object({
@@ -59,18 +90,23 @@ const groupMembershipBaseSchema = z.object({
   source: z.string(),
   source_group_id: z.string().nullable(),
   created_at: timestampSchema,
-})
+});
 
-export const groupMembershipSelectSchema = groupMembershipBaseSchema
+export const groupMembershipSelectSchema = groupMembershipBaseSchema;
 export const groupMembershipCreateSchema = groupMembershipBaseSchema
   .omit({ id: true, created_at: true, user_id: true, source: true, source_group_id: true })
-  .extend({ id: z.string(), user_id: z.string().optional(), source: z.string().optional(), source_group_id: z.string().nullable().optional() })
+  .extend({
+    id: z.string(),
+    user_id: z.string().optional(),
+    source: z.string().optional(),
+    source_group_id: z.string().nullable().optional(),
+  });
 export const groupMembershipUpdateSchema = groupMembershipBaseSchema
   .pick({ status: true, visibility: true, role_id: true, source: true, source_group_id: true })
   .partial()
-  .extend({ id: z.string() })
-export const groupMembershipDeleteSchema = z.object({ id: z.string() })
-export type GroupMembership = z.infer<typeof groupMembershipSelectSchema>
+  .extend({ id: z.string() });
+export const groupMembershipDeleteSchema = z.object({ id: z.string() });
+export type GroupMembership = z.infer<typeof groupMembershipSelectSchema>;
 
 // ── role ──────────────────────────────────────────────────────────────
 const roleBaseSchema = z.object({
@@ -84,18 +120,18 @@ const roleBaseSchema = z.object({
   blog_id: z.string().nullable(),
   sort_order: z.number(),
   created_at: timestampSchema,
-})
+});
 
-export const roleSelectSchema = roleBaseSchema
+export const roleSelectSchema = roleBaseSchema;
 export const roleCreateSchema = roleBaseSchema
   .omit({ id: true, created_at: true })
-  .extend({ id: z.string() })
+  .extend({ id: z.string() });
 export const roleUpdateSchema = roleBaseSchema
   .pick({ sort_order: true })
   .partial()
-  .extend({ id: z.string() })
-export const roleDeleteSchema = z.object({ id: z.string() })
-export type Role = z.infer<typeof roleSelectSchema>
+  .extend({ id: z.string() });
+export const roleDeleteSchema = z.object({ id: z.string() });
+export type Role = z.infer<typeof roleSelectSchema>;
 
 // ── action_right ──────────────────────────────────────────────────────
 const actionRightBaseSchema = z.object({
@@ -108,11 +144,11 @@ const actionRightBaseSchema = z.object({
   amendment_id: z.string().nullable(),
   blog_id: z.string().nullable(),
   created_at: timestampSchema,
-})
+});
 
-export const actionRightSelectSchema = actionRightBaseSchema
+export const actionRightSelectSchema = actionRightBaseSchema;
 export const actionRightCreateSchema = actionRightBaseSchema
   .omit({ id: true, created_at: true })
-  .extend({ id: z.string() })
-export const actionRightDeleteSchema = z.object({ id: z.string() })
-export type ActionRight = z.infer<typeof actionRightSelectSchema>
+  .extend({ id: z.string() });
+export const actionRightDeleteSchema = z.object({ id: z.string() });
+export type ActionRight = z.infer<typeof actionRightSelectSchema>;

@@ -5,10 +5,19 @@ export const componentsTranslations = {
     locationAndDate: 'Location & Date',
     noInformation: 'No information available',
     noContact: 'No contact information available',
+    socialTitle: 'Social profiles',
+    socialDescription: 'Public links and channels connected to this profile.',
     labels: {
       email: 'Email',
       twitter: 'Twitter',
       website: 'Website',
+      youtube: 'YouTube',
+      linkedin: 'LinkedIn',
+      whatsapp: 'WhatsApp',
+      instagram: 'Instagram',
+      facebook: 'Facebook',
+      snapchat: 'Snapchat',
+      tiktok: 'TikTok',
       location: 'Location',
       region: 'Region',
       country: 'Country',
@@ -93,7 +102,8 @@ export const componentsTranslations = {
     disabledDescriptionShort: 'Enable notifications for this device',
     notSupported: 'Your browser does not support push notifications.',
     blocked: 'Notifications blocked. Please enable them in your browser settings.',
-    blockedLong: 'Push notifications have been blocked. Please enable them in your browser settings.',
+    blockedLong:
+      'Push notifications have been blocked. Please enable them in your browser settings.',
     success: {
       enabled: 'Push notifications enabled',
       disabled: 'Push notifications disabled',
@@ -102,8 +112,10 @@ export const componentsTranslations = {
       changeFailed: 'Error changing setting',
       notSupported: 'Push notifications are not supported in this browser',
       notLoggedIn: 'You must be logged in to enable notifications',
-      permissionBlocked: 'Notifications have been blocked. Please enable them in your browser settings.',
-      permissionDismissed: 'Notification permission was not granted. Please allow notifications in your browser settings (click the lock icon in the address bar).',
+      permissionBlocked:
+        'Notifications have been blocked. Please enable them in your browser settings.',
+      permissionDismissed:
+        'Notification permission was not granted. Please allow notifications in your browser settings (click the lock icon in the address bar).',
       permissionRequest: 'Error requesting notification permission',
       swRegistration: 'Service worker could not be registered. Please reload the page.',
       swTimeout: 'Service worker timeout — please reload the page',
@@ -116,10 +128,13 @@ export const componentsTranslations = {
   ariaKaiWelcome: {
     title: 'Welcome to Polity!',
     subtitle: 'Meet Aria & Kai, your personal assistants',
-    intro: "Hey! We're Aria & Kai, and we're here to help you navigate Polity and make the most of all its features.",
-    helpText: 'Whenever you need assistance, tips, or want to learn about groups, events, amendments, and more, just find us in your message conversations. We\'re always ready to help!',
+    intro:
+      "Hey! We're Aria & Kai, and we're here to help you navigate Polity and make the most of all its features.",
+    helpText:
+      "Whenever you need assistance, tips, or want to learn about groups, events, amendments, and more, just find us in your message conversations. We're always ready to help!",
     quickTip: 'Quick Tip:',
-    quickTipText: "We've already started a conversation with you. Click below to see where you can always find us!",
+    quickTipText:
+      "We've already started a conversation with you. Click below to see where you can always find us!",
     dontShowAgain: "Don't show this message again",
     findLater: "I'll find you later",
     showLocation: 'Show me my assistant location',

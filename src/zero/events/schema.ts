@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { timestampSchema, nullableTimestampSchema, jsonSchema, jsonNumberArraySchema, jsonStringStringRecordSchema } from '../shared/helpers';
+import {
+  timestampSchema,
+  nullableTimestampSchema,
+  jsonNumberArraySchema,
+  jsonStringStringRecordSchema,
+} from '../shared/helpers';
 
 // ── event ─────────────────────────────────────────────────────────────
 const eventBaseSchema = z.object({
@@ -10,7 +15,12 @@ const eventBaseSchema = z.object({
   event_type: z.string().nullable(),
   location_type: z.string().nullable(),
   location_name: z.string().nullable(),
-  location_address: z.string().nullable(),
+  country: z.string().nullable(),
+  region: z.string().nullable(),
+  post_code: z.string().nullable(),
+  city: z.string().nullable(),
+  street: z.string().nullable(),
+  house_number: z.string().nullable(),
   location_url: z.string().nullable(),
   location_coordinates: z.string().nullable(),
   visibility: z.string(),
@@ -99,7 +109,12 @@ export const eventUpdateSchema = eventBaseSchema
     event_type: true,
     location_type: true,
     location_name: true,
-    location_address: true,
+    country: true,
+    region: true,
+    post_code: true,
+    city: true,
+    street: true,
+    house_number: true,
     location_url: true,
     location_coordinates: true,
     visibility: true,
@@ -189,7 +204,12 @@ const eventExceptionBaseSchema = z.object({
   new_start_date: nullableTimestampSchema,
   new_end_date: nullableTimestampSchema,
   new_location_name: z.string().nullable(),
-  new_location_address: z.string().nullable(),
+  new_country: z.string().nullable(),
+  new_region: z.string().nullable(),
+  new_post_code: z.string().nullable(),
+  new_city: z.string().nullable(),
+  new_street: z.string().nullable(),
+  new_house_number: z.string().nullable(),
   created_at: timestampSchema,
   updated_at: timestampSchema,
 });
@@ -206,7 +226,12 @@ export const eventExceptionUpdateSchema = eventExceptionBaseSchema
     new_start_date: true,
     new_end_date: true,
     new_location_name: true,
-    new_location_address: true,
+    new_country: true,
+    new_region: true,
+    new_post_code: true,
+    new_city: true,
+    new_street: true,
+    new_house_number: true,
   })
   .partial()
   .extend({ id: z.string() });

@@ -92,9 +92,11 @@ export const createPageTranslations = {
     inviteMembersOptional: 'Mitglieder einladen (Optional)',
     invited: 'eingeladen',
     csvGuideTitle: 'Mit CSV einladen',
-    csvGuideDescription: 'Lade eine CSV mit den Spalten Vorname und Nachname hoch, um bestehende Nutzer zuzuordnen und zur Einladungsliste hinzuzufügen.',
+    csvGuideDescription:
+      'Lade eine CSV mit den Spalten Vorname und Nachname hoch, um bestehende Nutzer zuzuordnen und zur Einladungsliste hinzuzufügen.',
     csvGuideTrigger: 'CSV-Format und Beispiel anzeigen',
-    csvGuideFootnote: 'Akzeptierte Spalten: first name / last name. Der Abgleich erfolgt mit bestehenden Nutzerprofilen.',
+    csvGuideFootnote:
+      'Akzeptierte Spalten: first name / last name. Der Abgleich erfolgt mit bestehenden Nutzerprofilen.',
     csvColumnFirstName: 'Vorname',
     csvColumnLastName: 'Nachname',
     csvMissingColumns: 'Die CSV muss die Spalten "first name" und "last name" enthalten',
@@ -103,7 +105,8 @@ export const createPageTranslations = {
     csvMatchedUsers_other: '{{count}} Nutzer zugeordnet',
     csvReviewSummary: 'CSV verarbeitet. Prüfe die Zusammenfassung unten.',
     csvSummaryTitle: 'CSV-Import Zusammenfassung',
-    csvSummaryDescription: 'Gefundene Nutzer wurden zur Einladungsliste hinzugefügt. Mehrdeutige Zeilen wurden übersprungen, um falsche Einladungen zu vermeiden.',
+    csvSummaryDescription:
+      'Gefundene Nutzer wurden zur Einladungsliste hinzugefügt. Mehrdeutige Zeilen wurden übersprungen, um falsche Einladungen zu vermeiden.',
     csvFoundCount: '{{count}} gefunden',
     csvFoundCount_other: '{{count}} gefunden',
     csvNotFoundCount: '{{count}} nicht gefunden',
@@ -165,7 +168,8 @@ export const createPageTranslations = {
       base: 'Basisgruppe',
       baseDesc: 'Mitglieder treten direkt bei. Standardgruppe mit direkter Mitgliedschaft.',
       hierarchical: 'Hierarchische Gruppe',
-      hierarchicalDesc: 'Zusammengesetzt aus Untergruppen. Mitglieder treten über verlinkte Basisgruppen bei.',
+      hierarchicalDesc:
+        'Zusammengesetzt aus Untergruppen. Mitglieder treten über verlinkte Basisgruppen bei.',
     },
     userAlreadyInvited: 'Benutzer bereits eingeladen',
     groupAlreadyLinked: 'Gruppe bereits verknüpft. Rechte werden aktualisiert...',
@@ -180,13 +184,17 @@ export const createPageTranslations = {
       name: 'Wähle einen klaren, wiedererkennbaren Namen für deine Gruppe',
       description: 'Erkläre den Zweck, die Ziele und für wen diese Gruppe gedacht ist',
       location: 'Wo ist diese Gruppe hauptsächlich verortet?',
-      groupType: 'Basisgruppen haben direkte Mitglieder; hierarchische Gruppen bestehen aus Untergruppen',
+      groupType:
+        'Basisgruppen haben direkte Mitglieder; hierarchische Gruppen bestehen aus Untergruppen',
       image: 'Ein Logo oder Bild, das deine Gruppe repräsentiert',
       hashtags: 'Füge Themen hinzu, damit andere deine Gruppe leichter finden',
       inviteMembers: 'Suche nach Nutzern und lade sie in deine Gruppe ein',
-      linkGroups: 'Lege Über- und Untergruppenbeziehungen zu anderen Gruppen fest und weise Rechte zu',
-      constitutionalEvent: 'Erstelle eine Gründungsversammlung, um die Gruppe offiziell zu etablieren',
-      visibility: 'Öffentliche Gruppen sind für alle sichtbar; private Gruppen erfordern eine Einladung',
+      linkGroups:
+        'Lege Über- und Untergruppenbeziehungen zu anderen Gruppen fest und weise Rechte zu',
+      constitutionalEvent:
+        'Erstelle eine Gründungsversammlung, um die Gruppe offiziell zu etablieren',
+      visibility:
+        'Öffentliche Gruppen sind für alle sichtbar; private Gruppen erfordern eine Einladung',
     },
   },
   event: {
@@ -279,6 +287,8 @@ export const createPageTranslations = {
     accessCodeOptional: 'Zugangscode (optional)',
     venueName: 'Name des Veranstaltungsortes',
     venueNamePlaceholder: 'z.B. Rathaus, Bürgerzentrum',
+    country: 'Land',
+    region: 'Region',
     street: 'Straße',
     houseNumber: 'Hausnummer',
     postalCode: 'Postleitzahl',
@@ -315,7 +325,8 @@ export const createPageTranslations = {
       title: 'Wähle einen aussagekräftigen Titel für dein Event',
       description: 'Erkläre den Zweck, die Agenda und was Teilnehmende erwarten können',
       eventType: 'Bestimmt, wie Teilnehmende ausgewählt werden und wer beitreten kann',
-      group: 'Die organisierende Gruppe. Es werden nur Gruppen angezeigt, bei denen du Event-Rechte hast',
+      group:
+        'Die organisierende Gruppe. Es werden nur Gruppen angezeigt, bei denen du Event-Rechte hast',
       dateTime: 'Wann das Event beginnt und endet. Leer lassen, wenn es noch nicht feststeht',
       recurring: 'Richte eine Wiederholung ein, wenn dieses Event regelmäßig stattfindet',
       location: 'Wo das Event stattfindet. Wähle einen physischen Ort oder einen Online-Link',

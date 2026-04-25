@@ -1,16 +1,16 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { useGroupEventsPage } from '@/features/groups/hooks/useGroupEventsPage'
-import { SharedCalendarHeader } from '@/features/events/ui/calendar/SharedCalendarHeader'
-import { CalendarViewContainer } from '@/features/events/ui/calendar/CalendarViewContainer'
-import { CalendarSearchFilter } from '@/features/events/ui/calendar/CalendarSearchFilter'
+import { createFileRoute } from '@tanstack/react-router';
+import { useGroupEventsPage } from '@/features/groups/hooks/useGroupEventsPage';
+import { SharedCalendarHeader } from '@/features/events/ui/calendar/SharedCalendarHeader';
+import { CalendarViewContainer } from '@/features/events/ui/calendar/CalendarViewContainer';
+import { CalendarSearchFilter } from '@/features/events/ui/calendar/CalendarSearchFilter';
 
 export const Route = createFileRoute('/_authed/group/$id/events')({
   component: GroupEventsPage,
-})
+});
 
 function GroupEventsPage() {
-  const { id } = Route.useParams()
-  const gp = useGroupEventsPage(id)
+  const { id } = Route.useParams();
+  const gp = useGroupEventsPage(id);
 
   return (
     <div>
@@ -37,7 +37,8 @@ function GroupEventsPage() {
         events={gp.filteredEvents}
         allEvents={gp.events}
         onDateSelect={gp.setSelectedDate}
+        onEventSelect={gp.onEventSelect}
       />
     </div>
-  )
+  );
 }

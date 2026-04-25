@@ -25,10 +25,21 @@ export function useUserMutations() {
       about?: string;
       avatar?: string;
       x?: string;
+      whatsapp?: string;
+      instagram?: string;
+      twitter?: string;
+      facebook?: string;
+      snapchat?: string;
+      tiktok?: string;
       youtube?: string;
       linkedin?: string;
       website?: string;
-      location?: string;
+      country?: string;
+      region?: string;
+      post_code?: string;
+      city?: string;
+      street?: string;
+      house_number?: string;
     }
   ) => {
     setIsLoading(true);
@@ -62,7 +73,8 @@ export function useUserMutations() {
         avatar: fileId,
       });
 
-      await createTimelineEvent({ data: {
+      await createTimelineEvent({
+        data: {
           eventType: 'image_uploaded',
           entityType: 'user',
           entityId: userId,
@@ -71,7 +83,8 @@ export function useUserMutations() {
           description: 'User uploaded a new profile image',
           contentType: 'image',
           status: {},
-        } });
+        },
+      });
       return { success: true };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update avatar';
@@ -94,15 +107,29 @@ export function useUserMutations() {
       bio?: string;
       about?: string;
       avatar?: string;
-      x?: string;
+      whatsapp?: string;
+      instagram?: string;
+      twitter?: string;
+      facebook?: string;
+      snapchat?: string;
+      tiktok?: string;
       youtube?: string;
       linkedin?: string;
       website?: string;
-      location?: string;
+      country?: string;
+      region?: string;
+      post_code?: string;
+      city?: string;
+      street?: string;
+      house_number?: string;
       visibility?: string;
       hashtags?: string[];
-      existingJunctions?: Array<{ id: string; hashtag_id: string; hashtag?: { id: string; tag: string } | undefined }>;
-      allHashtags?: Array<{ id: string; tag: string }>;
+      existingJunctions?: {
+        id: string;
+        hashtag_id: string;
+        hashtag?: { id: string; tag: string } | undefined;
+      }[];
+      allHashtags?: { id: string; tag: string }[];
     }
   ) => {
     setIsLoading(true);
@@ -115,11 +142,22 @@ export function useUserMutations() {
         bio: profileData.bio,
         about: profileData.about,
         avatar: profileData.avatar,
-        x: profileData.x,
+        x: profileData.twitter,
+        whatsapp: profileData.whatsapp,
+        instagram: profileData.instagram,
+        twitter: profileData.twitter,
+        facebook: profileData.facebook,
+        snapchat: profileData.snapchat,
+        tiktok: profileData.tiktok,
         youtube: profileData.youtube,
         linkedin: profileData.linkedin,
         website: profileData.website,
-        location: profileData.location,
+        country: profileData.country,
+        region: profileData.region,
+        post_code: profileData.post_code,
+        city: profileData.city,
+        street: profileData.street,
+        house_number: profileData.house_number,
         visibility: profileData.visibility,
       });
 
@@ -135,14 +173,18 @@ export function useUserMutations() {
       }
 
       // Add timeline event for profile update
-      await createTimelineEvent({ data: {
+      await createTimelineEvent({
+        data: {
           eventType: 'updated',
           entityType: 'user',
           entityId: userId,
           actorId: userId,
-          title: profileData.first_name ? `${profileData.first_name}${profileData.last_name ? ' ' + profileData.last_name : ''} updated their profile` : 'Profile updated',
+          title: profileData.first_name
+            ? `${profileData.first_name}${profileData.last_name ? ' ' + profileData.last_name : ''} updated their profile`
+            : 'Profile updated',
           description: profileData.about?.substring(0, 100) || undefined,
-        } });
+        },
+      });
 
       return { success: true };
     } catch (err) {

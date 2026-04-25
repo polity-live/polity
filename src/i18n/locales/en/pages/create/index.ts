@@ -83,9 +83,11 @@ export const createPageTranslations = {
     inviteMembersOptional: 'Invite Members (Optional)',
     invited: 'invited',
     csvGuideTitle: 'Invite with CSV',
-    csvGuideDescription: 'Upload a CSV with first name and last name columns to match existing users and add them to the invitation list.',
+    csvGuideDescription:
+      'Upload a CSV with first name and last name columns to match existing users and add them to the invitation list.',
     csvGuideTrigger: 'Show CSV format and example',
-    csvGuideFootnote: 'Accepted headers: first name / last name. Matching is done against existing user profiles.',
+    csvGuideFootnote:
+      'Accepted headers: first name / last name. Matching is done against existing user profiles.',
     csvColumnFirstName: 'First name',
     csvColumnLastName: 'Last name',
     csvMissingColumns: 'CSV must include "first name" and "last name" columns',
@@ -94,7 +96,8 @@ export const createPageTranslations = {
     csvMatchedUsers_other: 'Matched {{count}} users',
     csvReviewSummary: 'CSV processed. Review the summary below.',
     csvSummaryTitle: 'CSV import summary',
-    csvSummaryDescription: 'Matched users were added to the invite list. Ambiguous rows were skipped to avoid inviting the wrong person.',
+    csvSummaryDescription:
+      'Matched users were added to the invite list. Ambiguous rows were skipped to avoid inviting the wrong person.',
     csvFoundCount: '{{count}} found',
     csvFoundCount_other: '{{count}} found',
     csvNotFoundCount: '{{count}} not found',
@@ -139,7 +142,8 @@ export const createPageTranslations = {
     eventStartDate: 'Start Date',
     eventStartTime: 'Start Time',
     eventTypeGeneralAssembly: 'Event Type: General Assembly',
-    eventTypeDescription: 'All invited members will be invited to this event. You will be the event organizer.',
+    eventTypeDescription:
+      'All invited members will be invited to this event. You will be the event organizer.',
     untitledGroup: 'Untitled Group',
     visibilityLabel: 'Visibility',
     hashtagsLabel: 'Hashtags',
@@ -244,7 +248,8 @@ export const createPageTranslations = {
     delegates: 'delegates',
     members: 'members',
     noSubgroups: 'No Subgroups Found',
-    noSubgroupsDesc: 'The selected group has no subgroups. Delegate conferences require subgroups for delegate allocation.',
+    noSubgroupsDesc:
+      'The selected group has no subgroups. Delegate conferences require subgroups for delegate allocation.',
     location: 'Location',
     locationTypes: {
       online: 'Online',
@@ -261,6 +266,8 @@ export const createPageTranslations = {
     accessCodeOptional: 'Access Code (optional)',
     venueName: 'Venue Name',
     venueNamePlaceholder: 'e.g., City Hall, Community Center',
+    country: 'Country',
+    region: 'Region',
     street: 'Street',
     houseNumber: 'House Number',
     postalCode: 'Postal Code',
@@ -381,7 +388,7 @@ export const createPageTranslations = {
     },
     tips: {
       election: 'The election this candidate is running in',
-      name: 'The candidate\'s full name as it should appear on the ballot',
+      name: "The candidate's full name as it should appear on the ballot",
       description: 'Background, qualifications, and platform of the candidate',
       order: 'The display order on the ballot',
       image: 'A photo or image of the candidate',

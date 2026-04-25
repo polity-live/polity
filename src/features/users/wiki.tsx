@@ -19,6 +19,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useMemo } from 'react';
 import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
+import { formatLocation } from '@/features/shared/logic/locationHelpers';
 
 interface UserWikiProps {
   userId?: string;
@@ -57,27 +58,28 @@ export function UserWiki(_props: UserWikiProps) {
   // Derived values from zero row
   const fullName = useMemo(
     () => [dbUser?.first_name, dbUser?.last_name].filter(Boolean).join(' '),
-    [dbUser?.first_name, dbUser?.last_name],
+    [dbUser?.first_name, dbUser?.last_name]
   );
 
   const hashtags = useMemo(
     () =>
       (dbUser?.user_hashtags ?? [])
-        .map((j) => j.hashtag)
+        .map(j => j.hashtag)
         .filter((h): h is NonNullable<typeof h> => !!h?.id && !!h?.tag),
-    [dbUser?.user_hashtags],
+    [dbUser?.user_hashtags]
   );
 
   const collabCount = useMemo(
     () =>
       (dbUser?.amendment_collaborations ?? []).filter(
-        (c) => c.status === 'admin' || c.status === 'collaborator',
+        c => c.status === 'admin' || c.status === 'collaborator'
       ).length,
-    [dbUser?.amendment_collaborations],
+    [dbUser?.amendment_collaborations]
   );
 
   // Visibility access check: own profile always accessible
   const canAccess = checkEntityAccess(dbUser?.visibility, !!authUser, isOwnUser);
+  const userLocation = formatLocation(dbUser);
 
   if (dbUser && !canAccess) {
     return <AccessDenied />;
@@ -88,7 +90,7 @@ export function UserWiki(_props: UserWikiProps) {
       {isLoading && (
         <div>
           <div className="flex items-center justify-center py-12">
-            <div className="text-lg text-muted-foreground">Loading user...</div>
+            <div className="text-muted-foreground text-lg">Loading user...</div>
           </div>
         </div>
       )}
@@ -135,7 +137,10 @@ export function UserWiki(_props: UserWikiProps) {
           <StatsBar
             stats={[
               { value: subscriberCount, labelKey: 'components.labels.subscribers' },
-              { value: dbUser.group_count ?? dbUser.group_memberships?.length ?? 0, labelKey: 'components.labels.groups' },
+              {
+                value: dbUser.group_count ?? dbUser.group_memberships?.length ?? 0,
+                labelKey: 'components.labels.groups',
+              },
               {
                 value: dbUser.amendment_count ?? collabCount,
                 labelKey: 'components.labels.amendments',
@@ -156,8 +161,9 @@ export function UserWiki(_props: UserWikiProps) {
               <Button
                 variant="outline"
                 onClick={() =>
-                  navigate({ to:
-                    `/messages?userId=${encodeURIComponent(dbUser.id || '')}&name=${encodeURIComponent(fullName || '')}` })
+                  navigate({
+                    to: `/messages?userId=${encodeURIComponent(dbUser.id || '')}&name=${encodeURIComponent(fullName || '')}`,
+                  })
                 }
               >
                 <Mail className="h-4 w-4" />
@@ -178,15 +184,40 @@ export function UserWiki(_props: UserWikiProps) {
             </div>
           )}
 
-          <SocialBar socialMedia={{ twitter: dbUser.x ?? undefined }} />
+          <SocialBar
+            socialMedia={{
+              website: dbUser.website ?? undefined,
+              youtube: dbUser.youtube ?? undefined,
+              linkedin: dbUser.linkedin ?? undefined,
+              whatsapp: dbUser.whatsapp ?? undefined,
+              instagram: dbUser.instagram ?? undefined,
+              twitter: dbUser.twitter ?? dbUser.x ?? undefined,
+              facebook: dbUser.facebook ?? undefined,
+              snapchat: dbUser.snapchat ?? undefined,
+              tiktok: dbUser.tiktok ?? undefined,
+            }}
+          />
 
           <InfoTabs
             about={dbUser.about ?? undefined}
             contact={{
               email: dbUser.email || '',
-              twitter: dbUser.x || '',
               website: dbUser.website || '',
-              location: dbUser.location || '',
+              youtube: dbUser.youtube || '',
+              linkedin: dbUser.linkedin || '',
+              whatsapp: dbUser.whatsapp || '',
+              instagram: dbUser.instagram || '',
+              twitter: dbUser.twitter || dbUser.x || '',
+              facebook: dbUser.facebook || '',
+              snapchat: dbUser.snapchat || '',
+              tiktok: dbUser.tiktok || '',
+              country: dbUser.country || '',
+              region: dbUser.region || '',
+              post_code: dbUser.post_code || '',
+              city: dbUser.city || '',
+              street: dbUser.street || '',
+              house_number: dbUser.house_number || '',
+              location: userLocation || undefined,
             }}
             className="mb-12"
           />

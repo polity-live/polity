@@ -1,4 +1,4 @@
-import { table, string, number, boolean } from '@rocicorp/zero'
+import { table, string, number, boolean } from '@rocicorp/zero';
 
 export const user = table('user')
   .columns({
@@ -14,7 +14,18 @@ export const user = table('user')
     youtube: string().optional(),
     linkedin: string().optional(),
     website: string().optional(),
-    location: string().optional(),
+    whatsapp: string().optional(),
+    instagram: string().optional(),
+    twitter: string().optional(),
+    facebook: string().optional(),
+    snapchat: string().optional(),
+    tiktok: string().optional(),
+    country: string().optional(),
+    region: string().optional(),
+    post_code: string().optional(),
+    city: string().optional(),
+    street: string().optional(),
+    house_number: string().optional(),
     visibility: string(),
     subscriber_count: number(),
     amendment_count: number(),
@@ -24,7 +35,7 @@ export const user = table('user')
     created_at: number(),
     updated_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const file = table('file')
   .columns({
@@ -33,4 +44,4 @@ export const file = table('file')
     url: string().optional(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');

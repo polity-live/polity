@@ -18,6 +18,7 @@ import type { GroupFormData, GroupType } from '../hooks/useGroupUpdate';
 import { useState, useRef } from 'react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { CreateReviewCard, SummaryField } from '@/features/shared/ui/ui/create-review-card';
+import { formatLocation } from '@/features/shared/logic/locationHelpers';
 
 interface GroupEditFormProps {
   groupId: string;
@@ -73,11 +74,12 @@ export function GroupEditForm({
             hashtags={formData.hashtags}
             gradient="from-sky-100 to-indigo-100 dark:from-sky-900/40 dark:to-indigo-900/50"
           >
-            {formData.location && (
-              <SummaryField label={t('pages.create.common.group')} value={formData.location} />
+            {formatLocation(formData) && (
+              <SummaryField
+                label={t('features.groups.location.title')}
+                value={formatLocation(formData)}
+              />
             )}
-            {formData.country && <SummaryField label="Country" value={formData.country} />}
-            {formData.region && <SummaryField label="Region" value={formData.region} />}
           </CreateReviewCard>
           <div className="mt-6 flex gap-3">
             <Button variant="outline" onClick={() => setShowReview(false)}>

@@ -5,6 +5,7 @@ import { addYears, generateRecurringInstances } from '../logic/recurringEventHel
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 import type { CalendarEvent } from '../types/calendar.types';
 import { getInstanceBookingCount, isBookedByUser } from '@/zero/events/useMeetingState';
+import { formatNamedLocation } from '@/features/shared/logic/locationHelpers';
 
 export const useCalendarData = () => {
   const { user } = useAuth();
@@ -53,7 +54,7 @@ export const useCalendarData = () => {
             title: instance.title || '',
             start_date: instance.start_date ?? 0,
             end_date: instance.end_date ?? 0,
-            location: instance.location_name || instance.location_address || undefined,
+            location: formatNamedLocation(instance.location_name, instance) || undefined,
             location_url: instance.location_url ?? event.location_url ?? null,
             visibility: instance.visibility ?? 'public',
             image_url: instance.image_url,

@@ -40,10 +40,11 @@ export function useSearchPage() {
   const { data, isLoading } = useSearchData();
 
   const agendaItemsByEventId = useMemo(
-    () => buildAgendaItemsByEventId(
-      (data?.agendaItems ?? []) as Parameters<typeof buildAgendaItemsByEventId>[0]
-    ),
-    [data?.agendaItems],
+    () =>
+      buildAgendaItemsByEventId(
+        (data?.agendaItems ?? []) as Parameters<typeof buildAgendaItemsByEventId>[0]
+      ),
+    [data?.agendaItems]
   );
 
   const { mosaicResults } = useSearchFilters(data, {
@@ -55,19 +56,19 @@ export function useSearchPage() {
   const toggleContentType = useCallback(
     (type: ContentType) => {
       setContentTypes(prev =>
-        prev.includes(type) ? prev.filter(item => item !== type) : [...prev, type],
+        prev.includes(type) ? prev.filter(item => item !== type) : [...prev, type]
       );
     },
-    [setContentTypes],
+    [setContentTypes]
   );
 
   const toggleTopic = useCallback(
     (topic: string) => {
       setTopics(prev =>
-        prev.includes(topic) ? prev.filter(item => item !== topic) : [...prev, topic],
+        prev.includes(topic) ? prev.filter(item => item !== topic) : [...prev, topic]
       );
     },
-    [setTopics],
+    [setTopics]
   );
 
   const resetFilters = useCallback(() => {
@@ -80,26 +81,40 @@ export function useSearchPage() {
 
   const contentItems = useMemo(
     () => mapMosaicToContentItems(mosaicResults, agendaItemsByEventId),
-    [mosaicResults, agendaItemsByEventId],
+    [mosaicResults, agendaItemsByEventId]
   );
 
   const filteredItems = useMemo(
-    () => filterAndSortContentItems(contentItems, { contentTypes, dateRange, topics, engagement, sortBy }),
-    [contentItems, contentTypes, dateRange, topics, engagement, sortBy],
+    () =>
+      filterAndSortContentItems(contentItems, {
+        contentTypes,
+        dateRange,
+        topics,
+        engagement,
+        sortBy,
+      }),
+    [contentItems, contentTypes, dateRange, topics, engagement, sortBy]
   );
 
-  const availableTopics = useMemo(
-    () => collectAvailableTopics(contentItems),
-    [contentItems],
-  );
+  const availableTopics = useMemo(() => collectAvailableTopics(contentItems), [contentItems]);
 
   const hasActiveFiltersMemo = useMemo(
-    () => checkActiveFilters(contentTypes, ALL_CONTENT_TYPES.length, dateRange, topics, engagement, searchQuery),
-    [contentTypes, dateRange, topics, engagement, searchQuery],
+    () =>
+      checkActiveFilters(
+        contentTypes,
+        ALL_CONTENT_TYPES.length,
+        dateRange,
+        topics,
+        engagement,
+        searchQuery
+      ),
+    [contentTypes, dateRange, topics, engagement, searchQuery]
   );
 
   const buildCardProps = useCallback(
-    (item: SearchContentItem, t: (key: string, paramsOrFallback?: string | Record<string, string | number | undefined | null>, fallback?: string) => string): { cardType: CardType | null; cardProps: Record<string, unknown> | null } => {
+    (
+      item: SearchContentItem
+    ): { cardType: CardType | null; cardProps: Record<string, unknown> | null } => {
       let cardType: CardType | null = item.type;
       let cardProps: Record<string, unknown> | null = null;
 
@@ -295,41 +310,13 @@ export function useSearchPage() {
             },
           };
           break;
-        case 'action':
-          cardProps = {
-            action: {
-              id: item.id,
-              type: 'user_joined_group' as const,
-              actors: [
-                {
-                  id: item.authorId || item.id,
-                  name:
-                    item.authorName ||
-                    t('common.labels.unspecifiedUser', { defaultValue: 'not specified' }),
-                  avatarUrl: item.authorAvatar,
-                },
-              ],
-              sourceEntity: item.authorId
-                ? {
-                    id: item.authorId,
-                    type: 'user' as const,
-                    name:
-                      item.authorName ||
-                      t('common.labels.unspecifiedUser', { defaultValue: 'not specified' }),
-                    url: `/user/${item.authorId}`,
-                  }
-                : undefined,
-              timestamp: item.createdAt,
-            },
-          };
-          break;
         default:
           cardType = null;
       }
 
       return { cardType, cardProps };
     },
-    [],
+    []
   );
 
   return {

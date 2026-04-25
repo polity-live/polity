@@ -13,6 +13,8 @@ interface LocationData {
   meetingCode: string;
   // Physical fields
   locationName: string;
+  country: string;
+  region: string;
   street: string;
   houseNumber: string;
   postalCode: string;
@@ -88,6 +90,16 @@ export function LocationTypeInput({ value, onChange }: LocationTypeInputProps) {
               value={value.locationName}
               onChange={e => update({ locationName: e.target.value })}
             />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label>{t('pages.create.event.country')}</Label>
+              <Input value={value.country} onChange={e => update({ country: e.target.value })} />
+            </div>
+            <div>
+              <Label>{t('pages.create.event.region')}</Label>
+              <Input value={value.region} onChange={e => update({ region: e.target.value })} />
+            </div>
           </div>
           <div className="grid grid-cols-3 gap-2">
             <div className="col-span-2">

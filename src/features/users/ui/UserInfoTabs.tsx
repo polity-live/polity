@@ -10,7 +10,13 @@ interface UserInfoTabsProps {
     email: string;
     twitter: string;
     website: string;
-    location: string;
+    location?: string;
+    country?: string;
+    region?: string;
+    post_code?: string;
+    city?: string;
+    street?: string;
+    house_number?: string;
   };
 }
 
