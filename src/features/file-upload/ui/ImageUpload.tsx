@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useId, useState, useRef } from 'react';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { Card, CardContent } from '@/features/shared/ui/ui/card.tsx';
+import { Input } from '@/features/shared/ui/ui/input.tsx';
 import { Upload, X, Loader2 } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils.ts';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
@@ -62,6 +63,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   description = 'Upload a user image or provide a URL',
   className,
 }) => {
+  const urlInputId = useId();
   const { t } = useTranslation();
   const [isUploading, setIsUploading] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
@@ -242,8 +244,10 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
 
           <div
             className={cn(
-              'rounded-lg border border-dashed p-4 transition-colors',
-              isDragActive ? 'border-primary bg-primary/5' : 'border-border bg-muted/20',
+              'rounded-2xl border border-dashed px-4 py-6 transition-all sm:px-6',
+              isDragActive
+                ? 'border-primary bg-primary/5 shadow-primary/10 shadow-sm'
+                : 'border-border bg-muted/20',
               isBusy && 'pointer-events-none opacity-70'
             )}
             data-testid="image-upload-dropzone"
@@ -260,12 +264,25 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
               data-testid="image-upload-input"
               onChange={handleFileSelect}
             />
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="mx-auto flex max-w-md flex-col items-center gap-4 text-center">
+              <div className="bg-background/80 flex h-12 w-12 items-center justify-center rounded-full border shadow-sm">
+                <Upload className="text-primary h-5 w-5" />
+              </div>
+              <div className="space-y-1 text-sm">
+                <p className="text-foreground font-medium">
+                  {isDragActive
+                    ? t('common.actions.dropImageHere', 'Drop your image here')
+                    : t('common.actions.dragImageHere', 'Drag an image or GIF here')}
+                </p>
+                <p className="text-muted-foreground">
+                  {t('common.actions.orClickToBrowse', 'or click the button to browse')}
+                </p>
+              </div>
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => fileInputRef.current?.click()}
-                className="sm:flex-none"
+                className="mx-auto min-w-44"
                 disabled={isBusy}
               >
                 {isUploading ? (
@@ -280,28 +297,28 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
                   </>
                 )}
               </Button>
-              <div className="text-muted-foreground text-sm">
-                <p className="text-foreground font-medium">
-                  {isDragActive
-                    ? t('common.actions.dropImageHere', 'Drop your image here')
-                    : t('common.actions.dragImageHere', 'Drag an image or GIF here')}
-                </p>
-                <p>{t('common.actions.orClickToBrowse', 'or click the button to browse')}</p>
+              <div className="text-muted-foreground flex w-full items-center gap-3 text-[11px] font-medium tracking-[0.24em] uppercase">
+                <span className="bg-border h-px flex-1" />
+                <span>{t('common.labels.orProvideUrl')}</span>
+                <span className="bg-border h-px flex-1" />
+              </div>
+              <div className="w-full space-y-2 text-left">
+                <label className="sr-only" htmlFor={urlInputId}>
+                  {t('common.labels.orProvideUrl')}
+                </label>
+                <Input
+                  id={urlInputId}
+                  type="url"
+                  value={currentImage || ''}
+                  onChange={e => onImageChange(e.target.value)}
+                  placeholder="https://example.com/image.jpg"
+                  data-testid="image-upload-url-input"
+                  aria-label={t('common.labels.orProvideUrl')}
+                  disabled={isBusy}
+                  className="bg-background/90 text-center shadow-sm sm:text-left"
+                />
               </div>
             </div>
-          </div>
-
-          {/* URL Input */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">{t('common.labels.orProvideUrl')}</label>
-            <input
-              type="url"
-              value={currentImage || ''}
-              onChange={e => onImageChange(e.target.value)}
-              placeholder="https://example.com/image.jpg"
-              data-testid="image-upload-url-input"
-              className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-            />
           </div>
         </div>
       </CardContent>
