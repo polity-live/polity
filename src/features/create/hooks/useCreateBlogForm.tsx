@@ -1,59 +1,59 @@
-import { useState, useMemo } from 'react'
-import { useNavigate } from '@tanstack/react-router'
-import { useAuth } from '@/providers/auth-provider'
-import { useBlogActions } from '@/zero/blogs/useBlogActions'
-import { useCommonState, useCommonActions } from '@/zero/common'
-import { useGroupState } from '@/zero/groups/useGroupState'
-import { useTranslation } from '@/features/shared/hooks/use-translation'
-import { toast } from 'sonner'
-import { Input } from '@/features/shared/ui/ui/input'
-import { Label } from '@/features/shared/ui/ui/label'
-import { VisibilityInput } from '../ui/inputs/VisibilityInput'
-import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor'
-import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx'
-import { CreateSummaryStep } from '../ui/CreateSummaryStep'
-import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent'
-import { TypeaheadSearch } from '@/features/shared/ui/typeahead'
-import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers'
-import type { CreateFormConfig } from '../types/create-form.types'
+import { useState, useMemo } from 'react';
+import { useNavigate } from '@tanstack/react-router';
+import { useAuth } from '@/providers/auth-provider';
+import { useBlogActions } from '@/zero/blogs/useBlogActions';
+import { useCommonState, useCommonActions } from '@/zero/common';
+import { useGroupState } from '@/zero/groups/useGroupState';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { toast } from 'sonner';
+import { Input } from '@/features/shared/ui/ui/input';
+import { Label } from '@/features/shared/ui/ui/label';
+import { VisibilityInput } from '../ui/inputs/VisibilityInput';
+import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
+import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
+import { CreateSummaryStep } from '../ui/CreateSummaryStep';
+import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
+import { TypeaheadSearch } from '@/features/shared/ui/typeahead';
+import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
+import type { CreateFormConfig } from '../types/create-form.types';
 
 export function useCreateBlogForm(): CreateFormConfig {
-  const { t } = useTranslation()
-  const navigate = useNavigate()
-  const { user } = useAuth()
-  const { createBlogFull } = useBlogActions()
-  const commonActions = useCommonActions()
-  const { allHashtags } = useCommonState({ loadAllHashtags: true })
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { createBlogFull } = useBlogActions();
+  const commonActions = useCommonActions();
+  const { allHashtags } = useCommonState({ loadAllHashtags: true });
   const { currentUserMembershipsWithGroups } = useGroupState({
     includeCurrentUserMembershipsWithGroups: true,
-  })
+  });
 
   const memberGroupIds = useMemo(
-    () => new Set(currentUserMembershipsWithGroups.map((m) => m.group_id)),
-    [currentUserMembershipsWithGroups],
-  )
+    () => new Set(currentUserMembershipsWithGroups.map(m => m.group_id)),
+    [currentUserMembershipsWithGroups]
+  );
 
-  const [blogId] = useState(() => crypto.randomUUID())
-  const [title, setTitle] = useState('')
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0])
-  const [visibility, setVisibility] = useState<'public' | 'authenticated' | 'private'>('public')
-  const [hashtags, setHashtags] = useState<string[]>([])
-  const [imageURL, setImageURL] = useState('')
-  const [groupId, setGroupId] = useState<string | null>(null)
-  const [groupName, setGroupName] = useState<string>('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [blogId] = useState(() => crypto.randomUUID());
+  const [title, setTitle] = useState('');
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [visibility, setVisibility] = useState<'public' | 'authenticated' | 'private'>('public');
+  const [hashtags, setHashtags] = useState<string[]>([]);
+  const [imageURL, setImageURL] = useState('');
+  const [groupId, setGroupId] = useState<string | null>(null);
+  const [groupName, setGroupName] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
-    if (!user?.id || !title.trim()) return
-    setIsSubmitting(true)
+    if (!user?.id || !title.trim()) return;
+    setIsSubmitting(true);
 
     try {
-      const ownerRoleId = crypto.randomUUID()
-      const writerRoleId = crypto.randomUUID()
-      const bloggerId = crypto.randomUUID()
-      const ownerManageBlogsId = crypto.randomUUID()
-      const ownerManageBloggersId = crypto.randomUUID()
-      const writerUpdateRightId = crypto.randomUUID()
+      const ownerRoleId = crypto.randomUUID();
+      const writerRoleId = crypto.randomUUID();
+      const bloggerId = crypto.randomUUID();
+      const ownerManageBlogsId = crypto.randomUUID();
+      const ownerManageBloggersId = crypto.randomUUID();
+      const writerUpdateRightId = crypto.randomUUID();
 
       await createBlogFull({
         blog: {
@@ -136,10 +136,10 @@ export function useCreateBlogForm(): CreateFormConfig {
           status: 'member',
           visibility,
         },
-      })
+      });
 
       if (hashtags.length > 0) {
-        await commonActions.syncEntityHashtags('blog', blogId, hashtags, [], allHashtags ?? [])
+        await commonActions.syncEntityHashtags('blog', blogId, hashtags, [], allHashtags ?? []);
       }
 
       if (visibility === 'public') {
@@ -152,20 +152,20 @@ export function useCreateBlogForm(): CreateFormConfig {
             title: `New blog post: ${title.trim()}`,
             description: 'A new blog post has been published',
           },
-        })
+        });
       }
 
-      toast.success(t('pages.create.success.created'))
+      toast.success(t('pages.create.success.created'));
       if (groupId) {
-        navigate({ to: '/group/$id/blog/$entryId', params: { id: groupId, entryId: blogId } })
+        navigate({ to: '/group/$id/blog/$entryId', params: { id: groupId, entryId: blogId } });
       } else {
-        navigate({ to: '/user/$id/blog/$entryId', params: { id: user.id, entryId: blogId } })
+        navigate({ to: '/user/$id/blog/$entryId', params: { id: user.id, entryId: blogId } });
       }
     } catch {
-      toast.error(t('pages.create.error.createFailed'))
-      setIsSubmitting(false)
+      toast.error(t('pages.create.error.createFailed'));
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const config = useMemo(
     (): CreateFormConfig => ({
@@ -181,24 +181,24 @@ export function useCreateBlogForm(): CreateFormConfig {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>
-                  {t('pages.create.blog.titleLabel')}{' '}
-                  <span className="text-destructive">*</span>
+                  {t('pages.create.blog.titleLabel')} <span className="text-destructive">*</span>
                 </Label>
                 <p className="text-muted-foreground text-xs">{t('pages.create.blog.tips.title')}</p>
                 <Input
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  onChange={e => setTitle(e.target.value)}
                   placeholder={t('pages.create.blog.titlePlaceholder')}
                 />
               </div>
               <div className="space-y-2">
                 <Label>{t('pages.create.blog.dateLabel')}</Label>
                 <p className="text-muted-foreground text-xs">{t('pages.create.blog.tips.date')}</p>
-                <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+                <Input type="date" value={date} onChange={e => setDate(e.target.value)} />
               </div>
               <ImageUpload
                 currentImage={imageURL}
                 onImageChange={(url: string) => setImageURL(url)}
+                cleanupOnRemove
                 entityType="blogs"
                 entityId={blogId}
                 label={t('pages.create.blog.coverImage')}
@@ -210,11 +210,11 @@ export function useCreateBlogForm(): CreateFormConfig {
                   entityTypes={['group']}
                   value={groupId ?? undefined}
                   onChange={(item: TypeaheadItem | null) => {
-                    setGroupId(item?.id ?? null)
-                    setGroupName(item?.label ?? '')
+                    setGroupId(item?.id ?? null);
+                    setGroupName(item?.label ?? '');
                   }}
                   placeholder={t('pages.create.blog.groupPlaceholder', 'Search groups...')}
-                  filterFn={(item) => memberGroupIds.has(item.id)}
+                  filterFn={item => memberGroupIds.has(item.id)}
                 />
               </div>
             </div>
@@ -250,15 +250,34 @@ export function useCreateBlogForm(): CreateFormConfig {
                   label: t('pages.create.common.visibility'),
                   value: visibility,
                 },
-                ...(groupName ? [{ label: t('pages.create.blog.attachTo', 'Attach to group'), value: groupName }] : []),
+                ...(groupName
+                  ? [
+                      {
+                        label: t('pages.create.blog.attachTo', 'Attach to group'),
+                        value: groupName,
+                      },
+                    ]
+                  : []),
               ]}
             />
           ),
         },
       ],
     }),
-    [title, date, visibility, hashtags, imageURL, isSubmitting, blogId, groupId, groupName, t, memberGroupIds],
-  )
+    [
+      title,
+      date,
+      visibility,
+      hashtags,
+      imageURL,
+      isSubmitting,
+      blogId,
+      groupId,
+      groupName,
+      t,
+      memberGroupIds,
+    ]
+  );
 
-  return config
+  return config;
 }

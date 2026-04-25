@@ -6,7 +6,13 @@
  */
 
 import { useNavigate } from '@tanstack/react-router';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
@@ -45,6 +51,7 @@ export function EventEdit({ eventId, mode = 'edit' }: EventEditProps) {
     formData,
     setFormData,
     updateField,
+    removeImage,
     handleSubmit,
     isSubmitting,
     event,
@@ -56,7 +63,7 @@ export function EventEdit({ eventId, mode = 'edit' }: EventEditProps) {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="text-primary h-8 w-8 animate-spin" />
         <p className="text-muted-foreground">{t('features.events.editPage.loading')}</p>
       </div>
     );
@@ -107,16 +114,40 @@ export function EventEdit({ eventId, mode = 'edit' }: EventEditProps) {
         <div className="max-w-2xl">
           <CreateReviewCard
             badge={t('pages.create.event.reviewBadge')}
-            secondaryBadge={formData.visibility === 'public' ? t('pages.create.common.public') : t('pages.create.common.private')}
+            secondaryBadge={
+              formData.visibility === 'public'
+                ? t('pages.create.common.public')
+                : t('pages.create.common.private')
+            }
             title={formData.title || 'Untitled Event'}
             subtitle={formData.description || undefined}
             hashtags={formData.tags}
             gradient="from-blue-100 to-cyan-100 dark:from-blue-900/40 dark:to-cyan-900/50"
           >
-            {formData.startDate && <SummaryField label={t('features.events.editPage.dateTime.startDate')} value={formData.startDate} />}
-            {formData.endDate && <SummaryField label={t('features.events.editPage.dateTime.endDate')} value={formData.endDate} />}
-            {formData.location && <SummaryField label={t('features.events.editPage.locationCapacity.location')} value={formData.location} />}
-            {formData.capacity && <SummaryField label={t('features.events.editPage.locationCapacity.capacity')} value={formData.capacity} />}
+            {formData.startDate && (
+              <SummaryField
+                label={t('features.events.editPage.dateTime.startDate')}
+                value={formData.startDate}
+              />
+            )}
+            {formData.endDate && (
+              <SummaryField
+                label={t('features.events.editPage.dateTime.endDate')}
+                value={formData.endDate}
+              />
+            )}
+            {formData.location && (
+              <SummaryField
+                label={t('features.events.editPage.locationCapacity.location')}
+                value={formData.location}
+              />
+            )}
+            {formData.capacity && (
+              <SummaryField
+                label={t('features.events.editPage.locationCapacity.capacity')}
+                value={formData.capacity}
+              />
+            )}
           </CreateReviewCard>
           <div className="mt-6 flex gap-3">
             <Button variant="outline" onClick={() => setShowReview(false)}>
@@ -147,7 +178,9 @@ export function EventEdit({ eventId, mode = 'edit' }: EventEditProps) {
           {isCreating ? t('pages.create.event.title') : t('features.events.editPage.title')}
         </h1>
         <p className="text-muted-foreground">
-          {isCreating ? t('pages.create.event.description') : t('features.events.editPage.subtitle')}
+          {isCreating
+            ? t('pages.create.event.description')
+            : t('features.events.editPage.subtitle')}
         </p>
       </div>
 
@@ -156,6 +189,8 @@ export function EventEdit({ eventId, mode = 'edit' }: EventEditProps) {
         <ImageUpload
           currentImage={formData.imageURL}
           onImageChange={(url: string) => updateField('imageURL', url)}
+          onImageRemove={isCreating ? undefined : removeImage}
+          cleanupOnRemove
           entityType="events"
           entityId={eventId}
           label={t('features.events.editPage.image.label')}
@@ -189,13 +224,18 @@ export function EventEdit({ eventId, mode = 'edit' }: EventEditProps) {
                 rows={6}
               />
             </div>
-            <VisibilityInput value={formData.visibility} onChange={v => updateField('visibility', v)} />
+            <VisibilityInput
+              value={formData.visibility}
+              onChange={v => updateField('visibility', v)}
+            />
             {!isCreating && event?.event_type && (
               <div className="space-y-2">
                 <Label>{t('pages.create.event.eventType')}</Label>
                 <div>
                   <Badge variant="outline">
-                    {t(`pages.create.event.eventTypes.${event.event_type === 'delegate_assembly' ? 'delegateAssembly' : event.event_type === 'general_assembly' ? 'generalAssembly' : event.event_type === 'on_invite' ? 'onInvite' : 'open'}`)}
+                    {t(
+                      `pages.create.event.eventTypes.${event.event_type === 'delegate_assembly' ? 'delegateAssembly' : event.event_type === 'general_assembly' ? 'generalAssembly' : event.event_type === 'on_invite' ? 'onInvite' : 'open'}`
+                    )}
                   </Badge>
                 </div>
               </div>
@@ -319,7 +359,7 @@ export function EventEdit({ eventId, mode = 'edit' }: EventEditProps) {
           <CardContent>
             <HashtagEditor
               value={formData.tags}
-              onChange={(tags) => setFormData({ ...formData, tags })}
+              onChange={tags => setFormData({ ...formData, tags })}
               placeholder={t('features.events.editPage.tags.placeholder')}
             />
           </CardContent>
@@ -330,7 +370,10 @@ export function EventEdit({ eventId, mode = 'edit' }: EventEditProps) {
           <CardHeader>
             <CardTitle>{t('features.events.deadlines.title', 'Deadlines')}</CardTitle>
             <CardDescription>
-              {t('features.events.deadlines.settingsDescription', 'Set deadlines for registration, amendments, and candidacy.')}
+              {t(
+                'features.events.deadlines.settingsDescription',
+                'Set deadlines for registration, amendments, and candidacy.'
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -398,10 +441,14 @@ export function EventEdit({ eventId, mode = 'edit' }: EventEditProps) {
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {isCreating ? t('pages.create.common.creating') : t('features.events.editPage.saving')}
+                {isCreating
+                  ? t('pages.create.common.creating')
+                  : t('features.events.editPage.saving')}
               </>
+            ) : isCreating ? (
+              t('pages.create.next')
             ) : (
-              isCreating ? t('pages.create.next') : t('features.events.editPage.saveChanges')
+              t('features.events.editPage.saveChanges')
             )}
           </Button>
         </div>

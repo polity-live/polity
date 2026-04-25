@@ -17,9 +17,37 @@ interface ImageUploadProps {
   entityType?: string;
   entityId?: string;
   onFileUpload?: (file: File) => Promise<string>;
+  onImageRemove?: (imageUrl: string) => Promise<void> | void;
+  cleanupOnRemove?: boolean;
   label?: string;
   description?: string;
   className?: string;
+}
+
+function getStorageObjectFromPublicUrl(imageUrl: string): { bucket: string; path: string } | null {
+  try {
+    const url = new URL(imageUrl);
+    const publicObjectPrefix = '/storage/v1/object/public/';
+    const publicObjectIndex = url.pathname.indexOf(publicObjectPrefix);
+
+    if (publicObjectIndex === -1) {
+      return null;
+    }
+
+    const publicObjectPath = url.pathname.slice(publicObjectIndex + publicObjectPrefix.length);
+    const [bucket, ...pathSegments] = publicObjectPath.split('/').filter(Boolean);
+
+    if (!bucket || pathSegments.length === 0) {
+      return null;
+    }
+
+    return {
+      bucket: decodeURIComponent(bucket),
+      path: pathSegments.map(segment => decodeURIComponent(segment)).join('/'),
+    };
+  } catch {
+    return null;
+  }
 }
 
 export const ImageUpload: React.FC<ImageUploadProps> = ({
@@ -28,15 +56,19 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   entityType,
   entityId,
   onFileUpload,
+  onImageRemove,
+  cleanupOnRemove = false,
   label = 'User Image',
   description = 'Upload a user image or provide a URL',
   className,
 }) => {
   const { t } = useTranslation();
   const [isUploading, setIsUploading] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragCounterRef = useRef(0);
+  const isBusy = isUploading || isRemoving;
 
   const uploadFile = async (file: File) => {
     setIsUploading(true);
@@ -47,7 +79,9 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
         imageUrl = await onFileUpload(file);
       } else {
         if (!entityType || !entityId) {
-          throw new Error('Image uploads require entityType and entityId when no custom upload handler is provided.');
+          throw new Error(
+            'Image uploads require entityType and entityId when no custom upload handler is provided.'
+          );
         }
 
         const supabase = createClient();
@@ -129,10 +163,49 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     await uploadFile(file);
   };
 
-  const handleRemoveImage = () => {
+  const clearImageSelection = () => {
     onImageChange('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    if (!currentImage) {
+      clearImageSelection();
+      return;
+    }
+
+    if (!cleanupOnRemove && !onImageRemove) {
+      clearImageSelection();
+      return;
+    }
+
+    setIsRemoving(true);
+
+    try {
+      if (cleanupOnRemove) {
+        const storageObject = getStorageObjectFromPublicUrl(currentImage);
+
+        if (storageObject) {
+          const supabase = createClient();
+          const { error } = await supabase.storage
+            .from(storageObject.bucket)
+            .remove([storageObject.path]);
+
+          if (error) {
+            throw error;
+          }
+        }
+      }
+
+      await onImageRemove?.(currentImage);
+      clearImageSelection();
+    } catch (error) {
+      console.error('Image removal error:', error);
+      toast.error(t('common.actions.removeImageFailed', 'Failed to remove image'));
+    } finally {
+      setIsRemoving(false);
     }
   };
 
@@ -159,8 +232,8 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
                 variant="destructive"
                 size="icon"
                 className="absolute top-2 right-2"
-                onClick={handleRemoveImage}
-                disabled={isUploading}
+                onClick={() => void handleRemoveImage()}
+                disabled={isBusy}
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -171,7 +244,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
             className={cn(
               'rounded-lg border border-dashed p-4 transition-colors',
               isDragActive ? 'border-primary bg-primary/5' : 'border-border bg-muted/20',
-              isUploading && 'pointer-events-none opacity-70'
+              isBusy && 'pointer-events-none opacity-70'
             )}
             data-testid="image-upload-dropzone"
             onDragEnter={handleDragEnter}
@@ -193,7 +266,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
                 variant="outline"
                 onClick={() => fileInputRef.current?.click()}
                 className="sm:flex-none"
-                disabled={isUploading}
+                disabled={isBusy}
               >
                 {isUploading ? (
                   <>
@@ -207,8 +280,8 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
                   </>
                 )}
               </Button>
-              <div className="text-sm text-muted-foreground">
-                <p className="font-medium text-foreground">
+              <div className="text-muted-foreground text-sm">
+                <p className="text-foreground font-medium">
                   {isDragActive
                     ? t('common.actions.dropImageHere', 'Drop your image here')
                     : t('common.actions.dragImageHere', 'Drag an image or GIF here')}

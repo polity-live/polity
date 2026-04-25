@@ -6,7 +6,13 @@
  */
 
 import { useNavigate } from '@tanstack/react-router';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
@@ -31,6 +37,7 @@ export function BlogEdit({ blogId }: BlogEditProps) {
     formData,
     setFormData,
     updateField,
+    removeImage,
     handleSubmit,
     isSubmitting,
     blog,
@@ -41,7 +48,7 @@ export function BlogEdit({ blogId }: BlogEditProps) {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="text-primary h-8 w-8 animate-spin" />
         <p className="text-muted-foreground">{t('features.blogs.editPage.loading')}</p>
       </div>
     );
@@ -53,7 +60,9 @@ export function BlogEdit({ blogId }: BlogEditProps) {
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <p className="text-lg font-semibold">{t('features.blogs.editPage.notFound')}</p>
-          <p className="text-muted-foreground">{t('features.blogs.editPage.notFoundDescription')}</p>
+          <p className="text-muted-foreground">
+            {t('features.blogs.editPage.notFoundDescription')}
+          </p>
           <div className="mt-6">
             <Button onClick={() => navigate({ to: '/home' })} variant="default">
               {t('features.blogs.editPage.backToBlogs')}
@@ -77,6 +86,8 @@ export function BlogEdit({ blogId }: BlogEditProps) {
         <ImageUpload
           currentImage={formData.imageURL}
           onImageChange={(url: string) => updateField('imageURL', url)}
+          onImageRemove={removeImage}
+          cleanupOnRemove
           entityType="blogs"
           entityId={blogId}
           label={t('features.blogs.editPage.blogImage')}
@@ -110,7 +121,10 @@ export function BlogEdit({ blogId }: BlogEditProps) {
                 rows={6}
               />
             </div>
-            <VisibilityInput value={formData.visibility} onChange={v => updateField('visibility', v)} />
+            <VisibilityInput
+              value={formData.visibility}
+              onChange={v => updateField('visibility', v)}
+            />
           </CardContent>
         </Card>
 
@@ -123,7 +137,7 @@ export function BlogEdit({ blogId }: BlogEditProps) {
           <CardContent>
             <HashtagEditor
               value={formData.tags}
-              onChange={(tags) => setFormData({ ...formData, tags })}
+              onChange={tags => setFormData({ ...formData, tags })}
               placeholder={t('features.blogs.editPage.addTagPlaceholder')}
             />
           </CardContent>
@@ -136,9 +150,15 @@ export function BlogEdit({ blogId }: BlogEditProps) {
             variant="outline"
             onClick={() => {
               if (blog?.group_id) {
-                navigate({ to: '/group/$id/blog/$entryId', params: { id: blog.group_id, entryId: blogId } });
+                navigate({
+                  to: '/group/$id/blog/$entryId',
+                  params: { id: blog.group_id, entryId: blogId },
+                });
               } else {
-                navigate({ to: '/user/$id/blog/$entryId', params: { id: user?.id || '', entryId: blogId } });
+                navigate({
+                  to: '/user/$id/blog/$entryId',
+                  params: { id: user?.id || '', entryId: blogId },
+                });
               }
             }}
             disabled={isSubmitting}

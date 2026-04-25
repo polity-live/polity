@@ -58,7 +58,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
   const { event, isLoading: editLoading } = useEventData(isCreating ? undefined : eventId);
   const isLoading = isCreating ? false : editLoading;
   const { updateEvent } = useEventMutations(eventId);
-  const { createEvent } = useEventActions();
+  const { createEvent, updateEvent: updateEventAction } = useEventActions();
   const commonActions = useCommonActions();
   const { eventHashtags, allHashtags } = useCommonState({
     event_id: eventId,
@@ -106,9 +106,15 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
         imageURL: event.image_url || '',
         visibility: (event.visibility as Visibility) ?? 'public',
         tags: [],
-        registrationDeadline: event.registration_deadline ? new Date(event.registration_deadline).toISOString().slice(0, 16) : '',
-        amendmentDeadline: event.amendment_deadline ? new Date(event.amendment_deadline).toISOString().slice(0, 16) : '',
-        candidacyDeadline: event.candidacy_deadline ? new Date(event.candidacy_deadline).toISOString().slice(0, 16) : '',
+        registrationDeadline: event.registration_deadline
+          ? new Date(event.registration_deadline).toISOString().slice(0, 16)
+          : '',
+        amendmentDeadline: event.amendment_deadline
+          ? new Date(event.amendment_deadline).toISOString().slice(0, 16)
+          : '',
+        candidacyDeadline: event.candidacy_deadline
+          ? new Date(event.candidacy_deadline).toISOString().slice(0, 16)
+          : '',
       });
     }
   }, [event]);
@@ -116,6 +122,17 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
   // Update a single field
   const updateField = <K extends keyof EventFormData>(field: K, value: EventFormData[K]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const removeImage = () => {
+    if (isCreating) {
+      return;
+    }
+
+    updateEventAction({
+      id: eventId,
+      image_url: null,
+    });
   };
 
   // Submit handler
@@ -135,8 +152,12 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
           title: formData.title,
           description: formData.description || null,
           location_name: formData.location || null,
-          start_date: formData.startDate ? new Date(`${formData.startDate}T${formData.startTime || '00:00'}`).getTime() : null,
-          end_date: formData.endDate ? new Date(`${formData.endDate}T${formData.endTime || '00:00'}`).getTime() : null,
+          start_date: formData.startDate
+            ? new Date(`${formData.startDate}T${formData.startTime || '00:00'}`).getTime()
+            : null,
+          end_date: formData.endDate
+            ? new Date(`${formData.endDate}T${formData.endTime || '00:00'}`).getTime()
+            : null,
           visibility: formData.visibility,
           image_url: formData.imageURL || null,
           capacity: formData.capacity ? parseInt(formData.capacity, 10) : null,
@@ -156,15 +177,25 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
           title: formData.title,
           description: formData.description,
           location_name: formData.location,
-          start_date: formData.startDate ? new Date(`${formData.startDate}T${formData.startTime || '00:00'}`).getTime() : undefined,
-          end_date: formData.endDate ? new Date(`${formData.endDate}T${formData.endTime || '00:00'}`).getTime() : undefined,
+          start_date: formData.startDate
+            ? new Date(`${formData.startDate}T${formData.startTime || '00:00'}`).getTime()
+            : undefined,
+          end_date: formData.endDate
+            ? new Date(`${formData.endDate}T${formData.endTime || '00:00'}`).getTime()
+            : undefined,
           visibility: formData.visibility,
           image_url: formData.imageURL || null,
           capacity: formData.capacity ? parseInt(formData.capacity, 10) : null,
           group_id: formData.groupId || null,
-          registration_deadline: formData.registrationDeadline ? new Date(formData.registrationDeadline).getTime() : undefined,
-          amendment_deadline: formData.amendmentDeadline ? new Date(formData.amendmentDeadline).getTime() : undefined,
-          candidacy_deadline: formData.candidacyDeadline ? new Date(formData.candidacyDeadline).getTime() : undefined,
+          registration_deadline: formData.registrationDeadline
+            ? new Date(formData.registrationDeadline).getTime()
+            : undefined,
+          amendment_deadline: formData.amendmentDeadline
+            ? new Date(formData.amendmentDeadline).getTime()
+            : undefined,
+          candidacy_deadline: formData.candidacyDeadline
+            ? new Date(formData.candidacyDeadline).getTime()
+            : undefined,
         };
 
         await updateEvent(updateData);
@@ -191,6 +222,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
     formData,
     setFormData,
     updateField,
+    removeImage,
     handleSubmit,
     isSubmitting,
     event,

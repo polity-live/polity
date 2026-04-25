@@ -4,7 +4,6 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
 import { Textarea } from '@/features/shared/ui/ui/textarea';
-import { Switch } from '@/features/shared/ui/ui/switch';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/features/shared/ui/ui/tabs';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
@@ -64,7 +63,13 @@ export function useCreateEventForm(): CreateFormConfig {
   const [recurrenceEndDate, setRecurrenceEndDate] = useState('');
   const isRecurring = recurrencePattern !== 'none';
   const rruleString = useMemo(
-    () => buildRRule({ pattern: recurrencePattern, interval: recurrenceInterval, weekdays: recurrenceWeekdays, endDate: recurrenceEndDate || null }),
+    () =>
+      buildRRule({
+        pattern: recurrencePattern,
+        interval: recurrenceInterval,
+        weekdays: recurrenceWeekdays,
+        endDate: recurrenceEndDate || null,
+      }),
     [recurrencePattern, recurrenceInterval, recurrenceWeekdays, recurrenceEndDate]
   );
 
@@ -81,8 +86,8 @@ export function useCreateEventForm(): CreateFormConfig {
         title: title.trim(),
         description: description || null,
         location_type: locationType,
-        location_name: locationType === 'physical' ? (location || null) : null,
-        location_url: locationType === 'online' ? (onlineLink || null) : null,
+        location_name: locationType === 'physical' ? location || null : null,
+        location_url: locationType === 'online' ? onlineLink || null : null,
         start_date: startDate ? new Date(`${startDate}T${startTime || '00:00'}`).getTime() : null,
         end_date: endDate ? new Date(`${endDate}T${endTime || '00:00'}`).getTime() : null,
         visibility,
@@ -95,9 +100,15 @@ export function useCreateEventForm(): CreateFormConfig {
         recurrence_pattern: isRecurring ? recurrencePattern : null,
         recurrence_rule: rruleString ?? null,
         recurrence_interval: isRecurring ? recurrenceInterval : null,
-        recurrence_days: isRecurring && recurrencePattern === 'weekly' && recurrenceWeekdays.length > 0 ? recurrenceWeekdays : null,
-        recurrence_end_date: isRecurring && recurrenceEndDate ? new Date(recurrenceEndDate).getTime() : null,
-        delegates_nomination_deadline: delegatesNominationDeadline ? new Date(delegatesNominationDeadline).getTime() : null,
+        recurrence_days:
+          isRecurring && recurrencePattern === 'weekly' && recurrenceWeekdays.length > 0
+            ? recurrenceWeekdays
+            : null,
+        recurrence_end_date:
+          isRecurring && recurrenceEndDate ? new Date(recurrenceEndDate).getTime() : null,
+        delegates_nomination_deadline: delegatesNominationDeadline
+          ? new Date(delegatesNominationDeadline).getTime()
+          : null,
         amendment_deadline: amendmentDeadline ? new Date(amendmentDeadline).getTime() : null,
         has_delegates: eventType === 'delegate_assembly',
         ...(eventType === 'delegate_assembly'
@@ -135,7 +146,9 @@ export function useCreateEventForm(): CreateFormConfig {
                 <Label>
                   {t('pages.create.event.titleLabel')} <span className="text-destructive">*</span>
                 </Label>
-                <p className="text-muted-foreground text-xs">{t('pages.create.event.tips.title')}</p>
+                <p className="text-muted-foreground text-xs">
+                  {t('pages.create.event.tips.title')}
+                </p>
                 <Input
                   value={title}
                   onChange={e => setTitle(e.target.value)}
@@ -144,7 +157,9 @@ export function useCreateEventForm(): CreateFormConfig {
               </div>
               <div className="space-y-2">
                 <Label>{t('pages.create.event.descriptionLabel')}</Label>
-                <p className="text-muted-foreground text-xs">{t('pages.create.event.tips.description')}</p>
+                <p className="text-muted-foreground text-xs">
+                  {t('pages.create.event.tips.description')}
+                </p>
                 <Textarea
                   value={description}
                   onChange={e => setDescription(e.target.value)}
@@ -155,6 +170,7 @@ export function useCreateEventForm(): CreateFormConfig {
               <ImageUpload
                 currentImage={imageURL}
                 onImageChange={(url: string) => setImageURL(url)}
+                cleanupOnRemove
                 entityType="events"
                 entityId={eventId}
                 label={t('pages.create.event.imageLabel')}
@@ -172,11 +188,14 @@ export function useCreateEventForm(): CreateFormConfig {
         // 3. Associated Group
         {
           label: t('pages.create.event.associatedGroup'),
-          isValid: () => groupRequired ? !!groupId : true,
+          isValid: () => (groupRequired ? !!groupId : true),
           optional: !groupRequired,
           content: (
             <div className="space-y-2">
-              <Label>{t('pages.create.event.associatedGroupLabel')}{groupRequired && <span className="text-destructive"> *</span>}</Label>
+              <Label>
+                {t('pages.create.event.associatedGroupLabel')}
+                {groupRequired && <span className="text-destructive"> *</span>}
+              </Label>
               <p className="text-muted-foreground text-xs">{t('pages.create.event.tips.group')}</p>
               <TypeaheadSearch
                 entityTypes={['group']}
@@ -248,15 +267,24 @@ export function useCreateEventForm(): CreateFormConfig {
           optional: true,
           content: (
             <div className="space-y-4">
-              <Tabs value={locationType} onValueChange={(v) => setLocationType(v as 'physical' | 'online')}>
+              <Tabs
+                value={locationType}
+                onValueChange={v => setLocationType(v as 'physical' | 'online')}
+              >
                 <TabsList className="w-full">
-                  <TabsTrigger value="physical" className="flex-1">{t('pages.create.event.locationTypes.physical')}</TabsTrigger>
-                  <TabsTrigger value="online" className="flex-1">{t('pages.create.event.locationTypes.online')}</TabsTrigger>
+                  <TabsTrigger value="physical" className="flex-1">
+                    {t('pages.create.event.locationTypes.physical')}
+                  </TabsTrigger>
+                  <TabsTrigger value="online" className="flex-1">
+                    {t('pages.create.event.locationTypes.online')}
+                  </TabsTrigger>
                 </TabsList>
                 <TabsContent value="physical" className="space-y-4 pt-2">
                   <div className="space-y-2">
                     <Label>{t('pages.create.event.venueName')}</Label>
-                    <p className="text-muted-foreground text-xs">{t('pages.create.event.tips.venueName')}</p>
+                    <p className="text-muted-foreground text-xs">
+                      {t('pages.create.event.tips.venueName')}
+                    </p>
                     <Input
                       value={location}
                       onChange={e => setLocation(e.target.value)}
@@ -267,7 +295,9 @@ export function useCreateEventForm(): CreateFormConfig {
                 <TabsContent value="online" className="space-y-4 pt-2">
                   <div className="space-y-2">
                     <Label>{t('pages.create.event.meetingLink')}</Label>
-                    <p className="text-muted-foreground text-xs">{t('pages.create.event.tips.meetingLink')}</p>
+                    <p className="text-muted-foreground text-xs">
+                      {t('pages.create.event.tips.meetingLink')}
+                    </p>
                     <Input
                       value={onlineLink}
                       onChange={e => setOnlineLink(e.target.value)}
@@ -278,7 +308,9 @@ export function useCreateEventForm(): CreateFormConfig {
               </Tabs>
               <div className="space-y-2">
                 <Label>{t('pages.create.event.capacityLabel')}</Label>
-                <p className="text-muted-foreground text-xs">{t('pages.create.event.tips.capacity')}</p>
+                <p className="text-muted-foreground text-xs">
+                  {t('pages.create.event.tips.capacity')}
+                </p>
                 <Input
                   type="number"
                   value={capacity}
@@ -302,7 +334,9 @@ export function useCreateEventForm(): CreateFormConfig {
                     {eventType === 'delegate_assembly' && (
                       <div className="space-y-2">
                         <Label>{t('pages.create.event.delegateNominationDeadline')}</Label>
-                        <p className="text-muted-foreground text-xs">{t('pages.create.event.delegateNominationDeadlineDesc')}</p>
+                        <p className="text-muted-foreground text-xs">
+                          {t('pages.create.event.delegateNominationDeadlineDesc')}
+                        </p>
                         <Input
                           type="datetime-local"
                           value={delegatesNominationDeadline}
@@ -312,7 +346,9 @@ export function useCreateEventForm(): CreateFormConfig {
                     )}
                     <div className="space-y-2">
                       <Label>{t('pages.create.event.amendmentCutoffDeadline')}</Label>
-                      <p className="text-muted-foreground text-xs">{t('pages.create.event.amendmentCutoffDeadlineDesc')}</p>
+                      <p className="text-muted-foreground text-xs">
+                        {t('pages.create.event.amendmentCutoffDeadlineDesc')}
+                      </p>
                       <Input
                         type="datetime-local"
                         value={amendmentDeadline}
@@ -368,10 +404,28 @@ export function useCreateEventForm(): CreateFormConfig {
                     ]
                   : []),
                 ...(startDate
-                  ? [{ label: t('pages.create.event.startDate'), value: `${startDate}${startTime ? ` ${startTime}` : ''}` }]
+                  ? [
+                      {
+                        label: t('pages.create.event.startDate'),
+                        value: `${startDate}${startTime ? ` ${startTime}` : ''}`,
+                      },
+                    ]
                   : []),
-                ...(endDate ? [{ label: t('pages.create.event.endDate'), value: `${endDate}${endTime ? ` ${endTime}` : ''}` }] : []),
-                { label: t('pages.create.event.location'), value: locationType === 'online' ? t('pages.create.event.onlineMeeting') : (location || t('pages.create.event.inPerson')) },
+                ...(endDate
+                  ? [
+                      {
+                        label: t('pages.create.event.endDate'),
+                        value: `${endDate}${endTime ? ` ${endTime}` : ''}`,
+                      },
+                    ]
+                  : []),
+                {
+                  label: t('pages.create.event.location'),
+                  value:
+                    locationType === 'online'
+                      ? t('pages.create.event.onlineMeeting')
+                      : location || t('pages.create.event.inPerson'),
+                },
                 ...(locationType === 'online' && onlineLink
                   ? [{ label: t('pages.create.event.meetingLink'), value: onlineLink }]
                   : []),
@@ -379,21 +433,37 @@ export function useCreateEventForm(): CreateFormConfig {
                   ? [{ label: t('pages.create.event.capacityLabel'), value: capacity }]
                   : []),
                 ...(isRecurring
-                  ? [{ label: t('pages.create.event.recurring'), value: recurrencePattern.replace('-', ' ') }]
+                  ? [
+                      {
+                        label: t('pages.create.event.recurring'),
+                        value: recurrencePattern.replace('-', ' '),
+                      },
+                    ]
                   : []),
                 ...(delegatesNominationDeadline
-                  ? [{ label: t('pages.create.event.delegateNominationDeadline'), value: delegatesNominationDeadline }]
+                  ? [
+                      {
+                        label: t('pages.create.event.delegateNominationDeadline'),
+                        value: delegatesNominationDeadline,
+                      },
+                    ]
                   : []),
                 ...(amendmentDeadline
-                  ? [{ label: t('pages.create.event.amendmentCutoffDeadline'), value: amendmentDeadline }]
+                  ? [
+                      {
+                        label: t('pages.create.event.amendmentCutoffDeadline'),
+                        value: amendmentDeadline,
+                      },
+                    ]
                   : []),
                 {
                   label: t('pages.create.common.visibility'),
-                  value: visibility === 'public'
-                    ? t('pages.create.common.public')
-                    : visibility === 'authenticated'
-                      ? t('pages.create.common.authenticated')
-                      : t('pages.create.common.private'),
+                  value:
+                    visibility === 'public'
+                      ? t('pages.create.common.public')
+                      : visibility === 'authenticated'
+                        ? t('pages.create.common.authenticated')
+                        : t('pages.create.common.private'),
                 },
               ]}
             />

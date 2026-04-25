@@ -12,7 +12,6 @@ import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
 import { useMessageActions } from '@/zero/messages/useMessageActions';
 import { useMessageState } from '@/zero/messages/useMessageState';
-import { notifyGroupProfileUpdated } from '@/features/notifications/utils/notification-helpers.ts';
 import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
 
 export type GroupType = 'base' | 'hierarchical';
@@ -37,6 +36,7 @@ interface UseGroupUpdateResult {
   formData: GroupFormData;
   setFormData: (data: GroupFormData) => void;
   updateField: <K extends keyof GroupFormData>(field: K, value: GroupFormData[K]) => void;
+  removeImage: () => void;
   isSubmitting: boolean;
   handleSubmit: (e?: React.FormEvent) => Promise<void>;
   resetForm: () => void;
@@ -138,6 +138,17 @@ export function useGroupUpdate(
    */
   const updateField = <K extends keyof GroupFormData>(field: K, value: GroupFormData[K]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const removeImage = () => {
+    if (isCreating) {
+      return;
+    }
+
+    updateGroup({
+      id: groupId,
+      image_url: null,
+    });
   };
 
   /**
@@ -248,6 +259,7 @@ export function useGroupUpdate(
     formData,
     setFormData,
     updateField,
+    removeImage,
     isSubmitting,
     handleSubmit,
     resetForm,

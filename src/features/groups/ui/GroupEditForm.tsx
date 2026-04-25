@@ -28,16 +28,20 @@ interface GroupEditFormProps {
   groupType?: GroupType;
 }
 
-export function GroupEditForm({ groupId, initialData, onCancel, actorId, visibility, groupType }: GroupEditFormProps) {
+export function GroupEditForm({
+  groupId,
+  initialData,
+  onCancel,
+  actorId,
+  visibility,
+  groupType,
+}: GroupEditFormProps) {
   const { t } = useTranslation();
   const isCreating = !initialData;
   const [showReview, setShowReview] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
-  const { formData, setFormData, updateField, handleSubmit, isSubmitting } = useGroupUpdate(
-    groupId,
-    initialData,
-    { actorId, visibility, groupType }
-  );
+  const { formData, setFormData, updateField, removeImage, handleSubmit, isSubmitting } =
+    useGroupUpdate(groupId, initialData, { actorId, visibility, groupType });
 
   const onFormSubmit = (e: React.FormEvent) => {
     if (isCreating && !showReview) {
@@ -69,7 +73,9 @@ export function GroupEditForm({ groupId, initialData, onCancel, actorId, visibil
             hashtags={formData.hashtags}
             gradient="from-sky-100 to-indigo-100 dark:from-sky-900/40 dark:to-indigo-900/50"
           >
-            {formData.location && <SummaryField label={t('pages.create.common.group')} value={formData.location} />}
+            {formData.location && (
+              <SummaryField label={t('pages.create.common.group')} value={formData.location} />
+            )}
             {formData.country && <SummaryField label="Country" value={formData.country} />}
             {formData.region && <SummaryField label="Region" value={formData.region} />}
           </CreateReviewCard>
@@ -101,6 +107,8 @@ export function GroupEditForm({ groupId, initialData, onCancel, actorId, visibil
       <ImageUpload
         currentImage={formData.imageURL}
         onImageChange={(url: string) => updateField('imageURL', url)}
+        onImageRemove={isCreating ? undefined : removeImage}
+        cleanupOnRemove
         entityType="groups"
         entityId={groupId}
         label="Group Image"
@@ -124,7 +132,7 @@ export function GroupEditForm({ groupId, initialData, onCancel, actorId, visibil
         <label className="text-sm font-medium">Hashtags</label>
         <HashtagEditor
           value={formData.hashtags}
-          onChange={(tags) => setFormData({ ...formData, hashtags: tags })}
+          onChange={tags => setFormData({ ...formData, hashtags: tags })}
           placeholder="Add hashtags..."
         />
       </div>
@@ -142,8 +150,10 @@ export function GroupEditForm({ groupId, initialData, onCancel, actorId, visibil
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               {isCreating ? t('pages.create.common.creating') : 'Saving...'}
             </>
+          ) : isCreating ? (
+            t('pages.create.next')
           ) : (
-            isCreating ? t('pages.create.next') : 'Save Changes'
+            'Save Changes'
           )}
         </Button>
       </div>

@@ -8,7 +8,10 @@ import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
 import { VisibilityInput } from '../ui/inputs/VisibilityInput';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
-import { TargetGroupEventSelector, TargetGroupEventDisplay } from '@/features/amendments/ui/TargetGroupEventSelector';
+import {
+  TargetGroupEventSelector,
+  TargetGroupEventDisplay,
+} from '@/features/amendments/ui/TargetGroupEventSelector';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
@@ -55,13 +58,13 @@ export function useCreateAmendmentForm(): CreateFormConfig {
     groupData: CreateTargetGroupData;
     eventId: string;
     eventData: CreateTargetEventData;
-    pathWithEvents: Array<{
+    pathWithEvents: {
       groupId: string;
       groupName: string;
       eventId: string | null;
       eventTitle: string;
       eventStartDate: number | null;
-    }>;
+    }[];
     workflowId: string | null;
   } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -136,7 +139,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
           targetSelection.groupId,
           targetSelection.eventId,
           targetSelection.eventData.title ?? null,
-          targetSelection.eventData.start_date ?? null,
+          targetSelection.eventData.start_date ?? null
         );
 
         await createAmendmentPath({
@@ -171,7 +174,9 @@ export function useCreateAmendmentForm(): CreateFormConfig {
                   {t('pages.create.amendment.titleLabel')}{' '}
                   <span className="text-destructive">*</span>
                 </Label>
-                <p className="text-muted-foreground text-xs">{t('pages.create.amendment.tips.title')}</p>
+                <p className="text-muted-foreground text-xs">
+                  {t('pages.create.amendment.tips.title')}
+                </p>
                 <Input
                   value={title}
                   onChange={e => setTitle(e.target.value)}
@@ -180,7 +185,9 @@ export function useCreateAmendmentForm(): CreateFormConfig {
               </div>
               <div className="space-y-2">
                 <Label>{t('pages.create.amendment.subtitleOptional')}</Label>
-                <p className="text-muted-foreground text-xs">{t('pages.create.amendment.tips.subtitle')}</p>
+                <p className="text-muted-foreground text-xs">
+                  {t('pages.create.amendment.tips.subtitle')}
+                </p>
                 <Input
                   value={subtitle}
                   onChange={e => setSubtitle(e.target.value)}
@@ -190,6 +197,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
               <ImageUpload
                 currentImage={imageURL}
                 onImageChange={(url: string) => setImageURL(url)}
+                cleanupOnRemove
                 entityType="amendments"
                 entityId={amendmentId}
                 label={t('pages.create.amendment.imageLabel')}
@@ -209,7 +217,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
               {user?.id ? (
                 <TargetGroupEventSelector
                   userId={user.id}
-                  onSelect={(selection) => {
+                  onSelect={selection => {
                     setTargetSelection({
                       groupId: selection.groupId,
                       groupData: selection.groupData,
@@ -223,7 +231,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
                   selectedEventId={targetSelection?.eventId}
                 />
               ) : (
-                <p className="text-sm text-muted-foreground">{t('pages.create.common.loading')}</p>
+                <p className="text-muted-foreground text-sm">{t('pages.create.common.loading')}</p>
               )}
 
               {targetSelection && (
@@ -280,7 +288,18 @@ export function useCreateAmendmentForm(): CreateFormConfig {
         },
       ],
     }),
-    [title, subtitle, imageURL, visibility, hashtags, targetSelection, isSubmitting, amendmentId, t, user?.id]
+    [
+      title,
+      subtitle,
+      imageURL,
+      visibility,
+      hashtags,
+      targetSelection,
+      isSubmitting,
+      amendmentId,
+      t,
+      user?.id,
+    ]
   );
 
   return config;

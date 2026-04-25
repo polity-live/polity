@@ -1,7 +1,13 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
@@ -33,7 +39,6 @@ import {
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 import { notifyAmendmentProfileUpdated } from '@/features/notifications/utils/notification-helpers.ts';
-import type { AmendmentCollaboratorRow } from '@/zero/amendments/queries';
 import { CreateReviewCard, SummaryField } from '@/features/shared/ui/ui/create-review-card';
 import {
   EditingModeMenuItems,
@@ -44,7 +49,6 @@ import {
 interface AmendmentEditContentProps {
   amendmentId: string;
   amendment: ReturnType<typeof useAmendmentState>['amendment'];
-  collaborators: readonly AmendmentCollaboratorRow[];
   currentUserId: string;
   isLoading: boolean;
   mode?: 'create' | 'edit';
@@ -54,7 +58,6 @@ interface AmendmentEditContentProps {
 export function AmendmentEditContent({
   amendmentId,
   amendment,
-  collaborators,
   currentUserId,
   isLoading,
   mode,
@@ -122,7 +125,9 @@ export function AmendmentEditContent({
         supporters: 0,
         hashtags: amendmentHashtags
           ? amendmentHashtags.map(j => j.hashtag?.tag).filter((t): t is string => !!t)
-          : Array.isArray(amendment.tags) ? amendment.tags : [],
+          : Array.isArray(amendment.tags)
+            ? amendment.tags
+            : [],
       });
     }
   }, [amendment]);
@@ -177,9 +182,12 @@ export function AmendmentEditContent({
             agendaItemId,
           });
         } else if (value === 'vote_event' && !agendaItemId) {
-          console.warn('[AmendmentEditContent] Cannot initialize CR voting — no agenda item linked to this amendment', {
-            amendmentId,
-          });
+          console.warn(
+            '[AmendmentEditContent] Cannot initialize CR voting — no agenda item linked to this amendment',
+            {
+              amendmentId,
+            }
+          );
         }
       } catch (error) {
         setFormData(prev => ({ ...prev, workflowStatus: previousWorkflowStatus }));
@@ -191,8 +199,27 @@ export function AmendmentEditContent({
         });
       }
     },
-    [amendment, amendmentId, agendaItemId, formData.workflowStatus, isCreating, updateEditingMode, initializeChangeRequestVoting]
+    [
+      amendment,
+      amendmentId,
+      agendaItemId,
+      formData.workflowStatus,
+      isCreating,
+      updateEditingMode,
+      initializeChangeRequestVoting,
+    ]
   );
+
+  const handleRemoveImage = useCallback(() => {
+    if (isCreating) {
+      return;
+    }
+
+    updateAmendment({
+      id: amendmentId,
+      image_url: null,
+    });
+  }, [amendmentId, isCreating, updateAmendment]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -249,32 +276,36 @@ export function AmendmentEditContent({
       // Only create timeline events for public amendments in edit mode
       if (!isCreating && amendment?.visibility === 'public') {
         if (formData.imageURL && formData.imageURL !== amendment.image_url) {
-          await createTimelineEvent({ data: {
-            eventType: 'image_uploaded',
-            entityType: 'amendment',
-            entityId: amendmentId,
-            actorId: currentUserId,
-            title: t('features.timeline.imageUploadedTitle'),
-            description: t('features.timeline.imageUploadedDescription', {
-              title: formData.title,
-            }),
-            contentType: 'image',
-            status: {},
-          } });
+          await createTimelineEvent({
+            data: {
+              eventType: 'image_uploaded',
+              entityType: 'amendment',
+              entityId: amendmentId,
+              actorId: currentUserId,
+              title: t('features.timeline.imageUploadedTitle'),
+              description: t('features.timeline.imageUploadedDescription', {
+                title: formData.title,
+              }),
+              contentType: 'image',
+              status: {},
+            },
+          });
         }
         if (formData.videoURL) {
-          await createTimelineEvent({ data: {
-            eventType: 'video_uploaded',
-            entityType: 'amendment',
-            entityId: amendmentId,
-            actorId: currentUserId,
-            title: t('features.timeline.videoUploadedTitle'),
-            description: t('features.timeline.videoUploadedDescription', {
-              title: formData.title,
-            }),
-            contentType: 'video',
-            status: {},
-          } });
+          await createTimelineEvent({
+            data: {
+              eventType: 'video_uploaded',
+              entityType: 'amendment',
+              entityId: amendmentId,
+              actorId: currentUserId,
+              title: t('features.timeline.videoUploadedTitle'),
+              description: t('features.timeline.videoUploadedDescription', {
+                title: formData.title,
+              }),
+              contentType: 'video',
+              status: {},
+            },
+          });
         }
       }
       // Notify about profile update (edit mode only)
@@ -302,7 +333,7 @@ export function AmendmentEditContent({
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="text-primary h-8 w-8 animate-spin" />
         <p className="text-muted-foreground">{t('features.amendments.editContent.loading')}</p>
       </div>
     );
@@ -356,8 +387,18 @@ export function AmendmentEditContent({
             hashtags={formData.hashtags}
             gradient="from-violet-100 to-purple-100 dark:from-violet-900/40 dark:to-purple-900/50"
           >
-            {formData.code && <SummaryField label={t('features.amendments.editContent.codeLabel')} value={formData.code.length > 200 ? formData.code.slice(0, 200) + '…' : formData.code} />}
-            <SummaryField label={t('features.amendments.editContent.workflowStatusLabel')} value={workflowStatusOption.label} />
+            {formData.code && (
+              <SummaryField
+                label={t('features.amendments.editContent.codeLabel')}
+                value={
+                  formData.code.length > 200 ? formData.code.slice(0, 200) + '…' : formData.code
+                }
+              />
+            )}
+            <SummaryField
+              label={t('features.amendments.editContent.workflowStatusLabel')}
+              value={workflowStatusOption.label}
+            />
           </CreateReviewCard>
           <div className="mt-6 flex gap-3">
             <Button variant="outline" onClick={() => setShowReview(false)}>
@@ -385,10 +426,14 @@ export function AmendmentEditContent({
     <div>
       <div className="mb-6">
         <h1 className="text-3xl font-bold">
-          {isCreating ? t('pages.create.amendment.title') : t('features.amendments.editContent.pageTitle')}
+          {isCreating
+            ? t('pages.create.amendment.title')
+            : t('features.amendments.editContent.pageTitle')}
         </h1>
         <p className="text-muted-foreground">
-          {isCreating ? t('pages.create.amendment.description') : t('features.amendments.editContent.pageDescription')}
+          {isCreating
+            ? t('pages.create.amendment.description')
+            : t('features.amendments.editContent.pageDescription')}
         </p>
       </div>
 
@@ -396,6 +441,8 @@ export function AmendmentEditContent({
         <ImageUpload
           currentImage={formData.imageURL}
           onImageChange={(url: string) => setFormData({ ...formData, imageURL: url })}
+          onImageRemove={isCreating ? undefined : handleRemoveImage}
+          cleanupOnRemove
           entityType="amendments"
           entityId={amendmentId}
           label={t('features.amendments.editContent.amendmentImage')}
@@ -414,6 +461,7 @@ export function AmendmentEditContent({
           <ImageUpload
             currentImage={formData.videoThumbnailURL}
             onImageChange={(url: string) => setFormData({ ...formData, videoThumbnailURL: url })}
+            cleanupOnRemove
             entityType="amendments"
             entityId={amendmentId}
             label={t('features.amendments.editContent.videoThumbnail')}
@@ -458,7 +506,10 @@ export function AmendmentEditContent({
                 rows={10}
               />
             </div>
-            <VisibilityInput value={formData.visibility} onChange={v => setFormData({ ...formData, visibility: v })} />
+            <VisibilityInput
+              value={formData.visibility}
+              onChange={v => setFormData({ ...formData, visibility: v })}
+            />
           </CardContent>
         </Card>
 
@@ -517,7 +568,9 @@ export function AmendmentEditContent({
                     disabled={isEventPhase(formData.workflowStatus)}
                   >
                     <span className="flex items-center gap-2">
-                      <div className={`h-2.5 w-2.5 rounded-full ${workflowStatusOption.colorClass}`} />
+                      <div
+                        className={`h-2.5 w-2.5 rounded-full ${workflowStatusOption.colorClass}`}
+                      />
                       <workflowStatusOption.Icon className="h-4 w-4" />
                       <span>{workflowStatusOption.label}</span>
                     </span>
@@ -531,9 +584,7 @@ export function AmendmentEditContent({
                   />
                 </DropdownMenuContent>
               </DropdownMenu>
-              <p className="text-xs text-muted-foreground">
-                {workflowStatusOption.description}
-              </p>
+              <p className="text-muted-foreground text-xs">{workflowStatusOption.description}</p>
               {isEventPhase(formData.workflowStatus) && (
                 <p className="text-xs text-amber-600">
                   {t('features.amendments.editContent.eventPhaseWarning')}
@@ -548,7 +599,7 @@ export function AmendmentEditContent({
                     <Label htmlFor="autoCloseVoting">
                       {t('features.amendments.editContent.autoCloseVoting')}
                     </Label>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-muted-foreground text-xs">
                       {t('features.amendments.editContent.autoCloseVotingDescription')}
                     </p>
                   </div>
@@ -560,7 +611,7 @@ export function AmendmentEditContent({
                     }
                   />
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   {formData.autoCloseVoting
                     ? t('features.amendments.editContent.autoCloseEnabled')
                     : t('features.amendments.editContent.autoCloseDisabled')}
@@ -593,7 +644,7 @@ export function AmendmentEditContent({
           <CardContent>
             <HashtagEditor
               value={formData.hashtags}
-              onChange={(tags) => setFormData({ ...formData, hashtags: tags })}
+              onChange={tags => setFormData({ ...formData, hashtags: tags })}
               placeholder={t('features.amendments.editContent.addTagPlaceholder')}
             />
           </CardContent>
@@ -612,10 +663,14 @@ export function AmendmentEditContent({
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {isCreating ? t('pages.create.common.creating') : t('features.amendments.editContent.saving')}
+                {isCreating
+                  ? t('pages.create.common.creating')
+                  : t('features.amendments.editContent.saving')}
               </>
+            ) : isCreating ? (
+              t('pages.create.next')
             ) : (
-              isCreating ? t('pages.create.next') : t('features.amendments.editContent.saveChanges')
+              t('features.amendments.editContent.saveChanges')
             )}
           </Button>
         </div>

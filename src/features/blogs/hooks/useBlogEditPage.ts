@@ -21,7 +21,7 @@ export interface BlogFormData {
  */
 export function useBlogEditPage(blogId: string, actorId?: string) {
   const navigate = useNavigate();
-  const { updateBlog } = useBlogActions();
+  const { updateBlog, updateBlogSilent } = useBlogActions();
   const commonActions = useCommonActions();
 
   const [formData, setFormData] = useState<BlogFormData>({
@@ -76,6 +76,13 @@ export function useBlogEditPage(blogId: string, actorId?: string) {
   // Update a single field
   const updateField = <K extends keyof BlogFormData>(field: K, value: BlogFormData[K]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const removeImage = () => {
+    updateBlogSilent({
+      id: blogId,
+      image_url: null,
+    });
   };
 
   // Submit handler
@@ -156,6 +163,7 @@ export function useBlogEditPage(blogId: string, actorId?: string) {
     formData,
     setFormData,
     updateField,
+    removeImage,
     handleSubmit,
     isSubmitting,
     blog,

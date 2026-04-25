@@ -14,7 +14,12 @@ import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
-import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/features/shared/ui/ui/carousel';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselApi,
+} from '@/features/shared/ui/ui/carousel';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
 import { VisibilitySelector } from '@/features/shared/ui/ui/visibility-selector';
 import { TooltipProvider } from '@/features/shared/ui/ui/tooltip';
@@ -177,14 +182,16 @@ export function CreateBlogForm() {
 
       // Add timeline event for public blogs
       if (formData.visibility === 'public') {
-        await createTimelineEvent({ data: {
-          eventType: 'created',
-          entityType: 'blog',
-          entityId: blogId,
-          actorId: user.id,
-          title: `New blog post: ${formData.title}`,
-          description: 'A new blog post has been published',
-        } });
+        await createTimelineEvent({
+          data: {
+            eventType: 'created',
+            entityType: 'blog',
+            entityId: blogId,
+            actorId: user.id,
+            title: `New blog post: ${formData.title}`,
+            description: 'A new blog post has been published',
+          },
+        });
       }
 
       toast.success('Blog post created successfully!');
@@ -205,137 +212,138 @@ export function CreateBlogForm() {
         <CardContent>
           <Carousel setApi={setCarouselApi} opts={{ watchDrag: false }}>
             <CarouselContent>
-                {/* Step 1: Basic Information */}
-                <CarouselItem>
-                  <div className="space-y-4 p-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="blog-title">Title</Label>
-                      <Input
-                        id="blog-title"
-                        placeholder="Enter blog title"
-                        value={formData.title}
-                        onChange={e => setFormData({ ...formData, title: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="blog-date">Date</Label>
-                      <Input
-                        id="blog-date"
-                        type="date"
-                        value={formData.date}
-                        onChange={e => setFormData({ ...formData, date: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <ImageUpload
-                      currentImage={formData.imageURL}
-                      onImageChange={(url: string) => setFormData({ ...formData, imageURL: url })}
-                      entityType="blogs"
-                      entityId={blogId}
-                      label="Cover Image"
-                      description="Upload a cover image for your blog post"
+              {/* Step 1: Basic Information */}
+              <CarouselItem>
+                <div className="space-y-4 p-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="blog-title">Title</Label>
+                    <Input
+                      id="blog-title"
+                      placeholder="Enter blog title"
+                      value={formData.title}
+                      onChange={e => setFormData({ ...formData, title: e.target.value })}
+                      required
                     />
                   </div>
-                </CarouselItem>
+                  <div className="space-y-2">
+                    <Label htmlFor="blog-date">Date</Label>
+                    <Input
+                      id="blog-date"
+                      type="date"
+                      value={formData.date}
+                      onChange={e => setFormData({ ...formData, date: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <ImageUpload
+                    currentImage={formData.imageURL}
+                    onImageChange={(url: string) => setFormData({ ...formData, imageURL: url })}
+                    cleanupOnRemove
+                    entityType="blogs"
+                    entityId={blogId}
+                    label="Cover Image"
+                    description="Upload a cover image for your blog post"
+                  />
+                </div>
+              </CarouselItem>
 
-                {/* Step 2: Visibility & Hashtags */}
-                <CarouselItem>
-                  <div className="space-y-4 p-4">
-                    <TooltipProvider>
-                      <VisibilitySelector
-                        value={formData.visibility}
-                        onChange={visibility => setFormData({ ...formData, visibility })}
+              {/* Step 2: Visibility & Hashtags */}
+              <CarouselItem>
+                <div className="space-y-4 p-4">
+                  <TooltipProvider>
+                    <VisibilitySelector
+                      value={formData.visibility}
+                      onChange={visibility => setFormData({ ...formData, visibility })}
+                    />
+
+                    {/* Hashtags */}
+                    <div className="mt-4 space-y-2">
+                      <HashtagEditor
+                        value={formData.hashtags}
+                        onChange={hashtags => setFormData({ ...formData, hashtags })}
+                        placeholder="Add hashtags (e.g., politics, community)"
                       />
+                    </div>
+                  </TooltipProvider>
+                </div>
+              </CarouselItem>
 
-                      {/* Hashtags */}
-                      <div className="space-y-2 mt-4">
-                        <HashtagEditor
-                          value={formData.hashtags}
-                          onChange={hashtags => setFormData({ ...formData, hashtags })}
-                          placeholder="Add hashtags (e.g., politics, community)"
-                        />
+              {/* Step 3: Review */}
+              <CarouselItem>
+                <div className="p-4">
+                  <Card className="overflow-hidden border-2 bg-gradient-to-br from-yellow-100 to-orange-100 dark:from-yellow-900/40 dark:to-orange-900/50">
+                    <CardHeader>
+                      <div className="mb-2 flex items-center justify-between">
+                        <Badge variant="default" className="text-xs">
+                          Blog Post
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          {formData.visibility}
+                        </Badge>
                       </div>
-                    </TooltipProvider>
-                  </div>
-                </CarouselItem>
-
-                {/* Step 3: Review */}
-                <CarouselItem>
-                  <div className="p-4">
-                    <Card className="overflow-hidden border-2 bg-gradient-to-br from-yellow-100 to-orange-100 dark:from-yellow-900/40 dark:to-orange-900/50">
-                      <CardHeader>
-                        <div className="mb-2 flex items-center justify-between">
-                          <Badge variant="default" className="text-xs">
-                            Blog Post
-                          </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            {formData.visibility}
-                          </Badge>
+                      {formData.hashtags.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {formData.hashtags.map((tag, index) => (
+                            <Badge key={index} variant="secondary" className="text-xs">
+                              #{tag}
+                            </Badge>
+                          ))}
                         </div>
-                        {formData.hashtags.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
-                            {formData.hashtags.map((tag, index) => (
-                              <Badge key={index} variant="secondary" className="text-xs">
-                                #{tag}
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
-                        <CardTitle className="text-lg">
-                          {formData.title || 'Untitled Blog Post'}
-                        </CardTitle>
-                        <CardDescription>{formData.date}</CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div className="flex items-center gap-2 text-sm">
-                          <strong>Visibility:</strong>
-                          <span className="text-muted-foreground">{formData.visibility}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </CarouselItem>
-              </CarouselContent>
-            </Carousel>
-            <div className="mt-4 flex justify-center gap-2">
-              {[0, 1, 2].map(index => (
-                <button
-                  key={index}
-                  type="button"
-                  onClick={() => carouselApi?.scrollTo(index)}
-                  className={`h-2 w-2 rounded-full transition-colors ${
-                    currentStep === index ? 'bg-primary' : 'bg-muted-foreground/30'
-                  }`}
-                  aria-label={`Go to step ${index + 1}`}
-                />
-              ))}
-            </div>
-          </CardContent>
-          <CardFooter className="flex justify-between">
+                      )}
+                      <CardTitle className="text-lg">
+                        {formData.title || 'Untitled Blog Post'}
+                      </CardTitle>
+                      <CardDescription>{formData.date}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex items-center gap-2 text-sm">
+                        <strong>Visibility:</strong>
+                        <span className="text-muted-foreground">{formData.visibility}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </CarouselItem>
+            </CarouselContent>
+          </Carousel>
+          <div className="mt-4 flex justify-center gap-2">
+            {[0, 1, 2].map(index => (
+              <button
+                key={index}
+                type="button"
+                onClick={() => carouselApi?.scrollTo(index)}
+                className={`h-2 w-2 rounded-full transition-colors ${
+                  currentStep === index ? 'bg-primary' : 'bg-muted-foreground/30'
+                }`}
+                aria-label={`Go to step ${index + 1}`}
+              />
+            ))}
+          </div>
+        </CardContent>
+        <CardFooter className="flex justify-between">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => carouselApi?.scrollPrev()}
+            disabled={currentStep === 0}
+          >
+            Previous
+          </Button>
+          {currentStep < 2 ? (
             <Button
               type="button"
-              variant="outline"
-              onClick={() => carouselApi?.scrollPrev()}
-              disabled={currentStep === 0}
+              onClick={() => carouselApi?.scrollNext()}
+              disabled={currentStep === 0 && !formData.title}
             >
-              Previous
+              Next
             </Button>
-            {currentStep < 2 ? (
-              <Button
-                type="button"
-                onClick={() => carouselApi?.scrollNext()}
-                disabled={currentStep === 0 && !formData.title}
-              >
-                Next
-              </Button>
-            ) : (
-              <Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
-                {isSubmitting ? 'Creating...' : 'Create Blog Post'}
-              </Button>
-            )}
-          </CardFooter>
-        </Card>
-      </PageWrapper>
-    );
-  }
+          ) : (
+            <Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
+              {isSubmitting ? 'Creating...' : 'Create Blog Post'}
+            </Button>
+          )}
+        </CardFooter>
+      </Card>
+    </PageWrapper>
+  );
+}
