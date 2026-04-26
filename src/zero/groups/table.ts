@@ -12,6 +12,8 @@ export const group = table('group')
     city: string().optional(),
     street: string().optional(),
     house_number: string().optional(),
+    latitude: number().optional(),
+    longitude: number().optional(),
     image_url: string().optional(),
     member_count: number(),
     subscriber_count: number(),

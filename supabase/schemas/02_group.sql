@@ -16,6 +16,8 @@ CREATE TABLE IF NOT EXISTS public."group" (
   city TEXT,
   street TEXT,
   house_number TEXT,
+  latitude DOUBLE PRECISION,
+  longitude DOUBLE PRECISION,
   image_url TEXT,
   visibility TEXT NOT NULL DEFAULT 'public',
   member_count INTEGER NOT NULL DEFAULT 0,

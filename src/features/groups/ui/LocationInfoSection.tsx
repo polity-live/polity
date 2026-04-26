@@ -12,12 +12,12 @@ import {
   CardTitle,
 } from '@/features/shared/ui/ui/card';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { GeoAddressFields } from '@/features/shared/ui/form/GeoAddressFields';
+import { GeoAddressPicker } from '@/features/shared/ui/form/GeoAddressPicker';
 import type { GroupFormData } from '../hooks/useGroupUpdate';
 
 interface LocationInfoSectionProps {
   formData: GroupFormData;
-  onChange: (field: keyof GroupFormData, value: string) => void;
+  onChange: <K extends keyof GroupFormData>(field: K, value: GroupFormData[K]) => void;
 }
 
 export function LocationInfoSection({ formData, onChange }: LocationInfoSectionProps) {
@@ -30,7 +30,7 @@ export function LocationInfoSection({ formData, onChange }: LocationInfoSectionP
         <CardDescription>{t('features.groups.location.description')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <GeoAddressFields
+        <GeoAddressPicker
           idPrefix="group-location"
           values={{
             country: formData.country,
@@ -39,6 +39,15 @@ export function LocationInfoSection({ formData, onChange }: LocationInfoSectionP
             post_code: formData.post_code,
             street: formData.street,
             house_number: formData.house_number,
+          }}
+          coordinates={
+            formData.latitude !== null && formData.longitude !== null
+              ? { latitude: formData.latitude, longitude: formData.longitude }
+              : null
+          }
+          onCoordinatesChange={coordinates => {
+            onChange('latitude', coordinates?.latitude ?? null);
+            onChange('longitude', coordinates?.longitude ?? null);
           }}
           onFieldChange={onChange}
           labels={{

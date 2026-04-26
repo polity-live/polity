@@ -217,6 +217,8 @@ export function UserWiki(_props: UserWikiProps) {
               city: dbUser.city || '',
               street: dbUser.street || '',
               house_number: dbUser.house_number || '',
+              latitude: dbUser.latitude ?? null,
+              longitude: dbUser.longitude ?? null,
               location: userLocation || undefined,
             }}
             className="mb-12"

@@ -15,6 +15,8 @@ export const event = table('event')
     city: string().optional(),
     street: string().optional(),
     house_number: string().optional(),
+    latitude: number().optional(),
+    longitude: number().optional(),
     location_url: string().optional(),
     location_coordinates: string().optional(),
     visibility: string(),

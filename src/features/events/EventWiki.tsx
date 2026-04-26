@@ -233,20 +233,26 @@ export function EventWiki({ eventId }: EventWikiProps) {
       )}
 
       {/* About Tab with Event Details */}
-      {event.description && (
-        <InfoTabs
-          about={event.description}
-          eventDetails={{
-            startDate: event.start_date ?? undefined,
-            endDate: event.end_date ?? undefined,
-            location: formattedLocation || undefined,
-          }}
-          contact={{
-            location: formattedLocation || undefined,
-          }}
-          className="mb-12"
-        />
-      )}
+      <InfoTabs
+        about={event.description}
+        eventDetails={{
+          startDate: event.start_date ?? undefined,
+          endDate: event.end_date ?? undefined,
+          location: formattedLocation || undefined,
+        }}
+        contact={{
+          location: formattedLocation || undefined,
+          country: event.country ?? undefined,
+          region: event.region ?? undefined,
+          post_code: event.post_code ?? undefined,
+          city: event.city ?? undefined,
+          street: event.street ?? undefined,
+          house_number: event.house_number ?? undefined,
+          latitude: event.latitude ?? null,
+          longitude: event.longitude ?? null,
+        }}
+        className="mb-12"
+      />
 
       {/* Deadlines Card */}
       <EventDeadlinesCard

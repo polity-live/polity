@@ -20,9 +20,11 @@ import {
   Youtube,
 } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
+import { hasGeoCoordinates } from '@/features/shared/logic/geoCoordinates';
 import { formatLocation } from '@/features/shared/logic/locationHelpers';
 import { buildContactLinkHref } from '@/features/shared/logic/contactLinkHelpers';
 import { RichTextPreview } from '@/features/shared/ui/rich-text/RichTextPreview';
+import { GeoAddressMap } from '@/features/shared/ui/form/GeoAddressMap';
 
 interface ContactInfo {
   email?: string;
@@ -42,6 +44,8 @@ interface ContactInfo {
   city?: string;
   street?: string;
   house_number?: string;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 interface EventDetails {
@@ -68,7 +72,7 @@ interface ContactCardItem {
 }
 
 export const InfoTabs: React.FC<InfoTabsProps> = ({ about, contact, eventDetails, className }) => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const primaryContactItems: ContactCardItem[] = [
     {
       key: 'email',
@@ -124,6 +128,19 @@ export const InfoTabs: React.FC<InfoTabsProps> = ({ about, contact, eventDetails
       accentClass: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300',
     },
   ].filter(item => item.value);
+
+  const locationCoordinates = hasGeoCoordinates({
+    latitude: contact?.latitude,
+    longitude: contact?.longitude,
+  })
+    ? {
+        latitude: contact.latitude,
+        longitude: contact.longitude,
+      }
+    : null;
+
+  const hasLocationTab = Boolean(eventDetails || locationItems.length > 0 || locationCoordinates);
+  const defaultTab = about ? 'about' : hasLocationTab ? 'location' : 'contact';
 
   if (locationItems.length === 0) {
     const fallbackLocation = contact?.location || formatLocation(contact);
@@ -242,7 +259,7 @@ export const InfoTabs: React.FC<InfoTabsProps> = ({ about, contact, eventDetails
 
   // Helper functions for event details
   const formatDate = (date: string | number) => {
-    return new Date(date).toLocaleDateString('en-US', {
+    return new Date(date).toLocaleDateString(language === 'de' ? 'de-DE' : 'en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -251,7 +268,7 @@ export const InfoTabs: React.FC<InfoTabsProps> = ({ about, contact, eventDetails
   };
 
   const formatTime = (date: string | number) => {
-    return new Date(date).toLocaleTimeString('en-US', {
+    return new Date(date).toLocaleTimeString(language === 'de' ? 'de-DE' : 'en-US', {
       hour: 'numeric',
       minute: '2-digit',
     });
@@ -263,12 +280,14 @@ export const InfoTabs: React.FC<InfoTabsProps> = ({ about, contact, eventDetails
   }
 
   return (
-    <Tabs defaultValue="about" className={className}>
+    <Tabs defaultValue={defaultTab} className={className}>
       <ScrollableTabsList>
         <TabsTrigger value="about">{t('components.infoTabs.about')}</TabsTrigger>
-        {eventDetails && (
-          <TabsTrigger value="locationAndDate">
-            {t('components.infoTabs.locationAndDate')}
+        {hasLocationTab && (
+          <TabsTrigger value="location">
+            {eventDetails
+              ? t('components.infoTabs.locationAndDate')
+              : t('components.infoTabs.labels.location')}
           </TabsTrigger>
         )}
         <TabsTrigger value="contact">{t('components.infoTabs.contact')}</TabsTrigger>
@@ -282,38 +301,60 @@ export const InfoTabs: React.FC<InfoTabsProps> = ({ about, contact, eventDetails
         </Card>
       </TabsContent>
 
-      {eventDetails && (
-        <TabsContent value="locationAndDate" className="mt-4">
+      {hasLocationTab && (
+        <TabsContent value="location" className="mt-4">
           <Card>
             <CardContent className="space-y-4 pt-6">
-              {/* Time and Location side by side */}
-              <div className="grid gap-4 md:grid-cols-2">
-                {eventDetails.startDate && (
-                  <div className="flex items-start gap-3">
-                    <Calendar className="text-muted-foreground mt-1 h-5 w-5" />
-                    <div>
-                      <p className="font-medium">{formatDate(eventDetails.startDate)}</p>
-                      <p className="text-muted-foreground text-sm">
-                        {formatTime(eventDetails.startDate)}
-                        {eventDetails.endDate && ` - ${formatTime(eventDetails.endDate)}`}
-                      </p>
-                    </div>
-                  </div>
-                )}
+              {locationCoordinates ? (
+                <GeoAddressMap
+                  coordinates={locationCoordinates}
+                  onCoordinatesChange={() => undefined}
+                  loadingLabel={t('common.locationPicker.loading')}
+                  busyLabel=""
+                  emptyMessage={t('components.infoTabs.noLocation')}
+                  moveHint={t('components.infoTabs.mapDescription')}
+                  interactive={false}
+                />
+              ) : null}
 
-                {eventDetails.location && (
-                  <div className="flex items-start gap-3">
-                    <MapPin className="text-muted-foreground mt-1 h-5 w-5" />
-                    <div>
-                      <p className="font-medium">{t('components.infoTabs.labels.location')}</p>
-                      <p className="text-muted-foreground text-sm">{eventDetails.location}</p>
+              {(eventDetails?.startDate || locationItems.length > 0) && (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {eventDetails?.startDate && (
+                    <div className="flex items-start gap-3">
+                      <Calendar className="text-muted-foreground mt-1 h-5 w-5" />
+                      <div>
+                        <p className="font-medium">{t('components.infoTabs.dateTime')}</p>
+                        <p className="mt-1 text-sm font-medium">
+                          {formatDate(eventDetails.startDate)}
+                        </p>
+                        <p className="text-muted-foreground text-sm">
+                          {formatTime(eventDetails.startDate)}
+                          {eventDetails.endDate && ` - ${formatTime(eventDetails.endDate)}`}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
+                  )}
 
-              {/* Tags */}
-              {eventDetails.tags &&
+                  {locationItems.length > 0 && (
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">
+                          {t('components.infoTabs.labels.location')}
+                        </p>
+                      </div>
+                      <div className="grid gap-3 md:grid-cols-2">
+                        {locationItems.map(item => renderContactCard(item))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {!eventDetails?.startDate && locationItems.length === 0 && !locationCoordinates && (
+                <p className="text-muted-foreground">{t('components.infoTabs.noLocation')}</p>
+              )}
+
+              {eventDetails?.tags &&
                 Array.isArray(eventDetails.tags) &&
                 eventDetails.tags.length > 0 && (
                   <div className="flex flex-wrap gap-2">
@@ -338,17 +379,6 @@ export const InfoTabs: React.FC<InfoTabsProps> = ({ about, contact, eventDetails
               </div>
             )}
 
-            {locationItems.length > 0 && (
-              <div className="space-y-3">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">{t('components.infoTabs.labels.location')}</p>
-                </div>
-                <div className="grid gap-3 md:grid-cols-2">
-                  {locationItems.map(item => renderContactCard(item))}
-                </div>
-              </div>
-            )}
-
             {socialItems.length > 0 && (
               <div className="space-y-3">
                 <div className="space-y-1">
@@ -363,11 +393,9 @@ export const InfoTabs: React.FC<InfoTabsProps> = ({ about, contact, eventDetails
               </div>
             )}
 
-            {primaryContactItems.length === 0 &&
-              socialItems.length === 0 &&
-              locationItems.length === 0 && (
-                <p className="text-muted-foreground">{t('components.infoTabs.noContact')}</p>
-              )}
+            {primaryContactItems.length === 0 && socialItems.length === 0 && (
+              <p className="text-muted-foreground">{t('components.infoTabs.noContact')}</p>
+            )}
           </CardContent>
         </Card>
       </TabsContent>

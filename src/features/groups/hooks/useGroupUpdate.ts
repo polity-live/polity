@@ -34,6 +34,8 @@ export interface GroupFormData {
   city: string;
   street: string;
   house_number: string;
+  latitude: number | null;
+  longitude: number | null;
   imageURL: string;
   visibility: Visibility;
   website: string;
@@ -70,6 +72,8 @@ const initialFormState: GroupFormData = {
   city: '',
   street: '',
   house_number: '',
+  latitude: null,
+  longitude: null,
   imageURL: '',
   visibility: 'public' as Visibility,
   website: '',
@@ -153,6 +157,8 @@ export function useGroupUpdate(
         city: initialData.city || '',
         street: initialData.street || '',
         house_number: initialData.house_number || '',
+        latitude: initialData.latitude ?? null,
+        longitude: initialData.longitude ?? null,
         imageURL: initialData.imageURL || '',
         visibility: initialData.visibility ?? 'public',
         website: initialData.website || '',
@@ -216,6 +222,8 @@ export function useGroupUpdate(
         city: initialData.city || '',
         street: initialData.street || '',
         house_number: initialData.house_number || '',
+        latitude: initialData.latitude ?? null,
+        longitude: initialData.longitude ?? null,
         imageURL: initialData.imageURL || '',
         visibility: initialData.visibility ?? 'public',
         website: initialData.website || '',
@@ -272,6 +280,8 @@ export function useGroupUpdate(
           city: formData.city || null,
           street: formData.street || null,
           house_number: formData.house_number || null,
+          latitude: formData.latitude,
+          longitude: formData.longitude,
           image_url: formData.imageURL || null,
           x: formData.twitter || null,
           website: formData.website || null,
@@ -301,6 +311,8 @@ export function useGroupUpdate(
           city: formData.city || null,
           street: formData.street || null,
           house_number: formData.house_number || null,
+          latitude: formData.latitude,
+          longitude: formData.longitude,
           image_url: formData.imageURL || null,
           x: formData.twitter,
           website: formData.website || null,

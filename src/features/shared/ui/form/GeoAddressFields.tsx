@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   GeoAddressInputField,
   type GeoAddressContext,
@@ -7,7 +7,7 @@ import {
   type GeoResolvedAddress,
 } from '@/features/shared/ui/form/GeoAddressInputField';
 
-type GeoAddressTextMap = Record<GeoAddressField, string>;
+export type GeoAddressTextMap = Record<GeoAddressField, string>;
 
 interface GeoAddressFieldsProps {
   idPrefix: string;
@@ -15,6 +15,8 @@ interface GeoAddressFieldsProps {
   onFieldChange: (field: GeoAddressField, value: string) => void;
   labels: GeoAddressTextMap;
   placeholders: GeoAddressTextMap;
+  onResolvedAddress?: (result: GeoResolvedAddress | null) => void;
+  resetContextKey?: number | string;
 }
 
 const CASCADE_RESET_FIELDS: Record<GeoAddressField, GeoAddressField[]> = {
@@ -43,6 +45,24 @@ const INITIAL_CONTEXT: GeoAddressContext = {
   street: null,
 };
 
+const INITIAL_RESOLVED_ADDRESSES: Record<GeoAddressField, GeoResolvedAddress | null> = {
+  country: null,
+  region: null,
+  city: null,
+  post_code: null,
+  street: null,
+  house_number: null,
+};
+
+const RESOLVED_ADDRESS_PRIORITY: GeoAddressField[] = [
+  'house_number',
+  'street',
+  'post_code',
+  'city',
+  'region',
+  'country',
+];
+
 function hasSameResolvedAddress(
   previousValue: GeoResolvedAddress | null,
   nextValue: GeoResolvedAddress | null
@@ -64,22 +84,50 @@ export function GeoAddressFields({
   onFieldChange,
   labels,
   placeholders,
+  onResolvedAddress,
+  resetContextKey,
 }: GeoAddressFieldsProps) {
   const [context, setContext] = useState<GeoAddressContext>(INITIAL_CONTEXT);
+  const [resolvedAddresses, setResolvedAddresses] = useState(INITIAL_RESOLVED_ADDRESSES);
+
+  useEffect(() => {
+    setContext(INITIAL_CONTEXT);
+    setResolvedAddresses(INITIAL_RESOLVED_ADDRESSES);
+  }, [resetContextKey]);
+
+  useEffect(() => {
+    if (!onResolvedAddress) {
+      return;
+    }
+
+    const nextResolvedAddress =
+      RESOLVED_ADDRESS_PRIORITY.map(field => resolvedAddresses[field]).find(Boolean) ?? null;
+
+    onResolvedAddress(nextResolvedAddress);
+  }, [onResolvedAddress, resolvedAddresses]);
 
   const handleResolved = useCallback(
     (field: GeoAddressField, result: GeoResolvedAddress | null) => {
-      if (field === 'house_number') {
-        return;
+      if (field !== 'house_number') {
+        setContext(previousContext => {
+          if (hasSameResolvedAddress(previousContext[field], result)) {
+            return previousContext;
+          }
+
+          return {
+            ...previousContext,
+            [field]: result,
+          };
+        });
       }
 
-      setContext(previousContext => {
-        if (hasSameResolvedAddress(previousContext[field], result)) {
-          return previousContext;
+      setResolvedAddresses(previousResolvedAddresses => {
+        if (hasSameResolvedAddress(previousResolvedAddresses[field], result)) {
+          return previousResolvedAddresses;
         }
 
         return {
-          ...previousContext,
+          ...previousResolvedAddresses,
           [field]: result,
         };
       });
@@ -109,6 +157,19 @@ export function GeoAddressFields({
         }
 
         return nextContext;
+      });
+
+      setResolvedAddresses(previousResolvedAddresses => {
+        const nextResolvedAddresses = {
+          ...previousResolvedAddresses,
+          [field]: null,
+        };
+
+        for (const descendantField of CASCADE_RESET_FIELDS[field]) {
+          nextResolvedAddresses[descendantField] = null;
+        }
+
+        return nextResolvedAddresses;
       });
 
       for (const descendantField of CASCADE_RESET_FIELDS[field]) {

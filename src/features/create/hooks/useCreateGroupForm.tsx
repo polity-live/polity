@@ -46,6 +46,7 @@ import {
   TableRow,
 } from '@/features/shared/ui/ui/table';
 import { MiniPlateEditor } from '@/features/shared/ui/form/MiniPlateEditor';
+import { GeoAddressPicker } from '@/features/shared/ui/form/GeoAddressPicker';
 import { cn } from '@/features/shared/utils/utils.ts';
 import { matchInviteCsvUsers, type InviteCsvMatchResult } from '../logic/groupInviteCsv';
 import { formatLocation } from '@/features/shared/logic/locationHelpers';
@@ -116,6 +117,8 @@ export function useCreateGroupForm(): CreateFormConfig {
   const [city, setCity] = useState('');
   const [street, setStreet] = useState('');
   const [house_number, setHouseNumber] = useState('');
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
   const [imageURL, setImageURL] = useState('');
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [visibility, setVisibility] = useState<'public' | 'authenticated' | 'private'>('public');
@@ -259,6 +262,8 @@ export function useCreateGroupForm(): CreateFormConfig {
         city: city || null,
         street: street || null,
         house_number: house_number || null,
+        latitude,
+        longitude,
         image_url: imageURL || null,
         x: null,
         youtube: null,
@@ -436,61 +441,65 @@ export function useCreateGroupForm(): CreateFormConfig {
           optional: true,
           content: (
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>{t('pages.create.group.countryLabel')}</Label>
-                <p className="text-muted-foreground text-xs">
-                  {t('pages.create.group.tips.location')}
-                </p>
-                <Input
-                  value={country}
-                  onChange={e => setCountry(e.target.value)}
-                  placeholder={t('pages.create.group.countryPlaceholder')}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{t('pages.create.group.regionLabel')}</Label>
-                <Input
-                  value={region}
-                  onChange={e => setRegion(e.target.value)}
-                  placeholder={t('pages.create.group.regionPlaceholder')}
-                />
-              </div>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>{t('pages.create.event.postalCode')}</Label>
-                  <Input
-                    value={post_code}
-                    onChange={e => setPostCode(e.target.value)}
-                    placeholder={t('pages.create.event.postalCode')}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>{t('pages.create.event.city')}</Label>
-                  <Input
-                    value={city}
-                    onChange={e => setCity(e.target.value)}
-                    placeholder={t('pages.create.event.city')}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>{t('pages.create.event.street')}</Label>
-                  <Input
-                    value={street}
-                    onChange={e => setStreet(e.target.value)}
-                    placeholder={t('pages.create.event.street')}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>{t('pages.create.event.houseNumber')}</Label>
-                  <Input
-                    value={house_number}
-                    onChange={e => setHouseNumber(e.target.value)}
-                    placeholder={t('pages.create.event.houseNumber')}
-                  />
-                </div>
-              </div>
+              <p className="text-muted-foreground text-xs">
+                {t('pages.create.group.tips.location')}
+              </p>
+              <GeoAddressPicker
+                idPrefix="create-group-location"
+                values={{
+                  country,
+                  region,
+                  city,
+                  post_code,
+                  street,
+                  house_number,
+                }}
+                coordinates={
+                  latitude !== null && longitude !== null ? { latitude, longitude } : null
+                }
+                onCoordinatesChange={coordinates => {
+                  setLatitude(coordinates?.latitude ?? null);
+                  setLongitude(coordinates?.longitude ?? null);
+                }}
+                onFieldChange={(field, value) => {
+                  switch (field) {
+                    case 'country':
+                      setCountry(value);
+                      break;
+                    case 'region':
+                      setRegion(value);
+                      break;
+                    case 'city':
+                      setCity(value);
+                      break;
+                    case 'post_code':
+                      setPostCode(value);
+                      break;
+                    case 'street':
+                      setStreet(value);
+                      break;
+                    case 'house_number':
+                      setHouseNumber(value);
+                      break;
+                  }
+                }}
+                labels={{
+                  country: t('pages.create.group.countryLabel'),
+                  region: t('pages.create.group.regionLabel'),
+                  city: t('pages.create.event.city'),
+                  post_code: t('pages.create.event.postalCode'),
+                  street: t('pages.create.event.street'),
+                  house_number: t('pages.create.event.houseNumber'),
+                }}
+                placeholders={{
+                  country: t('pages.create.group.countryPlaceholder'),
+                  region: t('pages.create.group.regionPlaceholder'),
+                  city: t('pages.create.event.city'),
+                  post_code: t('pages.create.event.postalCode'),
+                  street: t('pages.create.event.street'),
+                  house_number: t('pages.create.event.houseNumber'),
+                }}
+              />
             </div>
           ),
         },

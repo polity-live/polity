@@ -149,12 +149,18 @@ export function UserProfileEditForm({
               city={formData.city}
               street={formData.street}
               house_number={formData.house_number}
+              latitude={formData.latitude}
+              longitude={formData.longitude}
               onCountryChange={value => onFieldChange('country', value)}
               onRegionChange={value => onFieldChange('region', value)}
               onPostCodeChange={value => onFieldChange('post_code', value)}
               onCityChange={value => onFieldChange('city', value)}
               onStreetChange={value => onFieldChange('street', value)}
               onHouseNumberChange={value => onFieldChange('house_number', value)}
+              onCoordinatesChange={coordinates => {
+                onFieldChange('latitude', coordinates?.latitude ?? null);
+                onFieldChange('longitude', coordinates?.longitude ?? null);
+              }}
             />
 
             <HashtagsSection

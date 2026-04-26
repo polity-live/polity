@@ -22,6 +22,8 @@ CREATE TABLE IF NOT EXISTS public.event (
   city TEXT,
   street TEXT,
   house_number TEXT,
+  latitude DOUBLE PRECISION,
+  longitude DOUBLE PRECISION,
   location_url TEXT,
   location_coordinates TEXT,
   visibility TEXT NOT NULL DEFAULT 'public',

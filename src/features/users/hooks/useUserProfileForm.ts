@@ -36,6 +36,8 @@ export interface UserProfileFormData {
   city: string;
   street: string;
   house_number: string;
+  latitude: number | null;
+  longitude: number | null;
   avatar: string;
   visibility: Visibility;
   hashtags: string[];
@@ -99,6 +101,8 @@ export function useUserProfileForm({
     city: '',
     street: '',
     house_number: '',
+    latitude: null,
+    longitude: null,
     avatar: '',
     visibility: 'public' as Visibility,
     hashtags: [],
@@ -135,6 +139,8 @@ export function useUserProfileForm({
         city: user.city || '',
         street: user.street || '',
         house_number: user.house_number || '',
+        latitude: user.latitude ?? null,
+        longitude: user.longitude ?? null,
         avatar: user.avatar || '',
         visibility: (user.visibility as Visibility) ?? 'public',
         hashtags: [],
@@ -198,6 +204,8 @@ export function useUserProfileForm({
         city: formData.city,
         street: formData.street,
         house_number: formData.house_number,
+        latitude: formData.latitude,
+        longitude: formData.longitude,
         visibility: formData.visibility,
         hashtags: formData.hashtags,
         existingJunctions: userHashtags ?? [],

@@ -14,6 +14,7 @@ import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import { EventTypeInput } from '../ui/inputs/EventTypeInput';
 import { RecurringPatternInput } from '../ui/inputs/RecurringPatternInput';
 import { DelegateAllocationInput, type DelegateConfig } from '../ui/inputs/DelegateAllocationInput';
+import { GeoAddressPicker } from '@/features/shared/ui/form/GeoAddressPicker';
 import { useEventActions } from '@/zero/events/useEventActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
 import { useUserGroupsWithManageEvents } from '@/zero/groups/useGroupState';
@@ -62,6 +63,8 @@ export function useCreateEventForm(): CreateFormConfig {
   const [city, setCity] = useState('');
   const [street, setStreet] = useState('');
   const [houseNumber, setHouseNumber] = useState('');
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
   const [capacity, setCapacity] = useState('');
   const [imageURL, setImageURL] = useState('');
   const [visibility, setVisibility] = useState<Visibility>('public');
@@ -121,6 +124,8 @@ export function useCreateEventForm(): CreateFormConfig {
         city: locationType === 'physical' ? city || null : null,
         street: locationType === 'physical' ? street || null : null,
         house_number: locationType === 'physical' ? houseNumber || null : null,
+        latitude: locationType === 'physical' ? latitude : null,
+        longitude: locationType === 'physical' ? longitude : null,
         start_date: startDate ? new Date(`${startDate}T${startTime || '00:00'}`).getTime() : null,
         end_date: endDate ? new Date(`${endDate}T${endTime || '00:00'}`).getTime() : null,
         visibility,
@@ -323,36 +328,62 @@ export function useCreateEventForm(): CreateFormConfig {
                       placeholder={t('pages.create.event.venueNamePlaceholder')}
                     />
                   </div>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label>{t('pages.create.event.country')}</Label>
-                      <Input value={country} onChange={e => setCountry(e.target.value)} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>{t('pages.create.event.region')}</Label>
-                      <Input value={region} onChange={e => setRegion(e.target.value)} />
-                    </div>
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label>{t('pages.create.event.postalCode')}</Label>
-                      <Input value={postCode} onChange={e => setPostCode(e.target.value)} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>{t('pages.create.event.city')}</Label>
-                      <Input value={city} onChange={e => setCity(e.target.value)} />
-                    </div>
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label>{t('pages.create.event.street')}</Label>
-                      <Input value={street} onChange={e => setStreet(e.target.value)} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>{t('pages.create.event.houseNumber')}</Label>
-                      <Input value={houseNumber} onChange={e => setHouseNumber(e.target.value)} />
-                    </div>
-                  </div>
+                  <GeoAddressPicker
+                    idPrefix="create-event-location"
+                    values={{
+                      country,
+                      region,
+                      city,
+                      post_code: postCode,
+                      street,
+                      house_number: houseNumber,
+                    }}
+                    coordinates={
+                      latitude !== null && longitude !== null ? { latitude, longitude } : null
+                    }
+                    onCoordinatesChange={coordinates => {
+                      setLatitude(coordinates?.latitude ?? null);
+                      setLongitude(coordinates?.longitude ?? null);
+                    }}
+                    onFieldChange={(field, value) => {
+                      switch (field) {
+                        case 'country':
+                          setCountry(value);
+                          break;
+                        case 'region':
+                          setRegion(value);
+                          break;
+                        case 'city':
+                          setCity(value);
+                          break;
+                        case 'post_code':
+                          setPostCode(value);
+                          break;
+                        case 'street':
+                          setStreet(value);
+                          break;
+                        case 'house_number':
+                          setHouseNumber(value);
+                          break;
+                      }
+                    }}
+                    labels={{
+                      country: t('pages.create.event.country'),
+                      region: t('pages.create.event.region'),
+                      city: t('pages.create.event.city'),
+                      post_code: t('pages.create.event.postalCode'),
+                      street: t('pages.create.event.street'),
+                      house_number: t('pages.create.event.houseNumber'),
+                    }}
+                    placeholders={{
+                      country: t('pages.create.event.country'),
+                      region: t('pages.create.event.region'),
+                      city: t('pages.create.event.city'),
+                      post_code: t('pages.create.event.postalCode'),
+                      street: t('pages.create.event.street'),
+                      house_number: t('pages.create.event.houseNumber'),
+                    }}
+                  />
                 </TabsContent>
                 <TabsContent value="online" className="space-y-4 pt-2">
                   <div className="space-y-2">

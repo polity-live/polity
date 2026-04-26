@@ -26,6 +26,8 @@ export const user = table('user')
     city: string().optional(),
     street: string().optional(),
     house_number: string().optional(),
+    latitude: number().optional(),
+    longitude: number().optional(),
     visibility: string(),
     subscriber_count: number(),
     amendment_count: number(),

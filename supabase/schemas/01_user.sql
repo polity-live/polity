@@ -29,6 +29,8 @@ CREATE TABLE IF NOT EXISTS public."user" (
   city TEXT,
   street TEXT,
   house_number TEXT,
+  latitude DOUBLE PRECISION,
+  longitude DOUBLE PRECISION,
   visibility TEXT NOT NULL DEFAULT 'public',
   subscriber_count INTEGER NOT NULL DEFAULT 0,
   amendment_count INTEGER NOT NULL DEFAULT 0,

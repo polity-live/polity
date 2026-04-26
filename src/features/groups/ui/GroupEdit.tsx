@@ -86,6 +86,8 @@ export function GroupEdit({ groupId }: GroupEditProps) {
                 city: group.city ?? '',
                 street: group.street ?? '',
                 house_number: group.house_number ?? '',
+                latitude: group.latitude ?? null,
+                longitude: group.longitude ?? null,
                 imageURL: group.image_url ?? '',
               }
             : undefined

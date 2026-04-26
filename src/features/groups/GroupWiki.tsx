@@ -195,6 +195,9 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
           city: group.city ?? undefined,
           street: group.street ?? undefined,
           house_number: group.house_number ?? undefined,
+          latitude: group.latitude ?? null,
+          longitude: group.longitude ?? null,
+          location: groupLocation || undefined,
         }}
         className="mb-12"
       />

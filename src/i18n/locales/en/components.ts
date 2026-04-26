@@ -3,8 +3,11 @@ export const componentsTranslations = {
     about: 'About',
     contact: 'Contact',
     locationAndDate: 'Location & Date',
+    dateTime: 'Date & time',
     noInformation: 'No information available',
     noContact: 'No contact information available',
+    noLocation: 'No location information available',
+    mapDescription: 'Verified location preview',
     socialTitle: 'Social profiles',
     socialDescription: 'Public links and channels connected to this profile.',
     labels: {

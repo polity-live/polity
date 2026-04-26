@@ -28,6 +28,8 @@ export interface EventFormData {
   city: string;
   street: string;
   houseNumber: string;
+  latitude: number | null;
+  longitude: number | null;
   startDate: string;
   startTime: string;
   endDate: string;
@@ -63,6 +65,8 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
     city: '',
     street: '',
     houseNumber: '',
+    latitude: null,
+    longitude: null,
     startDate: '',
     startTime: '',
     endDate: '',
@@ -134,6 +138,8 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
         city: event.city || '',
         street: event.street || '',
         houseNumber: event.house_number || '',
+        latitude: event.latitude ?? null,
+        longitude: event.longitude ?? null,
         startDate: formatDatePart(event.start_date),
         startTime: formatTimePart(event.start_date),
         endDate: formatDatePart(event.end_date),
@@ -208,6 +214,8 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
           city: formData.locationType === 'physical' ? formData.city || null : null,
           street: formData.locationType === 'physical' ? formData.street || null : null,
           house_number: formData.locationType === 'physical' ? formData.houseNumber || null : null,
+          latitude: formData.locationType === 'physical' ? formData.latitude : null,
+          longitude: formData.locationType === 'physical' ? formData.longitude : null,
           start_date: formData.startDate
             ? new Date(`${formData.startDate}T${formData.startTime || '00:00'}`).getTime()
             : null,
@@ -244,6 +252,8 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
           city: formData.locationType === 'physical' ? formData.city || null : null,
           street: formData.locationType === 'physical' ? formData.street || null : null,
           house_number: formData.locationType === 'physical' ? formData.houseNumber || null : null,
+          latitude: formData.locationType === 'physical' ? formData.latitude : null,
+          longitude: formData.locationType === 'physical' ? formData.longitude : null,
           start_date: formData.startDate
             ? new Date(`${formData.startDate}T${formData.startTime || '00:00'}`).getTime()
             : undefined,

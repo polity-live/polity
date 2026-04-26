@@ -6,7 +6,8 @@ import {
   CardTitle,
 } from '@/features/shared/ui/ui/card';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { GeoAddressFields } from '@/features/shared/ui/form/GeoAddressFields';
+import { GeoAddressPicker } from '@/features/shared/ui/form/GeoAddressPicker';
+import type { GeoCoordinates } from '@/features/shared/logic/geoCoordinates';
 
 interface LocationInformationSectionProps {
   country: string;
@@ -15,12 +16,15 @@ interface LocationInformationSectionProps {
   city: string;
   street: string;
   house_number: string;
+  latitude: number | null;
+  longitude: number | null;
   onCountryChange: (value: string) => void;
   onRegionChange: (value: string) => void;
   onPostCodeChange: (value: string) => void;
   onCityChange: (value: string) => void;
   onStreetChange: (value: string) => void;
   onHouseNumberChange: (value: string) => void;
+  onCoordinatesChange: (coordinates: GeoCoordinates | null) => void;
 }
 
 export function LocationInformationSection({
@@ -30,12 +34,15 @@ export function LocationInformationSection({
   city,
   street,
   house_number,
+  latitude,
+  longitude,
   onCountryChange,
   onRegionChange,
   onPostCodeChange,
   onCityChange,
   onStreetChange,
   onHouseNumberChange,
+  onCoordinatesChange,
 }: LocationInformationSectionProps) {
   const { t } = useTranslation();
 
@@ -46,7 +53,7 @@ export function LocationInformationSection({
         <CardDescription>{t('pages.user.settingsForm.location.description')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <GeoAddressFields
+        <GeoAddressPicker
           idPrefix="user-location"
           values={{
             country,
@@ -56,6 +63,8 @@ export function LocationInformationSection({
             street,
             house_number,
           }}
+          coordinates={latitude !== null && longitude !== null ? { latitude, longitude } : null}
+          onCoordinatesChange={onCoordinatesChange}
           onFieldChange={(field, value) => {
             switch (field) {
               case 'country':

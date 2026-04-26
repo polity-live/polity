@@ -97,6 +97,15 @@ export const commonTranslations = {
       houseNumberHint: 'Enter a house number like 12 or 12a and match it to the selected street.',
     },
   },
+  locationPicker: {
+    title: 'Map',
+    description:
+      'Choose a verified address or drag the marker to keep the address and map in sync.',
+    loading: 'Loading map...',
+    syncing: 'Updating address from map...',
+    empty: 'Select an address or click on the map to place the marker.',
+    moveHint: 'Drag the marker or click somewhere on the map to update the address.',
+  },
   visibility: {
     label: 'Visibility',
     public: 'Public',

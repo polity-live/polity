@@ -41,6 +41,8 @@ export function useUserMutations() {
       city?: string;
       street?: string;
       house_number?: string;
+      latitude?: number | null;
+      longitude?: number | null;
     }
   ) => {
     setIsLoading(true);
@@ -124,6 +126,8 @@ export function useUserMutations() {
       city?: string;
       street?: string;
       house_number?: string;
+      latitude?: number | null;
+      longitude?: number | null;
       visibility?: string;
       hashtags?: string[];
       existingJunctions?: {
@@ -160,6 +164,8 @@ export function useUserMutations() {
         city: profileData.city,
         street: profileData.street,
         house_number: profileData.house_number,
+        latitude: profileData.latitude,
+        longitude: profileData.longitude,
         visibility: profileData.visibility,
       });
 

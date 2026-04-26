@@ -106,6 +106,15 @@ export const commonTranslations = {
         'Gib eine Hausnummer wie 12 oder 12a ein und gleiche sie mit der gewählten Straße ab.',
     },
   },
+  locationPicker: {
+    title: 'Karte',
+    description:
+      'Wähle eine verifizierte Adresse oder ziehe den Marker, damit Adresse und Karte synchron bleiben.',
+    loading: 'Karte wird geladen...',
+    syncing: 'Adresse wird aus der Karte aktualisiert...',
+    empty: 'Wähle eine Adresse oder klicke in die Karte, um den Marker zu setzen.',
+    moveHint: 'Ziehe den Marker oder klicke auf die Karte, um die Adresse zu aktualisieren.',
+  },
   visibility: {
     label: 'Sichtbarkeit',
     public: 'Öffentlich',

@@ -37,7 +37,7 @@ import {
   isPositiveInteger,
   isValidOptionalUrlLike,
 } from '@/features/shared/logic/inputValidation';
-import { GeoAddressFields } from '@/features/shared/ui/form/GeoAddressFields';
+import { GeoAddressPicker } from '@/features/shared/ui/form/GeoAddressPicker';
 import { MiniPlateEditor } from '@/features/shared/ui/form/MiniPlateEditor';
 import { ValidatedInputField } from '@/features/shared/ui/form/ValidatedInputField';
 
@@ -364,7 +364,7 @@ export function EventEdit({ eventId, mode = 'edit' }: EventEditProps) {
                   validator={value => isOptionalMinLength(value, 3)}
                   hint={t('common.validation.locationNameHint')}
                 />
-                <GeoAddressFields
+                <GeoAddressPicker
                   idPrefix="event-location"
                   values={{
                     country: formData.country,
@@ -373,6 +373,15 @@ export function EventEdit({ eventId, mode = 'edit' }: EventEditProps) {
                     post_code: formData.postCode,
                     street: formData.street,
                     house_number: formData.houseNumber,
+                  }}
+                  coordinates={
+                    formData.latitude !== null && formData.longitude !== null
+                      ? { latitude: formData.latitude, longitude: formData.longitude }
+                      : null
+                  }
+                  onCoordinatesChange={coordinates => {
+                    updateField('latitude', coordinates?.latitude ?? null);
+                    updateField('longitude', coordinates?.longitude ?? null);
                   }}
                   onFieldChange={(field, value) => {
                     switch (field) {
