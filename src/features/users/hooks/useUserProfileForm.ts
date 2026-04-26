@@ -1,10 +1,17 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
+import type { Value } from 'platejs';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { useUserMutations } from './useUserMutations';
 import { useCommonState } from '@/zero/common/useCommonState';
 import type { UserProfile } from '../types/user.types';
 import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
+import {
+  EMPTY_RICH_TEXT_VALUE,
+  richTextToPlainText,
+  toRichTextValue,
+  toZeroRichTextValue,
+} from '@/features/shared/logic/richText';
 
 // Co-located types
 export interface UserProfileFormData {
@@ -12,6 +19,7 @@ export interface UserProfileFormData {
   lastName: string;
   subtitle: string;
   about: string;
+  aboutContent: Value;
   email: string;
   youtube: string;
   linkedin: string;
@@ -44,6 +52,7 @@ export interface UseUserProfileFormReturn {
   setFormData: React.Dispatch<React.SetStateAction<UserProfileFormData>>;
   isSubmitting: boolean;
   handleSubmit: (e: React.FormEvent) => Promise<void>;
+  updateAboutContent: (value: Value) => void;
   updateField: <K extends keyof UserProfileFormData>(
     field: K,
     value: UserProfileFormData[K]
@@ -73,6 +82,7 @@ export function useUserProfileForm({
     lastName: '',
     subtitle: '',
     about: '',
+    aboutContent: EMPTY_RICH_TEXT_VALUE,
     email: '',
     youtube: '',
     linkedin: '',
@@ -102,11 +112,13 @@ export function useUserProfileForm({
   useEffect(() => {
     if (user && !initializedRef.current) {
       initializedRef.current = true;
+      const aboutContent = toRichTextValue(user.about ?? '');
       setFormData({
         firstName: user.first_name || '',
         lastName: user.last_name || '',
         subtitle: user.bio || '',
-        about: user.about || '',
+        about: richTextToPlainText(aboutContent),
+        aboutContent,
         email: user.email || '',
         youtube: user.youtube || '',
         linkedin: user.linkedin || '',
@@ -145,6 +157,14 @@ export function useUserProfileForm({
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const updateAboutContent = (value: Value) => {
+    setFormData(prev => ({
+      ...prev,
+      about: richTextToPlainText(value),
+      aboutContent: value,
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -160,7 +180,8 @@ export function useUserProfileForm({
         first_name: formData.firstName,
         last_name: formData.lastName,
         bio: formData.subtitle,
-        about: formData.about,
+        about: formData.about ? toZeroRichTextValue(formData.aboutContent) : null,
+        aboutPlainText: formData.about,
         avatar: formData.avatar,
         youtube: formData.youtube,
         linkedin: formData.linkedin,
@@ -203,6 +224,7 @@ export function useUserProfileForm({
     setFormData,
     isSubmitting,
     handleSubmit,
+    updateAboutContent,
     updateField,
   };
 }

@@ -41,14 +41,23 @@ import { ToggleToolbarButton } from './toggle-toolbar-button.tsx';
 import { ToolbarGroup } from '@/features/shared/ui/ui/toolbar.tsx';
 import { TurnIntoToolbarButton } from './turn-into-toolbar-button.tsx';
 import { useModeContext } from '@/features/shared/ui/kit-platejs/mode-context.tsx';
+import { cn } from '@/features/shared/utils/utils.ts';
 
-export function FixedToolbarButtons() {
+interface FixedToolbarButtonsProps {
+  className?: string;
+  showModeToolbarButton?: boolean;
+}
+
+export function FixedToolbarButtons({
+  className,
+  showModeToolbarButton = true,
+}: FixedToolbarButtonsProps = {}) {
   const readOnly = useEditorReadOnly();
   const { t } = useTranslation();
   const { currentMode, onModeChange, isOwnerOrCollaborator } = useModeContext();
 
   return (
-    <div className="flex w-full">
+    <div className={cn('flex w-full min-w-max items-center', className)}>
       <ToolbarGroup>
         <MarkToolbarButton
           nodeType={KEYS.highlight}
@@ -59,13 +68,15 @@ export function FixedToolbarButtons() {
         <CommentToolbarButton />
       </ToolbarGroup>
 
-      <ToolbarGroup>
-        <ModeToolbarButton
-          currentMode={currentMode}
-          onModeChange={onModeChange}
-          isOwnerOrCollaborator={isOwnerOrCollaborator}
-        />
-      </ToolbarGroup>
+      {showModeToolbarButton && (
+        <ToolbarGroup>
+          <ModeToolbarButton
+            currentMode={currentMode}
+            onModeChange={onModeChange}
+            isOwnerOrCollaborator={isOwnerOrCollaborator}
+          />
+        </ToolbarGroup>
+      )}
 
       {!readOnly && (
         <>

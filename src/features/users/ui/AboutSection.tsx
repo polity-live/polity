@@ -1,14 +1,21 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
-import { Textarea } from '@/features/shared/ui/ui/textarea';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
 import { Label } from '@/features/shared/ui/ui/label';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import type { Value } from 'platejs';
+import { MiniPlateEditor } from '@/features/shared/ui/form/MiniPlateEditor';
 
 interface AboutSectionProps {
-  about: string;
-  onAboutChange: (value: string) => void;
+  aboutContent: Value;
+  onAboutContentChange: (value: Value) => void;
 }
 
-export function AboutSection({ about, onAboutChange }: AboutSectionProps) {
+export function AboutSection({ aboutContent, onAboutContentChange }: AboutSectionProps) {
   const { t } = useTranslation();
 
   return (
@@ -20,12 +27,11 @@ export function AboutSection({ about, onAboutChange }: AboutSectionProps) {
       <CardContent>
         <div className="space-y-2">
           <Label htmlFor="about">{t('pages.user.settingsForm.about.bioLabel')}</Label>
-          <Textarea
+          <MiniPlateEditor
             id="about"
-            value={about}
-            onChange={e => onAboutChange(e.target.value)}
+            value={aboutContent}
+            onChange={onAboutContentChange}
             placeholder={t('pages.user.settingsForm.about.bioPlaceholder')}
-            rows={6}
           />
         </div>
       </CardContent>

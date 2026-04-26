@@ -20,6 +20,12 @@ interface PlateEditorProps {
   initialValue?: Value;
   value?: Value; // Controlled mode
   onChange?: (value: Value) => void;
+  id?: string;
+  placeholder?: string;
+  containerClassName?: string;
+  editorClassName?: string;
+  containerVariant?: React.ComponentProps<typeof EditorContainer>['variant'];
+  editorVariant?: React.ComponentProps<typeof Editor>['variant'];
   currentUser?: {
     id: string;
     name: string;
@@ -55,6 +61,12 @@ export function PlateEditor({
   initialValue,
   value,
   onChange,
+  id,
+  placeholder,
+  containerClassName,
+  editorClassName,
+  containerVariant,
+  editorVariant = 'demo',
   currentUser,
   users,
   discussions,
@@ -116,7 +128,7 @@ export function PlateEditor({
       plugins: EditorKit,
       value: baseValue,
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [isControlled, initialValue, currentUser, users, documentTitle, documentId]);
 
   const editor = usePlateEditor(editorConfig);
@@ -154,7 +166,7 @@ export function PlateEditor({
         // changed (e.g. remote poke arrived). Otherwise keep whatever the
         // editor plugin currently holds — it may contain a comment the user
         // just added that hasn't round-tripped through Zero yet.
-        discussions: propsChanged ? (discussions || []) : currentEditorDiscussions,
+        discussions: propsChanged ? discussions || [] : currentEditorDiscussions,
       });
 
       if (propsChanged) {
@@ -318,8 +330,13 @@ export function PlateEditor({
             />
           )}
 
-          <EditorContainer>
-            <Editor variant="demo" />
+          <EditorContainer variant={containerVariant} className={containerClassName}>
+            <Editor
+              id={id}
+              variant={editorVariant}
+              placeholder={placeholder}
+              className={editorClassName}
+            />
           </EditorContainer>
 
           <SettingsDialog />

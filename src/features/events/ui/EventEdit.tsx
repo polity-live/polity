@@ -15,7 +15,6 @@ import {
 } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Label } from '@/features/shared/ui/ui/label';
-import { Textarea } from '@/features/shared/ui/ui/textarea';
 import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
 import { Loader2, XCircle } from 'lucide-react';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
@@ -39,6 +38,7 @@ import {
   isValidOptionalUrlLike,
 } from '@/features/shared/logic/inputValidation';
 import { GeoAddressFields } from '@/features/shared/ui/form/GeoAddressFields';
+import { MiniPlateEditor } from '@/features/shared/ui/form/MiniPlateEditor';
 import { ValidatedInputField } from '@/features/shared/ui/form/ValidatedInputField';
 
 interface EventEditProps {
@@ -59,6 +59,7 @@ export function EventEdit({ eventId, mode = 'edit' }: EventEditProps) {
   const {
     formData,
     setFormData,
+    updateDescriptionContent,
     updateField,
     removeImage,
     handleSubmit,
@@ -239,12 +240,11 @@ export function EventEdit({ eventId, mode = 'edit' }: EventEditProps) {
             />
             <div className="space-y-2">
               <Label htmlFor="description">{t('features.events.editPage.eventDescription')}</Label>
-              <Textarea
+              <MiniPlateEditor
                 id="description"
-                value={formData.description}
-                onChange={e => updateField('description', e.target.value)}
+                value={formData.descriptionContent}
+                onChange={updateDescriptionContent}
                 placeholder={t('features.events.editPage.eventDescriptionPlaceholder')}
-                rows={6}
               />
             </div>
             <VisibilityInput

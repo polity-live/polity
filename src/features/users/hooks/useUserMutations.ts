@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import { useUserActions } from '@/zero/users/useUserActions';
 import { useCommonActions } from '@/zero/common/useCommonActions';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
@@ -22,7 +23,7 @@ export function useUserMutations() {
       first_name?: string;
       last_name?: string;
       bio?: string;
-      about?: string;
+      about?: ReadonlyJSONValue | null;
       avatar?: string;
       x?: string;
       whatsapp?: string;
@@ -105,7 +106,8 @@ export function useUserMutations() {
       first_name?: string;
       last_name?: string;
       bio?: string;
-      about?: string;
+      about?: ReadonlyJSONValue | null;
+      aboutPlainText?: string;
       avatar?: string;
       whatsapp?: string;
       instagram?: string;
@@ -182,7 +184,7 @@ export function useUserMutations() {
           title: profileData.first_name
             ? `${profileData.first_name}${profileData.last_name ? ' ' + profileData.last_name : ''} updated their profile`
             : 'Profile updated',
-          description: profileData.about?.substring(0, 100) || undefined,
+          description: profileData.aboutPlainText?.substring(0, 100) || undefined,
         },
       });
 

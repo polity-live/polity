@@ -14,14 +14,15 @@ interface UserEditProps {
 export function UserEdit({ userId, defaultTab }: UserEditProps) {
   const { user, isLoading } = useUserData(userId);
 
-  const { formData, isSubmitting, handleSubmit, updateField } = useUserProfileForm({
-    userId,
-    user,
-  });
+  const { formData, isSubmitting, handleSubmit, updateAboutContent, updateField } =
+    useUserProfileForm({
+      userId,
+      user,
+    });
 
   const { uploadAvatar } = useAvatarUpload({
     userId,
-    onSuccess: (avatarUrl) => updateField('avatar', avatarUrl),
+    onSuccess: avatarUrl => updateField('avatar', avatarUrl),
   });
 
   const {
@@ -38,7 +39,7 @@ export function UserEdit({ userId, defaultTab }: UserEditProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="text-primary h-8 w-8 animate-spin" />
       </div>
     );
   }
@@ -56,13 +57,12 @@ export function UserEdit({ userId, defaultTab }: UserEditProps) {
       onSubmit={handleSubmit}
       onCancel={() => window.history.back()}
       onAvatarUpload={uploadAvatar}
+      onAboutContentChange={updateAboutContent}
       onFieldChange={updateField}
       onSubscribe={handleSubscribe}
       onCustomAmount={handleCustomAmount}
       onCancelSubscription={() =>
-        activeSubscription?.id
-          ? handleCancelSubscription(activeSubscription.id)
-          : undefined
+        activeSubscription?.id ? handleCancelSubscription(activeSubscription.id) : undefined
       }
     />
   );

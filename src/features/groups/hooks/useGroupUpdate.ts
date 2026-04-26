@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect, useRef, useMemo } from 'react';
+import type { Value } from 'platejs';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
@@ -13,12 +14,19 @@ import { useCommonState, useCommonActions } from '@/zero/common';
 import { useMessageActions } from '@/zero/messages/useMessageActions';
 import { useMessageState } from '@/zero/messages/useMessageState';
 import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
+import {
+  EMPTY_RICH_TEXT_VALUE,
+  richTextToPlainText,
+  toRichTextValue,
+  toZeroRichTextValue,
+} from '@/features/shared/logic/richText';
 
 export type GroupType = 'base' | 'hierarchical';
 
 export interface GroupFormData {
   name: string;
   description: string;
+  descriptionContent: Value;
   email: string;
   country: string;
   region: string;
@@ -44,6 +52,7 @@ interface UseGroupUpdateResult {
   formData: GroupFormData;
   setFormData: (data: GroupFormData) => void;
   updateField: <K extends keyof GroupFormData>(field: K, value: GroupFormData[K]) => void;
+  updateDescriptionContent: (value: Value) => void;
   removeImage: () => void;
   isSubmitting: boolean;
   handleSubmit: (e?: React.FormEvent) => Promise<void>;
@@ -53,6 +62,7 @@ interface UseGroupUpdateResult {
 const initialFormState: GroupFormData = {
   name: '',
   description: '',
+  descriptionContent: EMPTY_RICH_TEXT_VALUE,
   email: '',
   country: '',
   region: '',
@@ -129,9 +139,13 @@ export function useGroupUpdate(
   useEffect(() => {
     if (initialData && !initializedRef.current) {
       initializedRef.current = true;
+      const descriptionContent = toRichTextValue(
+        initialData.descriptionContent ?? initialData.description ?? ''
+      );
       const newFormData = {
         name: initialData.name || '',
-        description: initialData.description || '',
+        description: richTextToPlainText(descriptionContent),
+        descriptionContent,
         email: initialData.email || '',
         country: initialData.country || '',
         region: initialData.region || '',
@@ -164,6 +178,14 @@ export function useGroupUpdate(
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const updateDescriptionContent = (value: Value) => {
+    setFormData(prev => ({
+      ...prev,
+      description: richTextToPlainText(value),
+      descriptionContent: value,
+    }));
+  };
+
   const removeImage = () => {
     if (isCreating) {
       return;
@@ -180,9 +202,13 @@ export function useGroupUpdate(
    */
   const resetForm = () => {
     if (initialData) {
+      const descriptionContent = toRichTextValue(
+        initialData.descriptionContent ?? initialData.description ?? ''
+      );
       const resetData = {
         name: initialData.name || '',
-        description: initialData.description || '',
+        description: richTextToPlainText(descriptionContent),
+        descriptionContent,
         email: initialData.email || '',
         country: initialData.country || '',
         region: initialData.region || '',
@@ -236,7 +262,9 @@ export function useGroupUpdate(
         await createGroup({
           id: groupId,
           name: formData.name,
-          description: formData.description || null,
+          description: formData.description
+            ? toZeroRichTextValue(formData.descriptionContent)
+            : null,
           email: formData.email || null,
           country: formData.country || null,
           region: formData.region || null,
@@ -263,7 +291,9 @@ export function useGroupUpdate(
         await updateGroup({
           id: groupId,
           name: formData.name,
-          description: formData.description,
+          description: formData.description
+            ? toZeroRichTextValue(formData.descriptionContent)
+            : null,
           email: formData.email || null,
           country: formData.country || null,
           region: formData.region || null,
@@ -318,6 +348,7 @@ export function useGroupUpdate(
     formData,
     setFormData,
     updateField,
+    updateDescriptionContent,
     removeImage,
     isSubmitting,
     handleSubmit,

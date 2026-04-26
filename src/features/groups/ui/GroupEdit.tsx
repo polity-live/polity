@@ -8,10 +8,12 @@
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Loader2 } from 'lucide-react';
+import type { Value } from 'platejs';
 import { useGroupData } from '../hooks/useGroupData';
 import { GroupEditForm } from './GroupEditForm';
 import { useAuth } from '@/providers/auth-provider';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { richTextToPlainText, toRichTextValue } from '@/features/shared/logic/richText';
 
 interface GroupEditProps {
   groupId: string;
@@ -66,7 +68,8 @@ export function GroupEdit({ groupId }: GroupEditProps) {
           group
             ? {
                 name: group.name ?? '',
-                description: group.description ?? '',
+                description: richTextToPlainText(group.description),
+                descriptionContent: toRichTextValue(group.description) as Value,
                 email: group.email ?? '',
                 country: group.country ?? '',
                 region: group.region ?? '',

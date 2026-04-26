@@ -11,7 +11,7 @@
 CREATE TABLE IF NOT EXISTS public.event (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title TEXT,
-  description TEXT,
+  description JSONB,
   status TEXT,
   event_type TEXT,
   location_type TEXT,

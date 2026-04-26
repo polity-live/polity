@@ -1,4 +1,4 @@
-import { table, string, number, boolean } from '@rocicorp/zero';
+import { table, string, number, boolean, json, type ReadonlyJSONValue } from '@rocicorp/zero';
 
 export const user = table('user')
   .columns({
@@ -8,7 +8,7 @@ export const user = table('user')
     first_name: string().optional(),
     last_name: string().optional(),
     bio: string().optional(),
-    about: string().optional(),
+    about: json<ReadonlyJSONValue>().optional(),
     avatar: string().optional(),
     x: string().optional(),
     youtube: string().optional(),

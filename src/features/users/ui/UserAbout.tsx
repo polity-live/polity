@@ -1,14 +1,15 @@
 import React from 'react';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
+import { RichTextPreview } from '@/features/shared/ui/rich-text/RichTextPreview';
 
 interface UserAboutProps {
-  about: string;
+  about: unknown;
 }
 
 export const UserAbout: React.FC<UserAboutProps> = ({ about }) => (
   <Card>
     <CardContent className="pt-6">
-      <p>{about}</p>
+      <RichTextPreview content={about} />
     </CardContent>
   </Card>
 );

@@ -22,6 +22,7 @@ import {
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import { formatLocation } from '@/features/shared/logic/locationHelpers';
 import { buildContactLinkHref } from '@/features/shared/logic/contactLinkHelpers';
+import { RichTextPreview } from '@/features/shared/ui/rich-text/RichTextPreview';
 
 interface ContactInfo {
   email?: string;
@@ -51,7 +52,7 @@ interface EventDetails {
 }
 
 interface InfoTabsProps {
-  about?: string;
+  about?: unknown;
   contact?: ContactInfo;
   eventDetails?: EventDetails;
   className?: string;
@@ -276,11 +277,7 @@ export const InfoTabs: React.FC<InfoTabsProps> = ({ about, contact, eventDetails
       <TabsContent value="about" className="mt-4">
         <Card>
           <CardContent className="pt-6">
-            {about ? (
-              <p>{about}</p>
-            ) : (
-              <p className="text-muted-foreground">{t('components.infoTabs.noInformation')}</p>
-            )}
+            <RichTextPreview content={about} emptyText={t('components.infoTabs.noInformation')} />
           </CardContent>
         </Card>
       </TabsContent>

@@ -13,17 +13,23 @@ import {
 } from '@/features/shared/ui/ui/card';
 import { hasMinLength } from '@/features/shared/logic/inputValidation';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { MiniPlateEditor } from '@/features/shared/ui/form/MiniPlateEditor';
 import { ValidatedInputField } from '@/features/shared/ui/form/ValidatedInputField';
 import { Label } from '@/features/shared/ui/ui/label';
-import { Textarea } from '@/features/shared/ui/ui/textarea';
+import type { Value } from 'platejs';
 import type { GroupFormData } from '../hooks/useGroupUpdate';
 
 interface BasicInfoSectionProps {
   formData: GroupFormData;
-  onChange: (field: keyof GroupFormData, value: string) => void;
+  onNameChange: (value: string) => void;
+  onDescriptionContentChange: (value: Value) => void;
 }
 
-export function BasicInfoSection({ formData, onChange }: BasicInfoSectionProps) {
+export function BasicInfoSection({
+  formData,
+  onNameChange,
+  onDescriptionContentChange,
+}: BasicInfoSectionProps) {
   const { t } = useTranslation();
 
   return (
@@ -37,7 +43,7 @@ export function BasicInfoSection({ formData, onChange }: BasicInfoSectionProps) 
           id="name"
           label="Group Name *"
           value={formData.name}
-          onChange={value => onChange('name', value)}
+          onChange={onNameChange}
           placeholder="Group name"
           validator={value => hasMinLength(value, 3)}
           hint={t('common.validation.nameHint')}
@@ -45,12 +51,11 @@ export function BasicInfoSection({ formData, onChange }: BasicInfoSectionProps) 
         />
         <div className="space-y-2">
           <Label htmlFor="description">Description</Label>
-          <Textarea
+          <MiniPlateEditor
             id="description"
-            value={formData.description}
-            onChange={e => onChange('description', e.target.value)}
+            value={formData.descriptionContent}
+            onChange={onDescriptionContentChange}
             placeholder="Describe the group and its purpose..."
-            rows={6}
           />
         </div>
       </CardContent>

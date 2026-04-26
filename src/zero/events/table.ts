@@ -1,10 +1,10 @@
-import { table, string, number, boolean, json } from '@rocicorp/zero';
+import { table, string, number, boolean, json, type ReadonlyJSONValue } from '@rocicorp/zero';
 
 export const event = table('event')
   .columns({
     id: string(),
     title: string().optional(),
-    description: string().optional(),
+    description: json<ReadonlyJSONValue>().optional(),
     status: string().optional(),
     event_type: string().optional(),
     location_type: string().optional(),

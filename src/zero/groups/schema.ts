@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { timestampSchema } from '../shared/helpers';
+import { jsonSchema, timestampSchema } from '../shared/helpers';
 
 const groupTypeSchema = z.enum(['base', 'hierarchical']);
 
@@ -7,7 +7,7 @@ const groupTypeSchema = z.enum(['base', 'hierarchical']);
 const groupBaseSchema = z.object({
   id: z.string(),
   name: z.string().nullable(),
-  description: z.string().nullable(),
+  description: jsonSchema.nullable(),
   email: z.string().nullable(),
   country: z.string().nullable(),
   region: z.string().nullable(),

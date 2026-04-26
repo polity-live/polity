@@ -1,9 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import type { Value } from 'platejs';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
-import { Textarea } from '@/features/shared/ui/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/features/shared/ui/ui/tabs';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
@@ -22,6 +22,12 @@ import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import type { CreateFormConfig } from '../types/create-form.types';
 import { buildRRule, type RecurrencePattern } from '@/features/events/logic/rruleHelpers';
 import { formatNamedLocation } from '@/features/shared/logic/locationHelpers';
+import { MiniPlateEditor } from '@/features/shared/ui/form/MiniPlateEditor';
+import {
+  EMPTY_RICH_TEXT_VALUE,
+  richTextToPlainText,
+  toZeroRichTextValue,
+} from '@/features/shared/logic/richText';
 
 type EventType = 'delegate_assembly' | 'general_assembly' | 'open' | 'on_invite';
 
@@ -42,6 +48,7 @@ export function useCreateEventForm(): CreateFormConfig {
   });
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [descriptionContent, setDescriptionContent] = useState<Value>(EMPTY_RICH_TEXT_VALUE);
   const [startDate, setStartDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -92,6 +99,11 @@ export function useCreateEventForm(): CreateFormConfig {
   const { manageEventGroupIds } = useUserGroupsWithManageEvents();
   const groupRequired = eventType === 'general_assembly' || eventType === 'delegate_assembly';
 
+  const handleDescriptionContentChange = useCallback((value: Value) => {
+    setDescriptionContent(value);
+    setDescription(richTextToPlainText(value));
+  }, []);
+
   const handleSubmit = async () => {
     if (!title.trim()) return;
     setIsSubmitting(true);
@@ -99,7 +111,7 @@ export function useCreateEventForm(): CreateFormConfig {
       await createEvent({
         id: eventId,
         title: title.trim(),
-        description: description || null,
+        description: description ? toZeroRichTextValue(descriptionContent) : null,
         location_type: locationType,
         location_name: locationType === 'physical' ? locationName || null : null,
         location_url: locationType === 'online' ? onlineLink || null : null,
@@ -181,11 +193,10 @@ export function useCreateEventForm(): CreateFormConfig {
                 <p className="text-muted-foreground text-xs">
                   {t('pages.create.event.tips.description')}
                 </p>
-                <Textarea
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
+                <MiniPlateEditor
+                  value={descriptionContent}
+                  onChange={handleDescriptionContentChange}
                   placeholder={t('pages.create.event.descriptionPlaceholder')}
-                  rows={4}
                 />
               </div>
               <ImageUpload
@@ -525,6 +536,7 @@ export function useCreateEventForm(): CreateFormConfig {
     [
       title,
       description,
+      descriptionContent,
       startDate,
       startTime,
       endDate,
@@ -558,6 +570,7 @@ export function useCreateEventForm(): CreateFormConfig {
       amendmentDeadline,
       eventId,
       groupRequired,
+      handleDescriptionContentChange,
       manageEventGroupIds,
       t,
     ]

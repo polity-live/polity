@@ -3,6 +3,7 @@ import {
   timestampSchema,
   nullableTimestampSchema,
   jsonNumberArraySchema,
+  jsonSchema,
   jsonStringStringRecordSchema,
 } from '../shared/helpers';
 
@@ -10,7 +11,7 @@ import {
 const eventBaseSchema = z.object({
   id: z.string(),
   title: z.string().nullable(),
-  description: z.string().nullable(),
+  description: jsonSchema.nullable(),
   status: z.string().nullable(),
   event_type: z.string().nullable(),
   location_type: z.string().nullable(),

@@ -1,10 +1,10 @@
-import { table, string, number } from '@rocicorp/zero';
+import { table, string, number, json, type ReadonlyJSONValue } from '@rocicorp/zero';
 
 export const group = table('group')
   .columns({
     id: string(),
     name: string().optional(),
-    description: string().optional(),
+    description: json<ReadonlyJSONValue>().optional(),
     email: string().optional(),
     country: string().optional(),
     region: string().optional(),

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import type { Value } from 'platejs';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { useEventData } from './useEventData';
@@ -7,10 +8,17 @@ import { useEventActions } from '@/zero/events/useEventActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
 import { useAuth } from '@/providers/auth-provider';
 import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
+import {
+  EMPTY_RICH_TEXT_VALUE,
+  richTextToPlainText,
+  toRichTextValue,
+  toZeroRichTextValue,
+} from '@/features/shared/logic/richText';
 
 export interface EventFormData {
   title: string;
   description: string;
+  descriptionContent: Value;
   locationType: 'physical' | 'online';
   locationName: string;
   onlineLink: string;
@@ -45,6 +53,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
   const [formData, setFormData] = useState<EventFormData>({
     title: '',
     description: '',
+    descriptionContent: EMPTY_RICH_TEXT_VALUE,
     locationType: 'physical',
     locationName: '',
     onlineLink: '',
@@ -111,7 +120,8 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
 
       setFormData({
         title: event.title || '',
-        description: event.description || '',
+        description: richTextToPlainText(event.description ?? ''),
+        descriptionContent: toRichTextValue(event.description ?? ''),
         locationType:
           event.location_type === 'online' || (!!event.location_url && !event.location_name)
             ? 'online'
@@ -151,6 +161,14 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const updateDescriptionContent = (value: Value) => {
+    setFormData(prev => ({
+      ...prev,
+      description: richTextToPlainText(value),
+      descriptionContent: value,
+    }));
+  };
+
   const removeImage = () => {
     if (isCreating) {
       return;
@@ -177,7 +195,9 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
         const createData = {
           id: eventId,
           title: formData.title,
-          description: formData.description || null,
+          description: formData.description
+            ? toZeroRichTextValue(formData.descriptionContent)
+            : null,
           location_type: formData.locationType,
           location_name:
             formData.locationType === 'physical' ? formData.locationName || null : null,
@@ -211,7 +231,9 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
         const updateData = {
           id: eventId,
           title: formData.title,
-          description: formData.description,
+          description: formData.description
+            ? toZeroRichTextValue(formData.descriptionContent)
+            : null,
           location_type: formData.locationType,
           location_name:
             formData.locationType === 'physical' ? formData.locationName || null : null,
@@ -267,6 +289,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
     formData,
     setFormData,
     updateField,
+    updateDescriptionContent,
     removeImage,
     handleSubmit,
     isSubmitting,

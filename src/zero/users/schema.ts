@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { timestampSchema } from '../shared/helpers';
+import { jsonSchema, timestampSchema } from '../shared/helpers';
 
 // ── user ──────────────────────────────────────────────────────────────
 const userBaseSchema = z.object({
@@ -9,7 +9,7 @@ const userBaseSchema = z.object({
   first_name: z.string().nullable(),
   last_name: z.string().nullable(),
   bio: z.string().nullable(),
-  about: z.string().nullable(),
+  about: jsonSchema.nullable(),
   avatar: z.string().nullable(),
   x: z.string().nullable(),
   youtube: z.string().nullable(),

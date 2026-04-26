@@ -20,6 +20,7 @@ import { VotingPasswordTab } from './VotingPasswordTab';
 import { AccountPasswordSection } from './AccountPasswordSection';
 import { AccountEmailSection } from './AccountEmailSection';
 import { NotificationSettingsContent } from '@/features/notifications/ui/NotificationSettingsContent';
+import type { Value } from 'platejs';
 import type { UserProfileFormData } from '../hooks/useUserProfileForm';
 
 interface UserProfileEditFormProps {
@@ -34,6 +35,7 @@ interface UserProfileEditFormProps {
   onSubmit: (e: React.FormEvent) => void;
   onCancel: () => void;
   onAvatarUpload: (file: File) => Promise<string>;
+  onAboutContentChange: (value: Value) => void;
   onFieldChange: <K extends keyof UserProfileFormData>(
     field: K,
     value: UserProfileFormData[K]
@@ -55,6 +57,7 @@ export function UserProfileEditForm({
   onSubmit,
   onCancel,
   onAvatarUpload,
+  onAboutContentChange,
   onFieldChange,
   onSubscribe,
   onCustomAmount,
@@ -112,8 +115,8 @@ export function UserProfileEditForm({
             />
 
             <AboutSection
-              about={formData.about}
-              onAboutChange={value => onFieldChange('about', value)}
+              aboutContent={formData.aboutContent}
+              onAboutContentChange={onAboutContentChange}
             />
 
             <ContactInformationSection

@@ -1,9 +1,9 @@
 import { useState, useMemo, useCallback } from 'react';
+import type { Value } from 'platejs';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
-import { Textarea } from '@/features/shared/ui/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/features/shared/ui/ui/radio-group';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
@@ -45,9 +45,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/features/shared/ui/ui/table';
+import { MiniPlateEditor } from '@/features/shared/ui/form/MiniPlateEditor';
 import { cn } from '@/features/shared/utils/utils.ts';
 import { matchInviteCsvUsers, type InviteCsvMatchResult } from '../logic/groupInviteCsv';
 import { formatLocation } from '@/features/shared/logic/locationHelpers';
+import {
+  EMPTY_RICH_TEXT_VALUE,
+  richTextToPlainText,
+  toZeroRichTextValue,
+} from '@/features/shared/logic/richText';
 import { X, Upload, Link2, FileSpreadsheet } from 'lucide-react';
 import { toast } from 'sonner';
 import type { CreateFormConfig } from '../types/create-form.types';
@@ -102,6 +108,7 @@ export function useCreateGroupForm(): CreateFormConfig {
   const [groupType, setGroupType] = useState<GroupType>('base');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [descriptionContent, setDescriptionContent] = useState<Value>(EMPTY_RICH_TEXT_VALUE);
   const [email, setEmail] = useState('');
   const [country, setCountry] = useState('');
   const [region, setRegion] = useState('');
@@ -132,6 +139,11 @@ export function useCreateGroupForm(): CreateFormConfig {
   const [eventStartTime, setEventStartTime] = useState('');
 
   const { allHashtags } = useCommonState({ loadAllHashtags: true });
+
+  const handleDescriptionContentChange = useCallback((value: Value) => {
+    setDescriptionContent(value);
+    setDescription(richTextToPlainText(value));
+  }, []);
 
   const handleCsvUpload = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -239,7 +251,7 @@ export function useCreateGroupForm(): CreateFormConfig {
       await createGroup({
         id: groupId,
         name: name.trim(),
-        description: description || null,
+        description: description ? toZeroRichTextValue(descriptionContent) : null,
         email: email || null,
         country: country || null,
         region: region || null,
@@ -355,11 +367,10 @@ export function useCreateGroupForm(): CreateFormConfig {
                 <p className="text-muted-foreground text-xs">
                   {t('pages.create.group.tips.description')}
                 </p>
-                <Textarea
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
+                <MiniPlateEditor
+                  value={descriptionContent}
+                  onChange={handleDescriptionContentChange}
                   placeholder={t('pages.create.group.descriptionPlaceholder')}
-                  rows={4}
                 />
               </div>
               <div className="space-y-2">
@@ -945,6 +956,7 @@ export function useCreateGroupForm(): CreateFormConfig {
     [
       name,
       description,
+      descriptionContent,
       email,
       country,
       region,
@@ -970,6 +982,7 @@ export function useCreateGroupForm(): CreateFormConfig {
       eventLocation,
       eventStartDate,
       eventStartTime,
+      handleDescriptionContentChange,
       user,
     ]
   );

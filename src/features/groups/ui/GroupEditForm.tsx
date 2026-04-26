@@ -41,8 +41,15 @@ export function GroupEditForm({
   const isCreating = !initialData;
   const [showReview, setShowReview] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
-  const { formData, setFormData, updateField, removeImage, handleSubmit, isSubmitting } =
-    useGroupUpdate(groupId, initialData, { actorId, visibility, groupType });
+  const {
+    formData,
+    setFormData,
+    updateDescriptionContent,
+    updateField,
+    removeImage,
+    handleSubmit,
+    isSubmitting,
+  } = useGroupUpdate(groupId, initialData, { actorId, visibility, groupType });
 
   const onFormSubmit = (e: React.FormEvent) => {
     if (isCreating && !showReview) {
@@ -118,7 +125,11 @@ export function GroupEditForm({
       />
 
       {/* Basic Information */}
-      <BasicInfoSection formData={formData} onChange={updateField} />
+      <BasicInfoSection
+        formData={formData}
+        onNameChange={value => updateField('name', value)}
+        onDescriptionContentChange={updateDescriptionContent}
+      />
 
       {/* Visibility */}
       <VisibilityInput value={formData.visibility} onChange={v => updateField('visibility', v)} />

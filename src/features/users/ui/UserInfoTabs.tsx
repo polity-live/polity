@@ -5,7 +5,7 @@ import { UserAbout } from './UserAbout';
 import { UserContact } from './UserContact';
 
 interface UserInfoTabsProps {
-  about: string;
+  about: unknown;
   contact: {
     email: string;
     twitter: string;
