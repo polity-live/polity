@@ -12,6 +12,10 @@ export function useMessageMutations() {
   const actions = useMessageActions();
   const [isLoading, setIsLoading] = useState(false);
 
+  interface SendMessageOptions {
+    contextJson?: string;
+  }
+
   /**
    * Send a message to a conversation
    */
@@ -19,7 +23,8 @@ export function useMessageMutations() {
     conversationId: string,
     senderId: string,
     content: string,
-    recipientUserIds?: string[]
+    recipientUserIds?: string[],
+    options?: SendMessageOptions
   ) => {
     setIsLoading(true);
     try {
@@ -29,6 +34,7 @@ export function useMessageMutations() {
         id: messageId,
         content,
         conversation_id: conversationId,
+        context_json: options?.contextJson ?? '[]',
         deleted_at: 0,
       });
 

@@ -26,6 +26,11 @@ This project now separates local development from production values via mode-spe
 - `.env.production.local` for `npm run build` and local production previews against cloud services
 - `.env` should stay empty or contain only shared non-sensitive defaults
 
+AI-specific env vars:
+
+- `OPENROUTER_API_KEY` enables shared free OpenRouter models for all users.
+- `AI_ENCRYPTION_SECRET` encrypts per-user BYOK provider keys on the server. Use a long random secret and keep it identical across app instances that need to decrypt existing keys.
+
 ### Local development mode
 
 - App: `npm run dev`

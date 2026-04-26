@@ -1,19 +1,25 @@
 import { useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Check, X } from 'lucide-react';
+import { Check, LoaderCircle, X } from 'lucide-react';
 import { MessageBubble } from './MessageBubble';
 import { Conversation, Message } from '../types/message.types';
 import { getOtherParticipant } from '../logic/messageUtils';
 import { AriaKaiMessageActions } from '@/features/assistant/ui/AriaKaiMessageActions.tsx';
 import { isAssistantConversation } from '@/features/assistant/logic/assistantHelpers';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { MessageContent } from '@/features/messages/ui/MessageContent.tsx';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 
 interface MessageListProps {
   conversation: Conversation;
   currentUserId?: string;
   onAcceptConversation: (conversation: Conversation) => void;
   onRejectConversation: (conversation: Conversation) => void;
+  streamingAssistantMessage?: {
+    text: string;
+    isThinking: boolean;
+  };
 }
 
 export function MessageList({
@@ -21,6 +27,7 @@ export function MessageList({
   currentUserId,
   onAcceptConversation,
   onRejectConversation,
+  streamingAssistantMessage,
 }: MessageListProps) {
   const { t } = useTranslation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -28,18 +35,26 @@ export function MessageList({
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [conversation.messages]);
+  }, [
+    conversation.messages,
+    streamingAssistantMessage?.text,
+    streamingAssistantMessage?.isThinking,
+  ]);
 
   const otherUser = getOtherParticipant(conversation, currentUserId);
   const otherParticipantName =
-    [otherUser?.first_name, otherUser?.last_name].filter(Boolean).join(' ') || t('common.labels.unspecifiedUser');
+    [otherUser?.first_name, otherUser?.last_name].filter(Boolean).join(' ') ||
+    t('common.labels.unspecifiedUser');
+  const hasUserRepliedToAssistant = conversation.messages.some(
+    message => message.sender?.id === currentUserId
+  );
 
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="space-y-4 p-4">
         {conversation.messages.length === 0 ? (
           <div className="flex h-full items-center justify-center py-12">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               {t('features.messages.conversation.noMessagesYet')}
             </p>
           </div>
@@ -51,8 +66,29 @@ export function MessageList({
         )}
 
         {/* Aria & Kai Tutorial Actions - Show only in Aria & Kai conversation */}
-        {isAssistantConversation(conversation) && currentUserId && (
+        {isAssistantConversation(conversation) && currentUserId && !hasUserRepliedToAssistant && (
           <AriaKaiMessageActions conversationId={conversation.id} currentUserId={currentUserId} />
+        )}
+
+        {streamingAssistantMessage && otherUser && (
+          <div className="flex items-end gap-2">
+            <Avatar className="h-8 w-8 flex-shrink-0">
+              <AvatarImage src={otherUser.avatar ?? undefined} />
+              <AvatarFallback>{otherUser.first_name?.[0]?.toUpperCase() || 'A'}</AvatarFallback>
+            </Avatar>
+            <div className="max-w-[70%] space-y-2">
+              <div className="bg-muted rounded-lg px-4 py-2">
+                {streamingAssistantMessage.text ? (
+                  <MessageContent content={streamingAssistantMessage.text} />
+                ) : (
+                  <div className="text-muted-foreground flex items-center gap-2 text-sm">
+                    <LoaderCircle className="h-4 w-4 animate-spin" />
+                    <span>{t('features.messages.ai.thinking', 'Aria & Kai is thinking...')}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Conversation Request - Only for direct messages */}

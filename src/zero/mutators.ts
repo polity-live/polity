@@ -1,25 +1,26 @@
-import { defineMutators } from '@rocicorp/zero'
+import { defineMutators } from '@rocicorp/zero';
 
-import { userSharedMutators } from './users/shared-mutators'
-import { groupSharedMutators } from './groups/shared-mutators'
-import { eventSharedMutators } from './events/shared-mutators'
-import { amendmentSharedMutators } from './amendments/shared-mutators'
-import { documentSharedMutators } from './documents/shared-mutators'
-import { agendaSharedMutators } from './agendas/shared-mutators'
-import { todoSharedMutators } from './todos/shared-mutators'
-import { messageSharedMutators } from './messages/shared-mutators'
-import { notificationSharedMutators } from './notifications/shared-mutators'
-import { blogSharedMutators } from './blogs/shared-mutators'
-import { paymentSharedMutators } from './payments/shared-mutators'
-import { statementSharedMutators } from './statements/shared-mutators'
-import { commonSharedMutators } from './common/shared-mutators'
-import { preferenceSharedMutators } from './preferences/shared-mutators'
-import { calendarSubscriptionSharedMutators } from './calendar-subscriptions/shared-mutators'
-import { electionSharedMutators } from './elections/shared-mutators'
-import { voteSharedMutators } from './votes/shared-mutators'
-import { votingPasswordSharedMutators } from './voting-password/shared-mutators'
-import { accreditationSharedMutators } from './accreditation/shared-mutators'
-import { networkSharedMutators } from './network/shared-mutators'
+import { userSharedMutators } from './users/shared-mutators';
+import { groupSharedMutators } from './groups/shared-mutators';
+import { eventSharedMutators } from './events/shared-mutators';
+import { amendmentSharedMutators } from './amendments/shared-mutators';
+import { documentSharedMutators } from './documents/shared-mutators';
+import { agendaSharedMutators } from './agendas/shared-mutators';
+import { todoSharedMutators } from './todos/shared-mutators';
+import { messageSharedMutators } from './messages/shared-mutators';
+import { notificationSharedMutators } from './notifications/shared-mutators';
+import { blogSharedMutators } from './blogs/shared-mutators';
+import { paymentSharedMutators } from './payments/shared-mutators';
+import { statementSharedMutators } from './statements/shared-mutators';
+import { commonSharedMutators } from './common/shared-mutators';
+import { preferenceSharedMutators } from './preferences/shared-mutators';
+import { aiSharedMutators } from './ai/shared-mutators';
+import { calendarSubscriptionSharedMutators } from './calendar-subscriptions/shared-mutators';
+import { electionSharedMutators } from './elections/shared-mutators';
+import { voteSharedMutators } from './votes/shared-mutators';
+import { votingPasswordSharedMutators } from './voting-password/shared-mutators';
+import { accreditationSharedMutators } from './accreditation/shared-mutators';
+import { networkSharedMutators } from './network/shared-mutators';
 
 export const mutators = defineMutators({
   users: userSharedMutators,
@@ -36,10 +37,11 @@ export const mutators = defineMutators({
   statements: statementSharedMutators,
   common: commonSharedMutators,
   preferences: preferenceSharedMutators,
+  ai: aiSharedMutators,
   calendarSubscriptions: calendarSubscriptionSharedMutators,
   elections: electionSharedMutators,
   votes: voteSharedMutators,
   votingPassword: votingPasswordSharedMutators,
   accreditation: accreditationSharedMutators,
   network: networkSharedMutators,
-})
+});

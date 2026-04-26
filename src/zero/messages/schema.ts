@@ -1,5 +1,5 @@
-import { z } from 'zod'
-import { timestampSchema, nullableTimestampSchema } from '../shared/helpers'
+import { z } from 'zod';
+import { timestampSchema, nullableTimestampSchema } from '../shared/helpers';
 
 // ============================================
 // Conversation
@@ -15,17 +15,17 @@ const baseConversationSchema = z.object({
   group_id: z.string().nullable(),
   requested_by_id: z.string().nullable(),
   created_at: timestampSchema,
-})
+});
 
-export const selectConversationSchema = baseConversationSchema
+export const selectConversationSchema = baseConversationSchema;
 export const createConversationSchema = baseConversationSchema
   .omit({ id: true, created_at: true, requested_by_id: true, assistant_for_user_id: true })
-  .extend({ id: z.string() })
+  .extend({ id: z.string() });
 export const updateConversationSchema = baseConversationSchema
   .pick({ name: true, status: true, pinned: true, last_message_at: true })
   .partial()
-  .extend({ id: z.string() })
-export const deleteConversationSchema = z.object({ id: z.string() })
+  .extend({ id: z.string() });
+export const deleteConversationSchema = z.object({ id: z.string() });
 
 // ============================================
 // Conversation Participant
@@ -37,16 +37,16 @@ const baseConversationParticipantSchema = z.object({
   joined_at: z.number(),
   last_read_at: nullableTimestampSchema,
   left_at: nullableTimestampSchema,
-})
+});
 
-export const selectConversationParticipantSchema = baseConversationParticipantSchema
+export const selectConversationParticipantSchema = baseConversationParticipantSchema;
 export const createConversationParticipantSchema = baseConversationParticipantSchema
   .omit({ id: true })
-  .extend({ id: z.string() })
+  .extend({ id: z.string() });
 export const updateConversationParticipantSchema = baseConversationParticipantSchema
   .pick({ last_read_at: true })
-  .extend({ id: z.string() })
-export const deleteConversationParticipantSchema = z.object({ id: z.string() })
+  .extend({ id: z.string() });
+export const deleteConversationParticipantSchema = z.object({ id: z.string() });
 
 // ============================================
 // Message
@@ -56,26 +56,27 @@ const baseMessageSchema = z.object({
   conversation_id: z.string(),
   sender_id: z.string(),
   content: z.string().nullable(),
+  context_json: z.string().nullable(),
   is_read: z.boolean(),
   deleted_at: nullableTimestampSchema,
   created_at: timestampSchema,
   updated_at: timestampSchema,
-})
+});
 
-export const selectMessageSchema = baseMessageSchema
+export const selectMessageSchema = baseMessageSchema;
 export const createMessageSchema = baseMessageSchema
   .omit({ id: true, created_at: true, updated_at: true, sender_id: true, is_read: true })
-  .extend({ id: z.string() })
-export const createAssistantMessageSchema = createMessageSchema
+  .extend({ id: z.string() });
+export const createAssistantMessageSchema = createMessageSchema;
 export const updateMessageSchema = baseMessageSchema
-  .pick({ content: true, is_read: true })
+  .pick({ content: true, context_json: true, is_read: true })
   .partial()
-  .extend({ id: z.string() })
-export const deleteMessageSchema = z.object({ id: z.string() })
+  .extend({ id: z.string() });
+export const deleteMessageSchema = z.object({ id: z.string() });
 
 // ============================================
 // Inferred Types
 // ============================================
-export type Conversation = z.infer<typeof selectConversationSchema>
-export type ConversationParticipant = z.infer<typeof selectConversationParticipantSchema>
-export type Message = z.infer<typeof selectMessageSchema>
+export type Conversation = z.infer<typeof selectConversationSchema>;
+export type ConversationParticipant = z.infer<typeof selectConversationParticipantSchema>;
+export type Message = z.infer<typeof selectMessageSchema>;

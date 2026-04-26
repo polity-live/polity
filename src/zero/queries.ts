@@ -1,27 +1,28 @@
-import { defineQueries } from '@rocicorp/zero'
+import { defineQueries } from '@rocicorp/zero';
 
-import { userQueries } from './users/queries'
-import { groupQueries } from './groups/queries'
-import { eventQueries } from './events/queries'
-import { amendmentQueries } from './amendments/queries'
-import { documentQueries } from './documents/queries'
-import { agendaQueries } from './agendas/queries'
-import { todoQueries } from './todos/queries'
-import { messageQueries } from './messages/queries'
-import { notificationQueries } from './notifications/queries'
-import { blogQueries } from './blogs/queries'
-import { paymentQueries } from './payments/queries'
-import { statementQueries } from './statements/queries'
-import { commonQueries } from './common/queries'
-import { searchQueries } from './shared/queries'
-import { rbacQueries } from './rbac/queries'
-import { preferenceQueries } from './preferences/queries'
-import { calendarSubscriptionQueries } from './calendar-subscriptions/queries'
-import { electionQueries } from './elections/queries'
-import { voteQueries } from './votes/queries'
-import { votingPasswordQueries } from './voting-password/queries'
-import { accreditationQueries } from './accreditation/queries'
-import { networkQueries } from './network/queries'
+import { userQueries } from './users/queries';
+import { groupQueries } from './groups/queries';
+import { eventQueries } from './events/queries';
+import { amendmentQueries } from './amendments/queries';
+import { documentQueries } from './documents/queries';
+import { agendaQueries } from './agendas/queries';
+import { todoQueries } from './todos/queries';
+import { messageQueries } from './messages/queries';
+import { notificationQueries } from './notifications/queries';
+import { blogQueries } from './blogs/queries';
+import { paymentQueries } from './payments/queries';
+import { statementQueries } from './statements/queries';
+import { commonQueries } from './common/queries';
+import { searchQueries } from './shared/queries';
+import { rbacQueries } from './rbac/queries';
+import { preferenceQueries } from './preferences/queries';
+import { aiQueries } from './ai/queries';
+import { calendarSubscriptionQueries } from './calendar-subscriptions/queries';
+import { electionQueries } from './elections/queries';
+import { voteQueries } from './votes/queries';
+import { votingPasswordQueries } from './voting-password/queries';
+import { accreditationQueries } from './accreditation/queries';
+import { networkQueries } from './network/queries';
 
 export const queries = defineQueries({
   users: userQueries,
@@ -40,10 +41,11 @@ export const queries = defineQueries({
   search: searchQueries,
   rbac: rbacQueries,
   preferences: preferenceQueries,
+  ai: aiQueries,
   calendarSubscriptions: calendarSubscriptionQueries,
   elections: electionQueries,
   votes: voteQueries,
   votingPassword: votingPasswordQueries,
   accreditation: accreditationQueries,
   network: networkQueries,
-})
+});

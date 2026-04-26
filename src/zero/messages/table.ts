@@ -1,4 +1,4 @@
-import { table, string, number, boolean } from '@rocicorp/zero'
+import { table, string, number, boolean } from '@rocicorp/zero';
 
 export const conversation = table('conversation')
   .columns({
@@ -13,7 +13,7 @@ export const conversation = table('conversation')
     requested_by_id: string().optional(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const conversationParticipant = table('conversation_participant')
   .columns({
@@ -24,7 +24,7 @@ export const conversationParticipant = table('conversation_participant')
     last_read_at: number().optional(),
     left_at: number().optional(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const message = table('message')
   .columns({
@@ -32,9 +32,10 @@ export const message = table('message')
     conversation_id: string(),
     sender_id: string(),
     content: string().optional(),
+    context_json: string().optional(),
     is_read: boolean(),
     deleted_at: number().optional(),
     created_at: number(),
     updated_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');

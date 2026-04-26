@@ -15,6 +15,8 @@ interface HashtagInputProps {
   placeholder?: string;
   maxTags?: number;
   suggestions?: string[];
+  inputId?: string;
+  inputClassName?: string;
 }
 
 export function HashtagInput({
@@ -25,6 +27,8 @@ export function HashtagInput({
   placeholder = 'Add a hashtag',
   maxTags,
   suggestions = [],
+  inputId,
+  inputClassName,
 }: HashtagInputProps) {
   const [inputValue, setInputValue] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -35,6 +39,7 @@ export function HashtagInput({
   const filteredSuggestions = trimmed
     ? suggestions.filter(s => s.toLowerCase().includes(trimmed.toLowerCase()) && !value.includes(s))
     : suggestions.filter(s => !value.includes(s));
+  const resolvedInputId = inputId ?? 'hashtag-input';
 
   const addHashtag = (tag?: string) => {
     const tagToAdd = tag ?? trimmed;
@@ -93,7 +98,7 @@ export function HashtagInput({
 
   return (
     <div className="space-y-2" ref={containerRef}>
-      {showLabel && <Label htmlFor="hashtag-input">{label}</Label>}
+      {showLabel && <Label htmlFor={resolvedInputId}>{label}</Label>}
       {value.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {value.map(tag => (
@@ -118,7 +123,7 @@ export function HashtagInput({
         <div className="relative flex-1">
           <Hash className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <Input
-            id="hashtag-input"
+            id={resolvedInputId}
             aria-label={showLabel ? undefined : label}
             placeholder={placeholder}
             value={inputValue}
@@ -129,7 +134,7 @@ export function HashtagInput({
             }}
             onKeyDown={handleKeyDown}
             onFocus={() => setShowSuggestions(true)}
-            className="pl-9"
+            className={inputClassName ? `pl-9 ${inputClassName}` : 'pl-9'}
           />
           {showSuggestions && filteredSuggestions.length > 0 && (
             <div className="bg-popover absolute z-50 mt-1 w-full rounded-md border p-1 shadow-md">

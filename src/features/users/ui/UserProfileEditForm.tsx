@@ -20,6 +20,7 @@ import { VotingPasswordTab } from './VotingPasswordTab';
 import { AccountPasswordSection } from './AccountPasswordSection';
 import { AccountEmailSection } from './AccountEmailSection';
 import { NotificationSettingsContent } from '@/features/notifications/ui/NotificationSettingsContent';
+import { AiSettingsTab } from './AiSettingsTab';
 import type { Value } from 'platejs';
 import type { UserProfileFormData } from '../hooks/useUserProfileForm';
 
@@ -84,6 +85,7 @@ export function UserProfileEditForm({
           <TabsTrigger value="notifications">
             {t('pages.user.settingsTabs.notifications')}
           </TabsTrigger>
+          <TabsTrigger value="ai">{t('pages.user.settingsTabs.ai', 'AI')}</TabsTrigger>
         </TabsList>
 
         {/* Basic Information Tab */}
@@ -253,6 +255,11 @@ export function UserProfileEditForm({
         {/* Notifications Tab */}
         <TabsContent value="notifications">
           <NotificationSettingsContent userId={userId} />
+        </TabsContent>
+
+        {/* AI Tab */}
+        <TabsContent value="ai">
+          <AiSettingsTab />
         </TabsContent>
       </Tabs>
     </div>

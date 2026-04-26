@@ -49,6 +49,7 @@ export function useAriaKaiTutorialActions({
         id: crypto.randomUUID(),
         conversation_id: conversationId,
         content: t(action.labelKey),
+        context_json: '[]',
         deleted_at: 0,
       });
 
@@ -56,6 +57,7 @@ export function useAriaKaiTutorialActions({
         id: crypto.randomUUID(),
         conversation_id: conversationId,
         content: formatAssistantReply(topic),
+        context_json: '[]',
         deleted_at: 0,
       });
 

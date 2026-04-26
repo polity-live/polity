@@ -5,6 +5,8 @@ import { ConversationHeader } from './ConversationHeader';
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { isAssistantConversation } from '@/features/assistant/logic/assistantHelpers';
+import { AssistantMessageView } from './AssistantMessageView';
 
 interface MessageViewProps {
   conversation?: Conversation;
@@ -32,6 +34,22 @@ export function MessageView({
   className,
 }: MessageViewProps) {
   const { t } = useTranslation();
+
+  if (conversation && isAssistantConversation(conversation)) {
+    return (
+      <AssistantMessageView
+        conversation={conversation}
+        currentUserId={currentUserId}
+        onBack={onBack}
+        onTogglePin={onTogglePin}
+        onDeleteClick={onDeleteClick}
+        onMembersClick={onMembersClick}
+        onAcceptConversation={onAcceptConversation}
+        onRejectConversation={onRejectConversation}
+        className={className}
+      />
+    );
+  }
 
   return (
     <Card
@@ -67,7 +85,7 @@ export function MessageView({
         <div className="flex h-full items-center justify-center">
           <div className="text-center">
             <p className="text-lg font-semibold">{t('features.messages.conversation.select')}</p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               {t('features.messages.conversation.selectDescription')}
             </p>
           </div>

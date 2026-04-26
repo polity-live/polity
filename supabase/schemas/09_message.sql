@@ -50,6 +50,7 @@ CREATE TABLE IF NOT EXISTS public.message (
   conversation_id UUID NOT NULL REFERENCES public.conversation (id) ON DELETE CASCADE,
   sender_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
   content TEXT,
+  context_json TEXT NOT NULL DEFAULT '[]',
   is_read BOOLEAN NOT NULL DEFAULT false,
   deleted_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
