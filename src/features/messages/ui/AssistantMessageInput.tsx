@@ -1,7 +1,18 @@
 'use client';
 
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { AtSign, Bot, Brain, LoaderCircle, Plus, Send, Slash, Sparkles, X } from 'lucide-react';
+import {
+  AtSign,
+  Bot,
+  Brain,
+  LoaderCircle,
+  Plus,
+  Send,
+  Slash,
+  Sparkles,
+  Wrench,
+  X,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
@@ -17,6 +28,14 @@ import {
 import { HashtagInput } from '@/features/shared/ui/ui/hashtag-input';
 import { Input } from '@/features/shared/ui/ui/input';
 import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/features/shared/ui/ui/dropdown-menu';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -24,12 +43,13 @@ import {
   SelectValue,
 } from '@/features/shared/ui/ui/select';
 import { Textarea } from '@/features/shared/ui/ui/textarea';
-import type { AiReasoningEffort } from '@/server/ai-types';
+import type { AiReasoningEffort } from '@/lib/ai/schemas';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import {
   ASSISTANT_ATTACHMENT_TYPE_OPTIONS,
   parseActiveMentionQuery,
   parseActiveSkillCommand,
+  parseActiveToolCommand,
   replaceTextRange,
   slugifySkillName,
 } from '../logic/assistantComposer';
@@ -46,6 +66,7 @@ const REASONING_OPTIONS: readonly { value: AiReasoningEffort; label: string }[] 
 ] as const;
 
 const SUGGESTION_PANEL_MAX_WIDTH = 360;
+const MAX_VISIBLE_TOOL_BADGES = 4;
 
 function formatContextWindow(value: number | null | undefined): string {
   if (!value || value <= 0) {
@@ -169,11 +190,24 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
   const [skillAliases, setSkillAliases] = useState('');
   const [skillPrompt, setSkillPrompt] = useState('');
 
-  const selectedSkill = useMemo(
-    () =>
-      assistantChat.availableSkills.find(skill => skill.slug === assistantChat.selectedSkillSlug) ??
-      null,
-    [assistantChat.availableSkills, assistantChat.selectedSkillSlug]
+  const selectedSkillKeySet = useMemo(
+    () => new Set(assistantChat.selectedSkillSlugs),
+    [assistantChat.selectedSkillSlugs]
+  );
+
+  const selectedToolKeySet = useMemo(
+    () => new Set(assistantChat.selectedToolNames),
+    [assistantChat.selectedToolNames]
+  );
+
+  const searchTools = useMemo(
+    () => assistantChat.availableTools.filter(tool => tool.kind === 'search'),
+    [assistantChat.availableTools]
+  );
+
+  const createTools = useMemo(
+    () => assistantChat.availableTools.filter(tool => tool.kind === 'create'),
+    [assistantChat.availableTools]
   );
 
   const mentionQuery = useMemo(
@@ -183,6 +217,11 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
 
   const skillCommand = useMemo(
     () => parseActiveSkillCommand(messageText, caretPosition),
+    [messageText, caretPosition]
+  );
+
+  const toolCommand = useMemo(
+    () => parseActiveToolCommand(messageText, caretPosition),
     [messageText, caretPosition]
   );
 
@@ -255,12 +294,127 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
       .slice(0, 8);
   }, [assistantChat.availableSkills, skillCommand]);
 
+  const toolSuggestions = useMemo(() => {
+    if (!toolCommand) {
+      return [];
+    }
+
+    return assistantChat.availableTools
+      .filter(tool => {
+        if (selectedToolKeySet.has(tool.name)) {
+          return false;
+        }
+
+        if (!toolCommand.searchText) {
+          return true;
+        }
+
+        return [tool.label, tool.name, tool.description]
+          .join(' ')
+          .toLowerCase()
+          .includes(toolCommand.searchText);
+      })
+      .slice(0, 8);
+  }, [assistantChat.availableTools, selectedToolKeySet, toolCommand]);
+
   const hasSuggestionPanel =
+    toolSuggestions.length > 0 ||
     skillSuggestions.length > 0 ||
     attachmentSuggestions.length > 0 ||
     attachmentTypeSuggestions.length > 0;
 
-  const suggestionAnchorIndex = mentionQuery?.start ?? skillCommand?.start ?? null;
+  const suggestionAnchorIndex =
+    mentionQuery?.start ?? skillCommand?.start ?? toolCommand?.start ?? null;
+
+  const visibleSelectedTools = assistantChat.selectedTools.slice(0, MAX_VISIBLE_TOOL_BADGES);
+  const hiddenSelectedToolCount = Math.max(
+    assistantChat.selectedTools.length - visibleSelectedTools.length,
+    0
+  );
+
+  const getToolGroupCheckedState = (
+    tools: readonly (typeof assistantChat.availableTools)[number][]
+  ) => {
+    if (tools.length === 0) {
+      return false;
+    }
+
+    const selectedCount = tools.filter(tool => selectedToolKeySet.has(tool.name)).length;
+    if (selectedCount === 0) {
+      return false;
+    }
+
+    if (selectedCount === tools.length) {
+      return true;
+    }
+
+    return 'indeterminate' as const;
+  };
+
+  const renderToolGroup = (
+    label: string,
+    kind: 'search' | 'create',
+    tools: readonly (typeof assistantChat.availableTools)[number][]
+  ) => {
+    if (tools.length === 0) {
+      return null;
+    }
+
+    const checkedState = getToolGroupCheckedState(tools);
+
+    return (
+      <div className="space-y-1" key={kind}>
+        <div className="text-muted-foreground px-2 pt-1 text-[11px] font-semibold tracking-[0.14em] uppercase">
+          {label}
+        </div>
+        <DropdownMenuCheckboxItem
+          checked={checkedState}
+          onSelect={event => event.preventDefault()}
+          onCheckedChange={checked => assistantChat.setToolGroupSelection(kind, checked === true)}
+        >
+          <div className="flex w-full min-w-0 items-center justify-between gap-2">
+            <div className="min-w-0">
+              <div className="truncate text-sm font-medium">
+                {kind === 'search'
+                  ? t('features.messages.ai.allSearchTools', 'All search tools')
+                  : t('features.messages.ai.allCreateTools', 'All create tools')}
+              </div>
+              <div className="text-muted-foreground truncate text-xs">
+                {kind === 'search'
+                  ? t(
+                      'features.messages.ai.searchToolsDescription',
+                      'Enable or disable all search tools for this message.'
+                    )
+                  : t(
+                      'features.messages.ai.createToolsDescription',
+                      'Enable or disable all create tools for this message.'
+                    )}
+              </div>
+            </div>
+            <Badge variant="outline" className="text-[10px] uppercase">
+              {tools.length}
+            </Badge>
+          </div>
+        </DropdownMenuCheckboxItem>
+        {tools.map(tool => (
+          <DropdownMenuCheckboxItem
+            key={tool.name}
+            checked={selectedToolKeySet.has(tool.name)}
+            onSelect={event => event.preventDefault()}
+            onCheckedChange={checked => assistantChat.setToolSelection(tool.name, checked === true)}
+            className="pl-8"
+          >
+            <div className="min-w-0">
+              <div className="truncate text-sm font-medium">{tool.label}</div>
+              <div className="text-muted-foreground truncate text-xs">
+                {tool.name} · {tool.description}
+              </div>
+            </div>
+          </DropdownMenuCheckboxItem>
+        ))}
+      </div>
+    );
+  };
 
   const freeRouterLabel = t('features.messages.ai.freeRouterModel', 'Free Models Router');
   const freeRouterMessage = t(
@@ -404,8 +558,17 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
       return;
     }
 
-    assistantChat.setSelectedSkillSlug(slug);
+    assistantChat.toggleSelectedSkillSlug(slug);
     applyMessageReplacement(skillCommand.start, skillCommand.end, '', skillCommand.start);
+  };
+
+  const handleToolSelect = (toolName: (typeof assistantChat.availableTools)[number]['name']) => {
+    if (!toolCommand) {
+      return;
+    }
+
+    assistantChat.setToolSelection(toolName, true);
+    applyMessageReplacement(toolCommand.start, toolCommand.end, '', toolCommand.start);
   };
 
   const resetSkillForm = () => {
@@ -438,7 +601,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
       systemPrompt: trimmedPrompt,
     });
 
-    assistantChat.setSelectedSkillSlug(createdSlug);
+    assistantChat.setSkillSelection(createdSlug, true);
     setCreateSkillOpen(false);
     resetSkillForm();
   };
@@ -449,31 +612,62 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
       return;
     }
 
-    const didSend = await assistantChat.sendAssistantMessage(trimmedMessage);
-    if (didSend) {
-      setMessageText('');
-      setCaretPosition(0);
-    }
+    await assistantChat.sendAssistantMessage(trimmedMessage, {
+      onUserMessageSent: () => {
+        setMessageText('');
+        setCaretPosition(0);
+      },
+    });
   };
 
   return (
     <CardContent className="flex-shrink-0 border-t p-4">
       <div className="space-y-3">
-        {selectedSkill && (
+        {assistantChat.selectedTools.length > 0 && (
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="secondary" className="gap-1 pr-1 text-xs">
-              <Sparkles className="h-3 w-3" />
-              {selectedSkill.name}
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-5 w-5 rounded-full"
-                onClick={() => assistantChat.setSelectedSkillSlug(null)}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </Badge>
+            {visibleSelectedTools.map(tool => (
+              <Badge key={tool.name} variant="secondary" className="gap-1 pr-1 text-xs">
+                <Wrench className="h-3 w-3" />
+                {tool.label}
+                <span className="text-muted-foreground">{tool.name}</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5 rounded-full"
+                  onClick={() => assistantChat.setToolSelection(tool.name, false)}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </Badge>
+            ))}
+            {hiddenSelectedToolCount > 0 && (
+              <Badge variant="outline" className="gap-1 text-xs">
+                <Wrench className="h-3 w-3" />+{hiddenSelectedToolCount}{' '}
+                {t('features.messages.ai.moreTools', 'more tools')}
+              </Badge>
+            )}
+          </div>
+        )}
+
+        {assistantChat.selectedSkills.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            {assistantChat.selectedSkills.map(skill => (
+              <Badge key={skill.slug} variant="secondary" className="gap-1 pr-1 text-xs">
+                <Sparkles className="h-3 w-3" />
+                {skill.name}
+                <span className="text-muted-foreground">/{skill.slug}</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5 rounded-full"
+                  onClick={() => assistantChat.setSkillSelection(skill.slug, false)}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </Badge>
+            ))}
           </div>
         )}
 
@@ -508,7 +702,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
             ref={textareaRef}
             placeholder={t(
               'features.messages.ai.placeholder',
-              'Ask Aria & Kai anything. Use / for skills and @ for Polity context.'
+              'Ask Aria & Kai anything. Use # for tools, / for skills, and @ for Polity context.'
             )}
             value={messageText}
             onChange={event => {
@@ -534,6 +728,11 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
 
               if (skillSuggestions.length > 0) {
                 handleSkillSelect(skillSuggestions[0].slug);
+                return;
+              }
+
+              if (toolSuggestions.length > 0) {
+                handleToolSelect(toolSuggestions[0].name);
                 return;
               }
 
@@ -563,6 +762,36 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
             >
               <CardContent className="p-2">
                 <div className="max-h-72 space-y-1 overflow-y-auto">
+                  {toolSuggestions.length > 0 && (
+                    <>
+                      <p className="text-muted-foreground px-2 py-1 text-xs font-medium">
+                        {t('features.messages.ai.tools', 'Tools')}
+                      </p>
+                      {toolSuggestions.map(tool => (
+                        <button
+                          key={tool.name}
+                          type="button"
+                          onClick={() => handleToolSelect(tool.name)}
+                          className="hover:bg-muted flex w-full items-start gap-3 rounded-md px-2 py-2 text-left"
+                        >
+                          <Wrench className="text-muted-foreground mt-0.5 h-4 w-4" />
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-sm font-medium">{tool.label}</span>
+                            <span className="text-muted-foreground block text-xs">
+                              #{tool.name}
+                            </span>
+                            <span className="text-muted-foreground block text-xs">
+                              {tool.description}
+                            </span>
+                          </span>
+                          <Badge variant="outline" className="text-[10px] uppercase">
+                            {tool.kind}
+                          </Badge>
+                        </button>
+                      ))}
+                    </>
+                  )}
+
                   {skillSuggestions.length > 0 && (
                     <>
                       <p className="text-muted-foreground px-2 py-1 text-xs font-medium">
@@ -582,7 +811,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                               /{skill.slug}
                             </span>
                           </span>
-                          {skill.isDefault && (
+                          {skill.isBuiltIn && (
                             <Badge variant="secondary" className="text-[10px] uppercase">
                               Built-in
                             </Badge>
@@ -765,6 +994,93 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
             </Select>
           </div>
 
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button type="button" variant="outline" size="sm" className="h-8 px-2">
+                <Wrench className="mr-1 h-3.5 w-3.5" />
+                {t('features.messages.ai.toolSelector', 'Tools')}
+                {assistantChat.selectedTools.length > 0
+                  ? ` (${assistantChat.selectedTools.length})`
+                  : ''}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-96">
+              <DropdownMenuLabel>
+                {t(
+                  'features.messages.ai.toolSelectorDescription',
+                  'Callable Polity tools for this message. Tools are API-backed actions, separate from skills.'
+                )}
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {assistantChat.availableTools.length > 0 ? (
+                <>
+                  {renderToolGroup(
+                    t('features.messages.ai.searchToolGroup', 'Search tools'),
+                    'search',
+                    searchTools
+                  )}
+                  {searchTools.length > 0 && createTools.length > 0 && <DropdownMenuSeparator />}
+                  {renderToolGroup(
+                    t('features.messages.ai.createToolGroup', 'Create tools'),
+                    'create',
+                    createTools
+                  )}
+                </>
+              ) : (
+                <div className="text-muted-foreground px-2 py-2 text-sm">
+                  {t(
+                    'features.messages.ai.noToolsAvailable',
+                    'No enabled tools are currently available.'
+                  )}
+                </div>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button type="button" variant="outline" size="sm" className="h-8 px-2">
+                <Sparkles className="mr-1 h-3.5 w-3.5" />
+                {t('features.messages.ai.skillSelector', 'Skills')}
+                {assistantChat.selectedSkills.length > 0
+                  ? ` (${assistantChat.selectedSkills.length})`
+                  : ''}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80">
+              <DropdownMenuLabel>
+                {t(
+                  'features.messages.ai.skillSelectorDescription',
+                  'Active skills for this message context'
+                )}
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {assistantChat.availableSkills.length > 0 ? (
+                assistantChat.availableSkills.map(skill => (
+                  <DropdownMenuCheckboxItem
+                    key={skill.slug}
+                    checked={selectedSkillKeySet.has(skill.slug)}
+                    onCheckedChange={checked =>
+                      assistantChat.setSkillSelection(skill.slug, checked === true)
+                    }
+                  >
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-medium">{skill.name}</div>
+                      <div className="text-muted-foreground truncate text-xs">/{skill.slug}</div>
+                    </div>
+                  </DropdownMenuCheckboxItem>
+                ))
+              ) : (
+                <div className="text-muted-foreground px-2 py-2 text-sm">
+                  {t(
+                    'features.messages.ai.noSkillsAvailable',
+                    'No enabled skills are currently available.'
+                  )}
+                </div>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <Button
             type="button"
             variant="outline"
@@ -804,7 +1120,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
               : assistantChat.models.length > 0
                 ? t(
                     'features.messages.ai.helperText',
-                    'Use @ to attach Polity entities and / to switch Aria & Kai into a skill.'
+                    'Use @ to attach Polity entities, / to switch skills, and the Tools dropdown for callable Polity APIs.'
                   )
                 : t(
                     'features.messages.ai.noModels',

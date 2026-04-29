@@ -1,7 +1,7 @@
 import { buildTimelineCardProps } from '@/features/search/logic/buildTimelineCardProps';
 import { toDate } from '@/features/search/logic/searchMappers';
 import type { SearchContentItem } from '@/features/search/types/search.types';
-import type { AiAttachmentEntity, AiChatAttachment } from '@/server/ai-types';
+import type { AiAttachmentEntity, AiChatAttachment } from '@/lib/ai/schemas';
 import type { CardType } from '@/features/timeline/ui/LazyCardComponents';
 import type { VoteWithDetailsRow } from '@/zero/votes/queries';
 
@@ -34,6 +34,13 @@ export interface ActiveSkillCommand {
   searchText: string;
 }
 
+export interface ActiveToolCommand {
+  start: number;
+  end: number;
+  raw: string;
+  searchText: string;
+}
+
 export const ASSISTANT_ATTACHMENT_TYPE_OPTIONS: readonly {
   entityType: AiAttachmentEntity;
   token: string;
@@ -41,6 +48,7 @@ export const ASSISTANT_ATTACHMENT_TYPE_OPTIONS: readonly {
 }[] = [
   { entityType: 'user', token: '@user@', label: 'People' },
   { entityType: 'group', token: '@group@', label: 'Groups' },
+  { entityType: 'statement', token: '@statement@', label: 'Statements' },
   { entityType: 'event', token: '@event@', label: 'Events' },
   { entityType: 'amendment', token: '@amendment@', label: 'Amendments' },
   { entityType: 'blog', token: '@blog@', label: 'Blogs' },
@@ -52,6 +60,7 @@ export const ASSISTANT_ATTACHMENT_TYPE_OPTIONS: readonly {
 const AI_ATTACHMENT_ENTITY_SET = new Set<AiAttachmentEntity>([
   'user',
   'group',
+  'statement',
   'blog',
   'amendment',
   'event',
@@ -90,6 +99,8 @@ function buildSubtitle(item: SearchContentItem): string | null {
       return item.handle ? `@${item.handle}` : (item.location ?? null);
     case 'group':
       return formatCount('members', item.memberCount ?? item.stats?.members);
+    case 'statement':
+      return [item.authorName, item.groupName].filter(Boolean).join(' · ') || null;
     case 'event':
       return [item.groupName, item.location].filter(Boolean).join(' · ') || null;
     case 'amendment':
@@ -127,6 +138,11 @@ function buildPromptContext(item: SearchContentItem): string | null {
         ]
           .filter(Boolean)
           .join(', ')
+      );
+      break;
+    case 'statement':
+      lines.push(
+        [item.authorName, item.groupName, item.surveyQuestion].filter(Boolean).join(' | ')
       );
       break;
     case 'event':
@@ -212,6 +228,7 @@ function toAttachmentEntity(itemType: SearchContentItem['type']): AiAttachmentEn
   switch (itemType) {
     case 'user':
     case 'group':
+    case 'statement':
     case 'blog':
     case 'amendment':
     case 'event':
@@ -296,6 +313,31 @@ export function parseActiveSkillCommand(
     end: caretPosition,
     raw: beforeCaret,
     searchText: beforeCaret.slice(1).trim().toLowerCase(),
+  };
+}
+
+export function parseActiveToolCommand(
+  value: string,
+  caretPosition: number
+): ActiveToolCommand | null {
+  const beforeCaret = value.slice(0, caretPosition);
+  const toolMatch = /(?:^|[\s(])(#[^\s\n]*)$/.exec(beforeCaret);
+
+  if (!toolMatch) {
+    return null;
+  }
+
+  const raw = toolMatch[1];
+  const hashIndex = beforeCaret.length - raw.length;
+  if (raw.includes('\n')) {
+    return null;
+  }
+
+  return {
+    start: hashIndex,
+    end: caretPosition,
+    raw,
+    searchText: raw.slice(1).trim().toLowerCase(),
   };
 }
 

@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS public.ai_skill (
   name TEXT NOT NULL,
   aliases TEXT NOT NULL DEFAULT '',
   system_prompt TEXT NOT NULL,
+  enabled BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -20,6 +21,23 @@ CREATE INDEX IF NOT EXISTS idx_ai_skill_user
 
 ALTER TABLE public.ai_skill ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.ai_skill FOR ALL TO service_role USING (true);
+
+CREATE TABLE IF NOT EXISTS public.ai_tool (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
+  tool_name TEXT NOT NULL,
+  enabled BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_ai_tool_user_name
+  ON public.ai_tool (user_id, tool_name);
+CREATE INDEX IF NOT EXISTS idx_ai_tool_user
+  ON public.ai_tool (user_id);
+
+ALTER TABLE public.ai_tool ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.ai_tool FOR ALL TO service_role USING (true);
 
 CREATE TABLE IF NOT EXISTS public.ai_provider_credential (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

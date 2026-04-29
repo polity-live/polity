@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { useZero } from '@rocicorp/zero/react';
 import { gatedToast as toast } from '@/features/notifications/utils/gated-toast';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import type { AiToolName } from '@/lib/ai/schemas';
 import { mutators } from '../mutators';
 import { onServerError } from '../mutate-with-server-check';
 
@@ -11,6 +12,13 @@ interface UpsertSkillArgs {
   name: string;
   aliases?: string;
   system_prompt: string;
+  enabled?: boolean;
+}
+
+interface UpsertToolArgs {
+  id?: string;
+  tool_name: AiToolName;
+  enabled?: boolean;
 }
 
 export function useAiActions() {
@@ -26,6 +34,7 @@ export function useAiActions() {
           name: args.name,
           aliases: args.aliases ?? '',
           system_prompt: args.system_prompt,
+          enabled: args.enabled ?? true,
         })
       );
 
@@ -44,6 +53,7 @@ export function useAiActions() {
           name: args.name,
           aliases: args.aliases ?? '',
           system_prompt: args.system_prompt,
+          enabled: args.enabled,
         })
       );
 
@@ -62,9 +72,43 @@ export function useAiActions() {
     [t, zero]
   );
 
+  const createTool = useCallback(
+    (args: UpsertToolArgs) => {
+      const result = zero.mutate(
+        mutators.ai.createTool({
+          id: args.id ?? crypto.randomUUID(),
+          tool_name: args.tool_name,
+          enabled: args.enabled ?? true,
+        })
+      );
+
+      onServerError(result, msg => console.error('AI tool create failed:', msg));
+      toast.success(t('pages.user.ai.tools.created', 'Tool setting saved'));
+    },
+    [t, zero]
+  );
+
+  const updateTool = useCallback(
+    (args: Required<Pick<UpsertToolArgs, 'id'>> & Omit<UpsertToolArgs, 'id'>) => {
+      const result = zero.mutate(
+        mutators.ai.updateTool({
+          id: args.id,
+          tool_name: args.tool_name,
+          enabled: args.enabled,
+        })
+      );
+
+      onServerError(result, msg => console.error('AI tool update failed:', msg));
+      toast.success(t('pages.user.ai.tools.updated', 'Tool setting updated'));
+    },
+    [t, zero]
+  );
+
   return {
     createSkill,
     updateSkill,
     deleteSkill,
+    createTool,
+    updateTool,
   };
 }

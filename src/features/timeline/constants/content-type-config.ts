@@ -119,10 +119,10 @@ export const CONTENT_TYPE_CONFIG: Record<ContentType, ContentTypeConfig> = {
   todo: {
     icon: CheckSquare,
     labelKey: 'features.timeline.contentTypes.todo',
-    gradient: 'from-yellow-100 to-orange-100',
-    gradientDark: 'dark:from-yellow-900/40 dark:to-orange-900/50',
-    accentColor: 'text-yellow-600 dark:text-yellow-400',
-    borderColor: 'border-yellow-500',
+    gradient: 'from-lime-100 to-emerald-100',
+    gradientDark: 'dark:from-lime-900/40 dark:to-emerald-900/50',
+    accentColor: 'text-lime-700 dark:text-lime-300',
+    borderColor: 'border-lime-500',
   },
   blog: {
     icon: BookOpen,

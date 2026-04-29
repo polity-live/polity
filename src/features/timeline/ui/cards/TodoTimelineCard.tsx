@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { CheckSquare, Square, Users, Clock, UserPlus, Activity, UserCheck } from 'lucide-react';
-import { Link } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 import { Badge } from '@/features/shared/ui/ui/badge';
@@ -24,6 +23,8 @@ import {
   TimelineCardContent,
   TimelineCardActions,
   TimelineCardActionButton,
+  TimelineCardBadge,
+  TimelineCardHeader,
 } from './TimelineCardBase';
 
 export interface TodoTimelineCardProps {
@@ -32,7 +33,7 @@ export interface TodoTimelineCardProps {
     title: string;
     description?: string;
     isCompleted?: boolean;
-    dueDate?: string | Date;
+    dueDate?: string | number | Date;
     progress?: number; // 0-100
     currentValue?: number;
     targetValue?: number;
@@ -49,6 +50,9 @@ export interface TodoTimelineCardProps {
   onVolunteer?: () => void;
   onShare?: () => void;
   className?: string;
+  showStatusAction?: boolean;
+  linkToDetail?: boolean;
+  onCardClick?: () => void;
 }
 
 /**
@@ -107,7 +111,14 @@ function getUrgencyConfig(dueDate: Date): { color: string; bgColor: string; labe
  * - Assignee count
  * - Actions: View, Volunteer, Share
  */
-export function TodoTimelineCard({ todo, onToggle, className }: TodoTimelineCardProps) {
+export function TodoTimelineCard({
+  todo,
+  onToggle,
+  className,
+  showStatusAction = true,
+  linkToDetail = true,
+  onCardClick,
+}: TodoTimelineCardProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [statusOpen, setStatusOpen] = useState(false);
@@ -125,6 +136,7 @@ export function TodoTimelineCard({ todo, onToggle, className }: TodoTimelineCard
       : undefined);
   const assignments = assignmentsRaw ?? [];
   const isAssignedToMe = !!user?.id && assignments.some(a => a.user?.id === user.id);
+  const detailHref = linkToDetail ? `/todos/${todo.id}` : undefined;
 
   const currentStatus = todo.status || (todo.isCompleted ? 'completed' : 'pending');
   const statusLabels: Record<TodoStatus, string> = {
@@ -188,52 +200,61 @@ export function TodoTimelineCard({ todo, onToggle, className }: TodoTimelineCard
   };
 
   return (
-    <TimelineCardBase contentType="todo" className={className} href={`/todos/${todo.id}`}>
-      <TimelineCardContent className="pt-4">
-        {/* Title with Checkbox */}
-        <div className="mb-3 flex items-start gap-3">
+    <TimelineCardBase
+      contentType="todo"
+      className={className}
+      href={detailHref}
+      onClick={onCardClick}
+    >
+      <TimelineCardHeader
+        contentType="todo"
+        title={todo.title}
+        href={detailHref}
+        subtitle={todo.groupName}
+        subtitleHref={todo.groupId ? `/group/${todo.groupId}` : undefined}
+        badge={
+          <TimelineCardBadge label={t('features.timeline.contentTypes.todo')} icon={CheckSquare} />
+        }
+      >
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           <button
             onClick={e => {
               e.stopPropagation();
               onToggle?.();
             }}
-            className="mt-0.5 flex-shrink-0"
+            className="text-foreground inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/80 px-2.5 py-1 text-xs font-medium shadow-sm backdrop-blur transition-colors hover:bg-white dark:border-gray-700/70 dark:bg-gray-950/70 dark:text-gray-100 dark:hover:bg-gray-950"
           >
             {todo.isCompleted ? (
-              <CheckSquare className="h-5 w-5 text-green-600" />
+              <CheckSquare className="h-4 w-4 text-green-600" />
             ) : (
-              <Square className="h-5 w-5 text-muted-foreground transition-colors hover:text-primary" />
+              <Square className="text-muted-foreground hover:text-primary h-4 w-4 transition-colors" />
             )}
+            <span>
+              {todo.isCompleted
+                ? t('features.todos.status.completed')
+                : t('features.todos.actions.markComplete')}
+            </span>
           </button>
-          <h3
-            className={cn(
-              'text-base font-semibold leading-tight',
-              todo.isCompleted && 'text-muted-foreground line-through'
-            )}
-          >
-            <Link
-              to="/todos/$id"
-              params={{ id: todo.id }}
-              onClick={e => e.stopPropagation()}
-              className="hover:underline"
-            >
-              {todo.title}
-            </Link>
-          </h3>
-        </div>
 
-        {todo.description && (
-          <p className="mb-3 ml-8 line-clamp-2 text-sm text-muted-foreground">{todo.description}</p>
-        )}
-
-        {/* Urgency Badge */}
-        {urgency && !todo.isCompleted && (
-          <div className="mb-3">
+          {urgency && !todo.isCompleted && (
             <Badge variant="outline" className={cn('text-xs', urgency.bgColor, urgency.color)}>
               <Clock className="mr-1 h-3 w-3" />
               {urgency.label}
             </Badge>
-          </div>
+          )}
+        </div>
+      </TimelineCardHeader>
+
+      <TimelineCardContent>
+        {todo.description && (
+          <p
+            className={cn(
+              'text-muted-foreground mb-3 line-clamp-2 text-sm',
+              todo.isCompleted && 'line-through'
+            )}
+          >
+            {todo.description}
+          </p>
         )}
 
         {/* Progress Bar */}
@@ -255,7 +276,7 @@ export function TodoTimelineCard({ todo, onToggle, className }: TodoTimelineCard
         )}
 
         {/* Meta Info */}
-        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+        <div className="text-muted-foreground flex items-center gap-4 text-xs">
           {(todo.assigneeCount !== undefined || assignments.length > 0) && (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -287,50 +308,41 @@ export function TodoTimelineCard({ todo, onToggle, className }: TodoTimelineCard
               </TooltipContent>
             </Tooltip>
           )}
-          {todo.groupName && (
-            <Link
-              to="/group/$id"
-              params={{ id: todo.groupId! }}
-              className="truncate hover:underline"
-              onClick={e => e.stopPropagation()}
-            >
-              {todo.groupName}
-            </Link>
-          )}
         </div>
       </TimelineCardContent>
 
       <TimelineCardActions>
-        {/* Status Popover */}
-        <Popover open={statusOpen} onOpenChange={setStatusOpen}>
-          <PopoverTrigger asChild onClick={e => e.stopPropagation()}>
-            <Button variant="outline" size="sm" className="flex items-center gap-1.5">
-              <CheckSquare className="h-3.5 w-3.5" />
-              <span className="text-xs">{statusLabels[currentStatus]}</span>
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-48 p-2" align="start" onClick={e => e.stopPropagation()}>
-            <div className="flex flex-col gap-1">
-              {(['pending', 'in_progress', 'completed', 'cancelled'] as TodoStatus[])
-                .filter(status => status !== currentStatus)
-                .map(status => (
-                  <Button
-                    key={status}
-                    variant="ghost"
-                    size="sm"
-                    onClick={e => {
-                      e.preventDefault();
-                      handleStatusUpdate(status);
-                    }}
-                    disabled={isLoading}
-                    className="justify-start"
-                  >
-                    {statusLabels[status]}
-                  </Button>
-                ))}
-            </div>
-          </PopoverContent>
-        </Popover>
+        {showStatusAction && (
+          <Popover open={statusOpen} onOpenChange={setStatusOpen}>
+            <PopoverTrigger asChild onClick={e => e.stopPropagation()}>
+              <Button variant="outline" size="sm" className="flex items-center gap-1.5">
+                <CheckSquare className="h-3.5 w-3.5" />
+                <span className="text-xs">{statusLabels[currentStatus]}</span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-48 p-2" align="start" onClick={e => e.stopPropagation()}>
+              <div className="flex flex-col gap-1">
+                {(['pending', 'in_progress', 'completed', 'cancelled'] as TodoStatus[])
+                  .filter(status => status !== currentStatus)
+                  .map(status => (
+                    <Button
+                      key={status}
+                      variant="ghost"
+                      size="sm"
+                      onClick={e => {
+                        e.preventDefault();
+                        handleStatusUpdate(status);
+                      }}
+                      disabled={isLoading}
+                      className="justify-start"
+                    >
+                      {statusLabels[status]}
+                    </Button>
+                  ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+        )}
 
         <TimelineCardActionButton
           icon={isAssignedToMe ? UserCheck : UserPlus}

@@ -4,7 +4,7 @@ import { useTodoState } from '@/zero/todos/useTodoState';
 import { useTodoMutations } from '@/features/todos/hooks/useTodoMutations';
 import { useTodoFilters } from '@/features/todos/hooks/useTodoFilters';
 import { computeTodoStats } from '../logic/computeTodoStats';
-import type { Todo, TodoStatus } from '../types/todo.types';
+import type { Todo } from '../types/todo.types';
 import type { ViewMode } from '../ui/TodosHeader';
 
 export function useTodosPage() {
@@ -45,14 +45,6 @@ export function useTodosPage() {
     });
   };
 
-  const handleUpdateStatus = async (todoId: string, newStatus: TodoStatus) => {
-    const isCompleting = newStatus === 'completed';
-    await updateTodo(todoId, {
-      status: newStatus,
-      completed_at: isCompleting ? Date.now() : null,
-    });
-  };
-
   const handleTodoClick = (todo: Todo) => {
     setSelectedTodo(todo);
     setIsDetailDialogOpen(true);
@@ -87,7 +79,6 @@ export function useTodosPage() {
 
     // Handlers
     handleToggleComplete,
-    handleUpdateStatus,
     handleTodoClick,
   };
 }

@@ -1,15 +1,12 @@
 'use client';
 
-import { Card, CardContent } from '@/features/shared/ui/ui/card.tsx';
-import { Badge } from '@/features/shared/ui/ui/badge.tsx';
-import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar.tsx';
-import { Calendar } from 'lucide-react';
 import { useState } from 'react';
 import { useTodoActions } from '@/zero/todos/useTodoActions.ts';
 import { toast } from 'sonner';
 import { TodoDetailDialog } from './todo-detail-dialog.tsx';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
-import type { Todo, TodoStatus, TodoPriority } from '../types/todo.types';
+import { TodoTimelineCard } from '@/features/timeline/ui/cards/TodoTimelineCard';
+import type { Todo, TodoStatus } from '../types/todo.types';
 
 interface KanbanBoardProps {
   todos: Todo[];
@@ -26,22 +23,22 @@ export function KanbanBoard({ todos }: KanbanBoardProps) {
     {
       id: 'pending',
       titleKey: 'features.todos.kanban.toDo',
-      color: 'bg-slate-100 dark:bg-slate-800',
+      color: 'border border-slate-200 bg-white dark:border-slate-800 dark:bg-black',
     },
     {
       id: 'in_progress',
       titleKey: 'features.todos.kanban.inProgress',
-      color: 'bg-blue-50 dark:bg-blue-950',
+      color: 'border border-slate-200 bg-white dark:border-slate-800 dark:bg-black',
     },
     {
       id: 'completed',
       titleKey: 'features.todos.kanban.completed',
-      color: 'bg-green-50 dark:bg-green-950',
+      color: 'border border-slate-200 bg-white dark:border-slate-800 dark:bg-black',
     },
     {
       id: 'cancelled',
       titleKey: 'features.todos.kanban.cancelled',
-      color: 'bg-red-50 dark:bg-red-950',
+      color: 'border border-slate-200 bg-white dark:border-slate-800 dark:bg-black',
     },
   ];
 
@@ -87,6 +84,22 @@ export function KanbanBoard({ todos }: KanbanBoardProps) {
     setIsDetailDialogOpen(true);
   };
 
+  const handleToggleComplete = async (todo: Todo) => {
+    try {
+      const isCompleting = todo.status !== 'completed';
+      await updateTodo({
+        id: todo.id,
+        status: isCompleting ? 'completed' : 'pending',
+        completed_at: isCompleting ? Date.now() : null,
+        updated_at: Date.now(),
+      });
+      toast.success(t('features.todos.kanban.statusUpdated'));
+    } catch (error) {
+      console.error('Failed to toggle todo completion:', error);
+      toast.error(t('features.todos.kanban.updateFailed'));
+    }
+  };
+
   return (
     <>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -109,13 +122,13 @@ export function KanbanBoard({ todos }: KanbanBoardProps) {
 
               <div className="space-y-3">
                 {columnTodos.map(todo => (
-                  <TodoKanbanCard
+                  <TodoKanbanTimelineCard
                     key={todo.id}
                     todo={todo}
                     onDragStart={handleDragStart}
                     onClick={handleTodoClick}
+                    onToggleComplete={handleToggleComplete}
                     isDragging={draggedTodoId === todo.id}
-                    t={t}
                   />
                 ))}
               </div>
@@ -135,30 +148,22 @@ export function KanbanBoard({ todos }: KanbanBoardProps) {
   );
 }
 
-interface TodoKanbanCardProps {
+interface TodoKanbanTimelineCardProps {
   todo: Todo;
   onDragStart: (todoId: string) => void;
   onClick: (todo: Todo) => void;
+  onToggleComplete: (todo: Todo) => void;
   isDragging: boolean;
-  t: (key: string, paramsOrFallback?: string | Record<string, string | number | undefined | null>, fallback?: string) => string;
 }
 
-function TodoKanbanCard({ todo, onDragStart, onClick, isDragging, t }: TodoKanbanCardProps) {
-  const dueDateMs = todo.due_date ? (typeof todo.due_date === 'number' ? todo.due_date : parseInt(String(todo.due_date), 10)) : null;
-  const isOverdue = dueDateMs !== null && todo.status !== 'completed' && dueDateMs < Date.now();
+function TodoKanbanTimelineCard({
+  todo,
+  onDragStart,
+  onClick,
+  onToggleComplete,
+  isDragging,
+}: TodoKanbanTimelineCardProps) {
   const [isDraggingCard, setIsDraggingCard] = useState(false);
-
-  const parsedTags: string[] = Array.isArray(todo.tags)
-    ? todo.tags
-    : typeof todo.tags === 'string'
-      ? (() => {
-          try {
-            return JSON.parse(todo.tags);
-          } catch {
-            return [];
-          }
-        })()
-      : [];
 
   const handleMouseDown = () => {
     setIsDraggingCard(false);
@@ -178,109 +183,31 @@ function TodoKanbanCard({ todo, onDragStart, onClick, isDragging, t }: TodoKanba
   };
 
   return (
-    <Card
+    <div
       draggable
       onMouseDown={handleMouseDown}
       onDragStart={handleDragStart}
       onDragEnd={() => setIsDraggingCard(false)}
-      onClick={handleClick}
-      className={`cursor-pointer transition-opacity hover:shadow-md ${isDragging ? 'opacity-50' : ''}`}
+      className={isDragging ? 'opacity-50' : undefined}
     >
-      <CardContent className="p-3">
-        <div className="mb-2">
-          <h4 className="line-clamp-2 text-sm font-medium">{todo.title}</h4>
-          {todo.description && (
-            <p className="text-muted-foreground mt-1 line-clamp-2 text-xs">{todo.description}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          {/* Priority */}
-          <div className="flex items-center justify-between">
-            <PriorityBadge priority={(todo.priority ?? 'medium') as TodoPriority} t={t} />
-            {isOverdue && (
-              <Badge variant="destructive" className="text-xs">
-                {t('features.todos.status.overdue')}
-              </Badge>
-            )}
-          </div>
-
-          {/* Due date */}
-          {todo.due_date && (
-            <div className="text-muted-foreground flex items-center gap-1 text-xs">
-              <Calendar className="h-3 w-3" />
-              <span>{formatDate(todo.due_date)}</span>
-            </div>
-          )}
-
-          {/* Assignees */}
-          {todo.assignments && todo.assignments.length > 0 && (
-            <div className="flex items-center gap-1">
-              <div className="flex -space-x-2">
-                {todo.assignments.slice(0, 3).map((assignment, idx: number) => (
-                  <Avatar key={idx} className="border-background h-5 w-5 border-2">
-                    <AvatarImage src={assignment.user?.avatar ?? undefined} />
-                    <AvatarFallback className="text-xs">
-                      {assignment.user?.email?.[0]?.toUpperCase() || '?'}
-                    </AvatarFallback>
-                  </Avatar>
-                ))}
-              </div>
-              {todo.assignments.length > 3 && (
-                <span className="text-muted-foreground text-xs">
-                  +{todo.assignments.length - 3}
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* Tags */}
-          {parsedTags.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {parsedTags.slice(0, 2).map((tag: string, idx: number) => (
-                <Badge key={idx} variant="outline" className="text-xs">
-                  {tag}
-                </Badge>
-              ))}
-              {parsedTags.length > 2 && (
-                <Badge variant="outline" className="text-xs">
-                  +{parsedTags.length - 2}
-                </Badge>
-              )}
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+      <TodoTimelineCard
+        todo={{
+          id: todo.id,
+          title: todo.title ?? '',
+          description: todo.description ?? undefined,
+          isCompleted: todo.status === 'completed',
+          dueDate: todo.due_date ?? undefined,
+          assigneeCount: todo.assignments?.length,
+          groupName: todo.group?.name ?? undefined,
+          groupId: todo.group?.id ?? undefined,
+          status: todo.status ?? undefined,
+          creatorId: todo.creator?.id ?? undefined,
+        }}
+        onToggle={() => onToggleComplete(todo)}
+        onCardClick={handleClick}
+        linkToDetail={false}
+        showStatusAction={false}
+      />
+    </div>
   );
-}
-
-function PriorityBadge({ priority, t }: { priority: TodoPriority; t: (key: string, paramsOrFallback?: string | Record<string, string | number | undefined | null>, fallback?: string) => string }) {
-  const colors = {
-    urgent: 'bg-red-500/10 text-red-500 border-red-500/20',
-    high: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
-    medium: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
-    low: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-  };
-
-  return (
-    <Badge variant="outline" className={`${colors[priority]} text-xs capitalize`}>
-      {t(`features.todos.priority.${priority}`)}
-    </Badge>
-  );
-}
-
-function formatDate(timestamp: number | string): string {
-  const date = new Date(typeof timestamp === 'number' ? timestamp : parseInt(timestamp));
-  const now = new Date();
-  const diffMs = date.getTime() - now.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) return 'Today';
-  if (diffDays === 1) return 'Tomorrow';
-  if (diffDays === -1) return 'Yesterday';
-  if (diffDays > 0 && diffDays <= 7) return `In ${diffDays} days`;
-  if (diffDays < 0 && diffDays >= -7) return `${Math.abs(diffDays)} days ago`;
-
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }

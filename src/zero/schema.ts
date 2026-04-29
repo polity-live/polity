@@ -84,7 +84,7 @@ import {
   groupWorkflowStep,
 } from './network/table';
 import { userPreference } from './preferences/table';
-import { aiSkill } from './ai/table';
+import { aiSkill, aiTool } from './ai/table';
 import { calendarSubscription } from './calendar-subscriptions/table';
 // Voting Password
 import { votingPassword } from './voting-password/table';
@@ -200,6 +200,7 @@ export const schema = createSchema({
     userPreference,
     // AI
     aiSkill,
+    aiTool,
     // Common
     hashtag,
     userHashtag,
@@ -332,6 +333,7 @@ export type StatementHashtag = Row<Schema['tables']['statement_hashtag']>;
 // Preferences
 export type UserPreference = Row<Schema['tables']['user_preference']>;
 export type AiSkill = Row<Schema['tables']['ai_skill']>;
+export type AiTool = Row<Schema['tables']['ai_tool']>;
 
 // Voting Password
 export type VotingPasswordRow = Row<Schema['tables']['voting_password']>;

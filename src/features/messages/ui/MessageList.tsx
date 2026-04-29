@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Check, LoaderCircle, X } from 'lucide-react';
+import { AlertCircle, Check, LoaderCircle, Wrench, X } from 'lucide-react';
 import { MessageBubble } from './MessageBubble';
 import { Conversation, Message } from '../types/message.types';
 import { getOtherParticipant } from '../logic/messageUtils';
@@ -10,15 +10,21 @@ import { isAssistantConversation } from '@/features/assistant/logic/assistantHel
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { MessageContent } from '@/features/messages/ui/MessageContent.tsx';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
+import type { AiAttachmentEntity } from '@/lib/ai/schemas';
 
 interface MessageListProps {
   conversation: Conversation;
   currentUserId?: string;
   onAcceptConversation: (conversation: Conversation) => void;
   onRejectConversation: (conversation: Conversation) => void;
+  resolveAttachmentCardData?: (entityType: AiAttachmentEntity, entityId: string) => string | null;
   streamingAssistantMessage?: {
     text: string;
     isThinking: boolean;
+    isToolCalling: boolean;
+    toolName?: string | null;
+    toolPreview?: string | null;
+    errorMessage?: string | null;
   };
 }
 
@@ -27,6 +33,7 @@ export function MessageList({
   currentUserId,
   onAcceptConversation,
   onRejectConversation,
+  resolveAttachmentCardData,
   streamingAssistantMessage,
 }: MessageListProps) {
   const { t } = useTranslation();
@@ -39,6 +46,9 @@ export function MessageList({
     conversation.messages,
     streamingAssistantMessage?.text,
     streamingAssistantMessage?.isThinking,
+    streamingAssistantMessage?.isToolCalling,
+    streamingAssistantMessage?.toolName,
+    streamingAssistantMessage?.errorMessage,
   ]);
 
   const otherUser = getOtherParticipant(conversation, currentUserId);
@@ -61,7 +71,14 @@ export function MessageList({
         ) : (
           conversation.messages.map((message: Message) => {
             const isOwnMessage = message.sender?.id === currentUserId;
-            return <MessageBubble key={message.id} message={message} isOwnMessage={isOwnMessage} />;
+            return (
+              <MessageBubble
+                key={message.id}
+                message={message}
+                isOwnMessage={isOwnMessage}
+                resolveAttachmentCardData={resolveAttachmentCardData}
+              />
+            );
           })
         )}
 
@@ -79,11 +96,61 @@ export function MessageList({
             <div className="max-w-[70%] space-y-2">
               <div className="bg-muted rounded-lg px-4 py-2">
                 {streamingAssistantMessage.text ? (
-                  <MessageContent content={streamingAssistantMessage.text} />
+                  <div className="space-y-3">
+                    <MessageContent content={streamingAssistantMessage.text} />
+                    {streamingAssistantMessage.errorMessage && (
+                      <div className="flex items-start gap-2 rounded-md border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">
+                        <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                        <span>{streamingAssistantMessage.errorMessage}</span>
+                      </div>
+                    )}
+                  </div>
+                ) : streamingAssistantMessage.isToolCalling ? (
+                  <div className="space-y-2">
+                    <div className="text-muted-foreground flex items-center gap-2 text-sm">
+                      <div className="bg-primary/10 text-primary flex h-6 w-6 items-center justify-center rounded-full">
+                        <Wrench className="h-3.5 w-3.5 animate-[wiggle_1.2s_ease-in-out_infinite]" />
+                      </div>
+                      <span>
+                        {streamingAssistantMessage.toolName
+                          ? t('features.messages.ai.toolCallingNamed', {
+                              tool: streamingAssistantMessage.toolName,
+                            })
+                          : t('features.messages.ai.toolCalling', 'Aria & Kai is using a tool...')}
+                      </span>
+                    </div>
+                    <div className="bg-background/70 border-border/60 overflow-hidden rounded-md border px-3 py-2">
+                      <div className="text-muted-foreground mb-1 text-[11px] font-medium tracking-[0.18em] uppercase">
+                        {t('features.messages.ai.toolCallLabel', 'Tool call')}
+                      </div>
+                      <div className="text-foreground font-mono text-xs leading-5 break-all">
+                        {streamingAssistantMessage.toolPreview ??
+                          streamingAssistantMessage.toolName ??
+                          'tool()'}
+                      </div>
+                      <div className="mt-2 flex gap-1">
+                        <span className="bg-primary/50 h-1.5 w-1.5 animate-bounce rounded-full [animation-delay:-0.3s]" />
+                        <span className="bg-primary/50 h-1.5 w-1.5 animate-bounce rounded-full [animation-delay:-0.15s]" />
+                        <span className="bg-primary/50 h-1.5 w-1.5 animate-bounce rounded-full" />
+                      </div>
+                    </div>
+                  </div>
+                ) : streamingAssistantMessage.errorMessage ? (
+                  <div className="flex items-start gap-2 text-sm text-red-700 dark:text-red-300">
+                    <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                    <span>{streamingAssistantMessage.errorMessage}</span>
+                  </div>
                 ) : (
-                  <div className="text-muted-foreground flex items-center gap-2 text-sm">
-                    <LoaderCircle className="h-4 w-4 animate-spin" />
-                    <span>{t('features.messages.ai.thinking', 'Aria & Kai is thinking...')}</span>
+                  <div className="text-muted-foreground flex items-center gap-3 text-sm">
+                    <div className="bg-primary/10 text-primary flex h-6 w-6 items-center justify-center rounded-full">
+                      <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span>{t('features.messages.ai.thinking', 'Aria & Kai is thinking...')}</span>
+                      <span className="bg-primary/40 h-1.5 w-1.5 animate-pulse rounded-full" />
+                      <span className="bg-primary/40 h-1.5 w-1.5 animate-pulse rounded-full [animation-delay:120ms]" />
+                      <span className="bg-primary/40 h-1.5 w-1.5 animate-pulse rounded-full [animation-delay:240ms]" />
+                    </div>
                   </div>
                 )}
               </div>

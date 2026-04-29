@@ -1,4 +1,4 @@
-import { KeyRound, Loader2, Pencil, ShieldCheck, Sparkles, Trash2 } from 'lucide-react';
+import { KeyRound, Loader2, Pencil, ShieldCheck, Sparkles, Trash2, Wrench } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
   Card,
@@ -20,6 +20,7 @@ import { HashtagInput } from '@/features/shared/ui/ui/hashtag-input';
 import { Label } from '@/features/shared/ui/ui/label';
 import { Textarea } from '@/features/shared/ui/ui/textarea';
 import { Badge } from '@/features/shared/ui/ui/badge';
+import { Switch } from '@/features/shared/ui/ui/switch';
 import {
   Table,
   TableBody,
@@ -29,7 +30,7 @@ import {
   TableRow,
 } from '@/features/shared/ui/ui/table';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import type { AiProvider } from '@/server/ai-types';
+import type { AiProvider } from '@/lib/ai/schemas';
 import { useAiSettingsTab } from '../hooks/useAiSettingsTab';
 
 const PROVIDER_CONFIG: Record<
@@ -133,6 +134,7 @@ export function AiSettingsTab() {
   const ai = useAiSettingsTab();
   const builtInSlugSet = new Set(ai.builtInSkills.map(skill => skill.slug));
   const builtInOverridesBySlug = new Map(ai.skills.map(skill => [skill.slug, skill]));
+  const builtInToolOverridesByName = new Map(ai.tools.map(tool => [tool.tool_name, tool]));
   const customSkills = ai.skills.filter(skill => !builtInSlugSet.has(skill.slug));
   const isEditingBuiltIn = Boolean(ai.editingBuiltInSlug);
   const skillDialogTitle =
@@ -148,77 +150,174 @@ export function AiSettingsTab() {
         'pages.user.ai.skillFormHint',
         'Use clear instructions. This prompt is appended to the base Aria & Kai system prompt.'
       );
+  const aiSettingsOverviewCard = (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-xl">
+          <ShieldCheck className="h-5 w-5" />
+          {t('pages.user.ai.title', 'AI settings')}
+        </CardTitle>
+        <CardDescription>
+          {t(
+            'pages.user.ai.description',
+            'Provider keys are posted once to the server, encrypted at rest, and never exposed through Zero queries or synced back to the client.'
+          )}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="text-muted-foreground text-sm">
+        <p>
+          {t(
+            'pages.user.ai.freeModels',
+            'All users can use free OpenRouter models when OPENROUTER_API_KEY is configured on the server. Paid provider access comes from your BYOK credentials below.'
+          )}
+        </p>
+      </CardContent>
+    </Card>
+  );
+  const availableModelsCard = (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-xl">
+          <ShieldCheck className="h-5 w-5" />
+          {t('pages.user.ai.availableModelsTitle', 'Available models')}
+        </CardTitle>
+        <CardDescription>
+          {t(
+            'pages.user.ai.availableModelsDescription',
+            'These models are currently available to this account in Aria & Kai.'
+          )}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="text-muted-foreground space-y-3 text-sm">
+        {ai.models.length === 0 ? (
+          <p>{t('pages.user.ai.noModels', 'No AI models are currently available.')}</p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t('pages.user.ai.models.model', 'Model')}</TableHead>
+                <TableHead>{t('pages.user.ai.models.provider', 'Provider')}</TableHead>
+                <TableHead>{t('pages.user.ai.models.contextWindow', 'Context')}</TableHead>
+                <TableHead>{t('pages.user.ai.models.tags', 'Tags')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {ai.models.map(model => (
+                <TableRow key={`${model.provider}:${model.id}`}>
+                  <TableCell className="font-medium">{model.label}</TableCell>
+                  <TableCell className="text-muted-foreground uppercase">
+                    {model.provider}
+                  </TableCell>
+                  <TableCell>{formatContextWindow(model.context_window)}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1.5">
+                      <Badge className="border-0 bg-gradient-to-r from-indigo-500/20 via-blue-500/20 to-cyan-500/20 text-[11px] text-blue-800 dark:text-blue-200">
+                        {model.source === 'app' ? 'app' : 'byok'}
+                      </Badge>
+                      {model.free && (
+                        <Badge className="border-0 bg-gradient-to-r from-emerald-500/20 via-green-500/20 to-lime-500/20 text-[11px] text-emerald-800 dark:text-emerald-200">
+                          free
+                        </Badge>
+                      )}
+                      <Badge
+                        className={
+                          isAlwaysAvailableModel(model)
+                            ? 'border-0 bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-cyan-500/20 text-[11px] text-emerald-800 dark:text-emerald-200'
+                            : 'border-0 bg-gradient-to-r from-rose-500/20 via-red-500/20 to-orange-500/20 text-[11px] text-red-800 dark:text-red-200'
+                        }
+                      >
+                        {isAlwaysAvailableModel(model)
+                          ? t('pages.user.ai.models.stable', 'stable')
+                          : t('pages.user.ai.models.mayFail', 'may fail')}
+                      </Badge>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="space-y-6">
+      {aiSettingsOverviewCard}
+
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-xl">
-            <ShieldCheck className="h-5 w-5" />
-            {t('pages.user.ai.title', 'AI settings')}
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Wrench className="h-5 w-5" />
+            {t('pages.user.ai.toolsTitle', 'Available tools')}
           </CardTitle>
           <CardDescription>
             {t(
-              'pages.user.ai.description',
-              'Provider keys are posted once to the server, encrypted at rest, and never exposed through Zero queries or synced back to the client.'
+              'pages.user.ai.toolsDescription',
+              'Tools are callable Polity APIs that Aria & Kai can execute and read results from. Skills are prompt instructions and are configured separately below.'
             )}
           </CardDescription>
         </CardHeader>
-        <CardContent className="text-muted-foreground space-y-3 text-sm">
-          <p>
-            {t(
-              'pages.user.ai.freeModels',
-              'All users can use free OpenRouter models when OPENROUTER_API_KEY is configured on the server. Paid provider access comes from your BYOK credentials below.'
-            )}
-          </p>
-          {ai.models.length === 0 ? (
-            <p>{t('pages.user.ai.noModels', 'No AI models are currently available.')}</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('pages.user.ai.models.model', 'Model')}</TableHead>
-                  <TableHead>{t('pages.user.ai.models.provider', 'Provider')}</TableHead>
-                  <TableHead>{t('pages.user.ai.models.contextWindow', 'Context')}</TableHead>
-                  <TableHead>{t('pages.user.ai.models.tags', 'Tags')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {ai.models.map(model => (
-                  <TableRow key={`${model.provider}:${model.id}`}>
-                    <TableCell className="font-medium">{model.label}</TableCell>
-                    <TableCell className="text-muted-foreground uppercase">
-                      {model.provider}
-                    </TableCell>
-                    <TableCell>{formatContextWindow(model.context_window)}</TableCell>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t('pages.user.ai.tools.name', 'Name')}</TableHead>
+                <TableHead>{t('pages.user.ai.tools.identifier', 'Identifier')}</TableHead>
+                <TableHead>{t('pages.user.ai.tools.type', 'Type')}</TableHead>
+                <TableHead>{t('pages.user.ai.tools.descriptionColumn', 'Description')}</TableHead>
+                <TableHead>{t('common.labels.enabled', 'Enabled')}</TableHead>
+                <TableHead>{t('common.labels.status', 'Status')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {ai.builtInTools.map(tool => {
+                const override = builtInToolOverridesByName.get(tool.name);
+                const isEnabled = override?.enabled ?? true;
+
+                return (
+                  <TableRow key={tool.name}>
+                    <TableCell className="font-medium">{tool.label}</TableCell>
+                    <TableCell>{tool.name}</TableCell>
                     <TableCell>
-                      <div className="flex flex-wrap gap-1.5">
-                        <Badge className="border-0 bg-gradient-to-r from-indigo-500/20 via-blue-500/20 to-cyan-500/20 text-[11px] text-blue-800 dark:text-blue-200">
-                          {model.source === 'app' ? 'app' : 'byok'}
-                        </Badge>
-                        {model.free && (
-                          <Badge className="border-0 bg-gradient-to-r from-emerald-500/20 via-green-500/20 to-lime-500/20 text-[11px] text-emerald-800 dark:text-emerald-200">
-                            free
-                          </Badge>
-                        )}
-                        <Badge
-                          className={
-                            isAlwaysAvailableModel(model)
-                              ? 'border-0 bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-cyan-500/20 text-[11px] text-emerald-800 dark:text-emerald-200'
-                              : 'border-0 bg-gradient-to-r from-rose-500/20 via-red-500/20 to-orange-500/20 text-[11px] text-red-800 dark:text-red-200'
-                          }
-                        >
-                          {isAlwaysAvailableModel(model)
-                            ? t('pages.user.ai.models.stable', 'stable')
-                            : t('pages.user.ai.models.mayFail', 'may fail')}
-                        </Badge>
-                      </div>
+                      <Badge
+                        className={
+                          tool.kind === 'create'
+                            ? 'border-0 bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-yellow-500/20 text-[11px] text-amber-800 dark:text-amber-200'
+                            : 'border-0 bg-gradient-to-r from-sky-500/20 via-cyan-500/20 to-blue-500/20 text-[11px] text-sky-800 dark:text-sky-200'
+                        }
+                      >
+                        {tool.kind}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
+                      {tool.description}
+                    </TableCell>
+                    <TableCell>
+                      <Switch
+                        checked={isEnabled}
+                        onCheckedChange={checked => ai.toggleBuiltInToolEnabled(tool.name, checked)}
+                        aria-label={t('pages.user.ai.tools.toggle', 'Toggle tool')}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        className={
+                          override
+                            ? 'border-0 bg-gradient-to-r from-violet-500/20 via-fuchsia-500/20 to-pink-500/20 text-[11px] text-fuchsia-800 dark:text-fuchsia-200'
+                            : 'border-0 bg-gradient-to-r from-emerald-500/20 via-green-500/20 to-lime-500/20 text-[11px] text-emerald-800 dark:text-emerald-200'
+                        }
+                      >
+                        {override
+                          ? t('pages.user.ai.tools.overridden', 'overridden')
+                          : t('pages.user.ai.tools.default', 'default')}
+                      </Badge>
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+                );
+              })}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 
@@ -242,6 +341,8 @@ export function AiSettingsTab() {
                 <TableHead>{t('pages.user.ai.skills.slug', 'Slug')}</TableHead>
                 <TableHead>{t('pages.user.ai.skills.aliases', 'Aliases')}</TableHead>
                 <TableHead>{t('common.labels.status', 'Status')}</TableHead>
+                <TableHead>{t('common.labels.enabled', 'Enabled')}</TableHead>
+                <TableHead>{t('common.labels.status', 'Status')}</TableHead>
                 <TableHead className="w-[120px]">{t('common.actions.edit', 'Edit')}</TableHead>
               </TableRow>
             </TableHeader>
@@ -249,12 +350,35 @@ export function AiSettingsTab() {
               {ai.builtInSkills.map(skill => {
                 const override = builtInOverridesBySlug.get(skill.slug);
                 const effectiveAliases = override ? parseAliases(override.aliases) : skill.aliases;
+                const isEnabled = override?.enabled ?? true;
 
                 return (
                   <TableRow key={skill.slug}>
                     <TableCell className="font-medium">{override?.name ?? skill.name}</TableCell>
                     <TableCell>/{skill.slug}</TableCell>
                     <TableCell>{renderAliasBadges(effectiveAliases)}</TableCell>
+                    <TableCell>
+                      <Badge
+                        className={
+                          isEnabled
+                            ? 'border-0 bg-gradient-to-r from-emerald-500/20 via-green-500/20 to-lime-500/20 text-[11px] text-emerald-800 dark:text-emerald-200'
+                            : 'border-0 bg-gradient-to-r from-zinc-500/20 via-slate-500/20 to-stone-500/20 text-[11px] text-slate-800 dark:text-slate-200'
+                        }
+                      >
+                        {isEnabled
+                          ? t('common.status.enabled', 'enabled')
+                          : t('common.status.disabled', 'disabled')}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Switch
+                        checked={isEnabled}
+                        onCheckedChange={checked =>
+                          ai.toggleBuiltInSkillEnabled(skill.slug, checked)
+                        }
+                        aria-label={t('pages.user.ai.skills.toggle', 'Toggle skill')}
+                      />
+                    </TableCell>
                     <TableCell>
                       <Badge className="border-0 bg-gradient-to-r from-violet-500/20 via-fuchsia-500/20 to-pink-500/20 text-[11px] text-fuchsia-800 dark:text-fuchsia-200">
                         {override
@@ -316,6 +440,7 @@ export function AiSettingsTab() {
                   <TableHead>{t('pages.user.ai.skills.name', 'Name')}</TableHead>
                   <TableHead>{t('pages.user.ai.skills.slug', 'Slug')}</TableHead>
                   <TableHead>{t('pages.user.ai.skills.aliases', 'Aliases')}</TableHead>
+                  <TableHead>{t('common.labels.enabled', 'Enabled')}</TableHead>
                   <TableHead className="w-[180px]">{t('common.actions.edit', 'Edit')}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -325,6 +450,13 @@ export function AiSettingsTab() {
                     <TableCell className="font-medium">{skill.name}</TableCell>
                     <TableCell>/{skill.slug}</TableCell>
                     <TableCell>{renderAliasBadges(parseAliases(skill.aliases))}</TableCell>
+                    <TableCell>
+                      <Switch
+                        checked={skill.enabled}
+                        onCheckedChange={checked => ai.toggleCustomSkillEnabled(skill.id, checked)}
+                        aria-label={t('pages.user.ai.skills.toggle', 'Toggle skill')}
+                      />
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Button
@@ -453,6 +585,8 @@ export function AiSettingsTab() {
           </div>
         </CardContent>
       </Card>
+
+      {availableModelsCard}
 
       <Dialog
         open={ai.isSkillDialogOpen}

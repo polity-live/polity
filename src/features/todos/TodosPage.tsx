@@ -35,7 +35,6 @@ export function TodosPage() {
     filteredTodos,
     statusCounts,
     handleToggleComplete,
-    handleUpdateStatus,
     handleTodoClick,
   } = useTodosPage();
 
@@ -68,9 +67,9 @@ export function TodosPage() {
         {filteredTodos.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
-              <CheckSquare className="mb-4 h-12 w-12 text-muted-foreground" />
+              <CheckSquare className="text-muted-foreground mb-4 h-12 w-12" />
               <h3 className="mb-2 text-lg font-semibold">{t('features.todos.list.empty')}</h3>
-              <p className="mb-4 text-center text-sm text-muted-foreground">
+              <p className="text-muted-foreground mb-4 text-center text-sm">
                 {searchQuery
                   ? t('features.todos.list.noMatchingTodos')
                   : selectedTab === 'all'
@@ -94,7 +93,6 @@ export function TodosPage() {
             <TodoList
               todos={filteredTodos}
               onToggleComplete={handleToggleComplete}
-              onUpdateStatus={handleUpdateStatus}
               onTodoClick={handleTodoClick}
             />
           </ScrollArea>

@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { DEFAULT_AI_SKILLS } from '@/features/assistant/logic/defaultAiSkills';
+import type { AiProvider } from '@/lib/ai/schemas';
+import { DEFAULT_AI_TOOLS, type AiToolName } from '@/lib/ai/defaultAiTools';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useAuth } from '@/providers/auth-provider';
-import type { AiProvider } from '@/server/ai-types';
 import { useAiActions } from '@/zero/ai/useAiActions';
 import { useAiState } from '@/zero/ai/useAiState';
 
@@ -65,7 +66,7 @@ const SKILL_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export function useAiSettingsTab() {
   const { session } = useAuth();
   const { t } = useTranslation();
-  const { skills } = useAiState();
+  const { skills, tools } = useAiState();
   const aiActions = useAiActions();
 
   const [credentials, setCredentials] = useState<AiCredentialSummary[]>([]);
@@ -238,6 +239,11 @@ export function useAiSettingsTab() {
 
   const builtInSkillBySlug = useMemo(
     () => new Map(DEFAULT_AI_SKILLS.map(skill => [skill.slug, skill])),
+    []
+  );
+
+  const builtInToolByName = useMemo(
+    () => new Map(DEFAULT_AI_TOOLS.map(tool => [tool.name, tool])),
     []
   );
 
@@ -416,9 +422,96 @@ export function useAiSettingsTab() {
     [aiActions, cancelSkillEdit, editingSkillId]
   );
 
+  const toggleCustomSkillEnabled = useCallback(
+    (skillId: string, enabled: boolean) => {
+      const skill = skills.find(currentSkill => currentSkill.id === skillId);
+      if (!skill) {
+        return;
+      }
+
+      aiActions.updateSkill({
+        id: skill.id,
+        slug: skill.slug,
+        name: skill.name,
+        aliases: skill.aliases ?? '',
+        system_prompt: skill.system_prompt,
+        enabled,
+      });
+    },
+    [aiActions, skills]
+  );
+
+  const toggleBuiltInSkillEnabled = useCallback(
+    (skillSlug: string, enabled: boolean) => {
+      const builtInSkill = builtInSkillBySlug.get(skillSlug);
+      if (!builtInSkill) {
+        return;
+      }
+
+      const customOverride = skills.find(skill => skill.slug === skillSlug) ?? null;
+
+      if (customOverride) {
+        aiActions.updateSkill({
+          id: customOverride.id,
+          slug: customOverride.slug,
+          name: customOverride.name,
+          aliases: customOverride.aliases ?? '',
+          system_prompt: customOverride.system_prompt,
+          enabled,
+        });
+        return;
+      }
+
+      if (enabled) {
+        return;
+      }
+
+      aiActions.createSkill({
+        slug: builtInSkill.slug,
+        name: builtInSkill.name,
+        aliases: builtInSkill.aliases.join(','),
+        system_prompt: builtInSkill.systemPrompt,
+        enabled: false,
+      });
+    },
+    [aiActions, builtInSkillBySlug, skills]
+  );
+
+  const toggleBuiltInToolEnabled = useCallback(
+    (toolName: AiToolName, enabled: boolean) => {
+      const builtInTool = builtInToolByName.get(toolName);
+      if (!builtInTool) {
+        return;
+      }
+
+      const toolOverride = tools.find(tool => tool.tool_name === toolName) ?? null;
+
+      if (toolOverride) {
+        aiActions.updateTool({
+          id: toolOverride.id,
+          tool_name: toolOverride.tool_name,
+          enabled,
+        });
+        return;
+      }
+
+      if (enabled) {
+        return;
+      }
+
+      aiActions.createTool({
+        tool_name: builtInTool.name,
+        enabled: false,
+      });
+    },
+    [aiActions, builtInToolByName, tools]
+  );
+
   return {
+    builtInTools: DEFAULT_AI_TOOLS,
     builtInSkills: DEFAULT_AI_SKILLS,
     skills,
+    tools,
     models,
     credentialsByProvider,
     providerInputs,
@@ -443,5 +536,8 @@ export function useAiSettingsTab() {
     cancelSkillEdit,
     saveSkill,
     deleteSkill,
+    toggleBuiltInToolEnabled,
+    toggleBuiltInSkillEnabled,
+    toggleCustomSkillEnabled,
   };
 }

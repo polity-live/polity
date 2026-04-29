@@ -1,8 +1,13 @@
 import { ARIA_KAI_USER_ID } from '@/features/assistant/constants';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
+import {
+  aiChatAttachmentSchema,
+  type AiChatAttachment,
+  type AiProvider,
+  type AiToolName,
+} from '@/lib/ai/schemas';
 import { createClient } from '@/lib/supabase/server';
 import { decryptSecret, encryptSecret, maskSecret } from './ai-crypto';
-import { aiChatAttachmentSchema, type AiChatAttachment, type AiProvider } from './ai-types';
 
 export interface AiCredentialSummary {
   provider: AiProvider;
@@ -42,6 +47,16 @@ interface AiSkillRow {
   name: string;
   aliases: string;
   system_prompt: string;
+  enabled: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+interface AiToolRow {
+  id: string;
+  user_id: string;
+  tool_name: AiToolName;
+  enabled: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -500,7 +515,8 @@ export async function getConversationMessagesForAi(
 
 export async function persistAssistantMessage(
   conversationId: string,
-  content: string
+  content: string,
+  attachments: readonly AiChatAttachment[] = []
 ): Promise<void> {
   const supabase = createClient();
   const now = new Date().toISOString();
@@ -509,7 +525,7 @@ export async function persistAssistantMessage(
     conversation_id: conversationId,
     sender_id: ARIA_KAI_USER_ID,
     content,
-    context_json: '[]',
+    context_json: JSON.stringify(attachments),
     is_read: false,
     deleted_at: null,
     created_at: now,
@@ -539,7 +555,7 @@ export async function getAiSkillBySlug(
   const supabase = createClient();
   const { data, error } = await supabase
     .from('ai_skill')
-    .select('id, user_id, slug, name, aliases, system_prompt, created_at, updated_at')
+    .select('id, user_id, slug, name, aliases, system_prompt, enabled, created_at, updated_at')
     .eq('user_id', userId)
     .eq('slug', skillSlug)
     .maybeSingle();
@@ -549,6 +565,50 @@ export async function getAiSkillBySlug(
   }
 
   return (data as AiSkillRow | null) ?? null;
+}
+
+export async function getAiSkillsBySlugs(
+  userId: string,
+  skillSlugs: readonly string[]
+): Promise<AiSkillRow[]> {
+  if (skillSlugs.length === 0) {
+    return [];
+  }
+
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('ai_skill')
+    .select('id, user_id, slug, name, aliases, system_prompt, enabled, created_at, updated_at')
+    .eq('user_id', userId)
+    .in('slug', [...skillSlugs]);
+
+  if (error) {
+    throw new Error(`Failed to load AI skills: ${error.message}`);
+  }
+
+  return (data ?? []) as AiSkillRow[];
+}
+
+export async function getAiToolsByNames(
+  userId: string,
+  toolNames: readonly AiToolName[]
+): Promise<AiToolRow[]> {
+  if (toolNames.length === 0) {
+    return [];
+  }
+
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('ai_tool')
+    .select('id, user_id, tool_name, enabled, created_at, updated_at')
+    .eq('user_id', userId)
+    .in('tool_name', [...toolNames]);
+
+  if (error) {
+    throw new Error(`Failed to load AI tools: ${error.message}`);
+  }
+
+  return (data ?? []) as AiToolRow[];
 }
 
 export function isAssistantSender(senderId: string): boolean {

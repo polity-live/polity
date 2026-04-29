@@ -1,10 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { DEFAULT_AI_SKILLS } from '@/features/assistant/logic/defaultAiSkills';
+import { DEFAULT_AI_TOOLS, type AiToolName } from '@/lib/ai/defaultAiTools';
 import { buildAgendaItemsByEventId } from '@/features/search/logic/searchFiltering';
 import { mapMosaicToContentItems } from '@/features/search/logic/searchMappers';
 import type { SearchContentItem, SearchResultItem } from '@/features/search/types/search.types';
-import type { AiChatAttachment, AiProvider, AiReasoningEffort } from '@/server/ai-types';
+import type {
+  AiAttachmentEntity,
+  AiChatAttachment,
+  AiProvider,
+  AiReasoningEffort,
+} from '@/lib/ai/schemas';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useSearchData } from '@/features/search/hooks/useSearchData';
 import { useAuth } from '@/providers/auth-provider';
@@ -38,8 +44,17 @@ export interface AssistantSkillOption {
   slug: string;
   name: string;
   aliases: string[];
-  isDefault: boolean;
+  isBuiltIn: boolean;
   systemPrompt: string;
+  enabled: boolean;
+}
+
+export interface AssistantToolOption {
+  name: AiToolName;
+  label: string;
+  kind: 'search' | 'create';
+  description: string;
+  enabled: boolean;
 }
 
 export interface CreateAssistantSkillInput {
@@ -49,7 +64,107 @@ export interface CreateAssistantSkillInput {
   systemPrompt: string;
 }
 
+interface SendAssistantMessageOptions {
+  onUserMessageSent?: () => void;
+}
+
 const FREE_ROUTER_MODEL_LABEL = 'free models router';
+
+interface AssistantChatStreamEvent {
+  type: 'text-delta' | 'tool-call-delta' | 'tool-call' | 'tool-result' | 'error';
+  text?: string;
+  toolName?: string | null;
+  args?: Record<string, unknown> | null;
+  message?: string;
+}
+
+interface ActiveToolCallState {
+  label: string | null;
+  preview: string | null;
+}
+
+function sameToolNames(left: readonly AiToolName[], right: readonly AiToolName[]): boolean {
+  return left.length === right.length && left.every((toolName, index) => toolName === right[index]);
+}
+
+function parseAssistantChatStreamEvent(rawLine: string): AssistantChatStreamEvent | null {
+  try {
+    const parsed = JSON.parse(rawLine) as Record<string, unknown>;
+    const type = parsed.type;
+
+    if (
+      type !== 'text-delta' &&
+      type !== 'tool-call-delta' &&
+      type !== 'tool-call' &&
+      type !== 'tool-result' &&
+      type !== 'error'
+    ) {
+      return null;
+    }
+
+    return {
+      type,
+      text: typeof parsed.text === 'string' ? parsed.text : undefined,
+      toolName: typeof parsed.toolName === 'string' ? parsed.toolName : null,
+      args:
+        parsed.args && typeof parsed.args === 'object' && !Array.isArray(parsed.args)
+          ? (parsed.args as Record<string, unknown>)
+          : null,
+      message: typeof parsed.message === 'string' ? parsed.message : undefined,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function formatToolCallValue(value: unknown): string {
+  if (typeof value === 'string') {
+    return JSON.stringify(value);
+  }
+
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+
+  if (value === null) {
+    return 'null';
+  }
+
+  if (Array.isArray(value)) {
+    const preview = value
+      .slice(0, 3)
+      .map(item => formatToolCallValue(item))
+      .join(', ');
+    return `[${preview}${value.length > 3 ? ', ...' : ''}]`;
+  }
+
+  if (typeof value === 'object') {
+    return '{...}';
+  }
+
+  return 'unknown';
+}
+
+function buildToolCallPreview(
+  toolName: string | null,
+  args?: Record<string, unknown> | null
+): string | null {
+  if (!toolName) {
+    return null;
+  }
+
+  if (!args || Object.keys(args).length === 0) {
+    return `${toolName}()`;
+  }
+
+  const serializedArgs = Object.entries(args)
+    .slice(0, 4)
+    .map(([key, value]) => `${key}: ${formatToolCallValue(value)}`)
+    .join(', ');
+
+  const hasMoreArgs = Object.keys(args).length > 4;
+  return `${toolName}(${serializedArgs}${hasMoreArgs ? ', ...' : ''})`;
+}
 
 function getModelKey(model: Pick<AiCatalogModel, 'provider' | 'id'>): string {
   return `${model.provider}:${model.id}`;
@@ -78,7 +193,7 @@ function getPreferredDefaultModelKey(models: readonly AiCatalogModel[]): string 
 export function useAssistantChat(conversation: Conversation, currentUserId?: string) {
   const { session } = useAuth();
   const { t } = useTranslation();
-  const { skills } = useAiState();
+  const { skills, tools } = useAiState();
   const aiActions = useAiActions();
   const mutations = useMessageMutations();
   const { data } = useSearchData();
@@ -87,28 +202,37 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
   const [models, setModels] = useState<AiCatalogModel[]>([]);
   const [selectedModelKey, setSelectedModelKey] = useState('');
   const [reasoningEffort, setReasoningEffort] = useState<AiReasoningEffort>('medium');
-  const [selectedSkillSlug, setSelectedSkillSlug] = useState<string | null>(null);
+  const [selectedSkillSlugs, setSelectedSkillSlugs] = useState<string[]>([]);
+  const [selectedToolNames, setSelectedToolNames] = useState<AiToolName[]>([]);
   const [selectedAttachments, setSelectedAttachments] = useState<AiChatAttachment[]>([]);
   const [streamingText, setStreamingText] = useState('');
   const [awaitingPersistenceText, setAwaitingPersistenceText] = useState<string | null>(null);
+  const [streamError, setStreamError] = useState<string | null>(null);
   const [isCatalogLoading, setIsCatalogLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
+  const [isToolCalling, setIsToolCalling] = useState(false);
+  const [activeToolName, setActiveToolName] = useState<string | null>(null);
+  const [activeToolCall, setActiveToolCall] = useState<ActiveToolCallState | null>(null);
+  const [hasManualToolSelection, setHasManualToolSelection] = useState(false);
 
   const availableSkills = useMemo<AssistantSkillOption[]>(() => {
     const mergedSkills = new Map<string, AssistantSkillOption>();
+    const builtInSkillSlugs = new Set(DEFAULT_AI_SKILLS.map(skill => skill.slug));
 
     for (const skill of DEFAULT_AI_SKILLS) {
       mergedSkills.set(skill.slug, {
         slug: skill.slug,
         name: skill.name,
         aliases: [...skill.aliases],
-        isDefault: true,
+        isBuiltIn: true,
         systemPrompt: skill.systemPrompt,
+        enabled: true,
       });
     }
 
     for (const skill of skills) {
+      const isBuiltIn = builtInSkillSlugs.has(skill.slug);
       mergedSkills.set(skill.slug, {
         slug: skill.slug,
         name: skill.name,
@@ -116,13 +240,44 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
           .split(',')
           .map(alias => alias.trim())
           .filter(Boolean),
-        isDefault: false,
+        isBuiltIn,
         systemPrompt: skill.system_prompt,
+        enabled: skill.enabled,
       });
     }
 
-    return [...mergedSkills.values()].sort((left, right) => left.name.localeCompare(right.name));
+    return [...mergedSkills.values()]
+      .filter(skill => skill.enabled)
+      .sort((left, right) => left.name.localeCompare(right.name));
   }, [skills]);
+
+  const selectedSkills = useMemo(
+    () =>
+      selectedSkillSlugs
+        .map(skillSlug => availableSkills.find(skill => skill.slug === skillSlug) ?? null)
+        .filter((skill): skill is AssistantSkillOption => skill !== null),
+    [availableSkills, selectedSkillSlugs]
+  );
+
+  const availableTools = useMemo<AssistantToolOption[]>(() => {
+    const overrideMap = new Map(tools.map(tool => [tool.tool_name, tool]));
+
+    return DEFAULT_AI_TOOLS.map(tool => ({
+      name: tool.name,
+      label: tool.label,
+      kind: tool.kind,
+      description: tool.description,
+      enabled: overrideMap.get(tool.name)?.enabled ?? true,
+    })).sort((left, right) => left.label.localeCompare(right.label));
+  }, [tools]);
+
+  const selectedTools = useMemo(
+    () =>
+      selectedToolNames
+        .map(toolName => availableTools.find(tool => tool.name === toolName) ?? null)
+        .filter((tool): tool is AssistantToolOption => tool !== null),
+    [availableTools, selectedToolNames]
+  );
 
   const agendaItemsByEventId = useMemo(
     () =>
@@ -168,6 +323,18 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
         .filter((option): option is AssistantAttachmentOption => option !== null),
     [searchItems]
   );
+
+  const attachmentCardDataByKey = useMemo(() => {
+    const cardData = new Map<string, string>();
+
+    for (const option of attachmentOptions) {
+      if (option.attachment.card_data_json) {
+        cardData.set(option.key, option.attachment.card_data_json);
+      }
+    }
+
+    return cardData;
+  }, [attachmentOptions]);
 
   const selectedModel = useMemo(
     () => models.find(model => getModelKey(model) === selectedModelKey) ?? null,
@@ -224,22 +391,40 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
   }, [models, preferredDefaultModelKey, selectedModelKey]);
 
   useEffect(() => {
-    if (!selectedSkillSlug) {
+    setSelectedSkillSlugs(currentSkillSlugs =>
+      currentSkillSlugs.filter(skillSlug => availableSkills.some(skill => skill.slug === skillSlug))
+    );
+  }, [availableSkills]);
+
+  useEffect(() => {
+    setSelectedToolNames(currentToolNames =>
+      currentToolNames.filter(toolName => availableTools.some(tool => tool.name === toolName))
+    );
+  }, [availableTools]);
+
+  useEffect(() => {
+    if (hasManualToolSelection) {
       return;
     }
 
-    const skillStillExists = availableSkills.some(skill => skill.slug === selectedSkillSlug);
-    if (!skillStillExists) {
-      setSelectedSkillSlug(null);
-    }
-  }, [availableSkills, selectedSkillSlug]);
+    const nextToolNames = availableTools.filter(tool => tool.enabled).map(tool => tool.name);
+    setSelectedToolNames(currentToolNames =>
+      sameToolNames(currentToolNames, nextToolNames) ? currentToolNames : nextToolNames
+    );
+  }, [availableTools, hasManualToolSelection]);
 
   useEffect(() => {
     setSelectedAttachments([]);
+    setSelectedToolNames([]);
     setStreamingText('');
     setAwaitingPersistenceText(null);
+    setStreamError(null);
     setIsThinking(false);
+    setIsToolCalling(false);
+    setActiveToolName(null);
+    setActiveToolCall(null);
     setIsSending(false);
+    setHasManualToolSelection(false);
   }, [conversation.id]);
 
   useEffect(() => {
@@ -281,6 +466,85 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
     setSelectedAttachments([]);
   }, []);
 
+  const resolveAttachmentCardData = useCallback(
+    (entityType: AiAttachmentEntity, entityId: string): string | null =>
+      attachmentCardDataByKey.get(`${entityType}:${entityId}`) ?? null,
+    [attachmentCardDataByKey]
+  );
+
+  const setSkillSelection = useCallback((skillSlug: string, enabled: boolean) => {
+    setSelectedSkillSlugs(currentSkillSlugs => {
+      const hasSkill = currentSkillSlugs.includes(skillSlug);
+      if (enabled) {
+        return hasSkill ? currentSkillSlugs : [...currentSkillSlugs, skillSlug];
+      }
+
+      return hasSkill
+        ? currentSkillSlugs.filter(currentSkillSlug => currentSkillSlug !== skillSlug)
+        : currentSkillSlugs;
+    });
+  }, []);
+
+  const toggleSelectedSkillSlug = useCallback((skillSlug: string) => {
+    setSelectedSkillSlugs(currentSkillSlugs =>
+      currentSkillSlugs.includes(skillSlug)
+        ? currentSkillSlugs.filter(currentSkillSlug => currentSkillSlug !== skillSlug)
+        : [...currentSkillSlugs, skillSlug]
+    );
+  }, []);
+
+  const setToolSelection = useCallback((toolName: AiToolName, enabled: boolean) => {
+    setHasManualToolSelection(true);
+    setSelectedToolNames(currentToolNames => {
+      const hasTool = currentToolNames.includes(toolName);
+      if (enabled) {
+        return hasTool ? currentToolNames : [...currentToolNames, toolName];
+      }
+
+      return hasTool
+        ? currentToolNames.filter(currentToolName => currentToolName !== toolName)
+        : currentToolNames;
+    });
+  }, []);
+
+  const toggleSelectedToolName = useCallback((toolName: AiToolName) => {
+    setHasManualToolSelection(true);
+    setSelectedToolNames(currentToolNames =>
+      currentToolNames.includes(toolName)
+        ? currentToolNames.filter(currentToolName => currentToolName !== toolName)
+        : [...currentToolNames, toolName]
+    );
+  }, []);
+
+  const setToolGroupSelection = useCallback(
+    (kind: AssistantToolOption['kind'], enabled: boolean) => {
+      setHasManualToolSelection(true);
+
+      const toolNamesForKind = availableTools
+        .filter(tool => tool.kind === kind)
+        .map(tool => tool.name);
+
+      setSelectedToolNames(currentToolNames => {
+        const nextSelectedToolNameSet = new Set(currentToolNames);
+
+        for (const toolName of toolNamesForKind) {
+          if (enabled) {
+            nextSelectedToolNameSet.add(toolName);
+          } else {
+            nextSelectedToolNameSet.delete(toolName);
+          }
+        }
+
+        const nextToolNames = availableTools
+          .map(tool => tool.name)
+          .filter(toolName => nextSelectedToolNameSet.has(toolName));
+
+        return sameToolNames(currentToolNames, nextToolNames) ? currentToolNames : nextToolNames;
+      });
+    },
+    [availableTools]
+  );
+
   const createSkill = useCallback(
     (input: CreateAssistantSkillInput): string => {
       const slug = input.slug?.trim() || slugifySkillName(input.name);
@@ -296,7 +560,7 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
   );
 
   const sendAssistantMessage = useCallback(
-    async (content: string): Promise<boolean> => {
+    async (content: string, options?: SendAssistantMessageOptions): Promise<boolean> => {
       if (!currentUserId) {
         toast.error(
           t(
@@ -329,21 +593,21 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
 
       setIsSending(true);
       setIsThinking(true);
+      setIsToolCalling(false);
+      setActiveToolName(null);
+      setActiveToolCall(null);
       setStreamingText('');
       setAwaitingPersistenceText(null);
-
-      const selectedSkill = selectedSkillSlug
-        ? (availableSkills.find(skill => skill.slug === selectedSkillSlug) ?? null)
-        : null;
+      setStreamError(null);
 
       const attachmentsForRequest: AiChatAttachment[] = [...selectedAttachments];
 
-      if (selectedSkill) {
+      for (const selectedSkill of selectedSkills) {
         attachmentsForRequest.push({
           entityType: 'skill',
           entityId: selectedSkill.slug,
           title: selectedSkill.name,
-          subtitle: selectedSkill.isDefault ? 'Built-in skill' : 'Custom skill',
+          subtitle: selectedSkill.slug,
           prompt_context: selectedSkill.systemPrompt,
         });
       }
@@ -363,6 +627,8 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
           return false;
         }
 
+        options?.onUserMessageSent?.();
+
         const response = await fetch('/api/ai/chat', {
           method: 'POST',
           headers: {
@@ -377,7 +643,8 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
               id: selectedModel.id,
             },
             reasoningEffort,
-            skillSlug: selectedSkillSlug,
+            skillSlugs: selectedSkills.map(skill => skill.slug),
+            toolNames: selectedToolNames,
             attachments: attachmentsForRequest,
           }),
         });
@@ -391,6 +658,76 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let finalText = '';
+        let streamBuffer = '';
+        let streamErrorMessage: string | null = null;
+
+        const resolveToolLabel = (toolName?: string | null): string | null => {
+          if (!toolName) {
+            return null;
+          }
+
+          return availableTools.find(tool => tool.name === toolName)?.label ?? toolName;
+        };
+
+        const handleStreamLine = (rawLine: string) => {
+          if (!rawLine) {
+            return;
+          }
+
+          const streamEvent = parseAssistantChatStreamEvent(rawLine);
+          if (!streamEvent) {
+            return;
+          }
+
+          switch (streamEvent.type) {
+            case 'text-delta': {
+              if (!streamEvent.text) {
+                return;
+              }
+
+              finalText += streamEvent.text;
+              setStreamingText(currentText => currentText + streamEvent.text);
+              setIsThinking(false);
+              setIsToolCalling(false);
+              setActiveToolName(null);
+              setActiveToolCall(null);
+              break;
+            }
+            case 'tool-call-delta': {
+              setIsThinking(false);
+              setIsToolCalling(true);
+              break;
+            }
+            case 'tool-call': {
+              const label = resolveToolLabel(streamEvent.toolName);
+              setIsThinking(false);
+              setIsToolCalling(true);
+              setActiveToolName(label);
+              setActiveToolCall({
+                label,
+                preview: buildToolCallPreview(streamEvent.toolName ?? null, streamEvent.args),
+              });
+              break;
+            }
+            case 'tool-result': {
+              setIsThinking(true);
+              setIsToolCalling(false);
+              setActiveToolName(null);
+              setActiveToolCall(null);
+              break;
+            }
+            case 'error': {
+              streamErrorMessage =
+                streamEvent.message ??
+                t('features.messages.ai.sendFailed', 'Failed to get a response from Aria & Kai.');
+              setIsThinking(false);
+              setIsToolCalling(false);
+              setActiveToolName(null);
+              setActiveToolCall(null);
+              throw new Error(streamErrorMessage);
+            }
+          }
+        };
 
         while (true) {
           const { done, value } = await reader.read();
@@ -403,16 +740,23 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
             continue;
           }
 
-          finalText += chunk;
-          setStreamingText(currentText => currentText + chunk);
-          setIsThinking(false);
+          streamBuffer += chunk;
+          let newlineIndex = streamBuffer.indexOf('\n');
+          while (newlineIndex !== -1) {
+            const line = streamBuffer.slice(0, newlineIndex).trim();
+            streamBuffer = streamBuffer.slice(newlineIndex + 1);
+            handleStreamLine(line);
+            newlineIndex = streamBuffer.indexOf('\n');
+          }
         }
 
         const trailingChunk = decoder.decode();
         if (trailingChunk) {
-          finalText += trailingChunk;
-          setStreamingText(currentText => currentText + trailingChunk);
-          setIsThinking(false);
+          streamBuffer += trailingChunk;
+        }
+
+        if (streamBuffer.trim()) {
+          handleStreamLine(streamBuffer.trim());
         }
 
         if (finalText.trim()) {
@@ -421,30 +765,42 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
           setStreamingText('');
         }
 
+        setStreamError(null);
+
         return true;
       } catch (error) {
         console.error('Failed to stream Aria & Kai response:', error);
+        const errorMessage =
+          error instanceof Error && error.message.trim()
+            ? error.message
+            : t('features.messages.ai.sendFailed', 'Failed to get a response from Aria & Kai.');
         setStreamingText('');
         setAwaitingPersistenceText(null);
-        toast.error(
-          t('features.messages.ai.sendFailed', 'Failed to get a response from Aria & Kai.')
-        );
+        setIsToolCalling(false);
+        setActiveToolName(null);
+        setActiveToolCall(null);
+        setStreamError(errorMessage);
+        toast.error(errorMessage);
         return false;
       } finally {
         setIsSending(false);
         setIsThinking(false);
+        setIsToolCalling(false);
+        setActiveToolName(null);
+        setActiveToolCall(null);
       }
     },
     [
+      availableTools,
       clearAttachments,
       conversation.id,
       currentUserId,
       mutations,
       reasoningEffort,
-      availableSkills,
       selectedAttachments,
       selectedModel,
-      selectedSkillSlug,
+      selectedSkills,
+      selectedToolNames,
       session?.access_token,
       t,
     ]
@@ -459,18 +815,31 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
     setSelectedModelKey,
     reasoningEffort,
     setReasoningEffort,
+    availableTools,
+    selectedTools,
+    selectedToolNames,
+    setToolSelection,
+    setToolGroupSelection,
+    toggleSelectedToolName,
     availableSkills,
-    selectedSkillSlug,
-    setSelectedSkillSlug,
+    selectedSkills,
+    selectedSkillSlugs,
+    setSkillSelection,
+    toggleSelectedSkillSlug,
     selectedAttachments,
     attachmentOptions,
+    resolveAttachmentCardData,
     addAttachment,
     removeAttachment,
     clearAttachments,
     createSkill,
     sendAssistantMessage,
     streamingText,
+    streamError,
     isSending,
     isThinking,
+    isToolCalling,
+    activeToolName,
+    activeToolCall,
   };
 }

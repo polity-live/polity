@@ -50,11 +50,19 @@ export function AssistantMessageView({
           currentUserId={currentUserId}
           onAcceptConversation={onAcceptConversation}
           onRejectConversation={onRejectConversation}
+          resolveAttachmentCardData={assistantChat.resolveAttachmentCardData}
           streamingAssistantMessage={
-            assistantChat.streamingText || assistantChat.isThinking
+            assistantChat.streamingText ||
+            assistantChat.isThinking ||
+            assistantChat.isToolCalling ||
+            assistantChat.streamError
               ? {
                   text: assistantChat.streamingText,
                   isThinking: assistantChat.isThinking,
+                  isToolCalling: assistantChat.isToolCalling,
+                  toolName: assistantChat.activeToolName,
+                  toolPreview: assistantChat.activeToolCall?.preview ?? null,
+                  errorMessage: assistantChat.streamError,
                 }
               : undefined
           }

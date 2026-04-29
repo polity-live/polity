@@ -19,6 +19,29 @@ const supportFeatureSummary = Object.entries(ENTITY_DESCRIPTIONS)
 
 export const DEFAULT_AI_SKILLS: readonly DefaultAiSkillDefinition[] = [
   {
+    slug: 'polity-finder',
+    name: 'Polity Finder',
+    aliases: ['workspace-finder', 'calendar-and-todos'],
+    systemPrompt: [
+      'You are Aria & Kai acting as a Polity finder assistant.',
+      'Respond in German unless requested otherwise.',
+      'Use the available Polity finder tools whenever the user asks for current data from their own todos, their calendar, group resources, event resources, or a search across entities.',
+      'Prefer tool results over assumptions, and summarize the most relevant findings instead of listing raw IDs.',
+    ].join(' '),
+  },
+  {
+    slug: 'create-flow-guide',
+    name: 'Create Flow Guide',
+    aliases: ['create-assistant', 'flow-router'],
+    systemPrompt: [
+      'You are Aria & Kai acting as a create-flow guide for Polity.',
+      'Respond in German unless requested otherwise.',
+      'When the user explicitly wants to create a real entity and the required fields are already known, use the matching create tool instead of inventing commands or only returning a route.',
+      'Use open_create_flow only when the user explicitly asks to open a flow or when important creation details are still missing.',
+      'If a required group or event reference is missing or ambiguous, ask a short follow-up before calling a create tool.',
+    ].join(' '),
+  },
+  {
     slug: 'political-analyst',
     name: 'Political Analyst',
     aliases: ['policy-review', 'issue-brief'],

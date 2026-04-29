@@ -91,7 +91,7 @@ import {
 } from './statements/table';
 // Preferences
 import { userPreference } from './preferences/table';
-import { aiSkill } from './ai/table';
+import { aiSkill, aiTool } from './ai/table';
 // Calendar Subscriptions
 import { calendarSubscription } from './calendar-subscriptions/table';
 
@@ -296,6 +296,7 @@ export const userRelationships = relationships(user, ({ many }) => ({
   participants: many({ sourceField: ['id'], destSchema: participant, destField: ['user_id'] }),
   preferences: many({ sourceField: ['id'], destSchema: userPreference, destField: ['user_id'] }),
   ai_skills: many({ sourceField: ['id'], destSchema: aiSkill, destField: ['user_id'] }),
+  ai_tools: many({ sourceField: ['id'], destSchema: aiTool, destField: ['user_id'] }),
   voting_passwords: many({
     sourceField: ['id'],
     destSchema: votingPassword,
@@ -314,6 +315,10 @@ export const userPreferenceRelationships = relationships(userPreference, ({ one 
 }));
 
 export const aiSkillRelationships = relationships(aiSkill, ({ one }) => ({
+  user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
+}));
+
+export const aiToolRelationships = relationships(aiTool, ({ one }) => ({
   user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
 }));
 
@@ -1307,6 +1312,7 @@ export const allRelationships = [
   fileRelationships,
   userPreferenceRelationships,
   aiSkillRelationships,
+  aiToolRelationships,
   followRelationships,
   // Groups
   groupRelationships,
