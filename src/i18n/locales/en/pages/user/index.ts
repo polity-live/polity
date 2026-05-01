@@ -3,7 +3,7 @@ export const userPageTranslations = {
   settingsDescription: 'Manage your profile, preferences, and subscription',
   settingsTabs: {
     basicInfo: 'Basic Information',
-    preferences: 'Preferences',
+    appearance: 'Appearance',
     subscriptions: 'Subscriptions',
     passwords: 'Account & Passwords',
     notifications: 'Notifications',

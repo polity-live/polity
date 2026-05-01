@@ -77,7 +77,7 @@ export function UserProfileEditForm({
       <Tabs defaultValue={defaultTab || 'basic-info'}>
         <TabsList className="mb-6">
           <TabsTrigger value="basic-info">{t('pages.user.settingsTabs.basicInfo')}</TabsTrigger>
-          <TabsTrigger value="preferences">{t('pages.user.settingsTabs.preferences')}</TabsTrigger>
+          <TabsTrigger value="preferences">{t('pages.user.settingsTabs.appearance')}</TabsTrigger>
           <TabsTrigger value="subscriptions">
             {t('pages.user.settingsTabs.subscriptions')}
           </TabsTrigger>
