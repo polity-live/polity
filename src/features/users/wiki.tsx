@@ -1,7 +1,7 @@
 import '@/styles/animations.css';
 import { SocialBar } from '@/features/users/ui/SocialBar';
 import { useNavigate } from '@tanstack/react-router';
-import { Mail } from 'lucide-react';
+import { CircleHelp, Mail } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
 import { useUserWikiContentSearch } from './state/useUserWikiContentSearch';
 import { InfoTabs } from '@/features/shared/ui/wiki/InfoTabs.tsx';
@@ -20,6 +20,9 @@ import { useMemo } from 'react';
 import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
 import { formatLocation } from '@/features/shared/logic/locationHelpers';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/features/shared/ui/ui/hover-card';
+import { useSubscriptionStatusByUser } from '@/zero/payments/usePaymentState';
 
 interface UserWikiProps {
   userId?: string;
@@ -44,6 +47,7 @@ export function UserWiki(_props: UserWikiProps) {
 
   // Fetch user data from Zero
   const { user: dbUser, isLoading, error } = useUserData(userIdToFetch);
+  const { subscriptionStatus } = useSubscriptionStatusByUser(userIdToFetch);
 
   // Subscribe/unsubscribe functionality
   const {
@@ -76,6 +80,38 @@ export function UserWiki(_props: UserWikiProps) {
       ).length,
     [dbUser?.amendment_collaborations]
   );
+
+  const supportTier = useMemo(() => {
+    const activeSubscription = subscriptionStatus?.subscriptions?.find(
+      subscription => subscription.status === 'active'
+    );
+
+    if (!activeSubscription?.amount) {
+      return {
+        label: t('pages.user.profile.supportBadge.free.label'),
+        description: t('pages.user.profile.supportBadge.free.description'),
+      };
+    }
+
+    if (activeSubscription.amount === 200) {
+      return {
+        label: t('pages.user.profile.supportBadge.runningCosts.label'),
+        description: t('pages.user.profile.supportBadge.runningCosts.description'),
+      };
+    }
+
+    if (activeSubscription.amount === 1000) {
+      return {
+        label: t('pages.user.profile.supportBadge.development.label'),
+        description: t('pages.user.profile.supportBadge.development.description'),
+      };
+    }
+
+    return {
+      label: t('pages.user.profile.supportBadge.yourChoice.label'),
+      description: t('pages.user.profile.supportBadge.yourChoice.description'),
+    };
+  }, [subscriptionStatus?.subscriptions, t]);
 
   // Visibility access check: own profile always accessible
   const canAccess = checkEntityAccess(dbUser?.visibility, !!authUser, isOwnUser);
@@ -118,7 +154,32 @@ export function UserWiki(_props: UserWikiProps) {
         <div>
           {/* Header with centered title and subtitle */}
           <div className="mb-8 text-center">
-            <h1 className="text-4xl font-bold">{fullName}</h1>
+            <h1 className="text-4xl font-bold">
+              <span className="inline-flex items-center gap-3">
+                <span>{fullName}</span>
+                <span className="bg-background/80 inline-flex items-center gap-1 rounded-full border px-2 py-1 shadow-sm">
+                  <Badge variant="secondary" className="rounded-full px-3 py-1 text-xs font-medium">
+                    {supportTier.label}
+                  </Badge>
+                  <HoverCard openDelay={150}>
+                    <HoverCardTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={supportTier.description}
+                        className="text-muted-foreground hover:text-foreground h-7 w-7 rounded-full"
+                      >
+                        <CircleHelp className="h-4 w-4" />
+                      </Button>
+                    </HoverCardTrigger>
+                    <HoverCardContent side="bottom" className="w-64 p-3 text-sm">
+                      <p>{supportTier.description}</p>
+                    </HoverCardContent>
+                  </HoverCard>
+                </span>
+              </span>
+            </h1>
             {dbUser.bio && <p className="text-muted-foreground">{dbUser.bio}</p>}
           </div>
 

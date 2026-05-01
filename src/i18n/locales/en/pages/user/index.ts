@@ -160,6 +160,24 @@ export const userPageTranslations = {
   },
   profile: {
     title: 'Profile',
+    supportBadge: {
+      free: {
+        label: 'Free',
+        description: 'Using the free tier to keep democratic tools accessible to everyone.',
+      },
+      runningCosts: {
+        label: 'Running Costs',
+        description: "This contribution covers the platform's running costs.",
+      },
+      development: {
+        label: 'Development',
+        description: 'This contribution covers development costs and running costs.',
+      },
+      yourChoice: {
+        label: 'Your Choice',
+        description: 'Supporting other users to keep the platform free.',
+      },
+    },
   },
   subscriptions: {
     title: 'Subscriptions',

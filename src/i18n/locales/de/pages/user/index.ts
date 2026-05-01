@@ -160,6 +160,26 @@ export const userPageTranslations = {
   },
   profile: {
     title: 'Profil',
+    supportBadge: {
+      free: {
+        label: 'Kostenlos',
+        description:
+          'Nutzt die kostenlose Stufe, damit demokratische Werkzeuge für alle zugänglich bleiben.',
+      },
+      runningCosts: {
+        label: 'Laufende Kosten',
+        description: 'Dieser Beitrag deckt die laufenden Kosten der Plattform.',
+      },
+      development: {
+        label: 'Entwicklung',
+        description: 'Dieser Beitrag deckt Entwicklungs- und laufende Kosten.',
+      },
+      yourChoice: {
+        label: 'Deine Wahl',
+        description:
+          'Unterstützt andere Nutzerinnen und Nutzer dabei, die Plattform kostenlos zu halten.',
+      },
+    },
   },
   subscriptions: {
     title: 'Abonnements',
