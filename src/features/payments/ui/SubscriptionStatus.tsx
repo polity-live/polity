@@ -1,13 +1,17 @@
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card.tsx';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card.tsx';
 import { Badge } from '@/features/shared/ui/ui/badge.tsx';
-import { Button } from '@/features/shared/ui/ui/button.tsx';
-import { Loader2, CheckCircle2, XCircle, Clock, ExternalLink } from 'lucide-react';
+import { Loader2, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { stripeSubscriptionStatusFn } from '@/server/stripe-subscription-status';
-import { stripeCreatePortalFn } from '@/server/stripe-create-portal';
 
 interface SubscriptionStatusProps {
   userId: string;
@@ -78,7 +82,7 @@ export function SubscriptionStatus({ userId }: SubscriptionStatusProps) {
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <Loader2 className="text-primary h-6 w-6 animate-spin" />
           </div>
         </CardContent>
       </Card>
@@ -106,7 +110,7 @@ export function SubscriptionStatus({ userId }: SubscriptionStatusProps) {
           <CardDescription>You don't have an active subscription yet</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Subscribe to support the platform and get access to exclusive features!
           </p>
         </CardContent>
@@ -132,7 +136,11 @@ export function SubscriptionStatus({ userId }: SubscriptionStatusProps) {
     };
 
     const config = statusMap[status] || { label: status, variant: 'outline' };
-    return <Badge variant={config.variant}>{config.label}</Badge>;
+    return (
+      <Badge variant={config.variant} className={status === 'canceled' ? 'text-white' : undefined}>
+        {config.label}
+      </Badge>
+    );
   };
 
   const getPaymentStatusIcon = (status: string) => {
@@ -153,36 +161,14 @@ export function SubscriptionStatus({ userId }: SubscriptionStatusProps) {
     }).format(amount / 100);
   };
 
-  const handleManageSubscription = async () => {
-    try {
-      if (!data?.subscription?.id) return;
-      const portalData = await stripeCreatePortalFn({
-        data: { customerId: data.subscription.id },
-      });
-      if (portalData.url) {
-        window.location.href = portalData.url;
-      }
-    } catch (error) {
-      console.error('Error opening customer portal:', error);
-    }
-  };
-
   return (
     <div className="space-y-6">
       {/* Current Subscription */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Current Subscription</CardTitle>
-              <CardDescription>Manage your subscription and billing</CardDescription>
-            </div>
-            {activeSubscription && (
-              <Button variant="outline" size="sm" onClick={handleManageSubscription}>
-                <ExternalLink className="mr-2 h-4 w-4" />
-                Manage
-              </Button>
-            )}
+          <div>
+            <CardTitle>Current Subscription</CardTitle>
+            <CardDescription>Manage your subscription and billing</CardDescription>
           </div>
         </CardHeader>
         <CardContent>
@@ -192,11 +178,11 @@ export function SubscriptionStatus({ userId }: SubscriptionStatusProps) {
                 <div>
                   <p className="font-semibold">
                     {formatCurrency(activeSubscription.amount, activeSubscription.currency)}
-                    <span className="text-sm font-normal text-muted-foreground">
+                    <span className="text-muted-foreground text-sm font-normal">
                       /{activeSubscription.interval}
                     </span>
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     Next billing:{' '}
                     {new Date(activeSubscription.currentPeriodEnd).toLocaleDateString()}
                   </p>
@@ -214,16 +200,16 @@ export function SubscriptionStatus({ userId }: SubscriptionStatusProps) {
             </div>
           ) : subscriptions.length > 0 ? (
             <div className="space-y-2">
-              <div className="text-sm text-muted-foreground">
+              <div className="text-muted-foreground text-sm">
                 You previously had a subscription that is now{' '}
                 {getStatusBadge(subscriptions[0].status)}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 Last active: {new Date(subscriptions[0].createdAt).toLocaleDateString()}
               </p>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No subscription found</p>
+            <p className="text-muted-foreground text-sm">No subscription found</p>
           )}
         </CardContent>
       </Card>
@@ -237,7 +223,7 @@ export function SubscriptionStatus({ userId }: SubscriptionStatusProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {payments.map((payment) => (
+              {payments.map(payment => (
                 <div
                   key={payment.id}
                   className="flex items-center justify-between rounded-lg border p-3"
@@ -248,14 +234,21 @@ export function SubscriptionStatus({ userId }: SubscriptionStatusProps) {
                       <p className="text-sm font-medium">
                         {formatCurrency(payment.amount, payment.currency)}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-muted-foreground text-xs">
                         {payment.paidAt
                           ? formatDistanceToNow(new Date(payment.paidAt), { addSuffix: true })
                           : new Date(payment.createdAt).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
-                  <Badge variant={payment.status === 'paid' ? 'default' : 'destructive'}>
+                  <Badge
+                    variant={payment.status === 'paid' ? 'default' : 'destructive'}
+                    className={
+                      payment.status === 'paid'
+                        ? 'text-emerald-foreground bg-emerald-500 hover:bg-emerald-600'
+                        : undefined
+                    }
+                  >
                     {payment.status}
                   </Badge>
                 </div>
@@ -274,7 +267,7 @@ export function SubscriptionStatus({ userId }: SubscriptionStatusProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {subscriptions.slice(1).map((subscription) => (
+              {subscriptions.slice(1).map(subscription => (
                 <div
                   key={subscription.id}
                   className="flex items-center justify-between rounded-lg border p-3"
@@ -284,7 +277,7 @@ export function SubscriptionStatus({ userId }: SubscriptionStatusProps) {
                       {formatCurrency(subscription.amount, subscription.currency)}
                       <span className="text-muted-foreground">/{subscription.interval}</span>
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-muted-foreground text-xs">
                       {new Date(subscription.createdAt).toLocaleDateString()} -{' '}
                       {subscription.canceledAt
                         ? new Date(subscription.canceledAt).toLocaleDateString()

@@ -1,5 +1,11 @@
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Loader2 } from 'lucide-react';
@@ -69,22 +75,22 @@ export function SubscriptionPlansGrid({
           {/* Free Plan - €0/month */}
           <div
             className={`rounded-lg border p-4 transition-shadow ${
-              activeAmount === 0 ? 'border-primary bg-primary/5 shadow-md' : 'hover:shadow-md'
+              activeAmount === 0 ? 'border-emerald-500 bg-emerald-100 shadow-md' : 'hover:shadow-md'
             }`}
           >
             <div className="mb-2">
               <div className="mb-1 flex items-center justify-between">
                 <h3 className="font-semibold">Free</h3>
                 {activeAmount === 0 && (
-                  <span className="rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
+                  <span className="text-emerald-foreground rounded-full bg-emerald-500 px-2 py-0.5 text-xs">
                     Current
                   </span>
                 )}
               </div>
               <p className="text-2xl font-bold">€0</p>
-              <p className="text-xs text-muted-foreground">/month</p>
+              <p className="text-muted-foreground text-xs">/month</p>
             </div>
-            <p className="mb-4 text-sm text-muted-foreground">Full access to all features</p>
+            <p className="text-muted-foreground mb-4 text-sm">Full access to all features</p>
             <Button
               type="button"
               variant={activeAmount === 0 ? 'default' : 'outline'}
@@ -109,22 +115,22 @@ export function SubscriptionPlansGrid({
           {/* Running Costs - €2/month */}
           <div
             className={`rounded-lg border p-4 transition-shadow ${
-              isPlanActive(200) ? 'border-primary bg-primary/5 shadow-md' : 'hover:shadow-md'
+              isPlanActive(200) ? 'border-emerald-500 bg-emerald-100 shadow-md' : 'hover:shadow-md'
             }`}
           >
             <div className="mb-2">
               <div className="mb-1 flex items-center justify-between">
                 <h3 className="font-semibold">Running Costs</h3>
                 {isPlanActive(200) && (
-                  <span className="rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
+                  <span className="text-emerald-foreground rounded-full bg-emerald-500 px-2 py-0.5 text-xs">
                     Current
                   </span>
                 )}
               </div>
               <p className="text-2xl font-bold">€2</p>
-              <p className="text-xs text-muted-foreground">/month</p>
+              <p className="text-muted-foreground text-xs">/month</p>
             </div>
-            <p className="mb-4 text-sm text-muted-foreground">
+            <p className="text-muted-foreground mb-4 text-sm">
               Cover server costs and infrastructure
             </p>
             <Button
@@ -152,7 +158,7 @@ export function SubscriptionPlansGrid({
           <div
             className={`rounded-lg border p-4 transition-shadow ${
               isPlanActive(1000)
-                ? 'border-primary bg-primary/5 shadow-md'
+                ? 'border-emerald-500 bg-emerald-100 shadow-md'
                 : 'border-primary shadow-md hover:shadow-lg'
             }`}
           >
@@ -160,21 +166,19 @@ export function SubscriptionPlansGrid({
               <div className="mb-1 flex items-center justify-between">
                 <h3 className="font-semibold">Development</h3>
                 {isPlanActive(1000) ? (
-                  <span className="rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
+                  <span className="text-emerald-foreground rounded-full bg-emerald-500 px-2 py-0.5 text-xs">
                     Current
                   </span>
                 ) : (
-                  <span className="rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
+                  <span className="bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-xs">
                     Popular
                   </span>
                 )}
               </div>
               <p className="text-2xl font-bold">€10</p>
-              <p className="text-xs text-muted-foreground">/month</p>
+              <p className="text-muted-foreground text-xs">/month</p>
             </div>
-            <p className="mb-4 text-sm text-muted-foreground">
-              Fund new features and improvements
-            </p>
+            <p className="text-muted-foreground mb-4 text-sm">Fund new features and improvements</p>
             <Button
               type="button"
               size="sm"
@@ -199,14 +203,14 @@ export function SubscriptionPlansGrid({
           {/* Custom Amount */}
           <div
             className={`rounded-lg border p-4 transition-shadow ${
-              hasCustomPlan ? 'border-primary bg-primary/5 shadow-md' : 'hover:shadow-md'
+              hasCustomPlan ? 'border-emerald-500 bg-emerald-100 shadow-md' : 'hover:shadow-md'
             }`}
           >
             <div className="mb-2">
               <div className="mb-1 flex items-center justify-between">
                 <h3 className="font-semibold">Your Choice</h3>
                 {hasCustomPlan && (
-                  <span className="rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
+                  <span className="text-emerald-foreground rounded-full bg-emerald-500 px-2 py-0.5 text-xs">
                     Current
                   </span>
                 )}
@@ -233,9 +237,9 @@ export function SubscriptionPlansGrid({
                   />
                 )}
               </div>
-              <p className="text-xs text-muted-foreground">/month</p>
+              <p className="text-muted-foreground text-xs">/month</p>
             </div>
-            <p className="mb-4 text-sm text-muted-foreground">
+            <p className="text-muted-foreground mb-4 text-sm">
               Voluntary amount to support the platform
             </p>
             <Button
@@ -260,8 +264,8 @@ export function SubscriptionPlansGrid({
           </div>
         </div>
 
-        <div className="rounded-lg bg-muted p-3">
-          <p className="text-xs text-muted-foreground">
+        <div className="bg-muted rounded-lg p-3">
+          <p className="text-muted-foreground text-xs">
             💡 All features remain free. Your contribution helps us keep the platform running and
             build new features for everyone.
           </p>

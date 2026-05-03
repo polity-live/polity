@@ -229,8 +229,6 @@ export function UserProfileEditForm({
         {/* Subscriptions Tab */}
         <TabsContent value="subscriptions">
           <div className="space-y-6">
-            <SubscriptionStatus userId={userId} />
-
             <SubscriptionPlansGrid
               activeAmount={activeSubscriptionAmount}
               isLoading={isCheckoutLoading}
@@ -240,6 +238,8 @@ export function UserProfileEditForm({
               isPlanActive={isPlanActive}
               hasCustomPlan={hasCustomPlan}
             />
+
+            <SubscriptionStatus userId={userId} />
           </div>
         </TabsContent>
 

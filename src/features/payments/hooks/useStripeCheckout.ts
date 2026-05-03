@@ -27,18 +27,17 @@ export function useStripeCheckout({
 
   // Show success/cancel message from Stripe redirect
   useEffect(() => {
-    const success = searchParams.success;
-    const canceled = searchParams.canceled;
+    const { success, canceled, ...remainingSearch } = searchParams;
 
     if (success === 'true') {
       toast.success('Subscription successful! Thank you for your support! 🎉');
       // Clear the query param to prevent duplicate toasts
-      navigate({ to: window.location.pathname, replace: true });
+      navigate({ to: window.location.pathname, search: remainingSearch, replace: true });
       onSubscriptionChange?.();
     } else if (canceled === 'true') {
       toast.info('Subscription canceled. You can subscribe anytime.');
       // Clear the query param to prevent duplicate toasts
-      navigate({ to: window.location.pathname, replace: true });
+      navigate({ to: window.location.pathname, search: remainingSearch, replace: true });
     }
   }, [searchParams, navigate, onSubscriptionChange]);
 
