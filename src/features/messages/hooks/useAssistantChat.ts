@@ -415,7 +415,6 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
 
   useEffect(() => {
     setSelectedAttachments([]);
-    setSelectedToolNames([]);
     setStreamingText('');
     setAwaitingPersistenceText(null);
     setStreamError(null);
