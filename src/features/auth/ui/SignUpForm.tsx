@@ -144,7 +144,7 @@ export function SignUpForm() {
 
   if (pendingConfirmationEmail) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4 dark:from-gray-900 dark:to-gray-800">
+      <div className="bg-background flex min-h-screen items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="mb-4 flex justify-center">
@@ -189,7 +189,7 @@ export function SignUpForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4 dark:from-gray-900 dark:to-gray-800">
+    <div className="bg-background flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mb-4 flex justify-center">
@@ -221,7 +221,7 @@ export function SignUpForm() {
               />
               <p
                 className={cn(
-                  'text-xs text-muted-foreground',
+                  'text-muted-foreground text-xs',
                   showEmailError && 'text-destructive',
                   showEmailSuccess && 'text-emerald-600 dark:text-emerald-400'
                 )}
@@ -252,7 +252,7 @@ export function SignUpForm() {
               />
               <p
                 className={cn(
-                  'text-xs text-muted-foreground',
+                  'text-muted-foreground text-xs',
                   showPasswordError && 'text-destructive',
                   showPasswordSuccess && 'text-emerald-600 dark:text-emerald-400'
                 )}
@@ -283,7 +283,7 @@ export function SignUpForm() {
               />
               <p
                 className={cn(
-                  'text-xs text-muted-foreground',
+                  'text-muted-foreground text-xs',
                   showConfirmPasswordError && 'text-destructive',
                   showConfirmPasswordSuccess && 'text-emerald-600 dark:text-emerald-400'
                 )}
@@ -298,11 +298,7 @@ export function SignUpForm() {
               </Alert>
             )}
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading || !isFormValid}
-            >
+            <Button type="submit" className="w-full" disabled={isLoading || !isFormValid}>
               {isSigningUp ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -350,9 +346,7 @@ export function SignUpForm() {
             disabled={isLoading || !trimmedEmail || !emailIsValid}
           >
             <Mail className="mr-2 h-4 w-4" />
-            {isSendingMagicLink
-              ? t('auth.signUp.magicLinkSending')
-              : t('auth.signUp.sendCode')}
+            {isSendingMagicLink ? t('auth.signUp.magicLinkSending') : t('auth.signUp.sendCode')}
           </Button>
 
           <div className="text-muted-foreground mt-6 text-center text-sm">

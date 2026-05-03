@@ -37,11 +37,20 @@ interface SkillFormState {
   systemPrompt: string;
 }
 
+type SkillFormField = keyof SkillFormState;
+
+type SkillFormTouchedState = Record<SkillFormField, boolean>;
+
 interface SkillFormErrors {
   name: string | null;
   slug: string | null;
   aliases: string | null;
   systemPrompt: string | null;
+}
+
+interface PendingSkillDeletion {
+  id: string;
+  name: string;
 }
 
 const PROVIDERS: readonly AiProvider[] = ['openrouter', 'openai', 'anthropic'];
@@ -59,6 +68,13 @@ const EMPTY_SKILL_FORM: SkillFormState = {
   slug: '',
   aliases: '',
   systemPrompt: '',
+};
+
+const EMPTY_SKILL_FORM_TOUCHED: SkillFormTouchedState = {
+  name: false,
+  slug: false,
+  aliases: false,
+  systemPrompt: false,
 };
 
 const SKILL_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -83,6 +99,12 @@ export function useAiSettingsTab() {
   const [editingSkillId, setEditingSkillId] = useState<string | null>(null);
   const [editingBuiltInSlug, setEditingBuiltInSlug] = useState<string | null>(null);
   const [skillForm, setSkillForm] = useState<SkillFormState>(EMPTY_SKILL_FORM);
+  const [skillFormTouched, setSkillFormTouched] =
+    useState<SkillFormTouchedState>(EMPTY_SKILL_FORM_TOUCHED);
+  const [hasAttemptedSkillSubmit, setHasAttemptedSkillSubmit] = useState(false);
+  const [pendingSkillDeletion, setPendingSkillDeletion] = useState<PendingSkillDeletion | null>(
+    null
+  );
 
   const credentialsByProvider = useMemo(() => {
     const byProvider = new Map(credentials.map(credential => [credential.provider, credential]));
@@ -290,12 +312,44 @@ export function useAiSettingsTab() {
     [skillFormErrors]
   );
 
+  const visibleSkillFormErrors = useMemo<SkillFormErrors>(
+    () => ({
+      name: hasAttemptedSkillSubmit || skillFormTouched.name ? skillFormErrors.name : null,
+      slug: hasAttemptedSkillSubmit || skillFormTouched.slug ? skillFormErrors.slug : null,
+      aliases: hasAttemptedSkillSubmit || skillFormTouched.aliases ? skillFormErrors.aliases : null,
+      systemPrompt:
+        hasAttemptedSkillSubmit || skillFormTouched.systemPrompt
+          ? skillFormErrors.systemPrompt
+          : null,
+    }),
+    [hasAttemptedSkillSubmit, skillFormErrors, skillFormTouched]
+  );
+
+  const resetSkillFormValidationState = useCallback(() => {
+    setSkillFormTouched(EMPTY_SKILL_FORM_TOUCHED);
+    setHasAttemptedSkillSubmit(false);
+  }, []);
+
+  const touchSkillField = useCallback((field: SkillFormField) => {
+    setSkillFormTouched(currentTouched => {
+      if (currentTouched[field]) {
+        return currentTouched;
+      }
+
+      return {
+        ...currentTouched,
+        [field]: true,
+      };
+    });
+  }, []);
+
   const startCreateSkill = useCallback(() => {
+    resetSkillFormValidationState();
     setIsSkillDialogOpen(true);
     setEditingSkillId(null);
     setEditingBuiltInSlug(null);
     setSkillForm(EMPTY_SKILL_FORM);
-  }, []);
+  }, [resetSkillFormValidationState]);
 
   const startEditSkill = useCallback(
     (skillId: string) => {
@@ -304,6 +358,7 @@ export function useAiSettingsTab() {
         return;
       }
 
+      resetSkillFormValidationState();
       setEditingSkillId(skillId);
       setEditingBuiltInSlug(null);
       setIsSkillDialogOpen(true);
@@ -314,7 +369,7 @@ export function useAiSettingsTab() {
         systemPrompt: skill.system_prompt,
       });
     },
-    [skills]
+    [resetSkillFormValidationState, skills]
   );
 
   const startEditBuiltInSkill = useCallback(
@@ -326,6 +381,7 @@ export function useAiSettingsTab() {
 
       const customOverride = skills.find(skill => skill.slug === skillSlug) ?? null;
 
+      resetSkillFormValidationState();
       setIsSkillDialogOpen(true);
       setEditingBuiltInSlug(skillSlug);
       setEditingSkillId(customOverride?.id ?? null);
@@ -336,15 +392,16 @@ export function useAiSettingsTab() {
         systemPrompt: customOverride?.system_prompt ?? builtInSkill.systemPrompt,
       });
     },
-    [builtInSkillBySlug, skills]
+    [builtInSkillBySlug, resetSkillFormValidationState, skills]
   );
 
   const cancelSkillEdit = useCallback(() => {
+    resetSkillFormValidationState();
     setIsSkillDialogOpen(false);
     setEditingSkillId(null);
     setEditingBuiltInSlug(null);
     setSkillForm(EMPTY_SKILL_FORM);
-  }, []);
+  }, [resetSkillFormValidationState]);
 
   const updateSkillForm = useCallback(
     <K extends keyof SkillFormState>(field: K, value: SkillFormState[K]) => {
@@ -357,6 +414,8 @@ export function useAiSettingsTab() {
   );
 
   const saveSkill = useCallback(() => {
+    setHasAttemptedSkillSubmit(true);
+
     const name = skillForm.name.trim();
     const slug = (editingBuiltInSlug || skillForm.slug.trim() || slugifySkillName(name)).trim();
     const systemPrompt = skillForm.systemPrompt.trim();
@@ -421,6 +480,34 @@ export function useAiSettingsTab() {
     },
     [aiActions, cancelSkillEdit, editingSkillId]
   );
+
+  const requestDeleteSkill = useCallback(
+    (skillId: string) => {
+      const skill = skills.find(currentSkill => currentSkill.id === skillId);
+      if (!skill) {
+        return;
+      }
+
+      setPendingSkillDeletion({
+        id: skill.id,
+        name: skill.name,
+      });
+    },
+    [skills]
+  );
+
+  const cancelDeleteSkill = useCallback(() => {
+    setPendingSkillDeletion(null);
+  }, []);
+
+  const confirmDeleteSkill = useCallback(() => {
+    if (!pendingSkillDeletion) {
+      return;
+    }
+
+    deleteSkill(pendingSkillDeletion.id);
+    setPendingSkillDeletion(null);
+  }, [deleteSkill, pendingSkillDeletion]);
 
   const toggleCustomSkillEnabled = useCallback(
     (skillId: string, enabled: boolean) => {
@@ -528,7 +615,11 @@ export function useAiSettingsTab() {
     editingBuiltInSlug,
     skillForm,
     skillFormErrors,
+    visibleSkillFormErrors,
+    skillFormTouched,
+    hasAttemptedSkillSubmit,
     isSkillFormValid,
+    touchSkillField,
     updateSkillForm,
     startCreateSkill,
     startEditBuiltInSkill,
@@ -536,6 +627,10 @@ export function useAiSettingsTab() {
     cancelSkillEdit,
     saveSkill,
     deleteSkill,
+    pendingSkillDeletion,
+    requestDeleteSkill,
+    cancelDeleteSkill,
+    confirmDeleteSkill,
     toggleBuiltInToolEnabled,
     toggleBuiltInSkillEnabled,
     toggleCustomSkillEnabled,

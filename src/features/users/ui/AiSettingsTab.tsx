@@ -1,6 +1,16 @@
 import { KeyRound, Loader2, Pencil, ShieldCheck, Sparkles, Trash2, Wrench } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/features/shared/ui/ui/alert-dialog';
+import {
   Card,
   CardContent,
   CardDescription,
@@ -91,7 +101,11 @@ function isAlwaysAvailableModel(model: {
   return model.provider === 'openrouter' && model.source === 'app' && model.free;
 }
 
-function inputStateClass(value: string, error: string | null): string {
+function inputStateClass(value: string, error: string | null, hasBeenEvaluated: boolean): string {
+  if (!hasBeenEvaluated) {
+    return '';
+  }
+
   if (error) {
     return 'border-red-500 focus-visible:ring-red-500';
   }
@@ -101,6 +115,18 @@ function inputStateClass(value: string, error: string | null): string {
   }
 
   return '';
+}
+
+function fieldHintClass(error: string | null, hasBeenEvaluated: boolean): string {
+  if (error) {
+    return 'text-xs text-red-500';
+  }
+
+  if (hasBeenEvaluated) {
+    return 'text-xs text-emerald-600';
+  }
+
+  return 'text-muted-foreground text-xs';
 }
 
 function renderAliasBadges(aliases: string[]) {
@@ -132,6 +158,12 @@ function parseAliases(value: string): string[] {
 export function AiSettingsTab() {
   const { t } = useTranslation();
   const ai = useAiSettingsTab();
+  const skillFieldEvaluated = {
+    name: ai.hasAttemptedSkillSubmit || ai.skillFormTouched.name,
+    slug: ai.hasAttemptedSkillSubmit || ai.skillFormTouched.slug,
+    aliases: ai.hasAttemptedSkillSubmit || ai.skillFormTouched.aliases,
+    systemPrompt: ai.hasAttemptedSkillSubmit || ai.skillFormTouched.systemPrompt,
+  };
   const builtInSlugSet = new Set(ai.builtInSkills.map(skill => skill.slug));
   const builtInOverridesBySlug = new Map(ai.skills.map(skill => [skill.slug, skill]));
   const builtInToolOverridesByName = new Map(ai.tools.map(tool => [tool.tool_name, tool]));
@@ -472,7 +504,7 @@ export function AiSettingsTab() {
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={() => ai.deleteSkill(skill.id)}
+                          onClick={() => ai.requestDeleteSkill(skill.id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -612,13 +644,27 @@ export function AiSettingsTab() {
                 <Input
                   id="ai-skill-name"
                   value={ai.skillForm.name}
-                  onChange={event => ai.updateSkillForm('name', event.target.value)}
-                  className={inputStateClass(ai.skillForm.name, ai.skillFormErrors.name)}
+                  onChange={event => {
+                    ai.touchSkillField('name');
+                    ai.updateSkillForm('name', event.target.value);
+                  }}
+                  onBlur={() => ai.touchSkillField('name')}
+                  className={inputStateClass(
+                    ai.skillForm.name,
+                    ai.visibleSkillFormErrors.name,
+                    skillFieldEvaluated.name
+                  )}
                 />
                 <p
-                  className={`text-xs ${ai.skillFormErrors.name ? 'text-red-500' : 'text-emerald-600'}`}
+                  className={fieldHintClass(
+                    ai.visibleSkillFormErrors.name,
+                    skillFieldEvaluated.name
+                  )}
                 >
-                  {ai.skillFormErrors.name || t('common.validation.good', 'Looks good.')}
+                  {ai.visibleSkillFormErrors.name ||
+                    (skillFieldEvaluated.name
+                      ? t('common.validation.good', 'Looks good.')
+                      : t('pages.user.ai.skills.requiredHint', 'Required.'))}
                 </p>
               </div>
 
@@ -627,9 +673,17 @@ export function AiSettingsTab() {
                 <Input
                   id="ai-skill-slug"
                   value={ai.skillForm.slug}
-                  onChange={event => ai.updateSkillForm('slug', event.target.value)}
+                  onChange={event => {
+                    ai.touchSkillField('slug');
+                    ai.updateSkillForm('slug', event.target.value);
+                  }}
+                  onBlur={() => ai.touchSkillField('slug')}
                   disabled={isEditingBuiltIn}
-                  className={inputStateClass(ai.skillForm.slug, ai.skillFormErrors.slug)}
+                  className={inputStateClass(
+                    ai.skillForm.slug,
+                    ai.visibleSkillFormErrors.slug,
+                    skillFieldEvaluated.slug
+                  )}
                   placeholder={
                     ai.skillForm.name
                       ? ai.skillForm.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
@@ -637,9 +691,12 @@ export function AiSettingsTab() {
                   }
                 />
                 <p
-                  className={`text-xs ${ai.skillFormErrors.slug ? 'text-red-500' : 'text-emerald-600'}`}
+                  className={fieldHintClass(
+                    ai.visibleSkillFormErrors.slug,
+                    skillFieldEvaluated.slug
+                  )}
                 >
-                  {ai.skillFormErrors.slug ||
+                  {ai.visibleSkillFormErrors.slug ||
                     t('pages.user.ai.skills.slugHint', 'Letters, numbers, hyphens.')}
                 </p>
               </div>
@@ -652,18 +709,28 @@ export function AiSettingsTab() {
               <HashtagInput
                 inputId="ai-skill-aliases"
                 value={parseAliases(ai.skillForm.aliases)}
-                onChange={aliases => ai.updateSkillForm('aliases', aliases.join(','))}
+                onChange={aliases => {
+                  ai.touchSkillField('aliases');
+                  ai.updateSkillForm('aliases', aliases.join(','));
+                }}
                 showLabel={false}
-                inputClassName={inputStateClass(ai.skillForm.aliases, ai.skillFormErrors.aliases)}
+                inputClassName={inputStateClass(
+                  ai.skillForm.aliases,
+                  ai.visibleSkillFormErrors.aliases,
+                  skillFieldEvaluated.aliases
+                )}
                 placeholder={t(
                   'pages.user.ai.skills.aliasesPlaceholder',
                   'Add an alias, e.g. campaign-strategy'
                 )}
               />
               <p
-                className={`text-xs ${ai.skillFormErrors.aliases ? 'text-red-500' : 'text-emerald-600'}`}
+                className={fieldHintClass(
+                  ai.visibleSkillFormErrors.aliases,
+                  skillFieldEvaluated.aliases
+                )}
               >
-                {ai.skillFormErrors.aliases ||
+                {ai.visibleSkillFormErrors.aliases ||
                   t(
                     'pages.user.ai.skills.aliasHint',
                     'Aliases are optional. Press Enter or Add after each one.'
@@ -678,14 +745,27 @@ export function AiSettingsTab() {
               <Textarea
                 id="ai-skill-prompt"
                 value={ai.skillForm.systemPrompt}
-                onChange={event => ai.updateSkillForm('systemPrompt', event.target.value)}
-                className={`min-h-[180px] ${inputStateClass(ai.skillForm.systemPrompt, ai.skillFormErrors.systemPrompt)}`}
+                onChange={event => {
+                  ai.touchSkillField('systemPrompt');
+                  ai.updateSkillForm('systemPrompt', event.target.value);
+                }}
+                onBlur={() => ai.touchSkillField('systemPrompt')}
+                className={`min-h-[180px] ${inputStateClass(
+                  ai.skillForm.systemPrompt,
+                  ai.visibleSkillFormErrors.systemPrompt,
+                  skillFieldEvaluated.systemPrompt
+                )}`}
               />
               <p
-                className={`text-xs ${ai.skillFormErrors.systemPrompt ? 'text-red-500' : 'text-emerald-600'}`}
+                className={fieldHintClass(
+                  ai.visibleSkillFormErrors.systemPrompt,
+                  skillFieldEvaluated.systemPrompt
+                )}
               >
-                {ai.skillFormErrors.systemPrompt ||
-                  t('pages.user.ai.skills.promptHint', 'Prompt is valid.')}
+                {ai.visibleSkillFormErrors.systemPrompt ||
+                  (skillFieldEvaluated.systemPrompt
+                    ? t('pages.user.ai.skills.promptHint', 'Prompt is valid.')
+                    : t('pages.user.ai.skills.requiredHint', 'Required.'))}
               </p>
             </div>
           </div>
@@ -702,6 +782,38 @@ export function AiSettingsTab() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={Boolean(ai.pendingSkillDeletion)}
+        onOpenChange={open => {
+          if (!open) {
+            ai.cancelDeleteSkill();
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t('pages.user.ai.skills.deleteTitle', 'Delete skill?')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t(
+                'pages.user.ai.skills.deleteDescription',
+                'This will permanently delete the custom skill "{{name}}" from your account.'
+              ).replace('{{name}}', ai.pendingSkillDeletion?.name ?? '')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel', 'Cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={ai.confirmDeleteSkill}
+              className="bg-destructive hover:bg-destructive/90 text-white"
+            >
+              {t('common.actions.delete', 'Delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
