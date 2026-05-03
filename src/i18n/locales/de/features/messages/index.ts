@@ -55,7 +55,8 @@ export const messagesTranslations = {
     addParticipant: 'Teilnehmer hinzufügen',
     leave: 'Unterhaltung verlassen',
     delete: 'Unterhaltung löschen',
-    deleteConfirm: 'Möchtest du diese Unterhaltung wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden und alle Nachrichten werden dauerhaft gelöscht.',
+    deleteConfirm:
+      'Möchtest du diese Unterhaltung wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden und alle Nachrichten werden dauerhaft gelöscht.',
     mute: 'Stummschalten',
     unmute: 'Stummschaltung aufheben',
     pin: 'Unterhaltung anheften',
@@ -90,5 +91,13 @@ export const messagesTranslations = {
   errors: {
     sendFailed: 'Nachricht konnte nicht gesendet werden',
     loadFailed: 'Nachrichten konnten nicht geladen werden',
+  },
+  ai: {
+    reasoning: 'Denkaufwand',
+    reasoningDescription:
+      'Wähle aus, wie viel Denkaufwand die KI verwenden soll: hoch, mittel oder niedrig.',
+    reasoningDropdownTitle: 'Denkaufwand',
+    reasoningDropdownDescription:
+      'Wähle aus, wie viel Denkaufwand die KI verwenden soll: hoch, mittel oder niedrig.',
   },
 } as const;

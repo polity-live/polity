@@ -55,7 +55,8 @@ export const messagesTranslations = {
     addParticipant: 'Add Participant',
     leave: 'Leave Conversation',
     delete: 'Delete Conversation',
-    deleteConfirm: 'Are you sure you want to delete this conversation? This action cannot be undone and all messages will be permanently deleted.',
+    deleteConfirm:
+      'Are you sure you want to delete this conversation? This action cannot be undone and all messages will be permanently deleted.',
     mute: 'Mute',
     unmute: 'Unmute',
     pin: 'Pin conversation',
@@ -90,5 +91,13 @@ export const messagesTranslations = {
   errors: {
     sendFailed: 'Failed to send message',
     loadFailed: 'Failed to load messages',
+  },
+  ai: {
+    reasoning: 'Reasoning',
+    reasoningDescription:
+      'Choose how much thinking effort the AI should use: high, medium, or low.',
+    reasoningDropdownTitle: 'Reasoning effort',
+    reasoningDropdownDescription:
+      'Choose how much thinking effort the AI should use: high, medium, or low.',
   },
 } as const;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState, type ComponentType } from 'react';
 import {
   AtSign,
   Bot,
@@ -12,6 +12,7 @@ import {
   Sparkles,
   Wrench,
   X,
+  Zap,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/features/shared/ui/ui/badge';
@@ -59,10 +60,33 @@ interface AssistantMessageInputProps {
   assistantChat: ReturnType<typeof useAssistantChat>;
 }
 
-const REASONING_OPTIONS: readonly { value: AiReasoningEffort; label: string }[] = [
-  { value: 'low', label: 'Low' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'high', label: 'High' },
+const REASONING_OPTIONS: readonly {
+  value: AiReasoningEffort;
+  label: string;
+  Icon: ComponentType<{ className?: string }>;
+  gradientClass: string;
+}[] = [
+  {
+    value: 'low',
+    label: 'Low',
+    Icon: Sparkles,
+    gradientClass:
+      'bg-gradient-to-br from-slate-200/80 via-slate-200/60 to-slate-100/40 text-slate-700 dark:bg-slate-700/20 dark:text-slate-200',
+  },
+  {
+    value: 'medium',
+    label: 'Medium',
+    Icon: Zap,
+    gradientClass:
+      'bg-gradient-to-br from-amber-500/20 via-orange-500/20 to-yellow-400/20 text-amber-700 dark:text-amber-200',
+  },
+  {
+    value: 'high',
+    label: 'High',
+    Icon: Brain,
+    gradientClass:
+      'bg-gradient-to-br from-fuchsia-500/20 via-purple-500/20 to-indigo-500/20 text-fuchsia-700 dark:text-fuchsia-200',
+  },
 ] as const;
 
 const SUGGESTION_PANEL_MAX_WIDTH = 360;
@@ -985,9 +1009,28 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                 <SelectValue placeholder={t('features.messages.ai.reasoning', 'Reasoning')} />
               </SelectTrigger>
               <SelectContent>
+                <div className="px-3 py-2">
+                  <div className="text-xs font-medium text-slate-900 dark:text-slate-100">
+                    {t('features.messages.ai.reasoningDropdownTitle', 'Reasoning effort')}
+                  </div>
+                  <div className="text-muted-foreground text-xs">
+                    {t(
+                      'features.messages.ai.reasoningDropdownDescription',
+                      'Choose how much thinking effort the AI should use: high, medium, or low.'
+                    )}
+                  </div>
+                </div>
+                <div className="border-t border-slate-200 dark:border-slate-700" />
                 {REASONING_OPTIONS.map(option => (
                   <SelectItem key={option.value} value={option.value}>
-                    {option.label}
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`inline-flex h-6 w-6 items-center justify-center rounded-full ${option.gradientClass}`}
+                      >
+                        <option.Icon className="h-3 w-3" />
+                      </span>
+                      <span className="text-sm font-medium">{option.label}</span>
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
