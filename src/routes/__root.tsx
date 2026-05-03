@@ -1,5 +1,6 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from '@tanstack/react-router';
 import { AuthProvider } from '@/providers/auth-provider';
+import { OnlineUsersProvider } from '@/presence';
 import { ZeroAppProvider } from '@/providers/zero-provider';
 import { AppShell } from '@/layout/app-shell';
 import { NotFound } from '@/features/shared/ui/ui/not-found';
@@ -58,11 +59,13 @@ function RootLayout() {
           }}
         />
         <AuthProvider>
-          <ZeroAppProvider>
-            <AppShell>
-              <Outlet />
-            </AppShell>
-          </ZeroAppProvider>
+          <OnlineUsersProvider>
+            <ZeroAppProvider>
+              <AppShell>
+                <Outlet />
+              </AppShell>
+            </ZeroAppProvider>
+          </OnlineUsersProvider>
         </AuthProvider>
         <Scripts />
       </body>

@@ -8,6 +8,7 @@ import { getConversationDisplay, getUnreadCount, formatTime } from '../logic/mes
 interface ConversationItemProps {
   conversation: Conversation;
   currentUserId?: string;
+  isOnline: boolean;
   isSelected: boolean;
   onSelect: (id: string) => void;
 }
@@ -15,6 +16,7 @@ interface ConversationItemProps {
 export function ConversationItem({
   conversation,
   currentUserId,
+  isOnline,
   isSelected,
   onSelect,
 }: ConversationItemProps) {
@@ -30,10 +32,17 @@ export function ConversationItem({
         isSelected && 'bg-accent'
       )}
     >
-      <Avatar className="h-12 w-12 flex-shrink-0">
-        <AvatarImage src={display.avatar || undefined} />
-        <AvatarFallback>{display.name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
-      </Avatar>
+      <div className="relative h-12 w-12 flex-shrink-0">
+        <Avatar className="h-12 w-12 rounded-2xl">
+          <AvatarImage src={display.avatar || undefined} />
+          <AvatarFallback className="rounded-2xl">
+            {display.name?.[0]?.toUpperCase() || 'U'}
+          </AvatarFallback>
+        </Avatar>
+        {isOnline && !display.isGroup && (
+          <span className="border-background absolute -right-0.5 -bottom-0.5 block h-3.5 w-3.5 rounded-full border-2 bg-green-500" />
+        )}
+      </div>
       <div className="min-w-0 flex-1">
         <div className="mb-1 flex items-start justify-between gap-2">
           <div className="flex min-w-0 flex-1 items-center gap-1">

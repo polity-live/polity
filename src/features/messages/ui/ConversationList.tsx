@@ -13,12 +13,12 @@ import { Search, Plus, Filter } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
 import { Conversation } from '../types/message.types';
 import { ConversationItem } from './ConversationItem';
-import { Dialog, DialogTrigger } from '@/features/shared/ui/ui/dialog';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useState } from 'react';
 
 interface ConversationListProps {
   conversations: Conversation[];
+  conversationOnlineStatus: Readonly<Record<string, boolean>>;
   selectedConversationId: string | null;
   onSelectConversation: (id: string) => void;
   searchQuery: string;
@@ -30,6 +30,7 @@ interface ConversationListProps {
 
 export function ConversationList({
   conversations,
+  conversationOnlineStatus,
   selectedConversationId,
   onSelectConversation,
   searchQuery,
@@ -42,7 +43,7 @@ export function ConversationList({
   const [conversationFilter, setConversationFilter] = useState<'all' | 'direct' | 'group'>('all');
 
   // Filter conversations based on type
-  const filteredByTypeConversations = conversations.filter((conv) => {
+  const filteredByTypeConversations = conversations.filter(conv => {
     if (conversationFilter === 'all') return true;
     return conv.type === conversationFilter;
   });
@@ -58,9 +59,9 @@ export function ConversationList({
       <CardHeader className="flex-shrink-0 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold">{t('features.messages.title')}</h2>
-          <Button 
-            size="icon" 
-            variant="default" 
+          <Button
+            size="icon"
+            variant="default"
             className="rounded-full"
             onClick={onNewConversationClick}
             aria-label={t('features.messages.compose.startNew')}
@@ -70,15 +71,18 @@ export function ConversationList({
         </div>
         <div className="space-y-2">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
             <Input
               placeholder={t('features.messages.searchConversations')}
               value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
+              onChange={e => onSearchChange(e.target.value)}
               className="pl-9"
             />
           </div>
-          <Select value={conversationFilter} onValueChange={(value: 'all' | 'direct' | 'group') => setConversationFilter(value)}>
+          <Select
+            value={conversationFilter}
+            onValueChange={(value: 'all' | 'direct' | 'group') => setConversationFilter(value)}
+          >
             <SelectTrigger className="w-full">
               <Filter className="mr-2 h-4 w-4" />
               <SelectValue />
@@ -103,11 +107,12 @@ export function ConversationList({
               </p>
             </div>
           ) : (
-            filteredByTypeConversations.map((conversation) => (
+            filteredByTypeConversations.map(conversation => (
               <ConversationItem
                 key={conversation.id}
                 conversation={conversation}
                 currentUserId={currentUserId}
+                isOnline={conversationOnlineStatus[conversation.id] ?? false}
                 isSelected={selectedConversationId === conversation.id}
                 onSelect={onSelectConversation}
               />

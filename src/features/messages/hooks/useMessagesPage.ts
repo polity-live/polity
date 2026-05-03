@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useOnlineUsers } from '@/presence';
 import { useAuth } from '@/providers/auth-provider';
 import { useUserState } from '@/zero/users/useUserState';
 import { useConversationData } from './useConversationData';
@@ -13,6 +14,7 @@ export function useMessagesPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { onlineUserIds } = useOnlineUsers();
   const searchParams = useSearch({ strict: false }) as Record<string, string>;
 
   // Dialog state
@@ -37,6 +39,31 @@ export function useMessagesPage() {
     useConversationSelection(conversations, {
       openAriaKai: shouldOpenAriaKai,
     });
+
+  const conversationOnlineStatus = useMemo<Record<string, boolean>>(() => {
+    const statusByConversationId: Record<string, boolean> = {};
+
+    for (const conversation of conversations) {
+      if (conversation.type === 'group') {
+        statusByConversationId[conversation.id] = false;
+        continue;
+      }
+
+      const otherParticipantId = conversation.participants.find(
+        participant => participant.user?.id !== user?.id
+      )?.user?.id;
+
+      statusByConversationId[conversation.id] = Boolean(
+        otherParticipantId && onlineUserIds.has(otherParticipantId)
+      );
+    }
+
+    return statusByConversationId;
+  }, [conversations, onlineUserIds, user?.id]);
+
+  const selectedConversationUserOnline = selectedConversation
+    ? (conversationOnlineStatus[selectedConversation.id] ?? false)
+    : false;
 
   // Existing direct conversation user IDs (for new conversation dialog)
   const existingConversationUserIds = useMemo(() => {
@@ -232,9 +259,11 @@ export function useMessagesPage() {
 
     // Conversation data
     filteredConversations,
+    conversationOnlineStatus,
     selectedConversationId,
     setSelectedConversationId,
     selectedConversation,
+    selectedConversationUserOnline,
     searchQuery,
     setSearchQuery,
     existingConversationUserIds,

@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import * as channelManager from "./channelManager";
+import { useState, useEffect, useCallback, useRef } from 'react';
+import * as channelManager from './channelManager';
 
 export interface PeerData {
   userId: string;
@@ -23,15 +23,13 @@ interface UsePresenceReturn {
   isConnected: boolean;
 }
 
-export function usePresence(
-  roomId: string,
-  options: UsePresenceOptions = {}
-): UsePresenceReturn {
+export function usePresence(roomId: string, options: UsePresenceOptions = {}): UsePresenceReturn {
   const { initialData, enabled = true } = options;
   const [peers, setPeers] = useState<PeerData[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const currentDataRef = useRef<Partial<PeerData> | undefined>(initialData);
   const roomIdRef = useRef(roomId);
+  const presenceKey = initialData?.userId ?? 'anon';
 
   // Keep ref in sync so publishPresence always has latest data
   useEffect(() => {
@@ -42,16 +40,15 @@ export function usePresence(
     if (!enabled || !roomId) return;
     roomIdRef.current = roomId;
 
-    const presenceKey = initialData?.userId ?? "anon";
     const managed = channelManager.acquire(roomId, presenceKey);
 
     // Register for presence sync updates
-    const unsubPresence = channelManager.onPresenceSync(roomId, (newPeers) => {
+    const unsubPresence = channelManager.onPresenceSync(roomId, newPeers => {
       setPeers(newPeers);
     });
 
     // Register for connection status updates
-    const unsubStatus = channelManager.onStatusChange(roomId, (connected) => {
+    const unsubStatus = channelManager.onStatusChange(roomId, connected => {
       setIsConnected(connected);
       if (connected && currentDataRef.current) {
         managed.channel.track(currentDataRef.current);
@@ -71,35 +68,26 @@ export function usePresence(
       unsubStatus();
       channelManager.release(roomId);
     };
-  }, [roomId, enabled]);
+  }, [roomId, enabled, presenceKey]);
 
-  const publishPresence = useCallback(
-    (data: Partial<PeerData>) => {
-      currentDataRef.current = { ...currentDataRef.current, ...data };
-      const channel = channelManager.getChannel(roomIdRef.current);
-      channel?.track(currentDataRef.current);
-    },
-    []
-  );
+  const publishPresence = useCallback((data: Partial<PeerData>) => {
+    currentDataRef.current = { ...currentDataRef.current, ...data };
+    const channel = channelManager.getChannel(roomIdRef.current);
+    channel?.track(currentDataRef.current);
+  }, []);
 
-  const publishTopic = useCallback(
-    (topic: string, payload: Record<string, unknown>) => {
-      const channel = channelManager.getChannel(roomIdRef.current);
-      channel?.send({
-        type: "broadcast",
-        event: topic,
-        payload,
-      });
-    },
-    []
-  );
+  const publishTopic = useCallback((topic: string, payload: Record<string, unknown>) => {
+    const channel = channelManager.getChannel(roomIdRef.current);
+    channel?.send({
+      type: 'broadcast',
+      event: topic,
+      payload,
+    });
+  }, []);
 
-  const subscribeTopic = useCallback(
-    (topic: string, callback: TopicCallback): (() => void) => {
-      return channelManager.subscribeTopic(roomIdRef.current, topic, callback);
-    },
-    []
-  );
+  const subscribeTopic = useCallback((topic: string, callback: TopicCallback): (() => void) => {
+    return channelManager.subscribeTopic(roomIdRef.current, topic, callback);
+  }, []);
 
   return { peers, publishPresence, publishTopic, subscribeTopic, isConnected };
 }

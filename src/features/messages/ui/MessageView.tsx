@@ -11,6 +11,7 @@ import { AssistantMessageView } from './AssistantMessageView';
 interface MessageViewProps {
   conversation?: Conversation;
   currentUserId?: string;
+  isConversationUserOnline: boolean;
   onBack: () => void;
   onTogglePin: (id: string, currentPinned: boolean) => void;
   onDeleteClick: (id: string) => void;
@@ -24,6 +25,7 @@ interface MessageViewProps {
 export function MessageView({
   conversation,
   currentUserId,
+  isConversationUserOnline,
   onBack,
   onTogglePin,
   onDeleteClick,
@@ -64,6 +66,7 @@ export function MessageView({
           <ConversationHeader
             conversation={conversation}
             currentUserId={currentUserId}
+            isOnline={isConversationUserOnline}
             onBack={onBack}
             onTogglePin={onTogglePin}
             onDeleteClick={onDeleteClick}

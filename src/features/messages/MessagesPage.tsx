@@ -30,6 +30,7 @@ export default function MessagesPage() {
         <div className="flex h-[calc(100vh-6rem)] flex-col gap-4 md:grid md:h-[calc(100vh-3rem)] md:grid-cols-3">
           <ConversationList
             conversations={mp.filteredConversations}
+            conversationOnlineStatus={mp.conversationOnlineStatus}
             selectedConversationId={mp.selectedConversationId}
             onSelectConversation={mp.setSelectedConversationId}
             searchQuery={mp.searchQuery}
@@ -41,6 +42,7 @@ export default function MessagesPage() {
           <MessageView
             conversation={mp.selectedConversation}
             currentUserId={mp.currentUserId}
+            isConversationUserOnline={mp.selectedConversationUserOnline}
             onBack={() => mp.setSelectedConversationId(null)}
             onTogglePin={mp.togglePin}
             onDeleteClick={mp.openDeleteDialog}
