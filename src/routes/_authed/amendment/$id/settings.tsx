@@ -1,7 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { AccessDenied } from '@/features/auth/ui/AccessDenied';
+import { useAmendmentCollaboration } from '@/features/amendments/hooks/useAmendmentCollaboration';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { useAuth } from '@/providers/auth-provider';
 import { AmendmentEditContent } from '@/features/amendments/ui/AmendmentEditContent';
+import { GlobalLoadingAnimation } from '@/features/shared/ui/ui/global-loading-animation';
 import { NotFound } from '@/features/shared/ui/ui/not-found';
 
 export const Route = createFileRoute('/_authed/amendment/$id/settings')({
@@ -11,10 +14,19 @@ export const Route = createFileRoute('/_authed/amendment/$id/settings')({
 function AmendmentSettingsPage() {
   const { id } = Route.useParams();
   const { user } = useAuth();
+  const collaboration = useAmendmentCollaboration(id);
   const { amendment, amendmentProcess, isLoading } = useAmendmentState({
     amendmentId: id,
     includeProcessData: true,
   });
+
+  if (collaboration.isLoading) {
+    return <GlobalLoadingAnimation connectionStatus="connecting" />;
+  }
+
+  if (!user || (!collaboration.isCollaborator && !collaboration.isAdmin)) {
+    return <AccessDenied />;
+  }
 
   if (!isLoading && !amendment) {
     return <NotFound />;

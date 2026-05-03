@@ -1,9 +1,12 @@
-import { type ReactNode, useState, useEffect, useMemo } from 'react';
+import { type ReactNode, useMemo } from 'react';
 import { useNavigate, useRouterState } from '@tanstack/react-router';
 import { Toaster } from '@/features/shared/ui/ui/sonner.tsx';
 import { DynamicNavigation } from '@/features/navigation/dynamic-navigation.tsx';
 import { NavigationCommandDialog } from '@/features/navigation/command-dialog.tsx';
-import { useScreenResponsiveDetector, useScreenStore } from '@/features/shared/global-state/screen.store.tsx';
+import {
+  useScreenResponsiveDetector,
+  useScreenStore,
+} from '@/features/shared/global-state/screen.store.tsx';
 import { useNavigationStore } from '@/features/navigation/state/navigation.store.tsx';
 import { useThemeInitializer } from '@/features/shared/global-state/theme.store.tsx';
 import { I18nSyncProvider } from '@/i18n/i18n-sync-provider.tsx';
@@ -28,15 +31,6 @@ import { useBrowserNotifications } from '@/features/notifications/hooks/useBrows
 import { useToastSettingsSync } from '@/features/notifications/hooks/useToastSettingsSync.ts';
 
 export function AppShell({ children }: { children: ReactNode }) {
-  const [isClient, setIsClient] = useState(false);
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  if (!isClient) {
-    return <div className="bg-background min-h-screen">{children}</div>;
-  }
-
   return <AppShellInner>{children}</AppShellInner>;
 }
 
@@ -101,7 +95,10 @@ function UnauthenticatedShell({ children }: { children: ReactNode }) {
           {children}
         </main>
 
-        <NavigationCommandDialog primaryNavItems={navigationItems} secondaryNavItems={secondaryNavItems} />
+        <NavigationCommandDialog
+          primaryNavItems={navigationItems}
+          secondaryNavItems={secondaryNavItems}
+        />
 
         <Toaster richColors position="top-right" />
         <PWAInstallPrompt />

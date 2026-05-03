@@ -13,7 +13,12 @@ import { Link } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import { GITHUB_ISSUES_URL, SUPPORT_EMAIL } from '@/features/shared/constants.ts';
 
-export function AccessDenied() {
+interface AccessDeniedProps {
+  description?: string;
+  title?: string;
+}
+
+export function AccessDenied({ description, title }: AccessDeniedProps) {
   const { t } = useTranslation();
 
   return (
@@ -23,9 +28,9 @@ export function AccessDenied() {
           <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
             <ShieldAlert className="h-10 w-10 text-red-600 dark:text-red-400" />
           </div>
-          <CardTitle className="text-2xl">{t('errors.accessDenied.title')}</CardTitle>
+          <CardTitle className="text-2xl">{title ?? t('errors.accessDenied.title')}</CardTitle>
           <CardDescription className="text-base">
-            {t('errors.accessDenied.description')}
+            {description ?? t('errors.accessDenied.description')}
           </CardDescription>
         </CardHeader>
 

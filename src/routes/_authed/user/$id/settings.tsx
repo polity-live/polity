@@ -1,6 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { z } from 'zod';
+import { AccessDenied } from '@/features/auth/ui/AccessDenied';
 import { UserEdit } from '@/features/users/ui/UserEdit';
+import { useAuth } from '@/providers/auth-provider';
 
 const settingsSearchSchema = z.object({
   tab: z.string().optional(),
@@ -16,5 +18,12 @@ export const Route = createFileRoute('/_authed/user/$id/settings')({
 function UserSettingsPage() {
   const { id } = Route.useParams();
   const { tab } = Route.useSearch();
+
+  const { user } = useAuth();
+
+  if (!user || user.id !== id) {
+    return <AccessDenied />;
+  }
+
   return <UserEdit userId={id} defaultTab={tab} />;
 }

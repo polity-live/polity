@@ -42,6 +42,16 @@ export const commonTranslations = {
       description:
         'Sie haben keine Berechtigung, diese Seite anzuzeigen oder diese Aktion auszuführen.',
       helpText: 'Glauben Sie, das ist ein Fehler?',
+      reasons: {
+        loginRequired: {
+          title: 'Anmeldung erforderlich',
+          description: 'Sie müssen sich einloggen, um diese Seite zu öffnen.',
+        },
+        private: {
+          title: 'Diese Seite ist privat',
+          description: 'Diese Seite ist privat und kann nicht geöffnet werden.',
+        },
+      },
     },
     contactHint: 'Wenn Sie glauben, dass dies nicht korrekt ist, können Sie eine E-Mail senden an',
     contactHintOr: 'oder',

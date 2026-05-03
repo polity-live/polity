@@ -11,6 +11,7 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as UnauthorizedImport } from './routes/unauthorized'
 import { Route as TermsAndConditionsImport } from './routes/terms-and-conditions'
 import { Route as SupportImport } from './routes/support'
 import { Route as SolutionsImport } from './routes/solutions'
@@ -107,6 +108,12 @@ import { Route as AuthedUserIdBlogEntryIdEditorImport } from './routes/_authed/u
 import { Route as AuthedGroupIdBlogEntryIdEditorImport } from './routes/_authed/group/$id/blog/$entryId/editor'
 
 // Create/Update Routes
+
+const UnauthorizedRoute = UnauthorizedImport.update({
+  id: '/unauthorized',
+  path: '/unauthorized',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const TermsAndConditionsRoute = TermsAndConditionsImport.update({
   id: '/terms-and-conditions',
@@ -776,6 +783,13 @@ declare module '@tanstack/react-router' {
       path: '/terms-and-conditions'
       fullPath: '/terms-and-conditions'
       preLoaderRoute: typeof TermsAndConditionsImport
+      parentRoute: typeof rootRoute
+    }
+    '/unauthorized': {
+      id: '/unauthorized'
+      path: '/unauthorized'
+      fullPath: '/unauthorized'
+      preLoaderRoute: typeof UnauthorizedImport
       parentRoute: typeof rootRoute
     }
     '/_authed/calendar': {
@@ -1677,6 +1691,7 @@ export interface FileRoutesByFullPath {
   '/solutions': typeof SolutionsRoute
   '/support': typeof SupportRoute
   '/terms-and-conditions': typeof TermsAndConditionsRoute
+  '/unauthorized': typeof UnauthorizedRoute
   '/calendar': typeof AuthedCalendarRoute
   '/home': typeof AuthedHomeRoute
   '/messages': typeof AuthedMessagesRoute
@@ -1772,6 +1787,7 @@ export interface FileRoutesByTo {
   '/solutions': typeof SolutionsRoute
   '/support': typeof SupportRoute
   '/terms-and-conditions': typeof TermsAndConditionsRoute
+  '/unauthorized': typeof UnauthorizedRoute
   '/calendar': typeof AuthedCalendarRoute
   '/home': typeof AuthedHomeRoute
   '/messages': typeof AuthedMessagesRoute
@@ -1861,6 +1877,7 @@ export interface FileRoutesById {
   '/solutions': typeof SolutionsRoute
   '/support': typeof SupportRoute
   '/terms-and-conditions': typeof TermsAndConditionsRoute
+  '/unauthorized': typeof UnauthorizedRoute
   '/_authed/calendar': typeof AuthedCalendarRoute
   '/_authed/home': typeof AuthedHomeRoute
   '/_authed/messages': typeof AuthedMessagesRoute
@@ -1960,6 +1977,7 @@ export interface FileRouteTypes {
     | '/solutions'
     | '/support'
     | '/terms-and-conditions'
+    | '/unauthorized'
     | '/calendar'
     | '/home'
     | '/messages'
@@ -2054,6 +2072,7 @@ export interface FileRouteTypes {
     | '/solutions'
     | '/support'
     | '/terms-and-conditions'
+    | '/unauthorized'
     | '/calendar'
     | '/home'
     | '/messages'
@@ -2141,6 +2160,7 @@ export interface FileRouteTypes {
     | '/solutions'
     | '/support'
     | '/terms-and-conditions'
+    | '/unauthorized'
     | '/_authed/calendar'
     | '/_authed/home'
     | '/_authed/messages'
@@ -2239,6 +2259,7 @@ export interface RootRouteChildren {
   SolutionsRoute: typeof SolutionsRoute
   SupportRoute: typeof SupportRoute
   TermsAndConditionsRoute: typeof TermsAndConditionsRoute
+  UnauthorizedRoute: typeof UnauthorizedRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -2254,6 +2275,7 @@ const rootRouteChildren: RootRouteChildren = {
   SolutionsRoute: SolutionsRoute,
   SupportRoute: SupportRoute,
   TermsAndConditionsRoute: TermsAndConditionsRoute,
+  UnauthorizedRoute: UnauthorizedRoute,
 }
 
 export const routeTree = rootRoute
@@ -2277,7 +2299,8 @@ export const routeTree = rootRoute
         "/privacy-policy",
         "/solutions",
         "/support",
-        "/terms-and-conditions"
+        "/terms-and-conditions",
+        "/unauthorized"
       ]
     },
     "/": {
@@ -2351,6 +2374,9 @@ export const routeTree = rootRoute
     },
     "/terms-and-conditions": {
       "filePath": "terms-and-conditions.tsx"
+    },
+    "/unauthorized": {
+      "filePath": "unauthorized.tsx"
     },
     "/_authed/calendar": {
       "filePath": "_authed/calendar.tsx",

@@ -41,6 +41,16 @@ export const commonTranslations = {
       title: 'Access Denied',
       description: 'You do not have permission to view this page or perform this action.',
       helpText: 'Believe this is a mistake?',
+      reasons: {
+        loginRequired: {
+          title: 'Login Required',
+          description: 'You must sign in to open this page.',
+        },
+        private: {
+          title: 'This Page Is Private',
+          description: 'This page is private and cannot be opened.',
+        },
+      },
     },
     contactHint: 'If you believe this is incorrect, you can send an email to',
     contactHintOr: 'or',
