@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
-import { LoadingSpinner } from '@/features/shared/ui/ui/loading-spinner';
+import { GlobalLoadingAnimation } from '@/features/shared/ui/ui/global-loading-animation';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 export function AuthCallbackPage() {
@@ -73,11 +73,5 @@ export function AuthCallbackPage() {
     };
   }, [navigate, t]);
 
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4 dark:from-gray-900 dark:to-gray-800">
-      <div className="rounded-lg border bg-card p-8 shadow-sm">
-        <LoadingSpinner size="lg" text={t('auth.callback.loading')} />
-      </div>
-    </div>
-  );
+  return <GlobalLoadingAnimation connectionStatus="connecting" />;
 }
