@@ -31,6 +31,14 @@ AI-specific env vars:
 - `OPENROUTER_API_KEY` enables shared free OpenRouter models for all users.
 - `AI_ENCRYPTION_SECRET` encrypts per-user BYOK provider keys on the server. Use a long random secret and keep it identical across app instances that need to decrypt existing keys.
 
+### Implemented external APIs
+
+The following third-party APIs are already implemented in this codebase:
+
+- **OpenRouter / OpenAI / Anthropic** for the built-in AI assistant flows. OpenRouter supports shared app-level free models and optional BYOK usage, while OpenAI and Anthropic are available through per-user BYOK credentials.
+- **Stripe** for subscription checkout, billing portal access, subscription status, cancellation, and webhook handling.
+- **Geoapify** for address autocomplete and reverse geocoding used by location and address inputs.
+
 ### Local development mode
 
 - App: `npm run dev`
