@@ -132,13 +132,7 @@ export function useMessagesPage() {
   useEffect(() => {
     if (!selectedConversation || !user?.id) return;
 
-    const unreadMessages = selectedConversation.messages.filter(
-      msg => !msg.is_read && msg.sender?.id !== user.id
-    );
-
-    if (unreadMessages.length > 0) {
-      mutations.markAsRead(unreadMessages);
-    }
+    void mutations.markConversationAsRead(selectedConversation, user.id);
   }, [selectedConversation?.id, selectedConversation?.messages, user?.id]);
 
   // Handlers

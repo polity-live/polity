@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useAuth } from '@/providers/auth-provider.tsx';
 import { filterAccessibleNotifications } from '@/features/notifications/logic/notificationHelpers.ts';
+import { getUnreadCount } from '@/features/messages/logic/messageUtils';
 import { useUserNotifications } from '@/features/notifications/hooks/useUserNotifications.ts';
 import { useMessageState } from '@/zero/messages/useMessageState.ts';
 
@@ -23,7 +24,7 @@ export function useUnreadNotificationsCount() {
 
 /**
  * Hook to get unread messages count for the current user
- * Counts total unread messages across all conversations
+ * Counts unread messages plus unread incoming conversation requests
  */
 export function useUnreadMessagesCount() {
   const { user } = useAuth();
@@ -37,16 +38,10 @@ export function useUnreadMessagesCount() {
       return 0;
     }
 
-    let totalUnread = 0;
-    conversations.forEach(conversation => {
-      const unreadInConversation = conversation.messages.filter(
-        (msg) => !msg.is_read && msg.sender?.id !== user.id
-      ).length;
-
-      totalUnread += unreadInConversation;
-    });
-
-    return totalUnread;
+    return conversations.reduce(
+      (totalUnread, conversation) => totalUnread + getUnreadCount(conversation, user.id),
+      0
+    );
   }, [conversations, user?.id]);
 
   return { count, isLoading };

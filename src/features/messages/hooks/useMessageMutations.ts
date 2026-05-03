@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useMessageActions } from '@/zero/messages/useMessageActions';
 import { toast } from 'sonner';
-import { Message, Conversation } from '../types/message.types';
+import { Conversation } from '../types/message.types';
+import { hasUnreadConversationRequest } from '../logic/messageUtils';
 import {
   notifyDirectMessage,
   notifyConversationRequest,
@@ -161,13 +162,31 @@ export function useMessageMutations() {
     }
   };
 
-  const markAsRead = async (messages: Message[]) => {
-    if (messages.length === 0) return;
+  const markConversationAsRead = async (conversation: Conversation, currentUserId: string) => {
+    const unreadMessages = conversation.messages.filter(
+      msg => !msg.is_read && msg.sender?.id !== currentUserId
+    );
+    const shouldUpdateReadState =
+      unreadMessages.length > 0 || hasUnreadConversationRequest(conversation, currentUserId);
+
+    if (!shouldUpdateReadState) return;
+
+    const currentParticipant = conversation.participants.find(
+      participant => participant.user_id === currentUserId || participant.user?.id === currentUserId
+    );
+
     try {
-      for (const msg of messages) {
+      for (const msg of unreadMessages) {
         await actions.updateMessage({
           id: msg.id,
           is_read: true,
+        });
+      }
+
+      if (currentParticipant) {
+        await actions.markRead({
+          id: currentParticipant.id,
+          last_read_at: Date.now(),
         });
       }
     } catch (error) {
@@ -265,7 +284,7 @@ export function useMessageMutations() {
     sendMessage,
     createConversation,
     deleteMessage,
-    markAsRead,
+    markConversationAsRead,
     acceptConversation,
     rejectConversation,
     deleteConversation,
