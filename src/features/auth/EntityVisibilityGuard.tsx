@@ -15,6 +15,7 @@ interface EntityVisibilityGuardProps {
   hasError?: boolean;
   isLoading: boolean;
   visibilities: RouteVisibilityInput[];
+  canAccessPrivate?: boolean;
 }
 
 export function EntityVisibilityGuard({
@@ -23,6 +24,7 @@ export function EntityVisibilityGuard({
   hasError = false,
   isLoading,
   visibilities,
+  canAccessPrivate = false,
 }: EntityVisibilityGuardProps) {
   const { user } = useAuth();
 
@@ -38,7 +40,7 @@ export function EntityVisibilityGuard({
     return <NotFound />;
   }
 
-  const decision = resolveRouteVisibilityAccess(visibilities, !!user);
+  const decision = resolveRouteVisibilityAccess(visibilities, !!user, canAccessPrivate);
 
   if (!decision.allowed) {
     return <Navigate to="/unauthorized" search={{ reason: decision.reason }} replace />;

@@ -38,7 +38,8 @@ export function getEffectiveRouteVisibility(visibilities: RouteVisibilityInput[]
 
 export function resolveRouteVisibilityAccess(
   visibilities: RouteVisibilityInput[],
-  isAuthenticated: boolean
+  isAuthenticated: boolean,
+  canAccessPrivate = false
 ): RouteVisibilityDecision {
   const visibility = getEffectiveRouteVisibility(visibilities);
 
@@ -55,8 +56,8 @@ export function resolveRouteVisibilityAccess(
   }
 
   return {
-    allowed: false,
-    reason: 'private',
+    allowed: canAccessPrivate,
+    reason: canAccessPrivate ? undefined : 'private',
     visibility,
   };
 }
