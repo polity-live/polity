@@ -19,6 +19,7 @@ export function MessageBubble({
   resolveAttachmentCardData,
 }: MessageBubbleProps) {
   const contextLabel = isAssistantUser(message.sender?.id ?? '') ? 'output' : 'input';
+  const hasContent = Boolean(message.content?.trim());
 
   return (
     <div className={cn('flex items-end gap-2', isOwnMessage && 'flex-row-reverse')}>
@@ -27,22 +28,24 @@ export function MessageBubble({
         <AvatarFallback>{message.sender?.first_name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
       </Avatar>
       <div className="max-w-[70%] space-y-2">
-        <div
-          className={cn(
-            'rounded-lg px-4 py-2 break-words',
-            isOwnMessage ? 'bg-primary text-primary-foreground' : 'bg-muted'
-          )}
-        >
-          <MessageContent content={message.content ?? ''} />
-          <p
+        {hasContent && (
+          <div
             className={cn(
-              'mt-1 text-xs',
-              isOwnMessage ? 'text-primary-foreground/70' : 'text-muted-foreground'
+              'rounded-lg px-4 py-2 break-words',
+              isOwnMessage ? 'bg-primary text-primary-foreground' : 'bg-muted'
             )}
           >
-            {formatTime(message.created_at)}
-          </p>
-        </div>
+            <MessageContent content={message.content ?? ''} />
+            <p
+              className={cn(
+                'mt-1 text-xs',
+                isOwnMessage ? 'text-primary-foreground/70' : 'text-muted-foreground'
+              )}
+            >
+              {formatTime(message.created_at)}
+            </p>
+          </div>
+        )}
 
         <AiContextCards
           contextJson={message.context_json}
@@ -50,6 +53,12 @@ export function MessageBubble({
           resolveAttachmentCardData={resolveAttachmentCardData}
           className={cn(isOwnMessage && 'justify-self-end')}
         />
+
+        {!hasContent && (
+          <p className={cn('text-muted-foreground px-1 text-xs', isOwnMessage && 'text-right')}>
+            {formatTime(message.created_at)}
+          </p>
+        )}
       </div>
     </div>
   );

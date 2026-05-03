@@ -15,7 +15,7 @@ interface MessageViewProps {
   onTogglePin: (id: string, currentPinned: boolean) => void;
   onDeleteClick: (id: string) => void;
   onMembersClick: () => void;
-  onSendMessage: (content: string) => void;
+  onSendMessage: (content: string, contextJson: string) => Promise<boolean>;
   onAcceptConversation: (conversation: Conversation) => void;
   onRejectConversation: (conversation: Conversation) => void;
   className?: string;

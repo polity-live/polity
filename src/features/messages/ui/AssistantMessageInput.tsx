@@ -1,11 +1,19 @@
 'use client';
 
-import { useLayoutEffect, useMemo, useRef, useState, type ComponentType } from 'react';
+import {
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type ComponentType,
+} from 'react';
 import {
   AtSign,
   Bot,
   Brain,
   LoaderCircle,
+  Paperclip,
   Plus,
   Send,
   Slash,
@@ -48,13 +56,16 @@ import type { AiReasoningEffort } from '@/lib/ai/schemas';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import {
   ASSISTANT_ATTACHMENT_TYPE_OPTIONS,
+  getSuggestionAnchorPosition,
   parseActiveMentionQuery,
   parseActiveSkillCommand,
   parseActiveToolCommand,
   replaceTextRange,
   slugifySkillName,
+  type SuggestionAnchorPosition,
 } from '../logic/assistantComposer';
 import type { useAssistantChat } from '../hooks/useAssistantChat';
+import { MESSAGE_ATTACHMENT_ACCEPT } from '../logic/uploadAttachmentCard';
 
 interface AssistantMessageInputProps {
   assistantChat: ReturnType<typeof useAssistantChat>;
@@ -89,7 +100,6 @@ const REASONING_OPTIONS: readonly {
   },
 ] as const;
 
-const SUGGESTION_PANEL_MAX_WIDTH = 360;
 const MAX_VISIBLE_TOOL_BADGES = 4;
 
 function formatContextWindow(value: number | null | undefined): string {
@@ -119,90 +129,10 @@ function buildModelKey(model: { provider: string; id: string }): string {
   return `${model.provider}:${model.id}`;
 }
 
-interface SuggestionAnchorPosition {
-  left: number;
-  top: number;
-  width: number;
-}
-
-function getSuggestionAnchorPosition(
-  textarea: HTMLTextAreaElement,
-  value: string,
-  anchorIndex: number
-): SuggestionAnchorPosition | null {
-  if (anchorIndex < 0 || anchorIndex > value.length) {
-    return null;
-  }
-
-  const computedStyle = window.getComputedStyle(textarea);
-  const mirror = document.createElement('div');
-
-  mirror.style.position = 'absolute';
-  mirror.style.visibility = 'hidden';
-  mirror.style.pointerEvents = 'none';
-  mirror.style.left = '-9999px';
-  mirror.style.top = '0';
-  mirror.style.boxSizing = computedStyle.boxSizing;
-  mirror.style.width = `${textarea.offsetWidth}px`;
-  mirror.style.paddingTop = computedStyle.paddingTop;
-  mirror.style.paddingRight = computedStyle.paddingRight;
-  mirror.style.paddingBottom = computedStyle.paddingBottom;
-  mirror.style.paddingLeft = computedStyle.paddingLeft;
-  mirror.style.borderTopWidth = computedStyle.borderTopWidth;
-  mirror.style.borderRightWidth = computedStyle.borderRightWidth;
-  mirror.style.borderBottomWidth = computedStyle.borderBottomWidth;
-  mirror.style.borderLeftWidth = computedStyle.borderLeftWidth;
-  mirror.style.borderTopStyle = computedStyle.borderTopStyle;
-  mirror.style.borderRightStyle = computedStyle.borderRightStyle;
-  mirror.style.borderBottomStyle = computedStyle.borderBottomStyle;
-  mirror.style.borderLeftStyle = computedStyle.borderLeftStyle;
-  mirror.style.fontFamily = computedStyle.fontFamily;
-  mirror.style.fontSize = computedStyle.fontSize;
-  mirror.style.fontWeight = computedStyle.fontWeight;
-  mirror.style.fontStyle = computedStyle.fontStyle;
-  mirror.style.letterSpacing = computedStyle.letterSpacing;
-  mirror.style.lineHeight = computedStyle.lineHeight;
-  mirror.style.textTransform = computedStyle.textTransform;
-  mirror.style.textIndent = computedStyle.textIndent;
-  mirror.style.textAlign = computedStyle.textAlign;
-  mirror.style.whiteSpace = 'pre-wrap';
-  mirror.style.wordBreak = 'break-word';
-  mirror.style.overflowWrap = 'break-word';
-
-  const prefixText = value.slice(0, anchorIndex);
-  mirror.textContent = prefixText;
-
-  const marker = document.createElement('span');
-  marker.textContent = value.slice(anchorIndex, anchorIndex + 1) || '@';
-  mirror.append(marker);
-  document.body.append(mirror);
-
-  const mirrorRect = mirror.getBoundingClientRect();
-  const markerRect = marker.getBoundingClientRect();
-  mirror.remove();
-
-  const availableWidth = Math.max(textarea.clientWidth - 16, 0);
-  if (availableWidth === 0) {
-    return null;
-  }
-
-  const width = Math.min(SUGGESTION_PANEL_MAX_WIDTH, availableWidth);
-  const maxLeft = Math.max(8, textarea.clientWidth - width - 8);
-  const left = Math.min(
-    Math.max(markerRect.left - mirrorRect.left - textarea.scrollLeft, 8),
-    maxLeft
-  );
-
-  return {
-    left,
-    top: markerRect.top - mirrorRect.top - textarea.scrollTop,
-    width,
-  };
-}
-
 export function AssistantMessageInput({ assistantChat }: AssistantMessageInputProps) {
   const { t } = useTranslation();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [messageText, setMessageText] = useState('');
   const [caretPosition, setCaretPosition] = useState(0);
   const [suggestionAnchorPosition, setSuggestionAnchorPosition] =
@@ -632,7 +562,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
 
   const handleSubmit = async () => {
     const trimmedMessage = messageText.trim();
-    if (!trimmedMessage || assistantChat.isSending) {
+    if (!trimmedMessage || assistantChat.isSending || assistantChat.isUploadingAttachments) {
       return;
     }
 
@@ -642,6 +572,17 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
         setCaretPosition(0);
       },
     });
+  };
+
+  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []);
+    event.target.value = '';
+
+    if (files.length === 0) {
+      return;
+    }
+
+    await assistantChat.addUploadedFiles(files);
   };
 
   return (
@@ -719,6 +660,14 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
               </Badge>
             ))}
           </div>
+        )}
+
+        {assistantChat.isUploadingAttachments && assistantChat.uploadingAttachmentName && (
+          <Badge variant="secondary" className="gap-1 text-xs">
+            <LoaderCircle className="h-3 w-3 animate-spin" />
+            {t('features.messages.compose.uploading', 'Uploading')}:
+            {assistantChat.uploadingAttachmentName}
+          </Badge>
         )}
 
         <div className="relative">
@@ -906,6 +855,17 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept={MESSAGE_ATTACHMENT_ACCEPT}
+            className="hidden"
+            onChange={event => {
+              void handleFileChange(event);
+            }}
+          />
+
           <div className="min-w-[240px] flex-1">
             <div className="flex items-center gap-1">
               <Select
@@ -1128,6 +1088,22 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
             type="button"
             variant="outline"
             size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={assistantChat.isUploadingAttachments}
+            className="h-8 px-2"
+          >
+            {assistantChat.isUploadingAttachments ? (
+              <LoaderCircle className="mr-1 h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Paperclip className="mr-1 h-3.5 w-3.5" />
+            )}
+            {t('features.messages.compose.uploadFiles', 'Upload files')}
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
             onClick={() => setCreateSkillOpen(true)}
             className="h-8 px-2"
           >
@@ -1140,7 +1116,10 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
             size="sm"
             className="h-8 gap-1 px-3 sm:ml-auto"
             disabled={
-              !messageText.trim() || assistantChat.isSending || !assistantChat.selectedModel
+              !messageText.trim() ||
+              assistantChat.isSending ||
+              assistantChat.isUploadingAttachments ||
+              !assistantChat.selectedModel
             }
             onClick={() => {
               void handleSubmit();

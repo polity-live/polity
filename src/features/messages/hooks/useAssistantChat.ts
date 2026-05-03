@@ -2,29 +2,15 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { DEFAULT_AI_SKILLS } from '@/features/assistant/logic/defaultAiSkills';
 import { DEFAULT_AI_TOOLS, type AiToolName } from '@/lib/ai/defaultAiTools';
-import { buildAgendaItemsByEventId } from '@/features/search/logic/searchFiltering';
-import { mapMosaicToContentItems } from '@/features/search/logic/searchMappers';
-import type { SearchContentItem, SearchResultItem } from '@/features/search/types/search.types';
-import type {
-  AiAttachmentEntity,
-  AiChatAttachment,
-  AiProvider,
-  AiReasoningEffort,
-} from '@/lib/ai/schemas';
+import type { AiChatAttachment, AiProvider, AiReasoningEffort } from '@/lib/ai/schemas';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { useSearchData } from '@/features/search/hooks/useSearchData';
 import { useAuth } from '@/providers/auth-provider';
 import { useAiActions } from '@/zero/ai/useAiActions';
 import { useAiState } from '@/zero/ai/useAiState';
-import { useVoteState } from '@/zero/votes/useVoteState';
 import type { Conversation } from '../types/message.types';
-import {
-  buildAssistantAttachmentOption,
-  buildVoteSearchItem,
-  slugifySkillName,
-  type AssistantAttachmentOption,
-} from '../logic/assistantComposer';
+import { slugifySkillName } from '../logic/assistantComposer';
 import { useMessageMutations } from './useMessageMutations';
+import { useMessageAttachments } from './useMessageAttachments';
 
 export interface AiCatalogModel {
   provider: AiProvider;
@@ -196,15 +182,13 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
   const { skills, tools } = useAiState();
   const aiActions = useAiActions();
   const mutations = useMessageMutations();
-  const { data } = useSearchData();
-  const { votesWithDetails } = useVoteState({ includeVotesWithDetails: true });
+  const attachmentComposer = useMessageAttachments(conversation.id);
 
   const [models, setModels] = useState<AiCatalogModel[]>([]);
   const [selectedModelKey, setSelectedModelKey] = useState('');
   const [reasoningEffort, setReasoningEffort] = useState<AiReasoningEffort>('medium');
   const [selectedSkillSlugs, setSelectedSkillSlugs] = useState<string[]>([]);
   const [selectedToolNames, setSelectedToolNames] = useState<AiToolName[]>([]);
-  const [selectedAttachments, setSelectedAttachments] = useState<AiChatAttachment[]>([]);
   const [streamingText, setStreamingText] = useState('');
   const [awaitingPersistenceText, setAwaitingPersistenceText] = useState<string | null>(null);
   const [streamError, setStreamError] = useState<string | null>(null);
@@ -278,63 +262,6 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
         .filter((tool): tool is AssistantToolOption => tool !== null),
     [availableTools, selectedToolNames]
   );
-
-  const agendaItemsByEventId = useMemo(
-    () =>
-      buildAgendaItemsByEventId(
-        (data?.agendaItems ?? []) as Parameters<typeof buildAgendaItemsByEventId>[0]
-      ),
-    [data?.agendaItems]
-  );
-
-  const mosaicResults = useMemo<SearchResultItem[]>(
-    () => [
-      ...(data?.$users ?? []).map(item => ({ ...item, _type: 'user' as const })),
-      ...(data?.groups ?? []).map(item => ({ ...item, _type: 'group' as const })),
-      ...(data?.statements ?? []).map(item => ({ ...item, _type: 'statement' as const })),
-      ...(data?.blogs ?? []).map(item => ({ ...item, _type: 'blog' as const })),
-      ...(data?.amendments ?? []).map(item => ({ ...item, _type: 'amendment' as const })),
-      ...(data?.events ?? []).map(item => ({ ...item, _type: 'event' as const })),
-      ...(data?.todos ?? []).map(item => ({ ...item, _type: 'todo' as const })),
-      ...(data?.elections ?? []).map(item => ({ ...item, _type: 'election' as const })),
-    ],
-    [
-      data?.$users,
-      data?.groups,
-      data?.statements,
-      data?.blogs,
-      data?.amendments,
-      data?.events,
-      data?.todos,
-      data?.elections,
-    ]
-  );
-
-  const searchItems = useMemo<SearchContentItem[]>(() => {
-    const baseItems = mapMosaicToContentItems(mosaicResults, agendaItemsByEventId);
-    const voteItems = votesWithDetails.map(buildVoteSearchItem);
-    return [...baseItems, ...voteItems];
-  }, [agendaItemsByEventId, mosaicResults, votesWithDetails]);
-
-  const attachmentOptions = useMemo(
-    () =>
-      searchItems
-        .map(buildAssistantAttachmentOption)
-        .filter((option): option is AssistantAttachmentOption => option !== null),
-    [searchItems]
-  );
-
-  const attachmentCardDataByKey = useMemo(() => {
-    const cardData = new Map<string, string>();
-
-    for (const option of attachmentOptions) {
-      if (option.attachment.card_data_json) {
-        cardData.set(option.key, option.attachment.card_data_json);
-      }
-    }
-
-    return cardData;
-  }, [attachmentOptions]);
 
   const selectedModel = useMemo(
     () => models.find(model => getModelKey(model) === selectedModelKey) ?? null,
@@ -414,7 +341,6 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
   }, [availableTools, hasManualToolSelection]);
 
   useEffect(() => {
-    setSelectedAttachments([]);
     setStreamingText('');
     setAwaitingPersistenceText(null);
     setStreamError(null);
@@ -440,36 +366,6 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
       setAwaitingPersistenceText(null);
     }
   }, [awaitingPersistenceText, conversation.messages, currentUserId]);
-
-  const addAttachment = useCallback((option: AssistantAttachmentOption) => {
-    setSelectedAttachments(currentAttachments => {
-      const alreadySelected = currentAttachments.some(
-        attachment =>
-          attachment.entityType === option.attachment.entityType &&
-          attachment.entityId === option.attachment.entityId
-      );
-
-      return alreadySelected ? currentAttachments : [...currentAttachments, option.attachment];
-    });
-  }, []);
-
-  const removeAttachment = useCallback((entityType: AiAttachmentEntity, entityId: string) => {
-    setSelectedAttachments(currentAttachments =>
-      currentAttachments.filter(
-        attachment => attachment.entityType !== entityType || attachment.entityId !== entityId
-      )
-    );
-  }, []);
-
-  const clearAttachments = useCallback(() => {
-    setSelectedAttachments([]);
-  }, []);
-
-  const resolveAttachmentCardData = useCallback(
-    (entityType: AiAttachmentEntity, entityId: string): string | null =>
-      attachmentCardDataByKey.get(`${entityType}:${entityId}`) ?? null,
-    [attachmentCardDataByKey]
-  );
 
   const setSkillSelection = useCallback((skillSlug: string, enabled: boolean) => {
     setSelectedSkillSlugs(currentSkillSlugs => {
@@ -825,12 +721,15 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
     selectedSkillSlugs,
     setSkillSelection,
     toggleSelectedSkillSlug,
-    selectedAttachments,
-    attachmentOptions,
-    resolveAttachmentCardData,
-    addAttachment,
-    removeAttachment,
-    clearAttachments,
+    selectedAttachments: attachmentComposer.selectedAttachments,
+    attachmentOptions: attachmentComposer.attachmentOptions,
+    resolveAttachmentCardData: attachmentComposer.resolveAttachmentCardData,
+    addAttachment: attachmentComposer.addAttachment,
+    removeAttachment: attachmentComposer.removeAttachment,
+    clearAttachments: attachmentComposer.clearAttachments,
+    addUploadedFiles: attachmentComposer.addUploadedFiles,
+    isUploadingAttachments: attachmentComposer.isUploadingAttachments,
+    uploadingAttachmentName: attachmentComposer.uploadingAttachmentName,
     createSkill,
     sendAssistantMessage,
     streamingText,

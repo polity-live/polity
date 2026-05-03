@@ -41,6 +41,12 @@ export interface ActiveToolCommand {
   searchText: string;
 }
 
+export interface SuggestionAnchorPosition {
+  left: number;
+  top: number;
+  width: number;
+}
+
 export const ASSISTANT_ATTACHMENT_TYPE_OPTIONS: readonly {
   entityType: AiAttachmentEntity;
   token: string;
@@ -248,6 +254,83 @@ export function replaceTextRange(
   nextValue: string
 ): string {
   return `${value.slice(0, start)}${nextValue}${value.slice(end)}`;
+}
+
+const SUGGESTION_PANEL_MAX_WIDTH = 360;
+
+export function getSuggestionAnchorPosition(
+  textarea: HTMLTextAreaElement,
+  value: string,
+  anchorIndex: number
+): SuggestionAnchorPosition | null {
+  if (anchorIndex < 0 || anchorIndex > value.length) {
+    return null;
+  }
+
+  const computedStyle = window.getComputedStyle(textarea);
+  const mirror = document.createElement('div');
+
+  mirror.style.position = 'absolute';
+  mirror.style.visibility = 'hidden';
+  mirror.style.pointerEvents = 'none';
+  mirror.style.left = '-9999px';
+  mirror.style.top = '0';
+  mirror.style.boxSizing = computedStyle.boxSizing;
+  mirror.style.width = `${textarea.offsetWidth}px`;
+  mirror.style.paddingTop = computedStyle.paddingTop;
+  mirror.style.paddingRight = computedStyle.paddingRight;
+  mirror.style.paddingBottom = computedStyle.paddingBottom;
+  mirror.style.paddingLeft = computedStyle.paddingLeft;
+  mirror.style.borderTopWidth = computedStyle.borderTopWidth;
+  mirror.style.borderRightWidth = computedStyle.borderRightWidth;
+  mirror.style.borderBottomWidth = computedStyle.borderBottomWidth;
+  mirror.style.borderLeftWidth = computedStyle.borderLeftWidth;
+  mirror.style.borderTopStyle = computedStyle.borderTopStyle;
+  mirror.style.borderRightStyle = computedStyle.borderRightStyle;
+  mirror.style.borderBottomStyle = computedStyle.borderBottomStyle;
+  mirror.style.borderLeftStyle = computedStyle.borderLeftStyle;
+  mirror.style.fontFamily = computedStyle.fontFamily;
+  mirror.style.fontSize = computedStyle.fontSize;
+  mirror.style.fontWeight = computedStyle.fontWeight;
+  mirror.style.fontStyle = computedStyle.fontStyle;
+  mirror.style.letterSpacing = computedStyle.letterSpacing;
+  mirror.style.lineHeight = computedStyle.lineHeight;
+  mirror.style.textTransform = computedStyle.textTransform;
+  mirror.style.textIndent = computedStyle.textIndent;
+  mirror.style.textAlign = computedStyle.textAlign;
+  mirror.style.whiteSpace = 'pre-wrap';
+  mirror.style.wordBreak = 'break-word';
+  mirror.style.overflowWrap = 'break-word';
+
+  const prefixText = value.slice(0, anchorIndex);
+  mirror.textContent = prefixText;
+
+  const marker = document.createElement('span');
+  marker.textContent = value.slice(anchorIndex, anchorIndex + 1) || '@';
+  mirror.append(marker);
+  document.body.append(mirror);
+
+  const mirrorRect = mirror.getBoundingClientRect();
+  const markerRect = marker.getBoundingClientRect();
+  mirror.remove();
+
+  const availableWidth = Math.max(textarea.clientWidth - 16, 0);
+  if (availableWidth === 0) {
+    return null;
+  }
+
+  const width = Math.min(SUGGESTION_PANEL_MAX_WIDTH, availableWidth);
+  const maxLeft = Math.max(8, textarea.clientWidth - width - 8);
+  const left = Math.min(
+    Math.max(markerRect.left - mirrorRect.left - textarea.scrollLeft, 8),
+    maxLeft
+  );
+
+  return {
+    left,
+    top: markerRect.top - mirrorRect.top - textarea.scrollTop,
+    width,
+  };
 }
 
 export function parseActiveMentionQuery(

@@ -198,10 +198,21 @@ export function useMessagesPage() {
     }
   };
 
-  const handleSendMessage = (content: string) => {
+  const handleSendMessage = async (content: string, contextJson: string) => {
     if (selectedConversationId && user?.id) {
-      mutations.sendMessage(selectedConversationId, user.id, content);
+      const result = await mutations.sendMessage(
+        selectedConversationId,
+        user.id,
+        content,
+        undefined,
+        {
+          contextJson,
+        }
+      );
+      return result.success;
     }
+
+    return false;
   };
 
   const openNewConversationDialog = () => {
