@@ -262,7 +262,7 @@ export const commonTranslations = {
     linkShareFailed: 'Failed to share link',
     linkCopied: 'The link has been copied to your clipboard.',
     linkCopyFailed: 'Could not copy the link to your clipboard.',
-    shareManually: 'Please share manually on Instagram.',
+    shareManually: 'Please share manually on {{platform}}.',
   },
   comments: {
     sortBy: {

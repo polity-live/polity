@@ -14,15 +14,37 @@ import {
   MessageSquare,
   Instagram,
   Facebook,
+  Ghost,
+  Linkedin,
+  Music2,
   Twitter,
+  type LucideIcon,
   Check,
   Copy,
   Send,
+  Youtube,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Input } from '@/features/shared/ui/ui/input.tsx';
 import { ConversationSelectorDialog } from './ConversationSelectorDialog.tsx';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
+
+type SharePlatform =
+  | {
+      key: 'whatsapp' | 'twitter' | 'facebook' | 'linkedin';
+      label: string;
+      Icon: LucideIcon;
+      iconClassName: string;
+      href: string;
+      manualOnly?: false;
+    }
+  | {
+      key: 'instagram' | 'snapchat' | 'tiktok' | 'youtube';
+      label: string;
+      Icon: LucideIcon;
+      iconClassName: string;
+      manualOnly: true;
+    };
 
 interface ShareButtonProps {
   url: string;
@@ -49,6 +71,66 @@ export function ShareButton({
   const fullUrl = typeof window !== 'undefined' ? window.location.origin + url : url;
   const encodedUrl = encodeURIComponent(fullUrl);
   const encodedTitle = encodeURIComponent(title);
+  const sharePlatforms: SharePlatform[] = [
+    {
+      key: 'whatsapp',
+      label: 'WhatsApp',
+      Icon: MessageSquare,
+      iconClassName: 'text-green-500',
+      href: `https://wa.me/?text=${encodedTitle}%20${encodedUrl}`,
+    },
+    {
+      key: 'twitter',
+      label: 'X (Twitter)',
+      Icon: Twitter,
+      iconClassName: 'text-gray-800 dark:text-gray-300',
+      href: `https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`,
+    },
+    {
+      key: 'facebook',
+      label: 'Facebook',
+      Icon: Facebook,
+      iconClassName: 'text-blue-600',
+      href: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
+    },
+    {
+      key: 'linkedin',
+      label: 'LinkedIn',
+      Icon: Linkedin,
+      iconClassName: 'text-sky-700',
+      href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
+    },
+    {
+      key: 'instagram',
+      label: 'Instagram',
+      Icon: Instagram,
+      iconClassName: 'text-pink-500',
+      manualOnly: true,
+    },
+    {
+      key: 'snapchat',
+      label: 'Snapchat',
+      Icon: Ghost,
+      iconClassName: 'text-yellow-400',
+      manualOnly: true,
+    },
+    {
+      key: 'tiktok',
+      label: 'TikTok',
+      Icon: Music2,
+      iconClassName: 'text-zinc-900 dark:text-zinc-100',
+      manualOnly: true,
+    },
+    {
+      key: 'youtube',
+      label: 'YouTube',
+      Icon: Youtube,
+      iconClassName: 'text-red-600',
+      manualOnly: true,
+    },
+  ];
+  const directSharePlatforms = sharePlatforms.filter(platform => !platform.manualOnly);
+  const manualSharePlatforms = sharePlatforms.filter(platform => platform.manualOnly);
 
   const handleCopyUrl = async () => {
     try {
@@ -61,19 +143,13 @@ export function ShareButton({
     }
   };
 
-  const shareLinks = {
-    whatsapp: `https://wa.me/?text=${encodedTitle}%20${encodedUrl}`,
-    twitter: `https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`,
-    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
-    instagram: `https://www.instagram.com/`, // Instagram doesn't support direct sharing via URL
-  };
-
-  const handleShare = (platform: keyof typeof shareLinks) => {
-    if (platform === 'instagram') {
-      toast.info(t('common.share.shareManually'));
+  const handleShare = (platform: SharePlatform) => {
+    if (platform.manualOnly) {
+      toast.info(t('common.share.shareManually', { platform: platform.label }));
+      setIsOpen(false);
       return;
     }
-    window.open(shareLinks[platform], '_blank', 'noopener,noreferrer,width=600,height=400');
+    window.open(platform.href, '_blank', 'noopener,noreferrer,width=600,height=400');
     setIsOpen(false);
   };
 
@@ -86,9 +162,11 @@ export function ShareButton({
             {t('common.actions.share')}
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-[280px]">
+        <DropdownMenuContent align="end" className="max-h-[70vh] w-[280px] overflow-y-auto">
           <div className="p-2">
-            <div className="mb-2 text-xs font-medium text-muted-foreground">{t('common.labels.shareVia')}</div>
+            <div className="text-muted-foreground mb-2 text-xs font-medium">
+              {t('common.labels.shareVia')}
+            </div>
 
             <DropdownMenuItem
               onClick={() => {
@@ -97,35 +175,41 @@ export function ShareButton({
               }}
               className="cursor-pointer"
             >
-              <Send className="mr-2 h-4 w-4 text-primary" />
+              <Send className="text-primary mr-2 h-4 w-4" />
               <span>Polity</span>
             </DropdownMenuItem>
 
             <DropdownMenuSeparator />
 
-            <DropdownMenuItem onClick={() => handleShare('whatsapp')} className="cursor-pointer">
-              <MessageSquare className="mr-2 h-4 w-4 text-green-500" />
-              <span>WhatsApp</span>
-            </DropdownMenuItem>
-
-            <DropdownMenuItem onClick={() => handleShare('twitter')} className="cursor-pointer">
-              <Twitter className="mr-2 h-4 w-4 text-gray-800 dark:text-gray-300" />
-              <span>X (Twitter)</span>
-            </DropdownMenuItem>
-
-            <DropdownMenuItem onClick={() => handleShare('facebook')} className="cursor-pointer">
-              <Facebook className="mr-2 h-4 w-4 text-blue-600" />
-              <span>Facebook</span>
-            </DropdownMenuItem>
-
-            <DropdownMenuItem onClick={() => handleShare('instagram')} className="cursor-pointer">
-              <Instagram className="mr-2 h-4 w-4 text-pink-500" />
-              <span>Instagram</span>
-            </DropdownMenuItem>
+            {directSharePlatforms.map(platform => (
+              <DropdownMenuItem
+                key={platform.key}
+                onClick={() => handleShare(platform)}
+                className="cursor-pointer"
+              >
+                <platform.Icon className={`mr-2 h-4 w-4 ${platform.iconClassName}`} />
+                <span>{platform.label}</span>
+              </DropdownMenuItem>
+            ))}
 
             <DropdownMenuSeparator />
 
-            <div className="mb-1 mt-2 text-xs font-medium text-muted-foreground">{t('common.labels.copyLink')}</div>
+            {manualSharePlatforms.map(platform => (
+              <DropdownMenuItem
+                key={platform.key}
+                onClick={() => handleShare(platform)}
+                className="cursor-pointer"
+              >
+                <platform.Icon className={`mr-2 h-4 w-4 ${platform.iconClassName}`} />
+                <span>{platform.label}</span>
+              </DropdownMenuItem>
+            ))}
+
+            <DropdownMenuSeparator />
+
+            <div className="text-muted-foreground mt-2 mb-1 text-xs font-medium">
+              {t('common.labels.copyLink')}
+            </div>
             <div className="flex items-center gap-2">
               <Input
                 value={fullUrl}

@@ -210,37 +210,35 @@ export function UserWiki(_props: UserWikiProps) {
           />
 
           {/* Action Bar */}
-          {!isOwnUser && (
-            <ActionBar>
-              {authUser && (
-                <>
-                  <SubscribeButton
-                    entityType="user"
-                    entityId={userIdToFetch || ''}
-                    isSubscribed={subscribed}
-                    onToggleSubscribe={toggleSubscribe}
-                    isLoading={subscribeLoading}
-                  />
-                  <Button
-                    variant="outline"
-                    onClick={() =>
-                      navigate({
-                        to: `/messages?userId=${encodeURIComponent(dbUser.id || '')}&name=${encodeURIComponent(fullName || '')}`,
-                      })
-                    }
-                  >
-                    <Mail className="h-4 w-4" />
-                    <span>{t('features.timeline.cards.message')}</span>
-                  </Button>
-                </>
-              )}
-              <ShareButton
-                url={`/user/${userIdToFetch}`}
-                title={fullName || 'User'}
-                description={dbUser.about || ''}
-              />
-            </ActionBar>
-          )}
+          <ActionBar>
+            {!isOwnUser && authUser && (
+              <>
+                <SubscribeButton
+                  entityType="user"
+                  entityId={userIdToFetch || ''}
+                  isSubscribed={subscribed}
+                  onToggleSubscribe={toggleSubscribe}
+                  isLoading={subscribeLoading}
+                />
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    navigate({
+                      to: `/messages?userId=${encodeURIComponent(dbUser.id || '')}&name=${encodeURIComponent(fullName || '')}`,
+                    })
+                  }
+                >
+                  <Mail className="h-4 w-4" />
+                  <span>{t('features.timeline.cards.message')}</span>
+                </Button>
+              </>
+            )}
+            <ShareButton
+              url={`/user/${userIdToFetch}`}
+              title={fullName || 'User'}
+              description={dbUser.about || ''}
+            />
+          </ActionBar>
 
           {/* Hashtags */}
           {hashtags.length > 0 && (

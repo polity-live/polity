@@ -272,7 +272,7 @@ export const commonTranslations = {
     linkShareFailed: 'Link konnte nicht geteilt werden',
     linkCopied: 'Der Link wurde in die Zwischenablage kopiert.',
     linkCopyFailed: 'Der Link konnte nicht in die Zwischenablage kopiert werden.',
-    shareManually: 'Bitte manuell auf Instagram teilen.',
+    shareManually: 'Bitte manuell auf {{platform}} teilen.',
   },
   comments: {
     sortBy: {

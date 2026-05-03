@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
-import { useSearch } from '@tanstack/react-router';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useAuth } from '@/providers/auth-provider';
 import { useUserState } from '@/zero/users/useUserState';
 import { useConversationData } from './useConversationData';
@@ -11,6 +11,7 @@ import type { Conversation } from '../types/message.types';
 
 export function useMessagesPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const searchParams = useSearch({ strict: false }) as Record<string, string>;
 
@@ -24,8 +25,7 @@ export function useMessagesPage() {
   // Current user name for notifications
   const { currentUser: currentUserData } = useUserState();
   const currentUserName =
-    `${currentUserData?.first_name ?? ''} ${currentUserData?.last_name ?? ''}`.trim() ||
-    'Someone';
+    `${currentUserData?.first_name ?? ''} ${currentUserData?.last_name ?? ''}`.trim() || 'Someone';
 
   // Data hooks
   const { conversations, isLoading } = useConversationData(user?.id);
@@ -49,6 +49,45 @@ export function useMessagesPage() {
   const messageUserId = searchParams.userId;
   const messageUserName = searchParams.name || '';
 
+  const clearComposeIntentFromUrl = useCallback(() => {
+    const {
+      userId,
+      name,
+      new: newConversation,
+      search,
+      userSearch,
+      ...remainingSearch
+    } = searchParams;
+
+    if (
+      userId === undefined &&
+      name === undefined &&
+      newConversation === undefined &&
+      search === undefined &&
+      userSearch === undefined
+    ) {
+      return;
+    }
+
+    navigate({
+      to: '/messages',
+      search: remainingSearch,
+      replace: true,
+    });
+  }, [navigate, searchParams]);
+
+  const handleUserSearchDialogOpenChange = useCallback(
+    (open: boolean) => {
+      setUserSearchDialogOpen(open);
+
+      if (!open) {
+        setNewConversationSearch('');
+        clearComposeIntentFromUrl();
+      }
+    },
+    [clearComposeIntentFromUrl]
+  );
+
   // Open new conversation dialog from query params
   useEffect(() => {
     const shouldOpen = searchParams.new === '1';
@@ -56,8 +95,9 @@ export function useMessagesPage() {
     if (shouldOpen) {
       setUserSearchDialogOpen(true);
       setNewConversationSearch(search ?? '');
+      clearComposeIntentFromUrl();
     }
-  }, [searchParams]);
+  }, [searchParams, clearComposeIntentFromUrl]);
 
   // Route message intent based on existing conversations
   useEffect(() => {
@@ -77,11 +117,13 @@ export function useMessagesPage() {
       setUserSearchDialogOpen(true);
       setNewConversationSearch(messageUserName);
     }
+    clearComposeIntentFromUrl();
   }, [
     messageUserId,
     messageUserName,
     conversations,
     isLoading,
+    clearComposeIntentFromUrl,
     setSearchQuery,
     setSelectedConversationId,
   ]);
@@ -116,13 +158,20 @@ export function useMessagesPage() {
     if (existingConversation) {
       setSelectedConversationId(existingConversation.id);
       setUserSearchDialogOpen(false);
+      clearComposeIntentFromUrl();
       return;
     }
 
-    const result = await mutations.createConversation('direct', [user.id, otherUserId], undefined, user.id);
-    if (result.success) {
-      setSelectedConversationId(result.conversationId!);
+    const result = await mutations.createConversation(
+      'direct',
+      [user.id, otherUserId],
+      undefined,
+      user.id
+    );
+    if (result.success && result.conversationId) {
+      setSelectedConversationId(result.conversationId);
       setUserSearchDialogOpen(false);
+      clearComposeIntentFromUrl();
     }
   };
 
@@ -187,7 +236,7 @@ export function useMessagesPage() {
 
     // Dialog state
     userSearchDialogOpen,
-    setUserSearchDialogOpen,
+    setUserSearchDialogOpen: handleUserSearchDialogOpenChange,
     newConversationSearch,
     memberListDialogOpen,
     setMemberListDialogOpen,

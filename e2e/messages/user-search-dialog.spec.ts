@@ -46,7 +46,9 @@ test.describe('Chat/Messages - User Search Dialog', () => {
     // Wait for type-ahead to filter
 
     // User results should be filtered
-    const userResults = page.locator('button').filter({ has: page.locator('[data-slot="avatar"]') });
+    const userResults = page
+      .locator('button')
+      .filter({ has: page.locator('[data-slot="avatar"]') });
     const resultCount = await userResults.count();
 
     // Should show filtered results or "no users found" message
@@ -57,7 +59,10 @@ test.describe('Chat/Messages - User Search Dialog', () => {
     }
   });
 
-  test('User results show profile image and name', async ({ authenticatedPage: page, userFactory }) => {
+  test('User results show profile image and name', async ({
+    authenticatedPage: page,
+    userFactory,
+  }) => {
     // Create a searchable user so we get results
     const otherUser = await userFactory.createUser();
 
@@ -71,7 +76,10 @@ test.describe('Chat/Messages - User Search Dialog', () => {
     // Search for users
     const searchInput = page.getByPlaceholder(/search users by name or handle/i);
     await searchInput.fill(otherUser.name || 'test');
-    const userResults = page.getByRole('dialog').locator('button').filter({ has: page.locator('[data-slot="avatar"]') });
+    const userResults = page
+      .getByRole('dialog')
+      .locator('button')
+      .filter({ has: page.locator('[data-slot="avatar"]') });
     const hasResults = (await userResults.count()) > 0;
 
     if (hasResults) {
@@ -99,7 +107,9 @@ test.describe('Chat/Messages - User Search Dialog', () => {
     await searchInput.fill('test');
 
     // Check for handles in results
-    const userResults = page.locator('button').filter({ has: page.locator('[data-slot="avatar"]') });
+    const userResults = page
+      .locator('button')
+      .filter({ has: page.locator('[data-slot="avatar"]') });
     const hasResults = (await userResults.count()) > 0;
 
     if (hasResults) {
@@ -130,7 +140,9 @@ test.describe('Chat/Messages - User Search Dialog', () => {
     await expect(page.getByText(/search for users/i)).toBeVisible();
   });
 
-  test('No results message appears when search has no matches', async ({ authenticatedPage: page }) => {
+  test('No results message appears when search has no matches', async ({
+    authenticatedPage: page,
+  }) => {
     await page.goto('/messages');
 
     // Open dialog
@@ -145,7 +157,10 @@ test.describe('Chat/Messages - User Search Dialog', () => {
     await expect(page.getByText(/no users found/i)).toBeVisible();
   });
 
-  test('Clicking user result creates conversation and closes dialog', async ({ authenticatedPage: page, userFactory }) => {
+  test('Clicking user result creates conversation and closes dialog', async ({
+    authenticatedPage: page,
+    userFactory,
+  }) => {
     test.setTimeout(60000);
     // Create a searchable user so we get results
     const otherUser = await userFactory.createUser();
@@ -162,7 +177,10 @@ test.describe('Chat/Messages - User Search Dialog', () => {
     await searchInput.fill(otherUser.name || 'test');
 
     // Wait for search results to appear (type-ahead with debounce)
-    const userResults = page.getByRole('dialog').locator('button').filter({ has: page.locator('[data-slot="avatar"]') });
+    const userResults = page
+      .getByRole('dialog')
+      .locator('button')
+      .filter({ has: page.locator('[data-slot="avatar"]') });
     await expect(userResults.first()).toBeVisible({ timeout: 10000 });
 
     await userResults.first().click();
@@ -175,7 +193,9 @@ test.describe('Chat/Messages - User Search Dialog', () => {
     await expect(conversationHeader).toBeVisible({ timeout: 10000 });
   });
 
-  test('Dialog can be closed without creating conversation', async ({ authenticatedPage: page }) => {
+  test('Dialog can be closed without creating conversation', async ({
+    authenticatedPage: page,
+  }) => {
     await page.goto('/messages');
     await page.waitForLoadState('domcontentloaded');
 
@@ -191,6 +211,26 @@ test.describe('Chat/Messages - User Search Dialog', () => {
 
     // Dialog should be closed
     await expect(page.getByRole('dialog')).not.toBeVisible();
+  });
+
+  test('Profile-driven dialog can be closed and clears URL intent', async ({
+    authenticatedPage: page,
+    userFactory,
+  }) => {
+    const otherUser = await userFactory.createUser({ name: 'E2E Message Target' });
+
+    await page.goto(
+      `/messages?userId=${otherUser.id}&name=${encodeURIComponent(otherUser.name || 'E2E Message Target')}`
+    );
+    await page.waitForLoadState('domcontentloaded');
+
+    await expect(page.getByRole('dialog')).toBeVisible();
+
+    await page.keyboard.press('Escape');
+
+    await expect(page.getByRole('dialog')).not.toBeVisible();
+    await expect(page).not.toHaveURL(/userId=/);
+    await expect(page).not.toHaveURL(/name=/);
   });
 
   test('Search is case-insensitive', async ({ authenticatedPage: page }) => {
@@ -238,11 +278,12 @@ test.describe('Chat/Messages - User Search Dialog', () => {
 
     // Verify current user is not in the list
     // This is implicitly tested - the dialog filters out the current user
-    const userResults = page.locator('button').filter({ has: page.locator('[data-slot="avatar"]') });
+    const userResults = page
+      .locator('button')
+      .filter({ has: page.locator('[data-slot="avatar"]') });
 
     // All visible users should be other users, not the current user
     const hasResults = (await userResults.count()) > 0;
     expect(hasResults).toBeTruthy();
   });
 });
-
