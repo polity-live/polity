@@ -69,6 +69,17 @@ interface ActiveToolCallState {
   preview: string | null;
 }
 
+function parseStoredSkillAliases(value: string | null | undefined): string[] {
+  if (!value) {
+    return [];
+  }
+
+  return value
+    .split(',')
+    .map(alias => alias.trim())
+    .filter(Boolean);
+}
+
 function sameToolNames(left: readonly AiToolName[], right: readonly AiToolName[]): boolean {
   return left.length === right.length && left.every((toolName, index) => toolName === right[index]);
 }
@@ -220,10 +231,7 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
       mergedSkills.set(skill.slug, {
         slug: skill.slug,
         name: skill.name,
-        aliases: skill.aliases
-          .split(',')
-          .map(alias => alias.trim())
-          .filter(Boolean),
+        aliases: parseStoredSkillAliases(skill.aliases),
         isBuiltIn,
         systemPrompt: skill.system_prompt,
         enabled: skill.enabled,
@@ -495,7 +503,7 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
       setAwaitingPersistenceText(null);
       setStreamError(null);
 
-      const attachmentsForRequest: AiChatAttachment[] = [...selectedAttachments];
+      const attachmentsForRequest: AiChatAttachment[] = [...attachmentComposer.selectedAttachments];
 
       for (const selectedSkill of selectedSkills) {
         attachmentsForRequest.push({
@@ -548,7 +556,7 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
           throw new Error((await response.text()) || 'AI chat request failed');
         }
 
-        clearAttachments();
+        attachmentComposer.clearAttachments();
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
@@ -687,12 +695,11 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
     },
     [
       availableTools,
-      clearAttachments,
+      attachmentComposer,
       conversation.id,
       currentUserId,
       mutations,
       reasoningEffort,
-      selectedAttachments,
       selectedModel,
       selectedSkills,
       selectedToolNames,

@@ -28,6 +28,7 @@ import { toast } from 'sonner';
 import { Input } from '@/features/shared/ui/ui/input.tsx';
 import { ConversationSelectorDialog } from './ConversationSelectorDialog.tsx';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
+import type { SearchContentItem } from '@/features/search/types/search.types';
 
 type SharePlatform =
   | {
@@ -50,6 +51,7 @@ interface ShareButtonProps {
   url: string;
   title: string;
   description?: string;
+  shareContextItem?: SearchContentItem;
   variant?: 'default' | 'outline' | 'ghost';
   size?: 'default' | 'sm' | 'lg' | 'icon';
   className?: string;
@@ -58,7 +60,8 @@ interface ShareButtonProps {
 export function ShareButton({
   url,
   title,
-  // description is only used for encoding, but not needed as a variable
+  description,
+  shareContextItem,
   variant = 'outline',
   size = 'default',
   className = '',
@@ -234,6 +237,8 @@ export function ShareButton({
         onOpenChange={setConversationDialogOpen}
         shareUrl={url}
         shareTitle={title}
+        shareDescription={description}
+        shareContextItem={shareContextItem}
       />
     </>
   );

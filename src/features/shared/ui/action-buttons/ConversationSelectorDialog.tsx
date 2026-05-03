@@ -1,7 +1,12 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/features/shared/ui/ui/dialog.tsx';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/features/shared/ui/ui/dialog.tsx';
 import { Input } from '@/features/shared/ui/ui/input.tsx';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar.tsx';
 import { Badge } from '@/features/shared/ui/ui/badge.tsx';
@@ -12,12 +17,16 @@ import { useMessageActions } from '@/zero/messages/useMessageActions.ts';
 import { cn } from '@/features/shared/utils/utils.ts';
 import { toast } from 'sonner';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
+import { buildShareContextAttachment } from '@/features/messages/logic/shareContextAttachment.ts';
+import type { SearchContentItem } from '@/features/search/types/search.types';
 
 interface ConversationSelectorDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   shareUrl: string;
   shareTitle: string;
+  shareDescription?: string;
+  shareContextItem?: SearchContentItem;
 }
 
 export function ConversationSelectorDialog({
@@ -25,6 +34,8 @@ export function ConversationSelectorDialog({
   onOpenChange,
   shareUrl,
   shareTitle,
+  shareDescription,
+  shareContextItem,
 }: ConversationSelectorDialogProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -39,10 +50,11 @@ export function ConversationSelectorDialog({
   });
 
   // Extract the nested conversation from each participant row
-  const conversations = useMemo(() =>
-    (conversationsRaw || [])
-      .map(cp => cp.conversation)
-      .filter((c): c is NonNullable<typeof c> => c != null),
+  const conversations = useMemo(
+    () =>
+      (conversationsRaw || [])
+        .map(cp => cp.conversation)
+        .filter((c): c is NonNullable<typeof c> => c != null),
     [conversationsRaw]
   );
 
@@ -58,10 +70,13 @@ export function ConversationSelectorDialog({
     }
 
     return conversations
-      .filter((conv) => {
+      .filter(conv => {
         // Search in participant names
-        const participantMatch = conv.participants.some((p) => {
-          const name = [p.user?.first_name, p.user?.last_name].filter(Boolean).join(' ').toLowerCase();
+        const participantMatch = conv.participants.some(p => {
+          const name = [p.user?.first_name, p.user?.last_name]
+            .filter(Boolean)
+            .join(' ')
+            .toLowerCase();
           const handle = p.user?.handle?.toLowerCase() || '';
           return (
             name.includes(searchQuery.toLowerCase()) || handle.includes(searchQuery.toLowerCase())
@@ -93,7 +108,9 @@ export function ConversationSelectorDialog({
     } else {
       const otherUser = conversation.participants.find(p => p.user?.id !== user?.id)?.user;
       return {
-        name: [otherUser?.first_name, otherUser?.last_name].filter(Boolean).join(' ') || t('common.labels.unspecifiedUser'),
+        name:
+          [otherUser?.first_name, otherUser?.last_name].filter(Boolean).join(' ') ||
+          t('common.labels.unspecifiedUser'),
         avatar: otherUser?.avatar,
         handle: otherUser?.handle,
         isGroup: false,
@@ -110,12 +127,19 @@ export function ConversationSelectorDialog({
     const messageId = crypto.randomUUID();
     const fullUrl = typeof window !== 'undefined' ? window.location.origin + shareUrl : shareUrl;
     const messageContent = `${shareTitle}\n${fullUrl}`;
+    const shareAttachment = buildShareContextAttachment({
+      shareUrl,
+      shareTitle,
+      shareDescription,
+      shareContextItem,
+    });
 
     try {
       await sendMessage({
         id: messageId,
         conversation_id: conversationId,
-        content: messageContent,
+        content: shareAttachment ? null : messageContent,
+        context_json: shareAttachment ? JSON.stringify([shareAttachment]) : '[]',
         deleted_at: 0,
       });
 
@@ -138,7 +162,7 @@ export function ConversationSelectorDialog({
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
             <Input
               placeholder={t('common.share.searchConversations')}
               value={searchQuery}
@@ -153,13 +177,15 @@ export function ConversationSelectorDialog({
               </div>
             ) : filteredConversations.length === 0 ? (
               <div className="py-8 text-center">
-                <MessageSquare className="mx-auto mb-2 h-12 w-12 text-muted-foreground" />
+                <MessageSquare className="text-muted-foreground mx-auto mb-2 h-12 w-12" />
                 <p className="text-muted-foreground">
-                  {searchQuery ? t('common.share.noConversationsFound') : t('common.share.noConversationsYet')}
+                  {searchQuery
+                    ? t('common.share.noConversationsFound')
+                    : t('common.share.noConversationsYet')}
                 </p>
               </div>
             ) : (
-              filteredConversations.map((conversation) => {
+              filteredConversations.map(conversation => {
                 const display = getConversationDisplay(conversation);
                 const isSending = sending === conversation.id;
 
@@ -169,7 +195,7 @@ export function ConversationSelectorDialog({
                     onClick={() => handleShareToConversation(conversation.id)}
                     disabled={isSending || conversation.status === 'pending'}
                     className={cn(
-                      'flex w-full items-center gap-3 rounded-lg p-3 text-left transition-colors hover:bg-accent',
+                      'hover:bg-accent flex w-full items-center gap-3 rounded-lg p-3 text-left transition-colors',
                       isSending && 'opacity-50'
                     )}
                   >
@@ -192,10 +218,14 @@ export function ConversationSelectorDialog({
                         )}
                       </div>
                       {display.handle && (
-                        <p className="truncate text-sm text-muted-foreground">@{display.handle}</p>
+                        <p className="text-muted-foreground truncate text-sm">@{display.handle}</p>
                       )}
                     </div>
-                    {isSending && <div className="text-xs text-muted-foreground">{t('common.labels.sending')}</div>}
+                    {isSending && (
+                      <div className="text-muted-foreground text-xs">
+                        {t('common.labels.sending')}
+                      </div>
+                    )}
                   </button>
                 );
               })

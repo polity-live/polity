@@ -222,6 +222,22 @@ export function EventWiki({ eventId }: EventWikiProps) {
           url={`/event/${eventId}`}
           title={event.title ?? ''}
           description={event.description || ''}
+          shareContextItem={{
+            id: eventId,
+            type: 'event',
+            title: event.title ?? '',
+            description: event.description,
+            createdAt: event.start_date ? new Date(event.start_date) : new Date(),
+            startDate: event.start_date ? new Date(event.start_date) : undefined,
+            endDate: event.end_date ? new Date(event.end_date) : undefined,
+            location: event.location_name,
+            city: event.city ?? undefined,
+            postcode: event.post_code ?? undefined,
+            electionsCount,
+            amendmentsCount,
+            groupId: event.group?.id,
+            groupName: event.group?.name,
+          }}
         />
       </ActionBar>
 

@@ -150,6 +150,19 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
           url={`/group/${groupId}`}
           title={group.name ?? ''}
           description={group.description || ''}
+          shareContextItem={{
+            id: groupId,
+            type: 'group',
+            title: group.name ?? '',
+            description: group.description,
+            createdAt: new Date(),
+            memberCount,
+            eventCount: eventsCount,
+            amendmentCount: amendmentsCount,
+            stats: {
+              members: memberCount,
+            },
+          }}
         />
       </ActionBar>
 

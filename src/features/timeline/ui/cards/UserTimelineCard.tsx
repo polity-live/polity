@@ -209,6 +209,21 @@ export function UserTimelineCard({ user, onFollow, onMessage, className }: UserT
             description={user.bio || ''}
             variant="outline"
             size="sm"
+            shareContextItem={{
+              id: user.id,
+              type: 'user',
+              title: user.name,
+              description: user.bio,
+              createdAt: new Date(),
+              authorId: user.id,
+              authorName: user.name,
+              authorAvatar: user.avatarUrl,
+              handle: user.handle,
+              location,
+              groupCount: user.groupCount,
+              amendmentCount: user.amendmentCount,
+              tags: user.hashtags?.map(hashtag => hashtag.tag) ?? [],
+            }}
           />
         </div>
       </TimelineCardActions>

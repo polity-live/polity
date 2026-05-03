@@ -235,6 +235,21 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
           url={`/amendment/${amendmentId}`}
           title={amendment.title ?? ''}
           description={amendment.preamble || amendment.code || ''}
+          shareContextItem={{
+            id: amendmentId,
+            type: 'amendment',
+            title: amendment.title ?? '',
+            description: amendment.preamble || amendment.code || undefined,
+            createdAt: new Date(),
+            status: amendment.editing_mode,
+            groupName: targetGroup?.name,
+            collaboratorCount: collaborators.length,
+            supportingGroupsCount: supportingGroups.length,
+            tags:
+              amendment.amendment_hashtags
+                ?.map(relation => relation.hashtag?.tag)
+                .filter((tag): tag is string => Boolean(tag)) ?? [],
+          }}
         />
       </ActionBar>
 

@@ -104,8 +104,8 @@ export function BlogTimelineCard({ blog, className }: BlogTimelineCardProps) {
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
 
           {/* Title Overlay */}
-          <div className="absolute bottom-0 left-0 right-0 p-4">
-            <h3 className="line-clamp-2 text-lg font-bold leading-tight text-white">
+          <div className="absolute right-0 bottom-0 left-0 p-4">
+            <h3 className="line-clamp-2 text-lg leading-tight font-bold text-white">
               <Link to={blogUrl} onClick={e => e.stopPropagation()} className="hover:underline">
                 {blog.title}
               </Link>
@@ -118,7 +118,7 @@ export function BlogTimelineCard({ blog, className }: BlogTimelineCardProps) {
             <BookOpen className="mt-0.5 h-5 w-5 flex-shrink-0 text-teal-600 dark:text-teal-400" />
             <TimelineCardBadge label={t('features.timeline.contentTypes.blog')} icon={BookOpen} />
           </div>
-          <h3 className="line-clamp-2 text-lg font-bold leading-tight">
+          <h3 className="line-clamp-2 text-lg leading-tight font-bold">
             <Link to={blogUrl} onClick={e => e.stopPropagation()} className="hover:underline">
               {blog.title}
             </Link>
@@ -129,7 +129,7 @@ export function BlogTimelineCard({ blog, className }: BlogTimelineCardProps) {
       <TimelineCardContent className={blog.coverImageUrl ? undefined : 'pt-0'}>
         {/* Title (if there's a cover image, it's in the overlay) */}
         {blog.coverImageUrl && (
-          <h3 className="mb-2 line-clamp-2 text-base font-bold leading-tight">
+          <h3 className="mb-2 line-clamp-2 text-base leading-tight font-bold">
             <Link to={blogUrl} onClick={e => e.stopPropagation()} className="hover:underline">
               {blog.title}
             </Link>
@@ -138,7 +138,7 @@ export function BlogTimelineCard({ blog, className }: BlogTimelineCardProps) {
 
         {/* Excerpt */}
         {blog.excerpt && (
-          <p className="mb-3 line-clamp-3 text-sm text-muted-foreground">{blog.excerpt}</p>
+          <p className="text-muted-foreground mb-3 line-clamp-3 text-sm">{blog.excerpt}</p>
         )}
 
         {/* Hashtags */}
@@ -160,14 +160,14 @@ export function BlogTimelineCard({ blog, className }: BlogTimelineCardProps) {
               <User className="h-3 w-3" />
             </AvatarFallback>
           </Avatar>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-muted-foreground text-xs">
             {t('features.timeline.cards.by')} {blog.authorName}
           </span>
         </div>
 
         {/* Reading Time */}
         {blog.readingTimeMinutes && (
-          <div className="mb-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+          <div className="text-muted-foreground mb-2 flex items-center gap-1.5 text-xs">
             <Clock className="h-3.5 w-3.5" />
             <span>{formatReadingTime(blog.readingTimeMinutes)}</span>
           </div>
@@ -187,7 +187,7 @@ export function BlogTimelineCard({ blog, className }: BlogTimelineCardProps) {
         )}
 
         {/* Stats Bar with Tooltips */}
-        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+        <div className="text-muted-foreground flex items-center gap-4 text-xs">
           {stats.map((stat, index) => (
             <Tooltip key={index}>
               <TooltipTrigger asChild>
@@ -229,6 +229,20 @@ export function BlogTimelineCard({ blog, className }: BlogTimelineCardProps) {
             description={blog.excerpt || ''}
             variant="outline"
             size="sm"
+            shareContextItem={{
+              id: blog.id,
+              type: 'blog',
+              title: blog.title,
+              description: blog.excerpt,
+              imageUrl: blog.coverImageUrl,
+              createdAt: blog.publishedAt ? new Date(blog.publishedAt) : new Date(),
+              authorId: blog.authorId,
+              authorName: blog.authorName,
+              authorAvatar: blog.authorAvatar,
+              groupId: blog.groupId ?? undefined,
+              commentCount: blog.commentCount,
+              tags: blog.hashtags?.map(hashtag => hashtag.tag) ?? [],
+            }}
           />
         </div>
       </TimelineCardActions>

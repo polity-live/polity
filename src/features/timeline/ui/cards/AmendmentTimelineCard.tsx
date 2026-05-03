@@ -134,8 +134,6 @@ export function AmendmentTimelineCard({
   onToggleSubscription,
   isCollaborationLoading,
   isSubscriptionLoading,
-  onSupport,
-  onOppose,
   className,
 }: AmendmentTimelineCardProps) {
   const { t } = useTranslation();
@@ -254,7 +252,7 @@ export function AmendmentTimelineCard({
 
       <TimelineCardContent>
         {amendment.description && (
-          <p className="mb-3 line-clamp-3 text-sm text-muted-foreground">{amendment.description}</p>
+          <p className="text-muted-foreground mb-3 line-clamp-3 text-sm">{amendment.description}</p>
         )}
 
         {/* Hashtags */}
@@ -295,7 +293,7 @@ export function AmendmentTimelineCard({
 
         {/* Stats Bar with Tooltips */}
         {stats.length > 0 && (
-          <div className="mb-3 flex items-center gap-4 text-xs text-muted-foreground">
+          <div className="text-muted-foreground mb-3 flex items-center gap-4 text-xs">
             {stats.map((stat, index) => (
               <Tooltip key={index}>
                 <TooltipTrigger asChild>
@@ -316,7 +314,7 @@ export function AmendmentTimelineCard({
 
         {/* Vote Counts (for voting mode) */}
         {(isVoting || isCompleted) && (
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          <div className="text-muted-foreground flex items-center gap-4 text-xs">
             {amendment.supportCount !== undefined && (
               <div className="flex items-center gap-1">
                 <ThumbsUp className="h-3.5 w-3.5 text-green-600" />
@@ -388,7 +386,7 @@ export function AmendmentTimelineCard({
                       setCollaborationOpen(false);
                     }}
                     disabled={isCollaborationLoading || collaboration.isLoading}
-                    className="justify-start text-destructive"
+                    className="text-destructive justify-start"
                   >
                     {t('features.timeline.cards.amendment.declineInvitation')}
                   </Button>
@@ -404,7 +402,7 @@ export function AmendmentTimelineCard({
                     setCollaborationOpen(false);
                   }}
                   disabled={isCollaborationLoading || collaboration.isLoading}
-                  className="justify-start text-destructive"
+                  className="text-destructive justify-start"
                 >
                   {t('features.timeline.cards.amendment.withdrawRequest')}
                 </Button>
@@ -430,7 +428,11 @@ export function AmendmentTimelineCard({
 
         {/* Discuss Button (links to discussion page) */}
         <Button variant="outline" size="sm" asChild className="flex items-center gap-1.5">
-          <Link to="/amendment/$id/discussions" params={{ id: amendment.id }} onClick={e => e.stopPropagation()}>
+          <Link
+            to="/amendment/$id/discussions"
+            params={{ id: amendment.id }}
+            onClick={e => e.stopPropagation()}
+          >
             <MessageSquare className="h-3.5 w-3.5" />
             <span className="text-xs">{t('features.timeline.cards.discuss')}</span>
           </Link>
@@ -460,6 +462,20 @@ export function AmendmentTimelineCard({
             description={amendment.description || ''}
             variant="outline"
             size="sm"
+            shareContextItem={{
+              id: amendment.id,
+              type: 'amendment',
+              title: amendment.title,
+              description: amendment.description,
+              createdAt: new Date(),
+              status: amendment.status,
+              groupId: amendment.groupId,
+              groupName: amendment.groupName,
+              collaboratorCount: amendment.collaboratorCount,
+              supportingGroupsCount: amendment.supportingGroupsCount,
+              changeRequestCount: amendment.changeRequestCount,
+              tags: amendment.hashtags?.map(hashtag => hashtag.tag) ?? [],
+            }}
           />
         </div>
       </TimelineCardActions>

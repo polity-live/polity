@@ -95,7 +95,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
 
   // Map Zero comment rows → CommentData shape expected by CommentThread
   const allComments: CommentData[] = useMemo(() => {
-    return (commentsRows || []).map((c) => ({
+    return (commentsRows || []).map(c => ({
       id: c.id,
       text: c.content ?? '',
       createdAt: c.created_at ?? 0,
@@ -107,12 +107,12 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
             avatar: c.user.avatar ?? undefined,
           }
         : undefined,
-      votes: (c.votes ?? []).map((v) => ({
+      votes: (c.votes ?? []).map(v => ({
         id: v.id,
         vote: v.vote ?? 0,
         user: v.user ? { id: v.user.id } : undefined,
       })),
-      replies: (c.replies ?? []).map((r) => ({
+      replies: (c.replies ?? []).map(r => ({
         id: r.id,
         text: r.content ?? '',
         createdAt: r.created_at ?? 0,
@@ -124,7 +124,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
               avatar: r.user.avatar ?? undefined,
             }
           : undefined,
-        votes: (r.votes ?? []).map((v) => ({
+        votes: (r.votes ?? []).map(v => ({
           id: v.id,
           vote: v.vote ?? 0,
           user: v.user ? { id: v.user.id } : undefined,
@@ -143,7 +143,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
 
   // Vote handling
   const score = (blog?.upvotes || 0) - (blog?.downvotes || 0);
-  const userVote = blog?.support_votes?.find((v) => v.user?.id === user?.id);
+  const userVote = blog?.support_votes?.find(v => v.user?.id === user?.id);
   const currentVoteValue: VoteValue = userVote ? (userVote.vote === 1 ? 1 : -1) : 0;
 
   const handleVote = async (voteValue: VoteValue) => {
@@ -182,7 +182,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
         });
 
         const blogAuthor =
-          blog.bloggers?.find((b) => b.status === 'owner')?.user || blog.bloggers?.[0]?.user;
+          blog.bloggers?.find(b => b.status === 'owner')?.user || blog.bloggers?.[0]?.user;
         if (blogAuthor?.id && blogAuthor.id !== user.id) {
           await dispatchNotification({
             type: 'blog_vote_cast',
@@ -326,8 +326,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
 
   // Get the blog author - find the owner or first blogger
   const author =
-    blog.bloggers?.find((blogger) => blogger.status === 'owner')?.user ||
-    blog.bloggers?.[0]?.user;
+    blog.bloggers?.find(blogger => blogger.status === 'owner')?.user || blog.bloggers?.[0]?.user;
 
   // Compute context-aware editor URL
   const editorUrl = blog.group_id
@@ -378,7 +377,10 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
         stats={[
           { value: subscriberCount, labelKey: 'components.labels.subscribers' },
           { value: blog.supporter_count ?? score, labelKey: 'components.labels.supporters' },
-          { value: blog.comment_count ?? allComments.length, labelKey: 'components.labels.comments' },
+          {
+            value: blog.comment_count ?? allComments.length,
+            labelKey: 'components.labels.comments',
+          },
         ]}
       />
 
@@ -398,7 +400,23 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
           onVote={handleVote}
           orientation="horizontal"
         />
-        <ShareButton url={blogViewUrl} title={blog.title ?? ''} description="" />
+        <ShareButton
+          url={blogViewUrl}
+          title={blog.title ?? ''}
+          description=""
+          shareContextItem={{
+            id: blogId,
+            type: 'blog',
+            title: blog.title ?? '',
+            createdAt: new Date(),
+            authorId: author?.id,
+            authorName:
+              [author?.first_name, author?.last_name].filter(Boolean).join(' ') || undefined,
+            authorAvatar: author?.avatar ?? undefined,
+            groupId: blog.group_id ?? undefined,
+            commentCount: blog.comment_count ?? allComments.length,
+          }}
+        />
       </ActionBar>
 
       {/* Hashtags */}

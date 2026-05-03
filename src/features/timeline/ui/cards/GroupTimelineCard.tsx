@@ -157,7 +157,7 @@ export function GroupTimelineCard({
 
       <TimelineCardContent>
         {group.description && (
-          <p className="mb-3 line-clamp-3 text-sm text-muted-foreground">{group.description}</p>
+          <p className="text-muted-foreground mb-3 line-clamp-3 text-sm">{group.description}</p>
         )}
 
         {groupHashtags && groupHashtags.length > 0 && (
@@ -171,7 +171,7 @@ export function GroupTimelineCard({
         )}
 
         {/* Stats Bar with Tooltips */}
-        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+        <div className="text-muted-foreground flex items-center gap-4 text-xs">
           {stats.map((stat, index) => (
             <Tooltip key={index}>
               <TooltipTrigger asChild>
@@ -245,7 +245,7 @@ export function GroupTimelineCard({
                       setMembershipOpen(false);
                     }}
                     disabled={isMembershipLoading || membership.isLoading}
-                    className="justify-start text-destructive"
+                    className="text-destructive justify-start"
                   >
                     {t('features.timeline.cards.group.declineInvitation')}
                   </Button>
@@ -261,7 +261,7 @@ export function GroupTimelineCard({
                     setMembershipOpen(false);
                   }}
                   disabled={isMembershipLoading || membership.isLoading}
-                  className="justify-start text-destructive"
+                  className="text-destructive justify-start"
                 >
                   {t('features.timeline.cards.group.withdrawRequest')}
                 </Button>
@@ -309,6 +309,20 @@ export function GroupTimelineCard({
             description={group.description || ''}
             variant="outline"
             size="sm"
+            shareContextItem={{
+              id: group.id,
+              type: 'group',
+              title: group.name,
+              description: group.description,
+              createdAt: new Date(),
+              memberCount: group.memberCount,
+              eventCount: group.eventCount,
+              amendmentCount: group.amendmentCount,
+              tags: groupHashtags?.map(hashtag => hashtag.tag) ?? [],
+              stats: {
+                members: group.memberCount,
+              },
+            }}
           />
         </div>
       </TimelineCardActions>

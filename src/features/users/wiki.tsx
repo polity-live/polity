@@ -237,6 +237,21 @@ export function UserWiki(_props: UserWikiProps) {
               url={`/user/${userIdToFetch}`}
               title={fullName || 'User'}
               description={dbUser.about || ''}
+              shareContextItem={{
+                id: userIdToFetch || '',
+                type: 'user',
+                title: fullName || 'User',
+                description: dbUser.bio ?? dbUser.about ?? undefined,
+                createdAt: new Date(),
+                authorId: userIdToFetch || undefined,
+                authorName: fullName || 'User',
+                authorAvatar: dbUser.avatar ?? undefined,
+                handle: dbUser.handle ?? undefined,
+                location: userLocation ?? undefined,
+                groupCount: dbUser.group_count ?? dbUser.group_memberships?.length ?? undefined,
+                amendmentCount: collabCount,
+                tags: hashtags.map(hashtag => hashtag.tag),
+              }}
             />
           </ActionBar>
 

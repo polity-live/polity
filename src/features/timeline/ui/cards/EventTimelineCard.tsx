@@ -240,12 +240,7 @@ export function EventTimelineCard({
   ];
 
   return (
-    <TimelineCardBase
-      contentType="event"
-      className={className}
-      onClick={onSelect}
-      href={eventHref}
-    >
+    <TimelineCardBase contentType="event" className={className} onClick={onSelect} href={eventHref}>
       <TimelineCardHeader
         contentType="event"
         title={event.title}
@@ -271,9 +266,9 @@ export function EventTimelineCard({
               status === 'past' && 'opacity-60'
             )}
           >
-            <span className="text-xs font-medium uppercase text-muted-foreground">{month}</span>
-            <span className="text-2xl font-bold leading-none">{day}</span>
-            <span className="mt-0.5 text-xs text-muted-foreground">{time}</span>
+            <span className="text-muted-foreground text-xs font-medium uppercase">{month}</span>
+            <span className="text-2xl leading-none font-bold">{day}</span>
+            <span className="text-muted-foreground mt-0.5 text-xs">{time}</span>
             {dateLabel && (
               <Badge variant="secondary" className="mt-1 text-xs">
                 {dateLabel}
@@ -282,7 +277,7 @@ export function EventTimelineCard({
           </div>
         </div>
         {locationDisplay && (
-          <div className="mt-3 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+          <div className="text-muted-foreground mt-3 flex items-center justify-center gap-1.5 text-xs">
             <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
             <span className="truncate">{locationDisplay}</span>
           </div>
@@ -291,7 +286,7 @@ export function EventTimelineCard({
 
       <TimelineCardContent>
         {event.description && (
-          <p className="mb-3 line-clamp-2 text-sm text-muted-foreground">{event.description}</p>
+          <p className="text-muted-foreground mb-3 line-clamp-2 text-sm">{event.description}</p>
         )}
 
         {/* Hashtags */}
@@ -312,7 +307,7 @@ export function EventTimelineCard({
         {/* Location handled in header */}
 
         {/* Stats Bar with Tooltips */}
-        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+        <div className="text-muted-foreground flex items-center gap-4 text-xs">
           {stats.map((stat, index) => (
             <Tooltip key={index}>
               <TooltipTrigger asChild>
@@ -385,7 +380,7 @@ export function EventTimelineCard({
                       setRsvpOpen(false);
                     }}
                     disabled={isParticipationLoading || participation.isLoading}
-                    className="justify-start text-destructive"
+                    className="text-destructive justify-start"
                   >
                     {t('features.timeline.cards.event.declineInvitation')}
                   </Button>
@@ -401,7 +396,7 @@ export function EventTimelineCard({
                     setRsvpOpen(false);
                   }}
                   disabled={isParticipationLoading || participation.isLoading}
-                  className="justify-start text-destructive"
+                  className="text-destructive justify-start"
                 >
                   {t('features.timeline.cards.event.withdrawRequest')}
                 </Button>
@@ -449,6 +444,27 @@ export function EventTimelineCard({
             description={event.description || ''}
             variant="outline"
             size="sm"
+            shareContextItem={{
+              id: event.id,
+              type: 'event',
+              title: event.title,
+              description: event.description,
+              createdAt: new Date(event.startDate),
+              startDate: new Date(event.startDate),
+              endDate: event.endDate ? new Date(event.endDate) : undefined,
+              location: event.location,
+              city: event.city,
+              postcode: event.postcode,
+              attendeeCount: event.attendeeCount,
+              electionsCount: event.electionsCount,
+              amendmentsCount: event.amendmentsCount,
+              tags: event.hashtags?.map(hashtag => hashtag.tag) ?? [],
+              groupId: event.groupId,
+              groupName: event.organizerName,
+              stats: {
+                members: event.attendeeCount,
+              },
+            }}
           />
         </div>
       </TimelineCardActions>
