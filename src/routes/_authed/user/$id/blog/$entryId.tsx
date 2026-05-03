@@ -23,6 +23,7 @@ function UserBlogLayout() {
       hasError={!!error}
       isLoading={isLoading || (data?.exists === true && !zeroReady)}
       visibilities={data?.visibilities ?? []}
+      canAccessPrivate={data?.canAccessPrivate ?? false}
     >
       <Outlet />
     </EntityVisibilityGuard>
