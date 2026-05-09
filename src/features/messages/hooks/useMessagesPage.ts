@@ -44,7 +44,7 @@ export function useMessagesPage() {
     const statusByConversationId: Record<string, boolean> = {};
 
     for (const conversation of conversations) {
-      if (conversation.type === 'group') {
+      if (conversation.type === 'group' || conversation.status !== 'accepted') {
         statusByConversationId[conversation.id] = false;
         continue;
       }
