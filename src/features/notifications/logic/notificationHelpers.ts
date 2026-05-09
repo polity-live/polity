@@ -1,11 +1,114 @@
 import type { Notification } from '../types/notification.types';
 
+export interface MessageNavigationSearch {
+  conversationId?: string;
+  name?: string;
+  new?: string;
+  openAriaKai?: string;
+  search?: string;
+  userId?: string;
+  userSearch?: string;
+}
+
+export type NotificationNavigationTarget =
+  | { kind: 'messages'; search: MessageNavigationSearch }
+  | { kind: 'route'; to: string };
+
 /**
  * Constructs a display name from a user's first/last name fields.
  */
-export function getDisplayName(user: { first_name?: string | null; last_name?: string | null; email?: string | null } | undefined | null): string {
+export function getDisplayName(
+  user:
+    | { first_name?: string | null; last_name?: string | null; email?: string | null }
+    | undefined
+    | null
+): string {
   if (!user) return 'Unknown';
-  return [user.first_name, user.last_name].filter(Boolean).join(' ') || String(user.email ?? 'Unknown');
+  return (
+    [user.first_name, user.last_name].filter(Boolean).join(' ') || String(user.email ?? 'Unknown')
+  );
+}
+
+function getSearchParamValue(searchParams: URLSearchParams, key: keyof MessageNavigationSearch) {
+  const value = searchParams.get(key);
+  return value && value.length > 0 ? value : undefined;
+}
+
+function getMessagesNavigationSearchFromActionUrl(
+  actionUrl: string
+): MessageNavigationSearch | null {
+  let parsedUrl: URL;
+
+  try {
+    parsedUrl = new URL(actionUrl, 'https://polity.local');
+  } catch {
+    return null;
+  }
+
+  if (parsedUrl.pathname === '/messages') {
+    const search: MessageNavigationSearch = {
+      conversationId: getSearchParamValue(parsedUrl.searchParams, 'conversationId'),
+      name: getSearchParamValue(parsedUrl.searchParams, 'name'),
+      new: getSearchParamValue(parsedUrl.searchParams, 'new'),
+      openAriaKai: getSearchParamValue(parsedUrl.searchParams, 'openAriaKai'),
+      search: getSearchParamValue(parsedUrl.searchParams, 'search'),
+      userId: getSearchParamValue(parsedUrl.searchParams, 'userId'),
+      userSearch: getSearchParamValue(parsedUrl.searchParams, 'userSearch'),
+    };
+
+    return Object.values(search).some(Boolean) ? search : null;
+  }
+
+  if (parsedUrl.pathname.startsWith('/messages/')) {
+    const conversationId = parsedUrl.pathname.slice('/messages/'.length);
+    return conversationId.length > 0
+      ? { conversationId: decodeURIComponent(conversationId) }
+      : null;
+  }
+
+  return null;
+}
+
+function isMessageNotification(notification: Notification) {
+  return (
+    notification.type === 'direct_message' ||
+    notification.type === 'conversation_request' ||
+    notification.type === 'conversation_accepted'
+  );
+}
+
+export function getNotificationNavigationTarget(
+  notification: Notification
+): NotificationNavigationTarget | null {
+  if (notification.action_url) {
+    const messagesSearch = getMessagesNavigationSearchFromActionUrl(notification.action_url);
+
+    if (messagesSearch) {
+      return {
+        kind: 'messages',
+        search: messagesSearch,
+      };
+    }
+  }
+
+  if (isMessageNotification(notification) && notification.related_user_id) {
+    return {
+      kind: 'messages',
+      search: {
+        userId: notification.related_user_id,
+        name: getDisplayName(notification.sender ?? notification.related_user),
+      },
+    };
+  }
+
+  if (notification.action_url) {
+    return {
+      kind: 'route',
+      to: notification.action_url,
+    };
+  }
+
+  return null;
 }
 
 /**
@@ -13,7 +116,10 @@ export function getDisplayName(user: { first_name?: string | null; last_name?: s
  * based on personal recipient or entity RBAC rights.
  * Shared between useNotificationFilters and useUnreadNotificationsCount.
  */
-export function filterAccessibleNotifications(notifications: Notification[], userId?: string): Notification[] {
+export function filterAccessibleNotifications(
+  notifications: Notification[],
+  userId?: string
+): Notification[] {
   if (!userId) return [];
 
   return notifications.filter(n => {
@@ -83,5 +189,3 @@ export function formatTime(date: string | number): string {
     });
   }
 }
-
-

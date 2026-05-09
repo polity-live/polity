@@ -1,6 +1,7 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useCallback } from 'react';
 import { Notification } from '../types/notification.types';
+import { getNotificationNavigationTarget } from '../logic/notificationHelpers';
 import { useNotificationActions as useZeroNotificationActions } from '@/zero/notifications/useNotificationActions';
 
 export function useNotificationActions() {
@@ -14,10 +15,23 @@ export function useNotificationActions() {
         await markRead({ id: notification.id });
       }
 
+      const navigationTarget = getNotificationNavigationTarget(notification);
+
+      if (navigationTarget?.kind === 'messages') {
+        navigate({
+          to: '/messages',
+          search: navigationTarget.search,
+        });
+        return;
+      }
+
+      if (navigationTarget?.kind === 'route') {
+        navigate({ to: navigationTarget.to });
+        return;
+      }
+
       // Navigate based on related entity
-      if (notification.action_url) {
-        navigate({ to: notification.action_url });
-      } else if (notification.related_entity_type) {
+      if (notification.related_entity_type) {
         switch (notification.related_entity_type) {
           case 'group':
             if (notification.related_group?.id) {

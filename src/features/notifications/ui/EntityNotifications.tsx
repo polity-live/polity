@@ -15,6 +15,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { EntityType } from '@/features/notifications/utils/notification-helpers.ts';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import { NotificationType } from '@/features/notifications/types/notification.types.ts';
+import { getNotificationNavigationTarget } from '@/features/notifications/logic/notificationHelpers.ts';
 import {
   getNotificationIcon,
   getNotificationColor,
@@ -54,32 +55,48 @@ export function EntityNotifications({
   const filteredNotifications = useMemo(() => {
     if (!searchQuery.trim()) return notifications;
     const q = searchQuery.toLowerCase();
-    return notifications.filter((n) => {
-      const senderName = [n.sender?.first_name, n.sender?.last_name].filter(Boolean).join(' ').toLowerCase();
+    return notifications.filter(n => {
+      const senderName = [n.sender?.first_name, n.sender?.last_name]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
       const title = (n.title || '').toLowerCase();
       const message = (n.message || '').toLowerCase();
       return senderName.includes(q) || title.includes(q) || message.includes(q);
     });
   }, [notifications, searchQuery]);
 
-  const unreadNotifications = filteredNotifications.filter((n) => !n.is_read);
-  const readNotifications = filteredNotifications.filter((n) => n.is_read);
+  const unreadNotifications = filteredNotifications.filter(n => !n.is_read);
+  const readNotifications = filteredNotifications.filter(n => n.is_read);
 
   const handleNotificationClick = async (notification: (typeof notifications)[number]) => {
     // Mark as read on click
     if (!notification.is_read) {
       markRead({ id: notification.id });
     }
-    // Navigate based on action URL or related entity
-    if (notification.action_url) {
-      navigate({ to: notification.action_url });
-    } else if (notification.related_user_id) {
+
+    const navigationTarget = getNotificationNavigationTarget(notification);
+
+    if (navigationTarget?.kind === 'messages') {
+      navigate({
+        to: '/messages',
+        search: navigationTarget.search,
+      });
+      return;
+    }
+
+    if (navigationTarget?.kind === 'route') {
+      navigate({ to: navigationTarget.to });
+      return;
+    }
+
+    if (notification.related_user_id) {
       navigate({ to: `/user/${notification.related_user_id}` });
     }
   };
 
   const markAllAsRead = async () => {
-    const unreadIds = unreadNotifications.map((n) => n.id);
+    const unreadIds = unreadNotifications.map(n => n.id);
     if (unreadIds.length > 0) {
       for (const notifId of unreadIds) {
         await markRead({ id: notifId });
@@ -294,7 +311,7 @@ export function EntityNotifications({
             </Card>
           ) : (
             <div className="space-y-3">
-              {filteredNotifications.map((notification) => (
+              {filteredNotifications.map(notification => (
                 <NotificationItem key={notification.id} notification={notification} />
               ))}
             </div>
@@ -316,7 +333,7 @@ export function EntityNotifications({
             </Card>
           ) : (
             <div className="space-y-3">
-              {unreadNotifications.map((notification) => (
+              {unreadNotifications.map(notification => (
                 <NotificationItem key={notification.id} notification={notification} />
               ))}
             </div>
@@ -338,7 +355,7 @@ export function EntityNotifications({
             </Card>
           ) : (
             <div className="space-y-3">
-              {readNotifications.map((notification) => (
+              {readNotifications.map(notification => (
                 <NotificationItem key={notification.id} notification={notification} />
               ))}
             </div>

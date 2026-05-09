@@ -73,11 +73,13 @@ export function useMessagesPage() {
       .filter((id): id is string => id !== undefined && id !== user?.id);
   }, [conversations, user?.id]);
 
+  const messageConversationId = searchParams.conversationId;
   const messageUserId = searchParams.userId;
   const messageUserName = searchParams.name || '';
 
   const clearComposeIntentFromUrl = useCallback(() => {
     const {
+      conversationId,
       userId,
       name,
       new: newConversation,
@@ -87,6 +89,7 @@ export function useMessagesPage() {
     } = searchParams;
 
     if (
+      conversationId === undefined &&
       userId === undefined &&
       name === undefined &&
       newConversation === undefined &&
@@ -126,9 +129,31 @@ export function useMessagesPage() {
     }
   }, [searchParams, clearComposeIntentFromUrl]);
 
+  // Open a specific conversation from query params.
+  useEffect(() => {
+    if (!messageConversationId || isLoading) return;
+
+    const existingConversation = conversations.find(conv => conv.id === messageConversationId);
+    if (!existingConversation) return;
+
+    setSelectedConversationId(existingConversation.id);
+    setSearchQuery('');
+    setUserSearchDialogOpen(false);
+    setNewConversationSearch('');
+    clearComposeIntentFromUrl();
+  }, [
+    messageConversationId,
+    conversations,
+    isLoading,
+    clearComposeIntentFromUrl,
+    setSearchQuery,
+    setSelectedConversationId,
+  ]);
+
   // Route message intent based on existing conversations
   useEffect(() => {
-    if (!messageUserId || !messageUserName || isLoading) return;
+    if (messageConversationId) return;
+    if (!messageUserId || isLoading) return;
 
     const existingConversation = conversations.find(conv => {
       if (conv.type === 'group') return false;
@@ -140,12 +165,17 @@ export function useMessagesPage() {
       setSearchQuery('');
       setUserSearchDialogOpen(false);
       setNewConversationSearch('');
-    } else {
-      setUserSearchDialogOpen(true);
-      setNewConversationSearch(messageUserName);
+      clearComposeIntentFromUrl();
+      return;
     }
+
+    if (!messageUserName) return;
+
+    setUserSearchDialogOpen(true);
+    setNewConversationSearch(messageUserName);
     clearComposeIntentFromUrl();
   }, [
+    messageConversationId,
     messageUserId,
     messageUserName,
     conversations,

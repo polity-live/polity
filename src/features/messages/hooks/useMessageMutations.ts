@@ -123,6 +123,7 @@ export function useMessageMutations() {
           for (const participantId of participantIds) {
             if (participantId !== creatorId) {
               await notifyConversationRequest({
+                conversationId,
                 senderId: creatorId,
                 senderName: '',
                 recipientUserId: participantId,

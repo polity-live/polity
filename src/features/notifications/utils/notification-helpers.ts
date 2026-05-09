@@ -65,7 +65,9 @@ function getServerSupabase(): SupabaseClient {
     const url = process.env.SUPABASE_URL;
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!url || !key) {
-      throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required for server-side notifications');
+      throw new Error(
+        'SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required for server-side notifications'
+      );
     }
     _supabase = createClient(url, key);
   }
@@ -273,7 +275,7 @@ export interface NotificationConfig {
 async function getEntityMembersWithViewRight(
   entityType: EntityType,
   entityId: string,
-  excludeUserId?: string,
+  excludeUserId?: string
 ): Promise<string[]> {
   const membershipTable: Record<string, { table: string; fk: string }> = {
     group: { table: 'group_membership', fk: 'group_id' },
@@ -301,7 +303,9 @@ async function getEntityMembersWithViewRight(
 
   const userIds: string[] = [];
   for (const member of members) {
-    const role = member.role as { action_rights?: Array<{ resource: string; action: string }> } | null;
+    const role = member.role as {
+      action_rights?: { resource: string; action: string }[];
+    } | null;
     const rights = role?.action_rights ?? [];
     const hasViewRight = rights.some(
       r =>
@@ -319,7 +323,10 @@ async function getEntityMembersWithViewRight(
 /**
  * Maps a camelCase NotificationConfig to snake_case CreateNotificationInput.
  */
-function mapConfigToInput(config: NotificationConfig, notificationId: string): CreateNotificationInput {
+function mapConfigToInput(
+  config: NotificationConfig,
+  notificationId: string
+): CreateNotificationInput {
   const input: CreateNotificationInput = {
     id: notificationId,
     type: config.type,
@@ -424,12 +431,12 @@ export async function createNotification(config: NotificationConfig): Promise<st
       getEntityMembersWithViewRight(
         config.recipientEntityType,
         config.recipientEntityId,
-        config.senderId,
+        config.senderId
       )
-        .then(async (userIds) => {
+        .then(async userIds => {
           if (userIds.length === 0) return;
 
-          const personalCopies = userIds.map((uid) => {
+          const personalCopies = userIds.map(uid => {
             const copy = mapConfigToInput(
               {
                 ...config,
@@ -440,7 +447,7 @@ export async function createNotification(config: NotificationConfig): Promise<st
                 onBehalfOfEntityType: config.recipientEntityType,
                 onBehalfOfEntityId: config.recipientEntityId,
               },
-              crypto.randomUUID(),
+              crypto.randomUUID()
             );
             return copy;
           });
@@ -488,8 +495,6 @@ async function sendPushNotification(
     throw error;
   }
 }
-
-
 
 /**
  * Send notification when a user is invited to a group
@@ -2166,7 +2171,12 @@ export async function notifyVotingCompleted(params: {
   acceptVotes: number;
   rejectVotes: number;
 }) {
-  const resultText = params.result === 'passed' ? 'accepted' : params.result === 'rejected' ? 'rejected' : 'resulted in a tie';
+  const resultText =
+    params.result === 'passed'
+      ? 'accepted'
+      : params.result === 'rejected'
+        ? 'rejected'
+        : 'resulted in a tie';
   return createNotification({
     senderId: params.senderId,
     recipientEntityType: 'event',
@@ -2247,7 +2257,9 @@ export async function notifyRevoteScheduled(params: {
     type: 'revote_scheduled',
     title: 'Revote Scheduled',
     message: `A revote for ${params.positionTitle} has been scheduled for ${params.scheduledDate}`,
-    actionUrl: params.eventId ? `/event/${params.eventId}/agenda` : `/group/${params.groupId}/positions`,
+    actionUrl: params.eventId
+      ? `/event/${params.eventId}/agenda`
+      : `/group/${params.groupId}/positions`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
     relatedEventId: params.eventId,
@@ -2268,7 +2280,7 @@ export async function notifyEventCancelled(params: {
   const message = params.reassignmentEventId
     ? `${params.eventTitle} has been cancelled. Agenda items have been moved to ${params.reassignmentEventTitle}.`
     : `${params.eventTitle} has been cancelled.${params.cancellationReason ? ` Reason: ${params.cancellationReason}` : ''}`;
-  
+
   return createNotification({
     senderId: params.senderId,
     recipientEntityType: 'event',
@@ -2353,7 +2365,9 @@ export async function notifySupportConfirmationRequired(params: {
     type: 'support_confirmation_required',
     title: 'Support Confirmation Required',
     message: `A change was accepted on ${params.amendmentTitle}. ${params.groupName} needs to confirm continued support.`,
-    actionUrl: params.eventId ? `/event/${params.eventId}/agenda` : `/amendment/${params.amendmentId}`,
+    actionUrl: params.eventId
+      ? `/event/${params.eventId}/agenda`
+      : `/amendment/${params.amendmentId}`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
     relatedAmendmentId: params.amendmentId,
@@ -3120,6 +3134,10 @@ export async function notifyNewFollower(params: {
 /**
  * Send notification when a direct message is received
  */
+function buildMessagesConversationActionUrl(conversationId: string) {
+  return `/messages?conversationId=${encodeURIComponent(conversationId)}`;
+}
+
 export async function notifyDirectMessage(params: {
   senderId: string;
   senderName: string;
@@ -3132,7 +3150,7 @@ export async function notifyDirectMessage(params: {
     type: 'direct_message',
     title: 'New Message',
     message: `${params.senderName} sent you a message`,
-    actionUrl: `/messages/${params.conversationId}`,
+    actionUrl: buildMessagesConversationActionUrl(params.conversationId),
     relatedUserId: params.senderId,
   });
 }
@@ -3141,6 +3159,7 @@ export async function notifyDirectMessage(params: {
  * Send notification when a conversation request is received
  */
 export async function notifyConversationRequest(params: {
+  conversationId: string;
   senderId: string;
   senderName: string;
   recipientUserId: string;
@@ -3151,7 +3170,7 @@ export async function notifyConversationRequest(params: {
     type: 'conversation_request',
     title: 'Conversation Request',
     message: `${params.senderName} wants to start a conversation with you`,
-    actionUrl: `/messages`,
+    actionUrl: buildMessagesConversationActionUrl(params.conversationId),
     relatedUserId: params.senderId,
   });
 }
@@ -3171,7 +3190,7 @@ export async function notifyConversationAccepted(params: {
     type: 'conversation_accepted',
     title: 'Conversation Accepted',
     message: `${params.senderName} accepted your conversation request`,
-    actionUrl: `/messages/${params.conversationId}`,
+    actionUrl: buildMessagesConversationActionUrl(params.conversationId),
     relatedUserId: params.senderId,
   });
 }
