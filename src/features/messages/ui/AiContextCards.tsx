@@ -20,6 +20,7 @@ import {
 import { cn } from '@/features/shared/utils/utils';
 import type { AiChatAttachment } from '@/lib/ai/schemas';
 import {
+  buildUploadAttachmentDownloadUrl,
   formatUploadFileSize,
   isUploadAttachmentCardPayload,
   type UploadAttachmentCardPayload,
@@ -150,6 +151,7 @@ function UploadContextCard({
   const { t } = useTranslation();
   const showImagePreview = cardPayload.previewType === 'image';
   const fileSizeLabel = formatUploadFileSize(cardPayload.fileSize);
+  const downloadUrl = buildUploadAttachmentDownloadUrl(cardPayload.fileUrl, cardPayload.fileName);
 
   return (
     <Card className="bg-background/80 overflow-hidden border-sky-500/20">
@@ -209,7 +211,7 @@ function UploadContextCard({
             {t('features.messages.compose.openAttachment', 'Open')}
           </a>
           <a
-            href={cardPayload.fileUrl}
+            href={downloadUrl}
             download={cardPayload.fileName}
             className="border-border hover:bg-muted inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors"
           >

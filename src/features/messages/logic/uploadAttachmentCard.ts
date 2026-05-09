@@ -69,6 +69,13 @@ export function buildUploadAttachmentCardPayload(
   };
 }
 
+export function buildUploadAttachmentDownloadUrl(fileUrl: string, fileName: string): string {
+  const [baseUrl, hash = ''] = fileUrl.split('#', 2);
+  const queryJoiner = baseUrl.includes('?') ? '&' : '?';
+
+  return `${baseUrl}${queryJoiner}download=${encodeURIComponent(fileName)}${hash ? `#${hash}` : ''}`;
+}
+
 export function isUploadAttachmentCardPayload(
   value: unknown
 ): value is UploadAttachmentCardPayload {
