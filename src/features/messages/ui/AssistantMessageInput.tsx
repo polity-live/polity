@@ -1087,17 +1087,17 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
           <Button
             type="button"
             variant="outline"
-            size="sm"
+            size="icon"
             onClick={() => fileInputRef.current?.click()}
             disabled={assistantChat.isUploadingAttachments}
-            className="h-8 px-2"
+            title={t('features.messages.compose.uploadFiles', 'Upload documents and images')}
+            aria-label={t('features.messages.compose.uploadFiles', 'Upload documents and images')}
           >
             {assistantChat.isUploadingAttachments ? (
-              <LoaderCircle className="mr-1 h-3.5 w-3.5 animate-spin" />
+              <LoaderCircle className="h-4 w-4 animate-spin" />
             ) : (
-              <Paperclip className="mr-1 h-3.5 w-3.5" />
+              <Paperclip className="h-4 w-4" />
             )}
-            {t('features.messages.compose.uploadFiles', 'Upload files')}
           </Button>
 
           <Button
@@ -1113,24 +1113,25 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
 
           <Button
             type="button"
-            size="sm"
-            className="h-8 gap-1 px-3 sm:ml-auto"
+            size="icon"
+            className="sm:ml-auto"
             disabled={
               !messageText.trim() ||
               assistantChat.isSending ||
               assistantChat.isUploadingAttachments ||
               !assistantChat.selectedModel
             }
+            title={t('common.send', 'Send')}
+            aria-label={t('common.send', 'Send')}
             onClick={() => {
               void handleSubmit();
             }}
           >
             {assistantChat.isSending ? (
-              <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+              <LoaderCircle className="h-4 w-4 animate-spin" />
             ) : (
-              <Send className="h-3.5 w-3.5" />
+              <Send className="h-4 w-4" />
             )}
-            {t('common.send', 'Send')}
           </Button>
         </div>
 
