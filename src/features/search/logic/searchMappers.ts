@@ -1,6 +1,7 @@
 import type { SearchContentItem, SearchResultItem } from '../types/search.types';
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 import { formatLocation } from '@/features/shared/logic/locationHelpers';
+import { richTextToPlainText } from '@/features/shared/logic/richText';
 import { getUserAvatar, getUserDisplayName } from '../utils/searchUtils';
 
 export function toTags(hashtags?: { tag?: string | null }[]): string[] {
@@ -11,6 +12,19 @@ export function toTags(hashtags?: { tag?: string | null }[]): string[] {
 export function toDate(value?: string | number | Date | null): Date {
   if (!value && value !== 0) return new Date();
   return value instanceof Date ? value : new Date(value);
+}
+
+function toDescription(value: unknown): string | null | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (value === null) {
+    return null;
+  }
+
+  const text = richTextToPlainText(value);
+  return text.length > 0 ? text : null;
 }
 
 /**
@@ -33,7 +47,7 @@ export function mapMosaicToContentItems(
           id: item.id,
           type: 'group',
           title: item.name ?? '',
-          description: item.description,
+          description: toDescription(item.description),
           createdAt: toDate(item.created_at),
           tags: extractHashtagTags(item.group_hashtags),
           groupName: item.name,
@@ -50,7 +64,7 @@ export function mapMosaicToContentItems(
           id: item.id,
           type: 'event',
           title: item.title ?? '',
-          description: item.description,
+          description: toDescription(item.description),
           createdAt: toDate(item.created_at),
           startDate: item.start_date ? new Date(item.start_date) : undefined,
           endDate: item.end_date ? new Date(item.end_date) : undefined,
@@ -76,7 +90,7 @@ export function mapMosaicToContentItems(
           id: item.id,
           type: 'amendment',
           title: item.title ?? '',
-          description: item.reason || item.preamble,
+          description: toDescription(item.reason || item.preamble),
           createdAt: toDate(item.created_at),
           tags: extractHashtagTags(item.amendment_hashtags),
           groupId: item.group?.id,
@@ -101,7 +115,7 @@ export function mapMosaicToContentItems(
           id: item.id,
           type: 'blog',
           title: item.title ?? '',
-          description: item.description,
+          description: toDescription(item.description),
           imageUrl: item.image_url,
           createdAt: toDate(item.created_at),
           tags: extractHashtagTags(item.blog_hashtags),
@@ -122,7 +136,7 @@ export function mapMosaicToContentItems(
           id: item.id,
           type: 'statement',
           title: item.text ?? '',
-          description: item.text,
+          description: toDescription(item.text),
           imageUrl: item.image_url,
           videoUrl: item.video_url,
           createdAt: toDate(item.created_at),
@@ -155,7 +169,7 @@ export function mapMosaicToContentItems(
           id: item.id,
           type: 'todo',
           title: item.title ?? '',
-          description: item.description,
+          description: toDescription(item.description),
           createdAt: toDate(item.created_at),
           updatedAt: item.updated_at ? toDate(item.updated_at) : undefined,
           dueDate: item.due_date ? toDate(item.due_date) : undefined,
@@ -174,7 +188,7 @@ export function mapMosaicToContentItems(
           id: item.id,
           type: 'user',
           title: getUserDisplayName(item),
-          description: item.bio,
+          description: toDescription(item.bio),
           createdAt: toDate(item.created_at),
           tags: extractHashtagTags(item.user_hashtags),
           authorId: item.id,
@@ -194,7 +208,7 @@ export function mapMosaicToContentItems(
           id: item.id,
           type: 'election',
           title: item.title || '',
-          description: item.description,
+          description: toDescription(item.description),
           createdAt: toDate(item.created_at),
           updatedAt: item.updated_at ? toDate(item.updated_at) : undefined,
           status: item.status,
@@ -223,7 +237,7 @@ export function mapMosaicToContentItems(
           id: item.id,
           type: 'video',
           title: item.title || '',
-          description: item.description,
+          description: toDescription(item.description),
           imageUrl: item.video_thumbnail_url || item.image_url,
           videoUrl: item.video_url,
           createdAt: toDate(item.created_at),
@@ -239,7 +253,7 @@ export function mapMosaicToContentItems(
           id: item.id,
           type: 'image',
           title: item.title || '',
-          description: item.description,
+          description: toDescription(item.description),
           imageUrl: item.image_url,
           createdAt: toDate(item.created_at),
           authorId: item.actor?.id,

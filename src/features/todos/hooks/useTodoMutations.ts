@@ -3,7 +3,6 @@ import { useTodoActions } from '@/zero/todos/useTodoActions';
 import { useCommonActions } from '@/zero/common/useCommonActions';
 import { useNotificationActions } from '@/zero/notifications/useNotificationActions';
 
-
 /**
  * Orchestration hook for todo mutations.
  * Composes facade actions (todo, common, notification) — no direct Zero usage.
@@ -27,7 +26,7 @@ export function useTodoMutations() {
     eventId?: string;
     amendmentId?: string;
     senderId?: string;
-    visibility?: 'public' | 'authenticated' | 'private';
+    visibility?: 'public' | 'authenticated' | 'private' | 'group';
   }) => {
     setIsLoading(true);
     try {

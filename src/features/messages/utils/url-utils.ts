@@ -1,5 +1,35 @@
 // URL detection and parsing utilities
 
+export type PolityLinkEntityType =
+  | 'user'
+  | 'group'
+  | 'event'
+  | 'amendment'
+  | 'blog'
+  | 'statement'
+  | 'todo';
+
+export interface PolityLink {
+  type: PolityLinkEntityType;
+  id: string;
+}
+
+function getBaseOrigin(): string {
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return window.location.origin;
+  }
+
+  return 'https://polity.local';
+}
+
+function getCurrentHostname(): string | null {
+  if (typeof window !== 'undefined' && window.location?.hostname) {
+    return window.location.hostname;
+  }
+
+  return null;
+}
+
 export function detectUrls(text: string): string[] {
   const urlRegex =
     /(https?:\/\/[^\s]+)|(www\.[^\s]+)|(\/?(?:user|group|event|amendment|blog|statement|todos?)\/[a-zA-Z0-9_-]+)/gi;
@@ -7,9 +37,7 @@ export function detectUrls(text: string): string[] {
   return matches || [];
 }
 
-export function parseMessageWithLinks(
-  text: string
-): { type: 'text' | 'url'; content: string }[] {
+export function parseMessageWithLinks(text: string): { type: 'text' | 'url'; content: string }[] {
   const urlRegex =
     /(https?:\/\/[^\s]+)|(www\.[^\s]+)|(\/?(?:user|group|event|amendment|blog|statement|todos?)\/[a-zA-Z0-9_-]+)/gi;
   const parts: { type: 'text' | 'url'; content: string }[] = [];
@@ -55,4 +83,50 @@ export function parseMessageWithLinks(
 
 export function hasUrls(text: string): boolean {
   return detectUrls(text).length > 0;
+}
+
+export function parsePolityUrl(url: string): PolityLink | null {
+  try {
+    const urlObj = new URL(url, getBaseOrigin());
+    const pathname = urlObj.pathname;
+    const match = pathname.match(/^\/(user|group|event|amendment|blog|statement|todos?)\/([^/]+)/);
+
+    if (!match) {
+      return null;
+    }
+
+    const rawType = match[1];
+    const type: PolityLinkEntityType = rawType === 'todos' ? 'todo' : rawType;
+    return { type, id: match[2] };
+  } catch {
+    return null;
+  }
+}
+
+export function isPolityLink(url: string): boolean {
+  try {
+    if (
+      url.startsWith('/user/') ||
+      url.startsWith('/group/') ||
+      url.startsWith('/event/') ||
+      url.startsWith('/amendment/') ||
+      url.startsWith('/blog/') ||
+      url.startsWith('/statement/') ||
+      url.startsWith('/todo/') ||
+      url.startsWith('/todos/')
+    ) {
+      return parsePolityUrl(url) !== null;
+    }
+
+    const urlObj = new URL(url, getBaseOrigin());
+    const currentHostname = getCurrentHostname();
+
+    if (currentHostname && urlObj.hostname !== currentHostname) {
+      return false;
+    }
+
+    return parsePolityUrl(url) !== null;
+  } catch {
+    return false;
+  }
 }

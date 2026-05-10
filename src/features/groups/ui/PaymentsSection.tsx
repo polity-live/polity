@@ -1,7 +1,10 @@
+import { Link } from '@tanstack/react-router';
 import { useMemo } from 'react';
+import { Plus } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Badge } from '@/features/shared/ui/ui/badge';
+import { Button } from '@/features/shared/ui/ui/button';
 import { PqlToolbar } from '@/features/pql/ui/PqlToolbar';
 import {
   usePqlCollection,
@@ -9,7 +12,6 @@ import {
 } from '@/features/pql/hooks/usePqlCollection';
 import type { PqlFieldDefinition } from '@/features/pql/logic/applyPqlFilter';
 import type { GroupPaymentRow } from '@/zero/groups/queries';
-import { AddPaymentDialog } from './AddPaymentDialog';
 import type { ChartData, FinancialSummary } from '../types/group.types';
 
 type PaymentFieldKey =
@@ -110,30 +112,6 @@ interface PaymentsSectionProps {
   summary: FinancialSummary;
   incomeData: ChartData[];
   expenditureData: ChartData[];
-  incomeDialogOpen: boolean;
-  onIncomeDialogChange: (open: boolean) => void;
-  expenditureDialogOpen: boolean;
-  onExpenditureDialogChange: (open: boolean) => void;
-  onAddIncome: (data: {
-    label: string;
-    type: string;
-    amount: number;
-    direction: 'income' | 'expense';
-    payerUserId?: string;
-    payerGroupId?: string;
-    receiverUserId?: string;
-    receiverGroupId?: string;
-  }) => void;
-  onAddExpense: (data: {
-    label: string;
-    type: string;
-    amount: number;
-    direction: 'income' | 'expense';
-    payerUserId?: string;
-    payerGroupId?: string;
-    receiverUserId?: string;
-    receiverGroupId?: string;
-  }) => void;
 }
 
 export function PaymentsSection({
@@ -143,12 +121,6 @@ export function PaymentsSection({
   summary,
   incomeData,
   expenditureData,
-  incomeDialogOpen,
-  onIncomeDialogChange,
-  expenditureDialogOpen,
-  onExpenditureDialogChange,
-  onAddIncome,
-  onAddExpense,
 }: PaymentsSectionProps) {
   const counterpartyOptions = useMemo(() => {
     const nextOptions = new Map<string, { value: string; label: string; keywords: string[] }>();
@@ -287,20 +259,34 @@ export function PaymentsSection({
         <div className="flex items-center justify-between">
           <CardTitle>Payments</CardTitle>
           <div className="flex gap-2">
-            <AddPaymentDialog
-              open={incomeDialogOpen}
-              onOpenChange={onIncomeDialogChange}
-              onSubmit={onAddIncome}
-              direction="income"
-              groupId={groupId}
-            />
-            <AddPaymentDialog
-              open={expenditureDialogOpen}
-              onOpenChange={onExpenditureDialogChange}
-              onSubmit={onAddExpense}
-              direction="expense"
-              groupId={groupId}
-            />
+            <Button asChild size="sm">
+              <Link
+                to="/create/payment"
+                search={{
+                  groupId,
+                  direction: 'income',
+                  returnGroupId: groupId,
+                  returnSection: 'payments',
+                }}
+              >
+                <Plus className="h-4 w-4" />
+                Add Income
+              </Link>
+            </Button>
+            <Button asChild size="sm">
+              <Link
+                to="/create/payment"
+                search={{
+                  groupId,
+                  direction: 'expense',
+                  returnGroupId: groupId,
+                  returnSection: 'payments',
+                }}
+              >
+                <Plus className="h-4 w-4" />
+                Add Expense
+              </Link>
+            </Button>
           </div>
         </div>
       </CardHeader>

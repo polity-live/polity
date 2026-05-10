@@ -2,13 +2,13 @@ import { useState, useMemo, useCallback } from 'react';
 import type { Value } from 'platejs';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/features/shared/ui/ui/radio-group';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
 import { VisibilityInput } from '../ui/inputs/VisibilityInput';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
+import { CreateInputField } from '../ui/CreateFields';
 import { UserSearchInput } from '../ui/inputs/UserSearchInput';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useEventActions } from '@/zero/events/useEventActions';
@@ -16,9 +16,7 @@ import { useCommonState, useCommonActions } from '@/zero/common';
 import { useAllGroups } from '@/zero/groups/useGroupState';
 import { useUserState } from '@/zero/users/useUserState';
 import { useAuth } from '@/providers/auth-provider';
-import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
-import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import { RIGHT_TYPES } from '@/features/network/ui/RightFilters';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
@@ -47,6 +45,7 @@ import {
 } from '@/features/shared/ui/ui/table';
 import { MiniPlateEditor } from '@/features/shared/ui/form/MiniPlateEditor';
 import { GeoAddressPicker } from '@/features/shared/ui/form/GeoAddressPicker';
+import { isValidOptionalEmailAddress } from '@/features/shared/logic/inputValidation';
 import { cn } from '@/features/shared/utils/utils.ts';
 import { matchInviteCsvUsers, type InviteCsvMatchResult } from '../logic/groupInviteCsv';
 import { formatLocation } from '@/features/shared/logic/locationHelpers';
@@ -58,6 +57,7 @@ import {
 import { X, Upload, Link2, FileSpreadsheet } from 'lucide-react';
 import { toast } from 'sonner';
 import type { CreateFormConfig } from '../types/create-form.types';
+import { CreateTypeaheadField } from '../ui/CreateFields';
 
 type GroupType = 'base' | 'hierarchical';
 
@@ -142,6 +142,8 @@ export function useCreateGroupForm(): CreateFormConfig {
   const [eventStartTime, setEventStartTime] = useState('');
 
   const { allHashtags } = useCommonState({ loadAllHashtags: true });
+  const emailValidationMessage = t('common.validation.emailHint', 'Enter a valid email address.');
+  const emailIsValid = isValidOptionalEmailAddress(email);
 
   const handleDescriptionContentChange = useCallback((value: Value) => {
     setDescriptionContent(value);
@@ -248,7 +250,13 @@ export function useCreateGroupForm(): CreateFormConfig {
   }, []);
 
   const handleSubmit = async () => {
-    if (!name.trim()) return;
+    if (!name.trim() || !emailIsValid) {
+      if (!emailIsValid) {
+        toast.error(emailValidationMessage);
+      }
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await createGroup({
@@ -353,20 +361,17 @@ export function useCreateGroupForm(): CreateFormConfig {
       steps: [
         {
           label: t('pages.create.group.basicInfo'),
-          isValid: () => !!name.trim(),
+          isValid: () => !!name.trim() && emailIsValid,
           content: (
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>
-                  {t('pages.create.group.nameLabel')} <span className="text-destructive">*</span>
-                </Label>
-                <p className="text-muted-foreground text-xs">{t('pages.create.group.tips.name')}</p>
-                <Input
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  placeholder={t('pages.create.group.namePlaceholder')}
-                />
-              </div>
+              <CreateInputField
+                label={t('pages.create.group.nameLabel')}
+                required
+                hint={t('pages.create.group.tips.name')}
+                value={name}
+                onValueChange={setName}
+                placeholder={t('pages.create.group.namePlaceholder')}
+              />
               <div className="space-y-2">
                 <Label>{t('pages.create.group.descriptionLabel')}</Label>
                 <p className="text-muted-foreground text-xs">
@@ -378,15 +383,16 @@ export function useCreateGroupForm(): CreateFormConfig {
                   placeholder={t('pages.create.group.descriptionPlaceholder')}
                 />
               </div>
-              <div className="space-y-2">
-                <Label>{t('pages.create.group.emailLabel')}</Label>
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder={t('pages.create.group.emailPlaceholder')}
-                />
-              </div>
+              <CreateInputField
+                label={t('pages.create.group.emailLabel')}
+                type="email"
+                validator={value =>
+                  isValidOptionalEmailAddress(value) ? null : emailValidationMessage
+                }
+                value={email}
+                onValueChange={setEmail}
+                placeholder={t('pages.create.group.emailPlaceholder')}
+              />
               <div className="space-y-2">
                 <Label>{t('pages.create.group.groupType')}</Label>
                 <RadioGroup value={groupType} onValueChange={v => setGroupType(v as GroupType)}>
@@ -734,20 +740,18 @@ export function useCreateGroupForm(): CreateFormConfig {
               <p className="text-muted-foreground text-xs">
                 {t('pages.create.group.tips.linkGroups')}
               </p>
-              <div className="space-y-3">
-                <Label>{t('pages.create.group.selectGroup')}</Label>
-                <TypeaheadSearch
-                  items={toTypeaheadItems(
-                    allGroups.filter(g => g.id !== groupId),
-                    'group',
-                    g => g.name || 'Group',
-                    g => g.description?.substring(0, 60)
-                  )}
-                  value={linkGroupId}
-                  onChange={(item: TypeaheadItem | null) => setLinkGroupId(item?.id ?? '')}
-                  placeholder={t('pages.create.group.searchGroups')}
-                />
-              </div>
+              <CreateTypeaheadField
+                label={t('pages.create.group.selectGroup')}
+                items={toTypeaheadItems(
+                  allGroups.filter(g => g.id !== groupId),
+                  'group',
+                  g => g.name || 'Group',
+                  g => g.description?.substring(0, 60)
+                )}
+                value={linkGroupId || undefined}
+                onChange={item => setLinkGroupId(item?.id ?? '')}
+                placeholder={t('pages.create.group.searchGroups')}
+              />
               <div className="space-y-2">
                 <Label>{t('pages.create.group.relationshipType')}</Label>
                 <RadioGroup
@@ -873,39 +877,31 @@ export function useCreateGroupForm(): CreateFormConfig {
                   <p className="text-muted-foreground text-xs">
                     {t('pages.create.group.eventTypeDescription')}
                   </p>
-                  <div className="space-y-2">
-                    <Label>{t('pages.create.group.eventName')}</Label>
-                    <Input
-                      value={eventName}
-                      onChange={e => setEventName(e.target.value)}
-                      placeholder={t('pages.create.group.eventNamePlaceholder')}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>{t('pages.create.group.eventLocation')}</Label>
-                    <Input
-                      value={eventLocation}
-                      onChange={e => setEventLocation(e.target.value)}
-                      placeholder={t('pages.create.group.eventLocationPlaceholder')}
-                    />
-                  </div>
+                  <CreateInputField
+                    label={t('pages.create.group.eventName')}
+                    value={eventName}
+                    onValueChange={setEventName}
+                    placeholder={t('pages.create.group.eventNamePlaceholder')}
+                  />
+                  <CreateInputField
+                    label={t('pages.create.group.eventLocation')}
+                    value={eventLocation}
+                    onValueChange={setEventLocation}
+                    placeholder={t('pages.create.group.eventLocationPlaceholder')}
+                  />
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>{t('pages.create.group.eventStartDate')}</Label>
-                      <Input
-                        type="date"
-                        value={eventStartDate}
-                        onChange={e => setEventStartDate(e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>{t('pages.create.group.eventStartTime')}</Label>
-                      <Input
-                        type="time"
-                        value={eventStartTime}
-                        onChange={e => setEventStartTime(e.target.value)}
-                      />
-                    </div>
+                    <CreateInputField
+                      label={t('pages.create.group.eventStartDate')}
+                      type="date"
+                      value={eventStartDate}
+                      onValueChange={setEventStartDate}
+                    />
+                    <CreateInputField
+                      label={t('pages.create.group.eventStartTime')}
+                      type="time"
+                      value={eventStartTime}
+                      onValueChange={setEventStartTime}
+                    />
                   </div>
                 </div>
               )}
@@ -914,7 +910,7 @@ export function useCreateGroupForm(): CreateFormConfig {
         },
         {
           label: t('pages.create.common.review'),
-          isValid: () => !!name.trim(),
+          isValid: () => !!name.trim() && emailIsValid,
           content: (
             <CreateSummaryStep
               entityType="group"
@@ -992,6 +988,8 @@ export function useCreateGroupForm(): CreateFormConfig {
       eventStartDate,
       eventStartTime,
       handleDescriptionContentChange,
+      emailIsValid,
+      emailValidationMessage,
       user,
     ]
   );

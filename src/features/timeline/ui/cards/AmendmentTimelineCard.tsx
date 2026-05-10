@@ -28,6 +28,7 @@ import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx
 import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
 import { useAmendmentCollaboration } from '@/features/amendments/hooks/useAmendmentCollaboration';
 import { useSubscribeAmendment } from '@/features/amendments/hooks/useSubscribeAmendment';
+import { normalizeTimelineText } from '@/features/timeline/logic/normalizeTimelineText';
 import { CONTENT_TYPE_CONFIG } from '../../constants/content-type-config';
 import {
   TimelineCardBase,
@@ -141,6 +142,7 @@ export function AmendmentTimelineCard({
   const collaboration = useAmendmentCollaboration(amendment.id);
   const subscription = useSubscribeAmendment(amendment.id);
   const amendmentStyle = CONTENT_TYPE_CONFIG.amendment;
+  const amendmentDescription = normalizeTimelineText(amendment.description);
 
   const statusConfig = STATUS_CONFIG[amendment.status] || STATUS_CONFIG.view;
   const statusOption = getEditingModeOption(amendment.status, t);
@@ -251,8 +253,8 @@ export function AmendmentTimelineCard({
       </TimelineCardHeader>
 
       <TimelineCardContent>
-        {amendment.description && (
-          <p className="text-muted-foreground mb-3 line-clamp-3 text-sm">{amendment.description}</p>
+        {amendmentDescription && (
+          <p className="text-muted-foreground mb-3 line-clamp-3 text-sm">{amendmentDescription}</p>
         )}
 
         {/* Hashtags */}
@@ -459,14 +461,14 @@ export function AmendmentTimelineCard({
           <ShareButton
             url={`/amendment/${amendment.id}`}
             title={amendment.title}
-            description={amendment.description || ''}
+            description={amendmentDescription || ''}
             variant="outline"
             size="sm"
             shareContextItem={{
               id: amendment.id,
               type: 'amendment',
               title: amendment.title,
-              description: amendment.description,
+              description: amendmentDescription,
               createdAt: new Date(),
               status: amendment.status,
               groupId: amendment.groupId,

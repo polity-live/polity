@@ -6,15 +6,12 @@ import { useCommonState, useCommonActions } from '@/zero/common';
 import { useGroupState } from '@/zero/groups/useGroupState';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { toast } from 'sonner';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Label } from '@/features/shared/ui/ui/label';
 import { VisibilityInput } from '../ui/inputs/VisibilityInput';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
+import { CreateInputField, CreateTypeaheadField } from '../ui/CreateFields';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
-import { TypeaheadSearch } from '@/features/shared/ui/typeahead';
-import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import type { CreateFormConfig } from '../types/create-form.types';
 
 export function useCreateBlogForm(): CreateFormConfig {
@@ -179,22 +176,21 @@ export function useCreateBlogForm(): CreateFormConfig {
           isValid: () => !!title.trim(),
           content: (
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>
-                  {t('pages.create.blog.titleLabel')} <span className="text-destructive">*</span>
-                </Label>
-                <p className="text-muted-foreground text-xs">{t('pages.create.blog.tips.title')}</p>
-                <Input
-                  value={title}
-                  onChange={e => setTitle(e.target.value)}
-                  placeholder={t('pages.create.blog.titlePlaceholder')}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{t('pages.create.blog.dateLabel')}</Label>
-                <p className="text-muted-foreground text-xs">{t('pages.create.blog.tips.date')}</p>
-                <Input type="date" value={date} onChange={e => setDate(e.target.value)} />
-              </div>
+              <CreateInputField
+                label={t('pages.create.blog.titleLabel')}
+                required
+                hint={t('pages.create.blog.tips.title')}
+                value={title}
+                onValueChange={setTitle}
+                placeholder={t('pages.create.blog.titlePlaceholder')}
+              />
+              <CreateInputField
+                label={t('pages.create.blog.dateLabel')}
+                hint={t('pages.create.blog.tips.date')}
+                value={date}
+                onValueChange={setDate}
+                type="date"
+              />
               <ImageUpload
                 currentImage={imageURL}
                 onImageChange={(url: string) => setImageURL(url)}
@@ -204,19 +200,17 @@ export function useCreateBlogForm(): CreateFormConfig {
                 label={t('pages.create.blog.coverImage')}
                 description={t('pages.create.blog.coverImageDescription')}
               />
-              <div className="space-y-2">
-                <Label>{t('pages.create.blog.attachTo', 'Attach to group (optional)')}</Label>
-                <TypeaheadSearch
-                  entityTypes={['group']}
-                  value={groupId ?? undefined}
-                  onChange={(item: TypeaheadItem | null) => {
-                    setGroupId(item?.id ?? null);
-                    setGroupName(item?.label ?? '');
-                  }}
-                  placeholder={t('pages.create.blog.groupPlaceholder', 'Search groups...')}
-                  filterFn={item => memberGroupIds.has(item.id)}
-                />
-              </div>
+              <CreateTypeaheadField
+                label={t('pages.create.blog.attachTo', 'Attach to group (optional)')}
+                entityTypes={['group']}
+                value={groupId ?? undefined}
+                onChange={item => {
+                  setGroupId(item?.id ?? null);
+                  setGroupName(item?.label ?? '');
+                }}
+                placeholder={t('pages.create.blog.groupPlaceholder', 'Search groups...')}
+                filterFn={item => memberGroupIds.has(item.id)}
+              />
             </div>
           ),
         },

@@ -1,49 +1,52 @@
-import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch'
-import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems'
-import { useElectionState } from '@/zero/elections/useElectionState'
-import { Label } from '@/features/shared/ui/ui/label'
-import { useMemo } from 'react'
-import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers'
+import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
+import { useElectionState } from '@/zero/elections/useElectionState';
+import { useMemo } from 'react';
+import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
+import { CreateTypeaheadField } from '../CreateFields';
 
 interface ElectionSearchInputProps {
-  value: string
-  onChange: (electionId: string) => void
-  label?: string
-  placeholder?: string
+  value: string;
+  onChange: (electionId: string) => void;
+  label?: string;
+  hint?: string;
+  placeholder?: string;
+  required?: boolean;
 }
 
 export function ElectionSearchInput({
   value,
   onChange,
   label,
+  hint,
   placeholder = 'Search for an election...',
+  required,
 }: ElectionSearchInputProps) {
-  const { electionsForSearch } = useElectionState({ includeElectionsForSearch: true })
+  const { electionsForSearch } = useElectionState({ includeElectionsForSearch: true });
 
   const items = useMemo(
     () =>
       toTypeaheadItems(
         electionsForSearch ?? [],
         'election',
-        (e) => e.title || 'Election',
-        (e) => e.description?.substring(0, 60),
+        e => e.title || 'Election',
+        e => e.description?.substring(0, 60)
       ),
-    [electionsForSearch],
-  )
+    [electionsForSearch]
+  );
 
   const handleChange = (item: TypeaheadItem | null) => {
-    onChange(item?.id ?? '')
-  }
+    onChange(item?.id ?? '');
+  };
 
   return (
-    <div>
-      {label && <Label className="mb-2 block">{label}</Label>}
-      <TypeaheadSearch
-        items={items}
-        value={value}
-        onChange={handleChange}
-        placeholder={placeholder}
-      />
-    </div>
-  )
+    <CreateTypeaheadField
+      items={items}
+      value={value || undefined}
+      onChange={handleChange}
+      label={label}
+      hint={hint}
+      required={required}
+      placeholder={placeholder}
+    />
+  );
 }

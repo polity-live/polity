@@ -18,6 +18,7 @@ import { useTimelineFilters, type TimelineSortOption } from '../hooks/useTimelin
 import { useSubscribedTimeline, type TimelineItem } from '../hooks/useSubscribedTimeline';
 import { useSubscriptionTimeline } from '../hooks/useSubscriptionTimeline';
 import { useDecisionTerminal } from '@/features/decision-terminal/hooks/useDecisionTerminal';
+import { normalizeTimelineText } from '@/features/timeline/logic/normalizeTimelineText';
 
 // Decision Terminal
 import { DecisionTerminal } from '@/features/decision-terminal/ui/DecisionTerminal';
@@ -102,7 +103,14 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
       }
 
       const createdAt = new Date(event.created_at);
-      const stats = event.stats ? { reactions: event.stats.reactions, comments: event.stats.comments, views: event.stats.views, members: event.stats.members } as TimelineItem['stats'] : undefined;
+      const stats = event.stats
+        ? ({
+            reactions: event.stats.reactions,
+            comments: event.stats.comments,
+            views: event.stats.views,
+            members: event.stats.members,
+          } as TimelineItem['stats'])
+        : undefined;
       const amendmentTags = getTags(event.amendment?.amendment_hashtags);
       const blogTags = getTags(event.blog?.blog_hashtags);
       const userTags = getTags(event.user?.user_hashtags);
@@ -119,26 +127,17 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
                 : undefined;
       const tags = event.tags ?? fallbackTags;
       const eventParticipants = event.event?.participants;
-      // TODO: Removed with voting session migration
-      const eventVotingSessions: never[] = [];
       const eventPositions = event.event?.event_positions;
-      // TODO: Removed with voting session migration
-      const scheduledElections: never[] = [];
       const eventEventId = event.event?.id;
       const agendaItems = eventEventId
         ? subscriptionTimeline.agendaItemsByEventId?.get(eventEventId)
         : undefined;
 
-      // Extract agenda item links from election or amendment_vote_id relationships
+      // Extract agenda item links from election relationships
       const linkedElection = event.election;
-      const linkedAmendmentVoteId = event.amendment_vote_id;
 
-      const agendaEventId =
-        linkedElection?.agenda_item?.event?.id ||
-        undefined;
-      const agendaItemId =
-        linkedElection?.agenda_item?.id ||
-        undefined;
+      const agendaEventId = linkedElection?.agenda_item?.event?.id || undefined;
+      const agendaItemId = linkedElection?.agenda_item?.id || undefined;
 
       acc.push({
         id: event.id,
@@ -146,23 +145,18 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
         type: contentType,
         eventType: event.event_type || undefined,
         title: event.title || '',
-        description: event.description || undefined,
+        description: normalizeTimelineText(event.description),
         imageUrl: event.image_url || event.video_thumbnail_url || undefined,
         videoUrl: event.video_url || undefined,
         authorId: event.actor?.id || undefined,
-        authorAvatar:
-          event.actor?.avatar ||
-          event.user?.avatar ||
-          undefined,
+        authorAvatar: event.actor?.avatar || event.user?.avatar || undefined,
         groupId: event.group?.id || undefined,
         groupName: event.group?.name || undefined,
         eventId: event.event?.id || undefined,
         eventName: event.event?.title || undefined,
         startDate: event.event?.start_date ? new Date(event.event.start_date) : undefined,
         endDate: event.ends_at ? new Date(event.ends_at) : undefined,
-        location:
-          event.event?.location_name ||
-          undefined,
+        location: event.event?.location_name || undefined,
         city: undefined,
         postcode: undefined,
         createdAt,
@@ -180,11 +174,9 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
           agendaItems?.length ||
           undefined,
         amendmentsCount:
-          event.event?.agenda_items?.filter(item => Boolean(item?.amendment)).length ||
-          undefined,
+          event.event?.agenda_items?.filter(item => Boolean(item?.amendment)).length || undefined,
         eventCount: undefined,
-        amendmentCount:
-          event.user?.amendment_collaborations?.length,
+        amendmentCount: event.user?.amendment_collaborations?.length,
         collaboratorCount: event.amendment?.collaborators?.length,
         supportingGroupsCount: event.amendment?.support_votes?.length,
         changeRequestCount: event.amendment?.change_requests?.length,

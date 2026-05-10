@@ -10,6 +10,7 @@ import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx
 import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
 import { useGroupMembership } from '@/features/groups/hooks/useGroupMembership';
 import { useSubscribeGroup } from '@/features/groups/hooks/useSubscribeGroup';
+import { normalizeTimelineText } from '@/features/timeline/logic/normalizeTimelineText';
 import { CONTENT_TYPE_CONFIG } from '../../constants/content-type-config';
 import {
   TimelineCardBase,
@@ -83,6 +84,7 @@ export function GroupTimelineCard({
   const subscription = useSubscribeGroup(group.id);
   const groupStyle = CONTENT_TYPE_CONFIG.group;
   const groupHashtags = group.hashtags ?? group.topics?.map(topic => ({ id: topic, tag: topic }));
+  const groupDescription = normalizeTimelineText(group.description);
 
   const resolvedMembershipStatus = group.membershipStatus ?? membership.status;
   const isMember =
@@ -156,8 +158,8 @@ export function GroupTimelineCard({
       />
 
       <TimelineCardContent>
-        {group.description && (
-          <p className="text-muted-foreground mb-3 line-clamp-3 text-sm">{group.description}</p>
+        {groupDescription && (
+          <p className="text-muted-foreground mb-3 line-clamp-3 text-sm">{groupDescription}</p>
         )}
 
         {groupHashtags && groupHashtags.length > 0 && (
@@ -306,14 +308,14 @@ export function GroupTimelineCard({
           <ShareButton
             url={`/group/${group.id}`}
             title={group.name}
-            description={group.description || ''}
+            description={groupDescription || ''}
             variant="outline"
             size="sm"
             shareContextItem={{
               id: group.id,
               type: 'group',
               title: group.name,
-              description: group.description,
+              description: groupDescription,
               createdAt: new Date(),
               memberCount: group.memberCount,
               eventCount: group.eventCount,

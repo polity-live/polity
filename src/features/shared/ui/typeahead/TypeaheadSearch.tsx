@@ -17,6 +17,7 @@ interface TypeaheadSearchProps {
   entityTypes?: EntityType[];
   value?: string;
   onChange: (item: TypeaheadItem | null) => void;
+  onInteract?: () => void;
   placeholder?: string;
   multiple?: boolean;
   renderItem?: (item: TypeaheadItem) => React.ReactNode;
@@ -33,6 +34,7 @@ export function TypeaheadSearch({
   entityTypes = [],
   value,
   onChange,
+  onInteract,
   placeholder = 'Search...',
   filterFn,
   items: externalItems,
@@ -114,13 +116,14 @@ export function TypeaheadSearch({
       setQuery('');
       setSelectedIndex(0);
     },
-    [onChange, setQuery],
+    [onChange, setQuery]
   );
 
   const handleClear = useCallback(() => {
+    onInteract?.();
     onChange(null);
     setQuery('');
-  }, [onChange, setQuery]);
+  }, [onChange, onInteract, setQuery]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -144,7 +147,7 @@ export function TypeaheadSearch({
         setIsOpen(false);
       }
     },
-    [isOpen, filteredResults, selectedIndex, handleSelect],
+    [isOpen, filteredResults, selectedIndex, handleSelect]
   );
 
   return (
@@ -153,11 +156,17 @@ export function TypeaheadSearch({
 
       {/* Selected item display or search input */}
       {selectedItem && !isOpen ? (
-        <div className="relative flex items-center gap-2 rounded-md border bg-background px-3 py-2">
+        <div
+          data-slot="typeahead-selected"
+          className="bg-background relative flex items-center gap-2 rounded-md border px-3 py-2"
+        >
           <Avatar className="h-6 w-6 shrink-0">
             <AvatarImage src={selectedItem.avatar ?? undefined} />
             <AvatarFallback className="text-[10px]">
-              {(() => { const Icon = getEntityIcon(selectedItem.entityType); return <Icon className="h-3 w-3" />; })()}
+              {(() => {
+                const Icon = getEntityIcon(selectedItem.entityType);
+                return <Icon className="h-3 w-3" />;
+              })()}
             </AvatarFallback>
           </Avatar>
           <span className="flex-1 truncate text-sm font-medium">{selectedItem.label}</span>
@@ -172,7 +181,7 @@ export function TypeaheadSearch({
           <button
             type="button"
             onClick={handleClear}
-            className="rounded-full p-1 hover:bg-destructive/10 hover:text-destructive"
+            className="hover:bg-destructive/10 hover:text-destructive rounded-full p-1"
             aria-label="Clear selection"
           >
             <X className="h-3 w-3" />
@@ -180,16 +189,20 @@ export function TypeaheadSearch({
         </div>
       ) : (
         <div ref={inputWrapperRef} className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <Input
             placeholder={placeholder}
             value={query}
             onChange={e => {
+              onInteract?.();
               setQuery(e.target.value);
               setIsOpen(true);
               setSelectedIndex(0);
             }}
-            onFocus={() => setIsOpen(true)}
+            onFocus={() => {
+              onInteract?.();
+              setIsOpen(true);
+            }}
             onKeyDown={handleKeyDown}
             className="pl-10"
           />
@@ -197,12 +210,10 @@ export function TypeaheadSearch({
       )}
 
       {/* Dropdown — inline when disablePortal is set (e.g. inside dialogs), otherwise via portal */}
-      {isOpen && (externalItems ? true : query.trim().length > 0) && (
-        disablePortal ? (
-          <div
-            ref={dropdownPortalRef}
-            className="absolute left-0 right-0 top-full z-[9999] mt-1"
-          >
+      {isOpen &&
+        (externalItems ? true : query.trim().length > 0) &&
+        (disablePortal ? (
+          <div ref={dropdownPortalRef} className="absolute top-full right-0 left-0 z-[9999] mt-1">
             <TypeaheadDropdown
               results={filteredResults.slice(0, 20)}
               query={query}
@@ -223,8 +234,8 @@ export function TypeaheadSearch({
                 width: dropdownStyle.width,
                 zIndex: 9999,
               }}
-              onPointerDown={(e) => e.stopPropagation()}
-              onMouseDown={(e) => e.stopPropagation()}
+              onPointerDown={e => e.stopPropagation()}
+              onMouseDown={e => e.stopPropagation()}
             >
               <TypeaheadDropdown
                 results={filteredResults.slice(0, 20)}
@@ -234,10 +245,9 @@ export function TypeaheadSearch({
                 onHoverIndex={setSelectedIndex}
               />
             </div>,
-            document.body,
+            document.body
           )
-        )
-      )}
+        ))}
     </div>
   );
 }

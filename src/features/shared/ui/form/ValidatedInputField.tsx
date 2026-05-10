@@ -22,6 +22,7 @@ interface ValidatedInputFieldProps extends Omit<
   invalid?: boolean;
   icon?: ReactNode;
   suggestions?: ValidatedInputSuggestion[];
+  showHint?: 'focus' | 'always';
 }
 
 export function ValidatedInputField({
@@ -35,6 +36,7 @@ export function ValidatedInputField({
   invalid,
   icon,
   suggestions = [],
+  showHint = 'focus',
   className,
   onFocus,
   onBlur,
@@ -185,7 +187,7 @@ export function ValidatedInputField({
           </div>
         ) : null}
       </div>
-      {hint && hasEdited && isFocused ? (
+      {hint && (showHint === 'always' || (hasEdited && isFocused)) ? (
         <p
           className={cn(
             'text-muted-foreground text-xs',

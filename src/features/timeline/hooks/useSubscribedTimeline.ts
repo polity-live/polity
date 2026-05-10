@@ -8,6 +8,7 @@
 import { useMemo, useCallback, useState } from 'react';
 import { useUserGroupSubscriptions } from '@/zero/groups/useGroupState';
 import { useUserEventSubscriptions } from '@/zero/events/useEventState';
+import { normalizeTimelineText } from '@/features/timeline/logic/normalizeTimelineText';
 
 export interface TimelineItem {
   id: string;
@@ -107,28 +108,25 @@ interface AgendaItemPreview {
 export function useSubscribedTimeline(
   options: UseSubscribedTimelineOptions
 ): UseSubscribedTimelineResult {
-  const { userId, userEmail, pageSize = 20, sortBy = 'recent' } = options;
+  const { userId, pageSize = 20, sortBy = 'recent' } = options;
   const [page, setPage] = useState(0);
 
   // Query user's group memberships via facade
-  const { memberships: membershipRows, isLoading: membershipLoading } = useUserGroupSubscriptions(userId);
+  const { memberships: membershipRows, isLoading: membershipLoading } =
+    useUserGroupSubscriptions(userId);
 
   // Query user's event participations via facade
-  const { participations: participationRows, isLoading: participationLoading } = useUserEventSubscriptions(userId);
+  const { participations: participationRows, isLoading: participationLoading } =
+    useUserEventSubscriptions(userId);
 
   const membershipData = { groupMemberships: membershipRows };
   const participationData = { eventParticipants: participationRows };
-
-  const participatedEventIds = useMemo(() => {
-    if (!participationData?.eventParticipants) return [] as string[];
-    return participationData.eventParticipants.filter(p => p.event).map(p => p.event!.id);
-  }, [participationData]);
 
   // Agenda items are already retrieved via related queries on event participation data
   const { data: agendaItemsData } = { data: { agendaItems: [] as AgendaItemPreview[] } };
 
   const agendaItemsByEventId = useMemo(() => {
-    const map = new Map<string, Array<Pick<AgendaItemPreview, 'election' | 'amendmentVote'>>>();
+    const map = new Map<string, Pick<AgendaItemPreview, 'election' | 'amendmentVote'>[]>();
     for (const item of agendaItemsData?.agendaItems ?? []) {
       const eventId = item.event_id;
       if (!eventId) continue;
@@ -142,22 +140,25 @@ export function useSubscribedTimeline(
   // Get subscribed group IDs
   const subscribedGroupIds = useMemo(() => {
     if (!membershipData?.groupMemberships) return [];
-    return membershipData.groupMemberships.filter(m => m.group).map(m => m.group!.id);
+    return membershipData.groupMemberships
+      .map(m => m.group?.id)
+      .filter((id): id is string => Boolean(id));
   }, [membershipData]);
 
   // Transform memberships to timeline items
   const groupItems = useMemo((): TimelineItem[] => {
     if (!membershipData?.groupMemberships) return [];
 
-    return membershipData.groupMemberships
-      .filter(m => m.group)
-      .map(m => {
-        const g = m.group!;
-        return {
+    return membershipData.groupMemberships.flatMap(m => {
+      const g = m.group;
+      if (!g) return [] as TimelineItem[];
+
+      return [
+        {
           id: g.id,
           type: 'group' as const,
           title: g.name || 'Unnamed Group',
-          description: g.description ?? undefined,
+          description: normalizeTimelineText(g.description),
           imageUrl: g.image_url ?? undefined,
           groupId: g.id,
           groupName: g.name || 'Unnamed Group',
@@ -168,23 +169,25 @@ export function useSubscribedTimeline(
           tags: g.group_hashtags
             ?.map(j => j.hashtag?.tag)
             .filter((tag): tag is string => Boolean(tag)),
-        };
-      });
+        },
+      ];
+    });
   }, [membershipData]);
 
   // Transform events to timeline items
   const eventItems = useMemo((): TimelineItem[] => {
     if (!participationData?.eventParticipants) return [];
 
-    return participationData.eventParticipants
-      .filter(p => p.event)
-      .map(p => {
-        const e = p.event!;
-        return {
+    return participationData.eventParticipants.flatMap(p => {
+      const e = p.event;
+      if (!e) return [] as TimelineItem[];
+
+      return [
+        {
           id: e.id,
           type: 'event' as const,
           title: e.title || 'Unnamed Event',
-          description: e.description ?? undefined,
+          description: normalizeTimelineText(e.description),
           imageUrl: e.image_url ?? undefined,
           eventId: e.id,
           eventName: e.title || 'Unnamed Event',
@@ -193,8 +196,8 @@ export function useSubscribedTimeline(
           endDate: e.end_date ? new Date(e.end_date) : undefined,
           location: e.location_name ?? undefined,
           attendeeCount: e.participants?.length,
-          electionsCount:
-            agendaItemsByEventId.get(e.id)?.filter(item => Boolean(item?.election)).length,
+          electionsCount: agendaItemsByEventId.get(e.id)?.filter(item => Boolean(item?.election))
+            .length,
           createdAt: new Date(e.created_at || Date.now()),
           status: e.status ?? undefined,
           tags: e.event_hashtags
@@ -202,8 +205,9 @@ export function useSubscribedTimeline(
             .filter((tag): tag is string => Boolean(tag)),
           isRecurring: Boolean(e.is_recurring),
           recurrencePattern: e.recurrence_pattern ?? undefined,
-        };
-      });
+        },
+      ];
+    });
   }, [participationData]);
 
   // Combine and sort items (with deduplication)

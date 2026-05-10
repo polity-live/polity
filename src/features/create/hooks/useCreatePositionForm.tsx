@@ -1,36 +1,32 @@
-import { useState, useMemo } from 'react'
-import { useNavigate } from '@tanstack/react-router'
-import { useAuth } from '@/providers/auth-provider'
-import { useGroupActions } from '@/zero/groups/useGroupActions'
-import { useTranslation } from '@/features/shared/hooks/use-translation'
-import { toast } from 'sonner'
-import { Input } from '@/features/shared/ui/ui/input'
-import { Textarea } from '@/features/shared/ui/ui/textarea'
-import { Label } from '@/features/shared/ui/ui/label'
-import { CreateSummaryStep } from '../ui/CreateSummaryStep'
-import { TypeaheadSearch } from '@/features/shared/ui/typeahead'
-import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers'
-import type { CreateFormConfig } from '../types/create-form.types'
+import { useState, useMemo } from 'react';
+import { useNavigate } from '@tanstack/react-router';
+import { useAuth } from '@/providers/auth-provider';
+import { useGroupActions } from '@/zero/groups/useGroupActions';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { toast } from 'sonner';
+import { CreateSummaryStep } from '../ui/CreateSummaryStep';
+import { CreateInputField, CreateTextareaField } from '../ui/CreateFields';
+import { CreateTypeaheadField } from '../ui/CreateFields';
+import type { CreateFormConfig } from '../types/create-form.types';
 
 export function useCreatePositionForm(): CreateFormConfig {
-  const { t } = useTranslation()
-  const navigate = useNavigate()
-  const { user } = useAuth()
-  const { createPosition } = useGroupActions()
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { createPosition } = useGroupActions();
 
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [term, setTerm] = useState('4')
-  const [firstTermStart, setFirstTermStart] = useState('')
-  const [groupId, setGroupId] = useState('')
-  const [groupName, setGroupName] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [term, setTerm] = useState('4');
+  const [firstTermStart, setFirstTermStart] = useState('');
+  const [groupId, setGroupId] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
-    if (!user) return
-    setIsSubmitting(true)
+    if (!user) return;
+    setIsSubmitting(true);
     try {
-      const positionId = crypto.randomUUID()
+      const positionId = crypto.randomUUID();
       await createPosition({
         id: positionId,
         title: title.trim(),
@@ -40,119 +36,111 @@ export function useCreatePositionForm(): CreateFormConfig {
         scheduled_revote_date: null,
         group_id: groupId,
         event_id: null,
-      })
-      toast.success(t('pages.create.success.created'))
-      navigate({ to: '/group/$id', params: { id: groupId } })
+      });
+      toast.success(t('pages.create.success.created'));
+      navigate({ to: '/group/$id', params: { id: groupId } });
     } catch {
-      toast.error(t('pages.create.error.createFailed'))
+      toast.error(t('pages.create.error.createFailed'));
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
-  const config = useMemo((): CreateFormConfig => ({
-    entityType: 'group',
-    title: 'pages.create.position.title',
-    isSubmitting,
-    onSubmit: handleSubmit,
-    steps: [
-      {
-        label: t('pages.create.position.groupLabel'),
-        isValid: () => !!groupId,
-        content: (
-          <div className="space-y-2">
-            <Label>{t('pages.create.position.groupLabel')}</Label>
-            <TypeaheadSearch
+  const config = useMemo(
+    (): CreateFormConfig => ({
+      entityType: 'group',
+      title: 'pages.create.position.title',
+      isSubmitting,
+      onSubmit: handleSubmit,
+      steps: [
+        {
+          label: t('pages.create.position.groupLabel'),
+          isValid: () => !!groupId,
+          content: (
+            <CreateTypeaheadField
+              label={t('pages.create.position.groupLabel')}
+              required
               entityTypes={['group']}
               value={groupId || undefined}
-              onChange={(item: TypeaheadItem | null) => {
-                setGroupId(item?.id ?? '')
-                setGroupName(item?.label ?? '')
+              onChange={item => {
+                setGroupId(item?.id ?? '');
               }}
               placeholder={t('pages.create.common.searchGroup')}
             />
-          </div>
-        ),
-      },
-      {
-        label: t('pages.create.position.titleLabel'),
-        isValid: () => !!title.trim(),
-        content: (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>
-                {t('pages.create.position.titleLabel')} <span className="text-destructive">*</span>
-              </Label>
-              <p className="text-muted-foreground text-xs">{t('pages.create.position.tips.title')}</p>
-              <Input
+          ),
+        },
+        {
+          label: t('pages.create.position.titleLabel'),
+          isValid: () => !!title.trim(),
+          content: (
+            <div className="space-y-4">
+              <CreateInputField
+                label={t('pages.create.position.titleLabel')}
+                required
+                hint={t('pages.create.position.tips.title')}
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onValueChange={setTitle}
                 placeholder={t('pages.create.position.titlePlaceholder')}
               />
-            </div>
-            <div className="space-y-2">
-              <Label>{t('pages.create.position.descriptionLabel')}</Label>
-              <p className="text-muted-foreground text-xs">{t('pages.create.position.tips.description')}</p>
-              <Textarea
+              <CreateTextareaField
+                label={t('pages.create.position.descriptionLabel')}
+                hint={t('pages.create.position.tips.description')}
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onValueChange={setDescription}
                 placeholder={t('pages.create.position.descriptionPlaceholder')}
                 rows={3}
               />
             </div>
-          </div>
-        ),
-      },
-      {
-        label: t('pages.create.position.termLabel'),
-        isValid: () => parseInt(term, 10) >= 1 && !!firstTermStart,
-        content: (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>
-                {t('pages.create.position.termLabel')} <span className="text-destructive">*</span>
-              </Label>
-              <p className="text-muted-foreground text-xs">{t('pages.create.position.tips.termLength')}</p>
-              <Input
+          ),
+        },
+        {
+          label: t('pages.create.position.termLabel'),
+          isValid: () => parseInt(term, 10) >= 1 && !!firstTermStart,
+          content: (
+            <div className="space-y-4">
+              <CreateInputField
+                label={t('pages.create.position.termLabel')}
+                required
+                hint={`${t('pages.create.position.tips.termLength')} ${t('pages.create.position.termHint')}`}
                 type="number"
                 min={1}
                 value={term}
-                onChange={(e) => setTerm(e.target.value)}
+                onValueChange={setTerm}
               />
-              <p className="text-muted-foreground text-xs">{t('pages.create.position.termHint')}</p>
-            </div>
-            <div className="space-y-2">
-              <Label>
-                {t('pages.create.position.firstTermStartLabel')} <span className="text-destructive">*</span>
-              </Label>
-              <Input
+              <CreateInputField
+                label={t('pages.create.position.firstTermStartLabel')}
+                required
+                hint={t('pages.create.position.firstTermStartHint')}
                 type="date"
                 value={firstTermStart}
-                onChange={(e) => setFirstTermStart(e.target.value)}
+                onValueChange={setFirstTermStart}
               />
-              <p className="text-muted-foreground text-xs">{t('pages.create.position.firstTermStartHint')}</p>
             </div>
-          </div>
-        ),
-      },
-      {
-        label: t('pages.create.common.review'),
-        isValid: () => !!groupId && !!title.trim() && parseInt(term, 10) >= 1 && !!firstTermStart,
-        content: (
-          <CreateSummaryStep
-            entityType="group"
-            badge={t('pages.create.position.reviewBadge')}
-            title={title || 'Untitled Position'}
-            subtitle={description || undefined}
-            fields={[
-              { label: t('pages.create.position.termLength'), value: t('pages.create.position.termMonths', { months: term }) },
-              { label: t('pages.create.position.firstTermStarts'), value: firstTermStart },
-            ]}
-          />
-        ),
-      },
-    ],
-  }), [title, description, term, firstTermStart, groupId, isSubmitting, t])
+          ),
+        },
+        {
+          label: t('pages.create.common.review'),
+          isValid: () => !!groupId && !!title.trim() && parseInt(term, 10) >= 1 && !!firstTermStart,
+          content: (
+            <CreateSummaryStep
+              entityType="group"
+              badge={t('pages.create.position.reviewBadge')}
+              title={title || 'Untitled Position'}
+              subtitle={description || undefined}
+              fields={[
+                {
+                  label: t('pages.create.position.termLength'),
+                  value: t('pages.create.position.termMonths', { months: term }),
+                },
+                { label: t('pages.create.position.firstTermStarts'), value: firstTermStart },
+              ]}
+            />
+          ),
+        },
+      ],
+    }),
+    [title, description, term, firstTermStart, groupId, isSubmitting, t]
+  );
 
-  return config
+  return config;
 }

@@ -12,15 +12,12 @@ import {
 } from '@/zero/events/useEventState';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { toast } from 'sonner';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Textarea } from '@/features/shared/ui/ui/textarea';
 import { Label } from '@/features/shared/ui/ui/label';
-import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
-import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import { TypeSelector } from '@/features/shared/ui/ui/type-selector';
 import { TooltipProvider } from '@/features/shared/ui/ui/tooltip';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
+import { CreateInputField, CreateTextareaField, CreateTypeaheadField } from '../ui/CreateFields';
 import { notifyAgendaItemCreated } from '@/features/notifications/utils/notification-helpers.ts';
 import type { CreateFormConfig } from '../types/create-form.types';
 import { PositionSearchInput } from '../ui/inputs/PositionSearchInput';
@@ -204,43 +201,33 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
           isValid: () => !!eventId && !!title.trim(),
           content: (
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>
-                  {t('pages.create.agendaItem.eventLabel')}{' '}
-                  <span className="text-destructive">*</span>
-                </Label>
-                <TypeaheadSearch
-                  items={toTypeaheadItems(
-                    userEvents,
-                    'event',
-                    e => e.title || 'Event',
-                    e => e.description?.substring(0, 60)
-                  )}
-                  value={eventId}
-                  onChange={(item: TypeaheadItem | null) => setEventId(item?.id ?? '')}
-                  placeholder={t('pages.create.agendaItem.eventPlaceholder')}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>
-                  {t('pages.create.agendaItem.titleLabel')}{' '}
-                  <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  value={title}
-                  onChange={e => setTitle(e.target.value)}
-                  placeholder={t('pages.create.agendaItem.titlePlaceholder')}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{t('pages.create.agendaItem.descriptionLabel')}</Label>
-                <Textarea
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
-                  placeholder={t('pages.create.agendaItem.descriptionPlaceholder')}
-                  rows={3}
-                />
-              </div>
+              <CreateTypeaheadField
+                label={t('pages.create.agendaItem.eventLabel')}
+                required
+                items={toTypeaheadItems(
+                  userEvents,
+                  'event',
+                  e => e.title || 'Event',
+                  e => e.description?.substring(0, 60)
+                )}
+                value={eventId || undefined}
+                onChange={item => setEventId(item?.id ?? '')}
+                placeholder={t('pages.create.agendaItem.eventPlaceholder')}
+              />
+              <CreateInputField
+                label={t('pages.create.agendaItem.titleLabel')}
+                required
+                value={title}
+                onValueChange={setTitle}
+                placeholder={t('pages.create.agendaItem.titlePlaceholder')}
+              />
+              <CreateTextareaField
+                label={t('pages.create.agendaItem.descriptionLabel')}
+                value={description}
+                onValueChange={setDescription}
+                placeholder={t('pages.create.agendaItem.descriptionPlaceholder')}
+                rows={3}
+              />
             </div>
           ),
         },
@@ -253,69 +240,73 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                 <TypeSelector value={type} onChange={setType} />
               </TooltipProvider>
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>{t('pages.create.agendaItem.orderLabel')}</Label>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={order}
-                    onChange={e => {
-                      setHasCustomOrder(true);
-                      setOrder(parseInt(e.target.value) || 1);
-                    }}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>{t('pages.create.agendaItem.durationLabel')}</Label>
-                  <Input
-                    type="number"
-                    min="1"
-                    placeholder={t('pages.create.agendaItem.durationPlaceholder')}
-                    value={duration}
-                    onChange={e => setDuration(e.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-          ),
-        },
-        ...((type === 'election' || type === 'vote') ? [{
-          label: t('pages.create.agendaItem.votingSettings', 'Voting Settings'),
-          isValid: () => true,
-          content: (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>{t('pages.create.agendaItem.majorityType', 'Majority Type')}</Label>
-                <Select value={majorityType} onValueChange={(v: string) => setMajorityType(v as MajorityType)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="simple">
-                      {t('pages.create.agendaItem.majoritySimple', 'Simple Majority (>50%)')}
-                    </SelectItem>
-                    <SelectItem value="absolute">
-                      {t('pages.create.agendaItem.majorityAbsolute', 'Absolute Majority')}
-                    </SelectItem>
-                    <SelectItem value="two_thirds">
-                      {t('pages.create.agendaItem.majorityTwoThirds', 'Two-Thirds Majority (≥66.7%)')}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>{t('pages.create.agendaItem.timeLimit', 'Time Limit (minutes)')}</Label>
-                <Input
+                <CreateInputField
+                  label={t('pages.create.agendaItem.orderLabel')}
                   type="number"
                   min="1"
-                  placeholder={t('pages.create.agendaItem.timeLimitPlaceholder', 'No limit')}
-                  value={timeLimit}
-                  onChange={e => setTimeLimit(e.target.value)}
+                  value={order}
+                  onValueChange={value => {
+                    setHasCustomOrder(true);
+                    setOrder(parseInt(value, 10) || 1);
+                  }}
+                />
+                <CreateInputField
+                  label={t('pages.create.agendaItem.durationLabel')}
+                  type="number"
+                  min="1"
+                  placeholder={t('pages.create.agendaItem.durationPlaceholder')}
+                  value={duration}
+                  onValueChange={setDuration}
                 />
               </div>
             </div>
           ),
-        }] : []),
+        },
+        ...(type === 'election' || type === 'vote'
+          ? [
+              {
+                label: t('pages.create.agendaItem.votingSettings', 'Voting Settings'),
+                isValid: () => true,
+                content: (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>{t('pages.create.agendaItem.majorityType', 'Majority Type')}</Label>
+                      <Select
+                        value={majorityType}
+                        onValueChange={(v: string) => setMajorityType(v as MajorityType)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="simple">
+                            {t('pages.create.agendaItem.majoritySimple', 'Simple Majority (>50%)')}
+                          </SelectItem>
+                          <SelectItem value="absolute">
+                            {t('pages.create.agendaItem.majorityAbsolute', 'Absolute Majority')}
+                          </SelectItem>
+                          <SelectItem value="two_thirds">
+                            {t(
+                              'pages.create.agendaItem.majorityTwoThirds',
+                              'Two-Thirds Majority (≥66.7%)'
+                            )}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <CreateInputField
+                      label={t('pages.create.agendaItem.timeLimit', 'Time Limit (minutes)')}
+                      type="number"
+                      min="1"
+                      placeholder={t('pages.create.agendaItem.timeLimitPlaceholder', 'No limit')}
+                      value={timeLimit}
+                      onValueChange={setTimeLimit}
+                    />
+                  </div>
+                ),
+              },
+            ]
+          : []),
         {
           label: t('pages.create.agendaItem.additionalLinks'),
           isValid: () => true,
@@ -323,19 +314,13 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
           content: (
             <div className="space-y-4">
               {type === 'vote' && (
-                <div className="space-y-2">
-                  <Label>{t('pages.create.agendaItem.amendmentOptional')}</Label>
-                  <TypeaheadSearch
-                    items={toTypeaheadItems(
-                      userAmendments,
-                      'amendment',
-                      a => a.title || 'Amendment'
-                    )}
-                    value={amendmentId}
-                    onChange={(item: TypeaheadItem | null) => setAmendmentId(item?.id ?? '')}
-                    placeholder={t('pages.create.agendaItem.amendmentPlaceholder')}
-                  />
-                </div>
+                <CreateTypeaheadField
+                  label={t('pages.create.agendaItem.amendmentOptional')}
+                  items={toTypeaheadItems(userAmendments, 'amendment', a => a.title || 'Amendment')}
+                  value={amendmentId || undefined}
+                  onChange={item => setAmendmentId(item?.id ?? '')}
+                  placeholder={t('pages.create.agendaItem.amendmentPlaceholder')}
+                />
               )}
               {type === 'election' && (
                 <div className="space-y-2">
@@ -397,17 +382,24 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                       },
                     ]
                   : []),
-                ...((type === 'election' || type === 'vote')
+                ...(type === 'election' || type === 'vote'
                   ? [
                       {
                         label: t('pages.create.agendaItem.majorityType', 'Majority Type'),
-                        value: majorityType === 'two_thirds' ? '⅔ Majority' : majorityType === 'absolute' ? 'Absolute' : 'Simple',
+                        value:
+                          majorityType === 'two_thirds'
+                            ? '⅔ Majority'
+                            : majorityType === 'absolute'
+                              ? 'Absolute'
+                              : 'Simple',
                       },
                       ...(timeLimit
-                        ? [{
-                            label: t('pages.create.agendaItem.timeLimit', 'Time Limit'),
-                            value: `${timeLimit} min`,
-                          }]
+                        ? [
+                            {
+                              label: t('pages.create.agendaItem.timeLimit', 'Time Limit'),
+                              value: `${timeLimit} min`,
+                            },
+                          ]
                         : []),
                     ]
                   : []),

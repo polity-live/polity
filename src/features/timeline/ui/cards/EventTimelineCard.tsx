@@ -13,6 +13,7 @@ import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx
 import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
 import { useEventParticipation } from '@/features/events/hooks/useEventParticipation';
 import { useSubscribeEvent } from '@/features/events/hooks/useSubscribeEvent';
+import { normalizeTimelineText } from '@/features/timeline/logic/normalizeTimelineText';
 import { CONTENT_TYPE_CONFIG } from '../../constants/content-type-config';
 import {
   TimelineCardBase,
@@ -186,6 +187,7 @@ export function EventTimelineCard({
   const locationDisplay = buildLocationDisplay(event.location, event.city, event.postcode);
   const eventStyle = CONTENT_TYPE_CONFIG.event;
   const eventHref = href ?? (onSelect ? undefined : `/event/${event.id}`);
+  const eventDescription = normalizeTimelineText(event.description);
 
   const resolvedParticipationStatus = event.participationStatus ?? participation.status;
   const isParticipant =
@@ -285,8 +287,8 @@ export function EventTimelineCard({
       </TimelineCardHeader>
 
       <TimelineCardContent>
-        {event.description && (
-          <p className="text-muted-foreground mb-3 line-clamp-2 text-sm">{event.description}</p>
+        {eventDescription && (
+          <p className="text-muted-foreground mb-3 line-clamp-2 text-sm">{eventDescription}</p>
         )}
 
         {/* Hashtags */}
@@ -441,14 +443,14 @@ export function EventTimelineCard({
           <ShareButton
             url={`/event/${event.id}`}
             title={event.title}
-            description={event.description || ''}
+            description={eventDescription || ''}
             variant="outline"
             size="sm"
             shareContextItem={{
               id: event.id,
               type: 'event',
               title: event.title,
-              description: event.description,
+              description: eventDescription,
               createdAt: new Date(event.startDate),
               startDate: new Date(event.startDate),
               endDate: event.endDate ? new Date(event.endDate) : undefined,

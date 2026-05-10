@@ -2,12 +2,12 @@ import { useState, useMemo, useCallback } from 'react';
 import type { Value } from 'platejs';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/features/shared/ui/ui/tabs';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
 import { DateTimeRangeInput } from '../ui/inputs/DateTimeRangeInput';
+import { CreateInputField } from '../ui/CreateFields';
 import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
 import { VisibilityInput } from '../ui/inputs/VisibilityInput';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
@@ -18,8 +18,6 @@ import { GeoAddressPicker } from '@/features/shared/ui/form/GeoAddressPicker';
 import { useEventActions } from '@/zero/events/useEventActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
 import { useUserGroupsWithManageEvents } from '@/zero/groups/useGroupState';
-import { TypeaheadSearch } from '@/features/shared/ui/typeahead';
-import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import type { CreateFormConfig } from '../types/create-form.types';
 import { buildRRule, type RecurrencePattern } from '@/features/events/logic/rruleHelpers';
 import { formatNamedLocation } from '@/features/shared/logic/locationHelpers';
@@ -29,6 +27,7 @@ import {
   richTextToPlainText,
   toZeroRichTextValue,
 } from '@/features/shared/logic/richText';
+import { CreateTypeaheadField } from '../ui/CreateFields';
 
 type EventType = 'delegate_assembly' | 'general_assembly' | 'open' | 'on_invite';
 
@@ -180,19 +179,14 @@ export function useCreateEventForm(): CreateFormConfig {
           isValid: () => !!title.trim(),
           content: (
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>
-                  {t('pages.create.event.titleLabel')} <span className="text-destructive">*</span>
-                </Label>
-                <p className="text-muted-foreground text-xs">
-                  {t('pages.create.event.tips.title')}
-                </p>
-                <Input
-                  value={title}
-                  onChange={e => setTitle(e.target.value)}
-                  placeholder={t('pages.create.event.titlePlaceholder')}
-                />
-              </div>
+              <CreateInputField
+                label={t('pages.create.event.titleLabel')}
+                required
+                hint={t('pages.create.event.tips.title')}
+                value={title}
+                onValueChange={setTitle}
+                placeholder={t('pages.create.event.titlePlaceholder')}
+              />
               <div className="space-y-2">
                 <Label>{t('pages.create.event.descriptionLabel')}</Label>
                 <p className="text-muted-foreground text-xs">
@@ -228,23 +222,19 @@ export function useCreateEventForm(): CreateFormConfig {
           isValid: () => (groupRequired ? !!groupId : true),
           optional: !groupRequired,
           content: (
-            <div className="space-y-2">
-              <Label>
-                {t('pages.create.event.associatedGroupLabel')}
-                {groupRequired && <span className="text-destructive"> *</span>}
-              </Label>
-              <p className="text-muted-foreground text-xs">{t('pages.create.event.tips.group')}</p>
-              <TypeaheadSearch
-                entityTypes={['group']}
-                value={groupId || undefined}
-                onChange={(item: TypeaheadItem | null) => {
-                  setGroupId(item?.id ?? '');
-                  setGroupName(item?.label ?? '');
-                }}
-                filterFn={(item: TypeaheadItem) => manageEventGroupIds.has(item.id)}
-                placeholder={t('pages.create.event.associatedGroupPlaceholder')}
-              />
-            </div>
+            <CreateTypeaheadField
+              label={t('pages.create.event.associatedGroupLabel')}
+              hint={t('pages.create.event.tips.group')}
+              required={groupRequired}
+              entityTypes={['group']}
+              value={groupId || undefined}
+              onChange={item => {
+                setGroupId(item?.id ?? '');
+                setGroupName(item?.label ?? '');
+              }}
+              filterFn={item => manageEventGroupIds.has(item.id)}
+              placeholder={t('pages.create.event.associatedGroupPlaceholder')}
+            />
           ),
         },
         // 4. Delegate Allocation (only for delegate_assembly)
@@ -317,17 +307,13 @@ export function useCreateEventForm(): CreateFormConfig {
                   </TabsTrigger>
                 </TabsList>
                 <TabsContent value="physical" className="space-y-4 pt-2">
-                  <div className="space-y-2">
-                    <Label>{t('pages.create.event.venueName')}</Label>
-                    <p className="text-muted-foreground text-xs">
-                      {t('pages.create.event.tips.venueName')}
-                    </p>
-                    <Input
-                      value={locationName}
-                      onChange={e => setLocationName(e.target.value)}
-                      placeholder={t('pages.create.event.venueNamePlaceholder')}
-                    />
-                  </div>
+                  <CreateInputField
+                    label={t('pages.create.event.venueName')}
+                    hint={t('pages.create.event.tips.venueName')}
+                    value={locationName}
+                    onValueChange={setLocationName}
+                    placeholder={t('pages.create.event.venueNamePlaceholder')}
+                  />
                   <GeoAddressPicker
                     idPrefix="create-event-location"
                     values={{
@@ -386,32 +372,24 @@ export function useCreateEventForm(): CreateFormConfig {
                   />
                 </TabsContent>
                 <TabsContent value="online" className="space-y-4 pt-2">
-                  <div className="space-y-2">
-                    <Label>{t('pages.create.event.meetingLink')}</Label>
-                    <p className="text-muted-foreground text-xs">
-                      {t('pages.create.event.tips.meetingLink')}
-                    </p>
-                    <Input
-                      value={onlineLink}
-                      onChange={e => setOnlineLink(e.target.value)}
-                      placeholder={t('pages.create.event.meetingLinkPlaceholder')}
-                    />
-                  </div>
+                  <CreateInputField
+                    label={t('pages.create.event.meetingLink')}
+                    hint={t('pages.create.event.tips.meetingLink')}
+                    value={onlineLink}
+                    onValueChange={setOnlineLink}
+                    placeholder={t('pages.create.event.meetingLinkPlaceholder')}
+                  />
                 </TabsContent>
               </Tabs>
-              <div className="space-y-2">
-                <Label>{t('pages.create.event.capacityLabel')}</Label>
-                <p className="text-muted-foreground text-xs">
-                  {t('pages.create.event.tips.capacity')}
-                </p>
-                <Input
-                  type="number"
-                  value={capacity}
-                  onChange={e => setCapacity(e.target.value)}
-                  placeholder={t('pages.create.event.capacityPlaceholder')}
-                  min={1}
-                />
-              </div>
+              <CreateInputField
+                label={t('pages.create.event.capacityLabel')}
+                hint={t('pages.create.event.tips.capacity')}
+                type="number"
+                value={capacity}
+                onValueChange={setCapacity}
+                placeholder={t('pages.create.event.capacityPlaceholder')}
+                min={1}
+              />
             </div>
           ),
         },
@@ -425,29 +403,21 @@ export function useCreateEventForm(): CreateFormConfig {
                 content: (
                   <div className="space-y-4">
                     {eventType === 'delegate_assembly' && (
-                      <div className="space-y-2">
-                        <Label>{t('pages.create.event.delegateNominationDeadline')}</Label>
-                        <p className="text-muted-foreground text-xs">
-                          {t('pages.create.event.delegateNominationDeadlineDesc')}
-                        </p>
-                        <Input
-                          type="datetime-local"
-                          value={delegatesNominationDeadline}
-                          onChange={e => setDelegatesNominationDeadline(e.target.value)}
-                        />
-                      </div>
-                    )}
-                    <div className="space-y-2">
-                      <Label>{t('pages.create.event.amendmentCutoffDeadline')}</Label>
-                      <p className="text-muted-foreground text-xs">
-                        {t('pages.create.event.amendmentCutoffDeadlineDesc')}
-                      </p>
-                      <Input
+                      <CreateInputField
+                        label={t('pages.create.event.delegateNominationDeadline')}
+                        hint={t('pages.create.event.delegateNominationDeadlineDesc')}
                         type="datetime-local"
-                        value={amendmentDeadline}
-                        onChange={e => setAmendmentDeadline(e.target.value)}
+                        value={delegatesNominationDeadline}
+                        onValueChange={setDelegatesNominationDeadline}
                       />
-                    </div>
+                    )}
+                    <CreateInputField
+                      label={t('pages.create.event.amendmentCutoffDeadline')}
+                      hint={t('pages.create.event.amendmentCutoffDeadlineDesc')}
+                      type="datetime-local"
+                      value={amendmentDeadline}
+                      onValueChange={setAmendmentDeadline}
+                    />
                   </div>
                 ),
               },

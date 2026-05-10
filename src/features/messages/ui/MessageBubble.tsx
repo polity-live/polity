@@ -4,6 +4,7 @@ import { cn } from '@/features/shared/utils/utils';
 import { isAssistantUser } from '@/features/assistant/logic/assistantHelpers';
 import { Message } from '../types/message.types';
 import { formatTime } from '../logic/messageUtils';
+import { hasRenderableContextCards } from '../logic/contextAttachments';
 import { AiContextCards } from './AiContextCards';
 import type { AiAttachmentEntity } from '@/lib/ai/schemas';
 
@@ -20,6 +21,8 @@ export function MessageBubble({
 }: MessageBubbleProps) {
   const contextLabel = isAssistantUser(message.sender?.id ?? '') ? 'output' : 'input';
   const hasContent = Boolean(message.content?.trim());
+  const hidePolityLinkPreviews =
+    contextLabel === 'output' && hasRenderableContextCards(message.context_json);
 
   return (
     <div className={cn('flex items-end gap-2', isOwnMessage && 'flex-row-reverse')}>
@@ -35,7 +38,10 @@ export function MessageBubble({
               isOwnMessage ? 'bg-primary text-primary-foreground' : 'bg-muted'
             )}
           >
-            <MessageContent content={message.content ?? ''} />
+            <MessageContent
+              content={message.content ?? ''}
+              hidePolityLinkPreviews={hidePolityLinkPreviews}
+            />
             <p
               className={cn(
                 'mt-1 text-xs',

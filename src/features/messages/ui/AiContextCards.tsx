@@ -25,6 +25,8 @@ import {
   isUploadAttachmentCardPayload,
   type UploadAttachmentCardPayload,
 } from '../logic/uploadAttachmentCard';
+import { parseContextAttachments } from '../logic/contextAttachments';
+import { sanitizeAttachmentCardProps } from '../logic/sanitizeAttachmentCardProps';
 
 interface AiContextCardsProps {
   attachments?: readonly AiChatAttachment[];
@@ -70,32 +72,6 @@ type RenderableContextCard =
 type SkillContextCard = Extract<RenderableContextCard, { kind: 'skill' }>;
 type NonSkillContextCard = Exclude<RenderableContextCard, SkillContextCard>;
 
-function isAttachment(value: unknown): value is AiChatAttachment {
-  if (!value || typeof value !== 'object') {
-    return false;
-  }
-
-  const record = value as Record<string, unknown>;
-  return (
-    typeof record.entityType === 'string' &&
-    typeof record.entityId === 'string' &&
-    typeof record.title === 'string'
-  );
-}
-
-function parseAttachments(contextJson?: string | null): AiChatAttachment[] {
-  if (!contextJson) {
-    return [];
-  }
-
-  try {
-    const parsed: unknown = JSON.parse(contextJson);
-    return Array.isArray(parsed) ? parsed.filter(isAttachment) : [];
-  } catch {
-    return [];
-  }
-}
-
 function isCardPayload(value: unknown): value is CardPayload {
   if (!value || typeof value !== 'object') {
     return false;
@@ -119,7 +95,10 @@ function parseAttachmentCardPayload(cardDataJson?: string | null): AttachmentCar
     const parsed: unknown = JSON.parse(cardDataJson);
 
     if (isCardPayload(parsed)) {
-      return parsed;
+      return {
+        ...parsed,
+        cardProps: sanitizeAttachmentCardProps(parsed.cardProps),
+      };
     }
 
     if (isUploadAttachmentCardPayload(parsed)) {
@@ -233,7 +212,7 @@ export function AiContextCards({
 }: AiContextCardsProps) {
   const { t } = useTranslation();
   const resolvedAttachments = useMemo(
-    () => attachments ?? parseAttachments(contextJson),
+    () => attachments ?? parseContextAttachments(contextJson),
     [attachments, contextJson]
   );
 

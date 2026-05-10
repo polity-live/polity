@@ -22,57 +22,12 @@ import { useBlogState } from '@/zero/blogs/useBlogState.ts';
 import { useStatementState } from '@/zero/statements/useStatementState.ts';
 import { useTodoState } from '@/zero/todos/useTodoState.ts';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
+import { normalizeMessagePreviewText } from '../logic/normalizeMessagePreviewText';
+import { isPolityLink, parsePolityUrl, type PolityLinkEntityType } from '../utils/url-utils';
 
 interface LinkPreviewProps {
   url: string;
   className?: string;
-}
-
-type EntityType = 'user' | 'group' | 'event' | 'amendment' | 'blog' | 'statement' | 'todo';
-
-interface PolityLink {
-  type: EntityType;
-  id: string;
-}
-
-// Parse Polity URLs
-function parsePolityUrl(url: string): PolityLink | null {
-  try {
-    const urlObj = new URL(url, window.location.origin);
-    const pathname = urlObj.pathname;
-
-    // Match patterns like /user/123, /group/456, etc.
-    const match = pathname.match(/^\/(user|group|event|amendment|blog|statement|todos?)\/([^/]+)/);
-    if (match) {
-      const rawType = match[1];
-      // Normalize "todos" to "todo"
-      const type: EntityType = rawType === 'todos' ? 'todo' : (rawType as EntityType);
-      const id = match[2];
-      return { type, id };
-    }
-  } catch {
-    return null;
-  }
-  return null;
-}
-
-// Check if URL is a Polity link
-function isPolityLink(url: string): boolean {
-  try {
-    const urlObj = new URL(url, window.location.origin);
-    return (
-      urlObj.hostname === window.location.hostname ||
-      url.startsWith('/user/') ||
-      url.startsWith('/group/') ||
-      url.startsWith('/event/') ||
-      url.startsWith('/amendment/') ||
-      url.startsWith('/blog/') ||
-      url.startsWith('/statement/') ||
-      url.startsWith('/todo/')
-    );
-  } catch {
-    return false;
-  }
 }
 
 export function LinkPreview({ url, className = '' }: LinkPreviewProps) {
@@ -106,7 +61,7 @@ export function LinkPreview({ url, className = '' }: LinkPreviewProps) {
 }
 
 interface PolityLinkPreviewProps {
-  type: EntityType;
+  type: PolityLinkEntityType;
   id: string;
   className?: string;
 }
@@ -140,6 +95,8 @@ function UserPreview({ userId, className }: { userId: string; className?: string
     return <PreviewSkeleton />;
   }
 
+  const userBio = normalizeMessagePreviewText(user.bio);
+
   return (
     <Link to="/user/$id" params={{ id: userId }}>
       <Card className={`hover:bg-accent border-l-4 border-l-blue-500 ${className}`}>
@@ -159,7 +116,7 @@ function UserPreview({ userId, className }: { userId: string; className?: string
             {user.handle && (
               <p className="text-muted-foreground truncate text-sm">@{user.handle}</p>
             )}
-            {user.bio && <p className="text-muted-foreground truncate text-xs">{user.bio}</p>}
+            {userBio && <p className="text-muted-foreground truncate text-xs">{userBio}</p>}
           </div>
           <Badge variant="outline" className="flex-shrink-0 text-xs">
             {t('components.linkPreview.user')}
@@ -178,6 +135,8 @@ function GroupPreview({ groupId, className }: { groupId: string; className?: str
     return <PreviewSkeleton />;
   }
 
+  const groupDescription = normalizeMessagePreviewText(group.description);
+
   return (
     <Link to="/group/$id" params={{ id: groupId }}>
       <Card className={`hover:bg-accent border-l-4 border-l-purple-500 ${className}`}>
@@ -189,8 +148,8 @@ function GroupPreview({ groupId, className }: { groupId: string; className?: str
           </Avatar>
           <div className="min-w-0 flex-1">
             <p className="truncate font-semibold">{group.name}</p>
-            {group.description && (
-              <p className="text-muted-foreground line-clamp-1 text-xs">{group.description}</p>
+            {groupDescription && (
+              <p className="text-muted-foreground line-clamp-1 text-xs">{groupDescription}</p>
             )}
             <p className="text-muted-foreground text-xs">
               {group.member_count || 0} {t('components.linkPreview.members')}
@@ -246,6 +205,8 @@ function AmendmentPreview({ amendmentId, className }: { amendmentId: string; cla
     return <PreviewSkeleton />;
   }
 
+  const amendmentReason = normalizeMessagePreviewText(amendment.reason);
+
   return (
     <Link to="/amendment/$id" params={{ id: amendmentId }}>
       <Card className={`hover:bg-accent border-l-4 border-l-orange-500 ${className}`}>
@@ -253,8 +214,8 @@ function AmendmentPreview({ amendmentId, className }: { amendmentId: string; cla
           <FileText className="h-5 w-5 flex-shrink-0 text-orange-500" />
           <div className="min-w-0 flex-1">
             <p className="truncate font-semibold">{amendment.title}</p>
-            {amendment.reason && (
-              <p className="text-muted-foreground truncate text-xs">{amendment.reason}</p>
+            {amendmentReason && (
+              <p className="text-muted-foreground truncate text-xs">{amendmentReason}</p>
             )}
             {amendment.editing_mode && (
               <EditingModeBadge
@@ -282,7 +243,7 @@ function BlogPreview({ blogId, className }: { blogId: string; className?: string
     return <PreviewSkeleton />;
   }
 
-  const blogOwner = blog.bloggers?.find((b) => b.status === 'owner')?.user;
+  const blogOwner = blog.bloggers?.find(b => b.status === 'owner')?.user;
   const blogViewUrl = blog.group_id
     ? `/group/${blog.group_id}/blog/${blogId}`
     : `/user/${blogOwner?.id || ''}/blog/${blogId}`;
@@ -325,13 +286,15 @@ function StatementPreview({ statementId, className }: { statementId: string; cla
     return null;
   }
 
+  const statementText = normalizeMessagePreviewText(statement.text);
+
   return (
     <Link to="/statement/$id" params={{ id: statementId }}>
       <Card className={`hover:bg-accent border-l-4 border-l-cyan-500 ${className}`}>
         <CardContent className="flex items-center gap-3 p-3">
           <FileText className="h-5 w-5 flex-shrink-0 text-cyan-500" />
           <div className="min-w-0 flex-1">
-            <p className="line-clamp-2 text-sm">{statement.text}</p>
+            <p className="line-clamp-2 text-sm">{statementText ?? ''}</p>
           </div>
           <Badge variant="outline" className="flex-shrink-0 text-xs">
             {t('components.linkPreview.statement')}
@@ -350,6 +313,8 @@ function TodoPreview({ todoId, className }: { todoId: string; className?: string
     return <PreviewSkeleton />;
   }
 
+  const todoDescription = normalizeMessagePreviewText(todo.description);
+
   return (
     <Link to="/todos/$id" params={{ id: todoId }}>
       <Card className={`hover:bg-accent border-l-4 border-l-indigo-500 ${className}`}>
@@ -357,8 +322,8 @@ function TodoPreview({ todoId, className }: { todoId: string; className?: string
           <CheckSquare className="h-5 w-5 flex-shrink-0 text-indigo-500" />
           <div className="min-w-0 flex-1">
             <p className="truncate font-semibold">{todo.title}</p>
-            {todo.description && (
-              <p className="text-muted-foreground line-clamp-1 text-xs">{todo.description}</p>
+            {todoDescription && (
+              <p className="text-muted-foreground line-clamp-1 text-xs">{todoDescription}</p>
             )}
             <div className="mt-1 flex items-center gap-2">
               <Badge variant="secondary" className="text-xs capitalize">

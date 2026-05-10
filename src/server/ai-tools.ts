@@ -2,6 +2,8 @@ import { tool } from 'ai';
 import { z } from 'zod';
 import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
+import { buildTimelineCardProps } from '@/features/search/logic/buildTimelineCardProps';
+import type { SearchContentItem } from '@/features/search/types/search.types';
 import { type AiAttachmentEntity, type AiChatAttachment } from '@/lib/ai/schemas';
 import { executeZeroRead, type ZeroTransaction } from '@/server/zero-mutate';
 import { zql } from '@/zero/schema';
@@ -190,6 +192,18 @@ interface TodoSearchRow {
   updated_at: number | null;
 }
 
+interface GroupMembershipRoleRow {
+  group_id: string;
+  role_id: string | null;
+  created_at: number;
+}
+
+interface AmendmentCollaboratorRoleRow {
+  amendment_id: string;
+  role_id: string | null;
+  created_at: number;
+}
+
 interface ElectionSearchRow {
   id: string;
   title: string | null;
@@ -324,6 +338,13 @@ interface ToolItemSummary {
   subtitle: string | null;
 }
 
+type BlogAttachmentRow = BlogSearchRow | GroupBlogRow;
+type AmendmentAttachmentRow = AmendmentSearchRow | GroupAmendmentRow | EventAmendmentRow;
+type EventAttachmentRow = EventSearchRow | GroupEventRow;
+type TodoAttachmentRow = TodoSearchRow | GroupTodoRow;
+type ElectionAttachmentRow = ElectionSearchRow | EventElectionRow;
+type VoteAttachmentRow = VoteSearchRow | EventVoteRow;
+
 function clampLimit(value: number | undefined, fallback: number, min = 1, max = 12): number {
   if (!Number.isFinite(value)) {
     return fallback;
@@ -378,21 +399,257 @@ function formatCurrency(value: number | null | undefined): string | null {
   }).format(value ?? 0);
 }
 
+function toOptionalDate(value: number | null | undefined): Date | undefined {
+  return Number.isFinite(value) ? new Date(value ?? 0) : undefined;
+}
+
+function toRequiredDate(...values: (number | null | undefined)[]): Date {
+  for (const value of values) {
+    const resolved = toOptionalDate(value);
+    if (resolved) {
+      return resolved;
+    }
+  }
+
+  return new Date(0);
+}
+
 function buildAttachment(
   entityType: AiAttachmentEntity,
   entityId: string,
   title: string,
   subtitle?: string | null,
-  promptContext?: string | null
+  promptContext?: string | null,
+  searchItem?: SearchContentItem | null
 ): AiChatAttachment {
+  const cardDataJson = (() => {
+    if (!searchItem) {
+      return null;
+    }
+
+    const { cardType, cardProps } = buildTimelineCardProps(searchItem);
+    if (!cardType || !cardProps) {
+      return null;
+    }
+
+    return JSON.stringify({ cardType, cardProps });
+  })();
+
   return {
     entityType,
     entityId,
     title,
     subtitle: subtitle ?? null,
     prompt_context: promptContext ?? null,
-    card_data_json: null,
+    card_data_json: cardDataJson,
   };
+}
+
+function buildUserAttachment(row: UserSearchRow): AiChatAttachment {
+  const fullName = [row.first_name, row.last_name].filter(Boolean).join(' ').trim();
+  const title = fullName || row.handle || 'Profil';
+  const subtitle = row.handle ? `@${row.handle}` : null;
+  const description = row.bio?.trim() || null;
+
+  return buildAttachment('user', row.id, title, subtitle, truncate(row.bio), {
+    id: row.id,
+    type: 'user',
+    title,
+    description,
+    handle: row.handle ?? undefined,
+    subtitle,
+    createdAt: new Date(0),
+  });
+}
+
+function buildGroupAttachment(row: GroupSearchRow): AiChatAttachment {
+  const title = row.name || 'Gruppe';
+  const description = toPreviewText(row.description);
+  const memberCount = row.member_count ?? undefined;
+
+  return buildAttachment(
+    'group',
+    row.id,
+    title,
+    row.member_count ? `${row.member_count} Mitglieder` : null,
+    truncate(description),
+    {
+      id: row.id,
+      type: 'group',
+      title,
+      description,
+      createdAt: new Date(0),
+      memberCount,
+      stats: memberCount ? { members: memberCount } : undefined,
+    }
+  );
+}
+
+function buildStatementAttachment(row: StatementSearchRow): AiChatAttachment {
+  const title = truncate(row.text, 90) || 'Statement';
+  const description = row.text?.trim() || title;
+  const updatedAt = toOptionalDate(row.updated_at);
+
+  return buildAttachment(
+    'statement',
+    row.id,
+    title,
+    formatDate(row.updated_at),
+    truncate(row.text),
+    {
+      id: row.id,
+      type: 'statement',
+      title,
+      description,
+      authorId: row.user_id,
+      createdAt: updatedAt ?? new Date(0),
+      updatedAt,
+    }
+  );
+}
+
+function buildBlogAttachment(row: BlogAttachmentRow): AiChatAttachment {
+  const title = row.title || 'Blog';
+  const description = row.description?.trim() || null;
+  const updatedAt = toOptionalDate(row.updated_at);
+
+  return buildAttachment(
+    'blog',
+    row.id,
+    title,
+    formatDate(row.updated_at),
+    truncate(row.description),
+    {
+      id: row.id,
+      type: 'blog',
+      title,
+      description,
+      createdAt: updatedAt ?? new Date(0),
+      updatedAt,
+    }
+  );
+}
+
+function buildAmendmentAttachment(row: AmendmentAttachmentRow): AiChatAttachment {
+  const title = row.title || 'Änderungsantrag';
+  const description = (row.reason || row.preamble)?.trim() || null;
+  const updatedAt = toOptionalDate(row.updated_at);
+
+  return buildAttachment(
+    'amendment',
+    row.id,
+    title,
+    formatDate(row.updated_at),
+    truncate(row.reason || row.preamble),
+    {
+      id: row.id,
+      type: 'amendment',
+      title,
+      description,
+      createdAt: updatedAt ?? new Date(0),
+      updatedAt,
+    }
+  );
+}
+
+function buildEventAttachment(row: EventAttachmentRow): AiChatAttachment {
+  const title = row.title || 'Event';
+  const description = toPreviewText(row.description);
+  const startDate = toOptionalDate(row.start_date);
+  const endDate = toOptionalDate(row.end_date);
+  const updatedAt = 'updated_at' in row ? toOptionalDate(row.updated_at) : undefined;
+
+  return buildAttachment(
+    'event',
+    row.id,
+    title,
+    [formatDate(row.start_date), row.location_name, row.status].filter(Boolean).join(' · ') || null,
+    truncate(description),
+    {
+      id: row.id,
+      type: 'event',
+      title,
+      description,
+      createdAt: toRequiredDate(row.start_date, 'updated_at' in row ? row.updated_at : undefined),
+      updatedAt,
+      startDate,
+      endDate,
+      location: row.location_name ?? null,
+      status: row.status,
+    }
+  );
+}
+
+function buildTodoAttachment(row: TodoAttachmentRow): AiChatAttachment {
+  const title = row.title || 'Todo';
+  const description = row.description?.trim() || null;
+  const updatedAt = toOptionalDate(row.updated_at);
+  const dueDate = toOptionalDate(row.due_date);
+
+  return buildAttachment(
+    'todo',
+    row.id,
+    title,
+    [row.status, row.priority, formatDate(row.due_date)].filter(Boolean).join(' · ') || null,
+    truncate(row.description),
+    {
+      id: row.id,
+      type: 'todo',
+      title,
+      description,
+      createdAt: toRequiredDate(row.updated_at, row.due_date),
+      updatedAt,
+      dueDate,
+      status: row.status,
+      isCompleted: row.status === 'completed',
+    }
+  );
+}
+
+function buildElectionAttachment(row: ElectionAttachmentRow): AiChatAttachment {
+  const title = row.title || 'Wahl';
+  const description = row.description?.trim() || null;
+  const updatedAt = toOptionalDate(row.updated_at);
+
+  return buildAttachment(
+    'election',
+    row.id,
+    title,
+    [row.status, formatDate(row.updated_at)].filter(Boolean).join(' · ') || null,
+    truncate(row.description),
+    {
+      id: row.id,
+      type: 'election',
+      title,
+      description,
+      createdAt: updatedAt ?? new Date(0),
+      updatedAt,
+      status: row.status,
+    }
+  );
+}
+
+function buildVoteAttachment(row: VoteAttachmentRow): AiChatAttachment {
+  const title = row.title || 'Abstimmung';
+  const description = row.description?.trim() || null;
+  const updatedAt = toOptionalDate(row.updated_at);
+
+  return buildAttachment(
+    'vote',
+    row.id,
+    title,
+    [row.status, formatDate(row.updated_at)].filter(Boolean).join(' · ') || null,
+    truncate(row.description),
+    {
+      id: row.id,
+      type: 'vote',
+      title,
+      description,
+      createdAt: updatedAt ?? new Date(0),
+      updatedAt,
+      status: row.status,
+    }
+  );
 }
 
 function toItemSummary(attachment: AiChatAttachment): ToolItemSummary {
@@ -534,17 +791,7 @@ async function searchUsers(
 
     return ((data ?? []) as UserSearchRow[])
       .filter(row => checkEntityAccess(row.visibility, true, row.id === userId))
-      .map(row => {
-        const fullName = [row.first_name, row.last_name].filter(Boolean).join(' ').trim();
-        const title = fullName || row.handle || 'Profil';
-        return buildAttachment(
-          'user',
-          row.id,
-          title,
-          row.handle ? `@${row.handle}` : null,
-          truncate(row.bio)
-        );
-      });
+      .map(buildUserAttachment);
   });
 }
 
@@ -560,15 +807,7 @@ async function searchGroups(
 
     return ((data ?? []) as GroupSearchRow[])
       .filter(row => checkEntityAccess(row.visibility, true, relationships.groupIds.has(row.id)))
-      .map(row =>
-        buildAttachment(
-          'group',
-          row.id,
-          row.name || 'Gruppe',
-          row.member_count ? `${row.member_count} Mitglieder` : null,
-          truncate(toPreviewText(row.description))
-        )
-      );
+      .map(buildGroupAttachment);
   });
 }
 
@@ -584,15 +823,7 @@ async function searchStatements(
 
     return ((data ?? []) as StatementSearchRow[])
       .filter(row => checkEntityAccess(row.visibility, true, row.user_id === userId))
-      .map(row =>
-        buildAttachment(
-          'statement',
-          row.id,
-          truncate(row.text, 90) || 'Statement',
-          formatDate(row.updated_at),
-          truncate(row.text)
-        )
-      );
+      .map(buildStatementAttachment);
   });
 }
 
@@ -614,15 +845,7 @@ async function searchBlogs(
 
     return ((data ?? []) as BlogSearchRow[])
       .filter(row => checkEntityAccess(row.visibility, true, relationships.blogIds.has(row.id)))
-      .map(row =>
-        buildAttachment(
-          'blog',
-          row.id,
-          row.title || 'Blog',
-          formatDate(row.updated_at),
-          truncate(row.description)
-        )
-      );
+      .map(buildBlogAttachment);
   });
 }
 
@@ -650,15 +873,7 @@ async function searchAmendments(
       .filter(row =>
         checkEntityAccess(row.visibility, true, relationships.amendmentIds.has(row.id))
       )
-      .map(row =>
-        buildAttachment(
-          'amendment',
-          row.id,
-          row.title || 'Änderungsantrag',
-          formatDate(row.updated_at),
-          truncate(row.reason || row.preamble)
-        )
-      );
+      .map(buildAmendmentAttachment);
   });
 }
 
@@ -680,16 +895,7 @@ async function searchEvents(
 
     return ((data ?? []) as EventSearchRow[])
       .filter(row => checkEntityAccess(row.visibility, true, relationships.eventIds.has(row.id)))
-      .map(row =>
-        buildAttachment(
-          'event',
-          row.id,
-          row.title || 'Event',
-          [formatDate(row.start_date), row.location_name, row.status].filter(Boolean).join(' · ') ||
-            null,
-          truncate(toPreviewText(row.description))
-        )
-      );
+      .map(buildEventAttachment);
   });
 }
 
@@ -718,15 +924,7 @@ async function searchTodos(
           row.creator_id === userId || relationships.todoIds.has(row.id)
         )
       )
-      .map(row =>
-        buildAttachment(
-          'todo',
-          row.id,
-          row.title || 'Todo',
-          [row.status, row.priority, formatDate(row.due_date)].filter(Boolean).join(' · ') || null,
-          truncate(row.description)
-        )
-      );
+      .map(buildTodoAttachment);
   });
 }
 
@@ -744,15 +942,7 @@ async function searchElections(query: string, limit: number): Promise<AiChatAtta
 
     return ((data ?? []) as ElectionSearchRow[])
       .filter(row => checkEntityAccess(row.visibility, true, false))
-      .map(row =>
-        buildAttachment(
-          'election',
-          row.id,
-          row.title || 'Wahl',
-          [row.status, formatDate(row.updated_at)].filter(Boolean).join(' · ') || null,
-          truncate(row.description)
-        )
-      );
+      .map(buildElectionAttachment);
   });
 }
 
@@ -770,15 +960,7 @@ async function searchVotes(query: string, limit: number): Promise<AiChatAttachme
 
     return ((data ?? []) as VoteSearchRow[])
       .filter(row => checkEntityAccess(row.visibility, true, false))
-      .map(row =>
-        buildAttachment(
-          'vote',
-          row.id,
-          row.title || 'Abstimmung',
-          [row.status, formatDate(row.updated_at)].filter(Boolean).join(' · ') || null,
-          truncate(row.description)
-        )
-      );
+      .map(buildVoteAttachment);
   });
 }
 
@@ -828,15 +1010,7 @@ async function findMyTodos(
         return (right.updated_at ?? 0) - (left.updated_at ?? 0);
       })
       .slice(0, totalLimit)
-      .map(row =>
-        buildAttachment(
-          'todo',
-          row.id,
-          row.title || 'Todo',
-          [row.status, row.priority, formatDate(row.due_date)].filter(Boolean).join(' · ') || null,
-          truncate(row.description)
-        )
-      );
+      .map(buildTodoAttachment);
   });
 }
 
@@ -898,16 +1072,75 @@ async function findMyCalendar(
         );
       })
       .slice(0, totalLimit)
-      .map(row =>
-        buildAttachment(
-          'event',
-          row.id,
-          row.title || 'Event',
-          [formatDate(row.start_date), row.location_name, row.status].filter(Boolean).join(' · ') ||
-            null,
-          truncate(toPreviewText(row.description))
-        )
-      );
+      .map(buildEventAttachment);
+  });
+}
+
+async function findMyGroups(
+  userId: string,
+  query?: string | null,
+  limit?: number
+): Promise<AiChatAttachment[]> {
+  const totalLimit = clampLimit(limit, 6);
+
+  return executeZeroRead(async tx => {
+    const membershipRows = ((await tx.run(
+      zql.group_membership.where('user_id', userId).orderBy('created_at', 'desc')
+    )) ?? []) as GroupMembershipRoleRow[];
+
+    const groupIds = dedupeStrings(
+      membershipRows.filter(row => Boolean(row.role_id)).map(row => row.group_id)
+    );
+
+    if (groupIds.length === 0) {
+      return [];
+    }
+
+    const groupRows = ((await tx.run(zql.group.where('id', 'IN', groupIds))) ??
+      []) as GroupSearchRow[];
+    const groupsById = new Map(groupRows.map(row => [row.id, row]));
+
+    const attachments = groupIds
+      .map(groupId => groupsById.get(groupId))
+      .filter((row): row is GroupSearchRow => Boolean(row))
+      .filter(row => checkEntityAccess(row.visibility, true, true))
+      .map(buildGroupAttachment);
+
+    return filterAttachmentsByQuery(attachments, query).slice(0, totalLimit);
+  });
+}
+
+async function findMyAmendments(
+  userId: string,
+  query?: string | null,
+  limit?: number
+): Promise<AiChatAttachment[]> {
+  const totalLimit = clampLimit(limit, 6);
+
+  return executeZeroRead(async tx => {
+    const collaboratorRows = ((await tx.run(
+      zql.amendment_collaborator.where('user_id', userId).orderBy('created_at', 'desc')
+    )) ?? []) as AmendmentCollaboratorRoleRow[];
+
+    const amendmentIds = dedupeStrings(
+      collaboratorRows.filter(row => Boolean(row.role_id)).map(row => row.amendment_id)
+    );
+
+    if (amendmentIds.length === 0) {
+      return [];
+    }
+
+    const amendmentRows = ((await tx.run(zql.amendment.where('id', 'IN', amendmentIds))) ??
+      []) as AmendmentSearchRow[];
+    const amendmentsById = new Map(amendmentRows.map(row => [row.id, row]));
+
+    const attachments = amendmentIds
+      .map(amendmentId => amendmentsById.get(amendmentId))
+      .filter((row): row is AmendmentSearchRow => Boolean(row))
+      .filter(row => checkEntityAccess(row.visibility, true, true))
+      .map(buildAmendmentAttachment);
+
+    return filterAttachmentsByQuery(attachments, query).slice(0, totalLimit);
   });
 }
 
@@ -953,18 +1186,7 @@ async function findGroupResources(
         zql.todo.where('group_id', groupId).orderBy('updated_at', 'desc').limit(fetchLimit)
       );
 
-      attachments.push(
-        ...((data ?? []) as GroupTodoRow[]).map(row =>
-          buildAttachment(
-            'todo',
-            row.id,
-            row.title || 'Todo',
-            [row.status, row.priority, formatDate(row.due_date)].filter(Boolean).join(' · ') ||
-              null,
-            truncate(row.description)
-          )
-        )
-      );
+      attachments.push(...((data ?? []) as GroupTodoRow[]).map(buildTodoAttachment));
     }
 
     if (resourceTypes.includes('links')) {
@@ -993,17 +1215,7 @@ async function findGroupResources(
       const amendments = (amendmentData ?? []) as GroupAmendmentRow[];
 
       if (resourceTypes.includes('amendments')) {
-        attachments.push(
-          ...amendments.map(row =>
-            buildAttachment(
-              'amendment',
-              row.id,
-              row.title || 'Änderungsantrag',
-              formatDate(row.updated_at),
-              truncate(row.reason || row.preamble)
-            )
-          )
-        );
+        attachments.push(...amendments.map(buildAmendmentAttachment));
       }
 
       if (resourceTypes.includes('files')) {
@@ -1052,19 +1264,7 @@ async function findGroupResources(
         zql.event.where('group_id', groupId).orderBy('start_date', 'asc').limit(fetchLimit)
       );
 
-      attachments.push(
-        ...((data ?? []) as GroupEventRow[]).map(row =>
-          buildAttachment(
-            'event',
-            row.id,
-            row.title || 'Event',
-            [formatDate(row.start_date), row.location_name, row.status]
-              .filter(Boolean)
-              .join(' · ') || null,
-            truncate(toPreviewText(row.description))
-          )
-        )
-      );
+      attachments.push(...((data ?? []) as GroupEventRow[]).map(buildEventAttachment));
     }
 
     if (resourceTypes.includes('blogs')) {
@@ -1072,17 +1272,7 @@ async function findGroupResources(
         zql.blog.where('group_id', groupId).orderBy('updated_at', 'desc').limit(fetchLimit)
       );
 
-      attachments.push(
-        ...((data ?? []) as GroupBlogRow[]).map(row =>
-          buildAttachment(
-            'blog',
-            row.id,
-            row.title || 'Blog',
-            formatDate(row.updated_at),
-            truncate(row.description)
-          )
-        )
-      );
+      attachments.push(...((data ?? []) as GroupBlogRow[]).map(buildBlogAttachment));
     }
 
     return filterAttachmentsByQuery(dedupeAttachments(attachments), query).slice(
@@ -1145,14 +1335,7 @@ async function findEventResources(
 
       attachments.push(
         ...([...(eventAmendments ?? []), ...(agendaAmendments ?? [])] as EventAmendmentRow[]).map(
-          row =>
-            buildAttachment(
-              'amendment',
-              row.id,
-              row.title || 'Änderungsantrag',
-              formatDate(row.updated_at),
-              truncate(row.reason || row.preamble)
-            )
+          buildAmendmentAttachment
         )
       );
     }
@@ -1167,17 +1350,7 @@ async function findEventResources(
           .limit(fetchLimit)
       );
 
-      attachments.push(
-        ...((data ?? []) as EventElectionRow[]).map(row =>
-          buildAttachment(
-            'election',
-            row.id,
-            row.title || 'Wahl',
-            [row.status, formatDate(row.updated_at)].filter(Boolean).join(' · ') || null,
-            truncate(row.description)
-          )
-        )
-      );
+      attachments.push(...((data ?? []) as EventElectionRow[]).map(buildElectionAttachment));
     }
 
     if (resourceTypes.includes('votes') && agendaItemIds.length > 0) {
@@ -1188,17 +1361,7 @@ async function findEventResources(
           .limit(fetchLimit)
       );
 
-      attachments.push(
-        ...((data ?? []) as EventVoteRow[]).map(row =>
-          buildAttachment(
-            'vote',
-            row.id,
-            row.title || 'Abstimmung',
-            [row.status, formatDate(row.updated_at)].filter(Boolean).join(' · ') || null,
-            truncate(row.description)
-          )
-        )
-      );
+      attachments.push(...((data ?? []) as EventVoteRow[]).map(buildVoteAttachment));
     }
 
     const filtered = filterAttachmentsByQuery(dedupeAttachments(attachments), query).slice(
@@ -1278,6 +1441,40 @@ export function buildAiTools(userId: string) {
         const attachments = await findMyCalendar(userId, timeframe, limit);
         return {
           summary: buildToolSummary('Eigener Kalender', attachments),
+          items: attachments.map(toItemSummary),
+          attachments,
+        };
+      },
+    }),
+
+    find_my_groups: tool({
+      description:
+        "Find the current user's groups where they have an assigned role, similar to the groups they actively belong to.",
+      parameters: z.object({
+        query: z.string().trim().min(1).optional(),
+        limit: z.number().int().min(1).max(12).optional(),
+      }),
+      execute: async ({ query, limit }) => {
+        const attachments = await findMyGroups(userId, query, limit);
+        return {
+          summary: buildToolSummary('Eigene Gruppen', attachments),
+          items: attachments.map(toItemSummary),
+          attachments,
+        };
+      },
+    }),
+
+    find_my_amendments: tool({
+      description:
+        "Find the current user's amendments where they have an assigned role, including authored or collaborator amendments.",
+      parameters: z.object({
+        query: z.string().trim().min(1).optional(),
+        limit: z.number().int().min(1).max(12).optional(),
+      }),
+      execute: async ({ query, limit }) => {
+        const attachments = await findMyAmendments(userId, query, limit);
+        return {
+          summary: buildToolSummary('Eigene Anträge', attachments),
           items: attachments.map(toItemSummary),
           attachments,
         };

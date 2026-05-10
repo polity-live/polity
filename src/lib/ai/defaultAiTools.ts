@@ -1,6 +1,8 @@
 export const DEFAULT_AI_TOOL_NAMES = [
   'find_my_todos',
   'find_my_calendar',
+  'find_my_groups',
+  'find_my_amendments',
   'search_polity_entities',
   'find_group_resources',
   'find_event_resources',
@@ -38,6 +40,18 @@ export const DEFAULT_AI_TOOLS: readonly DefaultAiToolDefinition[] = [
     label: 'Eigener Kalender',
     kind: 'search',
     description: 'Findet die eigenen Kalender-Events und Teilnahmen.',
+  },
+  {
+    name: 'find_my_groups',
+    label: 'Eigene Gruppen',
+    kind: 'search',
+    description: 'Findet Gruppen, in denen man eine Rolle hat.',
+  },
+  {
+    name: 'find_my_amendments',
+    label: 'Eigene Anträge',
+    kind: 'search',
+    description: 'Findet Änderungsanträge, in denen man eine Rolle hat.',
   },
   {
     name: 'search_polity_entities',

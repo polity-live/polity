@@ -1,13 +1,13 @@
+import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import { LayoutGrid, List } from 'lucide-react';
+import { LayoutGrid, List, Plus } from 'lucide-react';
 import { KanbanBoard } from '@/features/todos/ui/kanban-board.tsx';
 import { TodoList } from '@/features/todos/ui/todo-list.tsx';
 import { TodoDetailDialog } from '@/features/todos/ui/todo-detail-dialog.tsx';
 import { TodosFilters } from '@/features/todos/ui/TodosFilters';
 import { useTodoFilters } from '@/features/todos/hooks/useTodoFilters';
-import { AddTodoDialog } from './AddTodoDialog';
 import type { TodoViewMode } from '../types/group.types';
 import type { Todo } from '@/features/todos/types/todo.types';
 
@@ -17,14 +17,6 @@ interface TodosSectionProps {
   todos: Todo[];
   viewMode: TodoViewMode;
   onViewModeChange: (mode: TodoViewMode) => void;
-  dialogOpen: boolean;
-  onDialogChange: (open: boolean) => void;
-  onAddTodo: (data: {
-    title: string;
-    description: string;
-    priority: string;
-    dueDate: string;
-  }) => void;
   onToggleComplete: (todo: Todo) => void;
 }
 
@@ -34,9 +26,6 @@ export function TodosSection({
   todos,
   viewMode,
   onViewModeChange,
-  dialogOpen,
-  onDialogChange,
-  onAddTodo,
   onToggleComplete,
 }: TodosSectionProps) {
   const [selectedTodo, setSelectedTodo] = useState<Todo | null>(null);
@@ -94,7 +83,19 @@ export function TodosSection({
                   <List className="h-4 w-4" />
                 </Button>
               </div>
-              <AddTodoDialog open={dialogOpen} onOpenChange={onDialogChange} onSubmit={onAddTodo} />
+              <Button asChild size="sm">
+                <Link
+                  to="/create/todo"
+                  search={{
+                    groupId,
+                    returnGroupId: groupId,
+                    returnSection: 'todos',
+                  }}
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Task
+                </Link>
+              </Button>
             </div>
           </div>
         </CardHeader>

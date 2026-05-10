@@ -2,12 +2,11 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useAuth } from '@/providers/auth-provider';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Label } from '@/features/shared/ui/ui/label';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
 import { VisibilityInput } from '../ui/inputs/VisibilityInput';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
+import { CreateInputField } from '../ui/CreateFields';
 import {
   TargetGroupEventSelector,
   TargetGroupEventDisplay,
@@ -169,31 +168,21 @@ export function useCreateAmendmentForm(): CreateFormConfig {
           isValid: () => !!title.trim(),
           content: (
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>
-                  {t('pages.create.amendment.titleLabel')}{' '}
-                  <span className="text-destructive">*</span>
-                </Label>
-                <p className="text-muted-foreground text-xs">
-                  {t('pages.create.amendment.tips.title')}
-                </p>
-                <Input
-                  value={title}
-                  onChange={e => setTitle(e.target.value)}
-                  placeholder={t('pages.create.amendment.titlePlaceholder')}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{t('pages.create.amendment.subtitleOptional')}</Label>
-                <p className="text-muted-foreground text-xs">
-                  {t('pages.create.amendment.tips.subtitle')}
-                </p>
-                <Input
-                  value={subtitle}
-                  onChange={e => setSubtitle(e.target.value)}
-                  placeholder={t('pages.create.amendment.subtitlePlaceholder')}
-                />
-              </div>
+              <CreateInputField
+                label={t('pages.create.amendment.titleLabel')}
+                required
+                hint={t('pages.create.amendment.tips.title')}
+                value={title}
+                onValueChange={setTitle}
+                placeholder={t('pages.create.amendment.titlePlaceholder')}
+              />
+              <CreateInputField
+                label={t('pages.create.amendment.subtitleOptional')}
+                hint={t('pages.create.amendment.tips.subtitle')}
+                value={subtitle}
+                onValueChange={setSubtitle}
+                placeholder={t('pages.create.amendment.subtitlePlaceholder')}
+              />
               <ImageUpload
                 currentImage={imageURL}
                 onImageChange={(url: string) => setImageURL(url)}

@@ -7,6 +7,34 @@ import { useCommonState } from '../common/useCommonState';
 import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
 import { resolveRouteVisibilityAccess } from '@/features/auth/logic/routeVisibilityAccess';
 
+function hasActiveGroupMembership(
+  membership:
+    | {
+        status?: string | null;
+        role?: { name?: string | null } | null;
+      }
+    | null
+    | undefined
+) {
+  return (
+    membership?.status === 'active' ||
+    membership?.status === 'member' ||
+    membership?.status === 'admin' ||
+    membership?.role?.name === 'Board Member'
+  );
+}
+
+function dedupeById<T extends { id: string }>(items: readonly T[]) {
+  const seen = new Set<string>();
+  return items.filter(item => {
+    if (seen.has(item.id)) {
+      return false;
+    }
+    seen.add(item.id);
+    return true;
+  });
+}
+
 export interface SearchLimits {
   users?: number;
   groups?: number;
@@ -53,6 +81,7 @@ export function useSearchState(options: SearchOptions = {}) {
   const memberGroupIds = useMemo(
     () =>
       (groupMemberships ?? [])
+        .filter(hasActiveGroupMembership)
         .map(m => m.group?.id)
         .filter((groupId): groupId is string => !!groupId),
     [groupMemberships]
@@ -64,10 +93,16 @@ export function useSearchState(options: SearchOptions = {}) {
     [todoAssignments]
   );
 
-  const hasTodoAccess = !!(userId && (assignedTodoIds.length > 0 || memberGroupIds.length > 0));
-
-  const [todos] = useQuery(
-    hasTodoAccess ? queries.search.searchableTodos({ limit: todosLimit }) : undefined
+  const [publicTodos] = useQuery(queries.search.searchableTodos({ limit: todosLimit }));
+  const [createdTodos] = useQuery(
+    userId
+      ? queries.search.searchableTodosByCreator({ user_id: userId, limit: todosLimit })
+      : undefined
+  );
+  const [groupTodos] = useQuery(
+    memberGroupIds.length > 0
+      ? queries.search.searchableTodosByGroups({ group_ids: memberGroupIds, limit: todosLimit })
+      : undefined
   );
 
   // ── Timeline events (via common facade) ─────────────────────────────
@@ -148,15 +183,35 @@ export function useSearchState(options: SearchOptions = {}) {
   const visibleEventIds = useMemo(() => new Set(visibleEvents.map(e => e.id)), [visibleEvents]);
 
   const visibleTodos = useMemo(() => {
-    const raw = hasTodoAccess ? (todos ?? []) : [];
-    return raw.filter(t =>
+    const assignedTodos = (todoAssignments ?? []).flatMap(assignment =>
+      assignment.todo ? [assignment.todo] : []
+    );
+
+    const rawTodos = dedupeById([
+      ...(publicTodos ?? []),
+      ...(createdTodos ?? []),
+      ...(groupTodos ?? []),
+      ...assignedTodos,
+    ]);
+
+    return rawTodos.filter(t =>
       checkEntityAccess(
         t.visibility,
         !!userId,
-        t.creator_id === userId || assignedTodoIds.includes(t.id)
+        t.creator_id === userId ||
+          assignedTodoIds.includes(t.id) ||
+          (t.group_id ? memberGroupIds.includes(t.group_id) : false)
       )
     );
-  }, [todos, hasTodoAccess, userId, assignedTodoIds]);
+  }, [
+    publicTodos,
+    createdTodos,
+    groupTodos,
+    todoAssignments,
+    userId,
+    assignedTodoIds,
+    memberGroupIds,
+  ]);
 
   // Agenda items inherit visibility from their parent event
   const visibleAgendaItems = useMemo(

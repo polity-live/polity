@@ -328,6 +328,7 @@ export function GeoAddressInputField({
       invalid={validationState === 'invalid'}
       suggestions={fieldSuggestions}
       autoComplete={autoComplete}
+      showHint="always"
     />
   );
 }

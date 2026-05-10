@@ -69,7 +69,7 @@ export const searchQueries = {
   ),
 
   userGroupMemberships: defineQuery(z.object({ user_id: z.string() }), ({ args: { user_id } }) =>
-    zql.group_membership.where('user_id', user_id).related('group')
+    zql.group_membership.where('user_id', user_id).related('group').related('role')
   ),
 
   userTodoAssignments: defineQuery(z.object({ user_id: z.string() }), ({ args: { user_id } }) =>
@@ -91,5 +91,27 @@ export const searchQueries = {
       .related('creator')
       .related('assignments', q => q.related('user'))
       .limit(limit)
+  ),
+
+  searchableTodosByCreator: defineQuery(
+    z.object({ user_id: z.string(), limit: z.number() }),
+    ({ args: { user_id, limit } }) =>
+      zql.todo
+        .where('creator_id', user_id)
+        .related('group')
+        .related('creator')
+        .related('assignments', q => q.related('user'))
+        .limit(limit)
+  ),
+
+  searchableTodosByGroups: defineQuery(
+    z.object({ group_ids: z.array(z.string()), limit: z.number() }),
+    ({ args: { group_ids, limit } }) =>
+      zql.todo
+        .where('group_id', 'IN', group_ids)
+        .related('group')
+        .related('creator')
+        .related('assignments', q => q.related('user'))
+        .limit(limit)
   ),
 };

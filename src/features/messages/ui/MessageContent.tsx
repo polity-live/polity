@@ -1,16 +1,22 @@
 'use client';
 
-import { parseMessageWithLinks } from '@/features/messages/utils/url-utils.ts';
+import { isPolityLink, parseMessageWithLinks } from '@/features/messages/utils/url-utils.ts';
 import { LinkPreview } from './LinkPreview.tsx';
 
 interface MessageContentProps {
   content: string;
   className?: string;
+  hidePolityLinkPreviews?: boolean;
 }
 
-export function MessageContent({ content, className = '' }: MessageContentProps) {
+export function MessageContent({
+  content,
+  className = '',
+  hidePolityLinkPreviews = false,
+}: MessageContentProps) {
   const parts = parseMessageWithLinks(content);
   const urls = parts.filter(p => p.type === 'url').map(p => p.content);
+  const previewUrls = hidePolityLinkPreviews ? urls.filter(url => !isPolityLink(url)) : urls;
 
   return (
     <div className={`space-y-2 ${className}`}>
@@ -26,7 +32,7 @@ export function MessageContent({ content, className = '' }: MessageContentProps)
                 href={part.content}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary underline hover:text-primary/80"
+                className="text-primary hover:text-primary/80 underline"
               >
                 {part.content}
               </a>
@@ -36,9 +42,9 @@ export function MessageContent({ content, className = '' }: MessageContentProps)
       </div>
 
       {/* Render link previews below */}
-      {urls.length > 0 && (
+      {previewUrls.length > 0 && (
         <div className="mt-2 space-y-2">
-          {urls.map((url, index) => (
+          {previewUrls.map((url, index) => (
             <LinkPreview key={index} url={url} />
           ))}
         </div>
