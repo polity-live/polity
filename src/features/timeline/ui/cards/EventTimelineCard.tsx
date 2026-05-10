@@ -181,7 +181,7 @@ export function EventTimelineCard({
   const subscription = useSubscribeEvent(event.id);
 
   const startDate = new Date(event.startDate);
-  const { day, month, time, status } = formatEventDate(startDate);
+  const { day, month, time, status: eventTimeStatus } = formatEventDate(startDate);
   const dateLabel = getDateLabel(startDate);
 
   const locationDisplay = buildLocationDisplay(event.location, event.city, event.postcode);
@@ -197,6 +197,7 @@ export function EventTimelineCard({
     participation.isParticipant;
   const isInvited = resolvedParticipationStatus === 'invited' || participation.isInvited;
   const hasRequested = resolvedParticipationStatus === 'requested' || participation.hasRequested;
+  const hasParticipationRelationship = isParticipant || isInvited || hasRequested;
 
   // Get RSVP button label based on status
   const getRsvpLabel = () => {
@@ -250,7 +251,7 @@ export function EventTimelineCard({
         subtitle={event.organizerName}
         subtitleHref={event.groupId ? `/group/${event.groupId}` : undefined}
         badge={
-          status === 'live' ? (
+          eventTimeStatus === 'live' ? (
             <Badge variant="destructive" className="animate-pulse">
               <span className="mr-1.5 h-2 w-2 animate-pulse rounded-full bg-white" />
               {t('features.timeline.cards.happeningNow')}
@@ -265,7 +266,7 @@ export function EventTimelineCard({
           <div
             className={cn(
               'flex flex-col items-center rounded-xl bg-white/80 px-4 py-2 shadow-sm dark:bg-gray-900/80',
-              status === 'past' && 'opacity-60'
+              eventTimeStatus === 'past' && 'opacity-60'
             )}
           >
             <span className="text-muted-foreground text-xs font-medium uppercase">{month}</span>
@@ -335,7 +336,11 @@ export function EventTimelineCard({
             <Button
               variant={getRsvpVariant()}
               size="sm"
-              disabled={status === 'past' || isParticipationLoading || participation.isLoading}
+              disabled={
+                isParticipationLoading ||
+                participation.isLoading ||
+                (eventTimeStatus === 'past' && !hasParticipationRelationship)
+              }
               className="flex items-center gap-1.5"
             >
               <span className="text-xs">{getRsvpLabel()}</span>
@@ -403,7 +408,7 @@ export function EventTimelineCard({
                   {t('features.timeline.cards.event.withdrawRequest')}
                 </Button>
               )}
-              {!isParticipant && !isInvited && !hasRequested && (
+              {!isParticipant && !isInvited && !hasRequested && eventTimeStatus !== 'past' && (
                 <Button
                   variant="ghost"
                   size="sm"
