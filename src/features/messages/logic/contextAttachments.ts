@@ -1,5 +1,7 @@
 import type { AiChatAttachment } from '@/lib/ai/schemas';
 
+const ASSISTANT_ERROR_CONTEXT_KIND = 'assistant-error';
+
 function isAiChatAttachment(value: unknown): value is AiChatAttachment {
   if (!value || typeof value !== 'object') {
     return false;
@@ -23,6 +25,30 @@ export function parseContextAttachments(contextJson?: string | null): AiChatAtta
     return Array.isArray(parsed) ? parsed.filter(isAiChatAttachment) : [];
   } catch {
     return [];
+  }
+}
+
+export function buildAssistantErrorContextJson(): string {
+  return JSON.stringify({ kind: ASSISTANT_ERROR_CONTEXT_KIND });
+}
+
+export function isAssistantErrorContext(contextJson?: string | null): boolean {
+  if (!contextJson) {
+    return false;
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(contextJson);
+
+    return (
+      Boolean(parsed) &&
+      typeof parsed === 'object' &&
+      !Array.isArray(parsed) &&
+      'kind' in parsed &&
+      parsed.kind === ASSISTANT_ERROR_CONTEXT_KIND
+    );
+  } catch {
+    return false;
   }
 }
 

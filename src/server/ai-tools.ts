@@ -2,8 +2,10 @@ import { tool } from 'ai';
 import { z } from 'zod';
 import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
-import { buildTimelineCardProps } from '@/features/search/logic/buildTimelineCardProps';
-import type { SearchContentItem } from '@/features/search/types/search.types';
+import {
+  buildTimelineCardProps,
+  type TimelineCardItem,
+} from '@/features/search/logic/buildTimelineCardProps';
 import { type AiAttachmentEntity, type AiChatAttachment } from '@/lib/ai/schemas';
 import { executeZeroRead, type ZeroTransaction } from '@/server/zero-mutate';
 import { zql } from '@/zero/schema';
@@ -198,10 +200,29 @@ interface GroupMembershipRoleRow {
   created_at: number;
 }
 
+interface EventParticipantRoleRow {
+  event_id: string;
+  role_id: string | null;
+  created_at: number;
+}
+
 interface AmendmentCollaboratorRoleRow {
   amendment_id: string;
   role_id: string | null;
   created_at: number;
+}
+
+interface BlogBloggerRoleRow {
+  blog_id: string;
+  role_id: string | null;
+  created_at: number;
+}
+
+interface CurrentUserScopeRow {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  handle: string | null;
 }
 
 interface ElectionSearchRow {
@@ -241,6 +262,8 @@ interface PaymentRow {
   label: string | null;
   type: string | null;
   amount: number | null;
+  payer_group_id: string | null;
+  receiver_group_id: string | null;
   created_at: number;
 }
 
@@ -302,6 +325,7 @@ interface AgendaItemRow {
   status: string | null;
   scheduled_time: string | null;
   order_index: number | null;
+  duration: number | null;
   amendment_id: string | null;
   created_at: number;
   updated_at: number;
@@ -420,7 +444,7 @@ function buildAttachment(
   title: string,
   subtitle?: string | null,
   promptContext?: string | null,
-  searchItem?: SearchContentItem | null
+  searchItem?: TimelineCardItem | null
 ): AiChatAttachment {
   const cardDataJson = (() => {
     if (!searchItem) {
@@ -663,6 +687,34 @@ function toItemSummary(attachment: AiChatAttachment): ToolItemSummary {
 
 function dedupeStrings(values: readonly string[]): string[] {
   return [...new Set(values.filter(Boolean))];
+}
+
+function formatCurrentUserDisplayName(user: CurrentUserScopeRow | null, userId: string): string {
+  const fullName = [user?.first_name, user?.last_name].filter(Boolean).join(' ').trim();
+
+  if (fullName) {
+    return user?.handle ? `${fullName} (@${user.handle})` : fullName;
+  }
+
+  if (user?.handle) {
+    return `@${user.handle}`;
+  }
+
+  return userId;
+}
+
+function formatCurrentUserScopeSection(
+  label: string,
+  attachments: readonly AiChatAttachment[]
+): string {
+  if (attachments.length === 0) {
+    return `${label}: none`;
+  }
+
+  return [
+    `${label}:`,
+    ...attachments.map(attachment => `- ${attachment.title} (id: ${attachment.entityId})`),
+  ].join('\n');
 }
 
 function dedupeAttachments(attachments: readonly AiChatAttachment[]): AiChatAttachment[] {
@@ -1144,6 +1196,98 @@ async function findMyAmendments(
   });
 }
 
+async function findMyRoleEvents(
+  userId: string,
+  query?: string | null,
+  limit?: number
+): Promise<AiChatAttachment[]> {
+  const totalLimit = clampLimit(limit, 6);
+
+  return executeZeroRead(async tx => {
+    const participantRows = ((await tx.run(
+      zql.event_participant.where('user_id', userId).orderBy('created_at', 'desc')
+    )) ?? []) as EventParticipantRoleRow[];
+
+    const eventIds = dedupeStrings(
+      participantRows.filter(row => Boolean(row.role_id)).map(row => row.event_id)
+    );
+
+    if (eventIds.length === 0) {
+      return [];
+    }
+
+    const eventRows = ((await tx.run(zql.event.where('id', 'IN', eventIds))) ??
+      []) as EventSearchRow[];
+    const eventsById = new Map(eventRows.map(row => [row.id, row]));
+
+    const attachments = eventIds
+      .map(eventId => eventsById.get(eventId))
+      .filter((row): row is EventSearchRow => Boolean(row))
+      .filter(row => checkEntityAccess(row.visibility, true, true))
+      .map(buildEventAttachment);
+
+    return filterAttachmentsByQuery(attachments, query).slice(0, totalLimit);
+  });
+}
+
+async function findMyBlogs(
+  userId: string,
+  query?: string | null,
+  limit?: number
+): Promise<AiChatAttachment[]> {
+  const totalLimit = clampLimit(limit, 6);
+
+  return executeZeroRead(async tx => {
+    const bloggerRows = ((await tx.run(
+      zql.blog_blogger.where('user_id', userId).orderBy('created_at', 'desc')
+    )) ?? []) as BlogBloggerRoleRow[];
+
+    const blogIds = dedupeStrings(
+      bloggerRows.filter(row => Boolean(row.role_id)).map(row => row.blog_id)
+    );
+
+    if (blogIds.length === 0) {
+      return [];
+    }
+
+    const blogRows = ((await tx.run(zql.blog.where('id', 'IN', blogIds))) ?? []) as BlogSearchRow[];
+    const blogsById = new Map(blogRows.map(row => [row.id, row]));
+
+    const attachments = blogIds
+      .map(blogId => blogsById.get(blogId))
+      .filter((row): row is BlogSearchRow => Boolean(row))
+      .filter(row => checkEntityAccess(row.visibility, true, true))
+      .map(buildBlogAttachment);
+
+    return filterAttachmentsByQuery(attachments, query).slice(0, totalLimit);
+  });
+}
+
+export async function buildCurrentUserScopePrompt(userId: string): Promise<string> {
+  try {
+    const [currentUser, groups, amendments, events, blogs] = await Promise.all([
+      executeZeroRead(
+        async tx => (await tx.run(zql.user.where('id', userId).one())) as CurrentUserScopeRow | null
+      ),
+      findMyGroups(userId, null, 12),
+      findMyAmendments(userId, null, 12),
+      findMyRoleEvents(userId, null, 12),
+      findMyBlogs(userId, null, 12),
+    ]);
+
+    return [
+      `Current user: ${formatCurrentUserDisplayName(currentUser, userId)} (id: ${userId})`,
+      formatCurrentUserScopeSection('Role-scoped groups', groups),
+      formatCurrentUserScopeSection('Role-scoped amendments', amendments),
+      formatCurrentUserScopeSection('Role-scoped events', events),
+      formatCurrentUserScopeSection('Role-scoped blogs', blogs),
+    ].join('\n\n');
+  } catch (error) {
+    console.error('Failed to build current user AI scope:', error);
+    return `Current user: ${userId}`;
+  }
+}
+
 async function findGroupResources(
   userId: string,
   groupId: string,
@@ -1167,17 +1311,35 @@ async function findGroupResources(
       );
 
       attachments.push(
-        ...((data ?? []) as PaymentRow[]).map(row =>
-          buildAttachment(
+        ...((data ?? []) as PaymentRow[]).map(row => {
+          const direction =
+            row.receiver_group_id === groupId
+              ? 'income'
+              : row.payer_group_id === groupId
+                ? 'expense'
+                : null;
+
+          return buildAttachment(
             'payment',
             row.id,
             row.label || 'Zahlung',
             [row.type, formatCurrency(row.amount), formatDate(row.created_at)]
               .filter(Boolean)
               .join(' · ') || null,
-            group.name ? `Gruppe: ${group.name}` : null
-          )
-        )
+            group.name ? `Gruppe: ${group.name}` : null,
+            {
+              id: row.id,
+              type: 'payment',
+              title: row.label || 'Zahlung',
+              createdAt: toRequiredDate(row.created_at),
+              amount: row.amount,
+              paymentType: row.type,
+              paymentDirection: direction,
+              groupId,
+              groupName: group.name,
+            }
+          );
+        })
       );
     }
 
@@ -1308,7 +1470,22 @@ async function findEventResources(
             row.id,
             row.title || row.type || 'Agenda-Punkt',
             [row.type, row.status, row.scheduled_time].filter(Boolean).join(' · ') || null,
-            truncate(row.description)
+            truncate(row.description),
+            {
+              id: row.id,
+              type: 'agenda_item',
+              title: row.title || row.type || 'Agenda-Punkt',
+              description: row.description,
+              createdAt: toRequiredDate(row.updated_at, row.created_at),
+              updatedAt: toOptionalDate(row.updated_at),
+              status: row.status,
+              agendaItemType: row.type,
+              orderIndex: row.order_index,
+              scheduledTime: row.scheduled_time,
+              durationMinutes: row.duration,
+              eventId,
+              eventName: event.title,
+            }
           )
         )
       );
@@ -1475,6 +1652,40 @@ export function buildAiTools(userId: string) {
         const attachments = await findMyAmendments(userId, query, limit);
         return {
           summary: buildToolSummary('Eigene Anträge', attachments),
+          items: attachments.map(toItemSummary),
+          attachments,
+        };
+      },
+    }),
+
+    find_my_role_events: tool({
+      description:
+        "Find the current user's events where they have an assigned role, useful for resolving event IDs before linking or creating related entries.",
+      parameters: z.object({
+        query: z.string().trim().min(1).optional(),
+        limit: z.number().int().min(1).max(12).optional(),
+      }),
+      execute: async ({ query, limit }) => {
+        const attachments = await findMyRoleEvents(userId, query, limit);
+        return {
+          summary: buildToolSummary('Eigene Rollen-Events', attachments),
+          items: attachments.map(toItemSummary),
+          attachments,
+        };
+      },
+    }),
+
+    find_my_blogs: tool({
+      description:
+        "Find the current user's blogs where they have an assigned role, useful for resolving blog IDs before linking or creating related entries.",
+      parameters: z.object({
+        query: z.string().trim().min(1).optional(),
+        limit: z.number().int().min(1).max(12).optional(),
+      }),
+      execute: async ({ query, limit }) => {
+        const attachments = await findMyBlogs(userId, query, limit);
+        return {
+          summary: buildToolSummary('Eigene Blogs', attachments),
           items: attachments.map(toItemSummary),
           attachments,
         };

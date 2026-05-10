@@ -19,7 +19,7 @@ import {
   touchAiCredential,
 } from '@/server/ai-db';
 import { getAiCatalog, resolveLanguageModelForUser } from '@/server/ai-models';
-import { buildAiTools } from '@/server/ai-tools';
+import { buildAiTools, buildCurrentUserScopePrompt } from '@/server/ai-tools';
 import { aiChatRequestSchema } from '@/server/ai-types';
 
 function getStreamErrorMessage(error: unknown): string {
@@ -135,10 +135,11 @@ export const APIRoute = createAPIFileRoute('/api/ai/chat')({
       ? selectedToolNames.filter((toolName): toolName is keyof typeof tools => toolName in tools)
       : [];
     const toolAttachments: ReturnType<typeof dedupeAiChatAttachments> = [];
+    const currentUserContext = await buildCurrentUserScopePrompt(session.user.id);
 
     const result = streamText({
       model,
-      system: buildSystemPrompt(selectedSkills),
+      system: buildSystemPrompt(selectedSkills, currentUserContext),
       messages,
       tools,
       maxSteps: tools ? 4 : 1,

@@ -1,0 +1,149 @@
+'use client';
+
+import { ArrowDownLeft, ArrowUpRight, Calendar, Tag } from 'lucide-react';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { cn } from '@/features/shared/utils/utils';
+import { normalizeTimelineText } from '@/features/timeline/logic/normalizeTimelineText';
+import {
+  TimelineCardBase,
+  TimelineCardHeader,
+  TimelineCardContent,
+  TimelineCardBadge,
+} from './TimelineCardBase';
+
+export interface PaymentTimelineCardProps {
+  payment: {
+    id: string;
+    label: string;
+    description?: string | null;
+    amount?: number | null;
+    type?: string | null;
+    direction?: 'income' | 'expense' | null;
+    createdAt?: string | Date | null;
+    groupId?: string | null;
+    groupName?: string | null;
+    counterpartyLabel?: string | null;
+  };
+  className?: string;
+}
+
+function formatPaymentAmount(value?: number | null): string | null {
+  if (!Number.isFinite(value)) {
+    return null;
+  }
+
+  return new Intl.NumberFormat(undefined, {
+    style: 'currency',
+    currency: 'EUR',
+    maximumFractionDigits: 2,
+  }).format(value ?? 0);
+}
+
+function formatPaymentDate(value?: string | Date | null): string | null {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+  }).format(parsed);
+}
+
+function formatPaymentType(value?: string | null): string | null {
+  const normalized = value?.trim();
+  if (!normalized) {
+    return null;
+  }
+
+  return normalized.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
+}
+
+export function PaymentTimelineCard({ payment, className }: PaymentTimelineCardProps) {
+  const { t } = useTranslation();
+  const amountLabel = formatPaymentAmount(payment.amount);
+  const createdAtLabel = formatPaymentDate(payment.createdAt);
+  const paymentTypeLabel = formatPaymentType(payment.type);
+  const description = normalizeTimelineText(payment.description);
+  const paymentHref = payment.groupId ? `/group/${payment.groupId}` : undefined;
+  const isIncome = payment.direction === 'income';
+  const isExpense = payment.direction === 'expense';
+
+  return (
+    <TimelineCardBase contentType="payment" className={className} href={paymentHref}>
+      <TimelineCardHeader
+        contentType="payment"
+        title={payment.label}
+        href={paymentHref}
+        subtitle={payment.groupName ?? undefined}
+        subtitleHref={paymentHref}
+        badge={<TimelineCardBadge label={t('features.timeline.contentTypes.payment', 'Payment')} />}
+      />
+
+      <TimelineCardContent className="space-y-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="space-y-1">
+            {amountLabel && (
+              <p
+                className={cn(
+                  'text-2xl font-semibold tracking-tight',
+                  isIncome && 'text-emerald-700 dark:text-emerald-300',
+                  isExpense && 'text-rose-700 dark:text-rose-300'
+                )}
+              >
+                {amountLabel}
+              </p>
+            )}
+
+            {payment.counterpartyLabel && (
+              <p className="text-muted-foreground text-sm">{payment.counterpartyLabel}</p>
+            )}
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {payment.direction && (
+              <Badge
+                variant="secondary"
+                className={cn(
+                  'border-0',
+                  isIncome && 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
+                  isExpense && 'bg-rose-500/15 text-rose-700 dark:text-rose-300'
+                )}
+              >
+                {isIncome ? (
+                  <ArrowDownLeft className="mr-1 h-3 w-3" />
+                ) : (
+                  <ArrowUpRight className="mr-1 h-3 w-3" />
+                )}
+                {isIncome
+                  ? t('pages.create.payment.income', 'Income')
+                  : t('pages.create.payment.expense', 'Expense')}
+              </Badge>
+            )}
+
+            {paymentTypeLabel && (
+              <Badge variant="outline">
+                <Tag className="mr-1 h-3 w-3" />
+                {paymentTypeLabel}
+              </Badge>
+            )}
+          </div>
+        </div>
+
+        {description && <p className="text-muted-foreground line-clamp-3 text-sm">{description}</p>}
+
+        {createdAtLabel && (
+          <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
+            <Calendar className="h-3.5 w-3.5" />
+            <span>{createdAtLabel}</span>
+          </div>
+        )}
+      </TimelineCardContent>
+    </TimelineCardBase>
+  );
+}

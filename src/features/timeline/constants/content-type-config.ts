@@ -11,6 +11,8 @@ import {
   BookOpen,
   Zap,
   User,
+  ListOrdered,
+  Wallet,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -24,6 +26,7 @@ export type ContentType =
   | 'event'
   | 'meetup'
   | 'amendment'
+  | 'agenda_item'
   | 'vote'
   | 'election'
   | 'video'
@@ -31,6 +34,7 @@ export type ContentType =
   | 'statement'
   | 'todo'
   | 'blog'
+  | 'payment'
   | 'action'
   | 'user';
 
@@ -75,6 +79,14 @@ export const CONTENT_TYPE_CONFIG: Record<ContentType, ContentTypeConfig> = {
     gradientDark: 'dark:from-purple-900/40 dark:to-blue-900/50',
     accentColor: 'text-violet-600 dark:text-violet-400',
     borderColor: 'border-violet-500',
+  },
+  agenda_item: {
+    icon: ListOrdered,
+    labelKey: 'features.timeline.contentTypes.agendaItem',
+    gradient: 'from-sky-100 to-cyan-100',
+    gradientDark: 'dark:from-sky-900/40 dark:to-cyan-900/50',
+    accentColor: 'text-sky-700 dark:text-sky-300',
+    borderColor: 'border-sky-500',
   },
   vote: {
     icon: Vote,
@@ -132,6 +144,14 @@ export const CONTENT_TYPE_CONFIG: Record<ContentType, ContentTypeConfig> = {
     accentColor: 'text-teal-600 dark:text-teal-400',
     borderColor: 'border-teal-500',
   },
+  payment: {
+    icon: Wallet,
+    labelKey: 'features.timeline.contentTypes.payment',
+    gradient: 'from-emerald-100 to-teal-100',
+    gradientDark: 'dark:from-emerald-900/40 dark:to-teal-900/50',
+    accentColor: 'text-emerald-700 dark:text-emerald-300',
+    borderColor: 'border-emerald-500',
+  },
   action: {
     icon: Zap,
     labelKey: 'features.timeline.contentTypes.action',
@@ -166,6 +186,7 @@ export const CONTENT_TYPE_LABELS: Record<ContentType, string> = {
   event: 'features.timeline.contentTypes.event',
   meetup: 'features.timeline.contentTypes.meetup',
   amendment: 'features.timeline.contentTypes.amendment',
+  agenda_item: 'features.timeline.contentTypes.agendaItem',
   vote: 'features.timeline.contentTypes.vote',
   election: 'features.timeline.contentTypes.election',
   video: 'features.timeline.contentTypes.video',
@@ -173,6 +194,7 @@ export const CONTENT_TYPE_LABELS: Record<ContentType, string> = {
   statement: 'features.timeline.contentTypes.statement',
   todo: 'features.timeline.contentTypes.todo',
   blog: 'features.timeline.contentTypes.blog',
+  payment: 'features.timeline.contentTypes.payment',
   action: 'features.timeline.contentTypes.action',
   user: 'features.timeline.contentTypes.user',
 };

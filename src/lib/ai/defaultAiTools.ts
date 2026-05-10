@@ -3,6 +3,8 @@ export const DEFAULT_AI_TOOL_NAMES = [
   'find_my_calendar',
   'find_my_groups',
   'find_my_amendments',
+  'find_my_role_events',
+  'find_my_blogs',
   'search_polity_entities',
   'find_group_resources',
   'find_event_resources',
@@ -52,6 +54,18 @@ export const DEFAULT_AI_TOOLS: readonly DefaultAiToolDefinition[] = [
     label: 'Eigene Anträge',
     kind: 'search',
     description: 'Findet Änderungsanträge, in denen man eine Rolle hat.',
+  },
+  {
+    name: 'find_my_role_events',
+    label: 'Eigene Rollen-Events',
+    kind: 'search',
+    description: 'Findet Events, in denen man eine Rolle hat.',
+  },
+  {
+    name: 'find_my_blogs',
+    label: 'Eigene Blogs',
+    kind: 'search',
+    description: 'Findet Blogs, in denen man eine Rolle hat.',
   },
   {
     name: 'search_polity_entities',

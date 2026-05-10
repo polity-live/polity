@@ -1,4 +1,5 @@
 import { ARIA_KAI_USER_ID } from '@/features/assistant/constants';
+import { isAssistantErrorContext } from '@/features/messages/logic/contextAttachments';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
 import {
   aiChatAttachmentSchema,
@@ -510,7 +511,9 @@ export async function getConversationMessagesForAi(
     throw new Error(`Failed to load assistant conversation messages: ${error.message}`);
   }
 
-  return (data ?? []) as AiMessageHistoryRow[];
+  return ((data ?? []) as AiMessageHistoryRow[]).filter(
+    message => !isAssistantErrorContext(message.context_json)
+  );
 }
 
 export async function persistAssistantMessage(

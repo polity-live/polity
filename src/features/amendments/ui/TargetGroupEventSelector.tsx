@@ -24,7 +24,7 @@ import { EventTimelineCard } from '@/features/timeline/ui/cards/EventTimelineCar
 
 interface TargetGroupEventSelectorProps {
   userId: string;
-  collaborators?: Array<{ id: string; name?: string; email?: string; avatar?: string }>;
+  collaborators?: { id: string; name?: string; email?: string; avatar?: string }[];
   onSelect: (data: {
     groupId: string;
     groupData: AmendmentNetworkGroup;
@@ -50,8 +50,14 @@ export function TargetGroupEventSelector({
   disablePortal = false,
 }: TargetGroupEventSelectorProps) {
   const [selectedUserId, setSelectedUserId] = useState<string>(userId);
-  const [selectedGroup, setSelectedGroup] = useState<{ id: string; data: AmendmentNetworkGroup } | null>(null);
-  const [selectedEvent, setSelectedEvent] = useState<{ id: string; data: AmendmentNetworkEvent } | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<{
+    id: string;
+    data: AmendmentNetworkGroup;
+  } | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<{
+    id: string;
+    data: AmendmentNetworkEvent;
+  } | null>(null);
   const [pathWithEvents, setPathWithEvents] = useState<PathWithEventSegment[]>([]);
   const [pathValidationError, setPathValidationError] = useState<string | null>(null);
   const lastEmittedSelectionRef = useRef<string | null>(null);
@@ -83,6 +89,29 @@ export function TargetGroupEventSelector({
     events: eventsData ?? [],
   };
 
+  // Initialize selection from controlled props when network data becomes available.
+  useEffect(() => {
+    if (!selectedGroupId) return;
+
+    const initialGroup = networkData.groups.find(group => group.id === selectedGroupId);
+    if (!initialGroup) return;
+
+    setSelectedGroup({ id: initialGroup.id, data: initialGroup });
+
+    if (!selectedEventId) {
+      setSelectedEvent(null);
+      return;
+    }
+
+    const initialEvent = networkData.events.find(
+      event => event.id === selectedEventId && event.group_id === selectedGroupId
+    );
+
+    if (initialEvent) {
+      setSelectedEvent({ id: initialEvent.id, data: initialEvent });
+    }
+  }, [networkData.events, networkData.groups, selectedEventId, selectedGroupId]);
+
   // Reset selection when user changes
   useEffect(() => {
     setSelectedGroup(null);
@@ -105,10 +134,7 @@ export function TargetGroupEventSelector({
     if (pathMode === 'workflow' && selectedWorkflowId) {
       const workflow = allWorkflows.find(w => w.id === selectedWorkflowId);
       if (workflow) {
-        calculatedPath = calculateWorkflowPathWithClosestEvents(
-          workflow.steps,
-          networkData.events,
-        );
+        calculatedPath = calculateWorkflowPathWithClosestEvents(workflow.steps, networkData.events);
       }
     } else {
       calculatedPath = calculatePathWithEvents(selectedGroup.id);
@@ -119,7 +145,7 @@ export function TargetGroupEventSelector({
       return;
     }
 
-    const seededPath = calculatedPath.map((segment) =>
+    const seededPath = calculatedPath.map(segment =>
       segment.groupId === selectedGroup.id
         ? {
             ...segment,
@@ -131,7 +157,15 @@ export function TargetGroupEventSelector({
     );
 
     setPathWithEvents(seededPath);
-  }, [selectedGroup, selectedEvent, selectedUserId, eventsData, pathMode, selectedWorkflowId, allWorkflows]);
+  }, [
+    selectedGroup,
+    selectedEvent,
+    selectedUserId,
+    eventsData,
+    pathMode,
+    selectedWorkflowId,
+    allWorkflows,
+  ]);
 
   // Calculate path from user to target group with events for each step
   const calculatePathWithEvents = (targetGroupId: string) => {
@@ -164,16 +198,12 @@ export function TargetGroupEventSelector({
   };
 
   const connectedGroups = getConnectedGroups();
-  const userGroupIds = getActiveUserGroupIds(
-    networkData.groupMemberships,
-    selectedUserId || userId
-  );
 
   const getUpcomingEventsForGroup = useCallback(
     (groupId: string): AmendmentNetworkEvent[] => {
       const now = Date.now();
       return [...(networkData.events ?? [])]
-        .filter((event) => event.group_id === groupId && (event.start_date ?? 0) > now)
+        .filter(event => event.group_id === groupId && (event.start_date ?? 0) > now)
         .sort((a, b) => (a.start_date ?? 0) - (b.start_date ?? 0));
     },
     [networkData.events]
@@ -182,15 +212,14 @@ export function TargetGroupEventSelector({
   // Get events for selected group from the dedicated eventsByGroup query
   // Shows all events (upcoming first, then past) so users can always see available events
   const upcomingEvents = selectedGroup?.id
-    ? [...(groupEventsResult ?? [])]
-        .sort((a, b) => {
-          const now = Date.now();
-          const aFuture = (a.start_date ?? 0) > now;
-          const bFuture = (b.start_date ?? 0) > now;
-          if (aFuture && !bFuture) return -1;
-          if (!aFuture && bFuture) return 1;
-          return (a.start_date ?? 0) - (b.start_date ?? 0);
-        })
+    ? [...(groupEventsResult ?? [])].sort((a, b) => {
+        const now = Date.now();
+        const aFuture = (a.start_date ?? 0) > now;
+        const bFuture = (b.start_date ?? 0) > now;
+        if (aFuture && !bFuture) return -1;
+        if (!aFuture && bFuture) return 1;
+        return (a.start_date ?? 0) - (b.start_date ?? 0);
+      })
     : [];
 
   const targetEventItems = useMemo(
@@ -198,8 +227,8 @@ export function TargetGroupEventSelector({
       toTypeaheadItems(
         upcomingEvents,
         'event',
-        (event) => event.title || 'Event',
-        (event) => {
+        event => event.title || 'Event',
+        event => {
           const dateLabel = event.start_date
             ? new Date(event.start_date).toLocaleString('en-US', {
                 month: 'short',
@@ -210,16 +239,14 @@ export function TargetGroupEventSelector({
               })
             : 'No date';
 
-          return event.location_name
-            ? `${dateLabel} - ${event.location_name}`
-            : dateLabel;
+          return event.location_name ? `${dateLabel} - ${event.location_name}` : dateLabel;
         }
       ),
     [upcomingEvents]
   );
 
   const validatePathEventOrder = useCallback((segments: PathWithEventSegment[]): string | null => {
-    if (segments.some((segment) => !segment.eventId)) {
+    if (segments.some(segment => !segment.eventId)) {
       return 'Please select an event for each group in the amendment path.';
     }
 
@@ -246,13 +273,12 @@ export function TargetGroupEventSelector({
       // For the target group, search upcomingEvents (from groupEventsResult) first
       const event =
         (groupId === selectedGroup?.id
-          ? upcomingEvents.find((entry) => entry.id === item.id)
-          : undefined) ??
-        getUpcomingEventsForGroup(groupId).find((entry) => entry.id === item.id);
+          ? upcomingEvents.find(entry => entry.id === item.id)
+          : undefined) ?? getUpcomingEventsForGroup(groupId).find(entry => entry.id === item.id);
       if (!event) return;
 
-      setPathWithEvents((previous) =>
-        previous.map((segment) =>
+      setPathWithEvents(previous =>
+        previous.map(segment =>
           segment.groupId === groupId
             ? {
                 ...segment,
@@ -284,17 +310,17 @@ export function TargetGroupEventSelector({
       return;
     }
 
-    const targetSegment = pathWithEvents.find((segment) => segment.groupId === selectedGroup.id);
+    const targetSegment = pathWithEvents.find(segment => segment.groupId === selectedGroup.id);
     const targetEventId = targetSegment?.eventId ?? selectedEvent.id;
     const targetEvent =
-      getUpcomingEventsForGroup(selectedGroup.id).find((event) => event.id === targetEventId) ??
+      getUpcomingEventsForGroup(selectedGroup.id).find(event => event.id === targetEventId) ??
       selectedEvent.data;
 
     const selectionSignature = JSON.stringify({
       groupId: selectedGroup.id,
       eventId: targetEventId,
       selectedUserId,
-      pathWithEvents: pathWithEvents.map((segment) => ({
+      pathWithEvents: pathWithEvents.map(segment => ({
         groupId: segment.groupId,
         eventId: segment.eventId,
         eventStartDate: segment.eventStartDate,
@@ -332,15 +358,15 @@ export function TargetGroupEventSelector({
       {/* User Selection (if collaborators are provided) */}
       {collaborators.length > 0 && (
         <div className="flex items-center gap-3">
-          <User className="h-4 w-4 text-muted-foreground" />
+          <User className="text-muted-foreground h-4 w-4" />
           <div className="flex-1">
             <TypeaheadSearch
               items={toTypeaheadItems(
                 collaborators,
                 'user',
-                (u) => u.name || 'User',
-                (u) => u.email,
-                (u) => u.avatar,
+                u => u.name || 'User',
+                u => u.email,
+                u => u.avatar
               )}
               value={selectedUserId}
               onChange={(item: TypeaheadItem | null) => setSelectedUserId(item?.id ?? '')}
@@ -356,7 +382,7 @@ export function TargetGroupEventSelector({
       {allWorkflows.length > 0 ? (
         <Tabs
           value={pathMode}
-          onValueChange={(value) => {
+          onValueChange={value => {
             const mode = value as 'hierarchy' | 'workflow';
             setPathMode(mode);
             setSelectedGroup(null);
@@ -367,8 +393,12 @@ export function TargetGroupEventSelector({
           }}
         >
           <TabsList className="w-full">
-            <TabsTrigger value="hierarchy" className="flex-1">Hierarchy Path</TabsTrigger>
-            <TabsTrigger value="workflow" className="flex-1">Workflow Path</TabsTrigger>
+            <TabsTrigger value="hierarchy" className="flex-1">
+              Hierarchy Path
+            </TabsTrigger>
+            <TabsTrigger value="workflow" className="flex-1">
+              Workflow Path
+            </TabsTrigger>
           </TabsList>
 
           {/* Hierarchy Tab */}
@@ -376,21 +406,23 @@ export function TargetGroupEventSelector({
             <div className="space-y-2">
               <Label>Select Target Group</Label>
               {connectedGroups.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  No connected groups found. You need to be a member of groups with amendment rights.
+                <p className="text-muted-foreground text-sm">
+                  No connected groups found. You need to be a member of groups with amendment
+                  rights.
                 </p>
               ) : (
                 <TypeaheadSearch
                   items={toTypeaheadItems(
                     connectedGroups,
                     'group',
-                    (g) => g.name || 'Group',
-                    (g) => g.description?.substring(0, 60),
+                    g => g.name || 'Group',
+                    g =>
+                      typeof g.description === 'string' ? g.description.substring(0, 60) : undefined
                   )}
                   value={selectedGroup?.id || ''}
                   onChange={(item: TypeaheadItem | null) => {
                     if (item) {
-                      const group = connectedGroups.find((g) => g.id === item.id);
+                      const group = connectedGroups.find(g => g.id === item.id);
                       if (group) {
                         setSelectedGroup({ id: group.id, data: group });
                         setSelectedEvent(null);
@@ -407,14 +439,17 @@ export function TargetGroupEventSelector({
               <div className="space-y-2">
                 <Label>Select Target Event</Label>
                 {upcomingEvents.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No events found for this group</p>
+                  <p className="text-muted-foreground text-sm">No events found for this group</p>
                 ) : (
                   <TypeaheadSearch
                     items={targetEventItems}
                     value={selectedEvent?.id || ''}
                     onChange={(item: TypeaheadItem | null) => {
-                      if (!item) { setSelectedEvent(null); return; }
-                      const event = upcomingEvents.find((entry) => entry.id === item.id);
+                      if (!item) {
+                        setSelectedEvent(null);
+                        return;
+                      }
+                      const event = upcomingEvents.find(entry => entry.id === item.id);
                       if (event) setSelectedEvent({ id: event.id, data: event });
                     }}
                     placeholder="Search for an event..."
@@ -433,8 +468,8 @@ export function TargetGroupEventSelector({
                 items={toTypeaheadItems(
                   allWorkflows,
                   'group',
-                  (w) => w.name || 'Untitled Workflow',
-                  (w) => w.group?.name ? `Group: ${w.group.name}` : undefined,
+                  w => w.name || 'Untitled Workflow',
+                  w => (w.group?.name ? `Group: ${w.group.name}` : undefined)
                 )}
                 value={selectedWorkflowId}
                 onChange={(item: TypeaheadItem | null) => {
@@ -448,64 +483,75 @@ export function TargetGroupEventSelector({
               />
             </div>
 
-            {selectedWorkflowId && (() => {
-              const selectedWorkflow = allWorkflows.find(w => w.id === selectedWorkflowId);
-              const workflowGroups = (selectedWorkflow?.steps ?? [])
-                .map(s => s.group)
-                .filter((g): g is NonNullable<typeof g> => !!g);
-              return (
-                <>
-                  <div className="space-y-2">
-                    <Label>Select Target Group</Label>
-                    {workflowGroups.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">No groups defined in this workflow.</p>
-                    ) : (
-                      <TypeaheadSearch
-                        items={toTypeaheadItems(
-                          workflowGroups,
-                          'group',
-                          (g) => g.name || 'Group',
-                          (g) => g.description?.substring(0, 60),
-                        )}
-                        value={selectedGroup?.id || ''}
-                        onChange={(item: TypeaheadItem | null) => {
-                          if (item) {
-                            const group = workflowGroups.find((g) => g.id === item.id);
-                            if (group) {
-                              setSelectedGroup({ id: group.id, data: group });
-                              setSelectedEvent(null);
-                            }
-                          }
-                        }}
-                        placeholder="Search for a group..."
-                        disablePortal={disablePortal}
-                      />
-                    )}
-                  </div>
-
-                  {selectedGroup && (
+            {selectedWorkflowId &&
+              (() => {
+                const selectedWorkflow = allWorkflows.find(w => w.id === selectedWorkflowId);
+                const workflowGroups = (selectedWorkflow?.steps ?? [])
+                  .map(s => s.group)
+                  .filter((g): g is NonNullable<typeof g> => !!g);
+                return (
+                  <>
                     <div className="space-y-2">
-                      <Label>Select Target Event</Label>
-                      {upcomingEvents.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">No events found for this group</p>
+                      <Label>Select Target Group</Label>
+                      {workflowGroups.length === 0 ? (
+                        <p className="text-muted-foreground text-sm">
+                          No groups defined in this workflow.
+                        </p>
                       ) : (
                         <TypeaheadSearch
-                          items={targetEventItems}
-                          value={selectedEvent?.id || ''}
+                          items={toTypeaheadItems(
+                            workflowGroups,
+                            'group',
+                            g => g.name || 'Group',
+                            g =>
+                              typeof g.description === 'string'
+                                ? g.description.substring(0, 60)
+                                : undefined
+                          )}
+                          value={selectedGroup?.id || ''}
                           onChange={(item: TypeaheadItem | null) => {
-                            if (!item) { setSelectedEvent(null); return; }
-                            const event = upcomingEvents.find((entry) => entry.id === item.id);
-                            if (event) setSelectedEvent({ id: event.id, data: event });
+                            if (item) {
+                              const group = workflowGroups.find(g => g.id === item.id);
+                              if (group) {
+                                setSelectedGroup({ id: group.id, data: group });
+                                setSelectedEvent(null);
+                              }
+                            }
                           }}
-                          placeholder="Search for an event..."
+                          placeholder="Search for a group..."
                           disablePortal={disablePortal}
                         />
                       )}
                     </div>
-                  )}
-                </>
-              );
-            })()}
+
+                    {selectedGroup && (
+                      <div className="space-y-2">
+                        <Label>Select Target Event</Label>
+                        {upcomingEvents.length === 0 ? (
+                          <p className="text-muted-foreground text-sm">
+                            No events found for this group
+                          </p>
+                        ) : (
+                          <TypeaheadSearch
+                            items={targetEventItems}
+                            value={selectedEvent?.id || ''}
+                            onChange={(item: TypeaheadItem | null) => {
+                              if (!item) {
+                                setSelectedEvent(null);
+                                return;
+                              }
+                              const event = upcomingEvents.find(entry => entry.id === item.id);
+                              if (event) setSelectedEvent({ id: event.id, data: event });
+                            }}
+                            placeholder="Search for an event..."
+                            disablePortal={disablePortal}
+                          />
+                        )}
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
           </TabsContent>
         </Tabs>
       ) : (
@@ -514,7 +560,7 @@ export function TargetGroupEventSelector({
           <div className="space-y-2">
             <Label>Select Target Group</Label>
             {connectedGroups.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 No connected groups found. You need to be a member of groups with amendment rights.
               </p>
             ) : (
@@ -522,13 +568,14 @@ export function TargetGroupEventSelector({
                 items={toTypeaheadItems(
                   connectedGroups,
                   'group',
-                  (g) => g.name || 'Group',
-                  (g) => g.description?.substring(0, 60),
+                  g => g.name || 'Group',
+                  g =>
+                    typeof g.description === 'string' ? g.description.substring(0, 60) : undefined
                 )}
                 value={selectedGroup?.id || ''}
                 onChange={(item: TypeaheadItem | null) => {
                   if (item) {
-                    const group = connectedGroups.find((g) => g.id === item.id);
+                    const group = connectedGroups.find(g => g.id === item.id);
                     if (group) {
                       setSelectedGroup({ id: group.id, data: group });
                       setSelectedEvent(null);
@@ -545,14 +592,17 @@ export function TargetGroupEventSelector({
             <div className="space-y-2">
               <Label>Select Target Event</Label>
               {upcomingEvents.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No events found for this group</p>
+                <p className="text-muted-foreground text-sm">No events found for this group</p>
               ) : (
                 <TypeaheadSearch
                   items={targetEventItems}
                   value={selectedEvent?.id || ''}
                   onChange={(item: TypeaheadItem | null) => {
-                    if (!item) { setSelectedEvent(null); return; }
-                    const event = upcomingEvents.find((entry) => entry.id === item.id);
+                    if (!item) {
+                      setSelectedEvent(null);
+                      return;
+                    }
+                    const event = upcomingEvents.find(entry => entry.id === item.id);
                     if (event) setSelectedEvent({ id: event.id, data: event });
                   }}
                   placeholder="Search for an event..."
@@ -565,29 +615,36 @@ export function TargetGroupEventSelector({
       )}
 
       {pathWithEvents.length > 0 && (
-        <div className="space-y-3 rounded-md border border-border bg-muted/30 p-3">
+        <div className="border-border bg-muted/30 space-y-3 rounded-md border p-3">
           <div className="flex items-center gap-2">
-            <Target className="h-4 w-4 text-muted-foreground" />
+            <Target className="text-muted-foreground h-4 w-4" />
             <Label className="text-sm">Amendment path events</Label>
           </div>
 
-          <p className="text-xs text-muted-foreground">
-            Select one event per group. Events of lower groups must happen before events of higher groups.
+          <p className="text-muted-foreground text-xs">
+            Select one event per group. Events of lower groups must happen before events of higher
+            groups.
           </p>
 
           <div className="space-y-3">
             {pathWithEvents.map((segment, index) => {
               // For the target group, use the same event list as the main typeahead
               // (groupEventsResult includes past events), avoiding the "no upcoming events" mismatch
-              const segmentEvents = segment.groupId === selectedGroup?.id
-                ? upcomingEvents
-                : getUpcomingEventsForGroup(segment.groupId);
+              const segmentEvents =
+                segment.groupId === selectedGroup?.id
+                  ? upcomingEvents
+                  : getUpcomingEventsForGroup(segment.groupId);
 
               return (
-                <div key={segment.groupId} className="rounded-md border border-border bg-background p-3">
+                <div
+                  key={segment.groupId}
+                  className="border-border bg-background rounded-md border p-3"
+                >
                   <div className="mb-2 flex items-center justify-between gap-2">
                     <p className="text-sm font-medium">{segment.groupName}</p>
-                    <Badge variant="secondary" className="text-xs">Step {index + 1}</Badge>
+                    <Badge variant="secondary" className="text-xs">
+                      Step {index + 1}
+                    </Badge>
                   </div>
 
                   {segmentEvents.length > 0 ? (
@@ -595,8 +652,8 @@ export function TargetGroupEventSelector({
                       items={toTypeaheadItems(
                         segmentEvents,
                         'event',
-                        (event) => event.title || 'Event',
-                        (event) =>
+                        event => event.title || 'Event',
+                        event =>
                           event.start_date
                             ? new Date(event.start_date).toLocaleString('en-US', {
                                 month: 'short',
@@ -608,12 +665,14 @@ export function TargetGroupEventSelector({
                             : 'No date'
                       )}
                       value={segment.eventId ?? undefined}
-                      onChange={(item: TypeaheadItem | null) => updatePathSegmentEvent(segment.groupId, item)}
+                      onChange={(item: TypeaheadItem | null) =>
+                        updatePathSegmentEvent(segment.groupId, item)
+                      }
                       placeholder="Select an event for this group..."
                       disablePortal={disablePortal}
                     />
                   ) : (
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-muted-foreground text-xs">
                       No upcoming events available for this group.
                     </p>
                   )}
@@ -622,9 +681,7 @@ export function TargetGroupEventSelector({
             })}
           </div>
 
-          {pathValidationError && (
-            <p className="text-xs text-destructive">{pathValidationError}</p>
-          )}
+          {pathValidationError && <p className="text-destructive text-xs">{pathValidationError}</p>}
         </div>
       )}
     </div>
@@ -665,9 +722,7 @@ export function TargetGroupEventDisplay({
     <div className="space-y-4">
       {/* Group Card */}
       <div>
-        <h4 className="mb-2 text-sm font-semibold uppercase text-muted-foreground">
-          Target Group
-        </h4>
+        <h4 className="text-muted-foreground mb-2 text-sm font-semibold uppercase">Target Group</h4>
         <GroupTimelineCard
           group={{
             id: groupData.id,
@@ -682,9 +737,7 @@ export function TargetGroupEventDisplay({
 
       {/* Event Card */}
       <div>
-        <h4 className="mb-2 text-sm font-semibold uppercase text-muted-foreground">
-          Target Event
-        </h4>
+        <h4 className="text-muted-foreground mb-2 text-sm font-semibold uppercase">Target Event</h4>
         <EventTimelineCard
           event={{
             id: eventData.id,
@@ -699,7 +752,7 @@ export function TargetGroupEventDisplay({
 
       {/* Path Preview */}
       {pathWithEvents.length > 0 && (
-        <div className="rounded-md bg-muted p-3 text-xs text-muted-foreground">
+        <div className="bg-muted text-muted-foreground rounded-md p-3 text-xs">
           <p className="font-semibold">Amendment Path ({pathWithEvents.length} groups):</p>
           <div className="mt-2 flex flex-wrap items-center gap-1">
             {pathWithEvents.map((segment, index) => (
@@ -708,7 +761,7 @@ export function TargetGroupEventDisplay({
                   {segment.groupName}
                 </Badge>
                 {index < pathWithEvents.length - 1 && (
-                  <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                  <ChevronRight className="text-muted-foreground h-3 w-3" />
                 )}
               </div>
             ))}

@@ -29,7 +29,7 @@ export function ElectionSearchInput({
         electionsForSearch ?? [],
         'election',
         e => e.title || 'Election',
-        e => e.description?.substring(0, 60)
+        e => (typeof e.description === 'string' ? e.description.substring(0, 60) : undefined)
       ),
     [electionsForSearch]
   );

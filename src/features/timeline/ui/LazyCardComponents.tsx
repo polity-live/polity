@@ -15,6 +15,8 @@ import type { VoteTimelineCardProps } from './cards/VoteTimelineCard';
 import type { ElectionTimelineCardProps } from './cards/ElectionTimelineCard';
 import type { ActionTimelineCardProps } from './cards/ActionTimelineCard';
 import type { UserTimelineCardProps } from './cards/UserTimelineCard';
+import type { PaymentTimelineCardProps } from './cards/PaymentTimelineCard';
+import type { AgendaItemTimelineCardProps } from './cards/AgendaItemTimelineCard';
 
 /**
  * Lazy-loaded card components for code splitting
@@ -25,7 +27,7 @@ import type { UserTimelineCardProps } from './cards/UserTimelineCard';
 
 // Card loading fallback
 function CardSkeleton({ className }: { className?: string }) {
-  return <div className={cn('h-48 w-full animate-pulse rounded-xl bg-muted', className)} />;
+  return <div className={cn('bg-muted h-48 w-full animate-pulse rounded-xl', className)} />;
 }
 
 // Lazy load card components
@@ -39,6 +41,10 @@ const LazyEventTimelineCard = lazy(() =>
 
 const LazyAmendmentTimelineCard = lazy(() =>
   import('./cards/AmendmentTimelineCard').then(m => ({ default: m.AmendmentTimelineCard }))
+);
+
+const LazyAgendaItemTimelineCard = lazy(() =>
+  import('./cards/AgendaItemTimelineCard').then(m => ({ default: m.AgendaItemTimelineCard }))
 );
 
 const LazyVideoTimelineCard = lazy(() =>
@@ -59,6 +65,10 @@ const LazyTodoTimelineCard = lazy(() =>
 
 const LazyBlogTimelineCard = lazy(() =>
   import('./cards/BlogTimelineCard').then(m => ({ default: m.BlogTimelineCard }))
+);
+
+const LazyPaymentTimelineCard = lazy(() =>
+  import('./cards/PaymentTimelineCard').then(m => ({ default: m.PaymentTimelineCard }))
 );
 
 const LazyVoteTimelineCard = lazy(() =>
@@ -84,11 +94,13 @@ export const LAZY_CARD_COMPONENTS = {
   group: LazyGroupTimelineCard,
   event: LazyEventTimelineCard,
   amendment: LazyAmendmentTimelineCard,
+  agenda_item: LazyAgendaItemTimelineCard,
   video: LazyVideoTimelineCard,
   image: LazyImageTimelineCard,
   statement: LazyStatementTimelineCard,
   todo: LazyTodoTimelineCard,
   blog: LazyBlogTimelineCard,
+  payment: LazyPaymentTimelineCard,
   vote: LazyVoteTimelineCard,
   election: LazyElectionTimelineCard,
   action: LazyActionTimelineCard,
@@ -102,11 +114,13 @@ export interface CardPropsMap {
   group: GroupTimelineCardProps;
   event: EventTimelineCardProps;
   amendment: AmendmentTimelineCardProps;
+  agenda_item: AgendaItemTimelineCardProps;
   video: VideoTimelineCardProps;
   image: ImageTimelineCardProps;
   statement: StatementTimelineCardProps;
   todo: TodoTimelineCardProps;
   blog: BlogTimelineCardProps;
+  payment: PaymentTimelineCardProps;
   vote: VoteTimelineCardProps;
   election: ElectionTimelineCardProps;
   action: ActionTimelineCardProps;
@@ -207,11 +221,13 @@ export function preloadCard(cardType: CardType): void {
     group: () => import('./cards/GroupTimelineCard'),
     event: () => import('./cards/EventTimelineCard'),
     amendment: () => import('./cards/AmendmentTimelineCard'),
+    agenda_item: () => import('./cards/AgendaItemTimelineCard'),
     video: () => import('./cards/VideoTimelineCard'),
     image: () => import('./cards/ImageTimelineCard'),
     statement: () => import('./cards/StatementTimelineCard'),
     todo: () => import('./cards/TodoTimelineCard'),
     blog: () => import('./cards/BlogTimelineCard'),
+    payment: () => import('./cards/PaymentTimelineCard'),
     vote: () => import('./cards/VoteTimelineCard'),
     election: () => import('./cards/ElectionTimelineCard'),
     action: () => import('./cards/ActionTimelineCard'),

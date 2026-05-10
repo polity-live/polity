@@ -17,6 +17,10 @@ export function useMessageMutations() {
     contextJson?: string;
   }
 
+  interface SendAssistantMessageOptions {
+    contextJson?: string;
+  }
+
   /**
    * Send a message to a conversation
    */
@@ -60,6 +64,33 @@ export function useMessageMutations() {
     } catch (error) {
       console.error('Failed to send message:', error);
       toast.error('Failed to send message');
+      return { success: false, error };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const sendAssistantMessage = async (
+    conversationId: string,
+    content: string,
+    options?: SendAssistantMessageOptions
+  ) => {
+    setIsLoading(true);
+    try {
+      const messageId = crypto.randomUUID();
+
+      await actions.sendAssistantMessage({
+        id: messageId,
+        content,
+        conversation_id: conversationId,
+        context_json: options?.contextJson ?? '[]',
+        deleted_at: 0,
+      });
+
+      return { success: true, messageId };
+    } catch (error) {
+      console.error('Failed to send assistant message:', error);
+      toast.error('Failed to send assistant message');
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -283,6 +314,7 @@ export function useMessageMutations() {
 
   return {
     sendMessage,
+    sendAssistantMessage,
     createConversation,
     deleteMessage,
     markConversationAsRead,

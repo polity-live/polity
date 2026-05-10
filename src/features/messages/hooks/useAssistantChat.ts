@@ -9,6 +9,7 @@ import { useAiActions } from '@/zero/ai/useAiActions';
 import { useAiState } from '@/zero/ai/useAiState';
 import type { Conversation } from '../types/message.types';
 import { slugifySkillName } from '../logic/assistantComposer';
+import { buildAssistantErrorContextJson } from '../logic/contextAttachments';
 import { useMessageMutations } from './useMessageMutations';
 import { useMessageAttachments } from './useMessageAttachments';
 
@@ -682,7 +683,12 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
         setIsToolCalling(false);
         setActiveToolName(null);
         setActiveToolCall(null);
-        setStreamError(errorMessage);
+
+        const persistedError = await mutations.sendAssistantMessage(conversation.id, errorMessage, {
+          contextJson: buildAssistantErrorContextJson(),
+        });
+
+        setStreamError(persistedError.success ? null : errorMessage);
         toast.error(errorMessage);
         return false;
       } finally {

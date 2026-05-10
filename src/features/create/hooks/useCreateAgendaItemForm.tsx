@@ -13,6 +13,7 @@ import {
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { toast } from 'sonner';
 import { Label } from '@/features/shared/ui/ui/label';
+import { richTextToPlainText } from '@/features/shared/logic/richText';
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
 import { TypeSelector } from '@/features/shared/ui/ui/type-selector';
 import { TooltipProvider } from '@/features/shared/ui/ui/tooltip';
@@ -208,7 +209,10 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                   userEvents,
                   'event',
                   e => e.title || 'Event',
-                  e => e.description?.substring(0, 60)
+                  e => {
+                    const text = richTextToPlainText(e.description);
+                    return text ? text.substring(0, 60) : undefined;
+                  }
                 )}
                 value={eventId || undefined}
                 onChange={item => setEventId(item?.id ?? '')}

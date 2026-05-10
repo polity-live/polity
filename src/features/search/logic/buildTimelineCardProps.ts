@@ -6,11 +6,46 @@ import {
 import type { SearchContentItem } from '../types/search.types';
 import type { CardType } from '@/features/timeline/ui/LazyCardComponents';
 
-export function buildTimelineCardProps(item: SearchContentItem): {
+interface PaymentTimelineCardItem {
+  id: string;
+  type: 'payment';
+  title: string;
+  description?: string | null;
+  createdAt: Date;
+  amount?: number | null;
+  paymentType?: string | null;
+  paymentDirection?: 'income' | 'expense' | null;
+  groupId?: string | null;
+  groupName?: string | null;
+  counterpartyLabel?: string | null;
+}
+
+interface AgendaItemTimelineCardItem {
+  id: string;
+  type: 'agenda_item';
+  title: string;
+  description?: string | null;
+  createdAt: Date;
+  updatedAt?: Date;
+  status?: string | null;
+  agendaItemType?: string | null;
+  orderIndex?: number | null;
+  scheduledTime?: string | Date | null;
+  durationMinutes?: number | null;
+  eventId?: string | null;
+  eventName?: string | null;
+}
+
+export type TimelineCardItem =
+  | SearchContentItem
+  | PaymentTimelineCardItem
+  | AgendaItemTimelineCardItem;
+
+export function buildTimelineCardProps(item: TimelineCardItem): {
   cardType: CardType | null;
   cardProps: Record<string, unknown> | null;
 } {
-  let cardType: CardType | null = item.type;
+  let cardType: CardType | null = item.type as CardType;
   let cardProps: Record<string, unknown> | null = null;
 
   switch (item.type) {
@@ -63,6 +98,23 @@ export function buildTimelineCardProps(item: SearchContentItem): {
         },
       };
       break;
+    case 'agenda_item':
+      cardProps = {
+        agendaItem: {
+          id: item.id,
+          title: item.title,
+          description: item.description,
+          type: item.agendaItemType,
+          status: item.status,
+          orderIndex: item.orderIndex,
+          scheduledTime: item.scheduledTime,
+          durationMinutes: item.durationMinutes,
+          eventId: item.eventId,
+          eventName: item.eventName,
+          createdAt: item.createdAt,
+        },
+      };
+      break;
     case 'blog':
       cardProps = {
         blog: {
@@ -112,6 +164,22 @@ export function buildTimelineCardProps(item: SearchContentItem): {
           assigneeCount: item.assigneeCount,
           groupName: item.groupName,
           groupId: item.groupId,
+        },
+      };
+      break;
+    case 'payment':
+      cardProps = {
+        payment: {
+          id: item.id,
+          label: item.title,
+          description: item.description,
+          amount: item.amount,
+          type: item.paymentType,
+          direction: item.paymentDirection,
+          createdAt: item.createdAt,
+          groupId: item.groupId,
+          groupName: item.groupName,
+          counterpartyLabel: item.counterpartyLabel,
         },
       };
       break;

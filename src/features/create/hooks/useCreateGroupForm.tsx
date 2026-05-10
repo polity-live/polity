@@ -746,7 +746,8 @@ export function useCreateGroupForm(): CreateFormConfig {
                   allGroups.filter(g => g.id !== groupId),
                   'group',
                   g => g.name || 'Group',
-                  g => g.description?.substring(0, 60)
+                  g =>
+                    typeof g.description === 'string' ? g.description.substring(0, 60) : undefined
                 )}
                 value={linkGroupId || undefined}
                 onChange={item => setLinkGroupId(item?.id ?? '')}

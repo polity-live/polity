@@ -40,7 +40,7 @@ export function PositionSearchInput({
         filteredPositions,
         'position',
         p => p.title || 'Position',
-        p => p.description?.substring(0, 60)
+        p => (typeof p.description === 'string' ? p.description.substring(0, 60) : undefined)
       ),
     [filteredPositions]
   );

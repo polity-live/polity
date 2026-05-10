@@ -1,17 +1,17 @@
-import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch'
-import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems'
-import { useAllEvents } from '@/zero/events/useEventState'
-import { Label } from '@/features/shared/ui/ui/label'
-import { useMemo } from 'react'
-import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers'
+import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
+import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
+import { useAllEvents } from '@/zero/events/useEventState';
+import { Label } from '@/features/shared/ui/ui/label';
+import { useMemo } from 'react';
+import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 
 interface EventSearchInputProps {
-  value: string
-  onChange: (eventId: string) => void
-  label?: string
-  placeholder?: string
+  value: string;
+  onChange: (eventId: string) => void;
+  label?: string;
+  placeholder?: string;
   /** Only show events belonging to this group */
-  filterByGroupId?: string
+  filterByGroupId?: string;
 }
 
 export function EventSearchInput({
@@ -21,23 +21,21 @@ export function EventSearchInput({
   placeholder = 'Search for an event...',
   filterByGroupId,
 }: EventSearchInputProps) {
-  const { events } = useAllEvents()
+  const { events } = useAllEvents();
 
   const items = useMemo(() => {
-    const filtered = filterByGroupId
-      ? events.filter((e) => e.group_id === filterByGroupId)
-      : events
+    const filtered = filterByGroupId ? events.filter(e => e.group_id === filterByGroupId) : events;
     return toTypeaheadItems(
       filtered,
       'event',
-      (e) => e.title || 'Event',
-      (e) => e.description?.substring(0, 60),
-    )
-  }, [events, filterByGroupId])
+      e => e.title || 'Event',
+      e => (typeof e.description === 'string' ? e.description.substring(0, 60) : undefined)
+    );
+  }, [events, filterByGroupId]);
 
   const handleChange = (item: TypeaheadItem | null) => {
-    onChange(item?.id ?? '')
-  }
+    onChange(item?.id ?? '');
+  };
 
   return (
     <div>
@@ -49,5 +47,5 @@ export function EventSearchInput({
         placeholder={placeholder}
       />
     </div>
-  )
+  );
 }

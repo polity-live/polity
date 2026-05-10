@@ -1,10 +1,11 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
+import { AlertCircle } from 'lucide-react';
 import { MessageContent } from '@/features/messages/ui/MessageContent.tsx';
 import { cn } from '@/features/shared/utils/utils';
 import { isAssistantUser } from '@/features/assistant/logic/assistantHelpers';
 import { Message } from '../types/message.types';
 import { formatTime } from '../logic/messageUtils';
-import { hasRenderableContextCards } from '../logic/contextAttachments';
+import { hasRenderableContextCards, isAssistantErrorContext } from '../logic/contextAttachments';
 import { AiContextCards } from './AiContextCards';
 import type { AiAttachmentEntity } from '@/lib/ai/schemas';
 
@@ -21,6 +22,7 @@ export function MessageBubble({
 }: MessageBubbleProps) {
   const contextLabel = isAssistantUser(message.sender?.id ?? '') ? 'output' : 'input';
   const hasContent = Boolean(message.content?.trim());
+  const isAssistantError = isAssistantErrorContext(message.context_json);
   const hidePolityLinkPreviews =
     contextLabel === 'output' && hasRenderableContextCards(message.context_json);
 
@@ -35,17 +37,36 @@ export function MessageBubble({
           <div
             className={cn(
               'rounded-lg px-4 py-2 break-words',
-              isOwnMessage ? 'bg-primary text-primary-foreground' : 'bg-muted'
+              isOwnMessage
+                ? 'bg-primary text-primary-foreground'
+                : isAssistantError
+                  ? 'border border-red-500/20 bg-red-500/10 text-red-700 dark:text-red-300'
+                  : 'bg-muted'
             )}
           >
-            <MessageContent
-              content={message.content ?? ''}
-              hidePolityLinkPreviews={hidePolityLinkPreviews}
-            />
+            {isAssistantError ? (
+              <div className="space-y-2">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <MessageContent content={message.content ?? ''} />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <MessageContent
+                content={message.content ?? ''}
+                hidePolityLinkPreviews={hidePolityLinkPreviews}
+              />
+            )}
             <p
               className={cn(
                 'mt-1 text-xs',
-                isOwnMessage ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                isOwnMessage
+                  ? 'text-primary-foreground/70'
+                  : isAssistantError
+                    ? 'text-red-700/70 dark:text-red-300/70'
+                    : 'text-muted-foreground'
               )}
             >
               {formatTime(message.created_at)}

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { hasRenderableContextCards, parseContextAttachments } from '../logic/contextAttachments';
+import {
+  buildAssistantErrorContextJson,
+  hasRenderableContextCards,
+  isAssistantErrorContext,
+  parseContextAttachments,
+} from '../logic/contextAttachments';
 
 describe('contextAttachments', () => {
   it('parses persisted ai attachments from message context', () => {
@@ -47,5 +52,12 @@ describe('contextAttachments', () => {
         ])
       )
     ).toBe(false);
+  });
+
+  it('builds and detects persisted assistant error context markers', () => {
+    const contextJson = buildAssistantErrorContextJson();
+
+    expect(isAssistantErrorContext(contextJson)).toBe(true);
+    expect(parseContextAttachments(contextJson)).toEqual([]);
   });
 });

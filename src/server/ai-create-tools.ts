@@ -1,8 +1,10 @@
 import { tool } from 'ai';
 import { z } from 'zod';
 import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
-import { buildTimelineCardProps } from '@/features/search/logic/buildTimelineCardProps';
-import type { SearchContentItem } from '@/features/search/types/search.types';
+import {
+  buildTimelineCardProps,
+  type TimelineCardItem,
+} from '@/features/search/logic/buildTimelineCardProps';
 import type { AiAttachmentEntity, AiChatAttachment } from '@/lib/ai/schemas';
 import {
   notifyAgendaItemCreated,
@@ -206,7 +208,7 @@ function buildAttachment(
   title: string,
   subtitle?: string | null,
   promptContext?: string | null,
-  searchItem?: SearchContentItem | null
+  searchItem?: TimelineCardItem | null
 ): AiChatAttachment {
   const cardDataJson = (() => {
     if (!searchItem) {
@@ -1558,6 +1560,7 @@ export function buildAiCreateTools(userId: string) {
         let notificationGroupId: string = groupId;
         let groupName = 'Group';
         let resolvedCounterpartyGroupId: string | null = null;
+        let counterpartyLabel: string | null = null;
 
         await executeZeroTransaction(zeroContext, async (tx, ctx) => {
           const accessibleGroup = await assertGroupAccess(tx, userId, groupId);
@@ -1565,8 +1568,13 @@ export function buildAiCreateTools(userId: string) {
           groupName = accessibleGroup.name ?? 'Group';
 
           if (counterpartyGroupId) {
-            resolvedCounterpartyGroupId = (await assertGroupAccess(tx, userId, counterpartyGroupId))
-              .id;
+            const accessibleCounterpartyGroup = await assertGroupAccess(
+              tx,
+              userId,
+              counterpartyGroupId
+            );
+            resolvedCounterpartyGroupId = accessibleCounterpartyGroup.id;
+            counterpartyLabel = accessibleCounterpartyGroup.name ?? null;
           }
 
           await runZeroMutator(
@@ -1599,7 +1607,19 @@ export function buildAiCreateTools(userId: string) {
           paymentId,
           label,
           [direction, type, formatCurrency(amount)].join(' · '),
-          null
+          null,
+          {
+            id: paymentId,
+            type: 'payment',
+            title: label,
+            createdAt: new Date(),
+            amount,
+            paymentType: type,
+            paymentDirection: direction,
+            groupId: notificationGroupId,
+            groupName,
+            counterpartyLabel,
+          }
         );
 
         return buildCreatedResult(
@@ -1744,7 +1764,20 @@ export function buildAiCreateTools(userId: string) {
           agendaItemId,
           title,
           [type, `#${resolvedOrder}`].join(' · '),
-          truncate(description)
+          truncate(description),
+          {
+            id: agendaItemId,
+            type: 'agenda_item',
+            title,
+            description: description?.trim() || null,
+            createdAt: new Date(),
+            status: 'pending',
+            agendaItemType: type,
+            orderIndex: resolvedOrder,
+            durationMinutes: durationMinutes ?? null,
+            eventId: resolvedEventId,
+            eventName: eventTitle,
+          }
         );
 
         return buildCreatedResult(

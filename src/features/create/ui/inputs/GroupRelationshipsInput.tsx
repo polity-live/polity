@@ -1,35 +1,35 @@
-import { useState, useMemo } from 'react'
-import { Label } from '@/features/shared/ui/ui/label'
-import { Badge } from '@/features/shared/ui/ui/badge'
-import { Button } from '@/features/shared/ui/ui/button'
-import { Card } from '@/features/shared/ui/ui/card'
-import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch'
-import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems'
-import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers'
-import { useAllGroups } from '@/zero/groups/useGroupState'
-import { X, Check, Link as LinkIcon } from 'lucide-react'
-import { useTranslation } from '@/features/shared/hooks/use-translation'
-import { toast } from 'sonner'
+import { useState, useMemo } from 'react';
+import { Label } from '@/features/shared/ui/ui/label';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Card } from '@/features/shared/ui/ui/card';
+import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
+import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
+import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
+import { useAllGroups } from '@/zero/groups/useGroupState';
+import { X, Check, Link as LinkIcon } from 'lucide-react';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { toast } from 'sonner';
 
-type RelationshipType = 'isParent' | 'isChild'
+type RelationshipType = 'isParent' | 'isChild';
 
 type WithRight =
   | 'informationRight'
   | 'amendmentRight'
   | 'rightToSpeak'
   | 'activeVotingRight'
-  | 'passiveVotingRight'
+  | 'passiveVotingRight';
 
 export interface GroupLink {
-  groupId: string
-  groupName: string
-  relationshipType: RelationshipType
-  rights: WithRight[]
+  groupId: string;
+  groupName: string;
+  relationshipType: RelationshipType;
+  rights: WithRight[];
 }
 
 interface GroupRelationshipsInputProps {
-  value: GroupLink[]
-  onChange: (links: GroupLink[]) => void
+  value: GroupLink[];
+  onChange: (links: GroupLink[]) => void;
 }
 
 const RIGHT_KEYS: WithRight[] = [
@@ -38,45 +38,45 @@ const RIGHT_KEYS: WithRight[] = [
   'rightToSpeak',
   'activeVotingRight',
   'passiveVotingRight',
-]
+];
 
 export function GroupRelationshipsInput({ value, onChange }: GroupRelationshipsInputProps) {
-  const { t } = useTranslation()
-  const { groups } = useAllGroups()
-  const [selectedGroupId, setSelectedGroupId] = useState('')
-  const [relationshipType, setRelationshipType] = useState<RelationshipType>('isParent')
-  const [selectedRights, setSelectedRights] = useState<Set<WithRight>>(new Set())
+  const { t } = useTranslation();
+  const { groups } = useAllGroups();
+  const [selectedGroupId, setSelectedGroupId] = useState('');
+  const [relationshipType, setRelationshipType] = useState<RelationshipType>('isParent');
+  const [selectedRights, setSelectedRights] = useState<Set<WithRight>>(new Set());
 
   const availableGroups = useMemo(
-    () => groups.filter(g => !value.some((link) => link.groupId === g.id)),
-    [groups, value],
-  )
+    () => groups.filter(g => !value.some(link => link.groupId === g.id)),
+    [groups, value]
+  );
 
   const toggleRight = (right: WithRight) => {
-    const next = new Set(selectedRights)
-    if (next.has(right)) next.delete(right)
-    else next.add(right)
-    setSelectedRights(next)
-  }
+    const next = new Set(selectedRights);
+    if (next.has(right)) next.delete(right);
+    else next.add(right);
+    setSelectedRights(next);
+  };
 
   const handleAdd = () => {
     if (!selectedGroupId || selectedRights.size === 0) {
-      toast.error(t('pages.create.group.selectGroupAndRights'))
-      return
+      toast.error(t('pages.create.group.selectGroupAndRights'));
+      return;
     }
-    const group = groups.find(g => g.id === selectedGroupId)
-    if (!group) return
+    const group = groups.find(g => g.id === selectedGroupId);
+    if (!group) return;
 
-    const existing = value.find((link) => link.groupId === selectedGroupId)
+    const existing = value.find(link => link.groupId === selectedGroupId);
     if (existing) {
       onChange(
-        value.map((link) =>
+        value.map(link =>
           link.groupId === selectedGroupId
             ? { ...link, rights: Array.from(selectedRights), relationshipType }
-            : link,
-        ),
-      )
-      toast.info(t('pages.create.group.groupAlreadyLinked'))
+            : link
+        )
+      );
+      toast.info(t('pages.create.group.groupAlreadyLinked'));
     } else {
       onChange([
         ...value,
@@ -86,16 +86,16 @@ export function GroupRelationshipsInput({ value, onChange }: GroupRelationshipsI
           relationshipType,
           rights: Array.from(selectedRights),
         },
-      ])
+      ]);
     }
 
-    setSelectedGroupId('')
-    setSelectedRights(new Set())
-  }
+    setSelectedGroupId('');
+    setSelectedRights(new Set());
+  };
 
   const handleRemove = (groupId: string) => {
-    onChange(value.filter((link) => link.groupId !== groupId))
-  }
+    onChange(value.filter(link => link.groupId !== groupId));
+  };
 
   return (
     <div className="space-y-4">
@@ -105,7 +105,9 @@ export function GroupRelationshipsInput({ value, onChange }: GroupRelationshipsI
           {value.length} {t('pages.create.group.linked')}
         </Badge>
       </div>
-      <p className="text-muted-foreground text-sm">{t('pages.create.group.requestRelationships')}</p>
+      <p className="text-muted-foreground text-sm">
+        {t('pages.create.group.requestRelationships')}
+      </p>
 
       {/* Group search */}
       <div className="space-y-2">
@@ -114,8 +116,8 @@ export function GroupRelationshipsInput({ value, onChange }: GroupRelationshipsI
           items={toTypeaheadItems(
             availableGroups,
             'group',
-            (g) => g.name || 'Group',
-            (g) => g.description?.substring(0, 60),
+            g => g.name || 'Group',
+            g => (typeof g.description === 'string' ? g.description.substring(0, 60) : undefined)
           )}
           value={selectedGroupId}
           onChange={(item: TypeaheadItem | null) => setSelectedGroupId(item?.id ?? '')}
@@ -149,7 +151,7 @@ export function GroupRelationshipsInput({ value, onChange }: GroupRelationshipsI
           <div className="space-y-2">
             <Label>{t('pages.create.group.selectRights')}</Label>
             <div className="grid grid-cols-2 gap-2">
-              {RIGHT_KEYS.map((right) => (
+              {RIGHT_KEYS.map(right => (
                 <Button
                   key={right}
                   type="button"
@@ -181,7 +183,7 @@ export function GroupRelationshipsInput({ value, onChange }: GroupRelationshipsI
         <div className="mt-4 space-y-2">
           <Label className="text-sm">{t('pages.create.group.linkedGroups')}</Label>
           <div className="space-y-2">
-            {value.map((link) => (
+            {value.map(link => (
               <Card key={link.groupId} className="p-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1">
@@ -194,7 +196,7 @@ export function GroupRelationshipsInput({ value, onChange }: GroupRelationshipsI
                       </Badge>
                     </div>
                     <div className="flex flex-wrap gap-1">
-                      {link.rights.map((right) => (
+                      {link.rights.map(right => (
                         <Badge key={right} variant="secondary" className="text-xs">
                           {t(`pages.create.group.rights.${right}`)}
                         </Badge>
@@ -215,5 +217,5 @@ export function GroupRelationshipsInput({ value, onChange }: GroupRelationshipsI
         </div>
       )}
     </div>
-  )
+  );
 }

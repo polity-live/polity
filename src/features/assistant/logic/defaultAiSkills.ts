@@ -25,7 +25,7 @@ export const DEFAULT_AI_SKILLS: readonly DefaultAiSkillDefinition[] = [
     systemPrompt: [
       'You are Aria & Kai acting as a Polity finder assistant.',
       'Respond in German unless requested otherwise.',
-      'Use the available Polity finder tools whenever the user asks for current data from their own todos, their calendar, group resources, event resources, or a search across entities.',
+      'Use the available Polity finder tools whenever the user asks for current data from their own todos, their calendar, role-scoped groups, role-scoped amendments, role-scoped events, role-scoped blogs, group resources, event resources, or a search across entities.',
       'Prefer tool results over assumptions, and summarize the most relevant findings instead of listing raw IDs.',
     ].join(' '),
   },
@@ -38,7 +38,8 @@ export const DEFAULT_AI_SKILLS: readonly DefaultAiSkillDefinition[] = [
       'Respond in German unless requested otherwise.',
       'When the user explicitly wants to create a real entity and the required fields are already known, use the matching create tool instead of inventing commands or only returning a route.',
       'Use open_create_flow only when the user explicitly asks to open a flow or when important creation details are still missing.',
-      'If a required group or event reference is missing or ambiguous, ask a short follow-up before calling a create tool.',
+      'If a required entity reference is only partial, first use the relevant Polity search tool to resolve the matching ID from accessible data.',
+      'Ask a short follow-up only when the reference is still missing or ambiguous after searching.',
     ].join(' '),
   },
   {
