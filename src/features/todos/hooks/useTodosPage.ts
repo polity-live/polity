@@ -19,16 +19,23 @@ export function useTodosPage() {
   const todosTyped = allTodos;
 
   const {
+    fields,
+    quickFilters,
     searchQuery,
     setSearchQuery,
+    quickFilterValues,
+    setQuickFilterValues,
+    toggleQuickFilterValue,
+    clearQuickFilter,
+    savedFilters,
+    saveCustomFilter,
+    deleteCustomFilter,
+    activeCustomFilterIds,
+    toggleCustomFilter,
     selectedTab,
     setSelectedTab,
-    sortBy,
-    setSortBy,
-    filterPriority,
-    setFilterPriority,
     filteredTodos,
-  } = useTodoFilters(todosTyped, user?.id);
+  } = useTodoFilters(todosTyped, user?.id, { storageKey: 'todos-page' });
 
   const statusCounts = useMemo(
     () => computeTodoStats(todosTyped, user?.id),
@@ -64,14 +71,21 @@ export function useTodosPage() {
     setIsDetailDialogOpen,
 
     // Filters (pass-through from useTodoFilters)
+    fields,
+    quickFilters,
     searchQuery,
     setSearchQuery,
+    quickFilterValues,
+    setQuickFilterValues,
+    toggleQuickFilterValue,
+    clearQuickFilter,
+    savedFilters,
+    saveCustomFilter,
+    deleteCustomFilter,
+    activeCustomFilterIds,
+    toggleCustomFilter,
     selectedTab,
     setSelectedTab,
-    sortBy,
-    setSortBy,
-    filterPriority,
-    setFilterPriority,
     filteredTodos,
 
     // Derived data

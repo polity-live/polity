@@ -207,6 +207,26 @@ export const featuresPageTranslations = {
         'Verbesserte Teamkommunikation',
       ],
     },
+    pql: {
+      title: 'PQL',
+      description:
+        'Erstellen Sie wiederverwendbare, typisierte Filter mit einklappbaren Schnellfiltern, gespeicherten Abfragen und benutzerdefinierten AND/OR/IN-Regeln über mehrere Polity-Funktionen hinweg.',
+      overview:
+        'Die Polity Query Language (PQL) bietet eine gemeinsame Filteroberfläche für Aufgaben, Zahlungen, Dokumente und weitere Funktionen. Sie kombiniert schnelle Feldfilter mit gespeicherten benutzerdefinierten Regeln, damit Teams große Datenmengen eingrenzen können, ohne dieselbe Filterlogik in jeder Funktion neu aufzubauen.',
+      capabilities: [
+        'Wiederverwendbare Suchleiste und einklappbare Feldfilter',
+        'Gespeicherte benutzerdefinierte Filter mit Bearbeiten- und Wiederverwenden-Flow',
+        'Typisierte AND-, OR- und IN-Regelkomposition',
+        'Entitätsbasierte Filterwerte für Personen, Gruppen und Mitwirkende',
+        'Funktionslokale Persistenz ohne duplizierte Filterlogik',
+      ],
+      benefits: [
+        'Konsistente Filter-UX in der gesamten Anwendung',
+        'Weniger Wiederholungsarbeit für Nutzer bei wiederkehrenden Abfragen',
+        'Sicherere Filterlogik durch typisierte Felddefinitionen',
+        'Schnellere Entwicklung neuer durchsuchbarer Oberflächen',
+      ],
+    },
     notifications: {
       title: 'Benachrichtigungen',
       description:

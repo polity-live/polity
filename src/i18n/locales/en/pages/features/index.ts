@@ -205,9 +205,30 @@ export const featuresPageTranslations = {
         'Improved team communication',
       ],
     },
+    pql: {
+      title: 'PQL',
+      description:
+        'Build reusable typed filters with collapsible quick filters, saved queries, and custom AND/OR/IN rules across Polity features.',
+      overview:
+        'Polity Query Language (PQL) gives users a shared filtering surface across tasks, payments, documents, and future features. It combines quick field filters with saved custom rules so teams can narrow large datasets without rebuilding the same filter logic in every feature.',
+      capabilities: [
+        'Reusable search bar and collapsible field filters',
+        'Saved custom filters with edit and reuse flows',
+        'Typed AND, OR, and IN rule composition',
+        'Entity-aware filter values for people, groups, and collaborators',
+        'Feature-local persistence without duplicating filter code',
+      ],
+      benefits: [
+        'Consistent filtering UX across the product',
+        'Less repeated work for users who revisit the same queries',
+        'Safer filtering logic with typed field definitions',
+        'Faster feature development for new searchable surfaces',
+      ],
+    },
     notifications: {
       title: 'Notifications',
-      description: 'Stay informed with intelligent notifications for important updates and activities.',
+      description:
+        'Stay informed with intelligent notifications for important updates and activities.',
       overview:
         'Smart notifications keep you informed without overwhelming you. Customize what you hear about and how you receive updates.',
       capabilities: [

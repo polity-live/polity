@@ -24,14 +24,21 @@ export function TodosPage() {
     selectedTodo,
     isDetailDialogOpen,
     setIsDetailDialogOpen,
+    fields,
+    quickFilters,
     searchQuery,
     setSearchQuery,
+    quickFilterValues,
+    setQuickFilterValues,
+    toggleQuickFilterValue,
+    clearQuickFilter,
+    savedFilters,
+    saveCustomFilter,
+    deleteCustomFilter,
+    activeCustomFilterIds,
+    toggleCustomFilter,
     selectedTab,
     setSelectedTab,
-    sortBy,
-    setSortBy,
-    filterPriority,
-    setFilterPriority,
     filteredTodos,
     statusCounts,
     handleToggleComplete,
@@ -51,12 +58,19 @@ export function TodosPage() {
       <TodosHeader viewMode={viewMode} setViewMode={setViewMode} />
 
       <TodosFilters
+        fields={fields}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
-        filterPriority={filterPriority}
-        setFilterPriority={setFilterPriority}
-        sortBy={sortBy}
-        setSortBy={setSortBy}
+        quickFilters={quickFilters}
+        quickFilterValues={quickFilterValues}
+        onQuickFilterValuesChange={setQuickFilterValues}
+        onQuickFilterToggle={toggleQuickFilterValue}
+        onQuickFilterClear={clearQuickFilter}
+        savedFilters={savedFilters}
+        activeCustomFilterIds={activeCustomFilterIds}
+        onCustomFilterToggle={toggleCustomFilter}
+        onCustomFilterDelete={deleteCustomFilter}
+        onCustomFilterSave={saveCustomFilter}
       />
 
       <TodosTabs

@@ -1,78 +1,62 @@
-import { Card, CardContent } from '@/features/shared/ui/ui/card';
-import { Input } from '@/features/shared/ui/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/features/shared/ui/ui/select';
-import { Search } from 'lucide-react';
-import { TodoPriority } from '../types/todo.types';
-import { SortBy } from '../hooks/useTodoFilters';
+import { PqlToolbar } from '@/features/pql/ui/PqlToolbar';
+import type {
+  PqlQuickFilterValues,
+  PqlQuickFilterDefinition,
+} from '@/features/pql/hooks/usePqlCollection';
+import type { PqlFieldDefinition, PqlFilter } from '@/features/pql/logic/applyPqlFilter';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import type { Todo } from '../types/todo.types';
+import type { TodoFieldKey } from '../hooks/useTodoFilters';
 
 interface TodosFiltersProps {
+  fields: readonly PqlFieldDefinition<Todo, TodoFieldKey>[];
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  filterPriority: 'all' | TodoPriority;
-  setFilterPriority: (priority: 'all' | TodoPriority) => void;
-  sortBy: SortBy;
-  setSortBy: (sort: SortBy) => void;
+  quickFilters: readonly PqlQuickFilterDefinition<TodoFieldKey>[];
+  quickFilterValues: PqlQuickFilterValues<TodoFieldKey>;
+  onQuickFilterValuesChange: (fieldKey: TodoFieldKey, values: readonly string[]) => void;
+  onQuickFilterToggle: (fieldKey: TodoFieldKey, value: string) => void;
+  onQuickFilterClear: (fieldKey: TodoFieldKey) => void;
+  savedFilters: readonly PqlFilter<TodoFieldKey>[];
+  activeCustomFilterIds: readonly string[];
+  onCustomFilterToggle: (filterId: string) => void;
+  onCustomFilterDelete: (filterId: string) => void;
+  onCustomFilterSave: (filter: PqlFilter<TodoFieldKey>) => void;
 }
 
 export function TodosFilters({
+  fields,
   searchQuery,
   setSearchQuery,
-  filterPriority,
-  setFilterPriority,
-  sortBy,
-  setSortBy,
+  quickFilters,
+  quickFilterValues,
+  onQuickFilterValuesChange,
+  onQuickFilterToggle,
+  onQuickFilterClear,
+  savedFilters,
+  activeCustomFilterIds,
+  onCustomFilterToggle,
+  onCustomFilterDelete,
+  onCustomFilterSave,
 }: TodosFiltersProps) {
   const { t } = useTranslation();
-  
+
   return (
-    <Card className="mb-6">
-      <CardContent className="pt-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder={t('features.todos.search.placeholder')}
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Select value={filterPriority} onValueChange={(v) => setFilterPriority(v as typeof filterPriority)}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder={t('features.todos.priority.title')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('features.todos.priority.all')}</SelectItem>
-                <SelectItem value="urgent">{t('features.todos.priority.urgent')}</SelectItem>
-                <SelectItem value="high">{t('features.todos.priority.high')}</SelectItem>
-                <SelectItem value="medium">{t('features.todos.priority.medium')}</SelectItem>
-                <SelectItem value="low">{t('features.todos.priority.low')}</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder={t('features.todos.sort.title')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="dueDate">{t('features.todos.sort.dueDate')}</SelectItem>
-                <SelectItem value="priority">{t('features.todos.sort.priority')}</SelectItem>
-                <SelectItem value="createdAt">{t('features.todos.sort.createdAt')}</SelectItem>
-                <SelectItem value="title">{t('features.todos.sort.titleSort')}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    <PqlToolbar
+      fields={fields}
+      searchQuery={searchQuery}
+      onSearchQueryChange={setSearchQuery}
+      searchPlaceholder={t('features.todos.search.placeholder')}
+      quickFilters={quickFilters}
+      quickFilterValues={quickFilterValues}
+      onQuickFilterValuesChange={onQuickFilterValuesChange}
+      onQuickFilterToggle={onQuickFilterToggle}
+      onQuickFilterClear={onQuickFilterClear}
+      savedFilters={savedFilters}
+      activeCustomFilterIds={activeCustomFilterIds}
+      onCustomFilterToggle={onCustomFilterToggle}
+      onCustomFilterDelete={onCustomFilterDelete}
+      onCustomFilterSave={onCustomFilterSave}
+    />
   );
 }

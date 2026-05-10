@@ -33,17 +33,62 @@ export function useGroupOperationPage(groupId: string) {
     setLinkDialogOpen(false);
   };
 
-  const handleAddIncome = async (data: { amount: number; type: string; description?: string; date?: number; payer_user_id?: string | null; receiver_group_id?: string | null; payer_group_id?: string | null; receiver_user_id?: string | null }) => {
-    await addPayment({ label: data.type, type: data.type, amount: data.amount, direction: 'income' as const, senderId: user?.id, groupName, payerUserId: data.payer_user_id ?? undefined, payerGroupId: data.payer_group_id ?? undefined, receiverUserId: data.receiver_user_id ?? undefined, receiverGroupId: data.receiver_group_id ?? undefined });
+  const handleAddIncome = async (data: {
+    amount: number;
+    type: string;
+    description?: string;
+    date?: number;
+    payer_user_id?: string | null;
+    receiver_group_id?: string | null;
+    payer_group_id?: string | null;
+    receiver_user_id?: string | null;
+  }) => {
+    await addPayment({
+      label: data.type,
+      type: data.type,
+      amount: data.amount,
+      direction: 'income' as const,
+      senderId: user?.id,
+      groupName,
+      payerUserId: data.payer_user_id ?? undefined,
+      payerGroupId: data.payer_group_id ?? undefined,
+      receiverUserId: data.receiver_user_id ?? undefined,
+      receiverGroupId: data.receiver_group_id ?? undefined,
+    });
     setIncomeDialogOpen(false);
   };
 
-  const handleAddExpense = async (data: { amount: number; type: string; description?: string; date?: number; payer_user_id?: string | null; receiver_group_id?: string | null; payer_group_id?: string | null; receiver_user_id?: string | null }) => {
-    await addPayment({ label: data.type, type: data.type, amount: data.amount, direction: 'expense' as const, senderId: user?.id, groupName, payerUserId: data.payer_user_id ?? undefined, payerGroupId: data.payer_group_id ?? undefined, receiverUserId: data.receiver_user_id ?? undefined, receiverGroupId: data.receiver_group_id ?? undefined });
+  const handleAddExpense = async (data: {
+    amount: number;
+    type: string;
+    description?: string;
+    date?: number;
+    payer_user_id?: string | null;
+    receiver_group_id?: string | null;
+    payer_group_id?: string | null;
+    receiver_user_id?: string | null;
+  }) => {
+    await addPayment({
+      label: data.type,
+      type: data.type,
+      amount: data.amount,
+      direction: 'expense' as const,
+      senderId: user?.id,
+      groupName,
+      payerUserId: data.payer_user_id ?? undefined,
+      payerGroupId: data.payer_group_id ?? undefined,
+      receiverUserId: data.receiver_user_id ?? undefined,
+      receiverGroupId: data.receiver_group_id ?? undefined,
+    });
     setExpenseDialogOpen(false);
   };
 
-  const handleAddTodo = async (data: { title: string; description: string; priority: string; dueDate: string }) => {
+  const handleAddTodo = async (data: {
+    title: string;
+    description: string;
+    priority: string;
+    dueDate: string;
+  }) => {
     await addTodo({ ...data, groupName });
     setTodoDialogOpen(false);
   };
@@ -57,6 +102,7 @@ export function useGroupOperationPage(groupId: string) {
     setLinkDialogOpen,
     handleAddLink,
     // Payments
+    payments,
     summary,
     incomeData,
     expenditureData,

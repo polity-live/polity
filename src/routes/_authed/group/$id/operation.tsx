@@ -1,18 +1,18 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { useGroupOperationPage } from '@/features/groups/hooks/useGroupOperationPage'
-import { LinksSection } from '@/features/network/ui/LinksSection'
-import { AddLinkDialog } from '@/features/network/ui/AddLinkDialog'
-import { PaymentsSection } from '@/features/groups/ui/PaymentsSection'
-import { TodosSection } from '@/features/groups/ui/TodosSection'
-import { GroupDocumentsList } from '@/features/documents/ui/GroupDocumentsList'
-import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card'
+import { createFileRoute } from '@tanstack/react-router';
+import { useGroupOperationPage } from '@/features/groups/hooks/useGroupOperationPage';
+import { LinksSection } from '@/features/network/ui/LinksSection';
+import { AddLinkDialog } from '@/features/network/ui/AddLinkDialog';
+import { PaymentsSection } from '@/features/groups/ui/PaymentsSection';
+import { TodosSection } from '@/features/groups/ui/TodosSection';
+import { GroupDocumentsList } from '@/features/documents/ui/GroupDocumentsList';
+import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 
 export const Route = createFileRoute('/_authed/group/$id/operation')({
   component: GroupOperationPage,
-})
+});
 
 function GroupOperationPage() {
-  const { id } = Route.useParams()
+  const { id } = Route.useParams();
   const {
     userId,
     groupName,
@@ -20,6 +20,7 @@ function GroupOperationPage() {
     linkDialogOpen,
     setLinkDialogOpen,
     handleAddLink,
+    payments,
     summary,
     incomeData,
     expenditureData,
@@ -35,9 +36,8 @@ function GroupOperationPage() {
     todoDialogOpen,
     setTodoDialogOpen,
     handleAddTodo,
-    updateTodoStatus,
     toggleTodoComplete,
-  } = useGroupOperationPage(id)
+  } = useGroupOperationPage(id);
 
   return (
     <div className="space-y-8">
@@ -56,6 +56,8 @@ function GroupOperationPage() {
       {/* 2. Payments */}
       <PaymentsSection
         groupId={id}
+        storageKey={`group-${id}-payments`}
+        payments={payments}
         summary={summary}
         incomeData={incomeData}
         expenditureData={expenditureData}
@@ -69,6 +71,7 @@ function GroupOperationPage() {
 
       {/* 3. Todos */}
       <TodosSection
+        storageKey={`group-${id}-todos`}
         todos={todos as import('@/features/todos/types/todo.types').Todo[]}
         viewMode={todoViewMode}
         onViewModeChange={setTodoViewMode}
@@ -76,7 +79,6 @@ function GroupOperationPage() {
         onDialogChange={setTodoDialogOpen}
         onAddTodo={handleAddTodo}
         onToggleComplete={toggleTodoComplete}
-        onUpdateStatus={updateTodoStatus}
       />
 
       {/* 4. Documents */}
@@ -85,9 +87,14 @@ function GroupOperationPage() {
           <CardTitle>Documents</CardTitle>
         </CardHeader>
         <CardContent>
-          <GroupDocumentsList groupId={id} groupName={groupName} userId={userId} />
+          <GroupDocumentsList
+            groupId={id}
+            groupName={groupName}
+            userId={userId}
+            storageKey={`group-${id}-documents`}
+          />
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
