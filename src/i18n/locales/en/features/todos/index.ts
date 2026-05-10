@@ -69,7 +69,7 @@ export const todosTranslations = {
     tomorrow: 'Tomorrow',
     thisWeek: 'This Week',
     nextWeek: 'Next Week',
-    custom: 'Custom Date',
+    custom: 'Due until date',
     noDueDate: 'No Due Date',
     overdue: 'Overdue',
     inDays: 'In {{count}} days',
