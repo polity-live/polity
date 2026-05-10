@@ -26,7 +26,12 @@ import { type PlateEditor, useEditorRef } from 'platejs/react';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/features/shared/ui/ui/button.tsx';
-import { Command, CommandGroup, CommandItem, CommandList } from '@/features/shared/ui/ui/command.tsx';
+import {
+  Command,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+} from '@/features/shared/ui/ui/command.tsx';
 import { Popover, PopoverAnchor, PopoverContent } from '@/features/shared/ui/ui/popover.tsx';
 import { cn } from '@/features/shared/utils/utils.ts';
 import { useChat } from '@/features/shared/ui/kit-platejs/use-chat.ts';
@@ -114,9 +119,6 @@ export function AIMenu() {
 
   useHotkeys('esc', () => {
     api.aiChat.stop();
-
-    // remove when you implement the route /api/ai/command
-    chat._abortFakeStream();
   });
 
   const isLoading = status === 'streaming' || status === 'submitted';
@@ -152,14 +154,14 @@ export function AIMenu() {
           {mode === 'chat' && isSelecting && content && <AIChatEditor content={content} />}
 
           {isLoading ? (
-            <div className="flex grow select-none items-center gap-2 p-2 text-sm text-muted-foreground">
+            <div className="text-muted-foreground flex grow items-center gap-2 p-2 text-sm select-none">
               <Loader2Icon className="size-4 animate-spin" />
               {messages.length > 1 ? t('plateJs.ai.menu.editing') : t('plateJs.ai.menu.thinking')}
             </div>
           ) : (
             <CommandPrimitive.Input
               className={cn(
-                'flex h-9 w-full min-w-0 border-input bg-transparent px-3 py-1 text-base outline-none transition-[color,box-shadow] placeholder:text-muted-foreground md:text-sm dark:bg-input/30',
+                'border-input placeholder:text-muted-foreground dark:bg-input/30 flex h-9 w-full min-w-0 bg-transparent px-3 py-1 text-base transition-[color,box-shadow] outline-none md:text-sm',
                 'aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40',
                 'border-b focus-visible:ring-transparent'
               )}
@@ -505,10 +507,10 @@ export function AILoadingBar() {
   return (
     <div
       className={cn(
-        'absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-3 rounded-md border border-border bg-muted px-3 py-1.5 text-sm text-muted-foreground shadow-md transition-all duration-300'
+        'border-border bg-muted text-muted-foreground absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-3 rounded-md border px-3 py-1.5 text-sm shadow-md transition-all duration-300'
       )}
     >
-      <span className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+      <span className="border-muted-foreground h-4 w-4 animate-spin rounded-full border-2 border-t-transparent" />
       <span>
         {status === 'submitted' ? t('plateJs.ai.menu.thinking') : t('plateJs.ai.menu.writing')}
       </span>
@@ -520,7 +522,7 @@ export function AILoadingBar() {
       >
         <PauseIcon className="h-4 w-4" />
         {t('plateJs.ai.menu.stop')}
-        <kbd className="ml-1 rounded bg-border px-1 font-mono text-[10px] text-muted-foreground shadow-sm">
+        <kbd className="bg-border text-muted-foreground ml-1 rounded px-1 font-mono text-[10px] shadow-sm">
           Esc
         </kbd>
       </Button>

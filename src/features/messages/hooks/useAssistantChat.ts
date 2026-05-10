@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { DEFAULT_AI_SKILLS } from '@/features/assistant/logic/defaultAiSkills';
+import { buildAiModelKey, getPreferredDefaultAiModelKey } from '@/lib/ai/models';
 import { DEFAULT_AI_TOOLS, type AiToolName } from '@/lib/ai/defaultAiTools';
 import type { AiChatAttachment, AiProvider, AiReasoningEffort } from '@/lib/ai/schemas';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -54,8 +55,6 @@ export interface CreateAssistantSkillInput {
 interface SendAssistantMessageOptions {
   onUserMessageSent?: () => void;
 }
-
-const FREE_ROUTER_MODEL_LABEL = 'free models router';
 
 interface AssistantChatStreamEvent {
   type:
@@ -171,30 +170,6 @@ function buildToolCallPreview(
   return `${toolName}(${serializedArgs}${hasMoreArgs ? ', ...' : ''})`;
 }
 
-function getModelKey(model: Pick<AiCatalogModel, 'provider' | 'id'>): string {
-  return `${model.provider}:${model.id}`;
-}
-
-function getPreferredDefaultModelKey(models: readonly AiCatalogModel[]): string | null {
-  const labeledFreeRouterModel = models.find(
-    model => model.label.trim().toLowerCase() === FREE_ROUTER_MODEL_LABEL
-  );
-
-  if (labeledFreeRouterModel) {
-    return getModelKey(labeledFreeRouterModel);
-  }
-
-  const fallbackFreeRouterModel = models.find(
-    model => model.provider === 'openrouter' && model.source === 'app' && model.free
-  );
-
-  if (fallbackFreeRouterModel) {
-    return getModelKey(fallbackFreeRouterModel);
-  }
-
-  return models[0] ? getModelKey(models[0]) : null;
-}
-
 export function useAssistantChat(conversation: Conversation, currentUserId?: string) {
   const { session } = useAuth();
   const { t } = useTranslation();
@@ -281,11 +256,11 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
   );
 
   const selectedModel = useMemo(
-    () => models.find(model => getModelKey(model) === selectedModelKey) ?? null,
+    () => models.find(model => buildAiModelKey(model) === selectedModelKey) ?? null,
     [models, selectedModelKey]
   );
 
-  const preferredDefaultModelKey = useMemo(() => getPreferredDefaultModelKey(models), [models]);
+  const preferredDefaultModelKey = useMemo(() => getPreferredDefaultAiModelKey(models), [models]);
 
   const refreshCatalog = useCallback(async () => {
     if (!session?.access_token) {
@@ -327,7 +302,7 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
       return;
     }
 
-    const selectionStillExists = models.some(model => getModelKey(model) === selectedModelKey);
+    const selectionStillExists = models.some(model => buildAiModelKey(model) === selectedModelKey);
 
     if (!selectionStillExists && preferredDefaultModelKey) {
       setSelectedModelKey(preferredDefaultModelKey);
