@@ -137,6 +137,10 @@ export const userPageTranslations = {
     navigationStyle: 'Navigationsstil',
     navigationStyleDescription: 'Wähle, wie die Navigation angezeigt wird',
   },
+  all: {
+    title: 'Alle',
+    searchPlaceholder: 'Anträge, Blogs, Gruppen und Statements suchen...',
+  },
   groups: {
     title: 'Gruppen',
     description: 'Gruppen, in denen dieser Benutzer Mitglied ist',
@@ -151,6 +155,8 @@ export const userPageTranslations = {
   },
   statements: {
     title: 'Statements',
+    searchPlaceholder: 'Statements nach Text oder Thema suchen...',
+    noResults: 'Keine Statements gefunden, die deiner Suche entsprechen.',
   },
   amendments: {
     title: 'Anträge',

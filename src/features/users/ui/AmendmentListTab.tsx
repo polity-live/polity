@@ -5,6 +5,7 @@ import { AmendmentTimelineCard } from '@/features/timeline/ui/cards/AmendmentTim
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { normalizeEditingMode } from '@/zero/rbac';
 import type { ProfileAmendmentCollaboration } from '../types/user.types';
+import { matchesSearchQuery } from '../logic/userWikiSearch';
 
 interface AmendmentListTabProps {
   collaborations: readonly ProfileAmendmentCollaboration[];
@@ -20,22 +21,33 @@ export const AmendmentListTab: React.FC<AmendmentListTabProps> = ({
   const { t } = useTranslation();
 
   const withAmendment = useMemo(
-    () => collaborations.filter((c) => c.amendment),
-    [collaborations],
+    () =>
+      collaborations.filter(
+        (
+          collaboration
+        ): collaboration is ProfileAmendmentCollaboration & {
+          amendment: NonNullable<ProfileAmendmentCollaboration['amendment']>;
+        } => Boolean(collaboration.amendment)
+      ),
+    [collaborations]
   );
 
   const filtered = useMemo(() => {
-    const term = (searchValue ?? '').toLowerCase();
-    if (!term) return withAmendment;
-    return withAmendment.filter((collab) => {
-      const a = collab.amendment!;
-      return (
-        (a.title ?? '').toLowerCase().includes(term) ||
-        (a.editing_mode ?? '').toLowerCase().includes(term) ||
-        (a.reason ?? '').toLowerCase().includes(term) ||
-        (a.code ?? '').toLowerCase().includes(term) ||
-        String(a.created_at).toLowerCase().includes(term) ||
-        (Array.isArray(a.tags) && a.tags.some((tag) => typeof tag === 'string' && tag.toLowerCase().includes(term)))
+    return withAmendment.filter(collab => {
+      const a = collab.amendment;
+      const hashtagTags = (a.amendment_hashtags ?? [])
+        .map(junction => junction.hashtag?.tag)
+        .filter((tag): tag is string => typeof tag === 'string');
+
+      return matchesSearchQuery(
+        searchValue,
+        a.title,
+        a.editing_mode,
+        a.reason,
+        a.code,
+        a.created_at,
+        hashtagTags,
+        Array.isArray(a.tags) ? a.tags : undefined
       );
     });
   }, [withAmendment, searchValue]);
@@ -43,8 +55,8 @@ export const AmendmentListTab: React.FC<AmendmentListTabProps> = ({
   // Deduplicate by amendment id
   const unique = useMemo(() => {
     const seen = new Set<string>();
-    return filtered.filter((c) => {
-      const id = c.amendment!.id;
+    return filtered.filter(c => {
+      const id = c.amendment.id;
       if (seen.has(id)) return false;
       seen.add(id);
       return true;
@@ -54,7 +66,7 @@ export const AmendmentListTab: React.FC<AmendmentListTabProps> = ({
   return (
     <>
       <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
         <Input
           placeholder={t('pages.user.amendments.searchPlaceholder')}
           className="pl-10"
@@ -63,22 +75,23 @@ export const AmendmentListTab: React.FC<AmendmentListTabProps> = ({
         />
       </div>
       {unique.length === 0 ? (
-        <p className="py-8 text-center text-muted-foreground">
+        <p className="text-muted-foreground py-8 text-center">
           {t('pages.user.amendments.noResults')}
         </p>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
-          {unique.map((collab) => {
-            const a = collab.amendment!;
+          {unique.map(collab => {
+            const a = collab.amendment;
             const hashtagTags = (a.amendment_hashtags ?? [])
-              .map((j) => j.hashtag?.tag)
+              .map(j => j.hashtag?.tag)
               .filter((tag): tag is string => !!tag);
             const rawTags = a.tags;
-            const tags = hashtagTags.length > 0
-              ? hashtagTags
-              : Array.isArray(rawTags)
-                ? rawTags.filter((tag): tag is string => typeof tag === 'string')
-                : undefined;
+            const tags =
+              hashtagTags.length > 0
+                ? hashtagTags
+                : Array.isArray(rawTags)
+                  ? rawTags.filter((tag): tag is string => typeof tag === 'string')
+                  : undefined;
 
             return (
               <AmendmentTimelineCard

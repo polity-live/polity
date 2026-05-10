@@ -5,6 +5,7 @@ import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCar
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 import type { ProfileGroupMembership } from '../types/user.types';
+import { matchesSearchQuery } from '../logic/userWikiSearch';
 
 interface GroupsListTabProps {
   memberships: readonly ProfileGroupMembership[];
@@ -20,25 +21,32 @@ export const GroupsListTab: React.FC<GroupsListTabProps> = ({
   const { t } = useTranslation();
 
   const withGroup = useMemo(
-    () => memberships.filter((m) => m.group),
-    [memberships],
+    () =>
+      memberships.filter(
+        (
+          membership
+        ): membership is ProfileGroupMembership & {
+          group: NonNullable<ProfileGroupMembership['group']>;
+        } => Boolean(membership.group)
+      ),
+    [memberships]
   );
 
   const filteredGroups = useMemo(() => {
-    const term = (searchValue ?? '').toLowerCase();
-    if (!term) return withGroup;
-    return withGroup.filter(
-      (m) =>
-        (m.group?.name ?? '').toLowerCase().includes(term) ||
-        (m.role?.name ?? '').toLowerCase().includes(term) ||
-        (m.group?.description ?? '').toLowerCase().includes(term)
+    return withGroup.filter(membership =>
+      matchesSearchQuery(
+        searchValue,
+        membership.group?.name,
+        membership.role?.name,
+        membership.group?.description
+      )
     );
   }, [withGroup, searchValue]);
 
   // Deduplicate by membership id
   const unique = useMemo(() => {
     const seen = new Set<string>();
-    return filteredGroups.filter((m) => {
+    return filteredGroups.filter(m => {
       if (seen.has(m.id)) return false;
       seen.add(m.id);
       return true;
@@ -48,7 +56,7 @@ export const GroupsListTab: React.FC<GroupsListTabProps> = ({
   return (
     <>
       <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
         <Input
           placeholder={t('pages.user.groups.searchPlaceholder')}
           className="pl-10"
@@ -57,11 +65,11 @@ export const GroupsListTab: React.FC<GroupsListTabProps> = ({
         />
       </div>
       {unique.length === 0 ? (
-        <p className="py-8 text-center text-muted-foreground">{t('pages.user.groups.noResults')}</p>
+        <p className="text-muted-foreground py-8 text-center">{t('pages.user.groups.noResults')}</p>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {unique.map(membership => {
-            const group = membership.group!;
+            const group = membership.group;
             return (
               <GroupTimelineCard
                 key={membership.id}

@@ -5,7 +5,6 @@ import { CircleHelp, Mail } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
 import { useUserWikiContentSearch } from './state/useUserWikiContentSearch';
 import { InfoTabs } from '@/features/shared/ui/wiki/InfoTabs.tsx';
-import { StatementCarousel } from '@/features/users/ui/StatementCarousel';
 import { UserWikiContentTabs } from '@/features/users/ui/UserWikiContentTabs';
 import { useUserData } from './hooks/useUserData';
 import { useSubscribeUser } from '@/features/payments/hooks/useSubscribeUser';
@@ -27,9 +26,11 @@ import { useSubscriptionStatusByUser } from '@/zero/payments/usePaymentState';
 interface UserWikiProps {
   userId?: string;
   searchFilters?: {
+    all?: string;
     blogs?: string;
     groups?: string;
     amendments?: string;
+    statements?: string;
   };
 }
 
@@ -300,13 +301,6 @@ export function UserWiki(_props: UserWikiProps) {
               location: userLocation || undefined,
             }}
             className="mb-12"
-          />
-
-          <StatementCarousel
-            statements={dbUser.statements ?? []}
-            authorName={fullName || t('common.labels.unspecifiedUser')}
-            authorTitle={dbUser.bio ?? undefined}
-            authorAvatar={dbUser.avatar ?? undefined}
           />
 
           <UserWikiContentTabs

@@ -6,15 +6,19 @@ export function useUserWikiContentSearch() {
   const searchParams = useSearch({ strict: false }) as Record<string, string>;
 
   const [searchTerms, setSearchTerms] = useState<TabSearchState>({
+    all: searchParams.all ?? '',
     blogs: searchParams.blogs ?? '',
     groups: searchParams.groups ?? '',
     amendments: searchParams.amendments ?? '',
+    statements: searchParams.statements ?? '',
   });
 
   // Update URL when searchTerms change
   const updateUrlSearch = (tab: keyof TabSearchState, value: string) => {
     const current = new URLSearchParams(
-      Object.entries(searchParams).filter(([, v]) => v != null).map(([k, v]) => [k, String(v)])
+      Object.entries(searchParams)
+        .filter(([, v]) => v != null)
+        .map(([k, v]) => [k, String(v)])
     );
     if (value) {
       current.set(tab, value);

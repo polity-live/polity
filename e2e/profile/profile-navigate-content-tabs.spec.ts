@@ -9,33 +9,36 @@ test.describe('View Own Profile (Authenticated)', () => {
     // 1. Authenticate and navigate to own profile
     await navigateToOwnProfile(page);
 
-    // 2. Wait for tablist element with role="tablist" to be visible
-    // Using the Blogs/Groups/Amendments tablist (there are multiple tablists on the page)
+    // 2. Wait for the profile content tablist to be visible
     const tablist = page.locator('[role="tablist"]').last();
     await expect(tablist).toBeVisible({ timeout: 10000 });
 
-    // 3. Get count of all tab elements with role="tab"
-    const tabs = page.locator('[role="tab"]');
-    const tabCount = await tabs.count();
+    // 3. Verify the tabs are ordered and default to All
+    const tabs = tablist.getByRole('tab');
+    await expect(tabs).toHaveCount(5);
+    await expect(tabs.nth(0)).toHaveText(/all/i);
+    await expect(tabs.nth(1)).toHaveText(/amendments/i);
+    await expect(tabs.nth(2)).toHaveText(/blogs/i);
+    await expect(tabs.nth(3)).toHaveText(/groups/i);
+    await expect(tabs.nth(4)).toHaveText(/statements/i);
 
-    // 4. Verify tab count is greater than 0
-    expect(tabCount).toBeGreaterThan(0);
+    const allTab = tabs.nth(0);
+    await expect(allTab).toHaveAttribute('aria-selected', 'true');
 
-    // 5. For each tab (minimum 3 tabs)
-    const tabsToTest = Math.min(3, tabCount);
-    for (let i = 0; i < tabsToTest; i++) {
-      const tab = tabs.nth(i);
+    const allPanelId = await allTab.getAttribute('aria-controls');
+    expect(allPanelId).toBeTruthy();
+    await expect(page.locator(`#${allPanelId}`)).toBeVisible({ timeout: 5000 });
 
-      // Click the tab
+    // 4. Verify each remaining tab can be activated and shows its panel
+    for (const name of ['amendments', 'blogs', 'groups', 'statements']) {
+      const tab = tablist.getByRole('tab', { name: new RegExp(name, 'i') });
       await tab.click();
 
-      // Verify tab has aria-selected="true" attribute
       await expect(tab).toHaveAttribute('aria-selected', 'true');
 
-      // Verify corresponding tab panel with role="tabpanel" is visible
-      // Filter for visible panel since there are multiple panels (some hidden)
-      const tabPanel = page.locator('[role="tabpanel"]:visible');
-      await expect(tabPanel.first()).toBeVisible({ timeout: 5000 });
+      const panelId = await tab.getAttribute('aria-controls');
+      expect(panelId).toBeTruthy();
+      await expect(page.locator(`#${panelId}`)).toBeVisible({ timeout: 5000 });
     }
   });
 });

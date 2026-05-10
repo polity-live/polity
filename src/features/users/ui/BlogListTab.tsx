@@ -4,6 +4,7 @@ import { Search } from 'lucide-react';
 import { BlogTimelineCard } from '@/features/timeline/ui/cards/BlogTimelineCard';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { ProfileBloggerRelation } from '../types/user.types';
+import { matchesSearchQuery } from '../logic/userWikiSearch';
 
 interface BlogListTabProps {
   bloggerRelations: readonly ProfileBloggerRelation[];
@@ -29,7 +30,7 @@ export const BlogListTab: React.FC<BlogListTabProps> = ({
     const seen = new Set<string>();
     return bloggerRelations
       .filter((r): r is typeof r & { blog: NonNullable<typeof r.blog> } => !!r.blog)
-      .filter((r) => {
+      .filter(r => {
         if (seen.has(r.blog.id)) return false;
         seen.add(r.blog.id);
         return true;
@@ -37,19 +38,20 @@ export const BlogListTab: React.FC<BlogListTabProps> = ({
   }, [bloggerRelations]);
 
   const filteredBlogs = useMemo(() => {
-    const term = (searchValue ?? '').toLowerCase();
-    if (!term) return blogs;
-    return blogs.filter(
-      (r) =>
-        (r.blog.title ?? '').toLowerCase().includes(term) ||
-        (r.blog.date ?? '').toLowerCase().includes(term)
+    return blogs.filter(relation =>
+      matchesSearchQuery(
+        searchValue,
+        relation.blog.title,
+        relation.blog.description,
+        relation.blog.date
+      )
     );
   }, [blogs, searchValue]);
 
   return (
     <>
       <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
         <Input
           placeholder={t('pages.user.blogs.searchPlaceholder')}
           className="pl-10"
@@ -58,13 +60,13 @@ export const BlogListTab: React.FC<BlogListTabProps> = ({
         />
       </div>
       {filteredBlogs.length === 0 ? (
-        <p className="py-8 text-center text-muted-foreground">{t('pages.user.blogs.noResults')}</p>
+        <p className="text-muted-foreground py-8 text-center">{t('pages.user.blogs.noResults')}</p>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredBlogs.map((relation) => {
+          {filteredBlogs.map(relation => {
             const blog = relation.blog;
             const hashtags = (blog.blog_hashtags ?? [])
-              .map((j) => j.hashtag)
+              .map(j => j.hashtag)
               .filter((h): h is NonNullable<typeof h> => !!h);
             return (
               <BlogTimelineCard

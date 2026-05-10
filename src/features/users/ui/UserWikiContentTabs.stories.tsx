@@ -39,10 +39,16 @@ const meta: Meta = {
 export default meta;
 
 export const UserWikiContentTabsDefault: StoryObj = {
-  render: (args) => {
-    const [searchTerms, setSearchTerms] = React.useState({ blogs: '', groups: '', amendments: '' });
+  render: args => {
+    const [searchTerms, setSearchTerms] = React.useState({
+      all: '',
+      blogs: '',
+      groups: '',
+      amendments: '',
+      statements: '',
+    });
     const handleSearchChange = (tab: keyof typeof searchTerms, value: string) => {
-      setSearchTerms((prev) => ({ ...prev, [tab]: value }));
+      setSearchTerms(prev => ({ ...prev, [tab]: value }));
     };
     return (
       <UserWikiContentTabs

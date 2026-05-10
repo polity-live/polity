@@ -187,13 +187,6 @@ export const navItemsAuthenticated = (
         href: `/user/${userId}`,
         onClick: () => navigate({ to: `/user/${userId}` }),
       },
-      {
-        id: 'blogs-and-statements',
-        label: t ? t('navigation.secondary.user.blogsAndStatements') : 'Blogs & Statements',
-        icon: 'BookOpen',
-        href: `/user/${userId}/blogs-and-statements`,
-        onClick: () => navigate({ to: `/user/${userId}/blogs-and-statements` }),
-      },
     ];
 
     // Only show subscriptions and memberships for own user profile
