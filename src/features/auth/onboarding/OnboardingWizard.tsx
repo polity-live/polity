@@ -33,7 +33,7 @@ export function OnboardingWizard({ userId, userEmail, onComplete }: OnboardingWi
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { updateProfile } = useUserActions();
+  const { updateProfileConfirmed } = useUserActions();
 
   const {
     step,
@@ -81,7 +81,7 @@ export function OnboardingWizard({ userId, userEmail, onComplete }: OnboardingWi
     // Save the "don't show again" preference if user checked it
     if (data.dontShowAriaKaiAgain && user?.id) {
       try {
-        await updateProfile({
+        await updateProfileConfirmed({
           assistant_introduction: false,
         });
       } catch (error) {

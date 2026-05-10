@@ -49,7 +49,7 @@ export function useUserMutations() {
     setError(null);
 
     try {
-      await userActions.updateProfile({
+      await userActions.updateProfileConfirmed({
         ...profileData,
       });
 
@@ -72,7 +72,7 @@ export function useUserMutations() {
     setError(null);
 
     try {
-      await userActions.updateProfile({
+      await userActions.updateProfileConfirmed({
         avatar: fileId,
       });
 
@@ -142,7 +142,7 @@ export function useUserMutations() {
     setError(null);
 
     try {
-      await userActions.updateProfile({
+      await userActions.updateProfileConfirmed({
         first_name: profileData.first_name,
         last_name: profileData.last_name,
         bio: profileData.bio,

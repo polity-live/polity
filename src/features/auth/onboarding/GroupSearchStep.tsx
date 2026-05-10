@@ -17,6 +17,7 @@ import { usePublicGroups } from '@/zero/groups/useGroupState.ts';
 import type { Group } from '../hooks/useOnboarding.ts';
 import { cn } from '@/features/shared/utils/utils.ts';
 import { buildLocationSearchValue, formatLocation } from '@/features/shared/logic/locationHelpers';
+import { richTextToPlainText } from '@/features/shared/logic/richText';
 
 interface GroupSearchStepProps {
   selectedGroup: Group | null;
@@ -47,16 +48,20 @@ export function GroupSearchStep({
     }
 
     const term = searchTerm.toLowerCase();
-    return groups.filter(
-      group =>
+    return groups.filter(group => {
+      const description = richTextToPlainText(group.description).toLowerCase();
+
+      return (
         group.name?.toLowerCase().includes(term) ||
-        group.description?.toLowerCase().includes(term) ||
+        description.includes(term) ||
         buildLocationSearchValue(group).includes(term)
-    );
+      );
+    });
   }, [groupsData, searchTerm]);
 
   const handleSelectGroup = (group: (typeof filteredGroups)[number]) => {
     const location = formatLocation(group);
+    const description = richTextToPlainText(group.description);
 
     if (selectedGroup?.id === group.id) {
       onSelectGroup(null); // Deselect
@@ -64,7 +69,7 @@ export function GroupSearchStep({
       onSelectGroup({
         id: group.id,
         name: group.name ?? '',
-        description: group.description ?? undefined,
+        description: description || undefined,
         member_count: group.member_count || 0,
         location: location || undefined,
         visibility: group.visibility ?? 'public',
@@ -124,6 +129,7 @@ export function GroupSearchStep({
             >
               {(() => {
                 const location = formatLocation(group);
+                const description = richTextToPlainText(group.description);
 
                 return (
                   <>
@@ -142,9 +148,9 @@ export function GroupSearchStep({
                           </Badge>
                         </div>
                       </div>
-                      {group.description && (
+                      {description && (
                         <CardDescription className="line-clamp-2 text-xs">
-                          {group.description}
+                          {description}
                         </CardDescription>
                       )}
                     </CardHeader>

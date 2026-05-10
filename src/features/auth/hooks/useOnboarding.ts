@@ -51,7 +51,7 @@ const STEP_ORDER: OnboardingStep[] = ['name', 'groupSearch', 'confirm', 'ariaKai
 export function useOnboarding(): UseOnboardingReturn {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { updateProfile } = useUserActions();
+  const { updateProfileConfirmed } = useUserActions();
   const { joinGroup } = useGroupActions();
   const [step, setStep] = useState<OnboardingStep>('name');
   const [isLoading, setIsLoading] = useState(false);
@@ -181,12 +181,16 @@ export function useOnboarding(): UseOnboardingReturn {
       setError(null);
 
       try {
-        await updateProfile({
-        first_name: data.firstName.trim(),
-        last_name: data.lastName.trim(),
-      });
+        await updateProfileConfirmed({
+          first_name: data.firstName.trim(),
+          last_name: data.lastName.trim(),
+        });
 
-        console.log('✅ Onboarding completed:', { userId, firstName: data.firstName, lastName: data.lastName });
+        console.log('✅ Onboarding completed:', {
+          userId,
+          firstName: data.firstName,
+          lastName: data.lastName,
+        });
       } catch (err) {
         console.error('Failed to complete onboarding:', err);
         const errorMsg = t('features.auth.errors.profileUpdateFailed');
@@ -196,7 +200,7 @@ export function useOnboarding(): UseOnboardingReturn {
         setIsLoading(false);
       }
     },
-    [data.firstName, data.lastName, t]
+    [data.firstName, data.lastName, t, updateProfileConfirmed]
   );
 
   return {

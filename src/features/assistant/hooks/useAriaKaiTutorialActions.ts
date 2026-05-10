@@ -33,7 +33,7 @@ export function useAriaKaiTutorialActions({
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
   const { sendMessage, sendAssistantMessage } = useMessageActions();
-  const { updateProfile } = useUserActions();
+  const { updateProfileConfirmed } = useUserActions();
   const { user: currentUser } = useUserState({ userId: currentUserId });
 
   const tutorialStep = currentUser?.tutorial_step ?? 0;
@@ -61,7 +61,7 @@ export function useAriaKaiTutorialActions({
         deleted_at: 0,
       });
 
-      await updateProfile({
+      await updateProfileConfirmed({
         id: currentUserId,
         tutorial_step: action.tutorial_step,
       });

@@ -12,7 +12,10 @@ export interface UseAvatarUploadReturn {
   uploadAvatar: (file: File) => Promise<string>;
 }
 
-export function useAvatarUpload({ userId, onSuccess }: UseAvatarUploadOptions): UseAvatarUploadReturn {
+export function useAvatarUpload({
+  userId,
+  onSuccess,
+}: UseAvatarUploadOptions): UseAvatarUploadReturn {
   const userActions = useUserActions();
 
   const uploadAvatar = async (file: File) => {
@@ -34,7 +37,7 @@ export function useAvatarUpload({ userId, onSuccess }: UseAvatarUploadOptions): 
       const avatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
 
       // Update user's avatar URL
-      await userActions.updateProfile({
+      await userActions.updateProfileConfirmed({
         avatar: avatarUrl,
       });
 
