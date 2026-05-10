@@ -262,6 +262,7 @@ export function PaymentsSection({
     fields,
     quickFilters,
     storageKey,
+    groupId,
     searchValues: [
       payment =>
         [

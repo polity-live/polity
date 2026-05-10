@@ -12,6 +12,7 @@ import type { TodoViewMode } from '../types/group.types';
 import type { Todo } from '@/features/todos/types/todo.types';
 
 interface TodosSectionProps {
+  groupId: string;
   storageKey: string;
   todos: Todo[];
   viewMode: TodoViewMode;
@@ -28,6 +29,7 @@ interface TodosSectionProps {
 }
 
 export function TodosSection({
+  groupId,
   storageKey,
   todos,
   viewMode,
@@ -58,6 +60,7 @@ export function TodosSection({
     hasActiveFilters,
   } = useTodoFilters(todos, undefined, {
     storageKey,
+    groupId,
     includeStatusQuickFilter: true,
   });
 

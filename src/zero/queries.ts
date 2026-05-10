@@ -23,6 +23,7 @@ import { voteQueries } from './votes/queries';
 import { votingPasswordQueries } from './voting-password/queries';
 import { accreditationQueries } from './accreditation/queries';
 import { networkQueries } from './network/queries';
+import { pqlQueries } from './pql/queries';
 
 export const queries = defineQueries({
   users: userQueries,
@@ -48,4 +49,5 @@ export const queries = defineQueries({
   votingPassword: votingPasswordQueries,
   accreditation: accreditationQueries,
   network: networkQueries,
+  pql: pqlQueries,
 });

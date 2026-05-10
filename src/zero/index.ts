@@ -18,6 +18,7 @@ export { userSharedMutators } from './users/shared-mutators';
 export { statementSharedMutators } from './statements/shared-mutators';
 export { paymentSharedMutators } from './payments/shared-mutators';
 export { preferenceSharedMutators } from './preferences/shared-mutators';
+export { pqlSharedMutators } from './pql/shared-mutators';
 
 // Re-export all Row types
 export type {
@@ -88,6 +89,7 @@ export type {
   Statement,
   // Preferences
   UserPreference,
+  StoredPqlFilter,
   // Common
   Subscriber,
   Hashtag,

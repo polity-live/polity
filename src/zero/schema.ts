@@ -84,6 +84,7 @@ import {
   groupWorkflowStep,
 } from './network/table';
 import { userPreference } from './preferences/table';
+import { pqlFilter } from './pql/table';
 import { aiSkill, aiTool } from './ai/table';
 import { calendarSubscription } from './calendar-subscriptions/table';
 // Voting Password
@@ -198,6 +199,8 @@ export const schema = createSchema({
     statementSurveyVote,
     // Preferences
     userPreference,
+    // PQL
+    pqlFilter,
     // AI
     aiSkill,
     aiTool,
@@ -332,6 +335,7 @@ export type StatementHashtag = Row<Schema['tables']['statement_hashtag']>;
 
 // Preferences
 export type UserPreference = Row<Schema['tables']['user_preference']>;
+export type StoredPqlFilter = Row<Schema['tables']['pql_filter']>;
 export type AiSkill = Row<Schema['tables']['ai_skill']>;
 export type AiTool = Row<Schema['tables']['ai_tool']>;
 

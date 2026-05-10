@@ -22,6 +22,7 @@ export type TodoFieldKey =
 
 interface UseTodoFiltersOptions {
   storageKey?: string;
+  groupId?: string;
   includeStatusQuickFilter?: boolean;
 }
 
@@ -400,6 +401,7 @@ export function useTodoFilters(
     fields,
     quickFilters,
     storageKey: options.storageKey,
+    groupId: options.groupId,
     searchValues: [getTodoSearchValues],
     sortItems: sortTodos,
   });

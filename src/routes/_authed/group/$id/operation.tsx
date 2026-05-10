@@ -71,6 +71,7 @@ function GroupOperationPage() {
 
       {/* 3. Todos */}
       <TodosSection
+        groupId={id}
         storageKey={`group-${id}-todos`}
         todos={todos as import('@/features/todos/types/todo.types').Todo[]}
         viewMode={todoViewMode}

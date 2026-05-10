@@ -1,13 +1,18 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { usePqlFilterActions } from '@/zero/pql/usePqlFilterActions';
+import { usePqlFilterState } from '@/zero/pql/usePqlFilterState';
 import {
   applyPqlFilter,
   createPqlFieldRegistry,
+  getPqlFilterExpression,
   matchesPqlFilter,
+  serializePqlFilter,
   type PqlFieldDefinition,
   type PqlFilter,
   type PqlOperator,
   type PqlRule,
 } from '../logic/applyPqlFilter';
+import { parsePqlExpression } from '../logic/pqlQueryLanguage';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 
 type PqlSearchValue = string | readonly string[] | null | undefined;
@@ -36,6 +41,7 @@ export interface UsePqlCollectionOptions<TItem, TFieldKey extends string> {
   searchValues?: readonly ((item: TItem) => PqlSearchValue)[];
   quickFilters?: readonly PqlQuickFilterDefinition<TFieldKey>[];
   storageKey?: string;
+  groupId?: string;
   sortItems?: (items: TItem[]) => TItem[];
 }
 
@@ -70,15 +76,12 @@ function readPersistedState<TFieldKey extends string>(
   }
 }
 
-function writePersistedState<TFieldKey extends string>(
-  storageKey: string,
-  value: PqlPersistedState<TFieldKey>
-) {
+function clearPersistedState(storageKey: string) {
   if (typeof window === 'undefined') {
     return;
   }
 
-  window.localStorage.setItem(storageKey, JSON.stringify(value));
+  window.localStorage.removeItem(storageKey);
 }
 
 export function usePqlCollection<TItem, TFieldKey extends string>({
@@ -87,12 +90,21 @@ export function usePqlCollection<TItem, TFieldKey extends string>({
   searchValues = [],
   quickFilters = [],
   storageKey,
+  groupId,
   sortItems,
 }: UsePqlCollectionOptions<TItem, TFieldKey>) {
   const [searchQuery, setSearchQuery] = useState('');
   const [quickFilterValues, setQuickFilterValues] = useState<PqlQuickFilterValues<TFieldKey>>({});
-  const [savedFilters, setSavedFilters] = useState<PqlFilter<TFieldKey>[]>([]);
-  const [activeCustomFilterIds, setActiveCustomFilterIds] = useState<string[]>([]);
+  const hasAttemptedStorageMigration = useRef(false);
+  const { filters: persistedFilters, isLoading: arePersistedFiltersLoading } = usePqlFilterState(
+    storageKey
+      ? {
+          storage_key: storageKey,
+          group_id: groupId,
+        }
+      : undefined
+  );
+  const { createFilter, updateFilter, deleteFilter } = usePqlFilterActions();
 
   const fieldRegistry = useMemo(() => createPqlFieldRegistry(fields), [fields]);
   const quickFilterMap = useMemo(
@@ -101,26 +113,64 @@ export function usePqlCollection<TItem, TFieldKey extends string>({
   );
 
   useEffect(() => {
-    if (!storageKey) {
+    hasAttemptedStorageMigration.current = false;
+  }, [groupId, storageKey]);
+
+  const savedFilters = useMemo(
+    () =>
+      persistedFilters.map(filter => {
+        const parseResult = parsePqlExpression(filter.query, fields);
+
+        return {
+          id: filter.id,
+          label: filter.label,
+          query: filter.query,
+          expression: parseResult.expression ?? undefined,
+        } satisfies PqlFilter<TFieldKey>;
+      }),
+    [fields, persistedFilters]
+  );
+
+  const activeCustomFilterIds = useMemo(
+    () => persistedFilters.filter(filter => filter.is_active).map(filter => filter.id),
+    [persistedFilters]
+  );
+
+  useEffect(() => {
+    if (!storageKey || hasAttemptedStorageMigration.current || arePersistedFiltersLoading) {
+      return;
+    }
+
+    if (persistedFilters.length > 0) {
+      hasAttemptedStorageMigration.current = true;
       return;
     }
 
     const persistedState = readPersistedState<TFieldKey>(storageKey);
+    hasAttemptedStorageMigration.current = true;
+
     if (!persistedState) {
       return;
     }
 
-    setSavedFilters(persistedState.savedFilters);
-    setActiveCustomFilterIds(persistedState.activeCustomFilterIds);
-  }, [storageKey]);
+    for (const filter of persistedState.savedFilters) {
+      const serializedQuery = serializePqlFilter(filter).trim();
+      if (!filter.label.trim() || !serializedQuery) {
+        continue;
+      }
 
-  useEffect(() => {
-    if (!storageKey) {
-      return;
+      createFilter({
+        id: filter.id,
+        storage_key: storageKey,
+        group_id: groupId,
+        label: filter.label.trim(),
+        query: serializedQuery,
+        is_active: persistedState.activeCustomFilterIds.includes(filter.id),
+      });
     }
 
-    writePersistedState(storageKey, { savedFilters, activeCustomFilterIds });
-  }, [activeCustomFilterIds, savedFilters, storageKey]);
+    clearPersistedState(storageKey);
+  }, [arePersistedFiltersLoading, createFilter, groupId, persistedFilters, storageKey]);
 
   const quickFilter = useMemo<PqlFilter<TFieldKey> | null>(() => {
     const rules = quickFilters.flatMap(definition => {
@@ -156,7 +206,11 @@ export function usePqlCollection<TItem, TFieldKey extends string>({
   }, [quickFilterValues, quickFilters]);
 
   const activeCustomFilters = useMemo(
-    () => savedFilters.filter(filter => activeCustomFilterIds.includes(filter.id)),
+    () =>
+      savedFilters.filter(
+        filter =>
+          activeCustomFilterIds.includes(filter.id) && Boolean(getPqlFilterExpression(filter))
+      ),
     [activeCustomFilterIds, savedFilters]
   );
 
@@ -230,31 +284,66 @@ export function usePqlCollection<TItem, TFieldKey extends string>({
   };
 
   const saveCustomFilter = (filter: PqlFilter<TFieldKey>) => {
-    setSavedFilters(currentFilters => {
-      const existingFilter = currentFilters.some(entry => entry.id === filter.id);
-      return existingFilter
-        ? currentFilters.map(entry => (entry.id === filter.id ? filter : entry))
-        : [...currentFilters, filter];
+    if (!storageKey) {
+      return;
+    }
+
+    const query = serializePqlFilter(filter).trim();
+    const label = filter.label.trim();
+    if (!label || !query) {
+      return;
+    }
+
+    const existingFilter = persistedFilters.find(entry => entry.id === filter.id);
+    if (existingFilter) {
+      updateFilter({
+        id: filter.id,
+        label,
+        query,
+      });
+      return;
+    }
+
+    createFilter({
+      id: filter.id,
+      storage_key: storageKey,
+      group_id: groupId,
+      label,
+      query,
+      is_active: false,
     });
   };
 
   const deleteCustomFilter = (filterId: string) => {
-    setSavedFilters(currentFilters => currentFilters.filter(filter => filter.id !== filterId));
-    setActiveCustomFilterIds(currentIds => currentIds.filter(id => id !== filterId));
+    deleteFilter(filterId);
   };
 
   const toggleCustomFilter = (filterId: string) => {
-    setActiveCustomFilterIds(currentIds =>
-      currentIds.includes(filterId)
-        ? currentIds.filter(id => id !== filterId)
-        : [...currentIds, filterId]
-    );
+    const filter = persistedFilters.find(entry => entry.id === filterId);
+    if (!filter) {
+      return;
+    }
+
+    updateFilter({
+      id: filterId,
+      is_active: !filter.is_active,
+    });
   };
 
   const clearAllFilters = () => {
     setSearchQuery('');
     setQuickFilterValues({});
-    setActiveCustomFilterIds([]);
+
+    for (const filter of persistedFilters) {
+      if (!filter.is_active) {
+        continue;
+      }
+
+      updateFilter({
+        id: filter.id,
+        is_active: false,
+      });
+    }
   };
 
   return {

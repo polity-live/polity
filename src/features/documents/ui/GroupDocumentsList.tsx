@@ -138,6 +138,7 @@ export function GroupDocumentsList({
     fields,
     quickFilters: [],
     storageKey,
+    groupId,
     searchValues: [
       document =>
         [
