@@ -1,4 +1,10 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
   Table,
@@ -11,6 +17,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { TableTag } from '@/features/shared/ui/ui/table-tag';
 import { Check, X, Trash2, LucideIcon } from 'lucide-react';
+import { richTextToPlainText } from '@/features/shared/logic/richText';
 import type { FilterableRecord } from '../hooks/useUserMembershipsFilters';
 import type { GroupMembershipsByUserRow } from '@/zero/groups/queries';
 import type { EventParticipantsByUserRow } from '@/zero/events/queries';
@@ -68,7 +75,7 @@ export function MembershipStatusTable({
           <CardDescription>{description}</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="py-8 text-center text-muted-foreground">No {statusType} items found</p>
+          <p className="text-muted-foreground py-8 text-center">No {statusType} items found</p>
         </CardContent>
       </Card>
     );
@@ -138,7 +145,7 @@ export function MembershipStatusTable({
                 ? new Date(item.created_at).toLocaleDateString()
                 : 'N/A';
               const entityDescription =
-                statusType === 'active' ? entity?.description || '' : '';
+                statusType === 'active' ? richTextToPlainText(entity?.description) : '';
 
               return (
                 <TableRow key={item.id}>
@@ -159,14 +166,16 @@ export function MembershipStatusTable({
                       >
                         <div className="font-medium">{entityName}</div>
                         {entityDescription && (
-                          <div className="line-clamp-1 text-sm text-muted-foreground">
+                          <div className="text-muted-foreground line-clamp-1 text-sm">
                             {entityDescription}
                           </div>
                         )}
                       </div>
                     </div>
                   </TableCell>
-                  {(statusType === 'active' || statusType === 'invited' || statusType === 'requested') && (
+                  {(statusType === 'active' ||
+                    statusType === 'invited' ||
+                    statusType === 'requested') && (
                     <TableCell>
                       <TableTag entityType={entityKey}>{role}</TableTag>
                     </TableCell>
@@ -175,19 +184,11 @@ export function MembershipStatusTable({
                   <TableCell className="text-right">
                     {statusType === 'invited' && (
                       <div className="flex justify-end gap-2">
-                        <Button
-                          variant="default"
-                          size="sm"
-                          onClick={() => onAccept?.(item.id)}
-                        >
+                        <Button variant="default" size="sm" onClick={() => onAccept?.(item.id)}>
                           <Check className="mr-1 h-4 w-4" />
                           Accept
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onDecline?.(item.id)}
-                        >
+                        <Button variant="outline" size="sm" onClick={() => onDecline?.(item.id)}>
                           <X className="mr-1 h-4 w-4" />
                           Decline
                         </Button>

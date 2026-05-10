@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { richTextToPlainText } from '@/features/shared/logic/richText';
 import type { GroupMembershipsByUserRow } from '@/zero/groups/queries';
 import type { EventParticipantsByUserRow } from '@/zero/events/queries';
 import type { AmendmentCollaboratorsByUserRow } from '@/zero/amendments/queries';
@@ -28,13 +29,13 @@ export interface MembershipsByStatus {
 export interface UseUserMembershipsFiltersReturn {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  
+
   // Filtered results
   filteredMemberships: readonly GroupMembershipsByUserRow[];
   filteredParticipations: readonly EventParticipantsByUserRow[];
   filteredCollaborations: readonly AmendmentCollaboratorsByUserRow[];
   filteredBlogRelations: readonly BloggersByUserRow[];
-  
+
   // Separated by status
   membershipsByStatus: MembershipsByStatus;
   participationsByStatus: MembershipsByStatus;
@@ -55,9 +56,9 @@ export function useUserMembershipsFilters({
     if (!searchQuery.trim()) return memberships;
 
     const query = searchQuery.toLowerCase();
-    return memberships.filter((membership) => {
+    return memberships.filter(membership => {
       const groupName = membership.group?.name?.toLowerCase() || '';
-      const groupDescription = membership.group?.description?.toLowerCase() || '';
+      const groupDescription = richTextToPlainText(membership.group?.description).toLowerCase();
       const role = membership.role?.name?.toLowerCase() || '';
       const status = membership.status?.toLowerCase() || '';
       return (
@@ -74,7 +75,7 @@ export function useUserMembershipsFilters({
     if (!searchQuery.trim()) return participations;
 
     const query = searchQuery.toLowerCase();
-    return participations.filter((participation) => {
+    return participations.filter(participation => {
       const eventTitle = participation.event?.title?.toLowerCase() || '';
       const status = participation.status?.toLowerCase() || '';
       return eventTitle.includes(query) || status.includes(query);
@@ -86,7 +87,7 @@ export function useUserMembershipsFilters({
     if (!searchQuery.trim()) return collaborations;
 
     const query = searchQuery.toLowerCase();
-    return collaborations.filter((collaboration) => {
+    return collaborations.filter(collaboration => {
       const amendmentTitle = collaboration.amendment?.title?.toLowerCase() || '';
       const status = collaboration.status?.toLowerCase() || '';
       return amendmentTitle.includes(query) || status.includes(query);
@@ -98,7 +99,7 @@ export function useUserMembershipsFilters({
     if (!searchQuery.trim()) return blogRelations;
 
     const query = searchQuery.toLowerCase();
-    return blogRelations.filter((relation) => {
+    return blogRelations.filter(relation => {
       const blogTitle = relation.blog?.title?.toLowerCase() || '';
       const role = relation.role?.name?.toLowerCase() || '';
       const status = relation.status?.toLowerCase() || '';
@@ -109,11 +110,11 @@ export function useUserMembershipsFilters({
   // Separate memberships by status
   const membershipsByStatus: MembershipsByStatus = useMemo(
     () => ({
-      invited: filteredMemberships.filter((m) => m.status === 'invited'),
+      invited: filteredMemberships.filter(m => m.status === 'invited'),
       active: filteredMemberships.filter(
-        (m) => m.status === 'active' || m.status === 'member' || m.status === 'admin'
+        m => m.status === 'active' || m.status === 'member' || m.status === 'admin'
       ),
-      requested: filteredMemberships.filter((m) => m.status === 'requested'),
+      requested: filteredMemberships.filter(m => m.status === 'requested'),
     }),
     [filteredMemberships]
   );
@@ -121,11 +122,11 @@ export function useUserMembershipsFilters({
   // Separate participations by status
   const participationsByStatus: MembershipsByStatus = useMemo(
     () => ({
-      invited: filteredParticipations.filter((p) => p.status === 'invited'),
+      invited: filteredParticipations.filter(p => p.status === 'invited'),
       active: filteredParticipations.filter(
-        (p) => p.status === 'member' || p.status === 'admin' || p.status === 'confirmed'
+        p => p.status === 'member' || p.status === 'admin' || p.status === 'confirmed'
       ),
-      requested: filteredParticipations.filter((p) => p.status === 'requested'),
+      requested: filteredParticipations.filter(p => p.status === 'requested'),
     }),
     [filteredParticipations]
   );
@@ -133,11 +134,9 @@ export function useUserMembershipsFilters({
   // Separate collaborations by status
   const collaborationsByStatus: MembershipsByStatus = useMemo(
     () => ({
-      invited: filteredCollaborations.filter((c) => c.status === 'invited'),
-      active: filteredCollaborations.filter(
-        (c) => c.status === 'member' || c.status === 'admin'
-      ),
-      requested: filteredCollaborations.filter((c) => c.status === 'requested'),
+      invited: filteredCollaborations.filter(c => c.status === 'invited'),
+      active: filteredCollaborations.filter(c => c.status === 'member' || c.status === 'admin'),
+      requested: filteredCollaborations.filter(c => c.status === 'requested'),
     }),
     [filteredCollaborations]
   );
@@ -145,11 +144,11 @@ export function useUserMembershipsFilters({
   // Separate blog relations by status
   const blogRelationsByStatus: MembershipsByStatus = useMemo(
     () => ({
-      invited: filteredBlogRelations.filter((b) => b.status === 'invited'),
+      invited: filteredBlogRelations.filter(b => b.status === 'invited'),
       active: filteredBlogRelations.filter(
-        (b) => b.status === 'writer' || b.status === 'owner' || b.status === 'member'
+        b => b.status === 'writer' || b.status === 'owner' || b.status === 'member'
       ),
-      requested: filteredBlogRelations.filter((b) => b.status === 'requested'),
+      requested: filteredBlogRelations.filter(b => b.status === 'requested'),
     }),
     [filteredBlogRelations]
   );
