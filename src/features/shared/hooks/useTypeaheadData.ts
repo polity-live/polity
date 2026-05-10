@@ -1,9 +1,14 @@
 import { useMemo } from 'react';
 import { useUserState } from '@/zero/users/useUserState';
 import { useGroupState } from '@/zero/groups/useGroupState';
-import { useAllEvents, useAllAmendments, usePositionsWithGroups } from '@/zero/events/useEventState';
+import {
+  useAllEvents,
+  useAllAmendments,
+  usePositionsWithGroups,
+} from '@/zero/events/useEventState';
 import { useElectionState } from '@/zero/elections/useElectionState';
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
+import { richTextToPlainText } from '@/features/shared/logic/richText';
 import type { TypeaheadItem, EntityType } from '@/features/shared/logic/typeaheadHelpers';
 
 interface UseTypeaheadDataOptions {
@@ -40,15 +45,27 @@ export function useTypeaheadData({ entityTypes }: UseTypeaheadDataOptions) {
   const items = useMemo<TypeaheadItem[]>(() => {
     const result: TypeaheadItem[] = [];
 
+    const getPreview = (value: unknown) => {
+      const text = richTextToPlainText(value);
+      return text ? text.substring(0, 60) : undefined;
+    };
+
     if (includeUsers && allUsers) {
       for (const user of allUsers) {
         result.push({
           id: user.id,
           entityType: 'user',
-          label: [user.first_name, user.last_name].filter(Boolean).join(' ') || user.handle || 'User',
+          label:
+            [user.first_name, user.last_name].filter(Boolean).join(' ') || user.handle || 'User',
           secondaryLabel: user.handle ? `@${user.handle}` : undefined,
           avatar: user.avatar,
-          hashtags: extractHashtagTags((user as { user_hashtags?: ReadonlyArray<{ hashtag?: { tag?: string | null } | null }> }).user_hashtags),
+          hashtags: extractHashtagTags(
+            (
+              user as {
+                user_hashtags?: readonly { hashtag?: { tag?: string | null } | null }[];
+              }
+            ).user_hashtags
+          ),
         });
       }
     }
@@ -59,9 +76,15 @@ export function useTypeaheadData({ entityTypes }: UseTypeaheadDataOptions) {
           id: group.id,
           entityType: 'group',
           label: group.name || 'Group',
-          secondaryLabel: group.description?.substring(0, 60) || undefined,
+          secondaryLabel: getPreview(group.description),
           avatar: group.image_url,
-          hashtags: extractHashtagTags((group as { group_hashtags?: ReadonlyArray<{ hashtag?: { tag?: string | null } | null }> }).group_hashtags),
+          hashtags: extractHashtagTags(
+            (
+              group as {
+                group_hashtags?: readonly { hashtag?: { tag?: string | null } | null }[];
+              }
+            ).group_hashtags
+          ),
         });
       }
     }
@@ -72,7 +95,7 @@ export function useTypeaheadData({ entityTypes }: UseTypeaheadDataOptions) {
           id: event.id,
           entityType: 'event',
           label: event.title || 'Event',
-          secondaryLabel: event.description?.substring(0, 60) || undefined,
+          secondaryLabel: getPreview(event.description),
           avatar: null,
         });
       }
@@ -84,7 +107,7 @@ export function useTypeaheadData({ entityTypes }: UseTypeaheadDataOptions) {
           id: amendment.id,
           entityType: 'amendment',
           label: amendment.title || 'Amendment',
-          secondaryLabel: amendment.reason?.substring(0, 60) || undefined,
+          secondaryLabel: getPreview(amendment.reason),
           avatar: null,
         });
       }
@@ -96,7 +119,7 @@ export function useTypeaheadData({ entityTypes }: UseTypeaheadDataOptions) {
           id: election.id,
           entityType: 'election',
           label: election.title || 'Election',
-          secondaryLabel: election.description?.substring(0, 60) || undefined,
+          secondaryLabel: getPreview(election.description),
           avatar: null,
         });
       }
@@ -108,14 +131,27 @@ export function useTypeaheadData({ entityTypes }: UseTypeaheadDataOptions) {
           id: position.id,
           entityType: 'position',
           label: position.title || 'Position',
-          secondaryLabel: position.description?.substring(0, 60) || undefined,
+          secondaryLabel: getPreview(position.description),
           avatar: null,
         });
       }
     }
 
     return result;
-  }, [includeUsers, includeGroups, includeEvents, includeAmendments, includeElections, includePositions, allUsers, searchResults, events, amendments, pendingElections, positions]);
+  }, [
+    includeUsers,
+    includeGroups,
+    includeEvents,
+    includeAmendments,
+    includeElections,
+    includePositions,
+    allUsers,
+    searchResults,
+    events,
+    amendments,
+    pendingElections,
+    positions,
+  ]);
 
   return { items };
 }
