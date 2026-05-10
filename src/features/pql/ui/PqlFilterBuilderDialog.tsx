@@ -100,11 +100,11 @@ export function PqlFilterBuilderDialog<TItem, TFieldKey extends string>({
 
   const queryPlaceholder = useMemo(() => buildQueryPlaceholder(fields), [fields]);
 
-  const isValid =
-    label.trim().length > 0 &&
-    query.trim().length > 0 &&
-    Boolean(parseResult.expression) &&
-    parseResult.issues.length === 0;
+  const isLabelValid = label.trim().length > 0;
+  const isQueryValid =
+    query.trim().length > 0 && Boolean(parseResult.expression) && parseResult.issues.length === 0;
+
+  const isValid = isLabelValid && isQueryValid;
 
   const handleSave = () => {
     if (!isValid) {
@@ -146,6 +146,11 @@ export function PqlFilterBuilderDialog<TItem, TFieldKey extends string>({
                 value={label}
                 onChange={event => setLabel(event.target.value)}
                 placeholder="Board work due soon"
+                className={
+                  isLabelValid
+                    ? 'border-emerald-500 focus-visible:ring-emerald-500 dark:border-emerald-400'
+                    : undefined
+                }
               />
             </div>
 
@@ -162,6 +167,11 @@ export function PqlFilterBuilderDialog<TItem, TFieldKey extends string>({
               onChange={setQuery}
               issues={parseResult.issues}
               placeholder={queryPlaceholder}
+              textareaClassName={
+                isQueryValid
+                  ? 'border-emerald-500 focus-visible:ring-emerald-500 dark:border-emerald-400'
+                  : undefined
+              }
             />
           </div>
 

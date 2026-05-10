@@ -17,6 +17,7 @@ interface PqlQueryEditorProps<TItem, TFieldKey extends string> {
   issues?: readonly PqlQueryIssue[];
   placeholder?: string;
   className?: string;
+  textareaClassName?: string;
 }
 
 export function PqlQueryEditor<TItem, TFieldKey extends string>({
@@ -26,6 +27,7 @@ export function PqlQueryEditor<TItem, TFieldKey extends string>({
   issues = [],
   placeholder,
   className,
+  textareaClassName,
 }: PqlQueryEditorProps<TItem, TFieldKey>) {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const blurTimeoutRef = useRef<number | null>(null);
@@ -166,7 +168,7 @@ export function PqlQueryEditor<TItem, TFieldKey extends string>({
               setSuggestionsOpen(false);
             }
           }}
-          className="min-h-32 font-mono text-sm"
+          className={cn('min-h-32 font-mono text-sm', textareaClassName)}
           spellCheck={false}
         />
 
