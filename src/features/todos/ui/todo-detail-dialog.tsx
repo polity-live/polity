@@ -1,12 +1,20 @@
 'use client';
 
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/features/shared/ui/ui/dialog.tsx';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/features/shared/ui/ui/dialog.tsx';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { Input } from '@/features/shared/ui/ui/input.tsx';
 import { Textarea } from '@/features/shared/ui/ui/textarea.tsx';
 import { Badge } from '@/features/shared/ui/ui/badge.tsx';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar.tsx';
+import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor.tsx';
+import { VisibilitySelector } from '@/features/shared/ui/ui/visibility-selector.tsx';
 import {
   Select,
   SelectContent,
@@ -14,11 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/features/shared/ui/ui/select.tsx';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/features/shared/ui/ui/popover.tsx';
+import { Popover, PopoverContent, PopoverTrigger } from '@/features/shared/ui/ui/popover.tsx';
 import {
   Command,
   CommandEmpty,
@@ -31,9 +35,11 @@ import {
   Calendar,
   Tag,
   Users,
+  Globe,
   Building2,
   Edit,
   Save,
+  Lock,
   X,
   AlertCircle,
   Flag,
@@ -57,11 +63,42 @@ import type { Todo } from '../types/todo.types';
 
 type TodoStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
 type TodoPriority = 'low' | 'medium' | 'high' | 'urgent';
+type TodoVisibility = 'public' | 'authenticated' | 'private';
+
+interface TodoFormData {
+  title: string;
+  description: string;
+  status: TodoStatus;
+  priority: TodoPriority;
+  dueDate: string;
+  tags: string[];
+  visibility: TodoVisibility;
+}
 
 interface TodoDetailDialogProps {
   todo: Todo;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+}
+
+function getSelectedUserIds(todo: Todo): string[] {
+  return (
+    todo.assignments
+      ?.map(assignment => assignment.user?.id)
+      .filter((id): id is string => Boolean(id)) || []
+  );
+}
+
+function getInitialFormData(todo: Todo): TodoFormData {
+  return {
+    title: todo.title || '',
+    description: todo.description || '',
+    status: (todo.status || 'pending') as TodoStatus,
+    priority: (todo.priority || 'medium') as TodoPriority,
+    dueDate: todo.due_date ? new Date(todo.due_date).toISOString().split('T')[0] : '',
+    tags: todo.tags || [],
+    visibility: (todo.visibility || 'private') as TodoVisibility,
+  };
 }
 
 export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogProps) {
@@ -71,30 +108,25 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
   const [isSaving, setIsSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [popoverOpen, setPopoverOpen] = useState(false);
-  const [selectedUserIds, setSelectedUserIds] = useState<string[]>(
-    todo.assignments?.map((a) => a.user?.id).filter((x): x is string => Boolean(x)) || []
-  );
-  const [formData, setFormData] = useState({
-    title: todo.title || '',
-    description: todo.description || '',
-    status: todo.status || 'pending',
-    priority: todo.priority || 'medium',
-    dueDate: todo.due_date ? new Date(todo.due_date).toISOString().split('T')[0] : '',
-  });
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>(() => getSelectedUserIds(todo));
+  const [formData, setFormData] = useState<TodoFormData>(() => getInitialFormData(todo));
 
   const isOverdue = todo.due_date && todo.status !== 'completed' && todo.due_date < Date.now();
+  const visibilityLabels: Record<TodoVisibility, string> = {
+    public: t('common.visibility.public'),
+    authenticated: t('common.visibility.authenticated'),
+    private: t('common.visibility.private'),
+  };
 
   // Query group members if the todo belongs to a group
   const { membershipsWithUsers: membershipsRaw } = useGroupState(
-    todo.group?.id
-      ? { groupId: todo.group.id, includeMembershipsWithUsers: true }
-      : {}
+    todo.group?.id ? { groupId: todo.group.id, includeMembershipsWithUsers: true } : {}
   );
 
   const members = membershipsRaw || [];
 
   // Filter members based on search query
-  const filteredMembers = members.filter((membership) => {
+  const filteredMembers = members.filter(membership => {
     const user = membership.user;
     if (!user?.id) return false;
     const query = searchQuery.toLowerCase();
@@ -106,16 +138,32 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
     );
   });
 
+  const resetForm = () => {
+    setFormData(getInitialFormData(todo));
+    setSelectedUserIds(getSelectedUserIds(todo));
+    setSearchQuery('');
+    setPopoverOpen(false);
+    setIsEditing(false);
+  };
+
+  const handleDialogOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      resetForm();
+    }
+    onOpenChange(nextOpen);
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const updates: Record<string, string | number | null> = {
+      const updates: Omit<Parameters<typeof updateTodo>[0], 'id'> = {
         title: formData.title,
         description: formData.description,
         status: formData.status,
         priority: formData.priority,
         due_date: formData.dueDate ? new Date(formData.dueDate).getTime() : null,
-        updated_at: Date.now(),
+        tags: formData.tags,
+        visibility: formData.visibility,
       };
 
       if (formData.status === 'completed' && todo.status !== 'completed') {
@@ -128,11 +176,11 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
       await updateTodo({ id: todo.id, ...updates });
 
       // Handle assignment changes
-      const currentAssignmentIds = todo.assignments?.map((a) => a.user?.id).filter((x): x is string => Boolean(x)) || [];
+      const currentAssignmentIds =
+        todo.assignments?.map(a => a.user?.id).filter((x): x is string => Boolean(x)) || [];
       const addedUserIds = selectedUserIds.filter(id => !currentAssignmentIds.includes(id));
-      const removedAssignments = todo.assignments?.filter(
-        (a) => a.user?.id && !selectedUserIds.includes(a.user.id)
-      ) || [];
+      const removedAssignments =
+        todo.assignments?.filter(a => a.user?.id && !selectedUserIds.includes(a.user.id)) || [];
 
       // Remove old assignments
       for (const assignment of removedAssignments) {
@@ -162,18 +210,7 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
   };
 
   const handleCancel = () => {
-    setFormData({
-      title: todo.title || '',
-      description: todo.description || '',
-      status: todo.status || 'pending',
-      priority: todo.priority || 'medium',
-      dueDate: todo.due_date ? new Date(todo.due_date).toISOString().split('T')[0] : '',
-    });
-    setSelectedUserIds(
-      todo.assignments?.map((a) => a.user?.id).filter((x): x is string => Boolean(x)) || []
-    );
-    setSearchQuery('');
-    setIsEditing(false);
+    resetForm();
   };
 
   const handleRemoveAssignee = (userId: string) => {
@@ -189,11 +226,11 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
+      <DialogContent showCloseButton={false} className="max-h-[90vh] max-w-4xl overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-start justify-between">
-            <DialogTitle className="flex-1">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <DialogTitle className="min-w-0 flex-1">
               {isEditing ? (
                 <Input
                   value={formData.title}
@@ -205,7 +242,7 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                 <span className="text-2xl">{formData.title}</span>
               )}
             </DialogTitle>
-            <div className="flex gap-2">
+            <div className="flex shrink-0 items-center gap-2 self-end sm:self-start">
               {isEditing ? (
                 <>
                   <Button onClick={handleSave} disabled={isSaving} size="sm">
@@ -223,6 +260,16 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                   {t('features.todos.actions.edit')}
                 </Button>
               )}
+              <DialogClose asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label={t('common.close', 'Close')}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </DialogClose>
             </div>
           </div>
         </DialogHeader>
@@ -231,7 +278,9 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
           {/* Status and Priority */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-2 block text-sm font-medium">{t('features.todos.detail.status')}</label>
+              <label className="mb-2 block text-sm font-medium">
+                {t('features.todos.detail.status')}
+              </label>
               {isEditing ? (
                 <Select
                   value={formData.status}
@@ -276,7 +325,9 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium">{t('features.todos.detail.priority')}</label>
+              <label className="mb-2 block text-sm font-medium">
+                {t('features.todos.detail.priority')}
+              </label>
               {isEditing ? (
                 <Select
                   value={formData.priority}
@@ -323,7 +374,9 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
 
           {/* Description */}
           <div>
-            <label className="mb-2 block text-sm font-medium">{t('features.todos.detail.description')}</label>
+            <label className="mb-2 block text-sm font-medium">
+              {t('features.todos.detail.description')}
+            </label>
             {isEditing ? (
               <Textarea
                 value={formData.description}
@@ -332,7 +385,7 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                 rows={6}
               />
             ) : (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 {todo.description || t('features.todos.detail.noDescription')}
               </p>
             )}
@@ -340,7 +393,9 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
 
           {/* Due Date */}
           <div>
-            <label className="mb-2 block text-sm font-medium">{t('features.todos.dueDate.title')}</label>
+            <label className="mb-2 block text-sm font-medium">
+              {t('features.todos.dueDate.title')}
+            </label>
             {isEditing ? (
               <Input
                 type="date"
@@ -349,8 +404,8 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
               />
             ) : todo.due_date ? (
               <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span className={isOverdue ? 'font-medium text-destructive' : ''}>
+                <Calendar className="text-muted-foreground h-4 w-4" />
+                <span className={isOverdue ? 'text-destructive font-medium' : ''}>
                   {formatDate(todo.due_date)}
                 </span>
                 {isOverdue && (
@@ -361,14 +416,38 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                 )}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">{t('features.todos.detail.noDueDateSet')}</p>
+              <p className="text-muted-foreground text-sm">
+                {t('features.todos.detail.noDueDateSet')}
+              </p>
+            )}
+          </div>
+
+          {/* Visibility */}
+          <div>
+            {isEditing ? (
+              <VisibilitySelector
+                value={formData.visibility}
+                onChange={visibility => setFormData({ ...formData, visibility })}
+              />
+            ) : (
+              <div>
+                <label className="mb-2 block text-sm font-medium">
+                  {t('common.visibility.label')}
+                </label>
+                <div className="text-muted-foreground flex items-center gap-2 text-sm">
+                  <VisibilityIcon visibility={(todo.visibility || 'private') as TodoVisibility} />
+                  <span>{visibilityLabels[(todo.visibility || 'private') as TodoVisibility]}</span>
+                </div>
+              </div>
             )}
           </div>
 
           {/* Creator */}
           {todo.creator && (
             <div>
-              <label className="mb-2 block text-sm font-medium">{t('features.todos.detail.createdBy')}</label>
+              <label className="mb-2 block text-sm font-medium">
+                {t('features.todos.detail.createdBy')}
+              </label>
               <Link
                 to="/user/$id"
                 params={{ id: todo.creator.id }}
@@ -376,9 +455,16 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
               >
                 <Avatar className="h-6 w-6">
                   <AvatarImage src={todo.creator.avatar ?? undefined} />
-                  <AvatarFallback>{(todo.creator.first_name?.[0] || todo.creator.email?.[0])?.toUpperCase() || '?'}</AvatarFallback>
+                  <AvatarFallback>
+                    {(todo.creator.first_name?.[0] || todo.creator.email?.[0])?.toUpperCase() ||
+                      '?'}
+                  </AvatarFallback>
                 </Avatar>
-                <span>{[todo.creator.first_name, todo.creator.last_name].filter(Boolean).join(' ') || todo.creator.email?.split('@')[0] || 'Unknown'}</span>
+                <span>
+                  {[todo.creator.first_name, todo.creator.last_name].filter(Boolean).join(' ') ||
+                    todo.creator.email?.split('@')[0] ||
+                    'Unknown'}
+                </span>
               </Link>
             </div>
           )}
@@ -395,8 +481,10 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                 {selectedUserIds.length > 0 && (
                   <div className="space-y-2">
                     {selectedUserIds.map((userId: string) => {
-                      const membership = members.find((m) => m.user?.id === userId);
-                      const user = membership?.user || todo.assignments?.find((a) => a.user?.id === userId)?.user;
+                      const membership = members.find(m => m.user?.id === userId);
+                      const user =
+                        membership?.user ||
+                        todo.assignments?.find(a => a.user?.id === userId)?.user;
                       if (!user) return null;
                       return (
                         <div
@@ -411,7 +499,9 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                               </AvatarFallback>
                             </Avatar>
                             <span className="text-sm">
-                              {[user.first_name, user.last_name].filter(Boolean).join(' ') || user.email?.split('@')[0] || 'Unknown'}
+                              {[user.first_name, user.last_name].filter(Boolean).join(' ') ||
+                                user.email?.split('@')[0] ||
+                                'Unknown'}
                             </span>
                           </div>
                           <Button
@@ -420,7 +510,7 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                             size="sm"
                             onClick={() => handleRemoveAssignee(userId)}
                           >
-                            <Trash2 className="h-4 w-4 text-destructive" />
+                            <Trash2 className="text-destructive h-4 w-4" />
                           </Button>
                         </div>
                       );
@@ -453,8 +543,10 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                           <CommandEmpty>{t('features.todos.assignee.noMembersFound')}</CommandEmpty>
                           <CommandGroup>
                             {filteredMembers
-                              .filter((m) => m.user?.id != null && !selectedUserIds.includes(m.user.id))
-                              .map((membership) => {
+                              .filter(
+                                m => m.user?.id != null && !selectedUserIds.includes(m.user.id)
+                              )
+                              .map(membership => {
                                 const user = membership.user;
                                 if (!user) return null;
                                 return (
@@ -466,21 +558,28 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                                     <Check
                                       className={cn(
                                         'mr-2 h-4 w-4',
-                                        selectedUserIds.includes(user.id) ? 'opacity-100' : 'opacity-0'
+                                        selectedUserIds.includes(user.id)
+                                          ? 'opacity-100'
+                                          : 'opacity-0'
                                       )}
                                     />
                                     <Avatar className="mr-2 h-6 w-6">
                                       <AvatarImage src={user.avatar ?? undefined} />
                                       <AvatarFallback>
-                                        {(user.first_name?.[0] || user.email?.[0])?.toUpperCase() || 'U'}
+                                        {(user.first_name?.[0] || user.email?.[0])?.toUpperCase() ||
+                                          'U'}
                                       </AvatarFallback>
                                     </Avatar>
                                     <div className="flex flex-col">
                                       <span className="text-sm font-medium">
-                                        {[user.first_name, user.last_name].filter(Boolean).join(' ') || user.handle || 'Unknown'}
+                                        {[user.first_name, user.last_name]
+                                          .filter(Boolean)
+                                          .join(' ') ||
+                                          user.handle ||
+                                          'Unknown'}
                                       </span>
                                       {user.email && (
-                                        <span className="text-xs text-muted-foreground">
+                                        <span className="text-muted-foreground text-xs">
                                           {user.email}
                                         </span>
                                       )}
@@ -507,15 +606,25 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                     <Avatar className="h-6 w-6">
                       <AvatarImage src={assignment.user?.avatar ?? undefined} />
                       <AvatarFallback>
-                        {(assignment.user?.first_name?.[0] || assignment.user?.email?.[0])?.toUpperCase() || '?'}
+                        {(
+                          assignment.user?.first_name?.[0] || assignment.user?.email?.[0]
+                        )?.toUpperCase() || '?'}
                       </AvatarFallback>
                     </Avatar>
-                    <span>{[assignment.user?.first_name, assignment.user?.last_name].filter(Boolean).join(' ') || assignment.user?.email?.split('@')[0] || 'Unknown'}</span>
+                    <span>
+                      {[assignment.user?.first_name, assignment.user?.last_name]
+                        .filter(Boolean)
+                        .join(' ') ||
+                        assignment.user?.email?.split('@')[0] ||
+                        'Unknown'}
+                    </span>
                   </Link>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">{t('features.todos.assignee.noUsersAssigned')}</p>
+              <p className="text-muted-foreground text-sm">
+                {t('features.todos.assignee.noUsersAssigned')}
+              </p>
             )}
           </div>
 
@@ -541,34 +650,48 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
           )}
 
           {/* Tags */}
-          {todo.tags && todo.tags.length > 0 && (
+          {(isEditing || (todo.tags && todo.tags.length > 0)) && (
             <div>
-              <label className="mb-2 block text-sm font-medium">
-                <Tag className="mr-2 inline h-4 w-4" />
-                {t('features.todos.detail.tags')}
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {todo.tags.map((tag: string, idx: number) => (
-                  <Badge key={idx} variant="secondary">
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
+              {isEditing ? (
+                <HashtagEditor
+                  value={formData.tags}
+                  onChange={tags => setFormData({ ...formData, tags })}
+                  label={t('features.todos.detail.tags')}
+                  placeholder={t('pages.create.todo.tagPlaceholder')}
+                />
+              ) : (
+                <>
+                  <label className="mb-2 block text-sm font-medium">
+                    <Tag className="mr-2 inline h-4 w-4" />
+                    {t('features.todos.detail.tags')}
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {todo.tags.map((tag: string, idx: number) => (
+                      <Badge key={idx} variant="secondary">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           )}
 
           {/* Metadata */}
-          <div className="border-t pt-4 text-xs text-muted-foreground">
+          <div className="text-muted-foreground border-t pt-4 text-xs">
             <div className="grid grid-cols-2 gap-2">
               <div>
-                {t('features.todos.detail.created')}: {todo.created_at ? new Date(todo.created_at).toLocaleString() : 'N/A'}
+                {t('features.todos.detail.created')}:{' '}
+                {todo.created_at ? new Date(todo.created_at).toLocaleString() : 'N/A'}
               </div>
               <div>
-                {t('features.todos.detail.updated')}: {todo.updated_at ? new Date(todo.updated_at).toLocaleString() : 'N/A'}
+                {t('features.todos.detail.updated')}:{' '}
+                {todo.updated_at ? new Date(todo.updated_at).toLocaleString() : 'N/A'}
               </div>
               {todo.completed_at && (
                 <div className="col-span-2">
-                  {t('features.todos.status.completed')}: {new Date(todo.completed_at).toLocaleString()}
+                  {t('features.todos.status.completed')}:{' '}
+                  {new Date(todo.completed_at).toLocaleString()}
                 </div>
               )}
             </div>
@@ -582,7 +705,7 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
 function StatusIcon({ status }: { status: TodoStatus }) {
   switch (status) {
     case 'pending':
-      return <Circle className="h-4 w-4 text-muted-foreground" />;
+      return <Circle className="text-muted-foreground h-4 w-4" />;
     case 'in_progress':
       return <Clock className="h-4 w-4 text-blue-500" />;
     case 'completed':
@@ -618,6 +741,17 @@ function PriorityBadge({ priority }: { priority: TodoPriority }) {
       {priority}
     </Badge>
   );
+}
+
+function VisibilityIcon({ visibility }: { visibility: TodoVisibility }) {
+  switch (visibility) {
+    case 'public':
+      return <Globe className="text-muted-foreground h-4 w-4" />;
+    case 'authenticated':
+      return <Users className="text-muted-foreground h-4 w-4" />;
+    case 'private':
+      return <Lock className="text-muted-foreground h-4 w-4" />;
+  }
 }
 
 function formatDate(timestamp: number | string): string {
