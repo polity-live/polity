@@ -15,6 +15,7 @@ interface AssistantMessageViewProps {
   onTogglePin: (id: string, currentPinned: boolean) => void;
   onDeleteClick: (id: string) => void;
   onMembersClick: () => void;
+  onRenameConversation: (id: string, name: string | null) => Promise<boolean>;
   onAcceptConversation: (conversation: Conversation) => void;
   onRejectConversation: (conversation: Conversation) => void;
   className?: string;
@@ -27,6 +28,7 @@ export function AssistantMessageView({
   onTogglePin,
   onDeleteClick,
   onMembersClick,
+  onRenameConversation,
   onAcceptConversation,
   onRejectConversation,
   className,
@@ -43,6 +45,7 @@ export function AssistantMessageView({
           onTogglePin={onTogglePin}
           onDeleteClick={onDeleteClick}
           onMembersClick={onMembersClick}
+          onRenameConversation={onRenameConversation}
         />
 
         <MessageList
@@ -58,6 +61,7 @@ export function AssistantMessageView({
             assistantChat.streamError
               ? {
                   text: assistantChat.streamingText,
+                  isCompressing: assistantChat.isCompressing,
                   isThinking: assistantChat.isThinking,
                   isToolCalling: assistantChat.isToolCalling,
                   toolName: assistantChat.activeToolName,

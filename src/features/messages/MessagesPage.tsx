@@ -35,8 +35,12 @@ export default function MessagesPage() {
             onSelectConversation={mp.setSelectedConversationId}
             searchQuery={mp.searchQuery}
             onSearchChange={mp.setSearchQuery}
+            conversationFilter={mp.conversationFilter}
+            onConversationFilterChange={mp.setConversationFilter}
             currentUserId={mp.currentUserId}
             onNewConversationClick={mp.openNewConversationDialog}
+            onNewAiConversationClick={mp.handleCreateAssistantConversation}
+            onDeleteConversationClick={mp.openDeleteDialog}
           />
 
           <MessageView
@@ -47,6 +51,7 @@ export default function MessagesPage() {
             onTogglePin={mp.togglePin}
             onDeleteClick={mp.openDeleteDialog}
             onMembersClick={() => mp.setMemberListDialogOpen(true)}
+            onRenameConversation={mp.handleRenameConversation}
             onSendMessage={mp.handleSendMessage}
             onAcceptConversation={mp.handleAcceptConversation}
             onRejectConversation={mp.handleRejectConversation}

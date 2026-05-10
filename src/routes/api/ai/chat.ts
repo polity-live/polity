@@ -5,6 +5,7 @@ import {
   dedupeAiChatAttachments,
   extractAiChatAttachmentsFromToolResults,
 } from '@/lib/ai/attachments';
+import { compressConversationHistory } from '@/lib/ai/historyCompression';
 import { buildCurrentTurnUserContent, buildSystemPrompt } from '@/lib/ai/prompts';
 import { getSession } from '@/lib/supabase/server';
 import {
@@ -95,6 +96,9 @@ export const APIRoute = createAPIFileRoute('/api/ai/chat')({
     const selectedToolNames = body.toolNames.filter(
       toolName => toolOverrideMap.get(toolName)?.enabled !== false
     );
+    const selectedCatalogModel = catalog.models.find(
+      model => model.provider === body.model.provider && model.id === body.model.id
+    );
 
     const { model, providerOptions, credentialProvider } = await resolveLanguageModelForUser(
       session.user.id,
@@ -136,11 +140,17 @@ export const APIRoute = createAPIFileRoute('/api/ai/chat')({
       : [];
     const toolAttachments: ReturnType<typeof dedupeAiChatAttachments> = [];
     const currentUserContext = await buildCurrentUserScopePrompt(session.user.id);
+    const systemPrompt = buildSystemPrompt(selectedSkills, currentUserContext);
+    const compressedHistory = compressConversationHistory({
+      systemPrompt,
+      messages,
+      contextWindow: selectedCatalogModel?.context_window ?? null,
+    });
 
     const result = streamText({
       model,
-      system: buildSystemPrompt(selectedSkills, currentUserContext),
-      messages,
+      system: systemPrompt,
+      messages: compressedHistory.messages,
       tools,
       maxSteps: tools ? 4 : 1,
       providerOptions,
@@ -180,6 +190,17 @@ export const APIRoute = createAPIFileRoute('/api/ai/chat')({
     const stream = new ReadableStream<Uint8Array>({
       async start(controller) {
         try {
+          if (compressedHistory.wasCompressed) {
+            controller.enqueue(
+              encoder.encode(
+                `${JSON.stringify({
+                  type: 'compression-start',
+                  compressedMessageCount: compressedHistory.compressedMessageCount,
+                })}\n`
+              )
+            );
+          }
+
           for await (const part of result.fullStream) {
             switch (part.type) {
               case 'text-delta': {

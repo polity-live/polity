@@ -9,9 +9,10 @@ export const messagesTranslations = {
   newMessage: 'Neue Nachricht',
   loading: 'Unterhaltungen werden geladen...',
   filters: {
-    all: 'Alle Unterhaltungen',
-    direct: 'Direktnachrichten',
-    group: 'Gruppenchats',
+    all: 'Alle',
+    direct: 'Direkt',
+    group: 'Gruppen',
+    ai: 'KI',
   },
   // Toast-Nachrichten für Action-Hooks
   toasts: {
@@ -33,6 +34,8 @@ export const messagesTranslations = {
   compose: {
     title: 'Neue Unterhaltung',
     startNew: 'Neue Unterhaltung starten',
+    startNewChat: 'Neuen Chat starten',
+    startNewAi: 'Neue KI-Unterhaltung starten',
     searchDescription: 'Suche nach Benutzern, um eine Unterhaltung zu starten',
     searchUsersPlaceholder: 'Benutzer nach Name oder Handle suchen...',
     noUsersFound: 'Keine Benutzer gefunden',
@@ -99,6 +102,10 @@ export const messagesTranslations = {
     loadFailed: 'Nachrichten konnten nicht geladen werden',
   },
   ai: {
+    compressingHistory: 'Aria & Kai komprimiert gerade den Chatverlauf...',
+    defaultConversationName: 'Aria & Kai',
+    renameConversation: 'KI-Unterhaltung umbenennen',
+    renameConversationPlaceholder: 'Name der Unterhaltung',
     reasoning: 'Denkaufwand',
     reasoningDescription:
       'Wähle aus, wie viel Denkaufwand die KI verwenden soll: hoch, mittel oder niedrig.',

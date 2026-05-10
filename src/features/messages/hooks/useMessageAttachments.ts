@@ -6,6 +6,7 @@ import { useSearchData } from '@/features/search/hooks/useSearchData';
 import type { SearchContentItem, SearchResultItem } from '@/features/search/types/search.types';
 import type { AiAttachmentEntity, AiChatAttachment } from '@/lib/ai/schemas';
 import { useVoteState } from '@/zero/votes/useVoteState';
+import { buildAttachmentCardDataIndex } from '../logic/buildAttachmentCardDataIndex';
 import {
   buildAssistantAttachmentOption,
   buildVoteSearchItem,
@@ -74,17 +75,14 @@ export function useMessageAttachments(resetKey?: string) {
     [searchItems]
   );
 
-  const attachmentCardDataByKey = useMemo(() => {
-    const cardData = new Map<string, string>();
-
-    for (const option of attachmentOptions) {
-      if (option.attachment.card_data_json) {
-        cardData.set(option.key, option.attachment.card_data_json);
-      }
-    }
-
-    return cardData;
-  }, [attachmentOptions]);
+  const attachmentCardDataByKey = useMemo(
+    () =>
+      buildAttachmentCardDataIndex({
+        attachmentOptions,
+        agendaItems: data?.agendaItems ?? [],
+      }),
+    [attachmentOptions, data?.agendaItems]
+  );
 
   useEffect(() => {
     setSelectedAttachments([]);

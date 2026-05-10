@@ -497,15 +497,20 @@ export async function getAssistantConversationForUser(
 
 export async function getConversationMessagesForAi(
   conversationId: string,
-  limit = 24
+  limit?: number
 ): Promise<AiMessageHistoryRow[]> {
   const supabase = createClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from('message')
     .select('id, sender_id, content, context_json, created_at')
     .eq('conversation_id', conversationId)
-    .order('created_at', { ascending: true })
-    .limit(limit);
+    .order('created_at', { ascending: true });
+
+  if (typeof limit === 'number') {
+    query = query.limit(limit);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     throw new Error(`Failed to load assistant conversation messages: ${error.message}`);

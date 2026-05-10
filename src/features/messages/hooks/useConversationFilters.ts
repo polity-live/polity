@@ -1,57 +1,79 @@
 import { useMemo, useState } from 'react';
 import { Conversation, Message } from '../types/message.types';
+import { getConversationDisplay } from '../logic/messageUtils';
+import { isAssistantConversation } from '@/features/assistant/logic/assistantHelpers';
 
-export function useConversationFilters(conversations: readonly Conversation[]) {
+export type ConversationFilter = 'all' | 'direct' | 'group' | 'ai';
+
+function sortConversations(left: Conversation, right: Conversation) {
+  if (left.pinned && !right.pinned) return -1;
+  if (!left.pinned && right.pinned) return 1;
+
+  const leftTimestamp = left.last_message_at || 0;
+  const rightTimestamp = right.last_message_at || 0;
+  return rightTimestamp - leftTimestamp;
+}
+
+export function useConversationFilters(
+  conversations: readonly Conversation[],
+  currentUserId?: string
+) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [conversationFilter, setConversationFilter] = useState<ConversationFilter>('all');
 
   const filteredConversations = useMemo(() => {
-    if (!searchQuery.trim()) {
-      // Sort conversations: pinned first, then by last_message_at (newest first)
-      return [...conversations].sort((a, b) => {
-        // First, sort by pinned status
-        if (a.pinned && !b.pinned) return -1;
-        if (!a.pinned && b.pinned) return 1;
-
-        // Then sort by last_message_at
-        const timeA = a.last_message_at || 0;
-        const timeB = b.last_message_at || 0;
-        return timeB - timeA; // Newest first
-      });
-    }
+    const normalizedQuery = searchQuery.trim().toLowerCase();
 
     return conversations
-      .filter((conv: Conversation) => {
-        // Search in participant names
-        const participantMatch = conv.participants.some(p => {
-          const name = [p.user?.first_name, p.user?.last_name].filter(Boolean).join(' ').toLowerCase();
-          const handle = p.user?.handle?.toLowerCase() || '';
-          return (
-            name.includes(searchQuery.toLowerCase()) || handle.includes(searchQuery.toLowerCase())
-          );
+      .filter(conversation => {
+        if (conversationFilter === 'group') {
+          return conversation.type === 'group';
+        }
+
+        if (conversationFilter === 'ai') {
+          return isAssistantConversation(conversation);
+        }
+
+        if (conversationFilter === 'direct') {
+          return conversation.type !== 'group' && !isAssistantConversation(conversation);
+        }
+
+        return true;
+      })
+      .filter((conversation: Conversation) => {
+        if (!normalizedQuery) {
+          return true;
+        }
+
+        const display = getConversationDisplay(conversation, currentUserId);
+        const displayMatch =
+          display.name.toLowerCase().includes(normalizedQuery) ||
+          (display.handle ?? '').toLowerCase().includes(normalizedQuery) ||
+          (conversation.name ?? '').toLowerCase().includes(normalizedQuery);
+
+        const participantMatch = conversation.participants.some(participant => {
+          const name = [participant.user?.first_name, participant.user?.last_name]
+            .filter(Boolean)
+            .join(' ')
+            .toLowerCase();
+          const handle = participant.user?.handle?.toLowerCase() || '';
+          return name.includes(normalizedQuery) || handle.includes(normalizedQuery);
         });
 
-        // Search in messages
-        const messageMatch = conv.messages.some((msg: Message) =>
-          (msg.content ?? '').toLowerCase().includes(searchQuery.toLowerCase())
+        const messageMatch = conversation.messages.some((message: Message) =>
+          (message.content ?? '').toLowerCase().includes(normalizedQuery)
         );
 
-        return participantMatch || messageMatch;
+        return displayMatch || participantMatch || messageMatch;
       })
-      .sort((a, b) => {
-        // First, sort by pinned status
-        if (a.pinned && !b.pinned) return -1;
-        if (!a.pinned && b.pinned) return 1;
-
-        // Sort by last_message_at (newest first)
-        const timeA = a.last_message_at || 0;
-        const timeB = b.last_message_at || 0;
-        return timeB - timeA;
-      });
-  }, [conversations, searchQuery]);
+      .sort(sortConversations);
+  }, [conversations, conversationFilter, currentUserId, searchQuery]);
 
   return {
     searchQuery,
     setSearchQuery,
+    conversationFilter,
+    setConversationFilter,
     filteredConversations,
   };
 }

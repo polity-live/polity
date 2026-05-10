@@ -15,10 +15,17 @@ export function useAssistantConversation(userId?: string) {
   // Find existing assistant conversation for this user
   const assistantConversation = useMemo(() => {
     if (!userId) return undefined;
-    const userConversations = (conversationsWithRelations ?? []).filter((c) =>
-      c.participants?.some((p) => p.user_id === userId),
+    const userConversations = (conversationsWithRelations ?? []).filter(c =>
+      c.participants?.some(p => p.user_id === userId)
     );
-    return userConversations.find((c) => isAssistantConversation(c));
+
+    return [...userConversations]
+      .filter(conversation => isAssistantConversation(conversation))
+      .sort((left, right) => {
+        const leftTimestamp = left.last_message_at ?? left.created_at ?? 0;
+        const rightTimestamp = right.last_message_at ?? right.created_at ?? 0;
+        return rightTimestamp - leftTimestamp;
+      })[0];
   }, [conversationsWithRelations, userId]);
 
   return {

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Conversation } from '../types/message.types';
-import { ARIA_KAI_USER_ID } from '@/features/assistant/constants';
+import { isAssistantConversation } from '@/features/assistant/logic/assistantHelpers';
 
 interface ConversationSelectionOptions {
   openAriaKai?: boolean;
@@ -20,9 +20,13 @@ export function useConversationSelection(
       return;
     }
 
-    const ariaKaiConversation = conversations.find(conv =>
-      conv.participants.some(p => p.user?.id === ARIA_KAI_USER_ID)
-    );
+    const ariaKaiConversation = [...conversations]
+      .filter(conversation => isAssistantConversation(conversation))
+      .sort((left, right) => {
+        const leftTimestamp = left.last_message_at ?? left.created_at ?? 0;
+        const rightTimestamp = right.last_message_at ?? right.created_at ?? 0;
+        return rightTimestamp - leftTimestamp;
+      })[0];
 
     if (ariaKaiConversation) {
       hasHandledAriaKaiIntentRef.current = true;

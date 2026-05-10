@@ -3,6 +3,7 @@ import { useMessageActions } from '@/zero/messages/useMessageActions';
 import { toast } from 'sonner';
 import { Conversation } from '../types/message.types';
 import { hasUnreadConversationRequest } from '../logic/messageUtils';
+import { ARIA_KAI_USER_ID, ARIA_KAI_WELCOME_MESSAGE } from '@/features/assistant/constants';
 import {
   notifyDirectMessage,
   notifyConversationRequest,
@@ -131,6 +132,7 @@ export function useMessageMutations() {
         name: null,
         pinned: false,
         last_message_at: 0,
+        assistant_for_user_id: null,
       });
 
       console.log('[createConversation] Will link requestedBy to:', requesterId);
@@ -170,6 +172,60 @@ export function useMessageMutations() {
     } catch (error) {
       console.error('Failed to create conversation:', error);
       toast.error('Failed to create conversation');
+      return { success: false, error };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const createAssistantConversation = async (currentUserId: string, name = 'Aria & Kai') => {
+    setIsLoading(true);
+    try {
+      const conversationId = crypto.randomUUID();
+      const now = Date.now();
+
+      await actions.createConversation({
+        id: conversationId,
+        type: 'direct',
+        status: 'accepted',
+        group_id: null,
+        name,
+        pinned: false,
+        last_message_at: now,
+        assistant_for_user_id: currentUserId,
+      });
+
+      await actions.addParticipant({
+        id: crypto.randomUUID(),
+        joined_at: now,
+        conversation_id: conversationId,
+        user_id: currentUserId,
+        last_read_at: 0,
+        left_at: 0,
+      });
+
+      await actions.addParticipant({
+        id: crypto.randomUUID(),
+        joined_at: now,
+        conversation_id: conversationId,
+        user_id: ARIA_KAI_USER_ID,
+        last_read_at: now,
+        left_at: 0,
+      });
+
+      await actions.sendAssistantMessage({
+        id: crypto.randomUUID(),
+        content: ARIA_KAI_WELCOME_MESSAGE,
+        conversation_id: conversationId,
+        context_json: '[]',
+        deleted_at: 0,
+      });
+
+      toast.success('AI conversation created');
+      return { success: true, conversationId };
+    } catch (error) {
+      console.error('Failed to create AI conversation:', error);
+      toast.error('Failed to create AI conversation');
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -312,16 +368,32 @@ export function useMessageMutations() {
     }
   };
 
+  const updateConversationName = async (conversationId: string, name: string | null) => {
+    try {
+      await actions.updateConversation({
+        id: conversationId,
+        name,
+      });
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to update conversation name:', error);
+      toast.error('Failed to update conversation');
+      return { success: false, error };
+    }
+  };
+
   return {
     sendMessage,
     sendAssistantMessage,
     createConversation,
+    createAssistantConversation,
     deleteMessage,
     markConversationAsRead,
     acceptConversation,
     rejectConversation,
     deleteConversation,
     togglePin,
+    updateConversationName,
     isLoading,
   };
 }

@@ -58,7 +58,13 @@ interface SendAssistantMessageOptions {
 const FREE_ROUTER_MODEL_LABEL = 'free models router';
 
 interface AssistantChatStreamEvent {
-  type: 'text-delta' | 'tool-call-delta' | 'tool-call' | 'tool-result' | 'error';
+  type:
+    | 'compression-start'
+    | 'text-delta'
+    | 'tool-call-delta'
+    | 'tool-call'
+    | 'tool-result'
+    | 'error';
   text?: string;
   toolName?: string | null;
   args?: Record<string, unknown> | null;
@@ -91,6 +97,7 @@ function parseAssistantChatStreamEvent(rawLine: string): AssistantChatStreamEven
     const type = parsed.type;
 
     if (
+      type !== 'compression-start' &&
       type !== 'text-delta' &&
       type !== 'tool-call-delta' &&
       type !== 'tool-call' &&
@@ -207,6 +214,7 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
   const [isCatalogLoading, setIsCatalogLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
   const [isToolCalling, setIsToolCalling] = useState(false);
   const [activeToolName, setActiveToolName] = useState<string | null>(null);
   const [activeToolCall, setActiveToolCall] = useState<ActiveToolCallState | null>(null);
@@ -353,6 +361,7 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
     setStreamingText('');
     setAwaitingPersistenceText(null);
     setStreamError(null);
+    setIsCompressing(false);
     setIsThinking(false);
     setIsToolCalling(false);
     setActiveToolName(null);
@@ -497,6 +506,7 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
 
       setIsSending(true);
       setIsThinking(true);
+      setIsCompressing(false);
       setIsToolCalling(false);
       setActiveToolName(null);
       setActiveToolCall(null);
@@ -584,6 +594,14 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
           }
 
           switch (streamEvent.type) {
+            case 'compression-start': {
+              setIsCompressing(true);
+              setIsThinking(false);
+              setIsToolCalling(false);
+              setActiveToolName(null);
+              setActiveToolCall(null);
+              break;
+            }
             case 'text-delta': {
               if (!streamEvent.text) {
                 return;
@@ -591,6 +609,7 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
 
               finalText += streamEvent.text;
               setStreamingText(currentText => currentText + streamEvent.text);
+              setIsCompressing(false);
               setIsThinking(false);
               setIsToolCalling(false);
               setActiveToolName(null);
@@ -598,12 +617,14 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
               break;
             }
             case 'tool-call-delta': {
+              setIsCompressing(false);
               setIsThinking(false);
               setIsToolCalling(true);
               break;
             }
             case 'tool-call': {
               const label = resolveToolLabel(streamEvent.toolName);
+              setIsCompressing(false);
               setIsThinking(false);
               setIsToolCalling(true);
               setActiveToolName(label);
@@ -614,6 +635,7 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
               break;
             }
             case 'tool-result': {
+              setIsCompressing(false);
               setIsThinking(true);
               setIsToolCalling(false);
               setActiveToolName(null);
@@ -624,6 +646,7 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
               streamErrorMessage =
                 streamEvent.message ??
                 t('features.messages.ai.sendFailed', 'Failed to get a response from Aria & Kai.');
+              setIsCompressing(false);
               setIsThinking(false);
               setIsToolCalling(false);
               setActiveToolName(null);
@@ -680,6 +703,7 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
             : t('features.messages.ai.sendFailed', 'Failed to get a response from Aria & Kai.');
         setStreamingText('');
         setAwaitingPersistenceText(null);
+        setIsCompressing(false);
         setIsToolCalling(false);
         setActiveToolName(null);
         setActiveToolCall(null);
@@ -693,6 +717,7 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
         return false;
       } finally {
         setIsSending(false);
+        setIsCompressing(false);
         setIsThinking(false);
         setIsToolCalling(false);
         setActiveToolName(null);
@@ -748,6 +773,7 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
     streamingText,
     streamError,
     isSending,
+    isCompressing,
     isThinking,
     isToolCalling,
     activeToolName,

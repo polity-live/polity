@@ -9,6 +9,7 @@ import { useConversationFilters } from './useConversationFilters';
 import { useConversationSelection } from './useConversationSelection';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { Conversation } from '../types/message.types';
+import { isAssistantConversation } from '@/features/assistant/logic/assistantHelpers';
 
 export function useMessagesPage() {
   const { t } = useTranslation();
@@ -32,8 +33,13 @@ export function useMessagesPage() {
   // Data hooks
   const { conversations, isLoading } = useConversationData(user?.id);
   const mutations = useMessageMutations();
-  const { searchQuery, setSearchQuery, filteredConversations } =
-    useConversationFilters(conversations);
+  const {
+    searchQuery,
+    setSearchQuery,
+    conversationFilter,
+    setConversationFilter,
+    filteredConversations,
+  } = useConversationFilters(conversations, user?.id);
   const shouldOpenAriaKai = searchParams.openAriaKai === 'true';
   const { selectedConversationId, setSelectedConversationId, selectedConversation } =
     useConversationSelection(conversations, {
@@ -68,7 +74,7 @@ export function useMessagesPage() {
   // Existing direct conversation user IDs (for new conversation dialog)
   const existingConversationUserIds = useMemo(() => {
     return conversations
-      .filter(conv => conv.type === 'direct')
+      .filter(conv => conv.type === 'direct' && !isAssistantConversation(conv))
       .flatMap(conv => conv.participants.map(p => p.user?.id))
       .filter((id): id is string => id !== undefined && id !== user?.id);
   }, [conversations, user?.id]);
@@ -156,7 +162,7 @@ export function useMessagesPage() {
     if (!messageUserId || isLoading) return;
 
     const existingConversation = conversations.find(conv => {
-      if (conv.type === 'group') return false;
+      if (conv.type === 'group' || isAssistantConversation(conv)) return false;
       return conv.participants.some(p => p.user?.id === messageUserId);
     });
 
@@ -197,7 +203,7 @@ export function useMessagesPage() {
     if (!user?.id) return;
 
     const existingConversation = conversations.find(conv => {
-      if (conv.type === 'group') return false;
+      if (conv.type === 'group' || isAssistantConversation(conv)) return false;
       const participantIds = conv.participants.map(p => p.user?.id);
       return (
         participantIds.length === 2 &&
@@ -223,6 +229,21 @@ export function useMessagesPage() {
       setSelectedConversationId(result.conversationId);
       setUserSearchDialogOpen(false);
       clearComposeIntentFromUrl();
+    }
+  };
+
+  const handleCreateAssistantConversation = async () => {
+    if (!user?.id) return;
+
+    const result = await mutations.createAssistantConversation(
+      user.id,
+      t('features.messages.ai.defaultConversationName', 'Aria & Kai')
+    );
+
+    if (result.success && result.conversationId) {
+      setSelectedConversationId(result.conversationId);
+      setSearchQuery('');
+      setConversationFilter('ai');
     }
   };
 
@@ -282,6 +303,11 @@ export function useMessagesPage() {
     setDeleteDialogOpen(true);
   };
 
+  const handleRenameConversation = async (conversationId: string, name: string | null) => {
+    const result = await mutations.updateConversationName(conversationId, name);
+    return result.success;
+  };
+
   return {
     t,
     isLoading,
@@ -296,6 +322,8 @@ export function useMessagesPage() {
     selectedConversationUserOnline,
     searchQuery,
     setSearchQuery,
+    conversationFilter,
+    setConversationFilter,
     existingConversationUserIds,
 
     // Dialog state
@@ -317,6 +345,8 @@ export function useMessagesPage() {
     handleRejectConversation,
     handleSendMessage,
     openNewConversationDialog,
+    handleCreateAssistantConversation,
     openDeleteDialog,
+    handleRenameConversation,
   };
 }

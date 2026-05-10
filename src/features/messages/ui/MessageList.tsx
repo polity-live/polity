@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import { AlertCircle, Check, LoaderCircle, Wrench, X } from 'lucide-react';
+import { AlertCircle, Archive, Check, LoaderCircle, Wrench, X } from 'lucide-react';
 import { MessageBubble } from './MessageBubble';
 import { Conversation, Message } from '../types/message.types';
 import { getOtherParticipant } from '../logic/messageUtils';
@@ -20,6 +20,7 @@ interface MessageListProps {
   resolveAttachmentCardData?: (entityType: AiAttachmentEntity, entityId: string) => string | null;
   streamingAssistantMessage?: {
     text: string;
+    isCompressing: boolean;
     isThinking: boolean;
     isToolCalling: boolean;
     toolName?: string | null;
@@ -45,6 +46,7 @@ export function MessageList({
   }, [
     conversation.messages,
     streamingAssistantMessage?.text,
+    streamingAssistantMessage?.isCompressing,
     streamingAssistantMessage?.isThinking,
     streamingAssistantMessage?.isToolCalling,
     streamingAssistantMessage?.toolName,
@@ -132,6 +134,34 @@ export function MessageList({
                         <span className="bg-primary/50 h-1.5 w-1.5 animate-bounce rounded-full [animation-delay:-0.3s]" />
                         <span className="bg-primary/50 h-1.5 w-1.5 animate-bounce rounded-full [animation-delay:-0.15s]" />
                         <span className="bg-primary/50 h-1.5 w-1.5 animate-bounce rounded-full" />
+                      </div>
+                    </div>
+                  </div>
+                ) : streamingAssistantMessage.isCompressing ? (
+                  <div className="space-y-3">
+                    <div className="text-muted-foreground flex items-center gap-3 text-sm">
+                      <div className="bg-primary/10 text-primary flex h-6 w-6 items-center justify-center rounded-full">
+                        <Archive className="h-3.5 w-3.5" />
+                      </div>
+                      <span>
+                        {t(
+                          'features.messages.ai.compressingHistory',
+                          'Aria & Kai is compressing the chat history...'
+                        )}
+                      </span>
+                    </div>
+                    <div className="bg-background/70 border-border/60 rounded-md border px-3 py-3">
+                      <div className="mb-2 flex items-end gap-1.5">
+                        <span className="bg-primary/35 h-3 w-2 animate-pulse rounded-full [animation-delay:-0.2s]" />
+                        <span className="bg-primary/45 h-5 w-2 animate-pulse rounded-full [animation-delay:-0.05s]" />
+                        <span className="bg-primary/60 h-7 w-2 animate-pulse rounded-full [animation-delay:0.1s]" />
+                        <span className="bg-primary/45 h-5 w-2 animate-pulse rounded-full [animation-delay:0.25s]" />
+                        <span className="bg-primary/35 h-3 w-2 animate-pulse rounded-full [animation-delay:0.4s]" />
+                      </div>
+                      <div className="flex items-center gap-1.5 opacity-80">
+                        <span className="bg-muted-foreground/30 h-1.5 w-16 animate-pulse rounded-full" />
+                        <span className="bg-muted-foreground/20 h-1.5 w-10 animate-pulse rounded-full [animation-delay:120ms]" />
+                        <span className="bg-muted-foreground/30 h-1.5 w-6 animate-pulse rounded-full [animation-delay:240ms]" />
                       </div>
                     </div>
                   </div>

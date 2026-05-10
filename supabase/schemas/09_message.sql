@@ -19,9 +19,6 @@ CREATE TABLE IF NOT EXISTS public.conversation (
 CREATE INDEX idx_conversation_group ON public.conversation (group_id);
 CREATE INDEX idx_conversation_requested_by ON public.conversation (requested_by_id);
 CREATE INDEX IF NOT EXISTS idx_conversation_assistant_for_user ON public.conversation (assistant_for_user_id);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_conversation_assistant_for_user_unique
-  ON public.conversation (assistant_for_user_id)
-  WHERE assistant_for_user_id IS NOT NULL;
 
 ALTER TABLE public.conversation ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.conversation FOR ALL TO service_role USING (true);

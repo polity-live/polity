@@ -19,8 +19,11 @@ const baseConversationSchema = z.object({
 
 export const selectConversationSchema = baseConversationSchema;
 export const createConversationSchema = baseConversationSchema
-  .omit({ id: true, created_at: true, requested_by_id: true, assistant_for_user_id: true })
-  .extend({ id: z.string() });
+  .omit({ id: true, created_at: true, requested_by_id: true })
+  .extend({
+    id: z.string(),
+    assistant_for_user_id: z.string().nullable().optional(),
+  });
 export const updateConversationSchema = baseConversationSchema
   .pick({ name: true, status: true, pinned: true, last_message_at: true })
   .partial()

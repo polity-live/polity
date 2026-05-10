@@ -16,6 +16,7 @@ interface MessageViewProps {
   onTogglePin: (id: string, currentPinned: boolean) => void;
   onDeleteClick: (id: string) => void;
   onMembersClick: () => void;
+  onRenameConversation: (id: string, name: string | null) => Promise<boolean>;
   onSendMessage: (content: string, contextJson: string) => Promise<boolean>;
   onAcceptConversation: (conversation: Conversation) => void;
   onRejectConversation: (conversation: Conversation) => void;
@@ -30,6 +31,7 @@ export function MessageView({
   onTogglePin,
   onDeleteClick,
   onMembersClick,
+  onRenameConversation,
   onSendMessage,
   onAcceptConversation,
   onRejectConversation,
@@ -46,6 +48,7 @@ export function MessageView({
         onTogglePin={onTogglePin}
         onDeleteClick={onDeleteClick}
         onMembersClick={onMembersClick}
+        onRenameConversation={onRenameConversation}
         onAcceptConversation={onAcceptConversation}
         onRejectConversation={onRejectConversation}
         className={className}
@@ -71,6 +74,7 @@ export function MessageView({
             onTogglePin={onTogglePin}
             onDeleteClick={onDeleteClick}
             onMembersClick={onMembersClick}
+            onRenameConversation={onRenameConversation}
           />
           <MessageList
             conversation={conversation}

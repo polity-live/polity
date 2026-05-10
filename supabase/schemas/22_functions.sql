@@ -65,6 +65,7 @@ BEGIN
   IF assistant_conversation_id IS NULL THEN
     INSERT INTO public.conversation (
       type,
+      name,
       status,
       last_message_at,
       assistant_for_user_id,
@@ -72,6 +73,7 @@ BEGIN
     )
     VALUES (
       'direct',
+      'Aria & Kai',
       'accepted',
       now(),
       target_user_id,

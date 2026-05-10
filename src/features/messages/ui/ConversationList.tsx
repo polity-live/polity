@@ -2,19 +2,12 @@ import { Card, CardHeader } from '@/features/shared/ui/ui/card';
 import { Separator } from '@/features/shared/ui/ui/separator';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Button } from '@/features/shared/ui/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/features/shared/ui/ui/select';
-import { Search, Plus, Filter } from 'lucide-react';
+import { Search, MessageCircle, Bot } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
 import { Conversation } from '../types/message.types';
 import { ConversationItem } from './ConversationItem';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { useState } from 'react';
+import type { ConversationFilter } from '../hooks/useConversationFilters';
 
 interface ConversationListProps {
   conversations: Conversation[];
@@ -23,8 +16,12 @@ interface ConversationListProps {
   onSelectConversation: (id: string) => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
+  conversationFilter: ConversationFilter;
+  onConversationFilterChange: (filter: ConversationFilter) => void;
   currentUserId?: string;
   onNewConversationClick: () => void;
+  onNewAiConversationClick: () => void;
+  onDeleteConversationClick: (id: string) => void;
   className?: string;
 }
 
@@ -35,18 +32,16 @@ export function ConversationList({
   onSelectConversation,
   searchQuery,
   onSearchChange,
+  conversationFilter,
+  onConversationFilterChange,
   currentUserId,
   onNewConversationClick,
+  onNewAiConversationClick,
+  onDeleteConversationClick,
   className,
 }: ConversationListProps) {
   const { t } = useTranslation();
-  const [conversationFilter, setConversationFilter] = useState<'all' | 'direct' | 'group'>('all');
-
-  // Filter conversations based on type
-  const filteredByTypeConversations = conversations.filter(conv => {
-    if (conversationFilter === 'all') return true;
-    return conv.type === conversationFilter;
-  });
+  const filterButtons: ConversationFilter[] = ['all', 'direct', 'group', 'ai'];
 
   return (
     <Card
@@ -59,15 +54,28 @@ export function ConversationList({
       <CardHeader className="flex-shrink-0 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold">{t('features.messages.title')}</h2>
-          <Button
-            size="icon"
-            variant="default"
-            className="rounded-full"
-            onClick={onNewConversationClick}
-            aria-label={t('features.messages.compose.startNew')}
-          >
-            <Plus className="h-5 w-5" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              size="icon"
+              variant="outline"
+              className="rounded-full"
+              onClick={onNewConversationClick}
+              aria-label={t('features.messages.compose.startNewChat', 'Start a new chat')}
+              title={t('features.messages.compose.startNewChat', 'Start a new chat')}
+            >
+              <MessageCircle className="h-5 w-5" />
+            </Button>
+            <Button
+              size="icon"
+              variant="default"
+              className="rounded-full"
+              onClick={onNewAiConversationClick}
+              aria-label={t('features.messages.compose.startNewAi', 'Start a new AI conversation')}
+              title={t('features.messages.compose.startNewAi', 'Start a new AI conversation')}
+            >
+              <Bot className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
         <div className="space-y-2">
           <div className="relative">
@@ -79,26 +87,25 @@ export function ConversationList({
               className="pl-9"
             />
           </div>
-          <Select
-            value={conversationFilter}
-            onValueChange={(value: 'all' | 'direct' | 'group') => setConversationFilter(value)}
-          >
-            <SelectTrigger className="w-full">
-              <Filter className="mr-2 h-4 w-4" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t('features.messages.filters.all')}</SelectItem>
-              <SelectItem value="direct">{t('features.messages.filters.direct')}</SelectItem>
-              <SelectItem value="group">{t('features.messages.filters.group')}</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex flex-wrap gap-2">
+            {filterButtons.map(filter => (
+              <Button
+                key={filter}
+                type="button"
+                size="sm"
+                variant={conversationFilter === filter ? 'default' : 'outline'}
+                onClick={() => onConversationFilterChange(filter)}
+              >
+                {t(`features.messages.filters.${filter}`)}
+              </Button>
+            ))}
+          </div>
         </div>
       </CardHeader>
       <Separator />
       <div className="flex-1 overflow-y-auto">
         <div className="space-y-1 p-4">
-          {filteredByTypeConversations.length === 0 ? (
+          {conversations.length === 0 ? (
             <div className="py-8 text-center">
               <p className="text-muted-foreground">
                 {searchQuery || conversationFilter !== 'all'
@@ -107,7 +114,7 @@ export function ConversationList({
               </p>
             </div>
           ) : (
-            filteredByTypeConversations.map(conversation => (
+            conversations.map(conversation => (
               <ConversationItem
                 key={conversation.id}
                 conversation={conversation}
@@ -115,6 +122,7 @@ export function ConversationList({
                 isOnline={conversationOnlineStatus[conversation.id] ?? false}
                 isSelected={selectedConversationId === conversation.id}
                 onSelect={onSelectConversation}
+                onDelete={onDeleteConversationClick}
               />
             ))
           )}

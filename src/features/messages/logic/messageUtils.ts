@@ -1,4 +1,5 @@
 import { Conversation, ConversationDisplay } from '../types/message.types';
+import { isAssistantConversation } from '@/features/assistant/logic/assistantHelpers';
 
 interface UnreadMessageLike {
   is_read: boolean;
@@ -38,9 +39,24 @@ export const getConversationDisplay = (
     };
   } else {
     const otherUser = conversation.participants.find(p => p.user?.id !== currentUserId)?.user;
+
+    if (isAssistantConversation(conversation)) {
+      const assistantName =
+        [otherUser?.first_name, otherUser?.last_name].filter(Boolean).join(' ') || 'Aria & Kai';
+
+      return {
+        name: conversation.name?.trim() || assistantName,
+        avatar: otherUser?.avatar,
+        handle: otherUser?.handle,
+        isGroup: false,
+      };
+    }
+
     return {
       name:
-        [otherUser?.first_name, otherUser?.last_name].filter(Boolean).join(' ') || 'Unknown User',
+        [otherUser?.first_name, otherUser?.last_name].filter(Boolean).join(' ') ||
+        conversation.name ||
+        'Unknown User',
       avatar: otherUser?.avatar,
       handle: otherUser?.handle,
       isGroup: false,

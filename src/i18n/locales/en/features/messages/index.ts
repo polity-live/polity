@@ -9,9 +9,10 @@ export const messagesTranslations = {
   newMessage: 'New Message',
   loading: 'Loading conversations...',
   filters: {
-    all: 'All Conversations',
-    direct: 'Direct Messages',
-    group: 'Group Chats',
+    all: 'All',
+    direct: 'Direct',
+    group: 'Groups',
+    ai: 'AI',
   },
   // Toast messages for action hooks
   toasts: {
@@ -33,6 +34,8 @@ export const messagesTranslations = {
   compose: {
     title: 'New Conversation',
     startNew: 'Start a New Conversation',
+    startNewChat: 'Start a new chat',
+    startNewAi: 'Start a new AI conversation',
     searchDescription: 'Search for users to start a conversation with',
     searchUsersPlaceholder: 'Search users by name or handle...',
     noUsersFound: 'No users found',
@@ -99,6 +102,10 @@ export const messagesTranslations = {
     loadFailed: 'Failed to load messages',
   },
   ai: {
+    compressingHistory: 'Aria & Kai is compressing the chat history...',
+    defaultConversationName: 'Aria & Kai',
+    renameConversation: 'Rename AI conversation',
+    renameConversationPlaceholder: 'Conversation name',
     reasoning: 'Reasoning',
     reasoningDescription:
       'Choose how much thinking effort the AI should use: high, medium, or low.',
