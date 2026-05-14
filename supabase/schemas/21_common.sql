@@ -114,12 +114,13 @@ CREATE TABLE IF NOT EXISTS public.link (
   url TEXT,
   user_id UUID,
   group_id UUID,
-  meeting_slot_id UUID,
+  event_id UUID REFERENCES public.event (id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX idx_link_user ON public.link (user_id);
 CREATE INDEX idx_link_group ON public.link (group_id);
+CREATE INDEX idx_link_event ON public.link (event_id);
 
 ALTER TABLE public.link ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.link FOR ALL TO service_role USING (true);

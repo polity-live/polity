@@ -1,7 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { useNavigate } from '@tanstack/react-router';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Calendar } from '@/features/shared/ui/ui/calendar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
@@ -16,7 +23,6 @@ import {
 import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
 import { Textarea } from '@/features/shared/ui/ui/textarea';
-import { Switch } from '@/features/shared/ui/ui/switch';
 import { startOfDay, isPast } from 'date-fns';
 import {
   Calendar as CalendarIcon,
@@ -26,19 +32,16 @@ import {
   Users,
   Video,
   Plus,
-  Repeat,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useMeetPage } from '@/features/meet/hooks/useMeetPage';
 import { MeetingInstanceCard } from '@/features/meet/ui/MeetingInstanceCard';
-import type { RecurrencePattern } from '@/features/events/logic/rruleHelpers';
 import { SharedCalendarHeader } from '@/features/events/ui/calendar/SharedCalendarHeader';
-import { MeetingListView, MeetingMonthView, MeetingWeekView } from '@/features/meet/ui/MeetingCalendarViews';
-import { useFormStyle } from '@/features/create/hooks/useFormStyle';
-import { FormStyleSelector } from '@/features/create/ui/FormStyleSelector';
-import { CarouselFormLayout } from '@/features/create/ui/CarouselFormLayout';
-import { OnePageFormLayout } from '@/features/create/ui/OnePageFormLayout';
-import type { CreateFormStep } from '@/features/create/types/create-form.types';
+import {
+  MeetingListView,
+  MeetingMonthView,
+  MeetingWeekView,
+} from '@/features/meet/ui/MeetingCalendarViews';
 
 interface UserMeetingSchedulerProps {
   userId: string;
@@ -46,7 +49,6 @@ interface UserMeetingSchedulerProps {
 
 export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
   const {
-    currentUser,
     isOwner,
     isLoading,
     owner,
@@ -62,33 +64,17 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
     allInstances,
     filteredInstances,
     getInstancesForDate,
-    isCreateDialogOpen,
-    setIsCreateDialogOpen,
     isBookingDialogOpen,
     setIsBookingDialogOpen,
     selectedInstance,
     handleBookMeeting,
     handleCancelBooking,
-    handleCreateMeeting,
     handleUpdateMeeting,
     handleDeleteMeeting,
     openBookingDialog,
   } = useMeetPage(userId);
+  const navigate = useNavigate();
 
-  // Create meeting form state
-  const [newTitle, setNewTitle] = useState('');
-  const [newDescription, setNewDescription] = useState('');
-  const [newDate, setNewDate] = useState<Date | undefined>(new Date());
-  const [newTime, setNewTime] = useState('09:00');
-  const [newDuration, setNewDuration] = useState('60');
-  const [newType, setNewType] = useState<'one-on-one' | 'public-meeting'>('one-on-one');
-  const [newMaxBookings, setNewMaxBookings] = useState('1');
-  const [isRecurring, setIsRecurring] = useState(false);
-  const [recurringPattern, setRecurringPattern] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
-  const [recurringEndDate, setRecurringEndDate] = useState<Date | undefined>(undefined);
-  const [selectedWeekdays, setSelectedWeekdays] = useState<number[]>([0, 1, 2, 3, 4]); // Mon-Fri (rrule 0-indexed)
-  const [newLocation, setNewLocation] = useState('');
-  const [newLocationUrl, setNewLocationUrl] = useState('');
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingMeetingId, setEditingMeetingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
@@ -101,39 +87,12 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
   const [editLocation, setEditLocation] = useState('');
   const [editLocationUrl, setEditLocationUrl] = useState('');
   const [editingRecurringSeries, setEditingRecurringSeries] = useState(false);
-  const [createFormStep, setCreateFormStep] = useState(0);
-  const { formMode } = useFormStyle();
-
-  const trimmedTitle = newTitle.trim();
-  const canCreateMeeting =
-    Boolean(newDate) &&
-    trimmedTitle.length > 0 &&
-    Boolean(newTime) &&
-    Number(newDuration) >= 15 &&
-    (!isRecurring || recurringPattern !== 'weekly' || selectedWeekdays.length > 0);
   const trimmedEditTitle = editTitle.trim();
   const canSaveMeeting =
     Boolean(editDate) &&
     trimmedEditTitle.length > 0 &&
     Boolean(editTime) &&
     Number(editDuration) >= 15;
-  const CreateMeetingLayout = formMode === 'carousel' ? CarouselFormLayout : OnePageFormLayout;
-
-  const resetForm = () => {
-    setNewTitle('');
-    setNewDescription('');
-    setNewDate(new Date());
-    setNewTime('09:00');
-    setNewDuration('60');
-    setNewType('one-on-one');
-    setNewMaxBookings('1');
-    setIsRecurring(false);
-    setRecurringPattern('weekly');
-    setRecurringEndDate(undefined);
-    setSelectedWeekdays([0, 1, 2, 3, 4]);
-    setNewLocation('');
-    setNewLocationUrl('');
-  };
 
   const resetEditForm = () => {
     setEditingMeetingId(null);
@@ -149,13 +108,28 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
     setEditingRecurringSeries(false);
   };
 
-  const openEditDialog = (instance: { parentEventId: string; startDate: number; endDate: number; title: string }) => {
+  const openCreateEventFlow = () => {
+    navigate({
+      to: '/create/event',
+      search: { eventType: 'meeting' },
+    });
+  };
+
+  const openEditDialog = (instance: {
+    parentEventId: string;
+    startDate: number;
+    endDate: number;
+    title: string;
+  }) => {
     const meeting = meetings.find(row => row.id === instance.parentEventId);
     if (!meeting) return;
 
     const startDate = new Date(meeting.start_date ?? instance.startDate);
     const endDate = new Date(meeting.end_date ?? instance.endDate);
-    const durationMinutes = Math.max(15, Math.round((endDate.getTime() - startDate.getTime()) / 60000) || 60);
+    const durationMinutes = Math.max(
+      15,
+      Math.round((endDate.getTime() - startDate.getTime()) / 60000) || 60
+    );
 
     setEditingMeetingId(meeting.id);
     setEditTitle(meeting.title ?? instance.title);
@@ -169,37 +143,6 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
     setEditLocationUrl(meeting.location_url ?? '');
     setEditingRecurringSeries(Boolean(meeting.is_recurring));
     setIsEditDialogOpen(true);
-  };
-
-  const handleSubmitCreate = async () => {
-    if (!newDate || !currentUser || !canCreateMeeting) return;
-
-    const [hours, minutes] = newTime.split(':');
-    const startDate = new Date(newDate);
-    startDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-
-    await handleCreateMeeting({
-      title: trimmedTitle,
-      description: newDescription,
-      meetingType: newType,
-      startDate,
-      durationMinutes: parseInt(newDuration),
-      maxBookings: newType === 'one-on-one' ? 1 : parseInt(newMaxBookings) || 10,
-      location: newLocation,
-      locationUrl: newLocationUrl,
-      isRecurring,
-      recurrence: isRecurring
-        ? {
-            pattern: recurringPattern as RecurrencePattern,
-            interval: 1,
-            weekdays: recurringPattern === 'weekly' ? selectedWeekdays : [],
-            endDate: recurringEndDate ? recurringEndDate.toISOString().split('T')[0] : null,
-          }
-        : undefined,
-    });
-
-    resetForm();
-    setCreateFormStep(0);
   };
 
   const handleSubmitEdit = async () => {
@@ -225,19 +168,6 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
     resetEditForm();
   };
 
-  const openCreateDialog = () => {
-    setCreateFormStep(0);
-    setIsCreateDialogOpen(true);
-  };
-
-  const handleCreateDialogOpenChange = (open: boolean) => {
-    setIsCreateDialogOpen(open);
-    if (!open) {
-      resetForm();
-      setCreateFormStep(0);
-    }
-  };
-
   const handleEditDialogOpenChange = (open: boolean) => {
     setIsEditDialogOpen(open);
     if (!open) {
@@ -245,251 +175,17 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
     }
   };
 
-  const createMeetingSteps: CreateFormStep[] = [
-    {
-      label: 'Format',
-      isValid: () => true,
-      content: (
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label>Meeting Type</Label>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant={newType === 'one-on-one' ? 'default' : 'outline'}
-                className="flex-1"
-                onClick={() => setNewType('one-on-one')}
-              >
-                1-on-1 offer
-              </Button>
-              <Button
-                type="button"
-                variant={newType === 'public-meeting' ? 'default' : 'outline'}
-                className="flex-1"
-                onClick={() => setNewType('public-meeting')}
-              >
-                <Users className="mr-2 h-4 w-4" />
-                Public session
-              </Button>
-            </div>
-          </div>
-
-          <div className="rounded-lg border bg-muted/30 p-4 text-sm text-muted-foreground">
-            {newType === 'public-meeting'
-              ? 'Public sessions let multiple people book the same offered time.'
-              : 'One-on-one offers stay limited to a single booking.'}
-          </div>
-        </div>
-      ),
-    },
-    {
-      label: 'Details',
-      isValid: () => trimmedTitle.length > 0,
-      content: (
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="meeting-title">Title</Label>
-            <Input
-              id="meeting-title"
-              placeholder={newType === 'public-meeting' ? 'Public office hours' : 'Intro meeting'}
-              value={newTitle}
-              onChange={e => setNewTitle(e.target.value)}
-              required
-            />
-            <p className="text-xs text-muted-foreground">
-              A clear title is required before you can publish this meeting offer.
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="meeting-description">Description</Label>
-            <Textarea
-              id="meeting-description"
-              placeholder="Tell people what this offered meeting is for and what they should prepare."
-              value={newDescription}
-              onChange={e => setNewDescription(e.target.value)}
-              rows={3}
-            />
-          </div>
-        </div>
-      ),
-    },
-    {
-      label: 'Access',
-      isValid: () => true,
-      content: (
-        <div className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="meeting-location">Location</Label>
-              <Input
-                id="meeting-location"
-                placeholder="Office, cafe, call-in studio, ..."
-                value={newLocation}
-                onChange={e => setNewLocation(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="meeting-location-url">Online Meeting URL</Label>
-              <Input
-                id="meeting-location-url"
-                type="url"
-                placeholder="https://..."
-                value={newLocationUrl}
-                onChange={e => setNewLocationUrl(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {newType === 'public-meeting' ? (
-            <div className="space-y-2">
-              <Label htmlFor="max-bookings">Max Participants</Label>
-              <Input
-                id="max-bookings"
-                type="number"
-                min="1"
-                max="100"
-                value={newMaxBookings}
-                onChange={e => setNewMaxBookings(e.target.value)}
-              />
-            </div>
-          ) : (
-            <div className="rounded-lg border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
-              One-on-one offers always allow a single booking.
-            </div>
-          )}
-        </div>
-      ),
-    },
-    {
-      label: 'Schedule',
-      isValid: () => canCreateMeeting,
-      content: (
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Switch id="recurring" checked={isRecurring} onCheckedChange={setIsRecurring} />
-              <Label htmlFor="recurring" className="flex cursor-pointer items-center gap-2">
-                <Repeat className="h-4 w-4" />
-                Recurring meeting offer
-              </Label>
-            </div>
-          </div>
-
-          {isRecurring && (
-            <div className="space-y-4 rounded-lg border bg-muted/50 p-4">
-              <div className="space-y-2">
-                <Label>Recurrence Pattern</Label>
-                <div className="flex gap-2">
-                  {(['daily', 'weekly', 'monthly'] as const).map(p => (
-                    <Button
-                      key={p}
-                      type="button"
-                      size="sm"
-                      variant={recurringPattern === p ? 'default' : 'outline'}
-                      onClick={() => setRecurringPattern(p)}
-                    >
-                      {p.charAt(0).toUpperCase() + p.slice(1)}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              {recurringPattern === 'weekly' && (
-                <div className="space-y-2">
-                  <Label>Weekdays</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      { label: 'Mon', value: 0 },
-                      { label: 'Tue', value: 1 },
-                      { label: 'Wed', value: 2 },
-                      { label: 'Thu', value: 3 },
-                      { label: 'Fri', value: 4 },
-                      { label: 'Sat', value: 5 },
-                      { label: 'Sun', value: 6 },
-                    ].map(day => (
-                      <Button
-                        key={day.value}
-                        type="button"
-                        size="sm"
-                        variant={selectedWeekdays.includes(day.value) ? 'default' : 'outline'}
-                        onClick={() => {
-                          setSelectedWeekdays(prev =>
-                            prev.includes(day.value)
-                              ? prev.filter(d => d !== day.value)
-                              : [...prev, day.value],
-                          );
-                        }}
-                      >
-                        {day.label}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <Label>End Date (Optional)</Label>
-                <Calendar
-                  mode="single"
-                  selected={recurringEndDate}
-                  onSelect={setRecurringEndDate}
-                  className="rounded-md border"
-                  disabled={date => isPast(startOfDay(date))}
-                />
-              </div>
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <Label>{isRecurring ? 'Start Date' : 'Date'}</Label>
-            <Calendar
-              mode="single"
-              selected={newDate}
-              onSelect={setNewDate}
-              className="rounded-md border"
-              disabled={date => isPast(startOfDay(date))}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="meeting-time">Start Time</Label>
-              <Input
-                id="meeting-time"
-                type="time"
-                value={newTime}
-                onChange={e => setNewTime(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="meeting-duration">Duration (min)</Label>
-              <Input
-                id="meeting-duration"
-                type="number"
-                min="15"
-                step="15"
-                value={newDuration}
-                onChange={e => setNewDuration(e.target.value)}
-              />
-            </div>
-          </div>
-        </div>
-      ),
-    },
-  ];
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-lg text-muted-foreground">Loading meetings...</div>
+        <div className="text-muted-foreground text-lg">Loading meetings...</div>
       </div>
     );
   }
 
   // Booked instances (for bookings tab)
   const bookedInstances = allInstances.filter(inst =>
-    isOwner ? inst.bookingCount > 0 : inst.isBookedByMe,
+    isOwner ? inst.bookingCount > 0 : inst.isBookedByMe
   );
   const selectedInstanceOnlineUrl = selectedInstance?.locationUrl ?? selectedInstance?.streamUrl;
 
@@ -509,7 +205,7 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
         }
         actions={
           isOwner ? (
-            <Button onClick={openCreateDialog}>
+            <Button onClick={openCreateEventFlow}>
               <Plus className="mr-2 h-4 w-4" />
               Offer a meeting
             </Button>
@@ -517,7 +213,7 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
         }
       />
 
-      <p className="mb-8 max-w-3xl text-muted-foreground">
+      <p className="text-muted-foreground mb-8 max-w-3xl">
         {isOwner
           ? 'Create meeting offers that other people can discover now and book later.'
           : `Browse the meeting offers ${owner?.first_name || 'this user'} has published and book an available time that fits.`}
@@ -526,6 +222,7 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
       {view === 'list' && (
         <MeetingListView
           instances={filteredInstances}
+          selectedDate={selectedDate}
           isOwner={isOwner}
           onBook={openBookingDialog}
           onCancel={handleCancelBooking}
@@ -556,7 +253,9 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
       <Tabs defaultValue={isOwner ? 'manage' : 'bookings'} className="mt-6 space-y-6">
         <TabsList>
           {isOwner && <TabsTrigger value="manage">Meeting Offers</TabsTrigger>}
-          <TabsTrigger value="bookings">{isOwner ? 'Booked With You' : 'My Booked Meetings'}</TabsTrigger>
+          <TabsTrigger value="bookings">
+            {isOwner ? 'Booked With You' : 'My Booked Meetings'}
+          </TabsTrigger>
         </TabsList>
 
         {isOwner && (
@@ -569,12 +268,14 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="mb-4">
-                    <Button onClick={openCreateDialog}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Offer a Meeting
-                  </Button>
-                </div>
+                {meetings.length === 0 && (
+                  <div className="mb-4">
+                    <Button onClick={openCreateEventFlow}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Offer a Meeting
+                    </Button>
+                  </div>
+                )}
                 <div className="space-y-3">
                   {allInstances
                     .filter(inst => inst.endDate > Date.now())
@@ -620,7 +321,7 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
                     />
                   ))
                 ) : (
-                  <p className="py-8 text-center text-sm text-muted-foreground">
+                  <p className="text-muted-foreground py-8 text-center text-sm">
                     No booked meetings yet
                   </p>
                 )}
@@ -664,7 +365,7 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
                       href={selectedInstanceOnlineUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-sm text-primary underline-offset-4 hover:underline"
+                      className="text-primary inline-flex items-center gap-1 text-sm underline-offset-4 hover:underline"
                     >
                       <Video className="h-4 w-4" />
                       Open online meeting link
@@ -672,7 +373,7 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
                     </a>
                   )}
                   {selectedInstance.bookingCount > 0 && (
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-muted-foreground text-sm">
                       {selectedInstance.bookingCount} / {selectedInstance.maxBookings} spots taken
                     </div>
                   )}
@@ -698,59 +399,15 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Create Meeting Dialog */}
-      <Dialog
-        open={isCreateDialogOpen}
-        onOpenChange={handleCreateDialogOpenChange}
-      >
-        <DialogContent className="!flex !max-h-[calc(100vh-2rem)] !max-w-3xl !flex-col !overflow-hidden sm:!max-w-3xl">
-          <div className="flex items-start justify-between gap-4 border-b px-6 pb-4 pt-6 pr-14">
-            <DialogHeader className="min-w-0">
-              <DialogTitle>Offer Meeting</DialogTitle>
-              <DialogDescription>
-                Create {isRecurring ? 'a recurring' : 'a'} meeting offer that other people can book later.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="shrink-0">
-              <FormStyleSelector />
-            </div>
-          </div>
-
-          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
-            <CreateMeetingLayout
-              steps={createMeetingSteps}
-              currentStep={createFormStep}
-              onStepChange={setCreateFormStep}
-              onSubmit={handleSubmitCreate}
-              isSubmitting={false}
-            />
-          </div>
-
-          <div className="border-t px-6 py-4">
-            <DialogFooter className="sm:justify-start">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  handleCreateDialogOpenChange(false);
-                }}
-              >
-                Cancel
-              </Button>
-            </DialogFooter>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={isEditDialogOpen}
-        onOpenChange={handleEditDialogOpenChange}
-      >
+      <Dialog open={isEditDialogOpen} onOpenChange={handleEditDialogOpenChange}>
         <DialogContent className="!flex !max-h-[calc(100vh-2rem)] !max-w-2xl !flex-col !overflow-hidden sm:!max-w-2xl">
-          <DialogHeader className="border-b px-6 pb-4 pt-6 pr-14">
+          <DialogHeader className="border-b px-6 pt-6 pr-14 pb-4">
             <DialogTitle>Edit Meeting Offer</DialogTitle>
             <DialogDescription>
               Update this meeting offer and save your changes.
-              {editingRecurringSeries ? ' Changes to time, title, and location apply to the whole recurring offer.' : ''}
+              {editingRecurringSeries
+                ? ' Changes to time, title, and location apply to the whole recurring offer.'
+                : ''}
             </DialogDescription>
           </DialogHeader>
 

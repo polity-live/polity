@@ -113,6 +113,32 @@ describe('searchMappers', () => {
       expect(result[0].tags).toEqual(['summit']);
     });
 
+    it('should preserve event group route context', () => {
+      const items = [
+        {
+          _type: 'event' as const,
+          id: 'e-group',
+          title: 'Neighborhood Assembly',
+          created_at: 1717200000000,
+          creator: { id: 'u-1', first_name: 'Alex', last_name: 'Organizer' },
+          group: { id: 'g-1', name: 'City Circle' },
+          agenda_items: [],
+          participants: [],
+        },
+      ];
+
+      const result = mapMosaicToContentItems(
+        items as unknown as readonly SearchResultItem[],
+        emptyAgendaMap
+      );
+
+      expect(result).toHaveLength(1);
+      expect(result[0].groupId).toBe('g-1');
+      expect(result[0].groupName).toBe('City Circle');
+      expect(result[0].authorId).toBe('u-1');
+      expect(result[0].authorName).toBe('Alex Organizer');
+    });
+
     it('should normalize rich-text descriptions to plain text', () => {
       const items = [
         {

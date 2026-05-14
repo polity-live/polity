@@ -1,101 +1,111 @@
-import { useState, useCallback, useEffect } from 'react'
-import useEmblaCarousel from 'embla-carousel-react'
-import { Button } from '@/features/shared/ui/ui/button'
-import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react'
-import { useTranslation } from '@/features/shared/hooks/use-translation'
-import { CreateProgressIndicator } from './CreateProgressIndicator'
-import type { CreateFormStep } from '../types/create-form.types'
+import { useState, useCallback, useEffect } from 'react';
+import useEmblaCarousel from 'embla-carousel-react';
+import { Button } from '@/features/shared/ui/ui/button';
+import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { CreateProgressIndicator } from './CreateProgressIndicator';
+import type { CreateFormStep } from '../types/create-form.types';
 
 interface CarouselFormLayoutProps {
-  steps: CreateFormStep[]
-  currentStep: number
-  onStepChange: (step: number) => void
-  onSubmit: () => Promise<void>
-  isSubmitting: boolean
+  steps: CreateFormStep[];
+  currentStep: number;
+  onStepChange: (step: number) => void;
+  onSubmit: () => Promise<void>;
+  isSubmitting: boolean;
 }
 
-export function CarouselFormLayout({ steps, currentStep, onStepChange, onSubmit, isSubmitting }: CarouselFormLayoutProps) {
-  const { t } = useTranslation()
-  const [emblaRef, emblaApi] = useEmblaCarousel({ watchDrag: true })
-  const [canScrollPrev, setCanScrollPrev] = useState(false)
-  const [canScrollNext, setCanScrollNext] = useState(false)
+export function CarouselFormLayout({
+  steps,
+  currentStep,
+  onStepChange,
+  onSubmit,
+  isSubmitting,
+}: CarouselFormLayoutProps) {
+  const { t } = useTranslation();
+  const [emblaRef, emblaApi] = useEmblaCarousel({ watchDrag: true });
+  const [canScrollPrev, setCanScrollPrev] = useState(false);
+  const [canScrollNext, setCanScrollNext] = useState(false);
 
-  const currentStepValid = steps[currentStep]?.isValid() ?? false
+  const currentStepValid = steps[currentStep]?.isValid() ?? false;
 
   const onSelect = useCallback(() => {
-    if (!emblaApi) return
-    const index = emblaApi.selectedScrollSnap()
-    onStepChange(index)
-    setCanScrollPrev(emblaApi.canScrollPrev())
-    setCanScrollNext(emblaApi.canScrollNext())
-  }, [emblaApi, onStepChange])
+    if (!emblaApi) return;
+    const index = emblaApi.selectedScrollSnap();
+    onStepChange(index);
+    setCanScrollPrev(emblaApi.canScrollPrev());
+    setCanScrollNext(emblaApi.canScrollNext());
+  }, [emblaApi, onStepChange]);
 
   useEffect(() => {
-    if (!emblaApi) return
-    emblaApi.on('select', onSelect)
-    onSelect()
+    if (!emblaApi) return;
+    emblaApi.on('select', onSelect);
+    onSelect();
     return () => {
-      emblaApi.off('select', onSelect)
-    }
-  }, [emblaApi, onSelect])
+      emblaApi.off('select', onSelect);
+    };
+  }, [emblaApi, onSelect]);
 
   // Sync external step changes to the carousel
   useEffect(() => {
-    if (!emblaApi) return
+    if (!emblaApi) return;
     if (emblaApi.selectedScrollSnap() !== currentStep) {
-      emblaApi.scrollTo(currentStep)
+      emblaApi.scrollTo(currentStep);
     }
-  }, [emblaApi, currentStep])
+  }, [emblaApi, currentStep]);
 
   const scrollPrev = useCallback(() => {
     if (emblaApi && canScrollPrev) {
-      emblaApi.scrollPrev()
+      emblaApi.scrollPrev();
     }
-  }, [emblaApi, canScrollPrev])
+  }, [emblaApi, canScrollPrev]);
 
   const scrollNext = useCallback(() => {
     if (emblaApi && canScrollNext && currentStepValid) {
-      emblaApi.scrollNext()
+      emblaApi.scrollNext();
     }
-  }, [emblaApi, canScrollNext, currentStepValid])
+  }, [emblaApi, canScrollNext, currentStepValid]);
 
   const handleStepClick = useCallback(
     (step: number) => {
       // Only allow navigating to steps where all previous steps are valid
-      const canNavigate = steps.slice(0, step).every((s) => s.isValid())
+      const canNavigate = steps.slice(0, step).every(s => s.isValid());
       if (canNavigate && emblaApi) {
-        emblaApi.scrollTo(step)
+        emblaApi.scrollTo(step);
       }
     },
     [emblaApi, steps]
-  )
+  );
 
-  const isLastStep = currentStep === steps.length - 1
-  const stepLabels = steps.map((s) => s.label)
-  const validSteps = steps.map((_, i) => steps.slice(0, i).every((s) => s.isValid()))
+  const isLastStep = currentStep === steps.length - 1;
+  const stepLabels = steps.map(s => s.label);
+  const validSteps = steps.map((_, i) => steps.slice(0, i).every(s => s.isValid()));
 
   return (
-    <div className="flex flex-col gap-4">
-      <CreateProgressIndicator
-        currentStep={currentStep}
-        totalSteps={steps.length}
-        stepLabels={stepLabels}
-        onStepClick={handleStepClick}
-        validSteps={validSteps}
-      />
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
+      <div className="shrink-0">
+        <CreateProgressIndicator
+          currentStep={currentStep}
+          totalSteps={steps.length}
+          stepLabels={stepLabels}
+          onStepClick={handleStepClick}
+          validSteps={validSteps}
+        />
+      </div>
 
-      <div ref={emblaRef} className="overflow-hidden">
-        <div className="flex">
+      <div ref={emblaRef} className="min-h-0 flex-1 overflow-hidden">
+        <div className="flex h-full">
           {steps.map((step, index) => (
-            <div key={index} className="min-w-0 flex-[0_0_100%] px-1">
-              <div className="space-y-4 py-2">{step.content}</div>
+            <div key={index} className="min-h-0 min-w-0 flex-[0_0_100%] px-1">
+              <div className="h-full overflow-y-auto py-2 pr-1">
+                <div className="space-y-4">{step.content}</div>
+              </div>
             </div>
           ))}
         </div>
       </div>
 
       {/* Navigation buttons */}
-      <div className="flex items-center justify-between pt-2">
+      <div className="flex shrink-0 items-center justify-between border-t pt-4">
         <Button
           type="button"
           variant="outline"
@@ -136,5 +146,5 @@ export function CarouselFormLayout({ steps, currentStep, onStepChange, onSubmit,
         )}
       </div>
     </div>
-  )
+  );
 }

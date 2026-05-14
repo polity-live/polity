@@ -3,7 +3,11 @@ import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
 import { cn } from '@/features/shared/utils/utils';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { CalendarEvent } from '@/features/events/hooks/useCalendarView';
-import { MapPin } from 'lucide-react';
+import { Calendar as CalendarIcon, MapPin } from 'lucide-react';
+import {
+  getCompactCalendarEventClassName,
+  getCompactCalendarEventMetaClassName,
+} from './compactCalendarEventStyles';
 
 interface SharedMonthViewProps {
   selectedDate: Date;
@@ -86,7 +90,7 @@ export function SharedMonthView({
         {/* Weekday headers */}
         <div className="grid grid-cols-7 gap-px border-b pb-2">
           {weekdayLabels.map(label => (
-            <div key={label} className="text-center text-xs font-medium text-muted-foreground">
+            <div key={label} className="text-muted-foreground text-center text-xs font-medium">
               {label}
             </div>
           ))}
@@ -97,7 +101,9 @@ export function SharedMonthView({
           {weeks.map((week, weekIndex) =>
             week.map((day, dayIndex) => {
               if (!day) {
-                return <div key={`${weekIndex}-${dayIndex}`} className="min-h-[120px] bg-muted/30" />;
+                return (
+                  <div key={`${weekIndex}-${dayIndex}`} className="bg-muted/30 min-h-[120px]" />
+                );
               }
 
               const dayEvents = getEventsForDate(day);
@@ -108,9 +114,9 @@ export function SharedMonthView({
                 <div
                   key={`${weekIndex}-${dayIndex}`}
                   className={cn(
-                    'min-h-[120px] border-b border-r p-1 transition-colors',
+                    'min-h-[120px] border-r border-b p-1 transition-colors',
                     isSelected && 'bg-accent/50',
-                    'cursor-pointer hover:bg-accent/30',
+                    'hover:bg-accent/30 cursor-pointer'
                   )}
                   onClick={() => onDateSelect(day)}
                 >
@@ -119,7 +125,7 @@ export function SharedMonthView({
                       className={cn(
                         'inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium',
                         isCurrentDay && 'bg-primary text-primary-foreground',
-                        isSelected && !isCurrentDay && 'bg-accent-foreground/10 font-bold',
+                        isSelected && !isCurrentDay && 'bg-accent-foreground/10 font-bold'
                       )}
                     >
                       {day.getDate()}
@@ -131,25 +137,31 @@ export function SharedMonthView({
                         <div
                           key={event.id}
                           className={cn(
-                            'cursor-pointer rounded px-1 py-0.5 text-[11px] leading-tight transition-colors',
-                            event.isMeeting && event.isBookedByMe
-                              ? 'bg-green-500/15 hover:bg-green-500/25'
-                              : event.isMeeting && event.is_bookable
-                                ? 'border border-dashed border-blue-300 bg-blue-500/10 hover:bg-blue-500/20 dark:border-blue-700'
-                                : 'bg-primary/10 hover:bg-primary/20',
+                            'cursor-pointer rounded px-1 py-0.5 text-[11px] leading-tight transition-all',
+                            getCompactCalendarEventClassName(event)
                           )}
                           onClick={e => {
                             e.stopPropagation();
                             onEventSelect(event);
                           }}
                         >
-                          <p className="truncate font-medium">
-                            {event.isMeeting && '📅 '}
-                            {event.title}
+                          <p className="flex items-center gap-1 truncate font-medium">
+                            {!event.isMeeting && <CalendarIcon className="h-2.5 w-2.5 shrink-0" />}
+                            <span className="truncate">
+                              {event.isMeeting && '📅 '}
+                              {event.title}
+                            </span>
                           </p>
-                          <p className="text-muted-foreground">{formatTime(event.start_date)}</p>
+                          <p className={getCompactCalendarEventMetaClassName(event)}>
+                            {formatTime(event.start_date)}
+                          </p>
                           {event.location && (
-                            <p className="flex items-center gap-0.5 truncate text-muted-foreground">
+                            <p
+                              className={cn(
+                                'flex items-center gap-0.5 truncate',
+                                getCompactCalendarEventMetaClassName(event)
+                              )}
+                            >
                               <MapPin className="h-2 w-2 shrink-0" />
                               {event.location}
                             </p>

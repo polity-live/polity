@@ -56,6 +56,7 @@ import {
 } from '@/features/shared/logic/richText';
 import { X, Upload, Link2, FileSpreadsheet } from 'lucide-react';
 import { toast } from 'sonner';
+import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import type { CreateFormConfig } from '../types/create-form.types';
 import { CreateTypeaheadField } from '../ui/CreateFields';
 
@@ -259,7 +260,7 @@ export function useCreateGroupForm(): CreateFormConfig {
 
     setIsSubmitting(true);
     try {
-      await createGroup({
+      const createGroupResult = createGroup({
         id: groupId,
         name: name.trim(),
         description: description ? toZeroRichTextValue(descriptionContent) : null,
@@ -287,6 +288,7 @@ export function useCreateGroupForm(): CreateFormConfig {
         group_type: groupType,
         owner_id: null,
       });
+      await serverConfirmed(createGroupResult);
       if (hashtags.length > 0) {
         await commonActions.syncEntityHashtags('group', groupId, hashtags, [], allHashtags ?? []);
       }

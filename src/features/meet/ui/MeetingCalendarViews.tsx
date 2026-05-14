@@ -1,11 +1,21 @@
+import { useEffect, useMemo, useRef, type CSSProperties } from 'react';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
-import { Calendar as CalendarIcon, MapPin, Video } from 'lucide-react';
+import { MapPin, Video } from 'lucide-react';
 import { formatTime } from '@/features/meet/logic/date-helpers.ts';
 import type { MeetingInstance } from '../hooks/useMeetPage';
 import { MeetingInstanceCard } from './MeetingInstanceCard';
+import { SharedChronologicalListView } from '@/features/events/ui/calendar/SharedChronologicalListView';
+import {
+  buildDayTimeLayout,
+  DEFAULT_WEEK_VIEW_SCROLL_TOP,
+  getWeekGridDays,
+  isSameWeekGridDay,
+  WEEK_VIEW_HOUR_HEIGHT,
+  WEEK_VIEW_SLOT_HEIGHT,
+} from '@/features/events/logic/weekViewGrid';
 
 interface MeetingListViewProps {
   instances: MeetingInstance[];
@@ -13,6 +23,7 @@ interface MeetingListViewProps {
   onBook: (instance: MeetingInstance) => void;
   onCancel: (instance: MeetingInstance) => void;
   onDelete: (eventId: string) => void;
+  selectedDate: Date;
   onSelectInstance?: (instance: MeetingInstance) => void;
 }
 
@@ -37,42 +48,6 @@ function isSameDay(d1: Date | string | number, d2: Date): boolean {
     date1.getMonth() === d2.getMonth() &&
     date1.getDate() === d2.getDate()
   );
-}
-
-function groupByDate(instances: MeetingInstance[]): Map<string, MeetingInstance[]> {
-  const map = new Map<string, MeetingInstance[]>();
-  const sorted = [...instances].sort((a, b) => a.startDate - b.startDate);
-
-  for (const instance of sorted) {
-    const date = new Date(instance.startDate);
-    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
-      date.getDate()
-    ).padStart(2, '0')}`;
-
-    const currentInstances = map.get(key);
-
-    if (currentInstances) {
-      currentInstances.push(instance);
-      continue;
-    }
-
-    map.set(key, [instance]);
-  }
-
-  return map;
-}
-
-function getWeekDays(selectedDate: Date): Date[] {
-  const start = new Date(selectedDate);
-  const day = start.getDay();
-  start.setDate(start.getDate() - day);
-  start.setHours(0, 0, 0, 0);
-
-  return Array.from({ length: 7 }, (_, index) => {
-    const date = new Date(start);
-    date.setDate(start.getDate() + index);
-    return date;
-  });
 }
 
 function getMonthGrid(selectedDate: Date): (Date | null)[][] {
@@ -121,6 +96,55 @@ function getCompactCardClassName(instance: MeetingInstance): string {
   return '';
 }
 
+const MEETING_WEEK_TOTAL_DAY_HEIGHT = WEEK_VIEW_HOUR_HEIGHT * 24;
+const MEETING_WEEK_GRID_TEMPLATE_COLUMNS = '4.5rem repeat(7, minmax(10rem, 1fr))';
+const MEETING_WEEK_GRID_MIN_WIDTH = '74.5rem';
+const MEETING_WEEK_EVENT_COLUMN_GAP_PX = 6;
+
+function getMeetingLocationLabel(instance: MeetingInstance): string | null {
+  return instance.locationName || ((instance.locationUrl ?? instance.streamUrl) ? 'Online' : null);
+}
+
+function getMeetingBlockStyle(
+  column: number,
+  columnCount: number,
+  top: number,
+  height: number
+): CSSProperties {
+  const widthPercent = 100 / columnCount;
+
+  return {
+    top: `${top}px`,
+    height: `${height}px`,
+    width: `calc(${widthPercent}% - ${MEETING_WEEK_EVENT_COLUMN_GAP_PX}px)`,
+    left: `calc(${widthPercent * column}% + ${MEETING_WEEK_EVENT_COLUMN_GAP_PX / 2}px)`,
+  };
+}
+
+function formatWeekHourLabel(hour: number, locale: string): string {
+  const date = new Date();
+  date.setHours(hour, 0, 0, 0);
+
+  return date.toLocaleTimeString(locale, {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function formatMeetingTimeRange(
+  startTimestamp: number,
+  endTimestamp: number,
+  locale: string
+): string {
+  return `${new Date(startTimestamp).toLocaleTimeString(locale, {
+    hour: '2-digit',
+    minute: '2-digit',
+  })} - ${new Date(endTimestamp).toLocaleTimeString(locale, {
+    hour: '2-digit',
+    minute: '2-digit',
+  })}`;
+}
+
 function CompactMeetingCard({
   instance,
   onClick,
@@ -167,58 +191,32 @@ export function MeetingListView({
   onBook,
   onCancel,
   onDelete,
+  selectedDate,
   onSelectInstance,
 }: MeetingListViewProps) {
-  const { language } = useTranslation();
-  const grouped = groupByDate(instances);
-  const locale = language === 'de' ? 'de-DE' : 'en-US';
-
-  if (instances.length === 0) {
-    return (
-      <Card>
-        <CardContent className="text-muted-foreground py-12 text-center">
-          <CalendarIcon className="mx-auto mb-4 h-12 w-12 opacity-50" />
-          <p>No meeting offers scheduled for this period</p>
-        </CardContent>
-      </Card>
-    );
-  }
+  const { t } = useTranslation();
 
   return (
-    <ScrollArea className="h-[700px]">
-      <div className="space-y-6">
-        {Array.from(grouped.entries()).map(([dateKey, dayInstances]) => {
-          const date = new Date(`${dateKey}T00:00:00`);
-          const isToday = isSameDay(date, new Date());
-
-          return (
-            <div key={dateKey}>
-              <h3 className="text-muted-foreground mb-3 text-sm font-semibold">
-                {date.toLocaleDateString(locale, {
-                  weekday: 'long',
-                  day: 'numeric',
-                  month: 'long',
-                })}
-                {isToday && <span className="text-primary ml-2">(Today)</span>}
-              </h3>
-              <div className="space-y-3">
-                {dayInstances.map(instance => (
-                  <MeetingInstanceCard
-                    key={instance.id}
-                    instance={instance}
-                    isOwner={isOwner}
-                    onBook={onBook}
-                    onCancel={onCancel}
-                    onDelete={onDelete}
-                    onSelect={onSelectInstance}
-                  />
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </ScrollArea>
+    <SharedChronologicalListView
+      items={instances}
+      selectedDate={selectedDate}
+      getItemDate={instance => instance.startDate}
+      getItemKey={instance => instance.id}
+      emptyText={t(
+        'features.calendar.dayView.noEvents',
+        'No meeting offers scheduled for this period'
+      )}
+      renderItem={instance => (
+        <MeetingInstanceCard
+          instance={instance}
+          isOwner={isOwner}
+          onBook={onBook}
+          onCancel={onCancel}
+          onDelete={onDelete}
+          onSelect={onSelectInstance}
+        />
+      )}
+    />
   );
 }
 
@@ -229,29 +227,60 @@ export function MeetingWeekView({
   onSelectInstance,
 }: MeetingWeekViewProps) {
   const { language } = useTranslation();
-  const weekDays = getWeekDays(selectedDate);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const weekDays = useMemo(() => getWeekGridDays(selectedDate), [selectedDate]);
+  const weekStartKey = weekDays[0]?.getTime() ?? 0;
+  const halfHourMarkers = useMemo(
+    () =>
+      Array.from({ length: 24 }, (_, hour) => hour * WEEK_VIEW_HOUR_HEIGHT + WEEK_VIEW_SLOT_HEIGHT),
+    []
+  );
+  const hourMarkers = useMemo(() => Array.from({ length: 25 }, (_, hour) => hour), []);
   const locale = language === 'de' ? 'de-DE' : 'en-US';
+
+  useEffect(() => {
+    if (!containerRef.current) {
+      return;
+    }
+
+    containerRef.current.scrollTop = DEFAULT_WEEK_VIEW_SCROLL_TOP;
+  }, [weekStartKey]);
 
   return (
     <Card>
-      <CardContent className="pt-6">
-        <div className="grid grid-cols-7 gap-2">
-          {weekDays.map(day => {
-            const dayInstances = getInstancesForDate(day);
-            const isToday = isSameDay(day, new Date());
-            const isSelected = isSameDay(day, selectedDate);
+      <CardContent className="p-0">
+        <div
+          ref={containerRef}
+          className="max-h-[75vh] min-h-[640px] overflow-auto rounded-xl"
+          style={{ touchAction: 'pan-x pan-y' }}
+        >
+          <div
+            className="grid"
+            style={{
+              gridTemplateColumns: MEETING_WEEK_GRID_TEMPLATE_COLUMNS,
+              minWidth: MEETING_WEEK_GRID_MIN_WIDTH,
+            }}
+          >
+            <div className="bg-background/95 sticky top-0 left-0 z-40 border-r border-b backdrop-blur" />
 
-            return (
-              <div
-                key={day.toISOString()}
-                className={cn(
-                  'min-h-[200px] rounded-lg border p-2 transition-colors',
-                  isSelected && 'border-primary bg-accent',
-                  isToday && !isSelected && 'border-primary'
-                )}
-                onClick={() => onDateSelect(day)}
-              >
-                <div className="mb-2 text-center">
+            {weekDays.map(day => {
+              const isToday = isSameWeekGridDay(day, new Date());
+              const isSelected = isSameWeekGridDay(day, selectedDate);
+
+              return (
+                <button
+                  key={day.toISOString()}
+                  type="button"
+                  className={cn(
+                    'sticky top-0 z-30 border-b px-2 py-3 text-center backdrop-blur transition-colors',
+                    isSelected
+                      ? 'bg-accent/80'
+                      : isToday
+                        ? 'border-primary/30 bg-primary/10'
+                        : 'bg-background/95 hover:bg-accent/40'
+                  )}
+                  onClick={() => onDateSelect(day)}
+                >
                   <p className="text-muted-foreground text-xs font-medium">
                     {day.toLocaleDateString(locale, { weekday: 'short' })}
                   </p>
@@ -263,22 +292,111 @@ export function MeetingWeekView({
                   >
                     {day.getDate()}
                   </p>
-                </div>
+                </button>
+              );
+            })}
 
-                <ScrollArea className="h-[140px]">
-                  <div className="space-y-1">
-                    {dayInstances.map(instance => (
-                      <CompactMeetingCard
-                        key={instance.id}
-                        instance={instance}
-                        onClick={selectedInstance => onSelectInstance?.(selectedInstance)}
-                      />
-                    ))}
+            <div className="bg-background/95 sticky left-0 z-[25] border-r backdrop-blur">
+              <div className="relative" style={{ height: `${MEETING_WEEK_TOTAL_DAY_HEIGHT}px` }}>
+                {hourMarkers.map(hour => (
+                  <div
+                    key={`meeting-time-${hour}`}
+                    className="border-border/80 absolute inset-x-0 border-t"
+                    style={{ top: `${hour * WEEK_VIEW_HOUR_HEIGHT}px` }}
+                  >
+                    {hour < 24 && (
+                      <span className="text-muted-foreground absolute top-0 right-2 -translate-y-1/2 text-[11px] font-medium">
+                        {formatWeekHourLabel(hour, locale)}
+                      </span>
+                    )}
                   </div>
-                </ScrollArea>
+                ))}
               </div>
-            );
-          })}
+            </div>
+
+            {weekDays.map(day => {
+              const isToday = isSameWeekGridDay(day, new Date());
+              const isSelected = isSameWeekGridDay(day, selectedDate);
+              const dayInstances = getInstancesForDate(day);
+              const dayLayouts = buildDayTimeLayout(
+                dayInstances,
+                instance => instance.startDate,
+                instance => instance.endDate
+              );
+
+              return (
+                <div
+                  key={`${day.toISOString()}-column`}
+                  className={cn(
+                    'relative border-l',
+                    isToday && 'bg-primary/[0.04]',
+                    isSelected && 'bg-accent/10'
+                  )}
+                  style={{ height: `${MEETING_WEEK_TOTAL_DAY_HEIGHT}px` }}
+                  onClick={() => onDateSelect(day)}
+                >
+                  {hourMarkers.map(hour => (
+                    <div
+                      key={`meeting-hour-line-${day.toISOString()}-${hour}`}
+                      className="border-border/70 pointer-events-none absolute inset-x-0 border-t"
+                      style={{ top: `${hour * WEEK_VIEW_HOUR_HEIGHT}px` }}
+                    />
+                  ))}
+                  {halfHourMarkers.map(offset => (
+                    <div
+                      key={`meeting-half-line-${day.toISOString()}-${offset}`}
+                      className="border-border/40 pointer-events-none absolute inset-x-0 border-t border-dashed"
+                      style={{ top: `${offset}px` }}
+                    />
+                  ))}
+
+                  {dayLayouts.map(layout => {
+                    const instance = layout.item;
+                    const isPast = instance.endDate < Date.now();
+                    const locationLabel = getMeetingLocationLabel(instance);
+                    const showLocation = layout.height >= WEEK_VIEW_SLOT_HEIGHT * 2;
+
+                    return (
+                      <button
+                        key={instance.id}
+                        type="button"
+                        className={cn(
+                          'bg-card hover:bg-accent absolute z-20 overflow-hidden rounded-md border p-1.5 text-left text-xs shadow-sm transition-colors',
+                          getCompactCardClassName(instance),
+                          isPast && 'opacity-50'
+                        )}
+                        style={getMeetingBlockStyle(
+                          layout.column,
+                          layout.columnCount,
+                          layout.top,
+                          layout.height
+                        )}
+                        onClick={event => {
+                          event.stopPropagation();
+                          onSelectInstance?.(instance);
+                        }}
+                      >
+                        <p className="truncate font-medium">{instance.title}</p>
+                        <p className="text-muted-foreground truncate">
+                          {formatMeetingTimeRange(instance.startDate, instance.endDate, locale)}
+                        </p>
+                        {showLocation && locationLabel && (
+                          <p className="text-muted-foreground mt-0.5 flex items-center gap-1 truncate">
+                            {instance.locationName ? (
+                              <MapPin className="h-3 w-3 shrink-0" />
+                            ) : (
+                              <Video className="h-3 w-3 shrink-0" />
+                            )}
+                            <span className="truncate">{locationLabel}</span>
+                          </p>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </CardContent>
     </Card>

@@ -57,8 +57,6 @@ import {
 } from './positions/table';
 // Delegates
 import { eventDelegate, groupDelegateAllocation } from './delegates/table';
-// Meet
-import { meetingSlot, meetingBooking } from './meet/table';
 // Network
 import {
   follow,
@@ -140,12 +138,6 @@ export const userRelationships = relationships(user, ({ many }) => ({
     destField: ['user_id'],
   }),
   event_delegates: many({ sourceField: ['id'], destSchema: eventDelegate, destField: ['user_id'] }),
-  meeting_slots: many({ sourceField: ['id'], destSchema: meetingSlot, destField: ['user_id'] }),
-  meeting_bookings: many({
-    sourceField: ['id'],
-    destSchema: meetingBooking,
-    destField: ['user_id'],
-  }),
   created_amendments: many({
     sourceField: ['id'],
     destSchema: amendment,
@@ -425,7 +417,7 @@ export const eventRelationships = relationships(event, ({ one, many }) => ({
     destSchema: groupDelegateAllocation,
     destField: ['event_id'],
   }),
-  meeting_slots: many({ sourceField: ['id'], destSchema: meetingSlot, destField: ['event_id'] }),
+  links: many({ sourceField: ['id'], destSchema: link, destField: ['event_id'] }),
   event_participants: many({
     sourceField: ['id'],
     destSchema: participant,
@@ -470,18 +462,6 @@ export const groupDelegateAllocationRelationships = relationships(
     event: one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
   })
 );
-
-export const meetingSlotRelationships = relationships(meetingSlot, ({ one, many }) => ({
-  event: one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
-  user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
-  bookings: many({ sourceField: ['id'], destSchema: meetingBooking, destField: ['slot_id'] }),
-  links: many({ sourceField: ['id'], destSchema: link, destField: ['meeting_slot_id'] }),
-}));
-
-export const meetingBookingRelationships = relationships(meetingBooking, ({ one }) => ({
-  slot: one({ sourceField: ['slot_id'], destSchema: meetingSlot, destField: ['id'] }),
-  user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
-}));
 
 export const participantRelationships = relationships(participant, ({ one }) => ({
   event: one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
@@ -1155,9 +1135,9 @@ export const blogHashtagRelationships = relationships(blogHashtag, ({ one }) => 
 export const linkRelationships = relationships(link, ({ one }) => ({
   user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
   group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
-  meeting_slot: one({
-    sourceField: ['meeting_slot_id'],
-    destSchema: meetingSlot,
+  event: one({
+    sourceField: ['event_id'],
+    destSchema: event,
     destField: ['id'],
   }),
 }));
@@ -1327,8 +1307,6 @@ export const allRelationships = [
   eventParticipantRelationships,
   eventDelegateRelationships,
   groupDelegateAllocationRelationships,
-  meetingSlotRelationships,
-  meetingBookingRelationships,
   participantRelationships,
   eventPositionRelationships,
   eventPositionHolderRelationships,

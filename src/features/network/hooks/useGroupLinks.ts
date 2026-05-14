@@ -22,7 +22,7 @@ export function useGroupLinks(groupId: string) {
         url,
         group_id: groupId,
         user_id: senderId || null,
-        meeting_slot_id: null,
+        event_id: null,
       });
 
       toast.success('Link added successfully!');

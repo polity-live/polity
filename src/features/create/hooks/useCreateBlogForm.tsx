@@ -12,6 +12,7 @@ import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import { CreateInputField, CreateTypeaheadField } from '../ui/CreateFields';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
+import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import type { CreateFormConfig } from '../types/create-form.types';
 
 export function useCreateBlogForm(): CreateFormConfig {
@@ -52,7 +53,7 @@ export function useCreateBlogForm(): CreateFormConfig {
       const ownerManageBloggersId = crypto.randomUUID();
       const writerUpdateRightId = crypto.randomUUID();
 
-      await createBlogFull({
+      const createBlogResults = createBlogFull({
         blog: {
           id: blogId,
           title: title.trim(),
@@ -134,6 +135,12 @@ export function useCreateBlogForm(): CreateFormConfig {
           visibility,
         },
       });
+      await Promise.all([
+        serverConfirmed(createBlogResults.blogResult),
+        ...createBlogResults.roleResults.map(serverConfirmed),
+        ...createBlogResults.actionRightResults.map(serverConfirmed),
+        serverConfirmed(createBlogResults.entryResult),
+      ]);
 
       if (hashtags.length > 0) {
         await commonActions.syncEntityHashtags('blog', blogId, hashtags, [], allHashtags ?? []);

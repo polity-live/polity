@@ -16,6 +16,7 @@ import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
 import { enrichPathSegments } from '@/features/amendments/logic/amendmentPathHelpers';
 import { useCreateAmendmentPath } from '@/features/amendments/hooks/useCreateAmendmentPath';
+import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import type { CreateFormConfig } from '../types/create-form.types';
 
 interface CreateTargetGroupData {
@@ -79,7 +80,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
       const documentId = crypto.randomUUID();
 
       // Create document first so amendment can reference it
-      await createDocument({
+      const createDocumentResult = createDocument({
         id: documentId,
         amendment_id: null,
         content: [
@@ -88,8 +89,9 @@ export function useCreateAmendmentForm(): CreateFormConfig {
         ],
         editing_mode: 'collaborative',
       });
+      await serverConfirmed(createDocumentResult);
 
-      await createAmendment({
+      const createAmendmentResult = createAmendment({
         id: amendmentId,
         title: title.trim(),
         code: subtitle || null,
@@ -110,9 +112,10 @@ export function useCreateAmendmentForm(): CreateFormConfig {
         linkedin: null,
         website: null,
       });
+      await serverConfirmed(createAmendmentResult);
 
       // Add creator as document collaborator
-      await addCollaborator({
+      const addCollaboratorResult = addCollaborator({
         id: crypto.randomUUID(),
         document_id: documentId,
         user_id: user.id,
@@ -120,6 +123,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
         status: 'active',
         visibility: 'public',
       });
+      await serverConfirmed(addCollaboratorResult);
 
       if (hashtags.length > 0) {
         await commonActions.syncEntityHashtags(

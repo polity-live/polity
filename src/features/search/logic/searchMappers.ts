@@ -70,6 +70,8 @@ export function mapMosaicToContentItems(
           endDate: item.end_date ? new Date(item.end_date) : undefined,
           location: item.location_name,
           attendeeCount: item.participants?.length,
+          authorId: item.creator?.id,
+          authorName: getUserDisplayName(item.creator),
           electionsCount:
             item.agenda_items?.filter(ai => Boolean(ai?.election)).length ??
             agendaItemsByEventId.get(item.id)?.filter(agendaItem => Boolean(agendaItem?.election))
@@ -77,6 +79,7 @@ export function mapMosaicToContentItems(
             0,
           amendmentsCount: item.agenda_items?.filter(ai => Boolean(ai?.amendment)).length,
           tags: extractHashtagTags(item.event_hashtags),
+          groupId: item.group?.id,
           groupName: item.group?.name,
           isRecurring: Boolean(item.is_recurring),
           recurrencePattern: item.recurrence_pattern,

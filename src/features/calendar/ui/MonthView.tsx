@@ -1,4 +1,10 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
 import { Calendar } from '@/features/shared/ui/ui/calendar';
 import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
 import { useNavigate } from '@tanstack/react-router';
@@ -76,7 +82,7 @@ export const MonthView = ({ selectedDate, onDateSelect, events, allEvents }: Mon
           </CardHeader>
           <CardContent>
             {selectedDateEvents.length === 0 ? (
-              <div className="py-8 text-center text-sm text-muted-foreground">
+              <div className="text-muted-foreground py-8 text-center text-sm">
                 {t('features.calendar.monthView.noEvents')}
               </div>
             ) : (
@@ -85,26 +91,24 @@ export const MonthView = ({ selectedDate, onDateSelect, events, allEvents }: Mon
                   {selectedDateEvents.map(event => (
                     <div
                       key={event.id}
-                      className="cursor-pointer rounded-lg border p-3 transition-colors hover:bg-accent"
+                      className="hover:bg-accent cursor-pointer rounded-lg border p-3 transition-colors"
                       onClick={() => {
                         const baseEventId = getBaseEventId(event.id);
-                        if (event.isMeeting) {
-                          navigate({ to: `/meet/${baseEventId}` });
-                        } else {
-                          navigate({ to: `/event/${baseEventId}` });
-                        }
+                        navigate({ to: `/event/${baseEventId}` });
                       }}
                     >
                       <h4 className="font-semibold">
                         {event.isMeeting && '📅 '}
                         {event.title}
                       </h4>
-                      <p className="text-sm text-muted-foreground">{formatTime(event.start_date)}</p>
+                      <p className="text-muted-foreground text-sm">
+                        {formatTime(event.start_date)}
+                      </p>
                       {event.location && !event.isMeeting && (
-                        <p className="mt-1 text-xs text-muted-foreground">{event.location}</p>
+                        <p className="text-muted-foreground mt-1 text-xs">{event.location}</p>
                       )}
                       {event.isMeeting && (
-                        <p className="mt-1 text-xs text-muted-foreground">
+                        <p className="text-muted-foreground mt-1 text-xs">
                           {event.visibility === 'public'
                             ? t('features.calendar.eventCard.publicMeeting')
                             : t('features.calendar.eventCard.privateMeeting')}

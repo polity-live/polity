@@ -39,6 +39,10 @@ export interface EventTimelineCardProps {
     /** User's participation status */
     participationStatus?: 'member' | 'admin' | 'confirmed' | 'invited' | 'requested' | null;
     organizerName?: string;
+    /** Organizer user ID for profile linking when no group is attached */
+    organizerId?: string;
+    /** Group name for clickable subtitle */
+    groupName?: string;
     /** Group ID for linking to group page */
     groupId?: string;
     /** Stats for elections count */
@@ -188,6 +192,13 @@ export function EventTimelineCard({
   const eventStyle = CONTENT_TYPE_CONFIG.event;
   const eventHref = href ?? (onSelect ? undefined : `/event/${event.id}`);
   const eventDescription = normalizeTimelineText(event.description);
+  const eventSubtitle = event.groupName ?? event.organizerName ?? event.organizerId;
+  const eventSubtitleHref =
+    event.groupId && event.groupName
+      ? `/group/${event.groupId}`
+      : event.organizerId
+        ? `/user/${event.organizerId}`
+        : undefined;
 
   const resolvedParticipationStatus = event.participationStatus ?? participation.status;
   const isParticipant =
@@ -248,8 +259,8 @@ export function EventTimelineCard({
         contentType="event"
         title={event.title}
         href={eventHref}
-        subtitle={event.organizerName}
-        subtitleHref={event.groupId ? `/group/${event.groupId}` : undefined}
+        subtitle={eventSubtitle}
+        subtitleHref={eventSubtitleHref}
         badge={
           eventTimeStatus === 'live' ? (
             <Badge variant="destructive" className="animate-pulse">
@@ -467,7 +478,7 @@ export function EventTimelineCard({
               amendmentsCount: event.amendmentsCount,
               tags: event.hashtags?.map(hashtag => hashtag.tag) ?? [],
               groupId: event.groupId,
-              groupName: event.organizerName,
+              groupName: event.groupName ?? event.organizerName,
               stats: {
                 members: event.attendeeCount,
               },

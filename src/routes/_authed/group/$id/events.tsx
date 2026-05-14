@@ -38,6 +38,7 @@ function GroupEventsPage() {
         allEvents={gp.events}
         onDateSelect={gp.setSelectedDate}
         onEventSelect={gp.onEventSelect}
+        onCreateEventRange={gp.onCreateEventRange}
       />
     </div>
   );

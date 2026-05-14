@@ -58,7 +58,7 @@ function isSameDay(date1: Date | string | number, date2: Date): boolean {
   );
 }
 
-export function useCalendarView(initialView: CalendarViewMode = 'list') {
+export function useCalendarView(initialView: CalendarViewMode = 'week') {
   const [viewMode, setViewMode] = useState<CalendarViewMode>(initialView);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
@@ -102,12 +102,9 @@ export function useCalendarView(initialView: CalendarViewMode = 'list') {
     [visibleRange]
   );
 
-  const getEventsForDate = useCallback(
-    (events: CalendarEvent[], date: Date): CalendarEvent[] => {
-      return events.filter(e => isSameDay(e.start_date, date));
-    },
-    []
-  );
+  const getEventsForDate = useCallback((events: CalendarEvent[], date: Date): CalendarEvent[] => {
+    return events.filter(e => isSameDay(e.start_date, date));
+  }, []);
 
   const currentViewTitle = useMemo(() => {
     if (viewMode === 'week') {

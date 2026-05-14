@@ -1,7 +1,8 @@
 import { useState, useMemo, useCallback } from 'react';
 import type { Value } from 'platejs';
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { Button } from '@/features/shared/ui/ui/button';
 import { Label } from '@/features/shared/ui/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/features/shared/ui/ui/tabs';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
@@ -18,8 +19,9 @@ import { GeoAddressPicker } from '@/features/shared/ui/form/GeoAddressPicker';
 import { useEventActions } from '@/zero/events/useEventActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
 import { useUserGroupsWithManageEvents } from '@/zero/groups/useGroupState';
+import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import type { CreateFormConfig } from '../types/create-form.types';
-import { buildRRule, type RecurrencePattern } from '@/features/events/logic/rruleHelpers';
+import { type RecurrencePattern } from '@/features/events/logic/rruleHelpers';
 import { formatNamedLocation } from '@/features/shared/logic/locationHelpers';
 import { MiniPlateEditor } from '@/features/shared/ui/form/MiniPlateEditor';
 import {
@@ -28,17 +30,29 @@ import {
   toZeroRichTextValue,
 } from '@/features/shared/logic/richText';
 import { CreateTypeaheadField } from '../ui/CreateFields';
+import {
+  type CreateEventType,
+  getCreateEventSearchDefaults,
+  type CreateEventSearch,
+} from '../logic/createEventSearch';
+import { getEventTypeTranslationKey } from '@/features/events/logic/getEventTypeTranslationKey';
+import { buildRecurringEventFields } from '@/features/events/logic/buildRecurringEventFields';
 
-type EventType = 'delegate_assembly' | 'general_assembly' | 'open' | 'on_invite';
+type EventType = CreateEventType;
+type MeetingType = 'one-on-one' | 'public-meeting';
 
 export function useCreateEventForm(): CreateFormConfig {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const searchParams = useSearch({ strict: false }) as CreateEventSearch;
   const { createEvent } = useEventActions();
   const commonActions = useCommonActions();
+  const prefilledSearch = useMemo(() => getCreateEventSearchDefaults(searchParams), [searchParams]);
 
   const [eventId] = useState(() => crypto.randomUUID());
-  const [eventType, setEventType] = useState<EventType>('open');
+  const [eventType, setEventType] = useState<EventType>(() => prefilledSearch.eventType);
+  const [meetingType, setMeetingType] = useState<MeetingType>('one-on-one');
+  const [meetingMaxBookings, setMeetingMaxBookings] = useState('10');
   const [groupId, setGroupId] = useState('');
   const [groupName, setGroupName] = useState('');
   const [delegateConfig, setDelegateConfig] = useState<DelegateConfig>({
@@ -49,10 +63,10 @@ export function useCreateEventForm(): CreateFormConfig {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [descriptionContent, setDescriptionContent] = useState<Value>(EMPTY_RICH_TEXT_VALUE);
-  const [startDate, setStartDate] = useState('');
-  const [startTime, setStartTime] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [endTime, setEndTime] = useState('');
+  const [startDate, setStartDate] = useState(() => prefilledSearch.startDate);
+  const [startTime, setStartTime] = useState(() => prefilledSearch.startTime);
+  const [endDate, setEndDate] = useState(() => prefilledSearch.endDate);
+  const [endTime, setEndTime] = useState(() => prefilledSearch.endTime);
   const [locationType, setLocationType] = useState<'physical' | 'online'>('physical');
   const [locationName, setLocationName] = useState('');
   const [onlineLink, setOnlineLink] = useState('');
@@ -86,20 +100,18 @@ export function useCreateEventForm(): CreateFormConfig {
     street,
     house_number: houseNumber,
   });
-  const rruleString = useMemo(
-    () =>
-      buildRRule({
-        pattern: recurrencePattern,
-        interval: recurrenceInterval,
-        weekdays: recurrenceWeekdays,
-        endDate: recurrenceEndDate || null,
-      }),
-    [recurrencePattern, recurrenceInterval, recurrenceWeekdays, recurrenceEndDate]
-  );
 
   const { allHashtags } = useCommonState({ loadAllHashtags: true });
   const { manageEventGroupIds } = useUserGroupsWithManageEvents();
+  const isMeetingEvent = eventType === 'meeting';
   const groupRequired = eventType === 'general_assembly' || eventType === 'delegate_assembly';
+  const normalizedMeetingBookings =
+    meetingType === 'one-on-one' ? 1 : Math.max(1, Number.parseInt(meetingMaxBookings, 10) || 1);
+  const effectiveVisibility = isMeetingEvent
+    ? meetingType === 'public-meeting'
+      ? 'public'
+      : 'private'
+    : visibility;
 
   const handleDescriptionContentChange = useCallback((value: Value) => {
     setDescriptionContent(value);
@@ -110,7 +122,17 @@ export function useCreateEventForm(): CreateFormConfig {
     if (!title.trim()) return;
     setIsSubmitting(true);
     try {
-      await createEvent({
+      const recurringFields = buildRecurringEventFields({
+        isRecurring,
+        recurrence: {
+          pattern: recurrencePattern,
+          interval: recurrenceInterval,
+          weekdays: recurrenceWeekdays,
+          endDate: recurrenceEndDate || null,
+        },
+      });
+
+      const createEventResult = createEvent({
         id: eventId,
         title: title.trim(),
         description: description ? toZeroRichTextValue(descriptionContent) : null,
@@ -127,27 +149,21 @@ export function useCreateEventForm(): CreateFormConfig {
         longitude: locationType === 'physical' ? longitude : null,
         start_date: startDate ? new Date(`${startDate}T${startTime || '00:00'}`).getTime() : null,
         end_date: endDate ? new Date(`${endDate}T${endTime || '00:00'}`).getTime() : null,
-        visibility,
+        visibility: effectiveVisibility,
         image_url: imageURL || null,
-        capacity: capacity ? parseInt(capacity, 10) : null,
+        capacity: isMeetingEvent ? null : capacity ? parseInt(capacity, 10) : null,
         event_type: eventType,
         group_id: groupId || null,
         creator_id: '',
-        is_recurring: isRecurring,
-        recurrence_pattern: isRecurring ? recurrencePattern : null,
-        recurrence_rule: rruleString ?? null,
-        recurrence_interval: isRecurring ? recurrenceInterval : null,
-        recurrence_days:
-          isRecurring && recurrencePattern === 'weekly' && recurrenceWeekdays.length > 0
-            ? recurrenceWeekdays
-            : null,
-        recurrence_end_date:
-          isRecurring && recurrenceEndDate ? new Date(recurrenceEndDate).getTime() : null,
+        ...recurringFields,
         delegates_nomination_deadline: delegatesNominationDeadline
           ? new Date(delegatesNominationDeadline).getTime()
           : null,
         amendment_deadline: amendmentDeadline ? new Date(amendmentDeadline).getTime() : null,
         has_delegates: eventType === 'delegate_assembly',
+        meeting_type: isMeetingEvent ? meetingType : null,
+        is_bookable: isMeetingEvent,
+        max_bookings: isMeetingEvent ? normalizedMeetingBookings : null,
         ...(eventType === 'delegate_assembly'
           ? {
               total_delegate_seats:
@@ -155,6 +171,7 @@ export function useCreateEventForm(): CreateFormConfig {
             }
           : {}),
       });
+      await serverConfirmed(createEventResult);
 
       if (hashtags.length > 0) {
         await commonActions.syncEntityHashtags('event', eventId, hashtags, [], allHashtags ?? []);
@@ -216,6 +233,57 @@ export function useCreateEventForm(): CreateFormConfig {
           isValid: () => true,
           content: <EventTypeInput value={eventType} onChange={setEventType} />,
         },
+        ...(isMeetingEvent
+          ? [
+              {
+                label: t('pages.create.event.meetingSettings'),
+                isValid: () => normalizedMeetingBookings > 0,
+                content: (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>{t('pages.create.event.meetingFormat')}</Label>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          variant={meetingType === 'one-on-one' ? 'default' : 'outline'}
+                          onClick={() => setMeetingType('one-on-one')}
+                        >
+                          {t('pages.create.event.meetingFormats.oneOnOne')}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={meetingType === 'public-meeting' ? 'default' : 'outline'}
+                          onClick={() => setMeetingType('public-meeting')}
+                        >
+                          {t('pages.create.event.meetingFormats.publicMeeting')}
+                        </Button>
+                      </div>
+                      <p className="text-muted-foreground text-xs">
+                        {meetingType === 'public-meeting'
+                          ? t('pages.create.event.meetingFormats.publicMeetingDesc')
+                          : t('pages.create.event.meetingFormats.oneOnOneDesc')}
+                      </p>
+                    </div>
+                    {meetingType === 'public-meeting' ? (
+                      <CreateInputField
+                        label={t('pages.create.event.bookingLimit')}
+                        hint={t('pages.create.event.bookingLimitHint')}
+                        type="number"
+                        value={meetingMaxBookings}
+                        onValueChange={setMeetingMaxBookings}
+                        placeholder={t('pages.create.event.bookingLimitPlaceholder')}
+                        min={1}
+                      />
+                    ) : (
+                      <p className="text-muted-foreground text-xs">
+                        {t('pages.create.event.meetingFormats.oneOnOneLimit')}
+                      </p>
+                    )}
+                  </div>
+                ),
+              },
+            ]
+          : []),
         // 3. Associated Group
         {
           label: t('pages.create.event.associatedGroup'),
@@ -381,15 +449,17 @@ export function useCreateEventForm(): CreateFormConfig {
                   />
                 </TabsContent>
               </Tabs>
-              <CreateInputField
-                label={t('pages.create.event.capacityLabel')}
-                hint={t('pages.create.event.tips.capacity')}
-                type="number"
-                value={capacity}
-                onValueChange={setCapacity}
-                placeholder={t('pages.create.event.capacityPlaceholder')}
-                min={1}
-              />
+              {!isMeetingEvent && (
+                <CreateInputField
+                  label={t('pages.create.event.capacityLabel')}
+                  hint={t('pages.create.event.tips.capacity')}
+                  type="number"
+                  value={capacity}
+                  onValueChange={setCapacity}
+                  placeholder={t('pages.create.event.capacityPlaceholder')}
+                  min={1}
+                />
+              )}
             </div>
           ),
         },
@@ -430,7 +500,7 @@ export function useCreateEventForm(): CreateFormConfig {
           optional: true,
           content: (
             <div className="space-y-4">
-              <VisibilityInput value={visibility} onChange={setVisibility} />
+              {!isMeetingEvent && <VisibilityInput value={visibility} onChange={setVisibility} />}
               <HashtagEditor
                 value={hashtags}
                 onChange={setHashtags}
@@ -451,7 +521,27 @@ export function useCreateEventForm(): CreateFormConfig {
               subtitle={description || undefined}
               hashtags={hashtags.length > 0 ? hashtags : undefined}
               fields={[
-                { label: t('pages.create.event.eventType'), value: eventType.replace('_', ' ') },
+                {
+                  label: t('pages.create.event.eventType'),
+                  value: t(
+                    `pages.create.event.eventTypes.${getEventTypeTranslationKey(eventType)}`
+                  ),
+                },
+                ...(isMeetingEvent
+                  ? [
+                      {
+                        label: t('pages.create.event.meetingFormat'),
+                        value:
+                          meetingType === 'public-meeting'
+                            ? t('pages.create.event.meetingFormats.publicMeeting')
+                            : t('pages.create.event.meetingFormats.oneOnOne'),
+                      },
+                      {
+                        label: t('pages.create.event.bookingLimit'),
+                        value: String(normalizedMeetingBookings),
+                      },
+                    ]
+                  : []),
                 ...(groupId
                   ? [{ label: t('pages.create.event.associatedGroup'), value: groupName }]
                   : []),
@@ -492,7 +582,7 @@ export function useCreateEventForm(): CreateFormConfig {
                 ...(locationType === 'online' && onlineLink
                   ? [{ label: t('pages.create.event.meetingLink'), value: onlineLink }]
                   : []),
-                ...(capacity
+                ...(!isMeetingEvent && capacity
                   ? [{ label: t('pages.create.event.capacityLabel'), value: capacity }]
                   : []),
                 ...(isRecurring
@@ -522,9 +612,9 @@ export function useCreateEventForm(): CreateFormConfig {
                 {
                   label: t('pages.create.common.visibility'),
                   value:
-                    visibility === 'public'
+                    effectiveVisibility === 'public'
                       ? t('pages.create.common.public')
-                      : visibility === 'authenticated'
+                      : effectiveVisibility === 'authenticated'
                         ? t('pages.create.common.authenticated')
                         : t('pages.create.common.private'),
                 },
@@ -557,6 +647,11 @@ export function useCreateEventForm(): CreateFormConfig {
       visibility,
       hashtags,
       eventType,
+      meetingType,
+      meetingMaxBookings,
+      normalizedMeetingBookings,
+      effectiveVisibility,
+      isMeetingEvent,
       groupId,
       groupName,
       delegateConfig,
@@ -566,7 +661,6 @@ export function useCreateEventForm(): CreateFormConfig {
       recurrenceWeekdays,
       recurrenceEndDate,
       isRecurring,
-      rruleString,
       delegatesNominationDeadline,
       amendmentDeadline,
       eventId,

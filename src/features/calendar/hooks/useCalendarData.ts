@@ -2,6 +2,10 @@ import { useMemo } from 'react';
 import { useAuth } from '@/providers/auth-provider';
 import { useEventsForCalendarWithExceptions } from '@/zero/events/useEventState';
 import { addYears, generateRecurringInstances } from '../logic/recurringEventHelpers';
+import {
+  isCalendarEventOwnedByUser,
+  isCalendarEventVisibleToUser,
+} from '../logic/calendarEventVisibility';
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 import type { CalendarEvent } from '../types/calendar.types';
 import { getInstanceBookingCount, isBookedByUser } from '@/zero/events/useMeetingState';
@@ -22,18 +26,11 @@ export const useCalendarData = () => {
     const rangeStart = addYears(now, -1);
     const rangeEnd = addYears(now, 1);
 
-    // Filter events where user is a participant, organizer, or meeting is bookable by them
     const userEvents = (eventsData || [])
-      .filter(event => {
-        const isOrganizer = event.creator?.id === user.id;
-        const isParticipant = event.participants?.some(p => p.user?.id === user.id);
-        // Include bookable meetings even if user hasn't booked yet (so they appear as available)
-        const isBookableMeeting = event.is_bookable && event.meeting_type;
-        return isOrganizer || isParticipant || isBookableMeeting;
-      })
+      .filter(event => isCalendarEventVisibleToUser(event, user.id))
       .flatMap(event => {
         const isMeeting = !!event.meeting_type;
-        const isOrganizer = event.creator?.id === user.id;
+        const isOrganizer = isCalendarEventOwnedByUser(event, user.id);
         const participants = event.participants ?? [];
         // Expand recurring events into instances, passing exceptions
         const instances = generateRecurringInstances(event, rangeStart, rangeEnd, event.exceptions);

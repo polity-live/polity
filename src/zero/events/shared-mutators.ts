@@ -19,13 +19,6 @@ import {
   updateEventPositionSchema,
   deleteEventPositionSchema,
 } from '../positions/schema';
-import {
-  createMeetingSlotSchema,
-  updateMeetingSlotSchema,
-  deleteMeetingSlotSchema,
-  createMeetingBookingSchema,
-  deleteMeetingBookingSchema,
-} from '../meet/schema';
 
 /** Shared mutators — run on both client and server. Server mutators may override these. */
 export const eventSharedMutators = {
@@ -137,46 +130,6 @@ export const eventSharedMutators = {
 
   deletePosition: defineMutator(deleteEventPositionSchema, async ({ tx, args }) => {
     await tx.mutate.event_position.delete({ id: args.id });
-  }),
-
-  // Meeting Slot mutators
-  createMeetingSlot: defineMutator(
-    createMeetingSlotSchema,
-    async ({ tx, ctx: { userID }, args }) => {
-      const now = Date.now();
-      await tx.mutate.meeting_slot.insert({
-        ...args,
-        user_id: userID,
-        booking_count: 0,
-        created_at: now,
-      });
-    }
-  ),
-
-  updateMeetingSlot: defineMutator(updateMeetingSlotSchema, async ({ tx, args }) => {
-    await tx.mutate.meeting_slot.update(args);
-  }),
-
-  deleteMeetingSlot: defineMutator(deleteMeetingSlotSchema, async ({ tx, args }) => {
-    await tx.mutate.meeting_slot.delete({ id: args.id });
-  }),
-
-  // Meeting Booking mutators
-  createMeetingBooking: defineMutator(
-    createMeetingBookingSchema,
-    async ({ tx, ctx: { userID }, args }) => {
-      const now = Date.now();
-      await tx.mutate.meeting_booking.insert({
-        ...args,
-        user_id: userID,
-        created_at: now,
-        updated_at: now,
-      });
-    }
-  ),
-
-  deleteMeetingBooking: defineMutator(deleteMeetingBookingSchema, async ({ tx, args }) => {
-    await tx.mutate.meeting_booking.delete({ id: args.id });
   }),
 
   // Event Exception mutators

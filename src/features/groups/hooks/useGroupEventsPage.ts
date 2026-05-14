@@ -7,18 +7,20 @@ import {
   addYears,
   generateRecurringInstances,
 } from '@/features/calendar/logic/recurringEventHelpers';
+import { getCalendarEventsForView } from '@/features/calendar/logic/listViewHelpers';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 import { useAuth } from '@/providers/auth-provider';
 import { getInstanceBookingCount, isBookedByUser } from '@/zero/events/useMeetingState';
 import { formatNamedLocation } from '@/features/shared/logic/locationHelpers';
+import { toCreateEventSearch } from '@/features/create/logic/createEventSearch';
 
 export function useGroupEventsPage(groupId: string) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const { events: eventsData } = useGroupEventsForCalendar(groupId);
-  const calendar = useCalendarView('list');
+  const calendar = useCalendarView('week');
 
   const events: CalendarEvent[] = useMemo(() => {
     if (!eventsData) return [];
@@ -77,10 +79,23 @@ export function useGroupEventsPage(groupId: string) {
   }, [eventsData, user]);
 
   const filter = useCalendarEventFilter(events);
-  const filteredEvents = calendar.filterEventsForRange(filter.filteredBySearch);
+  const filteredEvents = getCalendarEventsForView(
+    calendar.viewMode,
+    filter.filteredBySearch,
+    calendar.filterEventsForRange
+  );
   const onEventSelect = useCallback(
     (event: CalendarEvent) => {
       navigate({ to: '/event/$id', params: { id: event.id } });
+    },
+    [navigate]
+  );
+  const onCreateEventRange = useCallback(
+    (range: { start: Date; end: Date }) => {
+      navigate({
+        to: '/create/event',
+        search: toCreateEventSearch(range),
+      });
     },
     [navigate]
   );
@@ -94,6 +109,7 @@ export function useGroupEventsPage(groupId: string) {
     dateFilter: filter.dateFilter,
     setDateFilter: filter.setDateFilter,
     onEventSelect,
+    onCreateEventRange,
     ...calendar,
   };
 }

@@ -19,20 +19,16 @@ export const EventCard = ({ event }: EventCardProps) => {
   const { user } = useAuth();
 
   const participantCount = event.participants?.length || 0;
-  const userIsParticipant = event.participants?.some((p) => p.user?.id === user?.id);
+  const userIsParticipant = event.participants?.some(p => p.user?.id === user?.id);
   const userIsOrganizer = event.organizer?.id === user?.id;
   const isMeeting = event.isMeeting || false;
 
   return (
     <Card
-      className="cursor-pointer transition-colors hover:bg-accent"
+      className="hover:bg-accent cursor-pointer transition-colors"
       onClick={() => {
         const baseEventId = getBaseEventId(event.id);
-        if (isMeeting) {
-          navigate({ to: `/meet/${baseEventId}` });
-        } else {
-          navigate({ to: `/event/${baseEventId}` });
-        }
+        navigate({ to: `/event/${baseEventId}` });
       }}
     >
       <CardContent className="p-4">
@@ -63,7 +59,7 @@ export const EventCard = ({ event }: EventCardProps) => {
               </div>
             </div>
 
-            <div className="space-y-1 text-sm text-muted-foreground">
+            <div className="text-muted-foreground space-y-1 text-sm">
               <div className="flex items-center gap-2">
                 <Clock className="h-3.5 w-3.5" />
                 <span>{formatTime(event.start_date)}</span>
@@ -96,7 +92,7 @@ export const EventCard = ({ event }: EventCardProps) => {
                     {event.organizer.name?.[0]?.toUpperCase() || 'O'}
                   </AvatarFallback>
                 </Avatar>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-muted-foreground text-xs">
                   {event.organizer.name || t('features.calendar.eventCard.unspecified')}
                 </span>
               </div>

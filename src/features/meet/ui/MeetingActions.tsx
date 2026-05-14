@@ -54,7 +54,7 @@ export function MeetingActions({
         {t('features.meet.page.viewInCalendar')}
       </Button>
 
-      <ShareButton url={`/meet/${meetingId}`} title={title} description={description} />
+      <ShareButton url={`/event/${meetingId}`} title={title} description={description} />
 
       {isOwner && (
         <Button variant="outline" size="icon" onClick={onNavigateEdit}>

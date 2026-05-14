@@ -1,7 +1,7 @@
 -- =============================================================================
 -- 03_event.sql — Events and participants
 -- Delegates moved to 18_delegate.sql
--- Meetings moved to 13_meet.sql
+-- Meetings are modeled as bookable events in this schema
 -- Positions moved to 17_position.sql
 -- Voting sessions moved to 20_vote.sql
 -- Scheduled elections moved to 16_election.sql
@@ -90,6 +90,7 @@ ALTER TABLE public.event ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.event FOR ALL TO service_role USING (true);
 
 -- Event participant table
+-- Also stores meeting bookings. For recurring meetings, instance_date identifies the booked occurrence.
 CREATE TABLE IF NOT EXISTS public.event_participant (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   event_id UUID NOT NULL REFERENCES public.event (id) ON DELETE CASCADE,

@@ -6,11 +6,11 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { Plus } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import { useCalendarPage } from './hooks/useCalendarPage';
+import { CalendarGroupFilter } from './ui/CalendarGroupFilter';
 import { SharedCalendarHeader } from '@/features/events/ui/calendar/SharedCalendarHeader';
 import { CalendarViewContainer } from '@/features/events/ui/calendar/CalendarViewContainer';
 import { CalendarExportButton } from '@/features/events/ui/calendar/CalendarExportButton';
 import { CalendarSearchFilter } from '@/features/events/ui/calendar/CalendarSearchFilter';
-import { CalendarItemDetailsDialog } from './ui/CalendarItemDetailsDialog';
 
 export default function CalendarPage() {
   const cp = useCalendarPage();
@@ -55,6 +55,13 @@ export default function CalendarPage() {
           onSearchChange={cp.setSearchQuery}
           dateFilter={cp.dateFilter}
           onDateFilterChange={cp.setDateFilter}
+          middleFilter={
+            <CalendarGroupFilter
+              items={cp.groupItems}
+              selectedGroupId={cp.selectedGroupId}
+              onGroupChange={cp.setSelectedGroupId}
+            />
+          }
         />
 
         <CalendarViewContainer
@@ -63,13 +70,8 @@ export default function CalendarPage() {
           events={cp.filteredEvents}
           allEvents={cp.events}
           onDateSelect={cp.setSelectedDate}
-          onEventSelect={cp.selectItem}
-        />
-
-        <CalendarItemDetailsDialog
-          item={cp.selectedItem}
-          open={cp.selectedItem !== null}
-          onOpenChange={cp.handleDetailsOpenChange}
+          onEventSelect={cp.onEventSelect}
+          onCreateEventRange={cp.onCreateEventRange}
         />
       </PageWrapper>
     </AuthGuard>

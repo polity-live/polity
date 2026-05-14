@@ -75,7 +75,6 @@ import {
   eventPositionHolder,
 } from './positions/table';
 import { eventDelegate, groupDelegateAllocation } from './delegates/table';
-import { meetingSlot, meetingBooking } from './meet/table';
 import {
   follow,
   groupRelationship,
@@ -163,9 +162,6 @@ export const schema = createSchema({
     // Delegates
     eventDelegate,
     groupDelegateAllocation,
-    // Meet
-    meetingSlot,
-    meetingBooking,
     // Network
     follow,
     groupRelationship,
@@ -251,8 +247,6 @@ export type Event = Row<Schema['tables']['event']>;
 export type EventParticipant = Row<Schema['tables']['event_participant']>;
 export type EventDelegate = Row<Schema['tables']['event_delegate']>;
 export type GroupDelegateAllocation = Row<Schema['tables']['group_delegate_allocation']>;
-export type MeetingSlot = Row<Schema['tables']['meeting_slot']>;
-export type MeetingBooking = Row<Schema['tables']['meeting_booking']>;
 export type Participant = Row<Schema['tables']['participant']>;
 export type EventPosition = Row<Schema['tables']['event_position']>;
 export type EventPositionHolder = Row<Schema['tables']['event_position_holder']>;

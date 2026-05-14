@@ -1,5 +1,11 @@
-import { z } from 'zod'
-import { timestampSchema, nullableTimestampSchema, jsonSchema, jsonStringRecordSchema, jsonStringArraySchema, jsonNumberRecordSchema } from '../shared/helpers'
+import { z } from 'zod';
+import {
+  timestampSchema,
+  nullableTimestampSchema,
+  jsonStringRecordSchema,
+  jsonStringArraySchema,
+  jsonNumberRecordSchema,
+} from '../shared/helpers';
 
 // ============================================
 // Hashtag Zod Schemas
@@ -9,16 +15,16 @@ const baseHashtagSchema = z.object({
   id: z.string(),
   tag: z.string(),
   created_at: timestampSchema,
-})
+});
 
-export const selectHashtagSchema = baseHashtagSchema
+export const selectHashtagSchema = baseHashtagSchema;
 
 export const createHashtagSchema = z.object({
   id: z.string(),
   tag: z.string(),
-})
+});
 
-export const deleteHashtagSchema = z.object({ id: z.string() })
+export const deleteHashtagSchema = z.object({ id: z.string() });
 
 // ============================================
 // Junction Table Zod Schemas
@@ -28,39 +34,39 @@ export const createUserHashtagSchema = z.object({
   id: z.string(),
   user_id: z.string(),
   hashtag_id: z.string(),
-})
+});
 
 export const createGroupHashtagSchema = z.object({
   id: z.string(),
   group_id: z.string(),
   hashtag_id: z.string(),
-})
+});
 
 export const createAmendmentHashtagSchema = z.object({
   id: z.string(),
   amendment_id: z.string(),
   hashtag_id: z.string(),
-})
+});
 
 export const createEventHashtagSchema = z.object({
   id: z.string(),
   event_id: z.string(),
   hashtag_id: z.string(),
-})
+});
 
 export const createBlogHashtagSchema = z.object({
   id: z.string(),
   blog_id: z.string(),
   hashtag_id: z.string(),
-})
+});
 
 export const createStatementHashtagSchema = z.object({
   id: z.string(),
   statement_id: z.string(),
   hashtag_id: z.string(),
-})
+});
 
-export const deleteJunctionHashtagSchema = z.object({ id: z.string() })
+export const deleteJunctionHashtagSchema = z.object({ id: z.string() });
 
 // ============================================
 // Link Zod Schemas
@@ -72,17 +78,17 @@ const baseLinkSchema = z.object({
   url: z.string().nullable(),
   user_id: z.string().nullable(),
   group_id: z.string().nullable(),
-  meeting_slot_id: z.string().nullable(),
+  event_id: z.string().nullable(),
   created_at: timestampSchema,
-})
+});
 
-export const selectLinkSchema = baseLinkSchema
+export const selectLinkSchema = baseLinkSchema;
 
 export const createLinkSchema = baseLinkSchema
   .omit({ id: true, created_at: true })
-  .extend({ id: z.string() })
+  .extend({ id: z.string() });
 
-export const deleteLinkSchema = z.object({ id: z.string() })
+export const deleteLinkSchema = z.object({ id: z.string() });
 
 // ============================================
 // TimelineEvent Zod Schemas
@@ -116,13 +122,13 @@ const baseTimelineEventSchema = z.object({
   election_id: z.string().nullable(),
   amendment_vote_id: z.string().nullable(),
   created_at: timestampSchema,
-})
+});
 
-export const selectTimelineEventSchema = baseTimelineEventSchema
+export const selectTimelineEventSchema = baseTimelineEventSchema;
 
 export const createTimelineEventSchema = baseTimelineEventSchema
   .omit({ id: true, created_at: true })
-  .extend({ id: z.string() })
+  .extend({ id: z.string() });
 
 // ============================================
 // Reaction Zod Schemas
@@ -136,27 +142,27 @@ const baseReactionSchema = z.object({
   user_id: z.string(),
   timeline_event_id: z.string().nullable(),
   created_at: timestampSchema,
-})
+});
 
-export const selectReactionSchema = baseReactionSchema
+export const selectReactionSchema = baseReactionSchema;
 
 export const createReactionSchema = baseReactionSchema
   .omit({ id: true, created_at: true })
-  .extend({ id: z.string() })
+  .extend({ id: z.string() });
 
-export const deleteReactionSchema = z.object({ id: z.string() })
+export const deleteReactionSchema = z.object({ id: z.string() });
 
 // ============================================
 // Inferred Types
 // ============================================
 
-export type Hashtag = z.infer<typeof selectHashtagSchema>
-export type UserHashtag = z.infer<typeof createUserHashtagSchema>
-export type GroupHashtag = z.infer<typeof createGroupHashtagSchema>
-export type AmendmentHashtag = z.infer<typeof createAmendmentHashtagSchema>
-export type EventHashtag = z.infer<typeof createEventHashtagSchema>
-export type BlogHashtag = z.infer<typeof createBlogHashtagSchema>
-export type StatementHashtag = z.infer<typeof createStatementHashtagSchema>
-export type Link = z.infer<typeof selectLinkSchema>
-export type TimelineEvent = z.infer<typeof selectTimelineEventSchema>
-export type Reaction = z.infer<typeof selectReactionSchema>
+export type Hashtag = z.infer<typeof selectHashtagSchema>;
+export type UserHashtag = z.infer<typeof createUserHashtagSchema>;
+export type GroupHashtag = z.infer<typeof createGroupHashtagSchema>;
+export type AmendmentHashtag = z.infer<typeof createAmendmentHashtagSchema>;
+export type EventHashtag = z.infer<typeof createEventHashtagSchema>;
+export type BlogHashtag = z.infer<typeof createBlogHashtagSchema>;
+export type StatementHashtag = z.infer<typeof createStatementHashtagSchema>;
+export type Link = z.infer<typeof selectLinkSchema>;
+export type TimelineEvent = z.infer<typeof selectTimelineEventSchema>;
+export type Reaction = z.infer<typeof selectReactionSchema>;

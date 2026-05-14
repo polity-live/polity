@@ -51,6 +51,8 @@ import {
 import { useEventWikiPage } from './hooks/useEventWikiPage';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
 import { formatNamedLocation } from '@/features/shared/logic/locationHelpers';
+import { getEventTypeTranslationKey } from './logic/getEventTypeTranslationKey';
+import { MeetingPage } from '@/features/meet/MeetingPage';
 
 interface EventWikiProps {
   eventId: string;
@@ -100,6 +102,10 @@ export function EventWiki({ eventId }: EventWikiProps) {
     return <AccessDenied />;
   }
 
+  if (event.event_type === 'meeting' || event.meeting_type) {
+    return <MeetingPage meetingId={eventId} />;
+  }
+
   const { electionsCount, amendmentsCount, openChangeRequestsCount } = agendaStats;
   const formattedLocation = formatNamedLocation(event.location_name, event);
 
@@ -116,9 +122,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
           )}
           {event.event_type && (
             <Badge variant="outline">
-              {t(
-                `pages.create.event.eventTypes.${event.event_type === 'delegate_assembly' ? 'delegateAssembly' : event.event_type === 'general_assembly' ? 'generalAssembly' : event.event_type === 'on_invite' ? 'onInvite' : 'open'}`
-              )}
+              {t(`pages.create.event.eventTypes.${getEventTypeTranslationKey(event.event_type)}`)}
             </Badge>
           )}
           {event.recurrence_pattern && (

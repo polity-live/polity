@@ -1,4 +1,4 @@
-import { table, string, number, json } from '@rocicorp/zero'
+import { table, string, number, json } from '@rocicorp/zero';
 
 export const hashtag = table('hashtag')
   .columns({
@@ -6,7 +6,7 @@ export const hashtag = table('hashtag')
     tag: string(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const userHashtag = table('user_hashtag')
   .columns({
@@ -15,7 +15,7 @@ export const userHashtag = table('user_hashtag')
     hashtag_id: string(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const groupHashtag = table('group_hashtag')
   .columns({
@@ -24,7 +24,7 @@ export const groupHashtag = table('group_hashtag')
     hashtag_id: string(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const amendmentHashtag = table('amendment_hashtag')
   .columns({
@@ -33,7 +33,7 @@ export const amendmentHashtag = table('amendment_hashtag')
     hashtag_id: string(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const eventHashtag = table('event_hashtag')
   .columns({
@@ -42,7 +42,7 @@ export const eventHashtag = table('event_hashtag')
     hashtag_id: string(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const blogHashtag = table('blog_hashtag')
   .columns({
@@ -51,7 +51,7 @@ export const blogHashtag = table('blog_hashtag')
     hashtag_id: string(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const statementHashtag = table('statement_hashtag')
   .columns({
@@ -60,7 +60,7 @@ export const statementHashtag = table('statement_hashtag')
     hashtag_id: string(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const link = table('link')
   .columns({
@@ -69,10 +69,10 @@ export const link = table('link')
     url: string().optional(),
     user_id: string().optional(),
     group_id: string().optional(),
-    meeting_slot_id: string().optional(),
+    event_id: string().optional(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const timelineEvent = table('timeline_event')
   .columns({
@@ -104,7 +104,7 @@ export const timelineEvent = table('timeline_event')
     amendment_vote_id: string().optional(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const reaction = table('reaction')
   .columns({
@@ -116,4 +116,4 @@ export const reaction = table('reaction')
     timeline_event_id: string().optional(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');

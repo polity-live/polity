@@ -40,6 +40,7 @@ import {
 import { GeoAddressPicker } from '@/features/shared/ui/form/GeoAddressPicker';
 import { MiniPlateEditor } from '@/features/shared/ui/form/MiniPlateEditor';
 import { ValidatedInputField } from '@/features/shared/ui/form/ValidatedInputField';
+import { getEventTypeTranslationKey } from '@/features/events/logic/getEventTypeTranslationKey';
 
 interface EventEditProps {
   eventId: string;
@@ -257,7 +258,7 @@ export function EventEdit({ eventId, mode = 'edit' }: EventEditProps) {
                 <div>
                   <Badge variant="outline">
                     {t(
-                      `pages.create.event.eventTypes.${event.event_type === 'delegate_assembly' ? 'delegateAssembly' : event.event_type === 'general_assembly' ? 'generalAssembly' : event.event_type === 'on_invite' ? 'onInvite' : 'open'}`
+                      `pages.create.event.eventTypes.${getEventTypeTranslationKey(event.event_type)}`
                     )}
                   </Badge>
                 </div>

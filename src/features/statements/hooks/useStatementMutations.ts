@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useStatementActions } from '@/zero/statements/useStatementActions';
 import { useCommonActions } from '@/zero/common/useCommonActions';
+import { serverConfirmed } from '@/zero/mutate-with-server-check';
 
 /**
  * Hook for statement mutations with cross-domain orchestration (timeline events).
@@ -39,7 +40,7 @@ export function useStatementMutations() {
     try {
       const statementId = crypto.randomUUID();
 
-      await create({
+      const createResult = create({
         id: statementId,
         text,
         group_id: groupId ?? null,
@@ -47,6 +48,7 @@ export function useStatementMutations() {
         video_url: videoUrl ?? null,
         visibility,
       });
+      await serverConfirmed(createResult);
 
       if (visibility === 'public') {
         await createTimelineEvent({

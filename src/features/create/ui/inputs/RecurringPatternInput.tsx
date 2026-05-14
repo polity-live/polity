@@ -1,24 +1,46 @@
-import { Label } from '@/features/shared/ui/ui/label'
-import { RadioGroup, RadioGroupItem } from '@/features/shared/ui/ui/radio-group'
-import { Input } from '@/features/shared/ui/ui/input'
-import { useTranslation } from '@/features/shared/hooks/use-translation'
-import { cn } from '@/features/shared/utils/utils'
+import { Calendar } from '@/features/shared/ui/ui/calendar';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Label } from '@/features/shared/ui/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/features/shared/ui/ui/radio-group';
+import { Input } from '@/features/shared/ui/ui/input';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { cn } from '@/features/shared/utils/utils';
 
-type RecurringPattern = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'four-yearly'
+type RecurringPattern = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'four-yearly';
 
 interface RecurringPatternInputProps {
-  value: RecurringPattern
-  onChange: (pattern: RecurringPattern) => void
-  endDate?: string
-  onEndDateChange?: (date: string) => void
-  interval?: number
-  onIntervalChange?: (interval: number) => void
+  value: RecurringPattern;
+  onChange: (pattern: RecurringPattern) => void;
+  endDate?: string;
+  onEndDateChange?: (date: string) => void;
+  interval?: number;
+  onIntervalChange?: (interval: number) => void;
   /** Selected weekdays when pattern is 'weekly'. 0=Mon..6=Sun */
-  weekdays?: number[]
-  onWeekdaysChange?: (weekdays: number[]) => void
+  weekdays?: number[];
+  onWeekdaysChange?: (weekdays: number[]) => void;
 }
 
-const WEEKDAY_INDICES = [0, 1, 2, 3, 4, 5, 6] as const
+const WEEKDAY_INDICES = [0, 1, 2, 3, 4, 5, 6] as const;
+
+function parseInputDate(value?: string): Date | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  const parsedDate = new Date(`${value}T00:00:00`);
+  return Number.isNaN(parsedDate.getTime()) ? undefined : parsedDate;
+}
+
+function formatInputDate(value: Date | undefined): string {
+  if (!value) {
+    return '';
+  }
+
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  const day = String(value.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
 export function RecurringPatternInput({
   value,
@@ -30,7 +52,8 @@ export function RecurringPatternInput({
   weekdays = [],
   onWeekdaysChange,
 }: RecurringPatternInputProps) {
-  const { t } = useTranslation()
+  const { t } = useTranslation();
+  const selectedEndDate = parseInputDate(endDate);
 
   const dayLabels = [
     t('common.days.mondayShort'),
@@ -40,31 +63,53 @@ export function RecurringPatternInput({
     t('common.days.fridayShort'),
     t('common.days.saturdayShort'),
     t('common.days.sundayShort'),
-  ]
+  ];
 
   const options: { value: RecurringPattern; label: string; description: string }[] = [
-    { value: 'none', label: t('pages.create.event.recurringPatterns.none'), description: t('pages.create.event.recurringPatterns.noneDesc') },
-    { value: 'daily', label: t('pages.create.event.recurringPatterns.daily'), description: t('pages.create.event.recurringPatterns.dailyDesc') },
-    { value: 'weekly', label: t('pages.create.event.recurringPatterns.weekly'), description: t('pages.create.event.recurringPatterns.weeklyDesc') },
-    { value: 'monthly', label: t('pages.create.event.recurringPatterns.monthly'), description: t('pages.create.event.recurringPatterns.monthlyDesc') },
-    { value: 'yearly', label: t('pages.create.event.recurringPatterns.yearly'), description: t('pages.create.event.recurringPatterns.yearlyDesc') },
-    { value: 'four-yearly', label: t('pages.create.event.recurringPatterns.fourYearly'), description: t('pages.create.event.recurringPatterns.fourYearlyDesc') },
-  ]
+    {
+      value: 'none',
+      label: t('pages.create.event.recurringPatterns.none'),
+      description: t('pages.create.event.recurringPatterns.noneDesc'),
+    },
+    {
+      value: 'daily',
+      label: t('pages.create.event.recurringPatterns.daily'),
+      description: t('pages.create.event.recurringPatterns.dailyDesc'),
+    },
+    {
+      value: 'weekly',
+      label: t('pages.create.event.recurringPatterns.weekly'),
+      description: t('pages.create.event.recurringPatterns.weeklyDesc'),
+    },
+    {
+      value: 'monthly',
+      label: t('pages.create.event.recurringPatterns.monthly'),
+      description: t('pages.create.event.recurringPatterns.monthlyDesc'),
+    },
+    {
+      value: 'yearly',
+      label: t('pages.create.event.recurringPatterns.yearly'),
+      description: t('pages.create.event.recurringPatterns.yearlyDesc'),
+    },
+    {
+      value: 'four-yearly',
+      label: t('pages.create.event.recurringPatterns.fourYearly'),
+      description: t('pages.create.event.recurringPatterns.fourYearlyDesc'),
+    },
+  ];
 
   const toggleWeekday = (day: number) => {
-    if (!onWeekdaysChange) return
-    const next = weekdays.includes(day)
-      ? weekdays.filter(d => d !== day)
-      : [...weekdays, day]
-    onWeekdaysChange(next)
-  }
+    if (!onWeekdaysChange) return;
+    const next = weekdays.includes(day) ? weekdays.filter(d => d !== day) : [...weekdays, day];
+    onWeekdaysChange(next);
+  };
 
   return (
     <div className="space-y-4">
       <Label>{t('pages.create.event.recurring')}</Label>
-      <RadioGroup value={value} onValueChange={(v) => onChange(v as RecurringPattern)}>
+      <RadioGroup value={value} onValueChange={v => onChange(v as RecurringPattern)}>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {options.map((opt) => (
+          {options.map(opt => (
             <Label
               key={opt.value}
               htmlFor={`recurring-${opt.value}`}
@@ -113,7 +158,7 @@ export function RecurringPatternInput({
                       'flex h-9 w-9 items-center justify-center rounded-full text-xs font-medium transition-colors',
                       weekdays.includes(day)
                         ? 'bg-primary text-primary-foreground'
-                        : 'border hover:bg-muted'
+                        : 'hover:bg-muted border'
                     )}
                   >
                     {dayLabels[day]}
@@ -126,16 +171,29 @@ export function RecurringPatternInput({
           {/* End date */}
           {onEndDateChange && (
             <div className="space-y-2">
-              <Label>{t('pages.create.event.recurringEnds')}</Label>
-              <Input
-                type="date"
-                value={endDate ?? ''}
-                onChange={(e) => onEndDateChange(e.target.value)}
+              <div className="flex items-center justify-between gap-2">
+                <Label>{t('pages.create.event.recurringEnds')}</Label>
+                {selectedEndDate ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onEndDateChange('')}
+                  >
+                    {t('common.clear', 'Clear')}
+                  </Button>
+                ) : null}
+              </div>
+              <Calendar
+                mode="single"
+                selected={selectedEndDate}
+                onSelect={value => onEndDateChange(formatInputDate(value))}
+                className="rounded-md border"
               />
             </div>
           )}
         </div>
       )}
     </div>
-  )
+  );
 }

@@ -1,4 +1,10 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
 import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
 import { useNavigate } from '@tanstack/react-router';
 import { cn } from '@/features/shared/utils/utils';
@@ -49,7 +55,7 @@ export const WeekView = ({ selectedDate, events, allEvents }: WeekViewProps) => 
                 )}
               >
                 <div className="mb-2 text-center">
-                  <p className="text-xs font-medium text-muted-foreground">
+                  <p className="text-muted-foreground text-xs font-medium">
                     {day.toLocaleDateString(language === 'de' ? 'de-DE' : 'en-US', {
                       weekday: 'short',
                     })}
@@ -69,14 +75,10 @@ export const WeekView = ({ selectedDate, events, allEvents }: WeekViewProps) => 
                     {dayEvents.map(event => (
                       <div
                         key={event.id}
-                        className="cursor-pointer rounded border p-1.5 text-xs transition-colors hover:bg-accent"
+                        className="hover:bg-accent cursor-pointer rounded border p-1.5 text-xs transition-colors"
                         onClick={() => {
                           const baseEventId = getBaseEventId(event.id);
-                          if (event.isMeeting) {
-                            navigate({ to: `/meet/${baseEventId}` });
-                          } else {
-                            navigate({ to: `/event/${baseEventId}` });
-                          }
+                          navigate({ to: `/event/${baseEventId}` });
                         }}
                       >
                         <p className="truncate font-medium">

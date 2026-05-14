@@ -78,7 +78,10 @@ export function buildTimelineCardProps(item: TimelineCardItem): {
           electionsCount: item.electionsCount,
           amendmentsCount: item.amendmentsCount,
           hashtags: (item.tags ?? []).map(tag => ({ id: tag, tag })),
-          organizerName: item.groupName || item.authorName,
+          organizerName: item.authorName ?? item.authorId ?? undefined,
+          organizerId: item.authorId ?? undefined,
+          groupName: item.groupName,
+          groupId: item.groupId,
           isAttending: false,
         },
       };

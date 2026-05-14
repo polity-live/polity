@@ -10,6 +10,7 @@ interface CalendarViewContainerProps {
   allEvents: CalendarEvent[];
   onDateSelect: (date: Date) => void;
   onEventSelect: (event: CalendarEvent) => void;
+  onCreateEventRange?: (range: { start: Date; end: Date }) => void;
 }
 
 export function CalendarViewContainer({
@@ -19,13 +20,24 @@ export function CalendarViewContainer({
   allEvents,
   onDateSelect,
   onEventSelect,
+  onCreateEventRange,
 }: CalendarViewContainerProps) {
   if (viewMode === 'list') {
-    return <SharedListView events={events} selectedDate={selectedDate} onEventSelect={onEventSelect} />;
+    return (
+      <SharedListView events={events} selectedDate={selectedDate} onEventSelect={onEventSelect} />
+    );
   }
 
   if (viewMode === 'week') {
-    return <SharedWeekView selectedDate={selectedDate} events={allEvents} onEventSelect={onEventSelect} />;
+    return (
+      <SharedWeekView
+        selectedDate={selectedDate}
+        events={allEvents}
+        onDateSelect={onDateSelect}
+        onEventSelect={onEventSelect}
+        onCreateEventRange={onCreateEventRange}
+      />
+    );
   }
 
   return (

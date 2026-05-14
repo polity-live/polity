@@ -4,8 +4,9 @@ import { useMeetingsByCreator, getInstanceBookingCount, isBookedByUser } from '@
 import { useMeetingActions } from '@/zero/events/useMeetingActions';
 import { useEventActions } from '@/zero/events/useEventActions';
 import { generateRecurringInstances } from '@/features/calendar/logic/recurringEventHelpers';
-import { buildRRule, type RecurrenceFormState } from '@/features/events/logic/rruleHelpers';
+import type { RecurrenceFormState } from '@/features/events/logic/rruleHelpers';
 import type { CalendarViewMode } from '@/features/events/hooks/useCalendarView';
+import { buildRecurringEventFields } from '@/features/events/logic/buildRecurringEventFields';
 import { addHours } from 'date-fns';
 import {
   isSameDay,
@@ -228,20 +229,10 @@ export function useMeetPage(userId: string) {
 
       const endDate = addHours(args.startDate, args.durationMinutes / 60);
       const id = crypto.randomUUID();
-
-      let recurrenceRule: string | null = null;
-      let isRecurring = args.isRecurring;
-      let recurrencePattern: string | null = null;
-      let recurrenceEndDate: number | null = null;
-
-      if (args.isRecurring && args.recurrence) {
-        recurrenceRule = buildRRule(args.recurrence);
-        recurrencePattern = args.recurrence.pattern;
-        recurrenceEndDate = args.recurrence.endDate
-          ? new Date(args.recurrence.endDate).getTime()
-          : null;
-        if (!recurrenceRule) isRecurring = false;
-      }
+      const recurringFields = buildRecurringEventFields({
+        isRecurring: args.isRecurring,
+        recurrence: args.recurrence ?? null,
+      });
 
       await eventActions.createEvent({
         id,
@@ -256,10 +247,7 @@ export function useMeetPage(userId: string) {
         max_bookings: args.maxBookings,
         start_date: args.startDate.getTime(),
         end_date: endDate.getTime(),
-        is_recurring: isRecurring,
-        recurrence_rule: recurrenceRule,
-        recurrence_pattern: recurrencePattern,
-        recurrence_end_date: recurrenceEndDate,
+        ...recurringFields,
         location_name: args.location?.trim() || null,
         location_url: args.locationUrl?.trim() || null,
         creator_id: creatorId,

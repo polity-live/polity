@@ -2,6 +2,59 @@ import { describe, expect, it } from 'vitest';
 import { buildTimelineCardProps } from '../buildTimelineCardProps';
 
 describe('buildTimelineCardProps', () => {
+  it('builds an event timeline card payload with group navigation context', () => {
+    const createdAt = new Date('2026-05-10T12:00:00.000Z');
+    const startDate = new Date('2026-05-12T18:30:00.000Z');
+
+    const result = buildTimelineCardProps({
+      id: 'event-1',
+      type: 'event',
+      title: 'Town Hall',
+      createdAt,
+      startDate,
+      attendeeCount: 12,
+      authorId: 'user-1',
+      groupId: 'group-1',
+      groupName: 'City Circle',
+      authorName: 'Alex Organizer',
+    });
+
+    expect(result.cardType).toBe('event');
+    expect(result.cardProps).toMatchObject({
+      event: {
+        id: 'event-1',
+        title: 'Town Hall',
+        startDate,
+        attendeeCount: 12,
+        organizerName: 'Alex Organizer',
+        organizerId: 'user-1',
+        groupId: 'group-1',
+        groupName: 'City Circle',
+      },
+    });
+  });
+
+  it('falls back to a creator id for non-group event subtitles', () => {
+    const createdAt = new Date('2026-05-10T12:00:00.000Z');
+
+    const result = buildTimelineCardProps({
+      id: 'event-2',
+      type: 'event',
+      title: 'Open Office Hours',
+      createdAt,
+      authorId: 'user-99',
+    });
+
+    expect(result.cardType).toBe('event');
+    expect(result.cardProps).toMatchObject({
+      event: {
+        id: 'event-2',
+        organizerName: 'user-99',
+        organizerId: 'user-99',
+      },
+    });
+  });
+
   it('builds a payment timeline card payload', () => {
     const createdAt = new Date('2026-05-10T12:00:00.000Z');
 
