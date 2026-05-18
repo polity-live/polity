@@ -14,7 +14,8 @@ import { UserSearchInput } from '../ui/inputs/UserSearchInput';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useEventActions } from '@/zero/events/useEventActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
-import { useAllGroups } from '@/zero/groups/useGroupState';
+import { useAllGroups, useGroupState } from '@/zero/groups/useGroupState';
+import { buildExistingRightStatusesForDirection } from '@/features/network/logic/networkRelationshipHelpers';
 import { useUserState } from '@/zero/users/useUserState';
 import { useAuth } from '@/providers/auth-provider';
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
@@ -142,6 +143,9 @@ export function useCreateGroupForm(): CreateFormConfig {
   const [linkGroupId, setLinkGroupId] = useState('');
   const [linkType, setLinkType] = useState<GroupRelationshipType>('parent');
   const [linkRights, setLinkRights] = useState<Set<GroupRelationshipRight>>(new Set());
+
+  const { relationships: draftRelationships, relationshipsAsTarget: draftRelationshipsAsTarget } =
+    useGroupState({ groupId: linkGroupId ? groupId : undefined });
 
   // Constitutional event state
   const [createConstitutionalEvent, setCreateConstitutionalEvent] = useState(false);
@@ -369,6 +373,37 @@ export function useCreateGroupForm(): CreateFormConfig {
   });
 
   const selectedLinkedGroupName = allGroups.find(group => group.id === linkGroupId)?.name ?? '';
+
+  const existingRightStatuses = useMemo(() => {
+    if (!linkGroupId) {
+      return undefined;
+    }
+
+    const statuses = buildExistingRightStatusesForDirection(
+      [...(draftRelationships ?? []), ...(draftRelationshipsAsTarget ?? [])],
+      {
+        currentGroupId: groupId,
+        otherGroupId: linkGroupId,
+        relationshipType: linkType,
+      }
+    );
+
+    const pendingLink = linkedGroups.find(group => group.groupId === linkGroupId);
+    pendingLink?.rights.forEach(right => {
+      if (!statuses.has(right)) {
+        statuses.set(right, 'outgoing');
+      }
+    });
+
+    return statuses.size > 0 ? statuses : undefined;
+  }, [
+    linkGroupId,
+    linkType,
+    groupId,
+    draftRelationships,
+    draftRelationshipsAsTarget,
+    linkedGroups,
+  ]);
 
   const config = useMemo(
     (): CreateFormConfig => ({
@@ -789,6 +824,7 @@ export function useCreateGroupForm(): CreateFormConfig {
                   />
                   <GroupRelationshipRightsSelector
                     label={t('pages.create.group.selectRights')}
+                    helperText={t('common.network.existingRightsStatusHint')}
                     selectedRights={linkRights}
                     onToggleRight={right => {
                       setLinkRights(prev => {
@@ -801,6 +837,7 @@ export function useCreateGroupForm(): CreateFormConfig {
                         return next;
                       });
                     }}
+                    existingRightStatuses={existingRightStatuses}
                   />
                 </>
               ) : null}

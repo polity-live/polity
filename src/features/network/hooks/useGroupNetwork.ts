@@ -31,6 +31,12 @@ export function useGroupNetwork(groupId: string) {
       if (isActiveGroupRelationshipStatus(rel.status)) {
         active.push(rel);
       } else if (isRequestGroupRelationshipStatus(rel.status)) {
+        const involvesCurrentGroup = rel.group_id === groupId || rel.related_group_id === groupId;
+
+        if (!involvesCurrentGroup) {
+          return;
+        }
+
         if (rel.initiator_group_id === groupId) {
           outgoing.push(rel);
         } else {

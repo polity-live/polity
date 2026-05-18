@@ -299,6 +299,34 @@ export const commonTranslations = {
     rightPassiveVoting: 'Passives Stimmrecht',
     rightPassiveVotingDesc: 'Recht, gewählt zu werden',
     propagatingMemberships: 'Mitgliedschaften werden weitergeleitet...',
+    linkPossible: 'Verknüpfung möglich',
+    linkPossibleDescription:
+      'Keine überlappenden Mitglieder — diese Hierarchie-Verknüpfung kann akzeptiert werden.',
+    linkConflict: 'Mitglieder-Konflikt',
+    linkConflictDescription:
+      'Diese Mitglieder gehören mehreren Basisgruppen in derselben Hierarchie an. Bitte zuerst auflösen.',
+    linkStatusNotApplicable: 'Keine Hierarchie-Prüfung für diesen Rechtstyp.',
+    manage: 'Verwalten',
+    manageLinkRequest: 'Verknüpfungsanfrage verwalten',
+    manageLinkRequestDescription:
+      'Verbindung zwischen {{groupName}} und {{otherGroupName}} ({{rights}}).',
+    affectedMembersHeading: 'Betroffene Mitglieder ansprechen oder verwalten',
+    affectedMembersDescription:
+      'Diese direkten Mitglieder sind in Ihrer Gruppe und können vor der Bestätigung entfernt oder kontaktiert werden.',
+    futurePartnersHeading: 'oder mit Ihren künftigen Partnern sprechen',
+    futurePartnersDescription:
+      'Kontaktieren Sie direkte Mitglieder von {{groupName}}, die nicht direkt in Ihrer Gruppe sind.',
+    noAffectedMembers: 'Aktuell keine direkt betroffenen Mitglieder in Ihrer Gruppe.',
+    noFuturePartners:
+      'Derzeit keine direkten Mitglieder von {{groupName}}, die Sie kontaktieren können.',
+    directMemberOfYourGroup: 'Direktes Mitglied Ihrer Gruppe',
+    directMemberOfGroup: 'Direktes Mitglied von {{groupName}}',
+    removeFromGroup: 'Aus Gruppe entfernen',
+    conflictUserNotInGroup: 'Dieser Nutzer ist kein direktes Mitglied Ihrer Gruppe.',
+    conflictUserRemoved: 'Mitglied aus Ihrer Gruppe entfernt.',
+    conflictUserRemoveFailed: 'Mitglied konnte nicht entfernt werden.',
+    linkAcceptBlocked:
+      'Annahme nicht möglich: Mitglieder würden die Hierarchie-Exklusivität verletzen.',
   },
   share: {
     title: 'In Konversation teilen',

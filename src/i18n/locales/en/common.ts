@@ -286,6 +286,31 @@ export const commonTranslations = {
     rightPassiveVoting: 'Passive Voting Right',
     rightPassiveVotingDesc: 'Right to be elected',
     propagatingMemberships: 'Propagating memberships...',
+    linkPossible: 'Link possible',
+    linkPossibleDescription: 'No overlapping members — this hierarchy link can be accepted.',
+    linkConflict: 'Member conflict',
+    linkConflictDescription:
+      'These members belong to multiple base groups in the same hierarchy. Resolve the conflict before accepting.',
+    linkStatusNotApplicable: 'No hierarchy check for this right type.',
+    manage: 'Manage',
+    manageLinkRequest: 'Manage link request',
+    manageLinkRequestDescription:
+      'Connection between {{groupName}} and {{otherGroupName}} ({{rights}}).',
+    affectedMembersHeading: 'Manage or talk to affected members',
+    affectedMembersDescription:
+      'These direct members are in your group and can be removed or contacted before you confirm the link.',
+    futurePartnersHeading: 'or talk to your future partners',
+    futurePartnersDescription:
+      'Reach out to direct members of {{groupName}} who are not directly in your group.',
+    noAffectedMembers: 'No directly affected members in your group right now.',
+    noFuturePartners: 'No direct members of {{groupName}} to contact right now.',
+    directMemberOfYourGroup: 'Direct member of your group',
+    directMemberOfGroup: 'Direct member of {{groupName}}',
+    removeFromGroup: 'Remove from group',
+    conflictUserNotInGroup: 'This user is not a direct member of your group.',
+    conflictUserRemoved: 'Member removed from your group.',
+    conflictUserRemoveFailed: 'Could not remove member.',
+    linkAcceptBlocked: 'Cannot accept: members would violate hierarchy exclusivity.',
   },
   share: {
     title: 'Share to Conversation',

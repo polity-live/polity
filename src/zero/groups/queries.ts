@@ -162,6 +162,11 @@ export const groupQueries = {
     zql.group_relationship.related('group').related('related_group')
   ),
 
+  /** Direct memberships across all groups (hierarchy exclusivity checks) */
+  directMemberships: defineQuery(z.object({}), () =>
+    zql.group_membership.where('source', 'direct').related('user')
+  ),
+
   /** Amendments for a group with hashtags and creator */
   amendmentsByGroup: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
     zql.amendment
@@ -279,6 +284,7 @@ export type GroupTodoRow = QueryRowType<typeof groupQueries.todosByGroup>;
 export type GroupAmendmentRow = QueryRowType<typeof groupQueries.amendmentsByGroup>;
 export type GroupAmendmentWithDocsRow = QueryRowType<typeof groupQueries.amendmentsWithDocuments>;
 export type GroupNetworkRelationshipRow = QueryRowType<typeof groupQueries.networkRelationships>;
+export type GroupDirectMembershipRow = QueryRowType<typeof groupQueries.directMemberships>;
 export type GroupSubscriberRow = QueryRowType<typeof groupQueries.subscribersByGroup>;
 export type GroupPaymentRow = QueryRowType<typeof groupQueries.paymentsReceivedByGroup>;
 export type GroupLinkRow = QueryRowType<typeof groupQueries.linksByGroup>;

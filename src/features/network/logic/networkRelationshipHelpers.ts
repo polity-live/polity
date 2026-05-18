@@ -36,18 +36,61 @@ export function getGroupRelationshipKind(
   return relationship.initiator_group_id === currentGroupId ? 'outgoing' : 'incoming';
 }
 
-export function getGroupRelationshipDisplayStatus(
-  status: string | null | undefined
-): string | null {
-  if (isRequestGroupRelationshipStatus(status)) {
-    return 'requested';
-  }
+export type GroupRelationshipRightDisplayStatus = 'accepted' | 'incoming' | 'outgoing';
 
-  if (isActiveGroupRelationshipStatus(status)) {
+export function getGroupRelationshipRightDisplayStatus(
+  relationship: Pick<NormalizedGroupRelationship, 'status' | 'initiator_group_id'>,
+  currentGroupId: string
+): GroupRelationshipRightDisplayStatus | null {
+  if (isActiveGroupRelationshipStatus(relationship.status)) {
     return 'accepted';
   }
 
-  return status;
+  if (!isRequestGroupRelationshipStatus(relationship.status)) {
+    return null;
+  }
+
+  return relationship.initiator_group_id === currentGroupId ? 'outgoing' : 'incoming';
+}
+
+export function buildExistingRightStatusesForDirection(
+  relationships: NormalizedGroupRelationship[],
+  {
+    currentGroupId,
+    otherGroupId,
+    relationshipType,
+  }: {
+    currentGroupId: string;
+    otherGroupId: string;
+    relationshipType: 'parent' | 'child';
+  }
+): ReadonlyMap<string, GroupRelationshipRightDisplayStatus> {
+  const statuses = new Map<string, GroupRelationshipRightDisplayStatus>();
+
+  relationships
+    .filter(rel => {
+      if (relationshipType === 'parent') {
+        return rel.group_id === currentGroupId && rel.related_group_id === otherGroupId;
+      }
+
+      return rel.group_id === otherGroupId && rel.related_group_id === currentGroupId;
+    })
+    .forEach(rel => {
+      const right = rel.with_right;
+      const status = getGroupRelationshipRightDisplayStatus(rel, currentGroupId);
+
+      if (!right || !status) {
+        return;
+      }
+
+      const isRequest = status === 'incoming' || status === 'outgoing';
+
+      if (isRequest || !statuses.has(right)) {
+        statuses.set(right, status);
+      }
+    });
+
+  return statuses;
 }
 
 function mergeRightRelationshipKind(

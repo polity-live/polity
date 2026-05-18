@@ -22,7 +22,10 @@ import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItem
 import { richTextToPlainText } from '@/features/shared/logic/richText';
 import type { NormalizedGroupRelationship } from '../types/network.types';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
-import { getGroupRelationshipDisplayStatus } from '../logic/networkRelationshipHelpers';
+import {
+  buildExistingRightStatusesForDirection,
+  type GroupRelationshipRightDisplayStatus,
+} from '../logic/networkRelationshipHelpers';
 import {
   GroupRelationshipRightsSelector,
   GroupRelationshipTypeSelect,
@@ -122,24 +125,17 @@ export function LinkGroupDialog({
     [currentDirectionRelationships]
   );
 
-  const existingRightStatuses = useMemo(() => {
-    const statuses = new Map<GroupRelationshipRight, string>();
-
-    currentDirectionRelationships.forEach(rel => {
-      const right = rel.with_right as GroupRelationshipRight | null;
-      const status = getGroupRelationshipDisplayStatus(rel.status);
-
-      if (!right || !status) {
-        return;
-      }
-
-      if (status === 'requested' || !statuses.has(right)) {
-        statuses.set(right, status);
-      }
-    });
-
-    return statuses;
-  }, [currentDirectionRelationships]);
+  const existingRightStatuses = useMemo<ReadonlyMap<string, GroupRelationshipRightDisplayStatus>>(
+    () =>
+      selectedGroupId
+        ? buildExistingRightStatusesForDirection(relevantRelationships, {
+            currentGroupId,
+            otherGroupId: selectedGroupId,
+            relationshipType,
+          })
+        : new Map<string, GroupRelationshipRightDisplayStatus>(),
+    [relevantRelationships, currentGroupId, selectedGroupId, relationshipType]
+  );
 
   const existingRightsSignature = useMemo(
     () => Array.from(existingRightsForDirection).sort().join('|'),
@@ -400,7 +396,9 @@ export function LinkGroupDialog({
                 helperText={t('common.network.existingRightsStatusHint')}
                 selectedRights={selectedRights}
                 onToggleRight={toggleRight}
-                existingRightStatuses={existingRightStatuses}
+                existingRightStatuses={
+                  existingRightStatuses as ReadonlyMap<string, GroupRelationshipRightDisplayStatus>
+                }
               />
             </>
           ) : null}

@@ -6,7 +6,14 @@ import { useAllGroups } from '@/zero/groups/useGroupState';
 import { useAuth } from '@/providers/auth-provider';
 import { RIGHT_TYPES } from '@/features/network/ui/RightFilters';
 import { useWorkflowEditor } from './useWorkflowEditor';
-import type { NetworkTab, NormalizedGroupRelationship, NetworkGroupEntity } from '../types/network.types';
+import { useHierarchyLinkConflicts } from './useHierarchyLinkConflicts';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { toast } from 'sonner';
+import type {
+  NetworkTab,
+  NormalizedGroupRelationship,
+  NetworkGroupEntity,
+} from '../types/network.types';
 
 interface GroupedRelationshipRequests {
   group: NetworkGroupEntity;
@@ -15,6 +22,7 @@ interface GroupedRelationshipRequests {
 }
 
 export function useNetworkPage(groupId: string) {
+  const { t } = useTranslation();
   const { user: authUser } = useAuth();
   const { group } = useGroupData(groupId);
   const { updateRelationship, deleteRelationship } = useGroupActions();
@@ -32,15 +40,15 @@ export function useNetworkPage(groupId: string) {
     isLoading,
   } = useGroupNetwork(groupId);
 
+  const { canActivateLink } = useHierarchyLinkConflicts(groupId, allRelationships);
+
   // Tab state
   const [activeTab, setActiveTab] = useState<NetworkTab>('current-network');
 
   // Search & filter state for manage tab
   const [searchQuery, setSearchQuery] = useState('');
   const [directionFilter, setDirectionFilter] = useState<'all' | 'parent' | 'child'>('all');
-  const [manageRightFilter, setManageRightFilter] = useState<Set<string>>(
-    new Set(RIGHT_TYPES)
-  );
+  const [manageRightFilter, setManageRightFilter] = useState<Set<string>>(new Set(RIGHT_TYPES));
 
   const toggleManageRightFilter = useCallback((right: string) => {
     setManageRightFilter(prev => {
@@ -62,14 +70,15 @@ export function useNetworkPage(groupId: string) {
       const otherGroup = isParent ? rel.group : rel.related_group;
       if (!otherGroup) return;
 
-      if (!groups.has(otherGroup.id)) {
-        groups.set(otherGroup.id, {
+      let entry = groups.get(otherGroup.id);
+      if (!entry) {
+        entry = {
           group: otherGroup,
           rels: [],
           type: isParent ? 'parent' : 'child',
-        });
+        };
+        groups.set(otherGroup.id, entry);
       }
-      const entry = groups.get(otherGroup.id)!;
       entry.rels.push(rel);
     });
     return Array.from(groups.values());
@@ -83,14 +92,15 @@ export function useNetworkPage(groupId: string) {
       const otherGroup = isParent ? rel.group : rel.related_group;
       if (!otherGroup) return;
 
-      if (!groups.has(otherGroup.id)) {
-        groups.set(otherGroup.id, {
+      let entry = groups.get(otherGroup.id);
+      if (!entry) {
+        entry = {
           group: otherGroup,
           rels: [],
           type: isParent ? 'parent' : 'child',
-        });
+        };
+        groups.set(otherGroup.id, entry);
       }
-      const entry = groups.get(otherGroup.id)!;
       entry.rels.push(rel);
     });
     return Array.from(groups.values());
@@ -101,14 +111,10 @@ export function useNetworkPage(groupId: string) {
     let items: { group: NetworkGroupEntity; rights: string[]; type: 'parent' | 'child' }[] = [];
 
     if (directionFilter !== 'child') {
-      items = items.concat(
-        networkData.parents.map(p => ({ ...p, type: 'parent' as const }))
-      );
+      items = items.concat(networkData.parents.map(p => ({ ...p, type: 'parent' as const })));
     }
     if (directionFilter !== 'parent') {
-      items = items.concat(
-        networkData.children.map(c => ({ ...c, type: 'child' as const }))
-      );
+      items = items.concat(networkData.children.map(c => ({ ...c, type: 'child' as const })));
     }
 
     // Filter by right type
@@ -145,8 +151,7 @@ export function useNetworkPage(groupId: string) {
       }))
       .filter(
         entry =>
-          entry.rels.length > 0 &&
-          (!query || entry.group.name?.toLowerCase().includes(query))
+          entry.rels.length > 0 && (!query || entry.group.name?.toLowerCase().includes(query))
       );
   }, [groupedIncoming, searchQuery, manageRightFilter]);
 
@@ -162,19 +167,24 @@ export function useNetworkPage(groupId: string) {
       }))
       .filter(
         entry =>
-          entry.rels.length > 0 &&
-          (!query || entry.group.name?.toLowerCase().includes(query))
+          entry.rels.length > 0 && (!query || entry.group.name?.toLowerCase().includes(query))
       );
   }, [groupedOutgoing, searchQuery, manageRightFilter]);
 
   // Handlers
   const handleAcceptRequest = useCallback(
     async (rels: NormalizedGroupRelationship[]) => {
+      const blocked = rels.filter(rel => !canActivateLink(rel));
+      if (blocked.length > 0) {
+        toast.error(t('common.network.linkAcceptBlocked'));
+        throw new Error('Hierarchy member conflict');
+      }
+
       for (const rel of rels) {
         await updateRelationship({ id: rel.id, status: 'active' });
       }
     },
-    [updateRelationship]
+    [canActivateLink, updateRelationship, t]
   );
 
   const handleRejectRequest = useCallback(

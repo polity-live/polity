@@ -1,9 +1,11 @@
 import { Check } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Label } from '@/features/shared/ui/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/features/shared/ui/ui/select';
 import { cn } from '@/features/shared/utils/utils';
+import type { GroupRelationshipRightDisplayStatus } from '../logic/networkRelationshipHelpers';
 import { RIGHT_GRADIENTS, type RightType } from './RightFilters';
 
 export type GroupRelationshipType = 'parent' | 'child';
@@ -11,7 +13,13 @@ export type GroupRelationshipRight = RightType;
 export type GroupRelationshipPhraseMode = 'selection' | 'statement' | 'role';
 export type GroupRelationshipTagCase = 'sentence-start' | 'embedded';
 
-type TranslateFn = (key: string, params?: Record<string, unknown>, defaultValue?: string) => string;
+type TranslateParamValue = string | number | null | undefined;
+
+type TranslateFn = (
+  key: string,
+  paramsOrFallback?: string | Record<string, TranslateParamValue>,
+  fallback?: string
+) => string;
 
 const GROUP_RELATIONSHIP_RIGHT_OPTIONS: {
   value: GroupRelationshipRight;
@@ -87,15 +95,20 @@ export function getGroupRelationshipRightLabel(right: GroupRelationshipRight, t:
 }
 
 function getStatusBadgeLabel(status: string, t: TranslateFn) {
-  if (status === 'requested') {
-    return t('common.network.requested');
+  switch (status) {
+    case 'accepted':
+      return t('common.network.acceptedStatus');
+    case 'incoming':
+      return t('common.network.incomingRequest');
+    case 'outgoing':
+      return t('common.network.outgoingRequest');
+    default:
+      return status;
   }
+}
 
-  if (status === 'accepted') {
-    return t('common.network.acceptedStatus');
-  }
-
-  return status;
+function isRequestDisplayStatus(status: string) {
+  return status === 'incoming' || status === 'outgoing';
 }
 
 function getRelationshipConnectorLabel(
@@ -128,18 +141,30 @@ function getRelationshipConnectorClasses(relationshipType: GroupRelationshipType
 
 function getGroupTagClasses(kind: 'current' | 'selected') {
   return kind === 'current'
-    ? 'border-0 bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-cyan-500/20 text-emerald-800 dark:text-emerald-200'
-    : 'border-0 bg-gradient-to-r from-sky-500/20 via-blue-500/20 to-indigo-500/20 text-sky-800 dark:text-sky-200';
+    ? [
+        'border-0 bg-gradient-to-r from-emerald-100 via-teal-50 to-cyan-100 text-emerald-900',
+        'dark:from-emerald-950 dark:via-teal-950 dark:to-cyan-950 dark:text-emerald-200',
+        'hover:from-emerald-100 hover:via-teal-50 hover:to-cyan-100 hover:text-emerald-900',
+        'dark:hover:from-emerald-950 dark:hover:via-teal-950 dark:hover:to-cyan-950 dark:hover:text-emerald-200',
+      ].join(' ')
+    : [
+        'border-0 bg-gradient-to-r from-sky-100 via-blue-50 to-indigo-100 text-sky-900',
+        'dark:from-sky-950 dark:via-blue-950 dark:to-indigo-950 dark:text-sky-200',
+        'hover:from-sky-100 hover:via-blue-50 hover:to-indigo-100 hover:text-sky-900',
+        'dark:hover:from-sky-950 dark:hover:via-blue-950 dark:hover:to-indigo-950 dark:hover:text-sky-200',
+      ].join(' ');
 }
 
 export function GroupRelationshipNameTag({
   name,
   kind,
   caseStyle = 'sentence-start',
+  groupId,
 }: {
   name: string;
   kind: 'current' | 'selected';
   caseStyle?: GroupRelationshipTagCase;
+  groupId?: string;
 }) {
   const { t } = useTranslation();
   const fallback =
@@ -158,10 +183,27 @@ export function GroupRelationshipNameTag({
           : t('common.network.thisGroupWithName', { groupName: safeName })
       : safeName;
 
-  return (
-    <Badge className={cn('max-w-full text-[11px] font-semibold', getGroupTagClasses(kind))}>
+  const badge = (
+    <Badge
+      variant="outline"
+      className={cn('max-w-full text-[11px] font-semibold', getGroupTagClasses(kind))}
+    >
       <span className="truncate">{displayName}</span>
     </Badge>
+  );
+
+  if (!groupId) {
+    return badge;
+  }
+
+  return (
+    <Link
+      to="/group/$id"
+      params={{ id: groupId }}
+      className="focus-visible:ring-ring inline-flex max-w-full rounded-full transition-transform duration-150 ease-out hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+    >
+      {badge}
+    </Link>
   );
 }
 
@@ -287,7 +329,7 @@ interface GroupRelationshipRightsSelectorProps {
   selectedRights: Set<GroupRelationshipRight>;
   onToggleRight: (right: GroupRelationshipRight) => void;
   helperText?: string;
-  existingRightStatuses?: ReadonlyMap<GroupRelationshipRight, string>;
+  existingRightStatuses?: ReadonlyMap<string, GroupRelationshipRightDisplayStatus>;
 }
 
 export function GroupRelationshipRightsSelector({
@@ -335,7 +377,7 @@ export function GroupRelationshipRightsSelector({
                   <div className="font-medium">{t(option.labelKey)}</div>
                   {status ? (
                     <Badge
-                      variant={status === 'requested' ? 'secondary' : 'default'}
+                      variant={isRequestDisplayStatus(status) ? 'secondary' : 'default'}
                       className="shrink-0"
                     >
                       {getStatusBadgeLabel(status, t)}

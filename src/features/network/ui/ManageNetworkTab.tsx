@@ -34,7 +34,11 @@ import { LinkGroupDialog } from './LinkGroupDialog';
 import { WorkflowEditor } from './WorkflowEditor';
 import { PermissionGuard } from '@/features/auth/PermissionGuard';
 import { Pencil, Trash2, Clock } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { useHierarchyLinkConflicts } from '../hooks/useHierarchyLinkConflicts';
+import { HierarchyConflictDialog } from './HierarchyConflictDialog';
+import { NetworkLinkStatusCell } from './NetworkLinkStatusCell';
 import type { NormalizedGroupRelationship, NetworkGroupEntity } from '../types/network.types';
 import type { WorkflowWithStepsRow } from '@/zero/network/queries';
 
@@ -65,8 +69,8 @@ interface ManageNetworkTabProps {
   }[];
   allRelationships: NormalizedGroupRelationship[];
   // Handlers
-  onAcceptRequest: (rels: NormalizedGroupRelationship[]) => void;
-  onRejectRequest: (rels: NormalizedGroupRelationship[]) => void;
+  onAcceptRequest: (rels: NormalizedGroupRelationship[]) => Promise<void>;
+  onRejectRequest: (rels: NormalizedGroupRelationship[]) => Promise<void>;
   onDeleteRelationship: (targetGroupId: string) => void;
   // Workflow props
   workflows: WorkflowWithStepsRow[];
@@ -125,6 +129,53 @@ export function ManageNetworkTab({
   onDeleteWorkflow,
 }: ManageNetworkTabProps) {
   const { t } = useTranslation();
+  const [manageDialog, setManageDialog] = useState<{
+    rels: NormalizedGroupRelationship[];
+    otherGroupName: string;
+    otherGroupId: string;
+  } | null>(null);
+
+  const activePartnerGroupId = useMemo(() => {
+    return manageDialog?.otherGroupId;
+  }, [manageDialog]);
+
+  const {
+    canActivateLink,
+    getConflictUserIds,
+    resolveConflictUsers,
+    resolvePartnerUsers,
+    isLinkCheckApplicable,
+  } = useHierarchyLinkConflicts(groupId, allRelationships, activePartnerGroupId);
+
+  const openManageDialog = (
+    rels: NormalizedGroupRelationship[],
+    otherGroupName: string,
+    otherGroupId: string
+  ) => {
+    setManageDialog({ rels, otherGroupName, otherGroupId });
+  };
+
+  const manageDialogConflictUsers = manageDialog
+    ? resolveConflictUsers([...new Set(manageDialog.rels.flatMap(rel => getConflictUserIds(rel)))])
+    : [];
+
+  const manageDialogCanAccept = manageDialog
+    ? manageDialog.rels.every(rel => canActivateLink(rel))
+    : false;
+
+  const manageDialogAffectedUsers = useMemo(
+    () => manageDialogConflictUsers.filter(user => user.membershipIdInCurrentGroup),
+    [manageDialogConflictUsers]
+  );
+
+  const manageDialogPartnerUsers = useMemo(() => {
+    if (!activePartnerGroupId) {
+      return [];
+    }
+
+    return resolvePartnerUsers();
+  }, [activePartnerGroupId, resolvePartnerUsers]);
+
   const currentGroupTagName = groupName || '';
   const currentGroupDisplayName = groupName || t('common.network.thisGroup');
   const incomingRequestCount = incomingRequests.reduce(
@@ -138,14 +189,24 @@ export function ManageNetworkTab({
 
   const renderRequestDescription = (
     subjectName: string | null | undefined,
+    subjectGroupId: string,
     prefixKey: 'wantsToBe' | 'isRequestedAs',
     type: 'parent' | 'child'
   ) => (
     <div className="flex flex-wrap items-center gap-2 leading-tight">
-      <GroupRelationshipNameTag name={subjectName ?? t('common.unspecified')} kind="selected" />
+      <GroupRelationshipNameTag
+        name={subjectName ?? t('common.unspecified')}
+        kind="selected"
+        groupId={subjectGroupId}
+      />
       <span>{t(`common.network.${prefixKey}`)}</span>
       <GroupRelationshipConnector relationshipType={type} mode="role" />
-      <GroupRelationshipNameTag name={currentGroupTagName} kind="current" caseStyle="embedded" />
+      <GroupRelationshipNameTag
+        name={currentGroupTagName}
+        kind="current"
+        caseStyle="embedded"
+        groupId={groupId}
+      />
       <span>{t('common.network.withRights')}</span>
     </div>
   );
@@ -257,7 +318,7 @@ export function ManageNetworkTab({
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">{req.group.name}</CardTitle>
                   <CardDescription>
-                    {renderRequestDescription(req.group.name, 'wantsToBe', req.type)}
+                    {renderRequestDescription(req.group.name, req.group.id, 'wantsToBe', req.type)}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -267,47 +328,79 @@ export function ManageNetworkTab({
                         <TableHead>{t('common.network.relationship')}</TableHead>
                         <TableHead>{t('common.labels.rights')}</TableHead>
                         <TableHead>{t('common.network.requested')}</TableHead>
+                        <TableHead>{t('common.network.linkPossible')}</TableHead>
                         <TableHead>{t('common.actions.actions')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {req.rels.map(rel => (
-                        <TableRow key={rel.id}>
-                          <TableCell>
-                            <Badge variant={req.type === 'parent' ? 'default' : 'secondary'}>
-                              {req.type === 'parent'
-                                ? t('common.network.parent')
-                                : t('common.network.child')}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <RightBadge right={rel.with_right ?? ''} />
-                          </TableCell>
-                          <TableCell>
-                            {rel.created_at ? new Date(rel.created_at).toLocaleDateString() : '-'}
-                          </TableCell>
-                          <TableCell>
-                            <PermissionGuard
-                              action="manage"
-                              resource="groupRelationships"
-                              context={{ groupId }}
-                            >
-                              <div className="flex gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => onRejectRequest([rel])}
-                                >
-                                  {t('common.network.reject')}
-                                </Button>
-                                <Button size="sm" onClick={() => onAcceptRequest([rel])}>
-                                  {t('common.network.accept')}
-                                </Button>
-                              </div>
-                            </PermissionGuard>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {req.rels.map(rel => {
+                        const hasHierarchyCheck = isLinkCheckApplicable(rel);
+                        const canLink = canActivateLink(rel);
+                        const otherGroupName = req.group.name ?? t('common.unspecified');
+
+                        return (
+                          <TableRow key={rel.id}>
+                            <TableCell>
+                              <Badge variant={req.type === 'parent' ? 'default' : 'secondary'}>
+                                {req.type === 'parent'
+                                  ? t('common.network.parent')
+                                  : t('common.network.child')}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <RightBadge right={rel.with_right ?? ''} />
+                            </TableCell>
+                            <TableCell>
+                              {rel.created_at ? new Date(rel.created_at).toLocaleDateString() : '-'}
+                            </TableCell>
+                            <TableCell>
+                              <NetworkLinkStatusCell
+                                canLink={canLink}
+                                hasHierarchyCheck={hasHierarchyCheck}
+                                onWarningClick={() =>
+                                  openManageDialog([rel], otherGroupName, req.group.id)
+                                }
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <PermissionGuard
+                                action="manage"
+                                resource="groupRelationships"
+                                context={{ groupId }}
+                              >
+                                <div className="flex flex-wrap gap-2">
+                                  {canLink ? (
+                                    <Button
+                                      size="sm"
+                                      variant="default"
+                                      onClick={() => onAcceptRequest([rel])}
+                                    >
+                                      {t('common.actions.confirm')}
+                                    </Button>
+                                  ) : (
+                                    <Button
+                                      size="sm"
+                                      variant="default"
+                                      onClick={() =>
+                                        openManageDialog([rel], otherGroupName, req.group.id)
+                                      }
+                                    >
+                                      {t('common.network.manage')}
+                                    </Button>
+                                  )}
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => onRejectRequest([rel])}
+                                  >
+                                    {t('common.network.reject')}
+                                  </Button>
+                                </div>
+                              </PermissionGuard>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </CardContent>
@@ -329,7 +422,12 @@ export function ManageNetworkTab({
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">{req.group.name}</CardTitle>
                   <CardDescription>
-                    {renderRequestDescription(req.group.name, 'isRequestedAs', req.type)}
+                    {renderRequestDescription(
+                      req.group.name,
+                      req.group.id,
+                      'isRequestedAs',
+                      req.type
+                    )}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -416,6 +514,7 @@ export function ManageNetworkTab({
                           <GroupRelationshipNameTag
                             name={rel.group.name ?? t('common.unspecified')}
                             kind="selected"
+                            groupId={rel.group.id}
                           />
                         </div>
                       </TableCell>
@@ -428,6 +527,7 @@ export function ManageNetworkTab({
                             name={currentGroupTagName}
                             kind="current"
                             caseStyle="embedded"
+                            groupId={groupId}
                           />
                         </div>
                       </TableCell>
@@ -525,6 +625,29 @@ export function ManageNetworkTab({
           onDelete={onDeleteWorkflow}
         />
       </PermissionGuard>
+
+      {manageDialog ? (
+        <HierarchyConflictDialog
+          open
+          onOpenChange={open => {
+            if (!open) {
+              setManageDialog(null);
+            }
+          }}
+          groupName={groupName}
+          otherGroupName={manageDialog.otherGroupName}
+          relationships={manageDialog.rels}
+          affectedUsers={manageDialogAffectedUsers}
+          partnerUsers={manageDialogPartnerUsers}
+          canAccept={manageDialogCanAccept}
+          onAccept={async () => {
+            await onAcceptRequest(manageDialog.rels);
+          }}
+          onReject={async () => {
+            await onRejectRequest(manageDialog.rels);
+          }}
+        />
+      ) : null}
     </div>
   );
 }
