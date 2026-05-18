@@ -11,6 +11,7 @@ import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
 import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
 import { BasicInfoSection } from './BasicInfoSection';
+import { GroupTypeSection } from './GroupTypeSection';
 import { LocationInfoSection } from './LocationInfoSection';
 import { SocialMediaSection } from './SocialMediaSection';
 import { useGroupUpdate } from '../hooks/useGroupUpdate';
@@ -133,6 +134,9 @@ export function GroupEditForm({
 
       {/* Visibility */}
       <VisibilityInput value={formData.visibility} onChange={v => updateField('visibility', v)} />
+
+      {/* Group Type */}
+      {groupType && <GroupTypeSection groupType={groupType} />}
 
       {/* Location Information */}
       <LocationInfoSection formData={formData} onChange={updateField} />

@@ -79,6 +79,8 @@ export const createPageTranslations = {
     imageLabel: 'Group Image',
     imageDescription: 'Upload a group image or provide a URL',
     imageAndTags: 'Image & Tags',
+    hashtagsLabel: 'Hashtags',
+    hashtagPlaceholder: 'Add hashtags',
     inviteMembers: 'Invite Members',
     inviteMembersOptional: 'Invite Members (Optional)',
     invited: 'invited',

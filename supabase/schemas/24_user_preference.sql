@@ -9,11 +9,15 @@ CREATE TABLE IF NOT EXISTS public.user_preference (
   theme TEXT NOT NULL DEFAULT 'system',
   language TEXT NOT NULL DEFAULT 'en',
   navigation_view TEXT NOT NULL DEFAULT 'asButtonList',
+  group_network_layouts JSONB NOT NULL DEFAULT '{}'::jsonb,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX idx_user_preference_user ON public.user_preference (user_id);
+
+ALTER TABLE public.user_preference
+  ADD COLUMN IF NOT EXISTS group_network_layouts JSONB NOT NULL DEFAULT '{}'::jsonb;
 
 ALTER TABLE public.user_preference ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.user_preference FOR ALL TO service_role USING (true);

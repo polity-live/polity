@@ -4,7 +4,9 @@ import { OnlineUsersProvider } from '@/presence';
 import { ZeroAppProvider } from '@/providers/zero-provider';
 import { AppShell } from '@/layout/app-shell';
 import { NotFound } from '@/features/shared/ui/ui/not-found';
-import stylesHref from '../styles.css?url';
+import stylesAssetHref from '../styles.css?url';
+
+const stylesHref = import.meta.env.DEV ? '/_build/src/styles.css' : stylesAssetHref;
 
 export const Route = createRootRoute({
   notFoundComponent: NotFound,

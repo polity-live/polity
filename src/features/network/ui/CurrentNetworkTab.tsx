@@ -5,5 +5,9 @@ interface CurrentNetworkTabProps {
 }
 
 export function CurrentNetworkTab({ groupId }: CurrentNetworkTabProps) {
-  return <GroupNetworkFlow groupId={groupId} />;
+  return (
+    <div className="h-full min-h-0">
+      <GroupNetworkFlow groupId={groupId} />
+    </div>
+  );
 }

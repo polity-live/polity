@@ -1,4 +1,5 @@
-import { table, string, number } from '@rocicorp/zero'
+import { table, string, number, json } from '@rocicorp/zero';
+import type { GroupNetworkLayouts } from './schema';
 
 export const userPreference = table('user_preference')
   .columns({
@@ -8,7 +9,8 @@ export const userPreference = table('user_preference')
     theme: string(),
     language: string(),
     navigation_view: string(),
+    group_network_layouts: json<GroupNetworkLayouts>(),
     created_at: number(),
     updated_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');

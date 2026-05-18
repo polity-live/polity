@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -12,15 +12,7 @@ import {
 } from '@/features/shared/ui/ui/dialog';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Label } from '@/features/shared/ui/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/features/shared/ui/ui/select';
-import { Link, Check } from 'lucide-react';
-import { cn } from '@/features/shared/utils/utils';
+import { Link } from 'lucide-react';
 import { useGroupState } from '@/zero/groups/useGroupState';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -30,55 +22,24 @@ import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItem
 import { richTextToPlainText } from '@/features/shared/logic/richText';
 import type { NormalizedGroupRelationship } from '../types/network.types';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
-import { RIGHT_GRADIENTS } from './RightFilters';
+import { getGroupRelationshipDisplayStatus } from '../logic/networkRelationshipHelpers';
+import {
+  GroupRelationshipRightsSelector,
+  GroupRelationshipTypeSelect,
+  invertGroupRelationshipType,
+  type GroupRelationshipRight,
+  type GroupRelationshipType,
+} from './GroupRelationshipFields';
 
 interface LinkGroupDialogProps {
   currentGroupId: string;
   currentGroupName: string;
-  // Edit mode props
   initialTargetGroupId?: string;
-  initialRelationshipType?: 'parent' | 'child'; // 'parent' means target is parent
+  initialRelationshipType?: 'parent' | 'child';
   initialRights?: string[];
   trigger?: React.ReactNode;
-  // Optimistic/Parent Data
   allRelationships?: NormalizedGroupRelationship[];
 }
-
-type RelationshipType = 'isParent' | 'isChild';
-type WithRight =
-  | 'informationRight'
-  | 'amendmentRight'
-  | 'rightToSpeak'
-  | 'activeVotingRight'
-  | 'passiveVotingRight';
-
-const RIGHTS_KEYS: { value: WithRight; labelKey: string; descKey: string }[] = [
-  {
-    value: 'informationRight',
-    labelKey: 'common.network.rightInfo',
-    descKey: 'common.network.rightInfoDesc',
-  },
-  {
-    value: 'amendmentRight',
-    labelKey: 'common.network.rightAmendment',
-    descKey: 'common.network.rightAmendmentDesc',
-  },
-  {
-    value: 'rightToSpeak',
-    labelKey: 'common.network.rightSpeak',
-    descKey: 'common.network.rightSpeakDesc',
-  },
-  {
-    value: 'activeVotingRight',
-    labelKey: 'common.network.rightActiveVoting',
-    descKey: 'common.network.rightActiveVotingDesc',
-  },
-  {
-    value: 'passiveVotingRight',
-    labelKey: 'common.network.rightPassiveVoting',
-    descKey: 'common.network.rightPassiveVotingDesc',
-  },
-];
 
 export function LinkGroupDialog({
   currentGroupId,
@@ -92,100 +53,196 @@ export function LinkGroupDialog({
   const { t } = useTranslation();
   const { createRelationship, deleteRelationship } = useGroupActions();
   const [open, setOpen] = useState(false);
+  const initializedForOpenRef = useRef(false);
+  const lastSyncedRightsKeyRef = useRef<string | null>(null);
 
   const isEditMode = !!initialTargetGroupId;
 
-  const [selectedGroupId, setSelectedGroupId] = useState<string>(initialTargetGroupId || '');
-  // Map 'parent' -> 'isParent', 'child' -> 'isChild'
-  const [relationshipType, setRelationshipType] = useState<RelationshipType>(
-    initialRelationshipType === 'parent'
-      ? 'isParent'
-      : initialRelationshipType === 'child'
-        ? 'isChild'
-        : 'isParent'
-  );
+  const {
+    group: currentGroup,
+    relationships: hierarchyRaw,
+    relationshipsAsTarget: hierarchyAsTargetRaw,
+    searchResults: availableGroupsRaw,
+    isLoading: groupStateLoading,
+  } = useGroupState({ groupId: currentGroupId, includeSearch: true });
 
-  const [selectedRights, setSelectedRights] = useState<Set<WithRight>>(
-    initialRights ? new Set(initialRights as WithRight[]) : new Set()
-  );
+  const isBaseGroup = currentGroup?.group_type === 'base';
+  const defaultRelationshipType: GroupRelationshipType = isBaseGroup ? 'child' : 'parent';
 
+  const [selectedGroupId, setSelectedGroupId] = useState(initialTargetGroupId || '');
+  const [relationshipType, setRelationshipType] = useState<GroupRelationshipType>(
+    initialRelationshipType
+      ? invertGroupRelationshipType(initialRelationshipType)
+      : defaultRelationshipType
+  );
+  const [selectedRights, setSelectedRights] = useState<Set<GroupRelationshipRight>>(
+    initialRights ? new Set(initialRights as GroupRelationshipRight[]) : new Set()
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch all groups (needed for name info if not passed, and for selector)
-  const { searchResults: availableGroupsRaw } = useGroupState({ includeSearch: true });
-  const availableGroups = (availableGroupsRaw || []).filter(g => g.id !== currentGroupId);
+  const availableGroups = (availableGroupsRaw || []).filter(group => group.id !== currentGroupId);
 
-  // Fetch existing relationships to Handle Syncing (avoid duplicates, handle removals)
   const shouldQuery = !allRelationships && !!selectedGroupId && open;
+  const isLoadingQuery = shouldQuery ? groupStateLoading : false;
 
-  // groups.hierarchy returns relationships for a group - filter for specific pair client-side
-  const { relationships: hierarchyRaw } = useGroupState({ groupId: currentGroupId });
+  const hierarchyRelationships = useMemo(
+    () => [...(hierarchyRaw || []), ...(hierarchyAsTargetRaw || [])],
+    [hierarchyRaw, hierarchyAsTargetRaw]
+  );
 
-  const isLoadingQuery = shouldQuery ? !hierarchyRaw : false;
+  const relevantRelationships = useMemo(() => {
+    const relationships = allRelationships ?? hierarchyRelationships;
 
-  const relevantRelationships = allRelationships
-    ? allRelationships.filter(
-        rel =>
-          (rel.group?.id === currentGroupId && rel.related_group?.id === selectedGroupId) ||
-          (rel.group?.id === selectedGroupId && rel.related_group?.id === currentGroupId)
-      )
-    : (hierarchyRaw || []).filter(
-        rel =>
-          (rel.group_id === currentGroupId && rel.related_group_id === selectedGroupId) ||
-          (rel.group_id === selectedGroupId && rel.related_group_id === currentGroupId)
-      );
+    return relationships.filter(
+      rel =>
+        (rel.group_id === currentGroupId && rel.related_group_id === selectedGroupId) ||
+        (rel.group_id === selectedGroupId && rel.related_group_id === currentGroupId)
+    );
+  }, [allRelationships, hierarchyRelationships, currentGroupId, selectedGroupId]);
 
-  // Reset state when opening/closing or props change
-  useEffect(() => {
-    if (open) {
-      if (isEditMode && initialTargetGroupId) {
-        setSelectedGroupId(initialTargetGroupId);
-        setRelationshipType(initialRelationshipType === 'parent' ? 'isParent' : 'isChild');
-        setSelectedRights(initialRights ? new Set(initialRights as WithRight[]) : new Set());
+  const currentDirectionRelationships = useMemo(
+    () =>
+      relevantRelationships.filter(rel => {
+        if (relationshipType === 'parent') {
+          return rel.group_id === currentGroupId && rel.related_group_id === selectedGroupId;
+        }
+
+        return rel.group_id === selectedGroupId && rel.related_group_id === currentGroupId;
+      }),
+    [relevantRelationships, relationshipType, selectedGroupId, currentGroupId]
+  );
+
+  const existingRightsForDirection = useMemo(
+    () =>
+      new Set(
+        currentDirectionRelationships
+          .map(rel => rel.with_right)
+          .filter((right): right is GroupRelationshipRight => right != null)
+      ),
+    [currentDirectionRelationships]
+  );
+
+  const existingRightStatuses = useMemo(() => {
+    const statuses = new Map<GroupRelationshipRight, string>();
+
+    currentDirectionRelationships.forEach(rel => {
+      const right = rel.with_right as GroupRelationshipRight | null;
+      const status = getGroupRelationshipDisplayStatus(rel.status);
+
+      if (!right || !status) {
+        return;
       }
-    }
-  }, [open, isEditMode, initialTargetGroupId, initialRelationshipType, initialRights]);
 
-  const toggleRight = (right: WithRight) => {
-    const newRights = new Set(selectedRights);
-    if (newRights.has(right)) {
-      newRights.delete(right);
-    } else {
-      newRights.add(right);
+      if (status === 'requested' || !statuses.has(right)) {
+        statuses.set(right, status);
+      }
+    });
+
+    return statuses;
+  }, [currentDirectionRelationships]);
+
+  const existingRightsSignature = useMemo(
+    () => Array.from(existingRightsForDirection).sort().join('|'),
+    [existingRightsForDirection]
+  );
+
+  useEffect(() => {
+    if (!open) {
+      initializedForOpenRef.current = false;
+      lastSyncedRightsKeyRef.current = null;
+      return;
     }
-    setSelectedRights(newRights);
+
+    if (initializedForOpenRef.current) {
+      return;
+    }
+
+    initializedForOpenRef.current = true;
+
+    if (isEditMode && initialTargetGroupId) {
+      setSelectedGroupId(initialTargetGroupId);
+      setRelationshipType(
+        initialRelationshipType
+          ? invertGroupRelationshipType(initialRelationshipType)
+          : defaultRelationshipType
+      );
+      setSelectedRights(
+        initialRights ? new Set(initialRights as GroupRelationshipRight[]) : new Set()
+      );
+      return;
+    }
+
+    setSelectedGroupId('');
+    setRelationshipType(defaultRelationshipType);
+    setSelectedRights(new Set());
+  }, [
+    open,
+    isEditMode,
+    initialTargetGroupId,
+    initialRelationshipType,
+    initialRights,
+    defaultRelationshipType,
+  ]);
+
+  useEffect(() => {
+    if (!open || isEditMode || selectedGroupId) {
+      return;
+    }
+
+    setRelationshipType(defaultRelationshipType);
+  }, [open, isEditMode, selectedGroupId, defaultRelationshipType]);
+
+  useEffect(() => {
+    if (!open || isEditMode) {
+      return;
+    }
+
+    const syncKey = `${selectedGroupId}:${relationshipType}:${existingRightsSignature}`;
+    if (lastSyncedRightsKeyRef.current === syncKey) {
+      return;
+    }
+
+    setSelectedRights(new Set(existingRightsForDirection));
+    lastSyncedRightsKeyRef.current = syncKey;
+  }, [
+    open,
+    isEditMode,
+    selectedGroupId,
+    relationshipType,
+    existingRightsForDirection,
+    existingRightsSignature,
+  ]);
+
+  const toggleRight = (right: GroupRelationshipRight) => {
+    const next = new Set(selectedRights);
+
+    if (next.has(right)) {
+      next.delete(right);
+    } else {
+      next.add(right);
+    }
+
+    setSelectedRights(next);
   };
 
   const handleSubmit = async () => {
-    if (!selectedGroupId) return; // Rights can be empty if we want to remove all? Assume valid to have 0 rights (removes relationship)
+    if (!selectedGroupId) {
+      return;
+    }
 
     setIsSubmitting(true);
     try {
       const now = new Date();
       const transactions = [];
 
-      // Logic:
-      // 1. Identify which rights are currently active in DB for this specific direction (Parent/Child configuration)
-      // 2. Add missing rights
-      // 3. Remove unchecked rights
+      const existingRightsSet = new Set(
+        currentDirectionRelationships
+          .map(rel => rel.with_right)
+          .filter((right): right is GroupRelationshipRight => right != null)
+      );
 
-      // Filter existing relationships to match the CURRENT direction selection
-      const currentDirectionRels = relevantRelationships.filter(rel => {
-        if (relationshipType === 'isParent') {
-          // Selected is Parent, Current is Child
-          return rel.group_id === selectedGroupId && rel.related_group_id === currentGroupId;
-        } else {
-          // Current is Parent, Selected is Child
-          return rel.group_id === currentGroupId && rel.related_group_id === selectedGroupId;
-        }
-      });
-
-      const existingRightsSet = new Set(currentDirectionRels.map(r => r.with_right));
-
-      // 1. Additions
       for (const right of selectedRights) {
         if (!existingRightsSet.has(right)) {
-          // Create new
           const relationshipId = crypto.randomUUID();
           const relationshipData = {
             withRight: right as string | null,
@@ -195,32 +252,30 @@ export function LinkGroupDialog({
             initiatorGroupId: currentGroupId as string | null,
           };
 
-          if (relationshipType === 'isParent') {
-            // Group relationship creation via raw zero.mutate (no dedicated mutator layer)
-            transactions.push({
-              type: 'createRelationship' as const,
-              id: relationshipId,
-              data: relationshipData,
-              parentGroupId: selectedGroupId,
-              childGroupId: currentGroupId,
-            });
-          } else {
+          if (relationshipType === 'parent') {
             transactions.push({
               type: 'createRelationship' as const,
               id: relationshipId,
               data: relationshipData,
               parentGroupId: currentGroupId,
               childGroupId: selectedGroupId,
+              relationshipType: invertGroupRelationshipType(relationshipType),
+            });
+          } else {
+            transactions.push({
+              type: 'createRelationship' as const,
+              id: relationshipId,
+              data: relationshipData,
+              parentGroupId: selectedGroupId,
+              childGroupId: currentGroupId,
+              relationshipType: invertGroupRelationshipType(relationshipType),
             });
           }
         }
       }
 
-      // 2. Removals
-      for (const rel of currentDirectionRels) {
-        if (!selectedRights.has(rel.with_right as WithRight)) {
-          // Remove this relationship
-          // Group relationship deletion via raw zero.mutate
+      for (const rel of currentDirectionRelationships) {
+        if (!selectedRights.has(rel.with_right as GroupRelationshipRight)) {
           transactions.push({
             type: 'deleteRelationship' as const,
             id: rel.id,
@@ -235,15 +290,16 @@ export function LinkGroupDialog({
               id: tx.id,
               group_id: tx.parentGroupId,
               related_group_id: tx.childGroupId,
-              relationship_type: relationshipType,
+              relationship_type: tx.relationshipType,
               with_right: tx.data.withRight,
               status: tx.data.status,
               initiator_group_id: tx.data.initiatorGroupId,
             });
-          } else if (tx.type === 'deleteRelationship') {
+          } else {
             await deleteRelationship({ id: tx.id });
           }
         }
+
         toast.success(
           isEditMode
             ? t('common.network.relationshipsUpdated')
@@ -254,11 +310,11 @@ export function LinkGroupDialog({
       }
 
       if (!isEditMode) {
-        // Reset only if create mode
         setSelectedGroupId('');
-        setRelationshipType('isParent');
+        setRelationshipType(defaultRelationshipType);
         setSelectedRights(new Set());
       }
+
       setOpen(false);
     } catch (error) {
       console.error('Error managing group relationships:', error);
@@ -268,22 +324,7 @@ export function LinkGroupDialog({
     }
   };
 
-  const getRelationshipLabel = () => {
-    if (relationshipType === 'isParent') {
-      return t('common.network.asParentGroup');
-    } else {
-      return t('common.network.asChildGroup');
-    }
-  };
-
-  console.log('LinkGroupDialog Debug:', {
-    selectedGroupId,
-    isSubmitting,
-    isLoadingQuery,
-    shouldQuery,
-    allRelationships: !!allRelationships,
-    buttonDisabled: !selectedGroupId || isSubmitting || isLoadingQuery,
-  });
+  const selectedGroupName = availableGroups.find(group => group.id === selectedGroupId)?.name ?? '';
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -297,28 +338,26 @@ export function LinkGroupDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
+      <DialogContent className="h-[min(90dvh,42rem)] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden p-0 sm:max-w-[600px]">
+        <DialogHeader className="px-6 pt-6 pr-12 pb-4">
           <DialogTitle>
             {isEditMode ? t('common.network.editRelationship') : t('common.network.linkGroupTitle')}
           </DialogTitle>
           <DialogDescription>
             {isEditMode
               ? t('common.network.editRelationshipDescription', {
-                  groupName: availableGroups.find(g => g.id === selectedGroupId)?.name || 'Gruppe',
+                  groupName: selectedGroupName || t('common.unspecified'),
                 })
               : t('common.network.linkGroupDescription', { groupName: currentGroupName })}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
-          {/* Group Selection */}
+        <div className="grid min-h-0 content-start gap-4 overflow-y-auto px-6 py-4">
           <div className="grid gap-2">
             <Label htmlFor="group">{t('common.network.selectGroup')}</Label>
             {isEditMode ? (
               <div className="bg-muted/30 rounded-md border px-3 py-2 text-sm font-medium">
-                {availableGroups.find(group => group.id === selectedGroupId)?.name ??
-                  currentGroupName}
+                {selectedGroupName || currentGroupName}
               </div>
             ) : (
               <TypeaheadSearch
@@ -339,69 +378,35 @@ export function LinkGroupDialog({
             )}
           </div>
 
-          {/* Relationship Type */}
-          <div className="grid gap-2">
-            <Label htmlFor="relationshipType">{t('common.network.relationshipTypeLabel')}</Label>
-            <Select
-              value={relationshipType}
-              onValueChange={value => setRelationshipType(value as RelationshipType)}
-              disabled={isEditMode}
-            >
-              <SelectTrigger id="relationshipType">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="isParent">{t('common.network.asParentGroup')}</SelectItem>
-                <SelectItem value="isChild">{t('common.network.asChildGroup')}</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-muted-foreground text-sm">{getRelationshipLabel()}</p>
-          </div>
+          {selectedGroupId ? (
+            <>
+              <GroupRelationshipTypeSelect
+                label={t('common.network.relationshipTypeLabel')}
+                value={relationshipType}
+                currentGroupName={currentGroupName}
+                selectedGroupName={selectedGroupName}
+                onValueChange={setRelationshipType}
+                disabled={isEditMode}
+                disabledOptions={{ parent: !isEditMode && isBaseGroup }}
+                helperText={
+                  !isEditMode && isBaseGroup
+                    ? t('common.network.baseGroupsCanOnlyBeChildren')
+                    : undefined
+                }
+              />
 
-          {/* Rights Selection */}
-          <div className="grid gap-3">
-            <Label>{t('common.network.selectRights')}</Label>
-            <div className="grid gap-2">
-              {RIGHTS_KEYS.map(right => (
-                <button
-                  key={right.value}
-                  type="button"
-                  onClick={() => toggleRight(right.value)}
-                  className={cn(
-                    'flex items-start gap-3 rounded-lg border p-3 text-left transition-colors hover:opacity-90',
-                    selectedRights.has(right.value)
-                      ? cn('border-0 text-white shadow-sm', RIGHT_GRADIENTS[right.value])
-                      : 'border-border bg-muted/20 hover:bg-accent'
-                  )}
-                >
-                  <div
-                    className={cn(
-                      'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border',
-                      selectedRights.has(right.value)
-                        ? 'border-white/70 bg-white/15 text-white'
-                        : 'border-muted-foreground'
-                    )}
-                  >
-                    {selectedRights.has(right.value) && <Check className="h-3 w-3" />}
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-medium">{t(right.labelKey)}</div>
-                    <div
-                      className={cn(
-                        'text-sm',
-                        selectedRights.has(right.value) ? 'text-white/90' : 'text-muted-foreground'
-                      )}
-                    >
-                      {t(right.descKey)}
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
+              <GroupRelationshipRightsSelector
+                label={t('common.network.selectRights')}
+                helperText={t('common.network.existingRightsStatusHint')}
+                selectedRights={selectedRights}
+                onToggleRight={toggleRight}
+                existingRightStatuses={existingRightStatuses}
+              />
+            </>
+          ) : null}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="border-t px-6 py-4">
           <Button variant="outline" onClick={() => setOpen(false)} disabled={isSubmitting}>
             {t('common.actions.cancel')}
           </Button>

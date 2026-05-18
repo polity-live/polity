@@ -80,6 +80,8 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
   }
 
   const groupLocation = formatLocation(group);
+  const parentGroups = groupRelationshipsByGroup(group.relationships_as_target ?? [], 'parent');
+  const childGroups = groupRelationshipsByGroup(group.relationships_as_source ?? [], 'child');
 
   return (
     <div>
@@ -324,7 +326,36 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
       )}
 
       {/* Parent & Child Groups */}
-      {group.relationships_as_source && group.relationships_as_source.length > 0 && (
+      {parentGroups.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Network className="h-5 w-5" />
+              {t('pages.group.parentGroups.title')}
+            </CardTitle>
+            <CardDescription>{t('pages.group.parentGroups.description')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+              {parentGroups.map(({ group: relatedGroup }) => (
+                <GroupTimelineCard
+                  key={`parent-${relatedGroup.id}`}
+                  group={{
+                    id: String(relatedGroup.id),
+                    name: relatedGroup.name || t('common.unspecified'),
+                    description: relatedGroup.description ?? undefined,
+                    memberCount: relatedGroup.memberships?.length || relatedGroup.member_count || 0,
+                    amendmentCount: relatedGroup.amendments?.length || 0,
+                    eventCount: relatedGroup.events?.length || 0,
+                  }}
+                />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {childGroups.length > 0 && (
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -335,22 +366,19 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {groupRelationshipsByGroup([...group.relationships_as_source], 'child').map(
-                ({ group: relatedGroup }) => (
-                  <GroupTimelineCard
-                    key={`child-${relatedGroup.id}`}
-                    group={{
-                      id: String(relatedGroup.id),
-                      name: relatedGroup.name || t('common.unspecified'),
-                      description: relatedGroup.description ?? undefined,
-                      memberCount:
-                        relatedGroup.memberships?.length || relatedGroup.member_count || 0,
-                      amendmentCount: relatedGroup.amendments?.length || 0,
-                      eventCount: relatedGroup.events?.length || 0,
-                    }}
-                  />
-                )
-              )}
+              {childGroups.map(({ group: relatedGroup }) => (
+                <GroupTimelineCard
+                  key={`child-${relatedGroup.id}`}
+                  group={{
+                    id: String(relatedGroup.id),
+                    name: relatedGroup.name || t('common.unspecified'),
+                    description: relatedGroup.description ?? undefined,
+                    memberCount: relatedGroup.memberships?.length || relatedGroup.member_count || 0,
+                    amendmentCount: relatedGroup.amendments?.length || 0,
+                    eventCount: relatedGroup.events?.length || 0,
+                  }}
+                />
+              ))}
             </div>
           </CardContent>
         </Card>

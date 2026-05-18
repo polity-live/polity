@@ -17,6 +17,13 @@ export const groupsTranslations = {
     notFoundDescription: 'Für diese ID existieren keine Gruppendaten',
     saveChanges: 'Änderungen speichern',
     saving: 'Speichern...',
+    groupType: {
+      title: 'Gruppentyp',
+      description: 'Dieser Abschnitt zeigt, wie die Gruppe aktuell strukturiert ist.',
+      label: 'Aktuelle Struktur',
+      hierarchicalDescription: 'Diese Gruppe besteht aus untergeordneten Gruppen.',
+      baseDescription: 'Diese Gruppe ist eine Basisgruppe mit direkten Mitgliedern.',
+    },
   },
   location: {
     title: 'Standort',

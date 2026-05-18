@@ -9,6 +9,10 @@ export const groupPageTranslations = {
     title: 'Child Groups',
     description: 'Groups that are subordinate to this group',
   },
+  parentGroups: {
+    title: 'Parent Groups',
+    description: 'Groups that are superordinate to this group',
+  },
   memberships: {
     title: 'Members',
     searchPlaceholder: 'Search members by name, role, or status...',
@@ -67,7 +71,6 @@ export const groupPageTranslations = {
   },
   notifications: {
     title: 'Notifications',
-    
   },
   edit: {
     title: 'Edit Group',

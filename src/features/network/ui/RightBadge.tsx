@@ -1,35 +1,82 @@
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { cn } from '@/features/shared/utils/utils';
 import { getRightLabel, RIGHT_GRADIENTS, type RightType } from '@/features/network/ui/RightFilters';
+import { ArrowDownLeft, ArrowUpRight } from 'lucide-react';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import type { NetworkRelationshipKind } from '@/features/network/logic/networkRelationshipHelpers';
+
+type RightRequestKind = Extract<NetworkRelationshipKind, 'incoming' | 'outgoing'>;
 
 interface RightBadgeProps {
   right: string;
   variant?: 'gradient' | 'outline';
   className?: string;
+  requestKind?: RightRequestKind | null;
 }
 
-export function RightBadge({ right, variant = 'gradient', className }: RightBadgeProps) {
+export function RightBadge({
+  right,
+  variant = 'gradient',
+  className,
+  requestKind,
+}: RightBadgeProps) {
+  const { t } = useTranslation();
   const label = getRightLabel(right);
+  const requestStatusLabel =
+    requestKind === 'incoming'
+      ? t('common.network.incomingRequest')
+      : requestKind === 'outgoing'
+        ? t('common.network.outgoingRequest')
+        : null;
+  const RequestIcon = requestKind === 'incoming' ? ArrowDownLeft : ArrowUpRight;
 
   if (variant === 'outline') {
     return (
-      <Badge variant="outline" className={cn('text-xs', className)}>
-        {label}
-      </Badge>
+      <span className="relative inline-flex shrink-0 overflow-visible align-middle">
+        <Badge variant="outline" className={cn('text-xs', className)}>
+          {label}
+        </Badge>
+        {requestKind && requestStatusLabel && (
+          <span
+            className={cn(
+              'border-background absolute -top-1 -right-1 z-10 flex h-3.5 w-3.5 items-center justify-center rounded-full border text-white shadow-sm',
+              requestKind === 'incoming' ? 'bg-blue-500' : 'bg-amber-500'
+            )}
+            aria-label={requestStatusLabel}
+            title={requestStatusLabel}
+          >
+            <RequestIcon className="h-2 w-2" />
+          </span>
+        )}
+      </span>
     );
   }
 
   const gradient = RIGHT_GRADIENTS[right as RightType];
 
   return (
-    <Badge
-      className={cn(
-        'border-0 text-xs text-white',
-        gradient ?? 'bg-muted text-muted-foreground',
-        className
+    <span className="relative inline-flex shrink-0 overflow-visible align-middle">
+      <Badge
+        className={cn(
+          'border-0 text-xs text-white',
+          gradient ?? 'bg-muted text-muted-foreground',
+          className
+        )}
+      >
+        {label}
+      </Badge>
+      {requestKind && requestStatusLabel && (
+        <span
+          className={cn(
+            'border-background absolute -top-1 -right-1 z-10 flex h-3.5 w-3.5 items-center justify-center rounded-full border text-white shadow-sm',
+            requestKind === 'incoming' ? 'bg-blue-500' : 'bg-amber-500'
+          )}
+          aria-label={requestStatusLabel}
+          title={requestStatusLabel}
+        >
+          <RequestIcon className="h-2 w-2" />
+        </span>
       )}
-    >
-      {label}
-    </Badge>
+    </span>
   );
 }

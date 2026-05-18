@@ -1,4 +1,10 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import {
   Table,
@@ -9,13 +15,6 @@ import {
   TableRow,
 } from '@/features/shared/ui/ui/table';
 import { Button } from '@/features/shared/ui/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/features/shared/ui/ui/select';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +29,7 @@ import {
 import { EntitySearchBar, type FilterOption } from '@/features/shared/ui/ui/entity-search-bar';
 import { RightBadge } from './RightBadge';
 import { RIGHT_TYPES, RIGHT_GRADIENTS } from './RightFilters';
+import { GroupRelationshipConnector, GroupRelationshipNameTag } from './GroupRelationshipFields';
 import { LinkGroupDialog } from './LinkGroupDialog';
 import { WorkflowEditor } from './WorkflowEditor';
 import { PermissionGuard } from '@/features/auth/PermissionGuard';
@@ -58,7 +58,11 @@ interface ManageNetworkTabProps {
   incomingRequests: GroupedRequest[];
   outgoingRequests: GroupedRequest[];
   // Active relationships
-  filteredRelationships: { group: NetworkGroupEntity; rights: string[]; type: 'parent' | 'child' }[];
+  filteredRelationships: {
+    group: NetworkGroupEntity;
+    rights: string[];
+    type: 'parent' | 'child';
+  }[];
   allRelationships: NormalizedGroupRelationship[];
   // Handlers
   onAcceptRequest: (rels: NormalizedGroupRelationship[]) => void;
@@ -121,15 +125,65 @@ export function ManageNetworkTab({
   onDeleteWorkflow,
 }: ManageNetworkTabProps) {
   const { t } = useTranslation();
-  const incomingRequestCount = incomingRequests.reduce((total, entry) => total + entry.rels.length, 0);
-  const outgoingRequestCount = outgoingRequests.reduce((total, entry) => total + entry.rels.length, 0);
+  const currentGroupTagName = groupName || '';
+  const currentGroupDisplayName = groupName || t('common.network.thisGroup');
+  const incomingRequestCount = incomingRequests.reduce(
+    (total, entry) => total + entry.rels.length,
+    0
+  );
+  const outgoingRequestCount = outgoingRequests.reduce(
+    (total, entry) => total + entry.rels.length,
+    0
+  );
+
+  const renderRequestDescription = (
+    subjectName: string | null | undefined,
+    prefixKey: 'wantsToBe' | 'isRequestedAs',
+    type: 'parent' | 'child'
+  ) => (
+    <div className="flex flex-wrap items-center gap-2 leading-tight">
+      <GroupRelationshipNameTag name={subjectName ?? t('common.unspecified')} kind="selected" />
+      <span>{t(`common.network.${prefixKey}`)}</span>
+      <GroupRelationshipConnector relationshipType={type} mode="role" />
+      <GroupRelationshipNameTag name={currentGroupTagName} kind="current" caseStyle="embedded" />
+      <span>{t('common.network.withRights')}</span>
+    </div>
+  );
 
   const filterOptions: FilterOption[] = RIGHT_TYPES.map(right => ({
-    label: t(`common.rights.${right === 'informationRight' ? 'information' : right === 'amendmentRight' ? 'amendment' : right === 'rightToSpeak' ? 'speak' : right === 'activeVotingRight' ? 'activeVoting' : 'passiveVoting'}`) || right,
+    label:
+      t(
+        `common.rights.${right === 'informationRight' ? 'information' : right === 'amendmentRight' ? 'amendment' : right === 'rightToSpeak' ? 'speak' : right === 'activeVotingRight' ? 'activeVoting' : 'passiveVoting'}`
+      ) || right,
     value: right,
     active: manageRightFilter.has(right),
     gradient: RIGHT_GRADIENTS[right as keyof typeof RIGHT_GRADIENTS],
   }));
+
+  const directionOptions: {
+    value: 'all' | 'parent' | 'child';
+    label: string;
+    activeClassName?: string;
+  }[] = [
+    {
+      value: 'all',
+      label: t('common.network.allDirectionOptions'),
+    },
+    {
+      // "child" rows mean the current group acts as parent of the displayed group.
+      value: 'child',
+      label: t('common.network.thisGroupAsParent'),
+      activeClassName:
+        'border-0 bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:opacity-90',
+    },
+    {
+      // "parent" rows mean the current group acts as child of the displayed group.
+      value: 'parent',
+      label: t('common.network.thisGroupAsChild'),
+      activeClassName:
+        'border-0 bg-gradient-to-r from-sky-500 to-violet-500 text-white hover:opacity-90',
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -137,7 +191,7 @@ export function ManageNetworkTab({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">{t('common.network.groupRelationships')}</h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             {t('common.network.groupRelationshipsDescription')}
           </p>
         </div>
@@ -153,9 +207,7 @@ export function ManageNetworkTab({
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">{t('common.network.activeRelationships')}</CardTitle>
-          <CardDescription>
-            {t('common.network.groupRelationshipsDescription')}
-          </CardDescription>
+          <CardDescription>{t('common.network.groupRelationshipsDescription')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <EntitySearchBar
@@ -163,23 +215,31 @@ export function ManageNetworkTab({
             onSearchQueryChange={onSearchQueryChange}
             placeholder={t('common.network.searchByGroupName')}
             filterOptions={filterOptions}
+            filterLabel={t('common.labels.filterByRights')}
             onFilterToggle={onToggleRightFilter}
           />
 
-          <div className="flex gap-2">
-            <Select
-              value={directionFilter}
-              onValueChange={v => onDirectionFilterChange(v as 'all' | 'parent' | 'child')}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder={t('common.network.allDirections')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('common.network.allDirections')}</SelectItem>
-                <SelectItem value="parent">{t('common.network.parentsOnly')}</SelectItem>
-                <SelectItem value="child">{t('common.network.childrenOnly')}</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="space-y-2">
+            <p className="text-sm font-medium">{t('common.network.directionFilterLabel')}</p>
+            <div className="flex flex-wrap gap-2">
+              {directionOptions.map(option => {
+                const isActive = directionFilter === option.value;
+
+                return (
+                  <Button
+                    key={option.value}
+                    type="button"
+                    variant={isActive ? 'default' : 'outline'}
+                    className={
+                      isActive && option.activeClassName ? option.activeClassName : undefined
+                    }
+                    onClick={() => onDirectionFilterChange(option.value)}
+                  >
+                    {option.label}
+                  </Button>
+                );
+              })}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -197,9 +257,7 @@ export function ManageNetworkTab({
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">{req.group.name}</CardTitle>
                   <CardDescription>
-                    {req.type === 'parent'
-                      ? t('common.network.wantsToBeParent')
-                      : t('common.network.wantsToBeChild')}
+                    {renderRequestDescription(req.group.name, 'wantsToBe', req.type)}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -226,9 +284,7 @@ export function ManageNetworkTab({
                             <RightBadge right={rel.with_right ?? ''} />
                           </TableCell>
                           <TableCell>
-                            {rel.created_at
-                              ? new Date(rel.created_at).toLocaleDateString()
-                              : '-'}
+                            {rel.created_at ? new Date(rel.created_at).toLocaleDateString() : '-'}
                           </TableCell>
                           <TableCell>
                             <PermissionGuard
@@ -237,7 +293,11 @@ export function ManageNetworkTab({
                               context={{ groupId }}
                             >
                               <div className="flex gap-2">
-                                <Button size="sm" variant="outline" onClick={() => onRejectRequest([rel])}>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => onRejectRequest([rel])}
+                                >
                                   {t('common.network.reject')}
                                 </Button>
                                 <Button size="sm" onClick={() => onAcceptRequest([rel])}>
@@ -269,9 +329,7 @@ export function ManageNetworkTab({
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">{req.group.name}</CardTitle>
                   <CardDescription>
-                    {req.type === 'parent'
-                      ? t('common.network.requestAsParent')
-                      : t('common.network.requestAsChild')}
+                    {renderRequestDescription(req.group.name, 'isRequestedAs', req.type)}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -298,9 +356,7 @@ export function ManageNetworkTab({
                             <RightBadge right={rel.with_right ?? ''} />
                           </TableCell>
                           <TableCell>
-                            {rel.created_at
-                              ? new Date(rel.created_at).toLocaleDateString()
-                              : '-'}
+                            {rel.created_at ? new Date(rel.created_at).toLocaleDateString() : '-'}
                           </TableCell>
                           <TableCell>
                             <PermissionGuard
@@ -308,7 +364,11 @@ export function ManageNetworkTab({
                               resource="groupRelationships"
                               context={{ groupId }}
                             >
-                              <Button size="sm" variant="outline" onClick={() => onRejectRequest([rel])}>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => onRejectRequest([rel])}
+                              >
                                 {t('common.network.cancelRequest')}
                               </Button>
                             </PermissionGuard>
@@ -336,6 +396,7 @@ export function ManageNetworkTab({
                 <TableRow>
                   <TableHead>{t('common.network.groupName')}</TableHead>
                   <TableHead>{t('common.network.relationship')}</TableHead>
+                  <TableHead>{currentGroupDisplayName}</TableHead>
                   <TableHead>{t('common.labels.rights')}</TableHead>
                   <TableHead className="text-right">{t('common.actions.actions')}</TableHead>
                 </TableRow>
@@ -343,20 +404,32 @@ export function ManageNetworkTab({
               <TableBody>
                 {filteredRelationships.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                    <TableCell colSpan={5} className="text-muted-foreground h-24 text-center">
                       {t('common.network.noRelationshipsFound')}
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredRelationships.map((rel, idx) => (
                     <TableRow key={`${rel.group.id}-${rel.type}-${idx}`}>
-                      <TableCell className="font-medium">{rel.group.name}</TableCell>
                       <TableCell>
-                        <Badge variant={rel.type === 'parent' ? 'default' : 'secondary'}>
-                          {rel.type === 'parent'
-                            ? t('common.network.parent')
-                            : t('common.network.child')}
-                        </Badge>
+                        <div className="max-w-[14rem]">
+                          <GroupRelationshipNameTag
+                            name={rel.group.name ?? t('common.unspecified')}
+                            kind="selected"
+                          />
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <GroupRelationshipConnector relationshipType={rel.type} />
+                      </TableCell>
+                      <TableCell>
+                        <div className="max-w-[14rem]">
+                          <GroupRelationshipNameTag
+                            name={currentGroupTagName}
+                            kind="current"
+                            caseStyle="embedded"
+                          />
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
@@ -410,7 +483,7 @@ export function ManageNetworkTab({
                                   </AlertDialogCancel>
                                   <AlertDialogAction
                                     onClick={() => onDeleteRelationship(rel.group.id)}
-                                    className="bg-destructive text-white hover:bg-destructive/90"
+                                    className="bg-destructive hover:bg-destructive/90 text-white"
                                   >
                                     {t('common.actions.delete')}
                                   </AlertDialogAction>

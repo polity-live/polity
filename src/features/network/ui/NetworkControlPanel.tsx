@@ -1,14 +1,30 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Panel } from '@/features/network/ui/NetworkFlowBase';
-import { RightFilters, RIGHT_TYPES, RIGHT_GRADIENTS, RIGHT_LABELS } from '@/features/network/ui/RightFilters';
+import {
+  RightFilters,
+  RIGHT_TYPES,
+  RIGHT_GRADIENTS,
+  RIGHT_LABELS,
+} from '@/features/network/ui/RightFilters';
+import { cn } from '@/features/shared/utils/utils';
 
 export interface NetworkLegendItem {
   id: string;
   label: string;
   swatchClassName: string;
+}
+
+export interface NetworkRelationshipStatusFilter {
+  id: string;
+  label: string;
+  active: boolean;
+  onToggle: () => void;
+  activeClassName?: string;
+  inactiveClassName?: string;
 }
 
 interface NetworkControlPanelProps {
@@ -39,6 +55,10 @@ interface NetworkControlPanelProps {
   filterRight?: string;
   filteredByPrefix?: string;
   showRightsLegend?: boolean;
+  relationshipStatusFilters?: readonly NetworkRelationshipStatusFilter[];
+  relationshipStatusFiltersLabel?: string;
+  controlsExtraContent?: ReactNode;
+  legendExtraContent?: ReactNode;
 }
 
 export function NetworkControlPanel({
@@ -69,12 +89,19 @@ export function NetworkControlPanel({
   filterRight,
   filteredByPrefix = 'Filtered by',
   showRightsLegend = false,
+  relationshipStatusFilters,
+  relationshipStatusFiltersLabel,
+  controlsExtraContent,
+  legendExtraContent,
 }: NetworkControlPanelProps) {
   const canRenderRightFilter = showRightsFilter && !filterRight && selectedRights && onToggleRight;
 
   return (
-    <Panel position="top-left" className="rounded bg-white p-4 shadow dark:bg-background">
-      <div className="mb-2 flex items-center justify-between">
+    <Panel
+      position="top-left"
+      className="dark:bg-background flex max-h-[calc(100%-1rem)] w-[calc(100%-1rem)] max-w-sm flex-col overflow-hidden rounded bg-white p-4 shadow"
+    >
+      <div className="mb-2 flex shrink-0 items-center justify-between">
         <h2 className="text-lg font-bold">{title}</h2>
         <Button
           size="sm"
@@ -82,19 +109,17 @@ export function NetworkControlPanel({
           onClick={() => onPanelCollapsedChange(!panelCollapsed)}
           className="h-6 w-6 p-0"
         >
-          {panelCollapsed ? (
-            <ChevronDown className="h-4 w-4" />
-          ) : (
-            <ChevronUp className="h-4 w-4" />
-          )}
+          {panelCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
         </Button>
       </div>
 
       {!panelCollapsed && (
-        <>
-          {description ? <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">{description}</p> : null}
+        <div className="flex min-h-0 flex-1 flex-col">
+          {description ? (
+            <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">{description}</p>
+          ) : null}
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex shrink-0 flex-wrap gap-2">
             {showDisplayControls && isInteractive && onShowIndirectChange ? (
               <>
                 <Button
@@ -123,6 +148,8 @@ export function NetworkControlPanel({
                 {isInteractive ? lockLabel : unlockLabel}
               </Button>
             ) : null}
+
+            {controlsExtraContent}
           </div>
 
           {canRenderRightFilter ? (
@@ -130,16 +157,18 @@ export function NetworkControlPanel({
           ) : null}
 
           {filterRight ? (
-            <div className="mt-3 rounded-md bg-blue-50 p-2 text-sm dark:bg-blue-950/20">
+            <div className="mt-3 shrink-0 rounded-md bg-blue-50 p-2 text-sm dark:bg-blue-950/20">
               <span className="font-medium">{filteredByPrefix}:</span>{' '}
-              <span className="text-blue-700 dark:text-blue-300">{filterRight.replace('Right', '')}</span>
+              <span className="text-blue-700 dark:text-blue-300">
+                {filterRight.replace('Right', '')}
+              </span>
             </div>
           ) : null}
 
-          <div className="mt-3">
+          <div className="mt-3 flex min-h-0 flex-1 flex-col">
             <button
               onClick={() => onLegendCollapsedChange(!legendCollapsed)}
-              className="flex w-full items-center justify-between text-sm font-medium hover:text-primary"
+              className="hover:text-primary flex w-full shrink-0 items-center justify-between text-sm font-medium"
             >
               <span>{legendTitle}</span>
               {legendCollapsed ? (
@@ -149,8 +178,8 @@ export function NetworkControlPanel({
               )}
             </button>
             {!legendCollapsed && (
-              <div className="mt-2 space-y-2 text-sm">
-                {legendItems.map((item) => (
+              <div className="mt-2 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1 text-sm">
+                {legendItems.map(item => (
                   <div key={item.id} className="flex items-center gap-2">
                     <div className={item.swatchClassName}></div>
                     <span>{item.label}</span>
@@ -171,10 +200,44 @@ export function NetworkControlPanel({
                   </>
                 ) : null}
 
+                {relationshipStatusFilters && relationshipStatusFilters.length > 0 ? (
+                  <>
+                    <hr className="my-1 border-gray-200 dark:border-gray-700" />
+                    <div className="space-y-2">
+                      {relationshipStatusFiltersLabel ? (
+                        <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                          {relationshipStatusFiltersLabel}
+                        </div>
+                      ) : null}
+                      <div className="flex flex-wrap gap-2">
+                        {relationshipStatusFilters.map(filter => (
+                          <Button
+                            key={filter.id}
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={filter.onToggle}
+                            className={cn(
+                              'h-auto rounded-full px-2.5 py-1 text-xs',
+                              filter.active
+                                ? (filter.activeClassName ??
+                                    'border-primary bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground')
+                                : (filter.inactiveClassName ??
+                                    'border-border text-muted-foreground hover:bg-accent hover:text-foreground bg-transparent')
+                            )}
+                          >
+                            {filter.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                ) : null}
+
                 {showRightsLegend ? (
                   <>
                     <hr className="my-1 border-gray-200 dark:border-gray-700" />
-                    {RIGHT_TYPES.map((right) => (
+                    {RIGHT_TYPES.map(right => (
                       <div key={right} className="flex items-center gap-2">
                         <div className={`h-3 w-6 rounded-sm ${RIGHT_GRADIENTS[right]}`}></div>
                         <span>{RIGHT_LABELS[right]}</span>
@@ -182,10 +245,12 @@ export function NetworkControlPanel({
                     ))}
                   </>
                 ) : null}
+
+                {legendExtraContent ? <>{legendExtraContent}</> : null}
               </div>
             )}
           </div>
-        </>
+        </div>
       )}
     </Panel>
   );

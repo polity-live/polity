@@ -4,6 +4,8 @@
  * and reused across components without a React dependency.
  */
 
+import { isActiveGroupRelationshipStatus } from '@/features/network/logic/networkRelationshipHelpers';
+
 /** Translate a group right code to a German display label */
 export function formatRight(right: string): string {
   const labels: Record<string, string> = {
@@ -38,6 +40,7 @@ interface RelationshipRow {
   group?: RelatedGroupLike;
   related_group?: RelatedGroupLike;
   with_right?: string | null;
+  status?: string | null;
 }
 
 type GroupEntry = RelationshipRow['group'] & {};
@@ -48,7 +51,11 @@ export function groupRelationshipsByGroup(
 ): { group: GroupEntry; rights: string[] }[] {
   const grouped = new Map<string, { group: GroupEntry; rights: string[] }>();
 
-  relationships?.forEach((rel) => {
+  relationships?.forEach(rel => {
+    if (!isActiveGroupRelationshipStatus(rel.status)) {
+      return;
+    }
+
     const targetGroup = type === 'parent' ? rel.group : rel.related_group;
     if (!targetGroup) return;
 

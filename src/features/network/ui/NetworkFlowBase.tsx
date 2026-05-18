@@ -1,9 +1,10 @@
 'use client';
 
-import { createContext, ReactNode, useCallback, useContext } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import {
   ReactFlow,
   Controls,
+  ControlButton,
   Background,
   MiniMap,
   Panel,
@@ -12,7 +13,9 @@ import {
   OnNodesChange,
   OnEdgesChange,
 } from '@xyflow/react';
+import { Maximize2, Minimize2 } from 'lucide-react';
 import { RightsLabelEdge } from '@/features/network/ui/RightsLabelEdge';
+import { cn } from '@/features/shared/utils/utils';
 
 // Context to allow custom edge components to trigger onEdgeClick
 const EdgeClickContext = createContext<((edgeId: string) => void) | null>(null);
@@ -53,6 +56,8 @@ export function NetworkFlowBase<T extends Node = Node>({
   children,
   containerClassName = 'h-[32rem] min-h-[24rem]',
 }: NetworkFlowBaseProps<T>) {
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
   const handleEdgeLabelClick = useCallback(
     (edgeId: string) => {
       if (!onEdgeClick) return;
@@ -62,12 +67,40 @@ export function NetworkFlowBase<T extends Node = Node>({
         onEdgeClick(syntheticEvent, edge);
       }
     },
-    [onEdgeClick, edges],
+    [onEdgeClick, edges]
   );
+
+  useEffect(() => {
+    if (!isFullscreen) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsFullscreen(false);
+      }
+    };
+
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isFullscreen]);
 
   return (
     <EdgeClickContext.Provider value={handleEdgeLabelClick}>
-      <div className={`w-full rounded-lg border bg-background ${containerClassName}`}>
+      <div
+        className={cn(
+          'bg-background w-full border',
+          isFullscreen
+            ? 'fixed inset-0 z-50 h-dvh min-h-0 rounded-none border-0'
+            : ['rounded-lg', containerClassName]
+        )}
+      >
         <style>{`
         /* Dark mode styles for ReactFlow controls */
         .dark .react-flow__controls {
@@ -103,27 +136,35 @@ export function NetworkFlowBase<T extends Node = Node>({
           color: hsl(var(--foreground));
         }
       `}</style>
-      <ReactFlow
-        className="h-full w-full"
-        nodes={nodes}
-        edges={edges}
-        edgeTypes={edgeTypes}
-        nodesDraggable={nodesDraggable}
-        nodesFocusable={nodesFocusable}
-        nodesConnectable={nodesConnectable}
-        edgesFocusable={edgesFocusable}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onNodeClick={onNodeClick}
-        onEdgeClick={onEdgeClick}
-        fitView
-      >
-        {panel}
-        <Controls onInteractiveChange={onInteractiveChange} />
-        <MiniMap zoomable pannable />
-        <Background color="#aaa" gap={16} />
-      </ReactFlow>
-      {children}
+        <ReactFlow
+          className="h-full w-full"
+          nodes={nodes}
+          edges={edges}
+          edgeTypes={edgeTypes}
+          nodesDraggable={nodesDraggable}
+          nodesFocusable={nodesFocusable}
+          nodesConnectable={nodesConnectable}
+          edgesFocusable={edgesFocusable}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onNodeClick={onNodeClick}
+          onEdgeClick={onEdgeClick}
+          fitView
+        >
+          {panel}
+          <Controls onInteractiveChange={onInteractiveChange}>
+            <ControlButton
+              onClick={() => setIsFullscreen(currentValue => !currentValue)}
+              title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+              aria-label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+            >
+              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </ControlButton>
+          </Controls>
+          <MiniMap zoomable pannable />
+          <Background color="#aaa" gap={16} />
+        </ReactFlow>
+        {children}
       </div>
     </EdgeClickContext.Provider>
   );

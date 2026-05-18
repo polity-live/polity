@@ -7,9 +7,10 @@ import { CreateInputField } from '../CreateFields';
 interface DateTimeRangeInputProps {
   startDate: string;
   startTime: string;
-  endDate: string;
-  endTime: string;
+  endDate?: string;
+  endTime?: string;
   onChange: (field: 'startDate' | 'startTime' | 'endDate' | 'endTime', value: string) => void;
+  showEnd?: boolean;
 }
 
 function parseInputDate(value: string): Date | undefined {
@@ -35,18 +36,19 @@ function formatInputDate(value: Date | undefined): string {
 export function DateTimeRangeInput({
   startDate,
   startTime,
-  endDate,
-  endTime,
+  endDate = '',
+  endTime = '',
   onChange,
+  showEnd = true,
 }: DateTimeRangeInputProps) {
   const { t } = useTranslation();
   const selectedStartDate = parseInputDate(startDate);
-  const selectedEndDate = parseInputDate(endDate);
+  const selectedEndDate = showEnd ? parseInputDate(endDate) : undefined;
 
   return (
     <div className="space-y-4">
       <Label>{t('pages.create.event.dateTime')}</Label>
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className={showEnd ? 'grid gap-4 lg:grid-cols-2' : 'grid gap-4'}>
         <div className="space-y-3 rounded-lg border p-4">
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-2">
@@ -76,38 +78,40 @@ export function DateTimeRangeInput({
             onValueChange={value => onChange('startTime', value)}
           />
         </div>
-        <div className="space-y-3 rounded-lg border p-4">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <Label>{t('pages.create.event.endDate')}</Label>
-              {selectedEndDate ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onChange('endDate', '')}
-                >
-                  {t('common.clear', 'Clear')}
-                </Button>
-              ) : null}
+        {showEnd ? (
+          <div className="space-y-3 rounded-lg border p-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <Label>{t('pages.create.event.endDate')}</Label>
+                {selectedEndDate ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onChange('endDate', '')}
+                  >
+                    {t('common.clear', 'Clear')}
+                  </Button>
+                ) : null}
+              </div>
+              <Calendar
+                mode="single"
+                selected={selectedEndDate}
+                onSelect={value => onChange('endDate', formatInputDate(value))}
+                className="rounded-md border"
+                disabled={date =>
+                  selectedStartDate ? date.getTime() < selectedStartDate.getTime() : false
+                }
+              />
             </div>
-            <Calendar
-              mode="single"
-              selected={selectedEndDate}
-              onSelect={value => onChange('endDate', formatInputDate(value))}
-              className="rounded-md border"
-              disabled={date =>
-                selectedStartDate ? date.getTime() < selectedStartDate.getTime() : false
-              }
+            <CreateInputField
+              label={t('pages.create.event.endTime')}
+              type="time"
+              value={endTime}
+              onValueChange={value => onChange('endTime', value)}
             />
           </div>
-          <CreateInputField
-            label={t('pages.create.event.endTime')}
-            type="time"
-            value={endTime}
-            onValueChange={value => onChange('endTime', value)}
-          />
-        </div>
+        ) : null}
       </div>
     </div>
   );

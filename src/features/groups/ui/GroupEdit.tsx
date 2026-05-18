@@ -95,6 +95,7 @@ export function GroupEdit({ groupId }: GroupEditProps) {
         onCancel={() => navigate({ to: `/group/${groupId}` })}
         actorId={user?.id ?? undefined}
         visibility={group?.visibility as 'public' | 'private' | 'authenticated' | undefined}
+        groupType={group.group_type}
       />
     </div>
   );

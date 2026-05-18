@@ -1,7 +1,15 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useGroupNetwork as useFacadeGroupNetwork } from '@/zero/groups/useGroupState';
-import { RIGHT_TYPES, formatRights } from '@/features/network/ui/RightFilters';
-import { normalizeGroupRelationship, type NormalizedGroupRelationship, type NetworkGroupEntity } from '../types/network.types';
+import { RIGHT_TYPES } from '@/features/network/ui/RightFilters';
+import {
+  normalizeGroupRelationship,
+  type NormalizedGroupRelationship,
+  type NetworkGroupEntity,
+} from '../types/network.types';
+import {
+  isActiveGroupRelationshipStatus,
+  isRequestGroupRelationshipStatus,
+} from '../logic/networkRelationshipHelpers';
 
 export function useGroupNetwork(groupId: string) {
   const { group, relationships: rawRelationships, isLoading } = useFacadeGroupNetwork(groupId);
@@ -10,7 +18,7 @@ export function useGroupNetwork(groupId: string) {
 
   const relationships = useMemo(
     () => (rawRelationships || []).map(rel => normalizeGroupRelationship(rel)),
-    [rawRelationships],
+    [rawRelationships]
   ) as NormalizedGroupRelationship[];
 
   // Categorize relationships
@@ -20,18 +28,15 @@ export function useGroupNetwork(groupId: string) {
     const outgoing: NormalizedGroupRelationship[] = [];
 
     relationships.forEach(rel => {
-        // Treat undefined status as 'active' for backward compatibility
-        const status = rel.status || 'active';
-        
-        if (status === 'active') {
-            active.push(rel);
-        } else if (status === 'requested') {
-            if (rel.initiator_group_id === groupId) {
-                outgoing.push(rel);
-            } else {
-                incoming.push(rel);
-            }
+      if (isActiveGroupRelationshipStatus(rel.status)) {
+        active.push(rel);
+      } else if (isRequestGroupRelationshipStatus(rel.status)) {
+        if (rel.initiator_group_id === groupId) {
+          outgoing.push(rel);
+        } else {
+          incoming.push(rel);
         }
+      }
     });
 
     return { activeRelationships: active, incomingRequests: incoming, outgoingRequests: outgoing };
@@ -51,7 +56,7 @@ export function useGroupNetwork(groupId: string) {
       const parentsMap = new Map<string, { group: NetworkGroupEntity; rights: string[] }>();
       const childrenMap = new Map<string, { group: NetworkGroupEntity; rights: string[] }>();
 
-      stableRelationships.forEach((rel) => {
+      stableRelationships.forEach(rel => {
         if (rel.related_group?.id === targetGroupId) {
           // This is a parent relationship
           const parentId = rel.group?.id;
@@ -91,14 +96,14 @@ export function useGroupNetwork(groupId: string) {
   // Build indirect (recursive) relationships
   const getIndirectRelationships = useCallback(
     (targetGroupId: string) => {
-        const parentsMap = new Map<
+      const parentsMap = new Map<
         string,
         { group: NetworkGroupEntity; rights: string[]; level: number; childId?: string }
-        >();
-        const childrenMap = new Map<
+      >();
+      const childrenMap = new Map<
         string,
         { group: NetworkGroupEntity; rights: string[]; level: number; parentId?: string }
-        >();
+      >();
 
       // First, get all direct relationships and their rights
       const directRels = getDirectRelationships(targetGroupId);
@@ -120,7 +125,7 @@ export function useGroupNetwork(groupId: string) {
           visited.add(parent.group.id); // Mark direct parent as visited
 
           const findParentsForRight = (id: string, level: number) => {
-            stableRelationships.forEach((rel) => {
+            stableRelationships.forEach(rel => {
               if (
                 rel.related_group?.id === id &&
                 rel.with_right === right &&
@@ -172,7 +177,7 @@ export function useGroupNetwork(groupId: string) {
           visited.add(child.group.id); // Mark direct child as visited
 
           const findChildrenForRight = (id: string, level: number, currentParentId: string) => {
-            stableRelationships.forEach((rel) => {
+            stableRelationships.forEach(rel => {
               if (
                 rel.group?.id === id &&
                 rel.with_right === right &&
@@ -229,22 +234,24 @@ export function useGroupNetwork(groupId: string) {
 
   const networkData = useMemo(() => {
     if (!groupId) return { parents: [], children: [] };
-    
+
     const { parents, children } = showIndirect
       ? getIndirectRelationships(groupId)
       : getDirectRelationships(groupId);
 
     // Filter by selected rights
     const filterByRights = (items: typeof parents) => {
-       return items.map(item => ({
-           ...item,
-           rights: item.rights.filter(r => selectedRights.has(r))
-       })).filter(item => item.rights.length > 0);
+      return items
+        .map(item => ({
+          ...item,
+          rights: item.rights.filter(r => selectedRights.has(r)),
+        }))
+        .filter(item => item.rights.length > 0);
     };
 
     return {
-        parents: filterByRights(parents),
-        children: filterByRights(children)
+      parents: filterByRights(parents),
+      children: filterByRights(children),
     };
   }, [groupId, showIndirect, getDirectRelationships, getIndirectRelationships, selectedRights]);
 
@@ -260,6 +267,6 @@ export function useGroupNetwork(groupId: string) {
     allRelationships: relationships,
     activeRelationships,
     incomingRequests,
-    outgoingRequests
+    outgoingRequests,
   };
 }

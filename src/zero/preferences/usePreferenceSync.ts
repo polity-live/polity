@@ -1,13 +1,13 @@
-import { useCallback, useEffect, useRef } from 'react'
-import { useZero } from '@rocicorp/zero/react'
-import { usePreferenceState } from './usePreferenceState'
-import { mutators } from '../mutators'
-import { useThemeStore } from '@/features/shared/global-state/theme.store'
-import { useLanguageStore } from '@/features/shared/global-state/language.store'
-import { useNavigationStore } from '@/features/navigation/state/navigation.store'
-import type { ThemeType } from '@/features/shared/global-state/theme.store'
-import type { Language } from '@/features/shared/global-state/language.store'
-import type { NavigationView } from '@/features/navigation/types/navigation.types'
+import { useCallback, useEffect, useRef } from 'react';
+import { useZero } from '@rocicorp/zero/react';
+import { usePreferenceState } from './usePreferenceState';
+import { mutators } from '../mutators';
+import { useThemeStore } from '@/features/shared/global-state/theme.store';
+import { useLanguageStore } from '@/features/shared/global-state/language.store';
+import { useNavigationStore } from '@/features/navigation/state/navigation.store';
+import type { ThemeType } from '@/features/shared/global-state/theme.store';
+import type { Language } from '@/features/shared/global-state/language.store';
+import type { NavigationView } from '@/features/navigation/types/navigation.types';
 
 /**
  * Bidirectional sync between persisted DB preferences and Zustand stores.
@@ -17,36 +17,36 @@ import type { NavigationView } from '@/features/navigation/types/navigation.type
  * 2. On store changes: Zustand → DB (persists preferences)
  */
 export function usePreferenceSync() {
-  const zero = useZero()
-  const { preference, isLoading } = usePreferenceState()
-  const hasSynced = useRef(false)
-  const preferenceRef = useRef(preference)
-  preferenceRef.current = preference
+  const zero = useZero();
+  const { preference, isLoading } = usePreferenceState();
+  const hasSynced = useRef(false);
+  const preferenceRef = useRef(preference);
+  preferenceRef.current = preference;
 
-  const isLoadingRef = useRef(isLoading)
-  isLoadingRef.current = isLoading
+  const isLoadingRef = useRef(isLoading);
+  isLoadingRef.current = isLoading;
 
-  const setTheme = useThemeStore(state => state.setTheme)
-  const theme = useThemeStore(state => state.theme)
+  const setTheme = useThemeStore(state => state.setTheme);
+  const theme = useThemeStore(state => state.theme);
 
-  const setLanguage = useLanguageStore(state => state.setLanguage)
-  const language = useLanguageStore(state => state.language)
+  const setLanguage = useLanguageStore(state => state.setLanguage);
+  const language = useLanguageStore(state => state.language);
 
-  const setNavigationView = useNavigationStore(state => state.setNavigationView)
-  const navigationView = useNavigationStore(state => state.navigationView)
+  const setNavigationView = useNavigationStore(state => state.setNavigationView);
+  const navigationView = useNavigationStore(state => state.navigationView);
 
   // Track previous values to avoid writing back what we just loaded
-  const prevTheme = useRef(theme)
-  const prevLanguage = useRef(language)
-  const prevNavigationView = useRef(navigationView)
+  const prevTheme = useRef(theme);
+  const prevLanguage = useRef(language);
+  const prevNavigationView = useRef(navigationView);
 
   const persistField = useCallback(
     (fields: Record<string, string>) => {
       // Skip if preference data is still loading — a null preferenceRef
       // during loading does NOT mean the row doesn't exist on the server.
-      if (isLoadingRef.current) return
+      if (isLoadingRef.current) return;
 
-      const pref = preferenceRef.current
+      const pref = preferenceRef.current;
       if (!pref) {
         zero.mutate(
           mutators.preferences.create({
@@ -55,81 +55,92 @@ export function usePreferenceSync() {
             theme: 'system',
             language: 'en',
             navigation_view: 'asButtonList',
+            group_network_layouts: {},
             ...fields,
           })
-        )
+        );
       } else {
         zero.mutate(
           mutators.preferences.update({
             id: pref.id,
             ...fields,
           })
-        )
+        );
       }
     },
     [zero]
-  )
+  );
 
   // DB → Zustand (existing user) or Zustand → DB (new user) on first load
   useEffect(() => {
-    if (isLoading || hasSynced.current || !preference) return
+    if (isLoading || hasSynced.current || !preference) return;
 
-    hasSynced.current = true
+    hasSynced.current = true;
 
     // New user: trigger-created defaults have updated_at === created_at.
     // Push current Zustand values (browser-derived) to DB instead of overwriting them.
-    const isNewUser = preference.created_at === preference.updated_at
+    const isNewUser = preference.created_at === preference.updated_at;
 
     if (isNewUser) {
       // Zustand → DB: persist browser-derived values
-      prevTheme.current = theme
-      prevLanguage.current = language
-      prevNavigationView.current = navigationView
-      persistField({ theme, language, navigation_view: navigationView })
-      return
+      prevTheme.current = theme;
+      prevLanguage.current = language;
+      prevNavigationView.current = navigationView;
+      persistField({ theme, language, navigation_view: navigationView });
+      return;
     }
 
     // Existing user: DB → Zustand (restore saved preferences)
     if (preference.theme) {
-      const dbTheme = preference.theme as ThemeType
-      prevTheme.current = dbTheme
-      setTheme(dbTheme)
+      const dbTheme = preference.theme as ThemeType;
+      prevTheme.current = dbTheme;
+      setTheme(dbTheme);
     }
 
     if (preference.language) {
-      const dbLang = preference.language as Language
-      prevLanguage.current = dbLang
-      setLanguage(dbLang)
+      const dbLang = preference.language as Language;
+      prevLanguage.current = dbLang;
+      setLanguage(dbLang);
     }
 
     if (preference.navigation_view) {
-      const dbNav = preference.navigation_view as NavigationView
-      prevNavigationView.current = dbNav
-      setNavigationView(dbNav)
+      const dbNav = preference.navigation_view as NavigationView;
+      prevNavigationView.current = dbNav;
+      setNavigationView(dbNav);
     }
-  }, [preference, isLoading, setTheme, setLanguage, setNavigationView, theme, language, navigationView, persistField])
+  }, [
+    preference,
+    isLoading,
+    setTheme,
+    setLanguage,
+    setNavigationView,
+    theme,
+    language,
+    navigationView,
+    persistField,
+  ]);
 
   // Zustand → DB: persist theme changes
   useEffect(() => {
-    if (!hasSynced.current) return
-    if (theme === prevTheme.current) return
-    prevTheme.current = theme
-    persistField({ theme })
-  }, [theme, persistField])
+    if (!hasSynced.current) return;
+    if (theme === prevTheme.current) return;
+    prevTheme.current = theme;
+    persistField({ theme });
+  }, [theme, persistField]);
 
   // Zustand → DB: persist language changes
   useEffect(() => {
-    if (!hasSynced.current) return
-    if (language === prevLanguage.current) return
-    prevLanguage.current = language
-    persistField({ language })
-  }, [language, persistField])
+    if (!hasSynced.current) return;
+    if (language === prevLanguage.current) return;
+    prevLanguage.current = language;
+    persistField({ language });
+  }, [language, persistField]);
 
   // Zustand → DB: persist navigation view changes
   useEffect(() => {
-    if (!hasSynced.current) return
-    if (navigationView === prevNavigationView.current) return
-    prevNavigationView.current = navigationView
-    persistField({ navigation_view: navigationView })
-  }, [navigationView, persistField])
+    if (!hasSynced.current) return;
+    if (navigationView === prevNavigationView.current) return;
+    prevNavigationView.current = navigationView;
+    persistField({ navigation_view: navigationView });
+  }, [navigationView, persistField]);
 }

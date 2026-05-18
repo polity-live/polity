@@ -9,6 +9,10 @@ export const groupPageTranslations = {
     title: 'Untergeordnete Gruppen',
     description: 'Gruppen, die dieser Gruppe untergeordnet sind',
   },
+  parentGroups: {
+    title: 'Übergeordnete Gruppen',
+    description: 'Gruppen, die dieser Gruppe übergeordnet sind',
+  },
   memberships: {
     title: 'Mitglieder',
     searchPlaceholder: 'Mitglieder nach Name, Rolle oder Status suchen...',

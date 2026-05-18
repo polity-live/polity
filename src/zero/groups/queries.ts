@@ -22,12 +22,20 @@ export const groupQueries = {
   ),
 
   hierarchy: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
-    zql.group_relationship.where('group_id', groupId).related('group').related('related_group').orderBy('created_at', 'desc')
+    zql.group_relationship
+      .where('group_id', groupId)
+      .related('group')
+      .related('related_group')
+      .orderBy('created_at', 'desc')
   ),
 
   /** Reverse direction: relationships where this group is the target */
   hierarchyAsTarget: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
-    zql.group_relationship.where('related_group_id', groupId).related('group').related('related_group').orderBy('created_at', 'desc')
+    zql.group_relationship
+      .where('related_group_id', groupId)
+      .related('group')
+      .related('related_group')
+      .orderBy('created_at', 'desc')
   ),
 
   allRelationships: defineQuery(z.object({}), () =>
@@ -84,6 +92,9 @@ export const groupQueries = {
           q.related('memberships').related('events').related('amendments')
         )
       )
+      .related('relationships_as_target', q =>
+        q.related('group', q => q.related('memberships').related('events').related('amendments'))
+      )
       .related('group_hashtags', q => q.related('hashtag'))
       .related('positions', q => q.related('holder_history', q => q.related('user')))
       .related('blogs', q => q.related('blog_hashtags', q => q.related('hashtag')))
@@ -139,7 +150,11 @@ export const groupQueries = {
 
   /** Roles scoped to a group with action_rights */
   rolesWithRights: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
-    zql.role.where('group_id', groupId).where('scope', 'group').related('action_rights').orderBy('sort_order', 'asc')
+    zql.role
+      .where('group_id', groupId)
+      .where('scope', 'group')
+      .related('action_rights')
+      .orderBy('sort_order', 'asc')
   ),
 
   /** All group_relationship rows with both group and related_group (for network views) */
@@ -149,7 +164,10 @@ export const groupQueries = {
 
   /** Amendments for a group with hashtags and creator */
   amendmentsByGroup: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
-    zql.amendment.where('group_id', groupId).related('amendment_hashtags', q => q.related('hashtag')).related('created_by')
+    zql.amendment
+      .where('group_id', groupId)
+      .related('amendment_hashtags', q => q.related('hashtag'))
+      .related('created_by')
   ),
 
   /** Amendments for a group with nested documents→collaborators→user (for group document lists) */
@@ -222,9 +240,12 @@ export const groupQueries = {
   userMembershipsWithGroupRelations: defineQuery(
     z.object({ userId: z.string() }),
     ({ args: { userId } }) =>
-      zql.group_membership
-        .where('user_id', userId)
-        .related('group', q => q.related('group_hashtags', q => q.related('hashtag')).related('events').related('amendments'))
+      zql.group_membership.where('user_id', userId).related('group', q =>
+        q
+          .related('group_hashtags', q => q.related('hashtag'))
+          .related('events')
+          .related('amendments')
+      )
   ),
 
   /** Single group by ID (no relations, for subscriber name lookups) */
@@ -242,11 +263,17 @@ export const groupQueries = {
 export type GroupByIdFullRow = QueryRowType<typeof groupQueries.byIdFull>;
 export type GroupWikiRow = QueryRowType<typeof groupQueries.wikiData>;
 export type GroupMembershipWithUserRow = QueryRowType<typeof groupQueries.membershipsWithUsers>;
-export type GroupMembershipWithRoleRow = QueryRowType<typeof groupQueries.allMembershipsInGroupWithRole>;
-export type GroupMembershipWithRelationsRow = QueryRowType<typeof groupQueries.userMembershipsWithGroupRelations>;
+export type GroupMembershipWithRoleRow = QueryRowType<
+  typeof groupQueries.allMembershipsInGroupWithRole
+>;
+export type GroupMembershipWithRelationsRow = QueryRowType<
+  typeof groupQueries.userMembershipsWithGroupRelations
+>;
 export type GroupMembershipsByUserRow = QueryRowType<typeof groupQueries.membershipsByUser>;
 export type GroupRoleWithRightsRow = QueryRowType<typeof groupQueries.rolesWithRights>;
-export type GroupMembershipWithRolesAndRightsRow = QueryRowType<typeof groupQueries.membershipsWithRolesAndRights>;
+export type GroupMembershipWithRolesAndRightsRow = QueryRowType<
+  typeof groupQueries.membershipsWithRolesAndRights
+>;
 export type GroupPositionFullRow = QueryRowType<typeof groupQueries.positionsFull>;
 export type GroupTodoRow = QueryRowType<typeof groupQueries.todosByGroup>;
 export type GroupAmendmentRow = QueryRowType<typeof groupQueries.amendmentsByGroup>;

@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import type { Value } from 'platejs';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -6,6 +6,7 @@ import { Label } from '@/features/shared/ui/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/features/shared/ui/ui/radio-group';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
+import { DateTimeRangeInput } from '../ui/inputs/DateTimeRangeInput';
 import { VisibilityInput } from '../ui/inputs/VisibilityInput';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import { CreateInputField } from '../ui/CreateFields';
@@ -17,7 +18,15 @@ import { useAllGroups } from '@/zero/groups/useGroupState';
 import { useUserState } from '@/zero/users/useUserState';
 import { useAuth } from '@/providers/auth-provider';
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
-import { RIGHT_TYPES } from '@/features/network/ui/RightFilters';
+import {
+  getCurrentGroupRelationshipLabel,
+  getGroupRelationshipRightLabel,
+  GroupRelationshipRightsSelector,
+  GroupRelationshipTypeSelect,
+  invertGroupRelationshipType,
+  type GroupRelationshipRight,
+  type GroupRelationshipType,
+} from '@/features/network/ui/GroupRelationshipFields';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
@@ -28,7 +37,6 @@ import {
   CardTitle,
 } from '@/features/shared/ui/ui/card';
 import { Switch } from '@/features/shared/ui/ui/switch';
-import { Checkbox } from '@/features/shared/ui/ui/checkbox';
 import {
   Accordion,
   AccordionContent,
@@ -65,8 +73,8 @@ type GroupType = 'base' | 'hierarchical';
 interface LinkedGroup {
   groupId: string;
   groupName: string;
-  type: 'parent' | 'child';
-  rights: string[];
+  type: GroupRelationshipType;
+  rights: GroupRelationshipRight[];
 }
 
 interface CsvInviteSummary extends InviteCsvMatchResult {
@@ -132,8 +140,8 @@ export function useCreateGroupForm(): CreateFormConfig {
   // Link groups state
   const [linkedGroups, setLinkedGroups] = useState<LinkedGroup[]>([]);
   const [linkGroupId, setLinkGroupId] = useState('');
-  const [linkType, setLinkType] = useState<'parent' | 'child'>('parent');
-  const [linkRights, setLinkRights] = useState<Set<string>>(new Set());
+  const [linkType, setLinkType] = useState<GroupRelationshipType>('parent');
+  const [linkRights, setLinkRights] = useState<Set<GroupRelationshipRight>>(new Set());
 
   // Constitutional event state
   const [createConstitutionalEvent, setCreateConstitutionalEvent] = useState(false);
@@ -145,6 +153,12 @@ export function useCreateGroupForm(): CreateFormConfig {
   const { allHashtags } = useCommonState({ loadAllHashtags: true });
   const emailValidationMessage = t('common.validation.emailHint', 'Enter a valid email address.');
   const emailIsValid = isValidOptionalEmailAddress(email);
+
+  useEffect(() => {
+    if (groupType === 'base' && linkType !== 'child') {
+      setLinkType('child');
+    }
+  }, [groupType, linkType]);
 
   const handleDescriptionContentChange = useCallback((value: Value) => {
     setDescriptionContent(value);
@@ -311,11 +325,11 @@ export function useCreateGroupForm(): CreateFormConfig {
         for (const right of link.rights) {
           await createRelationship({
             id: crypto.randomUUID(),
-            group_id: isParent ? link.groupId : groupId,
-            related_group_id: isParent ? groupId : link.groupId,
-            relationship_type: link.type,
+            group_id: isParent ? groupId : link.groupId,
+            related_group_id: isParent ? link.groupId : groupId,
+            relationship_type: invertGroupRelationshipType(link.type),
             with_right: right,
-            status: 'pending',
+            status: 'requested',
             initiator_group_id: groupId,
           });
         }
@@ -353,6 +367,8 @@ export function useCreateGroupForm(): CreateFormConfig {
     street,
     house_number,
   });
+
+  const selectedLinkedGroupName = allGroups.find(group => group.id === linkGroupId)?.name ?? '';
 
   const config = useMemo(
     (): CreateFormConfig => ({
@@ -755,50 +771,39 @@ export function useCreateGroupForm(): CreateFormConfig {
                 onChange={item => setLinkGroupId(item?.id ?? '')}
                 placeholder={t('pages.create.group.searchGroups')}
               />
-              <div className="space-y-2">
-                <Label>{t('pages.create.group.relationshipType')}</Label>
-                <RadioGroup
-                  value={linkType}
-                  onValueChange={v => setLinkType(v as 'parent' | 'child')}
-                >
-                  <div className="flex gap-4">
-                    <Label htmlFor="link-parent" className="flex cursor-pointer items-center gap-2">
-                      <RadioGroupItem value="parent" id="link-parent" />
-                      {t('pages.create.group.theyAreParent')}
-                    </Label>
-                    <Label htmlFor="link-child" className="flex cursor-pointer items-center gap-2">
-                      <RadioGroupItem value="child" id="link-child" />
-                      {t('pages.create.group.theyAreChild')}
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div>
-              <div className="space-y-2">
-                <Label>{t('pages.create.group.selectRights')}</Label>
-                <div className="flex flex-wrap gap-3">
-                  {RIGHT_TYPES.map(right => (
-                    <Label
-                      key={right}
-                      htmlFor={`right-${right}`}
-                      className="flex cursor-pointer items-center gap-2 text-sm"
-                    >
-                      <Checkbox
-                        id={`right-${right}`}
-                        checked={linkRights.has(right)}
-                        onCheckedChange={checked => {
-                          setLinkRights(prev => {
-                            const next = new Set(prev);
-                            if (checked) next.add(right);
-                            else next.delete(right);
-                            return next;
-                          });
-                        }}
-                      />
-                      {t(`pages.create.group.rights.${right}`)}
-                    </Label>
-                  ))}
-                </div>
-              </div>
+              {linkGroupId ? (
+                <>
+                  <GroupRelationshipTypeSelect
+                    id="create-group-relationship-type"
+                    label={t('pages.create.group.relationshipType')}
+                    value={linkType}
+                    currentGroupName={name}
+                    selectedGroupName={selectedLinkedGroupName}
+                    onValueChange={setLinkType}
+                    disabledOptions={{ parent: groupType === 'base' }}
+                    helperText={
+                      groupType === 'base'
+                        ? t('common.network.baseGroupsCanOnlyBeChildren')
+                        : undefined
+                    }
+                  />
+                  <GroupRelationshipRightsSelector
+                    label={t('pages.create.group.selectRights')}
+                    selectedRights={linkRights}
+                    onToggleRight={right => {
+                      setLinkRights(prev => {
+                        const next = new Set(prev);
+                        if (next.has(right)) {
+                          next.delete(right);
+                        } else {
+                          next.add(right);
+                        }
+                        return next;
+                      });
+                    }}
+                  />
+                </>
+              ) : null}
               <Button
                 type="button"
                 variant="outline"
@@ -827,7 +832,17 @@ export function useCreateGroupForm(): CreateFormConfig {
                           : t('pages.create.group.child')}
                       </Badge>
                       <div className="min-w-0 flex-1 space-y-2">
-                        <span className="block text-sm font-medium">{lg.groupName}</span>
+                        <div className="space-y-1">
+                          <span className="block text-sm font-medium">{lg.groupName}</span>
+                          <p className="text-muted-foreground text-xs">
+                            {getCurrentGroupRelationshipLabel({
+                              relationshipType: lg.type,
+                              currentGroupName: name,
+                              selectedGroupName: lg.groupName,
+                              t,
+                            })}
+                          </p>
+                        </div>
                         <div className="flex flex-wrap gap-2">
                           {lg.rights.map(right => (
                             <Badge
@@ -837,7 +852,7 @@ export function useCreateGroupForm(): CreateFormConfig {
                                 getRightBadgeClasses(right)
                               )}
                             >
-                              {t(`pages.create.group.rights.${right}`)}
+                              {getGroupRelationshipRightLabel(right, t)}
                             </Badge>
                           ))}
                         </div>
@@ -892,20 +907,15 @@ export function useCreateGroupForm(): CreateFormConfig {
                     onValueChange={setEventLocation}
                     placeholder={t('pages.create.group.eventLocationPlaceholder')}
                   />
-                  <div className="grid grid-cols-2 gap-4">
-                    <CreateInputField
-                      label={t('pages.create.group.eventStartDate')}
-                      type="date"
-                      value={eventStartDate}
-                      onValueChange={setEventStartDate}
-                    />
-                    <CreateInputField
-                      label={t('pages.create.group.eventStartTime')}
-                      type="time"
-                      value={eventStartTime}
-                      onValueChange={setEventStartTime}
-                    />
-                  </div>
+                  <DateTimeRangeInput
+                    startDate={eventStartDate}
+                    startTime={eventStartTime}
+                    showEnd={false}
+                    onChange={(field, value) => {
+                      if (field === 'startDate') setEventStartDate(value);
+                      else if (field === 'startTime') setEventStartTime(value);
+                    }}
+                  />
                 </div>
               )}
             </div>
@@ -948,7 +958,16 @@ export function useCreateGroupForm(): CreateFormConfig {
                   ? [
                       {
                         label: t('pages.create.group.groupLinksLabel'),
-                        value: linkedGroups.map(g => `${g.groupName} (${g.type})`).join(', '),
+                        value: linkedGroups
+                          .map(g =>
+                            getCurrentGroupRelationshipLabel({
+                              relationshipType: g.type,
+                              currentGroupName: name,
+                              selectedGroupName: g.groupName,
+                              t,
+                            })
+                          )
+                          .join(', '),
                       },
                     ]
                   : []),

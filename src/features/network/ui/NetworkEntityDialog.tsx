@@ -14,10 +14,11 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { GroupSearchCard } from '@/features/search/ui/GroupSearchCard';
 import { GroupEventsList } from './GroupEventsList';
 import { RightBadge } from './RightBadge';
+import { Badge } from '@/features/shared/ui/ui/badge';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import type { SearchResultItem } from '@/features/search/types/search.types';
 import type { EventByGroupRow } from '@/zero/events/useEventState';
+import type { NetworkRelationshipKind } from '@/features/network/logic/networkRelationshipHelpers';
 import type { NetworkGroupEntity } from '../types/network.types';
 
 interface NetworkEventData {
@@ -43,6 +44,8 @@ interface NetworkRelationshipData {
   sourceName?: string | null;
   targetName?: string | null;
   rights?: string[];
+  relationshipKinds?: NetworkRelationshipKind[];
+  rightRelationshipKinds?: Record<string, NetworkRelationshipKind>;
   label?: string | null | ReactNode;
 }
 
@@ -68,6 +71,19 @@ interface NetworkEntityDialogProps {
 export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntityDialogProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
+
+  const getRelationshipKindLabel = (relationshipKind: NetworkRelationshipKind) => {
+    switch (relationshipKind) {
+      case 'active':
+        return t('common.network.active');
+      case 'incoming':
+        return t('common.network.incomingRequest');
+      case 'outgoing':
+        return t('common.network.outgoingRequest');
+      default:
+        return relationshipKind;
+    }
+  };
 
   if (!entity) return null;
 
@@ -135,7 +151,7 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
                 <div>
                   <h3 className="text-xl font-semibold">{entity.data.title}</h3>
                   {entity.data.description && (
-                    <p className="mt-2 text-sm text-muted-foreground">{entity.data.description}</p>
+                    <p className="text-muted-foreground mt-2 text-sm">{entity.data.description}</p>
                   )}
                   {entity.data.startDate && (
                     <p className="mt-2 text-sm">
@@ -145,7 +161,8 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
                   )}
                   {entity.data.location && (
                     <p className="text-sm">
-                      <span className="font-medium">{t('common.labels.location')}:</span> {entity.data.location}
+                      <span className="font-medium">{t('common.labels.location')}:</span>{' '}
+                      {entity.data.location}
                     </p>
                   )}
                 </div>
@@ -161,14 +178,14 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
                   {entity.data.avatarFile?.url && (
                     <img
                       src={entity.data.avatarFile.url}
-                    alt={entity.data.name ?? undefined}
+                      alt={entity.data.name ?? undefined}
                       className="h-16 w-16 rounded-full object-cover"
                     />
                   )}
                   <div>
                     <h3 className="text-xl font-semibold">{entity.data.name}</h3>
                     {entity.data.subtitle && (
-                      <p className="text-sm text-muted-foreground">{entity.data.subtitle}</p>
+                      <p className="text-muted-foreground text-sm">{entity.data.subtitle}</p>
                     )}
                   </div>
                 </div>
@@ -181,10 +198,10 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
             <div className="space-y-4">
               {/* Direction: Parent → Child */}
               {(entity.data.sourceName || entity.data.targetName) && (
-                <div className="flex items-center gap-2 rounded-lg border bg-muted/30 p-3">
+                <div className="bg-muted/30 flex items-center gap-2 rounded-lg border p-3">
                   <button
                     type="button"
-                    className="flex-1 text-center transition-colors hover:bg-muted/50 rounded-md p-1.5 cursor-pointer"
+                    className="hover:bg-muted/50 flex-1 cursor-pointer rounded-md p-1.5 text-center transition-colors"
                     onClick={() => {
                       if (entity.data.source) {
                         const groupId = entity.data.source.replace(/^(parent-|child-)/, '');
@@ -193,15 +210,17 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
                       }
                     }}
                   >
-                    <p className="text-xs font-medium uppercase text-muted-foreground">
+                    <p className="text-muted-foreground text-xs font-medium uppercase">
                       {t('common.labels.parentGroup', 'Parent')}
                     </p>
-                    <p className="text-sm font-semibold text-primary underline-offset-2 hover:underline">{entity.data.sourceName ?? entity.data.source}</p>
+                    <p className="text-primary text-sm font-semibold underline-offset-2 hover:underline">
+                      {entity.data.sourceName ?? entity.data.source}
+                    </p>
                   </button>
                   <div className="text-muted-foreground">→</div>
                   <button
                     type="button"
-                    className="flex-1 text-center transition-colors hover:bg-muted/50 rounded-md p-1.5 cursor-pointer"
+                    className="hover:bg-muted/50 flex-1 cursor-pointer rounded-md p-1.5 text-center transition-colors"
                     onClick={() => {
                       if (entity.data.target) {
                         const groupId = entity.data.target.replace(/^(parent-|child-)/, '');
@@ -210,25 +229,72 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
                       }
                     }}
                   >
-                    <p className="text-xs font-medium uppercase text-muted-foreground">
+                    <p className="text-muted-foreground text-xs font-medium uppercase">
                       {t('common.labels.childGroup', 'Child')}
                     </p>
-                    <p className="text-sm font-semibold text-primary underline-offset-2 hover:underline">{entity.data.targetName ?? entity.data.target}</p>
+                    <p className="text-primary text-sm font-semibold underline-offset-2 hover:underline">
+                      {entity.data.targetName ?? entity.data.target}
+                    </p>
                   </button>
                 </div>
               )}
 
+              {(!entity.data.rights || entity.data.rights.length === 0) &&
+                entity.data.relationshipKinds &&
+                entity.data.relationshipKinds.length > 0 && (
+                  <div className="space-y-3 rounded-lg border p-4">
+                    <div>
+                      <p className="text-muted-foreground text-sm font-medium">
+                        {t('common.labels.connectionType')}
+                      </p>
+                      <p className="text-muted-foreground mt-1 text-xs">
+                        {entity.data.relationshipKinds.length}{' '}
+                        {t('common.network.relationshipStatuses')}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {entity.data.relationshipKinds.map(relationshipKind => (
+                        <Badge
+                          key={relationshipKind}
+                          variant="outline"
+                          className={
+                            relationshipKind === 'active'
+                              ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                              : relationshipKind === 'incoming'
+                                ? 'border-blue-200 bg-blue-50 text-blue-700'
+                                : 'border-amber-200 bg-amber-50 text-amber-700'
+                          }
+                        >
+                          {getRelationshipKindLabel(relationshipKind)}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
               {entity.data.rights && (entity.data.rights as string[]).length > 0 ? (
                 <div className="space-y-3">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">{t('common.labels.relationshipRights')}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">
+                    <p className="text-muted-foreground text-sm font-medium">
+                      {t('common.labels.relationshipRights')}
+                    </p>
+                    <p className="text-muted-foreground mt-1 text-xs">
                       {(entity.data.rights as string[]).length} {t('common.labels.rightsGranted')}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {(entity.data.rights as string[]).map((right: string) => (
-                      <RightBadge key={right} right={right} className="px-3 py-1.5 text-sm" />
+                      <RightBadge
+                        key={right}
+                        right={right}
+                        requestKind={
+                          entity.data.rightRelationshipKinds?.[right] === 'incoming' ||
+                          entity.data.rightRelationshipKinds?.[right] === 'outgoing'
+                            ? entity.data.rightRelationshipKinds[right]
+                            : null
+                        }
+                        className="px-3 py-1.5 text-sm"
+                      />
                     ))}
                   </div>
                 </div>
@@ -236,11 +302,17 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
                 <div className="rounded-lg border p-4">
                   <div className="space-y-3">
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">{t('common.labels.connectionType')}</p>
-                      <p className="text-lg font-semibold">{entity.data.label || t('common.labels.connection')}</p>
+                      <p className="text-muted-foreground text-sm font-medium">
+                        {t('common.labels.connectionType')}
+                      </p>
+                      <p className="text-lg font-semibold">
+                        {entity.data.label || t('common.labels.connection')}
+                      </p>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      {entity.data.label ? entity.data.label : t('common.labels.membershipConnection')}
+                    <p className="text-muted-foreground text-sm">
+                      {entity.data.label
+                        ? entity.data.label
+                        : t('common.labels.membershipConnection')}
                     </p>
                   </div>
                 </div>
