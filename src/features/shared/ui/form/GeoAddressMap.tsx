@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import 'leaflet/dist/leaflet.css';
 import type { Marker as LeafletMarker } from 'leaflet';
 import type { GeoCoordinates } from '@/features/shared/logic/geoCoordinates';
 

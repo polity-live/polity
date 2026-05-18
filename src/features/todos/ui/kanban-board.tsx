@@ -12,6 +12,15 @@ interface KanbanBoardProps {
   todos: Todo[];
 }
 
+function isTodoStatus(status: string | null | undefined): status is TodoStatus {
+  return (
+    status === 'pending' ||
+    status === 'in_progress' ||
+    status === 'completed' ||
+    status === 'cancelled'
+  );
+}
+
 export function KanbanBoard({ todos }: KanbanBoardProps) {
   const { t } = useTranslation();
   const { updateTodo } = useTodoActions();
@@ -54,18 +63,13 @@ export function KanbanBoard({ todos }: KanbanBoardProps) {
     if (!draggedTodoId) return;
 
     try {
-      const updates: Record<string, string | number | null> = {
+      const updates: Parameters<typeof updateTodo>[0] = {
+        id: draggedTodoId,
         status,
-        updated_at: Date.now(),
+        completed_at: status === 'completed' ? Date.now() : null,
       };
 
-      if (status === 'completed') {
-        updates.completed_at = Date.now();
-      } else {
-        updates.completed_at = null;
-      }
-
-      await updateTodo({ id: draggedTodoId, ...updates });
+      await updateTodo(updates);
       toast.success(t('features.todos.kanban.statusUpdated'));
     } catch (error) {
       console.error('Failed to update todo:', error);
@@ -91,7 +95,6 @@ export function KanbanBoard({ todos }: KanbanBoardProps) {
         id: todo.id,
         status: isCompleting ? 'completed' : 'pending',
         completed_at: isCompleting ? Date.now() : null,
-        updated_at: Date.now(),
       });
       toast.success(t('features.todos.kanban.statusUpdated'));
     } catch (error) {
@@ -109,7 +112,7 @@ export function KanbanBoard({ todos }: KanbanBoardProps) {
           return (
             <div
               key={column.id}
-              className={`rounded-lg ${column.color} min-h-[500px] p-4`}
+              className={`rounded-lg ${column.color} min-h-125 p-4`}
               onDragOver={handleDragOver}
               onDrop={() => handleDrop(column.id)}
             >
@@ -200,7 +203,7 @@ function TodoKanbanTimelineCard({
           assigneeCount: todo.assignments?.length,
           groupName: todo.group?.name ?? undefined,
           groupId: todo.group?.id ?? undefined,
-          status: todo.status ?? undefined,
+          status: isTodoStatus(todo.status) ? todo.status : undefined,
           creatorId: todo.creator?.id ?? undefined,
         }}
         onToggle={() => onToggleComplete(todo)}

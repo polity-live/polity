@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import '@xyflow/react/dist/style.css';
+@import 'leaflet/dist/leaflet.css';
 @import './styles/animations.css';
 
 @plugin '@tailwindcss/typography';
@@ -244,4 +245,8 @@ code {
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+.leaflet-container img.leaflet-tile {
+  mix-blend-mode: normal;
 }
