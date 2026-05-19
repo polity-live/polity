@@ -1,40 +1,30 @@
-import { defineQuery, type QueryRowType } from '@rocicorp/zero'
-import { z } from 'zod'
-import { zql } from '../schema'
+import { defineQuery, type QueryRowType } from '@rocicorp/zero';
+import { z } from 'zod';
+import { zql } from '../schema';
 
 export const messageQueries = {
   // Conversations for the current user (via participant join)
-  conversations: defineQuery(
-    z.object({}),
-    ({ ctx: { userID } }) =>
-      zql.conversation_participant
-        .where('user_id', userID)
-        .orderBy('joined_at', 'desc')
+  conversations: defineQuery(z.object({}), ({ ctx: { userID } }) =>
+    zql.conversation_participant.where('user_id', userID).orderBy('joined_at', 'desc')
   ),
 
   // Single conversation by ID
-  conversationById: defineQuery(
-    z.object({ id: z.string() }),
-    ({ args: { id } }) =>
-      zql.conversation.where('id', id).one()
+  conversationById: defineQuery(z.object({ id: z.string() }), ({ args: { id } }) =>
+    zql.conversation.where('id', id).one()
   ),
 
   // Messages in a conversation
   messages: defineQuery(
     z.object({ conversation_id: z.string() }),
     ({ args: { conversation_id } }) =>
-      zql.message
-        .where('conversation_id', conversation_id)
-        .orderBy('created_at', 'asc')
+      zql.message.where('conversation_id', conversation_id).orderBy('created_at', 'asc')
   ),
 
   // Unread message count for the current user
   unreadCount: defineQuery(
     z.object({ conversation_id: z.string() }),
     ({ args: { conversation_id } }) =>
-      zql.message
-        .where('conversation_id', conversation_id)
-        .where('is_read', false)
+      zql.message.where('conversation_id', conversation_id).where('is_read', false)
   ),
 
   // Conversations with full relations (group, requested_by, participants→user, messages→sender)
@@ -43,50 +33,49 @@ export const messageQueries = {
     ({ args: { limit } }) => {
       let q = zql.conversation
         .related('group')
+        .related('event')
         .related('requested_by')
         .related('participants', q => q.related('user'))
         .related('messages', q => q.orderBy('created_at', 'asc').related('sender'))
-        .orderBy('last_message_at', 'desc')
-      if (limit) q = q.limit(limit)
-      return q
+        .orderBy('last_message_at', 'desc');
+      if (limit) q = q.limit(limit);
+      return q;
     }
   ),
 
   // Lighter conversation query for unread counting (participants + messages→sender)
-  conversationsForUnread: defineQuery(
-    z.object({}),
-    ({ ctx: { userID } }) =>
-      zql.conversation_participant
-        .where('user_id', userID)
-        .related('conversation', q =>
-          q.related('participants', pq => pq.related('user'))
-            .related('messages', mq => mq.orderBy('created_at', 'asc').related('sender'))
-            .orderBy('last_message_at', 'desc')
-        )
+  conversationsForUnread: defineQuery(z.object({}), ({ ctx: { userID } }) =>
+    zql.conversation_participant.where('user_id', userID).related('conversation', q =>
+      q
+        .related('participants', pq => pq.related('user'))
+        .related('messages', mq => mq.orderBy('created_at', 'asc').related('sender'))
+        .orderBy('last_message_at', 'desc')
+    )
   ),
 
   conversationsByUserWithRelations: defineQuery(
     z.object({ user_id: z.string() }),
     ({ args: { user_id } }) =>
-      zql.conversation_participant
-        .where('user_id', user_id)
-        .related('conversation', q =>
-          q.related('group')
-            .related('participants', pq => pq.related('user'))
-            .related('messages')
-        )
+      zql.conversation_participant.where('user_id', user_id).related('conversation', q =>
+        q
+          .related('group')
+          .related('event')
+          .related('participants', pq => pq.related('user'))
+          .related('messages')
+      )
   ),
 
   // Find group conversation by group_id
-  conversationByGroupId: defineQuery(
-    z.object({ group_id: z.string() }),
-    ({ args: { group_id } }) =>
-      zql.conversation
-        .where('group_id', group_id)
-        .where('type', 'group')
-        .one()
+  conversationByGroupId: defineQuery(z.object({ group_id: z.string() }), ({ args: { group_id } }) =>
+    zql.conversation.where('group_id', group_id).where('type', 'group').one()
   ),
-}
+
+  conversationByEventId: defineQuery(z.object({ event_id: z.string() }), ({ args: { event_id } }) =>
+    zql.conversation.where('event_id', event_id).where('type', 'event').one()
+  ),
+};
 
 // ── Query Row Types ─────────────────────────────────────────────────
-export type ConversationWithRelationsRow = QueryRowType<typeof messageQueries.conversationsWithRelations>;
+export type ConversationWithRelationsRow = QueryRowType<
+  typeof messageQueries.conversationsWithRelations
+>;

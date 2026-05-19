@@ -13,6 +13,7 @@ const baseConversationSchema = z.object({
   last_message_at: nullableTimestampSchema,
   assistant_for_user_id: z.string().nullable(),
   group_id: z.string().nullable(),
+  event_id: z.string().nullable(),
   requested_by_id: z.string().nullable(),
   created_at: timestampSchema,
 });
@@ -23,6 +24,7 @@ export const createConversationSchema = baseConversationSchema
   .extend({
     id: z.string(),
     assistant_for_user_id: z.string().nullable().optional(),
+    event_id: z.string().nullable().optional(),
   });
 export const updateConversationSchema = baseConversationSchema
   .pick({ name: true, status: true, pinned: true, last_message_at: true })

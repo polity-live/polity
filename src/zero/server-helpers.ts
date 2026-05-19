@@ -5,12 +5,22 @@
 import { type Transaction } from '@rocicorp/zero';
 import { zql, type Schema } from './schema';
 
-const ACTIVE_GROUP_STATUSES = new Set(['active', 'member', 'admin']);
-const ACTIVE_EVENT_STATUSES = new Set(['active', 'confirmed', 'member', 'admin']);
+type ZeroTransaction = Transaction<Schema>;
+
+export const ACTIVE_GROUP_STATUSES = new Set(['active', 'member', 'admin']);
+export const ACTIVE_EVENT_STATUSES = new Set(['active', 'confirmed', 'member', 'admin']);
 const ACTIVE_COLLABORATOR_STATUSES = new Set(['collaborator', 'member', 'admin']);
 
 function isOpenChangeRequest(status: string | null | undefined) {
   return !status || status === 'open';
+}
+
+export function isActiveGroupStatus(status: string | null | undefined) {
+  return ACTIVE_GROUP_STATUSES.has(status ?? '');
+}
+
+export function isActiveEventStatus(status: string | null | undefined) {
+  return ACTIVE_EVENT_STATUSES.has(status ?? '');
 }
 
 /** Read group name by id. */
@@ -57,6 +67,191 @@ export async function roleName(
   return { name: r?.name ?? 'Role', groupId: r?.group_id ?? null };
 }
 
+async function ensureConversationParticipant(
+  tx: ZeroTransaction,
+  conversationId: string,
+  userId: string
+): Promise<void> {
+  const existingParticipant = await tx.run(
+    zql.conversation_participant
+      .where('conversation_id', conversationId)
+      .where('user_id', userId)
+      .one()
+  );
+
+  if (existingParticipant) {
+    if (existingParticipant.left_at) {
+      await tx.mutate.conversation_participant.update({
+        id: existingParticipant.id,
+        left_at: null,
+      });
+    }
+    return;
+  }
+
+  const now = Date.now();
+
+  await tx.mutate.conversation_participant.insert({
+    id: crypto.randomUUID(),
+    conversation_id: conversationId,
+    user_id: userId,
+    joined_at: now,
+    last_read_at: now,
+    left_at: null,
+  });
+}
+
+async function removeConversationParticipant(
+  tx: ZeroTransaction,
+  conversationId: string,
+  userId: string
+): Promise<void> {
+  const existingParticipant = await tx.run(
+    zql.conversation_participant
+      .where('conversation_id', conversationId)
+      .where('user_id', userId)
+      .one()
+  );
+
+  if (!existingParticipant) {
+    return;
+  }
+
+  await tx.mutate.conversation_participant.delete({ id: existingParticipant.id });
+}
+
+export async function ensureGroupConversation(
+  tx: ZeroTransaction,
+  args: {
+    groupId: string;
+    name?: string | null;
+    requestedById: string;
+    createdAt?: number;
+  }
+): Promise<string> {
+  const existingConversation = await tx.run(
+    zql.conversation.where('group_id', args.groupId).where('type', 'group').one()
+  );
+
+  if (existingConversation) {
+    return existingConversation.id;
+  }
+
+  const now = args.createdAt ?? Date.now();
+  const conversationId = crypto.randomUUID();
+
+  await tx.mutate.conversation.insert({
+    id: conversationId,
+    type: 'group',
+    name: args.name?.trim() || 'Group Chat',
+    status: 'accepted',
+    pinned: false,
+    last_message_at: now,
+    assistant_for_user_id: null,
+    group_id: args.groupId,
+    event_id: null,
+    requested_by_id: args.requestedById,
+    created_at: now,
+  });
+
+  return conversationId;
+}
+
+export async function ensureEventConversation(
+  tx: ZeroTransaction,
+  args: {
+    eventId: string;
+    name?: string | null;
+    requestedById: string;
+    createdAt?: number;
+  }
+): Promise<string> {
+  const existingConversation = await tx.run(
+    zql.conversation.where('event_id', args.eventId).where('type', 'event').one()
+  );
+
+  if (existingConversation) {
+    return existingConversation.id;
+  }
+
+  const now = args.createdAt ?? Date.now();
+  const conversationId = crypto.randomUUID();
+
+  await tx.mutate.conversation.insert({
+    id: conversationId,
+    type: 'event',
+    name: args.name?.trim() || 'Event Chat',
+    status: 'accepted',
+    pinned: false,
+    last_message_at: now,
+    assistant_for_user_id: null,
+    group_id: null,
+    event_id: args.eventId,
+    requested_by_id: args.requestedById,
+    created_at: now,
+  });
+
+  return conversationId;
+}
+
+export async function syncUserWithGroupConversation(
+  tx: ZeroTransaction,
+  args: {
+    groupId: string;
+    userId: string;
+  }
+): Promise<void> {
+  const conversation = await tx.run(
+    zql.conversation.where('group_id', args.groupId).where('type', 'group').one()
+  );
+
+  if (!conversation) {
+    return;
+  }
+
+  const memberships = await tx.run(
+    zql.group_membership.where('group_id', args.groupId).where('user_id', args.userId)
+  );
+  const shouldParticipate = memberships.some(membership => isActiveGroupStatus(membership.status));
+
+  if (shouldParticipate) {
+    await ensureConversationParticipant(tx, conversation.id, args.userId);
+    return;
+  }
+
+  await removeConversationParticipant(tx, conversation.id, args.userId);
+}
+
+export async function syncUserWithEventConversation(
+  tx: ZeroTransaction,
+  args: {
+    eventId: string;
+    userId: string;
+  }
+): Promise<void> {
+  const conversation = await tx.run(
+    zql.conversation.where('event_id', args.eventId).where('type', 'event').one()
+  );
+
+  if (!conversation) {
+    return;
+  }
+
+  const participations = await tx.run(
+    zql.event_participant.where('event_id', args.eventId).where('user_id', args.userId)
+  );
+  const shouldParticipate = participations.some(participant =>
+    isActiveEventStatus(participant.status)
+  );
+
+  if (shouldParticipate) {
+    await ensureConversationParticipant(tx, conversation.id, args.userId);
+    return;
+  }
+
+  await removeConversationParticipant(tx, conversation.id, args.userId);
+}
+
 export async function recomputeUserCounters(
   tx: Transaction<Schema>,
   userId: string
@@ -68,8 +263,7 @@ export async function recomputeUserCounters(
   ]);
 
   const groups = memberships.filter(
-    membership =>
-      membership.source !== 'derived' && ACTIVE_GROUP_STATUSES.has(membership.status ?? '')
+    membership => membership.source !== 'derived' && isActiveGroupStatus(membership.status)
   ).length;
 
   await tx.mutate.user.update({
@@ -91,9 +285,7 @@ export async function recomputeGroupCounters(
     tx.run(zql.amendment.where('group_id', groupId)),
   ]);
 
-  const members = memberships.filter(membership =>
-    ACTIVE_GROUP_STATUSES.has(membership.status ?? '')
-  ).length;
+  const members = memberships.filter(membership => isActiveGroupStatus(membership.status)).length;
   const activeEvents = events.filter(event => event.status !== 'cancelled').length;
 
   await tx.mutate.group.update({
@@ -117,7 +309,7 @@ export async function recomputeEventCounters(
   ]);
 
   const participantCount = participants.filter(participant =>
-    ACTIVE_EVENT_STATUSES.has(participant.status ?? '')
+    isActiveEventStatus(participant.status)
   ).length;
   const agendaItemIds = agendaItems.map(item => item.id);
   const amendmentIds = amendments.map(amendment => amendment.id);

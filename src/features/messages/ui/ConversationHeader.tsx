@@ -36,9 +36,14 @@ export function ConversationHeader({
   const otherParticipant = getOtherParticipant(conversation, currentUserId);
   const isAiConversation = isAssistantConversation(conversation);
   const userHref =
-    !display.isGroup && otherParticipant?.id && !isAiConversation
+    !display.isCollective && otherParticipant?.id && !isAiConversation
       ? `/user/${otherParticipant.id}`
       : null;
+  const groupHref =
+    display.isGroup && conversation.group?.id ? `/group/${conversation.group.id}` : null;
+  const eventHref =
+    display.isEvent && conversation.event?.id ? `/event/${conversation.event.id}` : null;
+  const entityHref = groupHref ?? eventHref ?? userHref;
   const [isEditingName, setIsEditingName] = useState(false);
   const [draftName, setDraftName] = useState(conversation.name?.trim() || display.name);
 
@@ -61,82 +66,98 @@ export function ConversationHeader({
     }
   };
 
-  const identityContent = (
-    <>
-      <div className="relative h-10 w-10 flex-shrink-0">
-        <Avatar className="h-10 w-10 rounded-2xl">
-          <AvatarImage src={display.avatar || undefined} />
-          <AvatarFallback className="rounded-2xl">
-            {display.name?.[0]?.toUpperCase() || 'U'}
-          </AvatarFallback>
-        </Avatar>
-        {isOnline && !display.isGroup && (
-          <span className="border-background absolute -right-0.5 -bottom-0.5 block h-3 w-3 rounded-full border-2 bg-green-500" />
+  const avatarContent = (
+    <div className="relative h-10 w-10 flex-shrink-0">
+      <Avatar className="h-10 w-10 rounded-2xl">
+        <AvatarImage src={display.avatar || undefined} />
+        <AvatarFallback className="rounded-2xl">
+          {display.name?.[0]?.toUpperCase() || 'U'}
+        </AvatarFallback>
+      </Avatar>
+      {isOnline && !display.isCollective && (
+        <span className="border-background absolute -right-0.5 -bottom-0.5 block h-3 w-3 rounded-full border-2 bg-green-500" />
+      )}
+    </div>
+  );
+
+  const titleContent =
+    isAiConversation && isEditingName ? (
+      <div className="flex items-center gap-2">
+        <Input
+          value={draftName}
+          onChange={event => setDraftName(event.target.value)}
+          onKeyDown={event => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              void handleSaveRename();
+            }
+
+            if (event.key === 'Escape') {
+              event.preventDefault();
+              handleCancelRename();
+            }
+          }}
+          className="h-8 w-[180px] md:w-[260px]"
+          placeholder={t('features.messages.ai.renameConversationPlaceholder', 'Conversation name')}
+        />
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7"
+          onClick={() => void handleSaveRename()}
+        >
+          <Check className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7"
+          onClick={handleCancelRename}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+    ) : (
+      <div className="flex items-center gap-2">
+        {entityHref ? (
+          <Link to={entityHref} className="min-w-0 hover:underline">
+            <h3 className="truncate font-semibold">{display.name}</h3>
+          </Link>
+        ) : (
+          <h3 className="truncate font-semibold">{display.name}</h3>
+        )}
+        {isAiConversation && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 flex-shrink-0"
+            onClick={event => {
+              event.preventDefault();
+              setIsEditingName(true);
+            }}
+            title={t('features.messages.ai.renameConversation', 'Rename AI conversation')}
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </Button>
         )}
       </div>
-      <div className="ml-3 min-w-0">
-        {isAiConversation && isEditingName ? (
-          <div className="flex items-center gap-2">
-            <Input
-              value={draftName}
-              onChange={event => setDraftName(event.target.value)}
-              onKeyDown={event => {
-                if (event.key === 'Enter') {
-                  event.preventDefault();
-                  void handleSaveRename();
-                }
+    );
 
-                if (event.key === 'Escape') {
-                  event.preventDefault();
-                  handleCancelRename();
-                }
-              }}
-              className="h-8 w-[180px] md:w-[260px]"
-              placeholder={t(
-                'features.messages.ai.renameConversationPlaceholder',
-                'Conversation name'
-              )}
-            />
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => void handleSaveRename()}
-            >
-              <Check className="h-4 w-4" />
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={handleCancelRename}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            <h3 className="truncate font-semibold">{display.name}</h3>
-            {isAiConversation && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 flex-shrink-0"
-                onClick={event => {
-                  event.preventDefault();
-                  setIsEditingName(true);
-                }}
-                title={t('features.messages.ai.renameConversation', 'Rename AI conversation')}
-              >
-                <Pencil className="h-3.5 w-3.5" />
-              </Button>
-            )}
-          </div>
-        )}
-        {display.isGroup ? (
+  const identityContent = (
+    <>
+      {entityHref && !isEditingName ? (
+        <Link to={entityHref} className="flex-shrink-0">
+          {avatarContent}
+        </Link>
+      ) : (
+        avatarContent
+      )}
+      <div className="ml-3 min-w-0">
+        {titleContent}
+        {display.isCollective ? (
           <button
             onClick={onMembersClick}
             className="text-muted-foreground hover:text-foreground text-sm transition-colors hover:underline"
@@ -156,13 +177,7 @@ export function ConversationHeader({
         <Button variant="ghost" size="icon" className="mr-2 md:hidden" onClick={onBack}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        {userHref ? (
-          <Link to={userHref} className="flex items-center">
-            {identityContent}
-          </Link>
-        ) : (
-          <div className="flex items-center">{identityContent}</div>
-        )}
+        <div className="flex items-center">{identityContent}</div>
       </div>
 
       {/* Action Bar */}
@@ -186,7 +201,7 @@ export function ConversationHeader({
             )}
           </Button>
         )}
-        {conversation.type !== 'group' && (
+        {conversation.type !== 'group' && conversation.type !== 'event' && (
           <Button
             variant="ghost"
             size="icon"

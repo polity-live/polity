@@ -3,7 +3,7 @@ import { Conversation, Message } from '../types/message.types';
 import { getConversationDisplay } from '../logic/messageUtils';
 import { isAssistantConversation } from '@/features/assistant/logic/assistantHelpers';
 
-export type ConversationFilter = 'all' | 'direct' | 'group' | 'ai';
+export type ConversationFilter = 'all' | 'direct' | 'group' | 'event' | 'ai';
 
 function sortConversations(left: Conversation, right: Conversation) {
   if (left.pinned && !right.pinned) return -1;
@@ -30,12 +30,16 @@ export function useConversationFilters(
           return conversation.type === 'group';
         }
 
+        if (conversationFilter === 'event') {
+          return conversation.type === 'event';
+        }
+
         if (conversationFilter === 'ai') {
           return isAssistantConversation(conversation);
         }
 
         if (conversationFilter === 'direct') {
-          return conversation.type !== 'group' && !isAssistantConversation(conversation);
+          return conversation.type === 'direct' && !isAssistantConversation(conversation);
         }
 
         return true;

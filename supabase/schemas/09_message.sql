@@ -12,11 +12,13 @@ CREATE TABLE IF NOT EXISTS public.conversation (
   last_message_at TIMESTAMPTZ,
   assistant_for_user_id UUID REFERENCES public."user" (id) ON DELETE CASCADE,
   group_id UUID,
+  event_id UUID REFERENCES public.event (id) ON DELETE CASCADE,
   requested_by_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX idx_conversation_group ON public.conversation (group_id);
+CREATE INDEX idx_conversation_event ON public.conversation (event_id);
 CREATE INDEX idx_conversation_requested_by ON public.conversation (requested_by_id);
 CREATE INDEX IF NOT EXISTS idx_conversation_assistant_for_user ON public.conversation (assistant_for_user_id);
 

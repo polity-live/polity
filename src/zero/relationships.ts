@@ -474,6 +474,7 @@ export const eventRelationships = relationships(event, ({ one, many }) => ({
     destSchema: eventException,
     destField: ['parent_event_id'],
   }),
+  conversations: many({ sourceField: ['id'], destSchema: conversation, destField: ['event_id'] }),
   accreditations: many({ sourceField: ['id'], destSchema: accreditation, destField: ['event_id'] }),
 }));
 
@@ -868,6 +869,7 @@ export const todoAssignmentRelationships = relationships(todoAssignment, ({ one 
 // ============================================
 export const conversationRelationships = relationships(conversation, ({ one, many }) => ({
   group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
+  event: one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
   requested_by: one({ sourceField: ['requested_by_id'], destSchema: user, destField: ['id'] }),
   participants: many({
     sourceField: ['id'],

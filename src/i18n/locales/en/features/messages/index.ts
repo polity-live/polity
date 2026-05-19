@@ -12,6 +12,7 @@ export const messagesTranslations = {
     all: 'All',
     direct: 'Direct',
     group: 'Groups',
+    event: 'Events',
     ai: 'AI',
   },
   // Toast messages for action hooks

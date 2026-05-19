@@ -189,7 +189,7 @@ export function MessageList({
         )}
 
         {/* Conversation Request - Only for direct messages */}
-        {conversation.type !== 'group' && conversation.status === 'pending' && (
+        {conversation.type === 'direct' && conversation.status === 'pending' && (
           <div className="border-t pt-4">
             <Card className="bg-muted/50">
               <CardContent className="flex flex-col items-center gap-3 p-4">

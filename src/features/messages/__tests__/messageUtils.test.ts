@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { getUnreadCount, hasUnreadConversationRequest } from '../logic/messageUtils';
+import {
+  getConversationDisplay,
+  getUnreadCount,
+  hasUnreadConversationRequest,
+} from '../logic/messageUtils';
 
 const createConversation = (overrides: Partial<Parameters<typeof getUnreadCount>[0]> = {}) => ({
   type: 'direct',
@@ -82,5 +86,26 @@ describe('getUnreadCount', () => {
 
     expect(hasUnreadConversationRequest(conversation, 'user-a')).toBe(false);
     expect(getUnreadCount(conversation, 'user-a')).toBe(0);
+  });
+
+  it('returns collective display details for event conversations', () => {
+    const display = getConversationDisplay(
+      createConversation({
+        type: 'event',
+        name: null,
+        event: {
+          id: 'event-1',
+          title: 'Town Hall',
+          image_url: 'https://example.com/town-hall.png',
+        },
+      }),
+      'user-a'
+    );
+
+    expect(display.name).toBe('Town Hall');
+    expect(display.avatar).toBe('https://example.com/town-hall.png');
+    expect(display.isEvent).toBe(true);
+    expect(display.isCollective).toBe(true);
+    expect(display.participantCount).toBe(2);
   });
 });

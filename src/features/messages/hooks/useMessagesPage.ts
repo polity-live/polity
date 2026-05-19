@@ -50,7 +50,11 @@ export function useMessagesPage() {
     const statusByConversationId: Record<string, boolean> = {};
 
     for (const conversation of conversations) {
-      if (conversation.type === 'group' || conversation.status !== 'accepted') {
+      if (
+        conversation.type === 'group' ||
+        conversation.type === 'event' ||
+        conversation.status !== 'accepted'
+      ) {
         statusByConversationId[conversation.id] = false;
         continue;
       }
@@ -162,7 +166,7 @@ export function useMessagesPage() {
     if (!messageUserId || isLoading) return;
 
     const existingConversation = conversations.find(conv => {
-      if (conv.type === 'group' || isAssistantConversation(conv)) return false;
+      if (conv.type !== 'direct' || isAssistantConversation(conv)) return false;
       return conv.participants.some(p => p.user?.id === messageUserId);
     });
 
@@ -203,7 +207,7 @@ export function useMessagesPage() {
     if (!user?.id) return;
 
     const existingConversation = conversations.find(conv => {
-      if (conv.type === 'group' || isAssistantConversation(conv)) return false;
+      if (conv.type !== 'direct' || isAssistantConversation(conv)) return false;
       const participantIds = conv.participants.map(p => p.user?.id);
       return (
         participantIds.length === 2 &&

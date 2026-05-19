@@ -26,7 +26,10 @@ export function ConversationItem({
   const display = getConversationDisplay(conversation, currentUserId);
   const lastMessage = conversation.messages[conversation.messages.length - 1];
   const unreadCount = getUnreadCount(conversation, currentUserId);
-  const canDelete = conversation.type !== 'group' && typeof onDelete === 'function';
+  const canDelete =
+    conversation.type !== 'group' &&
+    conversation.type !== 'event' &&
+    typeof onDelete === 'function';
 
   return (
     <div className="group flex items-start gap-2">
@@ -44,7 +47,7 @@ export function ConversationItem({
               {display.name?.[0]?.toUpperCase() || 'U'}
             </AvatarFallback>
           </Avatar>
-          {isOnline && !display.isGroup && (
+          {isOnline && !display.isCollective && (
             <span className="border-background absolute -right-0.5 -bottom-0.5 block h-3.5 w-3.5 rounded-full border-2 bg-green-500" />
           )}
         </div>
@@ -53,7 +56,7 @@ export function ConversationItem({
             <div className="flex min-w-0 flex-1 items-center gap-1">
               {conversation.pinned && <Pin className="text-primary h-3.5 w-3.5 flex-shrink-0" />}
               <p className="truncate font-semibold">{display.name}</p>
-              {display.isGroup && (
+              {display.isCollective && (
                 <Badge variant="secondary" className="ml-1 flex-shrink-0 text-xs">
                   {display.participantCount}
                 </Badge>

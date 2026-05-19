@@ -4,6 +4,7 @@ import { Input } from '@/features/shared/ui/ui/input';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Search, MessageCircle, Bot } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
+import { SEARCH_CARD_GRADIENTS } from '@/features/shared/utils/search-card-gradients';
 import { Conversation } from '../types/message.types';
 import { ConversationItem } from './ConversationItem';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -41,7 +42,12 @@ export function ConversationList({
   className,
 }: ConversationListProps) {
   const { t } = useTranslation();
-  const filterButtons: ConversationFilter[] = ['all', 'direct', 'group', 'ai'];
+  const filterButtons: ConversationFilter[] = ['all', 'direct', 'group', 'event', 'ai'];
+  const filterGradients: Partial<Record<ConversationFilter, string>> = {
+    direct: SEARCH_CARD_GRADIENTS.user,
+    group: SEARCH_CARD_GRADIENTS.group,
+    event: SEARCH_CARD_GRADIENTS.event,
+  };
 
   return (
     <Card
@@ -88,17 +94,33 @@ export function ConversationList({
             />
           </div>
           <div className="flex flex-wrap gap-2">
-            {filterButtons.map(filter => (
-              <Button
-                key={filter}
-                type="button"
-                size="sm"
-                variant={conversationFilter === filter ? 'default' : 'outline'}
-                onClick={() => onConversationFilterChange(filter)}
-              >
-                {t(`features.messages.filters.${filter}`)}
-              </Button>
-            ))}
+            {filterButtons.map(filter =>
+              (() => {
+                const gradient = filterGradients[filter];
+
+                return (
+                  <Button
+                    key={filter}
+                    type="button"
+                    size="sm"
+                    variant={
+                      gradient ? 'outline' : conversationFilter === filter ? 'default' : 'outline'
+                    }
+                    className={cn(
+                      gradient && gradient,
+                      gradient && 'text-foreground hover:text-foreground border-transparent',
+                      gradient &&
+                        (conversationFilter === filter
+                          ? 'opacity-100 shadow-sm ring-1 ring-black/10 dark:ring-white/15'
+                          : 'opacity-70 hover:opacity-100')
+                    )}
+                    onClick={() => onConversationFilterChange(filter)}
+                  >
+                    {t(`features.messages.filters.${filter}`)}
+                  </Button>
+                );
+              })()
+            )}
           </div>
         </div>
       </CardHeader>

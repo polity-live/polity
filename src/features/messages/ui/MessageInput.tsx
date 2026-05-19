@@ -216,7 +216,7 @@ export function MessageInput({ conversation, currentUserId, onSendMessage }: Mes
     [otherUser?.first_name, otherUser?.last_name].filter(Boolean).join(' ') ||
     t('common.labels.unspecifiedUser');
   const isPendingDirectConversation =
-    conversation.type !== 'group' && conversation.status === 'pending';
+    conversation.type === 'direct' && conversation.status === 'pending';
   const isConversationRequester = conversation.requested_by?.id === currentUserId;
 
   if (isPendingDirectConversation && !isConversationRequester) {

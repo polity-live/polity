@@ -7,8 +7,11 @@ import {
   groupName,
   userName,
   roleName,
+  isActiveGroupStatus,
+  ensureGroupConversation,
   recomputeGroupCounters,
   recomputeUserCounters,
+  syncUserWithGroupConversation,
 } from '../server-helpers';
 import { DEFAULT_GROUP_ROLES } from '../rbac/constants';
 import {
@@ -176,6 +179,17 @@ export const groupServerMutators = {
       });
     }
 
+    await ensureGroupConversation(tx, {
+      groupId: args.id,
+      name: args.name,
+      requestedById: ctx.userID,
+      createdAt: now,
+    });
+    await syncUserWithGroupConversation(tx, {
+      groupId: args.id,
+      userId: ctx.userID,
+    });
+
     await recomputeGroupCounters(tx, args.id);
     await recomputeUserCounters(tx, ctx.userID);
   }),
@@ -219,6 +233,13 @@ export const groupServerMutators = {
       });
     }
 
+    if (isActiveGroupStatus(args.status)) {
+      await syncUserWithGroupConversation(tx, {
+        groupId: args.group_id,
+        userId: ctx.userID,
+      });
+    }
+
     // Propagate derived memberships into hierarchical ancestors
     if (!group || group.group_type !== 'base') return;
 
@@ -255,6 +276,10 @@ export const groupServerMutators = {
       }
 
       await recomputeGroupCounters(tx, ancestorId);
+      await syncUserWithGroupConversation(tx, {
+        groupId: ancestorId,
+        userId: ctx.userID,
+      });
     }
   }),
 
@@ -291,6 +316,11 @@ export const groupServerMutators = {
       senderName: uName,
       groupId: membership.group_id,
       groupName: gName,
+    });
+
+    await syncUserWithGroupConversation(tx, {
+      groupId: membership.group_id,
+      userId: membership.user_id,
     });
 
     // Propagate derived memberships when accepting invitation to a base group
@@ -334,6 +364,10 @@ export const groupServerMutators = {
       }
 
       await recomputeGroupCounters(tx, ancestorId);
+      await syncUserWithGroupConversation(tx, {
+        groupId: ancestorId,
+        userId: membership.user_id,
+      });
     }
   }),
 
@@ -346,6 +380,10 @@ export const groupServerMutators = {
 
     await recomputeGroupCounters(tx, membership.group_id);
     await recomputeUserCounters(tx, membership.user_id);
+    await syncUserWithGroupConversation(tx, {
+      groupId: membership.group_id,
+      userId: membership.user_id,
+    });
 
     // Cascade: delete derived memberships from ancestor groups
     if (membership.source === 'direct') {
@@ -356,6 +394,10 @@ export const groupServerMutators = {
       for (const derived of toDelete) {
         await tx.mutate.group_membership.delete({ id: derived.id });
         await recomputeGroupCounters(tx, derived.group_id);
+        await syncUserWithGroupConversation(tx, {
+          groupId: derived.group_id,
+          userId: membership.user_id,
+        });
       }
     }
 
@@ -426,6 +468,10 @@ export const groupServerMutators = {
     const oldStatus = oldMembership.status;
     const newStatus = args.status;
     const isSelf = ctx.userID === membUserId;
+    const becameActive =
+      newStatus !== undefined && isActiveGroupStatus(newStatus) && !isActiveGroupStatus(oldStatus);
+    const lostActiveAccess =
+      newStatus !== undefined && !isActiveGroupStatus(newStatus) && isActiveGroupStatus(oldStatus);
 
     const gName = await groupName(tx, gId);
 
@@ -480,49 +526,80 @@ export const groupServerMutators = {
       });
     }
 
-    // Propagate derived memberships when admin approves a request or invitation
-    if (newStatus === 'active' && (oldStatus === 'requested' || oldStatus === 'invited')) {
+    // Keep derived memberships and linked conversations aligned with active base memberships.
+    if (becameActive || lostActiveAccess) {
       const group = await tx.run(zql.group.where('id', gId).one());
       if (group?.group_type === 'base') {
         const pvrRels = await tx.run(
           zql.group_relationship.where('with_right', 'passiveVotingRight').where('status', 'active')
         );
         const ancestors = resolveHierarchicalAncestors(gId, pvrRels);
-        for (const ancestorId of ancestors) {
-          const existing = await tx.run(
-            zql.group_membership.where('user_id', membUserId).where('group_id', ancestorId)
-          );
-          if (existing.length > 0) continue;
+        if (becameActive) {
+          for (const ancestorId of ancestors) {
+            const existing = await tx.run(
+              zql.group_membership.where('user_id', membUserId).where('group_id', ancestorId)
+            );
+            if (existing.length > 0) continue;
 
-          const roles = await tx.run(
-            zql.role.where('group_id', ancestorId).where('scope', 'group')
-          );
-          const memberRole = roles.find(r => r.name === 'Member');
+            const roles = await tx.run(
+              zql.role.where('group_id', ancestorId).where('scope', 'group')
+            );
+            const memberRole = roles.find(r => r.name === 'Member');
 
-          const derivedMembershipId = crypto.randomUUID();
+            const derivedMembershipId = crypto.randomUUID();
 
-          await tx.mutate.group_membership.insert({
-            id: derivedMembershipId,
-            group_id: ancestorId,
-            user_id: membUserId,
-            status: 'active',
-            visibility: 'public',
-            source: 'derived',
-            source_group_id: gId,
-            created_at: Date.now(),
-          });
+            await tx.mutate.group_membership.insert({
+              id: derivedMembershipId,
+              group_id: ancestorId,
+              user_id: membUserId,
+              status: 'active',
+              visibility: 'public',
+              source: 'derived',
+              source_group_id: gId,
+              created_at: Date.now(),
+            });
 
-          if (memberRole?.id) {
-            await syncGroupMembershipRoleLinks(tx, {
-              group_membership_id: derivedMembershipId,
-              role_ids: [memberRole.id],
-              assigned_by_id: ctx.userID,
+            if (memberRole?.id) {
+              await syncGroupMembershipRoleLinks(tx, {
+                group_membership_id: derivedMembershipId,
+                role_ids: [memberRole.id],
+                assigned_by_id: ctx.userID,
+              });
+            }
+
+            await recomputeGroupCounters(tx, ancestorId);
+            await syncUserWithGroupConversation(tx, {
+              groupId: ancestorId,
+              userId: membUserId,
             });
           }
+        }
 
-          await recomputeGroupCounters(tx, ancestorId);
+        if (lostActiveAccess) {
+          const derivedMemberships = await tx.run(
+            zql.group_membership.where('user_id', membUserId).where('source', 'derived')
+          );
+          const derivedForGroup = derivedMemberships.filter(
+            membership => membership.source_group_id === gId
+          );
+
+          for (const derivedMembership of derivedForGroup) {
+            await tx.mutate.group_membership.delete({ id: derivedMembership.id });
+            await recomputeGroupCounters(tx, derivedMembership.group_id);
+            await syncUserWithGroupConversation(tx, {
+              groupId: derivedMembership.group_id,
+              userId: membUserId,
+            });
+          }
         }
       }
+    }
+
+    if (args.status !== undefined) {
+      await syncUserWithGroupConversation(tx, {
+        groupId: gId,
+        userId: membUserId,
+      });
     }
   }),
 

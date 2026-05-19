@@ -5,8 +5,12 @@ import { fireNotification } from '../server-notify';
 import {
   eventTitle,
   userName,
+  isActiveEventStatus,
+  isActiveGroupStatus,
+  ensureEventConversation,
   recomputeEventCounters,
   recomputeGroupCounters,
+  syncUserWithEventConversation,
 } from '../server-helpers';
 import { DEFAULT_EVENT_ROLES } from '../rbac/constants';
 import {
@@ -86,6 +90,94 @@ async function syncEventParticipantRoleLinks(
       });
     }
   }
+}
+
+async function isConfirmedDelegateForEvent(
+  tx: Parameters<typeof mutators.events.create.fn>[0]['tx'],
+  eventId: string,
+  userId: string
+) {
+  const delegates = await tx.run(
+    zql.event_delegate.where('event_id', eventId).where('user_id', userId)
+  );
+  return delegates.some(delegate => delegate.status === 'confirmed');
+}
+
+async function isActiveMemberOfGroup(
+  tx: Parameters<typeof mutators.events.create.fn>[0]['tx'],
+  groupId: string,
+  userId: string
+) {
+  const memberships = await tx.run(
+    zql.group_membership.where('group_id', groupId).where('user_id', userId)
+  );
+  return memberships.some(membership => isActiveGroupStatus(membership.status));
+}
+
+async function assertEventParticipationEligibility(
+  tx: Parameters<typeof mutators.events.create.fn>[0]['tx'],
+  args: {
+    event_id: string;
+    user_id: string;
+    allowInviteOnlyEvent: boolean;
+  }
+) {
+  const event = await tx.run(zql.event.where('id', args.event_id).one());
+
+  if (!event) {
+    throw new Error('Event not found.');
+  }
+
+  if (event.event_type === 'delegate_assembly') {
+    const isConfirmedDelegate = await isConfirmedDelegateForEvent(tx, args.event_id, args.user_id);
+    if (!isConfirmedDelegate) {
+      throw new Error('Only confirmed delegates can participate in this delegate assembly.');
+    }
+  }
+
+  if (event.event_type === 'general_assembly') {
+    if (!event.group_id) {
+      throw new Error('This general assembly is missing its associated group.');
+    }
+
+    const isGroupMember = await isActiveMemberOfGroup(tx, event.group_id, args.user_id);
+    if (!isGroupMember) {
+      throw new Error(
+        'Only active members of the associated group can participate in this general assembly.'
+      );
+    }
+  }
+
+  if (event.event_type === 'on_invite' && !args.allowInviteOnlyEvent) {
+    throw new Error('This event is by invitation only.');
+  }
+
+  return event;
+}
+
+async function assertEventStatusTransitionEligibility(
+  tx: Parameters<typeof mutators.events.create.fn>[0]['tx'],
+  args: {
+    event_id: string;
+    user_id: string;
+    old_status: string | null | undefined;
+    new_status: string | null | undefined;
+  }
+) {
+  const becameActive =
+    args.new_status !== undefined &&
+    isActiveEventStatus(args.new_status) &&
+    !isActiveEventStatus(args.old_status);
+
+  if (!becameActive) {
+    return;
+  }
+
+  await assertEventParticipationEligibility(tx, {
+    event_id: args.event_id,
+    user_id: args.user_id,
+    allowInviteOnlyEvent: args.old_status === 'invited',
+  });
 }
 
 /** Server-only mutators — override the shared mutators with additional server-side logic (e.g. notifications). */
@@ -187,11 +279,21 @@ export const eventServerMutators = {
       });
     }
 
+    await ensureEventConversation(tx, {
+      eventId: args.id,
+      name: args.title,
+      requestedById: ctx.userID,
+      createdAt: now,
+    });
+    await syncUserWithEventConversation(tx, {
+      eventId: args.id,
+      userId: ctx.userID,
+    });
+
     // Auto-invite group members for General Assembly events
     if (args.event_type === 'general_assembly' && args.group_id) {
-      const members = await tx.run(
-        zql.group_membership.where('group_id', args.group_id).where('status', 'active')
-      );
+      const memberships = await tx.run(zql.group_membership.where('group_id', args.group_id));
+      const members = memberships.filter(membership => isActiveGroupStatus(membership.status));
       for (const member of members) {
         if (member.user_id === ctx.userID) continue; // skip creator (already added)
         const participationId = crypto.randomUUID();
@@ -248,9 +350,22 @@ export const eventServerMutators = {
   }),
 
   joinEvent: defineMutator(eventParticipantCreateSchema, async ({ tx, ctx, args }) => {
+    await assertEventParticipationEligibility(tx, {
+      event_id: args.event_id,
+      user_id: ctx.userID,
+      allowInviteOnlyEvent: false,
+    });
+
     await mutators.events.joinEvent.fn({ tx, ctx, args });
 
     await recomputeEventCounters(tx, args.event_id);
+
+    if (isActiveEventStatus(args.status)) {
+      await syncUserWithEventConversation(tx, {
+        eventId: args.event_id,
+        userId: ctx.userID,
+      });
+    }
 
     if (args.status === 'requested' && args.event_id) {
       const [eTitle, uName] = await Promise.all([
@@ -267,6 +382,14 @@ export const eventServerMutators = {
   }),
 
   inviteParticipant: defineMutator(eventParticipantCreateSchema, async ({ tx, ctx, args }) => {
+    if (args.user_id) {
+      await assertEventParticipationEligibility(tx, {
+        event_id: args.event_id,
+        user_id: args.user_id,
+        allowInviteOnlyEvent: true,
+      });
+    }
+
     await mutators.events.inviteParticipant.fn({ tx, ctx, args });
 
     await recomputeEventCounters(tx, args.event_id);
@@ -290,6 +413,10 @@ export const eventServerMutators = {
     if (!participation) return;
 
     await recomputeEventCounters(tx, participation.event_id);
+    await syncUserWithEventConversation(tx, {
+      eventId: participation.event_id,
+      userId: participation.user_id,
+    });
 
     const eId = participation.event_id;
     const partUserId = participation.user_id;
@@ -348,11 +475,27 @@ export const eventServerMutators = {
         zql.event_participant_role.where('event_participant_id', args.id)
       );
 
+      if (oldPart) {
+        await assertEventStatusTransitionEligibility(tx, {
+          event_id: oldPart.event_id,
+          user_id: oldPart.user_id,
+          old_status: oldPart.status,
+          new_status: args.status,
+        });
+      }
+
       await mutators.events.updateParticipant.fn({ tx, ctx, args });
 
       if (!oldPart) return;
 
       await recomputeEventCounters(tx, oldPart.event_id);
+
+      if (args.status !== undefined) {
+        await syncUserWithEventConversation(tx, {
+          eventId: oldPart.event_id,
+          userId: oldPart.user_id,
+        });
+      }
 
       const eId = oldPart.event_id;
       const partUserId = oldPart.user_id;
@@ -400,7 +543,22 @@ export const eventServerMutators = {
   ),
 
   update: defineMutator(eventUpdateSchema, async ({ tx, ctx, args }) => {
+    const previousEvent = await tx.run(zql.event.where('id', args.id).one());
+
     await mutators.events.update.fn({ tx, ctx, args });
+
+    if (args.title !== undefined && previousEvent?.title !== args.title) {
+      const eventConversation = await tx.run(
+        zql.conversation.where('event_id', args.id).where('type', 'event').one()
+      );
+
+      if (eventConversation) {
+        await tx.mutate.conversation.update({
+          id: eventConversation.id,
+          name: args.title?.trim() || null,
+        });
+      }
+    }
 
     const eTitle = await eventTitle(tx, args.id);
     fireNotification('notifyScheduleChanged', {
@@ -481,6 +639,10 @@ export const eventServerMutators = {
     await mutators.events.bookMeeting.fn({ tx, ctx, args });
 
     await recomputeEventCounters(tx, args.event_id);
+    await syncUserWithEventConversation(tx, {
+      eventId: args.event_id,
+      userId: ctx.userID,
+    });
 
     const [eTitle, uName] = await Promise.all([
       eventTitle(tx, args.event_id),
@@ -498,6 +660,10 @@ export const eventServerMutators = {
     await mutators.events.cancelMeetingBooking.fn({ tx, ctx, args });
 
     await recomputeEventCounters(tx, args.event_id);
+    await syncUserWithEventConversation(tx, {
+      eventId: args.event_id,
+      userId: ctx.userID,
+    });
 
     const [eTitle, uName] = await Promise.all([
       eventTitle(tx, args.event_id),

@@ -31,41 +31,59 @@ export const getConversationDisplay = (
 ): ConversationDisplay => {
   if (conversation.type === 'group') {
     return {
-      name: conversation.name || conversation.group?.name || 'Group Chat',
+      name: conversation.group?.name || conversation.name || 'Group Chat',
       avatar: conversation.group?.image_url || null,
       handle: null,
       isGroup: true,
+      isEvent: false,
+      isCollective: true,
       participantCount: conversation.participants.length,
     };
-  } else {
-    const otherUser = conversation.participants.find(p => p.user?.id !== currentUserId)?.user;
+  }
 
-    if (isAssistantConversation(conversation)) {
-      const assistantName =
-        [otherUser?.first_name, otherUser?.last_name].filter(Boolean).join(' ') || 'Aria & Kai';
+  if (conversation.type === 'event') {
+    return {
+      name: conversation.event?.title || conversation.name || 'Event Chat',
+      avatar: conversation.event?.image_url || null,
+      handle: null,
+      isGroup: false,
+      isEvent: true,
+      isCollective: true,
+      participantCount: conversation.participants.length,
+    };
+  }
 
-      return {
-        name: conversation.name?.trim() || assistantName,
-        avatar: otherUser?.avatar,
-        handle: otherUser?.handle,
-        isGroup: false,
-      };
-    }
+  const otherUser = conversation.participants.find(p => p.user?.id !== currentUserId)?.user;
+
+  if (isAssistantConversation(conversation)) {
+    const assistantName =
+      [otherUser?.first_name, otherUser?.last_name].filter(Boolean).join(' ') || 'Aria & Kai';
 
     return {
-      name:
-        [otherUser?.first_name, otherUser?.last_name].filter(Boolean).join(' ') ||
-        conversation.name ||
-        'Unknown User',
+      name: conversation.name?.trim() || assistantName,
       avatar: otherUser?.avatar,
       handle: otherUser?.handle,
       isGroup: false,
+      isEvent: false,
+      isCollective: false,
     };
   }
+
+  return {
+    name:
+      [otherUser?.first_name, otherUser?.last_name].filter(Boolean).join(' ') ||
+      conversation.name ||
+      'Unknown User',
+    avatar: otherUser?.avatar,
+    handle: otherUser?.handle,
+    isGroup: false,
+    isEvent: false,
+    isCollective: false,
+  };
 };
 
 export const getOtherParticipant = (conversation: Conversation, currentUserId?: string) => {
-  if (conversation.type === 'group') return null;
+  if (conversation.type === 'group' || conversation.type === 'event') return null;
   return conversation.participants.find(p => p.user?.id !== currentUserId)?.user;
 };
 
@@ -116,7 +134,12 @@ export const hasUnreadConversationRequest = (
   conversation: UnreadConversationLike,
   currentUserId?: string
 ) => {
-  if (!currentUserId || conversation.type === 'group' || conversation.status !== 'pending') {
+  if (
+    !currentUserId ||
+    conversation.type === 'group' ||
+    conversation.type === 'event' ||
+    conversation.status !== 'pending'
+  ) {
     return false;
   }
 

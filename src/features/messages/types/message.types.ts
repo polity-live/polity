@@ -9,5 +9,7 @@ export interface ConversationDisplay {
   avatar: string | null | undefined;
   handle: string | null | undefined;
   isGroup: boolean;
+  isEvent: boolean;
+  isCollective: boolean;
   participantCount?: number;
 }

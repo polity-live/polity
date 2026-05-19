@@ -10,6 +10,7 @@ export const conversation = table('conversation')
     last_message_at: number().optional(),
     assistant_for_user_id: string().optional(),
     group_id: string().optional(),
+    event_id: string().optional(),
     requested_by_id: string().optional(),
     created_at: number(),
   })
