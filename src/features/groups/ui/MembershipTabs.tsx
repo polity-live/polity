@@ -10,17 +10,25 @@ import type { MembershipTab } from '../types/group.types';
 interface MembershipTabsProps {
   activeTab: MembershipTab;
   onTabChange: (tab: MembershipTab) => void;
-  membershipsContent: React.ReactNode;
+  membershipsByUserContent: React.ReactNode;
+  membershipsByRoleContent: React.ReactNode;
   rolesContent: React.ReactNode;
-  positionsContent?: React.ReactNode;
+  tabBarAction?: React.ReactNode;
+  membershipsByUserLabel?: string;
+  membershipsByRoleLabel?: string;
+  rolesLabel?: string;
 }
 
 export function MembershipTabs({
   activeTab,
   onTabChange,
-  membershipsContent,
+  membershipsByUserContent,
+  membershipsByRoleContent,
   rolesContent,
-  positionsContent,
+  tabBarAction,
+  membershipsByUserLabel = 'Memberships by user',
+  membershipsByRoleLabel = 'Memberships by role',
+  rolesLabel = 'Roles',
 }: MembershipTabsProps) {
   return (
     <Tabs
@@ -28,22 +36,25 @@ export function MembershipTabs({
       onValueChange={value => onTabChange(value as MembershipTab)}
       className="space-y-4"
     >
-      <TabsList>
-        <TabsTrigger value="memberships">Memberships</TabsTrigger>
-        <TabsTrigger value="roles">Roles</TabsTrigger>
-        <TabsTrigger value="positions">Positions</TabsTrigger>
-      </TabsList>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <TabsList>
+          <TabsTrigger value="membershipsByUser">{membershipsByUserLabel}</TabsTrigger>
+          <TabsTrigger value="membershipsByRole">{membershipsByRoleLabel}</TabsTrigger>
+          <TabsTrigger value="roles">{rolesLabel}</TabsTrigger>
+        </TabsList>
+        {tabBarAction}
+      </div>
 
-      <TabsContent value="memberships" className="space-y-6">
-        {membershipsContent}
+      <TabsContent value="membershipsByUser" className="space-y-6">
+        {membershipsByUserContent}
+      </TabsContent>
+
+      <TabsContent value="membershipsByRole" className="space-y-6">
+        {membershipsByRoleContent}
       </TabsContent>
 
       <TabsContent value="roles" className="space-y-6">
         {rolesContent}
-      </TabsContent>
-
-      <TabsContent value="positions" className="space-y-6">
-        {positionsContent}
       </TabsContent>
     </Tabs>
   );

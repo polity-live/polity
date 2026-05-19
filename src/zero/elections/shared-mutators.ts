@@ -1,4 +1,4 @@
-import { defineMutator } from '@rocicorp/zero'
+import { defineMutator } from '@rocicorp/zero';
 import {
   createElectionSchema,
   updateElectionSchema,
@@ -12,99 +12,79 @@ import {
   createIndicativeCandidateSelectionSchema,
   createFinalElectorParticipationSchema,
   createFinalCandidateSelectionSchema,
-} from './schema'
+} from './schema';
 
 /** Shared mutators — run on both client and server. */
 export const electionSharedMutators = {
   // Create an election
-  createElection: defineMutator(
-    createElectionSchema,
-    async ({ tx, args }) => {
-      const now = Date.now()
-      await tx.mutate.election.insert({
-        ...args,
-        created_at: now,
-        updated_at: now,
-      })
-    }
-  ),
+  createElection: defineMutator(createElectionSchema, async ({ tx, args }) => {
+    const now = Date.now();
+    const { position_id, ...restArgs } = args;
+    await tx.mutate.election.insert({
+      ...restArgs,
+      role_id: args.role_id ?? position_id ?? null,
+      created_at: now,
+      updated_at: now,
+    });
+  }),
 
   // Update an election
-  updateElection: defineMutator(
-    updateElectionSchema,
-    async ({ tx, args }) => {
-      await tx.mutate.election.update({
-        ...args,
-        updated_at: Date.now(),
-      })
-    }
-  ),
+  updateElection: defineMutator(updateElectionSchema, async ({ tx, args }) => {
+    const { position_id, ...restArgs } = args;
+    await tx.mutate.election.update({
+      ...restArgs,
+      role_id: args.role_id ?? position_id ?? undefined,
+      updated_at: Date.now(),
+    });
+  }),
 
   // Delete an election
-  deleteElection: defineMutator(
-    deleteElectionSchema,
-    async ({ tx, args }) => {
-      await tx.mutate.election.delete({ id: args.id })
-    }
-  ),
+  deleteElection: defineMutator(deleteElectionSchema, async ({ tx, args }) => {
+    await tx.mutate.election.delete({ id: args.id });
+  }),
 
   // Add a candidate to an election
-  addCandidate: defineMutator(
-    createElectionCandidateSchema,
-    async ({ tx, args }) => {
-      const now = Date.now()
-      await tx.mutate.election_candidate.insert({
-        ...args,
-        created_at: now,
-      })
-    }
-  ),
+  addCandidate: defineMutator(createElectionCandidateSchema, async ({ tx, args }) => {
+    const now = Date.now();
+    await tx.mutate.election_candidate.insert({
+      ...args,
+      created_at: now,
+    });
+  }),
 
   // Update a candidate
-  updateCandidate: defineMutator(
-    updateElectionCandidateSchema,
-    async ({ tx, args }) => {
-      await tx.mutate.election_candidate.update(args)
-    }
-  ),
+  updateCandidate: defineMutator(updateElectionCandidateSchema, async ({ tx, args }) => {
+    await tx.mutate.election_candidate.update(args);
+  }),
 
   // Delete a candidate
-  deleteCandidate: defineMutator(
-    deleteElectionCandidateSchema,
-    async ({ tx, args }) => {
-      await tx.mutate.election_candidate.delete({ id: args.id })
-    }
-  ),
+  deleteCandidate: defineMutator(deleteElectionCandidateSchema, async ({ tx, args }) => {
+    await tx.mutate.election_candidate.delete({ id: args.id });
+  }),
 
   // Add an elector
-  createElector: defineMutator(
-    createElectorSchema,
-    async ({ tx, args }) => {
-      const now = Date.now()
-      await tx.mutate.elector.insert({
-        ...args,
-        created_at: now,
-      })
-    }
-  ),
+  createElector: defineMutator(createElectorSchema, async ({ tx, args }) => {
+    const now = Date.now();
+    await tx.mutate.elector.insert({
+      ...args,
+      created_at: now,
+    });
+  }),
 
   // Remove an elector
-  deleteElector: defineMutator(
-    deleteElectorSchema,
-    async ({ tx, args }) => {
-      await tx.mutate.elector.delete({ id: args.id })
-    }
-  ),
+  deleteElector: defineMutator(deleteElectorSchema, async ({ tx, args }) => {
+    await tx.mutate.elector.delete({ id: args.id });
+  }),
 
   // Cast indicative election vote (creates participation + selection(s))
   castIndicativeElectionVote: defineMutator(
     createIndicativeElectorParticipationSchema,
     async ({ tx, args }) => {
-      const now = Date.now()
+      const now = Date.now();
       await tx.mutate.indicative_elector_participation.insert({
         ...args,
         created_at: now,
-      })
+      });
     }
   ),
 
@@ -112,11 +92,11 @@ export const electionSharedMutators = {
   createIndicativeCandidateSelection: defineMutator(
     createIndicativeCandidateSelectionSchema,
     async ({ tx, args }) => {
-      const now = Date.now()
+      const now = Date.now();
       await tx.mutate.indicative_candidate_selection.insert({
         ...args,
         created_at: now,
-      })
+      });
     }
   ),
 
@@ -124,11 +104,11 @@ export const electionSharedMutators = {
   castFinalElectionVote: defineMutator(
     createFinalElectorParticipationSchema,
     async ({ tx, args }) => {
-      const now = Date.now()
+      const now = Date.now();
       await tx.mutate.final_elector_participation.insert({
         ...args,
         created_at: now,
-      })
+      });
     }
   ),
 
@@ -136,11 +116,11 @@ export const electionSharedMutators = {
   createFinalCandidateSelection: defineMutator(
     createFinalCandidateSelectionSchema,
     async ({ tx, args }) => {
-      const now = Date.now()
+      const now = Date.now();
       await tx.mutate.final_candidate_selection.insert({
         ...args,
         created_at: now,
-      })
+      });
     }
   ),
-}
+};

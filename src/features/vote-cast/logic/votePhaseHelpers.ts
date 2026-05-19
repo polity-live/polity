@@ -42,29 +42,29 @@ export function canUserBeCandidate(permissions: PermissionsLike): boolean {
  * Format a result sentence for display.
  *
  * For votes: "The motion was <passed|rejected> with <share>% of votes."
- * For elections: "For the election of <position>, <winner> won with <share>% of votes."
+ * For elections: "For the election of <role>, <winner> won with <share>% of votes."
  */
 export function formatVoteResultSentence(
   type: 'vote' | 'election',
   result: 'passed' | 'rejected' | 'tie',
   winnerName?: string,
-  positionName?: string,
-  voteSharePercent?: number,
+  roleName?: string,
+  voteSharePercent?: number
 ): string {
   if (type === 'election') {
     if (result === 'tie') {
-      return positionName
-        ? `The election for ${positionName} ended in a tie.`
+      return roleName
+        ? `The election for ${roleName} ended in a tie.`
         : 'The election ended in a tie.';
     }
     if (!winnerName) {
-      return positionName
-        ? `The election for ${positionName} did not produce a winner.`
+      return roleName
+        ? `The election for ${roleName} did not produce a winner.`
         : 'The election did not produce a winner.';
     }
     const share = voteSharePercent !== undefined ? ` with ${voteSharePercent}% of votes` : '';
-    return positionName
-      ? `For the election of ${positionName}, ${winnerName} won${share}.`
+    return roleName
+      ? `For the election of ${roleName}, ${winnerName} won${share}.`
       : `${winnerName} won the election${share}.`;
   }
 

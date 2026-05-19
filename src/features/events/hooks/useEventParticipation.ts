@@ -4,7 +4,13 @@ import { toast } from 'sonner';
 import { useEventActions } from '@/zero/events/useEventActions';
 import { useEventById, useEventParticipantsQuery } from '@/zero/events/useEventState';
 
-export type ParticipationStatus = 'invited' | 'requested' | 'member' | 'admin' | 'confirmed';
+export type ParticipationStatus =
+  | 'invited'
+  | 'requested'
+  | 'active'
+  | 'member'
+  | 'admin'
+  | 'confirmed';
 
 export function useEventParticipation(eventId: string) {
   const { user } = useAuth();
@@ -18,30 +24,36 @@ export function useEventParticipation(eventId: string) {
 
   // Check if user is a member of the event's group
   const isGroupMember = event?.group?.memberships?.some(
-    (m) => m.user?.id === user?.id && (m.status === 'active' || m.status === 'admin')
+    m => m.user?.id === user?.id && (m.status === 'active' || m.status === 'admin')
   );
 
   // Check if user is a confirmed delegate
   const isConfirmedDelegate = event?.delegates?.some(
-    (d) => d.user?.id === user?.id && d.status === 'confirmed'
+    d => d.user?.id === user?.id && d.status === 'confirmed'
   );
 
   // Query participants
-  const { participants: allParticipantsData, isLoading: participantsLoading } = useEventParticipantsQuery(eventId);
+  const { participants: allParticipantsData, isLoading: participantsLoading } =
+    useEventParticipantsQuery(eventId);
 
   const queryLoading = eventLoading || participantsLoading;
 
-  const participation = allParticipantsData?.find((p) => p.user_id === user?.id);
+  const participation = allParticipantsData?.find(p => p.user_id === user?.id);
 
   // Filter to count only active participants (excluding invited and requested)
   const allParticipants = allParticipantsData || [];
   const filteredParticipants = allParticipants.filter(
-    (p) => p.status === 'member' || p.status === 'admin' || p.status === 'confirmed'
+    p =>
+      p.status === 'active' ||
+      p.status === 'member' ||
+      p.status === 'admin' ||
+      p.status === 'confirmed'
   );
   const participantCount = filteredParticipants.length;
 
   const status: ParticipationStatus | null = (participation?.status as ParticipationStatus) || null;
-  const isParticipant = status === 'member' || status === 'admin' || status === 'confirmed';
+  const isParticipant =
+    status === 'active' || status === 'member' || status === 'admin' || status === 'confirmed';
   const isAdmin = status === 'admin';
   const hasRequested = status === 'requested';
   const isInvited = status === 'invited';
@@ -64,7 +76,9 @@ export function useEventParticipation(eventId: string) {
       }
     } else if (eventType === 'general_assembly') {
       if (!isGroupMember) {
-        toast.error('Only members of the associated group can participate in this general assembly');
+        toast.error(
+          'Only members of the associated group can participate in this general assembly'
+        );
         return;
       }
     } else if (eventType === 'on_invite') {
@@ -82,10 +96,8 @@ export function useEventParticipation(eventId: string) {
         status: 'requested',
         event_id: eventId,
         group_id: event?.group?.id ?? null,
-        role_id: null,
         visibility: event?.visibility ?? 'public',
       });
-
 
       toast.success('Participation request sent successfully');
     } catch (error) {
@@ -105,9 +117,6 @@ export function useEventParticipation(eventId: string) {
     setIsLoading(true);
     try {
       await doLeaveEvent({ id: participation.id });
-      if (status === 'requested') {
-      } else {
-      }
       toast.success('Successfully left the event');
     } catch (error) {
       console.error('Failed to leave event:', error);
@@ -125,7 +134,7 @@ export function useEventParticipation(eventId: string) {
     try {
       await updateParticipant({
         id: participation.id,
-        status: 'member',
+        status: 'active',
       });
       toast.success('Successfully joined the event');
     } catch (error) {

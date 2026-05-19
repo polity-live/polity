@@ -104,9 +104,19 @@ export const eventParticipant = table('event_participant')
     user_id: string(),
     group_id: string().optional(),
     status: string().optional(),
-    role_id: string().optional(),
-    visibility: string().optional(),
+    visibility: string(),
     instance_date: number().optional(),
+    created_at: number(),
+  })
+  .primaryKey('id');
+
+export const eventParticipantRole = table('event_participant_role')
+  .columns({
+    id: string(),
+    event_participant_id: string(),
+    role_id: string(),
+    assigned_at: number(),
+    assigned_by_id: string().optional(),
     created_at: number(),
   })
   .primaryKey('id');

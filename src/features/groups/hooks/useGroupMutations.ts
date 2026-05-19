@@ -10,6 +10,7 @@ export function useGroupMutations(groupId: string) {
   const {
     inviteMember,
     updateMemberRole,
+    syncMembershipRoles,
     leaveGroup: leaveGroupAction,
     createRole: createRoleAction,
     deleteRole: deleteRoleAction,
@@ -21,29 +22,39 @@ export function useGroupMutations(groupId: string) {
    */
   const inviteUsers = async (
     userIds: string[],
-    roleId?: string,
+    roleIds: string[] = [],
     senderId?: string,
     senderName?: string,
     groupName?: string
   ) => {
+    void senderName;
+    void groupName;
+
     if (userIds.length === 0) return { success: false, error: 'No users selected' };
 
     setIsLoading(true);
     try {
+      const dedupedRoleIds = [...new Set(roleIds.filter(Boolean))];
+
       for (const userId of userIds) {
         const membershipId = crypto.randomUUID();
         await inviteMember({
           id: membershipId,
           user_id: userId,
           group_id: groupId,
-          role_id: roleId ?? null,
+          initial_role_id: dedupedRoleIds[0] ?? null,
           visibility: '',
           status: 'invited',
         });
-      }
 
-      userIds.forEach(uid => {
-      })
+        if (dedupedRoleIds.length > 0) {
+          await syncMembershipRoles({
+            group_membership_id: membershipId,
+            role_ids: dedupedRoleIds,
+            assigned_by_id: senderId ?? null,
+          });
+        }
+      }
       toast.success(`Successfully invited ${userIds.length} user(s)`);
       return { success: true };
     } catch (error) {
@@ -66,6 +77,12 @@ export function useGroupMutations(groupId: string) {
     senderName?: string,
     groupName?: string
   ) => {
+    void userId;
+    void conversationId;
+    void senderId;
+    void senderName;
+    void groupName;
+
     setIsLoading(true);
     try {
       await updateMemberRole({
@@ -94,6 +111,11 @@ export function useGroupMutations(groupId: string) {
     senderName?: string,
     groupName?: string
   ) => {
+    void userId;
+    void senderId;
+    void senderName;
+    void groupName;
+
     setIsLoading(true);
     try {
       const transactions = [leaveGroupAction({ id: membershipId })];
@@ -122,6 +144,12 @@ export function useGroupMutations(groupId: string) {
     senderName?: string,
     groupName?: string
   ) => {
+    void userId;
+    void conversationId;
+    void senderId;
+    void senderName;
+    void groupName;
+
     setIsLoading(true);
     try {
       await leaveGroupAction({ id: membershipId });
@@ -149,11 +177,40 @@ export function useGroupMutations(groupId: string) {
     groupName?: string,
     roleName?: string
   ) => {
+    return changeMemberRoles(
+      membershipId,
+      roleId ? [roleId] : [],
+      userId,
+      senderId,
+      senderName,
+      groupName,
+      roleName
+    );
+  };
+
+  /**
+   * Change a member's roles
+   */
+  const changeMemberRoles = async (
+    membershipId: string,
+    roleIds: string[],
+    userId: string,
+    senderId?: string,
+    senderName?: string,
+    groupName?: string,
+    roleName?: string
+  ) => {
+    void userId;
+    void senderName;
+    void groupName;
+    void roleName;
+
     setIsLoading(true);
     try {
-      await updateMemberRole({
-        id: membershipId,
-        role_id: roleId,
+      await syncMembershipRoles({
+        group_membership_id: membershipId,
+        role_ids: roleIds,
+        assigned_by_id: senderId ?? null,
       });
 
       toast.success('Member role updated');
@@ -177,8 +234,12 @@ export function useGroupMutations(groupId: string) {
     senderId?: string,
     groupName?: string,
     adminUserIds?: string[],
-    sortOrder: number = 0
+    sortOrder = 0
   ) => {
+    void senderId;
+    void groupName;
+    void adminUserIds;
+
     setIsLoading(true);
     try {
       const roleId = crypto.randomUUID();
@@ -191,6 +252,18 @@ export function useGroupMutations(groupId: string) {
         event_id: null,
         amendment_id: null,
         blog_id: null,
+        assignment_mode: 'assigned',
+        visibility: 'public',
+        term_start_date: null,
+        is_recurring: false,
+        recurrence_pattern: null,
+        recurrence_rule: null,
+        recurrence_interval: null,
+        recurrence_days: null,
+        recurrence_end_date: null,
+        scheduled_revote_date: null,
+        default_request_role: false,
+        default_invite_role: false,
         sort_order: sortOrder,
       });
 
@@ -230,6 +303,11 @@ export function useGroupMutations(groupId: string) {
     groupName?: string,
     adminUserIds?: string[]
   ) => {
+    void roleName;
+    void senderId;
+    void groupName;
+    void adminUserIds;
+
     setIsLoading(true);
     try {
       await deleteRoleAction({ id: roleId });
@@ -254,6 +332,10 @@ export function useGroupMutations(groupId: string) {
     senderId?: string,
     groupName?: string
   ) => {
+    void userId;
+    void senderId;
+    void groupName;
+
     setIsLoading(true);
     try {
       await updateMemberRole({
@@ -281,6 +363,10 @@ export function useGroupMutations(groupId: string) {
     senderId?: string,
     groupName?: string
   ) => {
+    void userId;
+    void senderId;
+    void groupName;
+
     setIsLoading(true);
     try {
       await updateMemberRole({
@@ -305,6 +391,7 @@ export function useGroupMutations(groupId: string) {
     rejectMembership,
     removeMember,
     changeMemberRole,
+    changeMemberRoles,
     createRole,
     deleteRole,
     promoteToAdmin,

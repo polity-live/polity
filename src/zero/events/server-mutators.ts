@@ -1,39 +1,109 @@
-import { defineMutator } from '@rocicorp/zero'
-import { z } from 'zod'
-import { mutators } from '../mutators'
-import { zql } from '../schema'
-import { fireNotification } from '../server-notify'
-import { eventTitle, userName, recomputeEventCounters, recomputeGroupCounters } from '../server-helpers'
-import { DEFAULT_EVENT_ROLES } from '../rbac/constants'
+import { defineMutator } from '@rocicorp/zero';
+import { mutators } from '../mutators';
+import { zql } from '../schema';
+import { fireNotification } from '../server-notify';
+import {
+  eventTitle,
+  userName,
+  recomputeEventCounters,
+  recomputeGroupCounters,
+} from '../server-helpers';
+import { DEFAULT_EVENT_ROLES } from '../rbac/constants';
 import {
   eventCreateSchema,
   eventParticipantCreateSchema,
   eventParticipantDeleteSchema,
-  eventParticipantUpdateSchema,
+  eventParticipantLegacyRoleUpdateSchema,
   eventUpdateSchema,
   eventCancelSchema,
+  createEventRoleSchema,
+  deleteEventRoleSchema,
   bookMeetingSchema,
   cancelMeetingBookingSchema,
-} from './schema'
-import {
-  createEventPositionSchema,
-  deleteEventPositionSchema,
-} from '../positions/schema'
+} from './schema';
+
+async function addEventParticipantRoleLink(
+  tx: Parameters<typeof mutators.events.create.fn>[0]['tx'],
+  args: {
+    event_participant_id: string;
+    role_id: string;
+    assigned_by_id?: string | null;
+  }
+) {
+  const existingLink = await tx.run(
+    zql.event_participant_role
+      .where('event_participant_id', args.event_participant_id)
+      .where('role_id', args.role_id)
+      .one()
+  );
+
+  if (existingLink) {
+    return existingLink.id;
+  }
+
+  const now = Date.now();
+  const id = crypto.randomUUID();
+
+  await tx.mutate.event_participant_role.insert({
+    id,
+    event_participant_id: args.event_participant_id,
+    role_id: args.role_id,
+    assigned_at: now,
+    assigned_by_id: args.assigned_by_id ?? null,
+    created_at: now,
+  });
+
+  return id;
+}
+
+async function syncEventParticipantRoleLinks(
+  tx: Parameters<typeof mutators.events.create.fn>[0]['tx'],
+  args: {
+    event_participant_id: string;
+    role_ids: string[];
+    assigned_by_id?: string | null;
+  }
+) {
+  const desiredRoleIds = [...new Set(args.role_ids.filter(Boolean))];
+  const existingLinks = await tx.run(
+    zql.event_participant_role.where('event_participant_id', args.event_participant_id)
+  );
+  const desiredRoleIdSet = new Set(desiredRoleIds);
+  const existingRoleIds = new Set(existingLinks.map(link => link.role_id));
+
+  for (const link of existingLinks) {
+    if (!desiredRoleIdSet.has(link.role_id)) {
+      await tx.mutate.event_participant_role.delete({ id: link.id });
+    }
+  }
+
+  for (const roleId of desiredRoleIds) {
+    if (!existingRoleIds.has(roleId)) {
+      await addEventParticipantRoleLink(tx, {
+        event_participant_id: args.event_participant_id,
+        role_id: roleId,
+        assigned_by_id: args.assigned_by_id,
+      });
+    }
+  }
+}
 
 /** Server-only mutators — override the shared mutators with additional server-side logic (e.g. notifications). */
 export const eventServerMutators = {
   create: defineMutator(eventCreateSchema, async ({ tx, ctx, args }) => {
-    await mutators.events.create.fn({ tx, ctx, args })
+    await mutators.events.create.fn({ tx, ctx, args });
 
-    const now = Date.now()
+    const now = Date.now();
 
     // Create default event roles (Organizer, Voter, Participant) with action rights
-    const organizerRoleId = crypto.randomUUID()
-    const roleIds: Record<string, string> = {}
+    const organizerRoleId = crypto.randomUUID();
+    const roleIds: Record<string, string> = {};
+    const totalRoles = DEFAULT_EVENT_ROLES.length;
 
-    for (const roleDef of DEFAULT_EVENT_ROLES) {
-      const roleId = roleDef.name === 'Organizer' ? organizerRoleId : crypto.randomUUID()
-      roleIds[roleDef.name] = roleId
+    for (let index = 0; index < totalRoles; index++) {
+      const roleDef = DEFAULT_EVENT_ROLES[index];
+      const roleId = roleDef.name === 'Organizer' ? organizerRoleId : crypto.randomUUID();
+      roleIds[roleDef.name] = roleId;
 
       await tx.mutate.role.insert({
         id: roleId,
@@ -44,9 +114,21 @@ export const eventServerMutators = {
         group_id: null,
         amendment_id: null,
         blog_id: null,
-        sort_order: 0,
+        assignment_mode: 'assigned',
+        visibility: 'public',
+        term_start_date: null,
+        is_recurring: false,
+        recurrence_pattern: null,
+        recurrence_rule: null,
+        recurrence_interval: null,
+        recurrence_days: null,
+        recurrence_end_date: null,
+        scheduled_revote_date: null,
+        default_request_role: roleDef.default_request_role ?? false,
+        default_invite_role: roleDef.default_invite_role ?? false,
+        sort_order: totalRoles - 1 - index,
         created_at: now,
-      })
+      });
 
       for (const perm of roleDef.permissions) {
         await tx.mutate.action_right.insert({
@@ -59,285 +141,373 @@ export const eventServerMutators = {
           amendment_id: null,
           blog_id: null,
           created_at: now,
-        })
+        });
       }
     }
 
+    const defaultInviteRole = DEFAULT_EVENT_ROLES.find(roleDef => roleDef.default_invite_role);
+    const defaultInviteRoleId = defaultInviteRole
+      ? (roleIds[defaultInviteRole.name] ?? null)
+      : (roleIds.Participant ?? null);
+
     const creatorParticipation = await tx.run(
       zql.event_participant.where('event_id', args.id).where('user_id', ctx.userID).one()
-    )
+    );
     if (creatorParticipation) {
       await tx.mutate.event_participant.update({
         id: creatorParticipation.id,
         group_id: args.group_id ?? null,
-        status: 'confirmed',
-        role_id: organizerRoleId,
+        status: 'active',
         visibility: args.visibility ?? 'public',
-      })
+      });
+
+      await syncEventParticipantRoleLinks(tx, {
+        event_participant_id: creatorParticipation.id,
+        role_ids: [organizerRoleId],
+        assigned_by_id: ctx.userID,
+      });
     } else {
+      const creatorParticipationId = crypto.randomUUID();
+
       await tx.mutate.event_participant.insert({
-        id: crypto.randomUUID(),
+        id: creatorParticipationId,
         event_id: args.id,
         user_id: ctx.userID,
         group_id: args.group_id ?? null,
-        status: 'confirmed',
-        role_id: organizerRoleId,
+        status: 'active',
         visibility: args.visibility ?? 'public',
         instance_date: null,
         created_at: now,
-      })
+      });
+
+      await syncEventParticipantRoleLinks(tx, {
+        event_participant_id: creatorParticipationId,
+        role_ids: [organizerRoleId],
+        assigned_by_id: ctx.userID,
+      });
     }
 
     // Auto-invite group members for General Assembly events
     if (args.event_type === 'general_assembly' && args.group_id) {
       const members = await tx.run(
         zql.group_membership.where('group_id', args.group_id).where('status', 'active')
-      )
+      );
       for (const member of members) {
-        if (member.user_id === ctx.userID) continue // skip creator (already added)
+        if (member.user_id === ctx.userID) continue; // skip creator (already added)
+        const participationId = crypto.randomUUID();
         await tx.mutate.event_participant.insert({
-          id: crypto.randomUUID(),
+          id: participationId,
           event_id: args.id,
           user_id: member.user_id,
           group_id: args.group_id,
           status: 'invited',
-          role_id: null,
           visibility: args.visibility ?? 'public',
           created_at: now,
-        })
+        });
+
+        if (defaultInviteRoleId) {
+          await syncEventParticipantRoleLinks(tx, {
+            event_participant_id: participationId,
+            role_ids: [defaultInviteRoleId],
+            assigned_by_id: ctx.userID,
+          });
+        }
       }
     }
 
     // Auto-invite specific users for OnInvite events
     if (args.event_type === 'on_invite' && args.invited_user_ids?.length) {
       for (const userId of args.invited_user_ids) {
-        if (userId === ctx.userID) continue // skip creator (already added)
+        if (userId === ctx.userID) continue; // skip creator (already added)
+        const participationId = crypto.randomUUID();
         await tx.mutate.event_participant.insert({
-          id: crypto.randomUUID(),
+          id: participationId,
           event_id: args.id,
           user_id: userId,
           group_id: args.group_id ?? null,
           status: 'invited',
-          role_id: null,
           visibility: args.visibility ?? 'public',
           created_at: now,
-        })
+        });
+
+        if (defaultInviteRoleId) {
+          await syncEventParticipantRoleLinks(tx, {
+            event_participant_id: participationId,
+            role_ids: [defaultInviteRoleId],
+            assigned_by_id: ctx.userID,
+          });
+        }
       }
     }
 
-    await recomputeEventCounters(tx, args.id)
+    await recomputeEventCounters(tx, args.id);
 
     if (args.group_id) {
-      await recomputeGroupCounters(tx, args.group_id)
+      await recomputeGroupCounters(tx, args.group_id);
     }
   }),
 
   joinEvent: defineMutator(eventParticipantCreateSchema, async ({ tx, ctx, args }) => {
-    await mutators.events.joinEvent.fn({ tx, ctx, args })
+    await mutators.events.joinEvent.fn({ tx, ctx, args });
 
-    await recomputeEventCounters(tx, args.event_id)
+    await recomputeEventCounters(tx, args.event_id);
 
     if (args.status === 'requested' && args.event_id) {
       const [eTitle, uName] = await Promise.all([
         eventTitle(tx, args.event_id),
         userName(tx, ctx.userID),
-      ])
+      ]);
       fireNotification('notifyParticipationRequest', {
-        senderId: ctx.userID, senderName: uName, eventId: args.event_id, eventTitle: eTitle,
-      })
+        senderId: ctx.userID,
+        senderName: uName,
+        eventId: args.event_id,
+        eventTitle: eTitle,
+      });
     }
   }),
 
   inviteParticipant: defineMutator(eventParticipantCreateSchema, async ({ tx, ctx, args }) => {
-    await mutators.events.inviteParticipant.fn({ tx, ctx, args })
+    await mutators.events.inviteParticipant.fn({ tx, ctx, args });
 
-    await recomputeEventCounters(tx, args.event_id)
+    await recomputeEventCounters(tx, args.event_id);
 
     if (args.user_id && args.event_id) {
-      const eTitle = await eventTitle(tx, args.event_id)
+      const eTitle = await eventTitle(tx, args.event_id);
       fireNotification('notifyEventInvite', {
-        senderId: ctx.userID, recipientId: args.user_id, eventId: args.event_id, eventTitle: eTitle,
-      })
+        senderId: ctx.userID,
+        recipientId: args.user_id,
+        eventId: args.event_id,
+        eventTitle: eTitle,
+      });
     }
   }),
 
   leaveEvent: defineMutator(eventParticipantDeleteSchema, async ({ tx, ctx, args }) => {
-    const participation = await tx.run(zql.event_participant.where('id', args.id).one())
+    const participation = await tx.run(zql.event_participant.where('id', args.id).one());
 
-    await mutators.events.leaveEvent.fn({ tx, ctx, args })
+    await mutators.events.leaveEvent.fn({ tx, ctx, args });
 
-    if (!participation) return
+    if (!participation) return;
 
-    await recomputeEventCounters(tx, participation.event_id)
+    await recomputeEventCounters(tx, participation.event_id);
 
-    const eId = participation.event_id
-    const partUserId = participation.user_id
-    const status = participation.status
-    const isSelf = ctx.userID === partUserId
+    const eId = participation.event_id;
+    const partUserId = participation.user_id;
+    const status = participation.status;
+    const isSelf = ctx.userID === partUserId;
 
-    const [eTitle, uName] = await Promise.all([
-      eventTitle(tx, eId),
-      userName(tx, partUserId),
-    ])
+    const [eTitle, uName] = await Promise.all([eventTitle(tx, eId), userName(tx, partUserId)]);
 
     if (isSelf) {
       if (status === 'requested') {
         fireNotification('notifyEventRequestWithdrawn', {
-          senderId: ctx.userID, senderName: uName, eventId: eId, eventTitle: eTitle,
-        })
+          senderId: ctx.userID,
+          senderName: uName,
+          eventId: eId,
+          eventTitle: eTitle,
+        });
       } else if (status === 'invited') {
         fireNotification('notifyEventInvitationDeclined', {
-          senderId: ctx.userID, senderName: uName, eventId: eId, eventTitle: eTitle,
-        })
+          senderId: ctx.userID,
+          senderName: uName,
+          eventId: eId,
+          eventTitle: eTitle,
+        });
       } else {
         fireNotification('notifyParticipationWithdrawn', {
-          senderId: ctx.userID, senderName: uName, eventId: eId, eventTitle: eTitle,
-        })
+          senderId: ctx.userID,
+          senderName: uName,
+          eventId: eId,
+          eventTitle: eTitle,
+        });
       }
     } else {
       if (status === 'requested') {
         fireNotification('notifyParticipationRejected', {
-          senderId: ctx.userID, recipientId: partUserId, eventId: eId, eventTitle: eTitle,
-        })
+          senderId: ctx.userID,
+          recipientId: partUserId,
+          eventId: eId,
+          eventTitle: eTitle,
+        });
       } else {
         fireNotification('notifyParticipationRemoved', {
-          senderId: ctx.userID, recipientId: partUserId, eventId: eId, eventTitle: eTitle,
-        })
+          senderId: ctx.userID,
+          recipientId: partUserId,
+          eventId: eId,
+          eventTitle: eTitle,
+        });
       }
     }
   }),
 
-  updateParticipant: defineMutator(eventParticipantUpdateSchema, async ({ tx, ctx, args }) => {
-    const oldPart = await tx.run(zql.event_participant.where('id', args.id).one())
+  updateParticipant: defineMutator(
+    eventParticipantLegacyRoleUpdateSchema,
+    async ({ tx, ctx, args }) => {
+      const oldPart = await tx.run(zql.event_participant.where('id', args.id).one());
+      const oldRoleLinks = await tx.run(
+        zql.event_participant_role.where('event_participant_id', args.id)
+      );
 
-    await mutators.events.updateParticipant.fn({ tx, ctx, args })
+      await mutators.events.updateParticipant.fn({ tx, ctx, args });
 
-    if (!oldPart) return
+      if (!oldPart) return;
 
-    await recomputeEventCounters(tx, oldPart.event_id)
+      await recomputeEventCounters(tx, oldPart.event_id);
 
-    const eId = oldPart.event_id
-    const partUserId = oldPart.user_id
-    const oldStatus = oldPart.status
-    const newStatus = args.status
-    const isSelf = ctx.userID === partUserId
+      const eId = oldPart.event_id;
+      const partUserId = oldPart.user_id;
+      const oldStatus = oldPart.status;
+      const newStatus = args.status;
+      const isSelf = ctx.userID === partUserId;
 
-    const eTitle = await eventTitle(tx, eId)
+      const eTitle = await eventTitle(tx, eId);
 
-    if (newStatus === 'member' && (oldStatus === 'requested' || oldStatus === 'invited')) {
-      if (isSelf) {
-        const uName = await userName(tx, ctx.userID)
-        fireNotification('notifyEventInvitationAccepted', {
-          senderId: ctx.userID, senderName: uName, eventId: eId, eventTitle: eTitle,
-        })
-      } else {
-        fireNotification('notifyParticipationApproved', {
-          senderId: ctx.userID, recipientId: partUserId, eventId: eId, eventTitle: eTitle,
-        })
+      if (newStatus === 'active' && (oldStatus === 'requested' || oldStatus === 'invited')) {
+        if (isSelf) {
+          const uName = await userName(tx, ctx.userID);
+          fireNotification('notifyEventInvitationAccepted', {
+            senderId: ctx.userID,
+            senderName: uName,
+            eventId: eId,
+            eventTitle: eTitle,
+          });
+        } else {
+          fireNotification('notifyParticipationApproved', {
+            senderId: ctx.userID,
+            recipientId: partUserId,
+            eventId: eId,
+            eventTitle: eTitle,
+          });
+        }
+      }
+
+      const oldRoleIds = new Set(oldRoleLinks.map(link => link.role_id));
+      const legacyRoleChanged =
+        args.role_id !== undefined &&
+        (args.role_id
+          ? oldRoleIds.size !== 1 || !oldRoleIds.has(args.role_id)
+          : oldRoleIds.size > 0);
+
+      if (legacyRoleChanged && args.role_id) {
+        fireNotification('notifyOrganizerPromoted', {
+          senderId: ctx.userID,
+          recipientId: partUserId,
+          eventId: eId,
+          eventTitle: eTitle,
+        });
       }
     }
-
-    if (args.role_id !== undefined && args.role_id !== oldPart.role_id) {
-      fireNotification('notifyOrganizerPromoted', {
-        senderId: ctx.userID, recipientId: partUserId, eventId: eId, eventTitle: eTitle,
-      })
-    }
-  }),
+  ),
 
   update: defineMutator(eventUpdateSchema, async ({ tx, ctx, args }) => {
-    await mutators.events.update.fn({ tx, ctx, args })
+    await mutators.events.update.fn({ tx, ctx, args });
 
-    const eTitle = await eventTitle(tx, args.id)
+    const eTitle = await eventTitle(tx, args.id);
     fireNotification('notifyScheduleChanged', {
-      senderId: ctx.userID, eventId: args.id, eventTitle: eTitle,
-    })
+      senderId: ctx.userID,
+      eventId: args.id,
+      eventTitle: eTitle,
+    });
   }),
 
   cancel: defineMutator(eventCancelSchema, async ({ tx, ctx, args }) => {
-    const eTitle = await eventTitle(tx, args.id)
+    const eTitle = await eventTitle(tx, args.id);
 
     // Read event before cancel to get group_id
-    const ev = await tx.run(zql.event.where('id', args.id).one())
+    const ev = await tx.run(zql.event.where('id', args.id).one());
 
-    await mutators.events.cancel.fn({ tx, ctx, args })
+    await mutators.events.cancel.fn({ tx, ctx, args });
 
     if (ev?.group_id) {
-      await recomputeGroupCounters(tx, ev.group_id)
+      await recomputeGroupCounters(tx, ev.group_id);
     }
 
     fireNotification('notifyEventCancelled', {
-      senderId: ctx.userID, eventId: args.id, eventTitle: eTitle, reason: args.cancel_reason,
-    })
+      senderId: ctx.userID,
+      eventId: args.id,
+      eventTitle: eTitle,
+      reason: args.cancel_reason,
+    });
   }),
 
-  // Event position overrides
-  createPosition: defineMutator(createEventPositionSchema, async ({ tx, ctx, args }) => {
-    await mutators.events.createPosition.fn({ tx, ctx, args })
+  // Event role overrides
+  createRole: defineMutator(createEventRoleSchema, async ({ tx, ctx, args }) => {
+    await mutators.events.createRole.fn({ tx, ctx, args });
 
     if (args.event_id) {
-      fireNotification('notifyEventPositionCreated', {
-        senderId: ctx.userID, eventId: args.event_id, positionId: args.id, positionTitle: args.title,
-      })
+      fireNotification('notifyEventRoleCreated', {
+        senderId: ctx.userID,
+        eventId: args.event_id,
+        roleId: args.id,
+        roleTitle: args.name,
+      });
     }
   }),
 
-  deletePosition: defineMutator(deleteEventPositionSchema, async ({ tx, ctx, args }) => {
-    const pos = await tx.run(zql.event_position.where('id', args.id).one())
+  deleteRole: defineMutator(deleteEventRoleSchema, async ({ tx, ctx, args }) => {
+    const pos = await tx.run(zql.role.where('id', args.id).one());
 
-    await mutators.events.deletePosition.fn({ tx, ctx, args })
+    await mutators.events.deleteRole.fn({ tx, ctx, args });
 
     if (pos?.event_id) {
-      fireNotification('notifyEventPositionDeleted', {
-        senderId: ctx.userID, eventId: pos.event_id, positionId: args.id, positionTitle: pos.title,
-      })
+      fireNotification('notifyEventRoleDeleted', {
+        senderId: ctx.userID,
+        eventId: pos.event_id,
+        roleId: args.id,
+        roleTitle: pos.name,
+      });
     }
   }),
 
   // Meeting booking (meetings as events)
   bookMeeting: defineMutator(bookMeetingSchema, async ({ tx, ctx, args }) => {
     // Capacity check: count existing bookings for this instance
-    const allParticipants = await tx.run(
-      zql.event_participant.where('event_id', args.event_id)
-    )
-    const ev = await tx.run(zql.event.where('id', args.event_id).one())
-    if (!ev || !ev.is_bookable) return
+    const allParticipants = await tx.run(zql.event_participant.where('event_id', args.event_id));
+    const ev = await tx.run(zql.event.where('id', args.event_id).one());
+    if (!ev || !ev.is_bookable) return;
 
-    const maxBookings = ev.max_bookings ?? 1
+    const maxBookings = ev.max_bookings ?? 1;
     // Count non-organizer participants for this specific instance
     const instanceBookings = allParticipants.filter(p => {
       // Skip the organizer (creator)
-      if (p.user_id === ev.creator_id) return false
+      if (p.user_id === ev.creator_id) return false;
       if (args.instance_date === null || args.instance_date === undefined) {
-        return p.instance_date === null || p.instance_date === undefined || p.instance_date === 0
+        return p.instance_date === null || p.instance_date === undefined || p.instance_date === 0;
       }
-      return p.instance_date === args.instance_date
-    })
-    if (instanceBookings.length >= maxBookings) return
+      return p.instance_date === args.instance_date;
+    });
+    if (instanceBookings.length >= maxBookings) return;
 
-    await mutators.events.bookMeeting.fn({ tx, ctx, args })
+    await mutators.events.bookMeeting.fn({ tx, ctx, args });
 
-    await recomputeEventCounters(tx, args.event_id)
+    await recomputeEventCounters(tx, args.event_id);
 
     const [eTitle, uName] = await Promise.all([
       eventTitle(tx, args.event_id),
       userName(tx, ctx.userID),
-    ])
+    ]);
     fireNotification('notifyMeetingBooked', {
-      senderId: ctx.userID, senderName: uName, eventId: args.event_id, eventTitle: eTitle,
-    })
+      senderId: ctx.userID,
+      senderName: uName,
+      eventId: args.event_id,
+      eventTitle: eTitle,
+    });
   }),
 
   cancelMeetingBooking: defineMutator(cancelMeetingBookingSchema, async ({ tx, ctx, args }) => {
-    await mutators.events.cancelMeetingBooking.fn({ tx, ctx, args })
+    await mutators.events.cancelMeetingBooking.fn({ tx, ctx, args });
 
-    await recomputeEventCounters(tx, args.event_id)
+    await recomputeEventCounters(tx, args.event_id);
 
     const [eTitle, uName] = await Promise.all([
       eventTitle(tx, args.event_id),
       userName(tx, ctx.userID),
-    ])
+    ]);
     fireNotification('notifyMeetingCancelled', {
-      senderId: ctx.userID, senderName: uName, eventId: args.event_id, eventTitle: eTitle,
-    })
+      senderId: ctx.userID,
+      senderName: uName,
+      eventId: args.event_id,
+      eventTitle: eTitle,
+    });
   }),
-}
+};

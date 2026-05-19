@@ -1,4 +1,4 @@
-import { table, string, number, json, type ReadonlyJSONValue } from '@rocicorp/zero';
+import { table, string, number, boolean, json, type ReadonlyJSONValue } from '@rocicorp/zero';
 
 export const group = table('group')
   .columns({
@@ -45,9 +45,19 @@ export const groupMembership = table('group_membership')
     user_id: string(),
     status: string().optional(),
     visibility: string(),
-    role_id: string().optional(),
     source: string(),
     source_group_id: string().optional(),
+    created_at: number(),
+  })
+  .primaryKey('id');
+
+export const groupMembershipRole = table('group_membership_role')
+  .columns({
+    id: string(),
+    group_membership_id: string(),
+    role_id: string(),
+    assigned_at: number(),
+    assigned_by_id: string().optional(),
     created_at: number(),
   })
   .primaryKey('id');
@@ -62,7 +72,31 @@ export const role = table('role')
     event_id: string().optional(),
     amendment_id: string().optional(),
     blog_id: string().optional(),
+    assignment_mode: string(),
+    visibility: string(),
+    term_start_date: number().optional(),
+    is_recurring: boolean(),
+    recurrence_pattern: string().optional(),
+    recurrence_rule: string().optional(),
+    recurrence_interval: number().optional(),
+    recurrence_days: json<ReadonlyJSONValue>().optional(),
+    recurrence_end_date: number().optional(),
+    scheduled_revote_date: number().optional(),
+    default_request_role: boolean(),
+    default_invite_role: boolean(),
     sort_order: number(),
+    created_at: number(),
+  })
+  .primaryKey('id');
+
+export const roleHolderHistory = table('role_holder_history')
+  .columns({
+    id: string(),
+    role_id: string(),
+    user_id: string(),
+    start_date: number().optional(),
+    end_date: number().optional(),
+    reason: string().optional(),
     created_at: number(),
   })
   .primaryKey('id');

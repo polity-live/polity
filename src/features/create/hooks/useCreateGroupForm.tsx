@@ -317,7 +317,6 @@ export function useCreateGroupForm(): CreateFormConfig {
           id: crypto.randomUUID(),
           user_id: userId,
           group_id: groupId,
-          role_id: null,
           visibility: '',
           status: 'invited',
         });

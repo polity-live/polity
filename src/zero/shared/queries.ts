@@ -17,7 +17,9 @@ export const searchQueries = {
       .where('visibility', 'IN', ['public', 'authenticated'])
       .related('owner')
       .related('group_hashtags', q => q.related('hashtag'))
-      .related('memberships', q => q.related('user').related('role'))
+      .related('memberships', q =>
+        q.related('user').related('membership_roles', mq => mq.related('role'))
+      )
       .related('events')
       .related('amendments')
       .limit(limit)
@@ -63,13 +65,16 @@ export const searchQueries = {
       .related('group')
       .related('participants', q => q.related('user'))
       .related('event_hashtags', q => q.related('hashtag'))
-      .related('event_positions', q => q.related('holders'))
+      .related('roles', q => q.related('holders'))
       .related('agenda_items', q => q.related('election').related('amendment'))
       .limit(limit)
   ),
 
   userGroupMemberships: defineQuery(z.object({ user_id: z.string() }), ({ args: { user_id } }) =>
-    zql.group_membership.where('user_id', user_id).related('group').related('role')
+    zql.group_membership
+      .where('user_id', user_id)
+      .related('group')
+      .related('membership_roles', q => q.related('role'))
   ),
 
   userTodoAssignments: defineQuery(z.object({ user_id: z.string() }), ({ args: { user_id } }) =>

@@ -19,15 +19,11 @@ import {
   groupUpdateSchema,
   roleCreateSchema,
   roleDeleteSchema,
+  roleHolderHistoryCreateSchema,
+  roleHolderHistoryUpdateSchema,
   actionRightCreateSchema,
   actionRightDeleteSchema,
 } from './schema';
-import {
-  createPositionSchema,
-  deletePositionSchema,
-  createPositionHolderHistorySchema,
-  updatePositionHolderHistorySchema,
-} from '../positions/schema';
 import { updateGroupRelationshipSchema, deleteGroupRelationshipSchema } from '../network/schema';
 import {
   resolveHierarchicalAncestors,
@@ -35,6 +31,72 @@ import {
   checkExclusivityConstraint,
   detectLinkConflicts,
 } from '../../features/groups/logic/hierarchy';
+
+async function addGroupMembershipRoleLink(
+  tx: Parameters<typeof mutators.groups.create.fn>[0]['tx'],
+  args: {
+    group_membership_id: string;
+    role_id: string;
+    assigned_by_id?: string | null;
+  }
+) {
+  const existingLink = await tx.run(
+    zql.group_membership_role
+      .where('group_membership_id', args.group_membership_id)
+      .where('role_id', args.role_id)
+      .one()
+  );
+
+  if (existingLink) {
+    return existingLink.id;
+  }
+
+  const now = Date.now();
+  const id = crypto.randomUUID();
+
+  await tx.mutate.group_membership_role.insert({
+    id,
+    group_membership_id: args.group_membership_id,
+    role_id: args.role_id,
+    assigned_at: now,
+    assigned_by_id: args.assigned_by_id ?? null,
+    created_at: now,
+  });
+
+  return id;
+}
+
+async function syncGroupMembershipRoleLinks(
+  tx: Parameters<typeof mutators.groups.create.fn>[0]['tx'],
+  args: {
+    group_membership_id: string;
+    role_ids: string[];
+    assigned_by_id?: string | null;
+  }
+) {
+  const desiredRoleIds = [...new Set(args.role_ids.filter(Boolean))];
+  const existingLinks = await tx.run(
+    zql.group_membership_role.where('group_membership_id', args.group_membership_id)
+  );
+  const desiredRoleIdSet = new Set(desiredRoleIds);
+  const existingRoleIds = new Set(existingLinks.map(link => link.role_id));
+
+  for (const link of existingLinks) {
+    if (!desiredRoleIdSet.has(link.role_id)) {
+      await tx.mutate.group_membership_role.delete({ id: link.id });
+    }
+  }
+
+  for (const roleId of desiredRoleIds) {
+    if (!existingRoleIds.has(roleId)) {
+      await addGroupMembershipRoleLink(tx, {
+        group_membership_id: args.group_membership_id,
+        role_id: roleId,
+        assigned_by_id: args.assigned_by_id,
+      });
+    }
+  }
+}
 
 /** Server-only mutators — override the shared mutators with additional server-side logic (e.g. notifications). */
 export const groupServerMutators = {
@@ -62,6 +124,18 @@ export const groupServerMutators = {
         event_id: null,
         amendment_id: null,
         blog_id: null,
+        assignment_mode: 'assigned',
+        visibility: roleDef.name === 'Member' ? 'private' : 'public',
+        term_start_date: null,
+        is_recurring: false,
+        recurrence_pattern: null,
+        recurrence_rule: null,
+        recurrence_interval: null,
+        recurrence_days: null,
+        recurrence_end_date: null,
+        scheduled_revote_date: null,
+        default_request_role: roleDef.default_request_role,
+        default_invite_role: roleDef.default_invite_role,
         sort_order: totalRoles - 1 - index,
         created_at: now,
       });
@@ -81,17 +155,26 @@ export const groupServerMutators = {
       }
     }
 
+    const creatorMembershipId = crypto.randomUUID();
+
     await tx.mutate.group_membership.insert({
-      id: crypto.randomUUID(),
+      id: creatorMembershipId,
       group_id: args.id,
       user_id: ctx.userID,
       status: 'active',
       visibility: 'public',
-      role_id: adminRoleId,
       source: 'direct',
       source_group_id: null,
       created_at: now,
     });
+
+    if (adminRoleId) {
+      await syncGroupMembershipRoleLinks(tx, {
+        group_membership_id: creatorMembershipId,
+        role_ids: [adminRoleId],
+        assigned_by_id: ctx.userID,
+      });
+    }
 
     await recomputeGroupCounters(tx, args.id);
     await recomputeUserCounters(tx, ctx.userID);
@@ -150,17 +233,26 @@ export const groupServerMutators = {
       const roles = await tx.run(zql.role.where('group_id', ancestorId).where('scope', 'group'));
       const memberRole = roles.find(r => r.name === 'Member');
 
+      const derivedMembershipId = crypto.randomUUID();
+
       await tx.mutate.group_membership.insert({
-        id: crypto.randomUUID(),
+        id: derivedMembershipId,
         group_id: ancestorId,
         user_id: ctx.userID,
         status: 'active',
         visibility: 'public',
-        role_id: memberRole?.id ?? null,
         source: 'derived',
         source_group_id: args.group_id,
         created_at: Date.now(),
       });
+
+      if (memberRole?.id) {
+        await syncGroupMembershipRoleLinks(tx, {
+          group_membership_id: derivedMembershipId,
+          role_ids: [memberRole.id],
+          assigned_by_id: ctx.userID,
+        });
+      }
 
       await recomputeGroupCounters(tx, ancestorId);
     }
@@ -220,17 +312,26 @@ export const groupServerMutators = {
       const roles = await tx.run(zql.role.where('group_id', ancestorId).where('scope', 'group'));
       const memberRole = roles.find(r => r.name === 'Member');
 
+      const derivedMembershipId = crypto.randomUUID();
+
       await tx.mutate.group_membership.insert({
-        id: crypto.randomUUID(),
+        id: derivedMembershipId,
         group_id: ancestorId,
         user_id: membership.user_id,
         status: 'active',
         visibility: 'public',
-        role_id: memberRole?.id ?? null,
         source: 'derived',
         source_group_id: membership.group_id,
         created_at: Date.now(),
       });
+
+      if (memberRole?.id) {
+        await syncGroupMembershipRoleLinks(tx, {
+          group_membership_id: derivedMembershipId,
+          role_ids: [memberRole.id],
+          assigned_by_id: ctx.userID,
+        });
+      }
 
       await recomputeGroupCounters(tx, ancestorId);
     }
@@ -309,6 +410,9 @@ export const groupServerMutators = {
 
   updateMemberRole: defineMutator(groupMembershipUpdateSchema, async ({ tx, ctx, args }) => {
     const oldMembership = await tx.run(zql.group_membership.where('id', args.id).one());
+    const oldRoleLinks = await tx.run(
+      zql.group_membership_role.where('group_membership_id', args.id)
+    );
 
     await mutators.groups.updateMemberRole.fn({ tx, ctx, args });
 
@@ -358,7 +462,12 @@ export const groupServerMutators = {
       });
     }
 
-    if (args.role_id !== undefined && args.role_id !== oldMembership.role_id && !newStatus) {
+    const oldRoleIds = new Set(oldRoleLinks.map(link => link.role_id));
+    const legacyRoleChanged =
+      args.role_id !== undefined &&
+      (args.role_id ? oldRoleIds.size !== 1 || !oldRoleIds.has(args.role_id) : oldRoleIds.size > 0);
+
+    if (legacyRoleChanged && !newStatus) {
       const rInfo = args.role_id
         ? await roleName(tx, args.role_id)
         : { name: 'Default', groupId: null };
@@ -390,17 +499,26 @@ export const groupServerMutators = {
           );
           const memberRole = roles.find(r => r.name === 'Member');
 
+          const derivedMembershipId = crypto.randomUUID();
+
           await tx.mutate.group_membership.insert({
-            id: crypto.randomUUID(),
+            id: derivedMembershipId,
             group_id: ancestorId,
             user_id: membUserId,
             status: 'active',
             visibility: 'public',
-            role_id: memberRole?.id ?? null,
             source: 'derived',
             source_group_id: gId,
             created_at: Date.now(),
           });
+
+          if (memberRole?.id) {
+            await syncGroupMembershipRoleLinks(tx, {
+              group_membership_id: derivedMembershipId,
+              role_ids: [memberRole.id],
+              assigned_by_id: ctx.userID,
+            });
+          }
 
           await recomputeGroupCounters(tx, ancestorId);
         }
@@ -424,7 +542,7 @@ export const groupServerMutators = {
 
     if (args.group_id) {
       const gName = await groupName(tx, args.group_id);
-      fireNotification('notifyRoleCreated', {
+      fireNotification('notifyAccessRoleCreated', {
         senderId: ctx.userID,
         groupId: args.group_id,
         groupName: gName,
@@ -439,7 +557,7 @@ export const groupServerMutators = {
 
     if (rInfo.groupId) {
       const gName = await groupName(tx, rInfo.groupId);
-      fireNotification('notifyRoleDeleted', {
+      fireNotification('notifyAccessRoleDeleted', {
         senderId: ctx.userID,
         groupId: rInfo.groupId,
         groupName: gName,
@@ -483,72 +601,43 @@ export const groupServerMutators = {
     }
   }),
 
-  createPosition: defineMutator(createPositionSchema, async ({ tx, ctx, args }) => {
-    await mutators.groups.createPosition.fn({ tx, ctx, args });
-
-    if (args.group_id) {
-      const gName = await groupName(tx, args.group_id);
-      fireNotification('notifyPositionCreated', {
-        senderId: ctx.userID,
-        groupId: args.group_id,
-        groupName: gName,
-      });
-    }
-  }),
-
-  deletePosition: defineMutator(deletePositionSchema, async ({ tx, ctx, args }) => {
-    const pos = await tx.run(zql.position.where('id', args.id).one());
-
-    await mutators.groups.deletePosition.fn({ tx, ctx, args });
-
-    if (pos?.group_id) {
-      const gName = await groupName(tx, pos.group_id);
-      fireNotification('notifyPositionDeleted', {
-        senderId: ctx.userID,
-        groupId: pos.group_id,
-        groupName: gName,
-        positionTitle: pos.title,
-      });
-    }
-  }),
-
-  createPositionHolderHistory: defineMutator(
-    createPositionHolderHistorySchema,
+  createRoleHolderHistory: defineMutator(
+    roleHolderHistoryCreateSchema,
     async ({ tx, ctx, args }) => {
-      await mutators.groups.createPositionHolderHistory.fn({ tx, ctx, args });
+      await mutators.groups.createRoleHolderHistory.fn({ tx, ctx, args });
 
-      if (args.position_id) {
-        const pos = await tx.run(zql.position.where('id', args.position_id).one());
+      if (args.role_id) {
+        const pos = await tx.run(zql.role.where('id', args.role_id).one());
         if (pos?.group_id && args.user_id) {
           const gName = await groupName(tx, pos.group_id);
-          fireNotification('notifyPositionAssigned', {
+          fireNotification('notifyRoleAssigned', {
             senderId: ctx.userID,
             recipientId: args.user_id,
             groupId: pos.group_id,
             groupName: gName,
-            positionTitle: pos.title,
+            roleTitle: pos.name,
           });
         }
       }
     }
   ),
 
-  updatePositionHolderHistory: defineMutator(
-    updatePositionHolderHistorySchema,
+  updateRoleHolderHistory: defineMutator(
+    roleHolderHistoryUpdateSchema,
     async ({ tx, ctx, args }) => {
-      const oldHistory = await tx.run(zql.position_holder_history.where('id', args.id).one());
+      const oldHistory = await tx.run(zql.role_holder_history.where('id', args.id).one());
 
-      await mutators.groups.updatePositionHolderHistory.fn({ tx, ctx, args });
+      await mutators.groups.updateRoleHolderHistory.fn({ tx, ctx, args });
 
-      if (args.end_date && !oldHistory?.end_date && oldHistory?.position_id) {
-        const pos = await tx.run(zql.position.where('id', oldHistory.position_id).one());
+      if (args.end_date && !oldHistory?.end_date && oldHistory?.role_id) {
+        const pos = await tx.run(zql.role.where('id', oldHistory.role_id).one());
         if (pos?.group_id) {
           const gName = await groupName(tx, pos.group_id);
-          fireNotification('notifyPositionVacated', {
+          fireNotification('notifyRoleVacated', {
             senderId: ctx.userID,
             groupId: pos.group_id,
             groupName: gName,
-            positionTitle: pos.title,
+            roleTitle: pos.name,
           });
         }
       }
@@ -636,9 +725,11 @@ export const groupServerMutators = {
           zql.group_membership.where('group_id', parentGroupId).where('source', 'direct')
         );
         for (const member of existingMembers) {
-          if (member.role_id !== adminRole.id) {
-            await tx.mutate.group_membership.update({ id: member.id, role_id: adminRole.id });
-          }
+          await addGroupMembershipRoleLink(tx, {
+            group_membership_id: member.id,
+            role_id: adminRole.id,
+            assigned_by_id: ctx.userID,
+          });
         }
       }
     }
@@ -670,17 +761,26 @@ export const groupServerMutators = {
           );
           if (existing.length > 0) continue;
 
+          const derivedMembershipId = crypto.randomUUID();
+
           await tx.mutate.group_membership.insert({
-            id: crypto.randomUUID(),
+            id: derivedMembershipId,
             group_id: ancestorId,
             user_id: member.user_id,
             status: 'active',
             visibility: 'public',
-            role_id: memberRole?.id ?? null,
             source: 'derived',
             source_group_id: baseGroupId,
             created_at: Date.now(),
           });
+
+          if (memberRole?.id) {
+            await syncGroupMembershipRoleLinks(tx, {
+              group_membership_id: derivedMembershipId,
+              role_ids: [memberRole.id],
+              assigned_by_id: ctx.userID,
+            });
+          }
         }
 
         await recomputeGroupCounters(tx, ancestorId);

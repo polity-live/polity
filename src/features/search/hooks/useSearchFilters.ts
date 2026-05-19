@@ -82,9 +82,7 @@ export function useSearchFilters(data: SearchData | undefined, filters: SearchFi
         const matchesPreamble = amendment.preamble && filterByQuery(amendment.preamble, query);
         const matchesReason = amendment.reason && filterByQuery(amendment.reason, query);
         const matchesUser = (amendment.collaborators ?? []).some(
-          c =>
-            filterByQuery(c.user?.first_name, query) ||
-            filterByQuery(c.user?.last_name, query)
+          c => filterByQuery(c.user?.first_name, query) || filterByQuery(c.user?.last_name, query)
         );
 
         if (!query) return true;
@@ -144,21 +142,19 @@ export function useSearchFilters(data: SearchData | undefined, filters: SearchFi
         const matchesDescription =
           election.description && filterByQuery(election.description, query);
         const matchesGroup =
-          election.position?.group?.name && filterByQuery(election.position.group.name, query);
-        const matchesPosition =
-          election.position?.title && filterByQuery(election.position.title, query);
+          election.role?.group?.name && filterByQuery(election.role.group.name, query);
+        const matchesRole =
+          (election.role?.title || election.role?.name) &&
+          filterByQuery(election.role?.title || election.role?.name || '', query);
 
         if (!query) return true;
-        return matchesTitle || matchesDescription || matchesGroup || matchesPosition;
+        return matchesTitle || matchesDescription || matchesGroup || matchesRole;
       }) || [],
     [data?.elections, query]
   );
 
   // TODO: Removed with voting session migration — vote filtering returns empty
-  const filteredVotes = useMemo(
-    () => data?.eventVotingSessions ?? [],
-    [data?.eventVotingSessions]
-  );
+  const filteredVotes = useMemo(() => data?.eventVotingSessions ?? [], [data?.eventVotingSessions]);
 
   // Filter timeline events for video and image content
   const filteredVideos = useMemo(

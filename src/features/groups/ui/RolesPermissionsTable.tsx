@@ -5,9 +5,14 @@
  * Column order represents role hierarchy: left = least rights, right = most rights.
  */
 
-import { useState, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/features/shared/ui/ui/card';
-import { Button } from '@/features/shared/ui/ui/button';
+import { useRef, useState } from 'react';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/features/shared/ui/ui/card';
 import { Checkbox } from '@/features/shared/ui/ui/checkbox';
 import {
   Table,
@@ -17,25 +22,27 @@ import {
   TableHeader,
   TableRow,
 } from '@/features/shared/ui/ui/table';
-import { GripVertical, Shield, Trash2 } from 'lucide-react';
+import { GripVertical, Shield } from 'lucide-react';
 import { ACTION_RIGHTS } from '@/zero/rbac/constants';
-import type { GroupRole } from '../types/group.types';
+import type { ParticipationRoleLike } from '@/features/shared/types/participation';
+import { RoleTag } from './RoleTag';
 
-interface RolesPermissionsTableProps {
-  roles: GroupRole[];
-  onTogglePermission: (roleId: string, resource: string, action: string, currentlyHas: boolean) => void;
-  onRemoveRole: (roleId: string) => void;
+interface RolesPermissionsTableProps<TRole extends ParticipationRoleLike> {
+  roles: TRole[];
+  onTogglePermission: (
+    roleId: string,
+    resource: string,
+    action: string,
+    currentlyHas: boolean
+  ) => void;
   onReorderRoles: (orderedRoleIds: string[]) => void;
-  addRoleButton: React.ReactNode;
 }
 
-export function RolesPermissionsTable({
+export function RolesPermissionsTable<TRole extends ParticipationRoleLike>({
   roles,
   onTogglePermission,
-  onRemoveRole,
   onReorderRoles,
-  addRoleButton,
-}: RolesPermissionsTableProps) {
+}: RolesPermissionsTableProps<TRole>) {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const dragCounter = useRef(0);
@@ -71,7 +78,7 @@ export function RolesPermissionsTable({
     const reordered = [...roles];
     const [moved] = reordered.splice(draggedIndex, 1);
     reordered.splice(dropIndex, 0, moved);
-    onReorderRoles(reordered.map((r) => r.id));
+    onReorderRoles(reordered.map(r => r.id));
 
     setDraggedIndex(null);
     setDragOverIndex(null);
@@ -87,22 +94,20 @@ export function RolesPermissionsTable({
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5" />
-              Role Permissions
-            </CardTitle>
-            <CardDescription>
-              Manage roles and their action rights. Drag columns to reorder — left is least privileged, right is most privileged.
-            </CardDescription>
-          </div>
-          {addRoleButton}
+        <div>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="h-5 w-5" />
+            Role Permissions
+          </CardTitle>
+          <CardDescription>
+            Manage roles and their action rights. Drag columns to reorder — left is least
+            privileged, right is most privileged.
+          </CardDescription>
         </div>
       </CardHeader>
       <CardContent>
         {roles && roles.length > 0 ? (
-          <div className="overflow-x-auto">
+          <div className="border-border/70 overflow-x-auto rounded-2xl border">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -121,24 +126,18 @@ export function RolesPermissionsTable({
                       onDrop={() => handleDrop(index)}
                       onDragEnd={handleDragEnd}
                     >
-                      <div className="flex flex-col items-center gap-1">
+                      <div className="flex flex-col items-center gap-1 py-1">
                         <div className="flex cursor-grab items-center gap-1">
-                          <GripVertical className="h-3 w-3 text-muted-foreground" />
-                          <span className="font-semibold">{role.name}</span>
+                          <GripVertical className="text-muted-foreground h-3 w-3" />
+                          <RoleTag
+                            roleId={role.id}
+                            roleName={role.name || 'Role'}
+                            className="pointer-events-none text-[11px]"
+                          />
                         </div>
-                        {role.description && (
-                          <span className="text-xs font-normal text-muted-foreground">
-                            {role.description}
-                          </span>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="mt-1 h-6 w-6 p-0"
-                          onClick={() => onRemoveRole(role.id)}
-                        >
-                          <Trash2 className="h-3 w-3 text-destructive" />
-                        </Button>
+                        <span className="text-muted-foreground text-xs font-normal">
+                          {role.assignment_mode === 'elected' ? 'Election' : 'Assignment'}
+                        </span>
                       </div>
                     </TableHead>
                   ))}
@@ -150,7 +149,7 @@ export function RolesPermissionsTable({
                   return (
                     <TableRow key={rightKey}>
                       <TableCell className="font-medium">{label}</TableCell>
-                      {roles.map((role) => {
+                      {roles.map(role => {
                         const hasRight = role.action_rights?.some(
                           ar => ar.resource === resource && ar.action === action
                         );
@@ -160,12 +159,7 @@ export function RolesPermissionsTable({
                               <Checkbox
                                 checked={hasRight}
                                 onCheckedChange={() =>
-                                  onTogglePermission(
-                                    role.id,
-                                    resource,
-                                    action,
-                                    hasRight || false
-                                  )
+                                  onTogglePermission(role.id, resource, action, hasRight || false)
                                 }
                               />
                             </div>
@@ -180,9 +174,9 @@ export function RolesPermissionsTable({
           </div>
         ) : (
           <div className="py-12 text-center">
-            <Shield className="mx-auto h-12 w-12 text-muted-foreground/50" />
-            <p className="mt-4 text-muted-foreground">
-              No roles created yet. Click "Add Role" to create your first role.
+            <Shield className="text-muted-foreground/50 mx-auto h-12 w-12" />
+            <p className="text-muted-foreground mt-4">
+              No roles created yet. Create your first role in the details section.
             </p>
           </div>
         )}

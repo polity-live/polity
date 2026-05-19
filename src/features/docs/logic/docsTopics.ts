@@ -85,7 +85,7 @@ export const docsTopicDefinitions: DocsTopicDefinition[] = [
     process: {
       kind: 'timeline',
       steps: [
-        { id: 'define-position', tone: 'entry' },
+        { id: 'define-role', tone: 'entry' },
         { id: 'nominate', tone: 'collaboration' },
         { id: 'confirm-results', tone: 'result' },
       ],

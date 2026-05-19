@@ -45,7 +45,6 @@ const CREATE_FLOW_TYPES = [
   'payment',
   'agenda-item',
   'election-candidate',
-  'position',
 ] as const;
 
 const AGENDA_ITEM_TYPES = ['election', 'vote', 'speech', 'discussion', 'accreditation'] as const;
@@ -108,11 +107,6 @@ const createFlowMetadata: Record<
     title: 'Kandidatur erstellen',
     description: 'Öffnet den Election-Candidate-Flow im Create-Bereich.',
     route: '/create/election-candidate',
-  },
-  position: {
-    title: 'Position erstellen',
-    description: 'Öffnet den Position-Flow im Create-Bereich.',
-    route: '/create/position',
   },
 };
 

@@ -8,15 +8,8 @@ import {
   CardTitle,
 } from '@/features/shared/ui/ui/card';
 import { Badge } from '@/features/shared/ui/ui/badge';
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from '@/features/shared/ui/ui/carousel';
 import { LinkGroupDialog } from '@/features/network/ui/LinkGroupDialog';
-import { UserCheck, BookOpen, Network } from 'lucide-react';
+import { BookOpen, Network } from 'lucide-react';
 import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
 import { BlogTimelineCard } from '@/features/timeline/ui/cards/BlogTimelineCard';
@@ -30,9 +23,11 @@ import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCar
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { useGroupWikiPage } from '@/features/groups/hooks/useGroupWikiPage';
+import { buildGroupWikiIncumbentSections } from '@/features/groups/logic/buildGroupWikiIncumbentSections';
 import { groupRelationshipsByGroup } from '@/features/groups/logic/groupWikiHelpers';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
 import { formatLocation } from '@/features/shared/logic/locationHelpers';
+import { WikiIncumbentPanel } from '@/features/shared/ui/wiki/WikiIncumbentPanel';
 
 interface GroupWikiProps {
   groupId: string;
@@ -82,6 +77,10 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
   const groupLocation = formatLocation(group);
   const parentGroups = groupRelationshipsByGroup(group.relationships_as_target ?? [], 'parent');
   const childGroups = groupRelationshipsByGroup(group.relationships_as_source ?? [], 'child');
+  const incumbentSections = buildGroupWikiIncumbentSections(
+    group.roles ?? [],
+    group.memberships ?? []
+  );
 
   return (
     <div>
@@ -217,112 +216,12 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
         className="mb-12"
       />
 
-      {/* Positions Carousel */}
-      {group.positions && group.positions.length > 0 && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <UserCheck className="h-5 w-5" />
-              Positions
-            </CardTitle>
-            <CardDescription>Current office holders in this group</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Carousel
-              opts={{
-                align: 'start',
-                loop: true,
-              }}
-              className="w-full"
-            >
-              <CarouselContent className="-ml-2 md:-ml-4">
-                {group.positions.map((position, index: number) => (
-                  <CarouselItem
-                    key={position.id}
-                    className="pl-2 md:basis-1/2 md:pl-4 lg:basis-1/3"
-                  >
-                    <Card
-                      className={`h-full overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${GRADIENTS[index % GRADIENTS.length]}`}
-                    >
-                      <CardHeader className="space-y-3 pb-4">
-                        <CardTitle className="line-clamp-1 text-xl">{position.title}</CardTitle>
-                        {position.description && (
-                          <CardDescription className="line-clamp-2">
-                            {position.description}
-                          </CardDescription>
-                        )}
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div className="space-y-3">
-                          {(() => {
-                            const currentHistory = position.holder_history?.find(h => !h.end_date);
-                            const holder = currentHistory?.user;
-                            return holder ? (
-                              <div className="bg-background/80 rounded-lg border p-3 shadow-sm backdrop-blur-sm">
-                                <p className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
-                                  Current Holder
-                                </p>
-                                <div className="flex items-center gap-3">
-                                  {holder.avatar && (
-                                    <img
-                                      src={holder.avatar}
-                                      alt={holder.first_name || 'User'}
-                                      className="ring-background h-10 w-10 rounded-full object-cover ring-2"
-                                    />
-                                  )}
-                                  <div className="min-w-0 flex-1">
-                                    <p className="truncate font-semibold">
-                                      {[holder.first_name, holder.last_name]
-                                        .filter(Boolean)
-                                        .join(' ') || 'Unknown'}
-                                    </p>
-                                    {holder.handle && (
-                                      <p className="text-muted-foreground truncate text-sm">
-                                        @{holder.handle}
-                                      </p>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="border-border/50 bg-background/50 rounded-lg border border-dashed p-4 text-center">
-                                <p className="text-muted-foreground text-sm font-medium">
-                                  Vacant Position
-                                </p>
-                              </div>
-                            );
-                          })()}
-                          {(position.term || position.first_term_start) && (
-                            <div className="border-border/50 bg-background/50 space-y-2 rounded-lg border p-3 text-sm">
-                              {position.term && (
-                                <div className="flex justify-between">
-                                  <span className="text-muted-foreground font-medium">Term:</span>
-                                  <span className="font-semibold">{position.term}</span>
-                                </div>
-                              )}
-                              {position.first_term_start && (
-                                <div className="flex justify-between">
-                                  <span className="text-muted-foreground font-medium">
-                                    Started:
-                                  </span>
-                                  <span className="font-semibold">
-                                    {new Date(position.first_term_start).toLocaleDateString()}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious />
-              <CarouselNext />
-            </Carousel>
-          </CardContent>
-        </Card>
+      {incumbentSections.length > 0 && (
+        <WikiIncumbentPanel
+          title="Roles & Incumbents"
+          description="Assigned and elected roles with their active incumbents in this group"
+          sections={incumbentSections}
+        />
       )}
 
       {/* Parent & Child Groups */}

@@ -1,4 +1,6 @@
 import React, { useMemo } from 'react';
+import { getMembershipRoleNames } from '@/features/shared/logic/membershipRoleHelpers';
+import { richTextToPlainText } from '@/features/shared/logic/richText';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Search } from 'lucide-react';
 import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCard';
@@ -37,7 +39,7 @@ export const GroupsListTab: React.FC<GroupsListTabProps> = ({
       matchesSearchQuery(
         searchValue,
         membership.group?.name,
-        membership.role?.name,
+        getMembershipRoleNames(membership).join(' '),
         membership.group?.description
       )
     );
@@ -76,7 +78,7 @@ export const GroupsListTab: React.FC<GroupsListTabProps> = ({
                 group={{
                   id: String(group.id),
                   name: group.name ?? '',
-                  description: group.description ?? undefined,
+                  description: richTextToPlainText(group.description) || undefined,
                   memberCount: group.member_count ?? 0,
                   eventCount: group.event_count ?? group.events?.length,
                   amendmentCount: group.amendment_count ?? group.amendments?.length,

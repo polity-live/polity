@@ -11,8 +11,8 @@ interface VoteResultSentenceProps {
   result: 'passed' | 'rejected' | 'tie';
   winnerName?: string;
   winnerLink?: string;
-  positionName?: string;
-  positionLink?: string;
+  roleName?: string;
+  roleLink?: string;
   voteSharePercent?: number;
   isFinal?: boolean;
   className?: string;
@@ -21,7 +21,7 @@ interface VoteResultSentenceProps {
 /**
  * Standardized result sentence displayed above vote results.
  *
- * For elections: "For the election of <position>, <winner> won with <share>% of votes."
+ * For elections: "For the election of <role>, <winner> won with <share>% of votes."
  * For votes: "The motion was accepted/rejected with <share>% of votes."
  *
  * Winner gets a crown icon + golden highlight when the final vote is over.
@@ -31,8 +31,8 @@ export function VoteResultSentence({
   result,
   winnerName,
   winnerLink,
-  positionName,
-  positionLink,
+  roleName,
+  roleLink,
   voteSharePercent,
   isFinal,
   className,
@@ -42,22 +42,31 @@ export function VoteResultSentence({
   const isWinner = result === 'passed' && type === 'election' && winnerName;
 
   // Render a semantic sentence using the pure helper
-  const plainSentence = formatVoteResultSentence(type, result, winnerName, positionName, voteSharePercent);
+  const plainSentence = formatVoteResultSentence(
+    type,
+    result,
+    winnerName,
+    roleName,
+    voteSharePercent
+  );
 
   // For elections with a winner, render a rich version with links + crown
   if (isWinner && isFinal) {
-    const positionPart = positionName ? (
-      positionLink ? (
-        <Link to={positionLink} className="font-medium underline underline-offset-4 hover:text-primary">
-          {positionName}
+    const rolePart = roleName ? (
+      roleLink ? (
+        <Link to={roleLink} className="hover:text-primary font-medium underline underline-offset-4">
+          {roleName}
         </Link>
       ) : (
-        <span className="font-medium">{positionName}</span>
+        <span className="font-medium">{roleName}</span>
       )
     ) : null;
 
     const winnerPart = winnerLink ? (
-      <Link to={winnerLink} className="font-semibold text-yellow-700 underline underline-offset-4 hover:text-yellow-600 dark:text-yellow-400">
+      <Link
+        to={winnerLink}
+        className="font-semibold text-yellow-700 underline underline-offset-4 hover:text-yellow-600 dark:text-yellow-400"
+      >
         {winnerName}
       </Link>
     ) : (
@@ -68,22 +77,19 @@ export function VoteResultSentence({
       <div
         className={cn(
           'flex items-center gap-2 rounded-lg bg-yellow-50 px-4 py-3 text-sm dark:bg-yellow-950/30',
-          className,
+          className
         )}
       >
         <Crown className="h-5 w-5 shrink-0 text-yellow-500" />
         <p>
-          {positionPart ? (
+          {rolePart ? (
             <>
-              {t('features.events.voting.forElectionOf', 'For the election of')}{' '}
-              {positionPart},{' '}
-              {winnerPart}{' '}
-              {t('features.events.voting.wonWith', 'won')}
+              {t('features.events.voting.forElectionOf', 'For the election of')} {rolePart},{' '}
+              {winnerPart} {t('features.events.voting.wonWith', 'won')}
               {voteSharePercent !== undefined && (
                 <>
                   {' '}
-                  {t('features.events.voting.withShare', 'with')}{' '}
-                  {voteSharePercent}%{' '}
+                  {t('features.events.voting.withShare', 'with')} {voteSharePercent}%{' '}
                   {t('features.events.voting.ofVotes', 'of votes')}
                 </>
               )}
@@ -91,13 +97,11 @@ export function VoteResultSentence({
             </>
           ) : (
             <>
-              {winnerPart}{' '}
-              {t('features.events.voting.wonElection', 'won the election')}
+              {winnerPart} {t('features.events.voting.wonElection', 'won the election')}
               {voteSharePercent !== undefined && (
                 <>
                   {' '}
-                  {t('features.events.voting.withShare', 'with')}{' '}
-                  {voteSharePercent}%
+                  {t('features.events.voting.withShare', 'with')} {voteSharePercent}%
                 </>
               )}
               .
@@ -120,7 +124,7 @@ export function VoteResultSentence({
           : result === 'rejected'
             ? 'bg-red-50 text-red-800 dark:bg-red-950/30 dark:text-red-300'
             : 'bg-amber-50 text-amber-800 dark:bg-amber-950/30 dark:text-amber-300',
-        className,
+        className
       )}
     >
       <p>{plainSentence}</p>

@@ -7,11 +7,6 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { useAuth } from '@/providers/auth-provider';
-import {
-  notifyEventCancelled,
-  notifyAgendaItemsReassigned,
-  notifyRevoteScheduled,
-} from '@/features/notifications/utils/notification-helpers.ts';
 import { toast } from 'sonner';
 import { useEventActions } from '@/zero/events/useEventActions';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
@@ -28,7 +23,7 @@ interface AgendaItem {
   };
   election?: {
     id: string;
-    position?: {
+    role?: {
       id: string;
       name: string;
     };
@@ -40,11 +35,11 @@ interface UseCancelEventResult {
   agendaItems: AgendaItem[];
   cancelEvent: (params: CancelEventParams) => Promise<void>;
   scheduleRevote: (
-    positionId: string,
+    roleId: string,
     revoteDate: Date,
     groupId: string,
     groupName: string,
-    positionTitle: string
+    roleTitle: string
   ) => Promise<void>;
 }
 
@@ -59,7 +54,7 @@ export function useCancelEvent(eventId: string): UseCancelEventResult {
   const { user } = useAuth();
   const { cancelEvent: doCancelEvent } = useEventActions();
   const { updateAgendaItem } = useAgendaActions();
-  const { updatePosition } = useGroupActions();
+  const { updateRole } = useGroupActions();
   const [isLoading, setIsLoading] = useState(false);
 
   // Query event data with agenda items
@@ -67,7 +62,7 @@ export function useCancelEvent(eventId: string): UseCancelEventResult {
   const agendaItems = useMemo((): AgendaItem[] => {
     if (!event?.agenda_items) return [];
     return event.agenda_items
-      .map((item) => ({
+      .map(item => ({
         id: item.id,
         title: item.title || '',
         order_index: item.order_index || 0,
@@ -77,8 +72,8 @@ export function useCancelEvent(eventId: string): UseCancelEventResult {
         election: item.election[0]
           ? {
               id: item.election[0].id,
-              position: item.election[0].position
-                ? { id: item.election[0].position.id, name: item.election[0].position.title || '' }
+              role: item.election[0].role
+                ? { id: item.election[0].role.id, name: item.election[0].role.title || '' }
                 : undefined,
             }
           : undefined,
@@ -101,7 +96,6 @@ export function useCancelEvent(eventId: string): UseCancelEventResult {
           cancel_reason: params.reason,
         });
 
-
         // Reassign agenda items if specified
         if (params.reassignToEventId && params.itemsToReassign?.length) {
           // Reassign items sequentially
@@ -113,7 +107,6 @@ export function useCancelEvent(eventId: string): UseCancelEventResult {
               order_index: newSortOrder++,
             });
           }
-
         }
 
         toast.success('Event cancelled successfully');
@@ -129,13 +122,7 @@ export function useCancelEvent(eventId: string): UseCancelEventResult {
   );
 
   const scheduleRevote = useCallback(
-    async (
-      positionId: string,
-      revoteDate: Date,
-      groupId: string,
-      groupName: string,
-      positionTitle: string
-    ) => {
+    async (roleId: string, revoteDate: Date) => {
       if (!user) {
         toast.error('You must be logged in');
         return;
@@ -143,11 +130,10 @@ export function useCancelEvent(eventId: string): UseCancelEventResult {
 
       setIsLoading(true);
       try {
-        await updatePosition({
-          id: positionId,
+        await updateRole({
+          id: roleId,
           scheduled_revote_date: revoteDate.getTime(),
         });
-
 
         toast.success('Revote scheduled');
       } catch (error) {

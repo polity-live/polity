@@ -145,7 +145,6 @@ export function useOnboarding(): UseOnboardingReturn {
         group_id: data.selectedGroup.id,
         status: 'requested',
         visibility: '',
-        role_id: null,
       });
 
       // Notify group admins/members with manage rights

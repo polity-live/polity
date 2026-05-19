@@ -17,7 +17,6 @@ import {
   CheckSquare,
   Calendar,
   UserCheck,
-  Briefcase,
   DollarSign,
 } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -85,12 +84,6 @@ export function CreateDashboard() {
       icon: UserCheck,
       title: t('pages.create.electionCandidate.pageTitle'),
       description: t('pages.create.electionCandidate.description'),
-    },
-    {
-      href: '/create/position',
-      icon: Briefcase,
-      title: t('pages.create.position.pageTitle'),
-      description: t('pages.create.position.description'),
     },
   ];
 

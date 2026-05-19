@@ -3,17 +3,17 @@
  * Extracted from content-type-config.ts for reuse outside timeline code.
  */
 
-export type EntityType = 'group' | 'event' | 'amendment' | 'blog' | 'user' | 'election' | 'position'
+export type EntityType = 'group' | 'event' | 'amendment' | 'blog' | 'user' | 'election' | 'role';
 
 export interface EntityColorConfig {
-  gradient: string
-  gradientDark: string
-  accentColor: string
-  borderColor: string
+  gradient: string;
+  gradientDark: string;
+  accentColor: string;
+  borderColor: string;
   /** Left border color for notification cards */
-  notificationBorderLeft: string
+  notificationBorderLeft: string;
   /** Badge background classes (light + dark) */
-  badgeBg: string
+  badgeBg: string;
 }
 
 export const ENTITY_COLORS: Record<EntityType, EntityColorConfig> = {
@@ -65,7 +65,7 @@ export const ENTITY_COLORS: Record<EntityType, EntityColorConfig> = {
     notificationBorderLeft: 'border-l-rose-500',
     badgeBg: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
   },
-  position: {
+  role: {
     gradient: 'from-cyan-100 to-sky-100',
     gradientDark: 'dark:from-cyan-900/40 dark:to-sky-900/50',
     accentColor: 'text-cyan-600 dark:text-cyan-400',
@@ -73,4 +73,4 @@ export const ENTITY_COLORS: Record<EntityType, EntityColorConfig> = {
     notificationBorderLeft: 'border-l-cyan-500',
     badgeBg: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300',
   },
-}
+};

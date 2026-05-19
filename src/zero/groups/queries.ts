@@ -10,7 +10,11 @@ export const groupQueries = {
   ),
 
   byUser: defineQuery(z.object({}), ({ ctx: { userID } }) =>
-    zql.group_membership.where('user_id', userID).orderBy('created_at', 'desc')
+    zql.group_membership
+      .where('user_id', userID)
+      .related('group')
+      .related('membership_roles', q => q.related('role'))
+      .orderBy('created_at', 'desc')
   ),
 
   search: defineQuery(z.object({ query: z.string() }), ({ args: { query } }) =>
@@ -18,7 +22,10 @@ export const groupQueries = {
   ),
 
   memberships: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
-    zql.group_membership.where('group_id', groupId).orderBy('created_at', 'desc')
+    zql.group_membership
+      .where('group_id', groupId)
+      .related('membership_roles', q => q.related('role'))
+      .orderBy('created_at', 'desc')
   ),
 
   hierarchy: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
@@ -50,19 +57,22 @@ export const groupQueries = {
     zql.role.where('group_id', groupId).orderBy('sort_order', 'asc')
   ),
 
-  positions: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
-    zql.position.where('group_id', groupId).orderBy('title', 'asc')
+  scopedRoles: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
+    zql.role.where('group_id', groupId).where('scope', 'group').orderBy('sort_order', 'asc')
   ),
 
   membershipsByUser: defineQuery(z.object({ user_id: z.string() }), ({ args: { user_id } }) =>
     zql.group_membership
       .where('user_id', user_id)
       .related('group', q => q.related('owner'))
-      .related('role')
+      .related('membership_roles', q => q.related('role'))
   ),
 
   currentUserMembershipsWithGroups: defineQuery(z.object({}), ({ ctx: { userID } }) =>
-    zql.group_membership.where('user_id', userID).related('group').related('role')
+    zql.group_membership
+      .where('user_id', userID)
+      .related('group')
+      .related('membership_roles', q => q.related('role'))
   ),
 
   /** Current user's memberships with group and role→action_rights (for permission-filtered dropdowns) */
@@ -70,11 +80,14 @@ export const groupQueries = {
     zql.group_membership
       .where('user_id', userID)
       .related('group')
-      .related('role', q => q.related('action_rights'))
+      .related('membership_roles', q => q.related('role', rq => rq.related('action_rights')))
   ),
 
   membershipsWithUsers: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
-    zql.group_membership.where('group_id', groupId).related('user')
+    zql.group_membership
+      .where('group_id', groupId)
+      .related('user')
+      .related('membership_roles', q => q.related('role'))
   ),
 
   // ── New queries (extracted from hooks.ts) ─────────────────────────
@@ -86,7 +99,9 @@ export const groupQueries = {
       .related('owner')
       .related('events')
       .related('amendments')
-      .related('memberships', q => q.related('user'))
+      .related('memberships', q =>
+        q.related('user').related('membership_roles', mq => mq.related('role'))
+      )
       .related('relationships_as_source', q =>
         q.related('related_group', q =>
           q.related('memberships').related('events').related('amendments')
@@ -96,7 +111,7 @@ export const groupQueries = {
         q.related('group', q => q.related('memberships').related('events').related('amendments'))
       )
       .related('group_hashtags', q => q.related('hashtag'))
-      .related('positions', q => q.related('holder_history', q => q.related('user')))
+      .related('roles', q => q.related('holder_history', q => q.related('user')))
       .related('blogs', q => q.related('blog_hashtags', q => q.related('hashtag')))
   ),
 
@@ -104,13 +119,19 @@ export const groupQueries = {
   userMembershipInGroup: defineQuery(
     z.object({ userId: z.string(), groupId: z.string() }),
     ({ args: { userId, groupId } }) =>
-      zql.group_membership.where('user_id', userId).where('group_id', groupId).related('role')
+      zql.group_membership
+        .where('user_id', userId)
+        .where('group_id', groupId)
+        .related('membership_roles', q => q.related('role', rq => rq.related('action_rights')))
   ),
 
   /** All membership rows for a group, with role (used alongside userMembershipInGroup) */
   allMembershipsInGroupWithRole: defineQuery(
     z.object({ groupId: z.string() }),
-    ({ args: { groupId } }) => zql.group_membership.where('group_id', groupId).related('role')
+    ({ args: { groupId } }) =>
+      zql.group_membership
+        .where('group_id', groupId)
+        .related('membership_roles', q => q.related('role', rq => rq.related('action_rights')))
   ),
 
   /** Subscribers for a group with user and group relations */
@@ -132,7 +153,9 @@ export const groupQueries = {
       .where('id', id)
       .related('owner')
       .related('conversations', q => q.related('participants', q => q.related('user')))
-      .related('memberships', q => q.related('user').related('role'))
+      .related('memberships', q =>
+        q.related('user').related('membership_roles', mq => mq.related('role'))
+      )
       .related('roles', q => q.related('action_rights'))
       .related('events')
       .related('amendments')
@@ -145,11 +168,11 @@ export const groupQueries = {
       zql.group_membership
         .where('group_id', groupId)
         .related('user')
-        .related('role', q => q.related('action_rights'))
+        .related('membership_roles', q => q.related('role', rq => rq.related('action_rights')))
   ),
 
-  /** Roles scoped to a group with action_rights */
-  rolesWithRights: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
+  /** Access roles scoped to a group with action_rights */
+  accessRolesWithRights: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
     zql.role
       .where('group_id', groupId)
       .where('scope', 'group')
@@ -183,11 +206,18 @@ export const groupQueries = {
       .related('documents', q => q.related('collaborators', cq => cq.related('user')))
   ),
 
-  /** Positions for a group with group, elections→agenda_item+candidates, and holder_history */
-  positionsFull: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
-    zql.position
+  /** Roles for a group with group, elections→agenda_item+candidates, and holder_history */
+  rolesFull: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
+    zql.role
       .where('group_id', groupId)
+      .where('scope', 'group')
       .related('group')
+      .related('action_rights')
+      .related('group_membership_roles', q =>
+        q.related('group_membership', mq =>
+          mq.where('status', 'active').related('user').orderBy('created_at', 'asc')
+        )
+      )
       .related('elections', q =>
         q
           .related('agenda_item', a => a.related('event'))
@@ -275,11 +305,11 @@ export type GroupMembershipWithRelationsRow = QueryRowType<
   typeof groupQueries.userMembershipsWithGroupRelations
 >;
 export type GroupMembershipsByUserRow = QueryRowType<typeof groupQueries.membershipsByUser>;
-export type GroupRoleWithRightsRow = QueryRowType<typeof groupQueries.rolesWithRights>;
+export type GroupAccessRoleWithRightsRow = QueryRowType<typeof groupQueries.accessRolesWithRights>;
 export type GroupMembershipWithRolesAndRightsRow = QueryRowType<
   typeof groupQueries.membershipsWithRolesAndRights
 >;
-export type GroupPositionFullRow = QueryRowType<typeof groupQueries.positionsFull>;
+export type GroupRoleFullRow = QueryRowType<typeof groupQueries.rolesFull>;
 export type GroupTodoRow = QueryRowType<typeof groupQueries.todosByGroup>;
 export type GroupAmendmentRow = QueryRowType<typeof groupQueries.amendmentsByGroup>;
 export type GroupAmendmentWithDocsRow = QueryRowType<typeof groupQueries.amendmentsWithDocuments>;

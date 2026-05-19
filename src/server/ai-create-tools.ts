@@ -783,7 +783,6 @@ export function buildAiCreateTools(userId: string) {
                 user_id: invitedUserId,
                 status: 'invited',
                 visibility,
-                role_id: null,
               }),
               ctx
             );
@@ -1641,7 +1640,7 @@ export function buildAiCreateTools(userId: string) {
         orderIndex: z.number().int().min(1).optional(),
         durationMinutes: z.number().int().min(1).optional(),
         amendmentId: z.string().trim().min(1).optional(),
-        positionId: z.string().trim().min(1).optional(),
+        roleId: z.string().trim().min(1).optional(),
         majorityType: majorityTypeSchema.default('simple'),
         timeLimitMinutes: z.number().int().min(1).optional(),
       }),
@@ -1653,7 +1652,7 @@ export function buildAiCreateTools(userId: string) {
         orderIndex,
         durationMinutes,
         amendmentId,
-        positionId,
+        roleId,
         majorityType,
         timeLimitMinutes,
       }) => {
@@ -1700,7 +1699,7 @@ export function buildAiCreateTools(userId: string) {
               serverMutators.elections.createElection({
                 id: crypto.randomUUID(),
                 agenda_item_id: agendaItemId,
-                position_id: positionId ?? null,
+                role_id: roleId ?? null,
                 title,
                 description: description?.trim() || null,
                 status: 'indicative',
@@ -1843,58 +1842,6 @@ export function buildAiCreateTools(userId: string) {
         );
 
         return buildCreatedResult('Kandidatur erstellt.', attachment, electionRoute);
-      },
-    }),
-
-    create_position: tool({
-      description:
-        'Create a real Polity position. Only use this when the user explicitly wants to create a position and the required fields are known.',
-      parameters: z.object({
-        groupId: z.string().trim().min(1).describe(groupReferenceDescription),
-        title: z.string().trim().min(1),
-        description: z.string().trim().optional(),
-        termMonths: z.number().int().min(1).default(4),
-        firstTermStart: z.string().trim().optional(),
-      }),
-      execute: async ({ groupId, title, description, termMonths, firstTermStart }) => {
-        const positionId = crypto.randomUUID();
-        const startDate =
-          parseOptionalTimestamp(firstTermStart) ??
-          Date.parse(new Date().toISOString().split('T')[0]);
-        let resolvedGroupId = groupId;
-
-        await executeZeroTransaction(zeroContext, async (tx, ctx) => {
-          resolvedGroupId = (await assertGroupAccess(tx, userId, groupId)).id;
-
-          await runZeroMutator(
-            tx,
-            serverMutators.groups.createPosition({
-              id: positionId,
-              title,
-              description: description?.trim() || '',
-              term: String(termMonths),
-              first_term_start: startDate,
-              scheduled_revote_date: null,
-              group_id: resolvedGroupId,
-              event_id: null,
-            }),
-            ctx
-          );
-        });
-
-        const attachment = buildAttachment(
-          'position',
-          positionId,
-          title,
-          `${termMonths} months`,
-          truncate(description)
-        );
-
-        return buildCreatedResult(
-          `Position „${title}“ erstellt.`,
-          attachment,
-          `/group/${resolvedGroupId}`
-        );
       },
     }),
   };

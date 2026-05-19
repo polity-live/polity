@@ -127,7 +127,7 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
                 : undefined;
       const tags = event.tags ?? fallbackTags;
       const eventParticipants = event.event?.participants;
-      const eventPositions = event.event?.event_positions;
+      const eventRoles = event.event?.roles;
       const eventEventId = event.event?.id;
       const agendaItems = eventEventId
         ? subscriptionTimeline.agendaItemsByEventId?.get(eventEventId)
@@ -170,7 +170,7 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
         tags,
         attendeeCount: eventParticipants?.length,
         electionsCount:
-          eventPositions?.filter(position => Boolean(position?.holders?.length)).length ||
+          eventRoles?.filter(role => Boolean(role?.holders?.length)).length ||
           agendaItems?.length ||
           undefined,
         amendmentsCount:
@@ -574,7 +574,7 @@ export function ModernTimeline({ className, userId: userIdProp, groupId }: Moder
             election: {
               id: entityId ?? item.id,
               title: item.title,
-              positionName: item.title,
+              roleName: item.title,
               groupId: item.groupId,
               groupName: item.groupName,
               status: normalizeElectionStatus(status),

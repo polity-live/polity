@@ -18,6 +18,7 @@ interface RecurringPatternInputProps {
   /** Selected weekdays when pattern is 'weekly'. 0=Mon..6=Sun */
   weekdays?: number[];
   onWeekdaysChange?: (weekdays: number[]) => void;
+  allowedPatterns?: RecurringPattern[];
 }
 
 const WEEKDAY_INDICES = [0, 1, 2, 3, 4, 5, 6] as const;
@@ -51,6 +52,7 @@ export function RecurringPatternInput({
   onIntervalChange,
   weekdays = [],
   onWeekdaysChange,
+  allowedPatterns,
 }: RecurringPatternInputProps) {
   const { t } = useTranslation();
   const selectedEndDate = parseInputDate(endDate);
@@ -96,7 +98,7 @@ export function RecurringPatternInput({
       label: t('pages.create.event.recurringPatterns.fourYearly'),
       description: t('pages.create.event.recurringPatterns.fourYearlyDesc'),
     },
-  ];
+  ].filter(option => !allowedPatterns || allowedPatterns.includes(option.value));
 
   const toggleWeekday = (day: number) => {
     if (!onWeekdaysChange) return;

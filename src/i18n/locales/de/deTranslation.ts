@@ -22,7 +22,7 @@ import { messagesTranslations } from './features/messages';
 import { networkTranslations } from './features/network';
 import { notificationsTranslations } from './features/notifications';
 import { paymentsTranslations } from './features/payments';
-import { positionsTranslations } from './features/positions';
+import { rolesTranslations } from './features/roles';
 import { searchTranslations } from './features/search';
 import { statementsTranslations } from './features/statements';
 import { timelineTranslations } from './features/timeline';
@@ -92,7 +92,7 @@ const deTranslation: I18nLocale = {
     network: networkTranslations,
     notifications: notificationsTranslations,
     payments: paymentsTranslations,
-    positions: positionsTranslations,
+    roles: rolesTranslations,
     search: searchTranslations,
     statements: statementsTranslations,
     timeline: timelineTranslations,

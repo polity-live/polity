@@ -5,7 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/u
 import { Button } from '@/features/shared/ui/ui/button';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/features/shared/ui/ui/collapsible';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/features/shared/ui/ui/collapsible';
 import {
   Clock,
   User,
@@ -65,26 +69,14 @@ export function EventStream({ eventId }: { eventId: string }) {
     isLoading,
     addingSpeaker,
     removingSpeaker,
-    votingLoading,
     userSpeaker,
     handleAddToSpeakerList,
     handleRemoveFromSpeakerList,
-    handleElectionVote,
-    handleAmendmentVote,
     calculateSpeakerTime,
     formatTime,
   } = useEventStream(eventId);
 
   const [speakersExpanded, setSpeakersExpanded] = useState(true);
-
-  // Map agenda status to component status
-  const mapAgendaStatus = (status: string): 'planned' | 'active' | 'completed' => {
-    if (status === 'completed' || status === 'done') return 'completed';
-    if (status === 'active' || status === 'in-progress') return 'active';
-    return 'planned';
-  };
-
-  const agendaStatus = mapAgendaStatus(currentAgendaItem?.status || '');
 
   // Prepare election data for AgendaElectionSection
   const election = currentAgendaItem?.election?.[0];
@@ -101,9 +93,7 @@ export function EventStream({ eventId }: { eventId: string }) {
 
   const userHasElectionVoted = useMemo(() => {
     if (!user?.id || !election) return false;
-    const userElector = election.electors?.find(
-      (e: { user_id: string }) => e.user_id === user.id
-    );
+    const userElector = election.electors?.find((e: { user_id: string }) => e.user_id === user.id);
     if (!userElector) return false;
     // Check if user has any selections in indicative or final
     return (
@@ -126,9 +116,7 @@ export function EventStream({ eventId }: { eventId: string }) {
 
   const isUserCandidate = useMemo(() => {
     if (!user?.id || !election?.candidates) return false;
-    return election.candidates.some(
-      (c: { user_id: string }) => c.user_id === user.id
-    );
+    return election.candidates.some((c: { user_id: string }) => c.user_id === user.id);
   }, [user?.id, election?.candidates]);
 
   // Prepare vote data for AgendaVoteSection
@@ -146,9 +134,7 @@ export function EventStream({ eventId }: { eventId: string }) {
 
   const userHasVoteVoted = useMemo(() => {
     if (!user?.id || !voteEntity) return false;
-    const userVoter = voteEntity.voters?.find(
-      (v: { user_id: string }) => v.user_id === user.id
-    );
+    const userVoter = voteEntity.voters?.find((v: { user_id: string }) => v.user_id === user.id);
     return !!userVoter;
   }, [user?.id, voteEntity]);
 
@@ -262,7 +248,7 @@ export function EventStream({ eventId }: { eventId: string }) {
   if (!event || !currentAgendaItem) {
     return (
       <div className="flex h-[400px] flex-col items-center justify-center gap-4">
-        <p className="text-lg text-muted-foreground">{t('features.events.stream.noActiveItem')}</p>
+        <p className="text-muted-foreground text-lg">{t('features.events.stream.noActiveItem')}</p>
         <Button onClick={() => navigate({ to: `/event/${eventId}` })}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           {t('features.events.backToEvent')}
@@ -294,13 +280,13 @@ export function EventStream({ eventId }: { eventId: string }) {
 
       {/* Current Agenda Item - Prominent Display */}
       <div ref={activeContentRef}>
-        <Card className="border-2 border-primary shadow-lg ring-2 ring-primary/20">
+        <Card className="border-primary ring-primary/20 border-2 shadow-lg ring-2">
           <CardHeader className="bg-primary/5">
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-4">
-                <div className="relative flex h-14 w-14 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-md">
+                <div className="bg-primary text-primary-foreground relative flex h-14 w-14 items-center justify-center rounded-lg shadow-md">
                   {getAgendaItemIcon(currentAgendaItem.type ?? 'discussion')}
-                  <div className="absolute -right-1 -top-1 flex h-5 w-5 animate-pulse items-center justify-center rounded-full bg-green-500 text-white">
+                  <div className="absolute -top-1 -right-1 flex h-5 w-5 animate-pulse items-center justify-center rounded-full bg-green-500 text-white">
                     <Play className="h-3 w-3 fill-white" />
                   </div>
                 </div>
@@ -328,7 +314,10 @@ export function EventStream({ eventId }: { eventId: string }) {
                 </div>
               </div>
               <Button asChild variant="outline">
-                <Link to="/event/$id/agenda/$agendaItemId" params={{ id: eventId, agendaItemId: currentAgendaItem.id }}>
+                <Link
+                  to="/event/$id/agenda/$agendaItemId"
+                  params={{ id: eventId, agendaItemId: currentAgendaItem.id }}
+                >
                   {t('features.events.stream.viewDetails')}
                 </Link>
               </Button>
@@ -336,8 +325,8 @@ export function EventStream({ eventId }: { eventId: string }) {
           </CardHeader>
           {currentAgendaItem.description && (
             <CardContent>
-              <div className="rounded-lg bg-muted/50 p-4">
-                <p className="whitespace-pre-wrap text-muted-foreground">
+              <div className="bg-muted/50 rounded-lg p-4">
+                <p className="text-muted-foreground whitespace-pre-wrap">
                   {currentAgendaItem.description}
                 </p>
               </div>
@@ -352,7 +341,7 @@ export function EventStream({ eventId }: { eventId: string }) {
       {/* Election Section */}
       {election && election.candidates && election.candidates.length > 0 && (
         <AgendaElectionSection
-          positionName={election.title ?? t('features.events.agenda.position')}
+          roleName={election.title ?? t('features.events.agenda.role')}
           candidates={[...election.candidates] as CandidatesByElectionRow[]}
           indicativeSelections={indicativeSelections}
           finalSelections={finalSelections}
@@ -362,8 +351,8 @@ export function EventStream({ eventId }: { eventId: string }) {
           canVote={!!user}
           canBeCandidate={false}
           isUserCandidate={isUserCandidate}
-          onBecomeCandidate={() => {}}
-          onWithdrawCandidacy={() => {}}
+          onBecomeCandidate={() => undefined}
+          onWithdrawCandidacy={() => undefined}
         />
       )}
 
@@ -388,14 +377,17 @@ export function EventStream({ eventId }: { eventId: string }) {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CollapsibleTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2 p-0 hover:bg-transparent">
+                <Button
+                  variant="ghost"
+                  className="flex items-center gap-2 p-0 hover:bg-transparent"
+                >
                   <CardTitle className="text-2xl">
                     {t('features.events.stream.speakersList')} ({speakerList.length})
                   </CardTitle>
                   {speakersExpanded ? (
-                    <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                    <ChevronUp className="text-muted-foreground h-5 w-5" />
                   ) : (
-                    <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                    <ChevronDown className="text-muted-foreground h-5 w-5" />
                   )}
                 </Button>
               </CollapsibleTrigger>
@@ -410,7 +402,11 @@ export function EventStream({ eventId }: { eventId: string }) {
                   {removingSpeaker === userSpeaker.id ? 'Removing...' : 'Remove Yourself'}
                 </Button>
               ) : (
-                <Button onClick={handleAddToSpeakerList} disabled={addingSpeaker || !user} size="lg">
+                <Button
+                  onClick={handleAddToSpeakerList}
+                  disabled={addingSpeaker || !user}
+                  size="lg"
+                >
                   <Plus className="mr-2 h-5 w-5" />
                   {addingSpeaker ? 'Adding...' : 'Add Yourself'}
                 </Button>
@@ -419,129 +415,132 @@ export function EventStream({ eventId }: { eventId: string }) {
           </CardHeader>
           <CollapsibleContent>
             <CardContent>
-          {speakerList.length === 0 ? (
-            <div className="py-12 text-center">
-              <User className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-              <p className="text-lg text-muted-foreground">No speakers yet</p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Be the first to add yourself to the speakers list
-              </p>
-            </div>
-          ) : (
-            <div className="relative">
-              {/* Carousel Navigation Buttons */}
-              {canScrollLeft && (
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="absolute left-0 top-1/2 z-10 -translate-y-1/2 rounded-full shadow-lg"
-                  onClick={() => scroll('left')}
-                >
-                  <ChevronLeft className="h-6 w-6" />
-                </Button>
-              )}
-              {canScrollRight && (
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="absolute right-0 top-1/2 z-10 -translate-y-1/2 rounded-full shadow-lg"
-                  onClick={() => scroll('right')}
-                >
-                  <ChevronRight className="h-6 w-6" />
-                </Button>
-              )}
-
-              {/* Carousel */}
-              <div
-                ref={carouselRef}
-                className="flex gap-4 overflow-x-auto scroll-smooth px-12 pb-4"
-                style={{ scrollbarWidth: 'thin' }}
-              >
-                {speakerList.map((speaker, index) => {
-                  const speakerTime = calculateSpeakerTime(index);
-                  const speakerName = `${speaker.user?.first_name ?? ''} ${speaker.user?.last_name ?? ''}`.trim() || speaker.user?.email || 'Unknown';
-                  const speakerAvatar = speaker.user?.avatar ?? undefined;
-                  const isCurrentUser = speaker.user?.id === user?.id;
-
-                  return (
-                    <Card
-                      key={speaker.id}
-                      className={`relative w-64 flex-shrink-0 ${
-                        speaker.completed
-                          ? 'border-muted opacity-60'
-                          : isCurrentUser
-                            ? 'border-2 border-primary'
-                            : 'border-primary'
-                      }`}
+              {speakerList.length === 0 ? (
+                <div className="py-12 text-center">
+                  <User className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
+                  <p className="text-muted-foreground text-lg">No speakers yet</p>
+                  <p className="text-muted-foreground mt-2 text-sm">
+                    Be the first to add yourself to the speakers list
+                  </p>
+                </div>
+              ) : (
+                <div className="relative">
+                  {/* Carousel Navigation Buttons */}
+                  {canScrollLeft && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="absolute top-1/2 left-0 z-10 -translate-y-1/2 rounded-full shadow-lg"
+                      onClick={() => scroll('left')}
                     >
-                      {isCurrentUser && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute -right-2 -top-2 z-10 h-6 w-6 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          onClick={() => handleRemoveFromSpeakerList(speaker.id)}
-                          disabled={removingSpeaker === speaker.id}
+                      <ChevronLeft className="h-6 w-6" />
+                    </Button>
+                  )}
+                  {canScrollRight && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="absolute top-1/2 right-0 z-10 -translate-y-1/2 rounded-full shadow-lg"
+                      onClick={() => scroll('right')}
+                    >
+                      <ChevronRight className="h-6 w-6" />
+                    </Button>
+                  )}
+
+                  {/* Carousel */}
+                  <div
+                    ref={carouselRef}
+                    className="flex gap-4 overflow-x-auto scroll-smooth px-12 pb-4"
+                    style={{ scrollbarWidth: 'thin' }}
+                  >
+                    {speakerList.map((speaker, index) => {
+                      const speakerTime = calculateSpeakerTime(index);
+                      const speakerName =
+                        `${speaker.user?.first_name ?? ''} ${speaker.user?.last_name ?? ''}`.trim() ||
+                        speaker.user?.email ||
+                        'Unknown';
+                      const speakerAvatar = speaker.user?.avatar ?? undefined;
+                      const isCurrentUser = speaker.user?.id === user?.id;
+
+                      return (
+                        <Card
+                          key={speaker.id}
+                          className={`relative w-64 flex-shrink-0 ${
+                            speaker.completed
+                              ? 'border-muted opacity-60'
+                              : isCurrentUser
+                                ? 'border-primary border-2'
+                                : 'border-primary'
+                          }`}
                         >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      )}
-                      <CardContent className="space-y-4 p-6">
-                        {/* Speaker Avatar */}
-                        <div className="flex justify-center">
-                          <Avatar className="h-20 w-20 border-4 border-background shadow-lg">
-                            <AvatarImage src={speakerAvatar} />
-                            <AvatarFallback className="text-2xl">
-                              {speakerName[0]?.toUpperCase() || 'U'}
-                            </AvatarFallback>
-                          </Avatar>
-                        </div>
-
-                        {/* Speaker Name */}
-                        <div className="text-center">
-                          <h3 className="truncate text-lg font-semibold" title={speakerName}>
-                            {speakerName}
-                          </h3>
                           {isCurrentUser && (
-                            <Badge variant="secondary" className="mt-1">
-                              You
-                            </Badge>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 absolute -top-2 -right-2 z-10 h-6 w-6 rounded-full"
+                              onClick={() => handleRemoveFromSpeakerList(speaker.id)}
+                              disabled={removingSpeaker === speaker.id}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
                           )}
-                        </div>
+                          <CardContent className="space-y-4 p-6">
+                            {/* Speaker Avatar */}
+                            <div className="flex justify-center">
+                              <Avatar className="border-background h-20 w-20 border-4 shadow-lg">
+                                <AvatarImage src={speakerAvatar} />
+                                <AvatarFallback className="text-2xl">
+                                  {speakerName[0]?.toUpperCase() || 'U'}
+                                </AvatarFallback>
+                              </Avatar>
+                            </div>
 
-                        {/* Speaker Title */}
-                        <div className="text-center">
-                          <p
-                            className="truncate text-sm text-muted-foreground"
-                            title={speaker.title ?? undefined}
-                          >
-                            {speaker.title}
-                          </p>
-                        </div>
+                            {/* Speaker Name */}
+                            <div className="text-center">
+                              <h3 className="truncate text-lg font-semibold" title={speakerName}>
+                                {speakerName}
+                              </h3>
+                              {isCurrentUser && (
+                                <Badge variant="secondary" className="mt-1">
+                                  You
+                                </Badge>
+                              )}
+                            </div>
 
-                        {/* Time Badge */}
-                        <div className="flex justify-center">
-                          <Badge variant="secondary" className="px-4 py-2 text-base">
-                            <Clock className="mr-2 h-4 w-4" />
-                            {formatTime(speakerTime)} ({speaker.time} min)
-                          </Badge>
-                        </div>
+                            {/* Speaker Title */}
+                            <div className="text-center">
+                              <p
+                                className="text-muted-foreground truncate text-sm"
+                                title={speaker.title ?? undefined}
+                              >
+                                {speaker.title}
+                              </p>
+                            </div>
 
-                        {/* Completed Badge */}
-                        {speaker.completed && (
-                          <div className="flex justify-center">
-                            <Badge variant="outline" className="bg-green-100 dark:bg-green-900">
-                              Completed
-                            </Badge>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </CardContent>
+                            {/* Time Badge */}
+                            <div className="flex justify-center">
+                              <Badge variant="secondary" className="px-4 py-2 text-base">
+                                <Clock className="mr-2 h-4 w-4" />
+                                {formatTime(speakerTime)} ({speaker.time} min)
+                              </Badge>
+                            </div>
+
+                            {/* Completed Badge */}
+                            {speaker.completed && (
+                              <div className="flex justify-center">
+                                <Badge variant="outline" className="bg-green-100 dark:bg-green-900">
+                                  Completed
+                                </Badge>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </CardContent>
           </CollapsibleContent>
         </Card>
       </Collapsible>

@@ -1,4 +1,5 @@
 import type { SearchContentItem } from '@/features/search/types/search.types';
+import { getMembershipRoleNames } from '@/features/shared/logic/membershipRoleHelpers';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 import type { UserProfile } from '../types/user.types';
@@ -122,6 +123,7 @@ export function buildUserWikiContentItems({
     seenGroupIds.add(group.id);
     const tags = extractHashtagTags(group.group_hashtags);
     const description = richTextToPlainText(group.description);
+    const membershipRoleNames = getMembershipRoleNames(membership).join(' ');
 
     items.push({
       id: group.id,
@@ -138,7 +140,7 @@ export function buildUserWikiContentItems({
       stats: {
         members: group.member_count ?? group.memberships?.length,
       },
-      searchText: buildSearchText(group.name, group.description, membership.role?.name, tags),
+      searchText: buildSearchText(group.name, group.description, membershipRoleNames, tags),
     });
   }
 

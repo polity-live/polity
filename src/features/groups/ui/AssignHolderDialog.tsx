@@ -19,11 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/features/shared/ui/ui/select';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/features/shared/ui/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/features/shared/ui/ui/popover';
 import {
   Command,
   CommandEmpty,
@@ -37,16 +33,25 @@ import { Check, ChevronsUpDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/features/shared/utils/utils';
 
-interface PositionWithHistory {
+interface RoleWithHistory {
   id: string;
   title?: string | null;
-  holder_history?: readonly { end_date?: number | string | null; user?: { id: string; first_name?: string | null; handle?: string | null; avatar?: string | null } }[];
+  assignment_mode?: string | null;
+  holder_history?: readonly {
+    end_date?: number | string | null;
+    user?: {
+      id: string;
+      first_name?: string | null;
+      handle?: string | null;
+      avatar?: string | null;
+    };
+  }[];
 }
 
 interface AssignHolderDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  position: PositionWithHistory;
+  role: RoleWithHistory;
   groupId: string;
   onAssign: (userId: string, reason: 'elected' | 'appointed') => void;
 }
@@ -54,7 +59,7 @@ interface AssignHolderDialogProps {
 export function AssignHolderDialog({
   open,
   onOpenChange,
-  position,
+  role,
   groupId,
   onAssign,
 }: AssignHolderDialogProps) {
@@ -64,10 +69,11 @@ export function AssignHolderDialog({
   const [reason, setReason] = useState<'elected' | 'appointed'>('appointed');
 
   const { members } = useGroupActiveMembers(groupId);
-  const currentHolder = position?.holder_history?.find((h) => !h.end_date)?.user;
+  const currentHolder = role?.holder_history?.find(h => !h.end_date)?.user;
+  const isElectedRole = role.assignment_mode === 'elected';
 
   // Filter members based on search query
-  const filteredMembers = members.filter((membership) => {
+  const filteredMembers = members.filter(membership => {
     const user = membership.user;
     if (!user?.id) return false;
     const query = searchQuery.toLowerCase();
@@ -78,10 +84,15 @@ export function AssignHolderDialog({
     );
   });
 
-  const selectedMember = members.find((m) => m.user?.id === selectedUserId);
+  const selectedMember = members.find(m => m.user?.id === selectedUserId);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isElectedRole) {
+      toast.error('Elected roles must be filled through an election');
+      return;
+    }
 
     if (!selectedUserId) {
       toast.error('Please select a member');
@@ -97,34 +108,39 @@ export function AssignHolderDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-[500px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Assign Holder to Position</DialogTitle>
+            <DialogTitle>Assign Incumbent</DialogTitle>
             <DialogDescription>
-              {currentHolder
-                ? `Replace the current holder of "${position?.title}" with a new member.`
-                : `Assign a member to the "${position?.title}" position.`}
+              {isElectedRole
+                ? `"${role?.title}" is an elected role and must be filled through an election.`
+                : currentHolder
+                  ? `Replace the current holder of "${role?.title}" with a new member.`
+                  : `Assign a member to the "${role?.title}" role.`}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            {isElectedRole && (
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
+                Start or complete an election to assign this incumbent. Direct assignment is
+                disabled for elected roles.
+              </div>
+            )}
             {currentHolder && (
               <div className="rounded-lg border border-orange-200 bg-orange-50 p-3">
                 <div className="flex items-center gap-2">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={currentHolder.avatar ?? undefined} />
                     <AvatarFallback>
-                      {currentHolder.first_name?.[0] || 
-                       currentHolder.handle?.[0] || 'U'}
+                      {currentHolder.first_name?.[0] || currentHolder.handle?.[0] || 'U'}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
                     <div className="text-sm font-medium">
                       Current: {currentHolder.first_name || currentHolder.handle}
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      Will be replaced
-                    </div>
+                    <div className="text-muted-foreground text-xs">Will be replaced</div>
                   </div>
                 </div>
               </div>
@@ -141,6 +157,7 @@ export function AssignHolderDialog({
                     variant="outline"
                     role="combobox"
                     aria-expanded={popoverOpen}
+                    disabled={isElectedRole}
                     className="w-full justify-between"
                   >
                     {selectedMember?.user ? (
@@ -148,13 +165,12 @@ export function AssignHolderDialog({
                         <Avatar className="h-6 w-6">
                           <AvatarImage src={selectedMember.user.avatar ?? undefined} />
                           <AvatarFallback>
-                            {selectedMember.user.first_name?.[0] || 
-                             selectedMember.user.handle?.[0] || 'U'}
+                            {selectedMember.user.first_name?.[0] ||
+                              selectedMember.user.handle?.[0] ||
+                              'U'}
                           </AvatarFallback>
                         </Avatar>
-                        <span>
-                          {selectedMember.user.first_name || selectedMember.user.handle}
-                        </span>
+                        <span>{selectedMember.user.first_name || selectedMember.user.handle}</span>
                       </div>
                     ) : (
                       <span className="text-muted-foreground">Select a member...</span>
@@ -172,14 +188,14 @@ export function AssignHolderDialog({
                     <CommandList>
                       <CommandEmpty>No members found.</CommandEmpty>
                       <CommandGroup>
-                        {filteredMembers.map((membership) => {
+                        {filteredMembers.map(membership => {
                           const user = membership.user;
                           if (!user) return null;
                           return (
                             <CommandItem
                               key={user.id}
                               value={user.id}
-                              onSelect={(value) => {
+                              onSelect={value => {
                                 setSelectedUserId(value);
                                 setPopoverOpen(false);
                               }}
@@ -201,7 +217,7 @@ export function AssignHolderDialog({
                                   {user.first_name || user.handle}
                                 </span>
                                 {user.handle && (
-                                  <span className="text-xs text-muted-foreground">
+                                  <span className="text-muted-foreground text-xs">
                                     @{user.handle}
                                   </span>
                                 )}
@@ -218,7 +234,11 @@ export function AssignHolderDialog({
 
             <div className="space-y-2">
               <Label htmlFor="assignment-reason">Assignment Reason</Label>
-              <Select value={reason} onValueChange={(value) => setReason(value as 'elected' | 'appointed')}>
+              <Select
+                value={reason}
+                onValueChange={value => setReason(value as 'elected' | 'appointed')}
+                disabled={isElectedRole}
+              >
                 <SelectTrigger id="assignment-reason">
                   <SelectValue />
                 </SelectTrigger>
@@ -227,18 +247,18 @@ export function AssignHolderDialog({
                   <SelectItem value="elected">Elected</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                This will be recorded in the position's history
+              <p className="text-muted-foreground text-xs">
+                This will be recorded in the role's history
               </p>
             </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {isElectedRole ? 'Close' : 'Cancel'}
             </Button>
-            <Button type="submit">
-              {currentHolder ? 'Replace Holder' : 'Assign Holder'}
-            </Button>
+            {!isElectedRole && (
+              <Button type="submit">{currentHolder ? 'Replace Holder' : 'Assign Holder'}</Button>
+            )}
           </DialogFooter>
         </form>
       </DialogContent>

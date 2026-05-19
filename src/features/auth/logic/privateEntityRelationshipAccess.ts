@@ -1,7 +1,7 @@
 type RelationshipStatus = string | null | undefined;
 
 const ACTIVE_GROUP_MEMBER_STATUSES = new Set(['active', 'member', 'admin']);
-const ACTIVE_EVENT_PARTICIPANT_STATUSES = new Set(['confirmed', 'member', 'admin']);
+const ACTIVE_EVENT_PARTICIPANT_STATUSES = new Set(['active', 'confirmed', 'member', 'admin']);
 const ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = new Set(['collaborator', 'member', 'admin']);
 const ACTIVE_BLOG_BLOGGER_STATUSES = new Set(['owner', 'admin', 'member']);
 

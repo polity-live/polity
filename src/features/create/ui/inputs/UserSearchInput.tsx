@@ -19,9 +19,12 @@ interface UserSearchInputProps {
   placeholder?: string;
   /** User ID to exclude (usually the current user) */
   excludeUserId?: string;
+  excludeUserIds?: string[];
   /** Allow selecting multiple users */
   multi?: boolean;
   required?: boolean;
+  disablePortal?: boolean;
+  showAllResults?: boolean;
 }
 
 export function UserSearchInput({
@@ -31,8 +34,11 @@ export function UserSearchInput({
   hint,
   placeholder = 'Search users by name or handle...',
   excludeUserId,
+  excludeUserIds = [],
   multi = true,
   required,
+  disablePortal = false,
+  showAllResults = false,
 }: UserSearchInputProps) {
   const { t } = useTranslation();
   const { allUsers } = useUserState({ includeAllUsers: true });
@@ -41,14 +47,18 @@ export function UserSearchInput({
 
   const filteredUsers = useMemo(() => {
     let users = allUsers ?? [];
+    const excludedIds = new Set(excludeUserIds);
     if (excludeUserId) {
-      users = users.filter(u => u.id !== excludeUserId);
+      excludedIds.add(excludeUserId);
+    }
+    if (excludedIds.size > 0) {
+      users = users.filter(u => !excludedIds.has(u.id));
     }
     if (multi) {
       users = users.filter(u => !value.includes(u.id));
     }
     return users;
-  }, [allUsers, excludeUserId, value, multi]);
+  }, [allUsers, excludeUserId, excludeUserIds, value, multi]);
 
   const selectedUsers = useMemo(() => {
     if (!allUsers) return [];
@@ -150,6 +160,8 @@ export function UserSearchInput({
         onInteract={() => setHasInteracted(true)}
         placeholder={placeholder}
         className={typeaheadClassName}
+        disablePortal={disablePortal}
+        showAllResults={showAllResults}
       />
       <p className={cn('text-xs', hintToneClass)}>{hintText}</p>
 

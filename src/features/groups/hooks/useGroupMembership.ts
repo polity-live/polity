@@ -105,7 +105,6 @@ export function useGroupMembership(groupId: string) {
         user_id: user.id,
         group_id: groupId,
         visibility: '',
-        role_id: null,
       });
 
       toast.success('Membership request sent successfully');

@@ -1,6 +1,6 @@
-import { defineQuery, type QueryRowType } from '@rocicorp/zero'
-import { z } from 'zod'
-import { zql } from '../schema'
+import { defineQuery, type QueryRowType } from '@rocicorp/zero';
+import { z } from 'zod';
+import { zql } from '../schema';
 
 export const commonQueries = {
   // Subscribers for an entity
@@ -13,51 +13,36 @@ export const commonQueries = {
       blog_id: z.string().optional(),
     }),
     ({ args }) => {
-      let q = zql.subscriber
-      if (args.user_id) q = q.where('user_id', args.user_id)
-      if (args.group_id) q = q.where('group_id', args.group_id)
-      if (args.amendment_id) q = q.where('amendment_id', args.amendment_id)
-      if (args.event_id) q = q.where('event_id', args.event_id)
-      if (args.blog_id) q = q.where('blog_id', args.blog_id)
-      return q.orderBy('created_at', 'desc')
+      let q = zql.subscriber;
+      if (args.user_id) q = q.where('user_id', args.user_id);
+      if (args.group_id) q = q.where('group_id', args.group_id);
+      if (args.amendment_id) q = q.where('amendment_id', args.amendment_id);
+      if (args.event_id) q = q.where('event_id', args.event_id);
+      if (args.blog_id) q = q.where('blog_id', args.blog_id);
+      return q.orderBy('created_at', 'desc');
     }
   ),
 
   // Subscribers for a user with related user objects
-  subscribersForUser: defineQuery(
-    z.object({ userId: z.string() }),
-    ({ args: { userId } }) =>
-      zql.subscriber
-        .where('user_id', userId)
-        .related('subscriber_user')
-        .related('user')
-        .orderBy('created_at', 'desc')
+  subscribersForUser: defineQuery(z.object({ userId: z.string() }), ({ args: { userId } }) =>
+    zql.subscriber
+      .where('user_id', userId)
+      .related('subscriber_user')
+      .related('user')
+      .orderBy('created_at', 'desc')
   ),
 
   // All canonical hashtags (for typeahead)
-  allHashtags: defineQuery(
-    z.object({}),
-    () => zql.hashtag.orderBy('tag', 'asc')
-  ),
+  allHashtags: defineQuery(z.object({}), () => zql.hashtag.orderBy('tag', 'asc')),
 
   // Hashtags for a user (via junction)
-  userHashtags: defineQuery(
-    z.object({ user_id: z.string() }),
-    ({ args: { user_id } }) =>
-      zql.user_hashtag
-        .where('user_id', user_id)
-        .related('hashtag')
-        .orderBy('created_at', 'desc')
+  userHashtags: defineQuery(z.object({ user_id: z.string() }), ({ args: { user_id } }) =>
+    zql.user_hashtag.where('user_id', user_id).related('hashtag').orderBy('created_at', 'desc')
   ),
 
   // Hashtags for a group (via junction)
-  groupHashtags: defineQuery(
-    z.object({ group_id: z.string() }),
-    ({ args: { group_id } }) =>
-      zql.group_hashtag
-        .where('group_id', group_id)
-        .related('hashtag')
-        .orderBy('created_at', 'desc')
+  groupHashtags: defineQuery(z.object({ group_id: z.string() }), ({ args: { group_id } }) =>
+    zql.group_hashtag.where('group_id', group_id).related('hashtag').orderBy('created_at', 'desc')
   ),
 
   // Hashtags for an amendment (via junction)
@@ -71,23 +56,13 @@ export const commonQueries = {
   ),
 
   // Hashtags for an event (via junction)
-  eventHashtags: defineQuery(
-    z.object({ event_id: z.string() }),
-    ({ args: { event_id } }) =>
-      zql.event_hashtag
-        .where('event_id', event_id)
-        .related('hashtag')
-        .orderBy('created_at', 'desc')
+  eventHashtags: defineQuery(z.object({ event_id: z.string() }), ({ args: { event_id } }) =>
+    zql.event_hashtag.where('event_id', event_id).related('hashtag').orderBy('created_at', 'desc')
   ),
 
   // Hashtags for a blog (via junction)
-  blogHashtags: defineQuery(
-    z.object({ blog_id: z.string() }),
-    ({ args: { blog_id } }) =>
-      zql.blog_hashtag
-        .where('blog_id', blog_id)
-        .related('hashtag')
-        .orderBy('created_at', 'desc')
+  blogHashtags: defineQuery(z.object({ blog_id: z.string() }), ({ args: { blog_id } }) =>
+    zql.blog_hashtag.where('blog_id', blog_id).related('hashtag').orderBy('created_at', 'desc')
   ),
 
   // Hashtags for a statement (via junction)
@@ -107,10 +82,10 @@ export const commonQueries = {
       user_id: z.string().optional(),
     }),
     ({ args }) => {
-      let q = zql.link
-      if (args.group_id) q = q.where('group_id', args.group_id)
-      if (args.user_id) q = q.where('user_id', args.user_id)
-      return q.orderBy('created_at', 'desc')
+      let q = zql.link;
+      if (args.group_id) q = q.where('group_id', args.group_id);
+      if (args.user_id) q = q.where('user_id', args.user_id);
+      return q.orderBy('created_at', 'desc');
     }
   ),
 
@@ -154,19 +129,20 @@ export const commonQueries = {
       zql.subscriber
         .where('subscriber_id', subscriber_id)
         .related('user')
-        .related('group', q => q.related('group_hashtags', q => q.related('hashtag')).related('events').related('amendments'))
+        .related('group', q =>
+          q
+            .related('group_hashtags', q => q.related('hashtag'))
+            .related('events')
+            .related('amendments')
+        )
         .related('amendment')
         .related('event', q => q.related('creator'))
         .related('blog')
   ),
 
   // Entity subscribers (users subscribed to a user/entity)
-  userSubscribers: defineQuery(
-    z.object({ user_id: z.string() }),
-    ({ args: { user_id } }) =>
-      zql.subscriber
-        .where('user_id', user_id)
-        .related('subscriber_user')
+  userSubscribers: defineQuery(z.object({ user_id: z.string() }), ({ args: { user_id } }) =>
+    zql.subscriber.where('user_id', user_id).related('subscriber_user')
   ),
 
   // Timeline events by entity IDs with deep relations
@@ -176,20 +152,27 @@ export const commonQueries = {
       zql.timeline_event
         .where('entity_id', 'IN', entity_ids)
         .related('actor')
-        .related('user', q => q.related('user_hashtags', q => q.related('hashtag')).related('group_memberships').related('amendment_collaborations'))
+        .related('user', q =>
+          q
+            .related('user_hashtags', q => q.related('hashtag'))
+            .related('group_memberships')
+            .related('amendment_collaborations')
+        )
         .related('group')
         .related('amendment', q =>
-          q.related('documents')
+          q
+            .related('documents')
             .related('amendment_hashtags', q => q.related('hashtag'))
             .related('collaborators')
             .related('support_votes')
             .related('change_requests')
         )
         .related('event', q =>
-          q.related('creator')
+          q
+            .related('creator')
             .related('event_hashtags', q => q.related('hashtag'))
             .related('participants')
-            .related('event_positions', q => q.related('holders'))
+            .related('roles', q => q.related('holders'))
             .related('agenda_items', q => q.related('election').related('amendment'))
         )
         .related('blog', q => q.related('blog_hashtags', q => q.related('hashtag')))
@@ -209,12 +192,16 @@ export const commonQueries = {
         .related('event')
         .limit(limit)
   ),
-}
+};
 
-export type LinkRow = QueryRowType<typeof commonQueries.links>
-export type TimelineEventByEntityRow = QueryRowType<typeof commonQueries.timelineByEntity>
-export type TimelineEventsByEntityIdsRow = QueryRowType<typeof commonQueries.timelineEventsByEntityIds>
-export type ReactionRow = QueryRowType<typeof commonQueries.reactions>
-export type SubscriberRow = QueryRowType<typeof commonQueries.subscribers>
-export type UserSubscriptionRow = QueryRowType<typeof commonQueries.userSubscriptions>
-export type TimelineEventsByContentTypeRow = QueryRowType<typeof commonQueries.timelineEventsByContentTypes>
+export type LinkRow = QueryRowType<typeof commonQueries.links>;
+export type TimelineEventByEntityRow = QueryRowType<typeof commonQueries.timelineByEntity>;
+export type TimelineEventsByEntityIdsRow = QueryRowType<
+  typeof commonQueries.timelineEventsByEntityIds
+>;
+export type ReactionRow = QueryRowType<typeof commonQueries.reactions>;
+export type SubscriberRow = QueryRowType<typeof commonQueries.subscribers>;
+export type UserSubscriptionRow = QueryRowType<typeof commonQueries.userSubscriptions>;
+export type TimelineEventsByContentTypeRow = QueryRowType<
+  typeof commonQueries.timelineEventsByContentTypes
+>;

@@ -3,9 +3,37 @@
  */
 
 import { useMemo } from 'react';
-import type { GroupMembershipWithUser } from '../types/group.types';
+import {
+  getMembershipDisplayRoles,
+  getMembershipRoleSummary,
+} from '../logic/buildMembershipRightsSummary';
+import type { ParticipationLike } from '@/features/shared/types/participation';
+import type { MembershipSort } from '../types/group.types';
 
-export function useMembershipSearch(memberships: GroupMembershipWithUser[], searchQuery: string) {
+interface UseMembershipSearchOptions {
+  activeStatuses?: string[];
+  activeRoleNames?: string[];
+}
+
+export function useMembershipSearch<TMembership extends ParticipationLike>(
+  memberships: TMembership[],
+  searchQuery: string,
+  sort: MembershipSort,
+  options: UseMembershipSearchOptions = {}
+) {
+  const activeStatuses = useMemo(
+    () =>
+      new Set((options.activeStatuses || ['active', 'member']).map(status => status.toLowerCase())),
+    [options.activeStatuses]
+  );
+  const activeRoleNames = useMemo(
+    () =>
+      new Set(
+        (options.activeRoleNames || ['Board Member']).map(roleName => roleName.toLowerCase())
+      ),
+    [options.activeRoleNames]
+  );
+
   const filteredMemberships = useMemo(() => {
     if (!searchQuery.trim()) return memberships;
 
@@ -16,7 +44,7 @@ export function useMembershipSearch(memberships: GroupMembershipWithUser[], sear
         .join(' ')
         .toLowerCase();
       const userHandle = membership.user?.handle?.toLowerCase() || '';
-      const role = membership.role?.name?.toLowerCase() || '';
+      const role = getMembershipRoleSummary(membership).toLowerCase();
       const status = membership.status?.toLowerCase() || '';
       return (
         userName.includes(query) ||
@@ -27,22 +55,39 @@ export function useMembershipSearch(memberships: GroupMembershipWithUser[], sear
     });
   }, [memberships, searchQuery]);
 
+  const sortMemberships = useMemo(() => {
+    return (items: TMembership[]) =>
+      [...items].sort((left, right) => compareMemberships(left, right, sort));
+  }, [sort]);
+
   const pendingRequests = useMemo(
-    () => filteredMemberships.filter(m => m.status === 'pending' || m.status === 'requested'),
-    [filteredMemberships]
+    () =>
+      sortMemberships(
+        filteredMemberships.filter(m => m.status === 'pending' || m.status === 'requested')
+      ),
+    [filteredMemberships, sortMemberships]
   );
 
   const activeMembers = useMemo(
     () =>
-      filteredMemberships.filter(
-        m => m.status === 'active' || m.status === 'member' || m.role?.name === 'Board Member'
+      sortMemberships(
+        filteredMemberships.filter(m => {
+          const status = m.status?.toLowerCase() || '';
+          if (activeStatuses.has(status)) {
+            return true;
+          }
+
+          return getMembershipDisplayRoles(m).some(role =>
+            activeRoleNames.has((role.name || '').toLowerCase())
+          );
+        })
       ),
-    [filteredMemberships]
+    [activeRoleNames, activeStatuses, filteredMemberships, sortMemberships]
   );
 
   const pendingInvitations = useMemo(
-    () => filteredMemberships.filter(m => m.status === 'invited'),
-    [filteredMemberships]
+    () => sortMemberships(filteredMemberships.filter(m => m.status === 'invited')),
+    [filteredMemberships, sortMemberships]
   );
 
   return {
@@ -51,4 +96,35 @@ export function useMembershipSearch(memberships: GroupMembershipWithUser[], sear
     activeMembers,
     pendingInvitations,
   };
+}
+
+function compareMemberships(
+  left: ParticipationLike,
+  right: ParticipationLike,
+  sort: MembershipSort
+) {
+  const direction = sort.direction === 'asc' ? 1 : -1;
+  const leftUserName = getMembershipUserName(left);
+  const rightUserName = getMembershipUserName(right);
+
+  if (sort.field === 'role') {
+    const roleComparison = getMembershipRoleSummary(left).localeCompare(
+      getMembershipRoleSummary(right),
+      undefined,
+      { sensitivity: 'base' }
+    );
+
+    if (roleComparison !== 0) {
+      return roleComparison * direction;
+    }
+  }
+
+  return leftUserName.localeCompare(rightUserName, undefined, { sensitivity: 'base' }) * direction;
+}
+
+function getMembershipUserName(membership: ParticipationLike) {
+  const fullName = [membership.user?.first_name, membership.user?.last_name]
+    .filter(Boolean)
+    .join(' ');
+  return fullName || membership.user?.handle || 'Unknown User';
 }

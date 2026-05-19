@@ -11,6 +11,7 @@ import {
   isGroupLinkRelationship,
   type DirectMembershipShape,
 } from '../logic/hierarchyLinkHelpers';
+import { getPrimaryMembershipRole } from '@/features/shared/logic/membershipRoleHelpers';
 import type { NormalizedGroupRelationship } from '../types/network.types';
 
 export interface HierarchyConflictUser {
@@ -35,12 +36,13 @@ function isActiveGroupMembership(row: GroupMembershipWithRolesAndRightsRow): boo
     row.status === 'active' ||
     row.status === 'member' ||
     row.status === 'admin' ||
-    isMemberRole(row.role?.name)
+    isMemberRole(getPrimaryMembershipRole(row)?.name)
   );
 }
 
 function hasNonMemberPartnerRole(row: GroupMembershipWithRolesAndRightsRow): boolean {
-  return row.status === 'admin' || (!!row.role?.name && row.role.name !== 'Member');
+  const roleName = getPrimaryMembershipRole(row)?.name;
+  return row.status === 'admin' || (!!roleName && roleName !== 'Member');
 }
 
 export function useHierarchyLinkConflicts(
@@ -97,7 +99,7 @@ export function useHierarchyLinkConflicts(
         preferredMembership ?? membershipInCurrentGroup ?? membershipWithUserByUserId.get(userId);
       const user = membership?.user;
       const displayName =
-        [user?.first_name, user?.last_name].filter(Boolean).join(' ') || user?.name || userId;
+        [user?.first_name, user?.last_name].filter(Boolean).join(' ') || user?.handle || userId;
 
       return {
         userId,

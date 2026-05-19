@@ -146,7 +146,7 @@ export function AgendaTypeBadge({ type, className }: { type: AgendaItemType; cla
 }
 
 /**
- * Clickable entity badge for related amendment or position/group.
+ * Clickable entity badge for related amendment or role/group.
  * Follows the same visual style as AgendaTypeBadge.
  */
 export function AgendaEntityBadge({
@@ -157,7 +157,7 @@ export function AgendaEntityBadge({
 }: {
   label: string;
   href: string;
-  variant: 'amendment' | 'position';
+  variant: 'amendment' | 'role';
   className?: string;
 }) {
   const Icon = variant === 'amendment' ? ScrollText : Building2;

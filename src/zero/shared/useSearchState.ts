@@ -7,6 +7,60 @@ import { useCommonState } from '../common/useCommonState';
 import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
 import { resolveRouteVisibilityAccess } from '@/features/auth/logic/routeVisibilityAccess';
 
+interface SearchGroupRoleLike {
+  id?: string | null;
+  name?: string | null;
+  sort_order?: number | null;
+}
+
+interface SearchMembershipRoleLinkLike<TRole extends SearchGroupRoleLike = SearchGroupRoleLike> {
+  role?: TRole | null;
+}
+
+function selectPrimaryGroupRole<TRole extends SearchGroupRoleLike>(roles: readonly TRole[]) {
+  if (roles.length === 0) return null;
+
+  return (
+    [...roles].sort((left, right) => (right.sort_order ?? -1) - (left.sort_order ?? -1))[0] ?? null
+  );
+}
+
+function normalizeGroupMemberships<
+  TMembership extends {
+    membership_roles?: readonly SearchMembershipRoleLinkLike<TRole>[] | null;
+    role?: TRole | null;
+  },
+  TRole extends SearchGroupRoleLike,
+>(memberships: readonly TMembership[] | null | undefined) {
+  return (memberships || []).map(membership => {
+    const roles = (membership.membership_roles || []).flatMap(link =>
+      link.role ? [link.role] : []
+    );
+
+    return {
+      ...membership,
+      roles,
+      role: selectPrimaryGroupRole(roles) ?? membership.role ?? null,
+    };
+  });
+}
+
+function normalizeSearchableGroup<
+  TGroup extends {
+    memberships?:
+      | readonly {
+          membership_roles?: readonly SearchMembershipRoleLinkLike[] | null;
+          role?: SearchGroupRoleLike | null;
+        }[]
+      | null;
+  },
+>(group: TGroup) {
+  return {
+    ...group,
+    memberships: normalizeGroupMemberships(group.memberships),
+  };
+}
+
 function hasActiveGroupMembership(
   membership:
     | {
@@ -77,14 +131,19 @@ export function useSearchState(options: SearchOptions = {}) {
     userId ? queries.search.userTodoAssignments({ user_id: userId }) : undefined
   );
 
+  const normalizedGroupMemberships = useMemo(
+    () => normalizeGroupMemberships(groupMemberships),
+    [groupMemberships]
+  );
+
   // ── Derived: todo eligibility ───────────────────────────────────────
   const memberGroupIds = useMemo(
     () =>
-      (groupMemberships ?? [])
+      normalizedGroupMemberships
         .filter(hasActiveGroupMembership)
         .map(m => m.group?.id)
         .filter((groupId): groupId is string => !!groupId),
-    [groupMemberships]
+    [normalizedGroupMemberships]
   );
 
   const assignedTodoIds = useMemo(
@@ -136,7 +195,9 @@ export function useSearchState(options: SearchOptions = {}) {
 
   const visibleGroups = useMemo(
     () =>
-      (groups ?? []).filter(g => resolveRouteVisibilityAccess([g.visibility], !!userId).allowed),
+      (groups ?? [])
+        .map(group => normalizeSearchableGroup(group))
+        .filter(g => resolveRouteVisibilityAccess([g.visibility], !!userId).allowed),
     [groups, userId]
   );
 

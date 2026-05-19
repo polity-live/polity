@@ -15,14 +15,24 @@
  * ```
  */
 
-import { createBuilder, type Transaction } from '@rocicorp/zero'
-import { schema, type Schema, type ActionRight as ActionRightRow } from '../schema'
-import { checkPermission, type PermissionData } from './check'
-import { PermissionError } from './errors'
-import type { ResourceType, ActionType, Membership, ActionRight, Role } from './types'
+import { createBuilder, type Transaction } from '@rocicorp/zero';
+import { schema, type Schema, type ActionRight as ActionRightRow } from '../schema';
+import { checkPermission, type PermissionData } from './check';
+import { PermissionError } from './errors';
+import type { ResourceType, ActionType, Membership, ActionRight, Role } from './types';
 
 // Build zql inside this module to avoid circular imports with schema.ts
-const zql = createBuilder(schema)
+const zql = createBuilder(schema);
+
+interface PermissionRoleLinkLike {
+  role?: {
+    id: string;
+    name?: string | null;
+    description?: string | null;
+    scope?: string | null;
+    action_rights?: readonly ActionRightRow[];
+  } | null;
+}
 
 // ============================================================================
 // Types
@@ -30,11 +40,11 @@ const zql = createBuilder(schema)
 
 /** What permission to check. */
 export interface PermissionCheck {
-  action: ActionType
-  resource: ResourceType
-  groupId?: string | null
-  eventId?: string | null
-  blogId?: string | null
+  action: ActionType;
+  resource: ResourceType;
+  groupId?: string | null;
+  eventId?: string | null;
+  blogId?: string | null;
 }
 
 // ============================================================================
@@ -50,28 +60,23 @@ export interface PermissionCheck {
 export async function can(
   tx: Transaction<Schema>,
   ctx: { readonly userID: string },
-  check: PermissionCheck,
+  check: PermissionCheck
 ): Promise<void> {
   // Skip permission checks on client — server is authoritative
-  if (tx.location === 'client') return
+  if (tx.location === 'client') return;
 
-  const { userID } = ctx
+  const { userID } = ctx;
   if (!userID || userID === 'anon') {
-    throw new PermissionError(check.action, check.resource, 'authentication required')
+    throw new PermissionError(check.action, check.resource, 'authentication required');
   }
 
-  const data = await loadPermissionData(tx, userID, check)
+  const data = await loadPermissionData(tx, userID, check);
 
-  const groupId = check.groupId ?? undefined
-  const eventId = check.eventId ?? undefined
-  const blogId = check.blogId ?? undefined
+  const groupId = check.groupId ?? undefined;
+  const eventId = check.eventId ?? undefined;
+  const blogId = check.blogId ?? undefined;
 
-  const allowed = checkPermission(
-    data,
-    { groupId, eventId, blogId },
-    check.action,
-    check.resource,
-  )
+  const allowed = checkPermission(data, { groupId, eventId, blogId }, check.action, check.resource);
 
   if (!allowed) {
     const scopeLabel = groupId
@@ -80,8 +85,8 @@ export async function can(
         ? `event:${eventId}`
         : blogId
           ? `blog:${blogId}`
-          : undefined
-    throw new PermissionError(check.action, check.resource, scopeLabel)
+          : undefined;
+    throw new PermissionError(check.action, check.resource, scopeLabel);
   }
 }
 
@@ -92,93 +97,69 @@ export async function can(
 async function loadPermissionData(
   tx: Transaction<Schema>,
   userId: string,
-  check: PermissionCheck,
+  check: PermissionCheck
 ): Promise<PermissionData> {
-  const data: PermissionData = { userId }
+  const data: PermissionData = { userId };
 
   if (check.groupId) {
-    data.memberships = await loadGroupMemberships(tx, userId, check.groupId)
+    data.memberships = await loadGroupMemberships(tx, userId, check.groupId);
   }
 
   if (check.eventId) {
-    data.participations = await loadEventParticipations(tx, userId, check.eventId)
+    data.participations = await loadEventParticipations(tx, userId, check.eventId);
   }
 
   if (check.blogId) {
-    data.bloggerRelations = await loadBloggerRelations(tx, userId, check.blogId)
+    data.bloggerRelations = await loadBloggerRelations(tx, userId, check.blogId);
   }
 
-  return data
+  return data;
 }
 
 async function loadGroupMemberships(
   tx: Transaction<Schema>,
   userId: string,
-  groupId: string,
+  groupId: string
 ): Promise<Membership[]> {
   const rows = await tx.run(
     zql.group_membership
       .where('user_id', userId)
       .where('group_id', groupId)
-      .related('role', q => q.related('action_rights'))
-      .related('group'),
-  )
+      .related('membership_roles', q => q.related('role', rq => rq.related('action_rights')))
+      .related('group')
+  );
 
   return rows.map(m => ({
     id: m.id,
     group: m.group ? { id: m.group.id } : undefined,
-    role: m.role
-      ? {
-          id: m.role.id,
-          name: m.role.name ?? '',
-          description: m.role.description ?? undefined,
-          scope: (m.role.scope ?? 'group') as Role['scope'],
-          actionRights: mapActionRights(m.role.action_rights),
-        }
-      : undefined,
-  }))
+    roles: mapRolesFromLinks(m.membership_roles, 'group'),
+  }));
 }
 
-async function loadEventParticipations(
-  tx: Transaction<Schema>,
-  userId: string,
-  eventId: string,
-) {
+async function loadEventParticipations(tx: Transaction<Schema>, userId: string, eventId: string) {
   const rows = await tx.run(
     zql.event_participant
       .where('user_id', userId)
       .where('event_id', eventId)
-      .related('role', q => q.related('action_rights'))
-      .related('event'),
-  )
+      .related('participant_roles', q => q.related('role', rq => rq.related('action_rights')))
+      .related('event')
+  );
 
   return rows.map(p => ({
     id: p.id,
     event: p.event ? { id: p.event.id } : undefined,
-    role: p.role
-      ? {
-          id: p.role.id,
-          name: p.role.name ?? '',
-          description: p.role.description ?? undefined,
-          scope: (p.role.scope ?? 'event') as Role['scope'],
-          actionRights: mapActionRights(p.role.action_rights),
-        }
-      : undefined,
-  }))
+    roles: mapRolesFromLinks(p.participant_roles, 'event'),
+  }));
 }
 
-async function loadBloggerRelations(
-  tx: Transaction<Schema>,
-  userId: string,
-  blogId: string,
-) {
+async function loadBloggerRelations(tx: Transaction<Schema>, userId: string, blogId: string) {
   const rows = await tx.run(
     zql.blog_blogger
       .where('user_id', userId)
       .where('blog_id', blogId)
       .related('role', q => q.related('action_rights'))
-      .related('blog'),
-  )
+      .related('blog')
+  );
 
   return rows.map(b => ({
     id: b.id,
@@ -192,11 +173,11 @@ async function loadBloggerRelations(
           actionRights: mapActionRights(b.role.action_rights),
         }
       : undefined,
-  }))
+  }));
 }
 
 function mapActionRights(raw: readonly ActionRightRow[] | undefined): ActionRight[] {
-  if (!raw) return []
+  if (!raw) return [];
   return raw.map(ar => ({
     id: ar.id,
     resource: (ar.resource ?? 'groups') as ResourceType,
@@ -205,5 +186,26 @@ function mapActionRights(raw: readonly ActionRightRow[] | undefined): ActionRigh
     event: ar.event_id ? { id: ar.event_id } : undefined,
     amendment: ar.amendment_id ? { id: ar.amendment_id } : undefined,
     blog: ar.blog_id ? { id: ar.blog_id } : undefined,
-  }))
+  }));
+}
+
+function mapRolesFromLinks<T extends PermissionRoleLinkLike>(
+  raw: readonly T[] | undefined,
+  fallbackScope: Role['scope']
+): Role[] {
+  if (!raw) return [];
+
+  return raw.flatMap(link => {
+    if (!link.role) return [];
+
+    return [
+      {
+        id: link.role.id,
+        name: link.role.name ?? '',
+        description: link.role.description ?? undefined,
+        scope: (link.role.scope ?? fallbackScope) as Role['scope'],
+        actionRights: mapActionRights(link.role.action_rights),
+      },
+    ];
+  });
 }

@@ -1,57 +1,45 @@
-import { defineQuery, type QueryRowType } from '@rocicorp/zero'
-import { z } from 'zod'
-import { zql } from '../schema'
+import { defineQuery, type QueryRowType } from '@rocicorp/zero';
+import { z } from 'zod';
+import { zql } from '../schema';
 
 export const agendaQueries = {
   // All agenda items for an event
-  byEvent: defineQuery(
-    z.object({ event_id: z.string() }),
-    ({ args: { event_id } }) =>
-      zql.agenda_item
-        .where('event_id', event_id)
-        .orderBy('order_index', 'asc')
-        .related('event')
-        .related('creator')
-        .related('election', q => q.related('position', pq => pq.related('group')))
-        .related('amendment')
-        .related('votes')
+  byEvent: defineQuery(z.object({ event_id: z.string() }), ({ args: { event_id } }) =>
+    zql.agenda_item
+      .where('event_id', event_id)
+      .orderBy('order_index', 'asc')
+      .related('event')
+      .related('creator')
+      .related('election', q => q.related('role', pq => pq.related('group')))
+      .related('amendment')
+      .related('votes')
   ),
 
   // Agenda items by multiple event IDs with relations
-  byEventIds: defineQuery(
-    z.object({ event_ids: z.array(z.string()) }),
-    ({ args: { event_ids } }) =>
-      zql.agenda_item
-        .where('event_id', 'IN', event_ids)
-        .related('event')
-        .related('election')
-        .related('amendment')
-        .related('votes')
+  byEventIds: defineQuery(z.object({ event_ids: z.array(z.string()) }), ({ args: { event_ids } }) =>
+    zql.agenda_item
+      .where('event_id', 'IN', event_ids)
+      .related('event')
+      .related('election')
+      .related('amendment')
+      .related('votes')
   ),
 
   // Single agenda item by ID
-  byId: defineQuery(
-    z.object({ id: z.string() }),
-    ({ args: { id } }) =>
-      zql.agenda_item.where('id', id).one()
+  byId: defineQuery(z.object({ id: z.string() }), ({ args: { id } }) =>
+    zql.agenda_item.where('id', id).one()
   ),
 
   // Agenda items for a specific amendment (to find the agenda item for CR voting timeline)
-  byAmendmentId: defineQuery(
-    z.object({ amendment_id: z.string() }),
-    ({ args: { amendment_id } }) =>
-      zql.agenda_item
-        .where('amendment_id', amendment_id)
-        .related('event')
+  byAmendmentId: defineQuery(z.object({ amendment_id: z.string() }), ({ args: { amendment_id } }) =>
+    zql.agenda_item.where('amendment_id', amendment_id).related('event')
   ),
 
   // Speaker list for an agenda item
   speakerList: defineQuery(
     z.object({ agenda_item_id: z.string() }),
     ({ args: { agenda_item_id } }) =>
-      zql.speaker_list
-        .where('agenda_item_id', agenda_item_id)
-        .orderBy('order_index', 'asc')
+      zql.speaker_list.where('agenda_item_id', agenda_item_id).orderBy('order_index', 'asc')
   ),
 
   // Change request timeline for an agenda item (CR voting during events)
@@ -76,12 +64,12 @@ export const agendaQueries = {
             .related('final_decisions', dq => dq.related('choice'))
         )
   ),
-}
+};
 
 // ── Query Row Types ─────────────────────────────────────────────────
-export type AgendaItemByEventRow = QueryRowType<typeof agendaQueries.byEvent>
-export type AgendaItemByEventIdsRow = QueryRowType<typeof agendaQueries.byEventIds>
-export type AgendaItemByIdRow = QueryRowType<typeof agendaQueries.byId>
-export type AgendaItemByAmendmentRow = QueryRowType<typeof agendaQueries.byAmendmentId>
-export type SpeakerListRow = QueryRowType<typeof agendaQueries.speakerList>
-export type ChangeRequestTimelineRow = QueryRowType<typeof agendaQueries.changeRequestTimeline>
+export type AgendaItemByEventRow = QueryRowType<typeof agendaQueries.byEvent>;
+export type AgendaItemByEventIdsRow = QueryRowType<typeof agendaQueries.byEventIds>;
+export type AgendaItemByIdRow = QueryRowType<typeof agendaQueries.byId>;
+export type AgendaItemByAmendmentRow = QueryRowType<typeof agendaQueries.byAmendmentId>;
+export type SpeakerListRow = QueryRowType<typeof agendaQueries.speakerList>;
+export type ChangeRequestTimelineRow = QueryRowType<typeof agendaQueries.changeRequestTimeline>;

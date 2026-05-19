@@ -29,10 +29,14 @@ export const docsPageTranslations = {
     secondaryCta: 'Understand roles and rights',
     pathwaysTitle: 'Common pathways',
     pathways: {
-      start: 'Set up your profile, discover relevant groups, and understand where you belong in the network.',
-      coordinate: 'Move between groups, events, messages, notifications, calendar, and todos to keep day-to-day collaboration moving.',
-      decide: 'Use amendments, votes, elections, and the decision terminal to understand how proposals turn into visible outcomes.',
-      'follow-through': 'Track what changed, who needs to act next, and where a decision or amendment continues through connected groups.',
+      start:
+        'Set up your profile, discover relevant groups, and understand where you belong in the network.',
+      coordinate:
+        'Move between groups, events, messages, notifications, calendar, and todos to keep day-to-day collaboration moving.',
+      decide:
+        'Use amendments, votes, elections, and the decision terminal to understand how proposals turn into visible outcomes.',
+      'follow-through':
+        'Track what changed, who needs to act next, and where a decision or amendment continues through connected groups.',
     },
     featuredTitle: 'Featured guides',
     featuredDescription: 'Start with the most important user journeys and system guides.',
@@ -58,15 +62,18 @@ export const docsPageTranslations = {
     },
     systems: {
       title: 'Systems',
-      description: 'Cross-cutting permission and routing systems that shape what users can do and where work moves next.',
+      description:
+        'Cross-cutting permission and routing systems that shape what users can do and where work moves next.',
     },
   },
   topics: {
     users: {
       navLabel: 'Users',
       title: 'Users',
-      summary: 'Profiles, memberships, subscriptions, and the personal view of activity across Polity.',
-      audience: 'Anyone getting started, joining a community, or managing their presence across multiple spaces.',
+      summary:
+        'Profiles, memberships, subscriptions, and the personal view of activity across Polity.',
+      audience:
+        'Anyone getting started, joining a community, or managing their presence across multiple spaces.',
       entry: 'Begin here when you want to understand how an individual experiences the platform.',
       perspective:
         'Users experience Polity as a connected workspace where profile, memberships, subscriptions, and notifications determine what feels close at hand.',
@@ -97,15 +104,18 @@ export const docsPageTranslations = {
         steps: {
           'create-profile': {
             title: 'Create your profile',
-            description: 'Set up the identity others will see when you join spaces, conversations, and decisions.',
+            description:
+              'Set up the identity others will see when you join spaces, conversations, and decisions.',
           },
           'join-spaces': {
             title: 'Join relevant spaces',
-            description: 'Memberships and subscriptions pull groups, events, and governance work into your orbit.',
+            description:
+              'Memberships and subscriptions pull groups, events, and governance work into your orbit.',
           },
           'stay-informed': {
             title: 'Stay informed',
-            description: 'Notifications, messages, and activity feeds keep your user view connected to ongoing work.',
+            description:
+              'Notifications, messages, and activity feeds keep your user view connected to ongoing work.',
           },
         },
       },
@@ -113,9 +123,11 @@ export const docsPageTranslations = {
     groups: {
       navLabel: 'Groups',
       title: 'Groups',
-      summary: 'Shared spaces where members organize, assign responsibility, and connect work to governance.',
+      summary:
+        'Shared spaces where members organize, assign responsibility, and connect work to governance.',
       audience: 'Organizers, members, and anyone working inside a collective space.',
-      entry: 'Use this guide when you want to understand the main collaboration container in Polity.',
+      entry:
+        'Use this guide when you want to understand the main collaboration container in Polity.',
       perspective:
         'Groups are where users usually feel structure: membership, permissions, documents, events, and governance all converge here.',
       outcome:
@@ -153,7 +165,8 @@ export const docsPageTranslations = {
           },
           'run-work': {
             title: 'Run the work',
-            description: 'Use the group as the anchor for events, amendments, discussions, and decisions.',
+            description:
+              'Use the group as the anchor for events, amendments, discussions, and decisions.',
           },
         },
       },
@@ -161,9 +174,12 @@ export const docsPageTranslations = {
     events: {
       navLabel: 'Events',
       title: 'Events',
-      summary: 'Meetings and gatherings with participants, agendas, positions, and visible outcomes.',
-      audience: 'Organizers, participants, and members tracking what happens in a scheduled gathering.',
-      entry: 'Read this when you want to understand how Polity turns coordination into a real event flow.',
+      summary:
+        'Meetings and gatherings with participants, agendas, positions, and visible outcomes.',
+      audience:
+        'Organizers, participants, and members tracking what happens in a scheduled gathering.',
+      entry:
+        'Read this when you want to understand how Polity turns coordination into a real event flow.',
       perspective:
         'Events give users a concrete time and place where agendas, participation, and outcomes become visible together.',
       outcome:
@@ -209,8 +225,10 @@ export const docsPageTranslations = {
     amendments: {
       navLabel: 'Amendments',
       title: 'Amendments',
-      summary: 'Collaborative drafting, discussion, forwarding, and decision workflows for changing text and policy.',
-      audience: 'Authors, collaborators, reviewers, and members following a proposal through its lifecycle.',
+      summary:
+        'Collaborative drafting, discussion, forwarding, and decision workflows for changing text and policy.',
+      audience:
+        'Authors, collaborators, reviewers, and members following a proposal through its lifecycle.',
       entry: 'Open this guide when you need to understand how text moves from draft to decision.',
       perspective:
         'Users see amendments as living proposals: they start as draft text, gather collaborators and feedback, then move into decisions or forwarding paths.',
@@ -245,11 +263,13 @@ export const docsPageTranslations = {
           },
           collaborate: {
             title: 'Collaborate',
-            description: 'Discuss, request changes, and refine the proposal with other contributors.',
+            description:
+              'Discuss, request changes, and refine the proposal with other contributors.',
           },
           'forward-or-vote': {
             title: 'Forward or vote',
-            description: 'Either move the amendment into a local decision or route it onward through the network.',
+            description:
+              'Either move the amendment into a local decision or route it onward through the network.',
           },
         },
       },
@@ -257,8 +277,10 @@ export const docsPageTranslations = {
     blogs: {
       navLabel: 'Blogs',
       title: 'Blogs',
-      summary: 'Publishing spaces for updates, arguments, announcements, and public-facing writing.',
-      audience: 'Writers, editors, organizers, and readers following public or group-facing content.',
+      summary:
+        'Publishing spaces for updates, arguments, announcements, and public-facing writing.',
+      audience:
+        'Writers, editors, organizers, and readers following public or group-facing content.',
       entry: 'Use this guide when you want to understand how publishing fits into Polity.',
       perspective:
         'Blogs give users a way to communicate narrative, context, and position outside purely procedural workflows.',
@@ -305,27 +327,27 @@ export const docsPageTranslations = {
     elections: {
       navLabel: 'Elections',
       title: 'Elections',
-      summary: 'Contests for positions with nominations, timing, and visible results.',
+      summary: 'Contests for roles with nominations, timing, and visible results.',
       audience: 'Organizers, candidates, and voters following representative selection.',
-      entry: 'Open this guide to understand how positions and candidacies turn into election outcomes.',
+      entry: 'Open this guide to understand how roles and candidacies turn into election outcomes.',
       perspective:
-        'For users, elections are time-bound decisions tied to a position, a candidate field, and a result everyone can track.',
+        'For users, elections are time-bound decisions tied to a role, a candidate field, and a result everyone can track.',
       outcome:
         'A transparent election flow reduces uncertainty around who can stand, when voting happens, and how the result becomes official.',
       actions: [
-        'Define or review the position connected to an election.',
+        'Define or review the role connected to an election.',
         'Track candidacies and the timing of the election window.',
         'Follow the result through the election detail view or decision terminal.',
       ],
       concepts: [
-        'Positions give elections institutional meaning beyond a single vote.',
+        'Roles give elections institutional meaning beyond a single vote.',
         'Election timing matters because campaigns, nominations, and results are all visible phases.',
         'Users often understand elections best when connected to the decision terminal and related notifications.',
       ],
       watchFor: [
         'Candidacy and participation rules can differ from ordinary voting rights.',
         'Results may be visible in multiple places, but the same underlying decision drives them.',
-        'Position context helps users understand what an election changes after it closes.',
+        'Role context helps users understand what an election changes after it closes.',
       ],
       states: [
         'Elections feel preparatory before opening and definitive after closing.',
@@ -333,10 +355,10 @@ export const docsPageTranslations = {
       ],
       diagram: {
         title: 'How an election unfolds',
-        description: 'The typical path from defining a position to confirming the result.',
+        description: 'The typical path from defining a role to confirming the result.',
         steps: {
-          'define-position': {
-            title: 'Define the position',
+          'define-role': {
+            title: 'Define the role',
             description: 'Anchor the election to a role or office users can understand.',
           },
           nominate: {
@@ -449,8 +471,10 @@ export const docsPageTranslations = {
     search: {
       navLabel: 'Search',
       title: 'Search',
-      summary: 'Find people, spaces, content, and decisions without knowing exactly where they live.',
-      audience: 'Anyone navigating a large workspace, rediscovering content, or jumping across features.',
+      summary:
+        'Find people, spaces, content, and decisions without knowing exactly where they live.',
+      audience:
+        'Anyone navigating a large workspace, rediscovering content, or jumping across features.',
       entry: 'Use this guide when navigation by memory is no longer enough.',
       perspective:
         'Search is the user’s shortcut through platform complexity, especially once work is spread across many groups and content types.',
@@ -499,7 +523,8 @@ export const docsPageTranslations = {
       title: 'Messages',
       summary: 'Direct communication for coordination, clarification, and fast follow-up.',
       audience: 'Members and organizers who need fast communication around active work.',
-      entry: 'Read this when you want to understand how direct conversation fits into Polity workflows.',
+      entry:
+        'Read this when you want to understand how direct conversation fits into Polity workflows.',
       perspective:
         'Messages help users close the gap between formal structure and immediate coordination.',
       outcome:
@@ -537,7 +562,8 @@ export const docsPageTranslations = {
           },
           'follow-links': {
             title: 'Follow linked context',
-            description: 'Return to the relevant group, event, or decision once alignment is restored.',
+            description:
+              'Return to the relevant group, event, or decision once alignment is restored.',
           },
         },
       },
@@ -547,7 +573,8 @@ export const docsPageTranslations = {
       title: 'Notifications',
       summary: 'Signals that help users notice what changed, what needs action, and what can wait.',
       audience: 'Anyone juggling multiple spaces, deadlines, or active decisions.',
-      entry: 'Use this guide when you want to understand how Polity surfaces urgency and relevance.',
+      entry:
+        'Use this guide when you want to understand how Polity surfaces urgency and relevance.',
       perspective:
         'Notifications shape the user’s sense of momentum by deciding what breaks into attention and what stays in the background.',
       outcome:
@@ -593,9 +620,11 @@ export const docsPageTranslations = {
     calendar: {
       navLabel: 'Calendar',
       title: 'Calendar',
-      summary: 'A schedule view that helps users place meetings, deadlines, and upcoming work in time.',
+      summary:
+        'A schedule view that helps users place meetings, deadlines, and upcoming work in time.',
       audience: 'Anyone planning participation or tracking multiple events and deadlines.',
-      entry: 'Open this guide to understand how time-based work becomes visible across the platform.',
+      entry:
+        'Open this guide to understand how time-based work becomes visible across the platform.',
       perspective:
         'Calendar turns scattered obligations into a view users can actually plan around.',
       outcome:
@@ -641,7 +670,8 @@ export const docsPageTranslations = {
     todos: {
       navLabel: 'Todos',
       title: 'Todos',
-      summary: 'Personal and shared follow-up work that keeps decisions from stalling after they are made.',
+      summary:
+        'Personal and shared follow-up work that keeps decisions from stalling after they are made.',
       audience: 'Anyone responsible for execution, coordination, or tracking completion.',
       entry: 'Use this guide when you want to understand how Polity handles follow-through.',
       perspective:
@@ -681,7 +711,8 @@ export const docsPageTranslations = {
           },
           'close-loop': {
             title: 'Close the loop',
-            description: 'Mark the work done and reduce uncertainty about what remains outstanding.',
+            description:
+              'Mark the work done and reduce uncertainty about what remains outstanding.',
           },
         },
       },
@@ -689,8 +720,10 @@ export const docsPageTranslations = {
     'roles-and-rights': {
       navLabel: 'Roles & Rights',
       title: 'Roles And Rights',
-      summary: 'How scoped roles and action rights determine what users can see, manage, or change.',
-      audience: 'Organizers assigning permissions and members trying to understand why an action is available or missing.',
+      summary:
+        'How scoped roles and action rights determine what users can see, manage, or change.',
+      audience:
+        'Organizers assigning permissions and members trying to understand why an action is available or missing.',
       entry: 'Read this guide when permissions are shaping the user experience in visible ways.',
       perspective:
         'Users rarely think in terms of permission tables; they notice roles and rights when actions appear, disappear, or require a different person.',
@@ -717,7 +750,8 @@ export const docsPageTranslations = {
       ],
       diagram: {
         title: 'How roles become visible to users',
-        description: 'A lane view showing assignment, experience, and enforcement across the system.',
+        description:
+          'A lane view showing assignment, experience, and enforcement across the system.',
         lanes: {
           organizer: 'Organizer',
           member: 'Member',
@@ -726,23 +760,28 @@ export const docsPageTranslations = {
         steps: {
           'set-scope': {
             title: 'Set the scope',
-            description: 'An organizer decides where the role applies: for example in a group or event.',
+            description:
+              'An organizer decides where the role applies: for example in a group or event.',
           },
           'assign-role': {
             title: 'Assign the role',
-            description: 'The role bundles action rights that define what the user can do in that scope.',
+            description:
+              'The role bundles action rights that define what the user can do in that scope.',
           },
           'see-available-actions': {
             title: 'See available actions',
-            description: 'The member experiences permissions as buttons, tabs, and workflows that are available or hidden.',
+            description:
+              'The member experiences permissions as buttons, tabs, and workflows that are available or hidden.',
           },
           'enforce-boundaries': {
             title: 'Enforce boundaries',
-            description: 'The system blocks actions outside the assigned rights and keeps the workflow consistent.',
+            description:
+              'The system blocks actions outside the assigned rights and keeps the workflow consistent.',
           },
           'adapt-over-time': {
             title: 'Adapt over time',
-            description: 'Organizers update roles as responsibility changes without rebuilding the whole space.',
+            description:
+              'Organizers update roles as responsibility changes without rebuilding the whole space.',
           },
         },
       },
@@ -750,7 +789,8 @@ export const docsPageTranslations = {
     'networks-and-forwarding': {
       navLabel: 'Networks & Forwarding',
       title: 'Networks And Forwarding',
-      summary: 'How connected groups shape event context and how amendments can move through the network instead of stopping locally.',
+      summary:
+        'How connected groups shape event context and how amendments can move through the network instead of stopping locally.',
       audience: 'Members, organizers, and proposal authors operating across connected groups.',
       entry: 'Open this guide when a decision or amendment does not end in one place.',
       perspective:
@@ -787,23 +827,28 @@ export const docsPageTranslations = {
         steps: {
           'connect-groups': {
             title: 'Connect groups',
-            description: 'Relationships between groups establish the wider structure users work inside.',
+            description:
+              'Relationships between groups establish the wider structure users work inside.',
           },
           'inherit-context': {
             title: 'Inherit context',
-            description: 'Events draw meaning from the group network around them rather than existing in isolation.',
+            description:
+              'Events draw meaning from the group network around them rather than existing in isolation.',
           },
           'route-amendments': {
             title: 'Route amendments',
-            description: 'A proposal can move through the network when local handling is only one stage of the process.',
+            description:
+              'A proposal can move through the network when local handling is only one stage of the process.',
           },
           'confirm-forwarding': {
             title: 'Confirm forwarding',
-            description: 'Users need a visible signal that the amendment has moved or is waiting on the previous step.',
+            description:
+              'Users need a visible signal that the amendment has moved or is waiting on the previous step.',
           },
           'surface-result': {
             title: 'Surface the result',
-            description: 'The amendment eventually returns a visible outcome that users can interpret in context.',
+            description:
+              'The amendment eventually returns a visible outcome that users can interpret in context.',
           },
         },
       },

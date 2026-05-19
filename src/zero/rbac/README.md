@@ -137,7 +137,7 @@ import { can } from '../rbac/can'
 
 await can(tx, ctx, {
   action: ActionType,      // e.g. 'manage', 'create', 'view'
-  resource: ResourceType,  // e.g. 'groups', 'events', 'groupRoles'
+  resource: ResourceType,  // e.g. 'groups', 'events', 'groupAccessRoles'
   groupId?: string | null, // scope to a specific group
   eventId?: string | null, // scope to a specific event
   blogId?: string | null,  // scope to a specific blog

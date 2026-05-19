@@ -4,8 +4,8 @@
  * against the recipient's preferences.
  */
 
-import type { NotificationType } from '../types/notification.types'
-import type { NotificationSettings } from '../types/notification-settings.types'
+import type { NotificationType } from '../types/notification.types';
+import type { NotificationSettings } from '../types/notification-settings.types';
 
 type SettingCategory =
   | 'groupNotifications'
@@ -13,11 +13,11 @@ type SettingCategory =
   | 'amendmentNotifications'
   | 'blogNotifications'
   | 'todoNotifications'
-  | 'socialNotifications'
+  | 'socialNotifications';
 
 interface SettingPath {
-  category: SettingCategory
-  key: string
+  category: SettingCategory;
+  key: string;
 }
 
 /**
@@ -54,9 +54,9 @@ export const NOTIFICATION_TYPE_TO_SETTING: Partial<Record<NotificationType, Sett
   // Admin
   group_admin_promoted: { category: 'groupNotifications', key: 'roleUpdates' },
   group_admin_demoted: { category: 'groupNotifications', key: 'roleUpdates' },
-  group_role_created: { category: 'groupNotifications', key: 'roleUpdates' },
-  group_role_deleted: { category: 'groupNotifications', key: 'roleUpdates' },
-  group_role_updated: { category: 'groupNotifications', key: 'roleUpdates' },
+  group_access_role_created: { category: 'groupNotifications', key: 'roleUpdates' },
+  group_access_role_deleted: { category: 'groupNotifications', key: 'roleUpdates' },
+  group_access_role_updated: { category: 'groupNotifications', key: 'roleUpdates' },
 
   // Todos
   group_todo_assigned: { category: 'groupNotifications', key: 'tasksAssigned' },
@@ -71,12 +71,13 @@ export const NOTIFICATION_TYPE_TO_SETTING: Partial<Record<NotificationType, Sett
   group_relationship_approved: { category: 'groupNotifications', key: 'newRelationships' },
   group_relationship_rejected: { category: 'groupNotifications', key: 'newRelationships' },
 
-  // Positions & Elections
-  group_position_created: { category: 'groupNotifications', key: 'newPositions' },
-  group_position_assigned: { category: 'groupNotifications', key: 'newPositions' },
-  group_position_vacated: { category: 'groupNotifications', key: 'newPositions' },
-  group_election_created: { category: 'groupNotifications', key: 'newPositions' },
-  group_election_results: { category: 'groupNotifications', key: 'newPositions' },
+  // Roles & Elections
+  group_role_created: { category: 'groupNotifications', key: 'newRoles' },
+  group_role_deleted: { category: 'groupNotifications', key: 'newRoles' },
+  group_role_assigned: { category: 'groupNotifications', key: 'newRoles' },
+  group_role_vacated: { category: 'groupNotifications', key: 'newRoles' },
+  group_election_created: { category: 'groupNotifications', key: 'newRoles' },
+  group_election_results: { category: 'groupNotifications', key: 'newRoles' },
 
   // ── Event Notifications ────────────────────────────────────────────
   // Participation
@@ -101,12 +102,12 @@ export const NOTIFICATION_TYPE_TO_SETTING: Partial<Record<NotificationType, Sett
   event_agenda_item_deleted: { category: 'eventNotifications', key: 'agendaItems' },
   event_schedule_changed: { category: 'eventNotifications', key: 'scheduleChanges' },
 
-  // Elections & Positions
+  // Elections & Roles
   event_candidate_added: { category: 'eventNotifications', key: 'elections' },
   event_election_started: { category: 'eventNotifications', key: 'elections' },
   event_election_ended: { category: 'eventNotifications', key: 'elections' },
-  event_position_created: { category: 'eventNotifications', key: 'positionChanges' },
-  event_position_deleted: { category: 'eventNotifications', key: 'positionChanges' },
+  event_role_created: { category: 'eventNotifications', key: 'roleChanges' },
+  event_role_deleted: { category: 'eventNotifications', key: 'roleChanges' },
   event_delegates_finalized: { category: 'eventNotifications', key: 'delegateNominations' },
   event_delegate_nominated: { category: 'eventNotifications', key: 'delegateNominations' },
 
@@ -123,9 +124,18 @@ export const NOTIFICATION_TYPE_TO_SETTING: Partial<Record<NotificationType, Sett
   collaboration_invite: { category: 'amendmentNotifications', key: 'collaborationInvitations' },
   collaboration_withdrawn: { category: 'amendmentNotifications', key: 'collaborationRequests' },
   collaborator_removed: { category: 'amendmentNotifications', key: 'newCollaborators' },
-  collaboration_invitation_accepted: { category: 'amendmentNotifications', key: 'collaborationInvitations' },
-  collaboration_invitation_declined: { category: 'amendmentNotifications', key: 'collaborationInvitations' },
-  collaboration_request_withdrawn: { category: 'amendmentNotifications', key: 'collaborationRequests' },
+  collaboration_invitation_accepted: {
+    category: 'amendmentNotifications',
+    key: 'collaborationInvitations',
+  },
+  collaboration_invitation_declined: {
+    category: 'amendmentNotifications',
+    key: 'collaborationInvitations',
+  },
+  collaboration_request_withdrawn: {
+    category: 'amendmentNotifications',
+    key: 'collaborationRequests',
+  },
 
   // Content
   amendment_profile_updated: { category: 'amendmentNotifications', key: 'profileUpdates' },
@@ -191,7 +201,7 @@ export const NOTIFICATION_TYPE_TO_SETTING: Partial<Record<NotificationType, Sett
   // Statement types
   statement_response: { category: 'socialNotifications', key: 'mentions' },
   statement_mention: { category: 'socialNotifications', key: 'mentions' },
-}
+};
 
 /**
  * Check whether a personal notification should be dispatched based on recipient settings.
@@ -207,18 +217,18 @@ export function shouldDispatchNotification(
   options?: { isEntityNotification?: boolean }
 ): boolean {
   // Entity notifications always dispatch
-  if (options?.isEntityNotification) return true
+  if (options?.isEntityNotification) return true;
 
   // Check delivery kill switch
-  if (recipientSettings?.deliverySettings?.inAppNotifications === false) return false
+  if (recipientSettings?.deliverySettings?.inAppNotifications === false) return false;
 
-  const mapping = NOTIFICATION_TYPE_TO_SETTING[type]
-  if (!mapping) return true // unmapped types always dispatch
-  if (!recipientSettings) return true // NULL = all defaults = all true
+  const mapping = NOTIFICATION_TYPE_TO_SETTING[type];
+  if (!mapping) return true; // unmapped types always dispatch
+  if (!recipientSettings) return true; // NULL = all defaults = all true
 
-  const categorySettings = recipientSettings[mapping.category]
-  if (!categorySettings) return true // NULL category = all true
+  const categorySettings = recipientSettings[mapping.category];
+  if (!categorySettings) return true; // NULL category = all true
 
-  const value = (categorySettings as Record<string, boolean>)[mapping.key]
-  return value !== false // undefined or true = dispatch
+  const value = (categorySettings as Record<string, boolean>)[mapping.key];
+  return value !== false; // undefined or true = dispatch
 }

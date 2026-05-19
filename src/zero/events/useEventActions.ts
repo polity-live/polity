@@ -78,6 +78,30 @@ export function useEventActions() {
     [zero]
   );
 
+  const addParticipantRole = useCallback(
+    (args: Parameters<typeof mutators.events.addParticipantRole>[0]) => {
+      const result = zero.mutate(mutators.events.addParticipantRole(args));
+      onServerError(result, () => toast.error(t('features.events.toasts.updateParticipantFailed')));
+    },
+    [zero]
+  );
+
+  const removeParticipantRole = useCallback(
+    (args: Parameters<typeof mutators.events.removeParticipantRole>[0]) => {
+      const result = zero.mutate(mutators.events.removeParticipantRole(args));
+      onServerError(result, () => toast.error(t('features.events.toasts.updateParticipantFailed')));
+    },
+    [zero]
+  );
+
+  const syncParticipantRoles = useCallback(
+    (args: Parameters<typeof mutators.events.syncParticipantRoles>[0]) => {
+      const result = zero.mutate(mutators.events.syncParticipantRoles(args));
+      onServerError(result, () => toast.error(t('features.events.toasts.updateParticipantFailed')));
+    },
+    [zero]
+  );
+
   // ── Delegates ──────────────────────────────────────────────────────
   const finalizeDelegates = useCallback(
     (args: Parameters<typeof mutators.events.finalizeDelegates>[0]) => {
@@ -88,29 +112,29 @@ export function useEventActions() {
     [zero]
   );
 
-  // ── Positions ──────────────────────────────────────────────────────
-  const createPosition = useCallback(
-    (args: Parameters<typeof mutators.events.createPosition>[0]) => {
-      const result = zero.mutate(mutators.events.createPosition(args));
-      toast.success(t('features.events.toasts.positionCreated'));
-      onServerError(result, () => toast.error(t('features.events.toasts.positionCreateFailed')));
+  // ── Roles ──────────────────────────────────────────────────────────
+  const createRole = useCallback(
+    (args: Parameters<typeof mutators.events.createRole>[0]) => {
+      const result = zero.mutate(mutators.events.createRole(args));
+      toast.success(t('features.events.toasts.roleCreated'));
+      onServerError(result, () => toast.error(t('features.events.toasts.roleCreateFailed')));
     },
     [zero]
   );
 
-  const updatePosition = useCallback(
-    (args: Parameters<typeof mutators.events.updatePosition>[0]) => {
-      const result = zero.mutate(mutators.events.updatePosition(args));
-      onServerError(result, () => toast.error(t('features.events.toasts.positionUpdateFailed')));
+  const updateRole = useCallback(
+    (args: Parameters<typeof mutators.events.updateRole>[0]) => {
+      const result = zero.mutate(mutators.events.updateRole(args));
+      onServerError(result, () => toast.error(t('features.events.toasts.roleUpdateFailed')));
     },
     [zero]
   );
 
-  const deletePosition = useCallback(
-    (args: Parameters<typeof mutators.events.deletePosition>[0]) => {
-      const result = zero.mutate(mutators.events.deletePosition(args));
-      toast.success(t('features.events.toasts.positionDeleted'));
-      onServerError(result, () => toast.error(t('features.events.toasts.positionDeleteFailed')));
+  const deleteRole = useCallback(
+    (args: Parameters<typeof mutators.events.deleteRole>[0]) => {
+      const result = zero.mutate(mutators.events.deleteRole(args));
+      toast.success(t('features.events.toasts.roleDeleted'));
+      onServerError(result, () => toast.error(t('features.events.toasts.roleDeleteFailed')));
     },
     [zero]
   );
@@ -154,14 +178,17 @@ export function useEventActions() {
     inviteParticipant,
     leaveEvent,
     updateParticipant,
+    addParticipantRole,
+    removeParticipantRole,
+    syncParticipantRoles,
 
     // Delegates
     finalizeDelegates,
 
-    // Positions
-    createPosition,
-    updatePosition,
-    deletePosition,
+    // Roles
+    createRole,
+    updateRole,
+    deleteRole,
 
     // Exceptions
     createException,

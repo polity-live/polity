@@ -51,10 +51,7 @@ import { toast } from 'sonner';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { TimelineItem } from '@/features/agendas/ui/TimelineItem.tsx';
 import { AgendaItemContextCard } from './AgendaItemContextCard';
-import {
-  AgendaRelatedAmendmentCard,
-  AgendaRelatedPositionCard,
-} from './AgendaRelatedEntityCard';
+import { AgendaRelatedAmendmentCard, AgendaRelatedRoleCard } from './AgendaRelatedEntityCard';
 import { AgendaSpeakerListSection } from './AgendaSpeakerListSection';
 import { AgendaElectionSection } from './AgendaElectionSection';
 import { AgendaVoteSection } from './AgendaVoteSection';
@@ -114,7 +111,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   const [streamOpen, setStreamOpen] = useState(true);
   const [addingSpeaker, setAddingSpeaker] = useState(false);
   const [removingSpeaker, setRemovingSpeaker] = useState(false);
-  const [markingSpeakerComplete, setMarkingSpeakerComplete] = useState<string | null>(null);
+  const [, setMarkingSpeakerComplete] = useState<string | null>(null);
   const [transferDialogItem, setTransferDialogItem] = useState<{
     id: string;
     title: string;
@@ -147,7 +144,8 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   const eventStartTimestamp = typeof event?.start_date === 'number' ? event.start_date : null;
 
   // Current active agenda item (for stream section)
-  const currentAgendaItem = agendaItems.find(item => item.id === currentAgendaItemId) ??
+  const currentAgendaItem =
+    agendaItems.find(item => item.id === currentAgendaItemId) ??
     agendaItems.find(item => item.status === 'in-progress') ??
     null;
 
@@ -166,7 +164,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   }, [agendaItems, currentAgendaItem?.id, isEventStarted]);
 
   const streamSpeakerListData = useMemo(() => {
-    return (streamAgendaItem?.speaker_list || []).map((speaker) => ({
+    return (streamAgendaItem?.speaker_list || []).map(speaker => ({
       id: speaker.id,
       order: speaker.order_index || 0,
       time: speaker.time || 3,
@@ -189,7 +187,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
 
   const isUserInSpeakerList = useMemo(() => {
     return streamSpeakerListData.some(
-      speaker => speaker.user?.id === user?.id && !speaker.completed,
+      speaker => speaker.user?.id === user?.id && !speaker.completed
     );
   }, [streamSpeakerListData, user?.id]);
 
@@ -199,15 +197,15 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
 
   const indicativeSelections = useMemo(
     () => streamElection?.indicative_selections ?? [],
-    [streamElection?.indicative_selections],
+    [streamElection?.indicative_selections]
   );
   const finalSelections = useMemo(
     () => streamElection?.final_selections ?? [],
-    [streamElection?.final_selections],
+    [streamElection?.final_selections]
   );
   const userElector = useMemo(() => {
     return streamElection?.electors?.find(
-      (elector: { user_id?: string | null }) => elector.user_id === user?.id,
+      (elector: { user_id?: string | null }) => elector.user_id === user?.id
     );
   }, [streamElection?.electors, user?.id]);
   const userHasElectionVoted = useMemo(() => {
@@ -216,12 +214,11 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     if (phase === 'final' || phase === 'final_vote') {
       return (streamElection?.final_participations ?? []).some(
         (participation: { elector_id?: string | null }) =>
-          participation.elector_id === userElector.id,
+          participation.elector_id === userElector.id
       );
     }
     return (streamElection?.indicative_participations ?? []).some(
-      (participation: { elector_id?: string | null }) =>
-        participation.elector_id === userElector.id,
+      (participation: { elector_id?: string | null }) => participation.elector_id === userElector.id
     );
   }, [streamElection, userElector]);
   const userSelectedCandidateIds = useMemo(() => {
@@ -229,33 +226,32 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     const phase = streamElection?.status;
     const participations =
       phase === 'final' || phase === 'final_vote'
-        ? streamElection?.final_participations ?? []
-        : streamElection?.indicative_participations ?? [];
+        ? (streamElection?.final_participations ?? [])
+        : (streamElection?.indicative_participations ?? []);
     const userParticipation = participations.find(
-      (participation: { elector_id?: string | null }) =>
-        participation.elector_id === userElector.id,
+      (participation: { elector_id?: string | null }) => participation.elector_id === userElector.id
     );
     if (!userParticipation) return [];
 
     return (userParticipation.selections ?? [])
       .map(
         (selection: { candidate_id?: string | null; candidate?: { id: string } | null }) =>
-          selection.candidate?.id ?? selection.candidate_id ?? '',
+          selection.candidate?.id ?? selection.candidate_id ?? ''
       )
       .filter(Boolean);
   }, [streamElection, userElector]);
 
   const indicativeDecisions = useMemo(
     () => streamVote?.indicative_decisions ?? [],
-    [streamVote?.indicative_decisions],
+    [streamVote?.indicative_decisions]
   );
   const finalDecisions = useMemo(
     () => streamVote?.final_decisions ?? [],
-    [streamVote?.final_decisions],
+    [streamVote?.final_decisions]
   );
   const userVoter = useMemo(() => {
     return streamVote?.voters?.find(
-      (voter: { user_id?: string | null }) => voter.user_id === user?.id,
+      (voter: { user_id?: string | null }) => voter.user_id === user?.id
     );
   }, [streamVote?.voters, user?.id]);
   const userHasVoteVoted = useMemo(() => {
@@ -263,13 +259,11 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     const phase = streamVote?.status;
     if (phase === 'final' || phase === 'final_vote') {
       return (streamVote?.final_participations ?? []).some(
-        (participation: { voter_id?: string | null }) =>
-          participation.voter_id === userVoter.id,
+        (participation: { voter_id?: string | null }) => participation.voter_id === userVoter.id
       );
     }
     return (streamVote?.indicative_participations ?? []).some(
-      (participation: { voter_id?: string | null }) =>
-        participation.voter_id === userVoter.id,
+      (participation: { voter_id?: string | null }) => participation.voter_id === userVoter.id
     );
   }, [streamVote, userVoter]);
   const userSelectedChoiceIds = useMemo(() => {
@@ -277,10 +271,10 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     const phase = streamVote?.status;
     const participations =
       phase === 'final' || phase === 'final_vote'
-        ? streamVote?.final_participations ?? []
-        : streamVote?.indicative_participations ?? [];
+        ? (streamVote?.final_participations ?? [])
+        : (streamVote?.indicative_participations ?? []);
     const userParticipation = participations.find(
-      (participation: { voter_id?: string | null }) => participation.voter_id === userVoter.id,
+      (participation: { voter_id?: string | null }) => participation.voter_id === userVoter.id
     );
     if (!userParticipation) return [];
 
@@ -353,7 +347,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     if (!user?.id) return;
 
     const userSpeaker = streamSpeakerListData.find(
-      speaker => speaker.user?.id === user.id && !speaker.completed,
+      speaker => speaker.user?.id === user.id && !speaker.completed
     );
 
     if (!userSpeaker) return;
@@ -492,10 +486,15 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
         <Card>
           <CardHeader className="pb-3">
             <CollapsibleTrigger asChild>
-              <Button variant="ghost" className="flex w-full items-center justify-between p-0 hover:bg-transparent">
+              <Button
+                variant="ghost"
+                className="flex w-full items-center justify-between p-0 hover:bg-transparent"
+              >
                 <div className="flex items-center gap-2">
                   <Radio className="h-5 w-5 text-red-500" />
-                  <CardTitle className="text-lg">{t('features.events.stream.liveStream', 'Live Stream')}</CardTitle>
+                  <CardTitle className="text-lg">
+                    {t('features.events.stream.liveStream', 'Live Stream')}
+                  </CardTitle>
                   {isEventStarted && currentAgendaItem && (
                     <Badge variant="default" className="animate-pulse">
                       {t('features.events.stream.live', 'LIVE')}
@@ -503,9 +502,9 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                   )}
                 </div>
                 {streamOpen ? (
-                  <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                  <ChevronUp className="text-muted-foreground h-5 w-5" />
                 ) : (
-                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                  <ChevronDown className="text-muted-foreground h-5 w-5" />
                 )}
               </Button>
             </CollapsibleTrigger>
@@ -513,7 +512,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
           <CollapsibleContent>
             <CardContent>
               {!streamAgendaItem ? (
-                <div className="flex items-center gap-3 rounded-lg border border-dashed p-4 text-muted-foreground">
+                <div className="text-muted-foreground flex items-center gap-3 rounded-lg border border-dashed p-4">
                   <Info className="h-5 w-5 flex-shrink-0" />
                   <p className="text-sm">
                     {t('features.events.stream.noActiveItem', 'No active agenda item')}
@@ -521,13 +520,13 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                 </div>
               ) : (
                 <div className="space-y-6">
-                  <div className="flex items-center gap-3 rounded-lg bg-primary/5 p-3">
-                    <div className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                  <div className="bg-primary/5 flex items-center gap-3 rounded-lg p-3">
+                    <div className="bg-primary text-primary-foreground relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg">
                       <Play className="h-4 w-4 fill-current" />
                       {isEventStarted ? (
-                        <div className="absolute -right-1 -top-1 h-3 w-3 animate-pulse rounded-full bg-green-500" />
+                        <div className="absolute -top-1 -right-1 h-3 w-3 animate-pulse rounded-full bg-green-500" />
                       ) : (
-                        <div className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-amber-500" />
+                        <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-amber-500" />
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -542,8 +541,10 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                           />
                         ) : null}
                       </div>
-                      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                        <AgendaTypeBadge type={(streamAgendaItem.type ?? 'discussion') as AgendaItemType} />
+                      <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
+                        <AgendaTypeBadge
+                          type={(streamAgendaItem.type ?? 'discussion') as AgendaItemType}
+                        />
                         {streamAgendaItem.duration && (
                           <span className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
@@ -559,29 +560,34 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                       </div>
                     </div>
                     <Button asChild variant="outline" size="sm">
-                      <Link to="/event/$id/agenda/$agendaItemId" params={{ id: eventId, agendaItemId: streamAgendaItem.id }}>
+                      <Link
+                        to="/event/$id/agenda/$agendaItemId"
+                        params={{ id: eventId, agendaItemId: streamAgendaItem.id }}
+                      >
                         {t('features.events.stream.viewDetails', 'Details')}
                       </Link>
                     </Button>
                   </div>
 
                   {/* Stream Video */}
-                  {isEventStarted && event.stream_url && (() => {
-                    const videoId = getYouTubeVideoId(event.stream_url);
-                    return videoId ? (
-                      <div className="relative w-full overflow-hidden rounded-lg bg-black">
-                        <div className="aspect-video">
-                          <iframe
-                            className="h-full w-full"
-                            src={`https://www.youtube.com/embed/${encodeURIComponent(videoId)}?autoplay=0&rel=0&modestbranding=1`}
-                            title={t('features.events.stream.liveStream', 'Live Stream')}
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                            allowFullScreen
-                          />
+                  {isEventStarted &&
+                    event.stream_url &&
+                    (() => {
+                      const videoId = getYouTubeVideoId(event.stream_url);
+                      return videoId ? (
+                        <div className="relative w-full overflow-hidden rounded-lg bg-black">
+                          <div className="aspect-video">
+                            <iframe
+                              className="h-full w-full"
+                              src={`https://www.youtube.com/embed/${encodeURIComponent(videoId)}?autoplay=0&rel=0&modestbranding=1`}
+                              title={t('features.events.stream.liveStream', 'Live Stream')}
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                              allowFullScreen
+                            />
+                          </div>
                         </div>
-                      </div>
-                    ) : null;
-                  })()}
+                      ) : null;
+                    })()}
 
                   <AgendaItemContextCard
                     agendaItem={{
@@ -629,7 +635,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                   {streamElection && (
                     <div className="space-y-4">
                       <AgendaElectionSection
-                        positionName={streamElection.title ?? t('features.events.agenda.position')}
+                        roleName={streamElection.title ?? t('features.events.agenda.role')}
                         candidates={streamElection.candidates as CandidatesByElectionRow[]}
                         indicativeSelections={indicativeSelections}
                         finalSelections={finalSelections}
@@ -639,13 +645,9 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                         canVote={false}
                         canBeCandidate={false}
                         isUserCandidate={false}
-                        onBecomeCandidate={() => {}}
+                        onBecomeCandidate={() => undefined}
                       />
-                      {streamElection.position && (
-                        <AgendaRelatedPositionCard
-                          position={streamElection.position}
-                        />
-                      )}
+                      {streamElection.role && <AgendaRelatedRoleCard role={streamElection.role} />}
                     </div>
                   )}
 
@@ -663,9 +665,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                         totalEligibleVoters={streamVote.voters?.length}
                       />
                       {streamVoteAmendment && (
-                        <AgendaRelatedAmendmentCard
-                          amendment={streamVoteAmendment}
-                        />
+                        <AgendaRelatedAmendmentCard amendment={streamVoteAmendment} />
                       )}
                     </div>
                   )}
@@ -681,12 +681,15 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
         <Card>
           <CardHeader className="pb-3">
             <CollapsibleTrigger asChild>
-              <Button variant="ghost" className="flex w-full items-center justify-between p-0 hover:bg-transparent">
+              <Button
+                variant="ghost"
+                className="flex w-full items-center justify-between p-0 hover:bg-transparent"
+              >
                 <CardTitle className="text-lg">{t('features.events.agenda.statistics')}</CardTitle>
                 {statsOpen ? (
-                  <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                  <ChevronUp className="text-muted-foreground h-5 w-5" />
                 ) : (
-                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                  <ChevronDown className="text-muted-foreground h-5 w-5" />
                 )}
               </Button>
             </CollapsibleTrigger>

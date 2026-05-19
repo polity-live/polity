@@ -1,17 +1,11 @@
-export { groupQueries } from './queries'
-export { groupSharedMutators } from './shared-mutators'
-export type {
-  Group,
-  GroupMembership,
-  Role,
-  ActionRight,
-} from './schema'
-export type { GroupRelationship } from '../network/schema'
-export type { Position, PositionHolderHistory } from '../positions/schema'
+export { groupQueries } from './queries';
+export { groupSharedMutators } from './shared-mutators';
+export type { Group, GroupMembership, Role, RoleHolderHistory, ActionRight } from './schema';
+export type { GroupRelationship } from '../network/schema';
 
 // Facade Hooks
-export { useGroupState } from './useGroupState'
-export { useGroupActions } from './useGroupActions'
+export { useGroupState } from './useGroupState';
+export { useGroupActions } from './useGroupActions';
 export {
   useGroupWikiData,
   useUserMembershipInGroup,
@@ -20,11 +14,11 @@ export {
   useAllDocuments,
   useGroupById,
   useGroupMemberships,
-  useGroupRoles,
+  useGroupAccessRoles,
   useGroupNetwork,
   useGroupAmendments,
   useGroupDocuments,
-  useGroupPositions,
+  useGroupRoles,
   useGroupTodos,
   useGroupLinks,
   useGroupPaymentsData,
@@ -32,4 +26,4 @@ export {
   useUserSearch,
   usePublicGroups,
   useUserGroupSubscriptions,
-} from './useGroupState'
+} from './useGroupState';

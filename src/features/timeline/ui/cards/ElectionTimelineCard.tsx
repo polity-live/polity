@@ -29,7 +29,7 @@ export interface ElectionTimelineCardProps {
   election: {
     id: string;
     title: string;
-    positionName: string;
+    roleName: string;
     groupId?: string;
     groupName?: string;
     status: 'nominations_open' | 'voting_open' | 'closed' | 'winner_announced';
@@ -176,7 +176,6 @@ function CandidateAvatars({
   winnerId?: string;
   isIndicationPhase?: boolean;
 }) {
-  const { t } = useTranslation();
   const displayCandidates = candidates.slice(0, maxDisplay);
   const remaining = candidates.length - maxDisplay;
 
@@ -191,7 +190,7 @@ function CandidateAvatars({
           <div key={candidate.id} className="relative">
             <Avatar
               className={cn(
-                'h-10 w-10 border-2 border-background',
+                'border-background h-10 w-10 border-2',
                 candidate.id === winnerId && 'ring-2 ring-amber-400'
               )}
             >
@@ -206,7 +205,7 @@ function CandidateAvatars({
           </div>
         ))}
         {remaining > 0 && (
-          <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-background bg-gray-100 text-xs font-medium dark:bg-gray-800">
+          <div className="border-background flex h-10 w-10 items-center justify-center rounded-full border-2 bg-gray-100 text-xs font-medium dark:bg-gray-800">
             +{remaining}
           </div>
         )}
@@ -223,7 +222,7 @@ function CandidateAvatars({
               <span className="text-muted-foreground">
                 <span className="text-blue-400">{candidate.indicationPercentage}%</span>
                 {' → '}
-                <span className="font-medium text-foreground">{candidate.votePercentage}%</span>
+                <span className="text-foreground font-medium">{candidate.votePercentage}%</span>
               </span>
             ) : candidate.votePercentage !== undefined ? (
               <span className="font-medium">{candidate.votePercentage}%</span>
@@ -243,18 +242,18 @@ function WinnerDisplay({
   name,
   avatarUrl,
   votePercentage,
-  positionName,
+  roleName,
 }: {
   name: string;
   avatarUrl?: string;
   votePercentage?: number;
-  positionName: string;
+  roleName: string;
 }) {
   const { t } = useTranslation();
 
   return (
     <div className="flex flex-col items-center gap-2 py-2">
-      <div className="text-sm font-medium text-muted-foreground">
+      <div className="text-muted-foreground text-sm font-medium">
         🎉 {t('features.timeline.cards.election.winnerAnnounced')}
       </div>
       <div className="relative">
@@ -268,7 +267,7 @@ function WinnerDisplay({
       </div>
       <div className="text-center">
         <div className="font-semibold">{name}</div>
-        <div className="text-sm text-muted-foreground">{positionName}</div>
+        <div className="text-muted-foreground text-sm">{roleName}</div>
         {votePercentage !== undefined && (
           <div className="mt-1 text-sm font-medium text-amber-600 dark:text-amber-400">
             {votePercentage}% {t('features.timeline.cards.election.ofVotes')}
@@ -285,7 +284,7 @@ function WinnerDisplay({
  * Displays an election with:
  * - Rose-pink gradient header
  * - Status badge (nominations open, voting, closed, winner)
- * - Position and group context
+ * - Role and group context
  * - Candidate avatars with winner highlight
  * - Phase timeline indicator
  * - Stats (candidates, voters, turnout)
@@ -368,17 +367,17 @@ export function ElectionTimelineCard({
         }
       >
         {dateText && (
-          <div className="mt-2 text-center text-xs text-muted-foreground">{dateText}</div>
+          <div className="text-muted-foreground mt-2 text-center text-xs">{dateText}</div>
         )}
       </TimelineCardHeader>
 
       <TimelineCardContent>
-        {/* Position being elected */}
+        {/* Role being elected */}
         <div className="mb-3 text-center">
-          <span className="text-sm text-muted-foreground">
+          <span className="text-muted-foreground text-sm">
             {t('features.timeline.cards.election.electionFor')}:{' '}
           </span>
-          <span className="font-medium">{election.positionName}</span>
+          <span className="font-medium">{election.roleName}</span>
         </div>
 
         {/* Winner display or candidate avatars */}
@@ -387,7 +386,7 @@ export function ElectionTimelineCard({
             name={election.winnerName}
             avatarUrl={election.winnerAvatarUrl}
             votePercentage={election.winnerVotePercentage}
-            positionName={election.positionName}
+            roleName={election.roleName}
           />
         ) : (
           election.candidates.length > 0 && (
@@ -402,7 +401,7 @@ export function ElectionTimelineCard({
         {/* Phase timeline */}
         <div className="mt-3">
           <PhaseTimeline currentPhase={currentPhase} />
-          <div className="mt-1 text-center text-xs text-muted-foreground">
+          <div className="text-muted-foreground mt-1 text-center text-xs">
             {currentPhase === 'nomination' &&
               t('features.timeline.cards.election.phases.nomination')}
             {currentPhase === 'voting' && t('features.timeline.cards.election.phases.voting')}
@@ -413,7 +412,7 @@ export function ElectionTimelineCard({
         </div>
 
         {/* Stats */}
-        <div className="mt-4 flex items-center justify-center gap-4 text-xs text-muted-foreground">
+        <div className="text-muted-foreground mt-4 flex items-center justify-center gap-4 text-xs">
           <div className="flex items-center gap-1">
             <Award className="h-3.5 w-3.5" />
             <span>
@@ -488,7 +487,7 @@ export function ElectionTimelineCard({
           <ShareButton
             url={agendaHref || fallbackHref || `/election/${election.id}`}
             title={election.title}
-            description={election.positionName}
+            description={election.roleName}
             variant="outline"
             size="sm"
           />

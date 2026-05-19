@@ -15,7 +15,12 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
 import { Textarea } from '@/features/shared/ui/ui/textarea';
-import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/features/shared/ui/ui/carousel';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselApi,
+} from '@/features/shared/ui/ui/carousel';
 import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
@@ -24,11 +29,7 @@ import { TooltipProvider } from '@/features/shared/ui/ui/tooltip';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useElectionActions } from '@/zero/elections/useElectionActions';
 import { useVoteActions } from '@/zero/votes/useVoteActions';
-import {
-  useAllEvents,
-  useAllAmendments,
-  usePositionsWithGroups,
-} from '@/zero/events/useEventState';
+import { useAllEvents, useAllAmendments, useRolesWithGroups } from '@/zero/events/useEventState';
 import { useAuth } from '@/providers/auth-provider';
 import { toast } from 'sonner';
 import { PageWrapper } from '@/layout/page-wrapper';
@@ -52,7 +53,7 @@ export function CreateAgendaItemForm() {
     duration: '',
     eventId: eventIdParam || '',
     amendmentId: '', // For vote type
-    positionId: '', // For election type
+    roleId: '', // For election type
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
@@ -74,8 +75,8 @@ export function CreateAgendaItemForm() {
   // Query available amendments for the dropdown (when type is vote)
   const { amendments: userAmendments } = useAllAmendments();
 
-  // Query available positions for the dropdown (when type is election)
-  const { positions: userPositions } = usePositionsWithGroups();
+  // Query available roles for the dropdown (when type is election)
+  const { roles: userRoles } = useRolesWithGroups();
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -132,7 +133,7 @@ export function CreateAgendaItemForm() {
           visibility: 'public',
           max_votes: 1,
           agenda_item_id: agendaItemId,
-          position_id: formData.positionId || null,
+          role_id: formData.roleId || null,
         });
       }
 
@@ -166,7 +167,7 @@ export function CreateAgendaItemForm() {
       }
 
       // Send notification to event participants
-      const selectedEvent = userEvents.find((e) => e.id === formData.eventId);
+      const selectedEvent = userEvents.find(e => e.id === formData.eventId);
       await notifyAgendaItemCreated({
         senderId: user.id,
         eventId: formData.eventId,
@@ -203,11 +204,13 @@ export function CreateAgendaItemForm() {
                       items={toTypeaheadItems(
                         userEvents,
                         'event',
-                        (e) => e.title || 'Event',
-                        (e) => e.description?.substring(0, 60),
+                        e => e.title || 'Event',
+                        e => e.description?.substring(0, 60)
                       )}
                       value={formData.eventId}
-                      onChange={(item: TypeaheadItem | null) => setFormData({ ...formData, eventId: item?.id ?? '' })}
+                      onChange={(item: TypeaheadItem | null) =>
+                        setFormData({ ...formData, eventId: item?.id ?? '' })
+                      }
                       placeholder="Search for an event..."
                     />
                   </div>
@@ -283,27 +286,31 @@ export function CreateAgendaItemForm() {
                         items={toTypeaheadItems(
                           userAmendments,
                           'amendment',
-                          (a) => a.title || 'Amendment',
+                          a => a.title || 'Amendment'
                         )}
                         value={formData.amendmentId}
-                        onChange={(item: TypeaheadItem | null) => setFormData({ ...formData, amendmentId: item?.id ?? '' })}
+                        onChange={(item: TypeaheadItem | null) =>
+                          setFormData({ ...formData, amendmentId: item?.id ?? '' })
+                        }
                         placeholder="Search for an amendment..."
                       />
                     </div>
                   )}
                   {formData.type === 'election' && (
                     <div className="space-y-2">
-                      <Label htmlFor="agenda-position">Position (optional)</Label>
+                      <Label htmlFor="agenda-role">Elective role (optional)</Label>
                       <TypeaheadSearch
                         items={toTypeaheadItems(
-                          userPositions,
-                          'position',
-                          (p) => p.title || 'Position',
-                          (p) => p.description?.substring(0, 60),
+                          userRoles,
+                          'role',
+                          role => role.title || 'Role',
+                          role => role.description?.substring(0, 60)
                         )}
-                        value={formData.positionId}
-                        onChange={(item: TypeaheadItem | null) => setFormData({ ...formData, positionId: item?.id ?? '' })}
-                        placeholder="Search for a position..."
+                        value={formData.roleId}
+                        onChange={(item: TypeaheadItem | null) =>
+                          setFormData({ ...formData, roleId: item?.id ?? '' })
+                        }
+                        placeholder="Search for an elective role..."
                       />
                     </div>
                   )}
@@ -360,11 +367,11 @@ export function CreateAgendaItemForm() {
                           </span>
                         </div>
                       )}
-                      {formData.positionId && (
+                      {formData.roleId && (
                         <div className="flex items-center gap-2 text-sm">
-                          <strong>Position:</strong>
+                          <strong>Role:</strong>
                           <span className="text-muted-foreground">
-                            {userPositions.find(p => p.id === formData.positionId)?.title}
+                            {userRoles.find(role => role.id === formData.roleId)?.title}
                           </span>
                         </div>
                       )}

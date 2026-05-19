@@ -5,7 +5,10 @@ import { useAgendaState } from '@/zero/agendas/useAgendaState';
 import type { ElectionWithDetailsRow } from '@/zero/elections';
 import { useElectionState } from '@/zero/elections/useElectionState';
 import { useVoteState } from '@/zero/votes/useVoteState';
-import { computeVoteResultSummary, type MajorityType } from '@/features/vote-cast/logic/computeVoteResults';
+import {
+  computeVoteResultSummary,
+  type MajorityType,
+} from '@/features/vote-cast/logic/computeVoteResults';
 import type { VoteWithDetailsRow } from '@/zero/votes';
 import type { DecisionItem } from '../ui/types';
 import type { Visibility } from '@/features/auth/logic/checkEntityAccess';
@@ -61,9 +64,9 @@ function countVoteChoices(vote: VoteWithDetailsRow, decisionType: 'indicative' |
   }
 
   return {
-    support: sortedChoices[0] ? (choiceCounts.get(sortedChoices[0].id) || 0) : 0,
-    oppose: sortedChoices[1] ? (choiceCounts.get(sortedChoices[1].id) || 0) : 0,
-    abstain: sortedChoices[2] ? (choiceCounts.get(sortedChoices[2].id) || 0) : 0,
+    support: sortedChoices[0] ? choiceCounts.get(sortedChoices[0].id) || 0 : 0,
+    oppose: sortedChoices[1] ? choiceCounts.get(sortedChoices[1].id) || 0 : 0,
+    abstain: sortedChoices[2] ? choiceCounts.get(sortedChoices[2].id) || 0 : 0,
   };
 }
 
@@ -104,6 +107,8 @@ export interface UseDecisionTerminalReturn {
 export function useDecisionTerminal(
   _options: UseDecisionTerminalOptions = {}
 ): UseDecisionTerminalReturn {
+  void _options;
+
   const { electionsWithDetails: electionRows, isLoading: electionsLoading } = useElectionState({
     includeElectionsWithDetails: true,
   });
@@ -112,32 +117,32 @@ export function useDecisionTerminal(
   });
 
   const agendaEventIds = useMemo(() => {
-    const eventIds = new Set<string>()
+    const eventIds = new Set<string>();
 
     for (const election of electionRows || []) {
-      const eventId = election.agenda_item?.event?.id
+      const eventId = election.agenda_item?.event?.id;
       if (eventId) {
-        eventIds.add(eventId)
+        eventIds.add(eventId);
       }
     }
 
     for (const vote of voteRows || []) {
-      const eventId = vote.agenda_item?.event?.id
+      const eventId = vote.agenda_item?.event?.id;
       if (eventId) {
-        eventIds.add(eventId)
+        eventIds.add(eventId);
       }
     }
 
-    return Array.from(eventIds)
-  }, [electionRows, voteRows])
+    return Array.from(eventIds);
+  }, [electionRows, voteRows]);
 
   const { agendaItems, isLoading: agendaLoading } = useAgendaState({
     eventIds: agendaEventIds.length > 0 ? agendaEventIds : undefined,
-  })
+  });
 
   const agendaItemsById = useMemo(() => {
-    return new Map(agendaItems.map(item => [item.id, item]))
-  }, [agendaItems])
+    return new Map(agendaItems.map(item => [item.id, item]));
+  }, [agendaItems]);
 
   const isLoading = electionsLoading || votesLoading || agendaLoading;
 
@@ -149,7 +154,7 @@ export function useDecisionTerminal(
     elections.forEach((election, index) => {
       const calculatedAgendaItem = election.agenda_item?.id
         ? agendaItemsById.get(election.agenda_item.id)
-        : undefined
+        : undefined;
 
       const endsAt = election.closing_end_time
         ? new Date(election.closing_end_time)
@@ -157,19 +162,19 @@ export function useDecisionTerminal(
           ? new Date(election.agenda_item.end_time)
           : calculatedAgendaItem?.calculated_end_time
             ? new Date(calculatedAgendaItem.calculated_end_time)
-          : election.updated_at
-            ? new Date(election.updated_at)
-            : election.created_at
-              ? new Date(election.created_at)
-              : now;
+            : election.updated_at
+              ? new Date(election.updated_at)
+              : election.created_at
+                ? new Date(election.created_at)
+                : now;
 
       const startsAt = calculatedAgendaItem?.calculated_start_time
         ? new Date(calculatedAgendaItem.calculated_start_time)
         : election.agenda_item?.start_time
-        ? new Date(election.agenda_item.start_time)
-        : election.created_at
-          ? new Date(election.created_at)
-          : undefined;
+          ? new Date(election.agenda_item.start_time)
+          : election.created_at
+            ? new Date(election.created_at)
+            : undefined;
 
       const candidates = election.candidates || [];
       const indicativeSelections = election.indicative_selections || [];
@@ -195,7 +200,7 @@ export function useDecisionTerminal(
       const totalFinalSelections = finalSelections.length;
       const totalIndicationSelections = indicativeSelections.length;
 
-      const candidateSummaries: Array<{
+      const candidateSummaries: {
         id: string;
         name: string;
         avatarUrl?: string;
@@ -204,7 +209,7 @@ export function useDecisionTerminal(
         indicationVotes?: number;
         indicationPercentage?: number;
         actualPercentage?: number;
-      }> = candidates.map(candidate => {
+      }[] = candidates.map(candidate => {
         const finalVoteCount = voteCounts.get(candidate.id) || 0;
         const indicationVoteCount = indicationCounts.get(candidate.id) || 0;
         return {
@@ -227,9 +232,8 @@ export function useDecisionTerminal(
       const isActiveByStatus = election.status === 'indicative' || election.status === 'final';
       const closedByStatus = election.status === 'completed';
       const isEnded = closedByStatus || (!isActiveByStatus && isClosed(endsAt));
-      const currentSelectionCount = isEnded || !isIndicationPhase
-        ? totalFinalSelections
-        : totalIndicationSelections;
+      const currentSelectionCount =
+        isEnded || !isIndicationPhase ? totalFinalSelections : totalIndicationSelections;
       const turnout = totalElectors
         ? calculateTurnout(currentSelectionCount, totalElectors)
         : undefined;
@@ -248,7 +252,7 @@ export function useDecisionTerminal(
         id: generateDecisionId('election', index + 1),
         type: 'election',
         title: election.title || 'Election',
-        body: election.position?.title || election.agenda_item?.event?.title || 'Election',
+        body: election.role?.title || election.agenda_item?.event?.title || 'Election',
         endsAt,
         startsAt,
         status,
@@ -283,7 +287,7 @@ export function useDecisionTerminal(
     votes.forEach((vote, index) => {
       const calculatedAgendaItem = vote.agenda_item?.id
         ? agendaItemsById.get(vote.agenda_item.id)
-        : undefined
+        : undefined;
 
       const endsAt = vote.closing_end_time
         ? new Date(vote.closing_end_time)
@@ -291,19 +295,19 @@ export function useDecisionTerminal(
           ? new Date(vote.agenda_item.end_time)
           : calculatedAgendaItem?.calculated_end_time
             ? new Date(calculatedAgendaItem.calculated_end_time)
-          : vote.updated_at
-            ? new Date(vote.updated_at)
-            : vote.created_at
-              ? new Date(vote.created_at)
-              : now;
+            : vote.updated_at
+              ? new Date(vote.updated_at)
+              : vote.created_at
+                ? new Date(vote.created_at)
+                : now;
 
       const voteStartsAt = calculatedAgendaItem?.calculated_start_time
         ? new Date(calculatedAgendaItem.calculated_start_time)
         : vote.agenda_item?.start_time
-        ? new Date(vote.agenda_item.start_time)
-        : vote.created_at
-          ? new Date(vote.created_at)
-          : undefined;
+          ? new Date(vote.agenda_item.start_time)
+          : vote.created_at
+            ? new Date(vote.created_at)
+            : undefined;
 
       const isIndicationPhase = vote.status === 'indicative';
       const isActiveByStatus = isIndicationPhase || vote.status === 'final';

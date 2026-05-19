@@ -14,8 +14,8 @@ export const eventPageTranslations = {
     searchPlaceholder: 'Teilnehmer suchen...',
     noParticipants: 'Keine Teilnehmer gefunden',
   },
-  positions: {
-    title: 'Positionen',
+  roles: {
+    title: 'Rollen',
   },
   network: {
     title: 'Netzwerk',

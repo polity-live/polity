@@ -5,11 +5,174 @@ import { queries } from '../queries';
 
 /** A single event row from the byGroup query (flat, no relations) */
 export type EventByGroupRow = QueryRowType<typeof queries.events.byGroup>;
+type EventByIdFullRow = QueryRowType<typeof queries.events.byIdFull>;
+type EventAgendaWithElectionsRow = QueryRowType<typeof queries.events.agendaWithElections>;
+type EventAgendaItemsFullRow = QueryRowType<typeof queries.events.agendaItemsFull>;
+type EventAgendaItemDetailRow = QueryRowType<typeof queries.events.agendaItemDetail>;
+type EventWikiDataRow = QueryRowType<typeof queries.events.wikiData>;
+type EventWikiAgendaItemRow = QueryRowType<typeof queries.events.wikiAgendaItems>;
 
 interface EventStateOptions {
   eventId?: string;
   groupId?: string;
   userId?: string;
+}
+
+interface RoleDisplayLike {
+  name?: string | null;
+  term_start_date?: number | null;
+  is_recurring?: boolean | null;
+  recurrence_pattern?: string | null;
+  recurrence_interval?: number | null;
+  holders?: readonly unknown[] | null;
+  holder_history?: readonly unknown[] | null;
+}
+
+type DisplayRole<TRole extends RoleDisplayLike> = TRole & {
+  title: string | null;
+  term: string | null;
+  first_term_start: number | null;
+  holders: readonly unknown[];
+};
+
+type ElectionWithDisplayRole<TElection extends { role?: RoleDisplayLike | null }> = Omit<
+  TElection,
+  'role'
+> & {
+  role?: DisplayRole<Extract<NonNullable<TElection['role']>, RoleDisplayLike>>;
+};
+
+type AgendaItemWithDisplayRoles<
+  TItem extends { election?: readonly { role?: RoleDisplayLike | null }[] | null },
+> = Omit<TItem, 'election'> & {
+  election: ElectionWithDisplayRole<
+    Extract<NonNullable<TItem['election']>[number], { role?: RoleDisplayLike | null }>
+  >[];
+};
+
+type EventWithDisplayRoles<
+  TEvent extends {
+    roles?: readonly RoleDisplayLike[] | null;
+    agenda_items?:
+      | readonly { election?: readonly { role?: RoleDisplayLike | null }[] | null }[]
+      | null;
+  },
+> = Omit<TEvent, 'roles' | 'agenda_items'> & {
+  roles: DisplayRole<Extract<NonNullable<TEvent['roles']>[number], RoleDisplayLike>>[];
+  agenda_items: AgendaItemWithDisplayRoles<
+    Extract<
+      NonNullable<TEvent['agenda_items']>[number],
+      { election?: readonly { role?: RoleDisplayLike | null }[] | null }
+    >
+  >[];
+};
+
+interface EventRoleLike {
+  id: string;
+  name?: string | null;
+  sort_order?: number | null;
+}
+
+interface EventParticipantRoleLinkLike<TRole extends EventRoleLike = EventRoleLike> {
+  role?: TRole | null;
+}
+
+function isActiveEventParticipantStatus(status: string | null | undefined) {
+  return status === 'active' || status === 'member' || status === 'admin' || status === 'confirmed';
+}
+
+function selectPrimaryEventRole<TRole extends EventRoleLike>(roles: readonly TRole[]) {
+  if (roles.length === 0) return null;
+
+  return (
+    [...roles].sort((left, right) => (right.sort_order ?? -1) - (left.sort_order ?? -1))[0] ?? null
+  );
+}
+
+function normalizeParticipantWithRoles<
+  TParticipant extends {
+    participant_roles?: readonly EventParticipantRoleLinkLike<TRole>[] | null;
+    role?: TRole | null;
+  },
+  TRole extends EventRoleLike,
+>(participant: TParticipant) {
+  const roles: TRole[] = [];
+  for (const link of participant.participant_roles || []) {
+    if (link.role) {
+      roles.push(link.role);
+    }
+  }
+  const primaryRole = selectPrimaryEventRole(roles) ?? participant.role ?? null;
+
+  return {
+    ...participant,
+    roles,
+    role: primaryRole,
+  };
+}
+
+function normalizeParticipants<
+  TParticipant extends {
+    participant_roles?: readonly EventParticipantRoleLinkLike<TRole>[] | null;
+    role?: TRole | null;
+  },
+  TRole extends EventRoleLike,
+>(participants: readonly TParticipant[] | null | undefined) {
+  return (participants || []).map(participant => normalizeParticipantWithRoles(participant));
+}
+
+function mapRoleForDisplay<T extends RoleDisplayLike>(role: T): DisplayRole<T> {
+  return {
+    ...role,
+    title: role.name,
+    term:
+      Boolean(role.is_recurring) && role.recurrence_pattern === 'yearly'
+        ? String(role.recurrence_interval ?? 1)
+        : null,
+    first_term_start: role.term_start_date ?? null,
+    holders: role.holders || role.holder_history || [],
+  };
+}
+
+function mapElectionRole<T extends { role?: RoleDisplayLike | null }>(
+  election: T
+): ElectionWithDisplayRole<T> {
+  if (!election.role) {
+    return {
+      ...election,
+    } as ElectionWithDisplayRole<T>;
+  }
+
+  return {
+    ...election,
+    role: mapRoleForDisplay(election.role),
+  } as ElectionWithDisplayRole<T>;
+}
+
+function mapAgendaItemRoles<
+  T extends { election?: readonly { role?: RoleDisplayLike | null }[] | null },
+>(item: T): AgendaItemWithDisplayRoles<T> {
+  return {
+    ...item,
+    election: (item.election || []).map(election => mapElectionRole(election)),
+  } as AgendaItemWithDisplayRoles<T>;
+}
+
+function mapEventRoles<
+  T extends {
+    roles?: readonly RoleDisplayLike[] | null;
+    agenda_items?:
+      | readonly {
+          election?: readonly { role?: RoleDisplayLike | null }[] | null;
+        }[]
+      | null;
+  },
+>(event: T): EventWithDisplayRoles<T> {
+  return {
+    ...event,
+    roles: (event.roles || []).map(role => mapRoleForDisplay(role)),
+    agenda_items: (event.agenda_items || []).map(item => mapAgendaItemRoles(item)),
+  } as EventWithDisplayRoles<T>;
 }
 
 /**
@@ -31,9 +194,7 @@ export function useEventState(options: EventStateOptions = {}) {
     eventId ? queries.events.delegates({ eventId }) : undefined
   );
 
-  const [positions, positionsResult] = useQuery(
-    eventId ? queries.events.positions({ eventId }) : undefined
-  );
+  const [roles, rolesResult] = useQuery(eventId ? queries.events.roles({ eventId }) : undefined);
 
   // ── Events by group (opt-in) ───────────────────────────────────────
   const [eventsByGroup, eventsByGroupResult] = useQuery(
@@ -50,18 +211,18 @@ export function useEventState(options: EventStateOptions = {}) {
     (eventId !== undefined && participantsResult.type === 'unknown') ||
     (eventId !== undefined && agendaResult.type === 'unknown') ||
     (eventId !== undefined && delegatesResult.type === 'unknown') ||
-    (eventId !== undefined && positionsResult.type === 'unknown') ||
+    (eventId !== undefined && rolesResult.type === 'unknown') ||
     (groupId !== undefined && eventsByGroupResult.type === 'unknown') ||
     (userId !== undefined && participantsByUserResult.type === 'unknown');
 
   return {
     event,
-    participants,
+    participants: normalizeParticipants(participants),
     agenda,
     delegates,
-    positions,
+    roles,
     eventsByGroup: eventsByGroup ?? [],
-    participantsByUser: participantsByUser ?? [],
+    participantsByUser: normalizeParticipants(participantsByUser),
     isLoading,
   };
 }
@@ -77,16 +238,34 @@ export function useEventById(eventId?: string) {
   );
 
   const isLoading = eventsResult.type === 'unknown';
-  const event = useMemo(() => eventsData?.[0] || null, [eventsData]);
+  const event = useMemo(() => {
+    const currentEvent = eventsData?.[0] as EventByIdFullRow | undefined;
+    if (!currentEvent) return null;
+
+    const mappedEvent = mapEventRoles<EventByIdFullRow>(currentEvent);
+
+    return {
+      ...mappedEvent,
+      participants: normalizeParticipants(currentEvent.participants),
+    };
+  }, [eventsData]);
   const participants = useMemo(() => event?.participants || [], [event]);
   const delegates = useMemo(() => event?.delegates || [], [event]);
   const agendaItems = useMemo(() => event?.agenda_items || [], [event]);
-  const positions = useMemo(() => event?.event_positions || [], [event]);
+  const roles = useMemo(
+    () =>
+      (event?.roles || []).map(role => ({
+        ...role,
+        title: role.name,
+        holders: role.holders || [],
+      })),
+    [event]
+  );
 
   const participantStats = useMemo(() => {
     const stats = { total: participants.length, members: 0, admins: 0, invited: 0, requested: 0 };
     participants.forEach(p => {
-      if (p.status === 'member') stats.members++;
+      if (isActiveEventParticipantStatus(p.status)) stats.members++;
       if (p.status === 'admin') stats.admins++;
       if (p.status === 'invited') stats.invited++;
       if (p.status === 'requested') stats.requested++;
@@ -94,7 +273,7 @@ export function useEventById(eventId?: string) {
     return stats;
   }, [participants]);
 
-  return { event, participants, delegates, agendaItems, positions, participantStats, isLoading };
+  return { event, participants, delegates, agendaItems, roles, participantStats, isLoading };
 }
 
 // ── Event with cancellation relations ───────────────────────────────
@@ -114,7 +293,12 @@ export function useEventWithVoting(eventId: string) {
   const [eventsData, eventsResult] = useQuery(queries.events.withVoting({ id: eventId }));
 
   return {
-    event: eventsData?.[0] || null,
+    event: eventsData?.[0]
+      ? {
+          ...eventsData[0],
+          participants: normalizeParticipants(eventsData[0].participants),
+        }
+      : null,
     isLoading: eventsResult.type === 'unknown',
   };
 }
@@ -138,14 +322,14 @@ export function useEventParticipantsQuery(eventId?: string) {
   );
 
   const isLoading = participantsResult.type === 'unknown';
-  const participants = useMemo(() => eventParticipants || [], [eventParticipants]);
+  const participants = useMemo(() => normalizeParticipants(eventParticipants), [eventParticipants]);
 
   const { activeParticipants, invitedParticipants, requestedParticipants } = useMemo(() => {
     const active: typeof participants = [];
     const invited: typeof participants = [];
     const requested: typeof participants = [];
     participants.forEach(p => {
-      if (p.status === 'member' || p.status === 'admin') active.push(p);
+      if (isActiveEventParticipantStatus(p.status)) active.push(p);
       else if (p.status === 'invited') invited.push(p);
       else if (p.status === 'requested') requested.push(p);
     });
@@ -180,8 +364,10 @@ export function useEventParticipationData(eventId: string, userId: string) {
 
   return {
     event: eventData?.[0] || null,
-    myParticipation: myParticipation?.[0] || null,
-    allParticipants: allParticipants || [],
+    myParticipation: myParticipation?.[0]
+      ? normalizeParticipantWithRoles(myParticipation[0])
+      : null,
+    allParticipants: normalizeParticipants(allParticipants),
     isLoading:
       eventResult.type === 'unknown' ||
       myParticipationResult.type === 'unknown' ||
@@ -189,19 +375,27 @@ export function useEventParticipationData(eventId: string, userId: string) {
   };
 }
 
-// ── Event Positions ─────────────────────────────────────────────────
+// ── Event Roles ─────────────────────────────────────────────────────
 
-export function useEventPositionsData(eventId: string) {
-  const [eventData, eventResult] = useQuery(queries.events.forPositions({ id: eventId }));
+export function useEventRolesData(eventId: string) {
+  const [eventData, eventResult] = useQuery(queries.events.forRoles({ id: eventId }));
 
-  const [positionsData, positionsResult] = useQuery(
-    queries.events.positionsWithHolders({ eventId })
+  const [rolesData, rolesResult] = useQuery(queries.events.rolesWithHolders({ eventId }));
+
+  const roles = useMemo(
+    () =>
+      (rolesData || []).map(role => ({
+        ...role,
+        title: role.name,
+        holders: role.holders || [],
+      })),
+    [rolesData]
   );
 
   return {
     event: eventData?.[0] || null,
-    positions: positionsData || [],
-    isLoading: eventResult.type === 'unknown' || positionsResult.type === 'unknown',
+    roles,
+    isLoading: eventResult.type === 'unknown' || rolesResult.type === 'unknown',
   };
 }
 
@@ -213,7 +407,11 @@ export function useEventAgenda(eventId?: string) {
   );
 
   return {
-    agendaItems: useMemo(() => agendaItemsData || [], [agendaItemsData]),
+    agendaItems: useMemo(
+      () =>
+        (agendaItemsData || []).map(item => mapAgendaItemRoles<EventAgendaWithElectionsRow>(item)),
+      [agendaItemsData]
+    ),
     isLoading: agendaResult.type === 'unknown',
   };
 }
@@ -252,7 +450,7 @@ export function useAgendaItemsByEvent(eventId: string) {
   const agendaItems = (agendaItemsData || [])
     .filter(item => item.event?.id === eventId)
     .map(item => ({
-      ...item,
+      ...mapAgendaItemRoles<EventAgendaItemsFullRow>(item),
       votes: votesByAgendaItemId.get(item.id) ?? item.votes ?? [],
     }))
     .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
@@ -275,7 +473,7 @@ export function useAgendaItemDetail(agendaItemId: string) {
   const agendaItem = agendaItemsData?.[0];
 
   return {
-    agendaItem,
+    agendaItem: agendaItem ? mapAgendaItemRoles<EventAgendaItemDetailRow>(agendaItem) : agendaItem,
     event: agendaItem?.event,
     isLoading: agendaItemsResult.type === 'unknown',
   };
@@ -324,13 +522,15 @@ export function useEventWikiData(eventId: string) {
   const [agendaItemRows] = useQuery(queries.events.wikiAgendaItems({ eventId }));
 
   return {
-    event: events?.[0] || null,
-    agendaItems: agendaItemRows || [],
+    event: events?.[0] ? mapEventRoles<EventWikiDataRow>(events[0]) : null,
+    agendaItems: (agendaItemRows || []).map(item =>
+      mapAgendaItemRoles<EventWikiAgendaItemRow>(item)
+    ),
   };
 }
 
-export function useEventRoles(eventId: string) {
-  const [eventRoles] = useQuery(queries.events.rolesByEvent({ eventId }));
+export function useEventAccessRoles(eventId: string) {
+  const [eventRoles] = useQuery(queries.events.accessRolesByEvent({ eventId }));
 
   return { roles: eventRoles || [] };
 }
@@ -355,9 +555,11 @@ export function useAllAmendments() {
   return { amendments: amendments || [] };
 }
 
-export function usePositionsWithGroups() {
-  const [positions] = useQuery(queries.events.positionsWithGroups({}));
-  return { positions: positions || [] };
+export function useRolesWithGroups() {
+  const [roles] = useQuery(queries.events.rolesWithGroups({}));
+  return {
+    roles: (roles || []).map(mapRoleForDisplay),
+  };
 }
 
 export function useUserEventParticipations(userId?: string) {
@@ -388,7 +590,7 @@ export function useElectionWithVotes(electionId: string) {
   );
 
   return {
-    election: electionsData?.[0] || null,
+    election: electionsData?.[0] ? mapElectionRole(electionsData[0]) : null,
     isLoading: electionsResult.type === 'unknown',
   };
 }

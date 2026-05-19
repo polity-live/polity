@@ -17,7 +17,6 @@ import {
   Link,
   LinkIcon,
   Unlink,
-  Settings,
   Star,
   Vote,
   CheckCircle,
@@ -32,11 +31,9 @@ import {
   Briefcase,
   Edit,
   Trash2,
-  Radio,
   Hash,
   Megaphone,
   BookOpen,
-  PenTool,
   type LucideIcon,
 } from 'lucide-react';
 import { NotificationType } from '../types/notification.types';
@@ -77,9 +74,9 @@ const NOTIFICATION_ICON_MAP: Record<string, LucideIcon> = {
   // Group — Admin
   group_admin_promoted: ShieldCheck,
   group_admin_demoted: ShieldX,
-  group_role_created: Shield,
-  group_role_deleted: Shield,
-  group_role_updated: Shield,
+  group_access_role_created: Shield,
+  group_access_role_deleted: Shield,
+  group_access_role_updated: Shield,
 
   // Group — Todos
   group_todo_assigned: CheckCircle,
@@ -94,10 +91,11 @@ const NOTIFICATION_ICON_MAP: Record<string, LucideIcon> = {
   group_relationship_approved: Link,
   group_relationship_rejected: Unlink,
 
-  // Group — Positions & Elections
-  group_position_created: Briefcase,
-  group_position_assigned: Briefcase,
-  group_position_vacated: Briefcase,
+  // Group — Roles & Elections
+  group_role_created: Briefcase,
+  group_role_deleted: Briefcase,
+  group_role_assigned: Briefcase,
+  group_role_vacated: Briefcase,
   group_election_created: Vote,
   group_election_results: Vote,
 
@@ -121,12 +119,12 @@ const NOTIFICATION_ICON_MAP: Record<string, LucideIcon> = {
   event_agenda_item_deleted: FileX,
   event_schedule_changed: Calendar,
 
-  // Event — Elections & Positions
+  // Event — Elections & Roles
   event_candidate_added: UserPlus,
   event_election_started: Vote,
   event_election_ended: Vote,
-  event_position_created: Briefcase,
-  event_position_deleted: Briefcase,
+  event_role_created: Briefcase,
+  event_role_deleted: Briefcase,
   event_delegates_finalized: Users,
   event_delegate_nominated: UserCheck,
 
@@ -209,8 +207,8 @@ const NOTIFICATION_ICON_MAP: Record<string, LucideIcon> = {
   conversation_accepted: MessageSquare,
 
   // Additional
-  position_assigned: Briefcase,
-  position_removed: Briefcase,
+  role_assigned: Briefcase,
+  role_removed: Briefcase,
   election_results_published: Vote,
   subscription_status_changed: Bell,
   payment_succeeded: CreditCard,
@@ -256,9 +254,9 @@ const NOTIFICATION_COLOR_MAP: Record<string, string> = {
   // Group — Admin (slate tones)
   group_admin_promoted: 'text-emerald-500',
   group_admin_demoted: 'text-orange-500',
-  group_role_created: 'text-slate-500',
-  group_role_deleted: 'text-slate-500',
-  group_role_updated: 'text-slate-500',
+  group_access_role_created: 'text-slate-500',
+  group_access_role_deleted: 'text-slate-500',
+  group_access_role_updated: 'text-slate-500',
 
   // Group — Todos
   group_todo_assigned: 'text-blue-500',
@@ -273,10 +271,11 @@ const NOTIFICATION_COLOR_MAP: Record<string, string> = {
   group_relationship_approved: 'text-green-500',
   group_relationship_rejected: 'text-red-500',
 
-  // Group — Positions & Elections
-  group_position_created: 'text-violet-500',
-  group_position_assigned: 'text-violet-500',
-  group_position_vacated: 'text-slate-500',
+  // Group — Roles & Elections
+  group_role_created: 'text-violet-500',
+  group_role_deleted: 'text-slate-500',
+  group_role_assigned: 'text-violet-500',
+  group_role_vacated: 'text-slate-500',
   group_election_created: 'text-violet-500',
   group_election_results: 'text-violet-500',
 
@@ -300,12 +299,12 @@ const NOTIFICATION_COLOR_MAP: Record<string, string> = {
   event_agenda_item_deleted: 'text-slate-500',
   event_schedule_changed: 'text-indigo-500',
 
-  // Event — Elections & Positions
+  // Event — Elections & Roles
   event_candidate_added: 'text-violet-500',
   event_election_started: 'text-violet-500',
   event_election_ended: 'text-violet-500',
-  event_position_created: 'text-violet-500',
-  event_position_deleted: 'text-slate-500',
+  event_role_created: 'text-violet-500',
+  event_role_deleted: 'text-slate-500',
   event_delegates_finalized: 'text-violet-500',
   event_delegate_nominated: 'text-violet-400',
 
@@ -388,8 +387,8 @@ const NOTIFICATION_COLOR_MAP: Record<string, string> = {
   conversation_accepted: 'text-green-500',
 
   // Additional
-  position_assigned: 'text-violet-500',
-  position_removed: 'text-slate-500',
+  role_assigned: 'text-violet-500',
+  role_removed: 'text-slate-500',
   election_results_published: 'text-violet-500',
   subscription_status_changed: 'text-yellow-500',
   payment_succeeded: 'text-emerald-500',

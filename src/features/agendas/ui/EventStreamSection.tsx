@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
@@ -77,23 +77,23 @@ interface CurrentAgendaItem {
   status?: string | null;
   duration?: number | null;
   voting_phase?: string | null;
-  election?: Array<{
+  election?: {
     id: string;
     title?: string | null;
     candidates?: CandidatesByElectionRow[];
-    indicative_selections?: ReadonlyArray<CandidateSelection>;
-    final_selections?: ReadonlyArray<CandidateSelection>;
-    electors?: Array<{ user_id?: string | null }>;
-  }>;
-  votes?: Array<{
+    indicative_selections?: readonly CandidateSelection[];
+    final_selections?: readonly CandidateSelection[];
+    electors?: { user_id?: string | null }[];
+  }[];
+  votes?: {
     id: string;
     title?: string | null;
     choices?: ChoicesByVoteRow[];
-    indicative_decisions?: ReadonlyArray<ChoiceDecision>;
-    final_decisions?: ReadonlyArray<ChoiceDecision>;
-    voters?: Array<{ user_id?: string | null }>;
+    indicative_decisions?: readonly ChoiceDecision[];
+    final_decisions?: readonly ChoiceDecision[];
+    voters?: { user_id?: string | null }[];
     majority_type?: string | null;
-  }>;
+  }[];
   speaker_list?: Speaker[];
 }
 
@@ -141,13 +141,6 @@ export function EventStreamSection({
   const [speakersExpanded, setSpeakersExpanded] = useState(true);
   const [expanded, setExpanded] = useState(true);
 
-  const mapAgendaStatus = (status: string): 'planned' | 'active' | 'completed' => {
-    if (status === 'completed' || status === 'done') return 'completed';
-    if (status === 'active' || status === 'in-progress') return 'active';
-    return 'planned';
-  };
-
-  const agendaStatus = mapAgendaStatus(currentAgendaItem?.status || '');
   const election = currentAgendaItem?.election?.[0];
   const voteEntity = currentAgendaItem?.votes?.[0];
 
@@ -157,7 +150,7 @@ export function EventStreamSection({
   const finalSelections = election?.final_selections ?? [];
   const userHasVotedElection = election?.electors?.some(e => e.user_id === userId) ?? false;
   const userSelectedCandidateIds = finalSelections
-    .filter(s => election?.electors?.some(e => e.user_id === userId) ?? false)
+    .filter(() => election?.electors?.some(e => e.user_id === userId) ?? false)
     .map(s => s.candidate_id);
   const electionStatus = currentAgendaItem?.voting_phase ?? null;
 
@@ -246,14 +239,17 @@ export function EventStreamSection({
 
   return (
     <Collapsible open={expanded} onOpenChange={setExpanded}>
-      <Card className="border-2 border-primary/50">
+      <Card className="border-primary/50 border-2">
         <CardHeader className="bg-primary/5">
           <CollapsibleTrigger asChild>
-            <Button variant="ghost" className="flex w-full items-center justify-between p-0 hover:bg-transparent">
+            <Button
+              variant="ghost"
+              className="flex w-full items-center justify-between p-0 hover:bg-transparent"
+            >
               <div className="flex items-center gap-3">
-                <div className="relative flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-md">
+                <div className="bg-primary text-primary-foreground relative flex h-10 w-10 items-center justify-center rounded-lg shadow-md">
                   {getAgendaItemIcon(currentAgendaItem.type ?? 'discussion')}
-                  <div className="absolute -right-1 -top-1 flex h-4 w-4 animate-pulse items-center justify-center rounded-full bg-green-500 text-white">
+                  <div className="absolute -top-1 -right-1 flex h-4 w-4 animate-pulse items-center justify-center rounded-full bg-green-500 text-white">
                     <Play className="h-2 w-2 fill-white" />
                   </div>
                 </div>
@@ -265,9 +261,9 @@ export function EventStreamSection({
                 </div>
               </div>
               {expanded ? (
-                <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                <ChevronUp className="text-muted-foreground h-5 w-5" />
               ) : (
-                <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                <ChevronDown className="text-muted-foreground h-5 w-5" />
               )}
             </Button>
           </CollapsibleTrigger>
@@ -285,7 +281,10 @@ export function EventStreamSection({
               </Badge>
             )}
             <Button asChild variant="outline" size="sm" className="ml-auto">
-              <Link to="/event/$id/agenda/$agendaItemId" params={{ id: eventId, agendaItemId: currentAgendaItem.id }}>
+              <Link
+                to="/event/$id/agenda/$agendaItemId"
+                params={{ id: eventId, agendaItemId: currentAgendaItem.id }}
+              >
                 {t('features.events.stream.viewDetails')}
               </Link>
             </Button>
@@ -315,8 +314,8 @@ export function EventStreamSection({
 
             {/* Description */}
             {currentAgendaItem.description && (
-              <div className="rounded-lg bg-muted/50 p-4">
-                <p className="whitespace-pre-wrap text-muted-foreground">
+              <div className="bg-muted/50 rounded-lg p-4">
+                <p className="text-muted-foreground whitespace-pre-wrap">
                   {currentAgendaItem.description}
                 </p>
               </div>
@@ -328,7 +327,7 @@ export function EventStreamSection({
             {/* Election Section */}
             {election && candidates.length > 0 && (
               <AgendaElectionSection
-                positionName={election.title ?? t('features.events.agenda.position')}
+                roleName={election.title ?? t('features.events.agenda.role')}
                 candidates={candidates}
                 indicativeSelections={indicativeSelections}
                 finalSelections={finalSelections}
@@ -339,7 +338,7 @@ export function EventStreamSection({
                 canBeCandidate={false}
                 isUserCandidate={isUserCandidate}
                 isVotingLoading={votingLoading === election.id}
-                onBecomeCandidate={onBecomeCandidate ?? (() => {})}
+                onBecomeCandidate={onBecomeCandidate ?? (() => undefined)}
                 onWithdrawCandidacy={onWithdrawCandidacy}
               />
             )}
@@ -369,14 +368,17 @@ export function EventStreamSection({
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <CollapsibleTrigger asChild>
-                    <Button variant="ghost" className="flex items-center gap-2 p-0 hover:bg-transparent">
+                    <Button
+                      variant="ghost"
+                      className="flex items-center gap-2 p-0 hover:bg-transparent"
+                    >
                       <h3 className="text-lg font-semibold">
                         {t('features.events.stream.speakersList')} ({speakerList.length})
                       </h3>
                       {speakersExpanded ? (
-                        <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                        <ChevronUp className="text-muted-foreground h-4 w-4" />
                       ) : (
-                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                        <ChevronDown className="text-muted-foreground h-4 w-4" />
                       )}
                     </Button>
                   </CollapsibleTrigger>
@@ -391,7 +393,11 @@ export function EventStreamSection({
                       {removingSpeaker === userSpeaker.id ? 'Removing...' : 'Remove Yourself'}
                     </Button>
                   ) : (
-                    <Button onClick={onAddToSpeakerList} disabled={addingSpeaker || !userId} size="sm">
+                    <Button
+                      onClick={onAddToSpeakerList}
+                      disabled={addingSpeaker || !userId}
+                      size="sm"
+                    >
                       <Plus className="mr-2 h-4 w-4" />
                       {addingSpeaker ? 'Adding...' : 'Add Yourself'}
                     </Button>
@@ -401,8 +407,8 @@ export function EventStreamSection({
                 <CollapsibleContent>
                   {speakerList.length === 0 ? (
                     <div className="py-8 text-center">
-                      <User className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground">No speakers yet</p>
+                      <User className="text-muted-foreground mx-auto mb-3 h-10 w-10" />
+                      <p className="text-muted-foreground text-sm">No speakers yet</p>
                     </div>
                   ) : (
                     <div className="relative">
@@ -410,7 +416,7 @@ export function EventStreamSection({
                         <Button
                           variant="outline"
                           size="icon"
-                          className="absolute left-0 top-1/2 z-10 -translate-y-1/2 rounded-full shadow-lg"
+                          className="absolute top-1/2 left-0 z-10 -translate-y-1/2 rounded-full shadow-lg"
                           onClick={() => scroll('left')}
                         >
                           <ChevronLeft className="h-5 w-5" />
@@ -420,7 +426,7 @@ export function EventStreamSection({
                         <Button
                           variant="outline"
                           size="icon"
-                          className="absolute right-0 top-1/2 z-10 -translate-y-1/2 rounded-full shadow-lg"
+                          className="absolute top-1/2 right-0 z-10 -translate-y-1/2 rounded-full shadow-lg"
                           onClick={() => scroll('right')}
                         >
                           <ChevronRight className="h-5 w-5" />
@@ -447,7 +453,7 @@ export function EventStreamSection({
                                 speaker.completed
                                   ? 'border-muted opacity-60'
                                   : isCurrentUser
-                                    ? 'border-2 border-primary'
+                                    ? 'border-primary border-2'
                                     : 'border-primary'
                               }`}
                             >
@@ -455,7 +461,7 @@ export function EventStreamSection({
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="absolute -right-2 -top-2 z-10 h-6 w-6 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90 absolute -top-2 -right-2 z-10 h-6 w-6 rounded-full"
                                   onClick={() => onRemoveFromSpeakerList(speaker.id)}
                                   disabled={removingSpeaker === speaker.id}
                                 >
@@ -464,7 +470,7 @@ export function EventStreamSection({
                               )}
                               <CardContent className="space-y-3 p-4">
                                 <div className="flex justify-center">
-                                  <Avatar className="h-16 w-16 border-4 border-background shadow-lg">
+                                  <Avatar className="border-background h-16 w-16 border-4 shadow-lg">
                                     <AvatarImage src={speakerAvatar} />
                                     <AvatarFallback className="text-xl">
                                       {speakerName[0]?.toUpperCase() || 'U'}
@@ -472,7 +478,10 @@ export function EventStreamSection({
                                   </Avatar>
                                 </div>
                                 <div className="text-center">
-                                  <h4 className="truncate text-sm font-semibold" title={speakerName}>
+                                  <h4
+                                    className="truncate text-sm font-semibold"
+                                    title={speakerName}
+                                  >
                                     {speakerName}
                                   </h4>
                                   {isCurrentUser && (
@@ -489,7 +498,10 @@ export function EventStreamSection({
                                 </div>
                                 {speaker.completed && (
                                   <div className="flex justify-center">
-                                    <Badge variant="outline" className="bg-green-100 dark:bg-green-900">
+                                    <Badge
+                                      variant="outline"
+                                      className="bg-green-100 dark:bg-green-900"
+                                    >
                                       Completed
                                     </Badge>
                                   </div>

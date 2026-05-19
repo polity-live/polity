@@ -7,7 +7,7 @@ import { useVoteActions } from '@/zero/votes/useVoteActions';
 import {
   useAllEvents,
   useAllAmendments,
-  usePositionsWithGroups,
+  useRolesWithGroups,
   useEventAgenda,
 } from '@/zero/events/useEventState';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -21,7 +21,7 @@ import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import { CreateInputField, CreateTextareaField, CreateTypeaheadField } from '../ui/CreateFields';
 import { notifyAgendaItemCreated } from '@/features/notifications/utils/notification-helpers.ts';
 import type { CreateFormConfig } from '../types/create-form.types';
-import { PositionSearchInput } from '../ui/inputs/PositionSearchInput';
+import { RoleSearchInput } from '../ui/inputs/RoleSearchInput';
 import {
   Select,
   SelectContent,
@@ -48,7 +48,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
 
   const { events: userEvents } = useAllEvents();
   const { amendments: userAmendments } = useAllAmendments();
-  const { positions: userPositions } = usePositionsWithGroups();
+  const { roles: userRoles } = useRolesWithGroups();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -58,7 +58,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
   const [duration, setDuration] = useState('');
   const [eventId, setEventId] = useState(eventIdParam || '');
   const [amendmentId, setAmendmentId] = useState('');
-  const [positionId, setPositionId] = useState('');
+  const [roleId, setRoleId] = useState('');
   const [majorityType, setMajorityType] = useState<MajorityType>('simple');
   const [timeLimit, setTimeLimit] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -143,7 +143,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
           visibility: 'public',
           max_votes: 1,
           agenda_item_id: agendaItemId,
-          position_id: positionId || null,
+          role_id: roleId || null,
         });
       }
 
@@ -328,9 +328,9 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
               )}
               {type === 'election' && (
                 <div className="space-y-2">
-                  <PositionSearchInput
-                    value={positionId}
-                    onChange={setPositionId}
+                  <RoleSearchInput
+                    value={roleId}
+                    onChange={setRoleId}
                     label={t('pages.create.agendaItem.positionOptional')}
                     placeholder={t('pages.create.agendaItem.positionPlaceholder')}
                     groupIds={selectedEvent?.group_id ? [selectedEvent.group_id] : undefined}
@@ -378,11 +378,11 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                       },
                     ]
                   : []),
-                ...(positionId
+                ...(roleId
                   ? [
                       {
                         label: t('pages.create.agendaItem.positionLabel'),
-                        value: userPositions.find(p => p.id === positionId)?.title || positionId,
+                        value: userRoles.find(role => role.id === roleId)?.title || roleId,
                       },
                     ]
                   : []),
@@ -421,13 +421,13 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
       duration,
       eventId,
       amendmentId,
-      positionId,
+      roleId,
       majorityType,
       timeLimit,
       isSubmitting,
       userEvents,
       userAmendments,
-      userPositions,
+      userRoles,
       t,
     ]
   );

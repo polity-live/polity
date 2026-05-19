@@ -19,7 +19,7 @@ export const ENTITY_DESCRIPTIONS = {
   overview: {
     title: 'Welcome to Polity!',
     message:
-      "We're excited to help you get started! Polity is a platform where you can create political networks, automate processes, and track political decisions in real time.\n\n**Here's what you can do:**\n• Create and manage **Groups** for your organization\n• Organize **Events** and track participation\n• Draft and collaborate on **Amendments**\n• Submit and review **Change Requests**\n• Write and publish **Blogs**\n• Run **Elections** and fill **Positions**\n\nWould you like to learn more about any of these features?",
+      "We're excited to help you get started! Polity is a platform where you can create political networks, automate processes, and track political decisions in real time.\n\n**Here's what you can do:**\n• Create and manage **Groups** for your organization\n• Organize **Events** and track participation\n• Draft and collaborate on **Amendments**\n• Submit and review **Change Requests**\n• Write and publish **Blogs**\n• Run **Elections** and fill **Roles**\n\nWould you like to learn more about any of these features?",
   },
   groups: {
     title: 'Groups',
@@ -42,9 +42,9 @@ export const ENTITY_DESCRIPTIONS = {
       '**Blogs** let you share ideas, updates, and announcements with your community.\n\n**Blog features:**\n• Rich text editor with multimedia support\n• Publish articles and opinion pieces\n• Tag posts for easy discovery\n• Share within groups or publicly\n• Engage with readers through comments\n• Build your political presence\n\n**Use blogs for:**\n• Policy explanations\n• Campaign updates\n• Position statements\n• Community news\n• Educational content\n• Thought leadership\n\nBlogs help you communicate your vision and keep stakeholders informed.',
   },
   elections: {
-    title: 'Elections & Positions',
+    title: 'Elections & Roles',
     message:
-      '**Elections** and **Positions** bring democratic governance to your organization.\n\n**Elections:**\n• Create election campaigns\n• Nominate candidates\n• Set voting periods\n• Secure ballot casting\n• Automatic vote tallying\n• Transparent results\n\n**Positions:**\n• Define organizational roles\n• Set terms and responsibilities\n• Track position holders\n• Manage succession\n• Link positions to groups\n\n**Perfect for:**\n• Board elections\n• Party leadership contests\n• Committee chair selections\n• Representative elections\n• Organizational governance\n\nEnsure fair, transparent, and efficient democratic processes in your organization.',
+      '**Elections** and **Roles** bring democratic governance to your organization.\n\n**Elections:**\n• Create election campaigns\n• Nominate candidates\n• Set voting periods\n• Secure ballot casting\n• Automatic vote tallying\n• Transparent results\n\n**Roles:**\n• Define organizational roles\n• Set terms and responsibilities\n• Track role holders\n• Manage succession\n• Link roles to groups\n\n**Perfect for:**\n• Board elections\n• Party leadership contests\n• Committee chair selections\n• Representative elections\n• Organizational governance\n\nEnsure fair, transparent, and efficient democratic processes in your organization.',
   },
 } as const;
 
@@ -75,7 +75,13 @@ export const ENTITY_TUTORIAL_ACTIONS = {
   },
 } as const;
 
-export const ENTITY_TUTORIAL_TOPICS = ['groups', 'events', 'amendments', 'blogs', 'elections'] as const;
+export const ENTITY_TUTORIAL_TOPICS = [
+  'groups',
+  'events',
+  'amendments',
+  'blogs',
+  'elections',
+] as const;
 
 export type EntityTopic = keyof typeof ENTITY_DESCRIPTIONS;
 export type EntityTutorialTopic = (typeof ENTITY_TUTORIAL_TOPICS)[number];

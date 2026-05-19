@@ -109,9 +109,9 @@ export type NotificationType =
   // Group admin notifications
   | 'group_admin_promoted'
   | 'group_admin_demoted'
-  | 'group_role_created'
-  | 'group_role_deleted'
-  | 'group_role_updated'
+  | 'group_access_role_created'
+  | 'group_access_role_deleted'
+  | 'group_access_role_updated'
   // Group resource notifications
   | 'group_link_added'
   | 'group_link_removed'
@@ -120,11 +120,11 @@ export type NotificationType =
   | 'group_new_subscriber'
   // Standalone document notifications
   | 'document_collaborator_invited'
-  // Group position notifications
-  | 'group_position_created'
-  | 'group_position_deleted'
-  | 'group_position_assigned'
-  | 'group_position_vacated'
+  // Group role notifications
+  | 'group_role_created'
+  | 'group_role_deleted'
+  | 'group_role_assigned'
+  | 'group_role_vacated'
   | 'group_election_created'
   // Group event notifications
   | 'group_event_created'
@@ -149,8 +149,8 @@ export type NotificationType =
   | 'event_candidate_added'
   | 'event_election_started'
   | 'event_election_ended'
-  | 'event_position_created'
-  | 'event_position_deleted'
+  | 'event_role_created'
+  | 'event_role_deleted'
   | 'event_delegates_finalized'
   | 'event_delegate_nominated'
   | 'event_meeting_booked'
@@ -277,9 +277,73 @@ async function getEntityMembersWithViewRight(
   entityId: string,
   excludeUserId?: string
 ): Promise<string[]> {
+  const supabase = getServerSupabase();
+
+  if (entityType === 'group' || entityType === 'event') {
+    const membershipTable =
+      entityType === 'group'
+        ? { table: 'group_membership', fk: 'group_id', roleTable: 'group_membership_role' }
+        : { table: 'event_participant', fk: 'event_id', roleTable: 'event_participant_role' };
+    const activeStatuses =
+      entityType === 'group'
+        ? ['active', 'member', 'admin', 'owner']
+        : ['active', 'confirmed', 'member', 'admin', 'organizer'];
+
+    const { data: memberships, error: membershipError } = await supabase
+      .from(membershipTable.table)
+      .select('id, user_id, status')
+      .eq(membershipTable.fk, entityId)
+      .in('status', activeStatuses);
+
+    if (membershipError || !memberships) {
+      console.error('[Notification] Failed to query entity members:', membershipError);
+      return [];
+    }
+
+    const membershipIds = memberships.map(membership => membership.id).filter(Boolean);
+    if (membershipIds.length === 0) return [];
+
+    const { data: roleLinks, error: roleLinkError } = await supabase
+      .from(membershipTable.roleTable)
+      .select(
+        'group_membership_id, event_participant_id, role:role_id(action_rights:action_right(resource, action))'
+      )
+      .in(entityType === 'group' ? 'group_membership_id' : 'event_participant_id', membershipIds);
+
+    if (roleLinkError || !roleLinks) {
+      console.error('[Notification] Failed to query entity member roles:', roleLinkError);
+      return [];
+    }
+
+    const rightsByMembershipId = new Map<string, { resource: string; action: string }[]>();
+
+    for (const link of roleLinks) {
+      const membershipId =
+        entityType === 'group' ? link.group_membership_id : link.event_participant_id;
+      if (!membershipId) continue;
+
+      const role = link.role as { action_rights?: { resource: string; action: string }[] } | null;
+      const existingRights = rightsByMembershipId.get(membershipId) ?? [];
+      rightsByMembershipId.set(membershipId, [...existingRights, ...(role?.action_rights ?? [])]);
+    }
+
+    const userIds: string[] = [];
+    for (const membership of memberships) {
+      const rights = rightsByMembershipId.get(membership.id) ?? [];
+      const hasViewRight = rights.some(
+        r =>
+          (r.resource === 'groupNotifications' && r.action === 'viewNotifications') ||
+          (r.resource === 'groupNotifications' && r.action === 'manageNotifications')
+      );
+      if (hasViewRight && membership.user_id && membership.user_id !== excludeUserId) {
+        userIds.push(membership.user_id);
+      }
+    }
+
+    return [...new Set(userIds)];
+  }
+
   const membershipTable: Record<string, { table: string; fk: string }> = {
-    group: { table: 'group_membership', fk: 'group_id' },
-    event: { table: 'event_participant', fk: 'event_id' },
     amendment: { table: 'amendment_collaborator', fk: 'amendment_id' },
     blog: { table: 'blog_blogger', fk: 'blog_id' },
   };
@@ -287,9 +351,6 @@ async function getEntityMembersWithViewRight(
   const config = membershipTable[entityType];
   if (!config) return [];
 
-  const supabase = getServerSupabase();
-
-  // Join membership → role → action_right to find users with viewNotifications
   const { data: members, error } = await supabase
     .from(config.table)
     .select('user_id, role:role_id(action_rights:action_right(resource, action))')
@@ -1115,7 +1176,7 @@ export async function notifyAdminDemoted(params: {
 /**
  * Send notification when a role is created
  */
-export async function notifyRoleCreated(params: {
+export async function notifyAccessRoleCreated(params: {
   senderId: string;
   recipientUserId: string;
   groupId: string;
@@ -1126,7 +1187,7 @@ export async function notifyRoleCreated(params: {
     senderId: params.senderId,
     recipientEntityType: 'user',
     recipientEntityId: params.recipientUserId,
-    type: 'group_role_created',
+    type: 'group_access_role_created',
     title: 'New Role Created',
     message: `A new role "${params.roleName}" has been created in ${params.groupName}`,
     actionUrl: `/group/${params.groupId}/memberships`,
@@ -1138,7 +1199,7 @@ export async function notifyRoleCreated(params: {
 /**
  * Send notification when a role is deleted
  */
-export async function notifyRoleDeleted(params: {
+export async function notifyAccessRoleDeleted(params: {
   senderId: string;
   recipientUserId: string;
   groupId: string;
@@ -1149,7 +1210,7 @@ export async function notifyRoleDeleted(params: {
     senderId: params.senderId,
     recipientEntityType: 'user',
     recipientEntityId: params.recipientUserId,
-    type: 'group_role_deleted',
+    type: 'group_access_role_deleted',
     title: 'Role Deleted',
     message: `The role "${params.roleName}" has been deleted from ${params.groupName}`,
     actionUrl: `/group/${params.groupId}/memberships`,
@@ -1172,7 +1233,7 @@ export async function notifyActionRightsChanged(params: {
     senderId: params.senderId,
     recipientEntityType: 'user',
     recipientEntityId: params.recipientUserId,
-    type: 'group_role_updated',
+    type: 'group_access_role_updated',
     title: 'Role Permissions Updated',
     message: `The permissions for "${params.roleName}" have been updated in ${params.groupName}`,
     actionUrl: `/group/${params.groupId}/memberships`,
@@ -1316,26 +1377,26 @@ export async function notifyGroupNewSubscriber(params: {
 }
 
 // ============================================================================
-// GROUP POSITION NOTIFICATIONS
+// GROUP ROLE NOTIFICATIONS
 // ============================================================================
 
 /**
- * Send notification when a position is created
+ * Send notification when a role is created
  */
-export async function notifyPositionCreated(params: {
+export async function notifyRoleCreated(params: {
   senderId: string;
   recipientUserId: string;
   groupId: string;
   groupName: string;
-  positionTitle: string;
+  roleTitle: string;
 }) {
   return createNotification({
     senderId: params.senderId,
     recipientEntityType: 'user',
     recipientEntityId: params.recipientUserId,
-    type: 'group_position_created',
-    title: 'New Position Created',
-    message: `A new position "${params.positionTitle}" has been created in ${params.groupName}`,
+    type: 'group_role_created',
+    title: 'New Role Created',
+    message: `A new role "${params.roleTitle}" has been created in ${params.groupName}`,
     actionUrl: `/group/${params.groupId}`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -1343,21 +1404,21 @@ export async function notifyPositionCreated(params: {
 }
 
 /**
- * Send notification to a group when a position is created
+ * Send notification to a group when a role is created
  */
-export async function notifyGroupPositionCreated(params: {
+export async function notifyGroupRoleCreated(params: {
   senderId: string;
   groupId: string;
   groupName: string;
-  positionTitle: string;
+  roleTitle: string;
 }) {
   return createNotification({
     senderId: params.senderId,
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
-    type: 'group_position_created',
-    title: 'New Position Created',
-    message: `A new position "${params.positionTitle}" has been created in ${params.groupName}`,
+    type: 'group_role_created',
+    title: 'New Role Created',
+    message: `A new role "${params.roleTitle}" has been created in ${params.groupName}`,
     actionUrl: `/group/${params.groupId}`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -1365,22 +1426,22 @@ export async function notifyGroupPositionCreated(params: {
 }
 
 /**
- * Send notification when a position is deleted
+ * Send notification when a role is deleted
  */
-export async function notifyPositionDeleted(params: {
+export async function notifyRoleDeleted(params: {
   senderId: string;
   recipientUserId: string;
   groupId: string;
   groupName: string;
-  positionTitle: string;
+  roleTitle: string;
 }) {
   return createNotification({
     senderId: params.senderId,
     recipientEntityType: 'user',
     recipientEntityId: params.recipientUserId,
-    type: 'group_position_deleted',
-    title: 'Position Deleted',
-    message: `The position "${params.positionTitle}" has been deleted from ${params.groupName}`,
+    type: 'group_role_deleted',
+    title: 'Role Deleted',
+    message: `The role "${params.roleTitle}" has been deleted from ${params.groupName}`,
     actionUrl: `/group/${params.groupId}`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -1388,23 +1449,23 @@ export async function notifyPositionDeleted(params: {
 }
 
 /**
- * Send notification when a user is assigned to a position
+ * Send notification when a user is assigned to a role
  */
-export async function notifyPositionAssigned(params: {
+export async function notifyRoleAssigned(params: {
   senderId: string;
   recipientUserId: string;
   groupId: string;
   groupName: string;
-  positionTitle: string;
+  roleTitle: string;
 }) {
   return createNotification({
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     onBehalfOfEntityType: 'group',
     onBehalfOfEntityId: params.groupId,
-    type: 'group_position_assigned',
-    title: 'Position Assigned',
-    message: `You have been assigned to the position "${params.positionTitle}" in ${params.groupName}`,
+    type: 'group_role_assigned',
+    title: 'Role Assigned',
+    message: `You have been assigned to the role "${params.roleTitle}" in ${params.groupName}`,
     actionUrl: `/group/${params.groupId}`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -1412,23 +1473,23 @@ export async function notifyPositionAssigned(params: {
 }
 
 /**
- * Send notification when a user is removed from a position
+ * Send notification when a user is removed from a role
  */
-export async function notifyPositionVacated(params: {
+export async function notifyRoleVacated(params: {
   senderId: string;
   recipientUserId: string;
   groupId: string;
   groupName: string;
-  positionTitle: string;
+  roleTitle: string;
 }) {
   return createNotification({
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     onBehalfOfEntityType: 'group',
     onBehalfOfEntityId: params.groupId,
-    type: 'group_position_vacated',
-    title: 'Position Vacated',
-    message: `You have been removed from the position "${params.positionTitle}" in ${params.groupName}`,
+    type: 'group_role_vacated',
+    title: 'Role Vacated',
+    message: `You have been removed from the role "${params.roleTitle}" in ${params.groupName}`,
     actionUrl: `/group/${params.groupId}`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -1436,14 +1497,14 @@ export async function notifyPositionVacated(params: {
 }
 
 /**
- * Send notification when an election is created for a position
+ * Send notification when an election is created for a role
  */
 export async function notifyElectionCreated(params: {
   senderId: string;
   recipientUserId: string;
   groupId: string;
   groupName: string;
-  positionTitle: string;
+  roleTitle: string;
 }) {
   return createNotification({
     senderId: params.senderId,
@@ -1451,7 +1512,7 @@ export async function notifyElectionCreated(params: {
     recipientEntityId: params.recipientUserId,
     type: 'group_election_created',
     title: 'Election Created',
-    message: `An election has been created for "${params.positionTitle}" in ${params.groupName}`,
+    message: `An election has been created for "${params.roleTitle}" in ${params.groupName}`,
     actionUrl: `/group/${params.groupId}`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -1879,21 +1940,21 @@ export async function notifyElectionEnded(params: {
 }
 
 /**
- * Send notification when an event position is created
+ * Send notification when an event role is created
  */
-export async function notifyEventPositionCreated(params: {
+export async function notifyEventRoleCreated(params: {
   senderId: string;
   eventId: string;
   eventTitle: string;
-  positionTitle: string;
+  roleTitle: string;
 }) {
   return createNotification({
     senderId: params.senderId,
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
-    type: 'event_position_created',
-    title: 'Position Created',
-    message: `A new position "${params.positionTitle}" has been created in ${params.eventTitle}`,
+    type: 'event_role_created',
+    title: 'Role Created',
+    message: `A new role "${params.roleTitle}" has been created in ${params.eventTitle}`,
     actionUrl: `/event/${params.eventId}`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
@@ -1901,21 +1962,21 @@ export async function notifyEventPositionCreated(params: {
 }
 
 /**
- * Send notification when an event position is deleted
+ * Send notification when an event role is deleted
  */
-export async function notifyEventPositionDeleted(params: {
+export async function notifyEventRoleDeleted(params: {
   senderId: string;
   eventId: string;
   eventTitle: string;
-  positionTitle: string;
+  roleTitle: string;
 }) {
   return createNotification({
     senderId: params.senderId,
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
-    type: 'event_position_deleted',
-    title: 'Position Deleted',
-    message: `The position "${params.positionTitle}" has been deleted from ${params.eventTitle}`,
+    type: 'event_role_deleted',
+    title: 'Role Deleted',
+    message: `The role "${params.roleTitle}" has been deleted from ${params.eventTitle}`,
     actionUrl: `/event/${params.eventId}`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
@@ -2221,7 +2282,7 @@ export async function notifyElectionResult(params: {
   senderId: string;
   eventId: string;
   eventTitle: string;
-  positionTitle: string;
+  roleTitle: string;
   winnerName: string;
   winnerId: string;
 }) {
@@ -2231,8 +2292,8 @@ export async function notifyElectionResult(params: {
     recipientEntityId: params.eventId,
     type: 'election_result',
     title: 'Election Result',
-    message: `${params.winnerName} has been elected as ${params.positionTitle}`,
-    actionUrl: `/event/${params.eventId}/positions`,
+    message: `${params.winnerName} has been elected as ${params.roleTitle}`,
+    actionUrl: `/event/${params.eventId}/roles`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
     relatedUserId: params.winnerId,
@@ -2246,7 +2307,7 @@ export async function notifyRevoteScheduled(params: {
   senderId: string;
   groupId: string;
   groupName: string;
-  positionTitle: string;
+  roleTitle: string;
   scheduledDate: string;
   eventId?: string;
 }) {
@@ -2256,10 +2317,10 @@ export async function notifyRevoteScheduled(params: {
     recipientEntityId: params.groupId,
     type: 'revote_scheduled',
     title: 'Revote Scheduled',
-    message: `A revote for ${params.positionTitle} has been scheduled for ${params.scheduledDate}`,
+    message: `A revote for ${params.roleTitle} has been scheduled for ${params.scheduledDate}`,
     actionUrl: params.eventId
       ? `/event/${params.eventId}/agenda`
-      : `/group/${params.groupId}/positions`,
+      : `/group/${params.groupId}/memberships`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
     relatedEventId: params.eventId,

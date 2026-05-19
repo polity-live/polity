@@ -1,17 +1,14 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { useAuth } from '@/providers/auth-provider';
-import { notifyEventPositionCreated, notifyEventPositionDeleted } from '@/features/notifications/utils/notification-helpers.ts';
 import { useEventActions } from '@/zero/events/useEventActions';
-import { useEventPositionsData } from '@/zero/events/useEventState';
+import { useEventRolesData } from '@/zero/events/useEventState';
 
-export function useEventPositions(eventId: string) {
-  const { user: authUser } = useAuth();
-  const { createPosition, updatePosition, deletePosition } = useEventActions();
+export function useEventRoles(eventId: string) {
+  const { createRole, updateRole, deleteRole } = useEventActions();
 
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editingPosition, setEditingPosition] = useState<(typeof positions)[number] | null>(null);
+  const [editingRole, setEditingRole] = useState<(typeof roles)[number] | null>(null);
 
   // Form state
   const [title, setTitle] = useState('');
@@ -19,8 +16,8 @@ export function useEventPositions(eventId: string) {
   const [capacity, setCapacity] = useState('1');
   const [createElection, setCreateElection] = useState(false);
 
-  // Query event and positions
-  const { event, positions, isLoading } = useEventPositionsData(eventId);
+  // Query event and roles
+  const { event, roles, isLoading } = useEventRolesData(eventId);
 
   const resetForm = () => {
     setTitle('');
@@ -29,9 +26,9 @@ export function useEventPositions(eventId: string) {
     setCreateElection(false);
   };
 
-  const handleAddPosition = async () => {
+  const handleAddRole = async () => {
     if (!title.trim()) {
-      toast.error('Position title is required');
+      toast.error('Role title is required');
       return;
     }
 
@@ -44,28 +41,27 @@ export function useEventPositions(eventId: string) {
     // Optimistic update: close dialog and show success immediately
     resetForm();
     setAddDialogOpen(false);
-    toast.success('Position created successfully');
+    toast.success('Role created successfully');
 
     try {
-      const positionId = crypto.randomUUID();
-      const positionTitle = title.trim();
+      const roleId = crypto.randomUUID();
+      const roleTitle = title.trim();
 
-      await createPosition({
-        id: positionId,
-        title: positionTitle,
+      await createRole({
+        id: roleId,
+        title: roleTitle,
         description: description.trim(),
         event_id: eventId,
       });
-
     } catch (error) {
-      console.error('Failed to create position:', error);
-      toast.error('Failed to create position. Please try again.');
+      console.error('Failed to create role:', error);
+      toast.error('Failed to create role. Please try again.');
     }
   };
 
-  const handleEditPosition = async () => {
-    if (!editingPosition || !title.trim()) {
-      toast.error('Position title is required');
+  const handleEditRole = async () => {
+    if (!editingRole || !title.trim()) {
+      toast.error('Role title is required');
       return;
     }
 
@@ -77,39 +73,38 @@ export function useEventPositions(eventId: string) {
 
     // Optimistic update: close dialog and show success immediately
     resetForm();
-    setEditingPosition(null);
+    setEditingRole(null);
     setEditDialogOpen(false);
-    toast.success('Position updated successfully');
+    toast.success('Role updated successfully');
 
     try {
-      await updatePosition({
-        id: editingPosition.id,
+      await updateRole({
+        id: editingRole.id,
         title: title.trim(),
         description: description.trim(),
       });
     } catch (error) {
-      console.error('Failed to update position:', error);
-      toast.error('Failed to update position. Please try again.');
+      console.error('Failed to update role:', error);
+      toast.error('Failed to update role. Please try again.');
     }
   };
 
-  const handleDeletePosition = async (positionId: string, positionTitle?: string) => {
+  const handleDeleteRole = async (roleId: string) => {
     // Optimistic update: show success immediately
-    toast.success('Position deleted successfully');
+    toast.success('Role deleted successfully');
 
     try {
-      await deletePosition({ id: positionId });
-
+      await deleteRole({ id: roleId });
     } catch (error) {
-      console.error('Failed to delete position:', error);
-      toast.error('Failed to delete position. Please try again.');
+      console.error('Failed to delete role:', error);
+      toast.error('Failed to delete role. Please try again.');
     }
   };
 
-  const openEditDialog = (position: (typeof positions)[number]) => {
-    setEditingPosition(position);
-    setTitle(position.title || '');
-    setDescription(position.description || '');
+  const openEditDialog = (role: (typeof roles)[number]) => {
+    setEditingRole(role);
+    setTitle(role.title || '');
+    setDescription(role.description || '');
     setCapacity('1');
     setCreateElection(false);
     setEditDialogOpen(true);
@@ -117,24 +112,28 @@ export function useEventPositions(eventId: string) {
 
   return {
     event,
-    positions,
+    roles,
     isLoading,
     dialogs: {
       add: { open: addDialogOpen, setOpen: setAddDialogOpen },
       edit: { open: editDialogOpen, setOpen: setEditDialogOpen },
     },
     form: {
-      title, setTitle,
-      description, setDescription,
-      capacity, setCapacity,
-      createElection, setCreateElection,
+      title,
+      setTitle,
+      description,
+      setDescription,
+      capacity,
+      setCapacity,
+      createElection,
+      setCreateElection,
       reset: resetForm,
     },
     actions: {
-      add: handleAddPosition,
-      edit: handleEditPosition,
-      delete: handleDeletePosition,
+      add: handleAddRole,
+      edit: handleEditRole,
+      delete: handleDeleteRole,
       openEdit: openEditDialog,
-    }
+    },
   };
 }

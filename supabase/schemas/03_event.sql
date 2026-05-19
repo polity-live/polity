@@ -2,7 +2,7 @@
 -- 03_event.sql — Events and participants
 -- Delegates moved to 18_delegate.sql
 -- Meetings are modeled as bookable events in this schema
--- Positions moved to 17_position.sql
+-- Event-scoped offices live on `role`
 -- Voting sessions moved to 20_vote.sql
 -- Scheduled elections moved to 16_election.sql
 -- =============================================================================
@@ -97,8 +97,7 @@ CREATE TABLE IF NOT EXISTS public.event_participant (
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
   group_id UUID,
   status TEXT,
-  role_id UUID REFERENCES public.role (id) ON DELETE SET NULL,
-  visibility TEXT,
+  visibility TEXT NOT NULL DEFAULT 'public',
   instance_date TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -106,9 +105,33 @@ CREATE TABLE IF NOT EXISTS public.event_participant (
 CREATE INDEX idx_event_participant_instance ON public.event_participant (event_id, instance_date);
 CREATE INDEX idx_event_participant_event ON public.event_participant (event_id);
 CREATE INDEX idx_event_participant_user ON public.event_participant (user_id);
+CREATE UNIQUE INDEX idx_event_participant_unique_event_user
+  ON public.event_participant (event_id, user_id)
+  WHERE instance_date IS NULL;
+CREATE UNIQUE INDEX idx_event_participant_unique_event_user_instance
+  ON public.event_participant (event_id, user_id, instance_date)
+  WHERE instance_date IS NOT NULL;
 
 ALTER TABLE public.event_participant ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.event_participant FOR ALL TO service_role USING (true);
+
+-- Event participant roles table
+CREATE TABLE IF NOT EXISTS public.event_participant_role (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_participant_id UUID NOT NULL REFERENCES public.event_participant (id) ON DELETE CASCADE,
+  role_id UUID NOT NULL REFERENCES public.role (id) ON DELETE CASCADE,
+  assigned_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  assigned_by_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (event_participant_id, role_id)
+);
+
+CREATE INDEX idx_event_participant_role_participant ON public.event_participant_role (event_participant_id);
+CREATE INDEX idx_event_participant_role_role ON public.event_participant_role (role_id);
+CREATE INDEX idx_event_participant_role_assigned_by ON public.event_participant_role (assigned_by_id);
+
+ALTER TABLE public.event_participant_role ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.event_participant_role FOR ALL TO service_role USING (true);
 
 -- Participant table (generic event participant with name/email)
 CREATE TABLE IF NOT EXISTS public.participant (

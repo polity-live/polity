@@ -139,11 +139,11 @@ export const navItemsAuthenticated = (
     if (isAdmin) {
       items.push(
         {
-          id: 'positions',
-          label: t ? t('navigation.secondary.event.positions') : 'Positions',
+          id: 'roles',
+          label: t ? t('navigation.secondary.event.roles') : 'Roles',
           icon: 'UserCheck',
-          href: `/event/${eventId}/positions`,
-          onClick: () => navigate({ to: `/event/${eventId}/positions` }),
+          href: `/event/${eventId}/roles`,
+          onClick: () => navigate({ to: `/event/${eventId}/roles` }),
         },
         {
           id: 'participants',

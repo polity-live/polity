@@ -230,7 +230,7 @@ export function buildTimelineCardProps(item: TimelineCardItem): {
         election: {
           id: item.id,
           title: item.title,
-          positionName: item.title,
+          roleName: item.title,
           groupId: item.groupId,
           groupName: item.groupName,
           status: normalizeElectionStatus(item.status ?? undefined),

@@ -4,7 +4,6 @@ import { toast } from 'sonner';
 import { useAuth } from '@/providers/auth-provider';
 import { useEventWikiData } from '@/zero/events/useEventState';
 import { useUserState } from '@/zero/users';
-import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useElectionActions } from '@/zero/elections/useElectionActions';
 import { useSubscribeEvent } from './useSubscribeEvent';
 import { useEventParticipation } from './useEventParticipation';
@@ -28,41 +27,33 @@ export function useEventWikiPage(eventId: string) {
   const { event, agendaItems: agendaItemRows } = useEventWikiData(eventId);
   const { allUsers } = useUserState({ includeAllUsers: true });
 
-  const currentUserProfile = user
-    ? (allUsers || []).find((u) => u.id === user.id)
-    : null;
+  const currentUserProfile = user ? (allUsers || []).find(u => u.id === user.id) : null;
 
   // Calculate agenda statistics
   const agendaItems = useMemo(
-    () => (agendaItemRows || []).filter((item) => item.event?.id === eventId),
-    [agendaItemRows, eventId],
+    () => (agendaItemRows || []).filter(item => item.event?.id === eventId),
+    [agendaItemRows, eventId]
   );
 
   const agendaStats = useMemo(() => computeAgendaStats(agendaItems), [agendaItems]);
 
   // Get elections for this event (flatten the one-to-many relation)
-  const elections = useMemo(
-    () => agendaItems.flatMap((item) => item.election ?? []),
-    [agendaItems],
-  );
+  const elections = useMemo(() => agendaItems.flatMap(item => item.election ?? []), [agendaItems]);
 
   type ElectionItem = (typeof elections)[number];
 
   const [selectedElection, setSelectedElection] = useState<ElectionItem | null>(null);
 
   const getUserCandidacy = useCallback(
-    (election: ElectionItem) => election.candidates?.find((c) => c.user?.id === user?.id),
-    [user?.id],
+    (election: ElectionItem) => election.candidates?.find(c => c.user?.id === user?.id),
+    [user?.id]
   );
 
-  const handleElectionClick = useCallback(
-    (election: ElectionItem) => {
-      setSelectedElection(election);
-      setElectionsDialogOpen(false);
-      setConfirmDialogOpen(true);
-    },
-    [],
-  );
+  const handleElectionClick = useCallback((election: ElectionItem) => {
+    setSelectedElection(election);
+    setElectionsDialogOpen(false);
+    setConfirmDialogOpen(true);
+  }, []);
 
   const handleConfirmCandidacy = useCallback(async () => {
     if (!user || !selectedElection) return;
@@ -80,7 +71,7 @@ export function useEventWikiPage(eventId: string) {
       const candidateId = crypto.randomUUID();
       const maxOrder = Math.max(
         0,
-        ...(selectedElection.candidates || []).map((c) => c.order_index || 0),
+        ...(selectedElection.candidates || []).map(c => c.order_index || 0)
       );
 
       const candidateName = currentUserProfile?.first_name || user.email || 'Unbenannt';
@@ -112,7 +103,15 @@ export function useEventWikiPage(eventId: string) {
     } finally {
       setIsSubmitting(false);
     }
-  }, [user, selectedElection, currentUserProfile, getUserCandidacy, addCandidate, eventId, event?.title]);
+  }, [
+    user,
+    selectedElection,
+    currentUserProfile,
+    getUserCandidacy,
+    addCandidate,
+    eventId,
+    event?.title,
+  ]);
 
   // Visibility access check
   const canAccess = checkEntityAccess(event?.visibility, !!user, participationData.isParticipant);

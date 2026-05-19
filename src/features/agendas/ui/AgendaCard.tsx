@@ -3,7 +3,13 @@
 import { ReactNode } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/features/shared/ui/ui/card.tsx';
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card.tsx';
 import { ArrowRight } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import { cn } from '@/features/shared/utils/utils.ts';
@@ -33,9 +39,9 @@ interface AgendaCardProps {
   footerRight?: ReactNode;
   /** Related amendment — shown as a clickable tag linking to amendment wiki */
   amendment?: { id: string; title?: string | null } | null;
-  /** Related election with position — shown as a clickable tag linking to group wiki */
+  /** Related election with role — shown as a clickable tag linking to group wiki */
   election?: {
-    position?: {
+    role?: {
       title?: string | null;
       group?: { id: string; name?: string | null } | null;
     } | null;
@@ -70,18 +76,16 @@ export function AgendaCard({
         className={cn(
           'cursor-pointer transition-all hover:shadow-md',
           isActive &&
-            'relative overflow-hidden before:absolute before:inset-0 before:-z-10 before:animate-spin-slow before:rounded-lg before:bg-gradient-to-r before:from-green-500 before:via-emerald-500 before:to-green-500 before:p-[3px]',
+            'before:animate-spin-slow relative overflow-hidden before:absolute before:inset-0 before:-z-10 before:rounded-lg before:bg-gradient-to-r before:from-green-500 before:via-emerald-500 before:to-green-500 before:p-[3px]',
           className
         )}
       >
-        <div className={cn(isActive && 'relative z-10 rounded-lg bg-background')}>
+        <div className={cn(isActive && 'bg-background relative z-10 rounded-lg')}>
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div className="flex-1 space-y-1">
                 <CardTitle className="text-lg">{title}</CardTitle>
-                {subtitle && (
-                  <p className="text-sm text-muted-foreground">{subtitle}</p>
-                )}
+                {subtitle && <p className="text-muted-foreground text-sm">{subtitle}</p>}
                 <div className="flex flex-wrap items-center gap-2">
                   <AgendaTypeBadge type={type} />
                   <AgendaStatusBadge status={visualStatus} />
@@ -92,11 +96,11 @@ export function AgendaCard({
                       variant="amendment"
                     />
                   )}
-                  {election?.position?.group && (
+                  {election?.role?.group && (
                     <AgendaEntityBadge
-                      label={election.position.title ?? election.position.group.name ?? 'Position'}
-                      href={`/group/${election.position.group.id}`}
-                      variant="position"
+                      label={election.role.title ?? election.role.group.name ?? 'Role'}
+                      href={`/group/${election.role.group.id}`}
+                      variant="role"
                     />
                   )}
                 </div>
@@ -132,11 +136,11 @@ export function AgendaCard({
                 <div
                   className={cn(
                     'flex w-full items-center gap-3',
-                    creatorName ? 'justify-between' : 'justify-end',
+                    creatorName ? 'justify-between' : 'justify-end'
                   )}
                 >
                   {creatorName ? (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="text-muted-foreground flex items-center gap-2 text-sm">
                       <Avatar className="h-6 w-6">
                         <AvatarImage src={creatorAvatar} />
                         <AvatarFallback className="text-xs">

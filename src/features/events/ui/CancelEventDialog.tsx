@@ -99,7 +99,7 @@ export function CancelEventDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-destructive">
+          <DialogTitle className="text-destructive flex items-center gap-2">
             <CalendarX className="h-5 w-5" />
             {t('features.events.cancel.title')}
           </DialogTitle>
@@ -108,13 +108,13 @@ export function CancelEventDialog({
 
         <div className="space-y-6 py-4">
           {/* Warning */}
-          <div className="flex items-start gap-3 rounded-lg border border-destructive/20 bg-destructive/10 p-4">
-            <AlertTriangle className="mt-0.5 h-5 w-5 text-destructive" />
+          <div className="border-destructive/20 bg-destructive/10 flex items-start gap-3 rounded-lg border p-4">
+            <AlertTriangle className="text-destructive mt-0.5 h-5 w-5" />
             <div>
-              <p className="font-medium text-destructive">
+              <p className="text-destructive font-medium">
                 {t('features.events.cancel.warning.title')}
               </p>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="text-muted-foreground mt-1 text-sm">
                 {t('features.events.cancel.warning.description')}
               </p>
             </div>
@@ -149,7 +149,7 @@ export function CancelEventDialog({
                   {agendaItems.map(item => (
                     <div
                       key={item.id}
-                      className="flex items-center gap-3 rounded-lg p-2 hover:bg-muted"
+                      className="hover:bg-muted flex items-center gap-3 rounded-lg p-2"
                     >
                       <Checkbox
                         checked={selectedItems.includes(item.id)}
@@ -165,14 +165,14 @@ export function CancelEventDialog({
                           <span className="truncate font-medium">{item.title}</span>
                         </div>
                         {item.amendment && (
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-muted-foreground text-xs">
                             {t('features.events.cancel.reassign.amendment')}: {item.amendment.title}
                           </p>
                         )}
-                        {item.election?.position && (
-                          <p className="text-xs text-muted-foreground">
+                        {item.election?.role && (
+                          <p className="text-muted-foreground text-xs">
                             {t('features.events.cancel.reassign.election')}:{' '}
-                            {item.election.position.name}
+                            {item.election.role.name}
                           </p>
                         )}
                       </div>
@@ -193,11 +193,11 @@ export function CancelEventDialog({
                 </SelectTrigger>
                 <SelectContent>
                   {availableEvents.length === 0 ? (
-                    <div className="p-4 text-center text-sm text-muted-foreground">
+                    <div className="text-muted-foreground p-4 text-center text-sm">
                       {t('features.events.cancel.reassign.noEvents')}
                     </div>
                   ) : (
-                    availableEvents.map((event) => (
+                    availableEvents.map(event => (
                       <SelectItem key={event.id} value={event.id}>
                         <div className="flex items-center gap-2">
                           <span>{event.title}</span>
@@ -214,11 +214,11 @@ export function CancelEventDialog({
               </Select>
 
               {targetEventId && (
-                <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="text-muted-foreground mt-2 flex items-center gap-2 text-sm">
                   <Badge variant="secondary">{selectedItems.length}</Badge>
                   <span>{t('features.events.cancel.reassign.itemCount')}</span>
                   <ArrowRight className="h-4 w-4" />
-                  <span>{availableEvents.find((e) => e.id === targetEventId)?.title}</span>
+                  <span>{availableEvents.find(e => e.id === targetEventId)?.title}</span>
                 </div>
               )}
             </div>

@@ -29,15 +29,20 @@ export const docsPageTranslations = {
     secondaryCta: 'Rollen und Rechte verstehen',
     pathwaysTitle: 'Typische Wege',
     pathways: {
-      start: 'Richten Sie Ihr Profil ein, entdecken Sie relevante Gruppen und verstehen Sie, wo Sie im Netzwerk stehen.',
-      coordinate: 'Bewegen Sie sich zwischen Gruppen, Veranstaltungen, Nachrichten, Benachrichtigungen, Kalender und Aufgaben, um tägliche Zusammenarbeit in Gang zu halten.',
-      decide: 'Nutzen Sie Amendments, Abstimmungen, Wahlen und das Decision Terminal, um zu sehen, wie aus Vorschlägen sichtbare Ergebnisse werden.',
-      'follow-through': 'Verfolgen Sie, was sich geändert hat, wer als Nächstes handeln muss und wo eine Entscheidung oder ein Amendment in verbundenen Gruppen weiterläuft.',
+      start:
+        'Richten Sie Ihr Profil ein, entdecken Sie relevante Gruppen und verstehen Sie, wo Sie im Netzwerk stehen.',
+      coordinate:
+        'Bewegen Sie sich zwischen Gruppen, Veranstaltungen, Nachrichten, Benachrichtigungen, Kalender und Aufgaben, um tägliche Zusammenarbeit in Gang zu halten.',
+      decide:
+        'Nutzen Sie Amendments, Abstimmungen, Wahlen und das Decision Terminal, um zu sehen, wie aus Vorschlägen sichtbare Ergebnisse werden.',
+      'follow-through':
+        'Verfolgen Sie, was sich geändert hat, wer als Nächstes handeln muss und wo eine Entscheidung oder ein Amendment in verbundenen Gruppen weiterläuft.',
     },
     featuredTitle: 'Empfohlene Leitfäden',
     featuredDescription: 'Beginnen Sie mit den wichtigsten Nutzerwegen und Systemübersichten.',
     libraryTitle: 'Dokumentationsbibliothek',
-    libraryDescription: 'Durchsuchen Sie die vollständigen, nutzerorientierten Leitfäden nach Arbeitsbereich.',
+    libraryDescription:
+      'Durchsuchen Sie die vollständigen, nutzerorientierten Leitfäden nach Arbeitsbereich.',
   },
   categories: {
     people: {
@@ -58,16 +63,20 @@ export const docsPageTranslations = {
     },
     systems: {
       title: 'Systeme',
-      description: 'Bereichsübergreifende Berechtigungs- und Routing-Systeme, die prägen, was Nutzer tun können und wohin Arbeit als Nächstes fließt.',
+      description:
+        'Bereichsübergreifende Berechtigungs- und Routing-Systeme, die prägen, was Nutzer tun können und wohin Arbeit als Nächstes fließt.',
     },
   },
   topics: {
     users: {
       navLabel: 'Benutzer',
       title: 'Benutzer',
-      summary: 'Profile, Mitgliedschaften, Abonnements und die persönliche Sicht auf Aktivitäten in Polity.',
-      audience: 'Alle, die starten, einer Gemeinschaft beitreten oder ihre Präsenz über mehrere Räume hinweg verwalten.',
-      entry: 'Beginnen Sie hier, wenn Sie verstehen möchten, wie eine einzelne Person die Plattform erlebt.',
+      summary:
+        'Profile, Mitgliedschaften, Abonnements und die persönliche Sicht auf Aktivitäten in Polity.',
+      audience:
+        'Alle, die starten, einer Gemeinschaft beitreten oder ihre Präsenz über mehrere Räume hinweg verwalten.',
+      entry:
+        'Beginnen Sie hier, wenn Sie verstehen möchten, wie eine einzelne Person die Plattform erlebt.',
       perspective:
         'Benutzer erleben Polity als verbundenen Arbeitsraum, in dem Profil, Mitgliedschaften, Abonnements und Benachrichtigungen bestimmen, was sich nah anfühlt.',
       outcome:
@@ -97,15 +106,18 @@ export const docsPageTranslations = {
         steps: {
           'create-profile': {
             title: 'Profil erstellen',
-            description: 'Richten Sie die Identität ein, die andere sehen, wenn Sie Räumen, Gesprächen und Entscheidungen beitreten.',
+            description:
+              'Richten Sie die Identität ein, die andere sehen, wenn Sie Räumen, Gesprächen und Entscheidungen beitreten.',
           },
           'join-spaces': {
             title: 'Relevanten Räumen beitreten',
-            description: 'Mitgliedschaften und Abonnements ziehen Gruppen, Veranstaltungen und Governance-Arbeit in Ihren Blickkreis.',
+            description:
+              'Mitgliedschaften und Abonnements ziehen Gruppen, Veranstaltungen und Governance-Arbeit in Ihren Blickkreis.',
           },
           'stay-informed': {
             title: 'Informiert bleiben',
-            description: 'Benachrichtigungen, Nachrichten und Aktivitätsansichten verbinden Ihre persönliche Sicht mit laufender Arbeit.',
+            description:
+              'Benachrichtigungen, Nachrichten und Aktivitätsansichten verbinden Ihre persönliche Sicht mit laufender Arbeit.',
           },
         },
       },
@@ -113,9 +125,11 @@ export const docsPageTranslations = {
     groups: {
       navLabel: 'Gruppen',
       title: 'Gruppen',
-      summary: 'Gemeinsame Räume, in denen Mitglieder organisieren, Verantwortung zuweisen und Arbeit mit Governance verbinden.',
+      summary:
+        'Gemeinsame Räume, in denen Mitglieder organisieren, Verantwortung zuweisen und Arbeit mit Governance verbinden.',
       audience: 'Organisatoren, Mitglieder und alle, die in einem kollektiven Raum arbeiten.',
-      entry: 'Nutzen Sie diesen Leitfaden, um den wichtigsten Kollaborationscontainer in Polity zu verstehen.',
+      entry:
+        'Nutzen Sie diesen Leitfaden, um den wichtigsten Kollaborationscontainer in Polity zu verstehen.',
       perspective:
         'Gruppen sind der Ort, an dem Nutzer Struktur am stärksten spüren: Mitgliedschaft, Berechtigungen, Dokumente, Veranstaltungen und Governance laufen hier zusammen.',
       outcome:
@@ -145,15 +159,18 @@ export const docsPageTranslations = {
         steps: {
           'create-space': {
             title: 'Raum anlegen',
-            description: 'Starten Sie eine Gruppe mit klarer Identität, Mitgliedschaftsgrenzen und Zweck.',
+            description:
+              'Starten Sie eine Gruppe mit klarer Identität, Mitgliedschaftsgrenzen und Zweck.',
           },
           'assign-roles': {
             title: 'Rollen zuweisen',
-            description: 'Bestimmen Sie, wer innerhalb der Gruppe bearbeiten, verwalten, organisieren oder steuern darf.',
+            description:
+              'Bestimmen Sie, wer innerhalb der Gruppe bearbeiten, verwalten, organisieren oder steuern darf.',
           },
           'run-work': {
             title: 'Arbeit ausführen',
-            description: 'Nutzen Sie die Gruppe als Anker für Veranstaltungen, Amendments, Diskussionen und Entscheidungen.',
+            description:
+              'Nutzen Sie die Gruppe als Anker für Veranstaltungen, Amendments, Diskussionen und Entscheidungen.',
           },
         },
       },
@@ -161,9 +178,12 @@ export const docsPageTranslations = {
     events: {
       navLabel: 'Veranstaltungen',
       title: 'Veranstaltungen',
-      summary: 'Treffen und Zusammenkünfte mit Teilnehmern, Tagesordnungen, Positionen und sichtbaren Ergebnissen.',
-      audience: 'Organisatoren, Teilnehmer und Mitglieder, die verfolgen, was in einem geplanten Termin passiert.',
-      entry: 'Lesen Sie dies, wenn Sie verstehen möchten, wie Polity Koordination in einen realen Veranstaltungsfluss verwandelt.',
+      summary:
+        'Treffen und Zusammenkünfte mit Teilnehmern, Tagesordnungen, Positionen und sichtbaren Ergebnissen.',
+      audience:
+        'Organisatoren, Teilnehmer und Mitglieder, die verfolgen, was in einem geplanten Termin passiert.',
+      entry:
+        'Lesen Sie dies, wenn Sie verstehen möchten, wie Polity Koordination in einen realen Veranstaltungsfluss verwandelt.',
       perspective:
         'Veranstaltungen geben Nutzern einen konkreten Zeitpunkt und Ort, an dem Tagesordnungen, Teilnahme und Ergebnisse gemeinsam sichtbar werden.',
       outcome:
@@ -193,15 +213,18 @@ export const docsPageTranslations = {
         steps: {
           'publish-event': {
             title: 'Veranstaltung veröffentlichen',
-            description: 'Machen Sie die Veranstaltung mit Zeit, Ort und relevantem Kontext sichtbar.',
+            description:
+              'Machen Sie die Veranstaltung mit Zeit, Ort und relevantem Kontext sichtbar.',
           },
           'run-agenda': {
             title: 'Tagesordnung durchführen',
-            description: 'Führen Sie Teilnehmende in geordneter Folge durch Punkte, Diskussionen und Entscheidungen.',
+            description:
+              'Führen Sie Teilnehmende in geordneter Folge durch Punkte, Diskussionen und Entscheidungen.',
           },
           'capture-outcomes': {
             title: 'Ergebnisse festhalten',
-            description: 'Machen Sie Resultate, Teilnahme und nächste Schritte sichtbar, sobald die Veranstaltung endet.',
+            description:
+              'Machen Sie Resultate, Teilnahme und nächste Schritte sichtbar, sobald die Veranstaltung endet.',
           },
         },
       },
@@ -209,9 +232,12 @@ export const docsPageTranslations = {
     amendments: {
       navLabel: 'Amendments',
       title: 'Amendments',
-      summary: 'Gemeinsames Formulieren, Diskussion, Weiterleitung und Entscheidungsabläufe für Text- und Politikänderungen.',
-      audience: 'Autoren, Mitwirkende, Prüfer und Mitglieder, die einen Vorschlag durch seinen Lebenszyklus verfolgen.',
-      entry: 'Öffnen Sie diesen Leitfaden, wenn Sie verstehen möchten, wie Text vom Entwurf zur Entscheidung gelangt.',
+      summary:
+        'Gemeinsames Formulieren, Diskussion, Weiterleitung und Entscheidungsabläufe für Text- und Politikänderungen.',
+      audience:
+        'Autoren, Mitwirkende, Prüfer und Mitglieder, die einen Vorschlag durch seinen Lebenszyklus verfolgen.',
+      entry:
+        'Öffnen Sie diesen Leitfaden, wenn Sie verstehen möchten, wie Text vom Entwurf zur Entscheidung gelangt.',
       perspective:
         'Nutzer sehen Amendments als lebende Vorschläge: Sie beginnen als Entwurf, sammeln Mitwirkende und Feedback und bewegen sich dann in Entscheidungen oder Weiterleitungswege.',
       outcome:
@@ -245,11 +271,13 @@ export const docsPageTranslations = {
           },
           collaborate: {
             title: 'Zusammenarbeiten',
-            description: 'Diskutieren, Änderungen anfordern und den Vorschlag gemeinsam verfeinern.',
+            description:
+              'Diskutieren, Änderungen anfordern und den Vorschlag gemeinsam verfeinern.',
           },
           'forward-or-vote': {
             title: 'Weiterleiten oder abstimmen',
-            description: 'Das Amendment lokal zur Entscheidung bringen oder durch das Netzwerk weiterführen.',
+            description:
+              'Das Amendment lokal zur Entscheidung bringen oder durch das Netzwerk weiterführen.',
           },
         },
       },
@@ -257,9 +285,12 @@ export const docsPageTranslations = {
     blogs: {
       navLabel: 'Blogs',
       title: 'Blogs',
-      summary: 'Veröffentlichungsräume für Updates, Argumente, Ankündigungen und öffentliches Schreiben.',
-      audience: 'Autorinnen, Editoren, Organisatoren und Leser, die öffentlichen oder gruppenbezogenen Inhalten folgen.',
-      entry: 'Nutzen Sie diesen Leitfaden, wenn Sie verstehen möchten, wie Veröffentlichungen in Polity eingebettet sind.',
+      summary:
+        'Veröffentlichungsräume für Updates, Argumente, Ankündigungen und öffentliches Schreiben.',
+      audience:
+        'Autorinnen, Editoren, Organisatoren und Leser, die öffentlichen oder gruppenbezogenen Inhalten folgen.',
+      entry:
+        'Nutzen Sie diesen Leitfaden, wenn Sie verstehen möchten, wie Veröffentlichungen in Polity eingebettet sind.',
       perspective:
         'Blogs geben Nutzern die Möglichkeit, Erzählung, Kontext und Position außerhalb rein prozeduraler Abläufe zu vermitteln.',
       outcome:
@@ -289,15 +320,18 @@ export const docsPageTranslations = {
         steps: {
           'draft-post': {
             title: 'Beitrag entwerfen',
-            description: 'Bereiten Sie die Botschaft, das Argument oder das Update vor, das Sie teilen möchten.',
+            description:
+              'Bereiten Sie die Botschaft, das Argument oder das Update vor, das Sie teilen möchten.',
           },
           publish: {
             title: 'Veröffentlichen',
-            description: 'Machen Sie den Beitrag zum richtigen Zeitpunkt für das gewünschte Publikum sichtbar.',
+            description:
+              'Machen Sie den Beitrag zum richtigen Zeitpunkt für das gewünschte Publikum sichtbar.',
           },
           discuss: {
             title: 'Diskutieren',
-            description: 'Lassen Sie Leser reagieren, teilen und den Beitrag mit laufender Arbeit verbinden.',
+            description:
+              'Lassen Sie Leser reagieren, teilen und den Beitrag mit laufender Arbeit verbinden.',
           },
         },
       },
@@ -305,27 +339,28 @@ export const docsPageTranslations = {
     elections: {
       navLabel: 'Wahlen',
       title: 'Wahlen',
-      summary: 'Wettbewerbe um Positionen mit Nominierungen, Zeitfenstern und sichtbaren Ergebnissen.',
+      summary: 'Wettbewerbe um Rollen mit Nominierungen, Zeitfenstern und sichtbaren Ergebnissen.',
       audience: 'Organisatoren, Kandidaten und Wählende, die die Besetzung von Rollen verfolgen.',
-      entry: 'Öffnen Sie diesen Leitfaden, um zu verstehen, wie Positionen und Kandidaturen zu Wahlergebnissen werden.',
+      entry:
+        'Öffnen Sie diesen Leitfaden, um zu verstehen, wie Rollen und Kandidaturen zu Wahlergebnissen werden.',
       perspective:
-        'Für Nutzer sind Wahlen zeitgebundene Entscheidungen, die an eine Position, ein Kandidatenfeld und ein nachvollziehbares Ergebnis gebunden sind.',
+        'Für Nutzer sind Wahlen zeitgebundene Entscheidungen, die an eine Rolle, ein Kandidatenfeld und ein nachvollziehbares Ergebnis gebunden sind.',
       outcome:
         'Ein transparenter Wahlablauf reduziert Unsicherheit darüber, wer kandidieren darf, wann gewählt wird und wie das Ergebnis offiziell wird.',
       actions: [
-        'Die mit einer Wahl verbundene Position definieren oder überprüfen.',
+        'Die mit einer Wahl verbundene Rolle definieren oder überprüfen.',
         'Kandidaturen und das Zeitfenster der Wahl verfolgen.',
         'Das Ergebnis in der Wahldetailansicht oder im Decision Terminal nachverfolgen.',
       ],
       concepts: [
-        'Positionen geben Wahlen institutionelle Bedeutung über eine einzelne Abstimmung hinaus.',
+        'Rollen geben Wahlen institutionelle Bedeutung über eine einzelne Abstimmung hinaus.',
         'Zeitfenster sind wichtig, weil Kampagne, Nominierung und Ergebnis sichtbare Phasen sind.',
         'Nutzer verstehen Wahlen oft am besten in Verbindung mit dem Decision Terminal und zugehörigen Benachrichtigungen.',
       ],
       watchFor: [
         'Kandidatur- und Teilnahmeregeln können von gewöhnlichen Stimmrechten abweichen.',
         'Ergebnisse können an mehreren Stellen sichtbar sein, beruhen aber auf derselben zugrunde liegenden Entscheidung.',
-        'Der Positionskontext hilft zu verstehen, was sich nach einer Wahl konkret ändert.',
+        'Der Rollenkontext hilft zu verstehen, was sich nach einer Wahl konkret ändert.',
       ],
       states: [
         'Wahlen fühlen sich vor dem Öffnen vorbereitend und nach dem Schließen verbindlich an.',
@@ -333,11 +368,12 @@ export const docsPageTranslations = {
       ],
       diagram: {
         title: 'Wie sich eine Wahl entfaltet',
-        description: 'Der typische Weg von der Positionsdefinition bis zur Ergebnisbestätigung.',
+        description: 'Der typische Weg von der Rollendefinition bis zur Ergebnisbestätigung.',
         steps: {
-          'define-position': {
-            title: 'Position definieren',
-            description: 'Verankern Sie die Wahl in einer Rolle oder einem Amt, das Nutzer verstehen können.',
+          'define-role': {
+            title: 'Rolle definieren',
+            description:
+              'Verankern Sie die Wahl in einer Rolle oder einem Amt, das Nutzer verstehen können.',
           },
           nominate: {
             title: 'Kandidaten nominieren',
@@ -354,8 +390,10 @@ export const docsPageTranslations = {
       navLabel: 'Abstimmungen',
       title: 'Abstimmungen',
       summary: 'Formale Entscheidungen mit Öffnungsfenstern, Stimmabgabe und klaren Ergebnissen.',
-      audience: 'Stimmberechtigte, Organisatoren und Beobachtende, die einem klar abgegrenzten Entscheidungsgegenstand folgen.',
-      entry: 'Nutzen Sie diesen Leitfaden, um zu verstehen, wie Polity formale Fragen darstellt und auflöst.',
+      audience:
+        'Stimmberechtigte, Organisatoren und Beobachtende, die einem klar abgegrenzten Entscheidungsgegenstand folgen.',
+      entry:
+        'Nutzen Sie diesen Leitfaden, um zu verstehen, wie Polity formale Fragen darstellt und auflöst.',
       perspective:
         'Nutzer erleben Abstimmungen als fokussierte Entscheidungsfenster: Eine Frage erscheint, eine Abstimmungsphase öffnet sich und ein Ergebnis wird sichtbar.',
       outcome:
@@ -385,15 +423,18 @@ export const docsPageTranslations = {
         steps: {
           'prepare-question': {
             title: 'Frage vorbereiten',
-            description: 'Formulieren Sie das Thema klar, damit Teilnehmende wissen, worum es geht.',
+            description:
+              'Formulieren Sie das Thema klar, damit Teilnehmende wissen, worum es geht.',
           },
           'cast-ballot': {
             title: 'Stimme abgeben',
-            description: 'Ermöglichen Sie berechtigten Teilnehmenden die Abstimmung im aktiven Fenster.',
+            description:
+              'Ermöglichen Sie berechtigten Teilnehmenden die Abstimmung im aktiven Fenster.',
           },
           'review-result': {
             title: 'Ergebnis prüfen',
-            description: 'Schließen Sie die Abstimmung und zeigen Sie, ob der Vorschlag angenommen, abgelehnt oder unentschieden war.',
+            description:
+              'Schließen Sie die Abstimmung und zeigen Sie, ob der Vorschlag angenommen, abgelehnt oder unentschieden war.',
           },
         },
       },
@@ -401,9 +442,12 @@ export const docsPageTranslations = {
     'decision-terminal': {
       navLabel: 'Decision Terminal',
       title: 'Decision Terminal',
-      summary: 'Eine schnelle, statusorientierte Ansicht auf laufende und kürzlich geschlossene Abstimmungen und Wahlen.',
-      audience: 'Menschen, die aktive Entscheidungen, dringende Punkte oder frisch geschlossene Ergebnisse beobachten.',
-      entry: 'Öffnen Sie diesen Leitfaden, wenn Sie die Echtzeit-Entscheidungsoberfläche der App verstehen möchten.',
+      summary:
+        'Eine schnelle, statusorientierte Ansicht auf laufende und kürzlich geschlossene Abstimmungen und Wahlen.',
+      audience:
+        'Menschen, die aktive Entscheidungen, dringende Punkte oder frisch geschlossene Ergebnisse beobachten.',
+      entry:
+        'Öffnen Sie diesen Leitfaden, wenn Sie die Echtzeit-Entscheidungsoberfläche der App verstehen möchten.',
       perspective:
         'Das Decision Terminal verdichtet Dringlichkeit in lesbare Signale: Was ist live, was öffnet bald, und was wurde gerade geschlossen.',
       outcome:
@@ -437,7 +481,8 @@ export const docsPageTranslations = {
           },
           'inspect-item': {
             title: 'Element prüfen',
-            description: 'Öffnen Sie den Detailkontext, sobald eine Entscheidung relevant oder dringend wird.',
+            description:
+              'Öffnen Sie den Detailkontext, sobald eine Entscheidung relevant oder dringend wird.',
           },
           'follow-result': {
             title: 'Ergebnis verfolgen',
@@ -449,8 +494,10 @@ export const docsPageTranslations = {
     search: {
       navLabel: 'Suche',
       title: 'Suche',
-      summary: 'Menschen, Räume, Inhalte und Entscheidungen finden, ohne genau zu wissen, wo sie liegen.',
-      audience: 'Alle, die sich in einem großen Arbeitsraum bewegen, Inhalte wiederfinden oder quer durch Funktionen springen.',
+      summary:
+        'Menschen, Räume, Inhalte und Entscheidungen finden, ohne genau zu wissen, wo sie liegen.',
+      audience:
+        'Alle, die sich in einem großen Arbeitsraum bewegen, Inhalte wiederfinden oder quer durch Funktionen springen.',
       entry: 'Nutzen Sie diesen Leitfaden, wenn Navigation aus Erinnerung nicht mehr ausreicht.',
       perspective:
         'Suche ist die Abkürzung des Nutzers durch Plattformkomplexität, besonders wenn Arbeit über viele Gruppen und Inhaltstypen verteilt ist.',
@@ -485,11 +532,13 @@ export const docsPageTranslations = {
           },
           'narrow-context': {
             title: 'Kontext eingrenzen',
-            description: 'Nutzen Sie Ergebnisse und sichtbare Hinweise, um den richtigen Raum oder Gegenstand zu erkennen.',
+            description:
+              'Nutzen Sie Ergebnisse und sichtbare Hinweise, um den richtigen Raum oder Gegenstand zu erkennen.',
           },
           'jump-to-target': {
             title: 'Zum Ziel springen',
-            description: 'Öffnen Sie das Ergebnis und setzen Sie die eigentliche Aufgabe im nativen Kontext fort.',
+            description:
+              'Öffnen Sie das Ergebnis und setzen Sie die eigentliche Aufgabe im nativen Kontext fort.',
           },
         },
       },
@@ -497,9 +546,12 @@ export const docsPageTranslations = {
     messages: {
       navLabel: 'Nachrichten',
       title: 'Nachrichten',
-      summary: 'Direkte Kommunikation für Koordination, Klärung und schnellen Anschluss an laufende Arbeit.',
-      audience: 'Mitglieder und Organisatoren, die schnelle Kommunikation rund um aktive Arbeit benötigen.',
-      entry: 'Lesen Sie dies, wenn Sie verstehen möchten, wie direkte Kommunikation in Polity-Workflows passt.',
+      summary:
+        'Direkte Kommunikation für Koordination, Klärung und schnellen Anschluss an laufende Arbeit.',
+      audience:
+        'Mitglieder und Organisatoren, die schnelle Kommunikation rund um aktive Arbeit benötigen.',
+      entry:
+        'Lesen Sie dies, wenn Sie verstehen möchten, wie direkte Kommunikation in Polity-Workflows passt.',
       perspective:
         'Nachrichten helfen Nutzern, die Lücke zwischen formaler Struktur und unmittelbarer Koordination zu schließen.',
       outcome:
@@ -533,11 +585,13 @@ export const docsPageTranslations = {
           },
           coordinate: {
             title: 'Koordinieren',
-            description: 'Tauschen Sie Informationen aus, die Unklarheit oder Verzögerung beseitigen.',
+            description:
+              'Tauschen Sie Informationen aus, die Unklarheit oder Verzögerung beseitigen.',
           },
           'follow-links': {
             title: 'Verknüpften Kontext öffnen',
-            description: 'Kehren Sie in die relevante Gruppe, Veranstaltung oder Entscheidung zurück, sobald Klarheit besteht.',
+            description:
+              'Kehren Sie in die relevante Gruppe, Veranstaltung oder Entscheidung zurück, sobald Klarheit besteht.',
           },
         },
       },
@@ -545,9 +599,12 @@ export const docsPageTranslations = {
     notifications: {
       navLabel: 'Benachrichtigungen',
       title: 'Benachrichtigungen',
-      summary: 'Signale, die Nutzern helfen zu bemerken, was sich geändert hat, was Handlung braucht und was warten kann.',
-      audience: 'Alle, die mehrere Räume, Fristen oder aktive Entscheidungen gleichzeitig im Blick behalten.',
-      entry: 'Nutzen Sie diesen Leitfaden, wenn Sie verstehen möchten, wie Polity Dringlichkeit und Relevanz sichtbar macht.',
+      summary:
+        'Signale, die Nutzern helfen zu bemerken, was sich geändert hat, was Handlung braucht und was warten kann.',
+      audience:
+        'Alle, die mehrere Räume, Fristen oder aktive Entscheidungen gleichzeitig im Blick behalten.',
+      entry:
+        'Nutzen Sie diesen Leitfaden, wenn Sie verstehen möchten, wie Polity Dringlichkeit und Relevanz sichtbar macht.',
       perspective:
         'Benachrichtigungen prägen das Gefühl von Bewegung, indem sie entscheiden, was Aufmerksamkeit durchbricht und was im Hintergrund bleibt.',
       outcome:
@@ -585,7 +642,8 @@ export const docsPageTranslations = {
           },
           act: {
             title: 'Handeln',
-            description: 'Öffnen Sie den passenden Workflow und setzen Sie aus dem richtigen Kontext fort.',
+            description:
+              'Öffnen Sie den passenden Workflow und setzen Sie aus dem richtigen Kontext fort.',
           },
         },
       },
@@ -595,7 +653,8 @@ export const docsPageTranslations = {
       title: 'Kalender',
       summary: 'Eine Terminansicht, die Treffen, Fristen und kommende Arbeit zeitlich einordnet.',
       audience: 'Alle, die Teilnahme planen oder mehrere Veranstaltungen und Fristen verfolgen.',
-      entry: 'Öffnen Sie diesen Leitfaden, um zu verstehen, wie zeitgebundene Arbeit auf der Plattform sichtbar wird.',
+      entry:
+        'Öffnen Sie diesen Leitfaden, um zu verstehen, wie zeitgebundene Arbeit auf der Plattform sichtbar wird.',
       perspective:
         'Der Kalender verwandelt verstreute Verpflichtungen in eine Ansicht, um die Nutzer tatsächlich planen können.',
       outcome:
@@ -625,15 +684,18 @@ export const docsPageTranslations = {
         steps: {
           'scan-schedule': {
             title: 'Zeitplan überblicken',
-            description: 'Prüfen Sie anstehende Veranstaltungen, Fristen und Verpflichtungen auf einen Blick.',
+            description:
+              'Prüfen Sie anstehende Veranstaltungen, Fristen und Verpflichtungen auf einen Blick.',
           },
           'open-entry': {
             title: 'Eintrag öffnen',
-            description: 'Springen Sie in das Element, das mehr Aufmerksamkeit oder Vorbereitung braucht.',
+            description:
+              'Springen Sie in das Element, das mehr Aufmerksamkeit oder Vorbereitung braucht.',
           },
           prepare: {
             title: 'Vorbereiten',
-            description: 'Nutzen Sie den verlinkten Kontext, um für den nächsten Schritt bereit zu sein.',
+            description:
+              'Nutzen Sie den verlinkten Kontext, um für den nächsten Schritt bereit zu sein.',
           },
         },
       },
@@ -641,9 +703,12 @@ export const docsPageTranslations = {
     todos: {
       navLabel: 'Aufgaben',
       title: 'Aufgaben',
-      summary: 'Persönliche und geteilte Nacharbeit, die verhindert, dass Entscheidungen nach dem Beschluss stehenbleiben.',
-      audience: 'Alle, die für Umsetzung, Koordination oder Abschlussverfolgung verantwortlich sind.',
-      entry: 'Nutzen Sie diesen Leitfaden, wenn Sie verstehen möchten, wie Polity Anschlussfähigkeit organisiert.',
+      summary:
+        'Persönliche und geteilte Nacharbeit, die verhindert, dass Entscheidungen nach dem Beschluss stehenbleiben.',
+      audience:
+        'Alle, die für Umsetzung, Koordination oder Abschlussverfolgung verantwortlich sind.',
+      entry:
+        'Nutzen Sie diesen Leitfaden, wenn Sie verstehen möchten, wie Polity Anschlussfähigkeit organisiert.',
       perspective:
         'Aufgaben sind der Ort, an dem Nutzer spüren, ob die Plattform echte Umsetzung nach Diskussion und Entscheidung unterstützt.',
       outcome:
@@ -677,11 +742,13 @@ export const docsPageTranslations = {
           },
           'track-progress': {
             title: 'Fortschritt verfolgen',
-            description: 'Halten Sie die Aufgabe sichtbar, während Verantwortung und Timing klar bleiben.',
+            description:
+              'Halten Sie die Aufgabe sichtbar, während Verantwortung und Timing klar bleiben.',
           },
           'close-loop': {
             title: 'Kreislauf schließen',
-            description: 'Markieren Sie die Arbeit als erledigt und verringern Sie Unsicherheit darüber, was noch offen ist.',
+            description:
+              'Markieren Sie die Arbeit als erledigt und verringern Sie Unsicherheit darüber, was noch offen ist.',
           },
         },
       },
@@ -689,8 +756,10 @@ export const docsPageTranslations = {
     'roles-and-rights': {
       navLabel: 'Rollen & Rechte',
       title: 'Rollen und Rechte',
-      summary: 'Wie bereichsgebundene Rollen und Aktionsrechte bestimmen, was Nutzer sehen, verwalten oder ändern können.',
-      audience: 'Organisatoren, die Berechtigungen vergeben, und Mitglieder, die verstehen wollen, warum eine Aktion vorhanden oder fehlend ist.',
+      summary:
+        'Wie bereichsgebundene Rollen und Aktionsrechte bestimmen, was Nutzer sehen, verwalten oder ändern können.',
+      audience:
+        'Organisatoren, die Berechtigungen vergeben, und Mitglieder, die verstehen wollen, warum eine Aktion vorhanden oder fehlend ist.',
       entry: 'Lesen Sie diesen Leitfaden, wenn Berechtigungen die Nutzererfahrung sichtbar prägen.',
       perspective:
         'Nutzer denken selten in Berechtigungstabellen; sie bemerken Rollen und Rechte dann, wenn Aktionen erscheinen, verschwinden oder eine andere Person erfordern.',
@@ -726,23 +795,28 @@ export const docsPageTranslations = {
         steps: {
           'set-scope': {
             title: 'Bereich festlegen',
-            description: 'Ein Organisator entscheidet, wo die Rolle gilt, zum Beispiel in einer Gruppe oder Veranstaltung.',
+            description:
+              'Ein Organisator entscheidet, wo die Rolle gilt, zum Beispiel in einer Gruppe oder Veranstaltung.',
           },
           'assign-role': {
             title: 'Rolle zuweisen',
-            description: 'Die Rolle bündelt Aktionsrechte, die definieren, was der Nutzer in diesem Bereich tun kann.',
+            description:
+              'Die Rolle bündelt Aktionsrechte, die definieren, was der Nutzer in diesem Bereich tun kann.',
           },
           'see-available-actions': {
             title: 'Verfügbare Aktionen sehen',
-            description: 'Das Mitglied erlebt Berechtigungen als Buttons, Tabs und Workflows, die vorhanden oder verborgen sind.',
+            description:
+              'Das Mitglied erlebt Berechtigungen als Buttons, Tabs und Workflows, die vorhanden oder verborgen sind.',
           },
           'enforce-boundaries': {
             title: 'Grenzen durchsetzen',
-            description: 'Das System blockiert Aktionen außerhalb der zugewiesenen Rechte und hält den Ablauf konsistent.',
+            description:
+              'Das System blockiert Aktionen außerhalb der zugewiesenen Rechte und hält den Ablauf konsistent.',
           },
           'adapt-over-time': {
             title: 'Im Laufe der Zeit anpassen',
-            description: 'Organisatoren aktualisieren Rollen, wenn sich Verantwortung ändert, ohne den gesamten Raum neu aufzubauen.',
+            description:
+              'Organisatoren aktualisieren Rollen, wenn sich Verantwortung ändert, ohne den gesamten Raum neu aufzubauen.',
           },
         },
       },
@@ -750,9 +824,12 @@ export const docsPageTranslations = {
     'networks-and-forwarding': {
       navLabel: 'Netzwerke & Weiterleitung',
       title: 'Netzwerke und Weiterleitung',
-      summary: 'Wie verbundene Gruppen den Veranstaltungskontext prägen und wie Amendments durch das Netzwerk weiterlaufen können, statt lokal zu enden.',
-      audience: 'Mitglieder, Organisatoren und Autoren von Vorschlägen, die über verbundene Gruppen hinweg arbeiten.',
-      entry: 'Öffnen Sie diesen Leitfaden, wenn eine Entscheidung oder ein Amendment nicht an einem Ort endet.',
+      summary:
+        'Wie verbundene Gruppen den Veranstaltungskontext prägen und wie Amendments durch das Netzwerk weiterlaufen können, statt lokal zu enden.',
+      audience:
+        'Mitglieder, Organisatoren und Autoren von Vorschlägen, die über verbundene Gruppen hinweg arbeiten.',
+      entry:
+        'Öffnen Sie diesen Leitfaden, wenn eine Entscheidung oder ein Amendment nicht an einem Ort endet.',
       perspective:
         'Nutzer spüren das Netzwerk, wenn eine Gruppe nach oben oder unten verbunden ist, eine Veranstaltung größere Struktur erbt oder ein Amendment über seinen Ursprung hinaus weitergeführt werden muss.',
       outcome:
@@ -778,7 +855,8 @@ export const docsPageTranslations = {
       ],
       diagram: {
         title: 'Wie Netzwerkkontext und Weiterleitung zusammenspielen',
-        description: 'Eine Spuransicht über Gruppenstruktur, Veranstaltungsvererbung und Amendment-Routing.',
+        description:
+          'Eine Spuransicht über Gruppenstruktur, Veranstaltungsvererbung und Amendment-Routing.',
         lanes: {
           group: 'Gruppe',
           event: 'Veranstaltung',
@@ -787,23 +865,28 @@ export const docsPageTranslations = {
         steps: {
           'connect-groups': {
             title: 'Gruppen verbinden',
-            description: 'Beziehungen zwischen Gruppen schaffen die größere Struktur, in der Nutzer arbeiten.',
+            description:
+              'Beziehungen zwischen Gruppen schaffen die größere Struktur, in der Nutzer arbeiten.',
           },
           'inherit-context': {
             title: 'Kontext erben',
-            description: 'Veranstaltungen erhalten Bedeutung aus dem Gruppennetzwerk statt isoliert zu existieren.',
+            description:
+              'Veranstaltungen erhalten Bedeutung aus dem Gruppennetzwerk statt isoliert zu existieren.',
           },
           'route-amendments': {
             title: 'Amendments weiterleiten',
-            description: 'Ein Vorschlag kann durch das Netzwerk weiterlaufen, wenn lokale Bearbeitung nur eine Stufe des Prozesses ist.',
+            description:
+              'Ein Vorschlag kann durch das Netzwerk weiterlaufen, wenn lokale Bearbeitung nur eine Stufe des Prozesses ist.',
           },
           'confirm-forwarding': {
             title: 'Weiterleitung bestätigen',
-            description: 'Nutzer brauchen ein sichtbares Signal dafür, dass das Amendment weitergelaufen ist oder noch auf einen vorherigen Schritt wartet.',
+            description:
+              'Nutzer brauchen ein sichtbares Signal dafür, dass das Amendment weitergelaufen ist oder noch auf einen vorherigen Schritt wartet.',
           },
           'surface-result': {
             title: 'Ergebnis sichtbar machen',
-            description: 'Das Amendment kehrt schließlich mit einem sichtbaren Ergebnis zurück, das Nutzer im Kontext einordnen können.',
+            description:
+              'Das Amendment kehrt schließlich mit einem sichtbaren Ergebnis zurück, das Nutzer im Kontext einordnen können.',
           },
         },
       },

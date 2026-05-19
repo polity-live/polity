@@ -1,48 +1,49 @@
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
-import { usePositionsWithGroups } from '@/zero/events/useEventState';
+import { useRolesWithGroups } from '@/zero/events/useEventState';
 import { useMemo } from 'react';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import { CreateTypeaheadField } from '../CreateFields';
 
-interface PositionSearchInputProps {
+interface RoleSearchInputProps {
   value: string;
-  onChange: (positionId: string) => void;
+  onChange: (roleId: string) => void;
   label?: string;
   hint?: string;
   placeholder?: string;
-  /** Filter positions to only these groups */
+  /** Filter roles to only these groups */
   groupIds?: string[];
-  /** Filter positions to this event's groups */
+  /** Filter roles to this event's groups */
   eventId?: string;
   required?: boolean;
 }
 
-export function PositionSearchInput({
+export function RoleSearchInput({
   value,
   onChange,
   label,
   hint,
-  placeholder = 'Search for a position...',
+  placeholder = 'Search for a role...',
   groupIds,
   required,
-}: PositionSearchInputProps) {
-  const { positions } = usePositionsWithGroups();
+}: RoleSearchInputProps) {
+  const { roles } = useRolesWithGroups();
 
-  const filteredPositions = useMemo(() => {
-    if (!positions) return [];
-    if (!groupIds || groupIds.length === 0) return positions;
-    return positions.filter(p => p.group_id && groupIds.includes(p.group_id));
-  }, [positions, groupIds]);
+  const filteredRoles = useMemo(() => {
+    if (!roles) return [];
+    if (!groupIds || groupIds.length === 0) return roles;
+    return roles.filter(role => role.group_id && groupIds.includes(role.group_id));
+  }, [roles, groupIds]);
 
   const items = useMemo(
     () =>
       toTypeaheadItems(
-        filteredPositions,
-        'position',
-        p => p.title || 'Position',
-        p => (typeof p.description === 'string' ? p.description.substring(0, 60) : undefined)
+        filteredRoles,
+        'role',
+        role => role.title || 'Role',
+        role =>
+          typeof role.description === 'string' ? role.description.substring(0, 60) : undefined
       ),
-    [filteredPositions]
+    [filteredRoles]
   );
 
   const handleChange = (item: TypeaheadItem | null) => {

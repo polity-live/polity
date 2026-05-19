@@ -18,7 +18,7 @@ export { messagesTranslations } from './messages';
 export { networkTranslations } from './network';
 export { notificationsTranslations } from './notifications';
 export { paymentsTranslations } from './payments';
-export { positionsTranslations } from './positions';
+export { rolesTranslations } from './roles';
 export { searchTranslations } from './search';
 export { statementsTranslations } from './statements';
 export { timelineTranslations } from './timeline';
@@ -47,7 +47,7 @@ export const features = {
   network: async () => (await import('./network')).networkTranslations,
   notifications: async () => (await import('./notifications')).notificationsTranslations,
   payments: async () => (await import('./payments')).paymentsTranslations,
-  positions: async () => (await import('./positions')).positionsTranslations,
+  roles: async () => (await import('./roles')).rolesTranslations,
   search: async () => (await import('./search')).searchTranslations,
   statements: async () => (await import('./statements')).statementsTranslations,
   timeline: async () => (await import('./timeline')).timelineTranslations,

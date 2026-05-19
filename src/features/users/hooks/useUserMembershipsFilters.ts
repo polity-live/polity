@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { getMembershipRoleNames } from '@/features/shared/logic/membershipRoleHelpers';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
 import type { GroupMembershipsByUserRow } from '@/zero/groups/queries';
 import type { EventParticipantsByUserRow } from '@/zero/events/queries';
@@ -59,7 +60,7 @@ export function useUserMembershipsFilters({
     return memberships.filter(membership => {
       const groupName = membership.group?.name?.toLowerCase() || '';
       const groupDescription = richTextToPlainText(membership.group?.description).toLowerCase();
-      const role = membership.role?.name?.toLowerCase() || '';
+      const role = getMembershipRoleNames(membership).join(' ').toLowerCase();
       const status = membership.status?.toLowerCase() || '';
       return (
         groupName.includes(query) ||
@@ -124,7 +125,11 @@ export function useUserMembershipsFilters({
     () => ({
       invited: filteredParticipations.filter(p => p.status === 'invited'),
       active: filteredParticipations.filter(
-        p => p.status === 'member' || p.status === 'admin' || p.status === 'confirmed'
+        p =>
+          p.status === 'active' ||
+          p.status === 'member' ||
+          p.status === 'admin' ||
+          p.status === 'confirmed'
       ),
       requested: filteredParticipations.filter(p => p.status === 'requested'),
     }),

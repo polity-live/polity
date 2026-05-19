@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { jsonSchema, timestampSchema } from '../shared/helpers';
+import {
+  jsonNumberArraySchema,
+  jsonSchema,
+  nullableTimestampSchema,
+  timestampSchema,
+} from '../shared/helpers';
 
 const groupTypeSchema = z.enum(['base', 'hierarchical']);
 
@@ -92,7 +97,6 @@ const groupMembershipBaseSchema = z.object({
   user_id: z.string(),
   status: z.string().nullable(),
   visibility: z.string(),
-  role_id: z.string().nullable(),
   source: z.string(),
   source_group_id: z.string().nullable(),
   created_at: timestampSchema,
@@ -106,13 +110,52 @@ export const groupMembershipCreateSchema = groupMembershipBaseSchema
     user_id: z.string().optional(),
     source: z.string().optional(),
     source_group_id: z.string().nullable().optional(),
+    initial_role_id: z.string().nullable().optional(),
   });
 export const groupMembershipUpdateSchema = groupMembershipBaseSchema
-  .pick({ status: true, visibility: true, role_id: true, source: true, source_group_id: true })
+  .pick({ status: true, visibility: true, source: true, source_group_id: true })
   .partial()
   .extend({ id: z.string() });
+export const groupMembershipLegacyRoleUpdateSchema = groupMembershipUpdateSchema.extend({
+  role_id: z.string().nullable().optional(),
+});
 export const groupMembershipDeleteSchema = z.object({ id: z.string() });
 export type GroupMembership = z.infer<typeof groupMembershipSelectSchema>;
+
+// ── group_membership_role ────────────────────────────────────────────
+const groupMembershipRoleBaseSchema = z.object({
+  id: z.string(),
+  group_membership_id: z.string(),
+  role_id: z.string(),
+  assigned_at: timestampSchema,
+  assigned_by_id: z.string().nullable(),
+  created_at: timestampSchema,
+});
+
+export const groupMembershipRoleSelectSchema = groupMembershipRoleBaseSchema;
+export const groupMembershipRoleCreateSchema = groupMembershipRoleBaseSchema
+  .omit({ id: true, assigned_at: true, created_at: true })
+  .extend({
+    id: z.string(),
+    assigned_at: nullableTimestampSchema.optional(),
+    assigned_by_id: z.string().nullable().optional(),
+  });
+export const groupMembershipRoleAssignSchema = z.object({
+  group_membership_id: z.string(),
+  role_id: z.string(),
+  assigned_by_id: z.string().nullable().optional(),
+});
+export const groupMembershipRoleUnassignSchema = z.object({
+  group_membership_id: z.string(),
+  role_id: z.string(),
+});
+export const groupMembershipRolesSyncSchema = z.object({
+  group_membership_id: z.string(),
+  role_ids: z.array(z.string()),
+  assigned_by_id: z.string().nullable().optional(),
+});
+export const groupMembershipRoleDeleteSchema = z.object({ id: z.string() });
+export type GroupMembershipRole = z.infer<typeof groupMembershipRoleSelectSchema>;
 
 // ── role ──────────────────────────────────────────────────────────────
 const roleBaseSchema = z.object({
@@ -124,20 +167,72 @@ const roleBaseSchema = z.object({
   event_id: z.string().nullable(),
   amendment_id: z.string().nullable(),
   blog_id: z.string().nullable(),
+  assignment_mode: z.enum(['assigned', 'elected']),
+  visibility: z.string(),
+  term_start_date: nullableTimestampSchema,
+  is_recurring: z.boolean(),
+  recurrence_pattern: z.string().nullable(),
+  recurrence_rule: z.string().nullable(),
+  recurrence_interval: z.number().nullable(),
+  recurrence_days: jsonNumberArraySchema.nullable(),
+  recurrence_end_date: nullableTimestampSchema,
+  scheduled_revote_date: nullableTimestampSchema,
+  default_request_role: z.boolean(),
+  default_invite_role: z.boolean(),
   sort_order: z.number(),
   created_at: timestampSchema,
 });
 
 export const roleSelectSchema = roleBaseSchema;
-export const roleCreateSchema = roleBaseSchema
-  .omit({ id: true, created_at: true })
-  .extend({ id: z.string() });
+export const roleCreateSchema = roleBaseSchema.omit({ id: true, created_at: true }).extend({
+  id: z.string(),
+  default_request_role: z.boolean().optional(),
+  default_invite_role: z.boolean().optional(),
+});
 export const roleUpdateSchema = roleBaseSchema
-  .pick({ sort_order: true })
+  .pick({
+    name: true,
+    description: true,
+    assignment_mode: true,
+    visibility: true,
+    term_start_date: true,
+    is_recurring: true,
+    recurrence_pattern: true,
+    recurrence_rule: true,
+    recurrence_interval: true,
+    recurrence_days: true,
+    recurrence_end_date: true,
+    scheduled_revote_date: true,
+    default_request_role: true,
+    default_invite_role: true,
+    sort_order: true,
+  })
   .partial()
   .extend({ id: z.string() });
 export const roleDeleteSchema = z.object({ id: z.string() });
 export type Role = z.infer<typeof roleSelectSchema>;
+
+// ── role_holder_history ─────────────────────────────────────────────
+const roleHolderHistoryBaseSchema = z.object({
+  id: z.string(),
+  role_id: z.string(),
+  user_id: z.string(),
+  start_date: nullableTimestampSchema,
+  end_date: nullableTimestampSchema,
+  reason: z.string().nullable(),
+  created_at: timestampSchema,
+});
+
+export const roleHolderHistorySelectSchema = roleHolderHistoryBaseSchema;
+export const roleHolderHistoryCreateSchema = roleHolderHistoryBaseSchema
+  .omit({ id: true, created_at: true })
+  .extend({ id: z.string(), start_date: z.number() });
+export const roleHolderHistoryUpdateSchema = z.object({
+  id: z.string(),
+  end_date: z.number().optional(),
+  reason: z.string().optional(),
+});
+export type RoleHolderHistory = z.infer<typeof roleHolderHistorySelectSchema>;
 
 // ── action_right ──────────────────────────────────────────────────────
 const actionRightBaseSchema = z.object({

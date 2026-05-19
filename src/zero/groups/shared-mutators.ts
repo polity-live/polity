@@ -6,11 +6,16 @@ import {
   groupUpdateSchema,
   groupDeleteSchema,
   groupMembershipCreateSchema,
-  groupMembershipUpdateSchema,
+  groupMembershipLegacyRoleUpdateSchema,
   groupMembershipDeleteSchema,
+  groupMembershipRoleAssignSchema,
+  groupMembershipRoleUnassignSchema,
+  groupMembershipRolesSyncSchema,
   roleCreateSchema,
   roleUpdateSchema,
   roleDeleteSchema,
+  roleHolderHistoryCreateSchema,
+  roleHolderHistoryUpdateSchema,
   actionRightCreateSchema,
   actionRightDeleteSchema,
 } from './schema';
@@ -19,13 +24,6 @@ import {
   updateGroupRelationshipSchema,
   deleteGroupRelationshipSchema,
 } from '../network/schema';
-import {
-  createPositionSchema,
-  updatePositionSchema,
-  deletePositionSchema,
-  createPositionHolderHistorySchema,
-  updatePositionHolderHistorySchema,
-} from '../positions/schema';
 import { z } from 'zod';
 
 async function authorizeScopedRoleMutation(
@@ -38,7 +36,7 @@ async function authorizeScopedRoleMutation(
   }
 ) {
   if (scope.group_id) {
-    await can(tx, ctx, { action: 'manage', resource: 'groupRoles', groupId: scope.group_id });
+    await can(tx, ctx, { action: 'manage', resource: 'groupAccessRoles', groupId: scope.group_id });
     return;
   }
 
@@ -49,6 +47,184 @@ async function authorizeScopedRoleMutation(
 
   if (scope.blog_id) {
     await can(tx, ctx, { action: 'manage', resource: 'blogs', blogId: scope.blog_id });
+  }
+}
+
+async function loadMembershipForRoleMutation(
+  tx: Parameters<typeof can>[0],
+  ctx: Parameters<typeof can>[1],
+  groupMembershipId: string
+) {
+  const membership = await tx.run(zql.group_membership.where('id', groupMembershipId).one());
+  if (!membership) {
+    throw new Error('Membership not found');
+  }
+
+  await can(tx, ctx, {
+    action: 'manage',
+    resource: 'groupMemberships',
+    groupId: membership.group_id,
+  });
+
+  return membership;
+}
+
+async function addGroupMembershipRole(
+  tx: Parameters<typeof can>[0],
+  args: {
+    group_membership_id: string;
+    role_id: string;
+    assigned_by_id?: string | null;
+  }
+) {
+  const existingLink = await tx.run(
+    zql.group_membership_role
+      .where('group_membership_id', args.group_membership_id)
+      .where('role_id', args.role_id)
+      .one()
+  );
+
+  if (existingLink) {
+    return existingLink.id;
+  }
+
+  const now = Date.now();
+  const id = crypto.randomUUID();
+
+  await tx.mutate.group_membership_role.insert({
+    id,
+    group_membership_id: args.group_membership_id,
+    role_id: args.role_id,
+    assigned_at: now,
+    assigned_by_id: args.assigned_by_id ?? null,
+    created_at: now,
+  });
+
+  return id;
+}
+
+async function removeGroupMembershipRole(
+  tx: Parameters<typeof can>[0],
+  args: {
+    group_membership_id: string;
+    role_id: string;
+  }
+) {
+  const existingLinks = await tx.run(
+    zql.group_membership_role
+      .where('group_membership_id', args.group_membership_id)
+      .where('role_id', args.role_id)
+  );
+
+  for (const link of existingLinks) {
+    await tx.mutate.group_membership_role.delete({ id: link.id });
+  }
+}
+
+async function syncGroupMembershipRoles(
+  tx: Parameters<typeof can>[0],
+  args: {
+    group_membership_id: string;
+    role_ids: string[];
+    assigned_by_id?: string | null;
+  }
+) {
+  const desiredRoleIds = [...new Set(args.role_ids.filter(Boolean))];
+  const existingLinks = await tx.run(
+    zql.group_membership_role.where('group_membership_id', args.group_membership_id)
+  );
+  const existingRoleIds = new Set(existingLinks.map(link => link.role_id));
+  const desiredRoleIdSet = new Set(desiredRoleIds);
+
+  for (const link of existingLinks) {
+    if (!desiredRoleIdSet.has(link.role_id)) {
+      await tx.mutate.group_membership_role.delete({ id: link.id });
+    }
+  }
+
+  for (const roleId of desiredRoleIds) {
+    if (!existingRoleIds.has(roleId)) {
+      await addGroupMembershipRole(tx, {
+        group_membership_id: args.group_membership_id,
+        role_id: roleId,
+        assigned_by_id: args.assigned_by_id,
+      });
+    }
+  }
+}
+
+async function resolveDefaultMembershipRoleId(
+  tx: Parameters<typeof can>[0],
+  groupId: string,
+  status: string | null | undefined,
+  explicitRoleId?: string | null
+) {
+  if (explicitRoleId) {
+    return explicitRoleId;
+  }
+
+  if (status !== 'requested' && status !== 'invited') {
+    return null;
+  }
+
+  const roles = await tx.run(
+    zql.role.where('group_id', groupId).where('scope', 'group').orderBy('sort_order', 'asc')
+  );
+
+  if (status === 'requested') {
+    const configuredRole = roles.find(role => role.default_request_role);
+    if (configuredRole?.id) {
+      return configuredRole.id;
+    }
+  }
+
+  if (status === 'invited') {
+    const configuredRole = roles.find(role => role.default_invite_role);
+    if (configuredRole?.id) {
+      return configuredRole.id;
+    }
+  }
+
+  return roles.find(role => role.name === 'Member')?.id ?? null;
+}
+
+async function clearGroupRoleDefaults(
+  tx: Parameters<typeof can>[0],
+  args: {
+    groupId: string;
+    keepRoleId?: string;
+    clearRequestDefault?: boolean;
+    clearInviteDefault?: boolean;
+  }
+) {
+  if (!args.clearRequestDefault && !args.clearInviteDefault) {
+    return;
+  }
+
+  const groupRoles = await tx.run(zql.role.where('group_id', args.groupId).where('scope', 'group'));
+
+  for (const role of groupRoles) {
+    if (args.keepRoleId && role.id === args.keepRoleId) {
+      continue;
+    }
+
+    const patch: {
+      id: string;
+      default_request_role?: boolean;
+      default_invite_role?: boolean;
+    } = { id: role.id };
+
+    if (args.clearRequestDefault && role.default_request_role) {
+      patch.default_request_role = false;
+    }
+
+    if (args.clearInviteDefault && role.default_invite_role) {
+      patch.default_invite_role = false;
+    }
+
+    if (patch.default_request_role !== undefined || patch.default_invite_role !== undefined) {
+      await tx.mutate.role.update(patch);
+    }
   }
 }
 
@@ -87,13 +263,29 @@ export const groupSharedMutators = {
     }
 
     const now = Date.now();
+    const { initial_role_id, ...membershipArgs } = args;
     await tx.mutate.group_membership.insert({
-      ...args,
+      ...membershipArgs,
       user_id: userID,
       source: 'direct',
       source_group_id: null,
       created_at: now,
     });
+
+    const initialRoleId = await resolveDefaultMembershipRoleId(
+      tx,
+      args.group_id,
+      args.status,
+      initial_role_id
+    );
+
+    if (initialRoleId) {
+      await syncGroupMembershipRoles(tx, {
+        group_membership_id: args.id,
+        role_ids: [initialRoleId],
+        assigned_by_id: userID,
+      });
+    }
   }),
 
   leaveGroup: defineMutator(groupMembershipDeleteSchema, async ({ tx, args }) => {
@@ -116,34 +308,104 @@ export const groupSharedMutators = {
     }
 
     const now = Date.now();
+    const { initial_role_id, ...membershipArgs } = args;
     await tx.mutate.group_membership.insert({
-      ...args,
+      ...membershipArgs,
       user_id: args.user_id,
       status: 'invited',
       source: 'direct',
       source_group_id: null,
       created_at: now,
     });
+
+    const initialRoleId = await resolveDefaultMembershipRoleId(
+      tx,
+      args.group_id,
+      'invited',
+      initial_role_id
+    );
+
+    if (initialRoleId) {
+      await syncGroupMembershipRoles(tx, {
+        group_membership_id: args.id,
+        role_ids: [initialRoleId],
+        assigned_by_id: ctx.userID,
+      });
+    }
   }),
 
   acceptInvitation: defineMutator(z.object({ id: z.string() }), async ({ tx, args }) => {
     await tx.mutate.group_membership.update({ id: args.id, status: 'active' });
   }),
 
-  updateMemberRole: defineMutator(groupMembershipUpdateSchema, async ({ tx, args }) => {
-    await tx.mutate.group_membership.update(args);
+  addMembershipRole: defineMutator(groupMembershipRoleAssignSchema, async ({ tx, ctx, args }) => {
+    await loadMembershipForRoleMutation(tx, ctx, args.group_membership_id);
+    await addGroupMembershipRole(tx, args);
   }),
+
+  removeMembershipRole: defineMutator(
+    groupMembershipRoleUnassignSchema,
+    async ({ tx, ctx, args }) => {
+      await loadMembershipForRoleMutation(tx, ctx, args.group_membership_id);
+      await removeGroupMembershipRole(tx, args);
+    }
+  ),
+
+  syncMembershipRoles: defineMutator(groupMembershipRolesSyncSchema, async ({ tx, ctx, args }) => {
+    await loadMembershipForRoleMutation(tx, ctx, args.group_membership_id);
+    await syncGroupMembershipRoles(tx, args);
+  }),
+
+  updateMemberRole: defineMutator(
+    groupMembershipLegacyRoleUpdateSchema,
+    async ({ tx, ctx, args }) => {
+      const { role_id, ...membershipArgs } = args;
+
+      if (Object.keys(membershipArgs).length > 1) {
+        await tx.mutate.group_membership.update(membershipArgs);
+      }
+
+      if (role_id !== undefined) {
+        await loadMembershipForRoleMutation(tx, ctx, args.id);
+        await syncGroupMembershipRoles(tx, {
+          group_membership_id: args.id,
+          role_ids: role_id ? [role_id] : [],
+          assigned_by_id: ctx.userID,
+        });
+      }
+    }
+  ),
 
   createRole: defineMutator(roleCreateSchema, async ({ tx, ctx, args }) => {
     await authorizeScopedRoleMutation(tx, ctx, args);
+    if (args.group_id) {
+      await clearGroupRoleDefaults(tx, {
+        groupId: args.group_id,
+        clearRequestDefault: Boolean(args.default_request_role),
+        clearInviteDefault: Boolean(args.default_invite_role),
+      });
+    }
     const now = Date.now();
-    await tx.mutate.role.insert({ ...args, created_at: now });
+    await tx.mutate.role.insert({
+      ...args,
+      default_request_role: args.default_request_role ?? false,
+      default_invite_role: args.default_invite_role ?? false,
+      created_at: now,
+    });
   }),
 
   updateRole: defineMutator(roleUpdateSchema, async ({ tx, ctx, args }) => {
     const role = await tx.run(zql.role.where('id', args.id).one());
     if (role) {
       await authorizeScopedRoleMutation(tx, ctx, role);
+      if (role.group_id) {
+        await clearGroupRoleDefaults(tx, {
+          groupId: role.group_id,
+          keepRoleId: role.id,
+          clearRequestDefault: args.default_request_role === true,
+          clearInviteDefault: args.default_invite_role === true,
+        });
+      }
     }
     await tx.mutate.role.update(args);
   }),
@@ -184,33 +446,16 @@ export const groupSharedMutators = {
     await tx.mutate.group_relationship.delete({ id: args.id });
   }),
 
-  // Position mutators
-  createPosition: defineMutator(createPositionSchema, async ({ tx, args }) => {
+  // Role holder history mutators
+  createRoleHolderHistory: defineMutator(roleHolderHistoryCreateSchema, async ({ tx, args }) => {
     const now = Date.now();
-    await tx.mutate.position.insert({ ...args, created_at: now });
+    await tx.mutate.role_holder_history.insert({
+      ...args,
+      created_at: now,
+    });
   }),
 
-  updatePosition: defineMutator(updatePositionSchema, async ({ tx, args }) => {
-    await tx.mutate.position.update(args);
+  updateRoleHolderHistory: defineMutator(roleHolderHistoryUpdateSchema, async ({ tx, args }) => {
+    await tx.mutate.role_holder_history.update(args);
   }),
-
-  deletePosition: defineMutator(deletePositionSchema, async ({ tx, args }) => {
-    await tx.mutate.position.delete({ id: args.id });
-  }),
-
-  // Position Holder History mutators
-  createPositionHolderHistory: defineMutator(
-    createPositionHolderHistorySchema,
-    async ({ tx, args }) => {
-      const now = Date.now();
-      await tx.mutate.position_holder_history.insert({ ...args, created_at: now });
-    }
-  ),
-
-  updatePositionHolderHistory: defineMutator(
-    updatePositionHolderHistorySchema,
-    async ({ tx, args }) => {
-      await tx.mutate.position_holder_history.update(args);
-    }
-  ),
 };

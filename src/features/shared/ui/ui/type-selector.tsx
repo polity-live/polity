@@ -30,7 +30,7 @@ const typeOptions: TypeOption[] = [
   {
     value: 'election',
     label: 'Election',
-    description: 'Vote for positions or candidates',
+    description: 'Vote for roles or candidates',
     icon: <Users className="h-4 w-4" />,
   },
   {
@@ -69,7 +69,7 @@ export function TypeSelector({
         {showTooltip && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <Info className="h-4 w-4 cursor-help text-muted-foreground" />
+              <Info className="text-muted-foreground h-4 w-4 cursor-help" />
             </TooltipTrigger>
             <TooltipContent className="max-w-xs">
               <p className="text-sm">{selectedOption?.description}</p>

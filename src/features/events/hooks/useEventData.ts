@@ -15,7 +15,7 @@ export function useEventData(eventId?: string) {
   const participants = useMemo(() => event?.participants || [], [event]);
   const delegates = useMemo(() => event?.delegates || [], [event]);
   const agendaItems = useMemo(() => event?.agenda_items || [], [event]);
-  const positions = useMemo(() => event?.event_positions || [], [event]);
+  const roles = useMemo(() => event?.roles || [], [event]);
 
   const participantStats = useMemo(() => {
     const stats = {
@@ -26,8 +26,14 @@ export function useEventData(eventId?: string) {
       requested: 0,
     };
 
-    participants.forEach((participant) => {
-      if (participant.status === 'member') stats.members++;
+    participants.forEach(participant => {
+      if (
+        participant.status === 'active' ||
+        participant.status === 'member' ||
+        participant.status === 'admin' ||
+        participant.status === 'confirmed'
+      )
+        stats.members++;
       if (participant.status === 'admin') stats.admins++;
       if (participant.status === 'invited') stats.invited++;
       if (participant.status === 'requested') stats.requested++;
@@ -41,7 +47,7 @@ export function useEventData(eventId?: string) {
     participants,
     delegates,
     agendaItems,
-    positions,
+    roles,
     participantStats,
     isLoading,
     error,
@@ -61,8 +67,13 @@ export function useEventParticipants(eventId?: string) {
     const invited: typeof participants = [];
     const requested: typeof participants = [];
 
-    participants.forEach((participant) => {
-      if (participant.status === 'member' || participant.status === 'admin') {
+    participants.forEach(participant => {
+      if (
+        participant.status === 'active' ||
+        participant.status === 'member' ||
+        participant.status === 'admin' ||
+        participant.status === 'confirmed'
+      ) {
         active.push(participant);
       } else if (participant.status === 'invited') {
         invited.push(participant);

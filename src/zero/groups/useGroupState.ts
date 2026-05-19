@@ -1,16 +1,86 @@
-import { useMemo } from 'react'
-import { useQuery } from '@rocicorp/zero/react'
-import { queries } from '../queries'
+import { useMemo } from 'react';
+import { useQuery } from '@rocicorp/zero/react';
+import { queries } from '../queries';
 
 interface GroupStateOptions {
-  groupId?: string
-  userId?: string
-  includeSearch?: boolean
-  includeAllRelationships?: boolean
-  includeByUser?: boolean
-  includeMembershipsWithUsers?: boolean
-  includeCurrentUserMembershipsWithGroups?: boolean
-  includeAllRelationshipsWithGroups?: boolean
+  groupId?: string;
+  userId?: string;
+  includeSearch?: boolean;
+  includeAllRelationships?: boolean;
+  includeByUser?: boolean;
+  includeMembershipsWithUsers?: boolean;
+  includeCurrentUserMembershipsWithGroups?: boolean;
+  includeAllRelationshipsWithGroups?: boolean;
+}
+
+interface GroupRoleDisplayLike {
+  name?: string | null;
+  term_start_date?: number | null;
+  is_recurring?: boolean | null;
+  recurrence_pattern?: string | null;
+  recurrence_interval?: number | null;
+}
+
+interface GroupRoleLike {
+  id?: string | null;
+  name?: string | null;
+  sort_order?: number | null;
+}
+
+interface GroupMembershipRoleLinkLike<TRole extends GroupRoleLike = GroupRoleLike> {
+  role?: TRole | null;
+}
+
+function selectPrimaryGroupRole<TRole extends GroupRoleLike>(roles: readonly TRole[]) {
+  if (roles.length === 0) return null;
+
+  return (
+    [...roles].sort((left, right) => (right.sort_order ?? -1) - (left.sort_order ?? -1))[0] ?? null
+  );
+}
+
+function normalizeMembershipWithRoles<
+  TMembership extends {
+    membership_roles?: readonly GroupMembershipRoleLinkLike<TRole>[] | null;
+    role?: TRole | null;
+  },
+  TRole extends GroupRoleLike,
+>(membership: TMembership) {
+  const roles: TRole[] = [];
+  for (const link of membership.membership_roles || []) {
+    if (link.role) {
+      roles.push(link.role);
+    }
+  }
+  const primaryRole = selectPrimaryGroupRole(roles) ?? membership.role ?? null;
+
+  return {
+    ...membership,
+    roles,
+    role: primaryRole,
+  };
+}
+
+function normalizeMemberships<
+  TMembership extends {
+    membership_roles?: readonly GroupMembershipRoleLinkLike<TRole>[] | null;
+    role?: TRole | null;
+  },
+  TRole extends GroupRoleLike,
+>(memberships: readonly TMembership[] | null | undefined) {
+  return (memberships || []).map(membership => normalizeMembershipWithRoles(membership));
+}
+
+function mapRoleForDisplay<T extends GroupRoleDisplayLike>(role: T) {
+  return {
+    ...role,
+    title: role.name,
+    term:
+      Boolean(role.is_recurring) && role.recurrence_pattern === 'yearly'
+        ? String(role.recurrence_interval ?? 1)
+        : null,
+    first_term_start: role.term_start_date ?? null,
+  };
 }
 
 /**
@@ -27,104 +97,102 @@ export function useGroupState(options: GroupStateOptions = {}) {
     includeMembershipsWithUsers,
     includeCurrentUserMembershipsWithGroups,
     includeAllRelationshipsWithGroups,
-  } = options
+  } = options;
 
-  const [group, groupResult] = useQuery(
-    groupId ? queries.groups.byId({ id: groupId }) : undefined
-  )
+  const [group, groupResult] = useQuery(groupId ? queries.groups.byId({ id: groupId }) : undefined);
 
   const [memberships, membershipsResult] = useQuery(
     groupId ? queries.groups.memberships({ groupId }) : undefined
-  )
+  );
 
-  const [roles, rolesResult] = useQuery(
-    groupId ? queries.groups.roles({ groupId }) : undefined
-  )
+  const [roles, rolesResult] = useQuery(groupId ? queries.groups.roles({ groupId }) : undefined);
 
-  const [positions, positionsResult] = useQuery(
-    groupId ? queries.groups.positions({ groupId }) : undefined
-  )
+  const [scopedRoles, scopedRolesResult] = useQuery(
+    groupId ? queries.groups.scopedRoles({ groupId }) : undefined
+  );
 
   const [relationships, relationshipsResult] = useQuery(
     groupId ? queries.groups.hierarchy({ groupId }) : undefined
-  )
+  );
 
   const [relationshipsAsTarget, relationshipsAsTargetResult] = useQuery(
     groupId ? queries.groups.hierarchyAsTarget({ groupId }) : undefined
-  )
+  );
 
   // ── User memberships (opt-in) ──────────────────────────────────────
   const [userMemberships, userMembershipsResult] = useQuery(
-    userId
-      ? queries.groups.membershipsByUser({ user_id: userId })
-      : undefined
-  )
+    userId ? queries.groups.membershipsByUser({ user_id: userId }) : undefined
+  );
 
   // ── Search all groups (opt-in) ─────────────────────────────────────
   const [searchResults, searchResult] = useQuery(
     includeSearch ? queries.groups.search({ query: '' }) : undefined
-  )
+  );
 
   // ── All relationships (opt-in) ─────────────────────────────────────
   const [allRelationships, allRelationshipsResult] = useQuery(
     includeAllRelationships ? queries.groups.allRelationships({}) : undefined
-  )
+  );
 
   // ── All relationships with groups (opt-in) ─────────────────────────
   const [allRelationshipsWithGroups, allRelationshipsWithGroupsResult] = useQuery(
     includeAllRelationshipsWithGroups ? queries.groups.allRelationshipsWithGroups({}) : undefined
-  )
+  );
 
   // ── Current user's groups via byUser (opt-in) ──────────────────────
   const [userGroupMemberships, userGroupMembershipsResult] = useQuery(
     includeByUser ? queries.groups.byUser({}) : undefined
-  )
+  );
 
   // ── Memberships with user data (opt-in, needs groupId) ─────────────
   const [membershipsWithUsers, membershipsWithUsersResult] = useQuery(
     includeMembershipsWithUsers && groupId
       ? queries.groups.membershipsWithUsers({ groupId })
       : undefined
-  )
+  );
 
   // ── Current user memberships with group data (opt-in) ──────────────
   const [currentUserMembershipsWithGroups, currentUserMembershipsWithGroupsResult] = useQuery(
     includeCurrentUserMembershipsWithGroups
       ? queries.groups.currentUserMembershipsWithGroups({})
       : undefined
-  )
+  );
 
   const isLoading =
     (groupId !== undefined && groupResult.type === 'unknown') ||
     (groupId !== undefined && membershipsResult.type === 'unknown') ||
     (groupId !== undefined && rolesResult.type === 'unknown') ||
-    (groupId !== undefined && positionsResult.type === 'unknown') ||
+    (groupId !== undefined && scopedRolesResult.type === 'unknown') ||
     (groupId !== undefined && relationshipsResult.type === 'unknown') ||
     (groupId !== undefined && relationshipsAsTargetResult.type === 'unknown') ||
     (userId !== undefined && userMembershipsResult.type === 'unknown') ||
     (includeSearch === true && searchResult.type === 'unknown') ||
     (includeAllRelationships === true && allRelationshipsResult.type === 'unknown') ||
     (includeByUser === true && userGroupMembershipsResult.type === 'unknown') ||
-    (includeMembershipsWithUsers === true && groupId !== undefined && membershipsWithUsersResult.type === 'unknown') ||
-    (includeCurrentUserMembershipsWithGroups === true && currentUserMembershipsWithGroupsResult.type === 'unknown') ||
-    (includeAllRelationshipsWithGroups === true && allRelationshipsWithGroupsResult.type === 'unknown')
+    (includeMembershipsWithUsers === true &&
+      groupId !== undefined &&
+      membershipsWithUsersResult.type === 'unknown') ||
+    (includeCurrentUserMembershipsWithGroups === true &&
+      currentUserMembershipsWithGroupsResult.type === 'unknown') ||
+    (includeAllRelationshipsWithGroups === true &&
+      allRelationshipsWithGroupsResult.type === 'unknown');
 
   return {
     group,
-    memberships,
+    memberships: normalizeMemberships(memberships),
     roles,
-    positions,
+    scopedRoles,
     relationships,
     relationshipsAsTarget,
-    userMemberships: userMemberships ?? [],
+    userMemberships: normalizeMemberships(userMemberships),
     searchResults: searchResults ?? [],
     allRelationships: allRelationships ?? [],
     allRelationshipsWithGroups: allRelationshipsWithGroups ?? [],
-    userGroupMemberships: userGroupMemberships ?? [],
-    membershipsWithUsers: membershipsWithUsers ?? [],
-    currentUserMembershipsWithGroups: currentUserMembershipsWithGroups ?? [],
+    userGroupMemberships: normalizeMemberships(userGroupMemberships),
+    membershipsWithUsers: normalizeMemberships(membershipsWithUsers),
+    currentUserMembershipsWithGroups: normalizeMemberships(currentUserMembershipsWithGroups),
     isLoading,
-  }
+  };
 }
 
 // ── Focused Query Hooks ─────────────────────────────────────────────
@@ -135,8 +203,19 @@ export function useGroupState(options: GroupStateOptions = {}) {
 export function useGroupWikiData(groupId: string) {
   const [groupsData, groupsResult] = useQuery(queries.groups.wikiData({ id: groupId }));
 
+  const group = useMemo(() => {
+    const currentGroup = groupsData?.[0];
+    if (!currentGroup) return null;
+
+    return {
+      ...currentGroup,
+      memberships: normalizeMemberships(currentGroup.memberships),
+      roles: (currentGroup.roles || []).map(mapRoleForDisplay),
+    };
+  }, [groupsData]);
+
   return {
-    group: groupsData?.[0] || null,
+    group,
     isLoading: groupsResult.type === 'unknown',
   };
 }
@@ -153,8 +232,8 @@ export function useUserMembershipInGroup(userId: string | undefined, groupId: st
   );
 
   return {
-    memberships: membershipsData || [],
-    allMemberships: allMembershipsData || [],
+    memberships: normalizeMemberships(membershipsData),
+    allMemberships: normalizeMemberships(allMembershipsData),
     isLoading: membershipsResult.type === 'unknown' || allMembershipsResult.type === 'unknown',
   };
 }
@@ -210,7 +289,15 @@ export function useGroupById(groupId?: string) {
   );
 
   const isLoading = groupsResult.type === 'unknown';
-  const group = useMemo(() => groupsData?.[0] || null, [groupsData]);
+  const group = useMemo(() => {
+    const currentGroup = groupsData?.[0];
+    if (!currentGroup) return null;
+
+    return {
+      ...currentGroup,
+      memberships: normalizeMemberships(currentGroup.memberships),
+    };
+  }, [groupsData]);
   const memberships = useMemo(() => group?.memberships || [], [group]);
   const roles = useMemo(() => group?.roles || [], [group]);
   const events = useMemo(() => group?.events || [], [group]);
@@ -219,7 +306,7 @@ export function useGroupById(groupId?: string) {
 
   const memberStats = useMemo(() => {
     const stats = { total: memberships.length, members: 0, admins: 0, invited: 0, requested: 0 };
-    memberships.forEach((membership) => {
+    memberships.forEach(membership => {
       if (membership.status === 'active') stats.members++;
       if (membership.status === 'admin' || membership.role?.name === 'Board Member') stats.admins++;
       if (membership.status === 'invited') stats.invited++;
@@ -239,7 +326,7 @@ export function useGroupMemberships(groupId?: string) {
   );
 
   const isLoading = membershipsResult.type === 'unknown';
-  const memberships = useMemo(() => membershipsData || [], [membershipsData]);
+  const memberships = useMemo(() => normalizeMemberships(membershipsData), [membershipsData]);
 
   const { activeMemberships, invitedMemberships, requestedMemberships, pendingMemberships } =
     useMemo(() => {
@@ -247,7 +334,7 @@ export function useGroupMemberships(groupId?: string) {
       const invited: (typeof memberships)[number][] = [];
       const requested: (typeof memberships)[number][] = [];
       const pending: (typeof memberships)[number][] = [];
-      memberships.forEach((m) => {
+      memberships.forEach(m => {
         if (m.status === 'active' || m.status === 'admin' || m.role?.name === 'Board Member') {
           active.push(m);
         } else if (m.status === 'invited') {
@@ -278,9 +365,9 @@ export function useGroupMemberships(groupId?: string) {
 
 // ── Group Roles ─────────────────────────────────────────────────────
 
-export function useGroupRoles(groupId?: string) {
+export function useGroupAccessRoles(groupId?: string) {
   const [rolesData, rolesResult] = useQuery(
-    groupId ? queries.groups.rolesWithRights({ groupId }) : undefined
+    groupId ? queries.groups.accessRolesWithRights({ groupId }) : undefined
   );
 
   return {
@@ -334,14 +421,47 @@ export function useGroupDocuments(groupId: string) {
   return { documents, isLoading: documentsResult.type === 'unknown' };
 }
 
-// ── Group Positions ─────────────────────────────────────────────────
+// ── Group Roles ─────────────────────────────────────────────────────
 
-export function useGroupPositions(groupId: string) {
-  const [positionsData, positionsResult] = useQuery(queries.groups.positionsFull({ groupId }));
+export function useGroupRoles(groupId: string) {
+  const [rolesData, rolesResult] = useQuery(queries.groups.rolesFull({ groupId }));
+
+  const roles = useMemo(
+    () =>
+      (rolesData || []).map(role => {
+        const currentHistoryEntry = role.holder_history?.find(history => !history.end_date);
+        const currentMembershipEntry = role.group_membership_roles?.find(
+          membershipRole => membershipRole.group_membership?.user?.id
+        )?.group_membership;
+        const currentAssignee = currentHistoryEntry?.user ?? currentMembershipEntry?.user ?? null;
+        return {
+          ...role,
+          title: role.name,
+          term:
+            role.is_recurring && role.recurrence_pattern === 'yearly'
+              ? String(role.recurrence_interval ?? 1)
+              : null,
+          first_term_start: role.term_start_date ?? null,
+          currentHolder: currentAssignee?.id
+            ? {
+                id: currentAssignee.id,
+                fullName:
+                  [currentAssignee.first_name, currentAssignee.last_name]
+                    .filter(Boolean)
+                    .join(' ') || null,
+                handle: currentAssignee.handle ?? null,
+                imageURL: currentAssignee.avatar ?? null,
+                source: currentHistoryEntry?.user?.id ? 'incumbent' : 'membership',
+              }
+            : null,
+        };
+      }),
+    [rolesData]
+  );
 
   return {
-    positions: positionsData || [],
-    isLoading: positionsResult.type === 'unknown',
+    roles,
+    isLoading: rolesResult.type === 'unknown',
   };
 }
 
@@ -413,12 +533,14 @@ export function useUserSearch(searchQuery: string, existingMemberIds: string[] =
     const allUsers = usersData || [];
     const filtered = trimmedQuery
       ? allUsers.filter(
-          (user) =>
-            `${user.first_name || ''} ${user.last_name || ''}`.toLowerCase().includes(trimmedQuery.toLowerCase()) ||
+          user =>
+            `${user.first_name || ''} ${user.last_name || ''}`
+              .toLowerCase()
+              .includes(trimmedQuery.toLowerCase()) ||
             user.handle?.toLowerCase().includes(trimmedQuery.toLowerCase())
         )
       : allUsers;
-    return filtered.filter((user) => !existingMemberIds.includes(user.id));
+    return filtered.filter(user => !existingMemberIds.includes(user.id));
   }, [usersData, existingMemberIds, trimmedQuery]);
 
   return { users, isLoading: usersResult.type === 'unknown' };
@@ -451,32 +573,32 @@ export function useUserGroupSubscriptions(userId?: string) {
 // ── Groups where current user can manage events ─────────────────────
 
 export function useUserGroupsWithManageEvents() {
-  const [memberships, result] = useQuery(
-    queries.groups.currentUserMembershipsWithRights({})
-  );
+  const [membershipsData, result] = useQuery(queries.groups.currentUserMembershipsWithRights({}));
+
+  const memberships = useMemo(() => normalizeMemberships(membershipsData), [membershipsData]);
 
   const manageEventGroupIds = useMemo(() => {
-    if (!memberships) return new Set<string>()
-    const ids = new Set<string>()
+    if (memberships.length === 0) return new Set<string>();
+    const ids = new Set<string>();
     for (const m of memberships) {
       // Only consider active memberships (member/admin)
-      const status = m.status
-      if (status !== 'active' && status !== 'admin') continue
+      const status = m.status;
+      if (status !== 'active' && status !== 'admin') continue;
 
-      const role = m.role
-      if (!role?.action_rights) continue
+      const role = m.role;
+      if (!role?.action_rights) continue;
       const canManage = role.action_rights.some(
-        (ar) => ar.resource === 'events' && (ar.action === 'manage' || ar.action === 'create')
-      )
+        ar => ar.resource === 'events' && (ar.action === 'manage' || ar.action === 'create')
+      );
       if (canManage && m.group_id) {
-        ids.add(m.group_id)
+        ids.add(m.group_id);
       }
     }
-    return ids
-  }, [memberships])
+    return ids;
+  }, [memberships]);
 
   return {
     manageEventGroupIds,
     isLoading: result.type === 'unknown',
-  }
+  };
 }

@@ -1,11 +1,7 @@
 import { useMemo } from 'react';
 import { useUserState } from '@/zero/users/useUserState';
 import { useGroupState } from '@/zero/groups/useGroupState';
-import {
-  useAllEvents,
-  useAllAmendments,
-  usePositionsWithGroups,
-} from '@/zero/events/useEventState';
+import { useAllEvents, useAllAmendments, useRolesWithGroups } from '@/zero/events/useEventState';
 import { useElectionState } from '@/zero/elections/useElectionState';
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
@@ -25,7 +21,7 @@ export function useTypeaheadData({ entityTypes }: UseTypeaheadDataOptions) {
   const includeEvents = entityTypes.includes('event');
   const includeAmendments = entityTypes.includes('amendment');
   const includeElections = entityTypes.includes('election');
-  const includePositions = entityTypes.includes('position');
+  const includeRoles = entityTypes.includes('role');
 
   const { allUsers } = useUserState({
     includeAllUsers: includeUsers,
@@ -37,7 +33,7 @@ export function useTypeaheadData({ entityTypes }: UseTypeaheadDataOptions) {
 
   const { events } = useAllEvents();
   const { amendments } = useAllAmendments();
-  const { positions } = usePositionsWithGroups();
+  const { roles } = useRolesWithGroups();
   const { pendingElections } = useElectionState({
     includePendingElections: includeElections,
   });
@@ -125,13 +121,13 @@ export function useTypeaheadData({ entityTypes }: UseTypeaheadDataOptions) {
       }
     }
 
-    if (includePositions && positions) {
-      for (const position of positions) {
+    if (includeRoles && roles) {
+      for (const role of roles) {
         result.push({
-          id: position.id,
-          entityType: 'position',
-          label: position.title || 'Position',
-          secondaryLabel: getPreview(position.description),
+          id: role.id,
+          entityType: 'role',
+          label: role.title || 'Role',
+          secondaryLabel: getPreview(role.description),
           avatar: null,
         });
       }
@@ -144,13 +140,13 @@ export function useTypeaheadData({ entityTypes }: UseTypeaheadDataOptions) {
     includeEvents,
     includeAmendments,
     includeElections,
-    includePositions,
+    includeRoles,
     allUsers,
     searchResults,
     events,
     amendments,
     pendingElections,
-    positions,
+    roles,
   ]);
 
   return { items };

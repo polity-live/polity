@@ -15,7 +15,7 @@ export const aiAttachmentEntitySchema = z.enum([
   'vote',
   'election',
   'election_candidate',
-  'position',
+  'role',
   'payment',
   'link',
   'document',

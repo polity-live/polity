@@ -22,14 +22,14 @@ interface AgendaRelatedAmendment {
   upvotes?: number | null;
   downvotes?: number | null;
   collaborator_count?: number | null;
-  change_requests?: ReadonlyArray<{ readonly id: string }> | null;
+  change_requests?: readonly { readonly id: string }[] | null;
   group?: {
     readonly id: string;
     readonly name?: string | null;
   } | null;
 }
 
-interface AgendaRelatedPosition {
+interface AgendaRelatedRole {
   readonly id: string;
   title?: string | null;
   description?: string | null;
@@ -52,7 +52,9 @@ export function AgendaRelatedAmendmentCard({
   className?: string;
 }) {
   const { t } = useTranslation();
-  const title = hasText(amendment.title) ? amendment.title : t('features.timeline.contentTypes.amendment');
+  const title = hasText(amendment.title)
+    ? amendment.title
+    : t('features.timeline.contentTypes.amendment');
   const supportCount = (amendment.upvotes ?? 0) - (amendment.downvotes ?? 0);
   const stats = [
     ...(amendment.collaborator_count && amendment.collaborator_count > 0
@@ -113,7 +115,7 @@ export function AgendaRelatedAmendmentCard({
 
       <TimelineCardContent className="space-y-3">
         {hasText(amendment.reason) && (
-          <p className="line-clamp-3 text-sm text-muted-foreground">{amendment.reason}</p>
+          <p className="text-muted-foreground line-clamp-3 text-sm">{amendment.reason}</p>
         )}
         {stats.length > 0 && <TimelineCardStats stats={stats} />}
       </TimelineCardContent>
@@ -121,16 +123,16 @@ export function AgendaRelatedAmendmentCard({
   );
 }
 
-export function AgendaRelatedPositionCard({
-  position,
+export function AgendaRelatedRoleCard({
+  role,
   className,
 }: {
-  position: AgendaRelatedPosition;
+  role: AgendaRelatedRole;
   className?: string;
 }) {
   const { t } = useTranslation();
-  const title = hasText(position.title) ? position.title : t('features.events.agenda.position', 'Position');
-  const groupName = position.group?.name?.trim() || undefined;
+  const title = hasText(role.title) ? role.title : t('features.events.agenda.role', 'Role');
+  const groupName = role.group?.name?.trim() || undefined;
 
   return (
     <TimelineCardBase contentType="election" className={className}>
@@ -138,28 +140,25 @@ export function AgendaRelatedPositionCard({
         contentType="election"
         title={title}
         subtitle={groupName}
-        subtitleHref={position.group?.id ? `/group/${position.group.id}` : undefined}
+        subtitleHref={role.group?.id ? `/group/${role.group.id}` : undefined}
         badge={
-          <TimelineCardBadge
-            label={t('features.events.agenda.position', 'Position')}
-            icon={Building2}
-          />
+          <TimelineCardBadge label={t('features.events.agenda.role', 'Role')} icon={Building2} />
         }
       >
-        {hasText(position.term) && (
+        {hasText(role.term) && (
           <div className="mt-2 flex flex-wrap gap-2">
             <Badge variant="secondary" className="text-xs">
-              {position.term}
+              {role.term}
             </Badge>
           </div>
         )}
       </TimelineCardHeader>
 
       <TimelineCardContent>
-        {hasText(position.description) ? (
-          <p className="line-clamp-3 text-sm text-muted-foreground">{position.description}</p>
+        {hasText(role.description) ? (
+          <p className="text-muted-foreground line-clamp-3 text-sm">{role.description}</p>
         ) : (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             {t('features.events.agenda.electionFor', 'Election for')} {title}
           </p>
         )}

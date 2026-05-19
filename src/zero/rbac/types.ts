@@ -28,14 +28,13 @@ export type ResourceType =
   | 'groupMemberships'
   | 'groupNotifications'
   | 'groupPayments'
-  | 'groupPositions'
-  | 'groupRelationships'
   | 'groupRoles'
+  | 'groupRelationships'
+  | 'groupAccessRoles'
   | 'groupTodos'
   | 'messages'
   | 'notifications'
   | 'payments'
-  | 'positions'
   | 'roles'
   | 'actionRights'
   | 'todos'
@@ -85,14 +84,14 @@ export interface Role {
 
 export interface Membership {
   id: string;
-  group?: { id: string; roles?: Role[] };
-  role?: Role;
+  group?: { id: string };
+  roles?: Role[];
 }
 
 export interface Participation {
   id: string;
   event?: { id: string };
-  role?: Role;
+  roles?: Role[];
 }
 
 export interface BloggerRelation {

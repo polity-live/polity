@@ -28,6 +28,8 @@ interface TypeaheadSearchProps {
   label?: string;
   /** Render dropdown inline instead of via portal. Use inside dialogs where portals escape the focus trap. */
   disablePortal?: boolean;
+  /** Render all filtered results instead of truncating the list to the default preview size. */
+  showAllResults?: boolean;
 }
 
 export function TypeaheadSearch({
@@ -41,6 +43,7 @@ export function TypeaheadSearch({
   className,
   label,
   disablePortal = false,
+  showAllResults = false,
 }: TypeaheadSearchProps) {
   const { query, setQuery, results: hookResults } = useTypeaheadSearch({ entityTypes });
   const baseResults = externalItems ?? hookResults;
@@ -68,6 +71,7 @@ export function TypeaheadSearch({
     : baseResults;
 
   const filteredResults = filterFn ? queryFilteredResults.filter(filterFn) : queryFilteredResults;
+  const visibleResults = showAllResults ? filteredResults : filteredResults.slice(0, 20);
 
   // Find selected item for display
   const selectedItem = value ? baseResults.find(r => r.id === value) : null;
@@ -215,7 +219,7 @@ export function TypeaheadSearch({
         (disablePortal ? (
           <div ref={dropdownPortalRef} className="absolute top-full right-0 left-0 z-[9999] mt-1">
             <TypeaheadDropdown
-              results={filteredResults.slice(0, 20)}
+              results={visibleResults}
               query={query}
               selectedIndex={selectedIndex}
               onSelect={handleSelect}
@@ -238,7 +242,7 @@ export function TypeaheadSearch({
               onMouseDown={e => e.stopPropagation()}
             >
               <TypeaheadDropdown
-                results={filteredResults.slice(0, 20)}
+                results={visibleResults}
                 query={query}
                 selectedIndex={selectedIndex}
                 onSelect={handleSelect}

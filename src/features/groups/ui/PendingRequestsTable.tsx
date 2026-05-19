@@ -4,7 +4,13 @@
  * Displays pending membership requests for group admins to approve or reject.
  */
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import {
@@ -16,21 +22,37 @@ import {
   TableRow,
 } from '@/features/shared/ui/ui/table';
 import { Check, Trash2, Users } from 'lucide-react';
-import type { GroupMembershipWithUser } from '../types/group.types';
+import { getMembershipDisplayRoles } from '../logic/buildMembershipRightsSummary';
+import type { ParticipationLike } from '@/features/shared/types/participation';
+import { RoleTag } from './RoleTag';
 
-interface PendingRequestsTableProps {
-  requests: GroupMembershipWithUser[];
+interface PendingRequestsTableProps<TParticipation extends ParticipationLike> {
+  requests: TParticipation[];
   onApprove: (membershipId: string, userId: string) => void;
   onReject: (membershipId: string, userId: string) => void;
   onNavigateToUser: (userId: string) => void;
+  title?: string;
+  description?: string;
+  roleColumnLabel?: string;
+  dateColumnLabel?: string;
+  fallbackRoleLabel?: string;
+  primaryActionLabel?: string;
+  secondaryActionLabel?: string;
 }
 
-export function PendingRequestsTable({
+export function PendingRequestsTable<TParticipation extends ParticipationLike>({
   requests,
   onApprove,
   onReject,
   onNavigateToUser,
-}: PendingRequestsTableProps) {
+  title = 'Pending Join Requests',
+  description = 'Review and approve membership requests',
+  roleColumnLabel = 'Requested Role',
+  dateColumnLabel = 'Requested',
+  fallbackRoleLabel = 'Member',
+  primaryActionLabel = 'Accept',
+  secondaryActionLabel = 'Remove',
+}: PendingRequestsTableProps<TParticipation>) {
   if (requests.length === 0) {
     return null;
   }
@@ -40,25 +62,28 @@ export function PendingRequestsTable({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Users className="h-5 w-5" />
-          Pending Join Requests ({requests.length})
+          {title} ({requests.length})
         </CardTitle>
-        <CardDescription>Review and approve membership requests</CardDescription>
+        <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>User</TableHead>
-              <TableHead>Requested</TableHead>
+              <TableHead>{roleColumnLabel}</TableHead>
+              <TableHead>{dateColumnLabel}</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {requests.map((membership) => {
+            {requests.map(membership => {
               const user = membership.user;
-              const userName = [user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'Unknown User';
+              const userName =
+                [user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'Unknown User';
               const userAvatar = user?.avatar || '';
               const userHandle = user?.handle || '';
+              const requestedRoles = getMembershipDisplayRoles(membership);
               const createdAt = membership.created_at
                 ? new Date(membership.created_at).toLocaleDateString()
                 : 'N/A';
@@ -86,11 +111,22 @@ export function PendingRequestsTable({
                       >
                         <div className="font-medium">{userName}</div>
                         {userHandle && (
-                          <div className="text-sm text-muted-foreground">
-                            @{userHandle}
-                          </div>
+                          <div className="text-muted-foreground text-sm">@{userHandle}</div>
                         )}
                       </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-2">
+                      {requestedRoles.length > 0 ? (
+                        requestedRoles.map(role => (
+                          <RoleTag key={role.id} roleId={role.id} roleName={role.name || 'Role'} />
+                        ))
+                      ) : (
+                        <RoleTag fallbackKey={`request-${membership.id}`}>
+                          {fallbackRoleLabel}
+                        </RoleTag>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell className="text-muted-foreground">{createdAt}</TableCell>
@@ -102,7 +138,7 @@ export function PendingRequestsTable({
                         onClick={() => user?.id && onApprove(membership.id, user.id)}
                       >
                         <Check className="mr-1 h-4 w-4" />
-                        Accept
+                        {primaryActionLabel}
                       </Button>
                       <Button
                         variant="ghost"
@@ -110,7 +146,7 @@ export function PendingRequestsTable({
                         onClick={() => user?.id && onReject(membership.id, user.id)}
                       >
                         <Trash2 className="h-4 w-4" />
-                        <span className="ml-2">Remove</span>
+                        <span className="ml-2">{secondaryActionLabel}</span>
                       </Button>
                     </div>
                   </TableCell>

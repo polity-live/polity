@@ -35,8 +35,8 @@ export const createTranslations = {
       description: 'Kollaboratives Dokument erstellen',
     },
     position: {
-      title: 'Position',
-      description: 'Neue Position in einer Organisation erstellen',
+      title: 'Rolle',
+      description: 'Neue Rolle in einer Organisation erstellen',
     },
     agendaItem: {
       title: 'Tagesordnungspunkt',

@@ -1,6 +1,12 @@
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card.tsx';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card.tsx';
 import { Badge } from '@/features/shared/ui/ui/badge.tsx';
 import { EditingModeBadge } from '@/features/shared/ui/ui/editing-mode.tsx';
 import { Calendar, Users, MapPin, Scale, FileText } from 'lucide-react';
@@ -30,7 +36,7 @@ interface SelectableElection {
   status?: string | null;
 }
 
-interface SelectablePosition {
+interface SelectableRole {
   title?: string | null;
   description?: string | null;
   group?: { name?: string | null } | null;
@@ -60,7 +66,7 @@ export function EventSelectCard({ event }: { event: SelectableEvent }) {
   };
 
   return (
-    <Card className="overflow-hidden bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/50 transition-all hover:shadow-md">
+    <Card className="overflow-hidden bg-gradient-to-br from-indigo-100 to-purple-100 transition-all hover:shadow-md dark:from-indigo-900/40 dark:to-purple-900/50">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-base">{event.title}</CardTitle>
@@ -70,12 +76,14 @@ export function EventSelectCard({ event }: { event: SelectableEvent }) {
           </Badge>
         </div>
         {event.startDate && (
-          <CardDescription className="text-xs">{formatDate(event.startDate as string | Date)}</CardDescription>
+          <CardDescription className="text-xs">
+            {formatDate(event.startDate as string | Date)}
+          </CardDescription>
         )}
       </CardHeader>
       {(event.location || event.group?.name) && (
         <CardContent className="pt-0">
-          <div className="space-y-1 text-xs text-muted-foreground">
+          <div className="text-muted-foreground space-y-1 text-xs">
             {event.location && (
               <div className="flex items-center gap-1">
                 <MapPin className="h-3 w-3" />
@@ -98,7 +106,7 @@ export function EventSelectCard({ event }: { event: SelectableEvent }) {
 // Group Selection Card
 export function GroupSelectCard({ group }: { group: SelectableGroup }) {
   return (
-    <Card className="overflow-hidden bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/50 transition-all hover:shadow-md">
+    <Card className="overflow-hidden bg-gradient-to-br from-indigo-100 to-purple-100 transition-all hover:shadow-md dark:from-indigo-900/40 dark:to-purple-900/50">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-base">{group.name}</CardTitle>
@@ -113,7 +121,7 @@ export function GroupSelectCard({ group }: { group: SelectableGroup }) {
       </CardHeader>
       {group.memberCount && (
         <CardContent className="pt-0">
-          <div className="text-xs text-muted-foreground">
+          <div className="text-muted-foreground text-xs">
             {group.memberCount} member{group.memberCount !== 1 ? 's' : ''}
           </div>
         </CardContent>
@@ -150,7 +158,7 @@ export function AmendmentSelectCard({ amendment }: { amendment: SelectableAmendm
 // Election Selection Card
 export function ElectionSelectCard({ election }: { election: SelectableElection }) {
   return (
-    <Card className="overflow-hidden bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/50 transition-all hover:shadow-md">
+    <Card className="overflow-hidden bg-gradient-to-br from-indigo-100 to-purple-100 transition-all hover:shadow-md dark:from-indigo-900/40 dark:to-purple-900/50">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-base">{election.title}</CardTitle>
@@ -173,30 +181,30 @@ export function ElectionSelectCard({ election }: { election: SelectableElection 
   );
 }
 
-// Position Selection Card
-export function PositionSelectCard({ position }: { position: SelectablePosition }) {
+// Role Selection Card
+export function RoleSelectCard({ role }: { role: SelectableRole }) {
   return (
     <Card className="transition-all hover:shadow-md">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
-          <CardTitle className="text-base">{position.title}</CardTitle>
+          <CardTitle className="text-base">{role.title}</CardTitle>
           <Badge variant="outline" className="flex-shrink-0">
-            Position
+            Role
           </Badge>
         </div>
-        {position.description && (
-          <CardDescription className="line-clamp-2 text-xs">{position.description}</CardDescription>
+        {role.description && (
+          <CardDescription className="line-clamp-2 text-xs">{role.description}</CardDescription>
         )}
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          {position.group?.name && (
+        <div className="text-muted-foreground flex items-center gap-3 text-xs">
+          {role.group?.name && (
             <div className="flex items-center gap-1">
               <Users className="h-3 w-3" />
-              <span>{position.group.name}</span>
+              <span>{role.group.name}</span>
             </div>
           )}
-          {position.term && <span>{position.term} months</span>}
+          {role.term && <span>{role.term} months</span>}
         </div>
       </CardContent>
     </Card>
@@ -204,7 +212,11 @@ export function PositionSelectCard({ position }: { position: SelectablePosition 
 }
 
 // Amendment Vote Selection Card (for change requests)
-export function AmendmentVoteSelectCard({ amendmentVote }: { amendmentVote: SelectableAmendmentVote }) {
+export function AmendmentVoteSelectCard({
+  amendmentVote,
+}: {
+  amendmentVote: SelectableAmendmentVote;
+}) {
   return (
     <Card className="transition-all hover:shadow-md">
       <CardHeader className="pb-3">

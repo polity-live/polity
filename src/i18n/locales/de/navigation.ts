@@ -39,7 +39,7 @@ export const navigationTranslations = {
       agenda: 'Tagesordnung',
       stream: 'Stream',
       participants: 'Teilnehmer',
-      positions: 'Positionen',
+      roles: 'Rollen',
       notifications: 'Benachrichtigungen',
       network: 'Netzwerk',
       edit: 'Veranstaltung bearbeiten',

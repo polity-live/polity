@@ -834,7 +834,7 @@ export function EventAgendaItemDetail({
       {election && (
         <div className="space-y-4">
           <AgendaElectionSection
-            positionName={election.title ?? t('features.events.agenda.position')}
+            roleName={election.title ?? t('features.events.agenda.role')}
             candidates={[...candidates] as CandidatesByElectionRow[]}
             indicativeSelections={indicativeSelections}
             finalSelections={finalSelections}

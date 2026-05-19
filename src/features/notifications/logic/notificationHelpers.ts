@@ -122,6 +122,55 @@ export function filterAccessibleNotifications(
 ): Notification[] {
   if (!userId) return [];
 
+  const hasAnyRight = (
+    actor:
+      | {
+          role?: {
+            action_rights?: readonly { action?: string | null; resource?: string | null }[] | null;
+          } | null;
+          roles?:
+            | readonly {
+                action_rights?:
+                  | readonly { action?: string | null; resource?: string | null }[]
+                  | null;
+              }[]
+            | null;
+          membership_roles?:
+            | readonly {
+                role?: {
+                  action_rights?:
+                    | readonly { action?: string | null; resource?: string | null }[]
+                    | null;
+                } | null;
+              }[]
+            | null;
+          participant_roles?:
+            | readonly {
+                role?: {
+                  action_rights?:
+                    | readonly { action?: string | null; resource?: string | null }[]
+                    | null;
+                } | null;
+              }[]
+            | null;
+        }
+      | null
+      | undefined,
+    matcher: (right: { action?: string | null; resource?: string | null }) => boolean
+  ) => {
+    const roleCandidates = actor?.roles?.length
+      ? actor.roles
+      : actor?.membership_roles?.length
+        ? actor.membership_roles.flatMap(link => (link.role ? [link.role] : []))
+        : actor?.participant_roles?.length
+          ? actor.participant_roles.flatMap(link => (link.role ? [link.role] : []))
+          : actor?.role
+            ? [actor.role]
+            : [];
+
+    return roleCandidates.some(role => role.action_rights?.some(right => matcher(right)));
+  };
+
   return notifications.filter(n => {
     // Personal notifications
     if (n.recipient?.id === userId) return true;
@@ -129,7 +178,8 @@ export function filterAccessibleNotifications(
     // Entity notifications where user has relevant management rights
     if (n.recipient_group?.memberships && n.recipient_group.memberships.length > 0) {
       const membership = n.recipient_group.memberships[0];
-      return membership.role?.action_rights?.some(
+      return hasAnyRight(
+        membership,
         right =>
           (right.resource === 'groupNotifications' && right.action === 'viewNotifications') ||
           (right.resource === 'groupNotifications' && right.action === 'manageNotifications') ||
@@ -140,11 +190,12 @@ export function filterAccessibleNotifications(
 
     if (n.recipient_event?.participants && n.recipient_event.participants.length > 0) {
       const participant = n.recipient_event.participants[0];
-      return participant.role?.action_rights?.some(
+      return hasAnyRight(
+        participant,
         right =>
           (right.resource === 'groupNotifications' && right.action === 'viewNotifications') ||
           (right.resource === 'groupNotifications' && right.action === 'manageNotifications') ||
-          (right.resource === 'eventParticipants' && right.action === 'manage') ||
+          (right.resource === 'events' && right.action === 'manage_participants') ||
           (right.resource === 'events' && right.action === 'manage')
       );
     }
@@ -155,7 +206,8 @@ export function filterAccessibleNotifications(
 
     if (n.recipient_blog?.bloggers && n.recipient_blog.bloggers.length > 0) {
       const blogger = n.recipient_blog.bloggers[0];
-      return blogger.role?.action_rights?.some(
+      return hasAnyRight(
+        blogger,
         right =>
           (right.resource === 'groupNotifications' && right.action === 'viewNotifications') ||
           (right.resource === 'groupNotifications' && right.action === 'manageNotifications') ||

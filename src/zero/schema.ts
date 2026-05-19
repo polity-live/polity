@@ -2,8 +2,21 @@ import { createSchema, createBuilder, type Row } from '@rocicorp/zero';
 
 // Table imports
 import { user, file } from './users/table';
-import { group, groupMembership, role, actionRight } from './groups/table';
-import { event, eventParticipant, participant, eventException } from './events/table';
+import {
+  group,
+  groupMembership,
+  groupMembershipRole,
+  role,
+  roleHolderHistory,
+  actionRight,
+} from './groups/table';
+import {
+  event,
+  eventParticipant,
+  eventParticipantRole,
+  participant,
+  eventException,
+} from './events/table';
 import {
   amendment,
   amendmentCollaborator,
@@ -68,12 +81,6 @@ import {
 } from './votes/table';
 import { changeRequest } from './change-requests/table';
 import { thread, comment } from './discussions/table';
-import {
-  position,
-  positionHolderHistory,
-  eventPosition,
-  eventPositionHolder,
-} from './positions/table';
 import { eventDelegate, groupDelegateAllocation } from './delegates/table';
 import {
   follow,
@@ -105,11 +112,14 @@ export const schema = createSchema({
     // Groups
     group,
     groupMembership,
+    groupMembershipRole,
     role,
+    roleHolderHistory,
     actionRight,
     // Events
     event,
     eventParticipant,
+    eventParticipantRole,
     participant,
     eventException,
     // Amendments
@@ -154,11 +164,6 @@ export const schema = createSchema({
     // Discussions
     thread,
     comment,
-    // Positions
-    position,
-    positionHolderHistory,
-    eventPosition,
-    eventPositionHolder,
     // Delegates
     eventDelegate,
     groupDelegateAllocation,
@@ -236,20 +241,19 @@ export type Follow = Row<Schema['tables']['follow']>;
 // Groups
 export type Group = Row<Schema['tables']['group']>;
 export type GroupMembership = Row<Schema['tables']['group_membership']>;
+export type GroupMembershipRole = Row<Schema['tables']['group_membership_role']>;
 export type GroupRelationship = Row<Schema['tables']['group_relationship']>;
 export type Role = Row<Schema['tables']['role']>;
+export type RoleHolderHistory = Row<Schema['tables']['role_holder_history']>;
 export type ActionRight = Row<Schema['tables']['action_right']>;
-export type Position = Row<Schema['tables']['position']>;
-export type PositionHolderHistory = Row<Schema['tables']['position_holder_history']>;
 
 // Events
 export type Event = Row<Schema['tables']['event']>;
 export type EventParticipant = Row<Schema['tables']['event_participant']>;
+export type EventParticipantRole = Row<Schema['tables']['event_participant_role']>;
 export type EventDelegate = Row<Schema['tables']['event_delegate']>;
 export type GroupDelegateAllocation = Row<Schema['tables']['group_delegate_allocation']>;
 export type Participant = Row<Schema['tables']['participant']>;
-export type EventPosition = Row<Schema['tables']['event_position']>;
-export type EventPositionHolder = Row<Schema['tables']['event_position_holder']>;
 export type EventException = Row<Schema['tables']['event_exception']>;
 export type CalendarSubscription = Row<Schema['tables']['calendar_subscription']>;
 

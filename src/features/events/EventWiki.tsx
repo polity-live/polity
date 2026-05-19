@@ -2,7 +2,7 @@
 
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Trophy, UserCheck, Users, Repeat } from 'lucide-react';
+import { Trophy, Users, Repeat } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -41,18 +41,13 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { DelegatesOverview } from '@/features/delegates/ui/DelegatesOverview';
 import { EventDeadlinesCard } from './ui/EventDeadlinesCard';
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from '@/features/shared/ui/ui/carousel';
 import { useEventWikiPage } from './hooks/useEventWikiPage';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
 import { formatNamedLocation } from '@/features/shared/logic/locationHelpers';
 import { getEventTypeTranslationKey } from './logic/getEventTypeTranslationKey';
 import { MeetingPage } from '@/features/meet/MeetingPage';
+import { buildEventWikiIncumbentSections } from './logic/buildEventWikiIncumbentSections';
+import { WikiIncumbentPanel } from '@/features/shared/ui/wiki/WikiIncumbentPanel';
 
 interface EventWikiProps {
   eventId: string;
@@ -108,6 +103,10 @@ export function EventWiki({ eventId }: EventWikiProps) {
 
   const { electionsCount, amendmentsCount, openChangeRequestsCount } = agendaStats;
   const formattedLocation = formatNamedLocation(event.location_name, event);
+  const incumbentSections = buildEventWikiIncumbentSections(
+    event.roles ?? [],
+    event.participants ?? []
+  );
 
   return (
     <div>
@@ -299,115 +298,12 @@ export function EventWiki({ eventId }: EventWikiProps) {
         </Card>
       )}
 
-      {/* Event Positions Carousel */}
-      {event.event_positions && event.event_positions.length > 0 && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <UserCheck className="h-5 w-5" />
-              Positions
-            </CardTitle>
-            <CardDescription>Positions for this event</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Carousel
-              opts={{
-                align: 'start',
-                loop: true,
-              }}
-              className="w-full"
-            >
-              <CarouselContent className="-ml-2 md:-ml-4">
-                {event.event_positions.map((position, index) => {
-                  const holders = position.holders || [];
-                  const filledSlots = holders.length;
-                  const totalSlots = filledSlots || 1;
-
-                  return (
-                    <CarouselItem
-                      key={position.id}
-                      className="pl-2 md:basis-1/2 md:pl-4 lg:basis-1/3"
-                    >
-                      <Card
-                        className={`h-full overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${GRADIENTS[index % GRADIENTS.length]}`}
-                      >
-                        <CardHeader className="space-y-3 pb-4">
-                          <div className="flex items-start justify-between">
-                            <CardTitle className="line-clamp-1 flex-1 text-xl">
-                              {position.title}
-                            </CardTitle>
-                            <Badge variant="outline" className="ml-2 shrink-0">
-                              {filledSlots}/{totalSlots}
-                            </Badge>
-                          </div>
-                          {position.description && (
-                            <CardDescription className="line-clamp-2">
-                              {position.description}
-                            </CardDescription>
-                          )}
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                          <div className="space-y-3">
-                            {/* Display holders */}
-                            {holders.length > 0 ? (
-                              <div className="space-y-2">
-                                <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-                                  Current {holders.length === 1 ? 'Holder' : 'Holders'}
-                                </p>
-                                {holders.map(holder => (
-                                  <div
-                                    key={holder.id}
-                                    className="bg-background/80 cursor-pointer rounded-lg border p-3 shadow-sm backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
-                                    onClick={() => navigate({ to: `/user/${holder.user?.id}` })}
-                                  >
-                                    <div className="flex items-center gap-3">
-                                      <Avatar className="ring-background h-10 w-10 ring-2">
-                                        <AvatarImage
-                                          src={holder.user?.avatar ?? undefined}
-                                          alt={
-                                            `${holder.user?.first_name ?? ''} ${holder.user?.last_name ?? ''}`.trim() ||
-                                            'User'
-                                          }
-                                        />
-                                        <AvatarFallback>
-                                          {holder.user?.first_name?.[0]?.toUpperCase() || '?'}
-                                        </AvatarFallback>
-                                      </Avatar>
-                                      <div className="min-w-0 flex-1">
-                                        <p className="truncate font-semibold">
-                                          {`${holder.user?.first_name ?? ''} ${holder.user?.last_name ?? ''}`.trim() ||
-                                            'Unknown'}
-                                        </p>
-                                        {holder.user?.handle && (
-                                          <p className="text-muted-foreground truncate text-sm">
-                                            @{holder.user.handle}
-                                          </p>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <div className="border-border/50 bg-background/50 rounded-lg border border-dashed p-4 text-center">
-                                <p className="text-muted-foreground text-sm font-medium">
-                                  Vacant Position
-                                </p>
-                              </div>
-                            )}
-                            {/* Elections are managed at the agenda item level, not per position */}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </CarouselItem>
-                  );
-                })}
-              </CarouselContent>
-              <CarouselPrevious />
-              <CarouselNext />
-            </Carousel>
-          </CardContent>
-        </Card>
+      {incumbentSections.length > 0 && (
+        <WikiIncumbentPanel
+          title="Roles & Incumbents"
+          description="Visible event roles and their current incumbents"
+          sections={incumbentSections}
+        />
       )}
 
       {/* Elections Selection Dialog */}
@@ -444,12 +340,12 @@ export function EventWiki({ eventId }: EventWikiProps) {
                     )}
                   </CardHeader>
                   <CardContent>
-                    {election.position && (
+                    {election.role && (
                       <div className="bg-background/50 rounded-md border p-3">
-                        <div className="text-sm font-medium">{election.position.title}</div>
-                        {election.position.description && (
+                        <div className="text-sm font-medium">{election.role.title}</div>
+                        {election.role.description && (
                           <div className="text-muted-foreground mt-1 text-xs">
-                            {election.position.description}
+                            {election.role.description}
                           </div>
                         )}
                       </div>
@@ -491,14 +387,12 @@ export function EventWiki({ eventId }: EventWikiProps) {
                 )}
               </CardHeader>
               <CardContent>
-                {selectedElection.position && (
+                {selectedElection.role && (
                   <div className="bg-background/50 rounded-md border p-3">
-                    <div className="text-sm font-semibold">
-                      Position: {selectedElection.position.title}
-                    </div>
-                    {selectedElection.position.description && (
+                    <div className="text-sm font-semibold">Role: {selectedElection.role.title}</div>
+                    {selectedElection.role.description && (
                       <div className="text-muted-foreground mt-1 text-xs">
-                        {selectedElection.position.description}
+                        {selectedElection.role.description}
                       </div>
                     )}
                   </div>

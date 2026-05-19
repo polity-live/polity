@@ -1,6 +1,6 @@
 -- =============================================================================
 -- 16_election.sql — Elections, candidates, electors, and voting tables
--- Depends on: 01_user (user), 03_event (event), 06_agenda (agenda_item)
+-- Depends on: 01_user (user), 02_group (role), 03_event (event), 06_agenda (agenda_item)
 -- =============================================================================
 
 -- Election table (modified: removed amendment_id, is_multiple_choice, max_selections,
@@ -9,7 +9,7 @@
 CREATE TABLE IF NOT EXISTS public.election (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   agenda_item_id UUID,
-  position_id UUID,
+  role_id UUID REFERENCES public.role (id) ON DELETE SET NULL,
   title TEXT,
   description TEXT,
   status TEXT,
@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS public.election (
 );
 
 CREATE INDEX idx_election_agenda_item ON public.election (agenda_item_id);
+CREATE INDEX idx_election_role_id ON public.election (role_id);
 
 ALTER TABLE public.election ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.election FOR ALL TO service_role USING (true);

@@ -30,7 +30,7 @@ export function getEntityIcon(entityType: string) {
       return User;
     case 'election':
       return Vote;
-    case 'position':
+    case 'role':
       return UserCheck;
     default:
       return FileText;
@@ -41,8 +41,15 @@ export function getEntityIcon(entityType: string) {
  * Format a display label for an entity based on its type.
  */
 export function formatEntityLabel(
-  entity: { name?: string; title?: string; code?: string; first_name?: string; last_name?: string; handle?: string },
-  entityType: string,
+  entity: {
+    name?: string;
+    title?: string;
+    code?: string;
+    first_name?: string;
+    last_name?: string;
+    handle?: string;
+  },
+  entityType: string
 ): string {
   switch (entityType) {
     case 'user':

@@ -1,4 +1,6 @@
 import React from 'react';
+import { richTextToPlainText } from '@/features/shared/logic/richText';
+import { getPrimaryMembershipRole } from '@/features/shared/logic/membershipRoleHelpers';
 import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCard';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
 import { useAuth } from '@/providers/auth-provider';
@@ -25,20 +27,30 @@ export function GroupSearchCard({ group }: GroupSearchCardProps) {
   if (isSearchGroup(group)) {
     // Find current user's membership to get their actual role
     const userMembership = group.memberships?.find(m => m.user?.id === user?.id);
-    const role = userMembership?.role?.name || (userMembership ? 'Member' : 'Visitor');
+    const role =
+      getPrimaryMembershipRole(userMembership)?.name || (userMembership ? 'Member' : 'Visitor');
     const memberCount = group.member_count ?? group.memberships?.length ?? 0;
+    const description = richTextToPlainText(group.description);
 
     return (
       <GroupTimelineCard
         group={{
           id: String(group.id),
           name: group.name ?? '',
-          description: group.description ?? undefined,
+          description: description || undefined,
           memberCount,
           eventCount: group.events?.length || 0,
           amendmentCount: group.amendments?.length || 0,
           hashtags: extractHashtags(group.group_hashtags),
-          membershipStatus: (userMembership?.status as 'active' | 'admin' | 'invited' | 'requested' | 'member' | null | undefined) || (role === 'Visitor' ? null : 'member'),
+          membershipStatus:
+            (userMembership?.status as
+              | 'active'
+              | 'admin'
+              | 'invited'
+              | 'requested'
+              | 'member'
+              | null
+              | undefined) || (role === 'Visitor' ? null : 'member'),
         }}
       />
     );

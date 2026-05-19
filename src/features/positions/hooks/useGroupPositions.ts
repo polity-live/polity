@@ -1,30 +1,23 @@
 /**
- * Hook for managing group positions
+ * Hook for managing group roles
  * Handles CRUD operations, holder management, history tracking, and election creation
  */
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { useGroupPositions as useFacadeGroupPositions } from '@/zero/groups/useGroupState';
+import { useGroupRoles as useFacadeGroupRoles } from '@/zero/groups/useGroupState';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useElectionActions } from '@/zero/elections/useElectionActions';
-import {
-  notifyPositionCreated,
-  notifyPositionAssigned,
-  notifyPositionVacated,
-  notifyPositionDeleted,
-  notifyElectionCreated,
-} from '@/features/notifications/utils/notification-helpers.ts';
 
-export function useGroupPositions(groupId: string) {
-  const { positions: positionsData, isLoading } = useFacadeGroupPositions(groupId);
+export function useGroupRoles(groupId: string) {
+  const { roles: rolesData, isLoading } = useFacadeGroupRoles(groupId);
   const {
-    createPosition: createPositionAction,
-    updatePosition: updatePositionAction,
-    deletePosition: deletePositionAction,
-    createPositionHolderHistory: createHistoryAction,
-    updatePositionHolderHistory: updateHistoryAction,
+    createRole: createRoleAction,
+    updateRole: updateRoleAction,
+    deleteRole: deleteRoleAction,
+    createRoleHolderHistory: createHistoryAction,
+    updateRoleHolderHistory: updateHistoryAction,
   } = useGroupActions();
   const { createElection: createElectionAction } = useElectionActions();
   const { createAgendaItem: createAgendaItemAction } = useAgendaActions();
@@ -32,8 +25,8 @@ export function useGroupPositions(groupId: string) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [assignHolderDialogOpen, setAssignHolderDialogOpen] = useState(false);
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
-  const [selectedPosition, setSelectedPosition] = useState<(typeof positions)[number] | null>(null);
-  const [editingPosition, setEditingPosition] = useState<(typeof positions)[number] | null>(null);
+  const [selectedRole, setSelectedRole] = useState<(typeof roles)[number] | null>(null);
+  const [editingRole, setEditingRole] = useState<(typeof roles)[number] | null>(null);
 
   // Form state
   const [title, setTitle] = useState('');
@@ -42,8 +35,8 @@ export function useGroupPositions(groupId: string) {
   const [firstTermStart, setFirstTermStart] = useState('');
   const [createElection, setCreateElection] = useState(false);
 
-  // Query positions with all relationships
-  const positions = positionsData || [];
+  // Query roles with all relationships
+  const roles = rolesData || [];
 
   const resetForm = () => {
     setTitle('');
@@ -53,16 +46,9 @@ export function useGroupPositions(groupId: string) {
     setCreateElection(false);
   };
 
-  /**
-   * Create a new position
-   */
-  const createPosition = async (params?: {
-    senderId?: string;
-    groupName?: string;
-    adminUserIds?: string[];
-  }) => {
+  const createRoleRecord = async () => {
     if (!title.trim()) {
-      toast.error('Position title is required');
+      toast.error('Role title is required');
       return { success: false };
     }
 
@@ -77,24 +63,35 @@ export function useGroupPositions(groupId: string) {
       return { success: false };
     }
 
-    const positionTitle = title.trim();
+    const roleTitle = title.trim();
+    const hasRecurringTerm = termNum > 0;
     resetForm();
     setAddDialogOpen(false);
-    toast.success('Position created successfully');
+    toast.success('Role created successfully');
 
     try {
-      const positionId = crypto.randomUUID();
-      const now = Date.now();
+      const roleId = crypto.randomUUID();
 
-      await createPositionAction({
-        id: positionId,
-        title: positionTitle,
+      await createRoleAction({
+        id: roleId,
+        name: roleTitle,
         description: description.trim() || '',
-        term: String(termNum),
-        first_term_start: new Date(firstTermStart).getTime(),
-        scheduled_revote_date: null,
+        scope: 'group',
         group_id: groupId,
         event_id: null,
+        amendment_id: null,
+        blog_id: null,
+        assignment_mode: createElection ? 'elected' : 'assigned',
+        visibility: 'public',
+        term_start_date: new Date(firstTermStart).getTime(),
+        is_recurring: hasRecurringTerm,
+        recurrence_pattern: hasRecurringTerm ? 'yearly' : null,
+        recurrence_rule: hasRecurringTerm ? `FREQ=YEARLY;INTERVAL=${termNum}` : null,
+        recurrence_interval: hasRecurringTerm ? termNum : null,
+        recurrence_days: null,
+        recurrence_end_date: null,
+        scheduled_revote_date: null,
+        sort_order: roles.length,
       });
 
       // If createElection is true, create election + agenda item
@@ -104,13 +101,13 @@ export function useGroupPositions(groupId: string) {
 
         await createElectionAction({
           id: electionId,
-          title: `Election for ${positionTitle}`,
-          description: `Vote for the ${positionTitle} position`,
+          title: `Election for ${roleTitle}`,
+          description: `Vote for the ${roleTitle} role`,
           majority_type: 'simple',
           status: 'pending',
           visibility: 'public',
           max_votes: 1,
-          position_id: positionId,
+          role_id: roleId,
           agenda_item_id: agendaItemId,
           closing_type: null,
           closing_duration_seconds: null,
@@ -119,7 +116,7 @@ export function useGroupPositions(groupId: string) {
 
         await createAgendaItemAction({
           id: agendaItemId,
-          title: `Election: ${positionTitle}`,
+          title: `Election: ${roleTitle}`,
           description: '',
           type: 'election',
           status: 'pending',
@@ -139,20 +136,17 @@ export function useGroupPositions(groupId: string) {
         });
       }
 
-      return { success: true, positionId };
+      return { success: true, roleId };
     } catch (error) {
-      console.error('Failed to create position:', error);
-      toast.error('Failed to create position. Please try again.');
+      console.error('Failed to create role:', error);
+      toast.error('Failed to create role. Please try again.');
       return { success: false, error };
     }
   };
 
-  /**
-   * Update an existing position
-   */
-  const updatePosition = async () => {
-    if (!editingPosition || !title.trim()) {
-      toast.error('Position title is required');
+  const updateRoleRecord = async () => {
+    if (!editingRole || !title.trim()) {
+      toast.error('Role title is required');
       return { success: false };
     }
 
@@ -167,75 +161,65 @@ export function useGroupPositions(groupId: string) {
       return { success: false };
     }
 
+    const hasRecurringTerm = termNum > 0;
     resetForm();
-    setEditingPosition(null);
+    setEditingRole(null);
     setEditDialogOpen(false);
-    toast.success('Position updated successfully');
+    toast.success('Role updated successfully');
 
     try {
-      await updatePositionAction({
-        id: editingPosition.id,
-        title: title.trim(),
+      await updateRoleAction({
+        id: editingRole.id,
+        name: title.trim(),
         description: description.trim() || '',
-        term: String(termNum),
-        first_term_start: new Date(firstTermStart).getTime(),
+        term_start_date: new Date(firstTermStart).getTime(),
+        is_recurring: hasRecurringTerm,
+        recurrence_pattern: hasRecurringTerm ? 'yearly' : null,
+        recurrence_rule: hasRecurringTerm ? `FREQ=YEARLY;INTERVAL=${termNum}` : null,
+        recurrence_interval: hasRecurringTerm ? termNum : null,
+        recurrence_days: null,
+        recurrence_end_date: null,
       });
       return { success: true };
     } catch (error) {
-      console.error('Failed to update position:', error);
-      toast.error('Failed to update position. Please try again.');
+      console.error('Failed to update role:', error);
+      toast.error('Failed to update role. Please try again.');
       return { success: false, error };
     }
   };
 
-  /**
-   * Delete a position
-   */
-  const deletePosition = async (
-    positionId: string,
-    params?: {
-      positionTitle?: string;
-      senderId?: string;
-      groupName?: string;
-      adminUserIds?: string[];
-    }
-  ) => {
-    toast.success('Position deleted successfully');
+  const deleteRoleRecord = async (roleId: string) => {
+    toast.success('Role deleted successfully');
 
     try {
-      await deletePositionAction({ id: positionId });
+      await deleteRoleAction({ id: roleId });
 
       return { success: true };
     } catch (error) {
-      console.error('Failed to delete position:', error);
-      toast.error('Failed to delete position. Please try again.');
+      console.error('Failed to delete role:', error);
+      toast.error('Failed to delete role. Please try again.');
       return { success: false, error };
     }
   };
 
   /**
-   * Assign a holder to a position
+   * Assign a holder to a role
    * Creates history entry for the new holder and ends the previous holder's entry
    */
   const assignHolder = async (
-    positionId: string,
+    roleId: string,
     userId: string,
-    reason: 'elected' | 'appointed' = 'appointed',
-    senderId?: string,
-    groupName?: string,
-    positionTitle?: string
+    reason: 'elected' | 'appointed' = 'appointed'
   ) => {
     toast.success('Holder assigned successfully');
 
     try {
       const now = Date.now();
-      const position = positions.find((p) => p.id === positionId);
+      const role = roles.find(candidateRole => candidateRole.id === roleId);
 
       // If there's a current holder, end their history entry
       // End the current active history entry (if exists)
-      const currentHistoryEntry = position?.holder_history?.find(
-        (h) => !h.end_date
-      );
+      const currentHistoryEntry = role?.holder_history?.find(h => !h.end_date);
       if (currentHistoryEntry) {
         await updateHistoryAction({
           id: currentHistoryEntry.id,
@@ -249,7 +233,7 @@ export function useGroupPositions(groupId: string) {
         id: historyId,
         start_date: now,
         reason: reason,
-        position_id: positionId,
+        role_id: roleId,
         user_id: userId,
         end_date: null,
       });
@@ -266,26 +250,28 @@ export function useGroupPositions(groupId: string) {
   };
 
   /**
-   * Remove the current holder from a position
+   * Remove the current holder from a role
    */
   const removeHolder = async (
-    positionId: string,
-    reason: 'resigned' | 'removed' | 'term_ended' = 'removed',
-    senderId?: string,
-    groupName?: string,
-    positionTitle?: string
+    roleId: string,
+    reason: 'resigned' | 'removed' | 'term_ended' = 'removed'
   ) => {
-    toast.success('Holder removed successfully');
-
     try {
       const now = Date.now();
-      const position = positions.find((p) => p.id === positionId);
+      const role = roles.find(candidateRole => candidateRole.id === roleId);
 
       // End the current holder's history entry
       // End the current active history entry
-      const currentHistoryEntry = position?.holder_history?.find(
-        (h) => !h.end_date
-      );
+      const currentHistoryEntry = role?.holder_history?.find(h => !h.end_date);
+      if (!currentHistoryEntry) {
+        toast.error(
+          'This assignee comes from an active member role. Change it from the members tab.'
+        );
+        return { success: false };
+      }
+
+      toast.success('Holder removed successfully');
+
       if (currentHistoryEntry) {
         await updateHistoryAction({
           id: currentHistoryEntry.id,
@@ -303,37 +289,28 @@ export function useGroupPositions(groupId: string) {
   };
 
   /**
-   * Create an election for a position (e.g., when term is ending)
+   * Create an election for a role (e.g., when term is ending)
    */
-  const createElectionForPosition = async (
-    positionId: string,
-    eventId?: string,
-    params?: {
-      senderId?: string;
-      groupName?: string;
-      memberUserIds?: string[];
-    }
-  ) => {
+  const createElectionForRole = async (roleId: string, eventId?: string) => {
     try {
-      const position = positions.find((p) => p.id === positionId);
-      if (!position) {
-        toast.error('Position not found');
+      const role = roles.find(candidateRole => candidateRole.id === roleId);
+      if (!role) {
+        toast.error('Role not found');
         return { success: false };
       }
 
-      const now = Date.now();
       const electionId = crypto.randomUUID();
       const agendaItemId = crypto.randomUUID();
 
       await createElectionAction({
         id: electionId,
-        title: `Election for ${position.title}`,
-        description: `Vote for the ${position.title} position`,
+        title: `Election for ${role.title}`,
+        description: `Vote for the ${role.title} role`,
         majority_type: 'simple',
         status: 'pending',
         visibility: 'public',
         max_votes: 1,
-        position_id: positionId,
+        role_id: roleId,
         agenda_item_id: agendaItemId,
         closing_type: null,
         closing_duration_seconds: null,
@@ -342,7 +319,7 @@ export function useGroupPositions(groupId: string) {
 
       await createAgendaItemAction({
         id: agendaItemId,
-        title: `Election: ${position.title}`,
+        title: `Election: ${role.title}`,
         description: '',
         type: 'election',
         status: 'pending',
@@ -371,15 +348,15 @@ export function useGroupPositions(groupId: string) {
   };
 
   /**
-   * Open edit dialog with position data
+   * Open edit dialog with role data
    */
-  const openEditDialog = (position: (typeof positions)[number]) => {
-    setEditingPosition(position);
-    setTitle(position.title || '');
-    setDescription(position.description || '');
-    setTerm(String(position.term || 4));
+  const openEditDialog = (role: (typeof roles)[number]) => {
+    setEditingRole(role);
+    setTitle(role.title || '');
+    setDescription(role.description || '');
+    setTerm(String(role.term || 4));
     setFirstTermStart(
-      position.first_term_start ? new Date(position.first_term_start).toISOString().split('T')[0] : ''
+      role.first_term_start ? new Date(role.first_term_start).toISOString().split('T')[0] : ''
     );
     setEditDialogOpen(true);
   };
@@ -387,21 +364,21 @@ export function useGroupPositions(groupId: string) {
   /**
    * Open assign holder dialog
    */
-  const openAssignHolderDialog = (position: (typeof positions)[number]) => {
-    setSelectedPosition(position);
+  const openAssignHolderDialog = (role: (typeof roles)[number]) => {
+    setSelectedRole(role);
     setAssignHolderDialogOpen(true);
   };
 
   /**
    * Open history dialog
    */
-  const openHistoryDialog = (position: (typeof positions)[number]) => {
-    setSelectedPosition(position);
+  const openHistoryDialog = (role: (typeof roles)[number]) => {
+    setSelectedRole(role);
     setHistoryDialogOpen(true);
   };
 
   return {
-    positions,
+    roles,
     isLoading,
     dialogs: {
       add: { open: addDialogOpen, setOpen: setAddDialogOpen },
@@ -422,15 +399,15 @@ export function useGroupPositions(groupId: string) {
       setCreateElection,
       reset: resetForm,
     },
-    selectedPosition,
-    editingPosition,
+    selectedRole,
+    editingRole,
     actions: {
-      create: createPosition,
-      update: updatePosition,
-      delete: deletePosition,
+      create: createRoleRecord,
+      update: updateRoleRecord,
+      delete: deleteRoleRecord,
       assignHolder,
       removeHolder,
-      createElection: createElectionForPosition,
+      createElection: createElectionForRole,
       openEdit: openEditDialog,
       openAssignHolder: openAssignHolderDialog,
       openHistory: openHistoryDialog,

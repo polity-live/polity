@@ -21,8 +21,8 @@ export interface GroupNotificationSettings {
   newAmendments: boolean;
   /** New relationships (parent/child group connections) */
   newRelationships: boolean;
-  /** New positions created in the group */
-  newPositions: boolean;
+  /** New roles created in the group */
+  newRoles: boolean;
   /** New documents shared in the group */
   newDocuments: boolean;
   /** New members joined (admin only) */
@@ -57,8 +57,8 @@ export interface EventNotificationSettings {
   newParticipants: boolean;
   /** Role updates (promotions, demotions) */
   roleUpdates: boolean;
-  /** Position changes (filled, vacated) */
-  positionChanges: boolean;
+  /** Role changes (filled, vacated) */
+  roleChanges: boolean;
   /** Profile updates (title, description) */
   profileUpdates: boolean;
   /** New subscribers (organizer only) */
@@ -227,7 +227,7 @@ export const DEFAULT_GROUP_NOTIFICATIONS: GroupNotificationSettings = {
   newEvents: true,
   newAmendments: true,
   newRelationships: true,
-  newPositions: true,
+  newRoles: true,
   newDocuments: true,
   newMembers: true,
   roleUpdates: true,
@@ -244,7 +244,7 @@ export const DEFAULT_EVENT_NOTIFICATIONS: EventNotificationSettings = {
   scheduleChanges: true,
   newParticipants: true,
   roleUpdates: true,
-  positionChanges: true,
+  roleChanges: true,
   profileUpdates: true,
   newSubscribers: true,
   participationRequests: true,
@@ -309,7 +309,10 @@ export const DEFAULT_TIMELINE_SETTINGS: TimelineSettings = {
   refreshFrequency: 'realtime',
 };
 
-export const DEFAULT_NOTIFICATION_SETTINGS: Omit<NotificationSettings, 'id' | 'createdAt' | 'updatedAt'> = {
+export const DEFAULT_NOTIFICATION_SETTINGS: Omit<
+  NotificationSettings,
+  'id' | 'createdAt' | 'updatedAt'
+> = {
   groupNotifications: DEFAULT_GROUP_NOTIFICATIONS,
   eventNotifications: DEFAULT_EVENT_NOTIFICATIONS,
   amendmentNotifications: DEFAULT_AMENDMENT_NOTIFICATIONS,

@@ -162,26 +162,135 @@ const eventParticipantBaseSchema = z.object({
   user_id: z.string(),
   group_id: z.string().nullable(),
   status: z.string().nullable(),
-  role_id: z.string().nullable(),
-  visibility: z.string().nullable(),
+  visibility: z.string(),
   instance_date: nullableTimestampSchema,
   created_at: timestampSchema,
 });
 
 export const eventParticipantSelectSchema = eventParticipantBaseSchema;
 export const eventParticipantCreateSchema = eventParticipantBaseSchema
-  .omit({ id: true, created_at: true, user_id: true })
+  .omit({ id: true, created_at: true, user_id: true, visibility: true })
   .extend({
     id: z.string(),
     user_id: z.string().optional(),
     instance_date: nullableTimestampSchema.optional(),
+    visibility: z.string().optional(),
+    initial_role_id: z.string().nullable().optional(),
   });
 export const eventParticipantUpdateSchema = eventParticipantBaseSchema
-  .pick({ status: true, role_id: true, visibility: true })
+  .pick({ status: true, visibility: true })
   .partial()
   .extend({ id: z.string() });
+export const eventParticipantLegacyRoleUpdateSchema = eventParticipantUpdateSchema.extend({
+  role_id: z.string().nullable().optional(),
+});
 export const eventParticipantDeleteSchema = z.object({ id: z.string() });
 export type EventParticipant = z.infer<typeof eventParticipantSelectSchema>;
+
+// ── event_participant_role ───────────────────────────────────────────
+const eventParticipantRoleBaseSchema = z.object({
+  id: z.string(),
+  event_participant_id: z.string(),
+  role_id: z.string(),
+  assigned_at: timestampSchema,
+  assigned_by_id: z.string().nullable(),
+  created_at: timestampSchema,
+});
+
+export const eventParticipantRoleSelectSchema = eventParticipantRoleBaseSchema;
+export const eventParticipantRoleCreateSchema = eventParticipantRoleBaseSchema
+  .omit({ id: true, assigned_at: true, created_at: true })
+  .extend({
+    id: z.string(),
+    assigned_at: nullableTimestampSchema.optional(),
+    assigned_by_id: z.string().nullable().optional(),
+  });
+export const eventParticipantRoleAssignSchema = z.object({
+  event_participant_id: z.string(),
+  role_id: z.string(),
+  assigned_by_id: z.string().nullable().optional(),
+});
+export const eventParticipantRoleUnassignSchema = z.object({
+  event_participant_id: z.string(),
+  role_id: z.string(),
+});
+export const eventParticipantRolesSyncSchema = z.object({
+  event_participant_id: z.string(),
+  role_ids: z.array(z.string()),
+  assigned_by_id: z.string().nullable().optional(),
+});
+export const eventParticipantRoleDeleteSchema = z.object({ id: z.string() });
+export type EventParticipantRole = z.infer<typeof eventParticipantRoleSelectSchema>;
+
+// ── event role ──────────────────────────────────────────────────────
+const eventRoleBaseSchema = z.object({
+  id: z.string(),
+  name: z.string().nullable(),
+  description: z.string().nullable(),
+  scope: z.string().nullable(),
+  group_id: z.string().nullable(),
+  event_id: z.string().nullable(),
+  amendment_id: z.string().nullable(),
+  blog_id: z.string().nullable(),
+  assignment_mode: z.enum(['assigned', 'elected']),
+  visibility: z.string(),
+  term_start_date: nullableTimestampSchema,
+  is_recurring: z.boolean(),
+  recurrence_pattern: z.string().nullable(),
+  recurrence_rule: z.string().nullable(),
+  recurrence_interval: z.number().nullable(),
+  recurrence_days: jsonNumberArraySchema.nullable(),
+  recurrence_end_date: nullableTimestampSchema,
+  scheduled_revote_date: nullableTimestampSchema,
+  default_request_role: z.boolean(),
+  default_invite_role: z.boolean(),
+  sort_order: z.number(),
+  created_at: timestampSchema,
+});
+
+export const eventRoleSelectSchema = eventRoleBaseSchema;
+export const createEventRoleSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().nullable().optional(),
+  scope: z.literal('event').optional(),
+  group_id: z.string().nullable().optional(),
+  event_id: z.string(),
+  amendment_id: z.string().nullable().optional(),
+  blog_id: z.string().nullable().optional(),
+  assignment_mode: z.enum(['assigned', 'elected']).optional(),
+  visibility: z.string().optional(),
+  term_start_date: nullableTimestampSchema.optional(),
+  is_recurring: z.boolean().optional(),
+  recurrence_pattern: z.string().nullable().optional(),
+  recurrence_rule: z.string().nullable().optional(),
+  recurrence_interval: z.number().nullable().optional(),
+  recurrence_days: jsonNumberArraySchema.nullable().optional(),
+  recurrence_end_date: nullableTimestampSchema.optional(),
+  scheduled_revote_date: nullableTimestampSchema.optional(),
+  default_request_role: z.boolean().optional(),
+  default_invite_role: z.boolean().optional(),
+  sort_order: z.number().optional(),
+});
+export const updateEventRoleSchema = z.object({
+  id: z.string(),
+  name: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
+  assignment_mode: z.enum(['assigned', 'elected']).optional(),
+  visibility: z.string().optional(),
+  term_start_date: nullableTimestampSchema.optional(),
+  is_recurring: z.boolean().optional(),
+  recurrence_pattern: z.string().nullable().optional(),
+  recurrence_rule: z.string().nullable().optional(),
+  recurrence_interval: z.number().nullable().optional(),
+  recurrence_days: jsonNumberArraySchema.nullable().optional(),
+  recurrence_end_date: nullableTimestampSchema.optional(),
+  scheduled_revote_date: nullableTimestampSchema.optional(),
+  default_request_role: z.boolean().optional(),
+  default_invite_role: z.boolean().optional(),
+  sort_order: z.number().optional(),
+});
+export const deleteEventRoleSchema = z.object({ id: z.string() });
 
 // ── participant ───────────────────────────────────────────────────────
 const participantBaseSchema = z.object({

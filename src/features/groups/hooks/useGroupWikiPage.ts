@@ -43,6 +43,7 @@ export function useGroupWikiPage(groupId: string) {
     // Group data
     group,
     canAccess,
+    isAuthenticated: !!user,
 
     // Derived counts
     memberCount,

@@ -107,6 +107,39 @@ export function useGroupActions() {
     [zero]
   );
 
+  const addMembershipRole = useCallback(
+    (args: Parameters<typeof mutators.groups.addMembershipRole>[0]) => {
+      const result = zero.mutate(mutators.groups.addMembershipRole(args));
+      toast.success(t('features.groups.toasts.memberRoleUpdated'));
+      onServerError(result, msg =>
+        handleMutationError(new Error(msg), t('features.groups.toasts.memberRoleUpdateFailed'), t)
+      );
+    },
+    [zero]
+  );
+
+  const removeMembershipRole = useCallback(
+    (args: Parameters<typeof mutators.groups.removeMembershipRole>[0]) => {
+      const result = zero.mutate(mutators.groups.removeMembershipRole(args));
+      toast.success(t('features.groups.toasts.memberRoleUpdated'));
+      onServerError(result, msg =>
+        handleMutationError(new Error(msg), t('features.groups.toasts.memberRoleUpdateFailed'), t)
+      );
+    },
+    [zero]
+  );
+
+  const syncMembershipRoles = useCallback(
+    (args: Parameters<typeof mutators.groups.syncMembershipRoles>[0]) => {
+      const result = zero.mutate(mutators.groups.syncMembershipRoles(args));
+      toast.success(t('features.groups.toasts.memberRoleUpdated'));
+      onServerError(result, msg =>
+        handleMutationError(new Error(msg), t('features.groups.toasts.memberRoleUpdateFailed'), t)
+      );
+    },
+    [zero]
+  );
+
   // ── Roles ──────────────────────────────────────────────────────────
   const createRole = useCallback(
     (args: Parameters<typeof mutators.groups.createRole>[0]) => {
@@ -205,16 +238,27 @@ export function useGroupActions() {
         }
       }
       if (adminRoleId) {
+        const membershipId = crypto.randomUUID();
         const joinResult = zero.mutate(
           mutators.groups.joinGroup({
-            id: crypto.randomUUID(),
+            id: membershipId,
             group_id: groupId,
             status: 'active',
             visibility: 'public',
-            role_id: adminRoleId,
           })
         );
         onServerError(joinResult, msg => console.error('Failed to join group as admin:', msg));
+
+        const syncResult = zero.mutate(
+          mutators.groups.syncMembershipRoles({
+            group_membership_id: membershipId,
+            role_ids: [adminRoleId],
+            assigned_by_id: null,
+          })
+        );
+        onServerError(syncResult, msg =>
+          console.error('Failed to assign admin role to creator membership:', msg)
+        );
       }
     },
     [zero]
@@ -254,48 +298,14 @@ export function useGroupActions() {
     [zero]
   );
 
-  // ── Positions ──────────────────────────────────────────────────────
-  const createPosition = useCallback(
-    (args: Parameters<typeof mutators.groups.createPosition>[0]) => {
-      const result = zero.mutate(mutators.groups.createPosition(args));
-      toast.success(t('features.groups.toasts.positionCreated'));
-      onServerError(result, msg =>
-        handleMutationError(new Error(msg), t('features.groups.toasts.positionCreateFailed'), t)
-      );
-    },
-    [zero]
-  );
-
-  const updatePosition = useCallback(
-    (args: Parameters<typeof mutators.groups.updatePosition>[0]) => {
-      const result = zero.mutate(mutators.groups.updatePosition(args));
-      toast.success(t('features.groups.toasts.positionUpdated'));
-      onServerError(result, msg =>
-        handleMutationError(new Error(msg), t('features.groups.toasts.positionUpdateFailed'), t)
-      );
-    },
-    [zero]
-  );
-
-  const deletePosition = useCallback(
-    (args: Parameters<typeof mutators.groups.deletePosition>[0]) => {
-      const result = zero.mutate(mutators.groups.deletePosition(args));
-      toast.success(t('features.groups.toasts.positionDeleted'));
-      onServerError(result, msg =>
-        handleMutationError(new Error(msg), t('features.groups.toasts.positionDeleteFailed'), t)
-      );
-    },
-    [zero]
-  );
-
-  const createPositionHolderHistory = useCallback(
-    (args: Parameters<typeof mutators.groups.createPositionHolderHistory>[0]) => {
-      const result = zero.mutate(mutators.groups.createPositionHolderHistory(args));
-      toast.success(t('features.groups.toasts.positionHolderHistoryCreated'));
+  const createRoleHolderHistory = useCallback(
+    (args: Parameters<typeof mutators.groups.createRoleHolderHistory>[0]) => {
+      const result = zero.mutate(mutators.groups.createRoleHolderHistory(args));
+      toast.success(t('features.groups.toasts.roleHolderHistoryCreated'));
       onServerError(result, msg =>
         handleMutationError(
           new Error(msg),
-          t('features.groups.toasts.positionHolderHistoryCreateFailed'),
+          t('features.groups.toasts.roleHolderHistoryCreateFailed'),
           t
         )
       );
@@ -303,14 +313,14 @@ export function useGroupActions() {
     [zero]
   );
 
-  const updatePositionHolderHistory = useCallback(
-    (args: Parameters<typeof mutators.groups.updatePositionHolderHistory>[0]) => {
-      const result = zero.mutate(mutators.groups.updatePositionHolderHistory(args));
-      toast.success(t('features.groups.toasts.positionHolderHistoryUpdated'));
+  const updateRoleHolderHistory = useCallback(
+    (args: Parameters<typeof mutators.groups.updateRoleHolderHistory>[0]) => {
+      const result = zero.mutate(mutators.groups.updateRoleHolderHistory(args));
+      toast.success(t('features.groups.toasts.roleHolderHistoryUpdated'));
       onServerError(result, msg =>
         handleMutationError(
           new Error(msg),
-          t('features.groups.toasts.positionHolderHistoryUpdateFailed'),
+          t('features.groups.toasts.roleHolderHistoryUpdateFailed'),
           t
         )
       );
@@ -330,6 +340,9 @@ export function useGroupActions() {
     inviteMember,
     acceptInvitation,
     updateMemberRole,
+    addMembershipRole,
+    removeMembershipRole,
+    syncMembershipRoles,
 
     // Roles
     createRole,
@@ -344,11 +357,7 @@ export function useGroupActions() {
     updateRelationship,
     deleteRelationship,
 
-    // Positions
-    createPosition,
-    updatePosition,
-    deletePosition,
-    createPositionHolderHistory,
-    updatePositionHolderHistory,
+    createRoleHolderHistory,
+    updateRoleHolderHistory,
   };
 }

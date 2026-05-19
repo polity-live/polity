@@ -22,10 +22,10 @@ interface CandidateSelection {
 }
 
 interface AgendaElectionSectionProps {
-  positionName: string;
+  roleName: string;
   candidates: CandidatesByElectionRow[];
-  indicativeSelections: ReadonlyArray<CandidateSelection>;
-  finalSelections: ReadonlyArray<CandidateSelection>;
+  indicativeSelections: readonly CandidateSelection[];
+  finalSelections: readonly CandidateSelection[];
   userHasVoted: boolean;
   userSelectedCandidateIds: string[];
   electionStatus?: string | null;
@@ -50,7 +50,7 @@ function buildCandidateOption(
   indicativeCount: number,
   indicativePercent: number,
   finalCount: number,
-  finalPercent: number,
+  finalPercent: number
 ): VoteBarOption {
   return {
     key: candidateId,
@@ -78,17 +78,15 @@ function getCandidateDisplayName(candidate: CandidatesByElectionRow): string {
  * Winner gets a golden border + Crown icon when status=closed.
  */
 export function AgendaElectionSection({
-  positionName,
+  roleName,
   candidates,
   indicativeSelections,
   finalSelections,
   userHasVoted,
   userSelectedCandidateIds,
   electionStatus,
-  canVote,
   canBeCandidate,
   isUserCandidate,
-  isVotingLoading,
   isCandidateLoading,
   onBecomeCandidate,
   onWithdrawCandidacy,
@@ -104,10 +102,14 @@ export function AgendaElectionSection({
 
   // Show all candidates except withdrawn
   const visibleCandidates = useMemo(() => {
-    return candidates.filter((c) => c.status !== 'withdrawn');
+    return candidates.filter(c => c.status !== 'withdrawn');
   }, [candidates]);
 
-  const { candidates: candidateStats, totalIndicative, totalFinal } = useMemo(() => {
+  const {
+    candidates: candidateStats,
+    totalIndicative,
+    totalFinal,
+  } = useMemo(() => {
     return calculateElectionStats(visibleCandidates, indicativeSelections, finalSelections);
   }, [visibleCandidates, indicativeSelections, finalSelections]);
 
@@ -115,11 +117,13 @@ export function AgendaElectionSection({
   const leadingCandidateId = useMemo(() => {
     if (candidateStats.length === 0) return null;
     const maxVotes = Math.max(
-      ...candidateStats.map((s) => (isClosed || !isIndicationPhase ? s.finalCount : s.indicativeCount)),
+      ...candidateStats.map(s =>
+        isClosed || !isIndicationPhase ? s.finalCount : s.indicativeCount
+      )
     );
     if (maxVotes === 0) return null;
     return candidateStats.find(
-      (s) => (isClosed || !isIndicationPhase ? s.finalCount : s.indicativeCount) === maxVotes,
+      s => (isClosed || !isIndicationPhase ? s.finalCount : s.indicativeCount) === maxVotes
     )?.candidate.id;
   }, [candidateStats, isIndicationPhase, isClosed]);
 
@@ -131,16 +135,10 @@ export function AgendaElectionSection({
             <Vote className="h-5 w-5" />
             {t('features.events.agenda.electionResults')}
             <VotePhaseBadge
-              phase={
-                isIndicationPhase
-                  ? 'indication'
-                  : isClosed
-                    ? 'closed'
-                    : 'final_vote'
-              }
+              phase={isIndicationPhase ? 'indication' : isClosed ? 'closed' : 'final_vote'}
             />
           </CardTitle>
-          <Badge variant="outline">{positionName}</Badge>
+          <Badge variant="outline">{roleName}</Badge>
         </div>
       </CardHeader>
 
@@ -151,14 +149,14 @@ export function AgendaElectionSection({
             type="election"
             result={winnerName ? 'passed' : 'tie'}
             winnerName={winnerName}
-            positionName={positionName}
+            roleName={roleName}
             voteSharePercent={winnerVoteSharePercent}
             isFinal
           />
         )}
 
         {/* Vote count header */}
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
+        <div className="text-muted-foreground flex items-center justify-between text-sm">
           <span>
             {isIndicationPhase
               ? `${totalIndicative} ${t('features.events.agenda.indicationVotes')}`
@@ -174,13 +172,13 @@ export function AgendaElectionSection({
         {/* Candidates List */}
         {visibleCandidates.length === 0 ? (
           <div className="rounded-lg border border-dashed p-6 text-center">
-            <User className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
+            <User className="text-muted-foreground mx-auto mb-2 h-8 w-8" />
             <p className="text-muted-foreground">{t('features.events.agenda.noCandidates')}</p>
           </div>
         ) : (
           <div className="space-y-4">
-            {visibleCandidates.map((candidate) => {
-              const stats = candidateStats.find((s) => s.candidate.id === candidate.id);
+            {visibleCandidates.map(candidate => {
+              const stats = candidateStats.find(s => s.candidate.id === candidate.id);
               const isLeading = candidate.id === leadingCandidateId && !isIndicationPhase;
               const isSelected = userSelectedCandidateIds.includes(candidate.id);
               const displayName = getCandidateDisplayName(candidate);
@@ -191,20 +189,13 @@ export function AgendaElectionSection({
                   className={cn(
                     'rounded-lg border p-4 transition-colors',
                     isSelected && 'border-primary bg-primary/5',
-                    isLeading &&
-                      isClosed &&
-                      'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/30',
+                    isLeading && isClosed && 'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/30'
                   )}
                 >
                   <div className="mb-3 flex items-center gap-3">
                     <Avatar className="h-12 w-12">
-                      <AvatarImage
-                        src={candidate.user?.avatar ?? undefined}
-                        alt={displayName}
-                      />
-                      <AvatarFallback>
-                        {displayName.charAt(0).toUpperCase()}
-                      </AvatarFallback>
+                      <AvatarImage src={candidate.user?.avatar ?? undefined} alt={displayName} />
+                      <AvatarFallback>{displayName.charAt(0).toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
@@ -217,13 +208,11 @@ export function AgendaElectionSection({
                             ? t('features.events.agenda.candidateAccepted')
                             : t('features.events.agenda.candidateNominated')}
                         </Badge>
-                        {isLeading && isClosed && (
-                          <Crown className="h-4 w-4 text-yellow-500" />
-                        )}
-                        {isSelected && <CheckCircle2 className="h-4 w-4 text-primary" />}
+                        {isLeading && isClosed && <Crown className="h-4 w-4 text-yellow-500" />}
+                        {isSelected && <CheckCircle2 className="text-primary h-4 w-4" />}
                       </div>
                       {candidate.user?.email && displayName !== candidate.user.email && (
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-muted-foreground text-sm">
                           {candidate.user.email}
                         </span>
                       )}
@@ -240,16 +229,10 @@ export function AgendaElectionSection({
                           stats.indicativeCount,
                           stats.indicativePercentage,
                           stats.finalCount,
-                          stats.finalPercentage,
+                          stats.finalPercentage
                         ),
                       ]}
-                      phase={
-                        isIndicationPhase
-                          ? 'indication'
-                          : isClosed
-                            ? 'closed'
-                            : 'final_vote'
-                      }
+                      phase={isIndicationPhase ? 'indication' : isClosed ? 'closed' : 'final_vote'}
                       totalFinal={totalFinal}
                       totalIndication={totalIndicative}
                     />
@@ -275,11 +258,7 @@ export function AgendaElectionSection({
         {/* Become Candidate Button */}
         {!isClosed && canBeCandidate && !isUserCandidate && (
           <div className="flex justify-center pt-4">
-            <Button
-              variant="outline"
-              onClick={onBecomeCandidate}
-              disabled={isCandidateLoading}
-            >
+            <Button variant="outline" onClick={onBecomeCandidate} disabled={isCandidateLoading}>
               {isCandidateLoading ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (

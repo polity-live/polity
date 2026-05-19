@@ -7,7 +7,13 @@ import type { EventUpdateInput } from '@/zero/events/schema';
  * Hook for event mutations
  */
 export function useEventMutations(eventId: string) {
-  const { inviteParticipant, updateParticipant, leaveEvent, updateEvent: doUpdateEvent } = useEventActions();
+  const {
+    inviteParticipant,
+    updateParticipant,
+    syncParticipantRoles,
+    leaveEvent,
+    updateEvent: doUpdateEvent,
+  } = useEventActions();
   const [isLoading, setIsLoading] = useState(false);
 
   /**
@@ -15,14 +21,22 @@ export function useEventMutations(eventId: string) {
    */
   const inviteParticipants = async (
     userIds: string[],
-    roleId?: string,
+    roleIds?: string | string[],
     senderId?: string,
     eventTitle?: string
   ) => {
+    void eventTitle;
+
     if (userIds.length === 0) return { success: false, error: 'No users selected' };
 
     setIsLoading(true);
     try {
+      const normalizedRoleIds = Array.isArray(roleIds)
+        ? roleIds.filter(Boolean)
+        : roleIds
+          ? [roleIds]
+          : [];
+
       for (const userId of userIds) {
         const participantId = crypto.randomUUID();
         await inviteParticipant({
@@ -32,10 +46,14 @@ export function useEventMutations(eventId: string) {
           event_id: eventId,
           group_id: null,
           visibility: 'public',
-          role_id: roleId ?? null,
         });
 
-        if (senderId && eventTitle) {
+        if (normalizedRoleIds.length > 0) {
+          await syncParticipantRoles({
+            event_participant_id: participantId,
+            role_ids: normalizedRoleIds,
+            assigned_by_id: senderId ?? null,
+          });
         }
       }
 
@@ -59,15 +77,16 @@ export function useEventMutations(eventId: string) {
     senderId?: string,
     eventTitle?: string
   ) => {
+    void userId;
+    void senderId;
+    void eventTitle;
+
     setIsLoading(true);
     try {
       await updateParticipant({
         id: participationId,
-        status: 'member',
+        status: 'active',
       });
-
-      if (userId && senderId && eventTitle) {
-      }
 
       toast.success('Participation approved');
       return { success: true };
@@ -89,14 +108,15 @@ export function useEventMutations(eventId: string) {
     senderId?: string,
     eventTitle?: string
   ) => {
+    void userId;
+    void senderId;
+    void eventTitle;
+
     setIsLoading(true);
     try {
       await leaveEvent({
         id: participationId,
       });
-
-      if (userId && senderId && eventTitle) {
-      }
 
       toast.success('Participation request rejected');
       return { success: true };
@@ -118,14 +138,15 @@ export function useEventMutations(eventId: string) {
     senderId?: string,
     eventTitle?: string
   ) => {
+    void userId;
+    void senderId;
+    void eventTitle;
+
     setIsLoading(true);
     try {
       await leaveEvent({
         id: participationId,
       });
-
-      if (userId && senderId && eventTitle) {
-      }
 
       toast.success('Participant removed successfully');
       return { success: true };
@@ -149,15 +170,38 @@ export function useEventMutations(eventId: string) {
     eventTitle?: string,
     isPromotion?: boolean
   ) => {
+    return changeParticipantRoles(
+      participationId,
+      roleId ? [roleId] : [],
+      userId,
+      senderId,
+      eventTitle,
+      isPromotion
+    );
+  };
+
+  /**
+   * Change a participant's roles
+   */
+  const changeParticipantRoles = async (
+    participationId: string,
+    roleIds: string[],
+    userId?: string,
+    senderId?: string,
+    eventTitle?: string,
+    isPromotion?: boolean
+  ) => {
+    void userId;
+    void eventTitle;
+    void isPromotion;
+
     setIsLoading(true);
     try {
-      await updateParticipant({
-        id: participationId,
-        role_id: roleId,
+      await syncParticipantRoles({
+        event_participant_id: participationId,
+        role_ids: roleIds,
+        assigned_by_id: senderId ?? null,
       });
-
-      if (isPromotion && userId && senderId && eventTitle) {
-      }
 
       toast.success('Participant role updated');
       return { success: true };
@@ -183,15 +227,14 @@ export function useEventMutations(eventId: string) {
       previousVideoURL?: string;
     }
   ) => {
+    void options;
+
     setIsLoading(true);
     try {
       await doUpdateEvent({
         id: eventId,
         ...updates,
       });
-
-      if (options?.actorId && options?.eventTitle) {
-      }
 
       toast.success('Event updated successfully');
       return { success: true };
@@ -210,6 +253,7 @@ export function useEventMutations(eventId: string) {
     rejectParticipation,
     removeParticipant,
     changeParticipantRole,
+    changeParticipantRoles,
     updateEvent,
     isLoading,
   };

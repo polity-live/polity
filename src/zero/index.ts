@@ -31,17 +31,14 @@ export type {
   GroupMembership,
   GroupRelationship,
   Role,
+  RoleHolderHistory,
   ActionRight,
-  Position,
-  PositionHolderHistory,
   // Events
   Event,
   EventParticipant,
   EventDelegate,
   GroupDelegateAllocation,
   Participant,
-  EventPosition,
-  EventPositionHolder,
   // Amendments
   Amendment,
   AmendmentSupportVote,

@@ -2,7 +2,7 @@
  * Pure functions for typeahead search filtering, ranking, and result grouping.
  */
 
-export type EntityType = 'user' | 'group' | 'amendment' | 'event' | 'election' | 'position';
+export type EntityType = 'user' | 'group' | 'amendment' | 'event' | 'election' | 'role';
 
 export interface TypeaheadItem {
   id: string;
@@ -17,11 +17,7 @@ export interface TypeaheadItem {
  * Filter items by query against specified search keys.
  * Case-insensitive prefix/substring match.
  */
-export function filterItems<T>(
-  items: T[],
-  query: string,
-  searchKeys: (keyof T)[],
-): T[] {
+export function filterItems<T>(items: T[], query: string, searchKeys: (keyof T)[]): T[] {
   if (!query.trim()) return items;
   const lowerQuery = query.toLowerCase().trim();
   return items.filter(item =>
@@ -34,17 +30,14 @@ export function filterItems<T>(
         return value.some(v => typeof v === 'string' && v.toLowerCase().includes(lowerQuery));
       }
       return false;
-    }),
+    })
   );
 }
 
 /**
  * Return start/end match ranges for highlighting query within text.
  */
-export function highlightMatch(
-  text: string,
-  query: string,
-): { start: number; end: number }[] {
+export function highlightMatch(text: string, query: string): { start: number; end: number }[] {
   if (!query.trim() || !text) return [];
   const lowerText = text.toLowerCase();
   const lowerQuery = query.toLowerCase().trim();
@@ -62,16 +55,14 @@ export function highlightMatch(
 /**
  * Group typeahead items by their entity type.
  */
-export function groupResultsByType(
-  items: TypeaheadItem[],
-): Record<EntityType, TypeaheadItem[]> {
+export function groupResultsByType(items: TypeaheadItem[]): Record<EntityType, TypeaheadItem[]> {
   const groups: Record<EntityType, TypeaheadItem[]> = {
     user: [],
     group: [],
     amendment: [],
     event: [],
     election: [],
-    position: [],
+    role: [],
   };
   for (const item of items) {
     groups[item.entityType].push(item);
@@ -82,10 +73,7 @@ export function groupResultsByType(
 /**
  * Score-based sorting: name prefix match > name contains > hashtag match > others.
  */
-export function sortByRelevance(
-  items: TypeaheadItem[],
-  query: string,
-): TypeaheadItem[] {
+export function sortByRelevance(items: TypeaheadItem[], query: string): TypeaheadItem[] {
   if (!query.trim()) return items;
   const lowerQuery = query.toLowerCase().trim();
 

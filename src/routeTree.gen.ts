@@ -46,7 +46,6 @@ import { Route as AuthedGroupIdImport } from './routes/_authed/group/$id'
 import { Route as AuthedEventIdImport } from './routes/_authed/event/$id'
 import { Route as AuthedCreateTodoImport } from './routes/_authed/create/todo'
 import { Route as AuthedCreateStatementImport } from './routes/_authed/create/statement'
-import { Route as AuthedCreatePositionImport } from './routes/_authed/create/position'
 import { Route as AuthedCreatePaymentImport } from './routes/_authed/create/payment'
 import { Route as AuthedCreateGroupImport } from './routes/_authed/create/group'
 import { Route as AuthedCreateEventImport } from './routes/_authed/create/event'
@@ -81,7 +80,7 @@ import { Route as AuthedGroupIdBlogImport } from './routes/_authed/group/$id/blo
 import { Route as AuthedGroupIdAmendmentsImport } from './routes/_authed/group/$id/amendments'
 import { Route as AuthedEventIdStreamImport } from './routes/_authed/event/$id/stream'
 import { Route as AuthedEventIdSettingsImport } from './routes/_authed/event/$id/settings'
-import { Route as AuthedEventIdPositionsImport } from './routes/_authed/event/$id/positions'
+import { Route as AuthedEventIdRolesImport } from './routes/_authed/event/$id/roles'
 import { Route as AuthedEventIdParticipantsImport } from './routes/_authed/event/$id/participants'
 import { Route as AuthedEventIdNotificationsImport } from './routes/_authed/event/$id/notifications'
 import { Route as AuthedEventIdNetworkImport } from './routes/_authed/event/$id/network'
@@ -317,12 +316,6 @@ const AuthedCreateStatementRoute = AuthedCreateStatementImport.update({
   getParentRoute: () => AuthedRoute,
 } as any)
 
-const AuthedCreatePositionRoute = AuthedCreatePositionImport.update({
-  id: '/create/position',
-  path: '/create/position',
-  getParentRoute: () => AuthedRoute,
-} as any)
-
 const AuthedCreatePaymentRoute = AuthedCreatePaymentImport.update({
   id: '/create/payment',
   path: '/create/payment',
@@ -534,9 +527,9 @@ const AuthedEventIdSettingsRoute = AuthedEventIdSettingsImport.update({
   getParentRoute: () => AuthedEventIdRoute,
 } as any)
 
-const AuthedEventIdPositionsRoute = AuthedEventIdPositionsImport.update({
-  id: '/positions',
-  path: '/positions',
+const AuthedEventIdRolesRoute = AuthedEventIdRolesImport.update({
+  id: '/roles',
+  path: '/roles',
   getParentRoute: () => AuthedEventIdRoute,
 } as any)
 
@@ -938,13 +931,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedCreatePaymentImport
       parentRoute: typeof AuthedImport
     }
-    '/_authed/create/position': {
-      id: '/_authed/create/position'
-      path: '/create/position'
-      fullPath: '/create/position'
-      preLoaderRoute: typeof AuthedCreatePositionImport
-      parentRoute: typeof AuthedImport
-    }
     '/_authed/create/statement': {
       id: '/_authed/create/statement'
       path: '/create/statement'
@@ -1078,11 +1064,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedEventIdParticipantsImport
       parentRoute: typeof AuthedEventIdImport
     }
-    '/_authed/event/$id/positions': {
-      id: '/_authed/event/$id/positions'
-      path: '/positions'
-      fullPath: '/event/$id/positions'
-      preLoaderRoute: typeof AuthedEventIdPositionsImport
+    '/_authed/event/$id/roles': {
+      id: '/_authed/event/$id/roles'
+      path: '/roles'
+      fullPath: '/event/$id/roles'
+      preLoaderRoute: typeof AuthedEventIdRolesImport
       parentRoute: typeof AuthedEventIdImport
     }
     '/_authed/event/$id/settings': {
@@ -1411,7 +1397,7 @@ interface AuthedEventIdRouteChildren {
   AuthedEventIdNetworkRoute: typeof AuthedEventIdNetworkRoute
   AuthedEventIdNotificationsRoute: typeof AuthedEventIdNotificationsRoute
   AuthedEventIdParticipantsRoute: typeof AuthedEventIdParticipantsRoute
-  AuthedEventIdPositionsRoute: typeof AuthedEventIdPositionsRoute
+  AuthedEventIdRolesRoute: typeof AuthedEventIdRolesRoute
   AuthedEventIdSettingsRoute: typeof AuthedEventIdSettingsRoute
   AuthedEventIdStreamRoute: typeof AuthedEventIdStreamRoute
   AuthedEventIdIndexRoute: typeof AuthedEventIdIndexRoute
@@ -1422,7 +1408,7 @@ const AuthedEventIdRouteChildren: AuthedEventIdRouteChildren = {
   AuthedEventIdNetworkRoute: AuthedEventIdNetworkRoute,
   AuthedEventIdNotificationsRoute: AuthedEventIdNotificationsRoute,
   AuthedEventIdParticipantsRoute: AuthedEventIdParticipantsRoute,
-  AuthedEventIdPositionsRoute: AuthedEventIdPositionsRoute,
+  AuthedEventIdRolesRoute: AuthedEventIdRolesRoute,
   AuthedEventIdSettingsRoute: AuthedEventIdSettingsRoute,
   AuthedEventIdStreamRoute: AuthedEventIdStreamRoute,
   AuthedEventIdIndexRoute: AuthedEventIdIndexRoute,
@@ -1591,7 +1577,6 @@ interface AuthedRouteChildren {
   AuthedCreateEventRoute: typeof AuthedCreateEventRoute
   AuthedCreateGroupRoute: typeof AuthedCreateGroupRoute
   AuthedCreatePaymentRoute: typeof AuthedCreatePaymentRoute
-  AuthedCreatePositionRoute: typeof AuthedCreatePositionRoute
   AuthedCreateStatementRoute: typeof AuthedCreateStatementRoute
   AuthedCreateTodoRoute: typeof AuthedCreateTodoRoute
   AuthedEventIdRoute: typeof AuthedEventIdRouteWithChildren
@@ -1616,7 +1601,6 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedCreateEventRoute: AuthedCreateEventRoute,
   AuthedCreateGroupRoute: AuthedCreateGroupRoute,
   AuthedCreatePaymentRoute: AuthedCreatePaymentRoute,
-  AuthedCreatePositionRoute: AuthedCreatePositionRoute,
   AuthedCreateStatementRoute: AuthedCreateStatementRoute,
   AuthedCreateTodoRoute: AuthedCreateTodoRoute,
   AuthedEventIdRoute: AuthedEventIdRouteWithChildren,
@@ -1697,7 +1681,6 @@ export interface FileRoutesByFullPath {
   '/create/event': typeof AuthedCreateEventRoute
   '/create/group': typeof AuthedCreateGroupRoute
   '/create/payment': typeof AuthedCreatePaymentRoute
-  '/create/position': typeof AuthedCreatePositionRoute
   '/create/statement': typeof AuthedCreateStatementRoute
   '/create/todo': typeof AuthedCreateTodoRoute
   '/event/$id': typeof AuthedEventIdRouteWithChildren
@@ -1717,7 +1700,7 @@ export interface FileRoutesByFullPath {
   '/event/$id/network': typeof AuthedEventIdNetworkRoute
   '/event/$id/notifications': typeof AuthedEventIdNotificationsRoute
   '/event/$id/participants': typeof AuthedEventIdParticipantsRoute
-  '/event/$id/positions': typeof AuthedEventIdPositionsRoute
+  '/event/$id/roles': typeof AuthedEventIdRolesRoute
   '/event/$id/settings': typeof AuthedEventIdSettingsRoute
   '/event/$id/stream': typeof AuthedEventIdStreamRoute
   '/group/$id/amendments': typeof AuthedGroupIdAmendmentsRoute
@@ -1791,7 +1774,6 @@ export interface FileRoutesByTo {
   '/create/event': typeof AuthedCreateEventRoute
   '/create/group': typeof AuthedCreateGroupRoute
   '/create/payment': typeof AuthedCreatePaymentRoute
-  '/create/position': typeof AuthedCreatePositionRoute
   '/create/statement': typeof AuthedCreateStatementRoute
   '/create/todo': typeof AuthedCreateTodoRoute
   '/statement/$id': typeof AuthedStatementIdRoute
@@ -1807,7 +1789,7 @@ export interface FileRoutesByTo {
   '/event/$id/network': typeof AuthedEventIdNetworkRoute
   '/event/$id/notifications': typeof AuthedEventIdNotificationsRoute
   '/event/$id/participants': typeof AuthedEventIdParticipantsRoute
-  '/event/$id/positions': typeof AuthedEventIdPositionsRoute
+  '/event/$id/roles': typeof AuthedEventIdRolesRoute
   '/event/$id/settings': typeof AuthedEventIdSettingsRoute
   '/event/$id/stream': typeof AuthedEventIdStreamRoute
   '/group/$id/amendments': typeof AuthedGroupIdAmendmentsRoute
@@ -1881,7 +1863,6 @@ export interface FileRoutesById {
   '/_authed/create/event': typeof AuthedCreateEventRoute
   '/_authed/create/group': typeof AuthedCreateGroupRoute
   '/_authed/create/payment': typeof AuthedCreatePaymentRoute
-  '/_authed/create/position': typeof AuthedCreatePositionRoute
   '/_authed/create/statement': typeof AuthedCreateStatementRoute
   '/_authed/create/todo': typeof AuthedCreateTodoRoute
   '/_authed/event/$id': typeof AuthedEventIdRouteWithChildren
@@ -1901,7 +1882,7 @@ export interface FileRoutesById {
   '/_authed/event/$id/network': typeof AuthedEventIdNetworkRoute
   '/_authed/event/$id/notifications': typeof AuthedEventIdNotificationsRoute
   '/_authed/event/$id/participants': typeof AuthedEventIdParticipantsRoute
-  '/_authed/event/$id/positions': typeof AuthedEventIdPositionsRoute
+  '/_authed/event/$id/roles': typeof AuthedEventIdRolesRoute
   '/_authed/event/$id/settings': typeof AuthedEventIdSettingsRoute
   '/_authed/event/$id/stream': typeof AuthedEventIdStreamRoute
   '/_authed/group/$id/amendments': typeof AuthedGroupIdAmendmentsRoute
@@ -1980,7 +1961,6 @@ export interface FileRouteTypes {
     | '/create/event'
     | '/create/group'
     | '/create/payment'
-    | '/create/position'
     | '/create/statement'
     | '/create/todo'
     | '/event/$id'
@@ -2000,7 +1980,7 @@ export interface FileRouteTypes {
     | '/event/$id/network'
     | '/event/$id/notifications'
     | '/event/$id/participants'
-    | '/event/$id/positions'
+    | '/event/$id/roles'
     | '/event/$id/settings'
     | '/event/$id/stream'
     | '/group/$id/amendments'
@@ -2073,7 +2053,6 @@ export interface FileRouteTypes {
     | '/create/event'
     | '/create/group'
     | '/create/payment'
-    | '/create/position'
     | '/create/statement'
     | '/create/todo'
     | '/statement/$id'
@@ -2089,7 +2068,7 @@ export interface FileRouteTypes {
     | '/event/$id/network'
     | '/event/$id/notifications'
     | '/event/$id/participants'
-    | '/event/$id/positions'
+    | '/event/$id/roles'
     | '/event/$id/settings'
     | '/event/$id/stream'
     | '/group/$id/amendments'
@@ -2161,7 +2140,6 @@ export interface FileRouteTypes {
     | '/_authed/create/event'
     | '/_authed/create/group'
     | '/_authed/create/payment'
-    | '/_authed/create/position'
     | '/_authed/create/statement'
     | '/_authed/create/todo'
     | '/_authed/event/$id'
@@ -2181,7 +2159,7 @@ export interface FileRouteTypes {
     | '/_authed/event/$id/network'
     | '/_authed/event/$id/notifications'
     | '/_authed/event/$id/participants'
-    | '/_authed/event/$id/positions'
+    | '/_authed/event/$id/roles'
     | '/_authed/event/$id/settings'
     | '/_authed/event/$id/stream'
     | '/_authed/group/$id/amendments'
@@ -2303,7 +2281,6 @@ export const routeTree = rootRoute
         "/_authed/create/event",
         "/_authed/create/group",
         "/_authed/create/payment",
-        "/_authed/create/position",
         "/_authed/create/statement",
         "/_authed/create/todo",
         "/_authed/event/$id",
@@ -2456,10 +2433,6 @@ export const routeTree = rootRoute
       "filePath": "_authed/create/payment.tsx",
       "parent": "/_authed"
     },
-    "/_authed/create/position": {
-      "filePath": "_authed/create/position.tsx",
-      "parent": "/_authed"
-    },
     "/_authed/create/statement": {
       "filePath": "_authed/create/statement.tsx",
       "parent": "/_authed"
@@ -2476,7 +2449,7 @@ export const routeTree = rootRoute
         "/_authed/event/$id/network",
         "/_authed/event/$id/notifications",
         "/_authed/event/$id/participants",
-        "/_authed/event/$id/positions",
+        "/_authed/event/$id/roles",
         "/_authed/event/$id/settings",
         "/_authed/event/$id/stream",
         "/_authed/event/$id/"
@@ -2576,8 +2549,8 @@ export const routeTree = rootRoute
       "filePath": "_authed/event/$id/participants.tsx",
       "parent": "/_authed/event/$id"
     },
-    "/_authed/event/$id/positions": {
-      "filePath": "_authed/event/$id/positions.tsx",
+    "/_authed/event/$id/roles": {
+      "filePath": "_authed/event/$id/roles.tsx",
       "parent": "/_authed/event/$id"
     },
     "/_authed/event/$id/settings": {

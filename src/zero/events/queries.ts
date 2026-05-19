@@ -22,7 +22,10 @@ export const eventQueries = {
   }),
 
   participants: defineQuery(z.object({ eventId: z.string() }), ({ args: { eventId } }) =>
-    zql.event_participant.where('event_id', eventId).orderBy('created_at', 'asc')
+    zql.event_participant
+      .where('event_id', eventId)
+      .related('participant_roles', q => q.related('role'))
+      .orderBy('created_at', 'asc')
   ),
 
   /** Event agenda items by event (replaces old event_voting_session query) */
@@ -39,20 +42,20 @@ export const eventQueries = {
     zql.event_delegate.where('event_id', eventId).orderBy('created_at', 'asc')
   ),
 
-  positions: defineQuery(z.object({ eventId: z.string() }), ({ args: { eventId } }) =>
-    zql.event_position.where('event_id', eventId).orderBy('title', 'asc')
+  roles: defineQuery(z.object({ eventId: z.string() }), ({ args: { eventId } }) =>
+    zql.role.where('event_id', eventId).where('scope', 'event').orderBy('sort_order', 'asc')
   ),
 
   participantsByUser: defineQuery(z.object({ user_id: z.string() }), ({ args: { user_id } }) =>
     zql.event_participant
       .where('user_id', user_id)
       .related('event', q => q.related('creator'))
-      .related('role')
+      .related('participant_roles', q => q.related('role'))
   ),
 
   // ── New queries (extracted from hooks.ts) ─────────────────────────
 
-  /** Deep event by ID with creator, group→memberships→user, participants→user+role→action_rights, delegates→user, agenda_items→election, event_positions */
+  /** Deep event by ID with creator, group→memberships→user, participants→user+role→action_rights, delegates→user, agenda_items→election, roles */
   byIdFull: defineQuery(z.object({ id: z.string() }), ({ args: { id } }) =>
     zql.event
       .where('id', id)
@@ -63,19 +66,21 @@ export const eventQueries = {
       .related('participants', participantQuery =>
         participantQuery
           .related('user')
-          .related('role', roleQuery => roleQuery.related('action_rights'))
+          .related('participant_roles', roleLinkQuery =>
+            roleLinkQuery.related('role', roleQuery => roleQuery.related('action_rights'))
+          )
       )
       .related('delegates', delegateQuery => delegateQuery.related('user'))
       .related('agenda_items', agendaItemQuery => agendaItemQuery.related('election'))
-      .related('event_positions')
+      .related('roles')
   ),
 
-  /** Event with cancellation-related data (agenda_items→amendment+election→position, participants→user) */
+  /** Event with cancellation-related data (agenda_items→amendment+election→role, participants→user) */
   forCancel: defineQuery(z.object({ id: z.string() }), ({ args: { id } }) =>
     zql.event
       .where('id', id)
       .related('agenda_items', q =>
-        q.related('amendment').related('election', q => q.related('position'))
+        q.related('amendment').related('election', q => q.related('role'))
       )
       .related('participants', q => q.related('user'))
   ),
@@ -85,7 +90,9 @@ export const eventQueries = {
     zql.event
       .where('id', id)
       .related('participants', q =>
-        q.related('user').related('role', q => q.related('action_rights'))
+        q
+          .related('user')
+          .related('participant_roles', pq => pq.related('role', rq => rq.related('action_rights')))
       )
       .related('agenda_items', q =>
         q
@@ -131,7 +138,10 @@ export const eventQueries = {
   participantsWithUserAndRole: defineQuery(
     z.object({ eventId: z.string() }),
     ({ args: { eventId } }) =>
-      zql.event_participant.where('event_id', eventId).related('user').related('role')
+      zql.event_participant
+        .where('event_id', eventId)
+        .related('user')
+        .related('participant_roles', q => q.related('role', rq => rq.related('action_rights')))
   ),
 
   /** Event with group→memberships→user and delegates→user (for participation) */
@@ -146,22 +156,30 @@ export const eventQueries = {
   userParticipation: defineQuery(
     z.object({ userId: z.string(), eventId: z.string() }),
     ({ args: { userId, eventId } }) =>
-      zql.event_participant.where('user_id', userId).where('event_id', eventId)
+      zql.event_participant
+        .where('user_id', userId)
+        .where('event_id', eventId)
+        .related('participant_roles', q => q.related('role', rq => rq.related('action_rights')))
   ),
 
   /** All participants for an event (no relations) */
   allParticipantsByEvent: defineQuery(z.object({ eventId: z.string() }), ({ args: { eventId } }) =>
-    zql.event_participant.where('event_id', eventId)
+    zql.event_participant
+      .where('event_id', eventId)
+      .related('participant_roles', q => q.related('role'))
   ),
 
-  /** Event with creator and group (for positions page) */
-  forPositions: defineQuery(z.object({ id: z.string() }), ({ args: { id } }) =>
+  /** Event with creator and group (for roles page) */
+  forRoles: defineQuery(z.object({ id: z.string() }), ({ args: { id } }) =>
     zql.event.where('id', id).related('creator').related('group')
   ),
 
-  /** Event positions with holder→user relations */
-  positionsWithHolders: defineQuery(z.object({ eventId: z.string() }), ({ args: { eventId } }) =>
-    zql.event_position.where('event_id', eventId).related('holders', q => q.related('user'))
+  /** Event roles with holder→user relations */
+  rolesWithHolders: defineQuery(z.object({ eventId: z.string() }), ({ args: { eventId } }) =>
+    zql.role
+      .where('event_id', eventId)
+      .where('scope', 'event')
+      .related('holders', q => q.related('user'))
   ),
 
   /** Agenda items for an event with election→candidates and amendment */
@@ -190,7 +208,7 @@ export const eventQueries = {
           .related('final_participations', p =>
             p.related('elector').related('selections', s => s.related('candidate'))
           )
-          .related('position', q => q.related('group'))
+          .related('role', q => q.related('group'))
       )
       .related('votes', q =>
         q
@@ -258,27 +276,29 @@ export const eventQueries = {
     zql.subscriber.where('event_id', eventId).related('subscriber_user').related('event')
   ),
 
-  /** Event wiki data with creator, group, hashtags, positions→holders→user, participants→user */
+  /** Event wiki data with creator, group, hashtags, roles→holders→user, participants→user */
   wikiData: defineQuery(z.object({ id: z.string() }), ({ args: { id } }) =>
     zql.event
       .where('id', id)
       .related('creator')
       .related('group')
       .related('event_hashtags', q => q.related('hashtag'))
-      .related('event_positions', q => q.related('holders', q => q.related('user')))
-      .related('participants', q => q.related('user'))
+      .related('roles', q => q.related('holders', q => q.related('user')))
+      .related('participants', q =>
+        q.related('user').related('participant_roles', pq => pq.related('role'))
+      )
   ),
 
-  /** Agenda items for wiki with event, election→candidates→user+position */
+  /** Agenda items for wiki with event, election→candidates→user+role */
   wikiAgendaItems: defineQuery(z.object({ eventId: z.string() }), ({ args: { eventId } }) =>
     zql.agenda_item
       .where('event_id', eventId)
       .related('event')
-      .related('election', q => q.related('candidates', q => q.related('user')).related('position'))
+      .related('election', q => q.related('candidates', q => q.related('user')).related('role'))
   ),
 
-  /** Event roles scoped to event with action_rights */
-  rolesByEvent: defineQuery(z.object({ eventId: z.string() }), ({ args: { eventId } }) =>
+  /** Event access roles scoped to event with action_rights */
+  accessRolesByEvent: defineQuery(z.object({ eventId: z.string() }), ({ args: { eventId } }) =>
     zql.role.where('event_id', eventId).where('scope', 'event').related('action_rights')
   ),
 
@@ -293,8 +313,10 @@ export const eventQueries = {
   /** All amendments (no filter) */
   allAmendments: defineQuery(z.object({}), () => zql.amendment),
 
-  /** All positions with group relation */
-  positionsWithGroups: defineQuery(z.object({}), () => zql.position.related('group')),
+  /** All roles with group relation */
+  rolesWithGroups: defineQuery(z.object({}), () =>
+    zql.role.where('scope', 'group').where('assignment_mode', 'elected').related('group')
+  ),
 
   /** User event participations with event→group */
   userParticipationsWithEvent: defineQuery(
@@ -308,11 +330,11 @@ export const eventQueries = {
     zql.event.where('id', id).related('group')
   ),
 
-  /** Election by ID with full relations (position→group, candidates→user, indicative/final selections) */
+  /** Election by ID with full relations (role→group, candidates→user, indicative/final selections) */
   electionWithVotes: defineQuery(z.object({ id: z.string() }), ({ args: { id } }) =>
     zql.election
       .where('id', id)
-      .related('position', q => q.related('group'))
+      .related('role', q => q.related('group'))
       .related('candidates', q => q.related('user'))
       .related('electors')
       .related('indicative_selections', q => q.related('candidate'))
@@ -348,7 +370,7 @@ export const eventQueries = {
       q
         .related('event_hashtags', q => q.related('hashtag'))
         .related('participants')
-        .related('event_positions')
+        .related('roles')
         .related('agenda_items', q => q.related('election').related('amendment'))
     )
   ),
@@ -407,7 +429,7 @@ export type EventParticipantWithUserRow = QueryRowType<
 export type EventAgendaItemFullRow = QueryRowType<typeof eventQueries.agendaItemsFull>;
 export type EventAgendaItemDetailRow = QueryRowType<typeof eventQueries.agendaItemDetail>;
 export type EventWikiAgendaRow = QueryRowType<typeof eventQueries.wikiAgendaItems>;
-export type EventPositionWithHoldersRow = QueryRowType<typeof eventQueries.positionsWithHolders>;
+export type EventRoleWithHoldersRow = QueryRowType<typeof eventQueries.rolesWithHolders>;
 export type EventElectionWithVotesRow = QueryRowType<typeof eventQueries.electionWithVotes>;
 export type EventDelegatesFullRow = QueryRowType<typeof eventQueries.delegatesFull>;
 export type EventParticipantsByUserRow = QueryRowType<typeof eventQueries.participantsByUser>;

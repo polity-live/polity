@@ -1,10 +1,10 @@
-import { table, string, number } from '@rocicorp/zero'
+import { table, string, number } from '@rocicorp/zero';
 
 export const election = table('election')
   .columns({
     id: string(),
     agenda_item_id: string().optional(),
-    position_id: string().optional(),
+    role_id: string().optional(),
     title: string().optional(),
     description: string().optional(),
     status: string().optional(),
@@ -17,7 +17,7 @@ export const election = table('election')
     created_at: number(),
     updated_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const electionCandidate = table('election_candidate')
   .columns({
@@ -31,7 +31,7 @@ export const electionCandidate = table('election_candidate')
     order_index: number().optional(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const elector = table('elector')
   .columns({
@@ -40,7 +40,7 @@ export const elector = table('elector')
     user_id: string(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const indicativeElectorParticipation = table('indicative_elector_participation')
   .columns({
@@ -49,7 +49,7 @@ export const indicativeElectorParticipation = table('indicative_elector_particip
     elector_id: string(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const indicativeCandidateSelection = table('indicative_candidate_selection')
   .columns({
@@ -59,7 +59,7 @@ export const indicativeCandidateSelection = table('indicative_candidate_selectio
     elector_participation_id: string().optional(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const finalElectorParticipation = table('final_elector_participation')
   .columns({
@@ -68,7 +68,7 @@ export const finalElectorParticipation = table('final_elector_participation')
     elector_id: string(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const finalCandidateSelection = table('final_candidate_selection')
   .columns({
@@ -78,4 +78,4 @@ export const finalCandidateSelection = table('final_candidate_selection')
     elector_participation_id: string().optional(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');

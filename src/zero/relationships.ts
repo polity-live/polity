@@ -3,9 +3,22 @@ import { relationships } from '@rocicorp/zero';
 // Users
 import { user, file } from './users/table';
 // Groups
-import { group, groupMembership, role, actionRight } from './groups/table';
+import {
+  group,
+  groupMembership,
+  groupMembershipRole,
+  role,
+  roleHolderHistory,
+  actionRight,
+} from './groups/table';
 // Events
-import { event, eventParticipant, participant, eventException } from './events/table';
+import {
+  event,
+  eventParticipant,
+  eventParticipantRole,
+  participant,
+  eventException,
+} from './events/table';
 // Amendments
 import {
   amendment,
@@ -48,13 +61,6 @@ import {
 import { changeRequest } from './change-requests/table';
 // Discussions
 import { thread, comment } from './discussions/table';
-// Positions
-import {
-  position,
-  positionHolderHistory,
-  eventPosition,
-  eventPositionHolder,
-} from './positions/table';
 // Delegates
 import { eventDelegate, groupDelegateAllocation } from './delegates/table';
 // Network
@@ -248,12 +254,12 @@ export const userRelationships = relationships(user, ({ many }) => ({
   reactions: many({ sourceField: ['id'], destSchema: reaction, destField: ['user_id'] }),
   position_holder_histories: many({
     sourceField: ['id'],
-    destSchema: positionHolderHistory,
+    destSchema: roleHolderHistory,
     destField: ['user_id'],
   }),
-  event_position_holdings: many({
+  event_role_holdings: many({
     sourceField: ['id'],
-    destSchema: eventPositionHolder,
+    destSchema: roleHolderHistory,
     destField: ['user_id'],
   }),
   document_versions: many({
@@ -339,7 +345,6 @@ export const groupRelationships = relationships(group, ({ one, many }) => ({
     destField: ['related_group_id'],
   }),
   roles: many({ sourceField: ['id'], destSchema: role, destField: ['group_id'] }),
-  positions: many({ sourceField: ['id'], destSchema: position, destField: ['group_id'] }),
   events: many({ sourceField: ['id'], destSchema: event, destField: ['group_id'] }),
   amendments: many({ sourceField: ['id'], destSchema: amendment, destField: ['group_id'] }),
   todos: many({ sourceField: ['id'], destSchema: todo, destField: ['group_id'] }),
@@ -362,10 +367,24 @@ export const groupRelationships = relationships(group, ({ one, many }) => ({
   conversations: many({ sourceField: ['id'], destSchema: conversation, destField: ['group_id'] }),
 }));
 
-export const groupMembershipRelationships = relationships(groupMembership, ({ one }) => ({
+export const groupMembershipRelationships = relationships(groupMembership, ({ one, many }) => ({
   group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
   user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
+  membership_roles: many({
+    sourceField: ['id'],
+    destSchema: groupMembershipRole,
+    destField: ['group_membership_id'],
+  }),
+}));
+
+export const groupMembershipRoleRelationships = relationships(groupMembershipRole, ({ one }) => ({
+  group_membership: one({
+    sourceField: ['group_membership_id'],
+    destSchema: groupMembership,
+    destField: ['id'],
+  }),
   role: one({ sourceField: ['role_id'], destSchema: role, destField: ['id'] }),
+  assigned_by: one({ sourceField: ['assigned_by_id'], destSchema: user, destField: ['id'] }),
 }));
 
 export const groupRelationshipRelationships = relationships(groupRelationship, ({ one }) => ({
@@ -373,32 +392,45 @@ export const groupRelationshipRelationships = relationships(groupRelationship, (
   related_group: one({ sourceField: ['related_group_id'], destSchema: group, destField: ['id'] }),
 }));
 
-export const roleRelationships = relationships(role, ({ one, many }) => ({
-  group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
-  action_rights: many({ sourceField: ['id'], destSchema: actionRight, destField: ['role_id'] }),
+export const roleRelationships = relationships(role, helpers => ({
+  group: helpers.one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
+  event: helpers.one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
+  group_membership_roles: helpers.many({
+    sourceField: ['id'],
+    destSchema: groupMembershipRole,
+    destField: ['role_id'],
+  }),
+  event_participant_roles: helpers.many({
+    sourceField: ['id'],
+    destSchema: eventParticipantRole,
+    destField: ['role_id'],
+  }),
+  action_rights: helpers.many({
+    sourceField: ['id'],
+    destSchema: actionRight,
+    destField: ['role_id'],
+  }),
+  holder_history: helpers.many({
+    sourceField: ['id'],
+    destSchema: roleHolderHistory,
+    destField: ['role_id'],
+  }),
+  holders: helpers.many({
+    sourceField: ['id'],
+    destSchema: roleHolderHistory,
+    destField: ['role_id'],
+  }),
+  elections: helpers.many({ sourceField: ['id'], destSchema: election, destField: ['role_id'] }),
 }));
 
 export const actionRightRelationships = relationships(actionRight, ({ one }) => ({
   role: one({ sourceField: ['role_id'], destSchema: role, destField: ['id'] }),
 }));
 
-export const positionRelationships = relationships(position, ({ one, many }) => ({
-  group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
-  holder_history: many({
-    sourceField: ['id'],
-    destSchema: positionHolderHistory,
-    destField: ['position_id'],
-  }),
-  elections: many({ sourceField: ['id'], destSchema: election, destField: ['position_id'] }),
+export const roleHolderHistoryRelationships = relationships(roleHolderHistory, ({ one }) => ({
+  role: one({ sourceField: ['role_id'], destSchema: role, destField: ['id'] }),
+  user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
 }));
-
-export const positionHolderHistoryRelationships = relationships(
-  positionHolderHistory,
-  ({ one }) => ({
-    position: one({ sourceField: ['position_id'], destSchema: position, destField: ['id'] }),
-    user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
-  })
-);
 
 // ============================================
 // Event relationships
@@ -423,9 +455,9 @@ export const eventRelationships = relationships(event, ({ one, many }) => ({
     destSchema: participant,
     destField: ['event_id'],
   }),
-  event_positions: many({
+  roles: many({
     sourceField: ['id'],
-    destSchema: eventPosition,
+    destSchema: role,
     destField: ['event_id'],
   }),
   agenda_items: many({ sourceField: ['id'], destSchema: agendaItem, destField: ['event_id'] }),
@@ -445,10 +477,24 @@ export const eventRelationships = relationships(event, ({ one, many }) => ({
   accreditations: many({ sourceField: ['id'], destSchema: accreditation, destField: ['event_id'] }),
 }));
 
-export const eventParticipantRelationships = relationships(eventParticipant, ({ one }) => ({
+export const eventParticipantRelationships = relationships(eventParticipant, ({ one, many }) => ({
   event: one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
   user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
+  participant_roles: many({
+    sourceField: ['id'],
+    destSchema: eventParticipantRole,
+    destField: ['event_participant_id'],
+  }),
+}));
+
+export const eventParticipantRoleRelationships = relationships(eventParticipantRole, ({ one }) => ({
+  event_participant: one({
+    sourceField: ['event_participant_id'],
+    destSchema: eventParticipant,
+    destField: ['id'],
+  }),
   role: one({ sourceField: ['role_id'], destSchema: role, destField: ['id'] }),
+  assigned_by: one({ sourceField: ['assigned_by_id'], destSchema: user, destField: ['id'] }),
 }));
 
 export const eventDelegateRelationships = relationships(eventDelegate, ({ one }) => ({
@@ -465,20 +511,6 @@ export const groupDelegateAllocationRelationships = relationships(
 
 export const participantRelationships = relationships(participant, ({ one }) => ({
   event: one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
-  user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
-}));
-
-export const eventPositionRelationships = relationships(eventPosition, ({ one, many }) => ({
-  event: one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
-  holders: many({
-    sourceField: ['id'],
-    destSchema: eventPositionHolder,
-    destField: ['position_id'],
-  }),
-}));
-
-export const eventPositionHolderRelationships = relationships(eventPositionHolder, ({ one }) => ({
-  position: one({ sourceField: ['position_id'], destSchema: eventPosition, destField: ['id'] }),
   user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
 }));
 
@@ -700,7 +732,7 @@ export const agendaItemChangeRequestRelationships = relationships(
 
 export const electionRelationships = relationships(election, ({ one, many }) => ({
   agenda_item: one({ sourceField: ['agenda_item_id'], destSchema: agendaItem, destField: ['id'] }),
-  position: one({ sourceField: ['position_id'], destSchema: position, destField: ['id'] }),
+  role: one({ sourceField: ['role_id'], destSchema: role, destField: ['id'] }),
   candidates: many({
     sourceField: ['id'],
     destSchema: electionCandidate,
@@ -1297,19 +1329,18 @@ export const allRelationships = [
   // Groups
   groupRelationships,
   groupMembershipRelationships,
+  groupMembershipRoleRelationships,
   groupRelationshipRelationships,
   roleRelationships,
   actionRightRelationships,
-  positionRelationships,
-  positionHolderHistoryRelationships,
+  roleHolderHistoryRelationships,
   // Events
   eventRelationships,
   eventParticipantRelationships,
+  eventParticipantRoleRelationships,
   eventDelegateRelationships,
   groupDelegateAllocationRelationships,
   participantRelationships,
-  eventPositionRelationships,
-  eventPositionHolderRelationships,
   // Amendments
   amendmentRelationships,
   amendmentSupportVoteRelationships,

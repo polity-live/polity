@@ -30,6 +30,8 @@ export const DEFAULT_GROUP_ROLES = [
   {
     name: 'Admin',
     description: 'Full group control',
+    default_request_role: false,
+    default_invite_role: false,
     permissions: [
       { resource: 'agendaItems' as ResourceType, action: 'manage' as ActionType },
       { resource: 'agendaItems' as ResourceType, action: 'view' as ActionType },
@@ -62,12 +64,12 @@ export const DEFAULT_GROUP_ROLES = [
       },
       { resource: 'groupPayments' as ResourceType, action: 'manage' as ActionType },
       { resource: 'groupPayments' as ResourceType, action: 'view' as ActionType },
-      { resource: 'groupPositions' as ResourceType, action: 'manage' as ActionType },
-      { resource: 'groupPositions' as ResourceType, action: 'view' as ActionType },
-      { resource: 'groupRelationships' as ResourceType, action: 'manage' as ActionType },
-      { resource: 'groupRelationships' as ResourceType, action: 'view' as ActionType },
       { resource: 'groupRoles' as ResourceType, action: 'manage' as ActionType },
       { resource: 'groupRoles' as ResourceType, action: 'view' as ActionType },
+      { resource: 'groupRelationships' as ResourceType, action: 'manage' as ActionType },
+      { resource: 'groupRelationships' as ResourceType, action: 'view' as ActionType },
+      { resource: 'groupAccessRoles' as ResourceType, action: 'manage' as ActionType },
+      { resource: 'groupAccessRoles' as ResourceType, action: 'view' as ActionType },
       { resource: 'groups' as ResourceType, action: 'manage' as ActionType },
       { resource: 'groups' as ResourceType, action: 'view' as ActionType },
       { resource: 'groupTodos' as ResourceType, action: 'manage' as ActionType },
@@ -79,6 +81,8 @@ export const DEFAULT_GROUP_ROLES = [
   {
     name: 'Moderator',
     description: 'Content moderation',
+    default_request_role: false,
+    default_invite_role: false,
     permissions: [
       { resource: 'amendments' as ResourceType, action: 'moderate' as ActionType },
       { resource: 'comments' as ResourceType, action: 'moderate' as ActionType },
@@ -92,6 +96,8 @@ export const DEFAULT_GROUP_ROLES = [
   {
     name: 'Member',
     description: 'Standard member access',
+    default_request_role: true,
+    default_invite_role: true,
     permissions: [
       { resource: 'amendments' as ResourceType, action: 'create' as ActionType },
       { resource: 'amendments' as ResourceType, action: 'view' as ActionType },
@@ -133,21 +139,57 @@ export const DEFAULT_BLOG_ROLES = [
  * This is the single source of truth for amendment collaborator permissions.
  */
 export const AMENDMENT_ACTION_RIGHTS = [
-  { resource: 'amendments' as ResourceType, action: 'manage' as ActionType, label: 'Manage Amendment' },
+  {
+    resource: 'amendments' as ResourceType,
+    action: 'manage' as ActionType,
+    label: 'Manage Amendment',
+  },
   { resource: 'amendments' as ResourceType, action: 'view' as ActionType, label: 'View Amendment' },
-  { resource: 'amendments' as ResourceType, action: 'create' as ActionType, label: 'Create Amendment' },
-  { resource: 'amendments' as ResourceType, action: 'update' as ActionType, label: 'Update Amendment' },
-  { resource: 'amendments' as ResourceType, action: 'delete' as ActionType, label: 'Delete Amendment' },
-  { resource: 'amendments' as ResourceType, action: 'vote' as ActionType, label: 'Vote on Amendment' },
-  { resource: 'amendments' as ResourceType, action: 'moderate' as ActionType, label: 'Moderate Amendment' },
+  {
+    resource: 'amendments' as ResourceType,
+    action: 'create' as ActionType,
+    label: 'Create Amendment',
+  },
+  {
+    resource: 'amendments' as ResourceType,
+    action: 'update' as ActionType,
+    label: 'Update Amendment',
+  },
+  {
+    resource: 'amendments' as ResourceType,
+    action: 'delete' as ActionType,
+    label: 'Delete Amendment',
+  },
+  {
+    resource: 'amendments' as ResourceType,
+    action: 'vote' as ActionType,
+    label: 'Vote on Amendment',
+  },
+  {
+    resource: 'amendments' as ResourceType,
+    action: 'moderate' as ActionType,
+    label: 'Moderate Amendment',
+  },
   { resource: 'documents' as ResourceType, action: 'view' as ActionType, label: 'View Document' },
   { resource: 'documents' as ResourceType, action: 'update' as ActionType, label: 'Edit Document' },
   { resource: 'threads' as ResourceType, action: 'create' as ActionType, label: 'Create Threads' },
   { resource: 'threads' as ResourceType, action: 'update' as ActionType, label: 'Update Threads' },
   { resource: 'threads' as ResourceType, action: 'delete' as ActionType, label: 'Delete Threads' },
-  { resource: 'comments' as ResourceType, action: 'create' as ActionType, label: 'Create Comments' },
-  { resource: 'comments' as ResourceType, action: 'update' as ActionType, label: 'Update Comments' },
-  { resource: 'comments' as ResourceType, action: 'delete' as ActionType, label: 'Delete Comments' },
+  {
+    resource: 'comments' as ResourceType,
+    action: 'create' as ActionType,
+    label: 'Create Comments',
+  },
+  {
+    resource: 'comments' as ResourceType,
+    action: 'update' as ActionType,
+    label: 'Update Comments',
+  },
+  {
+    resource: 'comments' as ResourceType,
+    action: 'delete' as ActionType,
+    label: 'Delete Comments',
+  },
   {
     resource: 'notifications' as ResourceType,
     action: 'manageNotifications' as ActionType,
@@ -190,6 +232,8 @@ export const DEFAULT_EVENT_ROLES = [
   {
     name: 'Organizer',
     description: 'Event organizer with full permissions',
+    default_request_role: false,
+    default_invite_role: false,
     permissions: [
       { resource: 'events' as ResourceType, action: 'view' as ActionType },
       { resource: 'events' as ResourceType, action: 'update' as ActionType },
@@ -218,6 +262,8 @@ export const DEFAULT_EVENT_ROLES = [
   {
     name: 'Voter',
     description: 'Event participant with voting rights',
+    default_request_role: false,
+    default_invite_role: false,
     permissions: [
       { resource: 'events' as ResourceType, action: 'view' as ActionType },
       { resource: 'events' as ResourceType, action: 'active_voting' as ActionType },
@@ -231,6 +277,8 @@ export const DEFAULT_EVENT_ROLES = [
   {
     name: 'Participant',
     description: 'Regular event participant',
+    default_request_role: true,
+    default_invite_role: true,
     permissions: [
       { resource: 'events' as ResourceType, action: 'view' as ActionType },
       { resource: 'events' as ResourceType, action: 'active_voting' as ActionType },
@@ -290,15 +338,15 @@ export const ACTION_RIGHTS = [
   // groupPayments
   { resource: 'groupPayments', action: 'manage', label: 'Manage Payments' },
   { resource: 'groupPayments', action: 'view', label: 'View Payments' },
-  // groupPositions
-  { resource: 'groupPositions', action: 'manage', label: 'Manage Positions' },
-  { resource: 'groupPositions', action: 'view', label: 'View Positions' },
+  // groupRoles
+  { resource: 'groupRoles', action: 'manage', label: 'Manage Incumbents' },
+  { resource: 'groupRoles', action: 'view', label: 'View Incumbents' },
   // groupRelationships
   { resource: 'groupRelationships', action: 'manage', label: 'Manage Group Relationships' },
   { resource: 'groupRelationships', action: 'view', label: 'View Group Relationships' },
-  // groupRoles
-  { resource: 'groupRoles', action: 'manage', label: 'Manage Roles' },
-  { resource: 'groupRoles', action: 'view', label: 'View Roles' },
+  // groupAccessRoles
+  { resource: 'groupAccessRoles', action: 'manage', label: 'Manage Roles' },
+  { resource: 'groupAccessRoles', action: 'view', label: 'View Roles' },
   // groups
   { resource: 'groups', action: 'manage', label: 'Manage Group Settings' },
   { resource: 'groups', action: 'view', label: 'View Group' },

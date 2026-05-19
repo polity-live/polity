@@ -18,7 +18,6 @@ export const DEFAULT_AI_TOOL_NAMES = [
   'create_payment',
   'create_agenda_item',
   'create_election_candidate',
-  'create_position',
 ] as const;
 
 export type AiToolName = (typeof DEFAULT_AI_TOOL_NAMES)[number];
@@ -146,12 +145,6 @@ export const DEFAULT_AI_TOOLS: readonly DefaultAiToolDefinition[] = [
     label: 'Kandidatur erstellen',
     kind: 'create',
     description: 'Erstellt eine echte Kandidatur in Polity.',
-  },
-  {
-    name: 'create_position',
-    label: 'Position erstellen',
-    kind: 'create',
-    description: 'Erstellt eine echte Position in Polity.',
   },
 ] as const;
 

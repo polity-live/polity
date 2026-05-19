@@ -2,7 +2,7 @@
  * useElectionVoting Hook
  *
  * Manages election voting at events, including candidate voting,
- * winner calculation, and position assignment.
+ * winner calculation, and role assignment.
  */
 
 import { useCallback, useMemo } from 'react';
@@ -12,8 +12,10 @@ import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useElectionWithVotes } from '@/zero/events/useEventState';
 import { usePermissions } from '@/zero/rbac';
 import { calculateElectionWinner, type MajorityType } from '@/features/shared/utils/voting-utils';
-import { notifyPositionAssigned } from '@/features/notifications/utils/notification-helpers.ts';
-import { schedulePositionRevote } from '@/features/votes/utils/revote-scheduling';
+import {
+  computeRoleScheduledRevoteDate,
+  scheduleRoleRevote,
+} from '@/features/votes/utils/revote-scheduling';
 
 interface UseElectionVotingOptions {
   eventId: string;
@@ -24,7 +26,9 @@ interface UseElectionVotingOptions {
 }
 
 /** Extract winner ID from the election description field (format: "winner:<id>") */
-function getWinnerId(election: { description?: string | null } | null | undefined): string | undefined {
+function getWinnerId(
+  election: { description?: string | null } | null | undefined
+): string | undefined {
   if (!election?.description) return undefined;
   const match = election.description.match(/^winner:(.+)$/);
   return match?.[1];
@@ -40,7 +44,7 @@ export function useElectionVoting({
   const { can } = usePermissions({ eventId, groupId });
   const { castFinalVote, updateElection, addCandidate, updateCandidate } = useElectionActions();
   const { createTimelineEvent } = useCommonActions();
-  const { createPositionHolderHistory } = useGroupActions();
+  const { createRoleHolderHistory, updateRole } = useGroupActions();
 
   // Query election with candidates and votes
   const { election: electionRaw, isLoading } = useElectionWithVotes(electionId);
@@ -49,7 +53,7 @@ export function useElectionVoting({
   const election = electionRaw;
   const candidates = election?.candidates ?? [];
   const finalSelections = election?.final_selections ?? [];
-  const position = election?.position;
+  const role = election?.role;
 
   // Candidates who accepted their nomination
   const eligibleCandidates = useMemo(() => {
@@ -112,10 +116,14 @@ export function useElectionVoting({
       }
 
       const participationId = crypto.randomUUID();
-      await castFinalVote(
-        { id: participationId, election_id: electionId, elector_id: userId },
-        [{ id: crypto.randomUUID(), election_id: electionId, candidate_id: candidateId, elector_participation_id: participationId }]
-      );
+      await castFinalVote({ id: participationId, election_id: electionId, elector_id: userId }, [
+        {
+          id: crypto.randomUUID(),
+          election_id: electionId,
+          candidate_id: candidateId,
+          elector_participation_id: participationId,
+        },
+      ]);
 
       return participationId;
     },
@@ -123,12 +131,9 @@ export function useElectionVoting({
   );
 
   // Change vote — not supported in the new voting model
-  const changeVote = useCallback(
-    async (_newCandidateId: string) => {
-      throw new Error('Changing votes is not supported. Delete and re-cast instead.');
-    },
-    []
-  );
+  const changeVote = useCallback(async () => {
+    throw new Error('Changing votes is not supported. Delete and re-cast instead.');
+  }, []);
 
   // Complete election and determine winner
   const completeElection = useCallback(
@@ -185,7 +190,6 @@ export function useElectionVoting({
         description: `winner:${result.winner.id}`,
       });
 
-
       await createTimelineEvent({
         id: crypto.randomUUID(),
         event_type: 'election_completed',
@@ -225,17 +229,17 @@ export function useElectionVoting({
     [electionId, eligibleCandidates, finalSelections, can]
   );
 
-  // Assign position to election winner
-  const assignPositionToWinner = useCallback(
+  // Assign role to the election winner
+  const assignRoleToWinner = useCallback(
     async (
-      positionTitle: string,
+      roleTitle: string,
       options?: { termDuration?: 'monthly' | 'quarterly' | 'yearly' | 'biannual' }
     ) => {
-      if (!getWinnerId(election) || !position?.id || !groupId) {
-        throw new Error('No winner or position to assign');
+      if (!getWinnerId(election) || !role?.id || !groupId) {
+        throw new Error('No winner or role to assign');
       }
 
-      if (!can('manage', 'groupPositions')) {
+      if (!can('manage', 'groupRoles')) {
         throw new Error('Permission denied');
       }
 
@@ -248,31 +252,54 @@ export function useElectionVoting({
       const now = Date.now();
       const historyId = crypto.randomUUID();
 
-      // Create position holder history record
-      await createPositionHolderHistory({
+      // Create incumbent history record
+      await createRoleHolderHistory({
         id: historyId,
         start_date: now,
-        end_date: 0,
+        end_date: null,
         reason: 'elected',
-        position_id: position.id,
+        role_id: role.id,
         user_id: winningCandidate.user_id,
       });
 
+      const scheduledRevoteDate =
+        computeRoleScheduledRevoteDate({
+          termStartDate: now,
+          recurrencePattern: role.recurrence_pattern,
+          recurrenceInterval: role.recurrence_interval,
+        }) ??
+        (options?.termDuration
+          ? await scheduleRoleRevote({
+              roleId: role.id,
+              groupId,
+              termDuration: options.termDuration,
+              termStartDate: new Date(now),
+              userId,
+            })
+          : null);
 
-      // Schedule revote for position term end if term duration is specified
-      if (options?.termDuration) {
-        await schedulePositionRevote({
-          positionId: position.id,
-          groupId,
-          termDuration: options.termDuration,
-          termStartDate: new Date(now),
-          userId,
+      if (Boolean(role.is_recurring) || scheduledRevoteDate) {
+        await updateRole({
+          id: role.id,
+          term_start_date: now,
+          scheduled_revote_date: scheduledRevoteDate,
         });
       }
 
       return historyId;
     },
-    [election, position, groupId, groupName, candidates, electionId, userId, can]
+    [
+      election,
+      role,
+      groupId,
+      groupName,
+      candidates,
+      electionId,
+      userId,
+      can,
+      createRoleHolderHistory,
+      updateRole,
+    ]
   );
 
   // Nominate a candidate
@@ -348,7 +375,7 @@ export function useElectionVoting({
     isLoading,
     error,
     election,
-    position,
+    role,
     candidates,
     eligibleCandidates,
     finalSelections,
@@ -369,7 +396,7 @@ export function useElectionVoting({
     castVote,
     changeVote,
     completeElection,
-    assignPositionToWinner,
+    assignRoleToWinner,
     nominateCandidate,
     acceptNomination,
     declineNomination,

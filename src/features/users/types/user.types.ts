@@ -1,11 +1,11 @@
-import type { UserFullProfileRow } from '@/zero/users/queries';
+import type { FullProfileRow } from '@/zero/users/useUserState';
 
 /**
- * Re-export the zero-derived user profile row as the canonical type.
- * All consumers should use `UserProfile` (a.k.a. `UserFullProfileRow`) directly,
+ * Re-export the normalized user profile row as the canonical type.
+ * All consumers should use `UserProfile` (a.k.a. `FullProfileRow`) directly,
  * accessing snake_case fields from the Zero sync engine.
  */
-export type UserProfile = UserFullProfileRow;
+export type UserProfile = FullProfileRow;
 
 /** Derived sub-relation types from the fullProfile query */
 export type ProfileStatement = UserProfile['statements'][number];
