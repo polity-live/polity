@@ -48,11 +48,18 @@ test.describe('Meet Scheduler - Owner Editing Offers', () => {
     eventFactory,
     adminDb,
   }) => {
-    const timestamp = Date.now();
-    const initialTitle = `E2E Owner Offer ${timestamp}`;
-    const updatedTitle = `E2E Owner Offer Updated ${timestamp}`;
-    const startDate = new Date(Date.now() + 48 * 60 * 60 * 1000);
-    const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+    const MS_PER_HOUR = 60 * 60 * 1000;
+    const FUTURE_MEETING_OFFSET_HOURS = 48;
+    const EDIT_DIALOG_TIMEOUT_MS = 10_000;
+    const BOOKING_DIALOG_ABSENCE_TIMEOUT_MS = 5_000;
+    const UPDATED_CARD_TIMEOUT_MS = 15_000;
+    const UPDATED_MAX_PARTICIPANTS = '7';
+    const INVALID_WHITESPACE_INPUT = '   ';
+    const uniqueId = crypto.randomUUID();
+    const initialTitle = `E2E Owner Offer ${uniqueId}`;
+    const updatedTitle = `E2E Owner Offer Updated ${uniqueId}`;
+    const startDate = new Date(Date.now() + FUTURE_MEETING_OFFSET_HOURS * MS_PER_HOUR);
+    const endDate = new Date(startDate.getTime() + MS_PER_HOUR);
 
     const meetingEvent = await eventFactory.createEvent(mainUserId, {
       title: initialTitle,
@@ -77,35 +84,43 @@ test.describe('Meet Scheduler - Owner Editing Offers', () => {
     await page.goto(`/user/${mainUserId}/meet`);
     await page.waitForLoadState('networkidle');
 
-    await page.getByText(initialTitle).first().click();
+    const initialMeetingCard = page.getByRole('button', { name: new RegExp(initialTitle) });
+    await expect(initialMeetingCard).toHaveCount(1, { timeout: EDIT_DIALOG_TIMEOUT_MS });
+    await expect(initialMeetingCard).toBeVisible({ timeout: EDIT_DIALOG_TIMEOUT_MS });
+    await initialMeetingCard.click();
 
     const editDialog = page.getByRole('dialog').filter({
       has: page.getByRole('heading', { name: 'Edit Meeting Offer' }),
     });
-    await expect(editDialog).toBeVisible({ timeout: 10000 });
-    await expect(page.getByRole('heading', { name: 'Book Meeting Offer' })).toHaveCount(0);
+    await expect(editDialog).toBeVisible({ timeout: EDIT_DIALOG_TIMEOUT_MS });
+    await expect(page.getByRole('heading', { name: 'Book Meeting Offer' })).toHaveCount(0, {
+      timeout: BOOKING_DIALOG_ABSENCE_TIMEOUT_MS,
+    });
 
-    const titleInput = editDialog.locator('#edit-meeting-title');
-    await titleInput.fill('   ');
+    const titleInput = editDialog.getByLabel('Title');
+    await titleInput.fill(INVALID_WHITESPACE_INPUT);
     await expect(editDialog.getByRole('button', { name: 'Save Meeting' })).toBeDisabled();
 
     await titleInput.fill(updatedTitle);
+    const maxParticipantsInput = editDialog.getByLabel('Max Participants');
+    await expect(maxParticipantsInput).toBeHidden();
     await editDialog.getByRole('button', { name: 'Public session' }).click();
-
-    const maxParticipantsInput = editDialog.locator('#edit-max-bookings');
     await expect(maxParticipantsInput).toBeVisible();
-    await maxParticipantsInput.fill('7');
+    await maxParticipantsInput.fill(UPDATED_MAX_PARTICIPANTS);
 
     await editDialog.getByRole('button', { name: 'Save Meeting' }).click();
-    await expect(editDialog).toBeHidden({ timeout: 10000 });
+    await expect(editDialog).toBeHidden({ timeout: EDIT_DIALOG_TIMEOUT_MS });
 
-    await expect(page.getByText(updatedTitle).first()).toBeVisible({ timeout: 15000 });
+    const updatedMeetingCard = page.getByRole('button', { name: new RegExp(updatedTitle) });
+    await expect(updatedMeetingCard).toHaveCount(1, { timeout: UPDATED_CARD_TIMEOUT_MS });
 
-    await page.getByText(updatedTitle).first().click();
+    await updatedMeetingCard.click();
     const reopenedEditDialog = page.getByRole('dialog').filter({
       has: page.getByRole('heading', { name: 'Edit Meeting Offer' }),
     });
-    await expect(reopenedEditDialog.locator('#edit-meeting-title')).toHaveValue(updatedTitle);
-    await expect(reopenedEditDialog.locator('#edit-max-bookings')).toHaveValue('7');
+    await expect(reopenedEditDialog.getByLabel('Title')).toHaveValue(updatedTitle);
+    await expect(reopenedEditDialog.getByLabel('Max Participants')).toHaveValue(
+      UPDATED_MAX_PARTICIPANTS
+    );
   });
 });
