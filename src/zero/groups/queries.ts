@@ -92,6 +92,26 @@ export const groupQueries = {
       .related('membership_roles', q => q.related('role'))
   ),
 
+  offlineMembersByGroup: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
+    zql.group_offline_member
+      .where('group_id', groupId)
+      .related('group')
+      .related('connected_user')
+      .related('created_by')
+      .orderBy('created_at', 'asc')
+  ),
+
+  offlineMembersByGroupIds: defineQuery(
+    z.object({ groupIds: z.array(z.string()) }),
+    ({ args: { groupIds } }) =>
+      zql.group_offline_member
+        .where('group_id', 'IN', groupIds)
+        .related('group')
+        .related('connected_user')
+        .related('created_by')
+        .orderBy('created_at', 'asc')
+  ),
+
   // ── New queries (extracted from hooks.ts) ─────────────────────────
 
   /** Deep-relational query powering the GroupWiki page */
@@ -106,6 +126,7 @@ export const groupQueries = {
       )
       .related('events')
       .related('amendments')
+      .related('offline_members', q => q.related('connected_user').related('created_by'))
       .related('memberships', q =>
         q
           .related('user')
@@ -173,6 +194,7 @@ export const groupQueries = {
       .related('connected_group')
       .related('sibling_sources', q => q.related('source_group'))
       .related('conversations', q => q.related('participants', q => q.related('user')))
+      .related('offline_members', q => q.related('connected_user').related('created_by'))
       .related('memberships', q =>
         q
           .related('user')
@@ -368,6 +390,10 @@ export type GroupMembershipWithRoleRow = QueryRowType<
 >;
 export type GroupMembershipWithRelationsRow = QueryRowType<
   typeof groupQueries.userMembershipsWithGroupRelations
+>;
+export type GroupOfflineMemberRow = QueryRowType<typeof groupQueries.offlineMembersByGroup>;
+export type GroupOfflineMemberByGroupIdsRow = QueryRowType<
+  typeof groupQueries.offlineMembersByGroupIds
 >;
 export type GroupMembershipsByUserRow = QueryRowType<typeof groupQueries.membershipsByUser>;
 export type GroupAccessRoleWithRightsRow = QueryRowType<typeof groupQueries.accessRolesWithRights>;

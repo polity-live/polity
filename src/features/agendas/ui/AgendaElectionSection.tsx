@@ -25,6 +25,12 @@ interface CandidateSelection {
   candidate_id: string;
 }
 
+interface ElectionOfflineTallyLike {
+  candidate_id?: string | null;
+  phase?: string | null;
+  count?: number | null;
+}
+
 interface AgendaElectionSectionProps {
   roleName: string;
   electionMode?: ElectionMode | null;
@@ -44,6 +50,8 @@ interface AgendaElectionSectionProps {
   onWithdrawCandidacy?: () => void;
   winnerName?: string;
   winnerVoteSharePercent?: number;
+  attendanceMode?: 'online' | 'hybrid' | 'offline' | null;
+  offlineTallies?: readonly ElectionOfflineTallyLike[];
   className?: string;
 }
 
@@ -158,6 +166,8 @@ export function AgendaElectionSection({
   onWithdrawCandidacy,
   winnerName,
   winnerVoteSharePercent,
+  attendanceMode = 'online',
+  offlineTallies = [],
   className,
 }: AgendaElectionSectionProps) {
   const { t } = useTranslation();
@@ -176,8 +186,13 @@ export function AgendaElectionSection({
     totalIndicative,
     totalFinal,
   } = useMemo(() => {
-    return calculateElectionStats(visibleCandidates, indicativeSelections, finalSelections);
-  }, [visibleCandidates, indicativeSelections, finalSelections]);
+    return calculateElectionStats(
+      visibleCandidates,
+      indicativeSelections,
+      finalSelections,
+      offlineTallies
+    );
+  }, [finalSelections, indicativeSelections, offlineTallies, visibleCandidates]);
 
   const winningCandidateIds = useMemo(() => {
     if (!isClosed) {
@@ -203,6 +218,11 @@ export function AgendaElectionSection({
             />
           </CardTitle>
           <div className="flex flex-wrap items-center justify-end gap-2">
+            {attendanceMode ? (
+              <Badge variant="outline" className="capitalize">
+                {attendanceMode}
+              </Badge>
+            ) : null}
             {electionMode ? (
               <Badge variant="secondary">
                 {getElectionModeSummaryLabel(electionMode, seatCount)}

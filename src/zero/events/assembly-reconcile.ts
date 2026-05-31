@@ -1,4 +1,8 @@
 import { mutators } from '../mutators';
+import {
+  getDefaultOfflineParticipationChannel,
+  getOfflineRosterMembersForGeneralAssembly,
+} from '../offline-roster-helpers';
 import { zql } from '../schema';
 import { fireNotification } from '../server-notify';
 import {
@@ -80,6 +84,17 @@ function isEventOngoingOrUpcomingByEndDate(event: {
   return inviteCutoff != null && inviteCutoff >= Date.now();
 }
 
+function resolveAttendanceMode(event: {
+  attendance_mode?: string | null;
+  location_type?: string | null;
+}) {
+  if (event.attendance_mode === 'online' || event.attendance_mode === 'hybrid') {
+    return event.attendance_mode;
+  }
+
+  return event.location_type === 'online' ? 'online' : 'offline';
+}
+
 async function getEligibleGeneralAssemblyUserIds(tx: EventTx, groupId: string) {
   const group = await tx.run(zql.group.where('id', groupId).one());
   if (!group) {
@@ -148,21 +163,41 @@ export async function reconcileGeneralAssemblyParticipantsForEvent(
     assignedById: assignedById ?? null,
   });
 
-  const [{ eligibleUserIds, descendantBaseGroupIds }, eventRoles, participants] = await Promise.all(
-    [
-      getEligibleGeneralAssemblyUserIds(tx, event.group_id),
-      tx.run(
-        zql.role.where('event_id', event.id).where('scope', 'event').orderBy('sort_order', 'asc')
-      ),
-      tx.run(
-        zql.event_participant
-          .where('event_id', event.id)
-          .related('participant_roles', q => q.related('role'))
-      ),
-    ]
-  );
+  const attendanceMode = resolveAttendanceMode(event);
+  const shouldSeedOfflineParticipants = attendanceMode !== 'online';
+  const [
+    { eligibleUserIds, descendantBaseGroupIds },
+    eligibleOfflineMembers,
+    eventRoles,
+    participants,
+    existingOfflineParticipants,
+  ] = await Promise.all([
+    getEligibleGeneralAssemblyUserIds(tx, event.group_id),
+    shouldSeedOfflineParticipants
+      ? getOfflineRosterMembersForGeneralAssembly(tx, event.group_id)
+      : Promise.resolve([]),
+    tx.run(
+      zql.role.where('event_id', event.id).where('scope', 'event').orderBy('sort_order', 'asc')
+    ),
+    tx.run(
+      zql.event_participant
+        .where('event_id', event.id)
+        .related('participant_roles', q => q.related('role'))
+    ),
+    tx.run(
+      zql.event_offline_participant.where('event_id', event.id).where('source_type', 'group_member')
+    ),
+  ]);
   const participantByUserId = new Map(
     participants.map(participant => [participant.user_id, participant])
+  );
+  const offlineParticipantsById = new Map(
+    existingOfflineParticipants.map(participant => [participant.id, participant])
+  );
+  const offlineParticipantsBySourceId = new Map(
+    existingOfflineParticipants
+      .filter(participant => participant.group_offline_member_id)
+      .map(participant => [participant.group_offline_member_id as string, participant])
   );
   const defaultInviteRole =
     eventRoles.find(role => role.default_invite_role) ??
@@ -171,6 +206,9 @@ export async function reconcileGeneralAssemblyParticipantsForEvent(
   const shouldAutoInvite = isEventOngoingOrUpcomingByEndDate(event);
   const addedUserIds: string[] = [];
   const removedUserIds: string[] = [];
+  const addedOfflineParticipantIds: string[] = [];
+  const removedOfflineParticipantIds: string[] = [];
+  const keptOfflineParticipantIds = new Set<string>();
 
   for (const userId of eligibleUserIds) {
     if (!shouldAutoInvite || participantByUserId.has(userId)) {
@@ -224,7 +262,114 @@ export async function reconcileGeneralAssemblyParticipantsForEvent(
     removedUserIds.push(participant.user_id);
   }
 
-  if (addedUserIds.length > 0 || removedUserIds.length > 0) {
+  if (shouldSeedOfflineParticipants) {
+    const desiredOfflineMembersByKey = new Map<string, (typeof eligibleOfflineMembers)[number]>();
+
+    for (const offlineMember of eligibleOfflineMembers) {
+      const personKey = offlineMember.connected_user_id
+        ? `user:${offlineMember.connected_user_id}`
+        : `offline:${offlineMember.id}`;
+      if (!desiredOfflineMembersByKey.has(personKey)) {
+        desiredOfflineMembersByKey.set(personKey, offlineMember);
+      }
+    }
+
+    for (const offlineMember of desiredOfflineMembersByKey.values()) {
+      const existingOfflineParticipant =
+        offlineParticipantsBySourceId.get(offlineMember.id) ??
+        [...offlineParticipantsById.values()].find(participant =>
+          offlineMember.connected_user_id
+            ? participant.connected_user_id === offlineMember.connected_user_id
+            : false
+        ) ??
+        null;
+      const nextParticipationChannel =
+        attendanceMode === 'hybrid'
+          ? existingOfflineParticipant?.participation_channel === 'offline'
+            ? 'offline'
+            : getDefaultOfflineParticipationChannel({
+                attendanceMode,
+                connectedUserId: offlineMember.connected_user_id,
+              })
+          : 'offline';
+
+      if (existingOfflineParticipant) {
+        keptOfflineParticipantIds.add(existingOfflineParticipant.id);
+        const patch: {
+          id: string;
+          group_offline_member_id?: string | null;
+          first_name?: string;
+          last_name?: string;
+          reason_not_signed_up?: string | null;
+          connected_user_id?: string | null;
+          participation_channel?: 'online' | 'offline';
+          updated_at?: number;
+        } = { id: existingOfflineParticipant.id };
+
+        if (existingOfflineParticipant.group_offline_member_id !== offlineMember.id) {
+          patch.group_offline_member_id = offlineMember.id;
+        }
+        if (existingOfflineParticipant.first_name !== offlineMember.first_name) {
+          patch.first_name = offlineMember.first_name;
+        }
+        if (existingOfflineParticipant.last_name !== offlineMember.last_name) {
+          patch.last_name = offlineMember.last_name;
+        }
+        if (
+          existingOfflineParticipant.reason_not_signed_up !== offlineMember.reason_not_signed_up
+        ) {
+          patch.reason_not_signed_up = offlineMember.reason_not_signed_up ?? null;
+        }
+        if (existingOfflineParticipant.connected_user_id !== offlineMember.connected_user_id) {
+          patch.connected_user_id = offlineMember.connected_user_id ?? null;
+        }
+        if (existingOfflineParticipant.participation_channel !== nextParticipationChannel) {
+          patch.participation_channel = nextParticipationChannel;
+        }
+
+        if (Object.keys(patch).length > 1) {
+          patch.updated_at = Date.now();
+          await tx.mutate.event_offline_participant.update(patch);
+        }
+
+        offlineParticipantsById.delete(existingOfflineParticipant.id);
+        continue;
+      }
+
+      const createdAt = Date.now();
+      const offlineParticipantId = crypto.randomUUID();
+      await tx.mutate.event_offline_participant.insert({
+        id: offlineParticipantId,
+        event_id: event.id,
+        group_offline_member_id: offlineMember.id,
+        source_type: 'group_member',
+        first_name: offlineMember.first_name,
+        last_name: offlineMember.last_name,
+        reason_not_signed_up: offlineMember.reason_not_signed_up ?? null,
+        connected_user_id: offlineMember.connected_user_id ?? null,
+        attendance_status: 'listed',
+        participation_channel: nextParticipationChannel,
+        created_at: createdAt,
+        updated_at: createdAt,
+      });
+      addedOfflineParticipantIds.push(offlineParticipantId);
+      keptOfflineParticipantIds.add(offlineParticipantId);
+    }
+  }
+
+  for (const offlineParticipant of existingOfflineParticipants) {
+    if (!shouldSeedOfflineParticipants || !keptOfflineParticipantIds.has(offlineParticipant.id)) {
+      await tx.mutate.event_offline_participant.delete({ id: offlineParticipant.id });
+      removedOfflineParticipantIds.push(offlineParticipant.id);
+    }
+  }
+
+  if (
+    addedUserIds.length > 0 ||
+    removedUserIds.length > 0 ||
+    addedOfflineParticipantIds.length > 0 ||
+    removedOfflineParticipantIds.length > 0
+  ) {
     await recomputeEventCounters(tx, event.id);
 
     for (const userId of new Set([...addedUserIds, ...removedUserIds])) {
@@ -248,11 +393,14 @@ export async function reconcileGeneralAssemblyParticipantsForEvent(
     console.info('[general-assembly-reconcile]', {
       eventId: event.id,
       groupId: event.group_id,
+      attendanceMode,
       shouldAutoInvite,
       descendantBaseGroupIds,
       eligibleUserCount: eligibleUserIds.size,
       addedUserIds,
       removedUserIds,
+      addedOfflineParticipantIds,
+      removedOfflineParticipantIds,
     });
   }
 
@@ -262,6 +410,8 @@ export async function reconcileGeneralAssemblyParticipantsForEvent(
     groupId: event.group_id,
     addedUserIds,
     removedUserIds,
+    addedOfflineParticipantIds,
+    removedOfflineParticipantIds,
   });
 }
 

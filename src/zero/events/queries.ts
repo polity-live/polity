@@ -28,6 +28,15 @@ export const eventQueries = {
       .orderBy('created_at', 'asc')
   ),
 
+  offlineParticipants: defineQuery(z.object({ eventId: z.string() }), ({ args: { eventId } }) =>
+    zql.event_offline_participant
+      .where('event_id', eventId)
+      .related('event')
+      .related('group_offline_member', q => q.related('group').related('connected_user'))
+      .related('connected_user')
+      .orderBy('created_at', 'asc')
+  ),
+
   /** Event agenda items by event (replaces old event_voting_session query) */
   agenda: defineQuery(z.object({ eventId: z.string() }), ({ args: { eventId } }) =>
     zql.agenda_item.where('event_id', eventId).orderBy('order_index', 'asc')
@@ -70,6 +79,11 @@ export const eventQueries = {
             roleLinkQuery.related('role', roleQuery => roleQuery.related('action_rights'))
           )
       )
+      .related('offline_participants', offlineParticipantQuery =>
+        offlineParticipantQuery
+          .related('connected_user')
+          .related('group_offline_member', q => q.related('group').related('connected_user'))
+      )
       .related('delegates', delegateQuery => delegateQuery.related('user').related('group'))
       .related('agenda_items', agendaItemQuery => agendaItemQuery.related('election'))
       .related('roles')
@@ -94,6 +108,9 @@ export const eventQueries = {
           .related('user')
           .related('participant_roles', pq => pq.related('role', rq => rq.related('action_rights')))
       )
+      .related('offline_participants', q =>
+        q.related('connected_user').related('group_offline_member', gq => gq.related('group'))
+      )
       .related('agenda_items', q =>
         q
           .related('votes', vq =>
@@ -101,6 +118,7 @@ export const eventQueries = {
               .related('choices')
               .related('indicative_decisions', d => d.related('choice'))
               .related('final_decisions', d => d.related('choice'))
+              .related('offline_tallies', oq => oq.related('choice'))
               .related('voters')
           )
           .related('amendment', aq => aq.related('group').related('event'))
@@ -112,6 +130,9 @@ export const eventQueries = {
     zql.event
       .where('id', id)
       .related('creator')
+      .related('offline_participants', q =>
+        q.related('connected_user').related('group_offline_member', gq => gq.related('group'))
+      )
       .related('agenda_items', q =>
         q
           .related('creator')
@@ -121,6 +142,7 @@ export const eventQueries = {
               .related('candidates', c => c.related('user'))
               .related('indicative_selections', s => s.related('candidate'))
               .related('final_selections', s => s.related('candidate'))
+              .related('offline_tallies', oq => oq.related('candidate'))
               .related('electors')
           )
           .related('votes', q =>
@@ -128,6 +150,7 @@ export const eventQueries = {
               .related('choices')
               .related('indicative_decisions', d => d.related('choice'))
               .related('final_decisions', d => d.related('choice'))
+              .related('offline_tallies', oq => oq.related('choice'))
               .related('voters')
           )
           .related('amendment', q => q.related('change_requests'))
@@ -203,6 +226,7 @@ export const eventQueries = {
           .related('candidates', c => c.related('user'))
           .related('indicative_selections', s => s.related('candidate'))
           .related('final_selections', s => s.related('candidate'))
+          .related('offline_tallies', oq => oq.related('candidate'))
           .related('electors', e => e.related('user'))
           .related('indicative_participations', p =>
             p.related('elector').related('selections', s => s.related('candidate'))
@@ -217,6 +241,7 @@ export const eventQueries = {
           .related('choices')
           .related('indicative_decisions', d => d.related('choice'))
           .related('final_decisions', d => d.related('choice'))
+          .related('offline_tallies', oq => oq.related('choice'))
           .related('voters', v => v.related('user'))
           .related('indicative_participations', p =>
             p.related('voter').related('decisions', d => d.related('choice'))
@@ -240,6 +265,7 @@ export const eventQueries = {
           .related('candidates', c => c.related('user'))
           .related('indicative_selections', s => s.related('candidate'))
           .related('final_selections', s => s.related('candidate'))
+          .related('offline_tallies', oq => oq.related('candidate'))
           .related('electors', e => e.related('user'))
       )
       .related('votes', q =>
@@ -247,6 +273,7 @@ export const eventQueries = {
           .related('choices')
           .related('indicative_decisions', d => d.related('choice'))
           .related('final_decisions', d => d.related('choice'))
+          .related('offline_tallies', oq => oq.related('choice'))
           .related('voters', v => v.related('user'))
       )
       .related('amendment', q => q.related('change_requests').related('group').related('document'))
@@ -302,6 +329,9 @@ export const eventQueries = {
       .related('delegates', q => q.related('user').related('group'))
       .related('participants', q =>
         q.related('user').related('participant_roles', pq => pq.related('role'))
+      )
+      .related('offline_participants', q =>
+        q.related('connected_user').related('group_offline_member', gq => gq.related('group'))
       )
   ),
 
@@ -378,6 +408,9 @@ export const eventQueries = {
       .where('id', id)
       .related('agenda_items')
       .related('participants', q => q.related('user'))
+      .related('offline_participants', q =>
+        q.related('connected_user').related('group_offline_member', gq => gq.related('group'))
+      )
   ),
 
   /** User event subscriptions (participations with deep event relations for timeline) */
@@ -442,6 +475,7 @@ export type EventSubscriptionRow = QueryRowType<typeof eventQueries.userSubscrip
 export type EventParticipantWithUserRow = QueryRowType<
   typeof eventQueries.participantsWithUserAndRole
 >;
+export type EventOfflineParticipantRow = QueryRowType<typeof eventQueries.offlineParticipants>;
 export type EventAgendaItemFullRow = QueryRowType<typeof eventQueries.agendaItemsFull>;
 export type EventAgendaItemDetailRow = QueryRowType<typeof eventQueries.agendaItemDetail>;
 export type EventWikiAgendaRow = QueryRowType<typeof eventQueries.wikiAgendaItems>;

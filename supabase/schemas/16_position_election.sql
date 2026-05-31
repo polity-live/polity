@@ -126,3 +126,22 @@ CREATE INDEX idx_final_candidate_selection_participation ON public.final_candida
 
 ALTER TABLE public.final_candidate_selection ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.final_candidate_selection FOR ALL TO service_role USING (true);
+
+-- Aggregated offline tallies per election phase and candidate
+CREATE TABLE IF NOT EXISTS public.election_offline_tally (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  election_id UUID NOT NULL REFERENCES public.election (id) ON DELETE CASCADE,
+  phase TEXT NOT NULL CHECK (phase IN ('indicative', 'final')),
+  candidate_id UUID NOT NULL REFERENCES public.election_candidate (id) ON DELETE CASCADE,
+  count INTEGER NOT NULL DEFAULT 0 CHECK (count >= 0),
+  updated_by_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (election_id, phase, candidate_id)
+);
+
+CREATE INDEX idx_election_offline_tally_election ON public.election_offline_tally (election_id);
+CREATE INDEX idx_election_offline_tally_candidate ON public.election_offline_tally (candidate_id);
+
+ALTER TABLE public.election_offline_tally ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.election_offline_tally FOR ALL TO service_role USING (true);

@@ -9,6 +9,10 @@ import {
   groupMembershipCreateSchema,
   groupMembershipLegacyRoleUpdateSchema,
   groupMembershipDeleteSchema,
+  groupOfflineMemberCreateSchema,
+  groupOfflineMemberUpdateSchema,
+  groupOfflineMemberDeleteSchema,
+  groupOfflineMemberBulkImportSchema,
   groupMembershipRoleAssignSchema,
   groupMembershipRoleUnassignSchema,
   groupMembershipRolesSyncSchema,
@@ -444,6 +448,85 @@ async function authorizeGroupRelationshipEndpointMutation(
   throw new Error('Relationship must reference at least one group.');
 }
 
+function normalizeOptionalReason(value: string | null | undefined) {
+  const trimmedValue = value?.trim() ?? '';
+  return trimmedValue.length > 0 ? trimmedValue : null;
+}
+
+function normalizeRequiredName(value: string) {
+  const trimmedValue = value.trim();
+  if (!trimmedValue) {
+    throw new Error('First name and last name are required.');
+  }
+
+  return trimmedValue;
+}
+
+async function assertCanManageGroupOfflineMembers(
+  tx: Parameters<typeof can>[0],
+  ctx: Parameters<typeof can>[1],
+  groupId: string
+) {
+  await can(tx, ctx, {
+    action: 'manage',
+    resource: 'groupMemberships',
+    groupId,
+  });
+
+  const group = await tx.run(zql.group.where('id', groupId).one());
+  if (!group) {
+    throw new Error('Group not found');
+  }
+
+  if (group.group_type !== 'base') {
+    throw new Error('Offline members can only be managed directly on base groups.');
+  }
+
+  return group;
+}
+
+async function loadGroupOfflineMemberForMutation(
+  tx: Parameters<typeof can>[0],
+  ctx: Parameters<typeof can>[1],
+  offlineMemberId: string
+) {
+  const offlineMember = await tx.run(zql.group_offline_member.where('id', offlineMemberId).one());
+  if (!offlineMember) {
+    throw new Error('Offline member not found');
+  }
+
+  await assertCanManageGroupOfflineMembers(tx, ctx, offlineMember.group_id);
+  return offlineMember;
+}
+
+async function assertUniqueConnectedOfflineUserWithinGroup(
+  tx: Parameters<typeof can>[0],
+  args: {
+    groupId: string;
+    connectedUserId?: string | null;
+    excludeOfflineMemberId?: string;
+  }
+) {
+  if (!args.connectedUserId) {
+    return;
+  }
+
+  const existingOfflineMembers = await tx.run(
+    zql.group_offline_member
+      .where('group_id', args.groupId)
+      .where('connected_user_id', args.connectedUserId)
+  );
+
+  const hasConflict = existingOfflineMembers.some(
+    offlineMember => offlineMember.id !== args.excludeOfflineMemberId
+  );
+  if (hasConflict) {
+    throw new Error(
+      'This active user is already connected to another offline member of the group.'
+    );
+  }
+}
+
 /** Shared mutators — run on both client and server. Server mutators may override these. */
 export const groupSharedMutators = {
   create: defineMutator(groupCreateSchema, async ({ tx, ctx: { userID }, args }) => {
@@ -550,6 +633,110 @@ export const groupSharedMutators = {
     await can(tx, ctx, { action: 'manage', resource: 'groups', groupId: args.id });
     await tx.mutate.group.delete({ id: args.id });
   }),
+
+  createOfflineMember: defineMutator(groupOfflineMemberCreateSchema, async ({ tx, ctx, args }) => {
+    const group = await assertCanManageGroupOfflineMembers(tx, ctx, args.group_id);
+    void group;
+    await assertUniqueConnectedOfflineUserWithinGroup(tx, {
+      groupId: args.group_id,
+      connectedUserId: args.connected_user_id ?? null,
+    });
+
+    const now = Date.now();
+    await tx.mutate.group_offline_member.insert({
+      id: args.id,
+      group_id: args.group_id,
+      first_name: normalizeRequiredName(args.first_name),
+      last_name: normalizeRequiredName(args.last_name),
+      reason_not_signed_up: normalizeOptionalReason(args.reason_not_signed_up),
+      connected_user_id: args.connected_user_id ?? null,
+      created_by_id: ctx.userID,
+      created_at: now,
+      updated_at: now,
+    });
+  }),
+
+  updateOfflineMember: defineMutator(groupOfflineMemberUpdateSchema, async ({ tx, ctx, args }) => {
+    const offlineMember = await loadGroupOfflineMemberForMutation(tx, ctx, args.id);
+    const connectedUserId =
+      args.connected_user_id !== undefined
+        ? args.connected_user_id
+        : offlineMember.connected_user_id;
+    await assertUniqueConnectedOfflineUserWithinGroup(tx, {
+      groupId: offlineMember.group_id,
+      connectedUserId,
+      excludeOfflineMemberId: offlineMember.id,
+    });
+
+    await tx.mutate.group_offline_member.update({
+      id: args.id,
+      ...(args.first_name !== undefined
+        ? { first_name: normalizeRequiredName(args.first_name) }
+        : {}),
+      ...(args.last_name !== undefined ? { last_name: normalizeRequiredName(args.last_name) } : {}),
+      ...(args.reason_not_signed_up !== undefined
+        ? { reason_not_signed_up: normalizeOptionalReason(args.reason_not_signed_up) }
+        : {}),
+      ...(args.connected_user_id !== undefined
+        ? { connected_user_id: args.connected_user_id ?? null }
+        : {}),
+      updated_at: Date.now(),
+    });
+  }),
+
+  deleteOfflineMember: defineMutator(groupOfflineMemberDeleteSchema, async ({ tx, ctx, args }) => {
+    await loadGroupOfflineMemberForMutation(tx, ctx, args.id);
+    await tx.mutate.group_offline_member.delete({ id: args.id });
+  }),
+
+  importOfflineMembers: defineMutator(
+    groupOfflineMemberBulkImportSchema,
+    async ({ tx, ctx, args }) => {
+      await assertCanManageGroupOfflineMembers(tx, ctx, args.group_id);
+
+      const existingOfflineMembers = await tx.run(
+        zql.group_offline_member.where('group_id', args.group_id)
+      );
+      const existingKeys = new Set(
+        existingOfflineMembers.map(offlineMember =>
+          [
+            offlineMember.first_name.trim().toLowerCase(),
+            offlineMember.last_name.trim().toLowerCase(),
+            (offlineMember.reason_not_signed_up ?? '').trim().toLowerCase(),
+          ].join('|')
+        )
+      );
+      const seenImportKeys = new Set<string>();
+      const now = Date.now();
+
+      for (const entry of args.entries) {
+        const firstName = normalizeRequiredName(entry.first_name);
+        const lastName = normalizeRequiredName(entry.last_name);
+        const reasonNotSignedUp = normalizeOptionalReason(entry.reason_not_signed_up);
+        const dedupeKey = [
+          firstName.toLowerCase(),
+          lastName.toLowerCase(),
+          (reasonNotSignedUp ?? '').toLowerCase(),
+        ].join('|');
+        if (existingKeys.has(dedupeKey) || seenImportKeys.has(dedupeKey)) {
+          continue;
+        }
+
+        seenImportKeys.add(dedupeKey);
+        await tx.mutate.group_offline_member.insert({
+          id: crypto.randomUUID(),
+          group_id: args.group_id,
+          first_name: firstName,
+          last_name: lastName,
+          reason_not_signed_up: reasonNotSignedUp,
+          connected_user_id: null,
+          created_by_id: ctx.userID,
+          created_at: now,
+          updated_at: now,
+        });
+      }
+    }
+  ),
 
   joinGroup: defineMutator(groupMembershipCreateSchema, async ({ tx, ctx: { userID }, args }) => {
     await assertCanDirectlyMutateOfficialMembership(tx, args.group_id, userID);

@@ -10,6 +10,7 @@ export {
   useEventWithVoting,
   useEventStreamData,
   useEventParticipantsQuery,
+  useEventOfflineParticipants,
   useEventParticipationData,
   useEventRolesData,
   useEventAgenda,
@@ -35,5 +36,11 @@ export {
   useEventWithAgendaAndParticipants,
   useUserEventSubscriptions,
 } from './useEventState';
-export type { Event, EventParticipant, Participant, EventException } from './schema';
+export type {
+  Event,
+  EventParticipant,
+  EventOfflineParticipant,
+  Participant,
+  EventException,
+} from './schema';
 export type { EventDelegate, GroupDelegateAllocation } from '../delegates/schema';

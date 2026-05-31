@@ -6,6 +6,7 @@ import { user, file } from './users/table';
 import {
   group,
   groupMembership,
+  groupOfflineMember,
   groupMembershipRole,
   groupGuestAccess,
   groupGuestRole,
@@ -18,6 +19,7 @@ import {
 import {
   event,
   eventParticipant,
+  eventOfflineParticipant,
   eventParticipantRole,
   participant,
   eventException,
@@ -38,6 +40,7 @@ import { agendaItem, speakerList, agendaItemChangeRequest } from './agendas/tabl
 import {
   election,
   electionCandidate,
+  electionOfflineTally,
   elector,
   indicativeElectorParticipation,
   indicativeCandidateSelection,
@@ -48,6 +51,7 @@ import {
 import {
   vote,
   voteChoice,
+  voteOfflineTally,
   voter,
   indicativeVoterParticipation,
   indicativeChoiceDecision,
@@ -160,6 +164,31 @@ export const userRelationships = relationships(user, ({ many }) => ({
     sourceField: ['id'],
     destSchema: eventParticipant,
     destField: ['user_id'],
+  }),
+  connected_group_offline_members: many({
+    sourceField: ['id'],
+    destSchema: groupOfflineMember,
+    destField: ['connected_user_id'],
+  }),
+  created_group_offline_members: many({
+    sourceField: ['id'],
+    destSchema: groupOfflineMember,
+    destField: ['created_by_id'],
+  }),
+  connected_event_offline_participants: many({
+    sourceField: ['id'],
+    destSchema: eventOfflineParticipant,
+    destField: ['connected_user_id'],
+  }),
+  updated_vote_offline_tallies: many({
+    sourceField: ['id'],
+    destSchema: voteOfflineTally,
+    destField: ['updated_by_id'],
+  }),
+  updated_election_offline_tallies: many({
+    sourceField: ['id'],
+    destSchema: electionOfflineTally,
+    destField: ['updated_by_id'],
   }),
   event_delegates: many({ sourceField: ['id'], destSchema: eventDelegate, destField: ['user_id'] }),
   created_amendments: many({
@@ -357,6 +386,11 @@ export const groupRelationships = relationships(group, ({ one, many }) => ({
     destField: ['id'],
   }),
   memberships: many({ sourceField: ['id'], destSchema: groupMembership, destField: ['group_id'] }),
+  offline_members: many({
+    sourceField: ['id'],
+    destSchema: groupOfflineMember,
+    destField: ['group_id'],
+  }),
   guest_accesses: many({
     sourceField: ['id'],
     destSchema: groupGuestAccess,
@@ -420,6 +454,24 @@ export const groupMembershipRelationships = relationships(groupMembership, ({ on
     destField: ['group_membership_id'],
   }),
 }));
+
+export const groupOfflineMemberRelationships = relationships(
+  groupOfflineMember,
+  ({ one, many }) => ({
+    group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
+    connected_user: one({
+      sourceField: ['connected_user_id'],
+      destSchema: user,
+      destField: ['id'],
+    }),
+    created_by: one({ sourceField: ['created_by_id'], destSchema: user, destField: ['id'] }),
+    event_offline_participants: many({
+      sourceField: ['id'],
+      destSchema: eventOfflineParticipant,
+      destField: ['group_offline_member_id'],
+    }),
+  })
+);
 
 export const groupMembershipRoleRelationships = relationships(groupMembershipRole, ({ one }) => ({
   group_membership: one({
@@ -523,6 +575,11 @@ export const eventRelationships = relationships(event, ({ one, many }) => ({
     destSchema: eventParticipant,
     destField: ['event_id'],
   }),
+  offline_participants: many({
+    sourceField: ['id'],
+    destSchema: eventOfflineParticipant,
+    destField: ['event_id'],
+  }),
   delegates: many({ sourceField: ['id'], destSchema: eventDelegate, destField: ['event_id'] }),
   delegate_allocations: many({
     sourceField: ['id'],
@@ -567,6 +624,23 @@ export const eventParticipantRelationships = relationships(eventParticipant, ({ 
     destField: ['event_participant_id'],
   }),
 }));
+
+export const eventOfflineParticipantRelationships = relationships(
+  eventOfflineParticipant,
+  ({ one }) => ({
+    event: one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
+    group_offline_member: one({
+      sourceField: ['group_offline_member_id'],
+      destSchema: groupOfflineMember,
+      destField: ['id'],
+    }),
+    connected_user: one({
+      sourceField: ['connected_user_id'],
+      destSchema: user,
+      destField: ['id'],
+    }),
+  })
+);
 
 export const eventParticipantRoleRelationships = relationships(eventParticipantRole, ({ one }) => ({
   event_participant: one({
@@ -823,6 +897,11 @@ export const electionRelationships = relationships(election, ({ one, many }) => 
     destField: ['election_id'],
   }),
   electors: many({ sourceField: ['id'], destSchema: elector, destField: ['election_id'] }),
+  offline_tallies: many({
+    sourceField: ['id'],
+    destSchema: electionOfflineTally,
+    destField: ['election_id'],
+  }),
   indicative_participations: many({
     sourceField: ['id'],
     destSchema: indicativeElectorParticipation,
@@ -929,6 +1008,16 @@ export const finalCandidateSelectionRelationships = relationships(
     }),
   })
 );
+
+export const electionOfflineTallyRelationships = relationships(electionOfflineTally, ({ one }) => ({
+  election: one({ sourceField: ['election_id'], destSchema: election, destField: ['id'] }),
+  candidate: one({
+    sourceField: ['candidate_id'],
+    destSchema: electionCandidate,
+    destField: ['id'],
+  }),
+  updated_by: one({ sourceField: ['updated_by_id'], destSchema: user, destField: ['id'] }),
+}));
 
 // ============================================
 // Todo relationships
@@ -1294,6 +1383,11 @@ export const voteRelationships = relationships(vote, ({ one, many }) => ({
   amendment: one({ sourceField: ['amendment_id'], destSchema: amendment, destField: ['id'] }),
   choices: many({ sourceField: ['id'], destSchema: voteChoice, destField: ['vote_id'] }),
   voters: many({ sourceField: ['id'], destSchema: voter, destField: ['vote_id'] }),
+  offline_tallies: many({
+    sourceField: ['id'],
+    destSchema: voteOfflineTally,
+    destField: ['vote_id'],
+  }),
   indicative_participations: many({
     sourceField: ['id'],
     destSchema: indicativeVoterParticipation,
@@ -1389,6 +1483,12 @@ export const finalChoiceDecisionRelationships = relationships(finalChoiceDecisio
   }),
 }));
 
+export const voteOfflineTallyRelationships = relationships(voteOfflineTally, ({ one }) => ({
+  vote: one({ sourceField: ['vote_id'], destSchema: vote, destField: ['id'] }),
+  choice: one({ sourceField: ['choice_id'], destSchema: voteChoice, destField: ['id'] }),
+  updated_by: one({ sourceField: ['updated_by_id'], destSchema: user, destField: ['id'] }),
+}));
+
 // ============================================
 // Voting Password relationships
 // ============================================
@@ -1419,6 +1519,7 @@ export const allRelationships = [
   // Groups
   groupRelationships,
   groupMembershipRelationships,
+  groupOfflineMemberRelationships,
   groupMembershipRoleRelationships,
   groupGuestAccessRelationships,
   groupGuestRoleRelationships,
@@ -1430,6 +1531,7 @@ export const allRelationships = [
   // Events
   eventRelationships,
   eventParticipantRelationships,
+  eventOfflineParticipantRelationships,
   eventParticipantRoleRelationships,
   eventDelegateRelationships,
   groupDelegateAllocationRelationships,
@@ -1463,6 +1565,7 @@ export const allRelationships = [
   indicativeCandidateSelectionRelationships,
   finalElectorParticipationRelationships,
   finalCandidateSelectionRelationships,
+  electionOfflineTallyRelationships,
   // Todos
   todoRelationships,
   todoAssignmentRelationships,
@@ -1513,6 +1616,7 @@ export const allRelationships = [
   indicativeChoiceDecisionRelationships,
   finalVoterParticipationRelationships,
   finalChoiceDecisionRelationships,
+  voteOfflineTallyRelationships,
   // Voting Password
   votingPasswordRelationships,
   // Accreditation

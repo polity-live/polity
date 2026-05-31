@@ -595,6 +595,17 @@ export function useGroupActiveMembers(groupId: string) {
   };
 }
 
+export function useGroupOfflineMembers(groupId?: string) {
+  const [offlineMembersData, offlineMembersResult] = useQuery(
+    groupId ? queries.groups.offlineMembersByGroup({ groupId }) : undefined
+  );
+
+  return {
+    offlineMembers: offlineMembersData || [],
+    isLoading: groupId != null && offlineMembersResult.type === 'unknown',
+  };
+}
+
 // ── User Search ─────────────────────────────────────────────────────
 
 export function useUserSearch(searchQuery: string, existingMemberIds: string[] = []) {

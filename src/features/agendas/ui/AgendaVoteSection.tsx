@@ -1,16 +1,14 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Badge } from '@/features/shared/ui/ui/badge';
-import {
-  Vote,
-  CheckCircle2,
-  Crown,
-} from 'lucide-react';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Input } from '@/features/shared/ui/ui/input';
+import { Vote, CheckCircle2, Crown } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
-import { VoteResultsDisplay, type VoteBarOption } from '@/features/vote-cast/ui/VoteResultsDisplay';
+import { VoteResultsDisplay } from '@/features/vote-cast/ui/VoteResultsDisplay';
 import { VoteResultSentence } from '@/features/vote-cast/ui/VoteResultSentence';
 import { VotePhaseBadge } from '@/features/vote-cast/ui/VotePhaseBadge';
 import {
@@ -18,14 +16,18 @@ import {
   type MajorityType,
   type VoteResult,
 } from '@/features/vote-cast/logic/computeVoteResults';
-import {
-  calculateVoteStats,
-  getVotingPhase,
-} from '@/features/agendas/hooks/useAgendaItemVoting';
+import { calculateVoteStats, getVotingPhase } from '@/features/agendas/hooks/useAgendaItemVoting';
 import type { ChoicesByVoteRow } from '@/zero/votes/queries';
+import { useVoteActions } from '@/zero/votes/useVoteActions';
 
 interface ChoiceDecision {
   choice_id: string;
+}
+
+interface VoteOfflineTallyLike {
+  choice_id?: string | null;
+  phase?: string | null;
+  count?: number | null;
 }
 
 function normalizeMajorityType(value?: string | null): MajorityType {
@@ -49,8 +51,8 @@ const CHOICE_COLORS = [
 interface AgendaVoteSectionProps {
   voteTitle: string;
   choices: ChoicesByVoteRow[];
-  indicativeDecisions: ReadonlyArray<ChoiceDecision>;
-  finalDecisions: ReadonlyArray<ChoiceDecision>;
+  indicativeDecisions: readonly ChoiceDecision[];
+  finalDecisions: readonly ChoiceDecision[];
   userHasVoted: boolean;
   userSelectedChoiceIds: string[];
   voteStatus?: string | null;
@@ -58,6 +60,11 @@ interface AgendaVoteSectionProps {
   voteSharePercent?: number;
   majorityType?: string | null;
   totalEligibleVoters?: number;
+  voteId?: string;
+  attendanceMode?: 'online' | 'hybrid' | 'offline' | null;
+  offlineTallies?: readonly VoteOfflineTallyLike[];
+  canManageOfflineResults?: boolean;
+  offlineEligibleCount?: number;
   className?: string;
 }
 
@@ -79,17 +86,41 @@ export function AgendaVoteSection({
   voteSharePercent,
   majorityType,
   totalEligibleVoters,
+  voteId,
+  attendanceMode = 'online',
+  offlineTallies = [],
+  canManageOfflineResults = false,
+  offlineEligibleCount,
   className,
 }: AgendaVoteSectionProps) {
   const { t } = useTranslation();
+  const { upsertOfflineTally } = useVoteActions();
+  const [offlineDraft, setOfflineDraft] = useState<Record<string, string>>({});
 
   const phase = getVotingPhase(voteStatus);
   const isIndicationPhase = phase === 'indicative';
   const isClosed = phase === 'closed';
+  const allowsOfflineResults = attendanceMode === 'hybrid' || attendanceMode === 'offline';
 
-  const { choices: choiceStats, totalIndicative, totalFinal } = useMemo(() => {
-    return calculateVoteStats(choices, indicativeDecisions, finalDecisions);
-  }, [choices, indicativeDecisions, finalDecisions]);
+  useEffect(() => {
+    const nextDraft: Record<string, string> = {};
+    for (const tally of offlineTallies) {
+      if (!tally.choice_id || (tally.phase !== 'indicative' && tally.phase !== 'final')) {
+        continue;
+      }
+
+      nextDraft[`${tally.phase}:${tally.choice_id}`] = String(tally.count ?? 0);
+    }
+    setOfflineDraft(nextDraft);
+  }, [offlineTallies, voteId]);
+
+  const {
+    choices: choiceStats,
+    totalIndicative,
+    totalFinal,
+  } = useMemo(() => {
+    return calculateVoteStats(choices, indicativeDecisions, finalDecisions, offlineTallies);
+  }, [choices, finalDecisions, indicativeDecisions, offlineTallies]);
 
   const computedVoteSummary = useMemo(() => {
     if (!isClosed || choiceStats.length === 0) {
@@ -104,9 +135,17 @@ export function AgendaVoteSection({
       })),
       finalDecisions,
       totalEligibleVoters ?? totalFinal,
-      normalizeMajorityType(majorityType),
+      normalizeMajorityType(majorityType)
     );
-  }, [choiceStats.length, choices, finalDecisions, isClosed, majorityType, totalEligibleVoters, totalFinal]);
+  }, [
+    choiceStats.length,
+    choices,
+    finalDecisions,
+    isClosed,
+    majorityType,
+    totalEligibleVoters,
+    totalFinal,
+  ]);
 
   const resolvedVoteResult: VoteResult | undefined = voteResult ?? computedVoteSummary?.result;
 
@@ -114,11 +153,11 @@ export function AgendaVoteSection({
   const leadingChoiceId = useMemo(() => {
     if (choiceStats.length === 0) return null;
     const maxVotes = Math.max(
-      ...choiceStats.map((s) => (isClosed || !isIndicationPhase ? s.finalCount : s.indicativeCount)),
+      ...choiceStats.map(s => (isClosed || !isIndicationPhase ? s.finalCount : s.indicativeCount))
     );
     if (maxVotes === 0) return null;
     return choiceStats.find(
-      (s) => (isClosed || !isIndicationPhase ? s.finalCount : s.indicativeCount) === maxVotes,
+      s => (isClosed || !isIndicationPhase ? s.finalCount : s.indicativeCount) === maxVotes
     )?.choice.id;
   }, [choiceStats, isIndicationPhase, isClosed]);
 
@@ -134,25 +173,9 @@ export function AgendaVoteSection({
     return leadingChoiceId;
   }, [computedVoteSummary?.winningChoiceId, isClosed, leadingChoiceId, resolvedVoteResult]);
 
-  const voteBarOptions: VoteBarOption[] = useMemo(() => {
-    return choiceStats.map((cs, idx) => {
-      const colors = CHOICE_COLORS[idx % CHOICE_COLORS.length];
-      return {
-        key: cs.choice.id,
-        label: cs.choice.label || `Choice ${idx + 1}`,
-        color: colors.color,
-        lightColor: colors.light,
-        finalCount: cs.finalCount,
-        finalPercent: cs.finalPercentage,
-        indicationCount: cs.indicativeCount,
-        indicationPercent: cs.indicativePercentage,
-      };
-    });
-  }, [choiceStats]);
-
   const winningLabel = useMemo(() => {
     if (!winningChoiceId) return undefined;
-    const choice = choices.find((c) => c.id === winningChoiceId);
+    const choice = choices.find(c => c.id === winningChoiceId);
     return choice?.label || undefined;
   }, [winningChoiceId, choices]);
 
@@ -165,7 +188,7 @@ export function AgendaVoteSection({
       return undefined;
     }
 
-    const winningStats = choiceStats.find((choice) => choice.choice.id === winningChoiceId);
+    const winningStats = choiceStats.find(choice => choice.choice.id === winningChoiceId);
     if (!winningStats) {
       return undefined;
     }
@@ -179,14 +202,13 @@ export function AgendaVoteSection({
         <CardTitle className="flex items-center gap-2">
           <Vote className="h-5 w-5" />
           {t('features.events.agenda.voteResults', 'Vote Results')}
+          {attendanceMode ? (
+            <Badge variant="outline" className="capitalize">
+              {attendanceMode}
+            </Badge>
+          ) : null}
           <VotePhaseBadge
-            phase={
-              isIndicationPhase
-                ? 'indication'
-                : isClosed
-                  ? 'closed'
-                  : 'final_vote'
-            }
+            phase={isIndicationPhase ? 'indication' : isClosed ? 'closed' : 'final_vote'}
             className="ml-auto"
           />
         </CardTitle>
@@ -208,7 +230,7 @@ export function AgendaVoteSection({
         <h3 className="font-semibold">{voteTitle}</h3>
 
         {/* Vote count header */}
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
+        <div className="text-muted-foreground flex items-center justify-between text-sm">
           <span>
             {isIndicationPhase
               ? `${totalIndicative} ${t('features.events.agenda.indicationVotes')}`
@@ -241,15 +263,13 @@ export function AgendaVoteSection({
                   className={cn(
                     'rounded-lg border p-3 transition-colors',
                     isSelected && 'border-primary bg-primary/5',
-                    isWinner &&
-                      isClosed &&
-                      'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/30',
+                    isWinner && isClosed && 'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/30'
                   )}
                 >
                   <div className="mb-2 flex items-center gap-2">
                     <span className="font-medium">{cs.choice.label || `Choice ${idx + 1}`}</span>
                     {isWinner && isClosed && <Crown className="h-4 w-4 text-yellow-500" />}
-                    {isSelected && <CheckCircle2 className="h-4 w-4 text-primary" />}
+                    {isSelected && <CheckCircle2 className="text-primary h-4 w-4" />}
                   </div>
 
                   <VoteResultsDisplay
@@ -265,13 +285,7 @@ export function AgendaVoteSection({
                         indicationPercent: cs.indicativePercentage,
                       },
                     ]}
-                    phase={
-                      isIndicationPhase
-                        ? 'indication'
-                        : isClosed
-                          ? 'closed'
-                          : 'final_vote'
-                    }
+                    phase={isIndicationPhase ? 'indication' : isClosed ? 'closed' : 'final_vote'}
                     totalFinal={totalFinal}
                     totalIndication={totalIndicative}
                   />
@@ -292,7 +306,87 @@ export function AgendaVoteSection({
             </span>
           </div>
         )}
+
+        {allowsOfflineResults && canManageOfflineResults && voteId ? (
+          <div className="space-y-4 rounded-xl border border-dashed p-4">
+            <div className="space-y-1">
+              <h4 className="font-medium">Offline vote tallies</h4>
+              <p className="text-muted-foreground text-sm">
+                Enter aggregated offline or hybrid results for this vote.
+                {offlineEligibleCount != null
+                  ? ` Maximum offline votes per phase: ${offlineEligibleCount}.`
+                  : ''}
+              </p>
+            </div>
+            {(['indicative', 'final'] as const).map(currentPhase => (
+              <div key={currentPhase} className="space-y-3 rounded-lg border p-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium capitalize">{currentPhase}</span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={async () => {
+                      const correlationId = `vote-offline-tally:${crypto.randomUUID()}`;
+                      console.info('[offline-roster]', {
+                        flow: 'vote-offline-tally',
+                        stage: 'submit-started',
+                        correlationId,
+                        voteId,
+                        phase: currentPhase,
+                      });
+                      for (const choice of choices) {
+                        const draftValue = offlineDraft[`${currentPhase}:${choice.id}`] ?? '0';
+                        await upsertOfflineTally({
+                          vote_id: voteId,
+                          phase: currentPhase,
+                          choice_id: choice.id,
+                          count: Math.max(0, Number.parseInt(draftValue, 10) || 0),
+                          debug_correlation_id: correlationId,
+                        });
+                      }
+                      console.info('[offline-roster]', {
+                        flow: 'vote-offline-tally',
+                        stage: 'submit-confirmed',
+                        correlationId,
+                        voteId,
+                        phase: currentPhase,
+                      });
+                    }}
+                  >
+                    Save {currentPhase}
+                  </Button>
+                </div>
+                <div className="grid gap-3">
+                  {choices.map(choice => (
+                    <div
+                      key={`${currentPhase}-${choice.id}`}
+                      className="grid gap-2 md:grid-cols-[1fr_120px] md:items-center"
+                    >
+                      <LabelText>{choice.label || 'Choice'}</LabelText>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={offlineDraft[`${currentPhase}:${choice.id}`] ?? '0'}
+                        onChange={event =>
+                          setOfflineDraft(current => ({
+                            ...current,
+                            [`${currentPhase}:${choice.id}`]: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : null}
       </CardContent>
     </Card>
   );
+}
+
+function LabelText({ children }: { children: string }) {
+  return <span className="text-sm font-medium">{children}</span>;
 }

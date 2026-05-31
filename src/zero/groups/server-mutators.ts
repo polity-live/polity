@@ -21,6 +21,10 @@ import {
   groupCreateSchema,
   groupMembershipCreateSchema,
   groupMembershipDeleteSchema,
+  groupOfflineMemberCreateSchema,
+  groupOfflineMemberUpdateSchema,
+  groupOfflineMemberDeleteSchema,
+  groupOfflineMemberBulkImportSchema,
   groupMembershipLegacyRoleUpdateSchema,
   groupMembershipRoleAssignSchema,
   groupMembershipRoleUnassignSchema,
@@ -458,6 +462,116 @@ export const groupServerMutators = {
       await recomputeSiblingGroupMemberships(tx, args.id, ctx.userID);
     }
   }),
+
+  createOfflineMember: defineMutator(groupOfflineMemberCreateSchema, async ({ tx, ctx, args }) => {
+    console.info('Server validation started', {
+      flow: 'group-offline-member-create',
+      correlationId: args.debug_correlation_id ?? null,
+      actorUserId: ctx.userID,
+      groupId: args.group_id,
+    });
+
+    await mutators.groups.createOfflineMember.fn({ tx, ctx, args });
+    await recomputeGroupCounters(tx, args.group_id);
+    await reconcileMembershipDrivenEventsForGroups(tx, [args.group_id], ctx.userID);
+
+    console.info('Server successful', {
+      flow: 'group-offline-member-create',
+      correlationId: args.debug_correlation_id ?? null,
+      actorUserId: ctx.userID,
+      groupId: args.group_id,
+      offlineMemberId: args.id,
+    });
+  }),
+
+  updateOfflineMember: defineMutator(groupOfflineMemberUpdateSchema, async ({ tx, ctx, args }) => {
+    const existingOfflineMember = await tx.run(zql.group_offline_member.where('id', args.id).one());
+
+    console.info('Server validation started', {
+      flow: 'group-offline-member-update',
+      correlationId: args.debug_correlation_id ?? null,
+      actorUserId: ctx.userID,
+      groupId: existingOfflineMember?.group_id ?? null,
+      offlineMemberId: args.id,
+    });
+
+    await mutators.groups.updateOfflineMember.fn({ tx, ctx, args });
+
+    if (!existingOfflineMember) {
+      return;
+    }
+
+    await recomputeGroupCounters(tx, existingOfflineMember.group_id);
+    await reconcileMembershipDrivenEventsForGroups(
+      tx,
+      [existingOfflineMember.group_id],
+      ctx.userID
+    );
+
+    console.info('Server successful', {
+      flow: 'group-offline-member-update',
+      correlationId: args.debug_correlation_id ?? null,
+      actorUserId: ctx.userID,
+      groupId: existingOfflineMember.group_id,
+      offlineMemberId: args.id,
+    });
+  }),
+
+  deleteOfflineMember: defineMutator(groupOfflineMemberDeleteSchema, async ({ tx, ctx, args }) => {
+    const existingOfflineMember = await tx.run(zql.group_offline_member.where('id', args.id).one());
+
+    console.info('Server validation started', {
+      flow: 'group-offline-member-delete',
+      actorUserId: ctx.userID,
+      groupId: existingOfflineMember?.group_id ?? null,
+      offlineMemberId: args.id,
+    });
+
+    await mutators.groups.deleteOfflineMember.fn({ tx, ctx, args });
+
+    if (!existingOfflineMember) {
+      return;
+    }
+
+    await recomputeGroupCounters(tx, existingOfflineMember.group_id);
+    await reconcileMembershipDrivenEventsForGroups(
+      tx,
+      [existingOfflineMember.group_id],
+      ctx.userID
+    );
+
+    console.info('Server successful', {
+      flow: 'group-offline-member-delete',
+      actorUserId: ctx.userID,
+      groupId: existingOfflineMember.group_id,
+      offlineMemberId: args.id,
+    });
+  }),
+
+  importOfflineMembers: defineMutator(
+    groupOfflineMemberBulkImportSchema,
+    async ({ tx, ctx, args }) => {
+      console.info('Server validation started', {
+        flow: 'group-offline-member-import',
+        correlationId: args.debug_correlation_id ?? null,
+        actorUserId: ctx.userID,
+        groupId: args.group_id,
+        entryCount: args.entries.length,
+      });
+
+      await mutators.groups.importOfflineMembers.fn({ tx, ctx, args });
+      await recomputeGroupCounters(tx, args.group_id);
+      await reconcileMembershipDrivenEventsForGroups(tx, [args.group_id], ctx.userID);
+
+      console.info('Server successful', {
+        flow: 'group-offline-member-import',
+        correlationId: args.debug_correlation_id ?? null,
+        actorUserId: ctx.userID,
+        groupId: args.group_id,
+        entryCount: args.entries.length,
+      });
+    }
+  ),
 
   joinGroup: defineMutator(groupMembershipCreateSchema, async ({ tx, ctx, args }) => {
     const group = await tx.run(zql.group.where('id', args.group_id).one());

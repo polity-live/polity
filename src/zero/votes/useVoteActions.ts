@@ -142,6 +142,15 @@ export function useVoteActions() {
     [t, zero]
   );
 
+  const upsertOfflineTally = useCallback(
+    (args: Parameters<typeof mutators.votes.upsertOfflineTally>[0]) => {
+      const result = zero.mutate(mutators.votes.upsertOfflineTally(args));
+      onServerError(result, () => toast.error('Failed to save offline tally'));
+      return serverConfirmed(result);
+    },
+    [zero]
+  );
+
   return {
     // Votes
     createVote,
@@ -160,5 +169,6 @@ export function useVoteActions() {
     // Voting
     castIndicativeVote,
     castFinalVote,
+    upsertOfflineTally,
   };
 }

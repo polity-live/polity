@@ -7,6 +7,7 @@ export const event = table('event')
     description: json<ReadonlyJSONValue>().optional(),
     status: string().optional(),
     event_type: string().optional(),
+    attendance_mode: string().optional(),
     location_type: string().optional(),
     location_name: string().optional(),
     country: string().optional(),
@@ -108,6 +109,23 @@ export const eventParticipant = table('event_participant')
     visibility: string(),
     instance_date: number().optional(),
     created_at: number(),
+  })
+  .primaryKey('id');
+
+export const eventOfflineParticipant = table('event_offline_participant')
+  .columns({
+    id: string(),
+    event_id: string(),
+    group_offline_member_id: string().optional(),
+    source_type: string(),
+    first_name: string(),
+    last_name: string(),
+    reason_not_signed_up: string().optional(),
+    connected_user_id: string().optional(),
+    attendance_status: string(),
+    participation_channel: string(),
+    created_at: number(),
+    updated_at: number(),
   })
   .primaryKey('id');
 

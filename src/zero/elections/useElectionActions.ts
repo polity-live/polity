@@ -152,6 +152,14 @@ export function useElectionActions() {
     [t, zero]
   );
 
+  const upsertOfflineTally = useCallback(
+    (args: Parameters<typeof mutators.elections.upsertOfflineTally>[0]) => {
+      const result = zero.mutate(mutators.elections.upsertOfflineTally(args));
+      return serverConfirmed(result);
+    },
+    [zero]
+  );
+
   return {
     // Elections
     createElection,
@@ -170,5 +178,6 @@ export function useElectionActions() {
     // Voting
     castIndicativeVote,
     castFinalVote,
+    upsertOfflineTally,
   };
 }

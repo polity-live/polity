@@ -1,4 +1,4 @@
-import { table, string, number } from '@rocicorp/zero'
+import { table, string, number } from '@rocicorp/zero';
 
 // ── Vote (amendment votes in agenda context) ──────────────────────────
 
@@ -18,7 +18,7 @@ export const vote = table('vote')
     created_at: number(),
     updated_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const voteChoice = table('vote_choice')
   .columns({
@@ -28,7 +28,7 @@ export const voteChoice = table('vote_choice')
     order_index: number().optional(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const voter = table('voter')
   .columns({
@@ -37,7 +37,7 @@ export const voter = table('voter')
     user_id: string(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const indicativeVoterParticipation = table('indicative_voter_participation')
   .columns({
@@ -46,7 +46,7 @@ export const indicativeVoterParticipation = table('indicative_voter_participatio
     voter_id: string(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const indicativeChoiceDecision = table('indicative_choice_decision')
   .columns({
@@ -56,7 +56,7 @@ export const indicativeChoiceDecision = table('indicative_choice_decision')
     voter_participation_id: string().optional(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const finalVoterParticipation = table('final_voter_participation')
   .columns({
@@ -65,7 +65,7 @@ export const finalVoterParticipation = table('final_voter_participation')
     voter_id: string(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const finalChoiceDecision = table('final_choice_decision')
   .columns({
@@ -75,7 +75,20 @@ export const finalChoiceDecision = table('final_choice_decision')
     voter_participation_id: string().optional(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
+
+export const voteOfflineTally = table('vote_offline_tally')
+  .columns({
+    id: string(),
+    vote_id: string(),
+    phase: string(),
+    choice_id: string(),
+    count: number(),
+    updated_by_id: string().optional(),
+    created_at: number(),
+    updated_at: number(),
+  })
+  .primaryKey('id');
 
 // ── Amendment support votes ───────────────────────────────────────────
 
@@ -87,7 +100,7 @@ export const amendmentSupportVote = table('amendment_support_vote')
     vote: number().optional(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 // ── Change request votes ──────────────────────────────────────────────
 
@@ -99,7 +112,7 @@ export const changeRequestVote = table('change_request_vote')
     vote: string().optional(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 // ── Blog votes ────────────────────────────────────────────────────────
 
@@ -111,7 +124,7 @@ export const blogSupportVote = table('blog_support_vote')
     vote: number().optional(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 // ── Statement votes ───────────────────────────────────────────────────
 
@@ -123,7 +136,7 @@ export const statementSupportVote = table('statement_support_vote')
     vote: number().optional(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 // ── Discussion votes ──────────────────────────────────────────────────
 
@@ -135,7 +148,7 @@ export const threadVote = table('thread_vote')
     vote: number().optional(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const commentVote = table('comment_vote')
   .columns({
@@ -145,4 +158,4 @@ export const commentVote = table('comment_vote')
     vote: number().optional(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');

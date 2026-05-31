@@ -8,6 +8,7 @@ import {
 } from '../shared/helpers';
 
 const nullableEventScheduleTimestampSchema = z.number().nullable();
+const attendanceModeSchema = z.enum(['online', 'hybrid', 'offline']);
 
 // ── event ─────────────────────────────────────────────────────────────
 const eventBaseSchema = z.object({
@@ -16,6 +17,7 @@ const eventBaseSchema = z.object({
   description: jsonSchema.nullable(),
   status: z.string().nullable(),
   event_type: z.string().nullable(),
+  attendance_mode: attendanceModeSchema.nullable(),
   location_type: z.string().nullable(),
   location_name: z.string().nullable(),
   country: z.string().nullable(),
@@ -114,6 +116,7 @@ export const eventUpdateSchema = eventBaseSchema
     description: true,
     status: true,
     event_type: true,
+    attendance_mode: true,
     location_type: true,
     location_name: true,
     country: true,
@@ -196,6 +199,54 @@ export const eventParticipantLegacyRoleUpdateSchema = eventParticipantUpdateSche
 });
 export const eventParticipantDeleteSchema = z.object({ id: z.string() });
 export type EventParticipant = z.infer<typeof eventParticipantSelectSchema>;
+
+// ── event_offline_participant ────────────────────────────────────────
+const eventOfflineParticipantBaseSchema = z.object({
+  id: z.string(),
+  event_id: z.string(),
+  group_offline_member_id: z.string().nullable(),
+  source_type: z.enum(['group_member', 'event_extra']),
+  first_name: z.string(),
+  last_name: z.string(),
+  reason_not_signed_up: z.string().nullable(),
+  connected_user_id: z.string().nullable(),
+  attendance_status: z.enum(['listed', 'confirmed']),
+  participation_channel: z.enum(['online', 'offline']),
+  created_at: timestampSchema,
+  updated_at: timestampSchema,
+});
+
+export const eventOfflineParticipantSelectSchema = eventOfflineParticipantBaseSchema;
+export const eventOfflineParticipantCreateSchema = eventOfflineParticipantBaseSchema
+  .omit({ created_at: true, updated_at: true })
+  .extend({ id: z.string(), debug_correlation_id: z.string().optional() });
+export const eventOfflineParticipantUpdateSchema = eventOfflineParticipantBaseSchema
+  .pick({
+    first_name: true,
+    last_name: true,
+    reason_not_signed_up: true,
+    connected_user_id: true,
+    attendance_status: true,
+    participation_channel: true,
+  })
+  .partial()
+  .extend({ id: z.string(), debug_correlation_id: z.string().optional() });
+export const eventOfflineParticipantDeleteSchema = z.object({
+  id: z.string(),
+  debug_correlation_id: z.string().optional(),
+});
+export const eventOfflineParticipantBulkImportSchema = z.object({
+  event_id: z.string(),
+  entries: z.array(
+    z.object({
+      first_name: z.string(),
+      last_name: z.string(),
+      reason_not_signed_up: z.string().nullable().optional(),
+    })
+  ),
+  debug_correlation_id: z.string().optional(),
+});
+export type EventOfflineParticipant = z.infer<typeof eventOfflineParticipantSelectSchema>;
 
 // ── event_participant_role ───────────────────────────────────────────
 const eventParticipantRoleBaseSchema = z.object({

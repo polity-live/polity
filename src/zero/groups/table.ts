@@ -54,6 +54,20 @@ export const groupMembership = table('group_membership')
   })
   .primaryKey('id');
 
+export const groupOfflineMember = table('group_offline_member')
+  .columns({
+    id: string(),
+    group_id: string(),
+    first_name: string(),
+    last_name: string(),
+    reason_not_signed_up: string().optional(),
+    connected_user_id: string().optional(),
+    created_by_id: string().optional(),
+    created_at: number(),
+    updated_at: number(),
+  })
+  .primaryKey('id');
+
 export const groupMembershipRole = table('group_membership_role')
   .columns({
     id: string(),

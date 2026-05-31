@@ -18,6 +18,8 @@ import {
   createIndicativeCandidateSelectionSchema,
   createFinalElectorParticipationSchema,
   createFinalCandidateSelectionSchema,
+  upsertElectionOfflineTallySchema,
+  deleteElectionOfflineTallySchema,
 } from './schema';
 
 /** Shared mutators — run on both client and server. */
@@ -168,4 +170,46 @@ export const electionSharedMutators = {
       });
     }
   ),
+
+  upsertOfflineTally: defineMutator(upsertElectionOfflineTallySchema, async ({ tx, ctx, args }) => {
+    const now = Date.now();
+    const { debug_correlation_id, ...tallyArgs } = args;
+    void debug_correlation_id;
+
+    const existingTally =
+      tallyArgs.id != null
+        ? await tx.run(zql.election_offline_tally.where('id', tallyArgs.id).one())
+        : await tx.run(
+            zql.election_offline_tally
+              .where('election_id', tallyArgs.election_id)
+              .where('phase', tallyArgs.phase)
+              .where('candidate_id', tallyArgs.candidate_id)
+              .one()
+          );
+
+    if (existingTally) {
+      await tx.mutate.election_offline_tally.update({
+        id: existingTally.id,
+        count: tallyArgs.count,
+        updated_by_id: ctx.userID,
+        updated_at: now,
+      });
+      return;
+    }
+
+    await tx.mutate.election_offline_tally.insert({
+      id: tallyArgs.id ?? crypto.randomUUID(),
+      election_id: tallyArgs.election_id,
+      phase: tallyArgs.phase,
+      candidate_id: tallyArgs.candidate_id,
+      count: tallyArgs.count,
+      updated_by_id: ctx.userID,
+      created_at: now,
+      updated_at: now,
+    });
+  }),
+
+  deleteOfflineTally: defineMutator(deleteElectionOfflineTallySchema, async ({ tx, args }) => {
+    await tx.mutate.election_offline_tally.delete({ id: args.id });
+  }),
 };

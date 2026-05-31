@@ -59,6 +59,54 @@ export function useGroupActions() {
     [zero]
   );
 
+  const createOfflineMember = useCallback(
+    (args: Parameters<typeof mutators.groups.createOfflineMember>[0]) => {
+      const result = zero.mutate(mutators.groups.createOfflineMember(args));
+      toast.success('Offline member added');
+      onServerError(result, msg =>
+        handleMutationError(toMutationError(msg), 'Failed to add offline member', t)
+      );
+      return result;
+    },
+    [zero]
+  );
+
+  const updateOfflineMember = useCallback(
+    (args: Parameters<typeof mutators.groups.updateOfflineMember>[0]) => {
+      const result = zero.mutate(mutators.groups.updateOfflineMember(args));
+      toast.success('Offline member updated');
+      onServerError(result, msg =>
+        handleMutationError(toMutationError(msg), 'Failed to update offline member', t)
+      );
+      return result;
+    },
+    [zero]
+  );
+
+  const deleteOfflineMember = useCallback(
+    (args: Parameters<typeof mutators.groups.deleteOfflineMember>[0]) => {
+      const result = zero.mutate(mutators.groups.deleteOfflineMember(args));
+      toast.success('Offline member removed');
+      onServerError(result, msg =>
+        handleMutationError(toMutationError(msg), 'Failed to remove offline member', t)
+      );
+      return result;
+    },
+    [zero]
+  );
+
+  const importOfflineMembers = useCallback(
+    (args: Parameters<typeof mutators.groups.importOfflineMembers>[0]) => {
+      const result = zero.mutate(mutators.groups.importOfflineMembers(args));
+      toast.success('Offline members imported');
+      onServerError(result, msg =>
+        handleMutationError(toMutationError(msg), 'Failed to import offline members', t)
+      );
+      return result;
+    },
+    [zero]
+  );
+
   // ── Membership ─────────────────────────────────────────────────────
   const joinGroup = useCallback(
     (args: Parameters<typeof mutators.groups.joinGroup>[0]) => {
@@ -447,6 +495,10 @@ export function useGroupActions() {
     createGroup,
     updateGroup,
     deleteGroup,
+    createOfflineMember,
+    updateOfflineMember,
+    deleteOfflineMember,
+    importOfflineMembers,
 
     // Membership
     joinGroup,

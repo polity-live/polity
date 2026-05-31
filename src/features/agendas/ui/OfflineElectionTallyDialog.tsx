@@ -1,0 +1,163 @@
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/features/shared/ui/ui/dialog';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Input } from '@/features/shared/ui/ui/input';
+import { VotePasswordInput } from '@/features/vote-cast/ui/VotePasswordInput';
+import { cn } from '@/features/shared/utils/utils';
+
+interface OfflineElectionTallyCandidate {
+  id: string;
+  label: string;
+}
+
+interface OfflineElectionTallyValue {
+  candidate_id?: string | null;
+  count?: number | null;
+}
+
+interface OfflineElectionTallyDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  description: string;
+  phase: 'indicative' | 'final';
+  candidates: readonly OfflineElectionTallyCandidate[];
+  tallies: readonly OfflineElectionTallyValue[];
+  maxTotalVotes?: number | null;
+  isSubmitting?: boolean;
+  passwordError?: string | null;
+  submitError?: string | null;
+  onSubmit: (args: { password: string; counts: Record<string, number> }) => Promise<void>;
+}
+
+export function OfflineElectionTallyDialog({
+  open,
+  onOpenChange,
+  title,
+  description,
+  phase,
+  candidates,
+  tallies,
+  maxTotalVotes,
+  isSubmitting = false,
+  passwordError,
+  submitError,
+  onSubmit,
+}: OfflineElectionTallyDialogProps) {
+  const [draft, setDraft] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const nextDraft: Record<string, string> = {};
+    for (const candidate of candidates) {
+      const tally = tallies.find(item => item.candidate_id === candidate.id);
+      nextDraft[candidate.id] = String(tally?.count ?? 0);
+    }
+    setDraft(nextDraft);
+  }, [candidates, open, tallies]);
+
+  const normalizedCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const candidate of candidates) {
+      counts[candidate.id] = Math.max(0, Number.parseInt(draft[candidate.id] ?? '0', 10) || 0);
+    }
+    return counts;
+  }, [candidates, draft]);
+
+  const totalVotes = useMemo(
+    () => Object.values(normalizedCounts).reduce((sum, value) => sum + value, 0),
+    [normalizedCounts]
+  );
+
+  const isOverLimit = maxTotalVotes != null && totalVotes > maxTotalVotes;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="bg-muted/30 rounded-lg border p-3 text-sm">
+            <div className="flex items-center justify-between gap-3">
+              <span className="font-medium capitalize">{phase} tally</span>
+              <span>
+                Total offline selections: {totalVotes}
+                {maxTotalVotes != null ? ` / ${maxTotalVotes}` : ''}
+              </span>
+            </div>
+            {isOverLimit ? (
+              <p className="text-destructive mt-2">
+                The current total exceeds the confirmed offline attendee cap.
+              </p>
+            ) : null}
+          </div>
+
+          <div className="grid gap-3">
+            {candidates.map(candidate => (
+              <label
+                key={candidate.id}
+                className="grid gap-2 md:grid-cols-[1fr_120px] md:items-center"
+              >
+                <span className="text-sm font-medium">{candidate.label}</span>
+                <Input
+                  type="number"
+                  min="0"
+                  inputMode="numeric"
+                  value={draft[candidate.id] ?? '0'}
+                  onChange={event =>
+                    setDraft(current => ({
+                      ...current,
+                      [candidate.id]: event.target.value,
+                    }))
+                  }
+                  disabled={isSubmitting}
+                />
+              </label>
+            ))}
+          </div>
+
+          <div className="rounded-lg border border-dashed p-4">
+            <VotePasswordInput
+              onSubmit={password => onSubmit({ password, counts: normalizedCounts })}
+              error={passwordError}
+              isLoading={isSubmitting}
+            />
+          </div>
+
+          {submitError ? <p className="text-destructive text-sm">{submitError}</p> : null}
+        </div>
+
+        <DialogFooter>
+          <p
+            className={cn(
+              'text-muted-foreground mr-auto text-sm',
+              isSubmitting && 'inline-flex items-center gap-2'
+            )}
+          >
+            {isSubmitting
+              ? 'Saving tally...'
+              : 'Enter your voting PIN above to save these tallies.'}
+          </p>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

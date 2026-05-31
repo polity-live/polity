@@ -5,6 +5,7 @@ import { user, file } from './users/table';
 import {
   group,
   groupMembership,
+  groupOfflineMember,
   groupMembershipRole,
   groupGuestAccess,
   groupGuestRole,
@@ -16,6 +17,7 @@ import {
 import {
   event,
   eventParticipant,
+  eventOfflineParticipant,
   eventParticipantRole,
   participant,
   eventException,
@@ -61,6 +63,7 @@ import {
 import {
   election,
   electionCandidate,
+  electionOfflineTally,
   elector,
   indicativeElectorParticipation,
   indicativeCandidateSelection,
@@ -70,6 +73,7 @@ import {
 import {
   vote,
   voteChoice,
+  voteOfflineTally,
   voter,
   indicativeVoterParticipation,
   indicativeChoiceDecision,
@@ -115,6 +119,7 @@ export const schema = createSchema({
     // Groups
     group,
     groupMembership,
+    groupOfflineMember,
     groupMembershipRole,
     groupGuestAccess,
     groupGuestRole,
@@ -125,6 +130,7 @@ export const schema = createSchema({
     // Events
     event,
     eventParticipant,
+    eventOfflineParticipant,
     eventParticipantRole,
     participant,
     eventException,
@@ -146,6 +152,7 @@ export const schema = createSchema({
     // Elections
     election,
     electionCandidate,
+    electionOfflineTally,
     elector,
     indicativeElectorParticipation,
     indicativeCandidateSelection,
@@ -154,6 +161,7 @@ export const schema = createSchema({
     // Votes
     vote,
     voteChoice,
+    voteOfflineTally,
     voter,
     indicativeVoterParticipation,
     indicativeChoiceDecision,
@@ -247,6 +255,7 @@ export type Follow = Row<Schema['tables']['follow']>;
 // Groups
 export type Group = Row<Schema['tables']['group']>;
 export type GroupMembership = Row<Schema['tables']['group_membership']>;
+export type GroupOfflineMember = Row<Schema['tables']['group_offline_member']>;
 export type GroupMembershipRole = Row<Schema['tables']['group_membership_role']>;
 export type GroupGuestAccess = Row<Schema['tables']['group_guest_access']>;
 export type GroupGuestRole = Row<Schema['tables']['group_guest_role']>;
@@ -259,6 +268,7 @@ export type ActionRight = Row<Schema['tables']['action_right']>;
 // Events
 export type Event = Row<Schema['tables']['event']>;
 export type EventParticipant = Row<Schema['tables']['event_participant']>;
+export type EventOfflineParticipant = Row<Schema['tables']['event_offline_participant']>;
 export type EventParticipantRole = Row<Schema['tables']['event_participant_role']>;
 export type EventDelegate = Row<Schema['tables']['event_delegate']>;
 export type GroupDelegateAllocation = Row<Schema['tables']['group_delegate_allocation']>;
@@ -292,6 +302,7 @@ export type SpeakerList = Row<Schema['tables']['speaker_list']>;
 export type AgendaItemChangeRequestRow = Row<Schema['tables']['agenda_item_change_request']>;
 export type Election = Row<Schema['tables']['election']>;
 export type ElectionCandidate = Row<Schema['tables']['election_candidate']>;
+export type ElectionOfflineTally = Row<Schema['tables']['election_offline_tally']>;
 export type Elector = Row<Schema['tables']['elector']>;
 export type IndicativeElectorParticipation = Row<
   Schema['tables']['indicative_elector_participation']
@@ -301,6 +312,7 @@ export type FinalElectorParticipation = Row<Schema['tables']['final_elector_part
 export type FinalCandidateSelection = Row<Schema['tables']['final_candidate_selection']>;
 export type Vote = Row<Schema['tables']['vote']>;
 export type VoteChoice = Row<Schema['tables']['vote_choice']>;
+export type VoteOfflineTally = Row<Schema['tables']['vote_offline_tally']>;
 export type Voter = Row<Schema['tables']['voter']>;
 export type IndicativeVoterParticipation = Row<Schema['tables']['indicative_voter_participation']>;
 export type IndicativeChoiceDecision = Row<Schema['tables']['indicative_choice_decision']>;

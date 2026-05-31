@@ -18,6 +18,8 @@ import {
   Loader2,
   ListOrdered,
   ArrowRightLeft,
+  FileEdit,
+  PencilLine,
 } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { ToolbarButton } from '@/features/shared/ui/ui/toolbar';
@@ -80,6 +82,9 @@ interface AgendaActionBarProps {
   onBecomeCandidate?: () => void;
   onWithdrawCandidacy?: () => void;
   onVoteClick?: () => void;
+  onOfflineTallyClick?: () => void;
+  offlineTallyMode?: 'create' | 'edit';
+  offlineTallyTooltip?: string;
   startVoteTooltip?: string;
   startFinalVoteTooltip?: string;
   closeVoteTooltip?: string;
@@ -127,6 +132,9 @@ export function AgendaActionBar({
   onBecomeCandidate,
   onWithdrawCandidacy,
   onVoteClick,
+  onOfflineTallyClick,
+  offlineTallyMode,
+  offlineTallyTooltip,
   startVoteTooltip,
   startFinalVoteTooltip,
   closeVoteTooltip,
@@ -326,6 +334,15 @@ export function AgendaActionBar({
           >
             {voteLoading ? <Loader2 className="animate-spin" /> : <Vote />}
             <span>Vote</span>
+          </ToolbarButton>
+        ) : null}
+        {!isClosed && !isPendingVote && onOfflineTallyClick ? (
+          <ToolbarButton
+            tooltip={offlineTallyTooltip || 'Manage offline tally'}
+            onClick={onOfflineTallyClick}
+            className="border border-sky-300 text-sky-700"
+          >
+            {offlineTallyMode === 'edit' ? <PencilLine /> : <FileEdit />}
           </ToolbarButton>
         ) : null}
       </div>

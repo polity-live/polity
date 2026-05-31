@@ -33,11 +33,13 @@ import {
   type ElectionMode,
 } from '@/features/elections/logic/electionMode';
 
+type AttendanceMode = 'online' | 'hybrid' | 'offline';
+
 export interface EventFormData {
   title: string;
   description: string;
   descriptionContent: Value;
-  locationType: 'physical' | 'online';
+  attendanceMode: AttendanceMode;
   locationName: string;
   onlineLink: string;
   country: string;
@@ -86,6 +88,17 @@ function normalizeRecurrencePattern(value: string | null | undefined): Recurrenc
     : 'none';
 }
 
+function resolveAttendanceMode(event: {
+  attendance_mode?: string | null;
+  location_type?: string | null;
+}) {
+  if (event.attendance_mode === 'online' || event.attendance_mode === 'hybrid') {
+    return event.attendance_mode;
+  }
+
+  return event.location_type === 'online' ? 'online' : 'offline';
+}
+
 /**
  * Hook for event create/update functionality
  */
@@ -99,7 +112,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
     title: '',
     description: '',
     descriptionContent: EMPTY_RICH_TEXT_VALUE,
-    locationType: 'physical',
+    attendanceMode: 'offline',
     locationName: '',
     onlineLink: '',
     country: '',
@@ -204,10 +217,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
         title: event.title || '',
         description: richTextToPlainText(event.description ?? ''),
         descriptionContent: toRichTextValue(event.description ?? ''),
-        locationType:
-          event.location_type === 'online' || (!!event.location_url && !event.location_name)
-            ? 'online'
-            : 'physical',
+        attendanceMode: resolveAttendanceMode(event),
         locationName: event.location_name || '',
         onlineLink: event.location_url || '',
         country: event.country || '',
@@ -335,18 +345,19 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
           description: formData.description
             ? toZeroRichTextValue(formData.descriptionContent)
             : null,
-          location_type: formData.locationType,
+          attendance_mode: formData.attendanceMode,
+          location_type: formData.attendanceMode === 'online' ? 'online' : 'physical',
           location_name:
-            formData.locationType === 'physical' ? formData.locationName || null : null,
-          location_url: formData.locationType === 'online' ? formData.onlineLink || null : null,
-          country: formData.locationType === 'physical' ? formData.country || null : null,
-          region: formData.locationType === 'physical' ? formData.region || null : null,
-          post_code: formData.locationType === 'physical' ? formData.postCode || null : null,
-          city: formData.locationType === 'physical' ? formData.city || null : null,
-          street: formData.locationType === 'physical' ? formData.street || null : null,
-          house_number: formData.locationType === 'physical' ? formData.houseNumber || null : null,
-          latitude: formData.locationType === 'physical' ? formData.latitude : null,
-          longitude: formData.locationType === 'physical' ? formData.longitude : null,
+            formData.attendanceMode !== 'online' ? formData.locationName || null : null,
+          location_url: formData.attendanceMode !== 'offline' ? formData.onlineLink || null : null,
+          country: formData.attendanceMode !== 'online' ? formData.country || null : null,
+          region: formData.attendanceMode !== 'online' ? formData.region || null : null,
+          post_code: formData.attendanceMode !== 'online' ? formData.postCode || null : null,
+          city: formData.attendanceMode !== 'online' ? formData.city || null : null,
+          street: formData.attendanceMode !== 'online' ? formData.street || null : null,
+          house_number: formData.attendanceMode !== 'online' ? formData.houseNumber || null : null,
+          latitude: formData.attendanceMode !== 'online' ? formData.latitude : null,
+          longitude: formData.attendanceMode !== 'online' ? formData.longitude : null,
           start_date,
           end_date,
           visibility: formData.visibility,
@@ -388,18 +399,19 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
           description: formData.description
             ? toZeroRichTextValue(formData.descriptionContent)
             : null,
-          location_type: formData.locationType,
+          attendance_mode: formData.attendanceMode,
+          location_type: formData.attendanceMode === 'online' ? 'online' : 'physical',
           location_name:
-            formData.locationType === 'physical' ? formData.locationName || null : null,
-          location_url: formData.locationType === 'online' ? formData.onlineLink || null : null,
-          country: formData.locationType === 'physical' ? formData.country || null : null,
-          region: formData.locationType === 'physical' ? formData.region || null : null,
-          post_code: formData.locationType === 'physical' ? formData.postCode || null : null,
-          city: formData.locationType === 'physical' ? formData.city || null : null,
-          street: formData.locationType === 'physical' ? formData.street || null : null,
-          house_number: formData.locationType === 'physical' ? formData.houseNumber || null : null,
-          latitude: formData.locationType === 'physical' ? formData.latitude : null,
-          longitude: formData.locationType === 'physical' ? formData.longitude : null,
+            formData.attendanceMode !== 'online' ? formData.locationName || null : null,
+          location_url: formData.attendanceMode !== 'offline' ? formData.onlineLink || null : null,
+          country: formData.attendanceMode !== 'online' ? formData.country || null : null,
+          region: formData.attendanceMode !== 'online' ? formData.region || null : null,
+          post_code: formData.attendanceMode !== 'online' ? formData.postCode || null : null,
+          city: formData.attendanceMode !== 'online' ? formData.city || null : null,
+          street: formData.attendanceMode !== 'online' ? formData.street || null : null,
+          house_number: formData.attendanceMode !== 'online' ? formData.houseNumber || null : null,
+          latitude: formData.attendanceMode !== 'online' ? formData.latitude : null,
+          longitude: formData.attendanceMode !== 'online' ? formData.longitude : null,
           start_date,
           end_date,
           visibility: formData.visibility,

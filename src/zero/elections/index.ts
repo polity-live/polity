@@ -7,7 +7,7 @@ export {
   indicativeCandidateSelection,
   finalElectorParticipation,
   finalCandidateSelection,
-} from './table'
+} from './table';
 
 // Zod Schemas
 export {
@@ -30,6 +30,9 @@ export {
   createFinalElectorParticipationSchema,
   selectFinalCandidateSelectionSchema,
   createFinalCandidateSelectionSchema,
+  selectElectionOfflineTallySchema,
+  upsertElectionOfflineTallySchema,
+  deleteElectionOfflineTallySchema,
   type Election,
   type ElectionCandidate,
   type Elector,
@@ -37,10 +40,11 @@ export {
   type IndicativeCandidateSelection,
   type FinalElectorParticipation,
   type FinalCandidateSelection,
-} from './schema'
+  type ElectionOfflineTally,
+} from './schema';
 
 // Queries
-export { electionQueries } from './queries'
+export { electionQueries } from './queries';
 export type {
   ElectionByAgendaItemRow,
   ElectionByIdRow,
@@ -53,16 +57,17 @@ export type {
   ElectionWithDetailsRow,
   ElectionForSearchRow,
   UserElectorRow,
-} from './queries'
+  ElectionOfflineTallyRow,
+} from './queries';
 
 // Shared Mutators
-export { electionSharedMutators } from './shared-mutators'
+export { electionSharedMutators } from './shared-mutators';
 
 // Server Mutators
-export { electionServerMutators } from './server-mutators'
+export { electionServerMutators } from './server-mutators';
 
 // State Hook
-export { useElectionState } from './useElectionState'
+export { useElectionState } from './useElectionState';
 
 // Action Hook
-export { useElectionActions } from './useElectionActions'
+export { useElectionActions } from './useElectionActions';

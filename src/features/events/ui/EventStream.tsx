@@ -53,6 +53,19 @@ function getYouTubeVideoId(url: string): string | null {
   return null;
 }
 
+function resolveAttendanceMode(
+  event?: {
+    attendance_mode?: string | null;
+    location_type?: string | null;
+  } | null
+) {
+  if (event?.attendance_mode === 'online' || event?.attendance_mode === 'hybrid') {
+    return event.attendance_mode;
+  }
+
+  return event?.location_type === 'online' ? 'online' : 'offline';
+}
+
 export function EventStream({ eventId }: { eventId: string }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -78,6 +91,13 @@ export function EventStream({ eventId }: { eventId: string }) {
   } = useEventStream(eventId);
 
   const [speakersExpanded, setSpeakersExpanded] = useState(true);
+  const attendanceMode = resolveAttendanceMode(event);
+  const confirmedOfflineParticipantCount =
+    event?.offline_participants?.filter(
+      participant =>
+        participant.attendance_status === 'confirmed' &&
+        participant.participation_channel === 'offline'
+    ).length ?? 0;
 
   // Prepare election data for AgendaElectionSection
   const election = currentAgendaItem?.election?.[0];
@@ -350,6 +370,8 @@ export function EventStream({ eventId }: { eventId: string }) {
           candidates={[...election.candidates] as CandidatesByElectionRow[]}
           indicativeSelections={indicativeSelections}
           finalSelections={finalSelections}
+          offlineTallies={election.offline_tallies ?? []}
+          attendanceMode={attendanceMode}
           userHasVoted={userHasElectionVoted}
           userSelectedCandidateIds={userSelectedCandidateIds}
           electionStatus={election.status ?? 'indicative'}
@@ -364,15 +386,19 @@ export function EventStream({ eventId }: { eventId: string }) {
       {/* Vote Section */}
       {voteEntity && voteEntity.choices && voteEntity.choices.length > 0 && (
         <AgendaVoteSection
+          voteId={voteEntity.id}
           voteTitle={voteEntity.title || 'Vote'}
           choices={[...voteEntity.choices] as ChoicesByVoteRow[]}
           indicativeDecisions={indicativeDecisions}
           finalDecisions={finalDecisions}
+          offlineTallies={voteEntity.offline_tallies ?? []}
+          attendanceMode={attendanceMode}
           userHasVoted={userHasVoteVoted}
           userSelectedChoiceIds={userSelectedChoiceIds}
           voteStatus={voteEntity.status ?? 'indicative'}
           majorityType={voteEntity.majority_type}
-          totalEligibleVoters={voteEntity.voters?.length}
+          totalEligibleVoters={(voteEntity.voters?.length ?? 0) + confirmedOfflineParticipantCount}
+          offlineEligibleCount={confirmedOfflineParticipantCount}
         />
       )}
 

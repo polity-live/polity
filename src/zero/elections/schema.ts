@@ -160,10 +160,31 @@ export const createFinalCandidateSelectionSchema = baseFinalCandidateSelectionSc
   .extend({ id: z.string() });
 
 // ============================================
+// Election Offline Tally
+// ============================================
+const baseElectionOfflineTallySchema = z.object({
+  id: z.string(),
+  election_id: z.string(),
+  phase: z.enum(['indicative', 'final']),
+  candidate_id: z.string(),
+  count: z.number(),
+  updated_by_id: z.string().nullable(),
+  created_at: timestampSchema,
+  updated_at: timestampSchema,
+});
+
+export const selectElectionOfflineTallySchema = baseElectionOfflineTallySchema;
+export const upsertElectionOfflineTallySchema = baseElectionOfflineTallySchema
+  .omit({ created_at: true, updated_at: true, updated_by_id: true })
+  .extend({ id: z.string().optional(), debug_correlation_id: z.string().optional() });
+export const deleteElectionOfflineTallySchema = z.object({ id: z.string() });
+
+// ============================================
 // Inferred Types
 // ============================================
 export type Election = z.infer<typeof selectElectionSchema>;
 export type ElectionCandidate = z.infer<typeof selectElectionCandidateSchema>;
+export type ElectionOfflineTally = z.infer<typeof selectElectionOfflineTallySchema>;
 export type Elector = z.infer<typeof selectElectorSchema>;
 export type IndicativeElectorParticipation = z.infer<
   typeof selectIndicativeElectorParticipationSchema

@@ -148,6 +148,28 @@ CREATE INDEX idx_group_membership_source_group ON public.group_membership (sourc
 ALTER TABLE public.group_membership ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.group_membership FOR ALL TO service_role USING (true);
 
+-- Offline group members (real-world members without platform signup)
+CREATE TABLE IF NOT EXISTS public.group_offline_member (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
+  reason_not_signed_up TEXT,
+  connected_user_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
+  created_by_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_group_offline_member_group ON public.group_offline_member (group_id);
+CREATE INDEX idx_group_offline_member_connected_user ON public.group_offline_member (connected_user_id);
+CREATE UNIQUE INDEX idx_group_offline_member_unique_connected_user
+  ON public.group_offline_member (group_id, connected_user_id)
+  WHERE connected_user_id IS NOT NULL;
+
+ALTER TABLE public.group_offline_member ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.group_offline_member FOR ALL TO service_role USING (true);
+
 -- Group membership roles table
 CREATE TABLE IF NOT EXISTS public.group_membership_role (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

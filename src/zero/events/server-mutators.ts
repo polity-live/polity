@@ -18,6 +18,10 @@ import {
   eventParticipantCreateSchema,
   eventParticipantDeleteSchema,
   eventParticipantLegacyRoleUpdateSchema,
+  eventOfflineParticipantCreateSchema,
+  eventOfflineParticipantUpdateSchema,
+  eventOfflineParticipantDeleteSchema,
+  eventOfflineParticipantBulkImportSchema,
   eventUpdateSchema,
   eventCancelSchema,
   createEventRoleSchema,
@@ -159,6 +163,52 @@ async function assertEventParticipationEligibility(
 
 function isAssemblyEventType(eventType: string | null | undefined) {
   return eventType === 'general_assembly' || eventType === 'delegate_assembly';
+}
+
+function resolveAttendanceMode(event: {
+  attendance_mode?: string | null;
+  location_type?: string | null;
+}) {
+  if (event.attendance_mode === 'online' || event.attendance_mode === 'hybrid') {
+    return event.attendance_mode;
+  }
+
+  return event.location_type === 'online' ? 'online' : 'offline';
+}
+
+async function normalizeOfflineParticipantChannelsForEvent(
+  tx: Parameters<typeof mutators.events.create.fn>[0]['tx'],
+  eventId: string
+) {
+  const event = await tx.run(zql.event.where('id', eventId).one());
+  if (!event) {
+    return;
+  }
+
+  const attendanceMode = resolveAttendanceMode(event);
+  const offlineParticipants = await tx.run(
+    zql.event_offline_participant.where('event_id', eventId)
+  );
+
+  for (const offlineParticipant of offlineParticipants) {
+    const nextParticipationChannel =
+      attendanceMode === 'offline'
+        ? 'offline'
+        : attendanceMode === 'hybrid'
+          ? offlineParticipant.connected_user_id &&
+            offlineParticipant.participation_channel !== 'offline'
+            ? 'online'
+            : 'offline'
+          : offlineParticipant.participation_channel;
+
+    if (nextParticipationChannel !== offlineParticipant.participation_channel) {
+      await tx.mutate.event_offline_participant.update({
+        id: offlineParticipant.id,
+        participation_channel: nextParticipationChannel,
+        updated_at: Date.now(),
+      });
+    }
+  }
 }
 
 async function assertDelegateAssemblyGroupEligibility(
@@ -375,6 +425,117 @@ export const eventServerMutators = {
     }
   }),
 
+  createOfflineParticipant: defineMutator(
+    eventOfflineParticipantCreateSchema,
+    async ({ tx, ctx, args }) => {
+      console.info('Server validation started', {
+        flow: 'event-offline-participant-create',
+        correlationId: args.debug_correlation_id ?? null,
+        actorUserId: ctx.userID,
+        eventId: args.event_id,
+      });
+
+      await mutators.events.createOfflineParticipant.fn({ tx, ctx, args });
+      await recomputeEventCounters(tx, args.event_id);
+
+      console.info('Server successful', {
+        flow: 'event-offline-participant-create',
+        correlationId: args.debug_correlation_id ?? null,
+        actorUserId: ctx.userID,
+        eventId: args.event_id,
+        offlineParticipantId: args.id,
+      });
+    }
+  ),
+
+  updateOfflineParticipant: defineMutator(
+    eventOfflineParticipantUpdateSchema,
+    async ({ tx, ctx, args }) => {
+      const existingOfflineParticipant = await tx.run(
+        zql.event_offline_participant.where('id', args.id).one()
+      );
+
+      console.info('Server validation started', {
+        flow: 'event-offline-participant-update',
+        correlationId: args.debug_correlation_id ?? null,
+        actorUserId: ctx.userID,
+        eventId: existingOfflineParticipant?.event_id ?? null,
+        offlineParticipantId: args.id,
+      });
+
+      await mutators.events.updateOfflineParticipant.fn({ tx, ctx, args });
+
+      if (!existingOfflineParticipant) {
+        return;
+      }
+
+      await recomputeEventCounters(tx, existingOfflineParticipant.event_id);
+
+      console.info('Server successful', {
+        flow: 'event-offline-participant-update',
+        correlationId: args.debug_correlation_id ?? null,
+        actorUserId: ctx.userID,
+        eventId: existingOfflineParticipant.event_id,
+        offlineParticipantId: args.id,
+      });
+    }
+  ),
+
+  deleteOfflineParticipant: defineMutator(
+    eventOfflineParticipantDeleteSchema,
+    async ({ tx, ctx, args }) => {
+      const existingOfflineParticipant = await tx.run(
+        zql.event_offline_participant.where('id', args.id).one()
+      );
+
+      console.info('Server validation started', {
+        flow: 'event-offline-participant-delete',
+        actorUserId: ctx.userID,
+        eventId: existingOfflineParticipant?.event_id ?? null,
+        offlineParticipantId: args.id,
+      });
+
+      await mutators.events.deleteOfflineParticipant.fn({ tx, ctx, args });
+
+      if (!existingOfflineParticipant) {
+        return;
+      }
+
+      await recomputeEventCounters(tx, existingOfflineParticipant.event_id);
+
+      console.info('Server successful', {
+        flow: 'event-offline-participant-delete',
+        actorUserId: ctx.userID,
+        eventId: existingOfflineParticipant.event_id,
+        offlineParticipantId: args.id,
+      });
+    }
+  ),
+
+  importOfflineParticipants: defineMutator(
+    eventOfflineParticipantBulkImportSchema,
+    async ({ tx, ctx, args }) => {
+      console.info('Server validation started', {
+        flow: 'event-offline-participant-import',
+        correlationId: args.debug_correlation_id ?? null,
+        actorUserId: ctx.userID,
+        eventId: args.event_id,
+        entryCount: args.entries.length,
+      });
+
+      await mutators.events.importOfflineParticipants.fn({ tx, ctx, args });
+      await recomputeEventCounters(tx, args.event_id);
+
+      console.info('Server successful', {
+        flow: 'event-offline-participant-import',
+        correlationId: args.debug_correlation_id ?? null,
+        actorUserId: ctx.userID,
+        eventId: args.event_id,
+        entryCount: args.entries.length,
+      });
+    }
+  ),
+
   joinEvent: defineMutator(eventParticipantCreateSchema, async ({ tx, ctx, args }) => {
     await assertEventParticipationEligibility(tx, {
       event_id: args.event_id,
@@ -573,6 +734,16 @@ export const eventServerMutators = {
     const nextEventType = args.event_type ?? previousEvent?.event_type ?? null;
     const nextGroupId =
       args.group_id !== undefined ? args.group_id : (previousEvent?.group_id ?? null);
+    const nextAttendanceMode = resolveAttendanceMode({
+      attendance_mode: args.attendance_mode ?? previousEvent?.attendance_mode,
+      location_type: args.location_type ?? previousEvent?.location_type,
+    });
+    const attendanceModeChanged =
+      nextAttendanceMode !==
+      resolveAttendanceMode({
+        attendance_mode: previousEvent?.attendance_mode,
+        location_type: previousEvent?.location_type,
+      });
 
     if (nextEventType === 'delegate_assembly') {
       await assertDelegateAssemblyGroupEligibility(tx, nextGroupId);
@@ -599,6 +770,10 @@ export const eventServerMutators = {
       eventId: args.id,
       eventTitle: eTitle,
     });
+
+    if (attendanceModeChanged) {
+      await normalizeOfflineParticipantChannelsForEvent(tx, args.id);
+    }
 
     if (nextEventType === 'general_assembly') {
       await reconcileGeneralAssemblyParticipantsForEvent(tx, args.id, ctx.userID);

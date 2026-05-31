@@ -20,11 +20,17 @@ import {
   userName,
 } from '../server-helpers';
 import {
+  eventAllowsOnlineVoting,
+  getConfirmedOfflineAttendeeCount,
+  isUserForcedOfflineForEvent,
+} from '../offline-roster-helpers';
+import {
   createElectionSchema,
   updateElectionSchema,
   createElectionCandidateSchema,
   createIndicativeElectorParticipationSchema,
   createFinalElectorParticipationSchema,
+  upsertElectionOfflineTallySchema,
 } from './schema';
 
 type ElectionServerTx = Parameters<typeof mutators.elections.createElection.fn>[0]['tx'];
@@ -53,6 +59,80 @@ interface ElectionAssignmentResult {
   winners: CandidateLike[];
   seatCount: number;
   tiedCandidateIds: string[];
+}
+
+async function loadElectionEventId(tx: ElectionServerTx, electionId: string) {
+  const election = await tx.run(zql.election.where('id', electionId).one());
+  if (!election?.agenda_item_id) {
+    return null;
+  }
+
+  const agendaItem = await tx.run(zql.agenda_item.where('id', election.agenda_item_id).one());
+  return agendaItem?.event_id ?? null;
+}
+
+async function assertOnlineElectionVoteAllowed(
+  tx: ElectionServerTx,
+  args: {
+    electionId: string;
+    userId: string;
+  }
+) {
+  const eventId = await loadElectionEventId(tx, args.electionId);
+  if (!eventId) {
+    return;
+  }
+
+  const [onlineVotingAllowed, forcedOffline] = await Promise.all([
+    eventAllowsOnlineVoting(tx, eventId),
+    isUserForcedOfflineForEvent(tx, eventId, args.userId),
+  ]);
+  if (!onlineVotingAllowed || forcedOffline) {
+    throw new Error(
+      'This election must be entered via the offline tally flow for this participant.'
+    );
+  }
+}
+
+async function assertOfflineElectionTallyWithinCap(
+  tx: ElectionServerTx,
+  args: {
+    electionId: string;
+    phase: 'indicative' | 'final';
+    nextCandidateId: string;
+    nextCount: number;
+  }
+) {
+  const [eventId, election] = await Promise.all([
+    loadElectionEventId(tx, args.electionId),
+    tx.run(zql.election.where('id', args.electionId).one()),
+  ]);
+  if (!eventId || !election) {
+    throw new Error('Election is not linked to an event.');
+  }
+
+  const confirmedOfflineAttendeeCount = await getConfirmedOfflineAttendeeCount(tx, eventId);
+  const existingTallies = await tx.run(
+    zql.election_offline_tally.where('election_id', args.electionId)
+  );
+  const hasMatchingCandidate = existingTallies.some(
+    tally => tally.phase === args.phase && tally.candidate_id === args.nextCandidateId
+  );
+  const totalCount =
+    existingTallies.reduce((sum, tally) => {
+      if (tally.phase !== args.phase) {
+        return sum;
+      }
+
+      return sum + (tally.candidate_id === args.nextCandidateId ? args.nextCount : tally.count);
+    }, 0) + (hasMatchingCandidate ? 0 : args.nextCount);
+  const maxOfflineVotes = confirmedOfflineAttendeeCount * Math.max(1, election.max_votes ?? 1);
+
+  if (totalCount > maxOfflineVotes) {
+    throw new Error(
+      `Offline election totals exceed the current cap of ${maxOfflineVotes} votes (${confirmedOfflineAttendeeCount} confirmed offline attendees x ${Math.max(1, election.max_votes ?? 1)} max votes). Confirm more offline or hybrid attendees on the participants page or reduce the tally.`
+    );
+  }
 }
 
 function tallyCandidateVotes(
@@ -862,6 +942,10 @@ export const electionServerMutators = {
     createIndicativeElectorParticipationSchema,
     async ({ tx, ctx, args }) => {
       await requireRecentVotingPasswordVerification(tx, ctx.userID);
+      await assertOnlineElectionVoteAllowed(tx, {
+        electionId: args.election_id,
+        userId: ctx.userID,
+      });
       await mutators.elections.castIndicativeElectionVote.fn({ tx, ctx, args });
     }
   ),
@@ -870,7 +954,42 @@ export const electionServerMutators = {
     createFinalElectorParticipationSchema,
     async ({ tx, ctx, args }) => {
       await requireRecentVotingPasswordVerification(tx, ctx.userID);
+      await assertOnlineElectionVoteAllowed(tx, {
+        electionId: args.election_id,
+        userId: ctx.userID,
+      });
       await mutators.elections.castFinalElectionVote.fn({ tx, ctx, args });
     }
   ),
+
+  upsertOfflineTally: defineMutator(upsertElectionOfflineTallySchema, async ({ tx, ctx, args }) => {
+    console.info('Server validation started', {
+      flow: 'election-offline-tally-upsert',
+      correlationId: args.debug_correlation_id ?? null,
+      actorUserId: ctx.userID,
+      electionId: args.election_id,
+      phase: args.phase,
+      candidateId: args.candidate_id,
+      count: args.count,
+    });
+
+    await requireRecentVotingPasswordVerification(tx, ctx.userID);
+    await assertOfflineElectionTallyWithinCap(tx, {
+      electionId: args.election_id,
+      phase: args.phase,
+      nextCandidateId: args.candidate_id,
+      nextCount: args.count,
+    });
+    await mutators.elections.upsertOfflineTally.fn({ tx, ctx, args });
+
+    console.info('Server successful', {
+      flow: 'election-offline-tally-upsert',
+      correlationId: args.debug_correlation_id ?? null,
+      actorUserId: ctx.userID,
+      electionId: args.election_id,
+      phase: args.phase,
+      candidateId: args.candidate_id,
+      count: args.count,
+    });
+  }),
 };

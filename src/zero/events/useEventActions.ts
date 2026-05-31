@@ -42,6 +42,45 @@ export function useEventActions() {
     [zero]
   );
 
+  const createOfflineParticipant = useCallback(
+    (args: Parameters<typeof mutators.events.createOfflineParticipant>[0]) => {
+      const result = zero.mutate(mutators.events.createOfflineParticipant(args));
+      toast.success('Offline participant added');
+      onServerError(result, () => toast.error('Failed to add offline participant'));
+      return result;
+    },
+    [zero]
+  );
+
+  const updateOfflineParticipant = useCallback(
+    (args: Parameters<typeof mutators.events.updateOfflineParticipant>[0]) => {
+      const result = zero.mutate(mutators.events.updateOfflineParticipant(args));
+      onServerError(result, () => toast.error('Failed to update offline participant'));
+      return result;
+    },
+    [zero]
+  );
+
+  const deleteOfflineParticipant = useCallback(
+    (args: Parameters<typeof mutators.events.deleteOfflineParticipant>[0]) => {
+      const result = zero.mutate(mutators.events.deleteOfflineParticipant(args));
+      toast.success('Offline participant removed');
+      onServerError(result, () => toast.error('Failed to remove offline participant'));
+      return result;
+    },
+    [zero]
+  );
+
+  const importOfflineParticipants = useCallback(
+    (args: Parameters<typeof mutators.events.importOfflineParticipants>[0]) => {
+      const result = zero.mutate(mutators.events.importOfflineParticipants(args));
+      toast.success('Offline participants imported');
+      onServerError(result, () => toast.error('Failed to import offline participants'));
+      return result;
+    },
+    [zero]
+  );
+
   // ── Participation ──────────────────────────────────────────────────
   const joinEvent = useCallback(
     (args: Parameters<typeof mutators.events.joinEvent>[0]) => {
@@ -172,6 +211,10 @@ export function useEventActions() {
     createEvent,
     updateEvent,
     cancelEvent,
+    createOfflineParticipant,
+    updateOfflineParticipant,
+    deleteOfflineParticipant,
+    importOfflineParticipants,
 
     // Participation
     joinEvent,

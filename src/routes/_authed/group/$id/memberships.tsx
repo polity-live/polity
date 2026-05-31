@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { useQuery } from '@rocicorp/zero/react';
 import { useTranslation } from 'react-i18next';
 import { MembershipTabs } from '@/features/groups/ui/MembershipTabs';
 import { ActiveMembersTable } from '@/features/groups/ui/ActiveMembersTable';
@@ -16,6 +17,12 @@ import { RolesPermissionsTable } from '@/features/groups/ui/RolesPermissionsTabl
 import { RoleDetailsTable } from '@/features/groups/ui/RoleDetailsTable';
 import { AddRoleDialog } from '@/features/groups/ui/AddRoleDialog';
 import { AssignHolderDialog } from '@/features/groups/ui/AssignHolderDialog';
+import {
+  OfflineRosterCard,
+  type OfflineRosterCandidateUser,
+  type OfflineRosterGroupReference,
+  type OfflineRosterRow,
+} from '@/features/offline-roster/ui/OfflineRosterCard';
 import { RoleHolderHistoryDialog } from '@/features/roles/ui/RoleHolderHistoryDialog';
 import {
   useGroupMemberships,
@@ -36,6 +43,11 @@ import { GlobalLoadingAnimation } from '@/features/shared/ui/ui/global-loading-a
 import { EntitySearchBar } from '@/features/shared/ui/ui/entity-search-bar';
 import { emptyRoleEditorForm, roleToEditorForm } from '@/features/groups/logic/roleFormHelpers';
 import { getMembershipDisplayRoles } from '@/features/groups/logic/buildMembershipRightsSummary';
+import { resolveChildBaseGroups } from '@/features/groups/logic/hierarchy';
+import { queries } from '@/zero/queries';
+import { useGroupActions } from '@/zero/groups/useGroupActions';
+import { useGroupState } from '@/zero/groups/useGroupState';
+import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import type {
   GroupMembershipWithUser,
   GroupRole,
@@ -85,6 +97,7 @@ function GroupMembershipsContent({
   const navigate = useNavigate();
   const { user: authUser } = useAuth();
   const { group } = useGroupData(groupId);
+  const { allRelationshipsWithGroups } = useGroupState({ includeAllRelationshipsWithGroups: true });
   const groupName = group?.name || 'Group';
 
   const [activeTab, setActiveTab] = useState<MembershipTab>(
@@ -149,6 +162,8 @@ function GroupMembershipsContent({
     removeMember,
     changeMemberRoles,
   } = useGroupMutations(groupId);
+  const { createOfflineMember, updateOfflineMember, deleteOfflineMember, importOfflineMembers } =
+    useGroupActions();
 
   const [changeRoleOpen, setChangeRoleOpen] = useState(false);
   const [changeRoleMembership, setChangeRoleMembership] = useState<GroupMembershipWithUser | null>(
@@ -299,6 +314,222 @@ function GroupMembershipsContent({
   };
 
   const groupRoleHook = useGroupRoles(groupId);
+
+  const compositionGroupIds = useMemo(() => {
+    if (!group) {
+      return [groupId];
+    }
+
+    if (group.group_type !== 'hierarchical' && group.group_type !== 'sibling') {
+      return [groupId];
+    }
+
+    const groupsById = new Map<
+      string,
+      { id: string; group_type?: string | null; name?: string | null }
+    >();
+    for (const relationship of allRelationshipsWithGroups) {
+      if (relationship.group?.id) {
+        groupsById.set(relationship.group.id, relationship.group);
+      }
+      if (relationship.related_group?.id) {
+        groupsById.set(relationship.related_group.id, relationship.related_group);
+      }
+    }
+    groupsById.set(group.id, group);
+
+    if (group.group_type === 'hierarchical') {
+      return [
+        group.id,
+        ...resolveChildBaseGroups(group.id, [...allRelationshipsWithGroups], groupsById),
+      ];
+    }
+
+    const sourceGroupIds =
+      group.sibling_membership_mode === 'elected'
+        ? group.connected_group_id
+          ? [group.connected_group_id]
+          : []
+        : (group.sibling_sources || [])
+            .map(source => source.source_group?.id || source.source_group_id)
+            .filter((candidate): candidate is string => Boolean(candidate));
+    const expandedGroupIds = new Set<string>([group.id]);
+
+    for (const sourceGroupId of sourceGroupIds) {
+      expandedGroupIds.add(sourceGroupId);
+      const sourceGroup = groupsById.get(sourceGroupId);
+      if (sourceGroup?.group_type === 'hierarchical') {
+        for (const baseGroupId of resolveChildBaseGroups(
+          sourceGroupId,
+          [...allRelationshipsWithGroups],
+          groupsById
+        )) {
+          expandedGroupIds.add(baseGroupId);
+        }
+      }
+    }
+
+    return [...expandedGroupIds];
+  }, [allRelationshipsWithGroups, group, groupId]);
+
+  const [offlineMembersData] = useQuery(
+    compositionGroupIds.length > 0
+      ? queries.groups.offlineMembersByGroupIds({ groupIds: compositionGroupIds })
+      : undefined
+  );
+
+  const groupsById = useMemo(() => {
+    const nextMap = new Map<string, OfflineRosterGroupReference>();
+    if (group?.id) {
+      nextMap.set(group.id, group);
+    }
+    for (const relationship of allRelationshipsWithGroups) {
+      if (relationship.group?.id) {
+        nextMap.set(relationship.group.id, relationship.group);
+      }
+      if (relationship.related_group?.id) {
+        nextMap.set(relationship.related_group.id, relationship.related_group);
+      }
+    }
+    for (const offlineMember of offlineMembersData || []) {
+      if (offlineMember.group?.id) {
+        nextMap.set(offlineMember.group.id, offlineMember.group);
+      }
+    }
+    return nextMap;
+  }, [allRelationshipsWithGroups, group, offlineMembersData]);
+
+  const siblingRootGroupIds = useMemo(() => {
+    if (!group || group.group_type !== 'sibling') {
+      return [] as string[];
+    }
+
+    if (group.sibling_membership_mode === 'elected') {
+      return group.connected_group_id ? [group.connected_group_id] : [];
+    }
+
+    return (group.sibling_sources || [])
+      .map(source => source.source_group?.id || source.source_group_id)
+      .filter((candidate): candidate is string => Boolean(candidate));
+  }, [group]);
+
+  const offlineRows = useMemo(() => {
+    const searchValue = memberSearchQuery.trim().toLowerCase();
+
+    return (offlineMembersData || [])
+      .filter(offlineMember => {
+        if (!searchValue) {
+          return true;
+        }
+
+        const haystack = [
+          offlineMember.first_name,
+          offlineMember.last_name,
+          offlineMember.reason_not_signed_up,
+          offlineMember.connected_user?.first_name,
+          offlineMember.connected_user?.last_name,
+          offlineMember.connected_user?.handle,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+
+        return haystack.includes(searchValue);
+      })
+      .map<OfflineRosterRow>(offlineMember => {
+        let partGroup: OfflineRosterGroupReference | null | undefined;
+        let baseGroup: OfflineRosterGroupReference | null | undefined;
+
+        if (showComposition) {
+          baseGroup = groupsById.get(offlineMember.group_id) || offlineMember.group || null;
+
+          if (group?.group_type === 'hierarchical') {
+            partGroup = group;
+          } else if (group?.group_type === 'sibling') {
+            const matchedRootGroupId =
+              siblingRootGroupIds.find(rootGroupId => {
+                if (rootGroupId === offlineMember.group_id) {
+                  return true;
+                }
+
+                const rootGroup = groupsById.get(rootGroupId);
+                if (rootGroup?.group_type !== 'hierarchical') {
+                  return false;
+                }
+
+                return resolveChildBaseGroups(
+                  rootGroupId,
+                  [...allRelationshipsWithGroups],
+                  groupsById
+                ).includes(offlineMember.group_id);
+              }) || offlineMember.group_id;
+
+            partGroup = groupsById.get(matchedRootGroupId) || offlineMember.group || null;
+          }
+        }
+
+        return {
+          id: offlineMember.id,
+          kind: 'offline',
+          firstName: offlineMember.first_name,
+          lastName: offlineMember.last_name,
+          isActiveUser: false,
+          reasonNotSignedUp: offlineMember.reason_not_signed_up,
+          connectedUser: offlineMember.connected_user ?? null,
+          partGroup,
+          baseGroup,
+          readOnlyIdentity: showComposition,
+          canConnect: !showComposition,
+          canEdit: !showComposition,
+          canDelete: !showComposition,
+        };
+      });
+  }, [
+    allRelationshipsWithGroups,
+    group,
+    groupsById,
+    memberSearchQuery,
+    offlineMembersData,
+    showComposition,
+    siblingRootGroupIds,
+  ]);
+
+  const allUserRows = useMemo<OfflineRosterRow[]>(() => {
+    const activeRows = activeMembers.map(membership => ({
+      id: `active:${membership.id}`,
+      kind: 'active' as const,
+      firstName: membership.user?.first_name || '',
+      lastName: membership.user?.last_name || '',
+      isActiveUser: true,
+      connectedUser: null,
+      reasonNotSignedUp: null,
+      partGroup: showComposition ? membership.partGroup || null : null,
+      baseGroup: showComposition ? membership.baseGroup || null : null,
+    }));
+
+    return [...activeRows, ...offlineRows];
+  }, [activeMembers, offlineRows, showComposition]);
+
+  const offlineConnectedUserIds = useMemo(
+    () =>
+      new Set(
+        (offlineMembersData || [])
+          .map(offlineMember => offlineMember.connected_user_id)
+          .filter((candidate): candidate is string => Boolean(candidate))
+      ),
+    [offlineMembersData]
+  );
+
+  const connectedUserCandidates = useMemo<OfflineRosterCandidateUser[]>(
+    () =>
+      activeMemberships
+        .map(membership => membership.user)
+        .filter(
+          (user): user is NonNullable<(typeof activeMemberships)[number]['user']> =>
+            Boolean(user?.id) && !offlineConnectedUserIds.has(user.id)
+        ),
+    [activeMemberships, offlineConnectedUserIds]
+  );
 
   return (
     <div>
@@ -453,6 +684,70 @@ function GroupMembershipsContent({
                   groupName
                 );
               }}
+            />
+            <OfflineRosterCard
+              title="All users (incl. non signed-up offline users)"
+              description="Some real group members may never sign up on the platform. Use this roster to include those offline users, map them to active platform users when needed, and keep counts and delegate calculations grounded in the full real-world membership."
+              rows={allUserRows}
+              connectedUserCandidates={connectedUserCandidates}
+              showManageButton={canManageMembers && !showComposition}
+              showProvenanceColumns={showComposition}
+              manageDialogTitle="Manage non signed up users"
+              manageDialogDescription="Add single offline users or import them from CSV so the full group roster remains complete."
+              onCreate={(entry, correlationId) =>
+                serverConfirmed(
+                  createOfflineMember({
+                    id: crypto.randomUUID(),
+                    group_id: groupId,
+                    first_name: entry.firstName,
+                    last_name: entry.lastName,
+                    reason_not_signed_up: entry.reasonNotSignedUp || null,
+                    connected_user_id: null,
+                    debug_correlation_id: correlationId,
+                  })
+                )
+              }
+              onImport={(entries, correlationId) =>
+                serverConfirmed(
+                  importOfflineMembers({
+                    group_id: groupId,
+                    entries: entries.map(entry => ({
+                      first_name: entry.firstName,
+                      last_name: entry.lastName,
+                      reason_not_signed_up: entry.reasonNotSignedUp || null,
+                    })),
+                    debug_correlation_id: correlationId,
+                  })
+                )
+              }
+              onConnect={(row, userId, correlationId) =>
+                serverConfirmed(
+                  updateOfflineMember({
+                    id: row.id,
+                    connected_user_id: userId,
+                    debug_correlation_id: correlationId,
+                  })
+                )
+              }
+              onEdit={(row, entry, correlationId) =>
+                serverConfirmed(
+                  updateOfflineMember({
+                    id: row.id,
+                    first_name: entry.firstName,
+                    last_name: entry.lastName,
+                    reason_not_signed_up: entry.reasonNotSignedUp || null,
+                    debug_correlation_id: correlationId,
+                  })
+                )
+              }
+              onDelete={(row, correlationId) =>
+                serverConfirmed(
+                  deleteOfflineMember({
+                    id: row.id,
+                    debug_correlation_id: correlationId,
+                  })
+                )
+              }
             />
           </div>
         }

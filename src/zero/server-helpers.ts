@@ -4,6 +4,10 @@
  */
 import { type Transaction } from '@rocicorp/zero';
 import { zql, type Schema } from './schema';
+import {
+  computeDistinctEventParticipantCount,
+  computeDistinctGroupMemberCount,
+} from './offline-roster-helpers';
 
 type ZeroTransaction = Transaction<Schema>;
 
@@ -318,19 +322,17 @@ export async function recomputeGroupCounters(
   tx: Transaction<Schema>,
   groupId: string
 ): Promise<void> {
-  const [memberships, subscribers, events, amendments] = await Promise.all([
-    tx.run(zql.group_membership.where('group_id', groupId)),
+  const [memberCount, subscribers, events, amendments] = await Promise.all([
+    computeDistinctGroupMemberCount(tx, groupId),
     tx.run(zql.subscriber.where('group_id', groupId)),
     tx.run(zql.event.where('group_id', groupId)),
     tx.run(zql.amendment.where('group_id', groupId)),
   ]);
-
-  const members = memberships.filter(membership => isActiveGroupStatus(membership.status)).length;
   const activeEvents = events.filter(event => event.status !== 'cancelled').length;
 
   await tx.mutate.group.update({
     id: groupId,
-    member_count: members,
+    member_count: memberCount,
     subscriber_count: subscribers.length,
     event_count: activeEvents,
     amendment_count: amendments.length,
@@ -384,16 +386,12 @@ export async function recomputeEventCounters(
   tx: Transaction<Schema>,
   eventId: string
 ): Promise<void> {
-  const [participants, subscribers, agendaItems, amendments] = await Promise.all([
-    tx.run(zql.event_participant.where('event_id', eventId)),
+  const [participantCount, subscribers, agendaItems, amendments] = await Promise.all([
+    computeDistinctEventParticipantCount(tx, eventId),
     tx.run(zql.subscriber.where('event_id', eventId)),
     tx.run(zql.agenda_item.where('event_id', eventId)),
     tx.run(zql.amendment.where('event_id', eventId)),
   ]);
-
-  const participantCount = participants.filter(participant =>
-    isActiveEventStatus(participant.status)
-  ).length;
   const agendaItemIds = agendaItems.map(item => item.id);
   const amendmentIds = amendments.map(amendment => amendment.id);
 

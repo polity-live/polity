@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS public.event (
   description JSONB,
   status TEXT,
   event_type TEXT,
+  attendance_mode TEXT NOT NULL DEFAULT 'offline' CHECK (attendance_mode IN ('online', 'hybrid', 'offline')),
   location_type TEXT,
   location_name TEXT,
   country TEXT,
@@ -115,6 +116,32 @@ CREATE UNIQUE INDEX idx_event_participant_unique_event_user_instance
 
 ALTER TABLE public.event_participant ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.event_participant FOR ALL TO service_role USING (true);
+
+-- Offline / hybrid participants for real-world attendance tracking
+CREATE TABLE IF NOT EXISTS public.event_offline_participant (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_id UUID NOT NULL REFERENCES public.event (id) ON DELETE CASCADE,
+  group_offline_member_id UUID REFERENCES public.group_offline_member (id) ON DELETE SET NULL,
+  source_type TEXT NOT NULL CHECK (source_type IN ('group_member', 'event_extra')),
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
+  reason_not_signed_up TEXT,
+  connected_user_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
+  attendance_status TEXT NOT NULL DEFAULT 'listed' CHECK (attendance_status IN ('listed', 'confirmed')),
+  participation_channel TEXT NOT NULL DEFAULT 'offline' CHECK (participation_channel IN ('online', 'offline')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_event_offline_participant_event ON public.event_offline_participant (event_id);
+CREATE INDEX idx_event_offline_participant_group_offline_member ON public.event_offline_participant (group_offline_member_id);
+CREATE INDEX idx_event_offline_participant_connected_user ON public.event_offline_participant (connected_user_id);
+CREATE UNIQUE INDEX idx_event_offline_participant_unique_connected_user
+  ON public.event_offline_participant (event_id, connected_user_id)
+  WHERE connected_user_id IS NOT NULL;
+
+ALTER TABLE public.event_offline_participant ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.event_offline_participant FOR ALL TO service_role USING (true);
 
 -- Event participant roles table
 CREATE TABLE IF NOT EXISTS public.event_participant_role (

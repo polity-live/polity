@@ -1,6 +1,7 @@
 import { defineMutator } from '@rocicorp/zero';
 import { z } from 'zod';
 import { normalizeDelegateElectionMode } from '@/features/elections/logic/electionMode';
+import { getDefaultOfflineParticipationChannel } from '../offline-roster-helpers';
 import { zql } from '../schema';
 import {
   eventCreateSchema,
@@ -9,6 +10,10 @@ import {
   eventParticipantCreateSchema,
   eventParticipantLegacyRoleUpdateSchema,
   eventParticipantDeleteSchema,
+  eventOfflineParticipantCreateSchema,
+  eventOfflineParticipantUpdateSchema,
+  eventOfflineParticipantDeleteSchema,
+  eventOfflineParticipantBulkImportSchema,
   eventParticipantRoleAssignSchema,
   eventParticipantRoleUnassignSchema,
   eventParticipantRolesSyncSchema,
@@ -25,6 +30,31 @@ import { can } from '../rbac/can';
 
 function isAssemblyEventType(eventType: string | null | undefined) {
   return eventType === 'general_assembly' || eventType === 'delegate_assembly';
+}
+
+function resolveAttendanceMode(event: {
+  attendance_mode?: string | null;
+  location_type?: string | null;
+}) {
+  if (event.attendance_mode === 'online' || event.attendance_mode === 'hybrid') {
+    return event.attendance_mode;
+  }
+
+  return event.location_type === 'online' ? 'online' : 'offline';
+}
+
+function normalizeRequiredName(value: string) {
+  const trimmedValue = value.trim();
+  if (!trimmedValue) {
+    throw new Error('First name and last name are required.');
+  }
+
+  return trimmedValue;
+}
+
+function normalizeOptionalReason(value: string | null | undefined) {
+  const trimmedValue = value?.trim() ?? '';
+  return trimmedValue.length > 0 ? trimmedValue : null;
 }
 
 async function loadParticipantForRoleMutation(
@@ -44,6 +74,73 @@ async function loadParticipantForRoleMutation(
   });
 
   return participant;
+}
+
+async function assertCanManageEventOfflineParticipants(
+  tx: Parameters<typeof can>[0],
+  ctx: Parameters<typeof can>[1],
+  eventId: string
+) {
+  await can(tx, ctx, {
+    action: 'manage_participants',
+    resource: 'events',
+    eventId,
+  });
+
+  const event = await tx.run(zql.event.where('id', eventId).one());
+  if (!event) {
+    throw new Error('Event not found');
+  }
+
+  if (resolveAttendanceMode(event) === 'online') {
+    throw new Error('Online-only events cannot manage offline or hybrid participants.');
+  }
+
+  return event;
+}
+
+async function loadOfflineParticipantForMutation(
+  tx: Parameters<typeof can>[0],
+  ctx: Parameters<typeof can>[1],
+  offlineParticipantId: string
+) {
+  const offlineParticipant = await tx.run(
+    zql.event_offline_participant.where('id', offlineParticipantId).one()
+  );
+  if (!offlineParticipant) {
+    throw new Error('Offline participant not found');
+  }
+
+  const event = await assertCanManageEventOfflineParticipants(tx, ctx, offlineParticipant.event_id);
+  return {
+    event,
+    offlineParticipant,
+  };
+}
+
+async function assertUniqueConnectedOfflineUserWithinEvent(
+  tx: Parameters<typeof can>[0],
+  args: {
+    eventId: string;
+    connectedUserId?: string | null;
+    excludeOfflineParticipantId?: string;
+  }
+) {
+  if (!args.connectedUserId) {
+    return;
+  }
+
+  const existingOfflineParticipants = await tx.run(
+    zql.event_offline_participant
+      .where('event_id', args.eventId)
+      .where('connected_user_id', args.connectedUserId)
+  );
+  const hasConflict = existingOfflineParticipants.some(
+    offlineParticipant => offlineParticipant.id !== args.excludeOfflineParticipantId
+  );
+  if (hasConflict) {
+    throw new Error('This active user is already connected to another offline participant.');
+  }
 }
 
 async function addEventParticipantRole(
@@ -237,9 +334,14 @@ export const eventSharedMutators = {
     void invited_user_ids;
     void debug_correlation_id;
     const delegateElectionMode = normalizeDelegateElectionMode(args.delegate_election_mode);
+    const attendanceMode = resolveAttendanceMode({
+      attendance_mode: args.attendance_mode,
+      location_type: args.location_type,
+    });
 
     await tx.mutate.event.insert({
       ...eventArgs,
+      attendance_mode: attendanceMode,
       delegate_election_mode: delegateElectionMode,
       creator_id: userID,
       participant_count: 1,
@@ -275,9 +377,17 @@ export const eventSharedMutators = {
     const delegateElectionMode = normalizeDelegateElectionMode(
       eventArgs.delegate_election_mode ?? currentEvent?.delegate_election_mode
     );
+    const attendanceMode =
+      args.attendance_mode !== undefined || args.location_type !== undefined
+        ? resolveAttendanceMode({
+            attendance_mode: args.attendance_mode ?? currentEvent?.attendance_mode,
+            location_type: args.location_type ?? currentEvent?.location_type,
+          })
+        : undefined;
 
     await tx.mutate.event.update({
       ...eventArgs,
+      ...(attendanceMode !== undefined ? { attendance_mode: attendanceMode } : {}),
       delegate_election_mode: delegateElectionMode,
       updated_at: Date.now(),
     });
@@ -294,6 +404,169 @@ export const eventSharedMutators = {
       updated_at: now,
     });
   }),
+
+  createOfflineParticipant: defineMutator(
+    eventOfflineParticipantCreateSchema,
+    async ({ tx, ctx, args }) => {
+      const event = await assertCanManageEventOfflineParticipants(tx, ctx, args.event_id);
+      if (args.source_type !== 'event_extra') {
+        throw new Error('Inherited group offline participants are managed automatically.');
+      }
+
+      await assertUniqueConnectedOfflineUserWithinEvent(tx, {
+        eventId: args.event_id,
+        connectedUserId: args.connected_user_id ?? null,
+      });
+
+      const createdAt = Date.now();
+      const attendanceMode = resolveAttendanceMode(event);
+      await tx.mutate.event_offline_participant.insert({
+        id: args.id,
+        event_id: args.event_id,
+        group_offline_member_id: null,
+        source_type: 'event_extra',
+        first_name: normalizeRequiredName(args.first_name),
+        last_name: normalizeRequiredName(args.last_name),
+        reason_not_signed_up: normalizeOptionalReason(args.reason_not_signed_up),
+        connected_user_id: args.connected_user_id ?? null,
+        attendance_status: args.attendance_status ?? 'listed',
+        participation_channel:
+          attendanceMode === 'offline'
+            ? 'offline'
+            : (args.participation_channel ??
+              getDefaultOfflineParticipationChannel({
+                attendanceMode,
+                connectedUserId: args.connected_user_id ?? null,
+              })),
+        created_at: createdAt,
+        updated_at: createdAt,
+      });
+    }
+  ),
+
+  updateOfflineParticipant: defineMutator(
+    eventOfflineParticipantUpdateSchema,
+    async ({ tx, ctx, args }) => {
+      const { event, offlineParticipant } = await loadOfflineParticipantForMutation(
+        tx,
+        ctx,
+        args.id
+      );
+      const attendanceMode = resolveAttendanceMode(event);
+
+      if (offlineParticipant.source_type === 'group_member') {
+        if (
+          args.first_name !== undefined ||
+          args.last_name !== undefined ||
+          args.reason_not_signed_up !== undefined
+        ) {
+          throw new Error('Inherited group offline participants can only update attendance data.');
+        }
+      }
+
+      const nextConnectedUserId =
+        args.connected_user_id !== undefined
+          ? args.connected_user_id
+          : offlineParticipant.connected_user_id;
+      await assertUniqueConnectedOfflineUserWithinEvent(tx, {
+        eventId: offlineParticipant.event_id,
+        connectedUserId: nextConnectedUserId,
+        excludeOfflineParticipantId: offlineParticipant.id,
+      });
+
+      const nextParticipationChannel =
+        attendanceMode === 'offline'
+          ? 'offline'
+          : (args.participation_channel ?? offlineParticipant.participation_channel);
+
+      await tx.mutate.event_offline_participant.update({
+        id: args.id,
+        ...(args.first_name !== undefined
+          ? { first_name: normalizeRequiredName(args.first_name) }
+          : {}),
+        ...(args.last_name !== undefined
+          ? { last_name: normalizeRequiredName(args.last_name) }
+          : {}),
+        ...(args.reason_not_signed_up !== undefined
+          ? { reason_not_signed_up: normalizeOptionalReason(args.reason_not_signed_up) }
+          : {}),
+        ...(args.connected_user_id !== undefined
+          ? { connected_user_id: args.connected_user_id ?? null }
+          : {}),
+        ...(args.attendance_status !== undefined
+          ? { attendance_status: args.attendance_status }
+          : {}),
+        participation_channel: nextParticipationChannel,
+        updated_at: Date.now(),
+      });
+    }
+  ),
+
+  deleteOfflineParticipant: defineMutator(
+    eventOfflineParticipantDeleteSchema,
+    async ({ tx, ctx, args }) => {
+      const { offlineParticipant } = await loadOfflineParticipantForMutation(tx, ctx, args.id);
+      if (offlineParticipant.source_type === 'group_member') {
+        throw new Error('Inherited group offline participants cannot be deleted from the event.');
+      }
+
+      await tx.mutate.event_offline_participant.delete({ id: args.id });
+    }
+  ),
+
+  importOfflineParticipants: defineMutator(
+    eventOfflineParticipantBulkImportSchema,
+    async ({ tx, ctx, args }) => {
+      const event = await assertCanManageEventOfflineParticipants(tx, ctx, args.event_id);
+      const attendanceMode = resolveAttendanceMode(event);
+      const existingOfflineParticipants = await tx.run(
+        zql.event_offline_participant.where('event_id', args.event_id)
+      );
+      const existingKeys = new Set(
+        existingOfflineParticipants
+          .filter(offlineParticipant => offlineParticipant.source_type === 'event_extra')
+          .map(offlineParticipant =>
+            [
+              offlineParticipant.first_name.trim().toLowerCase(),
+              offlineParticipant.last_name.trim().toLowerCase(),
+              (offlineParticipant.reason_not_signed_up ?? '').trim().toLowerCase(),
+            ].join('|')
+          )
+      );
+      const seenImportKeys = new Set<string>();
+      const createdAt = Date.now();
+
+      for (const entry of args.entries) {
+        const firstName = normalizeRequiredName(entry.first_name);
+        const lastName = normalizeRequiredName(entry.last_name);
+        const reasonNotSignedUp = normalizeOptionalReason(entry.reason_not_signed_up);
+        const dedupeKey = [
+          firstName.toLowerCase(),
+          lastName.toLowerCase(),
+          (reasonNotSignedUp ?? '').toLowerCase(),
+        ].join('|');
+        if (existingKeys.has(dedupeKey) || seenImportKeys.has(dedupeKey)) {
+          continue;
+        }
+
+        seenImportKeys.add(dedupeKey);
+        await tx.mutate.event_offline_participant.insert({
+          id: crypto.randomUUID(),
+          event_id: args.event_id,
+          group_offline_member_id: null,
+          source_type: 'event_extra',
+          first_name: firstName,
+          last_name: lastName,
+          reason_not_signed_up: reasonNotSignedUp,
+          connected_user_id: null,
+          attendance_status: 'listed',
+          participation_channel: attendanceMode === 'offline' ? 'offline' : 'offline',
+          created_at: createdAt,
+          updated_at: createdAt,
+        });
+      }
+    }
+  ),
 
   joinEvent: defineMutator(eventParticipantCreateSchema, async ({ tx, ctx: { userID }, args }) => {
     const now = Date.now();

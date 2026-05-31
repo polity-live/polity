@@ -403,6 +403,17 @@ export function useEventParticipantsQuery(eventId?: string) {
   };
 }
 
+export function useEventOfflineParticipants(eventId?: string) {
+  const [offlineParticipantsData, offlineParticipantsResult] = useQuery(
+    eventId ? queries.events.offlineParticipants({ eventId }) : undefined
+  );
+
+  return {
+    offlineParticipants: offlineParticipantsData || [],
+    isLoading: eventId != null && offlineParticipantsResult.type === 'unknown',
+  };
+}
+
 // ── Event Participation (user-specific) ─────────────────────────────
 
 export function useEventParticipationData(eventId: string, userId: string) {

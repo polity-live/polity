@@ -90,6 +90,12 @@ export function EventEdit({ eventId, mode = 'edit', defaultTab }: EventEditProps
       : formData.visibility === 'authenticated'
         ? t('pages.create.common.authenticated')
         : t('pages.create.common.private');
+  const attendanceModeLabel =
+    formData.attendanceMode === 'online'
+      ? 'Online'
+      : formData.attendanceMode === 'hybrid'
+        ? 'Hybrid'
+        : 'Offline';
   const timeSeriesValidationMessage =
     timeSeriesValidationError === 'missing-start-date'
       ? t('features.events.editPage.timeSeries.validation.startDateRequired')
@@ -204,13 +210,14 @@ export function EventEdit({ eventId, mode = 'edit', defaultTab }: EventEditProps
                 value={formData.endDate}
               />
             )}
-            {formData.locationType === 'physical' && locationSummary && (
+            <SummaryField label={t('pages.create.event.location')} value={attendanceModeLabel} />
+            {formData.attendanceMode !== 'online' && locationSummary && (
               <SummaryField
                 label={t('features.events.editPage.locationCapacity.location')}
                 value={locationSummary}
               />
             )}
-            {formData.locationType === 'online' && formData.onlineLink && (
+            {formData.attendanceMode !== 'offline' && formData.onlineLink && (
               <SummaryField
                 label={t('pages.create.event.meetingLink')}
                 value={formData.onlineLink}
@@ -356,21 +363,27 @@ export function EventEdit({ eventId, mode = 'edit', defaultTab }: EventEditProps
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Tabs
-                  value={formData.locationType}
-                  onValueChange={value =>
-                    updateField('locationType', value as 'physical' | 'online')
-                  }
-                >
-                  <TabsList className="w-full">
-                    <TabsTrigger value="physical" className="flex-1">
-                      {t('pages.create.event.locationTypes.physical')}
-                    </TabsTrigger>
-                    <TabsTrigger value="online" className="flex-1">
-                      {t('pages.create.event.locationTypes.online')}
-                    </TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="physical" className="space-y-4 pt-2">
+                <div className="space-y-2">
+                  <Label>Attendance Mode</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {(['online', 'hybrid', 'offline'] as const).map(modeOption => (
+                      <Button
+                        key={modeOption}
+                        type="button"
+                        variant={formData.attendanceMode === modeOption ? 'default' : 'outline'}
+                        onClick={() => updateField('attendanceMode', modeOption)}
+                      >
+                        {modeOption === 'online'
+                          ? 'Online'
+                          : modeOption === 'hybrid'
+                            ? 'Hybrid'
+                            : 'Offline'}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+                {formData.attendanceMode !== 'online' ? (
+                  <div className="space-y-4 rounded-xl border p-4">
                     <ValidatedInputField
                       id="locationName"
                       label={t('pages.create.event.venueName')}
@@ -438,8 +451,10 @@ export function EventEdit({ eventId, mode = 'edit', defaultTab }: EventEditProps
                         house_number: t('pages.create.event.houseNumber'),
                       }}
                     />
-                  </TabsContent>
-                  <TabsContent value="online" className="space-y-4 pt-2">
+                  </div>
+                ) : null}
+                {formData.attendanceMode !== 'offline' ? (
+                  <div className="space-y-4 rounded-xl border p-4">
                     <ValidatedInputField
                       id="onlineLink"
                       type="url"
@@ -451,8 +466,8 @@ export function EventEdit({ eventId, mode = 'edit', defaultTab }: EventEditProps
                       hint={t('common.validation.onlineLinkHint')}
                       autoComplete="url"
                     />
-                  </TabsContent>
-                </Tabs>
+                  </div>
+                ) : null}
                 <ValidatedInputField
                   id="capacity"
                   type="number"

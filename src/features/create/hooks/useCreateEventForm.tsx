@@ -5,7 +5,6 @@ import { toast } from 'sonner';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Label } from '@/features/shared/ui/ui/label';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/features/shared/ui/ui/tabs';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
 import { CreateInputField } from '../ui/CreateFields';
@@ -49,6 +48,7 @@ import { type ElectionMode } from '@/features/elections/logic/electionMode';
 
 type EventType = CreateEventType;
 type MeetingType = 'one-on-one' | 'public-meeting';
+type AttendanceMode = 'online' | 'hybrid' | 'offline';
 
 export function useCreateEventForm(): CreateFormConfig {
   const { t } = useTranslation();
@@ -79,7 +79,7 @@ export function useCreateEventForm(): CreateFormConfig {
   const [startTime, setStartTime] = useState(() => prefilledSearch.startTime);
   const [endDate, setEndDate] = useState(() => prefilledSearch.endDate);
   const [endTime, setEndTime] = useState(() => prefilledSearch.endTime);
-  const [locationType, setLocationType] = useState<'physical' | 'online'>('physical');
+  const [attendanceMode, setAttendanceMode] = useState<AttendanceMode>('offline');
   const [locationName, setLocationName] = useState('');
   const [onlineLink, setOnlineLink] = useState('');
   const [country, setCountry] = useState('');
@@ -137,9 +137,7 @@ export function useCreateEventForm(): CreateFormConfig {
       : `${delegateConfig.totalDelegates} total`;
   const delegateElectionModeLabel = delegateElectionMode === 'list' ? 'Listenwahl' : 'Einzelwahl';
   const locationTypeLabel =
-    locationType === 'online'
-      ? t('pages.create.event.locationTypes.online')
-      : t('pages.create.event.locationTypes.physical');
+    attendanceMode === 'online' ? 'Online' : attendanceMode === 'hybrid' ? 'Hybrid' : 'Offline';
   const visibilityLabel =
     effectiveVisibility === 'public'
       ? t('pages.create.common.public')
@@ -277,17 +275,18 @@ export function useCreateEventForm(): CreateFormConfig {
         id: eventId,
         title: title.trim(),
         description: description ? toZeroRichTextValue(descriptionContent) : null,
-        location_type: locationType,
-        location_name: locationType === 'physical' ? locationName || null : null,
-        location_url: locationType === 'online' ? onlineLink || null : null,
-        country: locationType === 'physical' ? country || null : null,
-        region: locationType === 'physical' ? region || null : null,
-        post_code: locationType === 'physical' ? postCode || null : null,
-        city: locationType === 'physical' ? city || null : null,
-        street: locationType === 'physical' ? street || null : null,
-        house_number: locationType === 'physical' ? houseNumber || null : null,
-        latitude: locationType === 'physical' ? latitude : null,
-        longitude: locationType === 'physical' ? longitude : null,
+        attendance_mode: attendanceMode,
+        location_type: attendanceMode === 'online' ? 'online' : 'physical',
+        location_name: attendanceMode !== 'online' ? locationName || null : null,
+        location_url: attendanceMode !== 'offline' ? onlineLink || null : null,
+        country: attendanceMode !== 'online' ? country || null : null,
+        region: attendanceMode !== 'online' ? region || null : null,
+        post_code: attendanceMode !== 'online' ? postCode || null : null,
+        city: attendanceMode !== 'online' ? city || null : null,
+        street: attendanceMode !== 'online' ? street || null : null,
+        house_number: attendanceMode !== 'online' ? houseNumber || null : null,
+        latitude: attendanceMode !== 'online' ? latitude : null,
+        longitude: attendanceMode !== 'online' ? longitude : null,
         start_date,
         end_date,
         visibility: effectiveVisibility,
@@ -542,19 +541,23 @@ export function useCreateEventForm(): CreateFormConfig {
           optional: true,
           content: (
             <div className="space-y-4">
-              <Tabs
-                value={locationType}
-                onValueChange={v => setLocationType(v as 'physical' | 'online')}
-              >
-                <TabsList className="w-full">
-                  <TabsTrigger value="physical" className="flex-1">
-                    {t('pages.create.event.locationTypes.physical')}
-                  </TabsTrigger>
-                  <TabsTrigger value="online" className="flex-1">
-                    {t('pages.create.event.locationTypes.online')}
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent value="physical" className="space-y-4 pt-2">
+              <div className="space-y-2">
+                <Label>Attendance Mode</Label>
+                <div className="flex flex-wrap gap-2">
+                  {(['online', 'hybrid', 'offline'] as const).map(mode => (
+                    <Button
+                      key={mode}
+                      type="button"
+                      variant={attendanceMode === mode ? 'default' : 'outline'}
+                      onClick={() => setAttendanceMode(mode)}
+                    >
+                      {mode === 'online' ? 'Online' : mode === 'hybrid' ? 'Hybrid' : 'Offline'}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              {attendanceMode !== 'online' ? (
+                <div className="space-y-4 rounded-xl border p-4">
                   <CreateInputField
                     label={t('pages.create.event.venueName')}
                     hint={t('pages.create.event.tips.venueName')}
@@ -618,8 +621,10 @@ export function useCreateEventForm(): CreateFormConfig {
                       house_number: t('pages.create.event.houseNumber'),
                     }}
                   />
-                </TabsContent>
-                <TabsContent value="online" className="space-y-4 pt-2">
+                </div>
+              ) : null}
+              {attendanceMode !== 'offline' ? (
+                <div className="space-y-4 rounded-xl border p-4">
                   <CreateInputField
                     label={t('pages.create.event.meetingLink')}
                     hint={t('pages.create.event.tips.meetingLink')}
@@ -627,8 +632,8 @@ export function useCreateEventForm(): CreateFormConfig {
                     onValueChange={setOnlineLink}
                     placeholder={t('pages.create.event.meetingLinkPlaceholder')}
                   />
-                </TabsContent>
-              </Tabs>
+                </div>
+              ) : null}
               {!isMeetingEvent && (
                 <CreateInputField
                   label={t('pages.create.event.capacityLabel')}
@@ -781,14 +786,15 @@ export function useCreateEventForm(): CreateFormConfig {
                       label: t('pages.create.event.location'),
                       value: locationTypeLabel,
                     },
-                    {
-                      label: t('pages.create.event.venueName'),
-                      value:
-                        locationType === 'online'
-                          ? t('pages.create.event.onlineMeeting')
-                          : locationSummary || t('pages.create.event.inPerson'),
-                    },
-                    ...(locationType === 'online' && onlineLink
+                    ...(attendanceMode !== 'online'
+                      ? [
+                          {
+                            label: t('pages.create.event.venueName'),
+                            value: locationSummary || t('pages.create.event.inPerson'),
+                          },
+                        ]
+                      : []),
+                    ...(attendanceMode !== 'offline' && onlineLink
                       ? [{ label: t('pages.create.event.meetingLink'), value: onlineLink }]
                       : []),
                   ],
@@ -807,7 +813,7 @@ export function useCreateEventForm(): CreateFormConfig {
       startTime,
       endDate,
       endTime,
-      locationType,
+      attendanceMode,
       locationName,
       onlineLink,
       country,

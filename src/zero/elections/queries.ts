@@ -11,6 +11,7 @@ export const electionQueries = {
         .where('agenda_item_id', agenda_item_id)
         .related('role', q => q.related('group'))
         .related('candidates', q => q.orderBy('order_index', 'asc').related('user'))
+        .related('offline_tallies', q => q.related('candidate').related('updated_by'))
         .related('electors', q => q.related('user'))
         .related('indicative_participations', q =>
           q.related('elector').related('selections', q2 => q2.related('candidate'))
@@ -29,6 +30,7 @@ export const electionQueries = {
       .related('agenda_item')
       .related('role', q => q.related('group'))
       .related('candidates', q => q.orderBy('order_index', 'asc').related('user'))
+      .related('offline_tallies', q => q.related('candidate').related('updated_by'))
       .related('electors', q => q.related('user'))
       .related('indicative_participations', q =>
         q.related('elector').related('selections', q2 => q2.related('candidate'))
@@ -105,6 +107,7 @@ export const electionQueries = {
       .related('candidates', q => q.related('user'))
       .related('agenda_item', q => q.related('event'))
       .related('role')
+      .related('offline_tallies', q => q.related('candidate'))
       .related('electors')
       .related('indicative_selections', q => q.related('candidate'))
       .related('final_selections', q => q.related('candidate'))
@@ -129,6 +132,15 @@ export const electionQueries = {
     ({ args: { election_id, user_id } }) =>
       zql.elector.where('election_id', election_id).where('user_id', user_id).one()
   ),
+
+  offlineTalliesByElection: defineQuery(
+    z.object({ election_id: z.string() }),
+    ({ args: { election_id } }) =>
+      zql.election_offline_tally
+        .where('election_id', election_id)
+        .related('candidate')
+        .related('updated_by')
+  ),
 };
 
 // ── Query Row Types ─────────────────────────────────────────────────
@@ -145,3 +157,4 @@ export type UserFinalParticipationRow = QueryRowType<typeof electionQueries.user
 export type ElectionWithDetailsRow = QueryRowType<typeof electionQueries.electionsWithDetails>;
 export type ElectionForSearchRow = QueryRowType<typeof electionQueries.electionsForSearch>;
 export type UserElectorRow = QueryRowType<typeof electionQueries.userElector>;
+export type ElectionOfflineTallyRow = QueryRowType<typeof electionQueries.offlineTalliesByElection>;

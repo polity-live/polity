@@ -140,6 +140,49 @@ export const groupMembershipLegacyRoleUpdateSchema = groupMembershipUpdateSchema
 export const groupMembershipDeleteSchema = z.object({ id: z.string() });
 export type GroupMembership = z.infer<typeof groupMembershipSelectSchema>;
 
+// ── group_offline_member ─────────────────────────────────────────────
+const groupOfflineMemberBaseSchema = z.object({
+  id: z.string(),
+  group_id: z.string(),
+  first_name: z.string(),
+  last_name: z.string(),
+  reason_not_signed_up: z.string().nullable(),
+  connected_user_id: z.string().nullable(),
+  created_by_id: z.string().nullable(),
+  created_at: timestampSchema,
+  updated_at: timestampSchema,
+});
+
+export const groupOfflineMemberSelectSchema = groupOfflineMemberBaseSchema;
+export const groupOfflineMemberCreateSchema = groupOfflineMemberBaseSchema
+  .omit({ created_by_id: true, created_at: true, updated_at: true })
+  .extend({ id: z.string(), debug_correlation_id: z.string().optional() });
+export const groupOfflineMemberUpdateSchema = groupOfflineMemberBaseSchema
+  .pick({
+    first_name: true,
+    last_name: true,
+    reason_not_signed_up: true,
+    connected_user_id: true,
+  })
+  .partial()
+  .extend({ id: z.string(), debug_correlation_id: z.string().optional() });
+export const groupOfflineMemberDeleteSchema = z.object({
+  id: z.string(),
+  debug_correlation_id: z.string().optional(),
+});
+export const groupOfflineMemberBulkImportSchema = z.object({
+  group_id: z.string(),
+  entries: z.array(
+    z.object({
+      first_name: z.string(),
+      last_name: z.string(),
+      reason_not_signed_up: z.string().nullable().optional(),
+    })
+  ),
+  debug_correlation_id: z.string().optional(),
+});
+export type GroupOfflineMember = z.infer<typeof groupOfflineMemberSelectSchema>;
+
 // ── group_membership_role ────────────────────────────────────────────
 const groupMembershipRoleBaseSchema = z.object({
   id: z.string(),

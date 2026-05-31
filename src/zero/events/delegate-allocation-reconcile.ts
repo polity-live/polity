@@ -2,6 +2,7 @@ import {
   calculateDelegateAllocations,
   calculateTotalDelegates,
 } from '@/features/shared/utils/delegate-calculations';
+import { resolveChildBaseGroups } from '@/features/groups/logic/hierarchy';
 import {
   resolveMembershipProvenance,
   supportsMembershipComposition,
@@ -10,6 +11,9 @@ import {
   type MembershipWithCompositionSource,
 } from '@/features/groups/logic/membershipComposition';
 import { getMembershipDisplayRoles } from '@/features/groups/logic/buildMembershipRightsSummary';
+import { getHierarchyRelationshipPair } from '@/features/network/logic/groupRelationshipOrientation';
+import type { GroupRelationship as GroupRelationshipRow } from '@/zero/network/schema';
+import { loadOfflineRosterMembersForGroup } from '../offline-roster-helpers';
 import { mutators } from '../mutators';
 import { zql } from '../schema';
 
@@ -104,6 +108,115 @@ function getMembersPerDelegate(event: { main_group_delegate_allocation_mode?: st
   return parsed;
 }
 
+function collectPathsFromBaseToRoot(args: {
+  baseGroupId: string;
+  rootGroupId: string;
+  relationships: readonly MembershipCompositionRelationshipLike[];
+}) {
+  const parentIdsByChildId = new Map<string, string[]>();
+
+  for (const relationship of args.relationships) {
+    const pair = getHierarchyRelationshipPair(relationship);
+    if (
+      !pair ||
+      relationship.with_right !== 'passiveVotingRight' ||
+      relationship.status !== 'active'
+    ) {
+      continue;
+    }
+
+    const parentIds = parentIdsByChildId.get(pair.childGroupId) ?? [];
+    parentIds.push(pair.parentGroupId);
+    parentIdsByChildId.set(pair.childGroupId, parentIds);
+  }
+
+  const paths: string[][] = [];
+
+  const walk = (currentGroupId: string, path: string[]) => {
+    const parentIds = parentIdsByChildId.get(currentGroupId) ?? [];
+
+    for (const parentGroupId of parentIds) {
+      if (path.includes(parentGroupId)) {
+        continue;
+      }
+
+      const nextPath = [...path, parentGroupId];
+      if (parentGroupId === args.rootGroupId) {
+        paths.push(nextPath);
+        continue;
+      }
+
+      walk(parentGroupId, nextPath);
+    }
+  };
+
+  walk(args.baseGroupId, [args.baseGroupId]);
+  return paths;
+}
+
+function resolvePartGroupIdForBase(args: {
+  rootGroupId: string;
+  baseGroupId: string;
+  relationships: readonly MembershipCompositionRelationshipLike[];
+}) {
+  if (args.rootGroupId === args.baseGroupId) {
+    return args.baseGroupId;
+  }
+
+  const paths = collectPathsFromBaseToRoot(args);
+  if (paths.length !== 1) {
+    return args.baseGroupId;
+  }
+
+  const path = paths[0];
+  return path[path.length - 2] ?? args.baseGroupId;
+}
+
+function buildOfflineBucketRootResolver(args: {
+  targetGroup: MembershipCompositionGroupLike;
+  relationships: readonly MembershipCompositionRelationshipLike[];
+  groupsById: ReadonlyMap<string, MembershipCompositionGroupLike>;
+  parliamentSourceGroupIds: readonly string[];
+}) {
+  return (baseGroupId: string) => {
+    if (args.targetGroup.group_type === 'hierarchical') {
+      return args.targetGroup.id;
+    }
+
+    if (args.targetGroup.group_type !== 'sibling') {
+      return baseGroupId;
+    }
+
+    if (args.targetGroup.sibling_membership_mode === 'elected') {
+      return args.targetGroup.connected_group_id ?? baseGroupId;
+    }
+
+    if (args.targetGroup.sibling_membership_mode !== 'parliament') {
+      return baseGroupId;
+    }
+
+    const matchingRootGroupIds = args.parliamentSourceGroupIds.filter(sourceGroupId => {
+      if (sourceGroupId === baseGroupId) {
+        return true;
+      }
+
+      const sourceGroup = args.groupsById.get(sourceGroupId);
+      if (sourceGroup?.group_type !== 'hierarchical') {
+        return false;
+      }
+
+      const descendantBaseGroupIds = resolveChildBaseGroups(
+        sourceGroupId,
+        [...args.relationships] as unknown as GroupRelationshipRow[],
+        args.groupsById
+      );
+      return descendantBaseGroupIds.includes(baseGroupId);
+    });
+
+    return matchingRootGroupIds.length === 1 ? matchingRootGroupIds[0] : baseGroupId;
+  };
+}
+
 function buildOpenGroupAllocations(args: {
   bucketRows: { partGroupId: string; memberCount: number }[];
   lockedSeatCountsByGroupId: Map<string, number>;
@@ -155,22 +268,36 @@ export async function reconcileDelegateAllocationsForEvent(tx: EventServerTx, ev
   const targetMemberships = (await loadGroupMemberships(tx, [targetGroup.id])).filter(
     isActiveMembership
   );
+  const [siblingSourceLinks, relationships, existingRows, confirmedDelegates, offlineMembers] =
+    await Promise.all([
+      targetGroup.group_type === 'sibling'
+        ? tx.run(zql.group_sibling_source.where('group_id', targetGroup.id))
+        : Promise.resolve([]),
+      loadNetworkRelationships(tx),
+      tx.run(zql.group_delegate_allocation.where('event_id', eventId)),
+      tx.run(zql.event_delegate.where('event_id', eventId).where('status', 'confirmed')),
+      loadOfflineRosterMembersForGroup(tx, targetGroup.id),
+    ]);
+  const configuredSourceGroupIds =
+    targetGroup.group_type !== 'sibling'
+      ? []
+      : targetGroup.sibling_membership_mode === 'elected'
+        ? targetGroup.connected_group_id
+          ? [targetGroup.connected_group_id]
+          : []
+        : siblingSourceLinks.map(sourceLink => sourceLink.source_group_id);
   const sourceGroupIds =
     targetGroup.group_type === 'sibling'
       ? [
-          ...new Set(
-            targetMemberships
+          ...new Set([
+            ...configuredSourceGroupIds,
+            ...targetMemberships
               .map(membership => membership.source_group_id)
-              .filter((groupId): groupId is string => Boolean(groupId))
-          ),
+              .filter((groupId): groupId is string => Boolean(groupId)),
+          ]),
         ]
       : [];
-  const [relationships, rootMemberships, existingRows, confirmedDelegates] = await Promise.all([
-    loadNetworkRelationships(tx),
-    loadGroupMemberships(tx, sourceGroupIds),
-    tx.run(zql.group_delegate_allocation.where('event_id', eventId)),
-    tx.run(zql.event_delegate.where('event_id', eventId).where('status', 'confirmed')),
-  ]);
+  const rootMemberships = await loadGroupMemberships(tx, sourceGroupIds);
 
   const membershipsWithProvenance = resolveMembershipProvenance({
     group: targetGroup,
@@ -180,11 +307,64 @@ export async function reconcileDelegateAllocationsForEvent(tx: EventServerTx, ev
   });
 
   const memberCountsByPartGroupId = new Map<string, number>();
+  const activeMembershipUserIds = new Set(
+    membershipsWithProvenance
+      .map(membership => membership.user_id)
+      .filter((userId): userId is string => Boolean(userId))
+  );
+
   for (const membership of membershipsWithProvenance) {
     const partGroupId = membership.partGroup?.id;
     if (!partGroupId) {
       continue;
     }
+
+    memberCountsByPartGroupId.set(
+      partGroupId,
+      (memberCountsByPartGroupId.get(partGroupId) ?? 0) + 1
+    );
+  }
+
+  const groupsById = new Map<string, MembershipCompositionGroupLike>();
+  for (const group of [
+    targetGroup,
+    ...relationships.flatMap(relationship => [relationship.group, relationship.related_group]),
+    ...rootMemberships.flatMap(membership => [membership.group, membership.source_group]),
+    ...offlineMembers.map(offlineMember => offlineMember.group),
+  ]) {
+    if (group?.id) {
+      groupsById.set(group.id, group as MembershipCompositionGroupLike);
+    }
+  }
+
+  const resolveOfflineRootGroupId = buildOfflineBucketRootResolver({
+    targetGroup,
+    relationships,
+    groupsById,
+    parliamentSourceGroupIds: configuredSourceGroupIds,
+  });
+  const seenOfflinePersonKeys = new Set<string>();
+
+  for (const offlineMember of offlineMembers) {
+    const personKey = offlineMember.connected_user_id
+      ? `user:${offlineMember.connected_user_id}`
+      : `offline:${offlineMember.id}`;
+    if (
+      seenOfflinePersonKeys.has(personKey) ||
+      (offlineMember.connected_user_id &&
+        activeMembershipUserIds.has(offlineMember.connected_user_id))
+    ) {
+      continue;
+    }
+
+    seenOfflinePersonKeys.add(personKey);
+
+    const rootGroupId = resolveOfflineRootGroupId(offlineMember.group_id);
+    const partGroupId = resolvePartGroupIdForBase({
+      rootGroupId,
+      baseGroupId: offlineMember.group_id,
+      relationships,
+    });
 
     memberCountsByPartGroupId.set(
       partGroupId,

@@ -84,6 +84,11 @@ interface CurrentAgendaItem {
     candidates?: CandidatesByElectionRow[];
     indicative_selections?: readonly CandidateSelection[];
     final_selections?: readonly CandidateSelection[];
+    offline_tallies?: readonly {
+      candidate_id?: string | null;
+      phase?: string | null;
+      count?: number | null;
+    }[];
     electors?: { user_id?: string | null }[];
   }[];
   votes?: {
@@ -92,6 +97,11 @@ interface CurrentAgendaItem {
     choices?: ChoicesByVoteRow[];
     indicative_decisions?: readonly ChoiceDecision[];
     final_decisions?: readonly ChoiceDecision[];
+    offline_tallies?: readonly {
+      choice_id?: string | null;
+      phase?: string | null;
+      count?: number | null;
+    }[];
     voters?: { user_id?: string | null }[];
     majority_type?: string | null;
   }[];
@@ -340,6 +350,7 @@ export function EventStreamSection({
                 candidates={candidates}
                 indicativeSelections={indicativeSelections}
                 finalSelections={finalSelections}
+                offlineTallies={election.offline_tallies ?? []}
                 userHasVoted={userHasVotedElection}
                 userSelectedCandidateIds={userSelectedCandidateIds}
                 electionStatus={electionStatus}
@@ -360,10 +371,12 @@ export function EventStreamSection({
             {/* Vote Section */}
             {voteEntity && choices.length > 0 && (
               <AgendaVoteSection
+                voteId={voteEntity.id}
                 voteTitle={voteEntity.title || 'Vote'}
                 choices={choices}
                 indicativeDecisions={indicativeDecisions}
                 finalDecisions={finalDecisions}
+                offlineTallies={voteEntity.offline_tallies ?? []}
                 userHasVoted={userHasVotedVote}
                 userSelectedChoiceIds={userSelectedChoiceIds}
                 voteStatus={voteStatus}

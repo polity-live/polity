@@ -58,7 +58,7 @@ import {
   Info,
   GripVertical,
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { gatedToast as toast } from '@/features/notifications/utils/gated-toast';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 import { TimelineItem } from '@/features/agendas/ui/TimelineItem.tsx';
@@ -68,6 +68,7 @@ import { EventSearchCard } from '@/features/search/ui/EventSearchCard';
 import { AgendaSpeakerListSection } from './AgendaSpeakerListSection';
 import { AgendaElectionSection } from './AgendaElectionSection';
 import { AgendaVoteSection } from './AgendaVoteSection';
+import { OfflineElectionTallyDialog } from './OfflineElectionTallyDialog';
 import {
   AgendaCard,
   type AgendaItemType,
@@ -83,6 +84,7 @@ import { normalizeElectionMode } from '@/features/elections/logic/electionMode';
 import { AgendaActionBar } from './AgendaActionBar';
 import { VoteCastDialog } from '@/features/vote-cast/ui/VoteCastDialog';
 import { useVotingPasswordActions } from '@/zero/voting-password/useVotingPasswordActions';
+import { useElectionActions } from '@/zero/elections/useElectionActions';
 import { useElectionState } from '@/zero/elections/useElectionState';
 import { useAgendaActionBar } from '../hooks/useAgendaActionBar';
 import { useAgendaNavigation } from '../hooks/useAgendaNavigation';
@@ -136,6 +138,19 @@ function getEffectiveCRVotingPhase(
   return 'indication';
 }
 
+function resolveAttendanceMode(
+  event?: {
+    attendance_mode?: string | null;
+    location_type?: string | null;
+  } | null
+) {
+  if (event?.attendance_mode === 'online' || event?.attendance_mode === 'hybrid') {
+    return event.attendance_mode;
+  }
+
+  return event?.location_type === 'online' ? 'online' : 'offline';
+}
+
 function normalizeSearchToken(value: string | null | undefined): string {
   if (!value) return '';
   return value.toLowerCase().replace(/[\s_-]+/g, '');
@@ -167,8 +182,21 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   const [removingSpeaker, setRemovingSpeaker] = useState(false);
   const [, setMarkingSpeakerComplete] = useState<string | null>(null);
   const { verifyVotingPassword } = useVotingPasswordActions();
+  const { upsertOfflineTally } = useElectionActions();
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const attendanceMode = resolveAttendanceMode(event);
+  const allowsOfflineElectionTallies = attendanceMode === 'hybrid' || attendanceMode === 'offline';
+  const confirmedOfflineParticipantCount =
+    event?.offline_participants?.filter(
+      participant =>
+        participant.attendance_status === 'confirmed' &&
+        participant.participation_channel === 'offline'
+    ).length ?? 0;
   const [isPasswordVerifying, setIsPasswordVerifying] = useState(false);
+  const [offlineTallyDialogOpen, setOfflineTallyDialogOpen] = useState(false);
+  const [offlineTallyPasswordError, setOfflineTallyPasswordError] = useState<string | null>(null);
+  const [offlineTallySubmitError, setOfflineTallySubmitError] = useState<string | null>(null);
+  const [isOfflineTallySubmitting, setIsOfflineTallySubmitting] = useState(false);
   const [overdueStartModalOpen, setOverdueStartModalOpen] = useState(false);
   const [dismissedOverdueAgendaItemId, setDismissedOverdueAgendaItemId] = useState<string | null>(
     null
@@ -184,7 +212,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       const currentItem = agendaItems.find(item => item.id === currentAgendaItemId);
       if (currentItem && previousAgendaItemIdRef.current !== null) {
         // Only show toast if this is not the initial load
-        toast(t('features.events.agenda.itemActivated'), {
+        toast.message(t('features.events.agenda.itemActivated'), {
           description: currentItem.title,
         });
       }
@@ -199,6 +227,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
 
   // Check if user can manage agenda items
   const canManageAgenda = can('manage', 'agendaItems');
+  const canManageOfflineTallies = can('manage_votes', 'events') || canManageAgenda;
   const [draggedAgendaItemId, setDraggedAgendaItemId] = useState<string | null>(null);
   const [dragOverAgendaItemId, setDragOverAgendaItemId] = useState<string | null>(null);
   const [dragInsertPosition, setDragInsertPosition] = useState<'above' | 'below' | null>(null);
@@ -493,6 +522,54 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     return 'indication' as const;
   }, [selectedCRPhase]);
   const effectiveToolbarVotingPhase = isCRToolbarActive ? selectedCRPhase : toolbarVotingPhase;
+  const toolbarOfflineTallyPhase = useMemo(() => {
+    if (!toolbarElection || !allowsOfflineElectionTallies || !canManageOfflineTallies) {
+      return null;
+    }
+
+    if (effectiveToolbarVotingPhase === 'indication') {
+      return 'indicative' as const;
+    }
+
+    if (effectiveToolbarVotingPhase === 'final_vote') {
+      return 'final' as const;
+    }
+
+    return null;
+  }, [
+    allowsOfflineElectionTallies,
+    canManageOfflineTallies,
+    effectiveToolbarVotingPhase,
+    toolbarElection,
+  ]);
+
+  const toolbarOfflineTallyCandidates = useMemo(
+    () =>
+      (toolbarElection?.candidates ?? [])
+        .filter(candidate => candidate.status !== 'withdrawn')
+        .map(candidate => ({
+          id: candidate.id,
+          label: candidate.user
+            ? `${candidate.user.first_name ?? ''} ${candidate.user.last_name ?? ''}`.trim() ||
+              candidate.user.email ||
+              candidate.name ||
+              'Candidate'
+            : candidate.name || 'Candidate',
+        })),
+    [toolbarElection?.candidates]
+  );
+
+  const toolbarCurrentOfflineTallies = useMemo(
+    () =>
+      toolbarOfflineTallyPhase
+        ? (toolbarElection?.offline_tallies ?? []).filter(
+            tally => tally.phase === toolbarOfflineTallyPhase
+          )
+        : [],
+    [toolbarElection?.offline_tallies, toolbarOfflineTallyPhase]
+  );
+
+  const toolbarOfflineTallyMode = toolbarCurrentOfflineTallies.length > 0 ? 'edit' : 'create';
   const startVoteTooltip = isCRToolbarActive
     ? isSelectedCRFinalVote
       ? t('features.events.agenda.actions.startFinalVote', 'Start Final Vote')
@@ -662,6 +739,113 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       await crVoting.castCRVote(activeCRToolbarItem, choiceId);
     },
     [activeCRToolbarItem, crVoting]
+  );
+  const handleOfflineTallyDialogOpenChange = useCallback((open: boolean) => {
+    setOfflineTallyDialogOpen(open);
+    if (!open) {
+      setOfflineTallyPasswordError(null);
+      setOfflineTallySubmitError(null);
+    }
+  }, []);
+
+  const handleOpenOfflineTallyDialog = useCallback(() => {
+    setOfflineTallyPasswordError(null);
+    setOfflineTallySubmitError(null);
+    setOfflineTallyDialogOpen(true);
+  }, []);
+
+  const handleSubmitOfflineTally = useCallback(
+    async ({ password, counts }: { password: string; counts: Record<string, number> }) => {
+      if (!toolbarElection || !toolbarOfflineTallyPhase) {
+        return;
+      }
+
+      setOfflineTallyPasswordError(null);
+      setOfflineTallySubmitError(null);
+      setIsOfflineTallySubmitting(true);
+
+      try {
+        await verifyVotingPassword(password);
+
+        const correlationId = `election-offline-tally:${crypto.randomUUID()}`;
+        const existingCountByCandidateId = new Map(
+          toolbarCurrentOfflineTallies.map(tally => [tally.candidate_id ?? '', tally.count ?? 0])
+        );
+        const updates = toolbarOfflineTallyCandidates
+          .map(candidate => {
+            const previousCount = existingCountByCandidateId.get(candidate.id) ?? 0;
+            const nextCount = counts[candidate.id] ?? 0;
+            return {
+              candidateId: candidate.id,
+              count: nextCount,
+              delta: nextCount - previousCount,
+            };
+          })
+          .sort((left, right) => {
+            const deltaDiff = left.delta - right.delta;
+            if (deltaDiff !== 0) {
+              return deltaDiff;
+            }
+
+            return left.candidateId.localeCompare(right.candidateId);
+          });
+
+        for (const update of updates) {
+          await upsertOfflineTally({
+            election_id: toolbarElection.id,
+            phase: toolbarOfflineTallyPhase,
+            candidate_id: update.candidateId,
+            count: update.count,
+            debug_correlation_id: correlationId,
+          });
+        }
+
+        toast.success(
+          toolbarOfflineTallyPhase === 'indicative'
+            ? 'Offline indicative tally saved'
+            : 'Offline final tally saved'
+        );
+        handleOfflineTallyDialogOpenChange(false);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to save offline tally';
+        const isPasswordError =
+          message === 'Invalid voting password.' ||
+          message === 'No voting password set. Please set your voting PIN first.';
+
+        if (isPasswordError) {
+          setOfflineTallyPasswordError(message);
+        } else {
+          setOfflineTallySubmitError(message);
+        }
+
+        toast.error('Failed to save offline tally', {
+          description: message,
+          action: message.includes('Offline election totals exceed the current cap')
+            ? {
+                label: 'Open participants',
+                onClick: () =>
+                  navigate({
+                    to: '/event/$id/participants',
+                    params: { id: eventId },
+                  }),
+              }
+            : undefined,
+        });
+      } finally {
+        setIsOfflineTallySubmitting(false);
+      }
+    },
+    [
+      eventId,
+      handleOfflineTallyDialogOpenChange,
+      navigate,
+      toolbarCurrentOfflineTallies,
+      toolbarElection,
+      toolbarOfflineTallyCandidates,
+      toolbarOfflineTallyPhase,
+      upsertOfflineTally,
+      verifyVotingPassword,
+    ]
   );
 
   const handleAddToSpeakerList = async () => {
@@ -993,6 +1177,21 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
               ? actionBarHook.handleVoteClick
               : undefined
         }
+        onOfflineTallyClick={
+          !isCRToolbarActive && toolbarOfflineTallyPhase ? handleOpenOfflineTallyDialog : undefined
+        }
+        offlineTallyMode={toolbarOfflineTallyMode}
+        offlineTallyTooltip={
+          toolbarOfflineTallyPhase === 'indicative'
+            ? toolbarOfflineTallyMode === 'edit'
+              ? 'Edit indicative offline tally'
+              : 'Save indicative offline tally'
+            : toolbarOfflineTallyPhase === 'final'
+              ? toolbarOfflineTallyMode === 'edit'
+                ? 'Edit final offline tally'
+                : 'Save final offline tally'
+              : undefined
+        }
         startVoteTooltip={startVoteTooltip}
         startFinalVoteTooltip={startFinalVoteTooltip}
         closeVoteTooltip={closeVoteTooltip}
@@ -1001,6 +1200,27 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       />
       {/* Spacer for fixed toolbar */}
       <div className="h-10" />
+
+      <OfflineElectionTallyDialog
+        open={offlineTallyDialogOpen}
+        onOpenChange={handleOfflineTallyDialogOpenChange}
+        title={
+          toolbarOfflineTallyPhase === 'final'
+            ? 'Save final offline tally'
+            : 'Save indicative offline tally'
+        }
+        description={`Enter aggregated offline or hybrid selections for ${toolbarElection?.title ?? 'this election'} and confirm with your voting PIN.`}
+        phase={toolbarOfflineTallyPhase ?? 'indicative'}
+        candidates={toolbarOfflineTallyCandidates}
+        tallies={toolbarCurrentOfflineTallies}
+        maxTotalVotes={
+          confirmedOfflineParticipantCount * Math.max(1, toolbarElection?.max_votes ?? 1)
+        }
+        isSubmitting={isOfflineTallySubmitting}
+        passwordError={offlineTallyPasswordError}
+        submitError={offlineTallySubmitError}
+        onSubmit={handleSubmitOfflineTally}
+      />
 
       {/* Stream Section */}
       <Collapsible open={streamOpen} onOpenChange={setStreamOpen}>
@@ -1170,6 +1390,8 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                         candidates={streamElection.candidates as CandidatesByElectionRow[]}
                         indicativeSelections={indicativeSelections}
                         finalSelections={finalSelections}
+                        offlineTallies={streamElection.offline_tallies ?? []}
+                        attendanceMode={attendanceMode}
                         userHasVoted={userHasElectionVoted}
                         userSelectedCandidateIds={userSelectedCandidateIds}
                         electionStatus={streamElection.status}
@@ -1185,15 +1407,22 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                   {streamVote && (
                     <div className="space-y-4">
                       <AgendaVoteSection
+                        voteId={streamVote.id}
                         voteTitle={streamVote.title || streamAgendaItem.title || 'Vote'}
                         choices={streamVote.choices as ChoicesByVoteRow[]}
                         indicativeDecisions={indicativeDecisions}
                         finalDecisions={finalDecisions}
+                        offlineTallies={streamVote.offline_tallies ?? []}
+                        attendanceMode={attendanceMode}
                         userHasVoted={userHasVoteVoted}
                         userSelectedChoiceIds={userSelectedChoiceIds}
                         voteStatus={streamVote.status}
                         majorityType={streamVote.majority_type}
-                        totalEligibleVoters={streamVote.voters?.length}
+                        totalEligibleVoters={
+                          (streamVote.voters?.length ?? 0) + confirmedOfflineParticipantCount
+                        }
+                        canManageOfflineResults={canManageAgenda}
+                        offlineEligibleCount={confirmedOfflineParticipantCount}
                       />
                       {streamVoteAmendment && (
                         <AgendaRelatedAmendmentCard amendment={streamVoteAmendment} />

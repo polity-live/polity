@@ -3,6 +3,7 @@ export { groupSharedMutators } from './shared-mutators';
 export type {
   Group,
   GroupMembership,
+  GroupOfflineMember,
   GroupGuestAccess,
   GroupGuestRole,
   GroupSiblingSource,
@@ -33,6 +34,7 @@ export {
   useGroupLinks,
   useGroupPaymentsData,
   useGroupActiveMembers,
+  useGroupOfflineMembers,
   useUserSearch,
   usePublicGroups,
   useUserGroupSubscriptions,

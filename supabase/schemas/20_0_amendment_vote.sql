@@ -118,3 +118,22 @@ CREATE INDEX idx_final_choice_decision_participation ON public.final_choice_deci
 
 ALTER TABLE public.final_choice_decision ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.final_choice_decision FOR ALL TO service_role USING (true);
+
+-- Aggregated offline tallies per vote phase and choice
+CREATE TABLE IF NOT EXISTS public.vote_offline_tally (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  vote_id UUID NOT NULL REFERENCES public.vote (id) ON DELETE CASCADE,
+  phase TEXT NOT NULL CHECK (phase IN ('indicative', 'final')),
+  choice_id UUID NOT NULL REFERENCES public.vote_choice (id) ON DELETE CASCADE,
+  count INTEGER NOT NULL DEFAULT 0 CHECK (count >= 0),
+  updated_by_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (vote_id, phase, choice_id)
+);
+
+CREATE INDEX idx_vote_offline_tally_vote ON public.vote_offline_tally (vote_id);
+CREATE INDEX idx_vote_offline_tally_choice ON public.vote_offline_tally (choice_id);
+
+ALTER TABLE public.vote_offline_tally ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.vote_offline_tally FOR ALL TO service_role USING (true);

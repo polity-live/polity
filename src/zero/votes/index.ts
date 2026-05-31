@@ -13,7 +13,7 @@ export {
   statementSupportVote,
   threadVote,
   commentVote,
-} from './table'
+} from './table';
 
 // Zod Schemas
 export {
@@ -36,6 +36,9 @@ export {
   createFinalVoterParticipationSchema,
   selectFinalChoiceDecisionSchema,
   createFinalChoiceDecisionSchema,
+  selectVoteOfflineTallySchema,
+  upsertVoteOfflineTallySchema,
+  deleteVoteOfflineTallySchema,
   selectAmendmentSupportVoteSchema,
   createAmendmentSupportVoteSchema,
   updateAmendmentSupportVoteSchema,
@@ -65,16 +68,17 @@ export {
   type IndicativeChoiceDecision,
   type FinalVoterParticipation,
   type FinalChoiceDecision,
+  type VoteOfflineTally,
   type AmendmentSupportVote,
   type ChangeRequestVote,
   type BlogSupportVote,
   type StatementSupportVote,
   type ThreadVote,
   type CommentVote,
-} from './schema'
+} from './schema';
 
 // Queries
-export { voteQueries } from './queries'
+export { voteQueries } from './queries';
 export type {
   VoteWithDetailsRow,
   VoteByAgendaItemRow,
@@ -85,16 +89,17 @@ export type {
   UserIndicativeVoterParticipationRow,
   UserFinalVoterParticipationRow,
   UserVoterRow,
-} from './queries'
+  VoteOfflineTallyRow,
+} from './queries';
 
 // Shared Mutators
-export { voteSharedMutators } from './shared-mutators'
+export { voteSharedMutators } from './shared-mutators';
 
 // Server Mutators
-export { voteServerMutators } from './server-mutators'
+export { voteServerMutators } from './server-mutators';
 
 // State Hook
-export { useVoteState } from './useVoteState'
+export { useVoteState } from './useVoteState';
 
 // Action Hook
-export { useVoteActions } from './useVoteActions'
+export { useVoteActions } from './useVoteActions';

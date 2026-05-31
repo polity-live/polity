@@ -81,3 +81,16 @@ export const finalCandidateSelection = table('final_candidate_selection')
     created_at: number(),
   })
   .primaryKey('id');
+
+export const electionOfflineTally = table('election_offline_tally')
+  .columns({
+    id: string(),
+    election_id: string(),
+    phase: string(),
+    candidate_id: string(),
+    count: number(),
+    updated_by_id: string().optional(),
+    created_at: number(),
+    updated_at: number(),
+  })
+  .primaryKey('id');
