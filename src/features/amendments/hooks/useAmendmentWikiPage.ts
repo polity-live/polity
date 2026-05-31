@@ -34,11 +34,10 @@ export function useAmendmentWikiPage(amendmentId: string) {
     userId: user?.id,
     includeFullRelations: true,
     includeClones: true,
+    includeRoles: true,
     includeNetworkData: true,
     includeUserMemberships: !!user?.id,
     includeAllUsers: !!user?.id,
-    includeEventsByGroup: false,
-    eventGroupId: '',
   });
 
   const amendment = facadeResult.amendmentFull;
@@ -63,19 +62,7 @@ export function useAmendmentWikiPage(amendmentId: string) {
   );
 
   // Clone hook (needs networkData + selectedTargetGroupId for event queries)
-  const cloneData = useCloneAmendment(amendmentId, amendment, networkData, user?.id, user?.email);
-
-  // Re-query events for the selected target group
-  const { eventsByGroup: targetGroupEventsResult } = useAmendmentState({
-    amendmentId,
-    includeEventsByGroup: !!cloneData.selectedTargetGroupId,
-    eventGroupId: cloneData.selectedTargetGroupId,
-  });
-
-  const targetGroupEventsData = useMemo(
-    () => ({ events: targetGroupEventsResult ?? [] }),
-    [targetGroupEventsResult]
-  );
+  const cloneData = useCloneAmendment(amendmentId, amendment, user?.id, user?.email);
 
   const usersData = useMemo(
     () => ({
@@ -90,11 +77,7 @@ export function useAmendmentWikiPage(amendmentId: string) {
   const supportConfirmations = amendment?.support_confirmations || [];
   const clones = facadeResult.clones ?? [];
   const clonedFrom = amendment?.clone_source;
-  const totalSupportingMembers = supportingGroups.reduce(
-    (sum: number, _group) => sum + 0,
-    0
-  );
-  const path = amendment?.paths?.[0];
+  const totalSupportingMembers = supportingGroups.reduce((sum: number) => sum + 0, 0);
   const targetCollaborator = undefined as { imageURL?: string; name?: string } | undefined;
   const targetGroup = amendment?.group;
 
@@ -141,7 +124,7 @@ export function useAmendmentWikiPage(amendmentId: string) {
           vote: voteValue,
         });
 
-        const adminCollab = collaborators.find((c) => c.status === 'admin');
+        const adminCollab = collaborators.find(c => c.status === 'admin');
         const authorUserId = adminCollab?.user?.id;
         if (authorUserId && authorUserId !== user.id) {
           await notifyAmendmentVoted({
@@ -166,11 +149,15 @@ export function useAmendmentWikiPage(amendmentId: string) {
       supportConfirmations.map(sc => ({
         group: sc.group_id ? { id: sc.group_id } : undefined,
         status: sc.status ?? undefined,
-      })),
+      }))
     );
 
   // Visibility access check
-  const canAccess = checkEntityAccess(amendment?.visibility, !!user, collaborationData.isCollaborator || collaborationData.isAdmin);
+  const canAccess = checkEntityAccess(
+    amendment?.visibility,
+    !!user,
+    collaborationData.isCollaborator || collaborationData.isAdmin
+  );
 
   return {
     // Navigation
@@ -188,6 +175,7 @@ export function useAmendmentWikiPage(amendmentId: string) {
 
     // Amendment data
     amendment,
+    roles: facadeResult.roles,
     isLoading: facadeResult.isLoading,
     isAdmin,
     collaborators,
@@ -205,7 +193,6 @@ export function useAmendmentWikiPage(amendmentId: string) {
     // Clone
     ...cloneData,
     networkData,
-    targetGroupEventsData,
     usersData,
 
     // Helpers

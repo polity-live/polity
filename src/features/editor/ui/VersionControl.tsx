@@ -58,10 +58,7 @@ export function VersionControl({
   entityType,
   entityId,
   currentContent,
-  currentUserId,
   onRestoreVersion,
-  amendmentId,
-  amendmentTitle,
 }: VersionControlProps) {
   const { t } = useTranslation();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -77,7 +74,7 @@ export function VersionControl({
   // Query all versions for this entity via facade
   const isBlog = entityType === 'blog';
   const { versions: docVersions, isLoading: docVersionsLoading } = useDocumentState({
-    documentId: !isBlog ? entityId : '',
+    documentId: !isBlog ? entityId : undefined,
     includeVersions: !isBlog,
   });
   const { versions: blogVersions, isLoading: blogVersionsLoading } = useBlogState({
@@ -86,8 +83,17 @@ export function VersionControl({
   });
   const versionsData = isBlog ? blogVersions : docVersions;
   const isLoading = isBlog ? blogVersionsLoading : docVersionsLoading;
-  const versions = versionsData as EditorVersion[];
-  const sortedVersions = [...versions].sort((a, b) => (b.version_number ?? 0) - (a.version_number ?? 0));
+  const versions = useMemo(() => {
+    const seen = new Set<string>();
+    return (versionsData as EditorVersion[]).filter(version => {
+      if (seen.has(version.id)) return false;
+      seen.add(version.id);
+      return true;
+    });
+  }, [versionsData]);
+  const sortedVersions = [...versions].sort(
+    (a, b) => (b.version_number ?? 0) - (a.version_number ?? 0)
+  );
 
   // Filter versions based on search query
   const filteredVersions = useMemo(() => {
@@ -98,7 +104,11 @@ export function VersionControl({
       version =>
         (version.change_summary ?? '').toLowerCase().includes(query) ||
         (version.version_number ?? 0).toString().includes(query) ||
-        [version.author?.first_name, version.author?.last_name].filter(Boolean).join(' ').toLowerCase().includes(query)
+        [version.author?.first_name, version.author?.last_name]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase()
+          .includes(query)
     );
   }, [sortedVersions, searchQuery]);
 
@@ -122,7 +132,7 @@ export function VersionControl({
         content: currentContent as ReadonlyJSONValue,
         document_id: entityType === 'blog' ? '' : entityId,
         amendment_id: null,
-        blog_id: entityType === 'blog' ? entityId : '',
+        blog_id: entityType === 'blog' ? entityId : null,
       });
 
       toast.success(
@@ -257,7 +267,7 @@ export function VersionControl({
 
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
             <Input
               placeholder={t('features.editor.versionControl.searchVersions')}
               value={searchQuery}
@@ -269,12 +279,12 @@ export function VersionControl({
           <ScrollArea className="h-[400px]">
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
               </div>
             ) : filteredVersions.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-center">
-                <GitBranch className="mb-2 h-8 w-8 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">
+                <GitBranch className="text-muted-foreground mb-2 h-8 w-8" />
+                <p className="text-muted-foreground text-sm">
                   {searchQuery
                     ? t('features.editor.versionControl.noMatchingVersions')
                     : t('features.editor.versionControl.noVersions')}
@@ -285,7 +295,7 @@ export function VersionControl({
                 {filteredVersions.map(version => (
                   <div
                     key={version.id}
-                    className="flex items-start justify-between rounded-lg border p-3 hover:bg-muted/50"
+                    className="hover:bg-muted/50 flex items-start justify-between rounded-lg border p-3"
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
@@ -329,7 +339,7 @@ export function VersionControl({
                           </>
                         )}
                       </div>
-                      <div className="mt-1 flex items-center gap-4 text-xs text-muted-foreground">
+                      <div className="text-muted-foreground mt-1 flex items-center gap-4 text-xs">
                         <span className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />
                           {formatDate(version.created_at)}
@@ -337,7 +347,9 @@ export function VersionControl({
                         {version.author && (
                           <span className="flex items-center gap-1">
                             <User className="h-3 w-3" />
-                            {[version.author.first_name, version.author.last_name].filter(Boolean).join(' ') || version.author.email}
+                            {[version.author.first_name, version.author.last_name]
+                              .filter(Boolean)
+                              .join(' ') || version.author.email}
                           </span>
                         )}
                       </div>

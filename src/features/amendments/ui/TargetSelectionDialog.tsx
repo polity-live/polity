@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -10,59 +10,29 @@ import {
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Badge } from '@/features/shared/ui/ui/badge';
-import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
-import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
-import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
-import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
-import { CalendarIcon, User } from 'lucide-react';
+import {
+  TargetGroupEventSelector,
+  type TargetGroupEventSelection,
+} from '@/features/amendments/ui/TargetGroupEventSelector';
+import type { PathWithEventSegment } from '@/features/amendments/logic/amendmentPathHelpers';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-
-interface NetworkDataProp {
-  groups: readonly {
-    id: string;
-    name?: string | null;
-    description?: string | null;
-    memberCount?: number;
-  }[];
-  groupRelationships: readonly {
-    with_right?: string | null;
-    group?: { id: string } | null;
-    related_group?: { id: string } | null;
-  }[];
-  groupMemberships: readonly {
-    status?: string | null;
-    user?: { id: string } | null;
-    group?: { id: string } | null;
-  }[];
-}
-
-interface EventsDataProp {
-  events: readonly {
-    id: string;
-    title?: string | null;
-    description?: string | null;
-    start_date?: number | null;
-  }[];
-}
 
 interface TargetSelectionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  networkData: NetworkDataProp;
-  targetGroupEventsData: EventsDataProp;
   currentUserId: string;
   allUsers: { id: string; name: string; email: string | null; avatar?: string | null }[];
   onConfirm: (selection: {
-    groupId: string;
-    groupData: NetworkDataProp['groups'][number];
-    eventId: string;
-    eventData: EventsDataProp['events'][number];
+    groupId: string | null;
+    groupData: TargetGroupEventSelection['groupData'] | null;
+    eventId: string | null;
+    eventData: TargetGroupEventSelection['eventData'] | null;
     collaboratorUserId: string;
+    pathWithEvents: PathWithEventSegment[];
+    workflowId: string | null;
   }) => void;
-  onGroupSelect?: (groupId: string) => void;
-  hideCollaboratorSelection?: boolean;
   isSaving?: boolean;
+  showCollaboratorSelection?: boolean;
   title?: string;
   description?: string;
   confirmButtonText?: string;
@@ -71,289 +41,84 @@ interface TargetSelectionDialogProps {
 export function TargetSelectionDialog({
   open,
   onOpenChange,
-  networkData,
-  targetGroupEventsData,
   currentUserId,
   allUsers,
   onConfirm,
-  hideCollaboratorSelection = false,
-  onGroupSelect,
   isSaving = false,
+  showCollaboratorSelection = true,
   title,
   description,
   confirmButtonText,
 }: TargetSelectionDialogProps) {
   const { t } = useTranslation();
-  const [targetCollaboratorUserId, setTargetCollaboratorUserId] = useState<string>('');
-  const [selectedTargetGroup, setSelectedTargetGroup] = useState<{
-    id: string;
-    data: NetworkDataProp['groups'][number];
-  } | null>(null);
-  const [pendingTarget, setPendingTarget] = useState<{
-    groupId: string;
-    groupData: NetworkDataProp['groups'][number];
-    eventId: string;
-    eventData: EventsDataProp['events'][number];
-  } | null>(null);
+  const [pendingTarget, setPendingTarget] = useState<TargetGroupEventSelection | null>(null);
 
   const dialogTitle = title || t('features.amendments.targetSelection.defaultTitle');
   const dialogDescription =
     description || t('features.amendments.targetSelection.defaultDescription');
   const confirmText = confirmButtonText || t('features.amendments.targetSelection.defaultConfirm');
 
+  const collaborators = useMemo(
+    () =>
+      allUsers.map(user => ({
+        id: user.id,
+        name: user.name,
+        email: user.email ?? undefined,
+        avatar: user.avatar ?? undefined,
+      })),
+    [allUsers]
+  );
+
   const handleCancel = () => {
     onOpenChange(false);
     setPendingTarget(null);
-    setSelectedTargetGroup(null);
-    setTargetCollaboratorUserId('');
+  };
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    onOpenChange(nextOpen);
+    if (!nextOpen) {
+      setPendingTarget(null);
+    }
   };
 
   const handleConfirm = () => {
-    if (pendingTarget) {
-      onConfirm({
-        ...pendingTarget,
-        collaboratorUserId: targetCollaboratorUserId || currentUserId,
-      });
-      handleCancel();
-    }
+    onConfirm({
+      groupId: pendingTarget?.groupId ?? null,
+      groupData: pendingTarget?.groupData ?? null,
+      eventId: pendingTarget?.eventId ?? null,
+      eventData: pendingTarget?.eventData ?? null,
+      collaboratorUserId: pendingTarget?.selectedUserId ?? currentUserId,
+      pathWithEvents: pendingTarget?.pathWithEvents ?? [],
+      workflowId: pendingTarget?.workflowId ?? null,
+    });
+    handleCancel();
   };
 
-  const gradients = [
-    'bg-gradient-to-br from-pink-100 to-blue-100 dark:from-pink-900/40 dark:to-blue-900/50',
-    'bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/40 dark:to-purple-900/50',
-    'bg-gradient-to-br from-green-100 to-blue-100 dark:from-green-900/40 dark:to-blue-900/50',
-    'bg-gradient-to-br from-yellow-100 to-orange-100 dark:from-yellow-900/40 dark:to-orange-900/50',
-    'bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/50',
-    'bg-gradient-to-br from-red-100 to-yellow-100 dark:from-red-900/40 dark:to-yellow-900/50',
-    'bg-gradient-to-br from-teal-100 to-green-100 dark:from-teal-900/40 dark:to-green-900/50',
-  ];
-
-  const targetUserId = targetCollaboratorUserId || currentUserId;
-
-  const userMemberships = networkData.groupMemberships.filter(
-    m => (m.status === 'active' || m.status === 'admin') && m.user?.id === targetUserId
-  );
-
-  const userGroupIds = userMemberships.map(m => m.group?.id).filter((id): id is string => !!id);
-  const allGroups = networkData.groups;
-  const relationships = networkData.groupRelationships;
-
-  // Filter for amendmentRight relationships
-  const amendmentRelationships = relationships.filter(r => r.with_right === 'amendmentRight');
-
-  // Build set of connected groups (direct and indirect)
-  const connectedGroupIds = new Set<string>(userGroupIds);
-
-  // Add directly connected groups
-  amendmentRelationships.forEach(rel => {
-    if (userGroupIds.includes(rel.group?.id ?? '')) {
-      if (rel.related_group?.id) connectedGroupIds.add(rel.related_group.id);
-    }
-    if (userGroupIds.includes(rel.related_group?.id ?? '')) {
-      if (rel.group?.id) connectedGroupIds.add(rel.group.id);
-    }
-  });
-
-  // Add indirectly connected groups (2 hops)
-  const firstHopGroups = Array.from(connectedGroupIds);
-  amendmentRelationships.forEach(rel => {
-    if (firstHopGroups.includes(rel.group?.id ?? '')) {
-      if (rel.related_group?.id) connectedGroupIds.add(rel.related_group.id);
-    }
-    if (firstHopGroups.includes(rel.related_group?.id ?? '')) {
-      if (rel.group?.id) connectedGroupIds.add(rel.group.id);
-    }
-  });
-
-  const connectedGroups = allGroups.filter(g => connectedGroupIds.has(g.id));
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="flex h-[85vh] max-w-4xl flex-col">
         <DialogHeader>
           <DialogTitle>{dialogTitle}</DialogTitle>
           <DialogDescription>{dialogDescription}</DialogDescription>
         </DialogHeader>
 
-        {!hideCollaboratorSelection && (
-          <div className="border-b px-6 py-3">
-            <div className="flex items-center gap-3">
-              <User className="text-muted-foreground h-4 w-4" />
-              <div className="flex-1">
-                <TypeaheadSearch
-                  items={toTypeaheadItems(
-                    allUsers,
-                    'user',
-                    u => u.name || 'User',
-                    u => u.email,
-                    u => u.avatar,
-                    u => `/user/${u.id}`
-                  )}
-                  value={targetCollaboratorUserId}
-                  onChange={(item: TypeaheadItem | null) =>
-                    setTargetCollaboratorUserId(item?.id ?? '')
-                  }
-                  placeholder={t(
-                    'features.amendments.targetSelection.selectCollaboratorPlaceholder'
-                  )}
-                  label={t('features.amendments.targetSelection.selectNetworkFor')}
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        <ScrollArea className="min-h-0 flex-1 pr-4">
-          <div className="space-y-2 pb-20">
-            {!targetUserId || !networkData ? (
-              <p className="text-muted-foreground px-6 text-sm">
-                {hideCollaboratorSelection
-                  ? t('features.amendments.targetSelection.loadingNetwork')
-                  : !targetCollaboratorUserId
-                    ? t('features.amendments.targetSelection.selectCollaboratorPrompt')
-                    : t('features.amendments.targetSelection.loadingGroups')}
-              </p>
-            ) : connectedGroups.length === 0 ? (
-              <p className="text-muted-foreground px-6 text-sm">
-                {t('features.amendments.targetSelection.noConnectedGroups')}
-              </p>
-            ) : (
-              connectedGroups.map((group, index: number) => {
-                const gradientClass = gradients[index % gradients.length];
-                const isSelected = selectedTargetGroup?.id === group.id;
-                const isMemberGroup = userGroupIds.includes(group.id);
-
-                return (
-                  <div key={group.id}>
-                    {/* Group Card */}
-                    <div
-                      className={`cursor-pointer rounded-lg border p-3 transition-all ${
-                        gradientClass
-                      } ${
-                        isSelected
-                          ? 'border-primary ring-primary/20 ring-2'
-                          : 'hover:border-primary hover:shadow-md'
-                      }`}
-                      onClick={() => {
-                        setSelectedTargetGroup({ id: group.id, data: group });
-                        onGroupSelect?.(group.id);
-                      }}
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="min-w-0 flex-1">
-                          <h4 className="truncate font-semibold">{group.name}</h4>
-                          {group.description && (
-                            <p className="text-muted-foreground mt-1 line-clamp-1 text-xs">
-                              {group.description}
-                            </p>
-                          )}
-                          <div className="mt-2 flex items-center gap-2">
-                            {isMemberGroup && (
-                              <Badge variant="secondary" className="text-xs">
-                                {t('features.amendments.targetSelection.member')}
-                              </Badge>
-                            )}
-                            <span className="text-muted-foreground text-xs">
-                              {group.memberCount || 0}{' '}
-                              {t('features.amendments.targetSelection.members')}
-                            </span>
-                          </div>
-                        </div>
-                        {isSelected && (
-                          <div className="shrink-0">
-                            <div className="bg-primary flex h-8 w-8 items-center justify-center rounded-full">
-                              <CalendarIcon className="text-primary-foreground h-4 w-4" />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Events (shown inline below selected group) */}
-                    {isSelected && (
-                      <div className="border-primary/30 mt-2 ml-6 space-y-2 border-l-2 pl-4">
-                        {(() => {
-                          const events = targetGroupEventsData.events;
-                          const upcomingEvents = [...events]
-                            .filter(e => new Date(e.start_date ?? 0) > new Date())
-                            .sort(
-                              (a, b) =>
-                                new Date(a.start_date ?? 0).getTime() -
-                                new Date(b.start_date ?? 0).getTime()
-                            );
-
-                          if (upcomingEvents.length === 0) {
-                            return (
-                              <p className="text-muted-foreground py-2 text-sm">
-                                {t('features.amendments.targetSelection.noUpcomingEvents')}
-                              </p>
-                            );
-                          }
-
-                          return upcomingEvents.map((event, eventIndex: number) => {
-                            const eventGradientClass = gradients[eventIndex % gradients.length];
-
-                            return (
-                              <div
-                                key={event.id}
-                                className={`cursor-pointer rounded-lg border p-3 transition-all ${eventGradientClass} ${
-                                  pendingTarget?.eventId === event.id
-                                    ? 'border-primary ring-primary/20 ring-2'
-                                    : 'hover:border-primary hover:shadow-md'
-                                }`}
-                                onClick={() => {
-                                  if (!isSaving) {
-                                    setPendingTarget({
-                                      groupId: group.id,
-                                      groupData: group,
-                                      eventId: event.id,
-                                      eventData: event,
-                                    });
-                                  }
-                                }}
-                              >
-                                <div className="space-y-2">
-                                  <h4 className="font-semibold">{event.title}</h4>
-                                  <div className="text-muted-foreground flex items-center gap-2 text-xs">
-                                    <CalendarIcon className="h-3 w-3" />
-                                    <span>
-                                      {new Date(event.start_date ?? 0).toLocaleDateString('en-US', {
-                                        weekday: 'short',
-                                        month: 'short',
-                                        day: 'numeric',
-                                        hour: 'numeric',
-                                        minute: '2-digit',
-                                      })}
-                                    </span>
-                                  </div>
-                                  {event.description && (
-                                    <p className="text-muted-foreground line-clamp-2 text-xs">
-                                      {event.description}
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          });
-                        })()}
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </ScrollArea>
+        <div className="min-h-0 flex-1 overflow-y-auto px-1 py-1">
+          <TargetGroupEventSelector
+            userId={currentUserId}
+            collaborators={showCollaboratorSelection ? collaborators : []}
+            onSelect={setPendingTarget}
+            disablePortal
+            allowGroupWithoutEvent
+          />
+        </div>
 
         <DialogFooter className="border-t pt-4">
-          <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
-            {t('features.amendments.targetSelection.cancel')}
+          <Button variant="outline" onClick={handleCancel}>
+            {t('features.amendments.process.cancel')}
           </Button>
-          {pendingTarget && (
-            <Button onClick={handleConfirm} disabled={isSaving}>
-              {isSaving ? t('features.amendments.targetSelection.processing') : confirmText}
-            </Button>
-          )}
+          <Button onClick={handleConfirm} disabled={isSaving}>
+            {confirmText}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

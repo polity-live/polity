@@ -5,11 +5,7 @@ import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
-import {
-  findShortestPath,
-  type GroupRelationship,
-  type GroupNode,
-} from '@/features/amendments/logic/path-finding.ts';
+import type { PathWithEventSegment } from '@/features/amendments/logic/amendmentPathHelpers';
 import { notifyAmendmentCloned } from '@/features/notifications/utils/notification-helpers.ts';
 
 interface CloneAmendmentDocument {
@@ -30,64 +26,25 @@ interface CloneAmendmentData {
   readonly documents: readonly CloneAmendmentDocument[];
 }
 
-interface CloneNetworkMembership {
-  readonly status: string | null;
-  readonly user: { readonly id: string } | undefined;
-  readonly group: { readonly id: string } | undefined;
-}
-
-interface CloneNetworkGroup {
-  readonly id: string;
-  readonly name: string | null;
-  readonly description: string | null;
-}
-
-interface CloneNetworkEvent {
-  readonly id: string;
-  readonly title: string | null;
-  readonly start_date: number | null;
-  readonly group: { readonly id: string } | undefined;
-}
-
-interface CloneNetworkRelationship {
-  readonly id: string;
-  readonly with_right: string | null;
-  readonly group_id: string;
-  readonly related_group_id: string;
-  readonly group:
-    | { readonly id: string; readonly name: string | null; readonly description: string | null }
-    | undefined;
-  readonly related_group:
-    | { readonly id: string; readonly name: string | null; readonly description: string | null }
-    | undefined;
-}
-
-interface CloneNetworkData {
-  groupMemberships: readonly CloneNetworkMembership[];
-  groups: readonly CloneNetworkGroup[];
-  groupRelationships: readonly CloneNetworkRelationship[];
-  events: readonly CloneNetworkEvent[];
-}
-
 interface CloneSelection {
-  groupId: string;
-  groupData: { id: string; name?: string | null; description?: string | null };
-  eventId: string;
-  eventData: { id: string; title?: string | null };
+  groupId: string | null;
+  groupData: { id: string; name?: string | null; description?: string | null } | null;
+  eventId: string | null;
+  eventData: { id: string; title?: string | null } | null;
   collaboratorUserId: string;
+  pathWithEvents: PathWithEventSegment[];
+  workflowId: string | null;
 }
 
 export function useCloneAmendment(
   amendmentId: string,
   amendment: CloneAmendmentData | null | undefined,
-  networkData: CloneNetworkData | null | undefined,
   userId: string | undefined,
   userEmail: string | undefined
 ) {
   const navigate = useNavigate();
   const [cloneDialogOpen, setCloneDialogOpen] = useState(false);
   const [isCloning, setIsCloning] = useState(false);
-  const [selectedTargetGroupId, setSelectedTargetGroupId] = useState<string>('');
 
   const {
     createAmendment,
@@ -116,7 +73,12 @@ export function useCloneAmendment(
       return;
     }
 
-    const { groupId: targetGroupId, eventId: selectedEventId, collaboratorUserId } = selection;
+    const {
+      groupId: targetGroupId,
+      eventId: selectedEventId,
+      pathWithEvents,
+      workflowId,
+    } = selection;
 
     setIsCloning(true);
     try {
@@ -127,83 +89,6 @@ export function useCloneAmendment(
 
       const originalDocument = amendment.documents?.[0];
 
-      // Calculate path
-      const targetUserId = collaboratorUserId || userId;
-      const userMemberships =
-        networkData?.groupMemberships.filter(
-          m => (m.status === 'active' || m.status === 'admin') && m.user?.id === targetUserId
-        ) ?? [];
-      const userGroupIds = userMemberships.map(m => m.group?.id).filter((id): id is string => !!id);
-      const allGroups = networkData?.groups ?? [];
-      const rawRelationships = networkData?.groupRelationships ?? [];
-      const events = networkData?.events ?? [];
-
-      const amendmentRelationships: GroupRelationship[] = rawRelationships
-        .filter(r => r.with_right === 'amendmentRight')
-        .map(r => ({
-          id: r.id,
-          withRight: r.with_right ?? '',
-          parentGroup: {
-            id: r.group?.id ?? r.group_id,
-            name: r.group?.name ?? '',
-            description: r.group?.description ?? undefined,
-          },
-          childGroup: {
-            id: r.related_group?.id ?? r.related_group_id,
-            name: r.related_group?.name ?? '',
-            description: r.related_group?.description ?? undefined,
-          },
-        }));
-
-      const groupsMap = new Map<string, GroupNode>();
-      allGroups.forEach(g => {
-        groupsMap.set(g.id, {
-          id: g.id,
-          name: g.name ?? '',
-          description: g.description ?? undefined,
-        });
-      });
-
-      const path = findShortestPath(userGroupIds, targetGroupId, amendmentRelationships, groupsMap);
-
-      if (!path || path.length === 0) {
-        toast.error('No valid path found to target group');
-        setIsCloning(false);
-        return;
-      }
-
-      // For each group in path, find the closest upcoming event
-      const now = new Date();
-      const pathWithEvents = path.map(segment => {
-        const groupId = segment.group.id;
-        const groupName = segment.group.name;
-
-        const groupEvents = events.filter(
-          e => e.group?.id === groupId && e.start_date != null && new Date(e.start_date) > now
-        );
-        groupEvents.sort((a, b) => (a.start_date ?? 0) - (b.start_date ?? 0));
-        const closestEvent = groupEvents[0];
-
-        return {
-          groupId,
-          groupName,
-          eventId: closestEvent?.id ?? null,
-          eventTitle: (closestEvent?.title ?? null) || 'No upcoming event',
-          eventStartDate: closestEvent?.start_date ?? null,
-        };
-      });
-
-      // Override the last segment's event with the user-selected event
-      const lastSegment = pathWithEvents[pathWithEvents.length - 1];
-      if (lastSegment && lastSegment.groupId === targetGroupId) {
-        lastSegment.eventId = selectedEventId;
-        const selectedEvent = events.find(e => e.id === selectedEventId);
-        if (selectedEvent) {
-          lastSegment.eventTitle = selectedEvent.title ?? 'No upcoming event';
-          lastSegment.eventStartDate = selectedEvent.start_date ?? null;
-        }
-      }
-
       // Find the closest event in the path
       const eventsWithDates = pathWithEvents.filter(seg => seg.eventStartDate != null);
       eventsWithDates.sort((a, b) => {
@@ -213,10 +98,10 @@ export function useCloneAmendment(
       });
       const closestEventId = eventsWithDates.length > 0 ? eventsWithDates[0].eventId : null;
 
-      // Create agenda items and votes for each event in the path
+      // Create agenda items and votes for each event in the path when a full target was selected.
       const enrichedPath = [];
 
-      for (const segment of pathWithEvents) {
+      for (const segment of selectedEventId ? pathWithEvents : []) {
         let agendaItemId = null;
         let amendmentVoteId = null;
         let forwardingStatus = 'previous_decision_outstanding';
@@ -303,25 +188,25 @@ export function useCloneAmendment(
         role_id: null,
       });
 
-      // Create path record
-      await createPath({
-        id: pathId,
-        amendment_id: cloneId,
-        title: '',
-        workflow_id: null,
-      });
-
-      // Create path segments
-      for (const [index, segment] of enrichedPath.entries()) {
-        const segmentId = crypto.randomUUID();
-        await createPathSegment({
-          id: segmentId,
-          path_id: pathId,
-          group_id: segment.groupId,
-          event_id: segment.eventId ?? null,
-          order_index: index,
-          status: segment.forwardingStatus,
+      if (selectedEventId && enrichedPath.length > 0) {
+        await createPath({
+          id: pathId,
+          amendment_id: cloneId,
+          title: '',
+          workflow_id: workflowId,
         });
+
+        for (const [index, segment] of enrichedPath.entries()) {
+          const segmentId = crypto.randomUUID();
+          await createPathSegment({
+            id: segmentId,
+            path_id: pathId,
+            group_id: segment.groupId,
+            event_id: segment.eventId ?? null,
+            order_index: index,
+            status: segment.forwardingStatus,
+          });
+        }
       }
 
       // Notify about the clone
@@ -348,8 +233,6 @@ export function useCloneAmendment(
     cloneDialogOpen,
     setCloneDialogOpen,
     isCloning,
-    selectedTargetGroupId,
-    setSelectedTargetGroupId,
     handleClone,
     handleConfirmClone,
   };

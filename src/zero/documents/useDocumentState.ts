@@ -1,10 +1,10 @@
-import { useQuery } from '@rocicorp/zero/react'
-import { queries } from '../queries'
+import { useQuery } from '@rocicorp/zero/react';
+import { queries } from '../queries';
 
 interface DocumentStateOptions {
-  documentId: string
-  includeVersions?: boolean
-  includeCollaborators?: boolean
+  documentId?: string;
+  includeVersions?: boolean;
+  includeCollaborators?: boolean;
 }
 
 /**
@@ -12,33 +12,33 @@ interface DocumentStateOptions {
  * Returns all query-derived state — no mutations.
  */
 export function useDocumentState(options: DocumentStateOptions) {
-  const { documentId, includeVersions, includeCollaborators } = options
+  const { documentId, includeVersions, includeCollaborators } = options;
 
   const [document, documentResult] = useQuery(
-    queries.documents.byId({ id: documentId })
-  )
+    documentId ? queries.documents.byId({ id: documentId }) : undefined
+  );
 
   const [threads, threadsResult] = useQuery(
-    queries.documents.threads({ document_id: documentId })
-  )
+    documentId ? queries.documents.threads({ document_id: documentId }) : undefined
+  );
 
   const [versions, versionsResult] = useQuery(
-    includeVersions
+    includeVersions && documentId
       ? queries.documents.versions({ document_id: documentId })
       : undefined
-  )
+  );
 
   const [collaborators, collaboratorsResult] = useQuery(
-    includeCollaborators
+    includeCollaborators && documentId
       ? queries.documents.collaborators({ document_id: documentId })
       : undefined
-  )
+  );
 
   const isLoading =
-    documentResult.type === 'unknown' ||
-    threadsResult.type === 'unknown' ||
-    (includeVersions === true && versionsResult.type === 'unknown') ||
-    (includeCollaborators === true && collaboratorsResult.type === 'unknown')
+    (!!documentId && documentResult.type === 'unknown') ||
+    (!!documentId && threadsResult.type === 'unknown') ||
+    (includeVersions === true && !!documentId && versionsResult.type === 'unknown') ||
+    (includeCollaborators === true && !!documentId && collaboratorsResult.type === 'unknown');
 
   return {
     document,
@@ -46,5 +46,5 @@ export function useDocumentState(options: DocumentStateOptions) {
     versions: versions ?? [],
     collaborators: collaborators ?? [],
     isLoading,
-  }
+  };
 }

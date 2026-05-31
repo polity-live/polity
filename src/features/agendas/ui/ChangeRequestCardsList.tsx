@@ -5,7 +5,7 @@ import type { Value } from 'platejs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Progress } from '@/features/shared/ui/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import { Vote, FileEdit, AlertTriangle, CheckCircle2, Search } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -15,6 +15,9 @@ import { ChangeRequestTimelineCard, type ChangeRequestDiffData } from './ChangeR
 import { getCRFilterStatus } from '../logic/createMockCRTimelineItems';
 import { getVoteResult } from '../hooks/useAgendaItemCRVoting';
 import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
+import { CREditorPreview } from '@/features/change-requests/ui/CREditorPreview';
+import { SuggestionViewToggle } from '@/features/editor/ui/SuggestionViewToggle';
+import { EditingModeSelector } from '@/features/editor/ui/EditingModeSelector';
 
 type TabValue = 'all' | 'open' | 'accepted' | 'rejected';
 
@@ -51,15 +54,24 @@ interface ChangeRequestCardsListProps {
 
 function getEditingModeLabel(mode: string | null | undefined): string {
   switch (mode) {
-    case 'edit': return 'Edit Mode';
-    case 'view': return 'View Mode';
-    case 'suggest_internal': return 'Internal Suggestions';
-    case 'suggest_event': return 'Event Suggestions';
-    case 'vote_internal': return 'Internal Voting';
-    case 'vote_event': return 'Event Voting';
-    case 'passed': return 'Passed';
-    case 'rejected': return 'Rejected';
-    default: return mode || 'Unknown';
+    case 'edit':
+      return 'Edit Mode';
+    case 'view':
+      return 'View Mode';
+    case 'suggest_internal':
+      return 'Internal Suggestions';
+    case 'suggest_event':
+      return 'Event Suggestions';
+    case 'vote_internal':
+      return 'Internal Voting';
+    case 'vote_event':
+      return 'Event Voting';
+    case 'passed':
+      return 'Passed';
+    case 'rejected':
+      return 'Rejected';
+    default:
+      return mode || 'Unknown';
   }
 }
 
@@ -108,11 +120,32 @@ export function ChangeRequestCardsList({
   const finalVoteItem = useMemo(() => items.find(i => i.is_final_vote), [items]);
   const crItems = useMemo(() => items.filter(i => !i.is_final_vote), [items]);
 
+  const sharedPreviewEnabled = useMemo(
+    () =>
+      Boolean(
+        ((editingMode === 'suggest_event' || editingMode === 'vote_event') && amendmentId) ||
+        (documentContent && discussions && discussions.length > 0)
+      ),
+    [amendmentId, discussions, documentContent, editingMode]
+  );
+
+  const getPreviewCrId = (item: ChangeRequestTimelineRow): string | null => {
+    const previewCrId = item.change_request?.title;
+    return previewCrId && previewCrId.trim().length > 0 ? previewCrId : null;
+  };
+
+  const [selectedPreviewCrIds, setSelectedPreviewCrIds] = useState<Set<string> | null>(() => {
+    const defaultItem =
+      items.find(item => item.id === currentItemId && !item.is_final_vote) ?? crItems[0];
+    const previewCrId = defaultItem ? getPreviewCrId(defaultItem) : null;
+    return previewCrId ? new Set([previewCrId]) : null;
+  });
+
   // Text search filter
   const searchedItems = useMemo(() => {
     if (!searchQuery.trim()) return crItems;
     const query = searchQuery.toLowerCase();
-    return crItems.filter((item) => {
+    return crItems.filter(item => {
       const cr = item.change_request;
       const title = cr?.title?.toLowerCase() ?? '';
       const description = cr?.description?.toLowerCase() ?? '';
@@ -129,7 +162,7 @@ export function ChangeRequestCardsList({
     for (const item of searchedItems) {
       const filterStatus = getCRFilterStatus(
         item,
-        isVotingActive ? (getVoteResult as (item: never) => string) : undefined,
+        isVotingActive ? (getVoteResult as (item: never) => string) : undefined
       );
       if (filterStatus === 'accepted') accepted.push(item);
       else if (filterStatus === 'rejected') rejected.push(item);
@@ -141,41 +174,118 @@ export function ChangeRequestCardsList({
 
   const getFilteredItems = (tab: TabValue): ChangeRequestTimelineRow[] => {
     switch (tab) {
-      case 'open': return categorized.open;
-      case 'accepted': return categorized.accepted;
-      case 'rejected': return categorized.rejected;
+      case 'open':
+        return categorized.open;
+      case 'accepted':
+        return categorized.accepted;
+      case 'rejected':
+        return categorized.rejected;
       case 'all':
-      default: return searchedItems;
+      default:
+        return searchedItems;
     }
   };
 
   const filteredItems = getFilteredItems(activeTab);
   const progressPercent = progress ? Math.round(progress * 100) : 0;
 
+  const availablePreviewCrIds = useMemo(
+    () =>
+      new Set(
+        crItems.map(item => getPreviewCrId(item)).filter((value): value is string => Boolean(value))
+      ),
+    [crItems]
+  );
+
+  const defaultPreviewCrId = useMemo(() => {
+    const currentPreviewItem = currentItemId
+      ? crItems.find(item => item.id === currentItemId)
+      : undefined;
+    const currentPreviewCrId = currentPreviewItem ? getPreviewCrId(currentPreviewItem) : null;
+    if (currentPreviewCrId) {
+      return currentPreviewCrId;
+    }
+
+    const firstFilteredPreviewCrId = filteredItems
+      .map(item => getPreviewCrId(item))
+      .find((value): value is string => Boolean(value));
+
+    if (firstFilteredPreviewCrId) {
+      return firstFilteredPreviewCrId;
+    }
+
+    return (
+      crItems.map(item => getPreviewCrId(item)).find((value): value is string => Boolean(value)) ??
+      null
+    );
+  }, [crItems, currentItemId, filteredItems]);
+
+  const normalizedPreviewCrIds = useMemo(() => {
+    if (!selectedPreviewCrIds || selectedPreviewCrIds.size === 0) {
+      return null;
+    }
+
+    const validCrIds = [...selectedPreviewCrIds].filter(crId => availablePreviewCrIds.has(crId));
+    return validCrIds.length > 0 ? new Set(validCrIds) : null;
+  }, [availablePreviewCrIds, selectedPreviewCrIds]);
+
+  const effectivePreviewCrIds =
+    normalizedPreviewCrIds ?? (defaultPreviewCrId ? new Set([defaultPreviewCrId]) : null);
+
+  const selectedPreviewSuggestionIds = useMemo(() => {
+    if (!effectivePreviewCrIds) {
+      return new Set(discussions?.map(d => d.id) ?? []);
+    }
+
+    const ids = new Set<string>();
+    for (const crId of effectivePreviewCrIds) {
+      const discussionId = crIdToDiscussionId.get(crId);
+      if (discussionId) {
+        ids.add(discussionId);
+      }
+    }
+
+    if (ids.size === 0) {
+      return new Set(discussions?.map(d => d.id) ?? []);
+    }
+
+    return ids;
+  }, [crIdToDiscussionId, discussions, effectivePreviewCrIds]);
+
   return (
     <Card>
       <CardHeader className="space-y-3">
         {/* Mode indicator banner */}
         {isVotingActive ? (
-          <div className={cn(
-            'flex items-center gap-2 rounded-md border px-3 py-2 text-sm',
-            'border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400',
-          )}>
+          <div
+            className={cn(
+              'flex items-center gap-2 rounded-md border px-3 py-2 text-sm',
+              'border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400'
+            )}
+          >
             <CheckCircle2 className="h-4 w-4" />
             <span className="font-medium">
               {t('features.agendas.crTimeline.votingActive', 'Change Request Voting Active')}
             </span>
-            <Badge variant="outline" className="ml-auto text-xs">vote_event</Badge>
+            <Badge variant="outline" className="ml-auto text-xs">
+              vote_event
+            </Badge>
           </div>
         ) : (
-          <div className={cn(
-            'flex items-center gap-2 rounded-md border px-3 py-2 text-sm',
-            'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400',
-          )}>
+          <div
+            className={cn(
+              'flex items-center gap-2 rounded-md border px-3 py-2 text-sm',
+              'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400'
+            )}
+          >
             <AlertTriangle className="h-4 w-4" />
             <span>
-              {t('features.agendas.crTimeline.modeInfo', 'Mode')}: <strong>{getEditingModeLabel(editingMode)}</strong>.{' '}
-              {t('features.agendas.crTimeline.setToVoteEvent', 'Set to vote_event to start voting on change requests.')}
+              {t('features.agendas.crTimeline.modeInfo', 'Mode')}:{' '}
+              <strong>{getEditingModeLabel(editingMode)}</strong>.{' '}
+              {t(
+                'features.agendas.crTimeline.setToVoteEvent',
+                'Set to vote_event to start voting on change requests.'
+              )}
             </span>
           </div>
         )}
@@ -190,7 +300,8 @@ export function ChangeRequestCardsList({
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="outline">
-              {completedCount ?? categorized.accepted.length + categorized.rejected.length}/{crItems.length}
+              {completedCount ?? categorized.accepted.length + categorized.rejected.length}/
+              {crItems.length}
             </Badge>
             {isTimelineComplete && (
               <Badge variant="default" className="bg-green-600">
@@ -201,19 +312,46 @@ export function ChangeRequestCardsList({
         </div>
         {isVotingActive && <Progress value={progressPercent} className="mt-1" />}
 
+        {sharedPreviewEnabled && (
+          <div className="bg-muted/20 space-y-2 rounded-lg border p-3">
+            {amendmentId && (
+              <EditingModeSelector amendmentId={amendmentId} currentMode={editingMode} />
+            )}
+            {editingMode !== 'suggest_event' &&
+              editingMode !== 'vote_event' &&
+              discussions &&
+              discussions.length > 1 && (
+                <SuggestionViewToggle
+                  discussions={discussions}
+                  selectedCrIds={effectivePreviewCrIds}
+                  onSelectedCrIdsChange={setSelectedPreviewCrIds}
+                />
+              )}
+            <CREditorPreview
+              documentContent={documentContent ?? ([] as Value)}
+              suggestionIds={selectedPreviewSuggestionIds}
+              editingMode={editingMode}
+              amendmentId={amendmentId}
+              userId={userId}
+              agendaItemId={agendaItemId}
+            />
+          </div>
+        )}
+
         {/* Tabs */}
-        <Tabs
-          value={activeTab}
-          onValueChange={value => setActiveTab(value as TabValue)}
-        >
+        <Tabs value={activeTab} onValueChange={value => setActiveTab(value as TabValue)}>
           <TabsList>
             <TabsTrigger value="all" className="gap-1.5">
               {t('features.agendas.crTimeline.tabAll', 'All')}
-              <Badge variant="secondary" className="ml-0.5 text-xs">{searchedItems.length}</Badge>
+              <Badge variant="secondary" className="ml-0.5 text-xs">
+                {searchedItems.length}
+              </Badge>
             </TabsTrigger>
             <TabsTrigger value="open" className="gap-1.5">
               {t('features.agendas.crTimeline.tabOpen', 'Open')}
-              <Badge variant="secondary" className="ml-0.5 text-xs">{categorized.open.length}</Badge>
+              <Badge variant="secondary" className="ml-0.5 text-xs">
+                {categorized.open.length}
+              </Badge>
             </TabsTrigger>
             <TabsTrigger value="accepted" className="gap-1.5">
               {t('features.agendas.crTimeline.tabAccepted', 'Accepted')}
@@ -226,7 +364,9 @@ export function ChangeRequestCardsList({
             </TabsTrigger>
             <TabsTrigger value="rejected" className="gap-1.5">
               {t('features.agendas.crTimeline.tabRejected', 'Rejected')}
-              <Badge variant="secondary" className="ml-0.5 text-xs">{categorized.rejected.length}</Badge>
+              <Badge variant="secondary" className="ml-0.5 text-xs">
+                {categorized.rejected.length}
+              </Badge>
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -234,12 +374,15 @@ export function ChangeRequestCardsList({
         {/* Search */}
         {crItems.length > 1 && (
           <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Search className="text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4" />
             <Input
-              placeholder={t('features.agendas.crTimeline.searchPlaceholder', 'Search change requests…')}
+              placeholder={t(
+                'features.agendas.crTimeline.searchPlaceholder',
+                'Search change requests…'
+              )}
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 h-9 text-sm"
+              onChange={e => setSearchQuery(e.target.value)}
+              className="h-9 pl-9 text-sm"
             />
           </div>
         )}
@@ -250,11 +393,14 @@ export function ChangeRequestCardsList({
           {/* Filtered CR items */}
           {filteredItems.length === 0 ? (
             <div className="rounded-lg border border-dashed p-8 text-center">
-              <FileEdit className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
+              <FileEdit className="text-muted-foreground mx-auto mb-3 h-10 w-10" />
+              <p className="text-muted-foreground text-sm">
                 {activeTab === 'all'
                   ? t('features.agendas.crTimeline.noCRs', 'No change requests')
-                  : t('features.agendas.crTimeline.noItemsInTab', 'No change requests in this category')}
+                  : t(
+                      'features.agendas.crTimeline.noItemsInTab',
+                      'No change requests in this category'
+                    )}
               </p>
             </div>
           ) : (
@@ -270,8 +416,14 @@ export function ChangeRequestCardsList({
                   item={item as ChangeRequestTimelineRow}
                   index={index}
                   isCurrent={isVotingActive && currentItemId === item.id}
-                  hasUserVoted={hasUserVoted ? hasUserVoted(item as ChangeRequestTimelineRow) : false}
-                  userSelectedChoiceIds={getUserSelectedChoiceIds ? getUserSelectedChoiceIds(item as ChangeRequestTimelineRow) : []}
+                  hasUserVoted={
+                    hasUserVoted ? hasUserVoted(item as ChangeRequestTimelineRow) : false
+                  }
+                  userSelectedChoiceIds={
+                    getUserSelectedChoiceIds
+                      ? getUserSelectedChoiceIds(item as ChangeRequestTimelineRow)
+                      : []
+                  }
                   canManage={isVotingActive ? canManage : false}
                   canVote={isVotingActive ? canVote : false}
                   isFinalVoteLocked={false}
@@ -284,6 +436,7 @@ export function ChangeRequestCardsList({
                   amendmentId={amendmentId}
                   userId={userId}
                   agendaItemId={agendaItemId}
+                  showEditorPreview
                   onCastVote={isVotingActive ? onCastVote : undefined}
                   onStartIndicative={isVotingActive ? onStartIndicative : undefined}
                   onStartFinal={isVotingActive ? onStartFinal : undefined}
@@ -300,11 +453,18 @@ export function ChangeRequestCardsList({
               item={finalVoteItem as ChangeRequestTimelineRow}
               index={crItems.length}
               isCurrent={isVotingActive && currentItemId === finalVoteItem.id}
-              hasUserVoted={hasUserVoted ? hasUserVoted(finalVoteItem as ChangeRequestTimelineRow) : false}
-              userSelectedChoiceIds={getUserSelectedChoiceIds ? getUserSelectedChoiceIds(finalVoteItem as ChangeRequestTimelineRow) : []}
+              hasUserVoted={
+                hasUserVoted ? hasUserVoted(finalVoteItem as ChangeRequestTimelineRow) : false
+              }
+              userSelectedChoiceIds={
+                getUserSelectedChoiceIds
+                  ? getUserSelectedChoiceIds(finalVoteItem as ChangeRequestTimelineRow)
+                  : []
+              }
               canManage={isVotingActive ? canManage : false}
               canVote={isVotingActive ? canVote : false}
               isFinalVoteLocked={!allCRsProcessed}
+              showEditorPreview
               onCastVote={isVotingActive ? onCastVote : undefined}
               onStartIndicative={isVotingActive ? onStartIndicative : undefined}
               onStartFinal={isVotingActive ? onStartFinal : undefined}

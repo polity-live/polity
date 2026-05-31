@@ -25,8 +25,8 @@ import { EventTimelineCard } from '@/features/timeline/ui/cards/EventTimelineCar
 export interface TargetGroupEventSelection {
   groupId: string;
   groupData: AmendmentNetworkGroup;
-  eventId: string;
-  eventData: AmendmentNetworkEvent;
+  eventId: string | null;
+  eventData: AmendmentNetworkEvent | null;
   pathWithEvents: PathWithEventSegment[];
   selectedUserId: string;
   pathMode: 'hierarchy' | 'workflow';
@@ -42,6 +42,7 @@ interface TargetGroupEventSelectorProps {
   selectedEventId?: string;
   /** Pass true when rendered inside a Dialog to avoid portal/focus-trap conflicts */
   disablePortal?: boolean;
+  allowGroupWithoutEvent?: boolean;
 }
 
 export function TargetGroupEventSelector({
@@ -52,6 +53,7 @@ export function TargetGroupEventSelector({
   selectedGroupId,
   selectedEventId,
   disablePortal = false,
+  allowGroupWithoutEvent = false,
 }: TargetGroupEventSelectorProps) {
   const hasInitializedUserSelection = useRef(false);
   const lastAppliedPrefillRef = useRef<string | null>(null);
@@ -376,7 +378,46 @@ export function TargetGroupEventSelector({
   );
 
   useEffect(() => {
-    if (!selectedGroup || !selectedEvent || pathWithEvents.length === 0) {
+    if (!selectedGroup) {
+      setPathValidationError(null);
+      clearEmittedSelection();
+      return;
+    }
+
+    if (!selectedEvent) {
+      setPathValidationError(null);
+
+      if (!allowGroupWithoutEvent) {
+        clearEmittedSelection();
+        return;
+      }
+
+      const selectionSignature = JSON.stringify({
+        groupId: selectedGroup.id,
+        eventId: null,
+        selectedUserId,
+        pathWithEvents: [],
+      });
+
+      if (lastEmittedSelectionRef.current === selectionSignature) {
+        return;
+      }
+
+      lastEmittedSelectionRef.current = selectionSignature;
+      onSelect({
+        groupId: selectedGroup.id,
+        groupData: selectedGroup.data,
+        eventId: null,
+        eventData: null,
+        pathWithEvents: [],
+        selectedUserId,
+        pathMode,
+        workflowId: selectedWorkflowId || null,
+      });
+      return;
+    }
+
+    if (pathWithEvents.length === 0) {
       setPathValidationError(null);
       clearEmittedSelection();
       return;
@@ -431,6 +472,9 @@ export function TargetGroupEventSelector({
     selectedUserId,
     validatePathEventOrder,
     clearEmittedSelection,
+    allowGroupWithoutEvent,
+    pathMode,
+    selectedWorkflowId,
   ]);
 
   const handleGroupSelection = useCallback(
@@ -811,7 +855,7 @@ interface DisplayEventData {
 
 interface TargetGroupEventDisplayProps {
   groupData: DisplayGroupData;
-  eventData: DisplayEventData;
+  eventData: DisplayEventData | null;
   pathWithEvents?: PathWithEventSegment[];
 }
 
@@ -840,16 +884,22 @@ export function TargetGroupEventDisplay({
       {/* Event Card */}
       <div>
         <h4 className="text-muted-foreground mb-2 text-sm font-semibold uppercase">Target Event</h4>
-        <EventTimelineCard
-          event={{
-            id: eventData.id,
-            title: eventData.title ?? '',
-            description: eventData.description ?? undefined,
-            startDate: eventData.start_date ? new Date(eventData.start_date) : new Date(),
-            location: eventData.location_name ?? undefined,
-            attendeeCount: eventData.participant_count ?? 0,
-          }}
-        />
+        {eventData ? (
+          <EventTimelineCard
+            event={{
+              id: eventData.id,
+              title: eventData.title ?? '',
+              description: eventData.description ?? undefined,
+              startDate: eventData.start_date ? new Date(eventData.start_date) : new Date(),
+              location: eventData.location_name ?? undefined,
+              attendeeCount: eventData.participant_count ?? 0,
+            }}
+          />
+        ) : (
+          <div className="text-muted-foreground border-border bg-muted/40 rounded-md border border-dashed p-4 text-sm">
+            No event linked yet.
+          </div>
+        )}
       </div>
 
       {/* Path Preview */}

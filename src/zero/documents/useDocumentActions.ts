@@ -60,6 +60,7 @@ export function useDocumentActions() {
       const result = zero.mutate(mutators.documents.createVersion(args));
       toast.success(t('features.documents.toasts.versionCreated'));
       onServerError(result, () => toast.error(t('features.documents.toasts.versionCreateFailed')));
+      return result;
     },
     [zero]
   );
@@ -68,6 +69,7 @@ export function useDocumentActions() {
     (args: Parameters<typeof mutators.documents.updateVersion>[0]) => {
       const result = zero.mutate(mutators.documents.updateVersion(args));
       onServerError(result, () => toast.error(t('features.documents.toasts.versionUpdateFailed')));
+      return result;
     },
     [zero]
   );
@@ -77,6 +79,7 @@ export function useDocumentActions() {
       const result = zero.mutate(mutators.documents.deleteVersion({ id }));
       toast.success(t('features.documents.toasts.versionDeleted'));
       onServerError(result, () => toast.error(t('features.documents.toasts.versionDeleteFailed')));
+      return result;
     },
     [zero]
   );

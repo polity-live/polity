@@ -64,8 +64,8 @@ export function useCreateAmendmentForm(): CreateFormConfig {
   const [targetSelection, setTargetSelection] = useState<{
     groupId: string;
     groupData: CreateTargetGroupData;
-    eventId: string;
-    eventData: CreateTargetEventData;
+    eventId: string | null;
+    eventData: CreateTargetEventData | null;
     pathWithEvents: {
       groupId: string;
       groupName: string;
@@ -126,17 +126,19 @@ export function useCreateAmendmentForm(): CreateFormConfig {
         amendment_count: selection.groupData.amendment_count ?? null,
       },
       eventId: selection.eventId,
-      eventData: {
-        id: selection.eventData.id,
-        title: selection.eventData.title ?? null,
-        start_date: selection.eventData.start_date ?? null,
-        location_name: selection.eventData.location_name ?? null,
-        description:
-          typeof selection.eventData.description === 'string'
-            ? selection.eventData.description
-            : null,
-        participant_count: selection.eventData.participant_count ?? null,
-      },
+      eventData: selection.eventData
+        ? {
+            id: selection.eventData.id,
+            title: selection.eventData.title ?? null,
+            start_date: selection.eventData.start_date ?? null,
+            location_name: selection.eventData.location_name ?? null,
+            description:
+              typeof selection.eventData.description === 'string'
+                ? selection.eventData.description
+                : null,
+            participant_count: selection.eventData.participant_count ?? null,
+          }
+        : null,
       pathWithEvents: selection.pathWithEvents,
       workflowId: selection.workflowId,
     });
@@ -207,7 +209,11 @@ export function useCreateAmendmentForm(): CreateFormConfig {
       }
 
       // Create amendment path with agenda items and votes if target was selected
-      if (targetSelection?.pathWithEvents && targetSelection.pathWithEvents.length > 0) {
+      if (
+        targetSelection?.eventId &&
+        targetSelection?.eventData &&
+        targetSelection.pathWithEvents.length > 0
+      ) {
         const enrichedPath = enrichPathSegments(
           targetSelection.pathWithEvents,
           targetSelection.groupId,
@@ -272,7 +278,8 @@ export function useCreateAmendmentForm(): CreateFormConfig {
         },
         {
           label: t('pages.create.amendment.targetGroupEvent'),
-          isValid: () => !!targetSelection,
+          isValid: () => true,
+          optional: true,
           content: (
             <div className="space-y-4">
               <p className="text-muted-foreground text-xs">
@@ -281,10 +288,11 @@ export function useCreateAmendmentForm(): CreateFormConfig {
               {user?.id ? (
                 <TargetGroupEventSelector
                   userId={user.id}
+                  allowGroupWithoutEvent
                   onGroupSelectionChange={handleGroupSelectionChange}
                   onSelect={handleTargetSelection}
                   selectedGroupId={targetSelection?.groupId ?? groupIdParam}
-                  selectedEventId={targetSelection?.eventId}
+                  selectedEventId={targetSelection?.eventId ?? undefined}
                 />
               ) : (
                 <p className="text-muted-foreground text-sm">{t('pages.create.common.loading')}</p>
@@ -336,9 +344,11 @@ export function useCreateAmendmentForm(): CreateFormConfig {
                       ? [
                           {
                             label: t('pages.create.amendment.target'),
-                            value: `${String(targetSelection.groupData.name ?? '')} -> ${String(targetSelection.eventData.title ?? '')}`,
+                            value: targetSelection.eventData
+                              ? `${String(targetSelection.groupData.name ?? '')} -> ${String(targetSelection.eventData.title ?? '')}`
+                              : String(targetSelection.groupData.name ?? ''),
                           },
-                          ...(targetSelection.pathWithEvents.length > 0
+                          ...(targetSelection.eventData && targetSelection.pathWithEvents.length > 0
                             ? [
                                 {
                                   label: 'Path',

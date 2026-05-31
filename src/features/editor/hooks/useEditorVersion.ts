@@ -66,7 +66,11 @@ interface UseEditorVersionResult {
  */
 export function useEditorVersion(options: UseEditorVersionOptions): UseEditorVersionResult {
   const { entityType, entityId, userId } = options;
-  const { createVersion: doCreateVersion, updateVersion: doUpdateVersion, deleteVersion: doDeleteVersion } = useDocumentActions();
+  const {
+    createVersion: doCreateVersion,
+    updateVersion: doUpdateVersion,
+    deleteVersion: doDeleteVersion,
+  } = useDocumentActions();
   const { t } = useTranslation();
   const [isCreating, setIsCreating] = useState(false);
 
@@ -74,7 +78,7 @@ export function useEditorVersion(options: UseEditorVersionOptions): UseEditorVer
   const isBlog = entityType === 'blog';
 
   const { versions: docVersions, isLoading: docVersionsLoading } = useDocumentState({
-    documentId: !isBlog ? entityId : '',
+    documentId: !isBlog ? entityId : undefined,
     includeVersions: !isBlog,
   });
 
@@ -94,12 +98,14 @@ export function useEditorVersion(options: UseEditorVersionOptions): UseEditorVer
   // Get the latest version number
   const latestVersionNumber = useMemo(() => {
     if (versions.length === 0) return 0;
-    return Math.max(...versions.map((v) => (v.version_number ?? 0)));
+    return Math.max(...versions.map(v => v.version_number ?? 0));
   }, [versions]);
 
   // Create a new version
   const createVersion = useCallback(
     async (title: string, content: Value, creationType: VersionCreationType = 'manual') => {
+      void creationType;
+
       if (!userId) {
         toast.error(t('features.editor.versionControl.notLoggedIn'));
         return;

@@ -6,61 +6,60 @@
  * accept/decline and voting operations.
  */
 
-import { useCallback } from 'react'
-import { toast } from 'sonner'
-import type { ReadonlyJSONValue } from '@rocicorp/zero'
-import type { Value } from 'platejs'
-import { useDocumentActions } from '@/zero/documents/useDocumentActions'
-import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions'
-import { useDocumentState } from '@/zero/documents/useDocumentState'
-import type { EditorEntityType, EditorMode, TDiscussion } from '../types'
+import { useCallback } from 'react';
+import { toast } from 'sonner';
+import type { ReadonlyJSONValue } from '@rocicorp/zero';
+import type { Value } from 'platejs';
+import { useDocumentActions } from '@/zero/documents/useDocumentActions';
+import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
+import { useDocumentState } from '@/zero/documents/useDocumentState';
+import type { EditorEntityType, EditorMode, TDiscussion } from '../types';
 
 interface SuggestionRef {
-  id?: string
-  suggestionId?: string
-  keyId?: string
-  crId?: string
+  id?: string;
+  suggestionId?: string;
+  keyId?: string;
+  crId?: string;
 }
 
 function getDefaultVersionTitle(creationType: string): string {
-  const now = new Date()
+  const now = new Date();
   const timestamp = now.toLocaleString('en-US', {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  })
+  });
 
   switch (creationType) {
     case 'suggestion_accepted':
-      return `Suggestion accepted - ${timestamp}`
+      return `Suggestion accepted - ${timestamp}`;
     case 'suggestion_declined':
-      return `Suggestion declined - ${timestamp}`
+      return `Suggestion declined - ${timestamp}`;
     default:
-      return `Auto-save - ${timestamp}`
+      return `Auto-save - ${timestamp}`;
   }
 }
 
 export function useEditorOperations(entityType: EditorEntityType, entityId: string) {
-  const { createVersion } = useDocumentActions()
-  const { createChangeRequest, updateChangeRequest, voteOnChangeRequest } = useAmendmentActions()
+  const { createVersion } = useDocumentActions();
+  const { createChangeRequest, updateChangeRequest, voteOnChangeRequest } = useAmendmentActions();
 
   // Query versions for computing next version number
-  const isBlog = entityType === 'blog'
+  const isBlog = entityType === 'blog';
   const { versions } = useDocumentState({
-    documentId: !isBlog ? entityId : '',
+    documentId: !isBlog ? entityId : undefined,
     includeVersions: !isBlog,
-  })
+  });
 
-  const latestVersionNumber = versions.length > 0
-    ? Math.max(...versions.map((v) => v.version_number ?? 0))
-    : 0
+  const latestVersionNumber =
+    versions.length > 0 ? Math.max(...versions.map(v => v.version_number ?? 0)) : 0;
 
   const createVersionForEntity = useCallback(
     async (content: Value, creationType: string, title?: string) => {
-      const versionId = crypto.randomUUID()
-      const newVersionNumber = latestVersionNumber + 1
-      const versionTitle = title || getDefaultVersionTitle(creationType)
+      const versionId = crypto.randomUUID();
+      const newVersionNumber = latestVersionNumber + 1;
+      const versionTitle = title || getDefaultVersionTitle(creationType);
 
       await createVersion({
         id: versionId,
@@ -70,10 +69,10 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
         document_id: isBlog ? '' : entityId,
         amendment_id: null,
         blog_id: isBlog ? entityId : null,
-      })
+      });
     },
     [entityId, isBlog, latestVersionNumber, createVersion]
-  )
+  );
 
   const handleSuggestionCreated = useCallback(
     async (params: { id: string; crId: string; amendmentId: string }) => {
@@ -93,14 +92,14 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
           voting_deadline: null,
           voting_majority_type: null,
           quorum_required: null,
-        })
+        });
         console.log('[useEditorOperations] change_request created successfully:', params.id);
       } catch (error) {
-        console.error('[useEditorOperations] Failed to create change request entity:', error)
+        console.error('[useEditorOperations] Failed to create change request entity:', error);
       }
     },
     [createChangeRequest]
-  )
+  );
 
   const handleSuggestionAccepted = useCallback(
     async (
@@ -109,30 +108,30 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
       discussions: TDiscussion[],
       suggestion: SuggestionRef,
       editingMode?: EditorMode,
-      amendmentId?: string,
+      amendmentId?: string
     ): Promise<{ updatedDiscussions: TDiscussion[] }> => {
       if (editingMode === 'vote_internal' || editingMode === 'vote_event') {
         toast.error(
           'This document is in voting mode. Changes must be approved by vote on the Change Requests page.'
-        )
-        return { updatedDiscussions: discussions }
+        );
+        return { updatedDiscussions: discussions };
       }
 
       try {
-        const versionTitle = suggestion?.crId ? `${suggestion.crId} accepted` : undefined
+        const versionTitle = suggestion?.crId ? `${suggestion.crId} accepted` : undefined;
 
-        await createVersionForEntity(content, 'suggestion_accepted', versionTitle)
+        await createVersionForEntity(content, 'suggestion_accepted', versionTitle);
 
         const discussion = discussions.find(
-          (d) => d.id === suggestion.suggestionId || d.id === suggestion.id
-        )
+          d => d.id === suggestion.suggestionId || d.id === suggestion.id
+        );
 
-        const updatedDiscussions = discussions.map((d) => {
+        const updatedDiscussions = discussions.map(d => {
           if (d.id === suggestion.suggestionId || d.id === suggestion.id) {
-            return { ...d, status: 'accepted' }
+            return { ...d, status: 'accepted' };
           }
-          return d
-        })
+          return d;
+        });
 
         if (entityType === 'amendment' && discussion && amendmentId) {
           if (discussion.changeRequestEntityId) {
@@ -140,9 +139,9 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
               id: discussion.changeRequestEntityId,
               status: 'accepted',
               voting_status: 'completed',
-            })
+            });
           } else {
-            const changeRequestId = crypto.randomUUID()
+            const changeRequestId = crypto.randomUUID();
             await createChangeRequest({
               id: changeRequestId,
               amendment_id: amendmentId,
@@ -157,19 +156,19 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
               voting_deadline: null,
               voting_majority_type: null,
               quorum_required: null,
-            })
+            });
           }
         }
 
-        return { updatedDiscussions }
+        return { updatedDiscussions };
       } catch (error) {
-        console.error('Failed to accept suggestion:', error)
-        toast.error('Failed to accept suggestion')
-        return { updatedDiscussions: discussions }
+        console.error('Failed to accept suggestion:', error);
+        toast.error('Failed to accept suggestion');
+        return { updatedDiscussions: discussions };
       }
     },
     [entityType, createVersionForEntity, createChangeRequest, updateChangeRequest]
-  )
+  );
 
   const handleSuggestionDeclined = useCallback(
     async (
@@ -178,31 +177,31 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
       discussions: TDiscussion[],
       suggestion: SuggestionRef,
       editingMode?: EditorMode,
-      amendmentId?: string,
+      amendmentId?: string
     ): Promise<{ updatedDiscussions: TDiscussion[] }> => {
       if (editingMode === 'vote_internal' || editingMode === 'vote_event') {
         toast.error(
           'This document is in voting mode. Changes must be declined by vote on the Change Requests page.'
-        )
-        return { updatedDiscussions: discussions }
+        );
+        return { updatedDiscussions: discussions };
       }
 
       try {
-        const versionTitle = suggestion?.crId ? `${suggestion.crId} declined` : undefined
+        const versionTitle = suggestion?.crId ? `${suggestion.crId} declined` : undefined;
 
-        await createVersionForEntity(content, 'suggestion_declined', versionTitle)
+        await createVersionForEntity(content, 'suggestion_declined', versionTitle);
 
-        const updatedDiscussions = discussions.map((d) => {
+        const updatedDiscussions = discussions.map(d => {
           if (d.id === suggestion.suggestionId || d.id === suggestion.id) {
-            return { ...d, status: 'rejected' }
+            return { ...d, status: 'rejected' };
           }
-          return d
-        })
+          return d;
+        });
 
         if (entityType === 'amendment' && amendmentId) {
           const discussion = discussions.find(
-            (d) => d.id === suggestion.suggestionId || d.id === suggestion.id
-          )
+            d => d.id === suggestion.suggestionId || d.id === suggestion.id
+          );
 
           if (discussion) {
             if (discussion.changeRequestEntityId) {
@@ -210,9 +209,9 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
                 id: discussion.changeRequestEntityId,
                 status: 'rejected',
                 voting_status: 'completed',
-              })
+              });
             } else {
-              const changeRequestId = crypto.randomUUID()
+              const changeRequestId = crypto.randomUUID();
               await createChangeRequest({
                 id: changeRequestId,
                 amendment_id: amendmentId,
@@ -227,20 +226,20 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
                 voting_deadline: null,
                 voting_majority_type: null,
                 quorum_required: null,
-              })
+              });
             }
           }
         }
 
-        return { updatedDiscussions }
+        return { updatedDiscussions };
       } catch (error) {
-        console.error('Failed to decline suggestion:', error)
-        toast.error('Failed to decline suggestion')
-        return { updatedDiscussions: discussions }
+        console.error('Failed to decline suggestion:', error);
+        toast.error('Failed to decline suggestion');
+        return { updatedDiscussions: discussions };
       }
     },
     [entityType, createVersionForEntity, createChangeRequest, updateChangeRequest]
-  )
+  );
 
   const handleVoteOnSuggestion = useCallback(
     async (
@@ -252,19 +251,19 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
     ): Promise<void> => {
       try {
         const discussion = discussions.find(
-          (d) => d.id === suggestion.suggestionId || d.id === suggestion.id
-        )
+          d => d.id === suggestion.suggestionId || d.id === suggestion.id
+        );
 
         if (!discussion) {
-          toast.error('Suggestion not found')
-          return
+          toast.error('Suggestion not found');
+          return;
         }
 
-        let changeRequestId = discussion.changeRequestEntityId
+        let changeRequestId = discussion.changeRequestEntityId;
 
         if (!changeRequestId) {
           // Fallback: create change request if none exists yet
-          changeRequestId = crypto.randomUUID()
+          changeRequestId = crypto.randomUUID();
           await createChangeRequest({
             id: changeRequestId,
             amendment_id: amendmentId,
@@ -279,30 +278,30 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
             voting_deadline: null,
             voting_majority_type: null,
             quorum_required: null,
-          })
+          });
         }
 
         // Cast the vote on the change request
-        const voteId = crypto.randomUUID()
+        const voteId = crypto.randomUUID();
         await voteOnChangeRequest({
           id: voteId,
           change_request_id: changeRequestId,
           vote: voteType,
-        })
+        });
 
-        toast.success('Vote recorded')
+        toast.success('Vote recorded');
       } catch (error) {
-        console.error('Failed to vote on suggestion:', error)
-        toast.error('Failed to record vote')
+        console.error('Failed to vote on suggestion:', error);
+        toast.error('Failed to record vote');
       }
     },
     [createChangeRequest, voteOnChangeRequest]
-  )
+  );
 
   return {
     handleSuggestionCreated,
     handleSuggestionAccepted,
     handleSuggestionDeclined,
     handleVoteOnSuggestion,
-  }
+  };
 }

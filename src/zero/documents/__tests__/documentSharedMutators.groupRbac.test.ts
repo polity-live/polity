@@ -181,7 +181,7 @@ describe('documentSharedMutators group RBAC', () => {
           id: 'version-1',
           document_id: 'doc-1',
           amendment_id: null,
-          blog_id: '',
+          blog_id: null,
           content: [],
           version_number: 1,
           change_summary: 'First version',

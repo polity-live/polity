@@ -10,7 +10,17 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/features/shared/ui/ui/collapsible';
-import { ChevronDown, CheckCircle2, Circle, Loader2, Vote, Play, Flag, Lock, Crown } from 'lucide-react';
+import {
+  ChevronDown,
+  CheckCircle2,
+  Circle,
+  Loader2,
+  Vote,
+  Play,
+  Flag,
+  Lock,
+  Crown,
+} from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { VotePhaseBadge } from '@/features/vote-cast/ui/VotePhaseBadge';
@@ -81,6 +91,8 @@ interface ChangeRequestTimelineCardProps {
   userId?: string;
   /** Agenda item ID — passed to interactive editor */
   agendaItemId?: string;
+  /** Hide the shared document preview block when it is rendered elsewhere */
+  showEditorPreview?: boolean;
   onCastVote?: (item: ChangeRequestTimelineRow, choiceId: string) => Promise<void>;
   onStartIndicative?: (itemId: string) => Promise<void>;
   onStartFinal?: (itemId: string) => Promise<void>;
@@ -90,7 +102,7 @@ interface ChangeRequestTimelineCardProps {
 function getStatusIcon(status: string | null, isCurrent: boolean) {
   if (status === 'completed') return <CheckCircle2 className="h-5 w-5 text-green-500" />;
   if (isCurrent) return <Loader2 className="h-5 w-5 animate-spin text-blue-500" />;
-  return <Circle className="h-5 w-5 text-muted-foreground" />;
+  return <Circle className="text-muted-foreground h-5 w-5" />;
 }
 
 function getStatusBadge(
@@ -98,20 +110,46 @@ function getStatusBadge(
   isCurrent: boolean,
   t: (key: string, fallback?: string) => string,
   voteResult?: string,
-  originalStatus?: string,
+  originalStatus?: string
 ) {
   // Determine accepted/rejected from vote result or original mock status
   if (status === 'completed') {
     if (voteResult === 'passed' || originalStatus === 'approved' || originalStatus === 'accepted') {
-      return <Badge variant="default" className="bg-green-600">{t('features.agendas.crTimeline.accepted', 'Accepted')}</Badge>;
+      return (
+        <Badge variant="default" className="bg-green-600">
+          {t('features.agendas.crTimeline.accepted', 'Accepted')}
+        </Badge>
+      );
     }
-    if (voteResult === 'rejected' || voteResult === 'failed' || originalStatus === 'declined' || originalStatus === 'rejected') {
-      return <Badge variant="default" className="bg-red-600">{t('features.agendas.crTimeline.rejected', 'Rejected')}</Badge>;
+    if (
+      voteResult === 'rejected' ||
+      voteResult === 'failed' ||
+      originalStatus === 'declined' ||
+      originalStatus === 'rejected'
+    ) {
+      return (
+        <Badge variant="default" className="bg-red-600">
+          {t('features.agendas.crTimeline.rejected', 'Rejected')}
+        </Badge>
+      );
     }
-    return <Badge variant="default" className="bg-green-600">{t('features.agendas.crTimeline.completed')}</Badge>;
+    return (
+      <Badge variant="default" className="bg-green-600">
+        {t('features.agendas.crTimeline.completed')}
+      </Badge>
+    );
   }
-  if (isCurrent) return <Badge variant="default" className="bg-blue-600">{t('features.agendas.crTimeline.voting')}</Badge>;
-  return <Badge variant="default" className="bg-blue-600">{t('features.agendas.crTimeline.open', 'Open')}</Badge>;
+  if (isCurrent)
+    return (
+      <Badge variant="default" className="bg-blue-600">
+        {t('features.agendas.crTimeline.voting')}
+      </Badge>
+    );
+  return (
+    <Badge variant="default" className="bg-blue-600">
+      {t('features.agendas.crTimeline.open', 'Open')}
+    </Badge>
+  );
 }
 
 export function ChangeRequestTimelineCard({
@@ -132,6 +170,7 @@ export function ChangeRequestTimelineCard({
   amendmentId,
   userId,
   agendaItemId,
+  showEditorPreview = true,
   onCastVote,
   onStartIndicative,
   onStartFinal,
@@ -141,8 +180,8 @@ export function ChangeRequestTimelineCard({
   const [votingLoading, setVotingLoading] = useState(false);
 
   // Per-card CR selection state — defaults to this card's own CR
-  const [selectedCrIds, setSelectedCrIds] = useState<Set<string> | null>(
-    () => crId ? new Set([crId]) : null,
+  const [selectedCrIds, setSelectedCrIds] = useState<Set<string> | null>(() =>
+    crId ? new Set([crId]) : null
   );
 
   // Map crId → discussion UUID for converting selected CRs to suggestion IDs
@@ -187,10 +226,17 @@ export function ChangeRequestTimelineCard({
 
   // Compute vote stats using the existing helper
   const choices = useMemo(() => (vote?.choices ?? []) as ChoicesByVoteRow[], [vote?.choices]);
-  const indicativeDecisions = useMemo(() => vote?.indicative_decisions ?? [], [vote?.indicative_decisions]);
+  const indicativeDecisions = useMemo(
+    () => vote?.indicative_decisions ?? [],
+    [vote?.indicative_decisions]
+  );
   const finalDecisions = useMemo(() => vote?.final_decisions ?? [], [vote?.final_decisions]);
 
-  const { choices: choiceStats, totalIndicative, totalFinal } = useMemo(
+  const {
+    choices: choiceStats,
+    totalIndicative,
+    totalFinal,
+  } = useMemo(
     () => calculateVoteStats(choices, indicativeDecisions, finalDecisions),
     [choices, indicativeDecisions, finalDecisions]
   );
@@ -210,20 +256,28 @@ export function ChangeRequestTimelineCard({
       })),
       finalDecisions,
       totalVoters || totalFinal,
-      normalizeMajorityType(vote?.majority_type),
+      normalizeMajorityType(vote?.majority_type)
     );
-  }, [choiceStats.length, choices, finalDecisions, isClosed, totalFinal, totalVoters, vote?.majority_type]);
+  }, [
+    choiceStats.length,
+    choices,
+    finalDecisions,
+    isClosed,
+    totalFinal,
+    totalVoters,
+    vote?.majority_type,
+  ]);
 
   const resolvedVoteResult: VoteResult | undefined = voteResult ?? computedVoteSummary?.result;
 
   const leadingChoiceId = useMemo(() => {
     if (choiceStats.length === 0) return null;
     const maxVotes = Math.max(
-      ...choiceStats.map((s) => (isClosed || !isIndicative ? s.finalCount : s.indicativeCount)),
+      ...choiceStats.map(s => (isClosed || !isIndicative ? s.finalCount : s.indicativeCount))
     );
     if (maxVotes === 0) return null;
     return choiceStats.find(
-      (s) => (isClosed || !isIndicative ? s.finalCount : s.indicativeCount) === maxVotes,
+      s => (isClosed || !isIndicative ? s.finalCount : s.indicativeCount) === maxVotes
     )?.choice.id;
   }, [choiceStats, isClosed, isIndicative]);
 
@@ -241,7 +295,7 @@ export function ChangeRequestTimelineCard({
 
   const winningLabel = useMemo(() => {
     if (!winningChoiceId) return undefined;
-    const choice = choices.find((c) => c.id === winningChoiceId);
+    const choice = choices.find(c => c.id === winningChoiceId);
     return choice?.label || undefined;
   }, [winningChoiceId, choices]);
 
@@ -250,7 +304,7 @@ export function ChangeRequestTimelineCard({
       return undefined;
     }
 
-    const winningStats = choiceStats.find((choice) => choice.choice.id === winningChoiceId);
+    const winningStats = choiceStats.find(choice => choice.choice.id === winningChoiceId);
     if (!winningStats) {
       return undefined;
     }
@@ -273,17 +327,19 @@ export function ChangeRequestTimelineCard({
 
   return (
     <Collapsible defaultOpen={isCurrent || item.is_final_vote}>
-      <Card className={cn(
-        'transition-all',
-        isCurrent && !isLocked && 'ring-2 ring-blue-500/50',
-        item.status === 'completed' && 'opacity-75',
-        isLocked && 'opacity-50',
-      )}>
+      <Card
+        className={cn(
+          'transition-all',
+          isCurrent && !isLocked && 'ring-2 ring-blue-500/50',
+          item.status === 'completed' && 'opacity-75',
+          isLocked && 'opacity-50'
+        )}
+      >
         <CollapsibleTrigger className="w-full">
           <CardHeader className="flex flex-row items-center justify-between py-3">
             <div className="flex items-center gap-3">
               {isLocked ? (
-                <Lock className="h-5 w-5 text-muted-foreground" />
+                <Lock className="text-muted-foreground h-5 w-5" />
               ) : (
                 getStatusIcon(item.status, isCurrent)
               )}
@@ -308,9 +364,9 @@ export function ChangeRequestTimelineCard({
                 isCurrent && !isLocked,
                 t,
                 resolvedVoteResult,
-                (item as Record<string, unknown>)._originalStatus as string | undefined,
+                (item as Record<string, unknown>)._originalStatus as string | undefined
               )}
-              <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]_&]:rotate-180" />
+              <ChevronDown className="text-muted-foreground h-4 w-4 transition-transform [[data-state=open]_&]:rotate-180" />
             </div>
           </CardHeader>
         </CollapsibleTrigger>
@@ -319,87 +375,137 @@ export function ChangeRequestTimelineCard({
           <CardContent className="space-y-4 pt-0">
             {/* Locked message for final vote */}
             {isLocked && (
-              <p className="text-sm text-muted-foreground italic">
+              <p className="text-muted-foreground text-sm italic">
                 {t('features.agendas.crTimeline.finalVoteLocked')}
               </p>
             )}
 
             {/* CR description */}
-            {cr?.description && (
-              <p className="text-sm text-muted-foreground">{cr.description}</p>
-            )}
+            {cr?.description && <p className="text-muted-foreground text-sm">{cr.description}</p>}
 
             {/* Suggestion text changes (Add / Delete) */}
-            {diff && !item.is_final_vote && (diff.originalText || diff.newText || diff.justification || (diff.newProperties && Object.keys(diff.newProperties).length > 0)) && (
-              <div className="space-y-3">
-                {/* Formatting change */}
-                {diff.changeType === 'update' && diff.newText && (
-                  <div>
-                    <h4 className="mb-2 text-sm font-semibold text-blue-600 dark:text-blue-400">
-                      {isClosed ? 'Formatting Changed:' : 'Formatting Change:'}
-                    </h4>
-                    {diff.newProperties && Object.keys(diff.newProperties).length > 0 && (
-                      <div className="rounded-lg bg-blue-500/10 p-3">
-                        <div className="mb-1 flex flex-wrap gap-2">
-                          {Object.entries(diff.newProperties).map(([key, value]) => (
-                            <Badge key={key} variant="outline" className="text-xs capitalize">
-                              {key}: {String(value)}
-                            </Badge>
-                          ))}
+            {diff &&
+              !item.is_final_vote &&
+              (diff.originalText ||
+                diff.newText ||
+                diff.justification ||
+                (diff.newProperties && Object.keys(diff.newProperties).length > 0)) && (
+                <div className="space-y-3">
+                  {/* Formatting change */}
+                  {diff.changeType === 'update' && diff.newText && (
+                    <div>
+                      <h4 className="mb-2 text-sm font-semibold text-blue-600 dark:text-blue-400">
+                        {isClosed ? 'Formatting Changed:' : 'Formatting Change:'}
+                      </h4>
+                      {diff.newProperties && Object.keys(diff.newProperties).length > 0 && (
+                        <div className="rounded-lg bg-blue-500/10 p-3">
+                          <div className="mb-1 flex flex-wrap gap-2">
+                            {Object.entries(diff.newProperties).map(([key, value]) => (
+                              <Badge key={key} variant="outline" className="text-xs capitalize">
+                                {key}: {String(value)}
+                              </Badge>
+                            ))}
+                          </div>
+                          <p className="text-xs whitespace-pre-wrap">
+                            To text: &quot;{diff.newText}&quot;
+                          </p>
                         </div>
-                        <p className="whitespace-pre-wrap text-xs">To text: &quot;{diff.newText}&quot;</p>
+                      )}
+                      {diff.properties && Object.keys(diff.properties).length > 0 && (
+                        <div className="bg-muted/50 mt-2 rounded-lg p-3">
+                          <p className="text-muted-foreground mb-1 text-xs font-semibold">
+                            {isClosed ? 'Removed formatting:' : 'Remove formatting:'}
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {Object.entries(diff.properties).map(([key, value]) => (
+                              <Badge
+                                key={key}
+                                variant="outline"
+                                className="text-xs capitalize opacity-60"
+                              >
+                                {key}: {String(value)}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Removed text */}
+                  {diff.originalText &&
+                    (diff.changeType === 'remove' || diff.changeType === 'replace') && (
+                      <div>
+                        <h4 className="mb-1 text-sm font-semibold text-red-600 dark:text-red-400">
+                          {diff.changeType === 'remove'
+                            ? isClosed
+                              ? 'Deleted:'
+                              : 'Delete:'
+                            : 'Original Text:'}
+                        </h4>
+                        <div className="rounded-lg bg-red-500/10 p-3 line-through">
+                          <p className="text-xs whitespace-pre-wrap">{diff.originalText}</p>
+                        </div>
                       </div>
                     )}
-                    {diff.properties && Object.keys(diff.properties).length > 0 && (
-                      <div className="mt-2 rounded-lg bg-muted/50 p-3">
-                        <p className="mb-1 text-xs font-semibold text-muted-foreground">
-                          {isClosed ? 'Removed formatting:' : 'Remove formatting:'}
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {Object.entries(diff.properties).map(([key, value]) => (
-                            <Badge key={key} variant="outline" className="text-xs capitalize opacity-60">
-                              {key}: {String(value)}
-                            </Badge>
-                          ))}
+
+                  {/* Added/replacement text */}
+                  {diff.newText &&
+                    (diff.changeType === 'insert' || diff.changeType === 'replace') && (
+                      <div>
+                        <h4 className="mb-1 text-sm font-semibold text-green-600 dark:text-green-400">
+                          {diff.changeType === 'insert'
+                            ? isClosed
+                              ? 'Added:'
+                              : 'Add:'
+                            : 'Replace with:'}
+                        </h4>
+                        <div className="rounded-lg bg-green-500/10 p-3">
+                          <p className="text-xs whitespace-pre-wrap">{diff.newText}</p>
                         </div>
                       </div>
                     )}
-                  </div>
-                )}
 
-                {/* Removed text */}
-                {diff.originalText && (diff.changeType === 'remove' || diff.changeType === 'replace') && (
-                  <div>
-                    <h4 className="mb-1 text-sm font-semibold text-red-600 dark:text-red-400">
-                      {diff.changeType === 'remove' ? (isClosed ? 'Deleted:' : 'Delete:') : 'Original Text:'}
-                    </h4>
-                    <div className="rounded-lg bg-red-500/10 p-3 line-through">
-                      <p className="whitespace-pre-wrap text-xs">{diff.originalText}</p>
+                  {/* Justification */}
+                  {diff.justification && (
+                    <div>
+                      <h4 className="mb-1 text-sm font-semibold">Justification:</h4>
+                      <p className="text-muted-foreground text-xs">{diff.justification}</p>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
+              )}
 
-                {/* Added/replacement text */}
-                {diff.newText && (diff.changeType === 'insert' || diff.changeType === 'replace') && (
-                  <div>
-                    <h4 className="mb-1 text-sm font-semibold text-green-600 dark:text-green-400">
-                      {diff.changeType === 'insert' ? (isClosed ? 'Added:' : 'Add:') : 'Replace with:'}
-                    </h4>
-                    <div className="rounded-lg bg-green-500/10 p-3">
-                      <p className="whitespace-pre-wrap text-xs">{diff.newText}</p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Justification */}
-                {diff.justification && (
-                  <div>
-                    <h4 className="mb-1 text-sm font-semibold">Justification:</h4>
-                    <p className="text-xs text-muted-foreground">{diff.justification}</p>
-                  </div>
-                )}
-              </div>
-            )}
+            {/* Editor preview with per-card suggestion filter */}
+            {showEditorPreview &&
+              (((editingMode === 'suggest_event' || editingMode === 'vote_event') && amendmentId) ||
+                (documentContent && suggestionId)) && (
+                <div className="space-y-2">
+                  {/* Mode selector — always shown when amendmentId is available */}
+                  {amendmentId && (
+                    <EditingModeSelector amendmentId={amendmentId} currentMode={editingMode} />
+                  )}
+                  {/* Suggestion filter — only for read-only preview (interactive editor has its own) */}
+                  {editingMode !== 'suggest_event' &&
+                    editingMode !== 'vote_event' &&
+                    discussions &&
+                    discussions.length > 1 && (
+                      <SuggestionViewToggle
+                        discussions={discussions}
+                        selectedCrIds={selectedCrIds}
+                        onSelectedCrIdsChange={setSelectedCrIds}
+                      />
+                    )}
+                  <CREditorPreview
+                    documentContent={documentContent ?? ([] as Value)}
+                    suggestionIds={selectedSuggestionIds}
+                    editingMode={editingMode}
+                    amendmentId={amendmentId}
+                    userId={userId}
+                    agendaItemId={agendaItemId}
+                  />
+                </div>
+              )}
 
             {/* Vote result sentence when closed */}
             {isClosed && resolvedVoteResult && (
@@ -413,8 +519,8 @@ export function ChangeRequestTimelineCard({
             )}
 
             {/* Vote results with one bar block per choice */}
-            {!isLocked && (
-              choices.length === 0 ? (
+            {!isLocked &&
+              (choices.length === 0 ? (
                 <div className="rounded-lg border border-dashed p-6 text-center">
                   <p className="text-muted-foreground">
                     {t('features.events.agenda.noChoices', 'No choices defined')}
@@ -446,13 +552,15 @@ export function ChangeRequestTimelineCard({
                           isSelected && 'border-primary bg-primary/5',
                           isWinner &&
                             isClosed &&
-                            'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/30',
+                            'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/30'
                         )}
                       >
                         <div className="mb-2 flex items-center gap-2">
-                          <span className="font-medium">{cs.choice.label || `Choice ${idx + 1}`}</span>
+                          <span className="font-medium">
+                            {cs.choice.label || `Choice ${idx + 1}`}
+                          </span>
                           {isWinner && isClosed && <Crown className="h-4 w-4 text-yellow-500" />}
-                          {isSelected && <CheckCircle2 className="h-4 w-4 text-primary" />}
+                          {isSelected && <CheckCircle2 className="text-primary h-4 w-4" />}
                         </div>
 
                         <VoteResultsDisplay
@@ -466,14 +574,14 @@ export function ChangeRequestTimelineCard({
                     );
                   })}
                 </div>
-              )
-            )}
+              ))}
 
             {/* Participation count */}
             {vote && !isLocked && (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="text-muted-foreground flex items-center gap-2 text-xs">
                 <span>
-                  {currentPhaseVoteCount}/{totalVoters} {t('features.agendas.crTimeline.votersParticipated')}
+                  {currentPhaseVoteCount}/{totalVoters}{' '}
+                  {t('features.agendas.crTimeline.votersParticipated')}
                 </span>
               </div>
             )}
@@ -492,20 +600,20 @@ export function ChangeRequestTimelineCard({
             {/* Voting buttons for active items */}
             {isCurrent && !isLocked && !isClosed && !hasUserVoted && canVote && vote && (
               <div className="flex gap-2 pt-2">
-                {choices.map((choice) => (
+                {choices.map(choice => (
                   <Button
                     key={choice.id}
                     size="sm"
                     variant={
-                      choice.label === 'yes' ? 'default' :
-                      choice.label === 'no' ? 'destructive' :
-                      'secondary'
+                      choice.label === 'yes'
+                        ? 'default'
+                        : choice.label === 'no'
+                          ? 'destructive'
+                          : 'secondary'
                     }
-                    className={cn(
-                      choice.label === 'yes' && 'bg-green-600 hover:bg-green-700',
-                    )}
+                    className={cn(choice.label === 'yes' && 'bg-green-600 hover:bg-green-700')}
                     disabled={votingLoading}
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation();
                       handleCastVote(choice.id);
                     }}
@@ -523,7 +631,7 @@ export function ChangeRequestTimelineCard({
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation();
                       onStartIndicative?.(item.id);
                     }}
@@ -536,7 +644,7 @@ export function ChangeRequestTimelineCard({
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation();
                       onStartFinal?.(item.id);
                     }}
@@ -549,7 +657,7 @@ export function ChangeRequestTimelineCard({
                   <Button
                     size="sm"
                     variant="default"
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation();
                       onCloseVoting?.(item.id);
                     }}
@@ -558,35 +666,6 @@ export function ChangeRequestTimelineCard({
                     {t('features.agendas.crTimeline.closeVoting')}
                   </Button>
                 )}
-              </div>
-            )}
-
-            {/* Editor preview with per-card suggestion filter */}
-            {(((editingMode === 'suggest_event' || editingMode === 'vote_event') && amendmentId) || (documentContent && suggestionId)) && (
-              <div className="space-y-2">
-                {/* Mode selector — always shown when amendmentId is available */}
-                {amendmentId && (
-                  <EditingModeSelector
-                    amendmentId={amendmentId}
-                    currentMode={editingMode}
-                  />
-                )}
-                {/* Suggestion filter — only for read-only preview (interactive editor has its own) */}
-                {editingMode !== 'suggest_event' && editingMode !== 'vote_event' && discussions && discussions.length > 1 && (
-                  <SuggestionViewToggle
-                    discussions={discussions}
-                    selectedCrIds={selectedCrIds}
-                    onSelectedCrIdsChange={setSelectedCrIds}
-                  />
-                )}
-                <CREditorPreview
-                  documentContent={documentContent ?? ([] as Value)}
-                  suggestionIds={selectedSuggestionIds}
-                  editingMode={editingMode}
-                  amendmentId={amendmentId}
-                  userId={userId}
-                  agendaItemId={agendaItemId}
-                />
               </div>
             )}
           </CardContent>

@@ -159,4 +159,33 @@ describe('TargetGroupEventSelector', () => {
     await waitFor(() => expect(onGroupSelectionChange).toHaveBeenCalledWith(null));
     expect(screen.getByPlaceholderText('Search for a group...')).toBeTruthy();
   });
+
+  it('can emit a group-only selection when event linking is optional', async () => {
+    const onSelect = vi.fn();
+
+    render(
+      <TargetGroupEventSelector
+        userId="user-1"
+        onSelect={onSelect}
+        allowGroupWithoutEvent
+        disablePortal
+      />
+    );
+
+    const groupSearchInput = screen.getByPlaceholderText('Search for a group...');
+    fireEvent.focus(groupSearchInput);
+    fireEvent.change(groupSearchInput, { target: { value: 'Budget' } });
+    fireEvent.click(await screen.findByRole('button', { name: /Budget Circle/i }));
+
+    await waitFor(() =>
+      expect(onSelect).toHaveBeenCalledWith(
+        expect.objectContaining({
+          groupId: 'group-1',
+          eventId: null,
+          eventData: null,
+          pathWithEvents: [],
+        })
+      )
+    );
+  });
 });

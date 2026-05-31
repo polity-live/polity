@@ -9,13 +9,6 @@ import {
 } from '@/features/shared/ui/ui/card';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from '@/features/shared/ui/ui/carousel';
 import { Users, Copy } from 'lucide-react';
 import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
@@ -29,12 +22,13 @@ import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx
 import { VoteButtons, type VoteValue } from '@/features/shared/ui/voting';
 import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCard';
 import { SupporterStatusBadge } from '@/features/amendments/ui/SupporterStatusBadge';
-import { GRADIENTS } from '@/features/users/state/gradientColors';
 import { TargetSelectionDialog } from '@/features/amendments/ui/TargetSelectionDialog';
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useAmendmentWikiPage } from './hooks/useAmendmentWikiPage';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
+import { WikiIncumbentPanel } from '@/features/shared/ui/wiki/WikiIncumbentPanel';
+import { buildAmendmentWikiCollaboratorSections } from '@/features/amendments/logic/buildAmendmentWikiCollaboratorSections';
 
 interface AmendmentWikiProps {
   amendmentId: string;
@@ -51,6 +45,7 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
     isLoading: subscribeLoading,
     collaboration,
     amendment,
+    roles,
     collaborators,
     supportingGroups,
     clones,
@@ -66,16 +61,14 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
     cloneDialogOpen,
     setCloneDialogOpen,
     isCloning,
-    setSelectedTargetGroupId,
     handleClone,
     handleConfirmClone,
-    networkData,
-    targetGroupEventsData,
     usersData,
     getSupportStatus,
   } = useAmendmentWikiPage(amendmentId);
   const normalizedVoteValue: VoteValue =
     currentVoteValue === -1 ? -1 : currentVoteValue === 1 ? 1 : 0;
+  const collaboratorSections = buildAmendmentWikiCollaboratorSections(roles, collaborators);
 
   if (!amendment) {
     return (
@@ -268,79 +261,13 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
       />
 
       {/* Collaborators Carousel */}
-      {collaborators.length > 0 && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Collaborators ({collaborators.length})
-            </CardTitle>
-            <CardDescription>People working on this amendment</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Carousel
-              opts={{
-                align: 'start',
-                loop: true,
-              }}
-              className="w-full"
-            >
-              <CarouselContent className="-ml-2 md:-ml-4">
-                {collaborators.map((collab, index: number) => (
-                  <CarouselItem key={collab.id} className="pl-2 md:basis-1/2 md:pl-4 lg:basis-1/3">
-                    <Link
-                      to="/user/$id"
-                      params={{ id: collab.user?.id ?? '' }}
-                      className="block transition-opacity hover:opacity-90"
-                    >
-                      <Card
-                        className={`h-full overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${GRADIENTS[index % GRADIENTS.length]}`}
-                      >
-                        <CardHeader className="space-y-3 pb-4">
-                          <div className="flex items-center gap-3">
-                            <Avatar className="border-background h-12 w-12 border-2">
-                              <AvatarImage src={collab.user?.avatar ?? undefined} />
-                              <AvatarFallback>
-                                {(
-                                  collab.user?.first_name?.[0] ?? collab.user?.last_name?.[0]
-                                )?.toUpperCase() || 'U'}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="min-w-0 flex-1">
-                              <CardTitle className="line-clamp-1 text-lg">
-                                {`${collab.user?.first_name ?? ''} ${collab.user?.last_name ?? ''}`.trim() ||
-                                  'Unknown'}
-                              </CardTitle>
-                              {collab.user?.handle && (
-                                <CardDescription className="text-xs">
-                                  @{collab.user.handle}
-                                </CardDescription>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            <Badge variant="secondary" className="text-xs">
-                              {collab.status === 'admin' ? 'Admin' : 'Collaborator'}
-                            </Badge>
-                          </div>
-                        </CardHeader>
-                        {collab.user?.bio && (
-                          <CardContent className="pt-0">
-                            <p className="text-muted-foreground line-clamp-2 text-sm">
-                              {collab.user.bio}
-                            </p>
-                          </CardContent>
-                        )}
-                      </Card>
-                    </Link>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious />
-              <CarouselNext />
-            </Carousel>
-          </CardContent>
-        </Card>
+      {collaboratorSections.length > 0 && (
+        <WikiIncumbentPanel
+          title={`Collaborators (${collaborators.length})`}
+          description="Active collaborators grouped by role"
+          sections={collaboratorSections}
+          icon={Users}
+        />
       )}
 
       {/* Supported By Section */}
@@ -443,8 +370,6 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
       <TargetSelectionDialog
         open={cloneDialogOpen}
         onOpenChange={setCloneDialogOpen}
-        networkData={networkData}
-        targetGroupEventsData={targetGroupEventsData}
         currentUserId={user?.id || ''}
         allUsers={(usersData?.$users || []).map(u => ({
           id: u.id,
@@ -453,11 +378,10 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
           avatar: u.avatar ?? undefined,
         }))}
         onConfirm={handleConfirmClone}
-        onGroupSelect={setSelectedTargetGroupId}
-        hideCollaboratorSelection={true}
         isSaving={isCloning}
+        showCollaboratorSelection={false}
         title="Clone Amendment - Select Target"
-        description="Select a target group and event from your network for the cloned amendment"
+        description="Optionally link the clone to a group and event from your network."
         confirmButtonText="Clone Amendment"
       />
     </div>
