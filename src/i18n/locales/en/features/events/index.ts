@@ -34,6 +34,14 @@ export const eventsTranslations = {
       endDate: 'End Date',
       endTime: 'End Time',
     },
+    timeSeries: {
+      title: 'Time & Series',
+      description: 'Plan the schedule, recurrence, and time-based deadlines in one place.',
+      validation: {
+        startDateRequired: 'Recurring events need a start date.',
+        weekdaysRequired: 'Pick at least one weekday for a weekly series.',
+      },
+    },
     locationCapacity: {
       title: 'Location & Capacity',
       description: 'Where is this event and how many can attend?',
@@ -90,7 +98,7 @@ export const eventsTranslations = {
     vote: 'Vote',
     openChangeRequests: 'Open Change Requests',
     itemsCount: 'Agenda Items ({{count}})',
-    searchPlaceholder: 'Search agenda items...',
+    searchPlaceholder: 'Search agenda items (e.g. TOP-1 or title)...',
     filters: 'Filters',
     filtersDescription: 'Refine the agenda items',
     type: 'Type',

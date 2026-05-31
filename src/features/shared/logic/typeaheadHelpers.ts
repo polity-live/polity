@@ -1,34 +1,119 @@
 /**
- * Pure functions for typeahead search filtering, ranking, and result grouping.
+ * Pure functions and shared constants for reusable typeahead search.
  */
 
-export type EntityType = 'user' | 'group' | 'amendment' | 'event' | 'election' | 'role';
+export const ALL_TYPEAHEAD_ENTITY_TYPES = [
+  'event',
+  'group',
+  'amendment',
+  'user',
+  'blog',
+  'todo',
+  'vote',
+  'election',
+  'agenda_item',
+] as const;
+
+export type DomainEntityType = (typeof ALL_TYPEAHEAD_ENTITY_TYPES)[number];
+export type EntityType = DomainEntityType | 'role';
+
+export const TYPEAHEAD_ENTITY_ORDER: readonly EntityType[] = [
+  'user',
+  'group',
+  'event',
+  'agenda_item',
+  'amendment',
+  'vote',
+  'election',
+  'todo',
+  'blog',
+  'role',
+] as const;
+
+export const TYPEAHEAD_ENTITY_LABELS: Record<EntityType, string> = {
+  user: 'User',
+  group: 'Group',
+  event: 'Event',
+  agenda_item: 'Agenda Point',
+  amendment: 'Amendment',
+  vote: 'Vote',
+  election: 'Election',
+  todo: 'Task',
+  blog: 'Blog',
+  role: 'Role',
+};
+
+export const TYPEAHEAD_ENTITY_GROUP_LABELS: Record<EntityType, string> = {
+  user: 'Users',
+  group: 'Groups',
+  event: 'Events',
+  agenda_item: 'Agenda Points',
+  amendment: 'Amendments',
+  vote: 'Votes',
+  election: 'Elections',
+  todo: 'Tasks',
+  blog: 'Blogs',
+  role: 'Roles',
+};
 
 export interface TypeaheadItem {
   id: string;
   entityType: EntityType;
   label: string;
   secondaryLabel?: string;
+  description?: string;
   avatar?: string | null;
   hashtags?: string[];
+  keywords?: string[];
+  metadata?: string[];
+  url?: string;
+}
+
+export const DEFAULT_TYPEAHEAD_SEARCH_KEYS: readonly (keyof TypeaheadItem)[] = [
+  'label',
+  'secondaryLabel',
+  'description',
+  'hashtags',
+  'keywords',
+];
+
+export function addUniqueTypeaheadValue(values: readonly string[], nextValue: string): string[] {
+  return values.includes(nextValue) ? [...values] : [...values, nextValue];
+}
+
+export function removeTypeaheadValue(values: readonly string[], valueToRemove: string): string[] {
+  return values.filter(value => value !== valueToRemove);
 }
 
 /**
  * Filter items by query against specified search keys.
- * Case-insensitive prefix/substring match.
+ * Case-insensitive substring matching for strings and string arrays.
  */
-export function filterItems<T>(items: T[], query: string, searchKeys: (keyof T)[]): T[] {
-  if (!query.trim()) return items;
+export function filterItems<T>(
+  items: readonly T[],
+  query: string,
+  searchKeys: readonly (keyof T)[]
+): T[] {
+  if (!query.trim()) {
+    return [...items];
+  }
+
   const lowerQuery = query.toLowerCase().trim();
+
   return items.filter(item =>
     searchKeys.some(key => {
       const value = item[key];
+
       if (typeof value === 'string') {
         return value.toLowerCase().includes(lowerQuery);
       }
+
       if (Array.isArray(value)) {
-        return value.some(v => typeof v === 'string' && v.toLowerCase().includes(lowerQuery));
+        return value.some(
+          entry => typeof entry === 'string' && entry.toLowerCase().includes(lowerQuery)
+        );
       }
+
       return false;
     })
   );
@@ -55,32 +140,50 @@ export function highlightMatch(text: string, query: string): { start: number; en
 /**
  * Group typeahead items by their entity type.
  */
-export function groupResultsByType(items: TypeaheadItem[]): Record<EntityType, TypeaheadItem[]> {
-  const groups: Record<EntityType, TypeaheadItem[]> = {
-    user: [],
-    group: [],
-    amendment: [],
-    event: [],
-    election: [],
-    role: [],
-  };
+export function groupResultsByType(
+  items: readonly TypeaheadItem[]
+): Record<EntityType, TypeaheadItem[]> {
+  const groups = TYPEAHEAD_ENTITY_ORDER.reduce<Record<EntityType, TypeaheadItem[]>>(
+    (accumulator, entityType) => {
+      accumulator[entityType] = [];
+      return accumulator;
+    },
+    {} as Record<EntityType, TypeaheadItem[]>
+  );
+
   for (const item of items) {
     groups[item.entityType].push(item);
   }
+
   return groups;
 }
 
 /**
- * Score-based sorting: name prefix match > name contains > hashtag match > others.
+ * Score-based sorting: label exact/prefix > label contains > secondary/keywords/hashtags > description.
  */
-export function sortByRelevance(items: TypeaheadItem[], query: string): TypeaheadItem[] {
-  if (!query.trim()) return items;
+export function sortByRelevance(items: readonly TypeaheadItem[], query: string): TypeaheadItem[] {
+  if (!query.trim()) {
+    return [...items];
+  }
+
   const lowerQuery = query.toLowerCase().trim();
 
-  return [...items].sort((a, b) => {
-    const scoreA = getRelevanceScore(a, lowerQuery);
-    const scoreB = getRelevanceScore(b, lowerQuery);
-    return scoreB - scoreA;
+  return [...items].sort((leftItem, rightItem) => {
+    const leftScore = getRelevanceScore(leftItem, lowerQuery);
+    const rightScore = getRelevanceScore(rightItem, lowerQuery);
+
+    if (rightScore !== leftScore) {
+      return rightScore - leftScore;
+    }
+
+    const typeOrderDelta =
+      TYPEAHEAD_ENTITY_ORDER.indexOf(leftItem.entityType) -
+      TYPEAHEAD_ENTITY_ORDER.indexOf(rightItem.entityType);
+    if (typeOrderDelta !== 0) {
+      return typeOrderDelta;
+    }
+
+    return leftItem.label.localeCompare(rightItem.label);
   });
 }
 
@@ -88,24 +191,46 @@ function getRelevanceScore(item: TypeaheadItem, lowerQuery: string): number {
   let score = 0;
   const lowerLabel = item.label.toLowerCase();
 
-  // Exact match
-  if (lowerLabel === lowerQuery) score += 100;
-  // Prefix match
-  else if (lowerLabel.startsWith(lowerQuery)) score += 50;
-  // Contains match
-  else if (lowerLabel.includes(lowerQuery)) score += 25;
-
-  // Secondary label match
-  if (item.secondaryLabel) {
-    const lowerSecondary = item.secondaryLabel.toLowerCase();
-    if (lowerSecondary.startsWith(lowerQuery)) score += 15;
-    else if (lowerSecondary.includes(lowerQuery)) score += 10;
+  if (lowerLabel === lowerQuery) {
+    score += 120;
+  } else if (lowerLabel.startsWith(lowerQuery)) {
+    score += 60;
+  } else if (lowerLabel.includes(lowerQuery)) {
+    score += 30;
   }
 
-  // Hashtag match
-  if (item.hashtags?.some(h => h.toLowerCase().includes(lowerQuery))) {
-    score += 5;
+  score += scoreTextValue(item.secondaryLabel, lowerQuery, 18, 12);
+  score += scoreTextValue(item.description, lowerQuery, 8, 5);
+
+  if (item.keywords?.some(keyword => keyword.toLowerCase().startsWith(lowerQuery))) {
+    score += 16;
+  } else if (item.keywords?.some(keyword => keyword.toLowerCase().includes(lowerQuery))) {
+    score += 10;
+  }
+
+  if (item.hashtags?.some(tag => tag.toLowerCase().startsWith(lowerQuery))) {
+    score += 14;
+  } else if (item.hashtags?.some(tag => tag.toLowerCase().includes(lowerQuery))) {
+    score += 9;
   }
 
   return score;
+}
+
+function scoreTextValue(
+  value: string | undefined,
+  lowerQuery: string,
+  prefixScore: number,
+  containsScore: number
+) {
+  if (!value) {
+    return 0;
+  }
+
+  const lowerValue = value.toLowerCase();
+  if (lowerValue.startsWith(lowerQuery)) {
+    return prefixScore;
+  }
+
+  return lowerValue.includes(lowerQuery) ? containsScore : 0;
 }

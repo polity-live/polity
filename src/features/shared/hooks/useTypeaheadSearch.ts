@@ -1,23 +1,34 @@
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTypeaheadData } from './useTypeaheadData';
-import { filterItems, sortByRelevance, groupResultsByType, type EntityType, type TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
+import {
+  DEFAULT_TYPEAHEAD_SEARCH_KEYS,
+  filterItems,
+  groupResultsByType,
+  sortByRelevance,
+  type EntityType,
+  type TypeaheadItem,
+} from '@/features/shared/logic/typeaheadHelpers';
 
 interface UseTypeaheadSearchOptions {
-  entityTypes: EntityType[];
+  entityTypes?: EntityType[];
+  items?: readonly TypeaheadItem[];
 }
 
 /**
- * Full typeahead search hook: manages query state, debounce, filtering, and grouping.
+ * Full typeahead search hook: manages query state, filtering, and grouped results.
+ * Returns both the full source dataset and the filtered result list.
  */
-export function useTypeaheadSearch({ entityTypes }: UseTypeaheadSearchOptions) {
+export function useTypeaheadSearch({
+  entityTypes = [],
+  items: externalItems,
+}: UseTypeaheadSearchOptions) {
   const [query, setQuery] = useState('');
-  const [selectedItem, setSelectedItem] = useState<TypeaheadItem | null>(null);
-  const { items } = useTypeaheadData({ entityTypes });
+  const { items: internalItems } = useTypeaheadData({ entityTypes });
+  const items = useMemo(() => externalItems ?? internalItems, [externalItems, internalItems]);
 
   const results = useMemo(() => {
-    if (!query.trim()) return items.slice(0, 20);
-    const filtered = filterItems(items, query, ['label', 'secondaryLabel', 'hashtags'] as (keyof TypeaheadItem)[]);
-    return sortByRelevance(filtered, query);
+    const filteredItems = filterItems(items, query, DEFAULT_TYPEAHEAD_SEARCH_KEYS);
+    return sortByRelevance(filteredItems, query);
   }, [items, query]);
 
   const groupedResults = useMemo(() => groupResultsByType(results), [results]);
@@ -25,9 +36,8 @@ export function useTypeaheadSearch({ entityTypes }: UseTypeaheadSearchOptions) {
   return {
     query,
     setQuery,
+    items,
     results,
     groupedResults,
-    selectedItem,
-    setSelectedItem,
   };
 }

@@ -33,6 +33,7 @@ export const NOTIFICATION_TYPE_TO_SETTING: Partial<Record<NotificationType, Sett
   membership_approved: { category: 'groupNotifications', key: 'membershipRequests' },
   membership_rejected: { category: 'groupNotifications', key: 'membershipRequests' },
   membership_invite: { category: 'groupNotifications', key: 'membershipInvitations' },
+  membership_role_changed: { category: 'groupNotifications', key: 'roleUpdates' },
   membership_withdrawn: { category: 'groupNotifications', key: 'membershipRequests' },
   member_removed: { category: 'groupNotifications', key: 'newMembers' },
   group_invitation_accepted: { category: 'groupNotifications', key: 'membershipInvitations' },
@@ -54,9 +55,9 @@ export const NOTIFICATION_TYPE_TO_SETTING: Partial<Record<NotificationType, Sett
   // Admin
   group_admin_promoted: { category: 'groupNotifications', key: 'roleUpdates' },
   group_admin_demoted: { category: 'groupNotifications', key: 'roleUpdates' },
-  group_access_role_created: { category: 'groupNotifications', key: 'roleUpdates' },
-  group_access_role_deleted: { category: 'groupNotifications', key: 'roleUpdates' },
-  group_access_role_updated: { category: 'groupNotifications', key: 'roleUpdates' },
+  group_access_role_created: { category: 'groupNotifications', key: 'newRoles' },
+  group_access_role_deleted: { category: 'groupNotifications', key: 'newRoles' },
+  group_access_role_updated: { category: 'groupNotifications', key: 'newRoles' },
 
   // Todos
   group_todo_assigned: { category: 'groupNotifications', key: 'tasksAssigned' },
@@ -85,9 +86,10 @@ export const NOTIFICATION_TYPE_TO_SETTING: Partial<Record<NotificationType, Sett
   participation_approved: { category: 'eventNotifications', key: 'participationRequests' },
   participation_rejected: { category: 'eventNotifications', key: 'participationRequests' },
   participation_invite: { category: 'eventNotifications', key: 'participationInvitations' },
+  event_invite: { category: 'eventNotifications', key: 'participationInvitations' },
+  participation_role_changed: { category: 'eventNotifications', key: 'roleUpdates' },
   participation_withdrawn: { category: 'eventNotifications', key: 'participationRequests' },
   participant_removed: { category: 'eventNotifications', key: 'newParticipants' },
-  event_invite: { category: 'eventNotifications', key: 'participationInvitations' },
   event_invitation_accepted: { category: 'eventNotifications', key: 'participationInvitations' },
   event_invitation_declined: { category: 'eventNotifications', key: 'participationInvitations' },
   event_request_withdrawn: { category: 'eventNotifications', key: 'participationRequests' },
@@ -100,6 +102,7 @@ export const NOTIFICATION_TYPE_TO_SETTING: Partial<Record<NotificationType, Sett
   event_organizer_demoted: { category: 'eventNotifications', key: 'roleUpdates' },
   event_agenda_item_created: { category: 'eventNotifications', key: 'agendaItems' },
   event_agenda_item_deleted: { category: 'eventNotifications', key: 'agendaItems' },
+  event_agenda_item_transferred: { category: 'eventNotifications', key: 'agendaItems' },
   event_schedule_changed: { category: 'eventNotifications', key: 'scheduleChanges' },
 
   // Elections & Roles
@@ -115,6 +118,16 @@ export const NOTIFICATION_TYPE_TO_SETTING: Partial<Record<NotificationType, Sett
   event_meeting_booked: { category: 'eventNotifications', key: 'meetingBookings' },
   event_meeting_cancelled: { category: 'eventNotifications', key: 'meetingBookings' },
   event_speaker_added: { category: 'eventNotifications', key: 'speakerListAdditions' },
+  agenda_item_activated: { category: 'eventNotifications', key: 'votes' },
+  voting_phase_started: { category: 'eventNotifications', key: 'votes' },
+  voting_phase_ending_soon: { category: 'eventNotifications', key: 'votes' },
+  voting_completed: { category: 'eventNotifications', key: 'votes' },
+  amendment_forwarded: { category: 'eventNotifications', key: 'votes' },
+  election_result: { category: 'eventNotifications', key: 'votes' },
+  revote_scheduled: { category: 'eventNotifications', key: 'votes' },
+  event_cancelled: { category: 'eventNotifications', key: 'votes' },
+  agenda_items_reassigned: { category: 'eventNotifications', key: 'agendaItems' },
+  amendment_path_recalculation_required: { category: 'eventNotifications', key: 'votes' },
 
   // ── Amendment Notifications ────────────────────────────────────────
   // Collaboration
@@ -122,6 +135,7 @@ export const NOTIFICATION_TYPE_TO_SETTING: Partial<Record<NotificationType, Sett
   collaboration_approved: { category: 'amendmentNotifications', key: 'collaborationRequests' },
   collaboration_rejected: { category: 'amendmentNotifications', key: 'collaborationRequests' },
   collaboration_invite: { category: 'amendmentNotifications', key: 'collaborationInvitations' },
+  collaboration_role_changed: { category: 'amendmentNotifications', key: 'roleUpdates' },
   collaboration_withdrawn: { category: 'amendmentNotifications', key: 'collaborationRequests' },
   collaborator_removed: { category: 'amendmentNotifications', key: 'newCollaborators' },
   collaboration_invitation_accepted: {
@@ -147,6 +161,12 @@ export const NOTIFICATION_TYPE_TO_SETTING: Partial<Record<NotificationType, Sett
   amendment_cloned: { category: 'amendmentNotifications', key: 'clones' },
   amendment_group_support: { category: 'amendmentNotifications', key: 'supportingGroups' },
   amendment_target_set: { category: 'amendmentNotifications', key: 'supportingGroups' },
+  support_confirmation_required: {
+    category: 'amendmentNotifications',
+    key: 'supportingGroups',
+  },
+  support_confirmed: { category: 'amendmentNotifications', key: 'supportingGroups' },
+  support_declined: { category: 'amendmentNotifications', key: 'supportingGroups' },
   amendment_comment_added: { category: 'amendmentNotifications', key: 'discussions' },
 
   // Change Requests

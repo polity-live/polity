@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery } from '@rocicorp/zero/react';
 import { queries } from '../queries';
 
@@ -114,6 +115,16 @@ export function useUserState(options: UserStateOptions = {}) {
     includeSearchableUsers ? queries.users.searchableUsers({}) : undefined
   );
 
+  const normalizedFullProfile = useMemo(
+    () => (fullProfile ?? []).map(profile => normalizeUserProfile(profile)),
+    [fullProfile]
+  );
+
+  const normalizedUsersWithGroupMemberships = useMemo(
+    () => (userWithGroupMemberships ?? []).map(profile => normalizeUserProfile(profile)),
+    [userWithGroupMemberships]
+  );
+
   const isLoading =
     currentResult.type === 'unknown' ||
     (userId !== undefined && userResult.type === 'unknown') ||
@@ -134,10 +145,8 @@ export function useUserState(options: UserStateOptions = {}) {
     followingCount: following?.length ?? 0,
     publicUsers: publicUsers ?? [],
     allUsers: allUsers ?? [],
-    fullProfile: (fullProfile ?? []).map(profile => normalizeUserProfile(profile)),
-    userWithGroupMemberships: (userWithGroupMemberships ?? []).map(profile =>
-      normalizeUserProfile(profile)
-    ),
+    fullProfile: normalizedFullProfile,
+    userWithGroupMemberships: normalizedUsersWithGroupMemberships,
     searchableUsers: searchableUsers ?? [],
     isLoading,
   };

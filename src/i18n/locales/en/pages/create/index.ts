@@ -206,6 +206,24 @@ export const createPageTranslations = {
     recurringEnds: 'Recurring ends on',
     recurringInterval: 'Repeat every N periods',
     recurringWeekdays: 'Repeat on days',
+    timeSeries: {
+      tabLabel: 'Time & Series',
+      validation: {
+        dateTimeRangeRequired:
+          'Set the start date, start time, end date, and end time before creating the event.',
+        startDateRequired: 'Recurring events need a start date.',
+        weekdaysRequired: 'Pick at least one weekday for a weekly series.',
+      },
+    },
+    timeSeriesSummary: {
+      start: 'Start',
+      end: 'End',
+      series: 'Series',
+      notScheduled: 'Not scheduled yet',
+      openEnded: 'Open-ended',
+      deadlines: 'Deadlines',
+      deadlinesDescription: 'Collect every time-based cutoff for this event here.',
+    },
     recurringPatterns: {
       none: 'One-time',
       noneDesc: 'The event occurs only once',

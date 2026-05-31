@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
-import { Link } from '@tanstack/react-router';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { useEventData } from '@/features/events/hooks/useEventData';
 import { useAgendaItems } from '../hooks/useAgendaItems';
 import { useAuth } from '@/providers/auth-provider';
@@ -32,6 +32,16 @@ import {
 } from '@/features/shared/ui/ui/collapsible';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/features/shared/ui/ui/alert-dialog';
+import {
   Calendar,
   Vote,
   Gavel,
@@ -46,12 +56,15 @@ import {
   Radio,
   Clock,
   Info,
+  GripVertical,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { cn } from '@/features/shared/utils/utils';
 import { TimelineItem } from '@/features/agendas/ui/TimelineItem.tsx';
 import { AgendaItemContextCard } from './AgendaItemContextCard';
 import { AgendaRelatedAmendmentCard, AgendaRelatedRoleCard } from './AgendaRelatedEntityCard';
+import { EventSearchCard } from '@/features/search/ui/EventSearchCard';
 import { AgendaSpeakerListSection } from './AgendaSpeakerListSection';
 import { AgendaElectionSection } from './AgendaElectionSection';
 import { AgendaVoteSection } from './AgendaVoteSection';
@@ -66,14 +79,27 @@ import {
   AgendaStatusBadge,
   AgendaTypeBadge,
 } from './AgendaBadges';
+import { normalizeElectionMode } from '@/features/elections/logic/electionMode';
 import { AgendaActionBar } from './AgendaActionBar';
+import { VoteCastDialog } from '@/features/vote-cast/ui/VoteCastDialog';
+import { useVotingPasswordActions } from '@/zero/voting-password/useVotingPasswordActions';
+import { useElectionState } from '@/zero/elections/useElectionState';
+import { useAgendaActionBar } from '../hooks/useAgendaActionBar';
 import { useAgendaNavigation } from '../hooks/useAgendaNavigation';
+import { useAgendaItemCRVoting } from '../hooks/useAgendaItemCRVoting';
+import { getAgendaDisplayTimes } from '../logic/getAgendaDisplayTimes';
+import { getAgendaRuntimeStatus } from '../logic/getAgendaRuntimeStatus';
+import { buildFinalVoteFromAgendaVote } from '../logic/buildFinalVoteFromAgendaVote';
+import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
 import type { CandidatesByElectionRow } from '@/zero/elections/queries';
 import type { ChoicesByVoteRow } from '@/zero/votes/queries';
+import { useEventById } from '@/zero/events';
 
 interface EventAgendaProps {
   eventId: string;
 }
+
+type EventAgendaItemRow = ReturnType<typeof useAgendaItems>['agendaItems'][number];
 
 function getYouTubeVideoId(url: string | null | undefined): string | null {
   if (!url) return null;
@@ -88,13 +114,41 @@ function getYouTubeVideoId(url: string | null | undefined): string | null {
   return null;
 }
 
+function getEffectiveVotingPhase(status?: string | null, fallback?: string | null): string | null {
+  if (status === 'final' || status === 'final_vote') return 'final_vote';
+  if (status === 'closed') return 'closed';
+  if (status === 'indicative') return 'indication';
+  return fallback ?? null;
+}
+
+function getEffectiveCRVotingPhase(
+  item?: {
+    status?: string | null;
+    vote?: { status?: string | null } | null;
+  } | null
+): string | null {
+  if (!item) return null;
+  if (item.status === 'pending') return 'pending';
+
+  const phase = getEffectiveVotingPhase(item.vote?.status, null);
+  if (phase === 'final_vote') return 'final_vote';
+  if (phase === 'closed') return 'closed';
+  return 'indication';
+}
+
+function normalizeSearchToken(value: string | null | undefined): string {
+  if (!value) return '';
+  return value.toLowerCase().replace(/[\s_-]+/g, '');
+}
+
 export function EventAgenda({ eventId }: EventAgendaProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { event, isLoading: eventLoading } = useEventData(eventId);
   const { agendaItems, isLoading } = useAgendaItems(eventId);
   const { can } = usePermissions({ eventId });
-  const { addSpeaker, updateSpeaker, removeSpeaker } = useAgendaActions();
+  const { addSpeaker, updateSpeaker, removeSpeaker, reorderAgendaItems } = useAgendaActions();
   const agendaNav = useAgendaNavigation(eventId);
 
   // Track current agenda item changes for toast notifications
@@ -112,6 +166,13 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   const [addingSpeaker, setAddingSpeaker] = useState(false);
   const [removingSpeaker, setRemovingSpeaker] = useState(false);
   const [, setMarkingSpeakerComplete] = useState<string | null>(null);
+  const { verifyVotingPassword } = useVotingPasswordActions();
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [isPasswordVerifying, setIsPasswordVerifying] = useState(false);
+  const [overdueStartModalOpen, setOverdueStartModalOpen] = useState(false);
+  const [dismissedOverdueAgendaItemId, setDismissedOverdueAgendaItemId] = useState<string | null>(
+    null
+  );
   const [transferDialogItem, setTransferDialogItem] = useState<{
     id: string;
     title: string;
@@ -138,30 +199,175 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
 
   // Check if user can manage agenda items
   const canManageAgenda = can('manage', 'agendaItems');
+  const [draggedAgendaItemId, setDraggedAgendaItemId] = useState<string | null>(null);
+  const [dragOverAgendaItemId, setDragOverAgendaItemId] = useState<string | null>(null);
+  const [dragInsertPosition, setDragInsertPosition] = useState<'above' | 'below' | null>(null);
+  const orderedAgendaItems = useMemo(
+    () =>
+      [...agendaItems].sort((left, right) => (left.order_index ?? 0) - (right.order_index ?? 0)),
+    [agendaItems]
+  );
+
+  const resetAgendaDragState = useCallback(() => {
+    setDraggedAgendaItemId(null);
+    setDragOverAgendaItemId(null);
+    setDragInsertPosition(null);
+  }, []);
+
+  const isAgendaItemDraggable = useCallback(
+    (runtimeStatus: string) =>
+      canManageAgenda && (runtimeStatus === 'planned' || runtimeStatus === 'pending'),
+    [canManageAgenda]
+  );
+
+  const handleAgendaDragStart = useCallback(
+    (event: React.DragEvent<HTMLButtonElement>, agendaItemId: string) => {
+      if (!canManageAgenda) return;
+
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', agendaItemId);
+      setDraggedAgendaItemId(agendaItemId);
+      setDragOverAgendaItemId(agendaItemId);
+    },
+    [canManageAgenda]
+  );
+
+  const handleAgendaDrop = useCallback(
+    (dropAgendaItemId: string, position: 'above' | 'below' = 'below') => {
+      if (!draggedAgendaItemId || draggedAgendaItemId === dropAgendaItemId) {
+        resetAgendaDragState();
+        return;
+      }
+
+      const sourceIndex = orderedAgendaItems.findIndex(item => item.id === draggedAgendaItemId);
+      const targetIndex = orderedAgendaItems.findIndex(item => item.id === dropAgendaItemId);
+
+      if (sourceIndex < 0 || targetIndex < 0) {
+        resetAgendaDragState();
+        return;
+      }
+
+      const reorderedAgendaItems = [...orderedAgendaItems];
+      const [movedItem] = reorderedAgendaItems.splice(sourceIndex, 1);
+      let insertionIndex = targetIndex;
+      if (position === 'below') {
+        insertionIndex += 1;
+      }
+      if (sourceIndex < targetIndex) {
+        insertionIndex -= 1;
+      }
+      insertionIndex = Math.max(0, Math.min(insertionIndex, reorderedAgendaItems.length));
+      reorderedAgendaItems.splice(insertionIndex, 0, movedItem);
+
+      const reorderPayload: Parameters<typeof reorderAgendaItems>[0] = {
+        items: reorderedAgendaItems.map((item, index) => ({
+          id: item.id,
+          order_index: index + 1,
+        })),
+      };
+
+      reorderAgendaItems(reorderPayload);
+
+      resetAgendaDragState();
+    },
+    [draggedAgendaItemId, orderedAgendaItems, reorderAgendaItems, resetAgendaDragState]
+  );
+
+  const handleAgendaDragEnd = useCallback(() => {
+    resetAgendaDragState();
+  }, [resetAgendaDragState]);
 
   // Event status
   const isEventStarted = event?.status === 'active' || event?.status === 'in-progress';
   const eventStartTimestamp = typeof event?.start_date === 'number' ? event.start_date : null;
 
-  // Current active agenda item (for stream section)
-  const currentAgendaItem =
-    agendaItems.find(item => item.id === currentAgendaItemId) ??
-    agendaItems.find(item => item.status === 'in-progress') ??
-    null;
+  const activeAgendaItem = useMemo<EventAgendaItemRow | null>(
+    () =>
+      agendaItems.find(
+        item =>
+          getAgendaRuntimeStatus({
+            id: item.id,
+            status: item.status,
+            start_time: item.start_time,
+            end_time: item.end_time,
+            activated_at: item.activated_at,
+            completed_at: item.completed_at,
+          }) === 'in-progress'
+      ) ?? null,
+    [agendaItems]
+  );
 
-  const streamAgendaItem = useMemo(() => {
-    if (agendaItems.length === 0) return null;
-
-    if (!isEventStarted) {
-      return agendaItems[0] ?? null;
+  const liveAgendaItem = useMemo<EventAgendaItemRow | null>(() => {
+    if (agendaNav.currentAgendaItem?.id) {
+      return (
+        agendaItems.find(item => item.id === agendaNav.currentAgendaItem?.id) ?? activeAgendaItem
+      );
     }
 
-    if (!currentAgendaItem?.id) {
+    return activeAgendaItem;
+  }, [agendaItems, agendaNav.currentAgendaItem?.id, activeAgendaItem]);
+  const liveAgendaItemId = liveAgendaItem?.id;
+
+  // Unified spotlight used by stream panel, toolbar TOP label and agenda pointer.
+  const spotlightAgendaItem = useMemo<EventAgendaItemRow | null>(() => {
+    if (liveAgendaItem) {
+      return liveAgendaItem;
+    }
+
+    if (agendaNav.startableAgendaItem?.id) {
+      return agendaItems.find(item => item.id === agendaNav.startableAgendaItem?.id) ?? null;
+    }
+
+    return null;
+  }, [agendaItems, agendaNav.startableAgendaItem?.id, liveAgendaItem]);
+  const spotlightAgendaItemId = spotlightAgendaItem?.id;
+  const streamAgendaItem = spotlightAgendaItem as EventAgendaItemRow | null;
+
+  const streamRuntimeStatus = streamAgendaItem
+    ? getAgendaRuntimeStatus({
+        id: streamAgendaItem.id,
+        status: streamAgendaItem.status,
+        start_time: streamAgendaItem.start_time,
+        end_time: streamAgendaItem.end_time,
+        activated_at: streamAgendaItem.activated_at,
+        completed_at: streamAgendaItem.completed_at,
+        currentAgendaItemId: liveAgendaItemId,
+      })
+    : null;
+  const streamIsLive =
+    streamRuntimeStatus === 'in-progress' &&
+    Boolean(streamAgendaItem?.id) &&
+    streamAgendaItem?.id === liveAgendaItemId;
+
+  const overdueStartCandidate = useMemo(() => {
+    if (!canManageAgenda || liveAgendaItem || !agendaNav.startableAgendaItem) {
       return null;
     }
 
-    return agendaItems.find(item => item.id === currentAgendaItem.id) ?? null;
-  }, [agendaItems, currentAgendaItem?.id, isEventStarted]);
+    const candidate = agendaItems.find(item => item.id === agendaNav.startableAgendaItem?.id);
+    if (!candidate || typeof candidate.calculated_start_time !== 'number') {
+      return null;
+    }
+
+    if (candidate.calculated_start_time >= Date.now()) {
+      return null;
+    }
+
+    return candidate;
+  }, [agendaItems, agendaNav.startableAgendaItem, canManageAgenda, liveAgendaItem]);
+
+  useEffect(() => {
+    if (!overdueStartCandidate) {
+      setOverdueStartModalOpen(false);
+      return;
+    }
+
+    if (dismissedOverdueAgendaItemId === overdueStartCandidate.id) {
+      return;
+    }
+
+    setOverdueStartModalOpen(true);
+  }, [overdueStartCandidate, dismissedOverdueAgendaItemId]);
 
   const streamSpeakerListData = useMemo(() => {
     return (streamAgendaItem?.speaker_list || []).map(speaker => ({
@@ -194,6 +400,124 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   const streamElection = streamAgendaItem?.election?.[0] ?? null;
   const streamVote = streamAgendaItem?.votes?.[0] ?? null;
   const streamVoteAmendment = streamAgendaItem?.amendment ?? null;
+  const streamDelegateAssignmentMeta = (
+    streamElection as { delegate_assignment_meta?: { targetEventId?: string } | null } | null
+  )?.delegate_assignment_meta;
+  const { event: streamDelegateTargetEvent } = useEventById(
+    streamDelegateAssignmentMeta?.targetEventId
+  );
+  const crVoting = useAgendaItemCRVoting(streamAgendaItem?.id ?? '', user?.id);
+  const { election: actionBarElection, candidates: actionBarCandidates } = useElectionState({
+    agendaItemId: streamAgendaItem?.id,
+  });
+  const toolbarElection = useMemo(() => {
+    if (!actionBarElection) {
+      return streamElection;
+    }
+
+    return {
+      ...streamElection,
+      ...actionBarElection,
+      candidates:
+        actionBarCandidates.length > 0
+          ? actionBarCandidates
+          : (actionBarElection.candidates ?? streamElection?.candidates ?? []),
+    };
+  }, [actionBarCandidates, actionBarElection, streamElection]);
+  const streamVotingPhase = getEffectiveVotingPhase(
+    streamElection?.status ?? streamVote?.status,
+    streamAgendaItem?.voting_phase ?? null
+  );
+  const toolbarVotingPhase = getEffectiveVotingPhase(
+    toolbarElection?.status ?? streamVote?.status,
+    streamAgendaItem?.voting_phase ?? null
+  );
+  const synthesizedFinalVoteItem = useMemo(() => {
+    if (!streamAgendaItem?.amendment_id || !streamVote) return null;
+    if (crVoting.finalVoteItem) return null;
+    return buildFinalVoteFromAgendaVote(
+      streamVote,
+      crVoting.crTimeline.length
+    ) as unknown as ChangeRequestTimelineRow;
+  }, [
+    crVoting.crTimeline.length,
+    crVoting.finalVoteItem,
+    streamAgendaItem?.amendment_id,
+    streamVote,
+  ]);
+  const effectiveFinalVoteItem = useMemo(
+    () => crVoting.finalVoteItem ?? synthesizedFinalVoteItem,
+    [crVoting.finalVoteItem, synthesizedFinalVoteItem]
+  );
+  const nextPendingCRItem = useMemo(
+    () =>
+      crVoting.crTimeline.find(item => !item.is_final_vote && item.status !== 'completed') ?? null,
+    [crVoting.crTimeline]
+  );
+  const activeCRToolbarItem = useMemo(
+    () =>
+      crVoting.currentItem ??
+      nextPendingCRItem ??
+      (crVoting.allCRsProcessed ? effectiveFinalVoteItem : null),
+    [crVoting.allCRsProcessed, crVoting.currentItem, effectiveFinalVoteItem, nextPendingCRItem]
+  );
+  const isCRToolbarActive = !!streamAgendaItem?.amendment_id && !!activeCRToolbarItem;
+  const selectedCRPhase = getEffectiveCRVotingPhase(activeCRToolbarItem);
+  const isSelectedCRFinalVote = !!activeCRToolbarItem?.is_final_vote;
+  const hasUserVotedOnSelectedCR = useMemo(
+    () => (activeCRToolbarItem ? crVoting.hasUserVoted(activeCRToolbarItem) : false),
+    [activeCRToolbarItem, crVoting]
+  );
+  const selectedCRTitle = useMemo(() => {
+    if (!activeCRToolbarItem) return streamAgendaItem?.title ?? undefined;
+    if (activeCRToolbarItem.is_final_vote) {
+      return t('features.agendas.crTimeline.acceptAmendment', 'Accept amendment as modified');
+    }
+
+    return (
+      activeCRToolbarItem.change_request?.title ||
+      t('features.agendas.crTimeline.changeRequest', 'Change Request')
+    );
+  }, [activeCRToolbarItem, streamAgendaItem?.title, t]);
+  const selectedCRChoices = useMemo(
+    () =>
+      (activeCRToolbarItem?.vote?.choices ?? []).map(choice => ({
+        id: choice.id,
+        label: choice.label || 'Choice',
+      })),
+    [activeCRToolbarItem?.vote?.choices]
+  );
+  const selectedCRDialogPhase = useMemo(() => {
+    if (selectedCRPhase === 'final_vote') return 'final_vote' as const;
+    if (selectedCRPhase === 'closed') return 'closed' as const;
+    return 'indication' as const;
+  }, [selectedCRPhase]);
+  const effectiveToolbarVotingPhase = isCRToolbarActive ? selectedCRPhase : toolbarVotingPhase;
+  const startVoteTooltip = isCRToolbarActive
+    ? isSelectedCRFinalVote
+      ? t('features.events.agenda.actions.startFinalVote', 'Start Final Vote')
+      : t('features.agendas.crTimeline.startVote', 'Start Change Request Vote')
+    : undefined;
+  const startFinalVoteTooltip = isCRToolbarActive
+    ? isSelectedCRFinalVote
+      ? t('features.events.agenda.actions.startFinalVote', 'Start Final Vote')
+      : t('features.agendas.crTimeline.startFinal', 'Start Change Request Final Vote')
+    : undefined;
+  const closeVoteTooltip = isCRToolbarActive
+    ? isSelectedCRFinalVote
+      ? t('features.events.agenda.actions.closeFinalVote', 'Close Final Vote')
+      : t('features.agendas.crTimeline.closeVoting', 'Close Change Request Vote')
+    : undefined;
+  const castIndicativeVoteTooltip = isCRToolbarActive
+    ? isSelectedCRFinalVote
+      ? t('features.events.agenda.actions.castIndicativeVote', 'Cast Indication')
+      : t('features.agendas.crTimeline.castIndicative', 'Cast Change Request Indication')
+    : undefined;
+  const castFinalVoteTooltip = isCRToolbarActive
+    ? isSelectedCRFinalVote
+      ? t('features.events.agenda.actions.castFinalVote', 'Cast Final Vote')
+      : t('features.agendas.crTimeline.castFinal', 'Cast Change Request Final Vote')
+    : undefined;
 
   const indicativeSelections = useMemo(
     () => streamElection?.indicative_selections ?? [],
@@ -254,6 +578,32 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       (voter: { user_id?: string | null }) => voter.user_id === user?.id
     );
   }, [streamVote?.voters, user?.id]);
+  const actionBarHook = useAgendaActionBar({
+    eventId,
+    currentAgendaItem: streamAgendaItem
+      ? {
+          id: streamAgendaItem.id,
+          type: streamAgendaItem.type,
+          status: streamAgendaItem.status,
+          voting_phase: streamVotingPhase,
+          speaker_list: streamAgendaItem.speaker_list,
+        }
+      : null,
+    eventTitle: event?.title,
+    election: toolbarElection,
+    vote: streamVote,
+    electorId: userElector?.id,
+    voterId: userVoter?.id,
+  });
+  const toolbarAgendaItem = spotlightAgendaItem as EventAgendaItemRow | null;
+  const topNumberByAgendaItemId = useMemo(
+    () => new Map(orderedAgendaItems.map((item, index) => [item.id, index + 1])),
+    [orderedAgendaItems]
+  );
+  const toolbarAgendaItemTopNumber =
+    toolbarAgendaItem?.id != null ? topNumberByAgendaItemId.get(toolbarAgendaItem.id) : undefined;
+  const streamAgendaItemTopNumber =
+    streamAgendaItem?.id != null ? topNumberByAgendaItemId.get(streamAgendaItem.id) : undefined;
   const userHasVoteVoted = useMemo(() => {
     if (!userVoter) return false;
     const phase = streamVote?.status;
@@ -284,6 +634,35 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       })
       .filter(Boolean);
   }, [streamVote, userVoter]);
+  const handleToolbarStartVote = useCallback(() => {
+    if (!activeCRToolbarItem) return;
+    void crVoting.startIndicativePhase(activeCRToolbarItem.id);
+  }, [activeCRToolbarItem, crVoting]);
+  const handleToolbarStartFinalVote = useCallback(() => {
+    if (isCRToolbarActive) {
+      if (!activeCRToolbarItem) return;
+      void crVoting.startFinalPhase(activeCRToolbarItem.id);
+      return;
+    }
+
+    void actionBarHook.handleStartFinalVote();
+  }, [actionBarHook, activeCRToolbarItem, crVoting, isCRToolbarActive]);
+  const handleToolbarCloseVote = useCallback(() => {
+    if (isCRToolbarActive) {
+      if (!activeCRToolbarItem) return;
+      void crVoting.closeVoting(activeCRToolbarItem.id);
+      return;
+    }
+
+    void actionBarHook.handleCloseFinalVote();
+  }, [actionBarHook, activeCRToolbarItem, crVoting, isCRToolbarActive]);
+  const handleCastCRVoteFromDialog = useCallback(
+    async (choiceId: string) => {
+      if (!activeCRToolbarItem) return;
+      await crVoting.castCRVote(activeCRToolbarItem, choiceId);
+    },
+    [activeCRToolbarItem, crVoting]
+  );
 
   const handleAddToSpeakerList = async () => {
     if (!user?.id || !streamAgendaItem?.id) return;
@@ -363,11 +742,25 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   };
 
   // Apply filters
-  const filteredAgendaItems = agendaItems.filter(item => {
+  const loweredSearchQuery = searchQuery.trim().toLowerCase();
+  const normalizedSearchQuery = normalizeSearchToken(searchQuery);
+  const filteredAgendaItems = orderedAgendaItems.filter(item => {
+    const topNumber = topNumberByAgendaItemId.get(item.id);
+    const topLabel = typeof topNumber === 'number' ? `top-${topNumber}` : '';
+    const topLabelCompact = typeof topNumber === 'number' ? `top${topNumber}` : '';
+    const normalizedTopLabel = normalizeSearchToken(topLabel);
+
+    const matchesTopSearch =
+      loweredSearchQuery.length > 0 &&
+      (topLabel.includes(loweredSearchQuery) ||
+        topLabelCompact.includes(normalizedSearchQuery) ||
+        normalizedTopLabel.includes(normalizedSearchQuery));
+
     const matchesSearch =
-      !searchQuery ||
-      item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.description?.toLowerCase().includes(searchQuery.toLowerCase());
+      loweredSearchQuery.length === 0 ||
+      item.title?.toLowerCase().includes(loweredSearchQuery) ||
+      item.description?.toLowerCase().includes(loweredSearchQuery) ||
+      matchesTopSearch;
 
     const matchesType = typeFilter === 'all' || item.type === typeFilter;
     const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
@@ -391,20 +784,25 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     status?: string | null;
     calculated_start_time?: number;
     calculated_end_time?: number;
+    start_time?: number | null;
     end_time?: number | null;
+    activated_at?: number | null;
     completed_at?: number | null;
   }) => {
-    const completedAt =
-      agendaItem.completed_at ?? agendaItem.end_time ?? agendaItem.calculated_end_time;
+    const { displayEndTime } = getAgendaDisplayTimes(agendaItem);
     const isCompleted =
       agendaItem.status === 'completed' || typeof agendaItem.completed_at === 'number';
     const isOngoing = agendaItem.status === 'in-progress' || agendaItem.status === 'active';
 
-    if (isCompleted && completedAt) {
-      return <AgendaEndedPill endedAt={new Date(completedAt)} />;
+    if (isCompleted && displayEndTime) {
+      return <AgendaEndedPill endedAt={new Date(displayEndTime)} />;
     }
 
-    if (isOngoing && agendaItem.calculated_end_time) {
+    if (
+      isOngoing &&
+      agendaItem.calculated_end_time &&
+      agendaItem.calculated_end_time > Date.now()
+    ) {
       return (
         <AgendaCountdownPill
           label={t('features.events.agenda.endsIn', 'Ends in')}
@@ -425,6 +823,33 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     }
 
     return null;
+  };
+
+  const renderAgendaDragHandle = (itemId: string, runtimeStatus: string) => {
+    if (!isAgendaItemDraggable(runtimeStatus)) {
+      return null;
+    }
+
+    return (
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8 cursor-grab active:cursor-grabbing"
+        draggable
+        aria-label={t('features.events.agenda.dragToReorder', 'Drag to reorder')}
+        title={t('features.events.agenda.dragToReorder', 'Drag to reorder')}
+        onMouseDown={event => event.stopPropagation()}
+        onClick={event => {
+          event.preventDefault();
+          event.stopPropagation();
+        }}
+        onDragStart={event => handleAgendaDragStart(event, itemId)}
+        onDragEnd={handleAgendaDragEnd}
+      >
+        <GripVertical className="h-4 w-4" />
+      </Button>
+    );
   };
 
   if (isLoading || eventLoading) {
@@ -466,17 +891,113 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       <AgendaActionBar
         eventId={eventId}
         canManageAgenda={canManageAgenda}
-        canVote={false}
-        canBeCandidate={false}
+        canVote={actionBarHook.hasVotingRight}
+        canBeCandidate={actionBarHook.hasCandidateRight}
         isEventStarted={isEventStarted}
-        isUserInSpeakerList={false}
-        isUserCandidate={false}
+        isUserInSpeakerList={actionBarHook.isUserInSpeakerList}
+        isUserCandidate={actionBarHook.isUserCandidate}
+        currentAgendaItem={
+          toolbarAgendaItem
+            ? {
+                id: toolbarAgendaItem.id,
+                type: toolbarAgendaItem.type,
+                status: getAgendaRuntimeStatus({
+                  id: toolbarAgendaItem.id,
+                  status: toolbarAgendaItem.status,
+                  start_time: toolbarAgendaItem.start_time,
+                  end_time: toolbarAgendaItem.end_time,
+                  activated_at: toolbarAgendaItem.activated_at,
+                  completed_at: toolbarAgendaItem.completed_at,
+                  currentAgendaItemId: liveAgendaItemId,
+                }),
+                voting_phase: effectiveToolbarVotingPhase,
+                election: toolbarElection ? { id: toolbarElection.id } : null,
+                vote: isCRToolbarActive
+                  ? activeCRToolbarItem?.vote
+                    ? { id: activeCRToolbarItem.vote.id }
+                    : null
+                  : streamVote
+                    ? { id: streamVote.id }
+                    : null,
+              }
+            : null
+        }
+        currentItemLabel={
+          typeof toolbarAgendaItemTopNumber === 'number'
+            ? `TOP-${toolbarAgendaItemTopNumber}`
+            : undefined
+        }
+        currentItemTitle={toolbarAgendaItem?.title ?? undefined}
+        onOpenCurrentItem={
+          toolbarAgendaItem
+            ? () =>
+                navigate({
+                  to: '/event/$id/agenda/$agendaItemId',
+                  params: { id: eventId, agendaItemId: toolbarAgendaItem.id },
+                })
+            : undefined
+        }
         hasPreviousItem={agendaNav.hasPreviousItem}
         hasNextItem={agendaNav.hasNextItem}
+        hasStartableItem={agendaNav.hasStartableItem}
+        canMoveToNextItem={agendaNav.canMoveToNextItem}
+        isCurrentItemCompleted={agendaNav.isCurrentItemCompleted}
+        onStartItem={agendaNav.startFirstPendingItem}
         onPreviousItem={agendaNav.moveToPreviousItem}
         onNextItem={agendaNav.moveToNextItem}
         onCompleteItem={agendaNav.completeCurrentItem}
         navigationLoading={agendaNav.isLoading}
+        speakerLoading={actionBarHook.speakerLoading}
+        candidateLoading={actionBarHook.candidateLoading}
+        onJoinSpeakerList={actionBarHook.handleJoinSpeakerList}
+        onLeaveSpeakerList={actionBarHook.handleLeaveSpeakerList}
+        onBecomeCandidate={actionBarHook.handleBecomeCandidate}
+        onWithdrawCandidacy={actionBarHook.handleWithdrawCandidacy}
+        onStartVote={
+          isCRToolbarActive
+            ? selectedCRPhase === 'pending'
+              ? handleToolbarStartVote
+              : undefined
+            : effectiveToolbarVotingPhase === 'pending'
+              ? actionBarHook.handleStartVote
+              : undefined
+        }
+        onStartFinalVote={
+          isCRToolbarActive
+            ? selectedCRPhase === 'indication'
+              ? handleToolbarStartFinalVote
+              : undefined
+            : effectiveToolbarVotingPhase === 'indication'
+              ? handleToolbarStartFinalVote
+              : undefined
+        }
+        onCloseFinalVote={
+          isCRToolbarActive
+            ? selectedCRPhase === 'final_vote'
+              ? handleToolbarCloseVote
+              : undefined
+            : effectiveToolbarVotingPhase === 'final_vote'
+              ? handleToolbarCloseVote
+              : undefined
+        }
+        onVoteClick={
+          isCRToolbarActive
+            ? selectedCRPhase !== 'pending' &&
+              selectedCRPhase !== 'closed' &&
+              !hasUserVotedOnSelectedCR
+              ? actionBarHook.handleVoteClick
+              : undefined
+            : effectiveToolbarVotingPhase &&
+                effectiveToolbarVotingPhase !== 'pending' &&
+                effectiveToolbarVotingPhase !== 'closed'
+              ? actionBarHook.handleVoteClick
+              : undefined
+        }
+        startVoteTooltip={startVoteTooltip}
+        startFinalVoteTooltip={startFinalVoteTooltip}
+        closeVoteTooltip={closeVoteTooltip}
+        castIndicativeVoteTooltip={castIndicativeVoteTooltip}
+        castFinalVoteTooltip={castFinalVoteTooltip}
       />
       {/* Spacer for fixed toolbar */}
       <div className="h-10" />
@@ -495,7 +1016,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                   <CardTitle className="text-lg">
                     {t('features.events.stream.liveStream', 'Live Stream')}
                   </CardTitle>
-                  {isEventStarted && currentAgendaItem && (
+                  {streamIsLive && (
                     <Badge variant="default" className="animate-pulse">
                       {t('features.events.stream.live', 'LIVE')}
                     </Badge>
@@ -531,9 +1052,15 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-medium">{streamAgendaItem.title}</p>
-                        <AgendaStatusBadge status={isEventStarted ? 'active' : 'planned'} />
-                        {!isEventStarted && eventStartTimestamp != null ? (
+                        <p className="font-medium">
+                          {typeof streamAgendaItemTopNumber === 'number'
+                            ? `TOP-${streamAgendaItemTopNumber}${streamAgendaItem.title ? `-${streamAgendaItem.title}` : ''}`
+                            : (streamAgendaItem.title ?? '')}
+                        </p>
+                        <AgendaStatusBadge
+                          status={streamIsLive ? 'active' : (streamRuntimeStatus ?? 'planned')}
+                        />
+                        {!streamIsLive && eventStartTimestamp != null ? (
                           <AgendaCountdownPill
                             label={t('features.events.stream.startsIn', 'Starts in')}
                             endsAt={new Date(eventStartTimestamp)}
@@ -595,7 +1122,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                       title: streamAgendaItem.title || '',
                       description: streamAgendaItem.description ?? undefined,
                       type: streamAgendaItem.type || 'discussion',
-                      status: streamAgendaItem.status || 'planned',
+                      status: streamRuntimeStatus ?? 'planned',
                       duration: streamAgendaItem.duration ?? undefined,
                       scheduledTime:
                         streamAgendaItem.scheduled_time ??
@@ -616,6 +1143,10 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                         : undefined,
                     }}
                   />
+
+                  {streamDelegateTargetEvent ? (
+                    <EventSearchCard event={streamDelegateTargetEvent} />
+                  ) : null}
 
                   {(streamAgendaItem.type === 'speech' || streamSpeakerListData.length > 0) && (
                     <AgendaSpeakerListSection
@@ -856,55 +1387,93 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
         </Card>
       ) : (
         <div className="space-y-6">
-          {filteredAgendaItems.map(item => {
-            const isActive = item.status === 'in-progress';
-
-            // Determine if we need an action button
-            let actionButton = null;
-            if (isActive) {
-              if (item.election) {
-                actionButton = (
-                  <Button size="sm" variant="default">
-                    <Vote className="mr-2 h-4 w-4" />
-                    {t('features.events.agenda.vote')}
-                  </Button>
-                );
-              } else if (item.amendment) {
-                actionButton = (
-                  <Button size="sm" variant="default">
-                    <Gavel className="mr-2 h-4 w-4" />
-                    {t('features.events.agenda.vote')}
-                  </Button>
-                );
-              }
-            }
-
-            // Check if this is the currently active item from event
-            const isCurrentItem = currentAgendaItemId === item.id;
-            const isCompleted = item.status === 'completed' || !!item.completed_at;
+          {filteredAgendaItems.map((item, index) => {
+            const runtimeStatus = getAgendaRuntimeStatus({
+              id: item.id,
+              status: item.status,
+              start_time: item.start_time,
+              end_time: item.end_time,
+              activated_at: item.activated_at,
+              completed_at: item.completed_at,
+              currentAgendaItemId: liveAgendaItemId,
+            });
+            const isLiveItem = liveAgendaItemId === item.id;
+            const isActive = runtimeStatus === 'in-progress';
+            const isSpotlightItem = spotlightAgendaItemId === item.id;
+            const isCompleted = runtimeStatus === 'completed';
+            const topNumber = topNumberByAgendaItemId.get(item.id) ?? index + 1;
+            const displayTimes = getAgendaDisplayTimes({
+              activated_at: item.activated_at,
+              completed_at: item.completed_at,
+              start_time: item.start_time,
+              end_time: item.end_time,
+              calculated_start_time: item.calculated_start_time,
+              calculated_end_time: item.calculated_end_time,
+            });
 
             return (
               <div
                 key={item.id}
-                ref={isCurrentItem ? activeItemRef : undefined}
-                className={isCurrentItem ? 'relative' : ''}
+                ref={isSpotlightItem ? activeItemRef : undefined}
+                className={cn(
+                  'relative rounded-lg transition-colors',
+                  draggedAgendaItemId === item.id ? 'opacity-50' : '',
+                  dragOverAgendaItemId === item.id && draggedAgendaItemId !== item.id
+                    ? 'bg-accent/40'
+                    : ''
+                )}
+                onDragOver={event => {
+                  if (!isAgendaItemDraggable(runtimeStatus)) return;
+                  event.preventDefault();
+                  const target = event.currentTarget as HTMLDivElement;
+                  const rect = target.getBoundingClientRect();
+                  const isAbove = event.clientY < rect.top + rect.height / 2;
+                  setDragOverAgendaItemId(item.id);
+                  setDragInsertPosition(isAbove ? 'above' : 'below');
+                }}
+                onDragEnter={event => {
+                  if (!isAgendaItemDraggable(runtimeStatus)) return;
+                  const target = event.currentTarget as HTMLDivElement;
+                  const rect = target.getBoundingClientRect();
+                  const isAbove = event.clientY < rect.top + rect.height / 2;
+                  setDragOverAgendaItemId(item.id);
+                  setDragInsertPosition(isAbove ? 'above' : 'below');
+                }}
+                onDragLeave={() => {
+                  if (dragOverAgendaItemId === item.id) {
+                    setDragOverAgendaItemId(null);
+                    setDragInsertPosition(null);
+                  }
+                }}
+                onDrop={event => {
+                  if (!isAgendaItemDraggable(runtimeStatus)) return;
+                  event.preventDefault();
+                  handleAgendaDrop(item.id, dragInsertPosition ?? 'below');
+                }}
               >
+                {dragOverAgendaItemId === item.id && dragInsertPosition === 'above' && (
+                  <div className="bg-primary absolute -top-3 right-6 left-6 z-20 h-0.5 rounded-full shadow-[0_0_0_1px_rgba(255,255,255,0.9)]" />
+                )}
                 {/* Active item indicator */}
-                {isCurrentItem && (
+                {isSpotlightItem && (
                   <div className="absolute top-1/2 -left-4 flex -translate-y-1/2 items-center gap-2">
-                    <div className="animate-pulse">
+                    <div className={isLiveItem ? 'animate-pulse' : undefined}>
                       <Play className="fill-primary text-primary h-5 w-5" />
                     </div>
                   </div>
                 )}
                 <TimelineItem
                   order={item.order_index ?? 0}
-                  startTime={formatTime(item.calculated_start_time)}
-                  endTime={formatTime(item.calculated_end_time)}
+                  startTime={formatTime(displayTimes.displayStartTime)}
+                  endTime={formatTime(displayTimes.displayEndTime)}
                   duration={item.duration || 30}
                 >
                   <div
-                    className={`relative ${isCurrentItem ? 'animate-pulse-subtle ring-primary rounded-lg ring-2 ring-offset-2' : ''} ${isCompleted ? 'opacity-70' : ''}`}
+                    className={cn(
+                      'relative',
+                      isSpotlightItem && isLiveItem ? 'animate-pulse-subtle' : '',
+                      isCompleted ? 'opacity-70' : ''
+                    )}
                   >
                     {/* Completion checkmark overlay */}
                     {isCompleted && (
@@ -916,10 +1485,10 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                     )}
                     <AgendaCard
                       id={item.id}
-                      title={item.title ?? ''}
+                      title={`TOP-${topNumber}-${item.title ?? ''}`}
                       description={item.description ?? undefined}
                       type={(item.type ?? 'discussion') as AgendaItemType}
-                      status={(item.status ?? 'pending') as AgendaItemStatus}
+                      status={runtimeStatus as AgendaItemStatus}
                       creatorName={
                         [item.creator?.first_name, item.creator?.last_name]
                           .filter(Boolean)
@@ -928,17 +1497,38 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                       }
                       detailsLink={`/event/${eventId}/agenda/${item.id}`}
                       isActive={isActive}
-                      actionButton={actionButton}
                       footerRight={renderAgendaTimer(item)}
+                      className={cn(
+                        isCompleted ? 'border-emerald-500/70' : undefined,
+                        isSpotlightItem
+                          ? isLiveItem
+                            ? 'border-primary shadow-[0_0_0_1px_hsl(var(--primary)/0.25)]'
+                            : 'border-primary/60'
+                          : undefined
+                      )}
                       showMoveButton={canManageAgenda}
+                      dragHandle={renderAgendaDragHandle(item.id, runtimeStatus)}
                       onMoveClick={() =>
                         setTransferDialogItem({ id: item.id, title: item.title ?? '' })
                       }
                       amendment={item.amendment ?? undefined}
-                      election={item.election?.[0] ?? undefined}
+                      election={
+                        item.election?.[0]
+                          ? {
+                              election_mode: item.election[0].election_mode
+                                ? normalizeElectionMode(item.election[0].election_mode)
+                                : null,
+                              seat_count: item.election[0].seat_count ?? null,
+                              role: item.election[0].role ?? null,
+                            }
+                          : undefined
+                      }
                     />
                   </div>
                 </TimelineItem>
+                {dragOverAgendaItemId === item.id && dragInsertPosition === 'below' && (
+                  <div className="bg-primary absolute right-6 -bottom-3 left-6 z-20 h-0.5 rounded-full shadow-[0_0_0_1px_rgba(255,255,255,0.9)]" />
+                )}
               </div>
             );
           })}
@@ -946,6 +1536,46 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       )}
 
       {/* Transfer Dialog */}
+      <AlertDialog
+        open={overdueStartModalOpen}
+        onOpenChange={open => {
+          if (!open && overdueStartCandidate) {
+            setDismissedOverdueAgendaItemId(overdueStartCandidate.id);
+          }
+          setOverdueStartModalOpen(open);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t('features.events.agenda.startReminderTitle', 'Start overdue agenda item')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t(
+                'features.events.agenda.startReminderDescription',
+                'The next agenda item is overdue. Start it now to keep the live stream and badges in sync.'
+              )}
+              {overdueStartCandidate?.title ? ` (${overdueStartCandidate.title})` : ''}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.actions.later', 'Later')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async event => {
+                event.preventDefault();
+                await agendaNav.startFirstPendingItem();
+                if (overdueStartCandidate) {
+                  setDismissedOverdueAgendaItemId(overdueStartCandidate.id);
+                }
+                setOverdueStartModalOpen(false);
+              }}
+            >
+              {t('features.events.navigation.start', 'Start')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {transferDialogItem && (
         <TransferAgendaItemDialog
           agendaItemId={transferDialogItem.id}
@@ -962,6 +1592,68 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
           }}
         />
       )}
+
+      <VoteCastDialog
+        open={actionBarHook.voteDialogOpen}
+        onOpenChange={actionBarHook.setVoteDialogOpen}
+        phase={isCRToolbarActive ? selectedCRDialogPhase : actionBarHook.voteCasting.phase}
+        title={isCRToolbarActive ? selectedCRTitle : (streamAgendaItem?.title ?? undefined)}
+        candidates={
+          isCRToolbarActive
+            ? undefined
+            : streamElection
+              ? (streamElection.candidates as CandidatesByElectionRow[]).map(candidate => ({
+                  id: candidate.id,
+                  name: candidate.user
+                    ? `${candidate.user.first_name ?? ''} ${candidate.user.last_name ?? ''}`.trim() ||
+                      candidate.user.email ||
+                      'Candidate'
+                    : candidate.name || 'Candidate',
+                  avatar: candidate.user?.avatar ?? undefined,
+                }))
+              : undefined
+        }
+        maxVotes={streamElection?.max_votes ?? 1}
+        electionMode={
+          streamElection?.election_mode ? normalizeElectionMode(streamElection.election_mode) : null
+        }
+        seatCount={streamElection?.seat_count ?? null}
+        choices={
+          isCRToolbarActive
+            ? selectedCRChoices
+            : streamVote
+              ? (streamVote.choices as ChoicesByVoteRow[]).map(choice => ({
+                  id: choice.id,
+                  label: choice.label || 'Choice',
+                }))
+              : undefined
+        }
+        requirePassword
+        passwordError={passwordError}
+        isPasswordVerifying={isPasswordVerifying}
+        onPasswordSubmit={async password => {
+          setPasswordError(null);
+          setIsPasswordVerifying(true);
+          try {
+            await verifyVotingPassword(password);
+          } catch (err) {
+            const message = err instanceof Error ? err.message : 'Verification failed';
+            setPasswordError(message);
+            throw err;
+          } finally {
+            setIsPasswordVerifying(false);
+          }
+        }}
+        onCastVote={
+          isCRToolbarActive
+            ? handleCastCRVoteFromDialog
+            : actionBarHook.voteCasting.castAmendmentVote
+        }
+        onCastElectionVote={
+          isCRToolbarActive ? undefined : actionBarHook.voteCasting.castElectionVote
+        }
+        isLoading={isCRToolbarActive ? false : actionBarHook.voteCasting.isLoading}
+      />
     </div>
   );
 }

@@ -137,22 +137,13 @@ export const navItemsAuthenticated = (
 
     // Only add participants and edit items if user is admin
     if (isAdmin) {
-      items.push(
-        {
-          id: 'roles',
-          label: t ? t('navigation.secondary.event.roles') : 'Roles',
-          icon: 'UserCheck',
-          href: `/event/${eventId}/roles`,
-          onClick: () => navigate({ to: `/event/${eventId}/roles` }),
-        },
-        {
-          id: 'participants',
-          label: t ? t('navigation.secondary.event.participants') : 'Participants',
-          icon: 'Users',
-          href: `/event/${eventId}/participants`,
-          onClick: () => navigate({ to: `/event/${eventId}/participants` }),
-        }
-      );
+      items.push({
+        id: 'participants',
+        label: t ? t('navigation.secondary.event.participants') : 'Participants',
+        icon: 'Users',
+        href: `/event/${eventId}/participants`,
+        onClick: () => navigate({ to: `/event/${eventId}/participants` }),
+      });
     }
 
     if (canViewNotifications) {
@@ -243,10 +234,13 @@ export const navItemsAuthenticated = (
   const getGroupSecondaryNavItems = (
     groupId: string,
     isAdmin = false,
-    isMember = false,
+    _isMember = false,
     canManageMembers = false,
-    canViewNotifications = false
+    canViewNotifications = false,
+    canAccessOperation = false,
+    canAccessEditor = false
   ): NavigationItem[] => {
+    void _isMember;
     const items: NavigationItem[] = [
       {
         id: 'overview',
@@ -258,7 +252,7 @@ export const navItemsAuthenticated = (
     ];
 
     // Add operation as second item if user is a member
-    if (isMember) {
+    if (canAccessOperation) {
       items.push({
         id: 'operation',
         label: t ? t('navigation.secondary.group.operation') : 'Operation',
@@ -300,7 +294,7 @@ export const navItemsAuthenticated = (
     );
 
     // Add editor/documents item if user is a member
-    if (isMember) {
+    if (canAccessEditor) {
       items.push({
         id: 'editor',
         label: t ? t('navigation.secondary.group.editor') : 'Documents',
@@ -436,6 +430,7 @@ export const navItemsAuthenticated = (
   const getBlogSecondaryNavItems = (
     blogId: string,
     isOwner = false,
+    canViewNotifications = false,
     groupId?: string,
     userId?: string
   ): NavigationItem[] => {
@@ -455,7 +450,7 @@ export const navItemsAuthenticated = (
       },
     ];
 
-    // Only add bloggers, editor, notifications and edit items if user is owner
+    // Only add bloggers, editor and edit items if user is owner
     if (isOwner) {
       items.push(
         {
@@ -473,13 +468,6 @@ export const navItemsAuthenticated = (
           onClick: () => navigate({ to: `${blogBase}/editor` }),
         },
         {
-          id: 'notifications',
-          label: t ? t('navigation.secondary.blog.notifications') : 'Notifications',
-          icon: 'Bell',
-          href: `${blogBase}/notifications`,
-          onClick: () => navigate({ to: `${blogBase}/notifications` }),
-        },
-        {
           id: 'edit',
           label: t ? t('navigation.secondary.blog.edit') : 'Edit Blog',
           icon: 'Settings',
@@ -487,6 +475,16 @@ export const navItemsAuthenticated = (
           onClick: () => navigate({ to: `${blogBase}/settings` }),
         }
       );
+    }
+
+    if (canViewNotifications) {
+      items.push({
+        id: 'notifications',
+        label: t ? t('navigation.secondary.blog.notifications') : 'Notifications',
+        icon: 'Bell',
+        href: `${blogBase}/notifications`,
+        onClick: () => navigate({ to: `${blogBase}/notifications` }),
+      });
     }
 
     return items;
@@ -518,7 +516,9 @@ export const navItemsAuthenticated = (
       isBlogOwner?: boolean,
       isGroupMember?: boolean,
       canManageMembers?: boolean,
-      canViewNotifications?: boolean
+      canViewNotifications?: boolean,
+      canAccessGroupOperation?: boolean,
+      canAccessGroupEditor?: boolean
     ) => {
       switch (currentPrimaryRoute) {
         case 'projects':
@@ -540,7 +540,9 @@ export const navItemsAuthenticated = (
                 isGroupAdmin ?? false,
                 isGroupMember ?? false,
                 canManageMembers ?? false,
-                canViewNotifications ?? false
+                canViewNotifications ?? false,
+                canAccessGroupOperation ?? false,
+                canAccessGroupEditor ?? false
               )
             : null;
         case 'amendment':
@@ -555,7 +557,13 @@ export const navItemsAuthenticated = (
             : null;
         case 'blog':
           return blogId
-            ? getBlogSecondaryNavItems(blogId, isBlogOwner ?? false, groupId, userId)
+            ? getBlogSecondaryNavItems(
+                blogId,
+                isBlogOwner ?? false,
+                canViewNotifications ?? false,
+                groupId,
+                userId
+              )
             : null;
         default:
           return null;

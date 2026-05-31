@@ -33,7 +33,6 @@ import { useAllEvents, useAllAmendments, useRolesWithGroups } from '@/zero/event
 import { useAuth } from '@/providers/auth-provider';
 import { toast } from 'sonner';
 import { PageWrapper } from '@/layout/page-wrapper';
-import { notifyAgendaItemCreated } from '@/features/notifications/utils/notification-helpers.ts';
 
 export function CreateAgendaItemForm() {
   const navigate = useNavigate();
@@ -166,15 +165,6 @@ export function CreateAgendaItemForm() {
         }
       }
 
-      // Send notification to event participants
-      const selectedEvent = userEvents.find(e => e.id === formData.eventId);
-      await notifyAgendaItemCreated({
-        senderId: user.id,
-        eventId: formData.eventId,
-        eventTitle: selectedEvent?.title || 'Event',
-        agendaItemTitle: formData.title,
-      });
-
       await Promise.resolve(); // mutations already committed above
 
       toast.success('Agenda item created successfully!');
@@ -205,7 +195,12 @@ export function CreateAgendaItemForm() {
                         userEvents,
                         'event',
                         e => e.title || 'Event',
-                        e => e.description?.substring(0, 60)
+                        e =>
+                          typeof e.description === 'string'
+                            ? e.description.substring(0, 60)
+                            : undefined,
+                        undefined,
+                        e => `/event/${e.id}`
                       )}
                       value={formData.eventId}
                       onChange={(item: TypeaheadItem | null) =>
@@ -286,7 +281,10 @@ export function CreateAgendaItemForm() {
                         items={toTypeaheadItems(
                           userAmendments,
                           'amendment',
-                          a => a.title || 'Amendment'
+                          a => a.title || 'Amendment',
+                          undefined,
+                          undefined,
+                          a => `/amendment/${a.id}`
                         )}
                         value={formData.amendmentId}
                         onChange={(item: TypeaheadItem | null) =>

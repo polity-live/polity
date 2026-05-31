@@ -3,6 +3,9 @@ export const groupsTranslations = {
   description: 'Gruppen verwalten und teilnehmen',
   headerDescription: 'Entdecke und tritt Gemeinschaften bei, die an wichtigen Anliegen arbeiten',
   hierarchicalMembershipDisabled: 'Mitglieder treten hierarchischen Gruppen über Untergruppen bei',
+  automaticSiblingMembershipDisabled: 'Diese Geschwistergruppe hat automatische Mitgliedschaften',
+  openSiblingMembershipRequiresConnectedGroupMember:
+    'Nur aktive Mitglieder der verbundenen Gruppe koennen dieser Geschwistergruppe beitreten',
   create: 'Gruppe erstellen',
   edit: 'Gruppe bearbeiten',
   delete: 'Gruppe löschen',
@@ -78,6 +81,10 @@ export const groupsTranslations = {
     searchPlaceholder: 'Mitglieder nach Name, Rolle oder Status suchen...',
     invite: 'Mitglied einladen',
     manage: 'Mitgliedschaften verwalten',
+    tabs: {
+      composition: 'Zusammensetzung',
+      openAssignments: 'Offene Auftraege',
+    },
     roles: {
       admin: 'Admin',
       member: 'Mitglied',
@@ -94,6 +101,66 @@ export const groupsTranslations = {
       remove: 'Entfernen',
       promote: 'Befördern',
       demote: 'Herabstufen',
+    },
+  },
+  conflicts: {
+    panel: {
+      affectedGroupsTitle: 'Welche Gruppen sind betroffen?',
+      affectedUsersTitle: 'Welche Nutzer sind betroffen?',
+      collidingSourceGroupsTitle: 'Welche speisenden Gruppen kollidieren?',
+      collidingPathsTitle: 'Welche Pfade kollidieren?',
+      baseGroupFallback: 'Basisgruppe',
+      targetGroupFallback: 'Zielgruppe',
+      resolutionTitle: 'Wie kann man es loesen?',
+      selfService: 'Du kannst diesen Konflikt selbst loesen.',
+      notSelfService: 'Du kannst diesen Konflikt nicht selbst loesen.',
+      requiredRole: 'Zustaendig: {{role}}.',
+    },
+    dialog: {
+      triggerLabel: 'Details',
+      title: 'Konfliktdetails',
+      description:
+        'Hier siehst du, warum die Aktion blockiert ist und wie der Konflikt aufgeloest werden kann.',
+      blockedSummaryFallback: 'Die Verknuepfung ist in dieser Konstellation blockiert.',
+      blockedDescription: 'Loese den Konflikt, bevor du die Verknuepfung speicherst.',
+      blockedReasonTitle: 'Warum ist diese Verknuepfung blockiert?',
+    },
+    kinds: {
+      hierarchyMemberOverlap: {
+        summary:
+          'Die Verknuepfung wuerde Mitglieder aus mehreren Untergruppen derselben Hierarchie zusammenfuehren.',
+        explanation:
+          'Mindestens eine Person waere danach gleichzeitig in mehreren speisenden Untergruppen derselben Ziel-Hierarchie aktiv.',
+        resolutions: {
+          alignMemberships: {
+            label: 'Mitgliedschaften angleichen',
+            description:
+              'Entferne oder deaktiviere ueberlappende Mitgliedschaften in einer der konkurrierenden Untergruppen.',
+          },
+          contactOtherGroup: {
+            label: 'Andere Gruppe kontaktieren',
+            description:
+              'Falls du die konkurrierende Untergruppe nicht selbst verwalten kannst, braucht es die zustaendige Admin-Seite.',
+          },
+        },
+      },
+      hierarchyDuplicatePath: {
+        summary: 'Verknuepfung wuerde denselben Unterbau doppelt anbinden.',
+        explanation:
+          'Dieselbe Leaf-Basisgruppe wuerde die Ziel-Hierarchie nach der Aktivierung ueber zwei aktive Pfade erreichen.',
+        resolutions: {
+          removePath: {
+            label: 'Einen Pfad entfernen oder deaktivieren',
+            description:
+              'Die Verknuepfung ist erst moeglich, wenn nur noch ein aktiver Pfad zwischen Basisgruppe und Ziel-Hierarchie uebrig bleibt.',
+          },
+          contactResponsibleGroup: {
+            label: 'Zustaendige Gruppe kontaktieren',
+            description:
+              'Wenn du den konkurrierenden Pfad nicht selbst verwalten kannst, braucht es die Admin-Seite der betroffenen Hierarchie.',
+          },
+        },
+      },
     },
   },
   events: {

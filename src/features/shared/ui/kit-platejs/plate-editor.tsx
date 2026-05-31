@@ -44,6 +44,7 @@ interface PlateEditorProps {
   currentMode?: EditorMode; // Current editing mode from DB
   onModeChange?: (mode: EditorMode) => void; // Mode change callback
   isOwnerOrCollaborator?: boolean; // Whether user can change modes
+  readOnly?: boolean;
   selectedCrIds?: Set<string> | null; // Filter suggestions to selected CRs
   onSelectedCrIdsChange?: (crIds: Set<string> | null) => void;
   /** Remote cursor sync props */
@@ -81,6 +82,7 @@ export function PlateEditor({
   currentMode,
   onModeChange,
   isOwnerOrCollaborator = true,
+  readOnly = false,
   selectedCrIds,
   onSelectedCrIdsChange,
   remoteCursors,
@@ -128,7 +130,6 @@ export function PlateEditor({
       plugins: EditorKit,
       value: baseValue,
     };
-     
   }, [isControlled, initialValue, currentUser, users, documentTitle, documentId]);
 
   const editor = usePlateEditor(editorConfig);
@@ -314,9 +315,9 @@ export function PlateEditor({
           onVoteAbstain,
         }}
       >
-        <Plate editor={editor} onChange={handleEditorChange}>
+        <Plate editor={editor} onChange={handleEditorChange} readOnly={readOnly}>
           {/* Sync external mode with PlateJS internal state */}
-          <ModeSync currentMode={currentMode} />
+          <ModeSync currentMode={currentMode} readOnly={readOnly} />
 
           {/* Sync remote cursors via Supabase Realtime */}
           {remoteCursors?.enabled && (

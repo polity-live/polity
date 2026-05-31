@@ -13,11 +13,8 @@ import { useVoteActions } from '@/zero/votes/useVoteActions';
 import { useAuth } from '@/providers/auth-provider';
 import { usePermissions } from '@/zero/rbac';
 import {
-  notifyVotingPhaseStarted,
-  notifyVotingCompleted,
   notifyAmendmentForwarded,
   notifyAmendmentRejected,
-  notifyElectionResult,
 } from '@/features/notifications/utils/notification-helpers.ts';
 import { toast } from 'sonner';
 import { computeVoteResult, type MajorityType, type VoteResult } from '../logic/computeVoteResult';
@@ -41,11 +38,11 @@ interface VotingSession {
   result?: VoteResult;
   targetEntityType: string;
   targetEntityId: string;
-  votes?: Array<{
+  votes?: {
     id: string;
     vote: VoteValue;
     voter: { id: string; name?: string };
-  }>;
+  }[];
 }
 
 interface UseEventVotingResult {
@@ -94,19 +91,22 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
     if (!agendaItemId || !event?.agenda_items) return null;
 
     const agendaItem = event.agenda_items.find(
-      (ai) => ai.id === agendaItemId && (ai.voting_phase === 'introduction' || ai.voting_phase === 'voting')
+      ai =>
+        ai.id === agendaItemId &&
+        (ai.voting_phase === 'introduction' || ai.voting_phase === 'voting')
     );
 
     if (!agendaItem) return null;
 
     // Flatten final_decisions from all votes on this agenda item
-    const allVotes = agendaItem.votes?.flatMap((vote) =>
-      (vote.final_decisions || []).map((d) => ({
-        id: d.id,
-        vote: ((vote.choices?.find(c => c.id === d.choice_id)?.label) || 'abstain') as VoteValue,
-        voter: { id: d.voter_participation_id || '' },
-      }))
-    ) || [];
+    const allVotes =
+      agendaItem.votes?.flatMap(vote =>
+        (vote.final_decisions || []).map(d => ({
+          id: d.id,
+          vote: (vote.choices?.find(c => c.id === d.choice_id)?.label || 'abstain') as VoteValue,
+          voter: { id: d.voter_participation_id || '' },
+        }))
+      ) || [];
 
     return {
       id: agendaItem.id,
@@ -124,7 +124,7 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
   // Get eligible voters (participants with active_voting right)
   const eligibleVoters = useMemo((): EligibleVoter[] => {
     if (!event?.participants) return [];
-    const votedUserIds = new Set(currentSession?.votes?.map((v) => v.voter?.id) || []);
+    const votedUserIds = new Set(currentSession?.votes?.map(v => v.voter?.id) || []);
     return computeEligibleVoters(event.participants, votedUserIds);
   }, [event?.participants, currentSession?.votes]);
 
@@ -133,21 +133,21 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
 
   const hasUserVoted = useMemo(() => {
     if (!user || !currentSession?.votes) return false;
-    return currentSession.votes.some((v) => v.voter?.id === user.id);
+    return currentSession.votes.some(v => v.voter?.id === user.id);
   }, [user, currentSession?.votes]);
 
   const userVote = useMemo((): VoteValue | null => {
     if (!user || !currentSession?.votes) return null;
-    const vote = currentSession.votes.find((v) => v.voter?.id === user.id);
+    const vote = currentSession.votes.find(v => v.voter?.id === user.id);
     return vote?.vote || null;
   }, [user, currentSession?.votes]);
 
   const voteResults = useMemo(() => {
     const votes = currentSession?.votes || [];
     return {
-      accept: votes.filter((v) => v.vote === 'accept').length,
-      reject: votes.filter((v) => v.vote === 'reject').length,
-      abstain: votes.filter((v) => v.vote === 'abstain').length,
+      accept: votes.filter(v => v.vote === 'accept').length,
+      reject: votes.filter(v => v.vote === 'reject').length,
+      abstain: votes.filter(v => v.vote === 'abstain').length,
     };
   }, [currentSession?.votes]);
 
@@ -248,7 +248,9 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
   );
 
   const startVotingPhase = useCallback(
-    async (sessionId: string, timeLimit?: number) => {
+    async (sessionId: string, _timeLimit?: number) => {
+      void _timeLimit;
+
       if (!user || !canManageVoting) {
         toast.error('You do not have permission to manage voting');
         return;
@@ -260,7 +262,6 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
           id: sessionId,
           voting_phase: 'voting',
         });
-
 
         toast.success('Voting has begun');
       } catch (error) {
@@ -285,7 +286,7 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
         const majorityType = currentSession?.majorityType || 'simple';
         const result = computeVoteResult(accept, reject, totalVoters, majorityType as MajorityType);
 
-        const session = event?.agenda_items?.find((ai) => ai.id === sessionId);
+        const session = event?.agenda_items?.find(ai => ai.id === sessionId);
         const agendaItem = session;
         const agendaItemTitle = agendaItem?.title || 'Current Item';
 
@@ -295,7 +296,6 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
           end_time: Date.now(),
           completed_at: Date.now(),
         });
-
 
         // Handle voting type-specific result processing
         if (currentSession?.votingType === 'amendment' && agendaItem?.amendment) {
@@ -384,7 +384,18 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
         setIsLoading(false);
       }
     },
-    [user, eventId, event?.title, event?.agenda_items, currentSession, voteResults, totalVoters, updateAgendaItem, createAgendaItem, updateAmendment]
+    [
+      user,
+      eventId,
+      event?.title,
+      event?.agenda_items,
+      currentSession,
+      voteResults,
+      totalVoters,
+      updateAgendaItem,
+      createAgendaItem,
+      updateAmendment,
+    ]
   );
 
   const castVote = useCallback(
@@ -412,7 +423,7 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
       setIsLoading(true);
       try {
         // Find the vote record for this agenda item (sessionId = agenda item id)
-        const agendaItem = event?.agenda_items?.find((ai) => ai.id === sessionId);
+        const agendaItem = event?.agenda_items?.find(ai => ai.id === sessionId);
         const voteRecord = agendaItem?.votes?.[0];
         if (!voteRecord) {
           toast.error('No vote found for this agenda item');
@@ -420,7 +431,7 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
         }
 
         // Find the matching choice for the vote value
-        const choice = voteRecord.choices?.find((c) => c.label === vote);
+        const choice = voteRecord.choices?.find(c => c.label === vote);
         if (!choice) {
           toast.error('Invalid vote choice');
           return;

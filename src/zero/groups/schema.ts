@@ -6,7 +6,10 @@ import {
   timestampSchema,
 } from '../shared/helpers';
 
-const groupTypeSchema = z.enum(['base', 'hierarchical']);
+const groupTypeSchema = z.enum(['base', 'hierarchical', 'sibling']);
+const groupSiblingMembershipModeSchema = z.enum(['open', 'elected', 'parliament']);
+const roleAssigneeKindSchema = z.enum(['member', 'guest']);
+const groupGuestStatusSchema = z.enum(['invited', 'active', 'revoked']);
 
 // ── group ─────────────────────────────────────────────────────────────
 const groupBaseSchema = z.object({
@@ -40,6 +43,9 @@ const groupBaseSchema = z.object({
   tiktok: z.string().nullable(),
   visibility: z.string(),
   group_type: groupTypeSchema,
+  connected_group_id: z.string().nullable(),
+  sibling_membership_mode: groupSiblingMembershipModeSchema.nullable(),
+  sibling_role_id: z.string().nullable(),
   owner_id: z.string().nullable(),
   created_at: timestampSchema,
   updated_at: timestampSchema,
@@ -57,7 +63,13 @@ export const groupCreateSchema = groupBaseSchema
     amendment_count: true,
     document_count: true,
   })
-  .extend({ id: z.string() });
+  .extend({
+    id: z.string(),
+    connected_group_id: z.string().nullable().optional(),
+    sibling_membership_mode: groupSiblingMembershipModeSchema.nullable().optional(),
+    sibling_role_id: z.string().nullable().optional(),
+    parliament_source_group_ids: z.array(z.string()).optional(),
+  });
 export const groupUpdateSchema = groupBaseSchema
   .pick({
     name: true,
@@ -84,9 +96,15 @@ export const groupUpdateSchema = groupBaseSchema
     website: true,
     visibility: true,
     group_type: true,
+    connected_group_id: true,
+    sibling_membership_mode: true,
+    sibling_role_id: true,
   })
   .partial()
-  .extend({ id: z.string() });
+  .extend({
+    id: z.string(),
+    parliament_source_group_ids: z.array(z.string()).optional(),
+  });
 export const groupDeleteSchema = z.object({ id: z.string() });
 export type Group = z.infer<typeof groupSelectSchema>;
 
@@ -157,6 +175,87 @@ export const groupMembershipRolesSyncSchema = z.object({
 export const groupMembershipRoleDeleteSchema = z.object({ id: z.string() });
 export type GroupMembershipRole = z.infer<typeof groupMembershipRoleSelectSchema>;
 
+// ── group_guest_access ─────────────────────────────────────────────
+const groupGuestAccessBaseSchema = z.object({
+  id: z.string(),
+  group_id: z.string(),
+  user_id: z.string(),
+  status: groupGuestStatusSchema,
+  invited_by_id: z.string().nullable(),
+  created_at: timestampSchema,
+  updated_at: timestampSchema,
+});
+
+export const groupGuestAccessSelectSchema = groupGuestAccessBaseSchema;
+export const groupGuestAccessCreateSchema = groupGuestAccessBaseSchema
+  .omit({ created_at: true, updated_at: true, invited_by_id: true })
+  .extend({
+    id: z.string(),
+    invited_by_id: z.string().nullable().optional(),
+    role_ids: z.array(z.string()).min(1).optional(),
+  });
+export const groupGuestAccessUpdateSchema = groupGuestAccessBaseSchema
+  .pick({ status: true })
+  .partial()
+  .extend({ id: z.string() });
+export const groupGuestAccessAcceptSchema = z.object({ id: z.string() });
+export const groupGuestAccessDeleteSchema = z.object({ id: z.string() });
+export type GroupGuestAccess = z.infer<typeof groupGuestAccessSelectSchema>;
+
+// ── group_guest_role ───────────────────────────────────────────────
+const groupGuestRoleBaseSchema = z.object({
+  id: z.string(),
+  group_guest_access_id: z.string(),
+  role_id: z.string(),
+  assigned_at: timestampSchema,
+  assigned_by_id: z.string().nullable(),
+  created_at: timestampSchema,
+});
+
+export const groupGuestRoleSelectSchema = groupGuestRoleBaseSchema;
+export const groupGuestRoleCreateSchema = groupGuestRoleBaseSchema
+  .omit({ id: true, assigned_at: true, created_at: true })
+  .extend({
+    id: z.string(),
+    assigned_at: nullableTimestampSchema.optional(),
+    assigned_by_id: z.string().nullable().optional(),
+  });
+export const groupGuestRoleAssignSchema = z.object({
+  group_guest_access_id: z.string(),
+  role_id: z.string(),
+  assigned_by_id: z.string().nullable().optional(),
+});
+export const groupGuestRoleUnassignSchema = z.object({
+  group_guest_access_id: z.string(),
+  role_id: z.string(),
+});
+export const groupGuestRolesSyncSchema = z.object({
+  group_guest_access_id: z.string(),
+  role_ids: z.array(z.string()),
+  assigned_by_id: z.string().nullable().optional(),
+});
+export const groupGuestRoleDeleteSchema = z.object({ id: z.string() });
+export type GroupGuestRole = z.infer<typeof groupGuestRoleSelectSchema>;
+
+// ── group_sibling_source ───────────────────────────────────────────
+const groupSiblingSourceBaseSchema = z.object({
+  id: z.string(),
+  group_id: z.string(),
+  source_group_id: z.string(),
+  created_at: timestampSchema,
+});
+
+export const groupSiblingSourceSelectSchema = groupSiblingSourceBaseSchema;
+export const groupSiblingSourceCreateSchema = groupSiblingSourceBaseSchema
+  .omit({ id: true, created_at: true })
+  .extend({ id: z.string() });
+export const groupSiblingSourceDeleteSchema = z.object({ id: z.string() });
+export const groupSiblingSourceSyncSchema = z.object({
+  group_id: z.string(),
+  source_group_ids: z.array(z.string()),
+});
+export type GroupSiblingSource = z.infer<typeof groupSiblingSourceSelectSchema>;
+
 // ── role ──────────────────────────────────────────────────────────────
 const roleBaseSchema = z.object({
   id: z.string(),
@@ -179,16 +278,25 @@ const roleBaseSchema = z.object({
   scheduled_revote_date: nullableTimestampSchema,
   default_request_role: z.boolean(),
   default_invite_role: z.boolean(),
+  assignee_kind: roleAssigneeKindSchema,
   sort_order: z.number(),
   created_at: timestampSchema,
 });
 
 export const roleSelectSchema = roleBaseSchema;
-export const roleCreateSchema = roleBaseSchema.omit({ id: true, created_at: true }).extend({
-  id: z.string(),
-  default_request_role: z.boolean().optional(),
-  default_invite_role: z.boolean().optional(),
-});
+export const roleCreateSchema = roleBaseSchema
+  .omit({ id: true, created_at: true })
+  .partial()
+  .extend({
+    id: z.string(),
+    assignment_mode: z.enum(['assigned', 'elected']).optional(),
+    visibility: z.string().optional(),
+    is_recurring: z.boolean().optional(),
+    default_request_role: z.boolean().optional(),
+    default_invite_role: z.boolean().optional(),
+    assignee_kind: roleAssigneeKindSchema.optional(),
+    sort_order: z.number().optional(),
+  });
 export const roleUpdateSchema = roleBaseSchema
   .pick({
     name: true,
@@ -205,6 +313,7 @@ export const roleUpdateSchema = roleBaseSchema
     scheduled_revote_date: true,
     default_request_role: true,
     default_invite_role: true,
+    assignee_kind: true,
     sort_order: true,
   })
   .partial()

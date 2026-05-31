@@ -7,6 +7,8 @@ import {
   jsonStringStringRecordSchema,
 } from '../shared/helpers';
 
+const nullableEventScheduleTimestampSchema = z.number().nullable();
+
 // ── event ─────────────────────────────────────────────────────────────
 const eventBaseSchema = z.object({
   id: z.string(),
@@ -27,8 +29,8 @@ const eventBaseSchema = z.object({
   location_url: z.string().nullable(),
   location_coordinates: z.string().nullable(),
   visibility: z.string(),
-  start_date: nullableTimestampSchema,
-  end_date: nullableTimestampSchema,
+  start_date: nullableEventScheduleTimestampSchema,
+  end_date: nullableEventScheduleTimestampSchema,
   timezone: z.string().nullable(),
   capacity: z.number().nullable(),
   participant_count: z.number(),
@@ -45,7 +47,7 @@ const eventBaseSchema = z.object({
   recurrence_rule: z.string().nullable(),
   recurrence_interval: z.number().nullable(),
   recurrence_days: jsonNumberArraySchema.nullable(),
-  recurrence_end_date: nullableTimestampSchema,
+  recurrence_end_date: nullableEventScheduleTimestampSchema,
   original_event_id: z.string().nullable(),
   cancel_reason: z.string().nullable(),
   cancelled_at: nullableTimestampSchema,
@@ -70,11 +72,12 @@ const eventBaseSchema = z.object({
   delegate_approval_type: z.string().nullable(),
   delegate_check_mode: z.string().nullable(),
   main_group_delegate_allocation_mode: z.string().nullable(),
+  delegate_election_mode: z.string().nullable(),
   current_agenda_item_id: z.string().nullable(),
-  amendment_deadline: nullableTimestampSchema,
-  registration_deadline: nullableTimestampSchema,
-  candidacy_deadline: nullableTimestampSchema,
-  delegates_nomination_deadline: nullableTimestampSchema,
+  amendment_deadline: nullableEventScheduleTimestampSchema,
+  registration_deadline: nullableEventScheduleTimestampSchema,
+  candidacy_deadline: nullableEventScheduleTimestampSchema,
+  delegates_nomination_deadline: nullableEventScheduleTimestampSchema,
   group_id: z.string().nullable(),
   creator_id: z.string(),
   created_at: timestampSchema,
@@ -103,6 +106,7 @@ export const eventCreateSchema = eventBaseSchema
     title: z.string(),
     group_id: z.string().nullable(),
     invited_user_ids: z.array(z.string()).optional(),
+    debug_correlation_id: z.string().optional(),
   });
 export const eventUpdateSchema = eventBaseSchema
   .pick({
@@ -143,10 +147,16 @@ export const eventUpdateSchema = eventBaseSchema
     registration_deadline: true,
     amendment_deadline: true,
     candidacy_deadline: true,
+    delegates_nomination_deadline: true,
     group_id: true,
+    has_delegates: true,
+    delegate_seat_allocation_type: true,
+    total_delegate_seats: true,
+    main_group_delegate_allocation_mode: true,
+    delegate_election_mode: true,
   })
   .partial()
-  .extend({ id: z.string() });
+  .extend({ id: z.string(), debug_correlation_id: z.string().optional() });
 export const eventDeleteSchema = z.object({ id: z.string() });
 export const eventCancelSchema = z.object({
   id: z.string(),
@@ -244,6 +254,7 @@ const eventRoleBaseSchema = z.object({
   scheduled_revote_date: nullableTimestampSchema,
   default_request_role: z.boolean(),
   default_invite_role: z.boolean(),
+  assignee_kind: z.enum(['member', 'guest']).nullable(),
   sort_order: z.number(),
   created_at: timestampSchema,
 });
@@ -270,12 +281,14 @@ export const createEventRoleSchema = z.object({
   scheduled_revote_date: nullableTimestampSchema.optional(),
   default_request_role: z.boolean().optional(),
   default_invite_role: z.boolean().optional(),
+  assignee_kind: z.enum(['member', 'guest']).optional(),
   sort_order: z.number().optional(),
 });
 export const updateEventRoleSchema = z.object({
   id: z.string(),
   name: z.string().nullable().optional(),
   description: z.string().nullable().optional(),
+  assignee_kind: z.enum(['member', 'guest']).optional(),
   assignment_mode: z.enum(['assigned', 'elected']).optional(),
   visibility: z.string().optional(),
   term_start_date: nullableTimestampSchema.optional(),

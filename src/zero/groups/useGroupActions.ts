@@ -3,7 +3,7 @@ import { useZero } from '@rocicorp/zero/react';
 import { gatedToast as toast } from '@/features/notifications/utils/gated-toast';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { mutators } from '../mutators';
-import { onServerError } from '../mutate-with-server-check';
+import { onServerError, toMutationError } from '../mutate-with-server-check';
 import { DEFAULT_GROUP_ROLES } from '../rbac/constants';
 import { handleMutationError } from '../rbac/handleMutationError';
 
@@ -22,7 +22,7 @@ export function useGroupActions() {
       const result = zero.mutate(mutators.groups.create(args));
       toast.success(t('features.groups.toasts.created'));
       onServerError(result, msg =>
-        handleMutationError(new Error(msg), t('features.groups.toasts.createFailed'), t)
+        handleMutationError(toMutationError(msg), t('features.groups.toasts.createFailed'), t)
       );
       return result;
     },
@@ -30,12 +30,20 @@ export function useGroupActions() {
   );
 
   const updateGroup = useCallback(
-    (args: Parameters<typeof mutators.groups.update>[0]) => {
+    (
+      args: Parameters<typeof mutators.groups.update>[0],
+      options?: {
+        silent?: boolean;
+      }
+    ) => {
       const result = zero.mutate(mutators.groups.update(args));
-      toast.success(t('features.groups.toasts.updated'));
+      if (!options?.silent) {
+        toast.success(t('features.groups.toasts.updated'));
+      }
       onServerError(result, msg =>
-        handleMutationError(new Error(msg), t('features.groups.toasts.updateFailed'), t)
+        handleMutationError(toMutationError(msg), t('features.groups.toasts.updateFailed'), t)
       );
+      return result;
     },
     [zero]
   );
@@ -45,7 +53,7 @@ export function useGroupActions() {
       const result = zero.mutate(mutators.groups.delete(args));
       toast.success(t('features.groups.toasts.deleted'));
       onServerError(result, msg =>
-        handleMutationError(new Error(msg), t('features.groups.toasts.deleteFailed'), t)
+        handleMutationError(toMutationError(msg), t('features.groups.toasts.deleteFailed'), t)
       );
     },
     [zero]
@@ -57,8 +65,9 @@ export function useGroupActions() {
       const result = zero.mutate(mutators.groups.joinGroup(args));
       toast.success(t('features.groups.toasts.joined'));
       onServerError(result, msg =>
-        handleMutationError(new Error(msg), t('features.groups.toasts.joinFailed'), t)
+        handleMutationError(toMutationError(msg), t('features.groups.toasts.joinFailed'), t)
       );
+      return result;
     },
     [zero]
   );
@@ -68,8 +77,9 @@ export function useGroupActions() {
       const result = zero.mutate(mutators.groups.leaveGroup(args));
       toast.success(t('features.groups.toasts.left'));
       onServerError(result, msg =>
-        handleMutationError(new Error(msg), t('features.groups.toasts.leaveFailed'), t)
+        handleMutationError(toMutationError(msg), t('features.groups.toasts.leaveFailed'), t)
       );
+      return result;
     },
     [zero]
   );
@@ -79,8 +89,9 @@ export function useGroupActions() {
       const result = zero.mutate(mutators.groups.inviteMember(args));
       toast.success(t('features.groups.toasts.invitationSent'));
       onServerError(result, msg =>
-        handleMutationError(new Error(msg), t('features.groups.toasts.inviteFailed'), t)
+        handleMutationError(toMutationError(msg), t('features.groups.toasts.inviteFailed'), t)
       );
+      return result;
     },
     [zero]
   );
@@ -90,8 +101,61 @@ export function useGroupActions() {
       const result = zero.mutate(mutators.groups.acceptInvitation(args));
       toast.success(t('features.groups.toasts.invitationAccepted'));
       onServerError(result, msg =>
-        handleMutationError(new Error(msg), t('features.groups.toasts.acceptInvitationFailed'), t)
+        handleMutationError(
+          toMutationError(msg),
+          t('features.groups.toasts.acceptInvitationFailed'),
+          t
+        )
       );
+      return result;
+    },
+    [zero]
+  );
+
+  const inviteGuest = useCallback(
+    (args: Parameters<typeof mutators.groups.inviteGuest>[0]) => {
+      const result = zero.mutate(mutators.groups.inviteGuest(args));
+      toast.success('Guest invitation sent');
+      onServerError(result, msg =>
+        handleMutationError(toMutationError(msg), 'Failed to invite guest', t)
+      );
+      return result;
+    },
+    [zero]
+  );
+
+  const acceptGuestInvitation = useCallback(
+    (args: Parameters<typeof mutators.groups.acceptGuestInvitation>[0]) => {
+      const result = zero.mutate(mutators.groups.acceptGuestInvitation(args));
+      toast.success('Guest invitation accepted');
+      onServerError(result, msg =>
+        handleMutationError(toMutationError(msg), 'Failed to accept guest invitation', t)
+      );
+      return result;
+    },
+    [zero]
+  );
+
+  const revokeGuestAccess = useCallback(
+    (args: Parameters<typeof mutators.groups.revokeGuestAccess>[0]) => {
+      const result = zero.mutate(mutators.groups.revokeGuestAccess(args));
+      toast.success('Guest access revoked');
+      onServerError(result, msg =>
+        handleMutationError(toMutationError(msg), 'Failed to revoke guest access', t)
+      );
+      return result;
+    },
+    [zero]
+  );
+
+  const syncGuestRoles = useCallback(
+    (args: Parameters<typeof mutators.groups.syncGuestRoles>[0]) => {
+      const result = zero.mutate(mutators.groups.syncGuestRoles(args));
+      toast.success('Guest roles updated');
+      onServerError(result, msg =>
+        handleMutationError(toMutationError(msg), 'Failed to update guest roles', t)
+      );
+      return result;
     },
     [zero]
   );
@@ -101,8 +165,13 @@ export function useGroupActions() {
       const result = zero.mutate(mutators.groups.updateMemberRole(args));
       toast.success(t('features.groups.toasts.memberRoleUpdated'));
       onServerError(result, msg =>
-        handleMutationError(new Error(msg), t('features.groups.toasts.memberRoleUpdateFailed'), t)
+        handleMutationError(
+          toMutationError(msg),
+          t('features.groups.toasts.memberRoleUpdateFailed'),
+          t
+        )
       );
+      return result;
     },
     [zero]
   );
@@ -112,8 +181,13 @@ export function useGroupActions() {
       const result = zero.mutate(mutators.groups.addMembershipRole(args));
       toast.success(t('features.groups.toasts.memberRoleUpdated'));
       onServerError(result, msg =>
-        handleMutationError(new Error(msg), t('features.groups.toasts.memberRoleUpdateFailed'), t)
+        handleMutationError(
+          toMutationError(msg),
+          t('features.groups.toasts.memberRoleUpdateFailed'),
+          t
+        )
       );
+      return result;
     },
     [zero]
   );
@@ -123,8 +197,13 @@ export function useGroupActions() {
       const result = zero.mutate(mutators.groups.removeMembershipRole(args));
       toast.success(t('features.groups.toasts.memberRoleUpdated'));
       onServerError(result, msg =>
-        handleMutationError(new Error(msg), t('features.groups.toasts.memberRoleUpdateFailed'), t)
+        handleMutationError(
+          toMutationError(msg),
+          t('features.groups.toasts.memberRoleUpdateFailed'),
+          t
+        )
       );
+      return result;
     },
     [zero]
   );
@@ -134,8 +213,13 @@ export function useGroupActions() {
       const result = zero.mutate(mutators.groups.syncMembershipRoles(args));
       toast.success(t('features.groups.toasts.memberRoleUpdated'));
       onServerError(result, msg =>
-        handleMutationError(new Error(msg), t('features.groups.toasts.memberRoleUpdateFailed'), t)
+        handleMutationError(
+          toMutationError(msg),
+          t('features.groups.toasts.memberRoleUpdateFailed'),
+          t
+        )
       );
+      return result;
     },
     [zero]
   );
@@ -146,8 +230,9 @@ export function useGroupActions() {
       const result = zero.mutate(mutators.groups.createRole(args));
       toast.success(t('features.groups.toasts.roleCreated'));
       onServerError(result, msg =>
-        handleMutationError(new Error(msg), t('features.groups.toasts.roleCreateFailed'), t)
+        handleMutationError(toMutationError(msg), t('features.groups.toasts.roleCreateFailed'), t)
       );
+      return result;
     },
     [zero]
   );
@@ -157,8 +242,9 @@ export function useGroupActions() {
       const result = zero.mutate(mutators.groups.deleteRole(args));
       toast.success(t('features.groups.toasts.roleDeleted'));
       onServerError(result, msg =>
-        handleMutationError(new Error(msg), t('features.groups.toasts.roleDeleteFailed'), t)
+        handleMutationError(toMutationError(msg), t('features.groups.toasts.roleDeleteFailed'), t)
       );
+      return result;
     },
     [zero]
   );
@@ -167,8 +253,9 @@ export function useGroupActions() {
     (args: Parameters<typeof mutators.groups.updateRole>[0]) => {
       const result = zero.mutate(mutators.groups.updateRole(args));
       onServerError(result, msg =>
-        handleMutationError(new Error(msg), t('features.groups.toasts.roleUpdateFailed'), t)
+        handleMutationError(toMutationError(msg), t('features.groups.toasts.roleUpdateFailed'), t)
       );
+      return result;
     },
     [zero]
   );
@@ -178,8 +265,13 @@ export function useGroupActions() {
       const result = zero.mutate(mutators.groups.assignActionRight(args));
       toast.success(t('features.groups.toasts.actionRightAssigned'));
       onServerError(result, msg =>
-        handleMutationError(new Error(msg), t('features.groups.toasts.actionRightAssignFailed'), t)
+        handleMutationError(
+          toMutationError(msg),
+          t('features.groups.toasts.actionRightAssignFailed'),
+          t
+        )
       );
+      return result;
     },
     [zero]
   );
@@ -189,8 +281,13 @@ export function useGroupActions() {
       const result = zero.mutate(mutators.groups.removeActionRight(args));
       toast.success(t('features.groups.toasts.actionRightRemoved'));
       onServerError(result, msg =>
-        handleMutationError(new Error(msg), t('features.groups.toasts.actionRightRemoveFailed'), t)
+        handleMutationError(
+          toMutationError(msg),
+          t('features.groups.toasts.actionRightRemoveFailed'),
+          t
+        )
       );
+      return result;
     },
     [zero]
   );
@@ -270,8 +367,13 @@ export function useGroupActions() {
       const result = zero.mutate(mutators.groups.createRelationship(args));
       toast.success(t('features.groups.toasts.relationshipCreated'));
       onServerError(result, msg =>
-        handleMutationError(new Error(msg), t('features.groups.toasts.relationshipCreateFailed'), t)
+        handleMutationError(
+          toMutationError(msg),
+          t('features.groups.toasts.relationshipCreateFailed'),
+          t
+        )
       );
+      return result;
     },
     [zero]
   );
@@ -281,8 +383,13 @@ export function useGroupActions() {
       const result = zero.mutate(mutators.groups.updateRelationship(args));
       toast.success(t('features.groups.toasts.relationshipUpdated'));
       onServerError(result, msg =>
-        handleMutationError(new Error(msg), t('features.groups.toasts.relationshipUpdateFailed'), t)
+        handleMutationError(
+          toMutationError(msg),
+          t('features.groups.toasts.relationshipUpdateFailed'),
+          t
+        )
       );
+      return result;
     },
     [zero]
   );
@@ -292,8 +399,13 @@ export function useGroupActions() {
       const result = zero.mutate(mutators.groups.deleteRelationship(args));
       toast.success(t('features.groups.toasts.relationshipDeleted'));
       onServerError(result, msg =>
-        handleMutationError(new Error(msg), t('features.groups.toasts.relationshipDeleteFailed'), t)
+        handleMutationError(
+          toMutationError(msg),
+          t('features.groups.toasts.relationshipDeleteFailed'),
+          t
+        )
       );
+      return result;
     },
     [zero]
   );
@@ -304,11 +416,12 @@ export function useGroupActions() {
       toast.success(t('features.groups.toasts.roleHolderHistoryCreated'));
       onServerError(result, msg =>
         handleMutationError(
-          new Error(msg),
+          toMutationError(msg),
           t('features.groups.toasts.roleHolderHistoryCreateFailed'),
           t
         )
       );
+      return result;
     },
     [zero]
   );
@@ -319,11 +432,12 @@ export function useGroupActions() {
       toast.success(t('features.groups.toasts.roleHolderHistoryUpdated'));
       onServerError(result, msg =>
         handleMutationError(
-          new Error(msg),
+          toMutationError(msg),
           t('features.groups.toasts.roleHolderHistoryUpdateFailed'),
           t
         )
       );
+      return result;
     },
     [zero]
   );
@@ -339,10 +453,14 @@ export function useGroupActions() {
     leaveGroup,
     inviteMember,
     acceptInvitation,
+    inviteGuest,
+    acceptGuestInvitation,
+    revokeGuestAccess,
     updateMemberRole,
     addMembershipRole,
     removeMembershipRole,
     syncMembershipRoles,
+    syncGuestRoles,
 
     // Roles
     createRole,

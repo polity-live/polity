@@ -27,13 +27,14 @@ import { InviteCollaboratorDialog } from './InviteCollaboratorDialog';
 import { SuggestionViewToggle } from './SuggestionViewToggle';
 import { EditorHeader } from './EditorHeader';
 import type { ResolvedSuggestion } from '@/features/shared/ui/ui-platejs/block-suggestion.tsx';
-import type { EditorViewProps, EditorUser, TDiscussion } from '../types';
+import type { EditorViewProps, EditorUser } from '../types';
 import { generateUserColor } from '../logic/editor-helpers';
 
 export function EditorView({
   entityType,
   entityId,
   userId,
+  readOnly = false,
   userRecord,
   capabilities: capabilitiesOverride,
   backUrl,
@@ -49,6 +50,7 @@ export function EditorView({
     entityType,
     entityId,
     userId,
+    readOnly,
     capabilities: capabilitiesOverride,
     agendaItemId,
   });
@@ -105,7 +107,7 @@ export function EditorView({
 
   // Map of online peer userId → peer (for collaborator online indicators)
   const onlinePeerMap = useMemo(() => {
-    const map = new Map<string, typeof onlinePeers[number]>();
+    const map = new Map<string, (typeof onlinePeers)[number]>();
     for (const peer of onlinePeers) {
       map.set(peer.userId, peer);
     }
@@ -126,8 +128,20 @@ export function EditorView({
 
   // Callback to persist a change_request entity when a suggestion is created
   const handleChangeRequestCreate = useCallback(
-    ({ crId, changeRequestEntityId }: { crId: string; discussionId: string; changeRequestEntityId: string }) => {
-      console.log('[EditorView] handleChangeRequestCreate called:', { crId, changeRequestEntityId, amendmentId, entityType });
+    ({
+      crId,
+      changeRequestEntityId,
+    }: {
+      crId: string;
+      discussionId: string;
+      changeRequestEntityId: string;
+    }) => {
+      console.log('[EditorView] handleChangeRequestCreate called:', {
+        crId,
+        changeRequestEntityId,
+        amendmentId,
+        entityType,
+      });
       if (!amendmentId) return;
       editorOps.handleSuggestionCreated({
         id: changeRequestEntityId,
@@ -160,21 +174,12 @@ export function EditorView({
         discussions,
         suggestion,
         mode,
-        amendmentId,
+        amendmentId
       );
 
       setDiscussions(updatedDiscussions);
     },
-    [
-      contentEntityId,
-      userId,
-      content,
-      discussions,
-      mode,
-      amendmentId,
-      setDiscussions,
-      editorOps,
-    ]
+    [contentEntityId, userId, content, discussions, mode, amendmentId, setDiscussions, editorOps]
   );
 
   // Handle suggestion declined
@@ -188,21 +193,12 @@ export function EditorView({
         discussions,
         suggestion,
         mode,
-        amendmentId,
+        amendmentId
       );
 
       setDiscussions(updatedDiscussions);
     },
-    [
-      contentEntityId,
-      userId,
-      content,
-      discussions,
-      mode,
-      amendmentId,
-      setDiscussions,
-      editorOps,
-    ]
+    [contentEntityId, userId, content, discussions, mode, amendmentId, setDiscussions, editorOps]
   );
 
   // Handle voting
@@ -269,7 +265,11 @@ export function EditorView({
     if (entityType === 'blog') {
       return (
         <Badge variant="outline" className="capitalize">
-          {entity.visibility === 'public' ? 'Public' : entity.visibility === 'authenticated' ? 'Authenticated' : 'Private'}
+          {entity.visibility === 'public'
+            ? 'Public'
+            : entity.visibility === 'authenticated'
+              ? 'Authenticated'
+              : 'Private'}
         </Badge>
       );
     }
@@ -291,7 +291,7 @@ export function EditorView({
       case 'document':
         return '/editor';
       case 'groupDocument':
-        return entity?.metadata?.groupId ? `/group/${entity.metadata.groupId}` : '/';
+        return entity?.metadata?.groupId ? `/group/${entity.metadata.groupId}/editor` : '/';
       default:
         return '/';
     }
@@ -306,7 +306,7 @@ export function EditorView({
       case 'document':
         return t('features.editor.navigation.backToDocuments');
       case 'groupDocument':
-        return t('features.editor.navigation.backToGroup');
+        return t('features.editor.navigation.backToDocuments');
       default:
         return t('common.back');
     }
@@ -317,7 +317,7 @@ export function EditorView({
     return (
       <Card>
         <CardContent className="flex items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <Loader2 className="text-muted-foreground h-8 w-8 animate-spin" />
         </CardContent>
       </Card>
     );
@@ -328,7 +328,7 @@ export function EditorView({
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-20 text-center">
-          <p className="mb-4 text-lg text-muted-foreground">
+          <p className="text-muted-foreground mb-4 text-lg">
             {t('features.editor.errors.notFound')}
           </p>
           <Button onClick={() => navigate({ to: backUrl || defaultBackUrl })}>
@@ -345,7 +345,7 @@ export function EditorView({
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-20 text-center">
-          <p className="mb-4 text-lg text-muted-foreground">
+          <p className="text-muted-foreground mb-4 text-lg">
             {t('features.editor.errors.noAccess')}
           </p>
           <Button onClick={() => navigate({ to: backUrl || defaultBackUrl })}>
@@ -379,7 +379,7 @@ export function EditorView({
           )}
 
           {/* Version Control */}
-          {capabilities.versioning && userId && contentEntityId && (
+          {capabilities.versioning && userId && contentEntityId && !readOnly && (
             <VersionControl
               entityType={entityType}
               entityId={contentEntityId}
@@ -392,16 +392,20 @@ export function EditorView({
           )}
 
           {/* Suggestion View Toggle (visible in suggest/vote modes) */}
-          {(mode === 'suggest_internal' || mode === 'suggest_event' || mode === 'vote_internal' || mode === 'vote_event') && discussions.length > 0 && (
-            <SuggestionViewToggle
-              discussions={discussions}
-              selectedCrIds={selectedCrIds}
-              onSelectedCrIdsChange={setSelectedCrIds}
-            />
-          )}
+          {(mode === 'suggest_internal' ||
+            mode === 'suggest_event' ||
+            mode === 'vote_internal' ||
+            mode === 'vote_event') &&
+            discussions.length > 0 && (
+              <SuggestionViewToggle
+                discussions={discussions}
+                selectedCrIds={selectedCrIds}
+                onSelectedCrIdsChange={setSelectedCrIds}
+              />
+            )}
 
           {/* Invite Collaborators */}
-          {capabilities.invites && userId && (
+          {capabilities.invites && userId && !readOnly && (
             <InviteCollaboratorDialog
               entityType={entityType}
               entityId={contentEntityId}
@@ -425,6 +429,7 @@ export function EditorView({
               onTitleChange={setTitle}
               isEditingTitle={isEditingTitle}
               setIsEditingTitle={setIsEditingTitle}
+              canEditTitle={!readOnly}
               isSavingTitle={isSavingTitle}
               saveStatus={saveStatus}
               hasUnsavedChanges={hasUnsavedChanges}
@@ -461,17 +466,20 @@ export function EditorView({
           {/* Collaborators list */}
           {entity.collaborators.length > 0 && (
             <div className="mt-4 flex flex-wrap items-center gap-2">
-              <span className="text-sm text-muted-foreground">
+              <span className="text-muted-foreground text-sm">
                 {t('features.editor.metadata.collaborators')}:
               </span>
               {entity.collaborators.map(collab => {
-                const isOnline = onlinePeerMap.has(collab.user.id) || collab.user.id === userId || activeCursorUserIds.has(collab.user.id);
+                const isOnline =
+                  onlinePeerMap.has(collab.user.id) ||
+                  collab.user.id === userId ||
+                  activeCursorUserIds.has(collab.user.id);
                 const userColor = generateUserColor(collab.user.id);
 
                 return (
                   <div
                     key={collab.id}
-                    className="relative flex items-center gap-1 rounded-full bg-muted px-2 py-1"
+                    className="bg-muted relative flex items-center gap-1 rounded-full px-2 py-1"
                     style={{ borderWidth: 2, borderStyle: 'solid', borderColor: userColor }}
                   >
                     <div className="relative">
@@ -485,7 +493,7 @@ export function EditorView({
                       </Avatar>
                       {isOnline && (
                         <span
-                          className="absolute -bottom-0.5 -right-0.5 block h-2 w-2 rounded-full ring-1 ring-background animate-pulse"
+                          className="ring-background absolute -right-0.5 -bottom-0.5 block h-2 w-2 animate-pulse rounded-full ring-1"
                           style={{ backgroundColor: '#22c55e' }}
                         />
                       )}
@@ -507,7 +515,8 @@ export function EditorView({
               documentTitle={title}
               currentMode={mode}
               onModeChange={setMode}
-              isOwnerOrCollaborator={isOwnerOrCollaborator}
+              isOwnerOrCollaborator={!readOnly && isOwnerOrCollaborator}
+              readOnly={readOnly}
               currentUser={
                 currentUser
                   ? {

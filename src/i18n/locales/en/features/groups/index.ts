@@ -3,6 +3,9 @@ export const groupsTranslations = {
   description: 'Manage and participate in groups',
   headerDescription: 'Discover and join communities working on important causes',
   hierarchicalMembershipDisabled: 'Members join hierarchical groups through subgroups',
+  automaticSiblingMembershipDisabled: 'This sibling group uses automatic memberships',
+  openSiblingMembershipRequiresConnectedGroupMember:
+    'Only active members of the connected group can join this sibling group',
   create: 'Create Group',
   edit: 'Edit Group',
   delete: 'Delete Group',
@@ -77,6 +80,10 @@ export const groupsTranslations = {
     searchPlaceholder: 'Search members by name, role, or status...',
     invite: 'Invite Member',
     manage: 'Manage Memberships',
+    tabs: {
+      composition: 'Composition',
+      openAssignments: 'Open Assignments',
+    },
     roles: {
       admin: 'Admin',
       member: 'Member',
@@ -93,6 +100,65 @@ export const groupsTranslations = {
       remove: 'Remove',
       promote: 'Promote',
       demote: 'Demote',
+    },
+  },
+  conflicts: {
+    panel: {
+      affectedGroupsTitle: 'Which groups are affected?',
+      affectedUsersTitle: 'Which users are affected?',
+      collidingSourceGroupsTitle: 'Which feeding groups are colliding?',
+      collidingPathsTitle: 'Which paths are colliding?',
+      baseGroupFallback: 'Base group',
+      targetGroupFallback: 'Target group',
+      resolutionTitle: 'How can this be resolved?',
+      selfService: 'You can resolve this conflict yourself.',
+      notSelfService: 'You cannot resolve this conflict yourself.',
+      requiredRole: 'Responsible: {{role}}.',
+    },
+    dialog: {
+      triggerLabel: 'Details',
+      title: 'Conflict details',
+      description:
+        'Here you can see why the action is blocked and how the conflict can be resolved.',
+      blockedSummaryFallback: 'Linking is blocked in this configuration.',
+      blockedDescription: 'Resolve the conflict before saving the link.',
+      blockedReasonTitle: 'Why is this link blocked?',
+    },
+    kinds: {
+      hierarchyMemberOverlap: {
+        summary: 'Linking would merge members from multiple subgroups of the same hierarchy.',
+        explanation:
+          'At least one person would then be active in multiple feeding subgroups of the same target hierarchy at the same time.',
+        resolutions: {
+          alignMemberships: {
+            label: 'Align memberships',
+            description:
+              'Remove or deactivate overlapping memberships in one of the competing subgroups.',
+          },
+          contactOtherGroup: {
+            label: 'Contact the other group',
+            description:
+              'If you cannot manage the competing subgroup yourself, the responsible admin side is required.',
+          },
+        },
+      },
+      hierarchyDuplicatePath: {
+        summary: 'Linking would connect the same subtree twice.',
+        explanation:
+          'The same leaf base group would reach the target hierarchy via two active paths after activation.',
+        resolutions: {
+          removePath: {
+            label: 'Remove or deactivate one path',
+            description:
+              'Linking is only possible when exactly one active path remains between the base group and the target hierarchy.',
+          },
+          contactResponsibleGroup: {
+            label: 'Contact the responsible group',
+            description:
+              'If you cannot manage the competing path yourself, the affected hierarchy admin side is required.',
+          },
+        },
+      },
     },
   },
   events: {

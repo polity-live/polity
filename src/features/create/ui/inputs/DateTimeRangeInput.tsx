@@ -2,6 +2,7 @@ import { Calendar } from '@/features/shared/ui/ui/calendar';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Label } from '@/features/shared/ui/ui/label';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { formatLocalDateInput, parseLocalDateInput } from '@/features/shared/logic/localDateTime';
 import { CreateInputField } from '../CreateFields';
 
 interface DateTimeRangeInputProps {
@@ -13,26 +14,6 @@ interface DateTimeRangeInputProps {
   showEnd?: boolean;
 }
 
-function parseInputDate(value: string): Date | undefined {
-  if (!value) {
-    return undefined;
-  }
-
-  const parsedDate = new Date(`${value}T00:00:00`);
-  return Number.isNaN(parsedDate.getTime()) ? undefined : parsedDate;
-}
-
-function formatInputDate(value: Date | undefined): string {
-  if (!value) {
-    return '';
-  }
-
-  const year = value.getFullYear();
-  const month = String(value.getMonth() + 1).padStart(2, '0');
-  const day = String(value.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
 export function DateTimeRangeInput({
   startDate,
   startTime,
@@ -42,14 +23,17 @@ export function DateTimeRangeInput({
   showEnd = true,
 }: DateTimeRangeInputProps) {
   const { t } = useTranslation();
-  const selectedStartDate = parseInputDate(startDate);
-  const selectedEndDate = showEnd ? parseInputDate(endDate) : undefined;
+  const selectedStartDate = parseLocalDateInput(startDate);
+  const selectedEndDate = showEnd ? parseLocalDateInput(endDate) : undefined;
 
   return (
-    <div className="space-y-4">
-      <Label>{t('pages.create.event.dateTime')}</Label>
+    <div className="space-y-5">
+      <div className="space-y-1">
+        <Label>{t('pages.create.event.dateTime')}</Label>
+        <p className="text-muted-foreground text-sm">{t('pages.create.event.tips.dateTime')}</p>
+      </div>
       <div className={showEnd ? 'grid gap-4 lg:grid-cols-2' : 'grid gap-4'}>
-        <div className="space-y-3 rounded-lg border p-4">
+        <div className="border-border/70 bg-background/70 space-y-3 rounded-xl border p-4">
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-2">
               <Label>{t('pages.create.event.startDate')}</Label>
@@ -67,19 +51,20 @@ export function DateTimeRangeInput({
             <Calendar
               mode="single"
               selected={selectedStartDate}
-              onSelect={value => onChange('startDate', formatInputDate(value))}
-              className="rounded-md border"
+              onSelect={value => onChange('startDate', formatLocalDateInput(value))}
+              className="rounded-lg border"
             />
           </div>
           <CreateInputField
             label={t('pages.create.event.startTime')}
+            hint={t('common.validation.timeHint')}
             type="time"
             value={startTime}
             onValueChange={value => onChange('startTime', value)}
           />
         </div>
         {showEnd ? (
-          <div className="space-y-3 rounded-lg border p-4">
+          <div className="border-border/70 bg-background/70 space-y-3 rounded-xl border p-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">
                 <Label>{t('pages.create.event.endDate')}</Label>
@@ -97,8 +82,8 @@ export function DateTimeRangeInput({
               <Calendar
                 mode="single"
                 selected={selectedEndDate}
-                onSelect={value => onChange('endDate', formatInputDate(value))}
-                className="rounded-md border"
+                onSelect={value => onChange('endDate', formatLocalDateInput(value))}
+                className="rounded-lg border"
                 disabled={date =>
                   selectedStartDate ? date.getTime() < selectedStartDate.getTime() : false
                 }
@@ -106,6 +91,7 @@ export function DateTimeRangeInput({
             </div>
             <CreateInputField
               label={t('pages.create.event.endTime')}
+              hint={t('common.validation.timeHint')}
               type="time"
               value={endTime}
               onValueChange={value => onChange('endTime', value)}

@@ -40,7 +40,14 @@ export function useCalendarPage() {
       left.name.localeCompare(right.name)
     );
 
-    return toTypeaheadItems(sortedGroups, 'group', group => group.name);
+    return toTypeaheadItems(
+      sortedGroups,
+      'group',
+      group => group.name,
+      undefined,
+      undefined,
+      group => `/group/${group.id}`
+    );
   }, [events]);
   const filter = useCalendarEventFilter(events, { selectedGroupId });
 

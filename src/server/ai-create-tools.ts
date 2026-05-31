@@ -22,7 +22,9 @@ import { serverMutators } from '@/zero/server-mutators';
 import { zql } from '@/zero/schema';
 
 const visibilitySchema = z.enum(['public', 'authenticated', 'private']);
-const groupTypeSchema = z.enum(['base', 'hierarchical']);
+const groupTypeSchema = z.enum(['base', 'hierarchical', 'sibling']);
+const siblingMembershipModeSchema = z.enum(['open', 'elected', 'parliament']);
+const relationshipDirectionSchema = z.enum(['none', 'outgoing', 'incoming', 'bidirectional']);
 const eventTypeSchema = z.enum(['delegate_assembly', 'general_assembly', 'open', 'on_invite']);
 const locationTypeSchema = z.enum(['physical', 'online']);
 const todoPrioritySchema = z.enum(['low', 'medium', 'high']);
@@ -352,6 +354,60 @@ async function assertGroupAccess(
   );
 }
 
+async function assertGroupRoleReference(
+  tx: ZeroTransaction,
+  groupId: string,
+  roleReference: string
+) {
+  const normalizedReference = normalizeReference(roleReference);
+  if (!normalizedReference) {
+    throw new Error(
+      'Missing role reference. Ask the user for the exact role ID or exact role name.'
+    );
+  }
+
+  if (isUuidReference(normalizedReference)) {
+    const role = await tx.run(zql.role.where('id', normalizedReference).one());
+    if (!role || role.group_id !== groupId || role.scope !== 'group') {
+      throw new Error('Role not found in the connected group.');
+    }
+    return role;
+  }
+
+  const exactNameMatches = await tx.run(
+    zql.role.where('group_id', groupId).where('scope', 'group').where('name', normalizedReference)
+  );
+
+  if ((exactNameMatches?.length ?? 0) === 1) {
+    return exactNameMatches[0];
+  }
+
+  if ((exactNameMatches?.length ?? 0) > 1) {
+    throw new Error(
+      `Multiple roles named "${normalizedReference}" exist in the connected group. Ask the user for the exact role ID.`
+    );
+  }
+
+  const fuzzyMatches = await tx.run(
+    zql.role
+      .where('group_id', groupId)
+      .where('scope', 'group')
+      .where('name', 'ILIKE', normalizedReference)
+  );
+
+  if ((fuzzyMatches?.length ?? 0) === 1) {
+    return fuzzyMatches[0];
+  }
+
+  if ((fuzzyMatches?.length ?? 0) > 1) {
+    throw new Error(
+      `Multiple roles match "${normalizedReference}" in the connected group. Ask the user for the exact role ID.`
+    );
+  }
+
+  throw new Error(`No group role matches "${normalizedReference}".`);
+}
+
 async function assertEventAccess(
   tx: ZeroTransaction,
   userId: string,
@@ -500,6 +556,19 @@ async function createScopedRolesAndRights(
         (scope.blog_id && 'blog') ||
         null,
       ...buildScopeRecord(scope),
+      assignee_kind: 'member',
+      assignment_mode: 'assigned',
+      visibility: 'public',
+      term_start_date: null,
+      is_recurring: false,
+      recurrence_pattern: null,
+      recurrence_rule: null,
+      recurrence_interval: null,
+      recurrence_days: null,
+      recurrence_end_date: null,
+      scheduled_revote_date: null,
+      default_request_role: false,
+      default_invite_role: false,
       sort_order: getSortOrder(index, roles.length),
       created_at: now,
     });
@@ -692,6 +761,25 @@ export function buildAiCreateTools(userId: string) {
         name: z.string().trim().min(1),
         description: z.string().trim().optional(),
         groupType: groupTypeSchema.default('base'),
+        connectedGroupId: z.string().trim().optional().describe(groupReferenceDescription),
+        siblingMembershipMode: siblingMembershipModeSchema.optional(),
+        connectedRoleId: z.string().trim().optional(),
+        parliamentSourceGroupIds: z.array(z.string().trim().min(1)).default([]),
+        relationshipRights: z
+          .object({
+            informationRight: relationshipDirectionSchema.default('none'),
+            amendmentRight: relationshipDirectionSchema.default('none'),
+            rightToSpeak: relationshipDirectionSchema.default('none'),
+            activeVotingRight: relationshipDirectionSchema.default('none'),
+            passiveVotingRight: relationshipDirectionSchema.default('none'),
+          })
+          .default({
+            informationRight: 'none',
+            amendmentRight: 'none',
+            rightToSpeak: 'none',
+            activeVotingRight: 'none',
+            passiveVotingRight: 'none',
+          }),
         visibility: visibilitySchema.default('public'),
         email: z.string().trim().email().optional(),
         country: z.string().trim().optional(),
@@ -717,6 +805,11 @@ export function buildAiCreateTools(userId: string) {
         name,
         description,
         groupType,
+        connectedGroupId,
+        siblingMembershipMode,
+        connectedRoleId,
+        parliamentSourceGroupIds,
+        relationshipRights,
         visibility,
         email,
         country,
@@ -737,8 +830,41 @@ export function buildAiCreateTools(userId: string) {
         const normalizedInviteUserIds = normalizeStringList(invitedUserIds).filter(
           invitedUserId => invitedUserId !== userId
         );
+        let resolvedConnectedGroupId: string | null = null;
+        let resolvedConnectedRoleId: string | null = null;
+        let resolvedParliamentSourceGroupIds: string[] = [];
 
         await executeZeroTransaction(zeroContext, async (tx, ctx) => {
+          if (groupType === 'sibling') {
+            if (!connectedGroupId) {
+              throw new Error('connectedGroupId is required for sibling groups.');
+            }
+
+            if (!siblingMembershipMode) {
+              throw new Error('siblingMembershipMode is required for sibling groups.');
+            }
+
+            const connectedGroup = await assertGroupAccess(tx, userId, connectedGroupId);
+            resolvedConnectedGroupId = connectedGroup.id;
+
+            if (siblingMembershipMode === 'elected') {
+              if (!connectedRoleId) {
+                throw new Error('connectedRoleId is required for elected sibling groups.');
+              }
+              resolvedConnectedRoleId = (
+                await assertGroupRoleReference(tx, connectedGroup.id, connectedRoleId)
+              ).id;
+            }
+
+            if (siblingMembershipMode === 'parliament') {
+              resolvedParliamentSourceGroupIds = [];
+              for (const sourceGroupReference of normalizeStringList(parliamentSourceGroupIds)) {
+                const sourceGroup = await assertGroupAccess(tx, userId, sourceGroupReference);
+                resolvedParliamentSourceGroupIds.push(sourceGroup.id);
+              }
+            }
+          }
+
           await runZeroMutator(
             tx,
             serverMutators.groups.create({
@@ -767,6 +893,11 @@ export function buildAiCreateTools(userId: string) {
               tiktok: null,
               visibility,
               group_type: groupType,
+              connected_group_id: resolvedConnectedGroupId,
+              sibling_membership_mode:
+                groupType === 'sibling' ? (siblingMembershipMode ?? null) : null,
+              sibling_role_id: resolvedConnectedRoleId,
+              parliament_source_group_ids: resolvedParliamentSourceGroupIds,
               owner_id: userId,
             }),
             ctx
@@ -774,18 +905,60 @@ export function buildAiCreateTools(userId: string) {
 
           await linkEntityHashtags(tx, 'group', groupId, hashtags);
 
-          for (const invitedUserId of normalizedInviteUserIds) {
-            await runZeroMutator(
-              tx,
-              serverMutators.groups.inviteMember({
-                id: crypto.randomUUID(),
-                group_id: groupId,
-                user_id: invitedUserId,
-                status: 'invited',
-                visibility,
-              }),
-              ctx
-            );
+          if (groupType !== 'sibling' || siblingMembershipMode === 'open') {
+            for (const invitedUserId of normalizedInviteUserIds) {
+              await runZeroMutator(
+                tx,
+                serverMutators.groups.inviteMember({
+                  id: crypto.randomUUID(),
+                  group_id: groupId,
+                  user_id: invitedUserId,
+                  status: 'invited',
+                  visibility,
+                }),
+                ctx
+              );
+            }
+          }
+
+          if (groupType === 'sibling' && resolvedConnectedGroupId) {
+            for (const [right, direction] of Object.entries(relationshipRights)) {
+              if (direction === 'none') {
+                continue;
+              }
+
+              if (direction === 'outgoing' || direction === 'bidirectional') {
+                await runZeroMutator(
+                  tx,
+                  serverMutators.groups.createRelationship({
+                    id: crypto.randomUUID(),
+                    group_id: groupId,
+                    related_group_id: resolvedConnectedGroupId,
+                    relationship_type: 'sibling',
+                    with_right: right,
+                    status: 'requested',
+                    initiator_group_id: groupId,
+                  }),
+                  ctx
+                );
+              }
+
+              if (direction === 'incoming' || direction === 'bidirectional') {
+                await runZeroMutator(
+                  tx,
+                  serverMutators.groups.createRelationship({
+                    id: crypto.randomUUID(),
+                    group_id: resolvedConnectedGroupId,
+                    related_group_id: groupId,
+                    relationship_type: 'sibling',
+                    with_right: right,
+                    status: 'requested',
+                    initiator_group_id: groupId,
+                  }),
+                  ctx
+                );
+              }
+            }
           }
 
           if (constitutionalEvent?.title) {

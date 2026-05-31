@@ -7,6 +7,7 @@ import type { CandidatesByElectionRow } from '@/zero/elections/queries';
 import type { ChoicesByVoteRow } from '@/zero/votes/queries';
 import { TransferAgendaItemDialog } from './TransferAgendaItemDialog';
 import { AgendaItemContextCard } from './AgendaItemContextCard';
+import { EventSearchCard } from '@/features/search/ui/EventSearchCard';
 import { AgendaRelatedAmendmentCard } from './AgendaRelatedEntityCard';
 import { AgendaSpeakerListSection } from './AgendaSpeakerListSection';
 import { AgendaVoteSection } from './AgendaVoteSection';
@@ -21,6 +22,7 @@ import { AccreditationSection } from './AccreditationSection';
 import { usePermissions } from '@/zero/rbac';
 import { useVotingPasswordActions } from '@/zero/voting-password/useVotingPasswordActions';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
+import { useEventById } from '@/zero/events';
 import { toast } from 'sonner';
 import type { Value } from 'platejs';
 import type { TDiscussion } from '@/features/editor/types';
@@ -33,6 +35,8 @@ import { buildFinalVoteFromAgendaVote } from '../logic/buildFinalVoteFromAgendaV
 import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
 import { extractSuggestionContent } from '@/features/change-requests/utils/suggestion-extraction';
 import type { ChangeRequestDiffData } from './ChangeRequestTimelineCard';
+import { getAgendaRuntimeStatus } from '../logic/getAgendaRuntimeStatus';
+import { normalizeElectionMode } from '@/features/elections/logic/electionMode';
 
 function getEffectiveVotingPhase(status?: string | null, fallback?: string | null): string | null {
   if (status === 'final' || status === 'final_vote') return 'final_vote';
@@ -83,6 +87,10 @@ export function EventAgendaItemDetail({
     handleDelete,
     handleAddToSpeakerList,
   } = useEventAgendaItem(eventId, agendaItemId);
+  const delegateAssignmentMeta = (
+    election as { delegate_assignment_meta?: { targetEventId?: string } | null } | null
+  )?.delegate_assignment_meta;
+  const { event: delegateTargetEvent } = useEventById(delegateAssignmentMeta?.targetEventId);
 
   const { can, canVote, canBeCandidate } = usePermissions({ eventId });
   const canManageAgenda = can('manage', 'agendaItems');
@@ -402,6 +410,32 @@ export function EventAgendaItemDetail({
   }, [selectedCRPhase]);
 
   const toolbarVotingPhase = isCRToolbarActive ? selectedCRPhase : effectiveVotingPhase;
+  const toolbarAgendaItem = agendaNav.currentAgendaItem ?? agendaItem;
+  const toolbarAgendaItemIndex = toolbarAgendaItem?.id
+    ? toolbarAgendaItem.id === agendaNav.currentAgendaItem?.id
+      ? agendaNav.currentIndex
+      : typeof agendaItem?.order_index === 'number'
+        ? Math.max(agendaItem.order_index - 1, 0)
+        : 0
+    : -1;
+  const toolbarAgendaItemTopNumber =
+    toolbarAgendaItemIndex >= 0 ? toolbarAgendaItemIndex + 1 : undefined;
+  const detailRuntimeStatus = agendaItem
+    ? getAgendaRuntimeStatus({
+        id: agendaItem.id,
+        status: agendaItem.status,
+        start_time: agendaItem.start_time,
+        end_time: agendaItem.end_time,
+        activated_at: agendaItem.activated_at,
+        completed_at: agendaItem.completed_at,
+        currentAgendaItemId:
+          agendaNav.currentAgendaItem?.id ?? event?.current_agenda_item_id ?? null,
+      })
+    : 'pending';
+  const handleToolbarStartItem = useCallback(() => {
+    if (!agendaItem) return Promise.resolve();
+    return agendaNav.activateAgendaItem(agendaItem.id);
+  }, [agendaItem, agendaNav]);
 
   const startVoteTooltip = isCRToolbarActive
     ? isSelectedCRFinalVote
@@ -610,7 +644,7 @@ export function EventAgendaItemDetail({
         currentAgendaItem={{
           id: agendaItem.id,
           type: agendaItem.type,
-          status: agendaItem.status,
+          status: detailRuntimeStatus,
           voting_phase: toolbarVotingPhase,
           election: election ? { id: election.id } : null,
           vote: isCRToolbarActive
@@ -627,8 +661,25 @@ export function EventAgendaItemDetail({
         isEventStarted={event?.status === 'active' || event?.status === 'in-progress'}
         isUserInSpeakerList={actionBarHook.isUserInSpeakerList}
         isUserCandidate={actionBarHook.isUserCandidate}
+        currentItemLabel={
+          toolbarAgendaItemTopNumber ? `TOP-${toolbarAgendaItemTopNumber}` : undefined
+        }
+        currentItemTitle={toolbarAgendaItem?.title ?? undefined}
+        onOpenCurrentItem={
+          toolbarAgendaItem
+            ? () =>
+                navigate({
+                  to: '/event/$id/agenda/$agendaItemId',
+                  params: { id: eventId, agendaItemId: toolbarAgendaItem.id },
+                })
+            : undefined
+        }
         hasPreviousItem={agendaNav.hasPreviousItem}
         hasNextItem={agendaNav.hasNextItem}
+        hasStartableItem={agendaNav.hasStartableItem}
+        canMoveToNextItem={agendaNav.canMoveToNextItem}
+        isCurrentItemCompleted={agendaNav.isCurrentItemCompleted}
+        onStartItem={handleToolbarStartItem}
         onPreviousItem={agendaNav.moveToPreviousItem}
         onNextItem={agendaNav.moveToNextItem}
         onCompleteItem={agendaNav.completeCurrentItem}
@@ -648,7 +699,13 @@ export function EventAgendaItemDetail({
         onBecomeCandidate={actionBarHook.handleBecomeCandidate}
         onWithdrawCandidacy={actionBarHook.handleWithdrawCandidacy}
         onStartVote={
-          isCRToolbarActive && toolbarVotingPhase === 'pending' ? handleToolbarStartVote : undefined
+          isCRToolbarActive
+            ? toolbarVotingPhase === 'pending'
+              ? handleToolbarStartVote
+              : undefined
+            : toolbarVotingPhase === 'pending'
+              ? actionBarHook.handleStartVote
+              : undefined
         }
         onStartFinalVote={
           isCRToolbarActive
@@ -704,6 +761,10 @@ export function EventAgendaItemDetail({
               : undefined
         }
         maxVotes={election?.max_votes ?? 1}
+        electionMode={
+          election?.election_mode ? normalizeElectionMode(election.election_mode) : null
+        }
+        seatCount={election?.seat_count ?? null}
         choices={
           isCRToolbarActive
             ? selectedCRChoices
@@ -748,6 +809,7 @@ export function EventAgendaItemDetail({
         agendaItemId={agendaItem.id}
         agendaItemTitle={agendaItem.title ?? null}
         agendaItemDescription={agendaItem.description ?? null}
+        agendaItemDuration={agendaItem.duration ?? null}
         election={election ?? undefined}
         vote={vote ?? undefined}
         choices={choices.map(c => ({
@@ -764,7 +826,7 @@ export function EventAgendaItemDetail({
           title: agendaItem.title || '',
           description: agendaItem.description ?? undefined,
           type: agendaItem.type || '',
-          status: agendaItem.status || '',
+          status: detailRuntimeStatus,
           duration: agendaItem.duration ?? undefined,
           scheduledTime:
             estimatedStartTime?.toISOString() ?? agendaItem.scheduled_time ?? undefined,
@@ -782,6 +844,8 @@ export function EventAgendaItemDetail({
             : undefined
         }
       />
+
+      {delegateTargetEvent ? <EventSearchCard event={delegateTargetEvent} /> : null}
 
       {/* Section 2: Speaker List */}
       <AgendaSpeakerListSection
@@ -835,6 +899,10 @@ export function EventAgendaItemDetail({
         <div className="space-y-4">
           <AgendaElectionSection
             roleName={election.title ?? t('features.events.agenda.role')}
+            electionMode={
+              election.election_mode ? normalizeElectionMode(election.election_mode) : null
+            }
+            seatCount={election.seat_count}
             candidates={[...candidates] as CandidatesByElectionRow[]}
             indicativeSelections={indicativeSelections}
             finalSelections={finalSelections}

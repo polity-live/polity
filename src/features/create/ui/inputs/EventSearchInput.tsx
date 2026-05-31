@@ -29,7 +29,9 @@ export function EventSearchInput({
       filtered,
       'event',
       e => e.title || 'Event',
-      e => (typeof e.description === 'string' ? e.description.substring(0, 60) : undefined)
+      e => (typeof e.description === 'string' ? e.description.substring(0, 60) : undefined),
+      undefined,
+      e => `/event/${e.id}`
     );
   }, [events, filterByGroupId]);
 

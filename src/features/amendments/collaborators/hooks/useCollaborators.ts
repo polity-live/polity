@@ -6,7 +6,10 @@ import { useMemo } from 'react';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import type { AmendmentCollaboratorRow, AmendmentRoleRow } from '@/zero/amendments/queries';
 
-export type Collaborator = AmendmentCollaboratorRow;
+export type Collaborator = AmendmentCollaboratorRow & {
+  role?: AmendmentRoleRow | null;
+  roles?: AmendmentRoleRow[];
+};
 export type Role = AmendmentRoleRow;
 
 export interface CollaboratorsData {
@@ -23,11 +26,10 @@ export interface CollaboratorsData {
 export function useCollaborators(
   amendmentId: string,
   currentUserId: string | undefined,
-  searchQuery: string = ''
+  searchQuery = ''
 ): CollaboratorsData {
   // Query amendment with collaborators and roles
   const {
-    amendment: amendmentData,
     collaborators: collabData,
     roles: rolesData,
     isLoading,
@@ -36,15 +38,27 @@ export function useCollaborators(
     includeRoles: true,
   });
 
-  const collaborators = collabData || [];
+  const baseCollaborators = collabData || [];
   const roles = rolesData || [];
+
+  const collaborators = useMemo<Collaborator[]>(() => {
+    return baseCollaborators.map(collaboration => {
+      const matchedRole = roles.find(role => role.id === collaboration.role_id) ?? null;
+      return {
+        ...collaboration,
+        role: matchedRole,
+        roles: matchedRole ? [matchedRole] : [],
+      };
+    });
+  }, [baseCollaborators, roles]);
 
   // Check if current user is admin (has 'manage' action right for 'amendments')
   const currentUserCollaboration = collaborators.find(c => c.user?.id === currentUserId);
   const currentUserRole = roles.find(r => r.id === currentUserCollaboration?.role_id);
-  const isAdmin = currentUserRole?.action_rights?.some(
-    right => right.resource === 'amendments' && right.action === 'manage'
-  ) || false;
+  const isAdmin =
+    currentUserRole?.action_rights?.some(
+      right => right.resource === 'amendments' && right.action === 'manage'
+    ) || false;
 
   // Filter collaborators based on search query
   const filteredCollaborators = useMemo(() => {
@@ -75,14 +89,11 @@ export function useCollaborators(
   );
 
   const activeCollaborators = useMemo(
-    () => filteredCollaborators.filter(c => {
-      const matchedRole = roles.find(r => r.id === c.role_id);
-      return (
-        c.status === 'member' ||
-        c.status === 'admin' ||
-        matchedRole?.name === 'Author'
-      );
-    }),
+    () =>
+      filteredCollaborators.filter(c => {
+        const matchedRole = roles.find(r => r.id === c.role_id);
+        return c.status === 'member' || c.status === 'admin' || matchedRole?.name === 'Author';
+      }),
     [filteredCollaborators, roles]
   );
 

@@ -14,7 +14,13 @@ import { ArrowRight } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import { cn } from '@/features/shared/utils/utils.ts';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { AgendaStatusBadge, AgendaTypeBadge, AgendaEntityBadge } from './AgendaBadges';
+import {
+  AgendaStatusBadge,
+  AgendaTypeBadge,
+  AgendaEntityBadge,
+  AgendaElectionModeBadge,
+} from './AgendaBadges';
+import type { ElectionMode } from '@/features/elections/logic/electionMode';
 
 export type AgendaItemType = 'election' | 'vote' | 'speech' | 'discussion' | 'accreditation';
 export type AgendaItemStatus = 'completed' | 'in-progress' | 'pending' | 'planned';
@@ -34,6 +40,7 @@ interface AgendaCardProps {
   className?: string;
   isActive?: boolean;
   actionButton?: ReactNode;
+  dragHandle?: ReactNode;
   showMoveButton?: boolean;
   onMoveClick?: () => void;
   footerRight?: ReactNode;
@@ -41,6 +48,8 @@ interface AgendaCardProps {
   amendment?: { id: string; title?: string | null } | null;
   /** Related election with role — shown as a clickable tag linking to group wiki */
   election?: {
+    election_mode?: ElectionMode | null;
+    seat_count?: number | null;
     role?: {
       title?: string | null;
       group?: { id: string; name?: string | null } | null;
@@ -61,6 +70,7 @@ export function AgendaCard({
   className,
   isActive = false,
   actionButton,
+  dragHandle,
   showMoveButton = false,
   onMoveClick,
   footerRight,
@@ -103,9 +113,16 @@ export function AgendaCard({
                       variant="role"
                     />
                   )}
+                  {election?.election_mode ? (
+                    <AgendaElectionModeBadge
+                      electionMode={election.election_mode}
+                      seatCount={election.seat_count}
+                    />
+                  ) : null}
                 </div>
               </div>
               <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                {dragHandle}
                 {showMoveButton && onMoveClick && (
                   <Button
                     variant="outline"

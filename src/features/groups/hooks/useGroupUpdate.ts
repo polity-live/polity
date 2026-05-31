@@ -10,10 +10,13 @@ import type { Value } from 'platejs';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
+import { useGroupState } from '@/zero/groups/useGroupState';
 import { useCommonState, useCommonActions } from '@/zero/common';
 import { useMessageActions } from '@/zero/messages/useMessageActions';
 import { useMessageState } from '@/zero/messages/useMessageState';
 import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
+import { RIGHT_TYPES, type RightType } from '@/features/network/ui/RightFilters';
+import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import {
   EMPTY_RICH_TEXT_VALUE,
   richTextToPlainText,
@@ -21,7 +24,16 @@ import {
   toZeroRichTextValue,
 } from '@/features/shared/logic/richText';
 
-export type GroupType = 'base' | 'hierarchical';
+export type GroupType = 'base' | 'hierarchical' | 'sibling';
+export type RelationshipDirection = 'none' | 'outgoing' | 'incoming' | 'bidirectional';
+
+const INITIAL_CONNECTED_RELATIONSHIP_DIRECTIONS: Record<RightType, RelationshipDirection> = {
+  informationRight: 'none',
+  amendmentRight: 'none',
+  rightToSpeak: 'none',
+  activeVotingRight: 'none',
+  passiveVotingRight: 'none',
+};
 
 export interface GroupFormData {
   name: string;
@@ -48,6 +60,11 @@ export interface GroupFormData {
   snapchat: string;
   tiktok: string;
   hashtags: string[];
+  connected_group_id?: string | null;
+  sibling_membership_mode?: 'open' | 'elected' | 'parliament' | null;
+  sibling_role_id?: string | null;
+  parliament_source_group_ids?: string[];
+  connected_relationship_directions: Record<RightType, RelationshipDirection>;
 }
 
 interface UseGroupUpdateResult {
@@ -86,6 +103,11 @@ const initialFormState: GroupFormData = {
   snapchat: '',
   tiktok: '',
   hashtags: [],
+  connected_group_id: null,
+  sibling_membership_mode: null,
+  sibling_role_id: null,
+  parliament_source_group_ids: [],
+  connected_relationship_directions: INITIAL_CONNECTED_RELATIONSHIP_DIRECTIONS,
 };
 
 /**
@@ -109,11 +131,12 @@ export function useGroupUpdate(
   }
 ): UseGroupUpdateResult {
   const navigate = useNavigate();
-  const { createGroup, updateGroup } = useGroupActions();
+  const { createGroup, updateGroup, createRelationship, deleteRelationship } = useGroupActions();
   const isCreating = !initialData;
   const commonActions = useCommonActions();
   const { updateConversation } = useMessageActions();
   const { groupConversation } = useMessageState({ groupId });
+  const { relationships, relationshipsAsTarget } = useGroupState({ groupId });
   const { groupHashtags, allHashtags } = useCommonState({
     group_id: groupId,
     loadAllHashtags: true,
@@ -171,6 +194,13 @@ export function useGroupUpdate(
         snapchat: initialData.snapchat || '',
         tiktok: initialData.tiktok || '',
         hashtags: initialData.hashtags || existingTags,
+        connected_group_id: initialData.connected_group_id ?? null,
+        sibling_membership_mode: initialData.sibling_membership_mode ?? null,
+        sibling_role_id: initialData.sibling_role_id ?? null,
+        parliament_source_group_ids: initialData.parliament_source_group_ids ?? [],
+        connected_relationship_directions: initialData.connected_relationship_directions ?? {
+          ...INITIAL_CONNECTED_RELATIONSHIP_DIRECTIONS,
+        },
       };
       setFormData(newFormData);
       setOriginalName(initialData.name || '');
@@ -236,10 +266,109 @@ export function useGroupUpdate(
         snapchat: initialData.snapchat || '',
         tiktok: initialData.tiktok || '',
         hashtags: existingTags,
+        connected_group_id: initialData.connected_group_id ?? null,
+        sibling_membership_mode: initialData.sibling_membership_mode ?? null,
+        sibling_role_id: initialData.sibling_role_id ?? null,
+        parliament_source_group_ids: initialData.parliament_source_group_ids ?? [],
+        connected_relationship_directions: initialData.connected_relationship_directions ?? {
+          ...INITIAL_CONNECTED_RELATIONSHIP_DIRECTIONS,
+        },
       };
       setFormData(resetData);
     } else {
       setFormData(initialFormState);
+    }
+  };
+
+  const syncConnectedSiblingRelationships = async () => {
+    const nextConnectedGroupId = formData.connected_group_id ?? null;
+    const previousConnectedGroupId = initialData?.connected_group_id ?? null;
+    const relevantConnectedGroupIds = [nextConnectedGroupId, previousConnectedGroupId].filter(
+      (connectedGroupId): connectedGroupId is string => Boolean(connectedGroupId)
+    );
+
+    const currentRelationships = [
+      ...(relationships ?? []),
+      ...(relationshipsAsTarget ?? []),
+    ].filter(relationship => {
+      if (relationship.relationship_type !== 'sibling') {
+        return false;
+      }
+
+      const otherGroupId =
+        relationship.group_id === groupId ? relationship.related_group_id : relationship.group_id;
+
+      return relevantConnectedGroupIds.includes(otherGroupId);
+    });
+
+    const desiredDirections = formData.connected_relationship_directions;
+    const desiredRelationshipKeys = new Set<string>();
+
+    if (nextConnectedGroupId) {
+      for (const right of RIGHT_TYPES) {
+        const direction = desiredDirections[right];
+
+        if (direction === 'outgoing' || direction === 'bidirectional') {
+          desiredRelationshipKeys.add(`${groupId}:${nextConnectedGroupId}:${right}`);
+        }
+
+        if (direction === 'incoming' || direction === 'bidirectional') {
+          desiredRelationshipKeys.add(`${nextConnectedGroupId}:${groupId}:${right}`);
+        }
+      }
+    }
+
+    for (const relationship of currentRelationships) {
+      const relationshipKey = `${relationship.group_id}:${relationship.related_group_id}:${relationship.with_right ?? ''}`;
+
+      if (!desiredRelationshipKeys.has(relationshipKey)) {
+        await deleteRelationship({ id: relationship.id });
+      }
+    }
+
+    if (!nextConnectedGroupId) {
+      return;
+    }
+
+    const existingRelationshipKeys = new Set(
+      currentRelationships.map(
+        relationship =>
+          `${relationship.group_id}:${relationship.related_group_id}:${relationship.with_right ?? ''}`
+      )
+    );
+
+    for (const right of RIGHT_TYPES) {
+      const direction = desiredDirections[right];
+
+      if (
+        (direction === 'outgoing' || direction === 'bidirectional') &&
+        !existingRelationshipKeys.has(`${groupId}:${nextConnectedGroupId}:${right}`)
+      ) {
+        await createRelationship({
+          id: crypto.randomUUID(),
+          group_id: groupId,
+          related_group_id: nextConnectedGroupId,
+          relationship_type: 'sibling',
+          with_right: right,
+          status: 'requested',
+          initiator_group_id: groupId,
+        });
+      }
+
+      if (
+        (direction === 'incoming' || direction === 'bidirectional') &&
+        !existingRelationshipKeys.has(`${nextConnectedGroupId}:${groupId}:${right}`)
+      ) {
+        await createRelationship({
+          id: crypto.randomUUID(),
+          group_id: nextConnectedGroupId,
+          related_group_id: groupId,
+          relationship_type: 'sibling',
+          with_right: right,
+          status: 'requested',
+          initiator_group_id: groupId,
+        });
+      }
     }
   };
 
@@ -267,7 +396,7 @@ export function useGroupUpdate(
           throw new Error('groupType is required when creating a group from useGroupUpdate');
         }
 
-        await createGroup({
+        const createGroupResult = createGroup({
           id: groupId,
           name: formData.name,
           description: formData.description
@@ -295,8 +424,13 @@ export function useGroupUpdate(
           tiktok: formData.tiktok || null,
           visibility: formData.visibility,
           group_type: options.groupType,
+          connected_group_id: formData.connected_group_id ?? null,
+          sibling_membership_mode: formData.sibling_membership_mode ?? null,
+          sibling_role_id: formData.sibling_role_id ?? null,
+          parliament_source_group_ids: formData.parliament_source_group_ids ?? [],
           owner_id: null,
         });
+        await serverConfirmed(createGroupResult);
       } else {
         await updateGroup({
           id: groupId,
@@ -325,7 +459,15 @@ export function useGroupUpdate(
           snapchat: formData.snapchat || null,
           tiktok: formData.tiktok || null,
           visibility: formData.visibility,
+          connected_group_id: formData.connected_group_id ?? null,
+          sibling_membership_mode: formData.sibling_membership_mode ?? null,
+          sibling_role_id: formData.sibling_role_id ?? null,
+          parliament_source_group_ids: formData.parliament_source_group_ids ?? [],
         });
+
+        if (options?.groupType === 'sibling') {
+          await syncConnectedSiblingRelationships();
+        }
 
         // Sync name to group conversation if it changed
         if (nameChanged && groupConversation) {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/providers/auth-provider';
@@ -13,6 +13,7 @@ import { EntitySearchBar } from '@/features/shared/ui/ui/entity-search-bar';
 import { MembershipTabs } from '@/features/groups/ui/MembershipTabs';
 import { ActiveMembersTable } from '@/features/groups/ui/ActiveMembersTable';
 import { MembershipsByRoleTables } from '@/features/groups/ui/MembershipsByRoleTables';
+import { MembershipCompositionPanel } from '@/features/groups/ui/MembershipCompositionPanel';
 import { PendingRequestsTable } from '@/features/groups/ui/PendingRequestsTable';
 import { PendingInvitationsTable } from '@/features/groups/ui/PendingInvitationsTable';
 import { InviteMembersDialog } from '@/features/groups/ui/InviteMembersDialog';
@@ -26,10 +27,18 @@ import type {
   MembershipSortField,
   MembershipTab,
 } from '@/features/groups/types/group.types';
+import { EVENT_ACTION_RIGHTS } from '@/zero/rbac/constants';
+import { useDelegateAssemblyParticipantsComposition } from '../hooks/useDelegateAssemblyParticipantsComposition';
 
 type EventParticipantRow = ReturnType<typeof useEventParticipantsData>['participants'][number];
 
-export function EventParticipants({ eventId }: { eventId: string }) {
+export function EventParticipants({
+  eventId,
+  defaultTab = 'membershipsByUser',
+}: {
+  eventId: string;
+  defaultTab?: MembershipTab;
+}) {
   const navigate = useNavigate();
   const { user: authUser } = useAuth();
   const { event, isLoading, error } = useEventData(eventId);
@@ -43,7 +52,7 @@ export function EventParticipants({ eventId }: { eventId: string }) {
     changeParticipantRoles,
   } = useEventMutations(eventId);
 
-  const [activeTab, setActiveTab] = useState<MembershipTab>('membershipsByUser');
+  const [activeTab, setActiveTab] = useState<MembershipTab>(defaultTab);
   const [membershipSort, setMembershipSort] = useState<MembershipSort>({
     field: 'user',
     direction: 'asc',
@@ -70,6 +79,21 @@ export function EventParticipants({ eventId }: { eventId: string }) {
     activeStatuses: ['active', 'member', 'admin', 'confirmed'],
     activeRoleNames: ['Organizer'],
   });
+  const {
+    showComposition,
+    participantsWithProvenance,
+    compositionBuckets,
+    isLoading: compositionIsLoading,
+  } = useDelegateAssemblyParticipantsComposition(event, activeParticipants);
+  const activeParticipantsForTables = showComposition
+    ? participantsWithProvenance
+    : activeParticipants;
+
+  useEffect(() => {
+    if (activeTab === 'composition' && !showComposition) {
+      setActiveTab('membershipsByUser');
+    }
+  }, [activeTab, showComposition]);
 
   const existingParticipantIds = Array.from(
     new Set(
@@ -176,7 +200,7 @@ export function EventParticipants({ eventId }: { eventId: string }) {
         <p className="text-muted-foreground">{eventTitle}</p>
       </div>
 
-      {activeTab !== 'roles' ? (
+      {activeTab !== 'roles' && activeTab !== 'composition' ? (
         <EntitySearchBar
           searchQuery={participantSearchQuery}
           onSearchQueryChange={setParticipantSearchQuery}
@@ -224,7 +248,6 @@ export function EventParticipants({ eventId }: { eventId: string }) {
               onReject={(membershipId, userId) =>
                 rejectParticipation(membershipId, userId, authUser?.id ?? undefined, eventTitle)
               }
-              onNavigateToUser={userId => navigate({ to: '/user/$id', params: { id: userId } })}
               title="Pending Participation Requests"
               description="Review and approve participation requests"
               fallbackRoleLabel="Participant"
@@ -234,12 +257,11 @@ export function EventParticipants({ eventId }: { eventId: string }) {
               onWithdraw={(membershipId, userId) =>
                 rejectParticipation(membershipId, userId, authUser?.id ?? undefined, eventTitle)
               }
-              onNavigateToUser={userId => navigate({ to: '/user/$id', params: { id: userId } })}
               description="Users who have been invited to this event but have not accepted yet"
               fallbackRoleLabel="Participant"
             />
             <ActiveMembersTable
-              members={activeParticipants}
+              members={activeParticipantsForTables}
               sort={membershipSort}
               onSortChange={handleParticipantSortChange}
               onOpenRightsDialog={membership => {
@@ -253,25 +275,37 @@ export function EventParticipants({ eventId }: { eventId: string }) {
               title="Active Participants"
               description="Current event participants and organizers"
               fallbackRoleLabel="Participant"
+              showProvenanceColumns={showComposition}
             />
           </div>
         }
         membershipsByRoleContent={
           <MembershipsByRoleTables
             roles={[...accessRoles]}
-            members={activeParticipants}
+            members={activeParticipantsForTables}
             onOpenRightsDialog={membership => {
               setMemberRightsMembership(membership);
               setMemberRightsOpen(true);
             }}
             onRemoveRole={handleRemoveRoleFromParticipantTypeView}
+            onSecondaryAction={handleOpenChangeRoleDialog}
+            secondaryActionLabel="Manage Roles"
             entityType="event"
             countLabel="participants"
             memberDescriptionFallback="Participants currently assigned to this role."
             emptyStateLabel="No participants currently carry this role."
+            showProvenanceColumns={showComposition}
+          />
+        }
+        compositionContent={
+          <MembershipCompositionPanel
+            buckets={compositionBuckets}
+            isLoading={compositionIsLoading}
           />
         }
         rolesContent={<EventRoles eventId={eventId} />}
+        showComposition={showComposition}
+        showGuests={false}
       />
 
       <MemberRightsDialog
@@ -283,6 +317,7 @@ export function EventParticipants({ eventId }: { eventId: string }) {
         contextLabel="event"
         fallbackRoleLabel="Participant"
         emptyRightsLabel="No explicit action rights are currently assigned through this participant's roles."
+        actionRightsCatalog={EVENT_ACTION_RIGHTS}
       />
 
       <ChangeRoleDialog

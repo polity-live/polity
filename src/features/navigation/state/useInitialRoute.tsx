@@ -8,7 +8,12 @@ export function useInitialRoute(
   const { pathname } = useLocation();
 
   useEffect(() => {
-    const route = pathname === '/' ? 'home' : pathname.split('/')[1];
+    const route =
+      pathname === '/'
+        ? 'home'
+        : /^\/(?:group|user)\/[^/]+\/blog\/[^/]+(?:\/|$)/.test(pathname)
+          ? 'blog'
+          : pathname.split('/')[1];
     setCurrentPrimaryRoute(route);
   }, [pathname, setCurrentPrimaryRoute]);
 }

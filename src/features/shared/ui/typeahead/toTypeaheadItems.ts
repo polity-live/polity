@@ -8,7 +8,8 @@ export function toTypeaheadItems<T extends { id: string }>(
   entityType: EntityType,
   getLabel: (item: T) => string,
   getSecondaryLabel?: (item: T) => string | null | undefined,
-  getAvatar?: (item: T) => string | null | undefined
+  getAvatar?: (item: T) => string | null | undefined,
+  getUrl?: (item: T) => string | undefined
 ): TypeaheadItem[] {
   return items.map(item => ({
     id: item.id,
@@ -16,5 +17,6 @@ export function toTypeaheadItems<T extends { id: string }>(
     label: getLabel(item),
     secondaryLabel: getSecondaryLabel?.(item) ?? undefined,
     avatar: getAvatar?.(item) ?? null,
+    url: getUrl?.(item),
   }));
 }

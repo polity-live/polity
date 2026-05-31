@@ -26,12 +26,13 @@ export const notificationQueries = {
   // Notifications for a specific entity
   byEntity: defineQuery(
     z.object({ entityId: z.string(), entityType: z.string() }),
-    ({ args: { entityId, entityType } }) =>
+    ({ ctx: { userID }, args: { entityId, entityType } }) =>
       zql.notification
         .where('recipient_entity_id', entityId)
         .where('recipient_entity_type', entityType)
         .related('sender')
         .related('related_user')
+        .related('reads', q => q.where('read_by_user_id', userID))
         .orderBy('created_at', 'desc')
         .limit(200)
   ),
@@ -51,6 +52,7 @@ export const notificationQueries = {
       .related('on_behalf_of_event')
       .related('on_behalf_of_amendment')
       .related('on_behalf_of_blog')
+      .related('reads', q => q.where('read_by_user_id', userID))
       .related('recipient_group', q =>
         q.related('memberships', q =>
           q
@@ -70,7 +72,9 @@ export const notificationQueries = {
         )
       )
       .related('recipient_amendment', q =>
-        q.related('collaborators', q => q.where('user_id', userID))
+        q.related('collaborators', q =>
+          q.where('user_id', userID).related('role', rq => rq.related('action_rights'))
+        )
       )
       .related('recipient_blog', q =>
         q.related('bloggers', q =>
@@ -97,6 +101,7 @@ export const notificationQueries = {
         .related('on_behalf_of_event')
         .related('on_behalf_of_amendment')
         .related('on_behalf_of_blog')
+        .related('reads', q => q.where('read_by_user_id', userID))
         .related('recipient_group', q =>
           q.related('memberships', q =>
             q
@@ -116,11 +121,98 @@ export const notificationQueries = {
           )
         )
         .related('recipient_amendment', q =>
-          q.related('collaborators', q => q.where('user_id', userID))
+          q.related('collaborators', q =>
+            q.where('user_id', userID).related('role', rq => rq.related('action_rights'))
+          )
         )
         .related('recipient_blog', q =>
           q.related('bloggers', q =>
             q.where('user_id', userID).related('role', q => q.related('action_rights'))
+          )
+        )
+        .orderBy('created_at', 'desc')
+        .limit(50)
+  ),
+
+  // Event notifications by recipient event IDs
+  byRecipientEvents: defineQuery(
+    z.object({ eventIds: z.array(z.string()) }),
+    ({ ctx: { userID }, args: { eventIds } }) =>
+      zql.notification
+        .where('recipient_event_id', 'IN', eventIds)
+        .related('sender')
+        .related('recipient')
+        .related('related_user')
+        .related('related_group')
+        .related('related_event')
+        .related('related_amendment')
+        .related('related_blog')
+        .related('on_behalf_of_group')
+        .related('on_behalf_of_event')
+        .related('on_behalf_of_amendment')
+        .related('on_behalf_of_blog')
+        .related('reads', q => q.where('read_by_user_id', userID))
+        .related('recipient_event', q =>
+          q.related('participants', q =>
+            q
+              .where('user_id', userID)
+              .related('participant_roles', pq =>
+                pq.related('role', rq => rq.related('action_rights'))
+              )
+          )
+        )
+        .orderBy('created_at', 'desc')
+        .limit(50)
+  ),
+
+  // Amendment notifications by recipient amendment IDs
+  byRecipientAmendments: defineQuery(
+    z.object({ amendmentIds: z.array(z.string()) }),
+    ({ ctx: { userID }, args: { amendmentIds } }) =>
+      zql.notification
+        .where('recipient_amendment_id', 'IN', amendmentIds)
+        .related('sender')
+        .related('recipient')
+        .related('related_user')
+        .related('related_group')
+        .related('related_event')
+        .related('related_amendment')
+        .related('related_blog')
+        .related('on_behalf_of_group')
+        .related('on_behalf_of_event')
+        .related('on_behalf_of_amendment')
+        .related('on_behalf_of_blog')
+        .related('reads', q => q.where('read_by_user_id', userID))
+        .related('recipient_amendment', q =>
+          q.related('collaborators', q =>
+            q.where('user_id', userID).related('role', rq => rq.related('action_rights'))
+          )
+        )
+        .orderBy('created_at', 'desc')
+        .limit(50)
+  ),
+
+  // Blog notifications by recipient blog IDs
+  byRecipientBlogs: defineQuery(
+    z.object({ blogIds: z.array(z.string()) }),
+    ({ ctx: { userID }, args: { blogIds } }) =>
+      zql.notification
+        .where('recipient_blog_id', 'IN', blogIds)
+        .related('sender')
+        .related('recipient')
+        .related('related_user')
+        .related('related_group')
+        .related('related_event')
+        .related('related_amendment')
+        .related('related_blog')
+        .related('on_behalf_of_group')
+        .related('on_behalf_of_event')
+        .related('on_behalf_of_amendment')
+        .related('on_behalf_of_blog')
+        .related('reads', q => q.where('read_by_user_id', userID))
+        .related('recipient_blog', q =>
+          q.related('bloggers', q =>
+            q.where('user_id', userID).related('role', rq => rq.related('action_rights'))
           )
         )
         .orderBy('created_at', 'desc')
@@ -146,7 +238,10 @@ export const notificationQueries = {
 
   // User's amendment collaborations
   userAmendmentCollaborations: defineQuery(z.object({}), ({ ctx: { userID } }) =>
-    zql.amendment_collaborator.where('user_id', userID).related('amendment')
+    zql.amendment_collaborator
+      .where('user_id', userID)
+      .related('amendment')
+      .related('role', q => q.related('action_rights'))
   ),
 
   // User's blog relations

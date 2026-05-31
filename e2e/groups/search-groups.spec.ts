@@ -2,7 +2,28 @@
 // seed: e2e/seed.spec.ts
 
 import { test, expect } from '../fixtures/test-base';
+
 test.describe('Groups - Search Groups', () => {
+  test('Newly created public group appears in search by name', async ({
+    authenticatedPage: page,
+    groupFactory,
+    mainUserId,
+  }) => {
+    const groupName = `Searchable Public Group ${Date.now()}`;
+
+    await groupFactory.createGroup(mainUserId, {
+      name: groupName,
+      visibility: 'public',
+    });
+
+    await page.goto('/search');
+
+    const searchInput = page.getByPlaceholder(/search/i);
+    await searchInput.fill(groupName);
+
+    await expect(page.getByText(groupName)).toBeVisible({ timeout: 10000 });
+  });
+
   test('User searches groups by name', async ({ authenticatedPage: page }) => {
     // 1. Authenticate as test user
     // 2. Navigate to /search

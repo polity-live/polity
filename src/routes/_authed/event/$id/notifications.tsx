@@ -1,20 +1,33 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { EntityNotifications } from '@/features/notifications/ui/EntityNotifications.tsx'
-import { useEventById } from '@/zero/events/useEventState'
+import { createFileRoute } from '@tanstack/react-router';
+import { EntityNotifications } from '@/features/notifications/ui/EntityNotifications.tsx';
+import { useEventById } from '@/zero/events/useEventState';
+import { usePermissions } from '@/zero/rbac/usePermissions';
+import { AccessDenied } from '@/features/auth/ui/AccessDenied';
+import { GlobalLoadingAnimation } from '@/features/shared/ui/ui/global-loading-animation';
 
 export const Route = createFileRoute('/_authed/event/$id/notifications')({
   component: EventNotificationsPage,
-})
+});
 
 function EventNotificationsPage() {
-  const { id } = Route.useParams()
-  const { event } = useEventById(id)
+  const { id } = Route.useParams();
+  const { can, isLoading } = usePermissions({ eventId: id });
+
+  if (isLoading) {
+    return <GlobalLoadingAnimation connectionStatus="connecting" />;
+  }
+
+  if (!can('manage', 'events')) {
+    return <AccessDenied />;
+  }
+
+  return <EventNotificationsContent eventId={id} />;
+}
+
+function EventNotificationsContent({ eventId }: { eventId: string }) {
+  const { event } = useEventById(eventId);
 
   return (
-    <EntityNotifications
-      entityId={id}
-      entityType="event"
-      entityName={event?.title ?? ''}
-    />
-  )
+    <EntityNotifications entityId={eventId} entityType="event" entityName={event?.title ?? ''} />
+  );
 }

@@ -11,6 +11,10 @@ import { DeleteConversationDialog } from './ui/DeleteConversationDialog';
 
 export default function MessagesPage() {
   const mp = useMessagesPage();
+  const messagesLayoutStyle = {
+    height:
+      'calc(100dvh - var(--app-shell-mobile-top-offset, 0rem) - var(--app-shell-mobile-bottom-offset, 0rem) - 3rem)',
+  };
 
   if (mp.isLoading) {
     return (
@@ -26,9 +30,13 @@ export default function MessagesPage() {
 
   return (
     <AuthGuard requireAuth={true}>
-      <PageWrapper className="min-h-screen">
-        <div className="flex h-[calc(100vh-6rem)] flex-col gap-4 md:grid md:h-[calc(100vh-3rem)] md:grid-cols-3">
+      <PageWrapper>
+        <div
+          style={messagesLayoutStyle}
+          className="flex min-h-0 flex-col gap-4 md:grid md:grid-cols-3 md:[grid-template-rows:minmax(0,1fr)]"
+        >
           <ConversationList
+            className="h-full"
             conversations={mp.filteredConversations}
             conversationOnlineStatus={mp.conversationOnlineStatus}
             selectedConversationId={mp.selectedConversationId}
@@ -44,6 +52,7 @@ export default function MessagesPage() {
           />
 
           <MessageView
+            className="h-full"
             conversation={mp.selectedConversation}
             currentUserId={mp.currentUserId}
             isConversationUserOnline={mp.selectedConversationUserOnline}

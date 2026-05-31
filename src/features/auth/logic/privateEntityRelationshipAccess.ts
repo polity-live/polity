@@ -1,6 +1,7 @@
 type RelationshipStatus = string | null | undefined;
 
 const ACTIVE_GROUP_MEMBER_STATUSES = new Set(['active', 'member', 'admin']);
+const ACTIVE_GROUP_GUEST_STATUSES = new Set(['active']);
 const ACTIVE_EVENT_PARTICIPANT_STATUSES = new Set(['active', 'confirmed', 'member', 'admin']);
 const ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = new Set(['collaborator', 'member', 'admin']);
 const ACTIVE_BLOG_BLOGGER_STATUSES = new Set(['owner', 'admin', 'member']);
@@ -15,14 +16,17 @@ function hasActiveRelationship(
 export function hasPrivateGroupRouteAccess(
   ownerId: string | null | undefined,
   userId: string | null | undefined,
-  membershipStatuses: readonly RelationshipStatus[]
+  membershipStatuses: readonly RelationshipStatus[],
+  guestStatuses: readonly RelationshipStatus[] = []
 ): boolean {
   if (!userId) {
     return false;
   }
 
   return (
-    ownerId === userId || hasActiveRelationship(membershipStatuses, ACTIVE_GROUP_MEMBER_STATUSES)
+    ownerId === userId ||
+    hasActiveRelationship(membershipStatuses, ACTIVE_GROUP_MEMBER_STATUSES) ||
+    hasActiveRelationship(guestStatuses, ACTIVE_GROUP_GUEST_STATUSES)
   );
 }
 

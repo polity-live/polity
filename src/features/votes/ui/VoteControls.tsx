@@ -9,7 +9,6 @@ import { Check, X, Minus } from 'lucide-react';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { toast } from 'sonner';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { notifyChangeRequestVoteCast } from '@/features/notifications/utils/notification-helpers.ts';
 
 interface VoteControlsProps {
   changeRequestId: string;
@@ -56,7 +55,6 @@ export function VoteControls({
   collaborators,
   status,
   amendmentId,
-  amendmentTitle,
   suggestionData,
   onVoteComplete,
 }: VoteControlsProps) {
@@ -130,19 +128,6 @@ export function VoteControls({
         change_request_id: crId,
       });
 
-      // Notify change request author about the vote
-      if (amendmentTitle && suggestionData?.userId && suggestionData.userId !== currentUserId) {
-        await notifyChangeRequestVoteCast({
-          senderId: currentUserId,
-          senderName: 'A collaborator',
-          recipientUserId: suggestionData.userId,
-          changeRequestId: crId,
-          amendmentId,
-          amendmentTitle,
-          voteType,
-        });
-      }
-
       toast.success(t('features.amendments.voteControls.voteRecorded'), {
         description: t('features.amendments.voteControls.yourVote').replace('{{vote}}', voteType),
       });
@@ -198,13 +183,16 @@ export function VoteControls({
         <Card className="border-blue-500/50 bg-blue-500/5">
           <CardContent className="py-3">
             <p className="text-sm">
-              {t('features.amendments.voteControls.yourVote').replace('{{vote}}', currentUserVote.vote)}
+              {t('features.amendments.voteControls.yourVote').replace(
+                '{{vote}}',
+                currentUserVote.vote
+              )}
             </p>
           </CardContent>
         </Card>
       )}
 
-      <div className="rounded-lg border bg-muted/50 p-4">
+      <div className="bg-muted/50 rounded-lg border p-4">
         <div className="mb-3 flex items-center justify-between">
           <h4 className="font-semibold">{t('features.amendments.voteControls.votingProgress')}</h4>
           <Badge variant="secondary">
@@ -273,12 +261,14 @@ export function VoteControls({
 
         {votes.length > 0 && (
           <div className="mt-4 border-t pt-3">
-            <p className="mb-2 text-sm font-semibold">{t('features.amendments.voteControls.votedList')}:</p>
+            <p className="mb-2 text-sm font-semibold">
+              {t('features.amendments.voteControls.votedList')}:
+            </p>
             <div className="flex flex-wrap gap-2">
               {votes.map(vote => (
                 <div
                   key={vote.id}
-                  className="flex items-center gap-1 rounded-full bg-background px-2 py-1 text-xs"
+                  className="bg-background flex items-center gap-1 rounded-full px-2 py-1 text-xs"
                 >
                   <Avatar className="h-5 w-5">
                     {vote.voter?.user ? (
@@ -288,7 +278,9 @@ export function VoteControls({
                       {vote.voter?.user?.name?.[0]?.toUpperCase() || '?'}
                     </AvatarFallback>
                   </Avatar>
-                  <span>{vote.voter?.user?.name || t('features.amendments.voteControls.unspecified')}</span>
+                  <span>
+                    {vote.voter?.user?.name || t('features.amendments.voteControls.unspecified')}
+                  </span>
                   <Badge
                     variant="outline"
                     className={`ml-1 ${
@@ -309,14 +301,14 @@ export function VoteControls({
 
         {notVotedYet.length > 0 && (
           <div className="mt-3 border-t pt-3">
-            <p className="mb-2 text-sm font-semibold text-muted-foreground">
+            <p className="text-muted-foreground mb-2 text-sm font-semibold">
               {t('features.amendments.voteControls.waitingFor')} ({notVotedYet.length}):
             </p>
             <div className="flex flex-wrap gap-2">
               {notVotedYet.map(collab => (
                 <div
                   key={collab.id}
-                  className="flex items-center gap-1 rounded-full bg-muted px-2 py-1 text-xs opacity-60"
+                  className="bg-muted flex items-center gap-1 rounded-full px-2 py-1 text-xs opacity-60"
                 >
                   <Avatar className="h-5 w-5">
                     {collab.user?.avatar ? (
@@ -326,7 +318,9 @@ export function VoteControls({
                       {collab.user?.name?.[0]?.toUpperCase() || '?'}
                     </AvatarFallback>
                   </Avatar>
-                  <span>{collab.user?.name || t('features.amendments.voteControls.unspecified')}</span>
+                  <span>
+                    {collab.user?.name || t('features.amendments.voteControls.unspecified')}
+                  </span>
                 </div>
               ))}
             </div>

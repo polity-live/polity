@@ -1,6 +1,14 @@
 import { useMemo } from 'react';
 import { useQuery } from '@rocicorp/zero/react';
 import { type QueryRowType } from '@rocicorp/zero';
+import {
+  parseDelegateElectionMetadata,
+  stripDelegateElectionMetadata,
+} from '@/features/elections/logic/electionAssignmentMetadata';
+import {
+  resolveElectionMode,
+  resolveElectionSeatCount,
+} from '@/features/elections/logic/electionMode';
 import { queries } from '../queries';
 
 /** A single event row from the byGroup query (flat, no relations) */
@@ -19,50 +27,65 @@ interface EventStateOptions {
 }
 
 interface RoleDisplayLike {
+  id: string;
   name?: string | null;
+  description?: string | null;
+  scope?: string | null;
+  group_id?: string | null;
+  event_id?: string | null;
+  amendment_id?: string | null;
+  blog_id?: string | null;
+  assignee_kind?: string | null;
+  assignment_mode?: string | null;
+  visibility?: string | null;
   term_start_date?: number | null;
   is_recurring?: boolean | null;
   recurrence_pattern?: string | null;
+  recurrence_rule?: string | null;
   recurrence_interval?: number | null;
+  recurrence_days?: unknown;
+  recurrence_end_date?: number | null;
+  scheduled_revote_date?: number | null;
+  default_request_role?: boolean | null;
+  default_invite_role?: boolean | null;
+  sort_order?: number | null;
+  created_at?: number | null;
   holders?: readonly unknown[] | null;
   holder_history?: readonly unknown[] | null;
+  elections?: readonly { status?: string | null }[] | null;
+  action_rights?: readonly { resource: string | null; action: string | null }[];
+  group?: { id: string; name?: string | null } | null;
 }
 
-type DisplayRole<TRole extends RoleDisplayLike> = TRole & {
+type DisplayRole<TRole extends RoleDisplayLike = RoleDisplayLike> = TRole & {
   title: string | null;
   term: string | null;
   first_term_start: number | null;
   holders: readonly unknown[];
 };
 
-type ElectionWithDisplayRole<TElection extends { role?: RoleDisplayLike | null }> = Omit<
-  TElection,
-  'role'
-> & {
-  role?: DisplayRole<Extract<NonNullable<TElection['role']>, RoleDisplayLike>>;
+type ElectionWithDisplayRole<TElection extends object> = Omit<TElection, 'role'> & {
+  role?: DisplayRole | null;
 };
 
-type AgendaItemWithDisplayRoles<
-  TItem extends { election?: readonly { role?: RoleDisplayLike | null }[] | null },
-> = Omit<TItem, 'election'> & {
-  election: ElectionWithDisplayRole<
-    Extract<NonNullable<TItem['election']>[number], { role?: RoleDisplayLike | null }>
-  >[];
+type AgendaItemWithDisplayRoles<TItem extends { election?: readonly unknown[] | null }> = Omit<
+  TItem,
+  'election'
+> & {
+  election: ElectionWithDisplayRole<Extract<NonNullable<TItem['election']>[number], object>>[];
 };
 
 type EventWithDisplayRoles<
   TEvent extends {
     roles?: readonly RoleDisplayLike[] | null;
-    agenda_items?:
-      | readonly { election?: readonly { role?: RoleDisplayLike | null }[] | null }[]
-      | null;
+    agenda_items?: readonly { election?: readonly unknown[] | null }[] | null;
   },
 > = Omit<TEvent, 'roles' | 'agenda_items'> & {
   roles: DisplayRole<Extract<NonNullable<TEvent['roles']>[number], RoleDisplayLike>>[];
   agenda_items: AgendaItemWithDisplayRoles<
     Extract<
       NonNullable<TEvent['agenda_items']>[number],
-      { election?: readonly { role?: RoleDisplayLike | null }[] | null }
+      object & { election?: readonly unknown[] | null }
     >
   >[];
 };
@@ -70,6 +93,16 @@ type EventWithDisplayRoles<
 interface EventRoleLike {
   id: string;
   name?: string | null;
+  description?: string | null;
+  scope?: string | null;
+  group_id?: string | null;
+  event_id?: string | null;
+  amendment_id?: string | null;
+  blog_id?: string | null;
+  assignee_kind?: string | null;
+  assignment_mode?: string | null;
+  visibility?: string | null;
+  action_rights?: readonly { resource: string | null; action: string | null }[];
   sort_order?: number | null;
 }
 
@@ -124,7 +157,7 @@ function normalizeParticipants<
 function mapRoleForDisplay<T extends RoleDisplayLike>(role: T): DisplayRole<T> {
   return {
     ...role,
-    title: role.name,
+    title: role.name ?? null,
     term:
       Boolean(role.is_recurring) && role.recurrence_pattern === 'yearly'
         ? String(role.recurrence_interval ?? 1)
@@ -134,45 +167,66 @@ function mapRoleForDisplay<T extends RoleDisplayLike>(role: T): DisplayRole<T> {
   };
 }
 
-function mapElectionRole<T extends { role?: RoleDisplayLike | null }>(
-  election: T
-): ElectionWithDisplayRole<T> {
-  if (!election.role) {
-    return {
-      ...election,
-    } as ElectionWithDisplayRole<T>;
-  }
+function mapElectionRole<T extends object>(election: T): ElectionWithDisplayRole<T> {
+  const role =
+    'role' in election ? (election as { role?: RoleDisplayLike | null }).role : undefined;
+  const description =
+    'description' in election
+      ? stripDelegateElectionMetadata((election as { description?: string | null }).description)
+      : undefined;
+  const delegateAssignmentMeta =
+    'description' in election
+      ? parseDelegateElectionMetadata((election as { description?: string | null }).description)
+      : null;
+  const rawElection = election as {
+    election_mode?: string | null;
+    seat_count?: number | null;
+    max_votes?: number | null;
+  };
+  const electionMode = resolveElectionMode({
+    electionMode: rawElection.election_mode,
+    seatCount: rawElection.seat_count,
+    maxVotes: rawElection.max_votes,
+    delegateAssignmentMode: delegateAssignmentMeta?.mode ?? null,
+  });
+  const seatCount = resolveElectionSeatCount({
+    electionMode,
+    seatCount: rawElection.seat_count,
+    maxVotes: rawElection.max_votes,
+    fallbackSeatCount: delegateAssignmentMeta?.seatRoleIds.length ?? null,
+    delegateAssignmentMode: delegateAssignmentMeta?.mode ?? null,
+  });
 
   return {
     ...election,
-    role: mapRoleForDisplay(election.role),
+    ...(description !== undefined ? { description } : {}),
+    ...(delegateAssignmentMeta ? { delegate_assignment_meta: delegateAssignmentMeta } : {}),
+    election_mode: electionMode,
+    seat_count: seatCount,
+    role: role ? mapRoleForDisplay(role) : (role ?? undefined),
   } as ElectionWithDisplayRole<T>;
 }
 
-function mapAgendaItemRoles<
-  T extends { election?: readonly { role?: RoleDisplayLike | null }[] | null },
->(item: T): AgendaItemWithDisplayRoles<T> {
+function mapAgendaItemRoles<T extends { election?: readonly unknown[] | null }>(
+  item: T
+): AgendaItemWithDisplayRoles<T> {
   return {
     ...item,
-    election: (item.election || []).map(election => mapElectionRole(election)),
-  } as AgendaItemWithDisplayRoles<T>;
+    election: (item.election || []).map(election => mapElectionRole(election as object)),
+  } as unknown as AgendaItemWithDisplayRoles<T>;
 }
 
 function mapEventRoles<
   T extends {
     roles?: readonly RoleDisplayLike[] | null;
-    agenda_items?:
-      | readonly {
-          election?: readonly { role?: RoleDisplayLike | null }[] | null;
-        }[]
-      | null;
+    agenda_items?: readonly { election?: readonly unknown[] | null }[] | null;
   },
 >(event: T): EventWithDisplayRoles<T> {
   return {
     ...event,
     roles: (event.roles || []).map(role => mapRoleForDisplay(role)),
     agenda_items: (event.agenda_items || []).map(item => mapAgendaItemRoles(item)),
-  } as EventWithDisplayRoles<T>;
+  } as unknown as EventWithDisplayRoles<T>;
 }
 
 /**
@@ -254,9 +308,9 @@ export function useEventById(eventId?: string) {
   const agendaItems = useMemo(() => event?.agenda_items || [], [event]);
   const roles = useMemo(
     () =>
-      (event?.roles || []).map(role => ({
+      ((event?.roles ?? []) as DisplayRole[]).map(role => ({
         ...role,
-        title: role.name,
+        title: role.name ?? null,
         holders: role.holders || [],
       })),
     [event]
@@ -535,14 +589,35 @@ export function useEventAccessRoles(eventId: string) {
   return { roles: eventRoles || [] };
 }
 
-export function useEventsByGroup(groupId?: string, excludeEventId?: string) {
-  const [eventsData] = useQuery(groupId ? queries.events.byGroupActive({ groupId }) : undefined);
-
-  const events = (eventsData || []).filter(
-    e => e.id !== excludeEventId && (e.start_date ?? 0) > Date.now()
+export function useEventsByGroup(
+  groupId?: string,
+  excludeEventId?: string,
+  options?: { includeOngoing?: boolean }
+) {
+  const [eventsData, eventsResult] = useQuery(
+    groupId ? queries.events.byGroupActive({ groupId }) : undefined
   );
 
-  return { events };
+  const now = Date.now();
+
+  const events = (eventsData || []).filter(
+    e =>
+      e.id !== excludeEventId &&
+      (options?.includeOngoing
+        ? (e.end_date ?? e.start_date ?? 0) >= now
+        : (e.start_date ?? 0) > now)
+  );
+
+  return {
+    events,
+    rawEvents: eventsData || [],
+    queryState: eventsResult.type,
+    queryArgs: {
+      groupId,
+      excludeEventId,
+      includeOngoing: options?.includeOngoing ?? false,
+    },
+  };
 }
 
 export function useAllEvents() {
@@ -557,8 +632,12 @@ export function useAllAmendments() {
 
 export function useRolesWithGroups() {
   const [roles] = useQuery(queries.events.rolesWithGroups({}));
+  const mappedRoles = useMemo(
+    () => (roles || []).map(role => mapRoleForDisplay(role as RoleDisplayLike)),
+    [roles]
+  );
   return {
-    roles: (roles || []).map(mapRoleForDisplay),
+    roles: mappedRoles,
   };
 }
 

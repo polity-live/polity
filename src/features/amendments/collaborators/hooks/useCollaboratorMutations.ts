@@ -11,11 +11,7 @@ import type { Role } from '../hooks/useCollaborators';
  * Server mutators handle notifications automatically.
  */
 export function useCollaboratorMutations() {
-  const {
-    requestCollaboration,
-    leaveCollaboration,
-    updateCollaborator,
-  } = useAmendmentActions();
+  const { requestCollaboration, leaveCollaboration, updateCollaborator } = useAmendmentActions();
 
   const {
     createRole: createGroupRole,
@@ -43,6 +39,14 @@ export function useCollaboratorMutations() {
   const changeCollaboratorRole = useCallback(
     async (collaboratorId: string, newRoleId: string) => {
       await updateCollaborator({ id: collaboratorId, role_id: newRoleId });
+    },
+    [updateCollaborator]
+  );
+
+  const changeCollaboratorRoles = useCallback(
+    async (collaboratorId: string, roleIds: string[], roles: Role[]) => {
+      const nextRoleId = pickPrimaryRoleId(roleIds, roles);
+      await updateCollaborator({ id: collaboratorId, role_id: nextRoleId });
     },
     [updateCollaborator]
   );
@@ -130,9 +134,7 @@ export function useCollaboratorMutations() {
     ) => {
       if (currentlyHas) {
         const role = roles.find(r => r.id === roleId);
-        const ar = role?.action_rights?.find(
-          a => a.resource === resource && a.action === action
-        );
+        const ar = role?.action_rights?.find(a => a.resource === resource && a.action === action);
         if (ar) {
           await removeActionRight({ id: ar.id });
         }
@@ -156,6 +158,7 @@ export function useCollaboratorMutations() {
   return {
     inviteUsers,
     changeCollaboratorRole,
+    changeCollaboratorRoles,
     removeCollaborator,
     approveRequest,
     rejectRequest,
@@ -166,4 +169,31 @@ export function useCollaboratorMutations() {
     deleteRole,
     toggleActionRight,
   };
+}
+
+function pickPrimaryRoleId(roleIds: string[], roles: Role[]) {
+  const uniqueRoleIds = [...new Set(roleIds.filter(Boolean))];
+  if (uniqueRoleIds.length === 0) {
+    return (
+      roles.find(role => role.default_request_role)?.id ||
+      roles.find(role => role.name === 'Collaborator')?.id ||
+      roles[0]?.id ||
+      null
+    );
+  }
+
+  const roleById = new Map(roles.map(role => [role.id, role]));
+  const sortedByPriority = [...uniqueRoleIds].sort((leftId, rightId) => {
+    const left = roleById.get(leftId);
+    const right = roleById.get(rightId);
+
+    return (
+      (right?.sort_order ?? -1) - (left?.sort_order ?? -1) ||
+      (left?.name ?? '').localeCompare(right?.name ?? '', undefined, {
+        sensitivity: 'base',
+      })
+    );
+  });
+
+  return sortedByPriority[0] ?? null;
 }

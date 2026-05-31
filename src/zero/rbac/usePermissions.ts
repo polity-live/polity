@@ -35,6 +35,7 @@ import type {
   ResourceType,
   ActionType,
   Membership,
+  GuestAccess,
   Participation,
   BloggerRelation,
   ActionRight,
@@ -52,8 +53,10 @@ function useAuthUserId(): string | undefined {
 
 interface UsePermissionsData {
   memberships: Membership[] | undefined;
+  guestAccesses: GuestAccess[] | undefined;
   participations: Participation[] | undefined;
   bloggerRelations: BloggerRelation[] | undefined;
+  ownedGroupIds: string[] | undefined;
   isLoading: boolean;
 }
 
@@ -108,6 +111,10 @@ function usePermissionsData(userId: string | undefined): UsePermissionsData {
     userId ? queries.rbac.membershipPermissions({ userId }) : undefined
   );
 
+  const [guestAccessesRaw, guestAccessesResult] = useQuery(
+    userId ? queries.rbac.guestPermissions({ userId }) : undefined
+  );
+
   const [participationsRaw, participationsResult] = useQuery(
     userId ? queries.rbac.participantPermissions({ userId }) : undefined
   );
@@ -116,10 +123,16 @@ function usePermissionsData(userId: string | undefined): UsePermissionsData {
     userId ? queries.rbac.bloggerPermissions({ userId }) : undefined
   );
 
+  const [ownedGroupsRaw, ownedGroupsResult] = useQuery(
+    userId ? queries.rbac.ownedGroupPermissions({ userId }) : undefined
+  );
+
   const isLoading =
     membershipsResult.type === 'unknown' ||
+    guestAccessesResult.type === 'unknown' ||
     participationsResult.type === 'unknown' ||
-    bloggerResult.type === 'unknown';
+    bloggerResult.type === 'unknown' ||
+    ownedGroupsResult.type === 'unknown';
 
   const memberships = useMemo(() => {
     if (!membershipsRaw) return undefined;
@@ -156,7 +169,21 @@ function usePermissionsData(userId: string | undefined): UsePermissionsData {
     })) as BloggerRelation[];
   }, [bloggerRelationsRaw]);
 
-  return { memberships, participations, bloggerRelations, isLoading };
+  const guestAccesses = useMemo(() => {
+    if (!guestAccessesRaw) return undefined;
+    return guestAccessesRaw.map(guestAccess => ({
+      id: guestAccess.id,
+      group: guestAccess.group ? { id: guestAccess.group.id } : undefined,
+      roles: mapRolesFromLinks(guestAccess.guest_roles, 'group'),
+    })) as GuestAccess[];
+  }, [guestAccessesRaw]);
+
+  const ownedGroupIds = useMemo(
+    () => ownedGroupsRaw?.map(group => group.id) ?? undefined,
+    [ownedGroupsRaw]
+  );
+
+  return { memberships, guestAccesses, participations, bloggerRelations, ownedGroupIds, isLoading };
 }
 
 // ============================================================================
@@ -165,13 +192,14 @@ function usePermissionsData(userId: string | undefined): UsePermissionsData {
 
 export function usePermissions(context: PermissionContext) {
   const userId = useAuthUserId();
-  const { memberships, participations, bloggerRelations, isLoading } = usePermissionsData(userId);
+  const { memberships, guestAccesses, participations, bloggerRelations, ownedGroupIds, isLoading } =
+    usePermissionsData(userId);
 
   return useMemo(() => {
     const can = (action: ActionType, resource: ResourceType): boolean => {
       if (!userId) return false;
       return checkPermission(
-        { userId, memberships, participations, bloggerRelations },
+        { userId, memberships, guestAccesses, participations, bloggerRelations, ownedGroupIds },
         {
           groupId: context.groupId,
           eventId: context.eventId,
@@ -250,8 +278,19 @@ export function usePermissions(context: PermissionContext) {
 
       // Raw data access (for advanced use cases)
       memberships,
+      guestAccesses,
       participations,
       bloggerRelations,
+      ownedGroupIds,
     };
-  }, [memberships, participations, bloggerRelations, userId, context, isLoading]);
+  }, [
+    memberships,
+    guestAccesses,
+    participations,
+    bloggerRelations,
+    ownedGroupIds,
+    userId,
+    context,
+    isLoading,
+  ]);
 }

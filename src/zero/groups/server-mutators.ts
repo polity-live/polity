@@ -4,6 +4,7 @@ import { mutators } from '../mutators';
 import { zql } from '../schema';
 import { fireNotification } from '../server-notify';
 import {
+  blogTitle,
   groupName,
   userName,
   roleName,
@@ -14,12 +15,23 @@ import {
   syncUserWithGroupConversation,
 } from '../server-helpers';
 import { DEFAULT_GROUP_ROLES } from '../rbac/constants';
+import { reconcileGeneralAssemblyParticipantsForGroups } from '../events/assembly-reconcile';
+import { reconcileDelegateAllocationsForGroups } from '../events/delegate-allocation-reconcile';
 import {
   groupCreateSchema,
   groupMembershipCreateSchema,
   groupMembershipDeleteSchema,
-  groupMembershipUpdateSchema,
+  groupMembershipLegacyRoleUpdateSchema,
+  groupMembershipRoleAssignSchema,
+  groupMembershipRoleUnassignSchema,
+  groupMembershipRolesSyncSchema,
   groupUpdateSchema,
+  groupGuestAccessCreateSchema,
+  groupGuestAccessAcceptSchema,
+  groupGuestAccessDeleteSchema,
+  groupGuestRoleAssignSchema,
+  groupGuestRoleUnassignSchema,
+  groupGuestRolesSyncSchema,
   roleCreateSchema,
   roleDeleteSchema,
   roleHolderHistoryCreateSchema,
@@ -27,13 +39,21 @@ import {
   actionRightCreateSchema,
   actionRightDeleteSchema,
 } from './schema';
-import { updateGroupRelationshipSchema, deleteGroupRelationshipSchema } from '../network/schema';
 import {
-  resolveHierarchicalAncestors,
-  resolveChildBaseGroups,
-  checkExclusivityConstraint,
-  detectLinkConflicts,
-} from '../../features/groups/logic/hierarchy';
+  createGroupRelationshipSchema,
+  updateGroupRelationshipSchema,
+  deleteGroupRelationshipSchema,
+} from '../network/schema';
+import { resolveChildBaseGroups } from '../../features/groups/logic/hierarchy';
+import {
+  clearAutomaticSiblingMemberships,
+  filterHierarchyRelationships,
+  reconcileHierarchyForBaseGroup,
+  recomputeSiblingGroupMemberships,
+  recomputeSiblingMembershipsForGroup,
+} from './membership-helpers';
+import { getHierarchyRelationshipPair } from '@/features/network/logic/groupRelationshipOrientation';
+import { assertNoBlockingGroupConflicts } from '@/server/group-conflict-validation';
 
 async function addGroupMembershipRoleLink(
   tx: Parameters<typeof mutators.groups.create.fn>[0]['tx'],
@@ -101,9 +121,242 @@ async function syncGroupMembershipRoleLinks(
   }
 }
 
+async function loadBlogRoleNotificationContext(
+  tx: Parameters<typeof mutators.groups.create.fn>[0]['tx'],
+  blogId: string
+) {
+  const [title, blogRow, ownerRelation] = await Promise.all([
+    blogTitle(tx, blogId),
+    tx.run(zql.blog.where('id', blogId).one()),
+    tx.run(zql.blog_blogger.where('blog_id', blogId).where('status', 'owner').one()),
+  ]);
+
+  return {
+    blogTitle: title,
+    groupId: blogRow?.group_id ?? undefined,
+    ownerId: ownerRelation?.user_id ?? undefined,
+  };
+}
+
+type GroupServerTx = Parameters<typeof mutators.groups.create.fn>[0]['tx'];
+type GroupServerCtx = Parameters<typeof mutators.groups.create.fn>[0]['ctx'];
+
+async function reconcileBaseGroupHierarchyMemberships(
+  tx: GroupServerTx,
+  baseGroupIds: readonly string[],
+  assignedById?: string | null
+) {
+  const affectedMembershipGroupIds = new Set<string>();
+
+  for (const baseGroupId of [...new Set(baseGroupIds.filter(Boolean))]) {
+    const { affectedGroupIds } = await reconcileHierarchyForBaseGroup(
+      tx,
+      baseGroupId,
+      assignedById
+    );
+    for (const affectedGroupId of affectedGroupIds) {
+      affectedMembershipGroupIds.add(affectedGroupId);
+    }
+  }
+
+  return affectedMembershipGroupIds;
+}
+
+async function applyActivatedHierarchyRelationshipEffects(
+  tx: GroupServerTx,
+  ctx: GroupServerCtx,
+  relationship: {
+    id: string;
+    group_id: string;
+    related_group_id: string;
+    relationship_type: string | null;
+    with_right: string | null;
+  }
+) {
+  const hierarchyPair = getHierarchyRelationshipPair(relationship);
+  if (!hierarchyPair) {
+    return new Set<string>();
+  }
+
+  const parentGroupId = hierarchyPair.parentGroupId;
+  const childGroupId = hierarchyPair.childGroupId;
+  const allGroups = await tx.run(zql.group);
+  const groupsById = new Map(allGroups.map(group => [group.id, group]));
+  const parentGroup = groupsById.get(parentGroupId) ?? null;
+  const childGroup = groupsById.get(childGroupId) ?? null;
+
+  if (parentGroup?.group_type === 'sibling' || childGroup?.group_type === 'sibling') {
+    return new Set<string>();
+  }
+
+  const affectedMembershipGroupIds = new Set<string>([parentGroupId]);
+
+  if (parentGroup?.group_type === 'base') {
+    await tx.mutate.group.update({ id: parentGroupId, group_type: 'hierarchical' });
+
+    const parentRoles = await tx.run(
+      zql.role.where('group_id', parentGroupId).where('scope', 'group')
+    );
+    const adminRole = parentRoles.find(
+      role => role.name === 'Admin' && role.assignee_kind !== 'guest'
+    );
+
+    if (adminRole) {
+      const existingMembers = await tx.run(
+        zql.group_membership.where('group_id', parentGroupId).where('source', 'direct')
+      );
+      for (const member of existingMembers) {
+        await addGroupMembershipRoleLink(tx, {
+          group_membership_id: member.id,
+          role_id: adminRole.id,
+          assigned_by_id: ctx.userID,
+        });
+      }
+    }
+  }
+
+  const activePvrRelationships = filterHierarchyRelationships(
+    await tx.run(
+      zql.group_relationship.where('with_right', 'passiveVotingRight').where('status', 'active')
+    ),
+    groupsById
+  );
+  const baseGroupIds = resolveChildBaseGroups(childGroupId, activePvrRelationships, groupsById);
+  const affectedBaseGroupIds = baseGroupIds.length > 0 ? baseGroupIds : [childGroupId];
+  const reconciledGroupIds = await reconcileBaseGroupHierarchyMemberships(
+    tx,
+    affectedBaseGroupIds,
+    ctx.userID
+  );
+
+  for (const affectedGroupId of reconciledGroupIds) {
+    affectedMembershipGroupIds.add(affectedGroupId);
+  }
+
+  return affectedMembershipGroupIds;
+}
+
+async function applyDeletedHierarchyRelationshipEffects(
+  tx: GroupServerTx,
+  ctx: GroupServerCtx,
+  relationship: {
+    id: string;
+    group_id: string;
+    related_group_id: string;
+    relationship_type: string | null;
+    with_right: string | null;
+    status: string | null;
+  }
+) {
+  const hierarchyPair = getHierarchyRelationshipPair(relationship);
+  if (!hierarchyPair) {
+    return new Set<string>();
+  }
+
+  const parentGroupId = hierarchyPair.parentGroupId;
+  const childGroupId = hierarchyPair.childGroupId;
+  const allGroups = await tx.run(zql.group);
+  const groupsById = new Map(allGroups.map(group => [group.id, group]));
+  const parentGroup = groupsById.get(parentGroupId) ?? null;
+  const childGroup = groupsById.get(childGroupId) ?? null;
+
+  if (parentGroup?.group_type === 'sibling' || childGroup?.group_type === 'sibling') {
+    return new Set<string>();
+  }
+
+  const remainingPvrRelationships = filterHierarchyRelationships(
+    await tx.run(
+      zql.group_relationship.where('with_right', 'passiveVotingRight').where('status', 'active')
+    ),
+    groupsById
+  );
+  const baseGroupIds = resolveChildBaseGroups(childGroupId, remainingPvrRelationships, groupsById);
+  const affectedBaseGroupIds = baseGroupIds.length > 0 ? baseGroupIds : [childGroupId];
+  const affectedMembershipGroupIds = new Set<string>([parentGroupId]);
+  const reconciledGroupIds = await reconcileBaseGroupHierarchyMemberships(
+    tx,
+    affectedBaseGroupIds,
+    ctx.userID
+  );
+
+  for (const affectedGroupId of reconciledGroupIds) {
+    affectedMembershipGroupIds.add(affectedGroupId);
+  }
+
+  const remainingChildren = remainingPvrRelationships.filter(currentRelationship => {
+    const pair = getHierarchyRelationshipPair(currentRelationship);
+    return pair?.parentGroupId === parentGroupId;
+  });
+
+  if (
+    remainingChildren.length === 0 &&
+    (await tx.run(zql.group.where('id', parentGroupId).one()))?.group_type === 'hierarchical'
+  ) {
+    await tx.mutate.group.update({ id: parentGroupId, group_type: 'base' });
+  }
+
+  return affectedMembershipGroupIds;
+}
+
+function isGraphActiveRelationshipStatus(status: string | null | undefined) {
+  return status == null || status === 'active' || status === 'accepted';
+}
+
+async function recomputeSiblingMembershipsForGroups(
+  tx: GroupServerTx,
+  groupIds: Iterable<string>,
+  assignedById?: string | null
+) {
+  for (const groupId of new Set([...groupIds].filter(Boolean))) {
+    await recomputeSiblingMembershipsForGroup(tx, groupId, assignedById);
+  }
+}
+
+async function reconcileMembershipDrivenEventsForGroups(
+  tx: GroupServerTx,
+  groupIds: Iterable<string>,
+  assignedById?: string | null
+) {
+  const uniqueGroupIds = [...new Set([...groupIds].filter(Boolean))];
+  if (uniqueGroupIds.length === 0) {
+    console.info('Server successful', {
+      flow: 'group-membership-event-reconcile',
+      assignedById: assignedById ?? null,
+      groupIds: [],
+      reason: 'no-groups',
+    });
+    return;
+  }
+
+  console.info('Server validation started', {
+    flow: 'group-membership-event-reconcile',
+    assignedById: assignedById ?? null,
+    groupIds: uniqueGroupIds,
+  });
+
+  await reconcileGeneralAssemblyParticipantsForGroups(tx, uniqueGroupIds, assignedById);
+  await reconcileDelegateAllocationsForGroups(tx, uniqueGroupIds);
+
+  console.info('Server successful', {
+    flow: 'group-membership-event-reconcile',
+    assignedById: assignedById ?? null,
+    groupIds: uniqueGroupIds,
+  });
+}
+
 /** Server-only mutators — override the shared mutators with additional server-side logic (e.g. notifications). */
 export const groupServerMutators = {
   create: defineMutator(groupCreateSchema, async ({ tx, ctx, args }) => {
+    await assertNoBlockingGroupConflicts(tx, ctx, {
+      kind: 'sibling_configuration',
+      group_id: args.id,
+      group_type: args.group_type,
+      connected_group_id: args.connected_group_id ?? null,
+      sibling_membership_mode: args.sibling_membership_mode ?? null,
+      sibling_role_id: args.sibling_role_id ?? null,
+      parliament_source_group_ids: args.parliament_source_group_ids ?? [],
+    });
+
     await mutators.groups.create.fn({ tx, ctx, args });
 
     const now = Date.now();
@@ -139,6 +392,7 @@ export const groupServerMutators = {
         scheduled_revote_date: null,
         default_request_role: roleDef.default_request_role,
         default_invite_role: roleDef.default_invite_role,
+        assignee_kind: 'member',
         sort_order: totalRoles - 1 - index,
         created_at: now,
       });
@@ -158,25 +412,30 @@ export const groupServerMutators = {
       }
     }
 
-    const creatorMembershipId = crypto.randomUUID();
+    const shouldCreateCreatorMembership =
+      args.group_type !== 'sibling' || args.sibling_membership_mode === 'open';
 
-    await tx.mutate.group_membership.insert({
-      id: creatorMembershipId,
-      group_id: args.id,
-      user_id: ctx.userID,
-      status: 'active',
-      visibility: 'public',
-      source: 'direct',
-      source_group_id: null,
-      created_at: now,
-    });
+    if (shouldCreateCreatorMembership) {
+      const creatorMembershipId = crypto.randomUUID();
 
-    if (adminRoleId) {
-      await syncGroupMembershipRoleLinks(tx, {
-        group_membership_id: creatorMembershipId,
-        role_ids: [adminRoleId],
-        assigned_by_id: ctx.userID,
+      await tx.mutate.group_membership.insert({
+        id: creatorMembershipId,
+        group_id: args.id,
+        user_id: ctx.userID,
+        status: 'active',
+        visibility: 'public',
+        source: 'direct',
+        source_group_id: null,
+        created_at: now,
       });
+
+      if (adminRoleId) {
+        await syncGroupMembershipRoleLinks(tx, {
+          group_membership_id: creatorMembershipId,
+          role_ids: [adminRoleId],
+          assigned_by_id: ctx.userID,
+        });
+      }
     }
 
     await ensureGroupConversation(tx, {
@@ -185,34 +444,30 @@ export const groupServerMutators = {
       requestedById: ctx.userID,
       createdAt: now,
     });
-    await syncUserWithGroupConversation(tx, {
-      groupId: args.id,
-      userId: ctx.userID,
-    });
+    if (shouldCreateCreatorMembership) {
+      await syncUserWithGroupConversation(tx, {
+        groupId: args.id,
+        userId: ctx.userID,
+      });
+    }
 
     await recomputeGroupCounters(tx, args.id);
     await recomputeUserCounters(tx, ctx.userID);
+
+    if (args.group_type === 'sibling') {
+      await recomputeSiblingGroupMemberships(tx, args.id, ctx.userID);
+    }
   }),
 
   joinGroup: defineMutator(groupMembershipCreateSchema, async ({ tx, ctx, args }) => {
     const group = await tx.run(zql.group.where('id', args.group_id).one());
+    const affectedMembershipGroupIds = new Set<string>([args.group_id]);
 
-    // Exclusivity check for base groups within a hierarchy
-    if (group?.group_type === 'base') {
-      const pvrRels = await tx.run(
-        zql.group_relationship.where('with_right', 'passiveVotingRight').where('status', 'active')
-      );
-      if (pvrRels.length > 0) {
-        const userMemberships = await tx.run(
-          zql.group_membership.where('user_id', ctx.userID).where('source', 'direct')
-        );
-        if (!checkExclusivityConstraint(ctx.userID, args.group_id, pvrRels, userMemberships)) {
-          throw new Error(
-            'Cannot join: you are already a member of another base group in the same hierarchy.'
-          );
-        }
-      }
-    }
+    await assertNoBlockingGroupConflicts(tx, ctx, {
+      kind: 'membership_activation',
+      group_id: args.group_id,
+      user_id: ctx.userID,
+    });
 
     // Run shared mutator (guards + direct insert)
     await mutators.groups.joinGroup.fn({ tx, ctx, args });
@@ -240,47 +495,27 @@ export const groupServerMutators = {
       });
     }
 
-    // Propagate derived memberships into hierarchical ancestors
-    if (!group || group.group_type !== 'base') return;
-
-    const pvrRels = await tx.run(
-      zql.group_relationship.where('with_right', 'passiveVotingRight').where('status', 'active')
-    );
-    const ancestors = resolveHierarchicalAncestors(args.group_id, pvrRels);
-    if (ancestors.length === 0) return;
-
-    for (const ancestorId of ancestors) {
-      // Find "Member" role in the ancestor group
-      const roles = await tx.run(zql.role.where('group_id', ancestorId).where('scope', 'group'));
-      const memberRole = roles.find(r => r.name === 'Member');
-
-      const derivedMembershipId = crypto.randomUUID();
-
-      await tx.mutate.group_membership.insert({
-        id: derivedMembershipId,
-        group_id: ancestorId,
-        user_id: ctx.userID,
-        status: 'active',
-        visibility: 'public',
-        source: 'derived',
-        source_group_id: args.group_id,
-        created_at: Date.now(),
-      });
-
-      if (memberRole?.id) {
-        await syncGroupMembershipRoleLinks(tx, {
-          group_membership_id: derivedMembershipId,
-          role_ids: [memberRole.id],
-          assigned_by_id: ctx.userID,
-        });
-      }
-
-      await recomputeGroupCounters(tx, ancestorId);
-      await syncUserWithGroupConversation(tx, {
-        groupId: ancestorId,
-        userId: ctx.userID,
-      });
+    // Only accepted base-group memberships should materialize into hierarchy ancestors.
+    if (!group || group.group_type !== 'base' || !isActiveGroupStatus(args.status)) {
+      await recomputeSiblingMembershipsForGroup(tx, args.group_id, ctx.userID);
+      await reconcileMembershipDrivenEventsForGroups(tx, affectedMembershipGroupIds, ctx.userID);
+      return;
     }
+
+    const reconciledGroupIds = await reconcileBaseGroupHierarchyMemberships(
+      tx,
+      [args.group_id],
+      ctx.userID
+    );
+    for (const affectedGroupId of reconciledGroupIds) {
+      affectedMembershipGroupIds.add(affectedGroupId);
+    }
+
+    for (const affectedGroupId of affectedMembershipGroupIds) {
+      await recomputeSiblingMembershipsForGroup(tx, affectedGroupId, ctx.userID);
+    }
+
+    await reconcileMembershipDrivenEventsForGroups(tx, affectedMembershipGroupIds, ctx.userID);
   }),
 
   inviteMember: defineMutator(groupMembershipCreateSchema, async ({ tx, ctx, args }) => {
@@ -297,12 +532,127 @@ export const groupServerMutators = {
     }
   }),
 
+  addMembershipRole: defineMutator(groupMembershipRoleAssignSchema, async ({ tx, ctx, args }) => {
+    const membership = await tx.run(
+      zql.group_membership.where('id', args.group_membership_id).one()
+    );
+
+    await mutators.groups.addMembershipRole.fn({ tx, ctx, args });
+
+    if (!membership) {
+      return;
+    }
+
+    await recomputeSiblingMembershipsForGroup(tx, membership.group_id, ctx.userID);
+  }),
+
+  removeMembershipRole: defineMutator(
+    groupMembershipRoleUnassignSchema,
+    async ({ tx, ctx, args }) => {
+      const membership = await tx.run(
+        zql.group_membership.where('id', args.group_membership_id).one()
+      );
+
+      await mutators.groups.removeMembershipRole.fn({ tx, ctx, args });
+
+      if (!membership) {
+        return;
+      }
+
+      await recomputeSiblingMembershipsForGroup(tx, membership.group_id, ctx.userID);
+    }
+  ),
+
+  syncMembershipRoles: defineMutator(groupMembershipRolesSyncSchema, async ({ tx, ctx, args }) => {
+    const membership = await tx.run(
+      zql.group_membership.where('id', args.group_membership_id).one()
+    );
+
+    await mutators.groups.syncMembershipRoles.fn({ tx, ctx, args });
+
+    if (!membership) {
+      return;
+    }
+
+    await recomputeSiblingMembershipsForGroup(tx, membership.group_id, ctx.userID);
+  }),
+
+  inviteGuest: defineMutator(groupGuestAccessCreateSchema, async ({ tx, ctx, args }) => {
+    await mutators.groups.inviteGuest.fn({ tx, ctx, args });
+
+    if (args.status === 'active') {
+      await syncUserWithGroupConversation(tx, {
+        groupId: args.group_id,
+        userId: args.user_id,
+      });
+    }
+  }),
+
+  acceptGuestInvitation: defineMutator(groupGuestAccessAcceptSchema, async ({ tx, ctx, args }) => {
+    const guestAccess = await tx.run(zql.group_guest_access.where('id', args.id).one());
+
+    await mutators.groups.acceptGuestInvitation.fn({ tx, ctx, args });
+
+    if (!guestAccess) {
+      return;
+    }
+
+    await syncUserWithGroupConversation(tx, {
+      groupId: guestAccess.group_id,
+      userId: guestAccess.user_id,
+    });
+  }),
+
+  revokeGuestAccess: defineMutator(groupGuestAccessDeleteSchema, async ({ tx, ctx, args }) => {
+    const guestAccess = await tx.run(zql.group_guest_access.where('id', args.id).one());
+
+    await mutators.groups.revokeGuestAccess.fn({ tx, ctx, args });
+
+    if (!guestAccess) {
+      return;
+    }
+
+    await syncUserWithGroupConversation(tx, {
+      groupId: guestAccess.group_id,
+      userId: guestAccess.user_id,
+    });
+  }),
+
+  addGuestRole: defineMutator(groupGuestRoleAssignSchema, async ({ tx, ctx, args }) => {
+    await mutators.groups.addGuestRole.fn({ tx, ctx, args });
+  }),
+
+  removeGuestRole: defineMutator(groupGuestRoleUnassignSchema, async ({ tx, ctx, args }) => {
+    await mutators.groups.removeGuestRole.fn({ tx, ctx, args });
+  }),
+
+  syncGuestRoles: defineMutator(groupGuestRolesSyncSchema, async ({ tx, ctx, args }) => {
+    await mutators.groups.syncGuestRoles.fn({ tx, ctx, args });
+  }),
+
   acceptInvitation: defineMutator(z.object({ id: z.string() }), async ({ tx, ctx, args }) => {
     const membership = await tx.run(zql.group_membership.where('id', args.id).one());
+    const affectedMembershipGroupIds = new Set<string>();
+
+    console.info('Server validation started', {
+      flow: 'group-membership-invitation-accept',
+      membershipId: args.id,
+      actorUserId: ctx.userID,
+      membershipStatus: membership?.status ?? null,
+      membershipGroupId: membership?.group_id ?? null,
+      membershipUserId: membership?.user_id ?? null,
+      membershipSource: membership?.source ?? null,
+    });
+
+    await assertNoBlockingGroupConflicts(tx, ctx, {
+      kind: 'membership_activation',
+      membership_id: args.id,
+    });
 
     await mutators.groups.acceptInvitation.fn({ tx, ctx, args });
 
     if (!membership) return;
+    affectedMembershipGroupIds.add(membership.group_id);
 
     await recomputeGroupCounters(tx, membership.group_id);
     await recomputeUserCounters(tx, membership.user_id);
@@ -325,58 +675,63 @@ export const groupServerMutators = {
 
     // Propagate derived memberships when accepting invitation to a base group
     const group = await tx.run(zql.group.where('id', membership.group_id).one());
-    if (!group || group.group_type !== 'base') return;
-
-    const pvrRels = await tx.run(
-      zql.group_relationship.where('with_right', 'passiveVotingRight').where('status', 'active')
-    );
-    const ancestors = resolveHierarchicalAncestors(membership.group_id, pvrRels);
-    if (ancestors.length === 0) return;
-
-    for (const ancestorId of ancestors) {
-      const existing = await tx.run(
-        zql.group_membership.where('user_id', membership.user_id).where('group_id', ancestorId)
-      );
-      if (existing.length > 0) continue;
-
-      const roles = await tx.run(zql.role.where('group_id', ancestorId).where('scope', 'group'));
-      const memberRole = roles.find(r => r.name === 'Member');
-
-      const derivedMembershipId = crypto.randomUUID();
-
-      await tx.mutate.group_membership.insert({
-        id: derivedMembershipId,
-        group_id: ancestorId,
-        user_id: membership.user_id,
-        status: 'active',
-        visibility: 'public',
-        source: 'derived',
-        source_group_id: membership.group_id,
-        created_at: Date.now(),
+    if (!group || group.group_type !== 'base') {
+      await recomputeSiblingMembershipsForGroup(tx, membership.group_id, ctx.userID);
+      await reconcileMembershipDrivenEventsForGroups(tx, affectedMembershipGroupIds, ctx.userID);
+      console.info('Server successful', {
+        flow: 'group-membership-invitation-accept',
+        membershipId: args.id,
+        actorUserId: ctx.userID,
+        membershipGroupId: membership.group_id,
+        membershipUserId: membership.user_id,
+        affectedMembershipGroupIds: [...affectedMembershipGroupIds],
       });
-
-      if (memberRole?.id) {
-        await syncGroupMembershipRoleLinks(tx, {
-          group_membership_id: derivedMembershipId,
-          role_ids: [memberRole.id],
-          assigned_by_id: ctx.userID,
-        });
-      }
-
-      await recomputeGroupCounters(tx, ancestorId);
-      await syncUserWithGroupConversation(tx, {
-        groupId: ancestorId,
-        userId: membership.user_id,
-      });
+      return;
     }
+
+    const reconciledGroupIds = await reconcileBaseGroupHierarchyMemberships(
+      tx,
+      [membership.group_id],
+      ctx.userID
+    );
+    for (const affectedGroupId of reconciledGroupIds) {
+      affectedMembershipGroupIds.add(affectedGroupId);
+    }
+
+    for (const affectedGroupId of affectedMembershipGroupIds) {
+      await recomputeSiblingMembershipsForGroup(tx, affectedGroupId, ctx.userID);
+    }
+
+    await reconcileMembershipDrivenEventsForGroups(tx, affectedMembershipGroupIds, ctx.userID);
+
+    console.info('Server successful', {
+      flow: 'group-membership-invitation-accept',
+      membershipId: args.id,
+      actorUserId: ctx.userID,
+      membershipGroupId: membership.group_id,
+      membershipUserId: membership.user_id,
+      affectedMembershipGroupIds: [...affectedMembershipGroupIds],
+    });
   }),
 
   leaveGroup: defineMutator(groupMembershipDeleteSchema, async ({ tx, ctx, args }) => {
     const membership = await tx.run(zql.group_membership.where('id', args.id).one());
+    const affectedMembershipGroupIds = new Set<string>();
+
+    console.info('Server validation started', {
+      flow: 'group-membership-delete',
+      membershipId: args.id,
+      actorUserId: ctx.userID,
+      membershipStatus: membership?.status ?? null,
+      membershipGroupId: membership?.group_id ?? null,
+      membershipUserId: membership?.user_id ?? null,
+      membershipSource: membership?.source ?? null,
+    });
 
     await mutators.groups.leaveGroup.fn({ tx, ctx, args });
 
     if (!membership) return;
+    affectedMembershipGroupIds.add(membership.group_id);
 
     await recomputeGroupCounters(tx, membership.group_id);
     await recomputeUserCounters(tx, membership.user_id);
@@ -385,19 +740,14 @@ export const groupServerMutators = {
       userId: membership.user_id,
     });
 
-    // Cascade: delete derived memberships from ancestor groups
     if (membership.source === 'direct') {
-      const allDerived = await tx.run(
-        zql.group_membership.where('user_id', membership.user_id).where('source', 'derived')
+      const reconciledGroupIds = await reconcileBaseGroupHierarchyMemberships(
+        tx,
+        [membership.group_id],
+        ctx.userID
       );
-      const toDelete = allDerived.filter(m => m.source_group_id === membership.group_id);
-      for (const derived of toDelete) {
-        await tx.mutate.group_membership.delete({ id: derived.id });
-        await recomputeGroupCounters(tx, derived.group_id);
-        await syncUserWithGroupConversation(tx, {
-          groupId: derived.group_id,
-          userId: membership.user_id,
-        });
+      for (const affectedGroupId of reconciledGroupIds) {
+        affectedMembershipGroupIds.add(affectedGroupId);
       }
     }
 
@@ -448,163 +798,241 @@ export const groupServerMutators = {
         });
       }
     }
+
+    for (const affectedGroupId of affectedMembershipGroupIds) {
+      await recomputeSiblingMembershipsForGroup(tx, affectedGroupId, ctx.userID);
+    }
+
+    await reconcileMembershipDrivenEventsForGroups(tx, affectedMembershipGroupIds, ctx.userID);
+
+    console.info('Server successful', {
+      flow: 'group-membership-delete',
+      membershipId: args.id,
+      actorUserId: ctx.userID,
+      membershipGroupId: membership.group_id,
+      membershipUserId: membership.user_id,
+      affectedMembershipGroupIds: [...affectedMembershipGroupIds],
+    });
   }),
 
-  updateMemberRole: defineMutator(groupMembershipUpdateSchema, async ({ tx, ctx, args }) => {
-    const oldMembership = await tx.run(zql.group_membership.where('id', args.id).one());
-    const oldRoleLinks = await tx.run(
-      zql.group_membership_role.where('group_membership_id', args.id)
-    );
+  updateMemberRole: defineMutator(
+    groupMembershipLegacyRoleUpdateSchema,
+    async ({ tx, ctx, args }) => {
+      const oldMembership = await tx.run(zql.group_membership.where('id', args.id).one());
+      const oldRoleLinks = await tx.run(
+        zql.group_membership_role.where('group_membership_id', args.id)
+      );
+      const affectedMembershipGroupIds = new Set<string>();
+      const isActivationTrace =
+        oldMembership != null &&
+        args.status !== undefined &&
+        isActiveGroupStatus(args.status) &&
+        !isActiveGroupStatus(oldMembership.status);
 
-    await mutators.groups.updateMemberRole.fn({ tx, ctx, args });
+      if (isActivationTrace) {
+        console.info('Server validation started', {
+          flow: 'group-membership-request-approve',
+          membershipId: args.id,
+          actorUserId: ctx.userID,
+          membershipUserId: oldMembership.user_id,
+          groupId: oldMembership.group_id,
+          oldStatus: oldMembership.status,
+          newStatus: args.status,
+          source: oldMembership.source,
+        });
+      }
 
-    if (!oldMembership) return;
+      if (
+        oldMembership &&
+        args.status !== undefined &&
+        isActiveGroupStatus(args.status) &&
+        !isActiveGroupStatus(oldMembership.status)
+      ) {
+        await assertNoBlockingGroupConflicts(tx, ctx, {
+          kind: 'membership_activation',
+          membership_id: args.id,
+        });
+      }
 
-    await recomputeGroupCounters(tx, oldMembership.group_id);
-    await recomputeUserCounters(tx, oldMembership.user_id);
+      await mutators.groups.updateMemberRole.fn({ tx, ctx, args });
 
-    const gId = oldMembership.group_id;
-    const membUserId = oldMembership.user_id;
-    const oldStatus = oldMembership.status;
-    const newStatus = args.status;
-    const isSelf = ctx.userID === membUserId;
-    const becameActive =
-      newStatus !== undefined && isActiveGroupStatus(newStatus) && !isActiveGroupStatus(oldStatus);
-    const lostActiveAccess =
-      newStatus !== undefined && !isActiveGroupStatus(newStatus) && isActiveGroupStatus(oldStatus);
+      if (!oldMembership) return;
+      affectedMembershipGroupIds.add(oldMembership.group_id);
 
-    const gName = await groupName(tx, gId);
+      await recomputeGroupCounters(tx, oldMembership.group_id);
+      await recomputeUserCounters(tx, oldMembership.user_id);
 
-    if (newStatus === 'active' && (oldStatus === 'requested' || oldStatus === 'invited')) {
-      if (isSelf) {
-        const uName = await userName(tx, ctx.userID);
-        fireNotification('notifyGroupInvitationAccepted', {
+      const gId = oldMembership.group_id;
+      const membUserId = oldMembership.user_id;
+      const oldStatus = oldMembership.status;
+      const newStatus = args.status;
+      const isSelf = ctx.userID === membUserId;
+      const becameActive =
+        newStatus !== undefined &&
+        isActiveGroupStatus(newStatus) &&
+        !isActiveGroupStatus(oldStatus);
+      const lostActiveAccess =
+        newStatus !== undefined &&
+        !isActiveGroupStatus(newStatus) &&
+        isActiveGroupStatus(oldStatus);
+
+      const gName = await groupName(tx, gId);
+
+      if (newStatus === 'active' && (oldStatus === 'requested' || oldStatus === 'invited')) {
+        if (isSelf) {
+          const uName = await userName(tx, ctx.userID);
+          fireNotification('notifyGroupInvitationAccepted', {
+            senderId: ctx.userID,
+            senderName: uName,
+            groupId: gId,
+            groupName: gName,
+          });
+        } else {
+          fireNotification('notifyMembershipApproved', {
+            senderId: ctx.userID,
+            recipientUserId: membUserId,
+            groupId: gId,
+            groupName: gName,
+          });
+        }
+      } else if (newStatus === 'admin') {
+        fireNotification('notifyAdminPromoted', {
           senderId: ctx.userID,
-          senderName: uName,
+          recipientUserId: membUserId,
           groupId: gId,
           groupName: gName,
         });
-      } else {
-        fireNotification('notifyMembershipApproved', {
+      } else if (newStatus === 'active' && oldStatus === 'admin') {
+        fireNotification('notifyAdminDemoted', {
           senderId: ctx.userID,
           recipientUserId: membUserId,
           groupId: gId,
           groupName: gName,
         });
       }
-    } else if (newStatus === 'admin') {
-      fireNotification('notifyAdminPromoted', {
-        senderId: ctx.userID,
-        recipientUserId: membUserId,
-        groupId: gId,
-        groupName: gName,
-      });
-    } else if (newStatus === 'active' && oldStatus === 'admin') {
-      fireNotification('notifyAdminDemoted', {
-        senderId: ctx.userID,
-        recipientUserId: membUserId,
-        groupId: gId,
-        groupName: gName,
-      });
-    }
 
-    const oldRoleIds = new Set(oldRoleLinks.map(link => link.role_id));
-    const legacyRoleChanged =
-      args.role_id !== undefined &&
-      (args.role_id ? oldRoleIds.size !== 1 || !oldRoleIds.has(args.role_id) : oldRoleIds.size > 0);
+      const oldRoleIds = new Set(oldRoleLinks.map(link => link.role_id));
+      const legacyRoleChanged =
+        args.role_id !== undefined &&
+        (args.role_id
+          ? oldRoleIds.size !== 1 || !oldRoleIds.has(args.role_id)
+          : oldRoleIds.size > 0);
 
-    if (legacyRoleChanged && !newStatus) {
-      const rInfo = args.role_id
-        ? await roleName(tx, args.role_id)
-        : { name: 'Default', groupId: null };
-      fireNotification('notifyMembershipRoleChanged', {
-        senderId: ctx.userID,
-        recipientUserId: membUserId,
-        groupId: gId,
-        groupName: gName,
-        newRole: rInfo.name,
-      });
-    }
+      if (legacyRoleChanged && !newStatus) {
+        const rInfo = args.role_id
+          ? await roleName(tx, args.role_id)
+          : { name: 'Default', groupId: null };
+        fireNotification('notifyMembershipRoleChanged', {
+          senderId: ctx.userID,
+          recipientUserId: membUserId,
+          groupId: gId,
+          groupName: gName,
+          newRole: rInfo.name,
+        });
+      }
 
-    // Keep derived memberships and linked conversations aligned with active base memberships.
-    if (becameActive || lostActiveAccess) {
-      const group = await tx.run(zql.group.where('id', gId).one());
-      if (group?.group_type === 'base') {
-        const pvrRels = await tx.run(
-          zql.group_relationship.where('with_right', 'passiveVotingRight').where('status', 'active')
-        );
-        const ancestors = resolveHierarchicalAncestors(gId, pvrRels);
-        if (becameActive) {
-          for (const ancestorId of ancestors) {
-            const existing = await tx.run(
-              zql.group_membership.where('user_id', membUserId).where('group_id', ancestorId)
-            );
-            if (existing.length > 0) continue;
-
-            const roles = await tx.run(
-              zql.role.where('group_id', ancestorId).where('scope', 'group')
-            );
-            const memberRole = roles.find(r => r.name === 'Member');
-
-            const derivedMembershipId = crypto.randomUUID();
-
-            await tx.mutate.group_membership.insert({
-              id: derivedMembershipId,
-              group_id: ancestorId,
-              user_id: membUserId,
-              status: 'active',
-              visibility: 'public',
-              source: 'derived',
-              source_group_id: gId,
-              created_at: Date.now(),
-            });
-
-            if (memberRole?.id) {
-              await syncGroupMembershipRoleLinks(tx, {
-                group_membership_id: derivedMembershipId,
-                role_ids: [memberRole.id],
-                assigned_by_id: ctx.userID,
-              });
-            }
-
-            await recomputeGroupCounters(tx, ancestorId);
-            await syncUserWithGroupConversation(tx, {
-              groupId: ancestorId,
-              userId: membUserId,
-            });
-          }
-        }
-
-        if (lostActiveAccess) {
-          const derivedMemberships = await tx.run(
-            zql.group_membership.where('user_id', membUserId).where('source', 'derived')
+      // Keep derived memberships and linked conversations aligned with active base memberships.
+      if (becameActive || lostActiveAccess) {
+        const group = await tx.run(zql.group.where('id', gId).one());
+        if (group?.group_type === 'base') {
+          const reconciledGroupIds = await reconcileBaseGroupHierarchyMemberships(
+            tx,
+            [gId],
+            ctx.userID
           );
-          const derivedForGroup = derivedMemberships.filter(
-            membership => membership.source_group_id === gId
-          );
-
-          for (const derivedMembership of derivedForGroup) {
-            await tx.mutate.group_membership.delete({ id: derivedMembership.id });
-            await recomputeGroupCounters(tx, derivedMembership.group_id);
-            await syncUserWithGroupConversation(tx, {
-              groupId: derivedMembership.group_id,
-              userId: membUserId,
-            });
+          for (const affectedGroupId of reconciledGroupIds) {
+            affectedMembershipGroupIds.add(affectedGroupId);
           }
         }
       }
-    }
 
-    if (args.status !== undefined) {
-      await syncUserWithGroupConversation(tx, {
-        groupId: gId,
-        userId: membUserId,
-      });
+      if (args.status !== undefined) {
+        await syncUserWithGroupConversation(tx, {
+          groupId: gId,
+          userId: membUserId,
+        });
+      }
+
+      for (const affectedGroupId of affectedMembershipGroupIds) {
+        await recomputeSiblingMembershipsForGroup(tx, affectedGroupId, ctx.userID);
+      }
+
+      if (becameActive || lostActiveAccess) {
+        await reconcileMembershipDrivenEventsForGroups(tx, affectedMembershipGroupIds, ctx.userID);
+      }
+
+      if (isActivationTrace) {
+        console.info('Server successful', {
+          flow: 'group-membership-request-approve',
+          membershipId: args.id,
+          actorUserId: ctx.userID,
+          membershipUserId: oldMembership.user_id,
+          groupId: oldMembership.group_id,
+          affectedMembershipGroupIds: [...affectedMembershipGroupIds],
+        });
+      }
     }
-  }),
+  ),
 
   update: defineMutator(groupUpdateSchema, async ({ tx, ctx, args }) => {
+    const previousGroup = await tx.run(zql.group.where('id', args.id).one());
+    const nextGroupType = args.group_type ?? previousGroup?.group_type ?? 'base';
+    const nextConnectedGroupId =
+      args.connected_group_id !== undefined
+        ? args.connected_group_id
+        : (previousGroup?.connected_group_id ?? null);
+    const nextSiblingMembershipMode =
+      args.sibling_membership_mode !== undefined
+        ? args.sibling_membership_mode
+        : (previousGroup?.sibling_membership_mode ?? null);
+    const nextSiblingRoleId =
+      args.sibling_role_id !== undefined
+        ? args.sibling_role_id
+        : (previousGroup?.sibling_role_id ?? null);
+    const nextParliamentSourceGroupIds =
+      args.parliament_source_group_ids ??
+      (await tx.run(zql.group_sibling_source.where('group_id', args.id))).map(
+        sourceLink => sourceLink.source_group_id
+      );
+
+    await assertNoBlockingGroupConflicts(tx, ctx, {
+      kind: 'sibling_configuration',
+      group_id: args.id,
+      group_type: nextGroupType,
+      connected_group_id: nextConnectedGroupId,
+      sibling_membership_mode: nextSiblingMembershipMode,
+      sibling_role_id: nextSiblingRoleId,
+      parliament_source_group_ids: nextParliamentSourceGroupIds,
+    });
+
     await mutators.groups.update.fn({ tx, ctx, args });
+    const updatedGroup = await tx.run(zql.group.where('id', args.id).one());
+
+    if (previousGroup?.group_type === 'sibling' && updatedGroup?.group_type !== 'sibling') {
+      await clearAutomaticSiblingMemberships(tx, args.id);
+    }
+
+    if (updatedGroup?.group_type === 'sibling') {
+      await recomputeSiblingGroupMemberships(tx, args.id, ctx.userID);
+      await recomputeSiblingMembershipsForGroup(tx, args.id, ctx.userID);
+    }
+
+    const affectedConnectedGroupIds = new Set<string>();
+    if (previousGroup?.connected_group_id) {
+      affectedConnectedGroupIds.add(previousGroup.connected_group_id);
+    }
+    if (updatedGroup?.connected_group_id) {
+      affectedConnectedGroupIds.add(updatedGroup.connected_group_id);
+    }
+    for (const connectedGroupId of affectedConnectedGroupIds) {
+      await recomputeSiblingMembershipsForGroup(tx, connectedGroupId, ctx.userID);
+    }
+
+    await reconcileMembershipDrivenEventsForGroups(
+      tx,
+      [args.id, ...affectedConnectedGroupIds],
+      ctx.userID
+    );
 
     const gName = args.name ?? (await groupName(tx, args.id));
     fireNotification('notifyGroupProfileUpdated', {
@@ -623,6 +1051,17 @@ export const groupServerMutators = {
         senderId: ctx.userID,
         groupId: args.group_id,
         groupName: gName,
+        roleName: args.name,
+      });
+    } else if (args.blog_id) {
+      const blogContext = await loadBlogRoleNotificationContext(tx, args.blog_id);
+      fireNotification('notifyBlogRoleCreated', {
+        senderId: ctx.userID,
+        blogId: args.blog_id,
+        blogTitle: blogContext.blogTitle,
+        roleName: args.name,
+        groupId: blogContext.groupId,
+        ownerId: blogContext.ownerId,
       });
     }
   }),
@@ -638,6 +1077,17 @@ export const groupServerMutators = {
         senderId: ctx.userID,
         groupId: rInfo.groupId,
         groupName: gName,
+        roleName: rInfo.name,
+      });
+    } else if (rInfo.blogId) {
+      const blogContext = await loadBlogRoleNotificationContext(tx, rInfo.blogId);
+      fireNotification('notifyBlogRoleDeleted', {
+        senderId: ctx.userID,
+        blogId: rInfo.blogId,
+        blogTitle: blogContext.blogTitle,
+        roleName: rInfo.name,
+        groupId: blogContext.groupId,
+        ownerId: blogContext.ownerId,
       });
     }
   }),
@@ -655,6 +1105,19 @@ export const groupServerMutators = {
         groupId: args.group_id,
         groupName: gName,
         roleName: rInfo.name,
+      });
+    } else if (args.role_id && args.blog_id) {
+      const [blogContext, rInfo] = await Promise.all([
+        loadBlogRoleNotificationContext(tx, args.blog_id),
+        roleName(tx, args.role_id),
+      ]);
+      fireNotification('notifyBlogRoleUpdated', {
+        senderId: ctx.userID,
+        blogId: args.blog_id,
+        blogTitle: blogContext.blogTitle,
+        roleName: rInfo.name,
+        groupId: blogContext.groupId,
+        ownerId: blogContext.ownerId,
       });
     }
   }),
@@ -675,6 +1138,19 @@ export const groupServerMutators = {
         groupName: gName,
         roleName: rInfo.name,
       });
+    } else if (right?.role_id && right?.blog_id) {
+      const [blogContext, rInfo] = await Promise.all([
+        loadBlogRoleNotificationContext(tx, right.blog_id),
+        roleName(tx, right.role_id),
+      ]);
+      fireNotification('notifyBlogRoleUpdated', {
+        senderId: ctx.userID,
+        blogId: right.blog_id,
+        blogTitle: blogContext.blogTitle,
+        roleName: rInfo.name,
+        groupId: blogContext.groupId,
+        ownerId: blogContext.ownerId,
+      });
     }
   }),
 
@@ -689,7 +1165,7 @@ export const groupServerMutators = {
           const gName = await groupName(tx, pos.group_id);
           fireNotification('notifyRoleAssigned', {
             senderId: ctx.userID,
-            recipientId: args.user_id,
+            recipientUserId: args.user_id,
             groupId: pos.group_id,
             groupName: gName,
             roleTitle: pos.name,
@@ -723,207 +1199,136 @@ export const groupServerMutators = {
 
   // ── Relationship overrides (hierarchy propagation) ──────────────────
 
+  createRelationship: defineMutator(createGroupRelationshipSchema, async ({ tx, ctx, args }) => {
+    if (args.with_right === 'passiveVotingRight' && args.status === 'active') {
+      await assertNoBlockingGroupConflicts(tx, ctx, {
+        kind: 'relationship_activation',
+        draft_relationships: [
+          {
+            id: args.id,
+            group_id: args.group_id,
+            related_group_id: args.related_group_id,
+            relationship_type: args.relationship_type,
+            with_right: args.with_right,
+            status: args.status,
+            initiator_group_id: args.initiator_group_id,
+          },
+        ],
+      });
+    }
+
+    await mutators.groups.createRelationship.fn({ tx, ctx, args });
+
+    const affectedMembershipGroupIds = new Set<string>([args.group_id, args.related_group_id]);
+
+    if (args.with_right === 'passiveVotingRight' && args.status === 'active') {
+      const activatedGroupIds = await applyActivatedHierarchyRelationshipEffects(tx, ctx, args);
+      for (const affectedGroupId of activatedGroupIds) {
+        affectedMembershipGroupIds.add(affectedGroupId);
+      }
+    }
+
+    await recomputeSiblingMembershipsForGroups(tx, affectedMembershipGroupIds, ctx.userID);
+    await reconcileMembershipDrivenEventsForGroups(tx, affectedMembershipGroupIds, ctx.userID);
+  }),
+
   updateRelationship: defineMutator(updateGroupRelationshipSchema, async ({ tx, ctx, args }) => {
     const relationship = await tx.run(zql.group_relationship.where('id', args.id).one());
 
-    const previousStatus = relationship?.status ?? null;
+    if (!relationship) {
+      await mutators.groups.updateRelationship.fn({ tx, ctx, args });
+      return;
+    }
 
-    // Run shared mutator
+    const nextRelationship = {
+      ...relationship,
+      relationship_type:
+        args.relationship_type !== undefined
+          ? args.relationship_type
+          : relationship.relationship_type,
+      with_right: args.with_right !== undefined ? args.with_right : relationship.with_right,
+      status: args.status !== undefined ? args.status : relationship.status,
+    };
+    const hadActivePvr =
+      relationship.with_right === 'passiveVotingRight' &&
+      isGraphActiveRelationshipStatus(relationship.status);
+    const hasActivePvr =
+      nextRelationship.with_right === 'passiveVotingRight' &&
+      isGraphActiveRelationshipStatus(nextRelationship.status);
+    const hierarchyStructureChanged =
+      relationship.relationship_type !== nextRelationship.relationship_type;
+
+    if (hasActivePvr && (!hadActivePvr || hierarchyStructureChanged)) {
+      await assertNoBlockingGroupConflicts(tx, ctx, {
+        kind: 'relationship_activation',
+        draft_relationships: [
+          {
+            id: nextRelationship.id,
+            group_id: nextRelationship.group_id,
+            related_group_id: nextRelationship.related_group_id,
+            relationship_type: nextRelationship.relationship_type,
+            with_right: nextRelationship.with_right,
+            status: nextRelationship.status,
+            initiator_group_id: nextRelationship.initiator_group_id,
+          },
+        ],
+      });
+    }
+
     await mutators.groups.updateRelationship.fn({ tx, ctx, args });
 
-    if (!relationship || args.status !== 'active') return;
+    const affectedMembershipGroupIds = new Set<string>([
+      relationship.group_id,
+      relationship.related_group_id,
+    ]);
 
-    const wasAlreadyActive =
-      previousStatus === 'active' || previousStatus === 'accepted' || previousStatus == null;
-
-    const parentGroupId = relationship.group_id;
-    const childGroupId = relationship.related_group_id;
-
-    if (!wasAlreadyActive) {
-      const existingPvrRels = await tx.run(
-        zql.group_relationship.where('with_right', 'passiveVotingRight').where('status', 'active')
-      );
-      const allPvrRels =
-        relationship.with_right === 'passiveVotingRight'
-          ? [
-              ...existingPvrRels.filter(r => r.id !== relationship.id),
-              { ...relationship, status: 'active' as const },
-            ]
-          : existingPvrRels;
-
-      const parentChildLinks = await tx.run(
-        zql.group_relationship.where('group_id', parentGroupId)
-      );
-      const activeParentChildLinks = parentChildLinks.filter(
-        r =>
-          r.id !== relationship.id &&
-          (r.status === 'active' || r.status === 'accepted' || r.status == null)
-      );
-
-      const allDirectMemberships = await tx.run(zql.group_membership.where('source', 'direct'));
-      const conflicts = detectLinkConflicts(
-        parentGroupId,
-        childGroupId,
-        allPvrRels,
-        allDirectMemberships,
-        activeParentChildLinks
-      );
-      if (conflicts.length > 0) {
-        await tx.mutate.group_relationship.update({ id: args.id, status: previousStatus });
-        throw new Error(
-          `Cannot activate link: ${conflicts.length} member(s) would violate exclusivity.`
-        );
+    if (hadActivePvr && (!hasActivePvr || hierarchyStructureChanged)) {
+      const deletedGroupIds = await applyDeletedHierarchyRelationshipEffects(tx, ctx, relationship);
+      for (const affectedGroupId of deletedGroupIds) {
+        affectedMembershipGroupIds.add(affectedGroupId);
       }
     }
 
-    // Only propagate when a passiveVotingRight link becomes active
-    if (relationship.with_right !== 'passiveVotingRight' || wasAlreadyActive) return;
-
-    const existingPvrRels = await tx.run(
-      zql.group_relationship.where('with_right', 'passiveVotingRight').where('status', 'active')
-    );
-    const allPvrRels = [
-      ...existingPvrRels.filter(r => r.id !== relationship.id),
-      { ...relationship, status: 'active' as const },
-    ];
-
-    // Transition parent to hierarchical if it was base
-    const parentGroup = await tx.run(zql.group.where('id', parentGroupId).one());
-    if (parentGroup?.group_type === 'base') {
-      await tx.mutate.group.update({ id: parentGroupId, group_type: 'hierarchical' });
-
-      // Promote existing direct members to Admin role
-      const parentRoles = await tx.run(
-        zql.role.where('group_id', parentGroupId).where('scope', 'group')
+    if (hasActivePvr && (!hadActivePvr || hierarchyStructureChanged)) {
+      const activatedGroupIds = await applyActivatedHierarchyRelationshipEffects(
+        tx,
+        ctx,
+        nextRelationship
       );
-      const adminRole = parentRoles.find(r => r.name === 'Admin');
-      if (adminRole) {
-        const existingMembers = await tx.run(
-          zql.group_membership.where('group_id', parentGroupId).where('source', 'direct')
-        );
-        for (const member of existingMembers) {
-          await addGroupMembershipRoleLink(tx, {
-            group_membership_id: member.id,
-            role_id: adminRole.id,
-            assigned_by_id: ctx.userID,
-          });
-        }
+      for (const affectedGroupId of activatedGroupIds) {
+        affectedMembershipGroupIds.add(affectedGroupId);
       }
     }
 
-    // Propagate child base-group members as derived memberships
-    let baseGroupsToPropagate = resolveChildBaseGroups(childGroupId, allPvrRels);
-    if (baseGroupsToPropagate.length === 0) {
-      // The child itself is a leaf base group
-      baseGroupsToPropagate = [childGroupId];
-    }
-
-    for (const baseGroupId of baseGroupsToPropagate) {
-      const baseMembers = await tx.run(
-        zql.group_membership.where('group_id', baseGroupId).where('source', 'direct')
-      );
-      const activeMembers = baseMembers.filter(m => m.status === 'active');
-
-      const ancestors = resolveHierarchicalAncestors(baseGroupId, allPvrRels);
-      for (const ancestorId of ancestors) {
-        const ancestorRoles = await tx.run(
-          zql.role.where('group_id', ancestorId).where('scope', 'group')
-        );
-        const memberRole = ancestorRoles.find(r => r.name === 'Member');
-
-        for (const member of activeMembers) {
-          // Check if membership already exists
-          const existing = await tx.run(
-            zql.group_membership.where('user_id', member.user_id).where('group_id', ancestorId)
-          );
-          if (existing.length > 0) continue;
-
-          const derivedMembershipId = crypto.randomUUID();
-
-          await tx.mutate.group_membership.insert({
-            id: derivedMembershipId,
-            group_id: ancestorId,
-            user_id: member.user_id,
-            status: 'active',
-            visibility: 'public',
-            source: 'derived',
-            source_group_id: baseGroupId,
-            created_at: Date.now(),
-          });
-
-          if (memberRole?.id) {
-            await syncGroupMembershipRoleLinks(tx, {
-              group_membership_id: derivedMembershipId,
-              role_ids: [memberRole.id],
-              assigned_by_id: ctx.userID,
-            });
-          }
-        }
-
-        await recomputeGroupCounters(tx, ancestorId);
-      }
-    }
+    await recomputeSiblingMembershipsForGroups(tx, affectedMembershipGroupIds, ctx.userID);
+    await reconcileMembershipDrivenEventsForGroups(tx, affectedMembershipGroupIds, ctx.userID);
   }),
 
   deleteRelationship: defineMutator(deleteGroupRelationshipSchema, async ({ tx, ctx, args }) => {
     const relationship = await tx.run(zql.group_relationship.where('id', args.id).one());
 
-    // Run shared mutator
     await mutators.groups.deleteRelationship.fn({ tx, ctx, args });
 
-    // Only clean up if deleting a passiveVotingRight link
-    if (
-      !relationship ||
-      relationship.with_right !== 'passiveVotingRight' ||
-      relationship.status !== 'active'
-    )
+    if (!relationship) {
       return;
-
-    const parentGroupId = relationship.group_id;
-    const childGroupId = relationship.related_group_id;
-
-    // Find base groups that were connected through this link
-    const remainingPvrRels = await tx.run(
-      zql.group_relationship.where('with_right', 'passiveVotingRight').where('status', 'active')
-    );
-
-    let affectedBaseGroups = resolveChildBaseGroups(childGroupId, remainingPvrRels);
-    if (affectedBaseGroups.length === 0) {
-      affectedBaseGroups = [childGroupId];
     }
 
-    // Remove derived memberships in the parent (and its ancestors) that came from these base groups
-    for (const baseGroupId of affectedBaseGroups) {
-      const derivedInParent = await tx.run(
-        zql.group_membership.where('group_id', parentGroupId).where('source', 'derived')
-      );
-      const toDelete = derivedInParent.filter(m => m.source_group_id === baseGroupId);
-      for (const derived of toDelete) {
-        await tx.mutate.group_membership.delete({ id: derived.id });
-      }
+    const affectedMembershipGroupIds = new Set<string>([
+      relationship.group_id,
+      relationship.related_group_id,
+    ]);
 
-      // Also clean up from ancestors of the parent that are no longer reachable
-      const parentAncestors = resolveHierarchicalAncestors(parentGroupId, remainingPvrRels);
-      for (const ancestorId of parentAncestors) {
-        const derivedInAncestor = await tx.run(
-          zql.group_membership.where('group_id', ancestorId).where('source', 'derived')
-        );
-        const ancestorToDelete = derivedInAncestor.filter(m => m.source_group_id === baseGroupId);
-        for (const derived of ancestorToDelete) {
-          await tx.mutate.group_membership.delete({ id: derived.id });
-        }
-      }
-    }
-
-    await recomputeGroupCounters(tx, parentGroupId);
-
-    // If parent has no more pvr children, transition back to base
-    const remainingChildren = remainingPvrRels.filter(r => r.group_id === parentGroupId);
     if (
-      remainingChildren.length === 0 &&
-      (await tx.run(zql.group.where('id', parentGroupId).one()))?.group_type === 'hierarchical'
+      relationship.with_right === 'passiveVotingRight' &&
+      isGraphActiveRelationshipStatus(relationship.status)
     ) {
-      await tx.mutate.group.update({ id: parentGroupId, group_type: 'base' });
+      const deletedGroupIds = await applyDeletedHierarchyRelationshipEffects(tx, ctx, relationship);
+      for (const affectedGroupId of deletedGroupIds) {
+        affectedMembershipGroupIds.add(affectedGroupId);
+      }
     }
+
+    await recomputeSiblingMembershipsForGroups(tx, affectedMembershipGroupIds, ctx.userID);
+    await reconcileMembershipDrivenEventsForGroups(tx, affectedMembershipGroupIds, ctx.userID);
   }),
 };

@@ -18,6 +18,8 @@ CREATE TABLE IF NOT EXISTS public.election (
   closing_duration_seconds INTEGER,
   closing_end_time TIMESTAMPTZ,
   visibility VARCHAR NOT NULL DEFAULT 'public',
+  election_mode TEXT NOT NULL DEFAULT 'single',
+  seat_count INTEGER NOT NULL DEFAULT 1,
   max_votes INTEGER NOT NULL DEFAULT 1,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()

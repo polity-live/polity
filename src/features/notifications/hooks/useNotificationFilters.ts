@@ -25,16 +25,22 @@ export function useNotificationFilters({
   }, [accessibleNotifications]);
 
   const personalNotifications = useMemo(() => {
-    return accessibleNotifications.filter(
-      n => n.recipient?.id === userId
-    );
+    return accessibleNotifications.filter(n => n.recipient?.id === userId);
   }, [accessibleNotifications, userId]);
 
   const entityNotifications = useMemo(() => {
     return accessibleNotifications.filter(
       n =>
-        n.recipient_group || n.recipient_event || n.recipient_amendment || n.recipient_blog ||
-        n.on_behalf_of_group || n.on_behalf_of_event || n.on_behalf_of_amendment || n.on_behalf_of_blog
+        n.recipient_entity_type ||
+        n.on_behalf_of_entity_type ||
+        n.recipient_group ||
+        n.recipient_event ||
+        n.recipient_amendment ||
+        n.recipient_blog ||
+        n.on_behalf_of_group ||
+        n.on_behalf_of_event ||
+        n.on_behalf_of_amendment ||
+        n.on_behalf_of_blog
     );
   }, [accessibleNotifications]);
 

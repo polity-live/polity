@@ -10,12 +10,14 @@ import {
   RIGHT_GRADIENTS,
   RIGHT_LABELS,
 } from '@/features/network/ui/RightFilters';
+import { NETWORK_CONNECTION_DIRECTION_COLORS } from '@/features/network/logic/networkEdgeHelpers';
 import { cn } from '@/features/shared/utils/utils';
 
 export interface NetworkLegendItem {
   id: string;
   label: string;
-  swatchClassName: string;
+  swatchClassName?: string;
+  swatch?: ReactNode;
 }
 
 export interface NetworkRelationshipStatusFilter {
@@ -23,9 +25,22 @@ export interface NetworkRelationshipStatusFilter {
   label: string;
   active: boolean;
   onToggle: () => void;
+  disabled?: boolean;
   activeClassName?: string;
   inactiveClassName?: string;
 }
+
+export const NETWORK_FILTER_ACTIVE_CLASS_NAMES = {
+  neutral:
+    'border-slate-200 bg-slate-100 text-slate-900 hover:bg-slate-200 hover:text-slate-950 dark:border-white/70 dark:bg-white/10 dark:text-white dark:hover:bg-white/15 dark:hover:text-white',
+  green:
+    'border-emerald-200 bg-emerald-100 text-emerald-900 hover:bg-emerald-200 hover:text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-100 dark:hover:bg-emerald-900 dark:hover:text-emerald-50',
+  blue: 'border-blue-200 bg-blue-100 text-blue-900 hover:bg-blue-200 hover:text-blue-950 dark:border-blue-800 dark:bg-blue-950/70 dark:text-blue-100 dark:hover:bg-blue-900 dark:hover:text-blue-50',
+  orange:
+    'border-amber-200 bg-amber-100 text-amber-900 hover:bg-amber-200 hover:text-amber-950 dark:border-amber-800 dark:bg-amber-950/70 dark:text-amber-100 dark:hover:bg-amber-900 dark:hover:text-amber-50',
+  purple:
+    'border-violet-200 bg-violet-100 text-violet-900 hover:bg-violet-200 hover:text-violet-950 dark:border-violet-800 dark:bg-violet-950/70 dark:text-violet-100 dark:hover:bg-violet-900 dark:hover:text-violet-50',
+} as const;
 
 interface NetworkControlPanelProps {
   title: string;
@@ -39,8 +54,10 @@ interface NetworkControlPanelProps {
   showGroupTypeLegend?: boolean;
   baseGroupLabel?: string;
   hierarchicalGroupLabel?: string;
+  siblingGroupLabel?: string;
   showDisplayControls?: boolean;
   showInteractiveToggle?: boolean;
+  depthFilters?: readonly NetworkRelationshipStatusFilter[];
   showIndirect?: boolean;
   onShowIndirectChange?: (showIndirect: boolean) => void;
   isInteractive: boolean;
@@ -55,8 +72,14 @@ interface NetworkControlPanelProps {
   filterRight?: string;
   filteredByPrefix?: string;
   showRightsLegend?: boolean;
+  showConnectionDirectionLegend?: boolean;
+  connectionDirectionLegendTitle?: string;
+  bidirectionalConnectionLabel?: string;
+  incomingConnectionLabel?: string;
+  outgoingConnectionLabel?: string;
   relationshipStatusFilters?: readonly NetworkRelationshipStatusFilter[];
   relationshipStatusFiltersLabel?: string;
+  connectionDirectionFilters?: readonly NetworkRelationshipStatusFilter[];
   controlsExtraContent?: ReactNode;
   legendExtraContent?: ReactNode;
 }
@@ -73,8 +96,10 @@ export function NetworkControlPanel({
   showGroupTypeLegend = false,
   baseGroupLabel = '◉ Base group',
   hierarchicalGroupLabel = '🏛 Hierarchical group',
+  siblingGroupLabel = '◎ Sibling group',
   showDisplayControls = true,
   showInteractiveToggle = true,
+  depthFilters,
   showIndirect = false,
   onShowIndirectChange,
   isInteractive,
@@ -89,17 +114,74 @@ export function NetworkControlPanel({
   filterRight,
   filteredByPrefix = 'Filtered by',
   showRightsLegend = false,
+  showConnectionDirectionLegend = false,
+  connectionDirectionLegendTitle = 'Connection direction',
+  bidirectionalConnectionLabel = 'Bidirectional',
+  incomingConnectionLabel = 'Incoming',
+  outgoingConnectionLabel = 'Outgoing',
   relationshipStatusFilters,
   relationshipStatusFiltersLabel,
+  connectionDirectionFilters,
   controlsExtraContent,
   legendExtraContent,
 }: NetworkControlPanelProps) {
   const canRenderRightFilter = showRightsFilter && !filterRight && selectedRights && onToggleRight;
+  const resolvedDepthFilters =
+    depthFilters ??
+    (showDisplayControls && onShowIndirectChange
+      ? [
+          {
+            id: 'direct',
+            label: directLabel,
+            active: !showIndirect,
+            onToggle: () => onShowIndirectChange(false),
+          },
+          {
+            id: 'indirect',
+            label: indirectLabel,
+            active: showIndirect,
+            onToggle: () => onShowIndirectChange(true),
+          },
+        ]
+      : undefined);
+
+  const renderFilterRow = (filters: readonly NetworkRelationshipStatusFilter[] | undefined) => {
+    if (!filters || filters.length === 0) {
+      return null;
+    }
+
+    return (
+      <div className="border-border/70 bg-background/95 dark:bg-card/95 rounded-lg border p-2 shadow-sm">
+        <div className="flex shrink-0 flex-wrap gap-2">
+          {filters.map(filter => (
+            <Button
+              key={filter.id}
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={filter.onToggle}
+              disabled={filter.disabled}
+              className={cn(
+                filter.active
+                  ? (filter.activeClassName ??
+                      'border-primary bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground')
+                  : (filter.inactiveClassName ??
+                      'border-border bg-background/90 text-foreground hover:bg-accent hover:text-accent-foreground dark:bg-card/90 dark:text-foreground'),
+                filter.disabled && 'pointer-events-none opacity-50'
+              )}
+            >
+              {filter.label}
+            </Button>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <Panel
       position="top-left"
-      className="dark:bg-background flex max-h-[calc(100%-1rem)] w-[calc(100%-1rem)] max-w-sm flex-col overflow-hidden rounded bg-white p-4 shadow"
+      className="border-border/80 bg-background/95 dark:bg-background/95 flex max-h-[calc(100%-1rem)] w-[calc(100%-1rem)] max-w-sm flex-col overflow-hidden rounded border p-4 shadow-lg supports-[backdrop-filter]:backdrop-blur-sm"
     >
       <div className="mb-2 flex shrink-0 items-center justify-between">
         <h2 className="text-lg font-bold">{title}</h2>
@@ -119,37 +201,26 @@ export function NetworkControlPanel({
             <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">{description}</p>
           ) : null}
 
-          <div className="flex shrink-0 flex-wrap gap-2">
-            {showDisplayControls && isInteractive && onShowIndirectChange ? (
-              <>
-                <Button
-                  size="sm"
-                  variant={!showIndirect ? 'default' : 'outline'}
-                  onClick={() => onShowIndirectChange(false)}
-                >
-                  {directLabel}
-                </Button>
-                <Button
-                  size="sm"
-                  variant={showIndirect ? 'default' : 'outline'}
-                  onClick={() => onShowIndirectChange(true)}
-                >
-                  {indirectLabel}
-                </Button>
-              </>
-            ) : null}
+          <div className="space-y-3">
+            {renderFilterRow(resolvedDepthFilters)}
+            {renderFilterRow(connectionDirectionFilters)}
+            {renderFilterRow(relationshipStatusFilters)}
 
-            {showInteractiveToggle ? (
-              <Button
-                size="sm"
-                variant={isInteractive ? 'outline' : 'default'}
-                onClick={() => onInteractiveChange(!isInteractive)}
-              >
-                {isInteractive ? lockLabel : unlockLabel}
-              </Button>
-            ) : null}
+            {showInteractiveToggle || controlsExtraContent ? (
+              <div className="flex shrink-0 flex-wrap gap-2">
+                {showInteractiveToggle ? (
+                  <Button
+                    size="sm"
+                    variant={isInteractive ? 'outline' : 'default'}
+                    onClick={() => onInteractiveChange(!isInteractive)}
+                  >
+                    {isInteractive ? lockLabel : unlockLabel}
+                  </Button>
+                ) : null}
 
-            {controlsExtraContent}
+                {controlsExtraContent}
+              </div>
+            ) : null}
           </div>
 
           {canRenderRightFilter ? (
@@ -165,7 +236,7 @@ export function NetworkControlPanel({
             </div>
           ) : null}
 
-          <div className="mt-3 flex min-h-0 flex-1 flex-col">
+          <div className="border-border/70 bg-background/95 dark:bg-card/95 mt-3 flex min-h-0 flex-1 flex-col rounded-lg border p-3 shadow-sm">
             <button
               onClick={() => onLegendCollapsedChange(!legendCollapsed)}
               className="hover:text-primary flex w-full shrink-0 items-center justify-between text-sm font-medium"
@@ -181,7 +252,11 @@ export function NetworkControlPanel({
               <div className="mt-2 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1 text-sm">
                 {legendItems.map(item => (
                   <div key={item.id} className="flex items-center gap-2">
-                    <div className={item.swatchClassName}></div>
+                    {item.swatch ? (
+                      item.swatch
+                    ) : item.swatchClassName ? (
+                      <div className={item.swatchClassName}></div>
+                    ) : null}
                     <span>{item.label}</span>
                   </div>
                 ))}
@@ -197,10 +272,50 @@ export function NetworkControlPanel({
                       <div className="h-4 w-4 rounded border-2 border-dashed border-gray-400 bg-gray-100"></div>
                       <span>{hierarchicalGroupLabel}</span>
                     </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 rounded border-2 border-[#fbbf24] bg-[#fff8e1]"></div>
+                      <span>{siblingGroupLabel}</span>
+                    </div>
                   </>
                 ) : null}
 
-                {relationshipStatusFilters && relationshipStatusFilters.length > 0 ? (
+                {showConnectionDirectionLegend ? (
+                  <>
+                    <hr className="my-1 border-gray-200 dark:border-gray-700" />
+                    <div className="space-y-2">
+                      <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                        {connectionDirectionLegendTitle}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="h-1 w-8 rounded-full"
+                          style={{
+                            backgroundColor: NETWORK_CONNECTION_DIRECTION_COLORS.bidirectional,
+                          }}
+                        ></div>
+                        <span>{bidirectionalConnectionLabel}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="h-1 w-8 rounded-full"
+                          style={{ backgroundColor: NETWORK_CONNECTION_DIRECTION_COLORS.outgoing }}
+                        ></div>
+                        <span>{outgoingConnectionLabel}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="h-1 w-8 rounded-full"
+                          style={{ backgroundColor: NETWORK_CONNECTION_DIRECTION_COLORS.incoming }}
+                        ></div>
+                        <span>{incomingConnectionLabel}</span>
+                      </div>
+                    </div>
+                  </>
+                ) : null}
+
+                {relationshipStatusFilters &&
+                relationshipStatusFilters.length > 0 &&
+                relationshipStatusFiltersLabel ? (
                   <>
                     <hr className="my-1 border-gray-200 dark:border-gray-700" />
                     <div className="space-y-2">
@@ -209,27 +324,6 @@ export function NetworkControlPanel({
                           {relationshipStatusFiltersLabel}
                         </div>
                       ) : null}
-                      <div className="flex flex-wrap gap-2">
-                        {relationshipStatusFilters.map(filter => (
-                          <Button
-                            key={filter.id}
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={filter.onToggle}
-                            className={cn(
-                              'h-auto rounded-full px-2.5 py-1 text-xs',
-                              filter.active
-                                ? (filter.activeClassName ??
-                                    'border-primary bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground')
-                                : (filter.inactiveClassName ??
-                                    'border-border text-muted-foreground hover:bg-accent hover:text-foreground bg-transparent')
-                            )}
-                          >
-                            {filter.label}
-                          </Button>
-                        ))}
-                      </div>
                     </div>
                   </>
                 ) : null}

@@ -13,6 +13,7 @@ import type {
   GroupMembershipWithRolesAndRightsRow,
   GroupAccessRoleWithRightsRow,
 } from '@/zero/groups/queries';
+import type { ParticipationProvenanceGroupLike } from '@/features/shared/types/participation';
 
 export type GroupMembershipWithUser = GroupMembershipWithRolesAndRightsRow & {
   roles?: GroupAccessRoleWithRightsRow[];
@@ -39,7 +40,24 @@ export interface ChartData {
   fill: string;
 }
 
-export type MembershipTab = 'membershipsByUser' | 'membershipsByRole' | 'roles';
+export type MembershipProvenanceGroup = ParticipationProvenanceGroupLike;
+
+export interface MembershipCompositionBucket {
+  key: string;
+  label: string;
+  memberCount: number;
+  leadershipAssignmentCount: number;
+  memberPercentage: number;
+  leadershipPercentage: number;
+}
+
+export type MembershipTab =
+  | 'membershipsByUser'
+  | 'membershipsByRole'
+  | 'composition'
+  | 'openAssignments'
+  | 'guests'
+  | 'roles';
 export type MembershipSortField = 'user' | 'role';
 export type MembershipSortDirection = 'asc' | 'desc';
 
@@ -53,10 +71,12 @@ export type TodoViewMode = 'kanban' | 'list';
 export type RoleAssignmentMode = 'assigned' | 'elected';
 export type RoleVisibility = 'public' | 'authenticated' | 'private';
 export type RoleTermPattern = 'none' | 'yearly' | 'four-yearly';
+export type RoleAssigneeKind = 'member' | 'guest';
 
 export interface RoleEditorFormState {
   name: string;
   description: string;
+  assignee_kind: RoleAssigneeKind;
   assignment_mode: RoleAssignmentMode;
   visibility: RoleVisibility;
   term_pattern: RoleTermPattern;

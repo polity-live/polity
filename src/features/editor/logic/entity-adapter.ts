@@ -20,23 +20,24 @@ import { DEFAULT_EDITOR_CONTENT } from '../types';
 // These receive untyped data from various Zero query shapes.
 // Using `any` here at the system boundary is intentional to avoid
 // duplicating Zero's complex inferred return types.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 type RawEntity = Record<string, any>;
 
 /**
  * Ensures every element node in a Plate/Slate tree has a valid `children` array.
  * Prevents `Array.from(undefined)` crashes in Slate's rendering pipeline.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 function sanitizeContent(nodes: any[]): any[] {
   return nodes.map(node => {
     if (node == null || typeof node !== 'object') return node;
     // Text leaf — must have `text` property, no children
     if ('text' in node) return node;
     // Element node — must have children array
-    const children = Array.isArray(node.children) && node.children.length > 0
-      ? sanitizeContent(node.children)
-      : [{ text: '' }];
+    const children =
+      Array.isArray(node.children) && node.children.length > 0
+        ? sanitizeContent(node.children)
+        : [{ text: '' }];
     return { ...node, children };
   });
 }
@@ -58,14 +59,24 @@ function buildUserName(user: RawEntity, fallback = 'Unknown'): string {
 function mapAmendmentEditingMode(mode: string | null | undefined): EditorMode {
   if (!mode) return 'suggest_internal';
   if (mode === 'passed' || mode === 'rejected') return 'view';
-  const valid: EditorMode[] = ['edit', 'view', 'suggest_internal', 'suggest_event', 'vote_internal', 'vote_event'];
+  const valid: EditorMode[] = [
+    'edit',
+    'view',
+    'suggest_internal',
+    'suggest_event',
+    'vote_internal',
+    'vote_event',
+  ];
   return valid.includes(mode as EditorMode) ? (mode as EditorMode) : 'suggest_internal';
 }
 
 /**
  * Adapts an amendment with its document to EditorEntity
  */
-export function adaptAmendmentToEntity(amendment: RawEntity | undefined | null, document: RawEntity | undefined | null): EditorEntity | null {
+export function adaptAmendmentToEntity(
+  amendment: RawEntity | undefined | null,
+  document: RawEntity | undefined | null
+): EditorEntity | null {
   if (!amendment || !document) return null;
 
   const owner: EditorUser | undefined = document.owner
@@ -127,9 +138,10 @@ export function adaptAmendmentToEntity(amendment: RawEntity | undefined | null, 
     amendmentEditingMode: amendment.editing_mode,
   };
 
-  const content = Array.isArray(document.content) && document.content.length > 0
-    ? sanitizeContent(document.content)
-    : DEFAULT_EDITOR_CONTENT;
+  const content =
+    Array.isArray(document.content) && document.content.length > 0
+      ? sanitizeContent(document.content)
+      : DEFAULT_EDITOR_CONTENT;
 
   return {
     id: document.id,
@@ -200,7 +212,10 @@ export function adaptBlogToEntity(blog: RawEntity | undefined | null): EditorEnt
   return {
     id: blog.id,
     title: blog.title || '',
-    content: Array.isArray(blog.content) && blog.content.length > 0 ? sanitizeContent(blog.content) : DEFAULT_EDITOR_CONTENT,
+    content:
+      Array.isArray(blog.content) && blog.content.length > 0
+        ? sanitizeContent(blog.content)
+        : DEFAULT_EDITOR_CONTENT,
     discussions: (blog.discussions || []) as TDiscussion[],
     editingMode: (blog.editing_mode as EditorMode) || 'edit',
     visibility: blog.visibility ?? 'public',
@@ -250,13 +265,14 @@ export function adaptDocumentToEntity(document: RawEntity | undefined | null): E
     entityType: 'document',
   };
 
-  const content = Array.isArray(document.content) && document.content.length > 0
-    ? sanitizeContent(document.content)
-    : DEFAULT_EDITOR_CONTENT;
+  const content =
+    Array.isArray(document.content) && document.content.length > 0
+      ? sanitizeContent(document.content)
+      : DEFAULT_EDITOR_CONTENT;
 
   return {
     id: document.id,
-    title: document.title || '',
+    title: document.title || document.amendment?.title || '',
     content,
     discussions: (document.discussions || []) as TDiscussion[],
     editingMode: (document.editing_mode as EditorMode) || 'edit',
@@ -309,17 +325,18 @@ export function adaptGroupDocumentToEntity(
 
   const metadata: EditorEntityMetadata = {
     entityType: 'groupDocument',
-    groupId,
+    groupId: groupId || document.amendment?.group_id || '',
     groupName,
   };
 
-  const content = Array.isArray(document.content) && document.content.length > 0
-    ? sanitizeContent(document.content)
-    : DEFAULT_EDITOR_CONTENT;
+  const content =
+    Array.isArray(document.content) && document.content.length > 0
+      ? sanitizeContent(document.content)
+      : DEFAULT_EDITOR_CONTENT;
 
   return {
     id: document.id,
-    title: document.title || '',
+    title: document.title || document.amendment?.title || '',
     content,
     discussions: (document.discussions || []) as TDiscussion[],
     editingMode: (document.editing_mode as EditorMode) || 'edit',

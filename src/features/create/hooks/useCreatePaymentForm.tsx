@@ -1,8 +1,10 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useAuth } from '@/providers/auth-provider';
-import { useGroupById } from '@/zero/groups/useGroupState';
+import { useAllGroups, useGroupById } from '@/zero/groups/useGroupState';
 import { usePaymentActions } from '@/zero/payments/usePaymentActions';
+import { useUserState } from '@/zero/users/useUserState';
+import { getUserDisplayName } from '@/features/search/utils/searchUtils';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { toast } from 'sonner';
 import { Label } from '@/features/shared/ui/ui/label';
@@ -12,12 +14,12 @@ import { DirectionInput } from '../ui/inputs/DirectionInput';
 import { PaymentTypeInput } from '../ui/inputs/PaymentTypeInput';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import { CreateInputField, CreateTypeaheadField } from '../ui/CreateFields';
+import { mergeCreateSearchParams } from '../logic/createSearchParams';
 import type { CreateFormConfig } from '../types/create-form.types';
 
 interface CreatePaymentSearch {
   groupId?: string;
   direction?: 'income' | 'expense';
-  returnGroupId?: string;
   returnSection?: 'payments';
 }
 
@@ -27,15 +29,14 @@ export function useCreatePaymentForm(): CreateFormConfig {
   const searchParams = useSearch({ strict: false }) as CreatePaymentSearch;
   const { user } = useAuth();
   const { createPayment } = usePaymentActions();
+  const { allUsers } = useUserState({ includeAllUsers: true });
+  const { groups: allGroups } = useAllGroups();
 
   const groupIdParam = searchParams.groupId;
   const directionParam = searchParams.direction;
-  const returnGroupId = searchParams.returnGroupId;
   const returnSection = searchParams.returnSection;
-  const hasLockedGroup = Boolean(groupIdParam && returnGroupId && groupIdParam === returnGroupId);
-  const { group } = useGroupById(groupIdParam);
-
   const [groupId, setGroupId] = useState('');
+  const { group } = useGroupById(groupId || undefined);
   const [direction, setDirection] = useState<'income' | 'expense'>('income');
   const [label, setLabel] = useState('');
   const [type, setType] = useState<
@@ -48,16 +49,24 @@ export function useCreatePaymentForm(): CreateFormConfig {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (groupIdParam && groupIdParam !== groupId) {
-      setGroupId(groupIdParam);
-    }
-  }, [groupIdParam, groupId]);
+    setGroupId(groupIdParam ?? '');
+  }, [groupIdParam]);
 
   useEffect(() => {
-    if (directionParam && directionParam !== direction) {
+    if (directionParam) {
       setDirection(directionParam);
     }
-  }, [directionParam, direction]);
+  }, [directionParam]);
+
+  const syncGroupSearch = (nextGroupId: string) => {
+    navigate({
+      to: '/create/payment',
+      search: mergeCreateSearchParams(searchParams, {
+        groupId: nextGroupId || undefined,
+      }),
+      replace: true,
+    });
+  };
 
   const handleSubmit = async () => {
     if (!user) return;
@@ -93,10 +102,10 @@ export function useCreatePaymentForm(): CreateFormConfig {
       });
       toast.success(t('pages.create.success.created'));
 
-      if (returnGroupId && returnSection === 'payments') {
+      if (returnSection === 'payments' && groupId) {
         navigate({
           to: '/group/$id/operation',
-          params: { id: returnGroupId },
+          params: { id: groupId },
           hash: returnSection,
         });
         return;
@@ -112,10 +121,26 @@ export function useCreatePaymentForm(): CreateFormConfig {
 
   const hasEntity = entityType === 'user' ? !!entityId : !!entityGroupId;
   const groupDisplayName = group?.name ?? groupId;
+  const selectedUser = allUsers.find(currentUser => currentUser.id === entityId);
+  const selectedGroup = allGroups.find(currentGroup => currentGroup.id === entityGroupId);
+  const selectedEntityDisplayName =
+    entityType === 'user'
+      ? getUserDisplayName(selectedUser) || entityId
+      : selectedGroup?.name || entityGroupId;
+  const directionLabel =
+    direction === 'income' ? t('pages.create.payment.income') : t('pages.create.payment.expense');
+  const counterpartLabel =
+    direction === 'income'
+      ? t('pages.create.payment.fromPayer')
+      : t('pages.create.payment.toReceiver');
+  const counterpartTypeLabel =
+    entityType === 'user'
+      ? t('pages.create.payment.entityUser')
+      : t('pages.create.payment.entityGroup');
 
   const config = useMemo(
     (): CreateFormConfig => ({
-      entityType: 'action',
+      entityType: 'payment',
       title: 'pages.create.payment.title',
       isSubmitting,
       onSubmit: handleSubmit,
@@ -123,27 +148,16 @@ export function useCreatePaymentForm(): CreateFormConfig {
         {
           label: t('pages.create.common.group'),
           isValid: () => !!groupId,
-          content: hasLockedGroup ? (
-            <div className="space-y-2">
-              <Label>{t('pages.create.common.group')}</Label>
-              <div className="bg-muted/40 rounded-md border px-3 py-2 text-sm font-medium">
-                {groupDisplayName}
-              </div>
-              <p className="text-muted-foreground text-xs">
-                {t(
-                  'pages.create.payment.currentGroupHint',
-                  'This payment will be created for the current group.'
-                )}
-              </p>
-            </div>
-          ) : (
+          content: (
             <CreateTypeaheadField
               label={t('pages.create.common.group')}
               required
               entityTypes={['group']}
               value={groupId || undefined}
               onChange={item => {
-                setGroupId(item?.id ?? '');
+                const nextGroupId = item?.id ?? '';
+                setGroupId(nextGroupId);
+                syncGroupSearch(nextGroupId);
               }}
               placeholder={t('pages.create.common.searchGroup')}
             />
@@ -243,28 +257,44 @@ export function useCreatePaymentForm(): CreateFormConfig {
           isValid: () => !!groupId && !!label.trim() && !!amount && hasEntity,
           content: (
             <CreateSummaryStep
-              entityType="action"
+              entityType="payment"
               badge={t('pages.create.payment.reviewBadge')}
+              secondaryBadge={directionLabel}
               title={label || 'Untitled Payment'}
               subtitle={`${parseFloat(amount || '0').toFixed(2)} €`}
-              fields={[
-                ...(groupDisplayName
-                  ? [{ label: t('pages.create.common.group'), value: groupDisplayName }]
-                  : []),
+              sections={[
                 {
-                  label: t('pages.create.payment.direction'),
-                  value:
-                    direction === 'income'
-                      ? t('pages.create.payment.income')
-                      : t('pages.create.payment.expense'),
+                  title: t('pages.create.payment.direction'),
+                  fields: [
+                    ...(groupDisplayName
+                      ? [{ label: t('pages.create.common.group'), value: groupDisplayName }]
+                      : []),
+                    {
+                      label: t('pages.create.payment.direction'),
+                      value: directionLabel,
+                    },
+                    {
+                      label: t('pages.create.payment.typeField'),
+                      value: t(`pages.create.payment.types.${type}`),
+                    },
+                    {
+                      label: t('pages.create.payment.amount'),
+                      value: `${parseFloat(amount || '0').toFixed(2)} €`,
+                    },
+                  ],
                 },
                 {
-                  label: t('pages.create.payment.typeField'),
-                  value: t(`pages.create.payment.types.${type}`),
-                },
-                {
-                  label: t('pages.create.payment.amount'),
-                  value: `${parseFloat(amount || '0').toFixed(2)} €`,
+                  title: counterpartLabel,
+                  fields: [
+                    {
+                      label: t('pages.create.payment.entityGroup'),
+                      value: counterpartTypeLabel,
+                    },
+                    {
+                      label: counterpartLabel,
+                      value: selectedEntityDisplayName || t('pages.create.common.notSelected'),
+                    },
+                  ],
                 },
               ]}
             />
@@ -283,8 +313,12 @@ export function useCreatePaymentForm(): CreateFormConfig {
       entityGroupId,
       isSubmitting,
       hasEntity,
-      hasLockedGroup,
       groupDisplayName,
+      selectedEntityDisplayName,
+      directionLabel,
+      counterpartLabel,
+      counterpartTypeLabel,
+      syncGroupSearch,
       t,
     ]
   );

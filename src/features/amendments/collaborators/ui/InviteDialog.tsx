@@ -4,8 +4,7 @@
 
 import { useMemo, useState } from 'react';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Badge } from '@/features/shared/ui/ui/badge';
-import { UserPlus, Loader2, X } from 'lucide-react';
+import { UserPlus, Loader2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -28,7 +27,12 @@ interface InviteDialogProps {
   onInviteUsers: (userIds: string[], amendmentId: string, roleId: string) => Promise<void>;
 }
 
-export function InviteDialog({ amendmentId, existingCollaborators, roles, onInviteUsers }: InviteDialogProps) {
+export function InviteDialog({
+  amendmentId,
+  existingCollaborators,
+  roles,
+  onInviteUsers,
+}: InviteDialogProps) {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [isInviting, setIsInviting] = useState(false);
@@ -43,20 +47,15 @@ export function InviteDialog({ amendmentId, existingCollaborators, roles, onInvi
   const typeaheadItems = useMemo(
     () =>
       toTypeaheadItems(
-        users.filter(user => !selectedUsers.includes(user.id)),
+        users,
         'user',
         user => user.name || 'Unnamed User',
         user => (user.handle ? `@${user.handle}` : user.contactEmail),
         user => user.avatar,
+        user => `/user/${user.id}`
       ),
-    [users, selectedUsers],
+    [users]
   );
-
-  const toggleUserSelection = (userId: string) => {
-    setSelectedUsers(prev =>
-      prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
-    );
-  };
 
   const handleInviteUsers = async () => {
     if (selectedUsers.length === 0) return;
@@ -94,52 +93,25 @@ export function InviteDialog({ amendmentId, existingCollaborators, roles, onInvi
         <DialogHeader>
           <DialogTitle>Invite Collaborators</DialogTitle>
           <DialogDescription>
-            Search and select users to invite to collaborate on this amendment. They will receive
-            an invitation to join.
+            Search and select users to invite to collaborate on this amendment. They will receive an
+            invitation to join.
           </DialogDescription>
         </DialogHeader>
 
         <div className="py-4">
           {isLoading ? (
             <div className="flex items-center justify-center py-6">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
             </div>
           ) : (
             <TypeaheadSearch
               items={typeaheadItems}
-              onChange={(item) => {
-                if (item) {
-                  toggleUserSelection(item.id);
-                }
-              }}
+              multiple
+              values={selectedUsers}
+              onValuesChange={setSelectedUsers}
               placeholder="Search by name, handle, or email..."
               disablePortal
             />
-          )}
-
-          {/* Selected users display */}
-          {selectedUsers.length > 0 && (
-            <div className="mt-4">
-              <div className="mb-2 text-sm font-medium">Selected ({selectedUsers.length})</div>
-              <div className="flex flex-wrap gap-2">
-                {selectedUsers.map(userId => {
-                  const user = users?.find(u => u.id === userId);
-                  if (!user) return null;
-
-                  return (
-                    <Badge key={userId} variant="secondary" className="gap-1 pr-1">
-                      <span>{user.name || 'Unnamed User'}</span>
-                      <button
-                        onClick={() => toggleUserSelection(userId)}
-                        className="ml-1 rounded-full p-0.5 hover:bg-muted"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  );
-                })}
-              </div>
-            </div>
           )}
         </div>
 

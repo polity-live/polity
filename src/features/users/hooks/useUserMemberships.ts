@@ -7,6 +7,7 @@ import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useBlogState } from '@/zero/blogs/useBlogState';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
+import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 
 const LOG_PREFIX = '[UserMemberships]';
@@ -20,7 +21,10 @@ export function useUserMemberships(userId?: string, userName?: string) {
   // Facade hooks for queries
   const { userMemberships: membershipRows } = useGroupState({ userId });
   const { participantsByUser: participantRows } = useEventState({ userId });
-  const { collaboratorsByUser: collaboratorRows } = useAmendmentState({ userId, includeCollaboratorsByUser: true });
+  const { collaboratorsByUser: collaboratorRows } = useAmendmentState({
+    userId,
+    includeCollaboratorsByUser: true,
+  });
   const { bloggersByUser: bloggerRows } = useBlogState({ userId });
 
   // Facade hooks for actions
@@ -46,15 +50,22 @@ export function useUserMemberships(userId?: string, userName?: string) {
   const leaveGroup = async (membershipId: string, groupId: string) => {
     try {
       // Snapshot group data before mutation (Zero reactivity may invalidate after delete)
-      const membership = memberships.find((m) => m.id === membershipId);
-      const groupSnapshot = membership?.group ? { id: membership.group.id, name: membership.group.name } : null;
+      const membership = memberships.find(m => m.id === membershipId);
+      const groupSnapshot = membership?.group
+        ? { id: membership.group.id, name: membership.group.name }
+        : null;
 
-      console.log(LOG_PREFIX, 'leaveGroup — snapshot:', { membershipId, groupId, groupSnapshot, userId, safeSenderName });
+      console.log(LOG_PREFIX, 'leaveGroup — snapshot:', {
+        membershipId,
+        groupId,
+        groupSnapshot,
+        userId,
+        safeSenderName,
+      });
 
       await groupActions.leaveGroup({ id: membershipId });
 
       // Use groupId param as primary source, snapshot as fallback for name
-
 
       return { success: true };
     } catch (error) {
@@ -68,14 +79,20 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const withdrawFromEvent = async (participationId: string, eventId: string) => {
     try {
-      const participation = participations.find((p) => p.id === participationId);
-      const eventSnapshot = participation?.event ? { id: participation.event.id, title: participation.event.title } : null;
+      const participation = participations.find(p => p.id === participationId);
+      const eventSnapshot = participation?.event
+        ? { id: participation.event.id, title: participation.event.title }
+        : null;
 
-      console.log(LOG_PREFIX, 'withdrawFromEvent — snapshot:', { participationId, eventId, eventSnapshot, userId, safeSenderName });
+      console.log(LOG_PREFIX, 'withdrawFromEvent — snapshot:', {
+        participationId,
+        eventId,
+        eventSnapshot,
+        userId,
+        safeSenderName,
+      });
 
       await eventActions.leaveEvent({ id: participationId });
-
-
 
       return { success: true };
     } catch (error) {
@@ -89,14 +106,20 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const leaveCollaboration = async (collaborationId: string, amendmentId: string) => {
     try {
-      const collaboration = collaborations.find((c) => c.id === collaborationId);
-      const amendmentSnapshot = collaboration?.amendment ? { id: collaboration.amendment.id, title: collaboration.amendment.title } : null;
+      const collaboration = collaborations.find(c => c.id === collaborationId);
+      const amendmentSnapshot = collaboration?.amendment
+        ? { id: collaboration.amendment.id, title: collaboration.amendment.title }
+        : null;
 
-      console.log(LOG_PREFIX, 'leaveCollaboration — snapshot:', { collaborationId, amendmentId, amendmentSnapshot, userId, safeSenderName });
+      console.log(LOG_PREFIX, 'leaveCollaboration — snapshot:', {
+        collaborationId,
+        amendmentId,
+        amendmentSnapshot,
+        userId,
+        safeSenderName,
+      });
 
       await amendmentActions.leaveCollaboration(collaborationId);
-
-
 
       return { success: true };
     } catch (error) {
@@ -110,13 +133,19 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const leaveBlog = async (relationId: string) => {
     try {
-      const blogRelation = blogRelations.find((r) => r.id === relationId);
-      const blogSnapshot = blogRelation?.blog ? { id: blogRelation.blog.id, title: blogRelation.blog.title } : null;
+      const blogRelation = blogRelations.find(r => r.id === relationId);
+      const blogSnapshot = blogRelation?.blog
+        ? { id: blogRelation.blog.id, title: blogRelation.blog.title }
+        : null;
 
-      console.log(LOG_PREFIX, 'leaveBlog — snapshot:', { relationId, blogSnapshot, userId, safeSenderName });
+      console.log(LOG_PREFIX, 'leaveBlog — snapshot:', {
+        relationId,
+        blogSnapshot,
+        userId,
+        safeSenderName,
+      });
 
       await blogActions.deleteEntry(relationId);
-
 
       return { success: true };
     } catch (error) {
@@ -130,26 +159,26 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const acceptGroupInvitation = async (membershipId: string) => {
     try {
-      const membership = memberships.find((m) => m.id === membershipId);
-      const groupSnapshot = membership?.group ? { id: membership.group.id, name: membership.group.name } : null;
+      const membership = memberships.find(m => m.id === membershipId);
+      const groupSnapshot = membership?.group
+        ? { id: membership.group.id, name: membership.group.name }
+        : null;
 
-      await groupActions.updateMemberRole({
-        id: membershipId,
-        status: 'active',
-      });
+      await serverConfirmed(groupActions.acceptInvitation({ id: membershipId }));
 
       // Add timeline event for member joining (if group is public)
       if (groupSnapshot && userId) {
-        await createTimelineEvent({ data: {
+        await createTimelineEvent({
+          data: {
             eventType: 'member_added',
             entityType: 'group',
             entityId: groupSnapshot.id,
             actorId: userId,
             title: `${safeSenderName} joined ${groupSnapshot.name || 'the group'}`,
             description: 'A new member has joined the group',
-          } });
+          },
+        });
       }
-
 
       return { success: true };
     } catch (error) {
@@ -163,13 +192,19 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const declineGroupInvitation = async (membershipId: string) => {
     try {
-      const membership = memberships.find((m) => m.id === membershipId);
-      const groupSnapshot = membership?.group ? { id: membership.group.id, name: membership.group.name } : null;
+      const membership = memberships.find(m => m.id === membershipId);
+      const groupSnapshot = membership?.group
+        ? { id: membership.group.id, name: membership.group.name }
+        : null;
 
-      console.log(LOG_PREFIX, 'declineGroupInvitation — snapshot:', { membershipId, groupSnapshot, userId, safeSenderName });
+      console.log(LOG_PREFIX, 'declineGroupInvitation — snapshot:', {
+        membershipId,
+        groupSnapshot,
+        userId,
+        safeSenderName,
+      });
 
       await groupActions.leaveGroup({ id: membershipId });
-
 
       return { success: true };
     } catch (error) {
@@ -183,13 +218,19 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const withdrawGroupRequest = async (membershipId: string) => {
     try {
-      const membership = memberships.find((m) => m.id === membershipId);
-      const groupSnapshot = membership?.group ? { id: membership.group.id, name: membership.group.name } : null;
+      const membership = memberships.find(m => m.id === membershipId);
+      const groupSnapshot = membership?.group
+        ? { id: membership.group.id, name: membership.group.name }
+        : null;
 
-      console.log(LOG_PREFIX, 'withdrawGroupRequest — snapshot:', { membershipId, groupSnapshot, userId, safeSenderName });
+      console.log(LOG_PREFIX, 'withdrawGroupRequest — snapshot:', {
+        membershipId,
+        groupSnapshot,
+        userId,
+        safeSenderName,
+      });
 
       await groupActions.leaveGroup({ id: membershipId });
-
 
       return { success: true };
     } catch (error) {
@@ -203,14 +244,10 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const acceptEventInvitation = async (participationId: string) => {
     try {
-      const participation = participations.find((p) => p.id === participationId);
-      const eventSnapshot = participation?.event ? { id: participation.event.id, title: participation.event.title } : null;
-
       await eventActions.updateParticipant({
         id: participationId,
         status: 'member',
       });
-
 
       return { success: true };
     } catch (error) {
@@ -224,13 +261,19 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const declineEventInvitation = async (participationId: string) => {
     try {
-      const participation = participations.find((p) => p.id === participationId);
-      const eventSnapshot = participation?.event ? { id: participation.event.id, title: participation.event.title } : null;
+      const participation = participations.find(p => p.id === participationId);
+      const eventSnapshot = participation?.event
+        ? { id: participation.event.id, title: participation.event.title }
+        : null;
 
-      console.log(LOG_PREFIX, 'declineEventInvitation — snapshot:', { participationId, eventSnapshot, userId, safeSenderName });
+      console.log(LOG_PREFIX, 'declineEventInvitation — snapshot:', {
+        participationId,
+        eventSnapshot,
+        userId,
+        safeSenderName,
+      });
 
       await eventActions.leaveEvent({ id: participationId });
-
 
       return { success: true };
     } catch (error) {
@@ -244,13 +287,19 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const withdrawEventRequest = async (participationId: string) => {
     try {
-      const participation = participations.find((p) => p.id === participationId);
-      const eventSnapshot = participation?.event ? { id: participation.event.id, title: participation.event.title } : null;
+      const participation = participations.find(p => p.id === participationId);
+      const eventSnapshot = participation?.event
+        ? { id: participation.event.id, title: participation.event.title }
+        : null;
 
-      console.log(LOG_PREFIX, 'withdrawEventRequest — snapshot:', { participationId, eventSnapshot, userId, safeSenderName });
+      console.log(LOG_PREFIX, 'withdrawEventRequest — snapshot:', {
+        participationId,
+        eventSnapshot,
+        userId,
+        safeSenderName,
+      });
 
       await eventActions.leaveEvent({ id: participationId });
-
 
       return { success: true };
     } catch (error) {
@@ -264,8 +313,14 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const acceptCollaborationInvitation = async (collaborationId: string) => {
     try {
-      const collaboration = collaborations.find((c) => c.id === collaborationId);
-      const amendmentSnapshot = collaboration?.amendment ? { id: collaboration.amendment.id, title: collaboration.amendment.title, visibility: collaboration.amendment.visibility } : null;
+      const collaboration = collaborations.find(c => c.id === collaborationId);
+      const amendmentSnapshot = collaboration?.amendment
+        ? {
+            id: collaboration.amendment.id,
+            title: collaboration.amendment.title,
+            visibility: collaboration.amendment.visibility,
+          }
+        : null;
 
       await amendmentActions.updateCollaborator({
         id: collaborationId,
@@ -274,7 +329,8 @@ export function useUserMemberships(userId?: string, userName?: string) {
 
       // Add timeline event for public amendments
       if (amendmentSnapshot && amendmentSnapshot.visibility === 'public' && userId) {
-        await createTimelineEvent({ data: {
+        await createTimelineEvent({
+          data: {
             eventType: 'member_added',
             entityType: 'amendment',
             entityId: amendmentSnapshot.id,
@@ -282,9 +338,9 @@ export function useUserMemberships(userId?: string, userName?: string) {
             title: safeSenderName,
             description: amendmentSnapshot.title || 'Amendment',
             contentType: 'amendment',
-          } });
+          },
+        });
       }
-
 
       return { success: true };
     } catch (error) {
@@ -298,13 +354,19 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const declineCollaborationInvitation = async (collaborationId: string) => {
     try {
-      const collaboration = collaborations.find((c) => c.id === collaborationId);
-      const amendmentSnapshot = collaboration?.amendment ? { id: collaboration.amendment.id, title: collaboration.amendment.title } : null;
+      const collaboration = collaborations.find(c => c.id === collaborationId);
+      const amendmentSnapshot = collaboration?.amendment
+        ? { id: collaboration.amendment.id, title: collaboration.amendment.title }
+        : null;
 
-      console.log(LOG_PREFIX, 'declineCollaborationInvitation — snapshot:', { collaborationId, amendmentSnapshot, userId, safeSenderName });
+      console.log(LOG_PREFIX, 'declineCollaborationInvitation — snapshot:', {
+        collaborationId,
+        amendmentSnapshot,
+        userId,
+        safeSenderName,
+      });
 
       await amendmentActions.leaveCollaboration(collaborationId);
-
 
       return { success: true };
     } catch (error) {
@@ -318,13 +380,19 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const withdrawCollaborationRequest = async (collaborationId: string) => {
     try {
-      const collaboration = collaborations.find((c) => c.id === collaborationId);
-      const amendmentSnapshot = collaboration?.amendment ? { id: collaboration.amendment.id, title: collaboration.amendment.title } : null;
+      const collaboration = collaborations.find(c => c.id === collaborationId);
+      const amendmentSnapshot = collaboration?.amendment
+        ? { id: collaboration.amendment.id, title: collaboration.amendment.title }
+        : null;
 
-      console.log(LOG_PREFIX, 'withdrawCollaborationRequest — snapshot:', { collaborationId, amendmentSnapshot, userId, safeSenderName });
+      console.log(LOG_PREFIX, 'withdrawCollaborationRequest — snapshot:', {
+        collaborationId,
+        amendmentSnapshot,
+        userId,
+        safeSenderName,
+      });
 
       await amendmentActions.leaveCollaboration(collaborationId);
-
 
       return { success: true };
     } catch (error) {
@@ -338,14 +406,10 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const acceptBlogInvitation = async (blogRelationId: string) => {
     try {
-      const blogRelation = blogRelations.find((r) => r.id === blogRelationId);
-      const blogSnapshot = blogRelation?.blog ? { id: blogRelation.blog.id, title: blogRelation.blog.title } : null;
-
       await blogActions.updateEntry({
         id: blogRelationId,
         status: 'writer',
       });
-
 
       return { success: true };
     } catch (error) {
@@ -359,13 +423,19 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const declineBlogInvitation = async (blogRelationId: string) => {
     try {
-      const blogRelation = blogRelations.find((r) => r.id === blogRelationId);
-      const blogSnapshot = blogRelation?.blog ? { id: blogRelation.blog.id, title: blogRelation.blog.title } : null;
+      const blogRelation = blogRelations.find(r => r.id === blogRelationId);
+      const blogSnapshot = blogRelation?.blog
+        ? { id: blogRelation.blog.id, title: blogRelation.blog.title }
+        : null;
 
-      console.log(LOG_PREFIX, 'declineBlogInvitation — snapshot:', { blogRelationId, blogSnapshot, userId, safeSenderName });
+      console.log(LOG_PREFIX, 'declineBlogInvitation — snapshot:', {
+        blogRelationId,
+        blogSnapshot,
+        userId,
+        safeSenderName,
+      });
 
       await blogActions.deleteEntry(blogRelationId);
-
 
       return { success: true };
     } catch (error) {
@@ -379,13 +449,19 @@ export function useUserMemberships(userId?: string, userName?: string) {
    */
   const withdrawBlogRequest = async (blogRelationId: string) => {
     try {
-      const blogRelation = blogRelations.find((r) => r.id === blogRelationId);
-      const blogSnapshot = blogRelation?.blog ? { id: blogRelation.blog.id, title: blogRelation.blog.title } : null;
+      const blogRelation = blogRelations.find(r => r.id === blogRelationId);
+      const blogSnapshot = blogRelation?.blog
+        ? { id: blogRelation.blog.id, title: blogRelation.blog.title }
+        : null;
 
-      console.log(LOG_PREFIX, 'withdrawBlogRequest — snapshot:', { blogRelationId, blogSnapshot, userId, safeSenderName });
+      console.log(LOG_PREFIX, 'withdrawBlogRequest — snapshot:', {
+        blogRelationId,
+        blogSnapshot,
+        userId,
+        safeSenderName,
+      });
 
       await blogActions.deleteEntry(blogRelationId);
-
 
       return { success: true };
     } catch (error) {

@@ -12,6 +12,10 @@ import { VoteResultsDisplay, type VoteBarOption } from '@/features/vote-cast/ui/
 import { VoteResultSentence } from '@/features/vote-cast/ui/VoteResultSentence';
 import { VotePhaseBadge } from '@/features/vote-cast/ui/VotePhaseBadge';
 import {
+  getElectionModeSummaryLabel,
+  type ElectionMode,
+} from '@/features/elections/logic/electionMode';
+import {
   calculateElectionStats,
   getVotingPhase,
 } from '@/features/agendas/hooks/useAgendaItemVoting';
@@ -23,6 +27,8 @@ interface CandidateSelection {
 
 interface AgendaElectionSectionProps {
   roleName: string;
+  electionMode?: ElectionMode | null;
+  seatCount?: number | null;
   candidates: CandidatesByElectionRow[];
   indicativeSelections: readonly CandidateSelection[];
   finalSelections: readonly CandidateSelection[];
@@ -71,6 +77,64 @@ function getCandidateDisplayName(candidate: CandidatesByElectionRow): string {
   return full || user.email || candidate.name || 'Unknown';
 }
 
+function getWinningCandidateIds(args: {
+  candidateStats: {
+    candidate: CandidatesByElectionRow;
+    finalCount: number;
+  }[];
+  electionMode?: ElectionMode | null;
+  seatCount?: number | null;
+}): string[] {
+  const positiveVoteCandidates = [...args.candidateStats]
+    .filter(candidate => candidate.finalCount > 0)
+    .sort((left, right) => {
+      const voteDelta = right.finalCount - left.finalCount;
+      if (voteDelta !== 0) {
+        return voteDelta;
+      }
+
+      const orderDelta =
+        (left.candidate.order_index ?? Number.MAX_SAFE_INTEGER) -
+        (right.candidate.order_index ?? Number.MAX_SAFE_INTEGER);
+      if (orderDelta !== 0) {
+        return orderDelta;
+      }
+
+      return left.candidate.id.localeCompare(right.candidate.id);
+    });
+
+  if (positiveVoteCandidates.length === 0) {
+    return [];
+  }
+
+  if (args.electionMode !== 'list') {
+    const winner = positiveVoteCandidates[0];
+    const runnerUp = positiveVoteCandidates[1];
+
+    if (winner && runnerUp && winner.finalCount === runnerUp.finalCount) {
+      return [];
+    }
+
+    return winner ? [winner.candidate.id] : [];
+  }
+
+  const resolvedSeatCount = Math.max(1, args.seatCount ?? 1);
+  const winners = positiveVoteCandidates.slice(0, resolvedSeatCount);
+  const boundaryWinner = winners[winners.length - 1];
+  const nextCandidate = positiveVoteCandidates[winners.length];
+
+  if (
+    boundaryWinner &&
+    nextCandidate &&
+    boundaryWinner.finalCount > 0 &&
+    boundaryWinner.finalCount === nextCandidate.finalCount
+  ) {
+    return [];
+  }
+
+  return winners.map(candidate => candidate.candidate.id);
+}
+
 /**
  * AgendaElectionSection - Displays election results for an agenda item.
  *
@@ -79,6 +143,8 @@ function getCandidateDisplayName(candidate: CandidatesByElectionRow): string {
  */
 export function AgendaElectionSection({
   roleName,
+  electionMode,
+  seatCount,
   candidates,
   indicativeSelections,
   finalSelections,
@@ -113,19 +179,17 @@ export function AgendaElectionSection({
     return calculateElectionStats(visibleCandidates, indicativeSelections, finalSelections);
   }, [visibleCandidates, indicativeSelections, finalSelections]);
 
-  // Find the leading candidate in final results
-  const leadingCandidateId = useMemo(() => {
-    if (candidateStats.length === 0) return null;
-    const maxVotes = Math.max(
-      ...candidateStats.map(s =>
-        isClosed || !isIndicationPhase ? s.finalCount : s.indicativeCount
-      )
-    );
-    if (maxVotes === 0) return null;
-    return candidateStats.find(
-      s => (isClosed || !isIndicationPhase ? s.finalCount : s.indicativeCount) === maxVotes
-    )?.candidate.id;
-  }, [candidateStats, isIndicationPhase, isClosed]);
+  const winningCandidateIds = useMemo(() => {
+    if (!isClosed) {
+      return [];
+    }
+
+    return getWinningCandidateIds({
+      candidateStats,
+      electionMode,
+      seatCount,
+    });
+  }, [candidateStats, electionMode, isClosed, seatCount]);
 
   return (
     <Card className={cn(className)}>
@@ -138,11 +202,24 @@ export function AgendaElectionSection({
               phase={isIndicationPhase ? 'indication' : isClosed ? 'closed' : 'final_vote'}
             />
           </CardTitle>
-          <Badge variant="outline">{roleName}</Badge>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {electionMode ? (
+              <Badge variant="secondary">
+                {getElectionModeSummaryLabel(electionMode, seatCount)}
+              </Badge>
+            ) : null}
+            <Badge variant="outline">{roleName}</Badge>
+          </div>
         </div>
       </CardHeader>
 
       <CardContent className="space-y-6">
+        {electionStatus === 'runoff_required' ? (
+          <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-900 dark:text-amber-100">
+            Gleichstand am letzten Sitz. Fuer diese Wahl ist eine Stichwahl erforderlich.
+          </div>
+        ) : null}
+
         {/* Result sentence when voting is closed */}
         {isClosed && winnerName && (
           <VoteResultSentence
@@ -179,7 +256,7 @@ export function AgendaElectionSection({
           <div className="space-y-4">
             {visibleCandidates.map(candidate => {
               const stats = candidateStats.find(s => s.candidate.id === candidate.id);
-              const isLeading = candidate.id === leadingCandidateId && !isIndicationPhase;
+              const isLeading = winningCandidateIds.includes(candidate.id);
               const isSelected = userSelectedCandidateIds.includes(candidate.id);
               const displayName = getCandidateDisplayName(candidate);
 

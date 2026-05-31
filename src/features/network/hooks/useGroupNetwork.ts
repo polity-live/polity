@@ -2,10 +2,15 @@ import { useCallback, useMemo, useState } from 'react';
 import { useGroupNetwork as useFacadeGroupNetwork } from '@/zero/groups/useGroupState';
 import { RIGHT_TYPES } from '@/features/network/ui/RightFilters';
 import {
+  type GroupedRelationshipSummary,
   normalizeGroupRelationship,
   type NormalizedGroupRelationship,
   type NetworkGroupEntity,
 } from '../types/network.types';
+import {
+  getHierarchyRelationshipPair,
+  getRelationshipTypeForGroup,
+} from '../logic/groupRelationshipOrientation';
 import {
   isActiveGroupRelationshipStatus,
   isRequestGroupRelationshipStatus,
@@ -59,32 +64,67 @@ export function useGroupNetwork(groupId: string) {
   // Build direct relationships
   const getDirectRelationships = useCallback(
     (targetGroupId: string) => {
-      const parentsMap = new Map<string, { group: NetworkGroupEntity; rights: string[] }>();
-      const childrenMap = new Map<string, { group: NetworkGroupEntity; rights: string[] }>();
+      const parentsMap = new Map<string, GroupedRelationshipSummary>();
+      const childrenMap = new Map<string, GroupedRelationshipSummary>();
+      const siblingsMap = new Map<string, GroupedRelationshipSummary>();
 
       stableRelationships.forEach(rel => {
-        if (rel.related_group?.id === targetGroupId) {
-          // This is a parent relationship
-          const parentId = rel.group?.id;
-          if (!parentId) return;
+        const relationshipType = getRelationshipTypeForGroup(rel, targetGroupId);
 
-          if (!parentsMap.has(parentId) && rel.group) {
-            parentsMap.set(parentId, { group: rel.group, rights: [] });
+        if (relationshipType === 'sibling') {
+          const siblingEntity = rel.group?.id === targetGroupId ? rel.related_group : rel.group;
+          if (!siblingEntity) {
+            return;
           }
-          const parentEntry = parentsMap.get(parentId);
+
+          if (!siblingsMap.has(siblingEntity.id)) {
+            siblingsMap.set(siblingEntity.id, {
+              group: siblingEntity,
+              rights: [],
+              type: 'sibling',
+            });
+          }
+
+          const siblingEntry = siblingsMap.get(siblingEntity.id);
+          if (siblingEntry && rel.with_right && !siblingEntry.rights.includes(rel.with_right)) {
+            siblingEntry.rights.push(rel.with_right);
+          }
+
+          return;
+        }
+
+        const pair = getHierarchyRelationshipPair(rel);
+        if (!pair) {
+          return;
+        }
+
+        if (pair.childGroupId === targetGroupId) {
+          const parentEntity = rel.group?.id === pair.parentGroupId ? rel.group : rel.related_group;
+          if (!parentEntity) {
+            return;
+          }
+
+          if (!parentsMap.has(parentEntity.id)) {
+            parentsMap.set(parentEntity.id, { group: parentEntity, rights: [], type: 'parent' });
+          }
+
+          const parentEntry = parentsMap.get(parentEntity.id);
           if (parentEntry && rel.with_right && !parentEntry.rights.includes(rel.with_right)) {
             parentEntry.rights.push(rel.with_right);
           }
         }
-        if (rel.group?.id === targetGroupId) {
-          // This is a child relationship
-          const childId = rel.related_group?.id;
-          if (!childId) return;
 
-          if (!childrenMap.has(childId) && rel.related_group) {
-            childrenMap.set(childId, { group: rel.related_group, rights: [] });
+        if (pair.parentGroupId === targetGroupId) {
+          const childEntity = rel.group?.id === pair.childGroupId ? rel.group : rel.related_group;
+          if (!childEntity) {
+            return;
           }
-          const childEntry = childrenMap.get(childId);
+
+          if (!childrenMap.has(childEntity.id)) {
+            childrenMap.set(childEntity.id, { group: childEntity, rights: [], type: 'child' });
+          }
+
+          const childEntry = childrenMap.get(childEntity.id);
           if (childEntry && rel.with_right && !childEntry.rights.includes(rel.with_right)) {
             childEntry.rights.push(rel.with_right);
           }
@@ -94,6 +134,7 @@ export function useGroupNetwork(groupId: string) {
       return {
         parents: Array.from(parentsMap.values()),
         children: Array.from(childrenMap.values()),
+        siblings: Array.from(siblingsMap.values()),
       };
     },
     [stableRelationships]
@@ -221,6 +262,7 @@ export function useGroupNetwork(groupId: string) {
       return {
         parents: Array.from(parentsMap.values()),
         children: Array.from(childrenMap.values()),
+        siblings: directRels.siblings,
       };
     },
     [stableRelationships, getDirectRelationships]
@@ -239,9 +281,9 @@ export function useGroupNetwork(groupId: string) {
   }, []);
 
   const networkData = useMemo(() => {
-    if (!groupId) return { parents: [], children: [] };
+    if (!groupId) return { parents: [], children: [], siblings: [] };
 
-    const { parents, children } = showIndirect
+    const { parents, children, siblings } = showIndirect
       ? getIndirectRelationships(groupId)
       : getDirectRelationships(groupId);
 
@@ -258,6 +300,7 @@ export function useGroupNetwork(groupId: string) {
     return {
       parents: filterByRights(parents),
       children: filterByRights(children),
+      siblings: filterByRights(siblings),
     };
   }, [groupId, showIndirect, getDirectRelationships, getIndirectRelationships, selectedRights]);
 

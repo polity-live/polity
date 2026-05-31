@@ -1,5 +1,4 @@
-import { defineMutator } from '@rocicorp/zero'
-import { zql } from '../schema'
+import { defineMutator } from '@rocicorp/zero';
 import {
   createBlogSchema,
   updateBlogSchema,
@@ -7,127 +6,111 @@ import {
   createBlogBloggerSchema,
   updateBlogBloggerSchema,
   deleteBlogBloggerSchema,
-} from './schema'
+} from './schema';
 import {
   createBlogSupportVoteSchema,
   updateBlogSupportVoteSchema,
   deleteBlogSupportVoteSchema,
-} from '../votes/schema'
-import {
-  roleCreateSchema,
-  actionRightCreateSchema,
-} from '../groups/schema'
+} from '../votes/schema';
+import { roleCreateSchema, actionRightCreateSchema } from '../groups/schema';
 
 /** Shared mutators — run on both client and server. Server mutators may override these. */
 export const blogSharedMutators = {
   // Create a blog
-  create: defineMutator(
-    createBlogSchema,
-    async ({ tx, ctx: { userID }, args }) => {
-      const now = Date.now()
-      await tx.mutate.blog.insert({
-        ...args,
-        subscriber_count: 0,
-        supporter_count: 0,
-        like_count: 0,
-        comment_count: 0,
-        upvotes: 0,
-        downvotes: 0,
-        updated_at: now,
-        created_at: now,
-      })
-    }
-  ),
+  create: defineMutator(createBlogSchema, async ({ tx, args }) => {
+    const now = Date.now();
+    await tx.mutate.blog.insert({
+      ...args,
+      subscriber_count: 0,
+      supporter_count: 0,
+      like_count: 0,
+      comment_count: 0,
+      upvotes: 0,
+      downvotes: 0,
+      updated_at: now,
+      created_at: now,
+    });
+  }),
 
   // Update a blog
-  update: defineMutator(
-    updateBlogSchema,
-    async ({ tx, args }) => {
-      await tx.mutate.blog.update({
-        ...args,
-        updated_at: Date.now(),
-      })
-    }
-  ),
+  update: defineMutator(updateBlogSchema, async ({ tx, args }) => {
+    await tx.mutate.blog.update({
+      ...args,
+      updated_at: Date.now(),
+    });
+  }),
 
   // Delete a blog
-  delete: defineMutator(
-    deleteBlogSchema,
-    async ({ tx, args }) => {
-      await tx.mutate.blog.delete({ id: args.id })
-    }
-  ),
+  delete: defineMutator(deleteBlogSchema, async ({ tx, args }) => {
+    await tx.mutate.blog.delete({ id: args.id });
+  }),
 
   // Create a blog_blogger entry
-  createEntry: defineMutator(
-    createBlogBloggerSchema,
-    async ({ tx, args }) => {
-      const now = Date.now()
-      await tx.mutate.blog_blogger.insert({
-        ...args,
-        created_at: now,
-      })
-    }
-  ),
+  createEntry: defineMutator(createBlogBloggerSchema, async ({ tx, args }) => {
+    const now = Date.now();
+    await tx.mutate.blog_blogger.insert({
+      ...args,
+      created_at: now,
+    });
+  }),
 
   // Update a blog_blogger entry
-  updateEntry: defineMutator(
-    updateBlogBloggerSchema,
-    async ({ tx, args }) => {
-      await tx.mutate.blog_blogger.update(args)
-    }
-  ),
+  updateEntry: defineMutator(updateBlogBloggerSchema, async ({ tx, args }) => {
+    await tx.mutate.blog_blogger.update(args);
+  }),
 
   // Delete a blog_blogger entry
-  deleteEntry: defineMutator(
-    deleteBlogBloggerSchema,
-    async ({ tx, args }) => {
-      await tx.mutate.blog_blogger.delete({ id: args.id })
-    }
-  ),
+  deleteEntry: defineMutator(deleteBlogBloggerSchema, async ({ tx, args }) => {
+    await tx.mutate.blog_blogger.delete({ id: args.id });
+  }),
 
   // Blog Support Vote mutators
   createSupportVote: defineMutator(
     createBlogSupportVoteSchema,
     async ({ tx, ctx: { userID }, args }) => {
-      const now = Date.now()
+      const now = Date.now();
       await tx.mutate.blog_support_vote.insert({
         ...args,
         user_id: userID,
         created_at: now,
-      })
+      });
     }
   ),
 
-  updateSupportVote: defineMutator(
-    updateBlogSupportVoteSchema,
-    async ({ tx, args }) => {
-      await tx.mutate.blog_support_vote.update(args)
-    }
-  ),
+  updateSupportVote: defineMutator(updateBlogSupportVoteSchema, async ({ tx, args }) => {
+    await tx.mutate.blog_support_vote.update(args);
+  }),
 
-  deleteSupportVote: defineMutator(
-    deleteBlogSupportVoteSchema,
-    async ({ tx, args }) => {
-      await tx.mutate.blog_support_vote.delete({ id: args.id })
-    }
-  ),
+  deleteSupportVote: defineMutator(deleteBlogSupportVoteSchema, async ({ tx, args }) => {
+    await tx.mutate.blog_support_vote.delete({ id: args.id });
+  }),
 
   // Blog-scoped role creation (no group permission check needed)
-  createRole: defineMutator(
-    roleCreateSchema,
-    async ({ tx, args }) => {
-      const now = Date.now()
-      await tx.mutate.role.insert({ ...args, created_at: now })
-    }
-  ),
+  createRole: defineMutator(roleCreateSchema, async ({ tx, args }) => {
+    const now = Date.now();
+    await tx.mutate.role.insert({
+      ...args,
+      assignee_kind: args.assignee_kind ?? 'member',
+      assignment_mode: args.assignment_mode ?? 'assigned',
+      visibility: args.visibility ?? 'public',
+      term_start_date: args.term_start_date ?? null,
+      is_recurring: args.is_recurring ?? false,
+      recurrence_pattern: args.recurrence_pattern ?? null,
+      recurrence_rule: args.recurrence_rule ?? null,
+      recurrence_interval: args.recurrence_interval ?? null,
+      recurrence_days: args.recurrence_days ?? null,
+      recurrence_end_date: args.recurrence_end_date ?? null,
+      scheduled_revote_date: args.scheduled_revote_date ?? null,
+      default_request_role: args.default_request_role ?? false,
+      default_invite_role: args.default_invite_role ?? false,
+      sort_order: args.sort_order ?? 0,
+      created_at: now,
+    });
+  }),
 
   // Blog-scoped action right assignment (no group permission check needed)
-  assignActionRight: defineMutator(
-    actionRightCreateSchema,
-    async ({ tx, args }) => {
-      const now = Date.now()
-      await tx.mutate.action_right.insert({ ...args, created_at: now })
-    }
-  ),
-}
+  assignActionRight: defineMutator(actionRightCreateSchema, async ({ tx, args }) => {
+    const now = Date.now();
+    await tx.mutate.action_right.insert({ ...args, created_at: now });
+  }),
+};

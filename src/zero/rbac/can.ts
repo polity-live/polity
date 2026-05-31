@@ -19,7 +19,7 @@ import { createBuilder, type Transaction } from '@rocicorp/zero';
 import { schema, type Schema, type ActionRight as ActionRightRow } from '../schema';
 import { checkPermission, type PermissionData } from './check';
 import { PermissionError } from './errors';
-import type { ResourceType, ActionType, Membership, ActionRight, Role } from './types';
+import type { ResourceType, ActionType, Membership, GuestAccess, ActionRight, Role } from './types';
 
 // Build zql inside this module to avoid circular imports with schema.ts
 const zql = createBuilder(schema);
@@ -103,6 +103,8 @@ async function loadPermissionData(
 
   if (check.groupId) {
     data.memberships = await loadGroupMemberships(tx, userId, check.groupId);
+    data.guestAccesses = await loadGroupGuestAccesses(tx, userId, check.groupId);
+    data.ownedGroupIds = await loadOwnedGroupIds(tx, userId, check.groupId);
   }
 
   if (check.eventId) {
@@ -125,6 +127,7 @@ async function loadGroupMemberships(
     zql.group_membership
       .where('user_id', userId)
       .where('group_id', groupId)
+      .where('status', 'IN', ['active', 'member', 'admin'])
       .related('membership_roles', q => q.related('role', rq => rq.related('action_rights')))
       .related('group')
   );
@@ -134,6 +137,36 @@ async function loadGroupMemberships(
     group: m.group ? { id: m.group.id } : undefined,
     roles: mapRolesFromLinks(m.membership_roles, 'group'),
   }));
+}
+
+async function loadGroupGuestAccesses(
+  tx: Transaction<Schema>,
+  userId: string,
+  groupId: string
+): Promise<GuestAccess[]> {
+  const rows = await tx.run(
+    zql.group_guest_access
+      .where('user_id', userId)
+      .where('group_id', groupId)
+      .where('status', 'active')
+      .related('guest_roles', q => q.related('role', rq => rq.related('action_rights')))
+      .related('group')
+  );
+
+  return rows.map(guestAccess => ({
+    id: guestAccess.id,
+    group: guestAccess.group ? { id: guestAccess.group.id } : undefined,
+    roles: mapRolesFromLinks(guestAccess.guest_roles, 'group'),
+  }));
+}
+
+async function loadOwnedGroupIds(
+  tx: Transaction<Schema>,
+  userId: string,
+  groupId: string
+): Promise<string[]> {
+  const ownedGroups = await tx.run(zql.group.where('id', groupId).where('owner_id', userId));
+  return ownedGroups.map(group => group.id);
 }
 
 async function loadEventParticipations(tx: Transaction<Schema>, userId: string, eventId: string) {

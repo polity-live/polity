@@ -88,6 +88,12 @@ export interface Membership {
   roles?: Role[];
 }
 
+export interface GuestAccess {
+  id: string;
+  group?: { id: string };
+  roles?: Role[];
+}
+
 export interface Participation {
   id: string;
   event?: { id: string };

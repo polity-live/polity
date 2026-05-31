@@ -32,6 +32,10 @@ export const RIGHT_LABELS: Record<RightType, string> = {
   passiveVotingRight: 'Passiv',
 };
 
+export function isRightType(right: string): right is RightType {
+  return RIGHT_TYPES.includes(right as RightType);
+}
+
 export function formatRights(rights: string[]): string {
   return rights.map(r => RIGHT_LABELS[r as RightType] || r).join(', ');
 }
@@ -65,13 +69,13 @@ interface RightFiltersProps {
 
 export function RightFilters({ selectedRights, onToggleRight }: RightFiltersProps) {
   const { t } = useTranslation();
-  
+
   const getTranslatedRightLabel = (right: RightType): string => {
     return t(RIGHT_TRANSLATION_KEYS[right]) || RIGHT_LABELS[right];
   };
 
   return (
-    <div className="mt-4">
+    <div className="border-border/70 bg-background/95 dark:bg-card/95 mt-4 rounded-lg border p-3 shadow-sm">
       <h3 className="mb-2 text-sm font-semibold">{t('common.labels.filterByRights')}:</h3>
       <div className="flex flex-wrap gap-2">
         {RIGHT_TYPES.map(right => {
@@ -84,8 +88,9 @@ export function RightFilters({ selectedRights, onToggleRight }: RightFiltersProp
               onClick={() => onToggleRight(right)}
               className={cn(
                 'text-xs',
-                isActive && RIGHT_GRADIENTS[right],
-                isActive && 'border-0 text-white hover:text-white'
+                isActive
+                  ? `${RIGHT_GRADIENTS[right]} border-0 text-white hover:text-white`
+                  : 'border-border bg-background/90 text-foreground hover:bg-accent hover:text-accent-foreground dark:bg-card/90 dark:text-foreground'
               )}
             >
               {getTranslatedRightLabel(right)}

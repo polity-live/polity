@@ -5,21 +5,26 @@ import { Badge } from '@/features/shared/ui/ui/badge';
 import { Label } from '@/features/shared/ui/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/features/shared/ui/ui/select';
 import { cn } from '@/features/shared/utils/utils';
+import {
+  getGroupRelationshipNameText,
+  getGroupRelationshipRightSentenceText,
+  getSiblingRelationshipPhraseText,
+  type SiblingMembershipMode,
+  type TranslateFn,
+} from '../logic/groupRelationshipSentence';
+export { getSiblingMembershipModeLabel } from '../logic/groupRelationshipSentence';
 import type { GroupRelationshipRightDisplayStatus } from '../logic/networkRelationshipHelpers';
+import type { GroupRelationshipDirection, GroupRelationshipType } from '../types/network.types';
 import { RIGHT_GRADIENTS, type RightType } from './RightFilters';
 
-export type GroupRelationshipType = 'parent' | 'child';
 export type GroupRelationshipRight = RightType;
 export type GroupRelationshipPhraseMode = 'selection' | 'statement' | 'role';
 export type GroupRelationshipTagCase = 'sentence-start' | 'embedded';
-
-type TranslateParamValue = string | number | null | undefined;
-
-type TranslateFn = (
-  key: string,
-  paramsOrFallback?: string | Record<string, TranslateParamValue>,
-  fallback?: string
-) => string;
+type SelectableGroupRelationshipDirection = Exclude<GroupRelationshipDirection, 'none'>;
+export interface GroupRelationshipDirectionOption {
+  value: SelectableGroupRelationshipDirection;
+  label: string;
+}
 
 const GROUP_RELATIONSHIP_RIGHT_OPTIONS: {
   value: GroupRelationshipRight;
@@ -53,10 +58,37 @@ const GROUP_RELATIONSHIP_RIGHT_OPTIONS: {
   },
 ];
 
+export function getGroupRelationshipDirectionOptions(
+  t: TranslateFn
+): GroupRelationshipDirectionOption[] {
+  return [
+    {
+      value: 'outgoing',
+      label: t('common.network.directionOutgoingLabel'),
+    },
+    {
+      value: 'incoming',
+      label: t('common.network.directionIncomingLabel'),
+    },
+    {
+      value: 'bidirectional',
+      label: t('common.network.directionBidirectionalLabel'),
+    },
+  ];
+}
+
 export function invertGroupRelationshipType(
   relationshipType: GroupRelationshipType
 ): GroupRelationshipType {
-  return relationshipType === 'parent' ? 'child' : 'parent';
+  if (relationshipType === 'parent') {
+    return 'child';
+  }
+
+  if (relationshipType === 'child') {
+    return 'parent';
+  }
+
+  return 'sibling';
 }
 
 function getSafeGroupName(name: string, fallback: string) {
@@ -68,25 +100,54 @@ export function getCurrentGroupRelationshipLabel({
   relationshipType,
   currentGroupName,
   selectedGroupName,
+  siblingMembershipMode,
   t,
 }: {
   relationshipType: GroupRelationshipType;
   currentGroupName: string;
   selectedGroupName: string;
+  siblingMembershipMode?: SiblingMembershipMode | null;
   t: TranslateFn;
 }) {
   const safeCurrentGroupName = getSafeGroupName(currentGroupName, t('common.network.thisGroup'));
   const safeSelectedGroupName = getSafeGroupName(selectedGroupName, t('common.unspecified'));
 
-  return relationshipType === 'parent'
-    ? t('common.network.currentGroupAsParentOf', {
-        currentGroupName: safeCurrentGroupName,
-        selectedGroupName: safeSelectedGroupName,
-      })
-    : t('common.network.currentGroupAsChildOf', {
-        currentGroupName: safeCurrentGroupName,
-        selectedGroupName: safeSelectedGroupName,
-      });
+  if (relationshipType === 'parent') {
+    return t('common.network.currentGroupAsParentOf', {
+      currentGroupName: safeCurrentGroupName,
+      selectedGroupName: safeSelectedGroupName,
+    });
+  }
+
+  if (relationshipType === 'child') {
+    return t('common.network.currentGroupAsChildOf', {
+      currentGroupName: safeCurrentGroupName,
+      selectedGroupName: safeSelectedGroupName,
+    });
+  }
+
+  return getSiblingRelationshipPhraseText({
+    mode: 'sentence',
+    siblingMembershipMode,
+    currentGroupName: safeCurrentGroupName,
+    selectedGroupName: safeSelectedGroupName,
+    t,
+  });
+}
+
+export function getGroupRelationshipTypeLabel(
+  relationshipType: GroupRelationshipType,
+  t: TranslateFn
+) {
+  if (relationshipType === 'parent') {
+    return t('common.network.parent');
+  }
+
+  if (relationshipType === 'child') {
+    return t('common.network.child');
+  }
+
+  return t('common.network.sibling', 'Geschwistergruppe');
 }
 
 export function getGroupRelationshipRightLabel(right: GroupRelationshipRight, t: TranslateFn) {
@@ -114,29 +175,66 @@ function isRequestDisplayStatus(status: string) {
 function getRelationshipConnectorLabel(
   relationshipType: GroupRelationshipType,
   t: TranslateFn,
-  mode: GroupRelationshipPhraseMode = 'selection'
+  mode: GroupRelationshipPhraseMode = 'selection',
+  siblingMembershipMode?: SiblingMembershipMode | null
 ) {
   if (mode === 'statement') {
-    return relationshipType === 'parent'
-      ? t('common.network.isParentGroupOf')
-      : t('common.network.isChildGroupOf');
+    if (relationshipType === 'parent') {
+      return t('common.network.isParentGroupOf');
+    }
+
+    if (relationshipType === 'child') {
+      return t('common.network.isChildGroupOf');
+    }
+
+    return getSiblingRelationshipPhraseText({
+      mode: 'statement',
+      siblingMembershipMode,
+      t,
+    });
   }
 
   if (mode === 'role') {
-    return relationshipType === 'parent'
-      ? t('common.network.parentGroupOf')
-      : t('common.network.childGroupOf');
+    if (relationshipType === 'parent') {
+      return t('common.network.parentGroupOf');
+    }
+
+    if (relationshipType === 'child') {
+      return t('common.network.childGroupOf');
+    }
+
+    return getSiblingRelationshipPhraseText({
+      mode: 'role',
+      siblingMembershipMode,
+      t,
+    });
   }
 
-  return relationshipType === 'parent'
-    ? t('common.network.asParentGroupOf')
-    : t('common.network.asChildGroupOf');
+  if (relationshipType === 'parent') {
+    return t('common.network.asParentGroupOf');
+  }
+
+  if (relationshipType === 'child') {
+    return t('common.network.asChildGroupOf');
+  }
+
+  return getSiblingRelationshipPhraseText({
+    mode: 'selection',
+    siblingMembershipMode,
+    t,
+  });
 }
 
 function getRelationshipConnectorClasses(relationshipType: GroupRelationshipType) {
-  return relationshipType === 'parent'
-    ? 'from-amber-600 via-orange-500 to-rose-500 decoration-orange-400/90'
-    : 'from-cyan-600 via-sky-500 to-violet-500 decoration-sky-400/90';
+  if (relationshipType === 'parent') {
+    return 'from-amber-600 via-orange-500 to-rose-500 decoration-orange-400/90';
+  }
+
+  if (relationshipType === 'child') {
+    return 'from-cyan-600 via-sky-500 to-violet-500 decoration-sky-400/90';
+  }
+
+  return 'from-fuchsia-600 via-violet-500 to-amber-500 decoration-fuchsia-400/90';
 }
 
 function getGroupTagClasses(kind: 'current' | 'selected') {
@@ -167,21 +265,12 @@ export function GroupRelationshipNameTag({
   groupId?: string;
 }) {
   const { t } = useTranslation();
-  const fallback =
-    kind === 'current'
-      ? caseStyle === 'embedded'
-        ? t('common.network.thisGroupEmbedded')
-        : t('common.network.thisGroup')
-      : t('common.unspecified');
-  const safeName = getSafeGroupName(name, fallback);
-  const displayName =
-    kind === 'current'
-      ? safeName === fallback
-        ? fallback
-        : caseStyle === 'embedded'
-          ? t('common.network.thisGroupWithNameEmbedded', { groupName: safeName })
-          : t('common.network.thisGroupWithName', { groupName: safeName })
-      : safeName;
+  const displayName = getGroupRelationshipNameText({
+    name,
+    kind,
+    caseStyle,
+    t,
+  });
 
   const badge = (
     <Badge
@@ -210,10 +299,12 @@ export function GroupRelationshipNameTag({
 export function GroupRelationshipConnector({
   relationshipType,
   mode = 'selection',
+  siblingMembershipMode,
   className,
 }: {
   relationshipType: GroupRelationshipType;
   mode?: GroupRelationshipPhraseMode;
+  siblingMembershipMode?: SiblingMembershipMode | null;
   className?: string;
 }) {
   const { t } = useTranslation();
@@ -226,19 +317,25 @@ export function GroupRelationshipConnector({
         className
       )}
     >
-      {getRelationshipConnectorLabel(relationshipType, t, mode)}
+      {getRelationshipConnectorLabel(relationshipType, t, mode, siblingMembershipMode)}
     </span>
   );
 }
 
-function RelationshipTypeOptionContent({
+export function GroupRelationshipTypePreview({
   relationshipType,
   currentGroupName,
   selectedGroupName,
+  siblingMembershipMode,
+  currentGroupId,
+  selectedGroupId,
 }: {
   relationshipType: GroupRelationshipType;
   currentGroupName: string;
   selectedGroupName: string;
+  siblingMembershipMode?: SiblingMembershipMode | null;
+  currentGroupId?: string;
+  selectedGroupId?: string;
 }) {
   const { t } = useTranslation();
   const safeCurrentGroupName = getSafeGroupName(currentGroupName, t('common.network.thisGroup'));
@@ -246,10 +343,43 @@ function RelationshipTypeOptionContent({
 
   return (
     <div className="flex flex-wrap items-center gap-2 leading-tight">
-      <GroupRelationshipNameTag name={safeCurrentGroupName} kind="current" />
-      <GroupRelationshipConnector relationshipType={relationshipType} mode="selection" />
-      <GroupRelationshipNameTag name={safeSelectedGroupName} kind="selected" />
+      <GroupRelationshipNameTag
+        name={safeCurrentGroupName}
+        kind="current"
+        groupId={currentGroupId}
+      />
+      <GroupRelationshipConnector
+        relationshipType={relationshipType}
+        mode="selection"
+        siblingMembershipMode={siblingMembershipMode}
+      />
+      <GroupRelationshipNameTag
+        name={safeSelectedGroupName}
+        kind="selected"
+        groupId={selectedGroupId}
+      />
     </div>
+  );
+}
+
+function RelationshipTypeOptionContent({
+  relationshipType,
+  currentGroupName,
+  selectedGroupName,
+  siblingMembershipMode,
+}: {
+  relationshipType: GroupRelationshipType;
+  currentGroupName: string;
+  selectedGroupName: string;
+  siblingMembershipMode?: SiblingMembershipMode | null;
+}) {
+  return (
+    <GroupRelationshipTypePreview
+      relationshipType={relationshipType}
+      currentGroupName={currentGroupName}
+      selectedGroupName={selectedGroupName}
+      siblingMembershipMode={siblingMembershipMode}
+    />
   );
 }
 
@@ -259,6 +389,7 @@ interface GroupRelationshipTypeSelectProps {
   value: GroupRelationshipType;
   currentGroupName: string;
   selectedGroupName: string;
+  siblingMembershipMode?: SiblingMembershipMode | null;
   onValueChange: (value: GroupRelationshipType) => void;
   helperText?: string;
   disabled?: boolean;
@@ -271,6 +402,7 @@ export function GroupRelationshipTypeSelect({
   value,
   currentGroupName,
   selectedGroupName,
+  siblingMembershipMode,
   onValueChange,
   helperText,
   disabled = false,
@@ -281,6 +413,7 @@ export function GroupRelationshipTypeSelect({
     relationshipType: value,
     currentGroupName,
     selectedGroupName,
+    siblingMembershipMode,
     t,
   });
 
@@ -298,11 +431,12 @@ export function GroupRelationshipTypeSelect({
               relationshipType={value}
               currentGroupName={currentGroupName}
               selectedGroupName={selectedGroupName}
+              siblingMembershipMode={siblingMembershipMode}
             />
             <span className="sr-only">{selectedLabel}</span>
           </div>
         </SelectTrigger>
-        <SelectContent className="max-w-[26rem]">
+        <SelectContent className="w-[var(--radix-select-trigger-width)] max-w-none">
           <SelectItem value="parent" disabled={disabledOptions?.parent} className="py-2">
             <RelationshipTypeOptionContent
               relationshipType="parent"
@@ -315,6 +449,14 @@ export function GroupRelationshipTypeSelect({
               relationshipType="child"
               currentGroupName={currentGroupName}
               selectedGroupName={selectedGroupName}
+            />
+          </SelectItem>
+          <SelectItem value="sibling" disabled={disabledOptions?.sibling} className="py-2">
+            <RelationshipTypeOptionContent
+              relationshipType="sibling"
+              currentGroupName={currentGroupName}
+              selectedGroupName={selectedGroupName}
+              siblingMembershipMode={siblingMembershipMode}
             />
           </SelectItem>
         </SelectContent>
@@ -330,6 +472,204 @@ interface GroupRelationshipRightsSelectorProps {
   onToggleRight: (right: GroupRelationshipRight) => void;
   helperText?: string;
   existingRightStatuses?: ReadonlyMap<string, GroupRelationshipRightDisplayStatus>;
+  rightDirections?: Partial<Record<GroupRelationshipRight, GroupRelationshipDirection>>;
+  onDirectionChange?: (
+    right: GroupRelationshipRight,
+    direction: GroupRelationshipDirection
+  ) => void;
+  directionOptions?: GroupRelationshipDirectionOption[];
+  currentGroupName?: string;
+  selectedGroupName?: string;
+  currentGroupId?: string;
+  selectedGroupId?: string;
+  disabled?: boolean;
+  optionsContainerClassName?: string;
+}
+
+function getRightUnderlineClasses(right: GroupRelationshipRight) {
+  switch (right) {
+    case 'informationRight':
+      return 'from-blue-700 via-sky-600 to-cyan-600 decoration-sky-500/90';
+    case 'amendmentRight':
+      return 'from-amber-700 via-orange-600 to-rose-600 decoration-orange-500/90';
+    case 'rightToSpeak':
+      return 'from-fuchsia-700 via-pink-600 to-rose-600 decoration-fuchsia-500/90';
+    case 'activeVotingRight':
+      return 'from-emerald-700 via-teal-600 to-cyan-600 decoration-emerald-500/90';
+    case 'passiveVotingRight':
+      return 'from-violet-700 via-indigo-600 to-blue-600 decoration-violet-500/90';
+    default:
+      return 'from-foreground to-foreground decoration-foreground/80';
+  }
+}
+
+function RightSentenceEmphasis({ right }: { right: GroupRelationshipRight }) {
+  const { t } = useTranslation();
+
+  return (
+    <span
+      className={cn(
+        'inline-block bg-gradient-to-r bg-clip-text text-xs font-semibold text-transparent underline decoration-2 underline-offset-4',
+        getRightUnderlineClasses(right)
+      )}
+    >
+      {getGroupRelationshipRightLabel(right, t)}
+    </span>
+  );
+}
+
+export function GroupRelationshipDirectionSentence({
+  direction,
+  right,
+  currentGroupName,
+  selectedGroupName,
+  currentGroupId,
+  selectedGroupId,
+}: {
+  direction: SelectableGroupRelationshipDirection;
+  right: GroupRelationshipRight;
+  currentGroupName: string;
+  selectedGroupName: string;
+  currentGroupId?: string;
+  selectedGroupId?: string;
+}) {
+  const { t } = useTranslation();
+  const safeCurrentGroupName = getSafeGroupName(currentGroupName, t('common.network.thisGroup'));
+  const safeSelectedGroupName = getSafeGroupName(selectedGroupName, t('common.unspecified'));
+  const srText = getGroupRelationshipRightSentenceText({
+    direction,
+    rightLabel: getGroupRelationshipRightLabel(right, t),
+    currentGroupName: safeCurrentGroupName,
+    selectedGroupName: safeSelectedGroupName,
+    t,
+  });
+
+  if (direction === 'incoming') {
+    return (
+      <div className="flex flex-wrap items-center gap-1.5 leading-tight">
+        <GroupRelationshipNameTag
+          name={safeCurrentGroupName}
+          kind="current"
+          caseStyle="sentence-start"
+          groupId={currentGroupId}
+        />
+        <span className="text-xs">{t('common.network.directionHas')}</span>
+        <RightSentenceEmphasis right={right} />
+        <span className="text-xs">{t('common.network.directionIn')}</span>
+        <GroupRelationshipNameTag
+          name={safeSelectedGroupName}
+          kind="selected"
+          caseStyle="embedded"
+          groupId={selectedGroupId}
+        />
+        <span className="sr-only">{srText}</span>
+      </div>
+    );
+  }
+
+  if (direction === 'bidirectional') {
+    return (
+      <div className="flex flex-wrap items-center gap-1.5 leading-tight">
+        <GroupRelationshipNameTag
+          name={safeCurrentGroupName}
+          kind="current"
+          caseStyle="sentence-start"
+          groupId={currentGroupId}
+        />
+        <span className="text-xs">{t('common.network.directionAnd')}</span>
+        <GroupRelationshipNameTag
+          name={safeSelectedGroupName}
+          kind="selected"
+          caseStyle="embedded"
+          groupId={selectedGroupId}
+        />
+        <span className="text-xs">{t('common.network.directionHaveMutually')}</span>
+        <RightSentenceEmphasis right={right} />
+        <span className="sr-only">{srText}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 leading-tight">
+      <GroupRelationshipNameTag
+        name={safeCurrentGroupName}
+        kind="current"
+        caseStyle="sentence-start"
+        groupId={currentGroupId}
+      />
+      <span className="text-xs">{t('common.network.directionGrants')}</span>
+      <RightSentenceEmphasis right={right} />
+      <span className="text-xs">{t('common.network.directionTo')}</span>
+      <GroupRelationshipNameTag
+        name={safeSelectedGroupName}
+        kind="selected"
+        caseStyle="embedded"
+        groupId={selectedGroupId}
+      />
+      <span className="sr-only">{srText}</span>
+    </div>
+  );
+}
+
+export function GroupRelationshipRightSentenceList({
+  rights,
+  rightDirections,
+  currentGroupName,
+  selectedGroupName,
+  currentGroupId,
+  selectedGroupId,
+  className,
+  itemClassName,
+}: {
+  rights?: GroupRelationshipRight[];
+  rightDirections?: Partial<Record<GroupRelationshipRight, GroupRelationshipDirection>>;
+  currentGroupName: string;
+  selectedGroupName: string;
+  currentGroupId?: string;
+  selectedGroupId?: string;
+  className?: string;
+  itemClassName?: string;
+}) {
+  const safeRights = rights ?? [];
+  const safeRightDirections = rightDirections ?? {};
+
+  const items = safeRights.flatMap(right => {
+    const direction = safeRightDirections[right];
+
+    if (!direction || direction === 'none') {
+      return [];
+    }
+
+    return [{ right, direction }];
+  });
+
+  if (!items.length) {
+    return null;
+  }
+
+  return (
+    <div className={cn('space-y-2', className)}>
+      {items.map(item => (
+        <div
+          key={item.right}
+          className={cn(
+            'border-border/70 bg-background/80 rounded-lg border px-3 py-2 shadow-sm',
+            itemClassName
+          )}
+        >
+          <GroupRelationshipDirectionSentence
+            direction={item.direction}
+            right={item.right}
+            currentGroupName={currentGroupName}
+            selectedGroupName={selectedGroupName}
+            currentGroupId={currentGroupId}
+            selectedGroupId={selectedGroupId}
+          />
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export function GroupRelationshipRightsSelector({
@@ -338,8 +678,19 @@ export function GroupRelationshipRightsSelector({
   onToggleRight,
   helperText,
   existingRightStatuses,
+  rightDirections,
+  onDirectionChange,
+  directionOptions,
+  currentGroupName,
+  selectedGroupName,
+  currentGroupId,
+  selectedGroupId,
+  disabled = false,
+  optionsContainerClassName,
 }: GroupRelationshipRightsSelectorProps) {
   const { t } = useTranslation();
+  const sentenceCurrentGroupName = currentGroupName ?? '';
+  const sentenceSelectedGroupName = selectedGroupName ?? '';
 
   return (
     <div className="grid gap-3">
@@ -347,50 +698,124 @@ export function GroupRelationshipRightsSelector({
         <Label>{label}</Label>
         {helperText ? <p className="text-muted-foreground text-sm">{helperText}</p> : null}
       </div>
-      <div className="grid gap-2">
+      <div className={cn('grid gap-2', optionsContainerClassName)}>
         {GROUP_RELATIONSHIP_RIGHT_OPTIONS.map(option => {
           const isSelected = selectedRights.has(option.value);
           const status = existingRightStatuses?.get(option.value);
+          const configuredDirection = rightDirections?.[option.value];
+          const selectedDirection: SelectableGroupRelationshipDirection =
+            configuredDirection && configuredDirection !== 'none'
+              ? configuredDirection
+              : 'outgoing';
 
           return (
-            <button
+            <div
               key={option.value}
-              type="button"
-              onClick={() => onToggleRight(option.value)}
               className={cn(
-                'flex items-start gap-3 rounded-lg border p-3 text-left transition-colors hover:opacity-90',
+                'rounded-lg border p-3 transition-colors',
                 isSelected
                   ? cn('border-0 text-white shadow-sm', RIGHT_GRADIENTS[option.value])
-                  : 'border-border bg-muted/20 hover:bg-accent'
+                  : 'border-border bg-muted/20',
+                !disabled && (isSelected ? 'hover:opacity-90' : 'hover:bg-accent')
               )}
             >
-              <div
-                className={cn(
-                  'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border',
-                  isSelected ? 'border-white/70 bg-white/15 text-white' : 'border-muted-foreground'
-                )}
+              <button
+                type="button"
+                onClick={() => onToggleRight(option.value)}
+                className="flex w-full items-start gap-3 text-left"
+                disabled={disabled}
               >
-                {isSelected ? <Check className="h-3 w-3" /> : null}
-              </div>
-              <div className="flex-1">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="font-medium">{t(option.labelKey)}</div>
-                  {status ? (
-                    <Badge
-                      variant={isRequestDisplayStatus(status) ? 'secondary' : 'default'}
-                      className="shrink-0"
-                    >
-                      {getStatusBadgeLabel(status, t)}
-                    </Badge>
-                  ) : null}
-                </div>
                 <div
-                  className={cn('text-sm', isSelected ? 'text-white/90' : 'text-muted-foreground')}
+                  className={cn(
+                    'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border',
+                    isSelected
+                      ? 'border-white/70 bg-white/15 text-white'
+                      : 'border-muted-foreground'
+                  )}
                 >
-                  {t(option.descKey)}
+                  {isSelected ? <Check className="h-3 w-3" /> : null}
                 </div>
-              </div>
-            </button>
+                <div className="flex-1">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="font-medium">{t(option.labelKey)}</div>
+                    {status ? (
+                      <Badge
+                        variant={isRequestDisplayStatus(status) ? 'secondary' : 'default'}
+                        className="shrink-0"
+                      >
+                        {getStatusBadgeLabel(status, t)}
+                      </Badge>
+                    ) : null}
+                  </div>
+                  <div
+                    className={cn(
+                      'text-sm',
+                      isSelected ? 'text-white/90' : 'text-muted-foreground'
+                    )}
+                  >
+                    {t(option.descKey)}
+                  </div>
+                </div>
+              </button>
+              {isSelected && onDirectionChange && directionOptions ? (
+                <div
+                  className={cn(
+                    'mt-3 ml-8 rounded-md border px-3 py-2',
+                    isSelected ? 'border-white/30 bg-white/10' : 'border-border bg-background'
+                  )}
+                >
+                  <Select
+                    value={selectedDirection}
+                    onValueChange={value =>
+                      onDirectionChange(option.value, value as GroupRelationshipDirection)
+                    }
+                    disabled={disabled}
+                  >
+                    <SelectTrigger
+                      className={cn(
+                        'h-auto min-h-10 border-white/25 bg-white/15 py-2 text-left shadow-none',
+                        isSelected &&
+                          'text-white data-[placeholder]:text-white/70 [&>svg]:text-white/80'
+                      )}
+                    >
+                      <div className="min-w-0 flex-1 text-left">
+                        <GroupRelationshipDirectionSentence
+                          direction={selectedDirection}
+                          right={option.value}
+                          currentGroupName={sentenceCurrentGroupName}
+                          selectedGroupName={sentenceSelectedGroupName}
+                          currentGroupId={currentGroupId}
+                          selectedGroupId={selectedGroupId}
+                        />
+                        <span className="sr-only">
+                          {getGroupRelationshipRightSentenceText({
+                            direction: selectedDirection,
+                            rightLabel: getGroupRelationshipRightLabel(option.value, t),
+                            currentGroupName: sentenceCurrentGroupName,
+                            selectedGroupName: sentenceSelectedGroupName,
+                            t,
+                          })}
+                        </span>
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {directionOptions.map(directionOption => (
+                        <SelectItem key={directionOption.value} value={directionOption.value}>
+                          <GroupRelationshipDirectionSentence
+                            direction={directionOption.value}
+                            right={option.value}
+                            currentGroupName={sentenceCurrentGroupName}
+                            selectedGroupName={sentenceSelectedGroupName}
+                            currentGroupId={currentGroupId}
+                            selectedGroupId={selectedGroupId}
+                          />
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : null}
+            </div>
           );
         })}
       </div>

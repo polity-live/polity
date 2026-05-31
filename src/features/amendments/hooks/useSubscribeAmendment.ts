@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { useAuth } from '@/providers/auth-provider';
-import { notifyAmendmentNewSubscriber } from '@/features/notifications/utils/notification-helpers.ts';
 import { toast } from 'sonner';
 
 /**
@@ -20,7 +19,6 @@ export function useSubscribeAmendment(targetAmendmentId?: string) {
 
   // Use facade state for amendment data and subscribers
   const {
-    amendment: amendmentRows,
     subscriberCount: persistedSubscriberCount,
     subscribers: subscriptionData,
     isLoading: subscriptionLoading,
@@ -28,12 +26,6 @@ export function useSubscribeAmendment(targetAmendmentId?: string) {
     amendmentId: targetAmendmentId,
     userId: authUser?.id,
   });
-
-  // Get user name from auth user (no separate query needed)
-  const currentUserName = authUser?.email?.split('@')[0] || 'Someone';
-
-  // Get amendment title from facade
-  const amendmentTitle = amendmentRows?.title || 'Amendment';
 
   // Update subscription state when data changes
   useEffect(() => {
@@ -81,18 +73,6 @@ export function useSubscribeAmendment(targetAmendmentId?: string) {
         id: subscriptionId,
         amendment_id: targetAmendmentId,
       });
-
-      // Send notification separately
-      try {
-        await notifyAmendmentNewSubscriber({
-          senderId: authUser.id,
-          senderName: currentUserName,
-          amendmentId: targetAmendmentId,
-          amendmentTitle: amendmentTitle,
-        });
-      } catch {
-        /* notification delivery is best-effort */
-      }
       toast.success('Successfully subscribed to amendment');
     } catch (error) {
       // Revert optimistic update

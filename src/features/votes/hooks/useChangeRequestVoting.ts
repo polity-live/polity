@@ -18,10 +18,6 @@ import {
   isQuorumReached,
   type VoteValue,
 } from '@/features/shared/utils/voting-utils';
-import {
-  notifyChangeRequestAccepted,
-  notifyChangeRequestRejected,
-} from '@/features/notifications/utils/notification-helpers.ts';
 import { triggerSupporterConfirmation } from '@/features/amendments/hooks/useSupportConfirmation';
 
 interface UseChangeRequestVotingOptions {
@@ -37,9 +33,7 @@ export function useChangeRequestVoting({
   eventId,
   votingSessionId,
   userId,
-  agendaItemId,
   amendmentId,
-  amendmentTitle,
 }: UseChangeRequestVotingOptions) {
   const { can } = usePermissions({ eventId });
   const zero = useZero();
@@ -52,7 +46,8 @@ export function useChangeRequestVoting({
   const sessionLoading = false;
 
   // Query change requests for the agenda item
-  const { changeRequests: changeRequestsRaw, isLoading: crLoading } = useChangeRequestsByAmendment(amendmentId);
+  const { changeRequests: changeRequestsRaw, isLoading: crLoading } =
+    useChangeRequestsByAmendment(amendmentId);
 
   const isLoading = sessionLoading || crLoading;
   const error = undefined;
@@ -63,21 +58,21 @@ export function useChangeRequestVoting({
 
   // We track current change request by finding the one with voting_status 'voting'
   const currentChangeRequestId = useMemo(() => {
-    const active = changeRequests.find((cr) => cr.voting_status === 'voting');
+    const active = changeRequests.find(cr => cr.voting_status === 'voting');
     return active?.id ?? null;
   }, [changeRequests]);
 
   // Current change request being voted on
   const currentChangeRequest = useMemo(() => {
     if (!currentChangeRequestId) return null;
-    return changeRequests.find((cr) => cr.id === currentChangeRequestId) ?? null;
+    return changeRequests.find(cr => cr.id === currentChangeRequestId) ?? null;
   }, [currentChangeRequestId, changeRequests]);
 
   // Change requests that haven't been voted on yet
   // Ordered by votingOrder if present, otherwise by characterCount descending
   const pendingChangeRequests = useMemo(() => {
     return changeRequests
-      .filter((cr) => cr.status === 'pending')
+      .filter(cr => cr.status === 'pending')
       .sort((a, b) => {
         // Sort by created_at ascending (oldest first)
         return (a.created_at ?? 0) - (b.created_at ?? 0);
@@ -86,7 +81,7 @@ export function useChangeRequestVoting({
 
   // Get votes for current voting session
   const currentVotes = useMemo(() => {
-    return votes.map((v) => ({
+    return votes.map(v => ({
       vote: v.vote as VoteValue,
       voter: v.user,
     }));
@@ -94,7 +89,7 @@ export function useChangeRequestVoting({
 
   // Check if user has already voted
   const hasVoted = useMemo(() => {
-    return votes.some((v) => v.user?.id === userId);
+    return votes.some(v => v.user?.id === userId);
   }, [votes, userId]);
 
   // Calculate vote results
@@ -125,7 +120,7 @@ export function useChangeRequestVoting({
         event_type: 'change_request_voting_started',
         entity_id: changeRequestId,
         entity_type: 'change_request',
-        metadata: { votingSessionId, changeRequestId, amendmentId: amendmentId! },
+        metadata: { votingSessionId, changeRequestId, amendmentId: amendmentId ?? '' },
         title: '',
         description: '',
         image_url: '',
@@ -149,7 +144,7 @@ export function useChangeRequestVoting({
         amendment_vote_id: null,
       });
     },
-    [votingSessionId, can, amendmentId, amendmentTitle, userId]
+    [votingSessionId, can, amendmentId, userId]
   );
 
   // Move to the next change request in queue
@@ -158,9 +153,7 @@ export function useChangeRequestVoting({
       throw new Error('Permission denied');
     }
 
-    const currentIndex = pendingChangeRequests.findIndex(
-      (cr) => cr.id === currentChangeRequest?.id
-    );
+    const currentIndex = pendingChangeRequests.findIndex(cr => cr.id === currentChangeRequest?.id);
 
     const nextChangeRequest = pendingChangeRequests[currentIndex + 1];
 
@@ -189,7 +182,9 @@ export function useChangeRequestVoting({
 
   // Cast a vote on the current change request
   const castVote = useCallback(
-    async (voteType: VoteValue) => {
+    async (_voteType: VoteValue) => {
+      void _voteType;
+
       if (!currentChangeRequest) {
         throw new Error('No active change request');
       }
@@ -243,7 +238,11 @@ export function useChangeRequestVoting({
         event_type: 'change_request_resolved',
         entity_id: currentChangeRequest.id,
         entity_type: 'change_request',
-        metadata: { changeRequestId: currentChangeRequest.id, status: newStatus, amendmentId: amendmentId ?? '' },
+        metadata: {
+          changeRequestId: currentChangeRequest.id,
+          status: newStatus,
+          amendmentId: amendmentId ?? '',
+        },
         title: '',
         description: '',
         image_url: '',
@@ -267,37 +266,19 @@ export function useChangeRequestVoting({
         amendment_vote_id: null,
       });
 
-      // Send notifications to change request author
-      const authorId = currentChangeRequest.user?.id;
-      if (authorId && amendmentId && amendmentTitle) {
-        if (passed) {
-          await notifyChangeRequestAccepted({
-            senderId: userId,
-            recipientUserId: authorId,
+      if (passed && amendmentId) {
+        // Trigger supporter confirmation for groups that support this amendment.
+        // Notification delivery for the confirmation itself is server-driven.
+        try {
+          await triggerSupporterConfirmation(mutation => zero.mutate(mutation).client, {
             amendmentId,
-            amendmentTitle,
+            changeRequestId: currentChangeRequest.id,
+            changeRequestTitle: currentChangeRequest.title,
+            userId,
           });
-
-          // Trigger supporter confirmation for groups that support this amendment
-          // They need to confirm their support now that changes have been made
-          try {
-            await triggerSupporterConfirmation((mutation) => zero.mutate(mutation).client, {
-              amendmentId,
-              changeRequestId: currentChangeRequest.id,
-              changeRequestTitle: currentChangeRequest.title,
-              userId,
-            });
-          } catch (error) {
-            console.error('Failed to trigger supporter confirmation:', error);
-            // Don't fail the main operation if confirmation fails
-          }
-        } else {
-          await notifyChangeRequestRejected({
-            senderId: userId,
-            recipientUserId: authorId,
-            amendmentId,
-            amendmentTitle,
-          });
+        } catch (error) {
+          console.error('Failed to trigger supporter confirmation:', error);
+          // Don't fail the main operation if confirmation fails
         }
       }
 
@@ -308,7 +289,7 @@ export function useChangeRequestVoting({
         result,
       };
     },
-    [currentChangeRequest, currentVotes, userId, amendmentId, amendmentTitle, can]
+    [currentChangeRequest, currentVotes, userId, amendmentId, can]
   );
 
   // Skip current change request (no vote, move to next)
@@ -340,11 +321,11 @@ export function useChangeRequestVoting({
     hasVoted,
 
     // Derived state
-    currentIndex: pendingChangeRequests.findIndex((cr) => cr.id === currentChangeRequest?.id),
+    currentIndex: pendingChangeRequests.findIndex(cr => cr.id === currentChangeRequest?.id),
     totalChangeRequests: pendingChangeRequests.length,
     progress:
       pendingChangeRequests.length > 0
-        ? (pendingChangeRequests.findIndex((cr) => cr.id === currentChangeRequest?.id) + 1) /
+        ? (pendingChangeRequests.findIndex(cr => cr.id === currentChangeRequest?.id) + 1) /
           pendingChangeRequests.length
         : 0,
 

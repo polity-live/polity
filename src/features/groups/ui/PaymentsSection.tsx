@@ -32,6 +32,14 @@ const PAYMENT_TYPE_LABELS: Record<string, string> = {
   others: 'Other',
 };
 
+function getPaymentTypeLabel(type: string | null | undefined): string {
+  if (!type) {
+    return 'Unknown type';
+  }
+
+  return PAYMENT_TYPE_LABELS[type] ?? type;
+}
+
 function getPaymentDirection(payment: GroupPaymentRow, groupId: string): 'income' | 'expense' {
   return payment.receiver_group_id === groupId ? 'income' : 'expense';
 }
@@ -106,6 +114,7 @@ function sortPayments(items: GroupPaymentRow[]): GroupPaymentRow[] {
 }
 
 interface PaymentsSectionProps {
+  canManagePayments?: boolean;
   groupId: string;
   storageKey: string;
   payments: GroupPaymentRow[];
@@ -115,6 +124,7 @@ interface PaymentsSectionProps {
 }
 
 export function PaymentsSection({
+  canManagePayments = true,
   groupId,
   storageKey,
   payments,
@@ -239,7 +249,7 @@ export function PaymentsSection({
       payment =>
         [
           payment.label,
-          PAYMENT_TYPE_LABELS[payment.type] ?? payment.type,
+          getPaymentTypeLabel(payment.type),
           getCounterpartyLabel(payment, groupId),
         ].filter((value): value is string => Boolean(value)),
     ],
@@ -258,36 +268,36 @@ export function PaymentsSection({
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Payments</CardTitle>
-          <div className="flex gap-2">
-            <Button asChild size="sm">
-              <Link
-                to="/create/payment"
-                search={{
-                  groupId,
-                  direction: 'income',
-                  returnGroupId: groupId,
-                  returnSection: 'payments',
-                }}
-              >
-                <Plus className="h-4 w-4" />
-                Add Income
-              </Link>
-            </Button>
-            <Button asChild size="sm">
-              <Link
-                to="/create/payment"
-                search={{
-                  groupId,
-                  direction: 'expense',
-                  returnGroupId: groupId,
-                  returnSection: 'payments',
-                }}
-              >
-                <Plus className="h-4 w-4" />
-                Add Expense
-              </Link>
-            </Button>
-          </div>
+          {canManagePayments ? (
+            <div className="flex gap-2">
+              <Button asChild size="sm">
+                <Link
+                  to="/create/payment"
+                  search={{
+                    groupId,
+                    direction: 'income',
+                    returnSection: 'payments',
+                  }}
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Income
+                </Link>
+              </Button>
+              <Button asChild size="sm">
+                <Link
+                  to="/create/payment"
+                  search={{
+                    groupId,
+                    direction: 'expense',
+                    returnSection: 'payments',
+                  }}
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Expense
+                </Link>
+              </Button>
+            </div>
+          ) : null}
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -409,14 +419,12 @@ export function PaymentsSection({
                     <div className="space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-medium">
-                          {payment.label || PAYMENT_TYPE_LABELS[payment.type] || payment.type}
+                          {payment.label || getPaymentTypeLabel(payment.type)}
                         </span>
                         <Badge variant={direction === 'income' ? 'default' : 'secondary'}>
                           {direction === 'income' ? 'Income' : 'Expense'}
                         </Badge>
-                        <Badge variant="outline">
-                          {PAYMENT_TYPE_LABELS[payment.type] ?? payment.type}
-                        </Badge>
+                        <Badge variant="outline">{getPaymentTypeLabel(payment.type)}</Badge>
                       </div>
                       <p className="text-muted-foreground text-sm">{counterpartyLabel}</p>
                       <p className="text-muted-foreground text-xs">
@@ -425,7 +433,7 @@ export function PaymentsSection({
                     </div>
 
                     <div className={`text-lg font-semibold ${amountClass}`}>
-                      {direction === 'income' ? '+' : '-'}${payment.amount.toFixed(2)}
+                      {direction === 'income' ? '+' : '-'}${(payment.amount ?? 0).toFixed(2)}
                     </div>
                   </div>
                 );

@@ -1,15 +1,15 @@
-import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch'
-import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems'
-import { useAllAmendments } from '@/zero/events/useEventState'
-import { Label } from '@/features/shared/ui/ui/label'
-import { useMemo } from 'react'
-import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers'
+import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
+import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
+import { useAllAmendments } from '@/zero/events/useEventState';
+import { Label } from '@/features/shared/ui/ui/label';
+import { useMemo } from 'react';
+import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 
 interface AmendmentSearchInputProps {
-  value: string
-  onChange: (amendmentId: string) => void
-  label?: string
-  placeholder?: string
+  value: string;
+  onChange: (amendmentId: string) => void;
+  label?: string;
+  placeholder?: string;
 }
 
 export function AmendmentSearchInput({
@@ -18,21 +18,24 @@ export function AmendmentSearchInput({
   label,
   placeholder = 'Search for an amendment...',
 }: AmendmentSearchInputProps) {
-  const { amendments } = useAllAmendments()
+  const { amendments } = useAllAmendments();
 
   const items = useMemo(
     () =>
       toTypeaheadItems(
         amendments ?? [],
         'amendment',
-        (a) => a.title || 'Amendment',
+        a => a.title || 'Amendment',
+        undefined,
+        undefined,
+        a => `/amendment/${a.id}`
       ),
-    [amendments],
-  )
+    [amendments]
+  );
 
   const handleChange = (item: TypeaheadItem | null) => {
-    onChange(item?.id ?? '')
-  }
+    onChange(item?.id ?? '');
+  };
 
   return (
     <div>
@@ -44,5 +47,5 @@ export function AmendmentSearchInput({
         placeholder={placeholder}
       />
     </div>
-  )
+  );
 }

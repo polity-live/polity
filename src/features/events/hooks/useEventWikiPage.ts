@@ -8,7 +8,6 @@ import { useElectionActions } from '@/zero/elections/useElectionActions';
 import { useSubscribeEvent } from './useSubscribeEvent';
 import { useEventParticipation } from './useEventParticipation';
 import { computeAgendaStats } from '@/features/agendas/logic/computeAgendaStats';
-import { notifyCandidateAdded } from '@/features/notifications/utils/notification-helpers.ts';
 import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
 
 export function useEventWikiPage(eventId: string) {
@@ -85,13 +84,6 @@ export function useEventWikiPage(eventId: string) {
         election_id: selectedElection.id as string,
         user_id: user.id,
         status: 'nominated',
-      });
-
-      await notifyCandidateAdded({
-        senderId: user.id,
-        eventId,
-        eventTitle: event?.title || 'Event',
-        candidateName,
       });
 
       toast.success('Sie wurden erfolgreich als Kandidat hinzugefügt!');

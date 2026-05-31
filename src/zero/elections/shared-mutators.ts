@@ -1,5 +1,11 @@
 import { defineMutator } from '@rocicorp/zero';
 import {
+  deriveElectionMaxVotes,
+  resolveElectionMode,
+  resolveElectionSeatCount,
+} from '@/features/elections/logic/electionMode';
+import { zql } from '../schema';
+import {
   createElectionSchema,
   updateElectionSchema,
   deleteElectionSchema,
@@ -19,10 +25,24 @@ export const electionSharedMutators = {
   // Create an election
   createElection: defineMutator(createElectionSchema, async ({ tx, args }) => {
     const now = Date.now();
-    const { position_id, ...restArgs } = args;
+    const { position_id, debug_correlation_id, ...restArgs } = args;
+    void debug_correlation_id;
+    const electionMode = resolveElectionMode({
+      electionMode: args.election_mode,
+      seatCount: args.seat_count,
+      maxVotes: args.max_votes,
+    });
+    const seatCount = resolveElectionSeatCount({
+      electionMode,
+      seatCount: args.seat_count,
+      maxVotes: args.max_votes,
+    });
     await tx.mutate.election.insert({
       ...restArgs,
       role_id: args.role_id ?? position_id ?? null,
+      election_mode: electionMode,
+      seat_count: seatCount,
+      max_votes: deriveElectionMaxVotes(electionMode, seatCount),
       created_at: now,
       updated_at: now,
     });
@@ -30,10 +50,35 @@ export const electionSharedMutators = {
 
   // Update an election
   updateElection: defineMutator(updateElectionSchema, async ({ tx, args }) => {
-    const { position_id, ...restArgs } = args;
+    const currentElection = await tx.run(zql.election.where('id', args.id).one());
+    const { position_id, debug_correlation_id, ...restArgs } = args;
+    void debug_correlation_id;
+    const electionMode =
+      args.election_mode !== undefined ||
+      args.seat_count !== undefined ||
+      args.max_votes !== undefined
+        ? resolveElectionMode({
+            electionMode: args.election_mode ?? currentElection?.election_mode,
+            seatCount: args.seat_count ?? currentElection?.seat_count,
+            maxVotes: args.max_votes ?? currentElection?.max_votes,
+          })
+        : undefined;
+    const seatCount =
+      electionMode !== undefined
+        ? resolveElectionSeatCount({
+            electionMode,
+            seatCount: args.seat_count ?? currentElection?.seat_count,
+            maxVotes: args.max_votes ?? currentElection?.max_votes,
+          })
+        : undefined;
     await tx.mutate.election.update({
       ...restArgs,
       role_id: args.role_id ?? position_id ?? undefined,
+      ...(electionMode !== undefined ? { election_mode: electionMode } : {}),
+      ...(seatCount !== undefined ? { seat_count: seatCount } : {}),
+      ...(electionMode !== undefined || seatCount !== undefined || args.max_votes !== undefined
+        ? { max_votes: deriveElectionMaxVotes(electionMode ?? 'single', seatCount) }
+        : {}),
       updated_at: Date.now(),
     });
   }),

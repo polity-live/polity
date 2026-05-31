@@ -35,6 +35,7 @@ export function RightsLabelEdge({
   sourcePosition,
   targetPosition,
   style,
+  markerStart,
   markerEnd,
   data,
 }: EdgeProps<EditableRightsLabelEdgeData>) {
@@ -241,6 +242,7 @@ export function RightsLabelEdge({
             id={`${id}-segment-${segmentIndex}`}
             path={edgePath}
             style={style}
+            markerStart={segmentIndex === 0 ? markerStart : undefined}
             markerEnd={segmentIndex === edgeSegments.length - 1 ? markerEnd : undefined}
           />
           <path

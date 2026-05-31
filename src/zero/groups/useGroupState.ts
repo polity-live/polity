@@ -25,9 +25,14 @@ interface GroupRoleLike {
   id?: string | null;
   name?: string | null;
   sort_order?: number | null;
+  action_rights?: readonly { resource?: string | null; action?: string | null }[] | null;
 }
 
 interface GroupMembershipRoleLinkLike<TRole extends GroupRoleLike = GroupRoleLike> {
+  role?: TRole | null;
+}
+
+interface GroupGuestRoleLinkLike<TRole extends GroupRoleLike = GroupRoleLike> {
   role?: TRole | null;
 }
 
@@ -69,6 +74,28 @@ function normalizeMemberships<
   TRole extends GroupRoleLike,
 >(memberships: readonly TMembership[] | null | undefined) {
   return (memberships || []).map(membership => normalizeMembershipWithRoles(membership));
+}
+
+function normalizeGuestAccesses<
+  TGuestAccess extends {
+    guest_roles?: readonly GroupGuestRoleLinkLike<TRole>[] | null;
+    role?: TRole | null;
+  },
+  TRole extends GroupRoleLike,
+>(guestAccesses: readonly TGuestAccess[] | null | undefined) {
+  return (guestAccesses || []).map(guestAccess => {
+    const roles: TRole[] = [];
+    for (const link of guestAccess.guest_roles || []) {
+      if (link.role) {
+        roles.push(link.role);
+      }
+    }
+    return {
+      ...guestAccess,
+      roles,
+      role: selectPrimaryGroupRole(roles) ?? guestAccess.role ?? null,
+    };
+  });
 }
 
 function mapRoleForDisplay<T extends GroupRoleDisplayLike>(role: T) {
@@ -222,19 +249,22 @@ export function useGroupWikiData(groupId: string) {
 
 // ── User Membership in a specific Group ─────────────────────────────
 
-export function useUserMembershipInGroup(userId: string | undefined, groupId: string) {
+export function useUserMembershipInGroup(userId: string | undefined, groupId?: string) {
   const [membershipsData, membershipsResult] = useQuery(
-    userId ? queries.groups.userMembershipInGroup({ userId, groupId }) : undefined
+    userId && groupId ? queries.groups.userMembershipInGroup({ userId, groupId }) : undefined
   );
 
   const [allMembershipsData, allMembershipsResult] = useQuery(
-    queries.groups.allMembershipsInGroupWithRole({ groupId })
+    groupId ? queries.groups.allMembershipsInGroupWithRole({ groupId }) : undefined
   );
 
   return {
     memberships: normalizeMemberships(membershipsData),
     allMemberships: normalizeMemberships(allMembershipsData),
-    isLoading: membershipsResult.type === 'unknown' || allMembershipsResult.type === 'unknown',
+    isLoading:
+      Boolean(groupId) &&
+      ((userId !== undefined && membershipsResult.type === 'unknown') ||
+        allMembershipsResult.type === 'unknown'),
   };
 }
 
@@ -296,6 +326,7 @@ export function useGroupById(groupId?: string) {
     return {
       ...currentGroup,
       memberships: normalizeMemberships(currentGroup.memberships),
+      guest_accesses: normalizeGuestAccesses(currentGroup.guest_accesses),
     };
   }, [groupsData]);
   const memberships = useMemo(() => group?.memberships || [], [group]);
@@ -359,6 +390,48 @@ export function useGroupMemberships(groupId?: string) {
     invitedMemberships,
     requestedMemberships,
     pendingMemberships,
+    isLoading,
+  };
+}
+
+export function useGroupGuestAccesses(groupId?: string) {
+  const [guestAccessesData, guestAccessesResult] = useQuery(
+    groupId ? queries.groups.guestAccessesWithRolesAndRights({ groupId }) : undefined
+  );
+
+  const isLoading = guestAccessesResult.type === 'unknown';
+  const guestAccesses = useMemo(
+    () => normalizeGuestAccesses(guestAccessesData),
+    [guestAccessesData]
+  );
+
+  const { activeGuestAccesses, invitedGuestAccesses, revokedGuestAccesses } = useMemo(() => {
+    const active: (typeof guestAccesses)[number][] = [];
+    const invited: (typeof guestAccesses)[number][] = [];
+    const revoked: (typeof guestAccesses)[number][] = [];
+
+    guestAccesses.forEach(guestAccess => {
+      if (guestAccess.status === 'active') {
+        active.push(guestAccess);
+      } else if (guestAccess.status === 'invited') {
+        invited.push(guestAccess);
+      } else if (guestAccess.status === 'revoked') {
+        revoked.push(guestAccess);
+      }
+    });
+
+    return {
+      activeGuestAccesses: active,
+      invitedGuestAccesses: invited,
+      revokedGuestAccesses: revoked,
+    };
+  }, [guestAccesses]);
+
+  return {
+    guestAccesses,
+    activeGuestAccesses,
+    invitedGuestAccesses,
+    revokedGuestAccesses,
     isLoading,
   };
 }
@@ -566,6 +639,37 @@ export function useUserGroupSubscriptions(userId?: string) {
 
   return {
     memberships: memberships ?? [],
+    isLoading: result.type === 'unknown',
+  };
+}
+
+// ── Groups where current user has active membership ────────────────
+
+export function useCurrentUserActiveGroupIds() {
+  const [membershipsData, result] = useQuery(queries.groups.currentUserMembershipsWithGroups({}));
+
+  const memberships = useMemo(() => normalizeMemberships(membershipsData), [membershipsData]);
+
+  const activeGroupIds = useMemo(() => {
+    if (memberships.length === 0) return new Set<string>();
+
+    const ids = new Set<string>();
+    for (const membership of memberships) {
+      const status = membership.status;
+      if (status !== 'active' && status !== 'admin' && status !== 'member') {
+        continue;
+      }
+
+      if (membership.group_id) {
+        ids.add(membership.group_id);
+      }
+    }
+
+    return ids;
+  }, [memberships]);
+
+  return {
+    activeGroupIds,
     isLoading: result.type === 'unknown',
   };
 }

@@ -98,7 +98,8 @@ export function useSearchFilters(data: SearchData | undefined, filters: SearchFi
 
         // Search in title, description, location, and creator name
         const matchesTitle = filterByQuery(event.title || '', query);
-        const matchesDescription = event.description && filterByQuery(event.description, query);
+        const matchesDescription =
+          typeof event.description === 'string' && filterByQuery(event.description, query);
         const matchesLocation = event.location_name && filterByQuery(event.location_name, query);
         const matchesCreator =
           filterByQuery(event.creator?.first_name, query) ||
@@ -143,9 +144,7 @@ export function useSearchFilters(data: SearchData | undefined, filters: SearchFi
           election.description && filterByQuery(election.description, query);
         const matchesGroup =
           election.role?.group?.name && filterByQuery(election.role.group.name, query);
-        const matchesRole =
-          (election.role?.title || election.role?.name) &&
-          filterByQuery(election.role?.title || election.role?.name || '', query);
+        const matchesRole = election.role?.name && filterByQuery(election.role.name, query);
 
         if (!query) return true;
         return matchesTitle || matchesDescription || matchesGroup || matchesRole;

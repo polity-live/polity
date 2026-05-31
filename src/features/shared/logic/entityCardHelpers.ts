@@ -3,7 +3,18 @@
  */
 
 import { ENTITY_COLORS, type EntityType } from '@/features/shared/utils/entity-colors';
-import { Users, Calendar, FileText, BookOpen, User, Vote, UserCheck } from 'lucide-react';
+import {
+  Award,
+  BookOpen,
+  Calendar,
+  CheckSquare,
+  FileText,
+  ListOrdered,
+  User,
+  UserCheck,
+  Users,
+  Vote,
+} from 'lucide-react';
 
 /**
  * Returns gradient classes for an entity type card background.
@@ -22,14 +33,20 @@ export function getEntityIcon(entityType: string) {
       return Users;
     case 'event':
       return Calendar;
+    case 'agenda_item':
+      return ListOrdered;
     case 'amendment':
       return FileText;
+    case 'vote':
+      return Vote;
+    case 'election':
+      return Award;
+    case 'todo':
+      return CheckSquare;
     case 'blog':
       return BookOpen;
     case 'user':
       return User;
-    case 'election':
-      return Vote;
     case 'role':
       return UserCheck;
     default:
@@ -57,8 +74,12 @@ export function formatEntityLabel(
         return [entity.first_name, entity.last_name].filter(Boolean).join(' ');
       }
       return entity.handle || entity.name || 'Unknown User';
+    case 'agenda_item':
+      return entity.title || entity.name || 'Agenda Point';
     case 'amendment':
       return entity.code || entity.title || entity.name || 'Amendment';
+    case 'todo':
+      return entity.title || entity.name || 'Task';
     default:
       return entity.name || entity.title || 'Unknown';
   }

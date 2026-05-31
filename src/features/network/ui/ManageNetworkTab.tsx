@@ -5,7 +5,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/features/shared/ui/ui/card';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import {
   Table,
   TableBody,
@@ -28,45 +27,51 @@ import {
 } from '@/features/shared/ui/ui/alert-dialog';
 import { EntitySearchBar, type FilterOption } from '@/features/shared/ui/ui/entity-search-bar';
 import { RightBadge } from './RightBadge';
-import { RIGHT_TYPES, RIGHT_GRADIENTS } from './RightFilters';
-import { GroupRelationshipConnector, GroupRelationshipNameTag } from './GroupRelationshipFields';
+import { isRightType, RIGHT_TYPES, RIGHT_GRADIENTS } from './RightFilters';
+import {
+  GroupRelationshipDirectionSentence,
+  GroupRelationshipConnector,
+  GroupRelationshipNameTag,
+  GroupRelationshipTypePreview,
+} from './GroupRelationshipFields';
 import { LinkGroupDialog } from './LinkGroupDialog';
 import { WorkflowEditor } from './WorkflowEditor';
-import { PermissionGuard } from '@/features/auth/PermissionGuard';
 import { Pencil, Trash2, Clock } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useHierarchyLinkConflicts } from '../hooks/useHierarchyLinkConflicts';
 import { HierarchyConflictDialog } from './HierarchyConflictDialog';
 import { NetworkLinkStatusCell } from './NetworkLinkStatusCell';
-import type { NormalizedGroupRelationship, NetworkGroupEntity } from '../types/network.types';
+import type {
+  GroupRelationshipFilter,
+  GroupedRelationshipRequest,
+  GroupedRelationshipSummary,
+  NetworkGroupEntity,
+  NormalizedGroupRelationship,
+} from '../types/network.types';
 import type { WorkflowWithStepsRow } from '@/zero/network/queries';
-
-interface GroupedRequest {
-  group: NetworkGroupEntity;
-  rels: NormalizedGroupRelationship[];
-  type: 'parent' | 'child';
-}
+import { getCurrentGroupRelationshipDisplay } from '../logic/groupRelationshipDisplay';
+import type { SiblingMembershipMode } from '../logic/groupRelationshipSentence';
 
 interface ManageNetworkTabProps {
+  showWorkflows?: boolean;
+  canManageRelationships: boolean;
   groupId: string;
   groupName: string;
+  currentGroupType?: NetworkGroupEntity['group_type'] | null;
+  currentGroupSiblingMembershipMode?: NetworkGroupEntity['sibling_membership_mode'] | null;
   // Search & filters
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
-  directionFilter: 'all' | 'parent' | 'child';
-  onDirectionFilterChange: (value: 'all' | 'parent' | 'child') => void;
+  directionFilter: GroupRelationshipFilter;
+  onDirectionFilterChange: (value: GroupRelationshipFilter) => void;
   manageRightFilter: Set<string>;
   onToggleRightFilter: (right: string) => void;
   // Requests
-  incomingRequests: GroupedRequest[];
-  outgoingRequests: GroupedRequest[];
+  incomingRequests: GroupedRelationshipRequest[];
+  outgoingRequests: GroupedRelationshipRequest[];
   // Active relationships
-  filteredRelationships: {
-    group: NetworkGroupEntity;
-    rights: string[];
-    type: 'parent' | 'child';
-  }[];
+  filteredRelationships: GroupedRelationshipSummary[];
   allRelationships: NormalizedGroupRelationship[];
   // Handlers
   onAcceptRequest: (rels: NormalizedGroupRelationship[]) => Promise<void>;
@@ -94,8 +99,12 @@ interface ManageNetworkTabProps {
 }
 
 export function ManageNetworkTab({
+  showWorkflows = true,
+  canManageRelationships,
   groupId,
   groupName,
+  currentGroupType,
+  currentGroupSiblingMembershipMode,
   searchQuery,
   onSearchQueryChange,
   directionFilter,
@@ -177,7 +186,6 @@ export function ManageNetworkTab({
   }, [activePartnerGroupId, resolvePartnerUsers]);
 
   const currentGroupTagName = groupName || '';
-  const currentGroupDisplayName = groupName || t('common.network.thisGroup');
   const incomingRequestCount = incomingRequests.reduce(
     (total, entry) => total + entry.rels.length,
     0
@@ -187,25 +195,57 @@ export function ManageNetworkTab({
     0
   );
 
+  const normalizeSiblingMembershipMode = (
+    mode: string | null | undefined
+  ): SiblingMembershipMode | null => {
+    switch (mode) {
+      case 'open':
+      case 'elected':
+      case 'parliament':
+        return mode;
+      default:
+        return null;
+    }
+  };
+
+  const getDisplayedSiblingMembershipMode = (
+    relationshipType: GroupedRelationshipRequest['type'] | GroupedRelationshipSummary['type'],
+    partnerGroup: NetworkGroupEntity
+  ): SiblingMembershipMode | null => {
+    const currentSiblingMembershipMode = normalizeSiblingMembershipMode(
+      currentGroupSiblingMembershipMode
+    );
+    const partnerSiblingMembershipMode = normalizeSiblingMembershipMode(
+      partnerGroup.sibling_membership_mode
+    );
+
+    if (relationshipType !== 'sibling') {
+      return null;
+    }
+
+    if (currentGroupType === 'sibling' && currentSiblingMembershipMode) {
+      return currentSiblingMembershipMode;
+    }
+
+    if (partnerGroup.group_type === 'sibling' && partnerSiblingMembershipMode) {
+      return partnerSiblingMembershipMode;
+    }
+
+    return currentSiblingMembershipMode ?? partnerSiblingMembershipMode ?? null;
+  };
+
   const renderRequestDescription = (
-    subjectName: string | null | undefined,
-    subjectGroupId: string,
-    prefixKey: 'wantsToBe' | 'isRequestedAs',
-    type: 'parent' | 'child'
+    partnerGroup: GroupedRelationshipRequest['group'],
+    type: GroupedRelationshipRequest['type']
   ) => (
     <div className="flex flex-wrap items-center gap-2 leading-tight">
-      <GroupRelationshipNameTag
-        name={subjectName ?? t('common.unspecified')}
-        kind="selected"
-        groupId={subjectGroupId}
-      />
-      <span>{t(`common.network.${prefixKey}`)}</span>
-      <GroupRelationshipConnector relationshipType={type} mode="role" />
-      <GroupRelationshipNameTag
-        name={currentGroupTagName}
-        kind="current"
-        caseStyle="embedded"
-        groupId={groupId}
+      <GroupRelationshipTypePreview
+        relationshipType={type}
+        currentGroupName={currentGroupTagName}
+        selectedGroupName={partnerGroup.name ?? t('common.unspecified')}
+        siblingMembershipMode={getDisplayedSiblingMembershipMode(type, partnerGroup)}
+        currentGroupId={groupId}
+        selectedGroupId={partnerGroup.id}
       />
       <span>{t('common.network.withRights')}</span>
     </div>
@@ -222,7 +262,7 @@ export function ManageNetworkTab({
   }));
 
   const directionOptions: {
-    value: 'all' | 'parent' | 'child';
+    value: GroupRelationshipFilter;
     label: string;
     activeClassName?: string;
   }[] = [
@@ -244,7 +284,51 @@ export function ManageNetworkTab({
       activeClassName:
         'border-0 bg-gradient-to-r from-sky-500 to-violet-500 text-white hover:opacity-90',
     },
+    {
+      value: 'sibling',
+      label: t('common.network.thisGroupAsSibling', 'Diese Gruppe als Geschwistergruppe'),
+      activeClassName:
+        'border-0 bg-gradient-to-r from-fuchsia-500 to-amber-500 text-white hover:opacity-90',
+    },
   ];
+
+  const renderRequestDeleteAction = ({
+    partnerGroupName,
+    onDelete,
+  }: {
+    partnerGroupName: string;
+    onDelete: () => void;
+  }) => (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+          <Trash2 className="h-4 w-4" />
+          <span className="sr-only">{t('common.actions.delete')}</span>
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            {t('common.network.deleteRequestTitle', 'Anfrage löschen?')}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            {t('common.network.deleteRequestDescription', {
+              groupName: partnerGroupName,
+            })}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>{t('common.actions.cancel')}</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={onDelete}
+            className="bg-destructive hover:bg-destructive/90 text-white"
+          >
+            {t('common.actions.delete')}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
 
   return (
     <div className="space-y-6">
@@ -256,13 +340,13 @@ export function ManageNetworkTab({
             {t('common.network.groupRelationshipsDescription')}
           </p>
         </div>
-        <PermissionGuard action="manage" resource="groupRelationships" context={{ groupId }}>
+        {canManageRelationships ? (
           <LinkGroupDialog
             currentGroupId={groupId}
             currentGroupName={groupName}
             allRelationships={allRelationships}
           />
-        </PermissionGuard>
+        ) : null}
       </div>
 
       <Card>
@@ -317,9 +401,7 @@ export function ManageNetworkTab({
               <Card key={req.group.id} className="border-primary/20 bg-primary/5">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">{req.group.name}</CardTitle>
-                  <CardDescription>
-                    {renderRequestDescription(req.group.name, req.group.id, 'wantsToBe', req.type)}
-                  </CardDescription>
+                  <CardDescription>{renderRequestDescription(req.group, req.type)}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Table>
@@ -329,7 +411,11 @@ export function ManageNetworkTab({
                         <TableHead>{t('common.labels.rights')}</TableHead>
                         <TableHead>{t('common.network.requested')}</TableHead>
                         <TableHead>{t('common.network.linkPossible')}</TableHead>
-                        <TableHead>{t('common.actions.actions')}</TableHead>
+                        {canManageRelationships ? (
+                          <TableHead className="text-right">
+                            {t('common.actions.actions')}
+                          </TableHead>
+                        ) : null}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -337,15 +423,27 @@ export function ManageNetworkTab({
                         const hasHierarchyCheck = isLinkCheckApplicable(rel);
                         const canLink = canActivateLink(rel);
                         const otherGroupName = req.group.name ?? t('common.unspecified');
+                        const display = getCurrentGroupRelationshipDisplay(rel, groupId);
+                        const right =
+                          rel.with_right && isRightType(rel.with_right) ? rel.with_right : null;
 
                         return (
                           <TableRow key={rel.id}>
                             <TableCell>
-                              <Badge variant={req.type === 'parent' ? 'default' : 'secondary'}>
-                                {req.type === 'parent'
-                                  ? t('common.network.parent')
-                                  : t('common.network.child')}
-                              </Badge>
+                              {display && right ? (
+                                <GroupRelationshipDirectionSentence
+                                  direction={display.rightDirection}
+                                  right={right}
+                                  currentGroupName={currentGroupTagName}
+                                  selectedGroupName={
+                                    display.partnerGroup.name ?? t('common.unspecified')
+                                  }
+                                  currentGroupId={groupId}
+                                  selectedGroupId={display.partnerGroup.id}
+                                />
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
                             </TableCell>
                             <TableCell>
                               <RightBadge right={rel.with_right ?? ''} />
@@ -357,18 +455,16 @@ export function ManageNetworkTab({
                               <NetworkLinkStatusCell
                                 canLink={canLink}
                                 hasHierarchyCheck={hasHierarchyCheck}
-                                onWarningClick={() =>
-                                  openManageDialog([rel], otherGroupName, req.group.id)
+                                onWarningClick={
+                                  canManageRelationships
+                                    ? () => openManageDialog([rel], otherGroupName, req.group.id)
+                                    : undefined
                                 }
                               />
                             </TableCell>
-                            <TableCell>
-                              <PermissionGuard
-                                action="manage"
-                                resource="groupRelationships"
-                                context={{ groupId }}
-                              >
-                                <div className="flex flex-wrap gap-2">
+                            {canManageRelationships ? (
+                              <TableCell className="text-right">
+                                <div className="flex items-center justify-end gap-1">
                                   {canLink ? (
                                     <Button
                                       size="sm"
@@ -388,16 +484,31 @@ export function ManageNetworkTab({
                                       {t('common.network.manage')}
                                     </Button>
                                   )}
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => onRejectRequest([rel])}
-                                  >
-                                    {t('common.network.reject')}
-                                  </Button>
+                                  {display ? (
+                                    <LinkGroupDialog
+                                      currentGroupId={groupId}
+                                      currentGroupName={groupName}
+                                      initialTargetGroupId={display.partnerGroup.id}
+                                      initialRelationshipType={display.relationshipType}
+                                      initialRights={rel.with_right ? [rel.with_right] : []}
+                                      trigger={
+                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                          <Pencil className="h-4 w-4" />
+                                          <span className="sr-only">
+                                            {t('common.network.editRelationship')}
+                                          </span>
+                                        </Button>
+                                      }
+                                      allRelationships={allRelationships}
+                                    />
+                                  ) : null}
+                                  {renderRequestDeleteAction({
+                                    partnerGroupName: otherGroupName,
+                                    onDelete: () => onRejectRequest([rel]),
+                                  })}
                                 </div>
-                              </PermissionGuard>
-                            </TableCell>
+                              </TableCell>
+                            ) : null}
                           </TableRow>
                         );
                       })}
@@ -421,14 +532,7 @@ export function ManageNetworkTab({
               <Card key={req.group.id}>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">{req.group.name}</CardTitle>
-                  <CardDescription>
-                    {renderRequestDescription(
-                      req.group.name,
-                      req.group.id,
-                      'isRequestedAs',
-                      req.type
-                    )}
-                  </CardDescription>
+                  <CardDescription>{renderRequestDescription(req.group, req.type)}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Table>
@@ -437,42 +541,75 @@ export function ManageNetworkTab({
                         <TableHead>{t('common.network.relationship')}</TableHead>
                         <TableHead>{t('common.labels.rights')}</TableHead>
                         <TableHead>{t('common.network.requested')}</TableHead>
-                        <TableHead>{t('common.actions.actions')}</TableHead>
+                        {canManageRelationships ? (
+                          <TableHead className="text-right">
+                            {t('common.actions.actions')}
+                          </TableHead>
+                        ) : null}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {req.rels.map(rel => (
-                        <TableRow key={rel.id}>
-                          <TableCell>
-                            <Badge variant={req.type === 'parent' ? 'default' : 'secondary'}>
-                              {req.type === 'parent'
-                                ? t('common.network.parent')
-                                : t('common.network.child')}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <RightBadge right={rel.with_right ?? ''} />
-                          </TableCell>
-                          <TableCell>
-                            {rel.created_at ? new Date(rel.created_at).toLocaleDateString() : '-'}
-                          </TableCell>
-                          <TableCell>
-                            <PermissionGuard
-                              action="manage"
-                              resource="groupRelationships"
-                              context={{ groupId }}
-                            >
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => onRejectRequest([rel])}
-                              >
-                                {t('common.network.cancelRequest')}
-                              </Button>
-                            </PermissionGuard>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {req.rels.map(rel => {
+                        const display = getCurrentGroupRelationshipDisplay(rel, groupId);
+                        const right =
+                          rel.with_right && isRightType(rel.with_right) ? rel.with_right : null;
+                        const otherGroupName = req.group.name ?? t('common.unspecified');
+
+                        return (
+                          <TableRow key={rel.id}>
+                            <TableCell>
+                              {display && right ? (
+                                <GroupRelationshipDirectionSentence
+                                  direction={display.rightDirection}
+                                  right={right}
+                                  currentGroupName={currentGroupTagName}
+                                  selectedGroupName={
+                                    display.partnerGroup.name ?? t('common.unspecified')
+                                  }
+                                  currentGroupId={groupId}
+                                  selectedGroupId={display.partnerGroup.id}
+                                />
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <RightBadge right={rel.with_right ?? ''} />
+                            </TableCell>
+                            <TableCell>
+                              {rel.created_at ? new Date(rel.created_at).toLocaleDateString() : '-'}
+                            </TableCell>
+                            {canManageRelationships ? (
+                              <TableCell className="text-right">
+                                <div className="flex items-center justify-end gap-1">
+                                  {display ? (
+                                    <LinkGroupDialog
+                                      currentGroupId={groupId}
+                                      currentGroupName={groupName}
+                                      initialTargetGroupId={display.partnerGroup.id}
+                                      initialRelationshipType={display.relationshipType}
+                                      initialRights={rel.with_right ? [rel.with_right] : []}
+                                      trigger={
+                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                          <Pencil className="h-4 w-4" />
+                                          <span className="sr-only">
+                                            {t('common.network.editRelationship')}
+                                          </span>
+                                        </Button>
+                                      }
+                                      allRelationships={allRelationships}
+                                    />
+                                  ) : null}
+                                  {renderRequestDeleteAction({
+                                    partnerGroupName: otherGroupName,
+                                    onDelete: () => onRejectRequest([rel]),
+                                  })}
+                                </div>
+                              </TableCell>
+                            ) : null}
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </CardContent>
@@ -494,21 +631,44 @@ export function ManageNetworkTab({
                 <TableRow>
                   <TableHead>{t('common.network.groupName')}</TableHead>
                   <TableHead>{t('common.network.relationship')}</TableHead>
-                  <TableHead>{currentGroupDisplayName}</TableHead>
+                  <TableHead>{t('common.network.partnerGroup')}</TableHead>
                   <TableHead>{t('common.labels.rights')}</TableHead>
-                  <TableHead className="text-right">{t('common.actions.actions')}</TableHead>
+                  {canManageRelationships ? (
+                    <TableHead className="text-right">{t('common.actions.actions')}</TableHead>
+                  ) : null}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredRelationships.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-muted-foreground h-24 text-center">
+                    <TableCell
+                      colSpan={canManageRelationships ? 5 : 4}
+                      className="text-muted-foreground h-24 text-center"
+                    >
                       {t('common.network.noRelationshipsFound')}
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredRelationships.map((rel, idx) => (
                     <TableRow key={`${rel.group.id}-${rel.type}-${idx}`}>
+                      <TableCell>
+                        <div className="max-w-[14rem]">
+                          <GroupRelationshipNameTag
+                            name={currentGroupTagName}
+                            kind="current"
+                            groupId={groupId}
+                          />
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <GroupRelationshipConnector
+                          relationshipType={rel.type}
+                          siblingMembershipMode={getDisplayedSiblingMembershipMode(
+                            rel.type,
+                            rel.group
+                          )}
+                        />
+                      </TableCell>
                       <TableCell>
                         <div className="max-w-[14rem]">
                           <GroupRelationshipNameTag
@@ -519,31 +679,14 @@ export function ManageNetworkTab({
                         </div>
                       </TableCell>
                       <TableCell>
-                        <GroupRelationshipConnector relationshipType={rel.type} />
-                      </TableCell>
-                      <TableCell>
-                        <div className="max-w-[14rem]">
-                          <GroupRelationshipNameTag
-                            name={currentGroupTagName}
-                            kind="current"
-                            caseStyle="embedded"
-                            groupId={groupId}
-                          />
-                        </div>
-                      </TableCell>
-                      <TableCell>
                         <div className="flex flex-wrap gap-1">
                           {Array.from(new Set(rel.rights)).map(r => (
                             <RightBadge key={r} right={r} />
                           ))}
                         </div>
                       </TableCell>
-                      <TableCell className="text-right">
-                        <PermissionGuard
-                          action="manage"
-                          resource="groupRelationships"
-                          context={{ groupId }}
-                        >
+                      {canManageRelationships ? (
+                        <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
                             <LinkGroupDialog
                               currentGroupId={groupId}
@@ -591,8 +734,8 @@ export function ManageNetworkTab({
                               </AlertDialogContent>
                             </AlertDialog>
                           </div>
-                        </PermissionGuard>
-                      </TableCell>
+                        </TableCell>
+                      ) : null}
                     </TableRow>
                   ))
                 )}
@@ -603,7 +746,7 @@ export function ManageNetworkTab({
       </Card>
 
       {/* Workflows Section */}
-      <PermissionGuard action="manage" resource="groupRelationships" context={{ groupId }}>
+      {showWorkflows && canManageRelationships ? (
         <WorkflowEditor
           workflows={workflows}
           isLoading={workflowsLoading}
@@ -624,9 +767,9 @@ export function ManageNetworkTab({
           onSave={onSaveWorkflow}
           onDelete={onDeleteWorkflow}
         />
-      </PermissionGuard>
+      ) : null}
 
-      {manageDialog ? (
+      {canManageRelationships && manageDialog ? (
         <HierarchyConflictDialog
           open
           onOpenChange={open => {

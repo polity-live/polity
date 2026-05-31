@@ -24,7 +24,10 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { useGroupWikiPage } from '@/features/groups/hooks/useGroupWikiPage';
 import { buildGroupWikiIncumbentSections } from '@/features/groups/logic/buildGroupWikiIncumbentSections';
-import { groupRelationshipsByGroup } from '@/features/groups/logic/groupWikiHelpers';
+import {
+  countAcceptedMemberships,
+  groupRelationshipsByGroup,
+} from '@/features/groups/logic/groupWikiHelpers';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
 import { formatLocation } from '@/features/shared/logic/locationHelpers';
 import { WikiIncumbentPanel } from '@/features/shared/ui/wiki/WikiIncumbentPanel';
@@ -51,7 +54,13 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
     hasRequested,
     isInvited,
     isHierarchical,
+    isSibling,
     membershipLoading,
+    canRequestJoin,
+    canAcceptInvitation,
+    requestJoinDisabledReason,
+    requestJoinConflictResponse,
+    acceptInvitationConflictResponse,
     requestJoin,
     leaveGroup,
     acceptInvitation,
@@ -77,6 +86,19 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
   const groupLocation = formatLocation(group);
   const parentGroups = groupRelationshipsByGroup(group.relationships_as_target ?? [], 'parent');
   const childGroups = groupRelationshipsByGroup(group.relationships_as_source ?? [], 'child');
+  const siblingGroups = group.sibling_groups ?? [];
+  const connectedGroup = group.connected_group;
+  const requestJoinActionDisabled = !isMember && !hasRequested && !isInvited && !canRequestJoin;
+  const acceptInvitationDisabled = isInvited && !canAcceptInvitation;
+  const parliamentSourceGroups = (group.sibling_sources ?? [])
+    .map(sourceLink => sourceLink.source_group)
+    .filter(
+      (
+        sourceGroup
+      ): sourceGroup is NonNullable<
+        NonNullable<typeof group.sibling_sources>[number]['source_group']
+      > => Boolean(sourceGroup)
+    );
   const incumbentSections = buildGroupWikiIncumbentSections(
     group.roles ?? [],
     group.memberships ?? []
@@ -94,9 +116,11 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
             </Badge>
           )}
           <Badge variant="outline" className="text-sm">
-            {isHierarchical
-              ? t('components.badges.hierarchicalGroup')
-              : t('components.badges.baseGroup')}
+            {isSibling
+              ? 'Geschwistergruppe'
+              : isHierarchical
+                ? t('components.badges.hierarchicalGroup')
+                : t('components.badges.baseGroup')}
           </Badge>
         </div>
         {groupLocation && <p className="text-muted-foreground">{groupLocation}</p>}
@@ -142,9 +166,21 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
           onLeave={leaveGroup}
           onAcceptInvitation={acceptInvitation}
           isLoading={membershipLoading}
-          disabled={isHierarchical && !isMember}
+          disabled={requestJoinActionDisabled || acceptInvitationDisabled}
           disabledReason={
-            isHierarchical ? t('features.groups.hierarchicalMembershipDisabled') : undefined
+            acceptInvitationDisabled
+              ? (acceptInvitationConflictResponse?.summary ??
+                acceptInvitationConflictResponse?.conflicts[0]?.summary)
+              : requestJoinActionDisabled
+                ? requestJoinDisabledReason
+                : undefined
+          }
+          conflictResponse={
+            acceptInvitationDisabled
+              ? acceptInvitationConflictResponse
+              : requestJoinActionDisabled
+                ? requestJoinConflictResponse
+                : null
           }
         />
         <ShareButton
@@ -224,6 +260,92 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
         />
       )}
 
+      {connectedGroup ? (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Verbundene Gruppe</CardTitle>
+            <CardDescription>
+              {group.sibling_membership_mode === 'elected'
+                ? 'Gewaehlte Geschwistergruppe'
+                : group.sibling_membership_mode === 'parliament'
+                  ? 'Parlamentsgruppe'
+                  : group.sibling_membership_mode === 'open'
+                    ? 'Offene Geschwistergruppe'
+                    : 'Geschwistergruppe'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <GroupTimelineCard
+              group={{
+                id: String(connectedGroup.id),
+                name: connectedGroup.name || t('common.unspecified'),
+                description: connectedGroup.description ?? undefined,
+                memberCount: connectedGroup.member_count || 0,
+                amendmentCount: connectedGroup.amendment_count || 0,
+                eventCount: connectedGroup.event_count || 0,
+              }}
+            />
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {parliamentSourceGroups.length > 0 ? (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Parlamentsquellen</CardTitle>
+            <CardDescription>
+              Diese Gruppen speisen die Mitglieder dieser Parlamentsgruppe.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+              {parliamentSourceGroups.map(sourceGroup => (
+                <GroupTimelineCard
+                  key={`source-${sourceGroup.id}`}
+                  group={{
+                    id: String(sourceGroup.id),
+                    name: sourceGroup.name || t('common.unspecified'),
+                    description: sourceGroup.description ?? undefined,
+                    memberCount: sourceGroup.member_count || 0,
+                    amendmentCount: sourceGroup.amendment_count || 0,
+                    eventCount: sourceGroup.event_count || 0,
+                  }}
+                />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {siblingGroups.length > 0 ? (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Network className="h-5 w-5" />
+              Geschwistergruppen
+            </CardTitle>
+            <CardDescription>Direkt verbundene Geschwistergruppen dieser Gruppe.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+              {siblingGroups.map(siblingGroup => (
+                <GroupTimelineCard
+                  key={`sibling-${siblingGroup.id}`}
+                  group={{
+                    id: String(siblingGroup.id),
+                    name: siblingGroup.name || t('common.unspecified'),
+                    description: siblingGroup.description ?? undefined,
+                    memberCount: siblingGroup.member_count || 0,
+                    amendmentCount: siblingGroup.amendment_count || 0,
+                    eventCount: siblingGroup.event_count || 0,
+                  }}
+                />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+
       {/* Parent & Child Groups */}
       {parentGroups.length > 0 && (
         <Card className="mb-6">
@@ -243,7 +365,9 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
                     id: String(relatedGroup.id),
                     name: relatedGroup.name || t('common.unspecified'),
                     description: relatedGroup.description ?? undefined,
-                    memberCount: relatedGroup.memberships?.length || relatedGroup.member_count || 0,
+                    memberCount:
+                      relatedGroup.member_count ??
+                      countAcceptedMemberships(relatedGroup.memberships),
                     amendmentCount: relatedGroup.amendments?.length || 0,
                     eventCount: relatedGroup.events?.length || 0,
                   }}
@@ -272,7 +396,9 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
                     id: String(relatedGroup.id),
                     name: relatedGroup.name || t('common.unspecified'),
                     description: relatedGroup.description ?? undefined,
-                    memberCount: relatedGroup.memberships?.length || relatedGroup.member_count || 0,
+                    memberCount:
+                      relatedGroup.member_count ??
+                      countAcceptedMemberships(relatedGroup.memberships),
                     amendmentCount: relatedGroup.amendments?.length || 0,
                     eventCount: relatedGroup.events?.length || 0,
                   }}

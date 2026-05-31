@@ -60,16 +60,25 @@ export function NetworkLinkStatusCell({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="text-destructive hover:text-destructive h-8 w-8"
-            aria-label={t('common.network.linkConflict')}
-            onClick={onWarningClick}
-          >
-            <AlertTriangle className="h-5 w-5" />
-          </Button>
+          {onWarningClick ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="text-destructive hover:text-destructive h-8 w-8"
+              aria-label={t('common.network.linkConflict')}
+              onClick={onWarningClick}
+            >
+              <AlertTriangle className="h-5 w-5" />
+            </Button>
+          ) : (
+            <span
+              className="text-destructive inline-flex"
+              aria-label={t('common.network.linkConflict')}
+            >
+              <AlertTriangle className="h-5 w-5" />
+            </span>
+          )}
         </TooltipTrigger>
         <TooltipContent>{t('common.network.linkConflict')}</TooltipContent>
       </Tooltip>

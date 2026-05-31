@@ -23,6 +23,9 @@ import type { GroupMembershipsByUserRow } from '@/zero/groups/queries';
 import type { EventParticipantsByUserRow } from '@/zero/events/queries';
 import type { AmendmentCollaboratorsByUserRow } from '@/zero/amendments/queries';
 import type { BloggersByUserRow } from '@/zero/blogs/queries';
+import { useGroupConflictPreflight } from '@/features/groups/hooks/useGroupConflictPreflight';
+import type { GroupConflictMembershipPreflight } from '@/features/groups/logic/groupConflictPreflight';
+import { GroupConflictDialog } from '@/features/groups/ui/GroupConflictPanel';
 
 type EntityKey = 'group' | 'event' | 'amendment' | 'blog';
 
@@ -31,7 +34,7 @@ interface DisplayEntity {
   id: string;
   name?: string | null;
   title?: string | null;
-  description?: string | null;
+  description?: unknown;
   image_url?: string | null;
 }
 
@@ -48,6 +51,49 @@ interface MembershipStatusTableProps {
   onLeave?: (id: string) => void;
   onWithdraw?: (id: string) => void;
   onNavigate?: (id: string) => void;
+  getAcceptPreflightInput?: (
+    item: FilterableRecord
+  ) => GroupConflictMembershipPreflight | null | undefined;
+}
+
+function InvitationActions({
+  item,
+  onAccept,
+  onDecline,
+  getAcceptPreflightInput,
+}: {
+  item: FilterableRecord;
+  onAccept?: (id: string) => void;
+  onDecline?: (id: string) => void;
+  getAcceptPreflightInput?: (
+    membership: FilterableRecord
+  ) => GroupConflictMembershipPreflight | null | undefined;
+}) {
+  const preflightInput = getAcceptPreflightInput?.(item) ?? null;
+  const { response, blocking } = useGroupConflictPreflight(preflightInput, {
+    enabled: Boolean(preflightInput),
+  });
+
+  return (
+    <div className="flex justify-end gap-2">
+      <Button variant="default" size="sm" disabled={blocking} onClick={() => onAccept?.(item.id)}>
+        <Check className="mr-1 h-4 w-4" />
+        Accept
+      </Button>
+      {blocking ? (
+        <GroupConflictDialog
+          response={response}
+          triggerLabel="Warum?"
+          triggerVariant="ghost"
+          title="Warum ist diese Annahme blockiert?"
+        />
+      ) : null}
+      <Button variant="outline" size="sm" onClick={() => onDecline?.(item.id)}>
+        <X className="mr-1 h-4 w-4" />
+        Decline
+      </Button>
+    </div>
+  );
 }
 
 export function MembershipStatusTable({
@@ -63,6 +109,7 @@ export function MembershipStatusTable({
   onLeave,
   onWithdraw,
   onNavigate,
+  getAcceptPreflightInput,
 }: MembershipStatusTableProps) {
   if (items.length === 0 && statusType === 'active') {
     return (
@@ -183,16 +230,12 @@ export function MembershipStatusTable({
                   <TableCell className="text-muted-foreground">{createdAt}</TableCell>
                   <TableCell className="text-right">
                     {statusType === 'invited' && (
-                      <div className="flex justify-end gap-2">
-                        <Button variant="default" size="sm" onClick={() => onAccept?.(item.id)}>
-                          <Check className="mr-1 h-4 w-4" />
-                          Accept
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => onDecline?.(item.id)}>
-                          <X className="mr-1 h-4 w-4" />
-                          Decline
-                        </Button>
-                      </div>
+                      <InvitationActions
+                        item={item}
+                        onAccept={onAccept}
+                        onDecline={onDecline}
+                        getAcceptPreflightInput={getAcceptPreflightInput}
+                      />
                     )}
                     {statusType === 'active' && (
                       <Button variant="ghost" size="sm" onClick={() => onLeave?.(item.id)}>

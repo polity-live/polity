@@ -6,7 +6,6 @@ import { useCreatePaymentForm } from '@/features/create/hooks/useCreatePaymentFo
 const createPaymentSearchSchema = z.object({
   groupId: z.string().optional(),
   direction: z.enum(['income', 'expense']).optional(),
-  returnGroupId: z.string().optional(),
   returnSection: z.literal('payments').optional(),
 });
 

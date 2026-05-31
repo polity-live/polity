@@ -5,11 +5,10 @@ import {
   Plus,
   Vote,
   Gavel,
+  Play,
   ChevronLeft,
   ChevronRight,
   CheckCircle2,
-  ArrowLeft,
-  ArrowRight,
   Edit,
   Trash2,
   Mic,
@@ -17,15 +16,13 @@ import {
   UserPlus,
   UserMinus,
   Loader2,
+  ListOrdered,
+  ArrowRightLeft,
 } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import {
-  ToolbarButton,
-  ToolbarGroup,
-} from '@/features/shared/ui/ui/toolbar';
+import { ToolbarButton } from '@/features/shared/ui/ui/toolbar';
 import { FixedAgendaToolbar } from './FixedAgendaToolbar';
-
-// ─── Types ───────────────────────────────────────────────────────────
+import { cn } from '@/features/shared/utils/utils';
 
 interface CurrentAgendaItem {
   id: string;
@@ -39,22 +36,25 @@ interface CurrentAgendaItem {
 interface AgendaActionBarProps {
   eventId: string;
   currentAgendaItem?: CurrentAgendaItem | null;
+  currentItemLabel?: string | null;
+  currentItemTitle?: string | null;
+  onOpenCurrentItem?: () => void;
 
-  // Permissions
   canManageAgenda: boolean;
   canVote: boolean;
   canBeCandidate: boolean;
 
-  // Event state
   isEventStarted: boolean;
 
-  // User state
   isUserInSpeakerList: boolean;
   isUserCandidate: boolean;
 
-  // Navigation (agenda progression)
   hasPreviousItem?: boolean;
   hasNextItem?: boolean;
+  hasStartableItem?: boolean;
+  canMoveToNextItem?: boolean;
+  isCurrentItemCompleted?: boolean;
+  onStartItem?: () => void;
   onPreviousItem?: () => void;
   onNextItem?: () => void;
   onCompleteItem?: () => void;
@@ -64,12 +64,10 @@ interface AgendaActionBarProps {
   onNextChangeRequest?: () => void;
   navigationLoading?: boolean;
 
-  // Loading
   speakerLoading?: boolean;
   candidateLoading?: boolean;
   voteLoading?: boolean;
 
-  // Handlers
   onStartVote?: () => void;
   onStartFinalVote?: () => void;
   onCloseFinalVote?: () => void;
@@ -92,14 +90,20 @@ interface AgendaActionBarProps {
 export function AgendaActionBar({
   eventId,
   currentAgendaItem,
+  currentItemLabel,
+  currentItemTitle,
+  onOpenCurrentItem,
   canManageAgenda,
   canVote,
   canBeCandidate,
-  isEventStarted,
   isUserInSpeakerList,
   isUserCandidate,
   hasPreviousItem,
   hasNextItem,
+  hasStartableItem,
+  canMoveToNextItem,
+  isCurrentItemCompleted,
+  onStartItem,
   onPreviousItem,
   onNextItem,
   onCompleteItem,
@@ -131,9 +135,17 @@ export function AgendaActionBar({
 }: AgendaActionBarProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const isCurrentItemActive =
+    currentAgendaItem?.status === 'in-progress' || currentAgendaItem?.status === 'active';
+  const canStartCurrentItem =
+    Boolean(currentAgendaItem) && !isCurrentItemActive && currentAgendaItem?.status !== 'completed';
+  const showStartButton = Boolean(onStartItem) && (canStartCurrentItem || !currentAgendaItem);
 
   const isElection = currentAgendaItem?.type === 'election' || !!currentAgendaItem?.election;
-  const isVote = currentAgendaItem?.type === 'amendment' || currentAgendaItem?.type === 'vote' || !!currentAgendaItem?.vote;
+  const isVote =
+    currentAgendaItem?.type === 'amendment' ||
+    currentAgendaItem?.type === 'vote' ||
+    !!currentAgendaItem?.vote;
   const isVotable = isElection || isVote;
 
   const votingPhase = currentAgendaItem?.voting_phase;
@@ -141,153 +153,131 @@ export function AgendaActionBar({
   const isIndicationPhase = votingPhase === 'indication';
   const isFinalVotePhase = votingPhase === 'final_vote';
   const isClosed = votingPhase === 'closed';
+  const completeDisabled =
+    !currentAgendaItem || Boolean(isCurrentItemCompleted) || Boolean(navigationLoading);
+  const startDisabled =
+    !canManageAgenda ||
+    !onStartItem ||
+    Boolean(navigationLoading) ||
+    (!canStartCurrentItem && !hasStartableItem);
+  const nextDisabled =
+    !hasNextItem || !canMoveToNextItem || Boolean(navigationLoading) || !currentAgendaItem;
+  const voteTooltip = isFinalVotePhase
+    ? castFinalVoteTooltip || t('features.events.agenda.actions.castFinalVote', 'Cast Final Vote')
+    : castIndicativeVoteTooltip ||
+      t('features.events.agenda.actions.castIndicativeVote', 'Cast Indication');
 
   return (
-    <FixedAgendaToolbar>
-      {/* Group 1: Create actions */}
-      <ToolbarGroup>
-        <ToolbarButton
-          tooltip={t('features.events.agenda.quickActions.addItem')}
-          onClick={() => navigate({ to: '/create/agenda-item', search: { eventId } })}
-        >
-          <Plus />
-        </ToolbarButton>
-        <ToolbarButton
-          tooltip={t('features.events.agenda.quickActions.createElection')}
-          onClick={() => navigate({ to: '/create/agenda-item', search: { eventId, type: 'election' } })}
-        >
-          <Vote />
-        </ToolbarButton>
-        <ToolbarButton
-          tooltip={t('features.events.agenda.quickActions.createVote')}
-          onClick={() => navigate({ to: '/create/agenda-item', search: { eventId, type: 'vote' } })}
-        >
-          <Gavel />
-        </ToolbarButton>
-      </ToolbarGroup>
-
-      {/* Group 2: Navigation (organizer only) */}
-      {canManageAgenda && (onPreviousItem || onCompleteItem || onNextItem) && (
-        <ToolbarGroup>
-          {onPreviousItem && (
-            <ToolbarButton
-              tooltip={t('features.events.navigation.previous', 'Previous')}
-              onClick={onPreviousItem}
-              disabled={!hasPreviousItem || navigationLoading}
-            >
-              {navigationLoading ? <Loader2 className="animate-spin" /> : <ChevronLeft />}
-            </ToolbarButton>
-          )}
-          {onCompleteItem && (
-            <ToolbarButton
-              tooltip={t('features.events.navigation.complete', 'Complete')}
-              onClick={onCompleteItem}
-              disabled={!currentAgendaItem || navigationLoading}
-            >
-              {navigationLoading ? <Loader2 className="animate-spin" /> : <CheckCircle2 />}
-            </ToolbarButton>
-          )}
-          {onNextItem && (
-            <ToolbarButton
-              tooltip={t('features.events.navigation.next', 'Next')}
-              onClick={onNextItem}
-              disabled={!hasNextItem || navigationLoading}
-            >
-              {navigationLoading ? <Loader2 className="animate-spin" /> : <ChevronRight />}
-            </ToolbarButton>
-          )}
-        </ToolbarGroup>
-      )}
-
-      {canManageAgenda && (onPreviousChangeRequest || onNextChangeRequest) && (
-        <ToolbarGroup>
-          {onPreviousChangeRequest && (
-            <ToolbarButton
-              tooltip={t('features.agendas.crTimeline.previous', 'Previous Change Request')}
-              onClick={onPreviousChangeRequest}
-              disabled={!hasPreviousChangeRequest}
-            >
-              <ChevronLeft />
-            </ToolbarButton>
-          )}
-          {onNextChangeRequest && (
-            <ToolbarButton
-              tooltip={t('features.agendas.crTimeline.next', 'Next Change Request')}
-              onClick={onNextChangeRequest}
-              disabled={!hasNextChangeRequest}
-            >
-              <ChevronRight />
-            </ToolbarButton>
-          )}
-        </ToolbarGroup>
-      )}
-
-      {/* Group 3: Item management */}
-      <ToolbarGroup>
-        {onBackToAgenda && (
+    <FixedAgendaToolbar className="gap-3">
+      <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
+        {onBackToAgenda ? (
           <ToolbarButton
             tooltip={t('features.events.agenda.backToAgenda')}
             onClick={onBackToAgenda}
           >
-            <ArrowLeft />
+            <ListOrdered />
           </ToolbarButton>
-        )}
-        {canManageAgenda && onMoveToEvent && (
-          <ToolbarButton
-            tooltip={t('features.events.agenda.moveToEvent')}
-            onClick={onMoveToEvent}
-          >
-            <ArrowRight />
+        ) : null}
+        {canManageAgenda && onMoveToEvent ? (
+          <ToolbarButton tooltip={t('features.events.agenda.moveToEvent')} onClick={onMoveToEvent}>
+            <ArrowRightLeft />
           </ToolbarButton>
-        )}
-        {canManageAgenda && currentAgendaItem && onEditItem && (
-          <ToolbarButton
-            tooltip={t('common.actions.edit')}
-            onClick={onEditItem}
-          >
+        ) : null}
+        {canManageAgenda && currentAgendaItem && onEditItem ? (
+          <ToolbarButton tooltip={t('common.actions.edit')} onClick={onEditItem}>
             <Edit />
           </ToolbarButton>
-        )}
-        {canManageAgenda && currentAgendaItem && onDeleteItem && (
-          <ToolbarButton
-            tooltip={t('common.actions.delete')}
-            onClick={onDeleteItem}
-          >
+        ) : null}
+        {canManageAgenda && currentAgendaItem && onDeleteItem ? (
+          <ToolbarButton tooltip={t('common.actions.delete')} onClick={onDeleteItem}>
             <Trash2 />
           </ToolbarButton>
-        )}
-      </ToolbarGroup>
-
-      {/* Group 4: Voting & participation */}
-      <ToolbarGroup>
-        {canManageAgenda && isVotable && !isClosed && isPendingVote && onStartVote && (
+        ) : null}
+        {canManageAgenda ? (
+          <>
+            <ToolbarButton
+              tooltip={t('features.events.agenda.quickActions.addItem')}
+              onClick={() => navigate({ to: '/create/agenda-item', search: { eventId } })}
+            >
+              <Plus />
+            </ToolbarButton>
+            <ToolbarButton
+              tooltip={t('features.events.agenda.quickActions.createElection')}
+              onClick={() =>
+                navigate({ to: '/create/agenda-item', search: { eventId, type: 'election' } })
+              }
+            >
+              <Vote />
+            </ToolbarButton>
+            <ToolbarButton
+              tooltip={t('features.events.agenda.quickActions.createVote')}
+              onClick={() =>
+                navigate({ to: '/create/agenda-item', search: { eventId, type: 'vote' } })
+              }
+            >
+              <Gavel />
+            </ToolbarButton>
+          </>
+        ) : null}
+        {canManageAgenda && onPreviousChangeRequest ? (
           <ToolbarButton
-            tooltip={startVoteTooltip || t('features.events.agenda.actions.startVote', 'Start Vote')}
+            tooltip={t('features.agendas.crTimeline.previous', 'Previous Change Request')}
+            onClick={onPreviousChangeRequest}
+            disabled={!hasPreviousChangeRequest}
+          >
+            <ChevronLeft />
+          </ToolbarButton>
+        ) : null}
+        {canManageAgenda && onNextChangeRequest ? (
+          <ToolbarButton
+            tooltip={t('features.agendas.crTimeline.next', 'Next Change Request')}
+            onClick={onNextChangeRequest}
+            disabled={!hasNextChangeRequest}
+          >
+            <ChevronRight />
+          </ToolbarButton>
+        ) : null}
+      </div>
+
+      <div className="flex items-center justify-center gap-1">
+        {canManageAgenda && isVotable && !isClosed && isPendingVote && onStartVote ? (
+          <ToolbarButton
+            tooltip={
+              startVoteTooltip || t('features.events.agenda.actions.startVote', 'Start Vote')
+            }
             onClick={onStartVote}
           >
-            <Vote />
+            <Play />
           </ToolbarButton>
-        )}
-        {/* Start / Close final vote (organizer) */}
-        {canManageAgenda && isVotable && !isClosed && isIndicationPhase && onStartFinalVote && (
+        ) : null}
+        {canManageAgenda &&
+        isVotable &&
+        !isClosed &&
+        isIndicationPhase &&
+        isCurrentItemActive &&
+        onStartFinalVote ? (
           <ToolbarButton
-            tooltip={startFinalVoteTooltip || t('features.events.agenda.actions.startFinalVote', 'Start Final Vote')}
+            tooltip={
+              startFinalVoteTooltip ||
+              t('features.events.agenda.actions.startFinalVote', 'Start Final Vote')
+            }
             onClick={onStartFinalVote}
           >
-            <Vote />
+            <Gavel />
           </ToolbarButton>
-        )}
-        {canManageAgenda && isVotable && !isClosed && isFinalVotePhase && onCloseFinalVote && (
+        ) : null}
+        {canManageAgenda && isVotable && !isClosed && isFinalVotePhase && onCloseFinalVote ? (
           <ToolbarButton
-            tooltip={closeVoteTooltip || t('features.events.agenda.actions.closeFinalVote', 'Close Final Vote')}
+            tooltip={
+              closeVoteTooltip ||
+              t('features.events.agenda.actions.closeFinalVote', 'Close Final Vote')
+            }
             onClick={onCloseFinalVote}
           >
-            <Vote />
+            <CheckCircle2 />
           </ToolbarButton>
-        )}
-
-        {/* Speaker list */}
-        {currentAgendaItem && !isUserInSpeakerList && onJoinSpeakerList && (
+        ) : null}
+        {currentAgendaItem && !isUserInSpeakerList && onJoinSpeakerList ? (
           <ToolbarButton
             tooltip={t('features.events.agenda.actions.joinSpeakerList', 'Join Speaker List')}
             onClick={onJoinSpeakerList}
@@ -295,8 +285,8 @@ export function AgendaActionBar({
           >
             {speakerLoading ? <Loader2 className="animate-spin" /> : <Mic />}
           </ToolbarButton>
-        )}
-        {currentAgendaItem && isUserInSpeakerList && onLeaveSpeakerList && (
+        ) : null}
+        {currentAgendaItem && isUserInSpeakerList && onLeaveSpeakerList ? (
           <ToolbarButton
             tooltip={t('features.events.agenda.actions.leaveSpeakerList', 'Leave Speaker List')}
             onClick={onLeaveSpeakerList}
@@ -304,10 +294,8 @@ export function AgendaActionBar({
           >
             {speakerLoading ? <Loader2 className="animate-spin" /> : <MicOff />}
           </ToolbarButton>
-        )}
-
-        {/* Candidate */}
-        {isElection && canBeCandidate && !isUserCandidate && onBecomeCandidate && (
+        ) : null}
+        {isElection && canBeCandidate && !isUserCandidate && onBecomeCandidate ? (
           <ToolbarButton
             tooltip={t('features.events.agenda.actions.becomeCandidate', 'Become Candidate')}
             onClick={onBecomeCandidate}
@@ -315,8 +303,8 @@ export function AgendaActionBar({
           >
             {candidateLoading ? <Loader2 className="animate-spin" /> : <UserPlus />}
           </ToolbarButton>
-        )}
-        {isElection && canBeCandidate && isUserCandidate && onWithdrawCandidacy && (
+        ) : null}
+        {isElection && canBeCandidate && isUserCandidate && onWithdrawCandidacy ? (
           <ToolbarButton
             tooltip={t('features.events.agenda.actions.withdrawCandidacy', 'Withdraw Candidacy')}
             onClick={onWithdrawCandidacy}
@@ -324,24 +312,79 @@ export function AgendaActionBar({
           >
             {candidateLoading ? <Loader2 className="animate-spin" /> : <UserMinus />}
           </ToolbarButton>
-        )}
-
-        {/* Vote / Cast button */}
-        {isVotable && canVote && !isClosed && !isPendingVote && onVoteClick && (
+        ) : null}
+        {isVotable && canVote && !isClosed && !isPendingVote && onVoteClick ? (
           <ToolbarButton
-            tooltip={
-              isFinalVotePhase
-                ? castFinalVoteTooltip || t('features.events.agenda.actions.castFinalVote', 'Cast Final Vote')
-                : castIndicativeVoteTooltip || t('features.events.agenda.actions.castIndicativeVote', 'Cast Indication')
-            }
+            tooltip={voteTooltip}
             onClick={onVoteClick}
             disabled={voteLoading}
-            className={isFinalVotePhase ? 'text-green-600' : undefined}
+            className={cn(
+              'bg-background border px-3 font-semibold shadow-sm transition-all',
+              'border-fuchsia-300 text-fuchsia-700 hover:border-fuchsia-400 hover:bg-fuchsia-50 hover:text-fuchsia-800',
+              'animate-pulse'
+            )}
           >
-            {voteLoading ? <Loader2 className="animate-spin" /> : <Vote className={isFinalVotePhase ? 'text-green-600' : undefined} />}
+            {voteLoading ? <Loader2 className="animate-spin" /> : <Vote />}
+            <span>Vote</span>
           </ToolbarButton>
-        )}
-      </ToolbarGroup>
+        ) : null}
+      </div>
+
+      <div className="flex min-w-0 flex-1 items-center justify-end gap-1 overflow-x-auto">
+        {onPreviousItem ? (
+          <ToolbarButton
+            tooltip={t('features.events.navigation.previous', 'Previous')}
+            onClick={onPreviousItem}
+            disabled={!hasPreviousItem || navigationLoading}
+          >
+            {navigationLoading ? <Loader2 className="animate-spin" /> : <ChevronLeft />}
+          </ToolbarButton>
+        ) : null}
+        {currentAgendaItem ? (
+          <ToolbarButton
+            tooltip={currentItemTitle || currentItemLabel || ''}
+            onClick={onOpenCurrentItem}
+            disabled={!onOpenCurrentItem}
+            className="max-w-[220px] justify-start truncate px-3"
+            title={currentItemTitle || currentItemLabel || undefined}
+          >
+            <span className="truncate">{currentItemLabel || 'TOP'}</span>
+          </ToolbarButton>
+        ) : null}
+        {showStartButton ? (
+          <ToolbarButton
+            tooltip={t('features.events.navigation.start', 'Start')}
+            onClick={onStartItem}
+            disabled={startDisabled}
+            className="border border-emerald-300 text-emerald-700"
+          >
+            {navigationLoading ? <Loader2 className="animate-spin" /> : <Play />}
+          </ToolbarButton>
+        ) : null}
+        {currentAgendaItem && isCurrentItemActive && onCompleteItem ? (
+          <ToolbarButton
+            tooltip={t('features.events.navigation.complete', 'Complete')}
+            onClick={onCompleteItem}
+            disabled={completeDisabled}
+            className={cn(
+              isCurrentItemCompleted
+                ? 'border border-emerald-500 bg-emerald-500/10 text-emerald-700'
+                : 'border border-emerald-300 text-emerald-700'
+            )}
+          >
+            {navigationLoading ? <Loader2 className="animate-spin" /> : <CheckCircle2 />}
+          </ToolbarButton>
+        ) : null}
+        {onNextItem ? (
+          <ToolbarButton
+            tooltip={t('features.events.navigation.next', 'Next')}
+            onClick={onNextItem}
+            disabled={nextDisabled}
+          >
+            {navigationLoading ? <Loader2 className="animate-spin" /> : <ChevronRight />}
+          </ToolbarButton>
+        ) : null}
+      </div>
     </FixedAgendaToolbar>
   );
 }

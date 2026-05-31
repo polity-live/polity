@@ -18,7 +18,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/ava
 import { useBlogState } from '@/zero/blogs/useBlogState';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
-import { useUserState } from '@/zero/users/useUserState';
 import { BookOpen, Calendar, Trash2, Edit } from 'lucide-react';
 import { StatsBar } from '@/features/shared/ui/ui/StatsBar';
 import { useSubscribeBlog } from '@/features/blogs/hooks/useSubscribeBlog';
@@ -37,7 +36,6 @@ import { PlateEditor } from '@/features/shared/ui/kit-platejs/plate-editor';
 import type { Value } from 'platejs';
 import { Link } from '@tanstack/react-router';
 import { mutators } from '@/zero/mutators';
-import { useNotificationDispatch } from '@/zero/notifications/useNotificationDispatch';
 import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
 import {
@@ -66,8 +64,6 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
   const { canEdit: blogCanEdit, canDelete: blogCanDelete, isBlogger } = useBlogPermissions(blogId);
   const blogActions = useBlogActions();
   const { addComment: addCommentAction, voteComment } = useDocumentActions();
-  const { currentUser } = useUserState();
-  const { dispatchEntity: dispatchNotification } = useNotificationDispatch();
 
   // Subscribe hook
   const {
@@ -76,9 +72,6 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
     toggleSubscribe,
     isLoading: subscribeLoading,
   } = useSubscribeBlog(blogId);
-
-  // Query current user's name for notifications
-  const currentUserName = currentUser?.first_name || 'Someone';
 
   // Fetch blog data with relations
   const {
@@ -180,21 +173,6 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
           upvotes: voteValue === 1 ? (blog.upvotes || 0) + 1 : blog.upvotes,
           downvotes: voteValue === -1 ? (blog.downvotes || 0) + 1 : blog.downvotes,
         });
-
-        const blogAuthor =
-          blog.bloggers?.find(b => b.status === 'owner')?.user || blog.bloggers?.[0]?.user;
-        if (blogAuthor?.id && blogAuthor.id !== user.id) {
-          await dispatchNotification({
-            type: 'blog_vote_cast',
-            title: voteValue === 1 ? 'Blog Upvoted' : 'Blog Downvoted',
-            message: `${currentUserName} has ${voteValue === 1 ? 'upvote' : 'downvote'}d ${blog.title || 'Blog'}`,
-            senderId: user.id,
-            recipientEntityType: 'blog',
-            recipientEntityId: blogId,
-            relatedEntityType: 'blog',
-            relatedEntityId: blogId,
-          });
-        }
       }
     } catch (error) {
       console.error('Error voting:', error);
@@ -235,18 +213,6 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
         downvotes: 0,
         user_id: user.id,
       });
-      if (blog) {
-        await dispatchNotification({
-          type: 'blog_comment_added',
-          title: 'New Comment',
-          message: `${currentUserName} commented on ${blog.title || 'Blog'}`,
-          senderId: user.id,
-          recipientEntityType: 'blog',
-          recipientEntityId: blogId,
-          relatedEntityType: 'blog',
-          relatedEntityId: blogId,
-        });
-      }
       toast.success('Comment posted successfully');
     } catch (error) {
       console.error('Error posting comment:', error);
@@ -270,19 +236,6 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
 
   const handleDeleteBlog = async () => {
     try {
-      // Send deletion notifications before removing the blog entity
-      if (user?.id && blog) {
-        await dispatchNotification({
-          type: 'blog_deleted',
-          title: 'Blog Deleted',
-          message: `${blog.title || 'Blog'} has been deleted`,
-          senderId: user.id,
-          recipientEntityType: 'blog',
-          recipientEntityId: blogId,
-          relatedEntityType: 'blog',
-          relatedEntityId: blogId,
-        });
-      }
       await blogActions.deleteBlog(blogId);
       toast.success(t('features.blogs.detail.blogDeleted'));
       const groupId = blog?.group_id;

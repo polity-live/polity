@@ -32,6 +32,10 @@ export function GroupMembershipsTab({
         onAccept={onAcceptInvitation}
         onDecline={onDeclineInvitation}
         onNavigate={onNavigate}
+        getAcceptPreflightInput={membership => ({
+          kind: 'membership_activation',
+          membership_id: membership.id,
+        })}
       />
 
       <MembershipStatusTable

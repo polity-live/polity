@@ -35,6 +35,8 @@ interface AddRoleDialogProps {
   description?: string;
   submitLabel?: string;
   trigger?: React.ReactNode | null;
+  scope?: 'group' | 'event';
+  eventType?: string | null;
 }
 
 export function AddRoleDialog({
@@ -47,7 +49,22 @@ export function AddRoleDialog({
   description = 'Create a new role with custom permissions, visibility, and term settings for this group.',
   submitLabel = 'Create Role',
   trigger,
+  scope = 'group',
+  eventType = null,
 }: AddRoleDialogProps) {
+  const isEventScope = scope === 'event';
+  const allowGuestRequestDefault =
+    isEventScope && (eventType === 'general_assembly' || eventType === 'delegate_assembly');
+  const requestRoleDisabled = allowGuestRequestDefault
+    ? form.assignee_kind !== 'guest'
+    : form.assignee_kind === 'guest';
+  const inviteRoleDisabled = form.assignee_kind === 'guest';
+  const assignmentSectionDescription = isEventScope
+    ? 'Decide whether the role is filled directly or by election and who can see it.'
+    : 'Decide whether the role is filled directly or by election, who can see it, and how term renewals should work.';
+  const guestRoleHint = isEventScope
+    ? 'Guest roles are useful for visitors and observers. In assemblies, only guest roles can be used as request roles.'
+    : 'Guest roles can be used in the Guests tab, but they are excluded from official membership invitations and member counts.';
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       {trigger === undefined ? (
@@ -116,12 +133,60 @@ export function AddRoleDialog({
             <div className="bg-muted/20 rounded-2xl border border-emerald-500/15 p-4">
               <div className="mb-4 space-y-1">
                 <h3 className="text-sm font-semibold">Assignment and timing</h3>
-                <p className="text-muted-foreground text-sm">
-                  Decide whether the role is filled directly or by election, who can see it, and how
-                  term renewals should work.
-                </p>
+                <p className="text-muted-foreground text-sm">{assignmentSectionDescription}</p>
               </div>
               <div className="space-y-4">
+                <div className="space-y-3">
+                  <Label>Access type</Label>
+                  <RadioGroup
+                    value={form.assignee_kind}
+                    onValueChange={value =>
+                      onFormChange({
+                        assignee_kind: value as RoleEditorFormState['assignee_kind'],
+                      })
+                    }
+                  >
+                    <div className="grid gap-2 md:grid-cols-2">
+                      {[
+                        {
+                          value: 'member',
+                          label: 'Official members',
+                          description:
+                            'Use this role for official members and inherited membership structures.',
+                        },
+                        {
+                          value: 'guest',
+                          label: 'Guests',
+                          description:
+                            'Use this role for invited guests who need permissions without becoming members.',
+                        },
+                      ].map(option => (
+                        <Label
+                          key={option.value}
+                          htmlFor={`role-assignee-kind-${option.value}`}
+                          className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
+                            form.assignee_kind === option.value
+                              ? 'border-primary bg-primary/5'
+                              : 'hover:bg-muted/50'
+                          }`}
+                        >
+                          <RadioGroupItem
+                            value={option.value}
+                            id={`role-assignee-kind-${option.value}`}
+                            className="mt-0.5"
+                          />
+                          <div>
+                            <div className="text-sm font-medium">{option.label}</div>
+                            <div className="text-muted-foreground text-xs">
+                              {option.description}
+                            </div>
+                          </div>
+                        </Label>
+                      ))}
+                    </div>
+                  </RadioGroup>
+                </div>
+
                 <div className="space-y-3">
                   <Label>Assignment</Label>
                   <RadioGroup
@@ -177,41 +242,48 @@ export function AddRoleDialog({
                   showTooltip
                 />
 
-                <RecurringPatternInput
-                  value={form.term_pattern}
-                  onChange={pattern =>
-                    onFormChange({
-                      term_pattern: pattern as RoleEditorFormState['term_pattern'],
-                      term_interval: pattern === 'none' ? 1 : form.term_interval,
-                    })
-                  }
-                  interval={form.term_interval}
-                  onIntervalChange={interval => onFormChange({ term_interval: interval })}
-                  allowedPatterns={['none', 'yearly', 'four-yearly']}
-                />
+                {isEventScope ? null : (
+                  <>
+                    <RecurringPatternInput
+                      value={form.term_pattern}
+                      onChange={pattern =>
+                        onFormChange({
+                          term_pattern: pattern as RoleEditorFormState['term_pattern'],
+                          term_interval: pattern === 'none' ? 1 : form.term_interval,
+                        })
+                      }
+                      interval={form.term_interval}
+                      onIntervalChange={interval => onFormChange({ term_interval: interval })}
+                      allowedPatterns={['none', 'yearly', 'four-yearly']}
+                    />
 
-                <div className="grid gap-4 md:grid-cols-2">
-                  <ValidatedInputField
-                    id="role-term-start"
-                    label="Term starts"
-                    type="date"
-                    value={form.term_start_date}
-                    onChange={value => onFormChange({ term_start_date: value })}
-                    hint="Anchor recurring terms to the first expected start date."
-                    valid={Boolean(form.term_start_date)}
-                    showHint="always"
-                  />
-                  <ValidatedInputField
-                    id="role-next-revote"
-                    label="Next revote"
-                    type="date"
-                    value={form.scheduled_revote_date}
-                    onChange={value => onFormChange({ scheduled_revote_date: value })}
-                    hint="Optional. Set this if you already know the next revote milestone."
-                    valid={Boolean(form.scheduled_revote_date)}
-                    showHint="always"
-                  />
-                </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <ValidatedInputField
+                        id="role-term-start"
+                        label="Term starts"
+                        type="date"
+                        value={form.term_start_date}
+                        onChange={value => onFormChange({ term_start_date: value })}
+                        hint="Anchor recurring terms to the first expected start date."
+                        valid={Boolean(form.term_start_date)}
+                        showHint="always"
+                      />
+                      <ValidatedInputField
+                        id="role-next-revote"
+                        label="Next revote"
+                        type="date"
+                        value={form.scheduled_revote_date}
+                        onChange={value => onFormChange({ scheduled_revote_date: value })}
+                        hint="Optional. Set this if you already know the next revote milestone."
+                        valid={Boolean(form.scheduled_revote_date)}
+                        showHint="always"
+                      />
+                    </div>
+                  </>
+                )}
+                {form.assignee_kind === 'guest' ? (
+                  <p className="text-muted-foreground text-xs">{guestRoleHint}</p>
+                ) : null}
               </div>
             </div>
             <div className="bg-muted/20 rounded-2xl border border-emerald-500/15 p-4">
@@ -234,7 +306,8 @@ export function AddRoleDialog({
                     </p>
                   </div>
                   <Switch
-                    checked={form.default_request_role}
+                    checked={requestRoleDisabled ? false : form.default_request_role}
+                    disabled={requestRoleDisabled}
                     onCheckedChange={checked =>
                       onFormChange({ default_request_role: checked === true })
                     }
@@ -251,7 +324,8 @@ export function AddRoleDialog({
                     </p>
                   </div>
                   <Switch
-                    checked={form.default_invite_role}
+                    checked={inviteRoleDisabled ? false : form.default_invite_role}
+                    disabled={inviteRoleDisabled}
                     onCheckedChange={checked =>
                       onFormChange({ default_invite_role: checked === true })
                     }

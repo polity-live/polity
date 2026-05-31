@@ -1,5 +1,9 @@
 export const eventPageTranslations = {
   settings: 'Veranstaltung bearbeiten',
+  settingsTabs: {
+    basicInfo: 'Grundlegende Informationen',
+    timeSeries: 'Zeit & Serie',
+  },
   overview: {
     title: 'Übersicht',
   },

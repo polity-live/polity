@@ -1,5 +1,9 @@
 export const eventPageTranslations = {
   settings: 'Edit Event',
+  settingsTabs: {
+    basicInfo: 'Basic Information',
+    timeSeries: 'Time & Series',
+  },
   overview: {
     title: 'Overview',
   },

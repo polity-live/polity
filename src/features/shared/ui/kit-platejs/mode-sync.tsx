@@ -7,13 +7,14 @@ import type { EditorMode } from '@/features/editor/types';
 
 interface ModeSyncProps {
   currentMode?: EditorMode;
+  readOnly?: boolean;
 }
 
 /**
  * Component that syncs the external mode with PlateJS internal state.
  * Must be rendered inside <Plate> component.
  */
-export function ModeSync({ currentMode }: ModeSyncProps) {
+export function ModeSync({ currentMode, readOnly = false }: ModeSyncProps) {
   const [, setReadOnly] = usePlateState('readOnly');
   const { setOption } = useEditorPlugin(SuggestionPlugin);
 
@@ -21,13 +22,18 @@ export function ModeSync({ currentMode }: ModeSyncProps) {
     if (!currentMode) return;
 
     // Set readonly based on mode
-    const shouldBeReadOnly = currentMode === 'view' || currentMode === 'vote_internal' || currentMode === 'vote_event';
+    const shouldBeReadOnly =
+      readOnly ||
+      currentMode === 'view' ||
+      currentMode === 'vote_internal' ||
+      currentMode === 'vote_event';
     setReadOnly(shouldBeReadOnly);
 
     // Set suggesting based on mode
-    const shouldBeSuggesting = currentMode === 'suggest_internal' || currentMode === 'suggest_event';
+    const shouldBeSuggesting =
+      currentMode === 'suggest_internal' || currentMode === 'suggest_event';
     setOption('isSuggesting', shouldBeSuggesting);
-  }, [currentMode, setReadOnly, setOption]);
+  }, [currentMode, readOnly, setReadOnly, setOption]);
 
   return null; // This component doesn't render anything
 }

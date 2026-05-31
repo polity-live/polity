@@ -12,6 +12,7 @@ import type { TodoViewMode } from '../types/group.types';
 import type { Todo } from '@/features/todos/types/todo.types';
 
 interface TodosSectionProps {
+  canManageTodos?: boolean;
   groupId: string;
   storageKey: string;
   todos: Todo[];
@@ -21,6 +22,7 @@ interface TodosSectionProps {
 }
 
 export function TodosSection({
+  canManageTodos = true,
   groupId,
   storageKey,
   todos,
@@ -83,19 +85,20 @@ export function TodosSection({
                   <List className="h-4 w-4" />
                 </Button>
               </div>
-              <Button asChild size="sm">
-                <Link
-                  to="/create/todo"
-                  search={{
-                    groupId,
-                    returnGroupId: groupId,
-                    returnSection: 'todos',
-                  }}
-                >
-                  <Plus className="h-4 w-4" />
-                  Add Task
-                </Link>
-              </Button>
+              {canManageTodos ? (
+                <Button asChild size="sm">
+                  <Link
+                    to="/create/todo"
+                    search={{
+                      groupId,
+                      returnSection: 'todos',
+                    }}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Task
+                  </Link>
+                </Button>
+              ) : null}
             </div>
           </div>
         </CardHeader>
@@ -123,9 +126,10 @@ export function TodosSection({
                 : 'No tasks yet. Add the first task to get started.'}
             </p>
           ) : viewMode === 'kanban' ? (
-            <KanbanBoard todos={filteredTodos} />
+            <KanbanBoard canManageTodos={canManageTodos} todos={filteredTodos} />
           ) : (
             <TodoList
+              canManageTodos={canManageTodos}
               todos={filteredTodos}
               onToggleComplete={onToggleComplete}
               onTodoClick={handleTodoClick}
@@ -136,6 +140,7 @@ export function TodosSection({
 
       {selectedTodo ? (
         <TodoDetailDialog
+          canManageTodos={canManageTodos}
           todo={selectedTodo}
           open={isDetailDialogOpen}
           onOpenChange={setIsDetailDialogOpen}

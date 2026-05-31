@@ -46,11 +46,17 @@ export function useMembershipSearch<TMembership extends ParticipationLike>(
       const userHandle = membership.user?.handle?.toLowerCase() || '';
       const role = getMembershipRoleSummary(membership).toLowerCase();
       const status = membership.status?.toLowerCase() || '';
+      const partGroup = membership.partGroup?.name?.toLowerCase() || '';
+      const baseGroup = membership.baseGroup?.name?.toLowerCase() || '';
+      const provenanceBucketLabel = membership.provenanceBucketLabel?.toLowerCase() || '';
       return (
         userName.includes(query) ||
         userHandle.includes(query) ||
         role.includes(query) ||
-        status.includes(query)
+        status.includes(query) ||
+        partGroup.includes(query) ||
+        baseGroup.includes(query) ||
+        provenanceBucketLabel.includes(query)
       );
     });
   }, [memberships, searchQuery]);

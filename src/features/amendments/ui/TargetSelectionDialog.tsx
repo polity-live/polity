@@ -19,26 +19,31 @@ import { CalendarIcon, User } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface NetworkDataProp {
-  groups: ReadonlyArray<{ id: string; name?: string | null; description?: string | null; memberCount?: number }>;
-  groupRelationships: ReadonlyArray<{
+  groups: readonly {
+    id: string;
+    name?: string | null;
+    description?: string | null;
+    memberCount?: number;
+  }[];
+  groupRelationships: readonly {
     with_right?: string | null;
     group?: { id: string } | null;
     related_group?: { id: string } | null;
-  }>;
-  groupMemberships: ReadonlyArray<{
+  }[];
+  groupMemberships: readonly {
     status?: string | null;
     user?: { id: string } | null;
     group?: { id: string } | null;
-  }>;
+  }[];
 }
 
 interface EventsDataProp {
-  events: ReadonlyArray<{
+  events: readonly {
     id: string;
     title?: string | null;
     description?: string | null;
     start_date?: number | null;
-  }>;
+  }[];
 }
 
 interface TargetSelectionDialogProps {
@@ -47,7 +52,7 @@ interface TargetSelectionDialogProps {
   networkData: NetworkDataProp;
   targetGroupEventsData: EventsDataProp;
   currentUserId: string;
-  allUsers: Array<{ id: string; name: string; email: string | null; avatar?: string | null }>;
+  allUsers: { id: string; name: string; email: string | null; avatar?: string | null }[];
   onConfirm: (selection: {
     groupId: string;
     groupData: NetworkDataProp['groups'][number];
@@ -92,7 +97,8 @@ export function TargetSelectionDialog({
   } | null>(null);
 
   const dialogTitle = title || t('features.amendments.targetSelection.defaultTitle');
-  const dialogDescription = description || t('features.amendments.targetSelection.defaultDescription');
+  const dialogDescription =
+    description || t('features.amendments.targetSelection.defaultDescription');
   const confirmText = confirmButtonText || t('features.amendments.targetSelection.defaultConfirm');
 
   const handleCancel = () => {
@@ -125,21 +131,21 @@ export function TargetSelectionDialog({
   const targetUserId = targetCollaboratorUserId || currentUserId;
 
   const userMemberships = networkData.groupMemberships.filter(
-    (m) => (m.status === 'active' || m.status === 'admin') && m.user?.id === targetUserId
+    m => (m.status === 'active' || m.status === 'admin') && m.user?.id === targetUserId
   );
 
-  const userGroupIds = userMemberships.map((m) => m.group?.id).filter((id): id is string => !!id);
+  const userGroupIds = userMemberships.map(m => m.group?.id).filter((id): id is string => !!id);
   const allGroups = networkData.groups;
   const relationships = networkData.groupRelationships;
 
   // Filter for amendmentRight relationships
-  const amendmentRelationships = relationships.filter((r) => r.with_right === 'amendmentRight');
+  const amendmentRelationships = relationships.filter(r => r.with_right === 'amendmentRight');
 
   // Build set of connected groups (direct and indirect)
   const connectedGroupIds = new Set<string>(userGroupIds);
 
   // Add directly connected groups
-  amendmentRelationships.forEach((rel) => {
+  amendmentRelationships.forEach(rel => {
     if (userGroupIds.includes(rel.group?.id ?? '')) {
       if (rel.related_group?.id) connectedGroupIds.add(rel.related_group.id);
     }
@@ -150,7 +156,7 @@ export function TargetSelectionDialog({
 
   // Add indirectly connected groups (2 hops)
   const firstHopGroups = Array.from(connectedGroupIds);
-  amendmentRelationships.forEach((rel) => {
+  amendmentRelationships.forEach(rel => {
     if (firstHopGroups.includes(rel.group?.id ?? '')) {
       if (rel.related_group?.id) connectedGroupIds.add(rel.related_group.id);
     }
@@ -159,7 +165,7 @@ export function TargetSelectionDialog({
     }
   });
 
-  const connectedGroups = allGroups.filter((g) => connectedGroupIds.has(g.id));
+  const connectedGroups = allGroups.filter(g => connectedGroupIds.has(g.id));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -172,19 +178,24 @@ export function TargetSelectionDialog({
         {!hideCollaboratorSelection && (
           <div className="border-b px-6 py-3">
             <div className="flex items-center gap-3">
-              <User className="h-4 w-4 text-muted-foreground" />
+              <User className="text-muted-foreground h-4 w-4" />
               <div className="flex-1">
                 <TypeaheadSearch
                   items={toTypeaheadItems(
                     allUsers,
                     'user',
-                    (u) => u.name || 'User',
-                    (u) => u.email,
-                    (u) => u.avatar,
+                    u => u.name || 'User',
+                    u => u.email,
+                    u => u.avatar,
+                    u => `/user/${u.id}`
                   )}
                   value={targetCollaboratorUserId}
-                  onChange={(item: TypeaheadItem | null) => setTargetCollaboratorUserId(item?.id ?? '')}
-                  placeholder={t('features.amendments.targetSelection.selectCollaboratorPlaceholder')}
+                  onChange={(item: TypeaheadItem | null) =>
+                    setTargetCollaboratorUserId(item?.id ?? '')
+                  }
+                  placeholder={t(
+                    'features.amendments.targetSelection.selectCollaboratorPlaceholder'
+                  )}
                   label={t('features.amendments.targetSelection.selectNetworkFor')}
                 />
               </div>
@@ -195,7 +206,7 @@ export function TargetSelectionDialog({
         <ScrollArea className="min-h-0 flex-1 pr-4">
           <div className="space-y-2 pb-20">
             {!targetUserId || !networkData ? (
-              <p className="px-6 text-sm text-muted-foreground">
+              <p className="text-muted-foreground px-6 text-sm">
                 {hideCollaboratorSelection
                   ? t('features.amendments.targetSelection.loadingNetwork')
                   : !targetCollaboratorUserId
@@ -203,7 +214,7 @@ export function TargetSelectionDialog({
                     : t('features.amendments.targetSelection.loadingGroups')}
               </p>
             ) : connectedGroups.length === 0 ? (
-              <p className="px-6 text-sm text-muted-foreground">
+              <p className="text-muted-foreground px-6 text-sm">
                 {t('features.amendments.targetSelection.noConnectedGroups')}
               </p>
             ) : (
@@ -220,7 +231,7 @@ export function TargetSelectionDialog({
                         gradientClass
                       } ${
                         isSelected
-                          ? 'border-primary ring-2 ring-primary/20'
+                          ? 'border-primary ring-primary/20 ring-2'
                           : 'hover:border-primary hover:shadow-md'
                       }`}
                       onClick={() => {
@@ -232,7 +243,7 @@ export function TargetSelectionDialog({
                         <div className="min-w-0 flex-1">
                           <h4 className="truncate font-semibold">{group.name}</h4>
                           {group.description && (
-                            <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
+                            <p className="text-muted-foreground mt-1 line-clamp-1 text-xs">
                               {group.description}
                             </p>
                           )}
@@ -242,15 +253,16 @@ export function TargetSelectionDialog({
                                 {t('features.amendments.targetSelection.member')}
                               </Badge>
                             )}
-                            <span className="text-xs text-muted-foreground">
-                              {group.memberCount || 0} {t('features.amendments.targetSelection.members')}
+                            <span className="text-muted-foreground text-xs">
+                              {group.memberCount || 0}{' '}
+                              {t('features.amendments.targetSelection.members')}
                             </span>
                           </div>
                         </div>
                         {isSelected && (
                           <div className="shrink-0">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary">
-                              <CalendarIcon className="h-4 w-4 text-primary-foreground" />
+                            <div className="bg-primary flex h-8 w-8 items-center justify-center rounded-full">
+                              <CalendarIcon className="text-primary-foreground h-4 w-4" />
                             </div>
                           </div>
                         )}
@@ -259,19 +271,20 @@ export function TargetSelectionDialog({
 
                     {/* Events (shown inline below selected group) */}
                     {isSelected && (
-                      <div className="ml-6 mt-2 space-y-2 border-l-2 border-primary/30 pl-4">
+                      <div className="border-primary/30 mt-2 ml-6 space-y-2 border-l-2 pl-4">
                         {(() => {
                           const events = targetGroupEventsData.events;
                           const upcomingEvents = [...events]
-                            .filter((e) => new Date(e.start_date ?? 0) > new Date())
+                            .filter(e => new Date(e.start_date ?? 0) > new Date())
                             .sort(
                               (a, b) =>
-                                new Date(a.start_date ?? 0).getTime() - new Date(b.start_date ?? 0).getTime()
+                                new Date(a.start_date ?? 0).getTime() -
+                                new Date(b.start_date ?? 0).getTime()
                             );
 
                           if (upcomingEvents.length === 0) {
                             return (
-                              <p className="py-2 text-sm text-muted-foreground">
+                              <p className="text-muted-foreground py-2 text-sm">
                                 {t('features.amendments.targetSelection.noUpcomingEvents')}
                               </p>
                             );
@@ -285,7 +298,7 @@ export function TargetSelectionDialog({
                                 key={event.id}
                                 className={`cursor-pointer rounded-lg border p-3 transition-all ${eventGradientClass} ${
                                   pendingTarget?.eventId === event.id
-                                    ? 'border-primary ring-2 ring-primary/20'
+                                    ? 'border-primary ring-primary/20 ring-2'
                                     : 'hover:border-primary hover:shadow-md'
                                 }`}
                                 onClick={() => {
@@ -301,7 +314,7 @@ export function TargetSelectionDialog({
                               >
                                 <div className="space-y-2">
                                   <h4 className="font-semibold">{event.title}</h4>
-                                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  <div className="text-muted-foreground flex items-center gap-2 text-xs">
                                     <CalendarIcon className="h-3 w-3" />
                                     <span>
                                       {new Date(event.start_date ?? 0).toLocaleDateString('en-US', {
@@ -314,7 +327,7 @@ export function TargetSelectionDialog({
                                     </span>
                                   </div>
                                   {event.description && (
-                                    <p className="line-clamp-2 text-xs text-muted-foreground">
+                                    <p className="text-muted-foreground line-clamp-2 text-xs">
                                       {event.description}
                                     </p>
                                   )}

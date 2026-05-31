@@ -11,12 +11,17 @@ import {
 } from '@/features/shared/ui/ui/dialog';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { Vote, CheckCircle2, Loader2 } from 'lucide-react';
+import { Vote, CheckCircle2, Circle, Loader2 } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 import { VotePasswordInput } from './VotePasswordInput';
 import { VotePhaseBadge } from './VotePhaseBadge';
 import type { VotingPhase } from '../logic/votePhaseHelpers';
+import {
+  getElectionModeLabel,
+  getSeatCountLabel,
+  type ElectionMode,
+} from '@/features/elections/logic/electionMode';
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -40,6 +45,10 @@ interface VoteCastDialogProps {
   candidates?: Candidate[];
   /** For elections — max selectable candidates (default 1) */
   maxVotes?: number;
+  /** For elections — structured election mode */
+  electionMode?: ElectionMode | null;
+  /** For elections — seat count */
+  seatCount?: number | null;
 
   /** For votes — dynamic list of choices */
   choices?: VoteChoice[];
@@ -54,7 +63,7 @@ interface VoteCastDialogProps {
   /** Callbacks */
   onCastVote?: (choiceId: string) => Promise<void>;
   onCastElectionVote?: (candidateIds: string[]) => Promise<void>;
-  onPasswordSubmit?: (password: string) => void;
+  onPasswordSubmit?: (password: string) => Promise<void>;
 
   isLoading?: boolean;
 }
@@ -76,6 +85,8 @@ export function VoteCastDialog({
   phase,
   candidates,
   maxVotes = 1,
+  electionMode,
+  seatCount,
   choices,
   title,
   requirePassword,
@@ -93,6 +104,9 @@ export function VoteCastDialog({
 
   const isElection = candidates && candidates.length > 0;
   const isMultiSelect = isElection && maxVotes > 1;
+  const isListElection = isElection && electionMode === 'list';
+  const assignedVoteCount = selectedCandidateIds.length;
+  const remainingVoteCount = Math.max(0, maxVotes - assignedVoteCount);
 
   const handleReset = useCallback(() => {
     setStep('choice');
@@ -135,9 +149,9 @@ export function VoteCastDialog({
   };
 
   const toggleCandidate = (candidateId: string) => {
-    setSelectedCandidateIds((prev) => {
+    setSelectedCandidateIds(prev => {
       if (prev.includes(candidateId)) {
-        return prev.filter((id) => id !== candidateId);
+        return prev.filter(id => id !== candidateId);
       }
       if (isMultiSelect) {
         if (prev.length >= maxVotes) return prev;
@@ -150,8 +164,8 @@ export function VoteCastDialog({
 
   const hasSelection = isElection ? selectedCandidateIds.length > 0 : !!selectedChoiceId;
 
-  const selectedCandidates = candidates?.filter((c) => selectedCandidateIds.includes(c.id)) ?? [];
-  const selectedChoice = choices?.find((c) => c.id === selectedChoiceId);
+  const selectedCandidates = candidates?.filter(c => selectedCandidateIds.includes(c.id)) ?? [];
+  const selectedChoice = choices?.find(c => c.id === selectedChoiceId);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -163,9 +177,11 @@ export function VoteCastDialog({
               ? t('features.events.voting.confirmWithPassword', 'Confirm with PIN')
               : t('features.events.voting.castVote', 'Cast Vote')}
           </DialogTitle>
-          <DialogDescription className="flex items-center gap-2">
-            {title}
-            <VotePhaseBadge phase={phase} />
+          <DialogDescription asChild>
+            <div className="text-muted-foreground flex items-center gap-2 text-sm">
+              <span>{title}</span>
+              <VotePhaseBadge phase={phase} />
+            </div>
           </DialogDescription>
         </DialogHeader>
 
@@ -176,30 +192,63 @@ export function VoteCastDialog({
               // Election: candidate list (single or multi-select)
               <>
                 {isMultiSelect && (
-                  <p className="text-sm text-muted-foreground">
-                    {t('features.events.voting.selectUpTo', `Select up to ${maxVotes} candidates`)}
-                    {' '}({selectedCandidateIds.length}/{maxVotes})
-                  </p>
+                  <div className="text-muted-foreground space-y-1 text-sm">
+                    <p>
+                      {t(
+                        'features.events.voting.selectUpTo',
+                        `Select up to ${maxVotes} candidates`
+                      )}
+                    </p>
+                    {isListElection ? (
+                      <>
+                        <p>
+                          {assignedVoteCount} von {maxVotes} Stimmen vergeben
+                        </p>
+                        <p>{remainingVoteCount} Stimmen offen</p>
+                      </>
+                    ) : (
+                      <p>
+                        {assignedVoteCount}/{maxVotes}
+                      </p>
+                    )}
+                    {isListElection ? (
+                      <p>
+                        {getElectionModeLabel('list')}
+                        {seatCount ? ` · ${getSeatCountLabel(seatCount)}` : ''}
+                      </p>
+                    ) : null}
+                  </div>
                 )}
-                {candidates.map((candidate) => {
+                {candidates.map(candidate => {
                   const isSelected = selectedCandidateIds.includes(candidate.id);
                   return (
                     <div
                       key={candidate.id}
                       className={cn(
-                        'flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-colors hover:bg-muted/50',
-                        isSelected && 'border-primary bg-primary/10',
+                        'flex cursor-pointer items-center gap-4 rounded-xl border p-4 transition-all duration-200',
+                        'bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/30',
+                        'hover:from-blue-100 hover:to-indigo-100 dark:hover:from-blue-900/35 dark:hover:to-indigo-900/45',
+                        'hover:-translate-y-0.5 hover:shadow-md',
+                        isSelected
+                          ? 'border-green-500 from-blue-100 to-indigo-100 shadow-sm dark:from-blue-900/40 dark:to-indigo-900/50'
+                          : 'border-blue-100 dark:border-blue-800/40'
                       )}
                       onClick={() => toggleCandidate(candidate.id)}
                     >
-                      <Avatar className="h-12 w-12">
+                      <Avatar className="h-12 w-12 ring-2 ring-white dark:ring-gray-800">
                         <AvatarImage src={candidate.avatar} alt={candidate.name} />
-                        <AvatarFallback>
+                        <AvatarFallback className="bg-gradient-to-br from-blue-200 to-indigo-200 text-blue-800 dark:from-blue-800 dark:to-indigo-800 dark:text-blue-200">
                           {candidate.name.charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="flex-1 font-medium">{candidate.name}</span>
-                      {isSelected && <CheckCircle2 className="h-5 w-5 text-primary" />}
+                      <span className="flex-1 font-medium text-blue-900 dark:text-blue-100">
+                        {candidate.name}
+                      </span>
+                      {isSelected ? (
+                        <CheckCircle2 className="h-5 w-5 text-green-500" />
+                      ) : (
+                        <Circle className="text-muted-foreground/40 h-5 w-5" />
+                      )}
                     </div>
                   );
                 })}
@@ -207,20 +256,32 @@ export function VoteCastDialog({
             ) : choices && choices.length > 0 ? (
               // Vote: dynamic choice list
               <div className="grid gap-3">
-                {choices.map((choice) => (
-                  <Button
-                    key={choice.id}
-                    size="lg"
-                    variant={selectedChoiceId === choice.id ? 'default' : 'outline'}
-                    className="justify-start"
-                    onClick={() => setSelectedChoiceId(choice.id)}
-                  >
-                    {selectedChoiceId === choice.id && (
-                      <CheckCircle2 className="mr-2 h-5 w-5" />
-                    )}
-                    {choice.label}
-                  </Button>
-                ))}
+                {choices.map(choice => {
+                  const isSelected = selectedChoiceId === choice.id;
+                  return (
+                    <button
+                      key={choice.id}
+                      type="button"
+                      onClick={() => setSelectedChoiceId(choice.id)}
+                      className={cn(
+                        'flex w-full cursor-pointer items-center gap-3 rounded-xl border px-5 py-4 text-left font-medium transition-all duration-200',
+                        'bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/30',
+                        'hover:from-blue-100 hover:to-indigo-100 dark:hover:from-blue-900/35 dark:hover:to-indigo-900/45',
+                        'hover:-translate-y-0.5 hover:shadow-md',
+                        isSelected
+                          ? 'border-green-500 from-blue-100 to-indigo-100 text-blue-900 shadow-sm dark:from-blue-900/40 dark:to-indigo-900/50 dark:text-blue-100'
+                          : 'text-foreground border-blue-100 dark:border-blue-800/40'
+                      )}
+                    >
+                      {isSelected ? (
+                        <CheckCircle2 className="h-5 w-5 shrink-0 text-green-500" />
+                      ) : (
+                        <Circle className="text-muted-foreground/40 h-5 w-5 shrink-0" />
+                      )}
+                      {choice.label}
+                    </button>
+                  );
+                })}
               </div>
             ) : null}
           </div>
@@ -228,13 +289,13 @@ export function VoteCastDialog({
 
         {/* Confirm preview (shown inline when choice is made) */}
         {step === 'choice' && hasSelection && (
-          <div className="rounded-lg border bg-muted/30 p-3">
-            <p className="mb-2 text-sm font-medium text-muted-foreground">
+          <div className="bg-muted/30 rounded-lg border p-3">
+            <p className="text-muted-foreground mb-2 text-sm font-medium">
               {t('features.events.voting.yourChoice', 'Your choice')}:
             </p>
             {isElection && selectedCandidates.length > 0 ? (
               <div className="space-y-2">
-                {selectedCandidates.map((c) => (
+                {selectedCandidates.map(c => (
                   <div key={c.id} className="flex items-center gap-3">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={c.avatar} alt={c.name} />
@@ -266,10 +327,7 @@ export function VoteCastDialog({
             {t('common.actions.cancel')}
           </Button>
           {step === 'choice' && (
-            <Button
-              onClick={handleConfirm}
-              disabled={isLoading || !hasSelection}
-            >
+            <Button onClick={handleConfirm} disabled={isLoading || !hasSelection}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {t('common.actions.confirm')}
             </Button>

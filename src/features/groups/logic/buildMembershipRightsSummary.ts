@@ -3,6 +3,7 @@ import type {
   ParticipationLike,
   ParticipationRoleLike,
 } from '@/features/shared/types/participation';
+import type { ActionRightOption } from '@/features/groups/types/group.types';
 
 export interface MembershipRightSource {
   roleId: string;
@@ -23,14 +24,19 @@ interface InternalMembershipRightSource extends MembershipRightSource {
   sortOrder: number;
 }
 
-const rightCatalog = ACTION_RIGHTS.map((right, index) => ({
-  ...right,
-  key: getRightKey(right.resource, right.action),
-  index,
-}));
+function buildRightCatalog(actionRightsCatalog: readonly ActionRightOption[] = ACTION_RIGHTS) {
+  const rightCatalog = actionRightsCatalog.map((right, index) => ({
+    ...right,
+    key: getRightKey(right.resource, right.action),
+    index,
+  }));
 
-const rightLabelByKey = new Map(rightCatalog.map(right => [right.key, right.label]));
-const rightIndexByKey = new Map(rightCatalog.map(right => [right.key, right.index]));
+  return {
+    rightCatalog,
+    rightLabelByKey: new Map(rightCatalog.map(right => [right.key, right.label])),
+    rightIndexByKey: new Map(rightCatalog.map(right => [right.key, right.index])),
+  };
+}
 
 export function sortGroupRoles<TRole extends ParticipationRoleLike>(roles: readonly TRole[]) {
   return [...roles].sort(
@@ -63,14 +69,17 @@ export function getMembershipRoleSummary<TRole extends ParticipationRoleLike>(
 }
 
 export function buildMembershipRightsSummary(
-  membership: ParticipationLike
+  membership: ParticipationLike,
+  actionRightsCatalog?: readonly ActionRightOption[]
 ): MembershipRightSummary[] {
-  return buildRightsSummaryForRoles(getMembershipDisplayRoles(membership));
+  return buildRightsSummaryForRoles(getMembershipDisplayRoles(membership), actionRightsCatalog);
 }
 
 export function buildRightsSummaryForRoles<TRole extends ParticipationRoleLike>(
-  roles: readonly TRole[]
+  roles: readonly TRole[],
+  actionRightsCatalog?: readonly ActionRightOption[]
 ): MembershipRightSummary[] {
+  const { rightLabelByKey, rightIndexByKey } = buildRightCatalog(actionRightsCatalog);
   const rows = new Map<
     string,
     MembershipRightSummary & { sources: InternalMembershipRightSource[] }
@@ -101,7 +110,10 @@ export function buildRightsSummaryForRoles<TRole extends ParticipationRoleLike>(
         },
       });
 
-      for (const impliedAction of PERMISSION_IMPLIES[actionRight.action] || []) {
+      const impliedActions =
+        PERMISSION_IMPLIES[actionRight.action as keyof typeof PERMISSION_IMPLIES] || [];
+
+      for (const impliedAction of impliedActions) {
         const impliedKey = getRightKey(actionRight.resource, impliedAction);
         const impliedLabel = rightLabelByKey.get(impliedKey);
 

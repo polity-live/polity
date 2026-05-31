@@ -32,7 +32,7 @@ export function useSearchPage() {
 
   const [showFilters, setShowFilters] = useState(false);
 
-  const { data, isLoading } = useSearchData();
+  const { data, isLoading } = useSearchData(searchQuery);
 
   const agendaItemsByEventId = useMemo(
     () =>

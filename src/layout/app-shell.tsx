@@ -1,4 +1,4 @@
-import { type ReactNode, useMemo } from 'react';
+import { type CSSProperties, type ReactNode, useMemo } from 'react';
 import { useNavigate, useRouterState } from '@tanstack/react-router';
 import { Toaster } from '@/features/shared/ui/ui/sonner.tsx';
 import { DynamicNavigation } from '@/features/navigation/dynamic-navigation.tsx';
@@ -64,6 +64,14 @@ function UnauthenticatedShell({ children }: { children: ReactNode }) {
     return createDocsSecondaryNavItems(navigate, t);
   }, [navigate, pathname, t]);
   const isMobile = screenType === 'mobile' || (screenType === 'automatic' && isMobileScreen);
+  const isSecondaryNavVisible =
+    Boolean(secondaryNavItems) && ['secondary', 'combined'].includes(navigationType);
+  const shellOffsets = getMobileShellOffsets({
+    isMobile,
+    navigationView,
+    isSecondaryNavVisible,
+  });
+  const mainStyle = getMainStyleWithShellOffsets(shellOffsets);
 
   return (
     <I18nSyncProvider>
@@ -85,6 +93,7 @@ function UnauthenticatedShell({ children }: { children: ReactNode }) {
           />
         )}
         <main
+          style={mainStyle}
           className={`transition-all duration-300 ${getMarginClasses({
             isMobile,
             navigationView,
@@ -120,6 +129,14 @@ function AuthenticatedShell({ children }: { children: ReactNode }) {
 
   const isMobile = screenType === 'mobile' || (screenType === 'automatic' && isMobileScreen);
   const isFullWidth = pathname === '/home' || pathname === '/search';
+  const isSecondaryNavVisible =
+    Boolean(secondaryNavItems) && ['secondary', 'combined'].includes(navigationType);
+  const shellOffsets = getMobileShellOffsets({
+    isMobile,
+    navigationView,
+    isSecondaryNavVisible,
+  });
+  const mainStyle = getMainStyleWithShellOffsets(shellOffsets);
 
   return (
     <I18nSyncProvider>
@@ -141,6 +158,7 @@ function AuthenticatedShell({ children }: { children: ReactNode }) {
           />
         )}
         <main
+          style={mainStyle}
           className={`transition-all duration-300 ${getMarginClasses({
             isMobile,
             navigationView,
@@ -252,4 +270,42 @@ function getMarginBottomForPrimaryMobile({
   if (navigationView === 'asButtonList') return 'mb-16';
   if (navigationView === 'asLabeledButtonList') return 'mb-20';
   return '';
+}
+
+function getMobileShellOffsets({
+  isMobile,
+  navigationView,
+  isSecondaryNavVisible,
+}: {
+  isMobile: boolean;
+  navigationView: NavigationView;
+  isSecondaryNavVisible: boolean;
+}): {
+  topRem: number;
+  bottomRem: number;
+} {
+  if (!isMobile) {
+    return { topRem: 0, bottomRem: 0 };
+  }
+
+  const navHeightRem =
+    navigationView === 'asLabeledButtonList' ? 5 : navigationView === 'asButtonList' ? 4 : 0;
+
+  return {
+    topRem: isSecondaryNavVisible ? navHeightRem : 0,
+    bottomRem: navHeightRem,
+  };
+}
+
+function getMainStyleWithShellOffsets({
+  topRem,
+  bottomRem,
+}: {
+  topRem: number;
+  bottomRem: number;
+}): CSSProperties {
+  return {
+    '--app-shell-mobile-top-offset': `${topRem}rem`,
+    '--app-shell-mobile-bottom-offset': `${bottomRem}rem`,
+  } as CSSProperties;
 }

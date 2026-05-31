@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useAuth } from '@/providers/auth-provider';
 import { useElectionActions } from '@/zero/elections/useElectionActions';
+import { useElectionState } from '@/zero/elections/useElectionState';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { toast } from 'sonner';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
@@ -15,12 +16,15 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { addCandidate } = useElectionActions();
+  const { electionsForSearch } = useElectionState({ includeElectionsForSearch: true });
 
   const [candidateId] = useState(() => crypto.randomUUID());
   const [electionId, setElectionId] = useState('');
   const [statement, setStatement] = useState('');
   const [imageURL, setImageURL] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const selectedElection = electionsForSearch.find(election => election.id === electionId);
+  const selectedElectionTitle = selectedElection?.title || t('pages.create.common.notSelected');
 
   const handleSubmit = async () => {
     if (!user) return;
@@ -97,27 +101,47 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
             <CreateSummaryStep
               entityType="election"
               badge={t('pages.create.electionCandidate.reviewBadge')}
-              title={electionId ? 'Election Candidate' : t('pages.create.common.notSelected')}
+              title={selectedElection?.title || 'Election Candidate'}
               subtitle={statement || undefined}
-              fields={[
-                ...(statement
-                  ? [
-                      {
-                        label: t('pages.create.electionCandidate.descriptionLabel'),
-                        value: statement,
-                      },
-                    ]
-                  : []),
-                ...(imageURL
-                  ? [{ label: t('pages.create.electionCandidate.image'), value: 'Attached' }]
-                  : []),
+              media={imageURL ? { imageUrl: imageURL, imageAlt: selectedElectionTitle } : undefined}
+              sections={[
+                {
+                  title: t('pages.create.electionCandidate.electionLabel'),
+                  fields: [
+                    {
+                      label: t('pages.create.electionCandidate.electionLabel'),
+                      value: selectedElectionTitle,
+                    },
+                  ],
+                },
+                {
+                  title: t('pages.create.electionCandidate.descriptionLabel'),
+                  fields: [
+                    {
+                      label: t('pages.create.electionCandidate.descriptionLabel'),
+                      value: statement || t('pages.create.common.notSelected'),
+                    },
+                    ...(imageURL
+                      ? [{ label: t('pages.create.electionCandidate.image'), value: 'Attached' }]
+                      : []),
+                  ],
+                },
               ]}
             />
           ),
         },
       ],
     }),
-    [electionId, statement, imageURL, candidateId, isSubmitting, t]
+    [
+      candidateId,
+      electionId,
+      imageURL,
+      isSubmitting,
+      selectedElection,
+      selectedElectionTitle,
+      statement,
+      t,
+    ]
   );
 
   return config;

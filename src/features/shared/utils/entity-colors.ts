@@ -3,7 +3,17 @@
  * Extracted from content-type-config.ts for reuse outside timeline code.
  */
 
-export type EntityType = 'group' | 'event' | 'amendment' | 'blog' | 'user' | 'election' | 'role';
+export type EntityType =
+  | 'group'
+  | 'event'
+  | 'agenda_item'
+  | 'amendment'
+  | 'vote'
+  | 'election'
+  | 'todo'
+  | 'blog'
+  | 'user'
+  | 'role';
 
 export interface EntityColorConfig {
   gradient: string;
@@ -33,6 +43,14 @@ export const ENTITY_COLORS: Record<EntityType, EntityColorConfig> = {
     notificationBorderLeft: 'border-l-amber-500',
     badgeBg: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
   },
+  agenda_item: {
+    gradient: 'from-sky-100 to-cyan-100',
+    gradientDark: 'dark:from-sky-900/40 dark:to-cyan-900/50',
+    accentColor: 'text-sky-700 dark:text-sky-300',
+    borderColor: 'border-sky-500',
+    notificationBorderLeft: 'border-l-sky-500',
+    badgeBg: 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300',
+  },
   amendment: {
     gradient: 'from-purple-100 to-blue-100',
     gradientDark: 'dark:from-purple-900/40 dark:to-blue-900/50',
@@ -40,6 +58,30 @@ export const ENTITY_COLORS: Record<EntityType, EntityColorConfig> = {
     borderColor: 'border-violet-500',
     notificationBorderLeft: 'border-l-violet-500',
     badgeBg: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
+  },
+  vote: {
+    gradient: 'from-red-100 to-orange-100',
+    gradientDark: 'dark:from-red-900/40 dark:to-orange-900/50',
+    accentColor: 'text-red-600 dark:text-red-400',
+    borderColor: 'border-red-500',
+    notificationBorderLeft: 'border-l-red-500',
+    badgeBg: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+  },
+  election: {
+    gradient: 'from-rose-100 to-pink-100',
+    gradientDark: 'dark:from-rose-900/40 dark:to-pink-900/50',
+    accentColor: 'text-rose-600 dark:text-rose-400',
+    borderColor: 'border-rose-500',
+    notificationBorderLeft: 'border-l-rose-500',
+    badgeBg: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
+  },
+  todo: {
+    gradient: 'from-lime-100 to-emerald-100',
+    gradientDark: 'dark:from-lime-900/40 dark:to-emerald-900/50',
+    accentColor: 'text-lime-700 dark:text-lime-300',
+    borderColor: 'border-lime-500',
+    notificationBorderLeft: 'border-l-lime-500',
+    badgeBg: 'bg-lime-100 text-lime-700 dark:bg-lime-900/40 dark:text-lime-300',
   },
   blog: {
     gradient: 'from-teal-100 to-green-100',
@@ -56,14 +98,6 @@ export const ENTITY_COLORS: Record<EntityType, EntityColorConfig> = {
     borderColor: 'border-blue-500',
     notificationBorderLeft: 'border-l-blue-500',
     badgeBg: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
-  },
-  election: {
-    gradient: 'from-rose-100 to-pink-100',
-    gradientDark: 'dark:from-rose-900/40 dark:to-pink-900/50',
-    accentColor: 'text-rose-600 dark:text-rose-400',
-    borderColor: 'border-rose-500',
-    notificationBorderLeft: 'border-l-rose-500',
-    badgeBg: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
   },
   role: {
     gradient: 'from-cyan-100 to-sky-100',

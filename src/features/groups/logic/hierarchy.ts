@@ -7,8 +7,26 @@
 
 import type { GroupRelationship as GroupRelationshipRow } from '@/zero/network/schema';
 import type { GroupMembership as GroupMembershipRow } from '@/zero/groups/schema';
+import { getHierarchyRelationshipPair } from '@/features/network/logic/groupRelationshipOrientation';
 
 // ── Types (minimal shapes expected from Zero query results) ─────────
+type GroupTypeLookup = ReadonlyMap<string, { group_type?: string | null | undefined }>;
+type MembershipConflictRow = Pick<GroupMembershipRow, 'group_id' | 'user_id' | 'source' | 'status'>;
+
+function filterHierarchySafeRelationships(
+  relationships: GroupRelationshipRow[],
+  groupsById?: GroupTypeLookup
+) {
+  return relationships.filter(relationship => {
+    if (!groupsById) {
+      return true;
+    }
+
+    const sourceType = groupsById.get(relationship.group_id)?.group_type ?? null;
+    const relatedType = groupsById.get(relationship.related_group_id)?.group_type ?? null;
+    return sourceType !== 'sibling' && relatedType !== 'sibling';
+  });
+}
 
 // ── Traversal helpers ───────────────────────────────────────────────
 
@@ -20,9 +38,10 @@ import type { GroupMembership as GroupMembershipRow } from '@/zero/groups/schema
  */
 export function resolveHierarchicalAncestors(
   baseGroupId: string,
-  relationships: GroupRelationshipRow[]
+  relationships: GroupRelationshipRow[],
+  groupsById?: GroupTypeLookup
 ): string[] {
-  const pvr = relationships.filter(
+  const pvr = filterHierarchySafeRelationships(relationships, groupsById).filter(
     r => r.with_right === 'passiveVotingRight' && r.status === 'active'
   );
 
@@ -37,10 +56,15 @@ export function resolveHierarchicalAncestors(
     }
     // Find parents of `current` (current is the child → related_group_id)
     for (const rel of pvr) {
-      if (rel.related_group_id === current && !visited.has(rel.group_id)) {
-        visited.add(rel.group_id);
-        ancestors.push(rel.group_id);
-        queue.push(rel.group_id);
+      const pair = getHierarchyRelationshipPair(rel);
+      if (!pair) {
+        continue;
+      }
+
+      if (pair.childGroupId === current && !visited.has(pair.parentGroupId)) {
+        visited.add(pair.parentGroupId);
+        ancestors.push(pair.parentGroupId);
+        queue.push(pair.parentGroupId);
       }
     }
   }
@@ -57,9 +81,10 @@ export function resolveHierarchicalAncestors(
 export function resolveBaseGroupMembers(
   hierarchicalGroupId: string,
   relationships: GroupRelationshipRow[],
-  memberships: GroupMembershipRow[]
+  memberships: GroupMembershipRow[],
+  groupsById?: GroupTypeLookup
 ): string[] {
-  const pvr = relationships.filter(
+  const pvr = filterHierarchySafeRelationships(relationships, groupsById).filter(
     r => r.with_right === 'passiveVotingRight' && r.status === 'active'
   );
 
@@ -75,15 +100,20 @@ export function resolveBaseGroupMembers(
     }
     // Find children of `current` (current is the parent → group_id)
     for (const rel of pvr) {
-      if (rel.group_id === current && !visited.has(rel.related_group_id)) {
-        visited.add(rel.related_group_id);
-        // Check if the child has children of its own
-        const hasChildren = pvr.some(r => r.group_id === rel.related_group_id);
-        if (hasChildren) {
-          queue.push(rel.related_group_id); // intermediate hierarchical group
-        } else {
-          baseGroupIds.add(rel.related_group_id); // leaf = base group
-        }
+      const pair = getHierarchyRelationshipPair(rel);
+      if (!pair || pair.parentGroupId !== current || visited.has(pair.childGroupId)) {
+        continue;
+      }
+
+      visited.add(pair.childGroupId);
+      const hasChildren = pvr.some(candidate => {
+        const candidatePair = getHierarchyRelationshipPair(candidate);
+        return candidatePair?.parentGroupId === pair.childGroupId;
+      });
+      if (hasChildren) {
+        queue.push(pair.childGroupId); // intermediate hierarchical group
+      } else {
+        baseGroupIds.add(pair.childGroupId); // leaf = base group
       }
     }
   }
@@ -109,10 +139,11 @@ export function checkExclusivityConstraint(
   userId: string,
   targetBaseGroupId: string,
   relationships: GroupRelationshipRow[],
-  memberships: GroupMembershipRow[]
+  memberships: GroupMembershipRow[],
+  groupsById?: GroupTypeLookup
 ): boolean {
   // 1. Find all hierarchical ancestors of the target base group
-  const ancestors = resolveHierarchicalAncestors(targetBaseGroupId, relationships);
+  const ancestors = resolveHierarchicalAncestors(targetBaseGroupId, relationships, groupsById);
 
   if (ancestors.length === 0) {
     // No hierarchy → no constraint to enforce
@@ -122,7 +153,7 @@ export function checkExclusivityConstraint(
   // 2. For each ancestor, find all child base groups (excluding the target)
   const siblingBaseGroups = new Set<string>();
   for (const ancestorId of ancestors) {
-    const children = resolveChildBaseGroups(ancestorId, relationships);
+    const children = resolveChildBaseGroups(ancestorId, relationships, groupsById);
     for (const childId of children) {
       if (childId !== targetBaseGroupId) {
         siblingBaseGroups.add(childId);
@@ -145,9 +176,10 @@ export function checkExclusivityConstraint(
  */
 export function resolveChildBaseGroups(
   groupId: string,
-  relationships: GroupRelationshipRow[]
+  relationships: GroupRelationshipRow[],
+  groupsById?: GroupTypeLookup
 ): string[] {
-  const pvr = relationships.filter(
+  const pvr = filterHierarchySafeRelationships(relationships, groupsById).filter(
     r => r.with_right === 'passiveVotingRight' && r.status === 'active'
   );
 
@@ -161,14 +193,20 @@ export function resolveChildBaseGroups(
       continue;
     }
     for (const rel of pvr) {
-      if (rel.group_id === current && !visited.has(rel.related_group_id)) {
-        visited.add(rel.related_group_id);
-        const hasChildren = pvr.some(r => r.group_id === rel.related_group_id);
-        if (hasChildren) {
-          queue.push(rel.related_group_id);
-        } else {
-          baseGroups.push(rel.related_group_id);
-        }
+      const pair = getHierarchyRelationshipPair(rel);
+      if (!pair || pair.parentGroupId !== current || visited.has(pair.childGroupId)) {
+        continue;
+      }
+
+      visited.add(pair.childGroupId);
+      const hasChildren = pvr.some(candidate => {
+        const candidatePair = getHierarchyRelationshipPair(candidate);
+        return candidatePair?.parentGroupId === pair.childGroupId;
+      });
+      if (hasChildren) {
+        queue.push(pair.childGroupId);
+      } else {
+        baseGroups.push(pair.childGroupId);
       }
     }
   }
@@ -180,12 +218,24 @@ function isActiveRelationshipStatus(status: string | null | undefined): boolean 
   return status == null || status === 'active' || status === 'accepted';
 }
 
+function isActiveDirectMembership(
+  membership: Pick<GroupMembershipRow, 'status' | 'source'>
+): boolean {
+  return (
+    membership.source === 'direct' &&
+    (membership.status === 'active' ||
+      membership.status === 'member' ||
+      membership.status === 'admin')
+  );
+}
+
 /** Base groups represented by a node in the passive-voting-right tree (leaf = the node itself). */
 function collectBaseGroupIdsUnderGroup(
   groupId: string,
-  pvrRelationships: GroupRelationshipRow[]
+  pvrRelationships: GroupRelationshipRow[],
+  groupsById?: GroupTypeLookup
 ): string[] {
-  const fromTree = resolveChildBaseGroups(groupId, pvrRelationships);
+  const fromTree = resolveChildBaseGroups(groupId, pvrRelationships, groupsById);
   return fromTree.length > 0 ? fromTree : [groupId];
 }
 
@@ -202,31 +252,53 @@ export function detectLinkConflicts(
   parentGroupId: string,
   childGroupId: string,
   pvrRelationships: GroupRelationshipRow[],
-  memberships: GroupMembershipRow[],
-  activeParentChildLinks: GroupRelationshipRow[] = []
+  memberships: MembershipConflictRow[],
+  activeParentChildLinks: GroupRelationshipRow[] = [],
+  groupsById?: GroupTypeLookup
 ): string[] {
+  const hierarchySafePvrRelationships = filterHierarchySafeRelationships(
+    pvrRelationships,
+    groupsById
+  );
+  const hierarchySafeParentChildLinks = filterHierarchySafeRelationships(
+    activeParentChildLinks,
+    groupsById
+  );
   const newBaseGroupIds = new Set<string>([
     childGroupId,
-    ...resolveChildBaseGroups(childGroupId, pvrRelationships),
+    ...resolveChildBaseGroups(childGroupId, hierarchySafePvrRelationships, groupsById),
   ]);
 
   const existingBaseGroupIds = new Set<string>();
-  for (const baseId of resolveChildBaseGroups(parentGroupId, pvrRelationships)) {
+  for (const baseId of resolveChildBaseGroups(
+    parentGroupId,
+    hierarchySafePvrRelationships,
+    groupsById
+  )) {
     if (!newBaseGroupIds.has(baseId)) {
       existingBaseGroupIds.add(baseId);
     }
   }
 
-  for (const link of activeParentChildLinks) {
+  for (const link of hierarchySafeParentChildLinks) {
+    const pair = getHierarchyRelationshipPair(link);
+    if (!pair) {
+      continue;
+    }
+
     if (
-      link.group_id !== parentGroupId ||
-      link.related_group_id === childGroupId ||
+      pair.parentGroupId !== parentGroupId ||
+      pair.childGroupId === childGroupId ||
       !isActiveRelationshipStatus(link.status)
     ) {
       continue;
     }
 
-    for (const baseId of collectBaseGroupIdsUnderGroup(link.related_group_id, pvrRelationships)) {
+    for (const baseId of collectBaseGroupIdsUnderGroup(
+      pair.childGroupId,
+      hierarchySafePvrRelationships,
+      groupsById
+    )) {
       if (!newBaseGroupIds.has(baseId)) {
         existingBaseGroupIds.add(baseId);
       }
@@ -235,17 +307,127 @@ export function detectLinkConflicts(
 
   const existingUserIds = new Set<string>();
   for (const m of memberships) {
-    if (existingBaseGroupIds.has(m.group_id) && m.source === 'direct') {
+    if (existingBaseGroupIds.has(m.group_id) && isActiveDirectMembership(m)) {
       existingUserIds.add(m.user_id);
     }
   }
 
   const newUserIds = new Set<string>();
   for (const m of memberships) {
-    if (newBaseGroupIds.has(m.group_id) && m.source === 'direct') {
+    if (newBaseGroupIds.has(m.group_id) && isActiveDirectMembership(m)) {
       newUserIds.add(m.user_id);
     }
   }
 
   return [...newUserIds].filter(uid => existingUserIds.has(uid));
+}
+
+export interface HierarchyDuplicatePathConflict {
+  baseGroupId: string;
+  targetGroupId: string;
+  paths: string[][];
+}
+
+function collectPathMapForBaseGroup(
+  baseGroupId: string,
+  relationships: GroupRelationshipRow[]
+): Map<string, string[][]> {
+  const activePvrRelationships = relationships.filter(
+    relationship =>
+      relationship.with_right === 'passiveVotingRight' && relationship.status === 'active'
+  );
+  const parentIdsByChildId = new Map<string, string[]>();
+
+  for (const relationship of activePvrRelationships) {
+    const pair = getHierarchyRelationshipPair(relationship);
+    if (!pair) {
+      continue;
+    }
+
+    const existingParentIds = parentIdsByChildId.get(pair.childGroupId) ?? [];
+    existingParentIds.push(pair.parentGroupId);
+    parentIdsByChildId.set(pair.childGroupId, existingParentIds);
+  }
+
+  const pathsByTargetGroupId = new Map<string, string[][]>();
+
+  const walk = (currentGroupId: string, path: string[]) => {
+    const parentIds = parentIdsByChildId.get(currentGroupId) ?? [];
+
+    for (const parentGroupId of parentIds) {
+      if (path.includes(parentGroupId)) {
+        continue;
+      }
+
+      const nextPath = [...path, parentGroupId];
+      const existingPaths = pathsByTargetGroupId.get(parentGroupId) ?? [];
+
+      if (existingPaths.length < 2) {
+        existingPaths.push(nextPath);
+        pathsByTargetGroupId.set(parentGroupId, existingPaths);
+      }
+
+      walk(parentGroupId, nextPath);
+    }
+  };
+
+  walk(baseGroupId, [baseGroupId]);
+  return pathsByTargetGroupId;
+}
+
+export function detectDuplicateHierarchyPaths(
+  relationships: GroupRelationshipRow[],
+  groupsById?: GroupTypeLookup
+): HierarchyDuplicatePathConflict[] {
+  const hierarchySafeRelationships = filterHierarchySafeRelationships(
+    relationships,
+    groupsById
+  ).filter(
+    relationship =>
+      relationship.with_right === 'passiveVotingRight' && relationship.status === 'active'
+  );
+
+  const childIds = new Set<string>();
+  const parentIds = new Set<string>();
+
+  for (const relationship of hierarchySafeRelationships) {
+    const pair = getHierarchyRelationshipPair(relationship);
+    if (!pair) {
+      continue;
+    }
+
+    childIds.add(pair.childGroupId);
+    parentIds.add(pair.parentGroupId);
+  }
+
+  const leafBaseGroupIds =
+    groupsById == null
+      ? [...childIds].filter(groupId => !parentIds.has(groupId))
+      : [...childIds].filter(groupId => {
+          const groupType = groupsById.get(groupId)?.group_type ?? null;
+          return groupType === 'base' && !parentIds.has(groupId);
+        });
+
+  const conflicts: HierarchyDuplicatePathConflict[] = [];
+
+  for (const baseGroupId of leafBaseGroupIds) {
+    const pathsByTargetGroupId = collectPathMapForBaseGroup(
+      baseGroupId,
+      hierarchySafeRelationships
+    );
+
+    for (const [targetGroupId, paths] of pathsByTargetGroupId.entries()) {
+      if (paths.length < 2) {
+        continue;
+      }
+
+      conflicts.push({
+        baseGroupId,
+        targetGroupId,
+        paths: paths.slice(0, 2),
+      });
+    }
+  }
+
+  return conflicts;
 }

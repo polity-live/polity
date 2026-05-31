@@ -55,9 +55,13 @@ export function normalizeElectionStatus(status?: string) {
     normalized === 'nominations_open' ||
     normalized === 'voting_open' ||
     normalized === 'closed' ||
+    normalized === 'runoff_required' ||
+    normalized === 'no_winner' ||
     normalized === 'winner_announced'
   ) {
-    return normalized as 'nominations_open' | 'voting_open' | 'closed' | 'winner_announced';
+    return (
+      normalized === 'runoff_required' || normalized === 'no_winner' ? 'closed' : normalized
+    ) as 'nominations_open' | 'voting_open' | 'closed' | 'winner_announced';
   }
   return 'voting_open';
 }

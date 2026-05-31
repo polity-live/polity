@@ -1,24 +1,32 @@
-import { useState, useMemo } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useAuth } from '@/providers/auth-provider';
 import { useStatementMutations } from '@/features/statements/hooks/useStatementMutations';
 import { useCommonActions } from '@/zero/common/useCommonActions';
 import { useCommonState } from '@/zero/common/useCommonState';
-import { useGroupState } from '@/zero/groups/useGroupState';
+import { useGroupById, useGroupState } from '@/zero/groups/useGroupState';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { Label } from '@/features/shared/ui/ui/label';
 import { VisibilityInput } from '../ui/inputs/VisibilityInput';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
+import { SummaryPillList } from '@/features/shared/ui/ui/create-review-card';
 import { MediaUpload } from '@/features/file-upload/ui/MediaUpload';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import { CreateInputField, CreateTextareaField, CreateTypeaheadField } from '../ui/CreateFields';
+import { mergeCreateSearchParams } from '../logic/createSearchParams';
 import type { CreateFormConfig } from '../types/create-form.types';
 
 const MAX_CHARS = 280;
 
+interface CreateStatementSearch {
+  groupId?: string;
+}
+
 export function useCreateStatementForm(): CreateFormConfig {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const searchParams = useSearch({ strict: false }) as CreateStatementSearch;
+  const groupIdParam = searchParams.groupId ?? '';
   const { user } = useAuth();
   const { createStatement, createSurvey, createSurveyOption, isLoading } = useStatementMutations();
   const { syncEntityHashtags } = useCommonActions();
@@ -36,8 +44,9 @@ export function useCreateStatementForm(): CreateFormConfig {
 
   // Step 1: Text + group
   const [text, setText] = useState('');
-  const [groupId, setGroupId] = useState<string | null>(null);
+  const [groupId, setGroupId] = useState<string | null>(() => groupIdParam || null);
   const [groupName, setGroupName] = useState('');
+  const { group } = useGroupById(groupId ?? undefined);
 
   // Step 2: Media + Survey
   const [imageUrl, setImageUrl] = useState('');
@@ -55,6 +64,40 @@ export function useCreateStatementForm(): CreateFormConfig {
   const charsRemaining = MAX_CHARS - text.length;
 
   const hasSurvey = surveyQuestion.trim() && surveyOptions.filter(o => o.trim()).length >= 2;
+  const visibilityLabel =
+    visibility === 'public'
+      ? t('pages.create.common.public')
+      : visibility === 'authenticated'
+        ? t('pages.create.common.authenticated')
+        : t('pages.create.common.private');
+
+  useEffect(() => {
+    setGroupId(groupIdParam || null);
+  }, [groupIdParam]);
+
+  useEffect(() => {
+    if (!groupId) {
+      if (groupName) {
+        setGroupName('');
+      }
+      return;
+    }
+
+    const nextGroupName = group?.name ?? '';
+    if (nextGroupName && groupName !== nextGroupName) {
+      setGroupName(nextGroupName);
+    }
+  }, [group?.name, groupId, groupName]);
+
+  const syncGroupSearch = (nextGroupId: string | null) => {
+    navigate({
+      to: '/create/statement',
+      search: mergeCreateSearchParams(searchParams, {
+        groupId: nextGroupId || undefined,
+      }),
+      replace: true,
+    });
+  };
 
   const handleSubmit = async () => {
     if (!user) return;
@@ -130,8 +173,10 @@ export function useCreateStatementForm(): CreateFormConfig {
                 entityTypes={['group']}
                 value={groupId ?? undefined}
                 onChange={item => {
-                  setGroupId(item?.id ?? null);
+                  const nextGroupId = item?.id ?? null;
+                  setGroupId(nextGroupId);
                   setGroupName(item?.label ?? '');
+                  syncGroupSearch(nextGroupId);
                 }}
                 placeholder={t('pages.create.statement.groupPlaceholder', 'Search groups...')}
                 filterFn={item => memberGroupIds.has(item.id)}
@@ -235,17 +280,61 @@ export function useCreateStatementForm(): CreateFormConfig {
               badge={t('pages.create.statement.reviewBadge')}
               title={t('pages.create.statement.reviewBadge')}
               subtitle={text || undefined}
+              secondaryBadge={visibilityLabel}
+              media={{
+                imageUrl: imageUrl || undefined,
+                imageAlt: t('pages.create.statement.reviewBadge'),
+                videoUrl: videoUrl || undefined,
+              }}
               hashtags={hashtags.length > 0 ? hashtags : undefined}
-              fields={[
-                ...(groupName
-                  ? [{ label: t('pages.create.statement.attachTo', 'Group'), value: groupName }]
-                  : []),
-                { label: t('pages.create.common.visibility'), value: visibility },
+              sections={[
+                {
+                  title: t('pages.create.statement.textLabel'),
+                  fields: [
+                    ...(groupName
+                      ? [{ label: t('pages.create.statement.attachTo', 'Group'), value: groupName }]
+                      : []),
+                    { label: t('pages.create.common.visibility'), value: visibilityLabel },
+                    ...(imageUrl
+                      ? [
+                          {
+                            label: t('pages.create.statement.imageUrl', 'Image'),
+                            value: 'Attached',
+                          },
+                        ]
+                      : []),
+                    ...(videoUrl
+                      ? [
+                          {
+                            label: t('pages.create.statement.videoUrl', 'Video'),
+                            value: 'Attached',
+                          },
+                        ]
+                      : []),
+                  ],
+                },
                 ...(hasSurvey
                   ? [
                       {
-                        label: t('features.statements.survey.addSurvey', 'Survey'),
-                        value: surveyQuestion,
+                        title: t('features.statements.survey.addSurvey', 'Survey'),
+                        fields: [
+                          {
+                            label: t('features.statements.survey.question', 'Survey question'),
+                            value: surveyQuestion,
+                          },
+                          {
+                            label: t('features.statements.survey.duration', 'Duration (hours)'),
+                            value: String(surveyDurationHours),
+                          },
+                          {
+                            label: t('features.statements.survey.option', 'Options'),
+                            value: (
+                              <SummaryPillList
+                                items={surveyOptions.filter(option => option.trim())}
+                              />
+                            ),
+                          },
+                        ],
                       },
                     ]
                   : []),
@@ -266,10 +355,12 @@ export function useCreateStatementForm(): CreateFormConfig {
       surveyDurationHours,
       hashtags,
       visibility,
+      visibilityLabel,
       isLoading,
       charsRemaining,
       hasSurvey,
       t,
+      syncGroupSearch,
     ]
   );
 

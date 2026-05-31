@@ -102,11 +102,12 @@ export interface SearchLimits {
 
 export interface SearchOptions {
   userId?: string;
+  query?: string;
   limits?: SearchLimits;
 }
 
 export function useSearchState(options: SearchOptions = {}) {
-  const { userId, limits = {} } = options;
+  const { userId, query = '', limits = {} } = options;
   const usersLimit = limits.users ?? 20;
   const groupsLimit = limits.groups ?? 20;
   const statementsLimit = limits.statements ?? 20;
@@ -116,12 +117,16 @@ export function useSearchState(options: SearchOptions = {}) {
   const todosLimit = limits.todos ?? 20;
 
   // ── Basic entity queries ────────────────────────────────────────────
-  const [users] = useQuery(queries.search.searchableUsers({ limit: usersLimit }));
-  const [groups] = useQuery(queries.search.searchableGroups({ limit: groupsLimit }));
-  const [statements] = useQuery(queries.search.searchableStatements({ limit: statementsLimit }));
-  const [blogs] = useQuery(queries.search.searchableBlogs({ limit: blogsLimit }));
-  const [amendments] = useQuery(queries.search.searchableAmendments({ limit: amendmentsLimit }));
-  const [events] = useQuery(queries.search.searchableEvents({ limit: eventsLimit }));
+  const [users] = useQuery(queries.search.searchableUsers({ limit: usersLimit, query }));
+  const [groups] = useQuery(queries.search.searchableGroups({ limit: groupsLimit, query }));
+  const [statements] = useQuery(
+    queries.search.searchableStatements({ limit: statementsLimit, query })
+  );
+  const [blogs] = useQuery(queries.search.searchableBlogs({ limit: blogsLimit, query }));
+  const [amendments] = useQuery(
+    queries.search.searchableAmendments({ limit: amendmentsLimit, query })
+  );
+  const [events] = useQuery(queries.search.searchableEvents({ limit: eventsLimit, query }));
 
   // ── User-specific queries ───────────────────────────────────────────
   const [groupMemberships] = useQuery(
@@ -152,15 +157,19 @@ export function useSearchState(options: SearchOptions = {}) {
     [todoAssignments]
   );
 
-  const [publicTodos] = useQuery(queries.search.searchableTodos({ limit: todosLimit }));
+  const [publicTodos] = useQuery(queries.search.searchableTodos({ limit: todosLimit, query }));
   const [createdTodos] = useQuery(
     userId
-      ? queries.search.searchableTodosByCreator({ user_id: userId, limit: todosLimit })
+      ? queries.search.searchableTodosByCreator({ user_id: userId, limit: todosLimit, query })
       : undefined
   );
   const [groupTodos] = useQuery(
     memberGroupIds.length > 0
-      ? queries.search.searchableTodosByGroups({ group_ids: memberGroupIds, limit: todosLimit })
+      ? queries.search.searchableTodosByGroups({
+          group_ids: memberGroupIds,
+          limit: todosLimit,
+          query,
+        })
       : undefined
   );
 

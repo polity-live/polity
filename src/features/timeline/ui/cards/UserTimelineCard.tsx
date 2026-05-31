@@ -40,6 +40,7 @@ export interface UserTimelineCardProps {
   };
   onFollow?: () => void;
   onMessage?: () => void;
+  actions?: React.ReactNode;
   className?: string;
 }
 
@@ -53,7 +54,13 @@ export interface UserTimelineCardProps {
  * - Location and group count
  * - Actions: Follow, Message, View Profile
  */
-export function UserTimelineCard({ user, onFollow, onMessage, className }: UserTimelineCardProps) {
+export function UserTimelineCard({
+  user,
+  onFollow,
+  onMessage,
+  actions,
+  className,
+}: UserTimelineCardProps) {
   const { t } = useTranslation();
   const subscription = useSubscribeUser(user.id);
   const amendmentStyle = CONTENT_TYPE_CONFIG.amendment;
@@ -177,55 +184,61 @@ export function UserTimelineCard({ user, onFollow, onMessage, className }: UserT
       </TimelineCardContent>
 
       <TimelineCardActions>
-        <Button
-          variant={subscription.isSubscribed ? 'outline' : 'ghost'}
-          size="sm"
-          onClick={e => {
-            e.preventDefault();
-            subscription.toggleSubscribe();
-            onFollow?.();
-          }}
-          disabled={subscription.isLoading}
-          className="flex items-center gap-1.5"
-        >
-          <Bell className={`h-3.5 w-3.5 ${subscription.isSubscribed ? 'fill-current' : ''}`} />
-        </Button>
-        <Button variant="outline" size="sm" asChild className="flex items-center gap-1.5">
-          <Link
-            to="/messages"
-            search={{ userId: user.id, name: user.name }}
-            onClick={e => {
-              e.stopPropagation();
-              onMessage?.();
-            }}
-          >
-            <Mail className="h-3.5 w-3.5" />
-          </Link>
-        </Button>
-        <div onClick={e => e.preventDefault()}>
-          <ShareButton
-            url={`/user/${user.id}`}
-            title={user.name}
-            description={user.bio || ''}
-            variant="outline"
-            size="sm"
-            shareContextItem={{
-              id: user.id,
-              type: 'user',
-              title: user.name,
-              description: user.bio,
-              createdAt: new Date(),
-              authorId: user.id,
-              authorName: user.name,
-              authorAvatar: user.avatarUrl,
-              handle: user.handle,
-              location,
-              groupCount: user.groupCount,
-              amendmentCount: user.amendmentCount,
-              tags: user.hashtags?.map(hashtag => hashtag.tag) ?? [],
-            }}
-          />
-        </div>
+        {actions ? (
+          actions
+        ) : (
+          <>
+            <Button
+              variant={subscription.isSubscribed ? 'outline' : 'ghost'}
+              size="sm"
+              onClick={e => {
+                e.preventDefault();
+                subscription.toggleSubscribe();
+                onFollow?.();
+              }}
+              disabled={subscription.isLoading}
+              className="flex items-center gap-1.5"
+            >
+              <Bell className={`h-3.5 w-3.5 ${subscription.isSubscribed ? 'fill-current' : ''}`} />
+            </Button>
+            <Button variant="outline" size="sm" asChild className="flex items-center gap-1.5">
+              <Link
+                to="/messages"
+                search={{ userId: user.id, name: user.name }}
+                onClick={e => {
+                  e.stopPropagation();
+                  onMessage?.();
+                }}
+              >
+                <Mail className="h-3.5 w-3.5" />
+              </Link>
+            </Button>
+            <div onClick={e => e.preventDefault()}>
+              <ShareButton
+                url={`/user/${user.id}`}
+                title={user.name}
+                description={user.bio || ''}
+                variant="outline"
+                size="sm"
+                shareContextItem={{
+                  id: user.id,
+                  type: 'user',
+                  title: user.name,
+                  description: user.bio,
+                  createdAt: new Date(),
+                  authorId: user.id,
+                  authorName: user.name,
+                  authorAvatar: user.avatarUrl,
+                  handle: user.handle,
+                  location,
+                  groupCount: user.groupCount,
+                  amendmentCount: user.amendmentCount,
+                  tags: user.hashtags?.map(hashtag => hashtag.tag) ?? [],
+                }}
+              />
+            </div>
+          </>
+        )}
       </TimelineCardActions>
     </TimelineCardBase>
   );

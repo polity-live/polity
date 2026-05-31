@@ -8,7 +8,6 @@
 
 import { Input } from '@/features/shared/ui/ui/input';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Loader2, Eye, Pencil, Users } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -19,6 +18,7 @@ interface EditorHeaderProps {
   onTitleChange: (title: string) => void;
   isEditingTitle: boolean;
   setIsEditingTitle: (editing: boolean) => void;
+  canEditTitle?: boolean;
   isSavingTitle: boolean;
   saveStatus: 'saved' | 'saving' | 'error';
   hasUnsavedChanges: boolean;
@@ -32,6 +32,7 @@ export function EditorHeader({
   onTitleChange,
   isEditingTitle,
   setIsEditingTitle,
+  canEditTitle = true,
   isSavingTitle,
   saveStatus,
   hasUnsavedChanges,
@@ -44,7 +45,7 @@ export function EditorHeader({
   return (
     <div className="flex items-center gap-4">
       <div className="flex-1">
-        {isEditingTitle ? (
+        {isEditingTitle && canEditTitle ? (
           <Input
             value={title}
             onChange={e => onTitleChange(e.target.value)}
@@ -61,14 +62,16 @@ export function EditorHeader({
         ) : (
           <div className="flex items-center gap-2">
             <h2 className="text-2xl font-bold">{title || t('features.editor.header.untitled')}</h2>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 w-7 p-0"
-              onClick={() => setIsEditingTitle(true)}
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
+            {canEditTitle ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0"
+                onClick={() => setIsEditingTitle(true)}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            ) : null}
           </div>
         )}
       </div>
@@ -76,15 +79,15 @@ export function EditorHeader({
       {/* Online presence */}
       {showPresence && onlinePeers.length > 0 && (
         <div className="flex items-center gap-2">
-          <Users className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground">
+          <Users className="text-muted-foreground h-4 w-4" />
+          <span className="text-muted-foreground text-sm">
             {onlinePeers.length} {onlinePeers.length === 1 ? 'user' : 'users'} online
           </span>
           <div className="flex -space-x-2">
             {onlinePeers.slice(0, 5).map(peer => (
               <Avatar
                 key={peer.peerId}
-                className="h-6 w-6 border-2 border-background"
+                className="border-background h-6 w-6 border-2"
                 title={peer.name}
               >
                 {peer.avatar ? <AvatarImage src={peer.avatar} alt={peer.name} /> : null}
@@ -97,7 +100,7 @@ export function EditorHeader({
               </Avatar>
             ))}
             {onlinePeers.length > 5 && (
-              <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-background bg-muted text-xs">
+              <div className="border-background bg-muted flex h-6 w-6 items-center justify-center rounded-full border-2 text-xs">
                 +{onlinePeers.length - 5}
               </div>
             )}
@@ -109,7 +112,7 @@ export function EditorHeader({
       {statusBadge}
 
       {/* Save status */}
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+      <div className="text-muted-foreground flex items-center gap-2 text-xs">
         {saveStatus === 'saving' || isSavingTitle ? (
           <>
             <Loader2 className="h-3 w-3 animate-spin" />

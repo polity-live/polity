@@ -1,5 +1,7 @@
 'use client';
 
+import { useMemo } from 'react';
+import { Link } from '@tanstack/react-router';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Trophy, Users, Repeat } from 'lucide-react';
@@ -40,6 +42,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/ava
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { DelegatesOverview } from '@/features/delegates/ui/DelegatesOverview';
+import { MembershipCompositionPanel } from '@/features/groups/ui/MembershipCompositionPanel';
 import { EventDeadlinesCard } from './ui/EventDeadlinesCard';
 import { useEventWikiPage } from './hooks/useEventWikiPage';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
@@ -48,6 +51,7 @@ import { getEventTypeTranslationKey } from './logic/getEventTypeTranslationKey';
 import { MeetingPage } from '@/features/meet/MeetingPage';
 import { buildEventWikiIncumbentSections } from './logic/buildEventWikiIncumbentSections';
 import { WikiIncumbentPanel } from '@/features/shared/ui/wiki/WikiIncumbentPanel';
+import { useDelegateAssemblyParticipantsComposition } from './hooks/useDelegateAssemblyParticipantsComposition';
 
 interface EventWikiProps {
   eventId: string;
@@ -107,6 +111,34 @@ export function EventWiki({ eventId }: EventWikiProps) {
     event.roles ?? [],
     event.participants ?? []
   );
+  const isAssemblyEventType =
+    event.event_type === 'delegate_assembly' || event.event_type === 'general_assembly';
+  const shouldDisableParticipationRequest =
+    isAssemblyEventType &&
+    !participation.isParticipant &&
+    !participation.hasRequested &&
+    !participation.isInvited;
+  const participationDisabledReason = shouldDisableParticipationRequest
+    ? 'Only members of the associated group can participate in this general assembly'
+    : undefined;
+  const activeDelegateAssemblyParticipants = useMemo(
+    () =>
+      (event.participants ?? []).filter(participant =>
+        ['active', 'member', 'admin', 'confirmed'].includes(participant.status ?? '')
+      ),
+    [event.participants]
+  );
+  const eventDescription = typeof event.description === 'string' ? event.description : undefined;
+  const {
+    showComposition,
+    participantsWithProvenance,
+    compositionBuckets,
+    isLoading: compositionIsLoading,
+  } = useDelegateAssemblyParticipantsComposition(event, activeDelegateAssemblyParticipants);
+  const delegateParticipantsForDialog = showComposition
+    ? participantsWithProvenance
+    : activeDelegateAssemblyParticipants;
+  type DelegateDialogParticipant = (typeof participantsWithProvenance)[number];
 
   return (
     <div>
@@ -144,17 +176,44 @@ export function EventWiki({ eventId }: EventWikiProps) {
 
         {/* Organizer Info */}
         <div className="mt-4 flex items-center justify-center gap-3">
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={event.creator?.avatar ?? undefined} />
-            <AvatarFallback>{event.creator?.first_name?.[0]?.toUpperCase() || 'O'}</AvatarFallback>
-          </Avatar>
+          {event.creator?.id ? (
+            <Link to="/user/$id" params={{ id: event.creator.id }} className="rounded-full">
+              <Avatar className="h-10 w-10 transition-opacity hover:opacity-90">
+                <AvatarImage src={event.creator?.avatar ?? undefined} />
+                <AvatarFallback>
+                  {event.creator?.first_name?.[0]?.toUpperCase() || 'O'}
+                </AvatarFallback>
+              </Avatar>
+            </Link>
+          ) : (
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={event.creator?.avatar ?? undefined} />
+              <AvatarFallback>
+                {event.creator?.first_name?.[0]?.toUpperCase() || 'O'}
+              </AvatarFallback>
+            </Avatar>
+          )}
           <div className="text-left">
             <p className="text-sm font-medium">
-              {t('components.labels.organizedBy')} {event.creator?.first_name || 'Unknown'}
+              {t('components.labels.organizedBy')}{' '}
+              {event.creator?.id ? (
+                <Link to="/user/$id" params={{ id: event.creator.id }} className="hover:underline">
+                  {event.creator?.first_name || 'Unknown'}
+                </Link>
+              ) : (
+                event.creator?.first_name || 'Unknown'
+              )}
             </p>
             {event.group && (
               <p className="text-muted-foreground text-xs">
-                {t('components.labels.partOf')} {event.group.name}
+                {t('components.labels.partOf')}{' '}
+                <Link
+                  to="/group/$id"
+                  params={{ id: event.group.id }}
+                  className="hover:text-foreground hover:underline"
+                >
+                  {event.group.name}
+                </Link>
               </p>
             )}
           </div>
@@ -214,6 +273,8 @@ export function EventWiki({ eventId }: EventWikiProps) {
           onLeave={participation.leaveEvent}
           onAcceptInvitation={participation.acceptInvitation}
           isLoading={participation.isLoading}
+          disabled={shouldDisableParticipationRequest}
+          disabledReason={participationDisabledReason}
         />
         {elections.length > 0 && user && (
           <Button variant="outline" onClick={() => setElectionsDialogOpen(true)}>
@@ -224,12 +285,12 @@ export function EventWiki({ eventId }: EventWikiProps) {
         <ShareButton
           url={`/event/${eventId}`}
           title={event.title ?? ''}
-          description={event.description || ''}
+          description={eventDescription ?? ''}
           shareContextItem={{
             id: eventId,
             type: 'event',
             title: event.title ?? '',
-            description: event.description,
+            description: eventDescription,
             createdAt: event.start_date ? new Date(event.start_date) : new Date(),
             startDate: event.start_date ? new Date(event.start_date) : undefined,
             endDate: event.end_date ? new Date(event.end_date) : undefined,
@@ -436,52 +497,69 @@ export function EventWiki({ eventId }: EventWikiProps) {
 
           {event.event_type === 'delegate_assembly' ? (
             <Tabs defaultValue="participants" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList
+                className={`grid w-full ${showComposition ? 'grid-cols-3' : 'grid-cols-2'}`}
+              >
                 <TabsTrigger value="participants">Participants</TabsTrigger>
                 <TabsTrigger value="delegates">Delegates by Subgroup</TabsTrigger>
+                {showComposition ? (
+                  <TabsTrigger value="composition">Composition</TabsTrigger>
+                ) : null}
               </TabsList>
 
               <TabsContent value="participants" className="space-y-4">
                 <div className="grid gap-4 py-4 sm:grid-cols-2">
-                  {event.participants && event.participants.length > 0 ? (
-                    event.participants.map(participant => (
-                      <Card
-                        key={participant.id}
-                        className="cursor-pointer transition-all duration-300 hover:shadow-lg"
-                        onClick={() => navigate({ to: `/user/${participant.user?.id}` })}
-                      >
-                        <CardContent className="flex items-center gap-4 p-4">
-                          <Avatar className="h-12 w-12">
-                            <AvatarImage
-                              src={participant.user?.avatar ?? undefined}
-                              alt={
-                                `${participant.user?.first_name ?? ''} ${participant.user?.last_name ?? ''}`.trim() ||
-                                'User'
-                              }
-                            />
-                            <AvatarFallback>
-                              {participant.user?.first_name?.[0]?.toUpperCase() || '?'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 space-y-1">
-                            <p className="leading-none font-semibold">
-                              {`${participant.user?.first_name ?? ''} ${participant.user?.last_name ?? ''}`.trim() ||
-                                'Unknown'}
-                            </p>
-                            {participant.user?.handle && (
-                              <p className="text-muted-foreground text-sm">
-                                @{participant.user.handle}
+                  {delegateParticipantsForDialog.length > 0 ? (
+                    (delegateParticipantsForDialog as DelegateDialogParticipant[]).map(
+                      participant => (
+                        <Card
+                          key={participant.id}
+                          className="cursor-pointer transition-all duration-300 hover:shadow-lg"
+                          onClick={() => navigate({ to: `/user/${participant.user?.id}` })}
+                        >
+                          <CardContent className="flex items-center gap-4 p-4">
+                            <Avatar className="h-12 w-12">
+                              <AvatarImage
+                                src={participant.user?.avatar ?? undefined}
+                                alt={
+                                  `${participant.user?.first_name ?? ''} ${participant.user?.last_name ?? ''}`.trim() ||
+                                  'User'
+                                }
+                              />
+                              <AvatarFallback>
+                                {participant.user?.first_name?.[0]?.toUpperCase() || '?'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 space-y-1">
+                              <p className="leading-none font-semibold">
+                                {`${participant.user?.first_name ?? ''} ${participant.user?.last_name ?? ''}`.trim() ||
+                                  'Unknown'}
                               </p>
-                            )}
-                            {participant.status && (
-                              <Badge variant="secondary" className="text-xs">
-                                {participant.status}
-                              </Badge>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))
+                              {participant.user?.handle && (
+                                <p className="text-muted-foreground text-sm">
+                                  @{participant.user.handle}
+                                </p>
+                              )}
+                              {participant.status && (
+                                <Badge variant="secondary" className="text-xs">
+                                  {participant.status}
+                                </Badge>
+                              )}
+                              {showComposition && participant.partGroup?.name ? (
+                                <Badge variant="outline" className="text-xs">
+                                  Subgroup: {participant.partGroup.name}
+                                </Badge>
+                              ) : null}
+                              {showComposition && participant.baseGroup?.name ? (
+                                <Badge variant="outline" className="text-xs">
+                                  Base group: {participant.baseGroup.name}
+                                </Badge>
+                              ) : null}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )
+                    )
                   ) : (
                     <div className="text-muted-foreground col-span-2 py-8 text-center">
                       No participants yet
@@ -493,6 +571,15 @@ export function EventWiki({ eventId }: EventWikiProps) {
               <TabsContent value="delegates" className="space-y-4">
                 <DelegatesOverview eventId={event.id} groupId={event.group?.id} />
               </TabsContent>
+
+              {showComposition ? (
+                <TabsContent value="composition" className="space-y-4 py-4">
+                  <MembershipCompositionPanel
+                    buckets={compositionBuckets}
+                    isLoading={compositionIsLoading}
+                  />
+                </TabsContent>
+              ) : null}
             </Tabs>
           ) : (
             <div className="grid gap-4 py-4 sm:grid-cols-2">

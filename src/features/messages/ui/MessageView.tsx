@@ -59,13 +59,13 @@ export function MessageView({
   return (
     <Card
       className={cn(
-        'flex flex-col overflow-hidden md:col-span-2',
+        'flex h-full min-h-0 flex-col overflow-hidden md:col-span-2',
         !conversation && 'hidden md:flex',
         className
       )}
     >
       {conversation ? (
-        <div className="flex h-full flex-col">
+        <div className="flex h-full min-h-0 flex-col">
           <ConversationHeader
             conversation={conversation}
             currentUserId={currentUserId}

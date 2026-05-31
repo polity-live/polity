@@ -1,23 +1,18 @@
 'use client';
 
-import type { TypeaheadItem, EntityType } from '@/features/shared/logic/typeaheadHelpers';
-import { groupResultsByType } from '@/features/shared/logic/typeaheadHelpers';
-import { TypeaheadResultCard } from './TypeaheadResultCard';
-import { getEntityIcon } from '@/features/shared/logic/entityCardHelpers';
-import { cn } from '@/features/shared/utils/utils';
 import { useMemo } from 'react';
-
-const ENTITY_TYPE_LABELS: Record<EntityType, string> = {
-  user: 'Users',
-  group: 'Groups',
-  amendment: 'Amendments',
-  event: 'Events',
-  election: 'Elections',
-  role: 'Roles',
-};
+import { getEntityIcon } from '@/features/shared/logic/entityCardHelpers';
+import {
+  groupResultsByType,
+  TYPEAHEAD_ENTITY_GROUP_LABELS,
+  TYPEAHEAD_ENTITY_ORDER,
+  type TypeaheadItem,
+} from '@/features/shared/logic/typeaheadHelpers';
+import { cn } from '@/features/shared/utils/utils';
+import { TypeaheadResultCard } from './TypeaheadResultCard';
 
 interface TypeaheadDropdownProps {
-  results: TypeaheadItem[];
+  results: readonly TypeaheadItem[];
   query: string;
   selectedIndex: number;
   onSelect: (item: TypeaheadItem) => void;
@@ -36,7 +31,6 @@ export function TypeaheadDropdown({
   className,
 }: TypeaheadDropdownProps) {
   const grouped = useMemo(() => groupResultsByType(results), [results]);
-  const typeOrder: EntityType[] = ['user', 'group', 'amendment', 'event', 'election', 'role'];
 
   if (isLoading) {
     return (
@@ -70,17 +64,20 @@ export function TypeaheadDropdown({
     <div
       className={cn('bg-popover max-h-80 overflow-y-auto rounded-md border shadow-lg', className)}
     >
-      {typeOrder.map(type => {
-        const items = grouped[type];
-        if (!items || items.length === 0) return null;
-        const Icon = getEntityIcon(type);
+      {TYPEAHEAD_ENTITY_ORDER.map(entityType => {
+        const items = grouped[entityType];
+        if (!items || items.length === 0) {
+          return null;
+        }
+
+        const Icon = getEntityIcon(entityType);
 
         return (
-          <div key={type}>
+          <div key={entityType}>
             <div className="bg-popover/95 sticky top-0 z-10 flex items-center gap-2 border-b px-3 py-1.5 backdrop-blur">
               <Icon className="text-muted-foreground h-3.5 w-3.5" />
               <span className="text-muted-foreground text-xs font-semibold uppercase">
-                {ENTITY_TYPE_LABELS[type]}
+                {TYPEAHEAD_ENTITY_GROUP_LABELS[entityType]}
               </span>
             </div>
             <div className="p-1">
@@ -88,7 +85,7 @@ export function TypeaheadDropdown({
                 const currentIndex = flatIndex++;
                 return (
                   <TypeaheadResultCard
-                    key={item.id}
+                    key={`${item.entityType}:${item.id}`}
                     item={item}
                     query={query}
                     isSelected={currentIndex === selectedIndex}

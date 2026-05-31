@@ -1,8 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useAuth } from '@/providers/auth-provider';
-import { useGroupById } from '@/zero/groups/useGroupState';
+import { useGroupById, useGroupState } from '@/zero/groups/useGroupState';
+import { useUserState } from '@/zero/users/useUserState';
 import { useTodoMutations } from '@/features/todos/hooks/useTodoMutations';
+import { getUserDisplayName } from '@/features/search/utils/searchUtils';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { toast } from 'sonner';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
@@ -11,12 +13,12 @@ import { StatusInput } from '../ui/inputs/StatusInput';
 import { VisibilityInput } from '../ui/inputs/VisibilityInput';
 import { UserSearchInput } from '../ui/inputs/UserSearchInput';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
-import { CreateInputField, CreateTextareaField } from '../ui/CreateFields';
+import { CreateInputField, CreateTextareaField, CreateTypeaheadField } from '../ui/CreateFields';
+import { mergeCreateSearchParams } from '../logic/createSearchParams';
 import type { CreateFormConfig } from '../types/create-form.types';
 
 interface CreateTodoSearch {
   groupId?: string;
-  returnGroupId?: string;
   returnSection?: 'todos';
 }
 
@@ -26,11 +28,20 @@ export function useCreateTodoForm(): CreateFormConfig {
   const searchParams = useSearch({ strict: false }) as CreateTodoSearch;
   const { user } = useAuth();
   const { createTodo, isLoading } = useTodoMutations();
-
-  const groupId = searchParams.groupId ?? '';
-  const returnGroupId = searchParams.returnGroupId;
+  const { allUsers } = useUserState({ includeAllUsers: true });
+  const groupIdParam = searchParams.groupId ?? '';
   const returnSection = searchParams.returnSection;
+  const [groupId, setGroupId] = useState(() => groupIdParam);
+  const [groupName, setGroupName] = useState('');
   const { group } = useGroupById(groupId || undefined);
+  const { currentUserMembershipsWithGroups } = useGroupState({
+    includeCurrentUserMembershipsWithGroups: true,
+  });
+
+  const memberGroupIds = useMemo(
+    () => new Set(currentUserMembershipsWithGroups.map(membership => membership.group_id)),
+    [currentUserMembershipsWithGroups]
+  );
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -42,7 +53,61 @@ export function useCreateTodoForm(): CreateFormConfig {
   const [visibility, setVisibility] = useState<'public' | 'authenticated' | 'private'>('private');
   const [tags, setTags] = useState<string[]>([]);
   const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
-  const groupDisplayName = group?.name ?? groupId;
+
+  useEffect(() => {
+    setGroupId(groupIdParam);
+  }, [groupIdParam]);
+
+  useEffect(() => {
+    if (!groupId) {
+      if (groupName) {
+        setGroupName('');
+      }
+      return;
+    }
+
+    const nextGroupName = group?.name ?? '';
+    if (nextGroupName && nextGroupName !== groupName) {
+      setGroupName(nextGroupName);
+    }
+  }, [group?.name, groupId, groupName]);
+
+  const syncGroupSearch = useCallback(
+    (nextGroupId: string) => {
+      navigate({
+        to: '/create/todo',
+        search: mergeCreateSearchParams(searchParams, {
+          groupId: nextGroupId || undefined,
+        }),
+        replace: true,
+      });
+    },
+    [navigate, searchParams]
+  );
+
+  const handleGroupChange = useCallback(
+    (nextGroupId: string, nextGroupName: string) => {
+      setGroupId(nextGroupId);
+      setGroupName(nextGroupName);
+      syncGroupSearch(nextGroupId);
+    },
+    [syncGroupSearch]
+  );
+
+  const groupDisplayName = groupName || group?.name || groupId;
+  const assigneeNames = assigneeIds
+    .map(assigneeId => {
+      const matchedUser = allUsers.find(currentUser => currentUser.id === assigneeId);
+      return getUserDisplayName(matchedUser) || assigneeId;
+    })
+    .filter(Boolean);
+  const visibilityLabel = groupId
+    ? t('pages.create.todo.groupVisibilityLabel', 'Group')
+    : visibility === 'public'
+      ? t('pages.create.common.public')
+      : visibility === 'authenticated'
+        ? t('pages.create.common.authenticated')
+        : t('pages.create.common.private');
 
   const handleSubmit = async () => {
     if (!title.trim() || !user?.id) return;
@@ -61,10 +126,10 @@ export function useCreateTodoForm(): CreateFormConfig {
       });
       toast.success(t('pages.create.success.created'));
 
-      if (returnGroupId && returnSection === 'todos') {
+      if (returnSection === 'todos' && groupId) {
         navigate({
           to: '/group/$id/operation',
-          params: { id: returnGroupId },
+          params: { id: groupId },
           hash: returnSection,
         });
         return;
@@ -88,12 +153,20 @@ export function useCreateTodoForm(): CreateFormConfig {
           isValid: () => !!title.trim(),
           content: (
             <div className="space-y-4">
-              {groupId ? (
-                <div className="bg-muted/40 space-y-2 rounded-md border px-3 py-2">
-                  <p className="text-sm font-medium">{t('pages.create.common.group')}</p>
-                  <p className="text-muted-foreground text-sm">{groupDisplayName}</p>
-                </div>
-              ) : null}
+              <CreateTypeaheadField
+                label={t('pages.create.common.group')}
+                hint={t(
+                  'pages.create.todo.groupHint',
+                  'Optionally link this task to one of your groups.'
+                )}
+                entityTypes={['group']}
+                value={groupId || undefined}
+                onChange={item => {
+                  handleGroupChange(item?.id ?? '', item?.label ?? '');
+                }}
+                placeholder={t('pages.create.common.searchGroup')}
+                filterFn={item => memberGroupIds.has(item.id)}
+              />
               <CreateInputField
                 label={t('pages.create.todo.titleLabel')}
                 required
@@ -178,35 +251,46 @@ export function useCreateTodoForm(): CreateFormConfig {
               badge={t('pages.create.todo.reviewBadge')}
               title={title || t('pages.create.todo.titlePlaceholder')}
               subtitle={description || undefined}
-              fields={[
-                ...(groupId
-                  ? [{ label: t('pages.create.common.group'), value: groupDisplayName }]
-                  : []),
+              sections={[
                 {
-                  label: t('pages.create.todo.priorityLabel'),
-                  value: t(`pages.create.todo.priority.${priority}`),
+                  title: t('pages.create.todo.priorityLabel'),
+                  fields: [
+                    ...(groupId
+                      ? [{ label: t('pages.create.common.group'), value: groupDisplayName }]
+                      : []),
+                    {
+                      label: t('pages.create.todo.priorityLabel'),
+                      value: t(`pages.create.todo.priority.${priority}`),
+                    },
+                    {
+                      label: t('pages.create.todo.statusLabel'),
+                      value: t(`features.todos.status.${status}`),
+                    },
+                    ...(dueDate
+                      ? [{ label: t('pages.create.todo.dueDateLabel'), value: dueDate }]
+                      : []),
+                  ],
                 },
-                { label: t('pages.create.todo.statusLabel'), value: status },
-                ...(assigneeIds.length > 0
-                  ? [
-                      {
-                        label: t('pages.create.todo.assignedTo'),
-                        value: `${assigneeIds.length} user(s)`,
-                      },
-                    ]
-                  : []),
-                ...(dueDate
-                  ? [{ label: t('pages.create.todo.dueDateLabel'), value: dueDate }]
-                  : []),
                 {
-                  label: t('pages.create.common.visibility'),
-                  value: groupId
-                    ? t('pages.create.todo.groupVisibilityLabel', 'Group')
-                    : visibility,
+                  title: t('pages.create.todo.assignTo'),
+                  fields: [
+                    ...(assigneeNames.length > 0
+                      ? [
+                          {
+                            label: t('pages.create.todo.assignedTo'),
+                            value: assigneeNames.join(', '),
+                          },
+                        ]
+                      : []),
+                    {
+                      label: t('pages.create.common.visibility'),
+                      value: visibilityLabel,
+                    },
+                    ...(tags.length > 0
+                      ? [{ label: t('pages.create.todo.tagsLabel'), value: tags.join(', ') }]
+                      : []),
+                  ],
                 },
-                ...(tags.length > 0
-                  ? [{ label: t('pages.create.todo.tagsLabel'), value: tags.join(', ') }]
-                  : []),
               ]}
             />
           ),
@@ -221,10 +305,14 @@ export function useCreateTodoForm(): CreateFormConfig {
       assigneeIds,
       dueDate,
       visibility,
+      visibilityLabel,
       tags,
+      assigneeNames,
+      memberGroupIds,
       isLoading,
       groupId,
       groupDisplayName,
+      handleGroupChange,
       t,
     ]
   );

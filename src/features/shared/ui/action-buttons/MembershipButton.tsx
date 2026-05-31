@@ -1,9 +1,12 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
 import { UserPlus, UserMinus, Clock, Check } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
+import type { GroupConflictResponse } from '@/features/groups/logic/groupConflict';
+import { GroupConflictDialog } from '@/features/groups/ui/GroupConflictPanel';
 
 export type MembershipStatus = 'invited' | 'requested' | 'member' | 'admin' | 'collaborator';
 export type MembershipAction = 'join' | 'participate' | 'collaborate';
@@ -49,6 +52,9 @@ interface MembershipButtonProps {
 
   /** Reason shown in tooltip when disabled */
   disabledReason?: string;
+
+  /** Optional structured conflict details for disabled actions */
+  conflictResponse?: GroupConflictResponse | null;
 }
 
 /**
@@ -67,8 +73,11 @@ export function MembershipButton({
   className,
   disabled,
   disabledReason,
+  conflictResponse,
 }: MembershipButtonProps) {
   const { t } = useTranslation();
+  const [showDisabledReason, setShowDisabledReason] = useState(false);
+  const longPressTimeoutRef = useRef<number | null>(null);
 
   // Get appropriate labels based on action type
   const getLabels = () => {
@@ -99,28 +108,152 @@ export function MembershipButton({
 
   const labels = getLabels();
 
+  const buttonConfig = isInvited
+    ? {
+        label: labels.accept,
+        icon: Check,
+        variant: 'default' as const,
+        onClick: onAcceptInvitation,
+      }
+    : hasRequested
+      ? {
+          label: labels.pending,
+          icon: Clock,
+          variant: 'outline' as const,
+          onClick: onLeave,
+        }
+      : isMember
+        ? {
+            label: labels.leave,
+            icon: UserMinus,
+            variant: 'outline' as const,
+            onClick: onLeave,
+          }
+        : {
+            label: labels.request,
+            icon: UserPlus,
+            variant: 'default' as const,
+            onClick: onRequest,
+          };
+
+  useEffect(() => {
+    return () => {
+      if (longPressTimeoutRef.current !== null) {
+        window.clearTimeout(longPressTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const clearLongPressTimeout = () => {
+    if (longPressTimeoutRef.current !== null) {
+      window.clearTimeout(longPressTimeoutRef.current);
+      longPressTimeoutRef.current = null;
+    }
+  };
+
   if (disabled) {
-    const btn = (
-      <Button disabled variant="outline" className={className}>
-        <UserPlus className="mr-2 h-4 w-4" />
-        {labels.request}
+    const Icon = buttonConfig.icon;
+    const disabledButton = (
+      <Button disabled variant={buttonConfig.variant} className={className}>
+        <Icon className="mr-2 h-4 w-4" />
+        {buttonConfig.label}
+        {disabledReason ? (
+          <span
+            aria-hidden="true"
+            className="inline-flex size-4 items-center justify-center rounded-full border border-current/40 text-[0.65rem] leading-none font-semibold"
+          >
+            ?
+          </span>
+        ) : null}
       </Button>
     );
-    if (disabledReason) {
-      return (
-        <Tooltip>
-          <TooltipTrigger asChild>{btn}</TooltipTrigger>
-          <TooltipContent>{disabledReason}</TooltipContent>
-        </Tooltip>
-      );
-    }
-    return btn;
+
+    const content = disabledReason ? (
+      <Tooltip open={showDisabledReason} onOpenChange={setShowDisabledReason}>
+        <TooltipTrigger asChild>
+          <span
+            tabIndex={0}
+            className="inline-flex cursor-help"
+            aria-label={`${buttonConfig.label}: ${disabledReason}`}
+            onPointerDown={event => {
+              if (event.pointerType !== 'touch') {
+                return;
+              }
+
+              clearLongPressTimeout();
+              longPressTimeoutRef.current = window.setTimeout(() => {
+                setShowDisabledReason(true);
+              }, 350);
+            }}
+            onPointerUp={() => {
+              clearLongPressTimeout();
+              setShowDisabledReason(false);
+            }}
+            onPointerCancel={() => {
+              clearLongPressTimeout();
+              setShowDisabledReason(false);
+            }}
+            onPointerLeave={() => {
+              clearLongPressTimeout();
+            }}
+            onBlur={() => setShowDisabledReason(false)}
+          >
+            {disabledButton}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" sideOffset={6}>
+          {disabledReason}
+        </TooltipContent>
+      </Tooltip>
+    ) : (
+      disabledButton
+    );
+
+    return (
+      <div className="flex items-center gap-2">
+        {content}
+        <GroupConflictDialog
+          response={conflictResponse}
+          triggerLabel="Warum?"
+          triggerVariant="ghost"
+          title="Warum ist diese Aktion blockiert?"
+        />
+      </div>
+    );
+  }
+
+  if (hasRequested) {
+    return (
+      <Button
+        onClick={buttonConfig.onClick}
+        disabled={isLoading}
+        variant="outline"
+        className={className}
+      >
+        <Clock className="mr-2 h-4 w-4" />
+        {labels.pending}
+      </Button>
+    );
+  }
+
+  if (isMember) {
+    return (
+      <Button
+        onClick={buttonConfig.onClick}
+        disabled={isLoading}
+        variant="outline"
+        className={className}
+      >
+        <UserMinus className="mr-2 h-4 w-4" />
+        {labels.leave}
+      </Button>
+    );
   }
 
   if (isInvited) {
     return (
       <Button
-        onClick={onAcceptInvitation}
+        onClick={buttonConfig.onClick}
         disabled={isLoading}
         variant="default"
         className={className}
@@ -131,26 +264,8 @@ export function MembershipButton({
     );
   }
 
-  if (hasRequested) {
-    return (
-      <Button onClick={onLeave} disabled={isLoading} variant="outline" className={className}>
-        <Clock className="mr-2 h-4 w-4" />
-        {labels.pending}
-      </Button>
-    );
-  }
-
-  if (isMember) {
-    return (
-      <Button onClick={onLeave} disabled={isLoading} variant="outline" className={className}>
-        <UserMinus className="mr-2 h-4 w-4" />
-        {labels.leave}
-      </Button>
-    );
-  }
-
   return (
-    <Button onClick={onRequest} disabled={isLoading} className={className}>
+    <Button onClick={buttonConfig.onClick} disabled={isLoading} className={className}>
       <UserPlus className="mr-2 h-4 w-4" />
       {labels.request}
     </Button>

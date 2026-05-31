@@ -4,6 +4,10 @@ import { Label } from '@/features/shared/ui/ui/label';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Textarea } from '@/features/shared/ui/ui/textarea';
 import { TypeaheadSearch } from '@/features/shared/ui/typeahead';
+import type {
+  TypeaheadMultiProps,
+  TypeaheadSingleProps,
+} from '@/features/shared/ui/typeahead/TypeaheadSearch';
 import { cn } from '@/features/shared/utils/utils';
 
 type CreateFieldValidator = (value: string) => string | null;
@@ -30,8 +34,13 @@ interface CreateTextareaFieldProps
   onValueChange: (value: string) => void;
 }
 
-interface CreateTypeaheadFieldProps
-  extends Omit<ComponentProps<typeof TypeaheadSearch>, 'label'>, CreateFieldBaseProps {}
+type CreateTypeaheadFieldProps =
+  | ((Omit<TypeaheadSingleProps, 'label' | 'className' | 'onInteract'> & CreateFieldBaseProps) & {
+      className?: string;
+    })
+  | ((Omit<TypeaheadMultiProps, 'label' | 'className' | 'onInteract'> & CreateFieldBaseProps) & {
+      className?: string;
+    });
 
 function normalizeValue(value: string | number | null | undefined): string {
   if (value === null || value === undefined) {
@@ -216,12 +225,17 @@ export function CreateTypeaheadField({
   labelClassName,
   hintClassName,
   className,
-  value,
-  onChange,
   ...typeaheadProps
 }: CreateTypeaheadFieldProps) {
+  const multiple = typeaheadProps.multiple === true;
+  const fieldValue = multiple
+    ? (
+        typeaheadProps as Omit<TypeaheadMultiProps, 'label' | 'className' | 'onInteract'>
+      ).values.join(' ')
+    : ((typeaheadProps as Omit<TypeaheadSingleProps, 'label' | 'className' | 'onInteract'>).value ??
+      '');
   const { hintText, isInvalid, isValid, markInteracted } = useCreateFieldState(
-    value ?? '',
+    fieldValue,
     hint,
     required,
     undefined
@@ -235,22 +249,56 @@ export function CreateTypeaheadField({
           {required ? <span className="text-destructive"> *</span> : null}
         </Label>
       ) : null}
-      <TypeaheadSearch
-        {...typeaheadProps}
-        value={value}
-        onInteract={markInteracted}
-        onChange={item => {
-          markInteracted();
-          onChange(item);
-        }}
-        className={cn(
-          isInvalid &&
-            '[&_[data-slot=input]]:border-destructive [&_[data-slot=input]]:focus-visible:ring-destructive/20 dark:[&_[data-slot=input]]:focus-visible:ring-destructive/40 [&_[data-slot=typeahead-selected]]:border-destructive',
-          isValid &&
-            '[&_[data-slot=input]]:border-emerald-500 [&_[data-slot=input]]:focus-visible:ring-emerald-500/20 dark:[&_[data-slot=input]]:border-emerald-400 dark:[&_[data-slot=input]]:focus-visible:ring-emerald-500/30 [&_[data-slot=typeahead-selected]]:border-emerald-500 dark:[&_[data-slot=typeahead-selected]]:border-emerald-400',
-          className
-        )}
-      />
+      {multiple
+        ? (() => {
+            const multiProps = typeaheadProps as Omit<
+              TypeaheadMultiProps,
+              'label' | 'className' | 'onInteract'
+            >;
+
+            return (
+              <TypeaheadSearch
+                {...multiProps}
+                multiple
+                onInteract={markInteracted}
+                onValuesChange={nextIds => {
+                  markInteracted();
+                  multiProps.onValuesChange(nextIds);
+                }}
+                className={cn(
+                  isInvalid &&
+                    '[&_[data-slot=input]]:border-destructive [&_[data-slot=input]]:focus-visible:ring-destructive/20 dark:[&_[data-slot=input]]:focus-visible:ring-destructive/40 [&_[data-slot=typeahead-selected]]:border-destructive [&_[data-slot=typeahead-selected-list]]:border-destructive',
+                  isValid &&
+                    '[&_[data-slot=input]]:border-emerald-500 [&_[data-slot=input]]:focus-visible:ring-emerald-500/20 dark:[&_[data-slot=input]]:border-emerald-400 dark:[&_[data-slot=input]]:focus-visible:ring-emerald-500/30 [&_[data-slot=typeahead-selected]]:border-emerald-500 dark:[&_[data-slot=typeahead-selected]]:border-emerald-400',
+                  className
+                )}
+              />
+            );
+          })()
+        : (() => {
+            const singleProps = typeaheadProps as Omit<
+              TypeaheadSingleProps,
+              'label' | 'className' | 'onInteract'
+            >;
+
+            return (
+              <TypeaheadSearch
+                {...singleProps}
+                onInteract={markInteracted}
+                onChange={item => {
+                  markInteracted();
+                  singleProps.onChange(item);
+                }}
+                className={cn(
+                  isInvalid &&
+                    '[&_[data-slot=input]]:border-destructive [&_[data-slot=input]]:focus-visible:ring-destructive/20 dark:[&_[data-slot=input]]:focus-visible:ring-destructive/40 [&_[data-slot=typeahead-selected]]:border-destructive',
+                  isValid &&
+                    '[&_[data-slot=input]]:border-emerald-500 [&_[data-slot=input]]:focus-visible:ring-emerald-500/20 dark:[&_[data-slot=input]]:border-emerald-400 dark:[&_[data-slot=input]]:focus-visible:ring-emerald-500/30 [&_[data-slot=typeahead-selected]]:border-emerald-500 dark:[&_[data-slot=typeahead-selected]]:border-emerald-400',
+                  className
+                )}
+              />
+            );
+          })()}
       <p className={cn('text-xs', hintClassName ?? getHintToneClass(isInvalid, isValid))}>
         {hintText}
       </p>

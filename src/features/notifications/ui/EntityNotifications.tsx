@@ -35,14 +35,12 @@ export function EntityNotifications({
 }: EntityNotificationsProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { markRead } = useNotificationActions();
+  const { markEntityNotificationRead, markAllEntityNotificationsRead } = useNotificationActions();
 
   const { entityNotifications: notifications, isLoading: isLoadingState } = useNotificationState({
     entityFilter: { entityId, entityType },
   });
 
-  // Auto-mark all entity notifications as read when the component mounts
-  const { markAllEntityNotificationsRead } = useNotificationActions();
   useEffect(() => {
     if (entityId && entityType && notifications.length > 0) {
       markAllEntityNotificationsRead({ entity_id: entityId, entity_type: entityType });
@@ -72,7 +70,12 @@ export function EntityNotifications({
   const handleNotificationClick = async (notification: (typeof notifications)[number]) => {
     // Mark as read on click
     if (!notification.is_read) {
-      markRead({ id: notification.id });
+      markEntityNotificationRead({
+        id: crypto.randomUUID(),
+        notification_id: notification.id,
+        entity_id: entityId,
+        entity_type: entityType,
+      });
     }
 
     const navigationTarget = getNotificationNavigationTarget(notification);
@@ -96,11 +99,8 @@ export function EntityNotifications({
   };
 
   const markAllAsRead = async () => {
-    const unreadIds = unreadNotifications.map(n => n.id);
-    if (unreadIds.length > 0) {
-      for (const notifId of unreadIds) {
-        await markRead({ id: notifId });
-      }
+    if (unreadNotifications.length > 0) {
+      await markAllEntityNotificationsRead({ entity_id: entityId, entity_type: entityType });
     }
   };
 

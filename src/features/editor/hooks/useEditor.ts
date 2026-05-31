@@ -78,6 +78,8 @@ interface UseEditorOptions {
   capabilities?: Partial<EditorCapabilities>;
   /** Agenda item ID for amendment CR voting initialization */
   agendaItemId?: string;
+  /** Force the editor into a read-only UI mode */
+  readOnly?: boolean;
 }
 
 /**
@@ -87,7 +89,7 @@ interface UseEditorOptions {
  * @returns Editor state and actions
  */
 export function useEditor(options: UseEditorOptions): EditorState & EditorActions {
-  const { entityType, entityId, userId, groupId, agendaItemId } = options;
+  const { entityType, entityId, userId, groupId, agendaItemId, readOnly = false } = options;
   const zero = useZero();
   const { updateEditingMode } = useAmendmentActions();
   const { initializeChangeRequestVoting } = useAgendaActions();
@@ -95,7 +97,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
   // Query data based on entity type via facade hooks
   const amId = entityType === 'amendment' ? entityId : undefined;
   const blId = entityType === 'blog' ? entityId : undefined;
-  const dcId = (entityType === 'document' || entityType === 'groupDocument') ? entityId : '';
+  const dcId = entityType === 'document' || entityType === 'groupDocument' ? entityId : '';
 
   const { amendmentDocsCollabs, isLoading: amendmentLoading } = useAmendmentState({
     amendmentId: amId,
@@ -185,7 +187,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
     userId,
     content,
     onRemoteContent: handleRemoteContent,
-    enabled: !!contentEntityId && !!userId,
+    enabled: !!contentEntityId && !!userId && !readOnly,
   });
 
   // Initialize entity data
@@ -250,12 +252,26 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
   // Persist content via Zero
   const saveContent = useCallback(
     async (newContent: Value) => {
+      if (readOnly) {
+        return;
+      }
+
       setSaveStatus('saving');
       try {
         if (entityType === 'blog') {
-          await zero.mutate(mutators.blogs.update({ id: contentEntityId, content: newContent as ReadonlyJSONValue[] }));
+          await zero.mutate(
+            mutators.blogs.update({
+              id: contentEntityId,
+              content: newContent as ReadonlyJSONValue[],
+            })
+          );
         } else {
-          await zero.mutate(mutators.documents.updateContent({ id: contentEntityId, content: newContent as ReadonlyJSONValue[] }));
+          await zero.mutate(
+            mutators.documents.updateContent({
+              id: contentEntityId,
+              content: newContent as ReadonlyJSONValue[],
+            })
+          );
         }
         lastSaveTime.current = Date.now();
         lastRemoteUpdate.current = Date.now();
@@ -266,12 +282,16 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
         setSaveStatus('error');
       }
     },
-    [entityType, contentEntityId, zero]
+    [entityType, contentEntityId, readOnly, zero]
   );
 
   // Content change handler - throttled with trailing edge
   const setContent = useCallback(
     (newContent: Value) => {
+      if (readOnly) {
+        return;
+      }
+
       if (!contentEntityId || !userId) {
         console.warn('⚠️ Cannot save: missing entityId or userId', { contentEntityId, userId });
         return;
@@ -303,12 +323,16 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
         }, 1000);
       }
     },
-    [contentEntityId, userId, saveContent, broadcastContent]
+    [contentEntityId, userId, saveContent, broadcastContent, readOnly]
   );
 
   // Title change handler - debounced
   const setTitle = useCallback(
     (newTitle: string) => {
+      if (readOnly) {
+        return;
+      }
+
       setTitleState(newTitle);
 
       if (titleSaveTimeoutRef.current) {
@@ -324,6 +348,19 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
             await zero.mutate(mutators.amendments.update({ id: entityId, title: newTitle }));
           } else if (entityType === 'blog') {
             await zero.mutate(mutators.blogs.update({ id: contentEntityId, title: newTitle }));
+          } else if (entityType === 'document') {
+            const amendmentId = documentData?.amendment_id;
+            if (!amendmentId) {
+              throw new Error('Cannot save document title: missing parent amendment id');
+            }
+            await zero.mutate(mutators.amendments.update({ id: amendmentId, title: newTitle }));
+          } else if (entityType === 'groupDocument') {
+            await zero.mutate(
+              mutators.documents.updateGroupDocumentTitle({
+                document_id: contentEntityId,
+                title: newTitle,
+              })
+            );
           } else {
             // Documents don't have a title field — title lives on the parent entity
           }
@@ -335,12 +372,16 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
         }
       }, 500);
     },
-    [entityType, entityId, contentEntityId, userId, zero]
+    [entityType, entityId, contentEntityId, userId, zero, documentData?.amendment_id, readOnly]
   );
 
   // Discussions change handler
   const setDiscussions = useCallback(
     async (newDiscussions: TDiscussion[]) => {
+      if (readOnly) {
+        return;
+      }
+
       // Skip if nothing changed — polling fires every 2s even when idle.
       // Without this guard, lastDiscussionsSave gets bumped constantly,
       // which blocks the sync effect from applying remote updates.
@@ -356,11 +397,15 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
       try {
         const serializedDiscussions: ReadonlyJSONValue = JSON.parse(newStr);
         if (entityType === 'blog') {
-          await zero.mutate(mutators.blogs.update({ id: contentEntityId, discussions: serializedDiscussions }));
+          await zero.mutate(
+            mutators.blogs.update({ id: contentEntityId, discussions: serializedDiscussions })
+          );
         } else if (entityType === 'amendment') {
           // Amendments store discussions as a JSON column on the amendment row
           // (not the document). This is where useChangeRequests reads them from.
-          await zero.mutate(mutators.amendments.update({ id: entityId, discussions: serializedDiscussions }));
+          await zero.mutate(
+            mutators.amendments.update({ id: entityId, discussions: serializedDiscussions })
+          );
         }
         // Documents and groupDocuments don't have a discussions column —
         // their discussion data lives in the thread/comment tables.
@@ -368,19 +413,25 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
         console.error('Failed to save discussions:', error);
       }
     },
-    [entityType, entityId, contentEntityId, userId, zero, discussions]
+    [entityType, entityId, contentEntityId, userId, zero, discussions, readOnly]
   );
 
   // Mode change handler
   const setMode = useCallback(
     async (newMode: EditorMode) => {
+      if (readOnly) {
+        return;
+      }
+
       if (!contentEntityId) return;
 
       try {
         if (entityType === 'blog') {
           await zero.mutate(mutators.blogs.update({ id: contentEntityId, editing_mode: newMode }));
         } else {
-          await zero.mutate(mutators.documents.updateContent({ id: contentEntityId, editing_mode: newMode }));
+          await zero.mutate(
+            mutators.documents.updateContent({ id: contentEntityId, editing_mode: newMode })
+          );
         }
 
         // For amendments, also update the amendment record and handle CR voting
@@ -388,15 +439,23 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
           await updateEditingMode(entityId, newMode);
 
           if (newMode === 'vote_event' && agendaItemId) {
-            console.info('[useEditor] Initializing CR voting', { amendmentId: entityId, agendaItemId });
+            console.info('[useEditor] Initializing CR voting', {
+              amendmentId: entityId,
+              agendaItemId,
+            });
             await initializeChangeRequestVoting({
               amendment_id: entityId,
               agenda_item_id: agendaItemId,
               voting_context: 'event',
             });
-            console.info('[useEditor] CR voting initialized', { amendmentId: entityId, agendaItemId });
+            console.info('[useEditor] CR voting initialized', {
+              amendmentId: entityId,
+              agendaItemId,
+            });
           } else if (newMode === 'vote_event' && !agendaItemId) {
-            console.warn('[useEditor] Cannot initialize CR voting — no agenda item linked', { amendmentId: entityId });
+            console.warn('[useEditor] Cannot initialize CR voting — no agenda item linked', {
+              amendmentId: entityId,
+            });
           }
         }
 
@@ -407,19 +466,42 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
         toast.error('Failed to change mode');
       }
     },
-    [entityType, entityId, contentEntityId, agendaItemId, zero, updateEditingMode, initializeChangeRequestVoting]
+    [
+      entityType,
+      entityId,
+      contentEntityId,
+      agendaItemId,
+      zero,
+      updateEditingMode,
+      initializeChangeRequestVoting,
+      readOnly,
+    ]
   );
 
   // Restore version handler
   const handleRestoreVersion = useCallback(
     async (versionContent: Value) => {
+      if (readOnly) {
+        return;
+      }
+
       if (!contentEntityId || !userId) return;
 
       try {
         if (entityType === 'blog') {
-          await zero.mutate(mutators.blogs.update({ id: contentEntityId, content: versionContent as ReadonlyJSONValue[] }));
+          await zero.mutate(
+            mutators.blogs.update({
+              id: contentEntityId,
+              content: versionContent as ReadonlyJSONValue[],
+            })
+          );
         } else {
-          await zero.mutate(mutators.documents.updateContent({ id: contentEntityId, content: versionContent as ReadonlyJSONValue[] }));
+          await zero.mutate(
+            mutators.documents.updateContent({
+              id: contentEntityId,
+              content: versionContent as ReadonlyJSONValue[],
+            })
+          );
         }
         isLocalChange.current = true;
         setContentState(versionContent);
@@ -431,18 +513,19 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
         toast.error('Failed to restore version');
       }
     },
-    [entityType, contentEntityId, userId, zero]
+    [entityType, contentEntityId, userId, zero, readOnly]
   );
 
   // Access checks
   const hasAccess = useMemo(() => {
     if (!entity) return false;
+    if (entityType === 'groupDocument') return true;
     if (entity.visibility === 'public') return true;
     if (entity.visibility === 'authenticated' && !!userId) return true;
     if (!userId) return false;
     if (entity.owner?.id === userId) return true;
     return entity.collaborators.some(c => c.user.id === userId);
-  }, [entity, userId]);
+  }, [entity, entityType, userId]);
 
   const isOwnerOrCollaborator = useMemo(() => {
     if (!entity || !userId) return false;

@@ -34,6 +34,7 @@ import { AgendaElectionSection } from '@/features/agendas/ui/AgendaElectionSecti
 import { AgendaVoteSection } from '@/features/agendas/ui/AgendaVoteSection';
 import type { CandidatesByElectionRow } from '@/zero/elections/queries';
 import type { ChoicesByVoteRow } from '@/zero/votes/queries';
+import { normalizeElectionMode } from '@/features/elections/logic/electionMode';
 
 // Helper function to extract YouTube video ID from URL
 function getYouTubeVideoId(url: string): string | null {
@@ -342,6 +343,10 @@ export function EventStream({ eventId }: { eventId: string }) {
       {election && election.candidates && election.candidates.length > 0 && (
         <AgendaElectionSection
           roleName={election.title ?? t('features.events.agenda.role')}
+          electionMode={
+            election.election_mode ? normalizeElectionMode(election.election_mode) : null
+          }
+          seatCount={election.seat_count}
           candidates={[...election.candidates] as CandidatesByElectionRow[]}
           indicativeSelections={indicativeSelections}
           finalSelections={finalSelections}

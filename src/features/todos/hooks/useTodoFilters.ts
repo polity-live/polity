@@ -5,7 +5,6 @@ import {
   type PqlQuickFilterDefinition,
 } from '@/features/pql/hooks/usePqlCollection';
 import type { PqlFieldDefinition } from '@/features/pql/logic/applyPqlFilter';
-import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
 import { Todo, TodoStatus } from '../types/todo.types';
 
 export type TodoFieldKey =
@@ -175,31 +174,25 @@ export function useTodoFilters(
 
   const assigneeTypeaheadItems = useMemo(
     () =>
-      toTypeaheadItems(
-        assigneeOptions.map(option => ({
-          id: option.value,
-          label: option.label,
-          secondaryLabel: option.keywords[0] ?? option.keywords[1] ?? undefined,
-        })),
-        'user',
-        option => option.label,
-        option => option.secondaryLabel
-      ),
+      assigneeOptions.map(option => ({
+        id: option.value,
+        entityType: 'user' as const,
+        label: option.label,
+        secondaryLabel: option.keywords[0] ?? option.keywords[1] ?? undefined,
+        keywords: option.keywords,
+      })),
     [assigneeOptions]
   );
 
   const creatorTypeaheadItems = useMemo(
     () =>
-      toTypeaheadItems(
-        creatorOptions.map(option => ({
-          id: option.value,
-          label: option.label,
-          secondaryLabel: option.keywords[0] ?? option.keywords[1] ?? undefined,
-        })),
-        'user',
-        option => option.label,
-        option => option.secondaryLabel
-      ),
+      creatorOptions.map(option => ({
+        id: option.value,
+        entityType: 'user' as const,
+        label: option.label,
+        secondaryLabel: option.keywords[0] ?? option.keywords[1] ?? undefined,
+        keywords: option.keywords,
+      })),
     [creatorOptions]
   );
 

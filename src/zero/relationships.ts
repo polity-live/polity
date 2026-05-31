@@ -7,6 +7,9 @@ import {
   group,
   groupMembership,
   groupMembershipRole,
+  groupGuestAccess,
+  groupGuestRole,
+  groupSiblingSource,
   role,
   roleHolderHistory,
   actionRight,
@@ -135,6 +138,21 @@ export const userRelationships = relationships(user, ({ many }) => ({
     sourceField: ['id'],
     destSchema: groupMembership,
     destField: ['user_id'],
+  }),
+  group_guest_accesses: many({
+    sourceField: ['id'],
+    destSchema: groupGuestAccess,
+    destField: ['user_id'],
+  }),
+  invited_group_guest_accesses: many({
+    sourceField: ['id'],
+    destSchema: groupGuestAccess,
+    destField: ['invited_by_id'],
+  }),
+  assigned_group_guest_roles: many({
+    sourceField: ['id'],
+    destSchema: groupGuestRole,
+    destField: ['assigned_by_id'],
   }),
   owned_groups: many({ sourceField: ['id'], destSchema: group, destField: ['owner_id'] }),
   created_events: many({ sourceField: ['id'], destSchema: event, destField: ['creator_id'] }),
@@ -333,7 +351,32 @@ export const followRelationships = relationships(follow, ({ one }) => ({
 // ============================================
 export const groupRelationships = relationships(group, ({ one, many }) => ({
   owner: one({ sourceField: ['owner_id'], destSchema: user, destField: ['id'] }),
+  connected_group: one({
+    sourceField: ['connected_group_id'],
+    destSchema: group,
+    destField: ['id'],
+  }),
   memberships: many({ sourceField: ['id'], destSchema: groupMembership, destField: ['group_id'] }),
+  guest_accesses: many({
+    sourceField: ['id'],
+    destSchema: groupGuestAccess,
+    destField: ['group_id'],
+  }),
+  sibling_groups: many({
+    sourceField: ['id'],
+    destSchema: group,
+    destField: ['connected_group_id'],
+  }),
+  sibling_sources: many({
+    sourceField: ['id'],
+    destSchema: groupSiblingSource,
+    destField: ['group_id'],
+  }),
+  source_for_sibling_groups: many({
+    sourceField: ['id'],
+    destSchema: groupSiblingSource,
+    destField: ['source_group_id'],
+  }),
   relationships_as_source: many({
     sourceField: ['id'],
     destSchema: groupRelationship,
@@ -370,6 +413,7 @@ export const groupRelationships = relationships(group, ({ one, many }) => ({
 export const groupMembershipRelationships = relationships(groupMembership, ({ one, many }) => ({
   group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
   user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
+  source_group: one({ sourceField: ['source_group_id'], destSchema: group, destField: ['id'] }),
   membership_roles: many({
     sourceField: ['id'],
     destSchema: groupMembershipRole,
@@ -387,6 +431,32 @@ export const groupMembershipRoleRelationships = relationships(groupMembershipRol
   assigned_by: one({ sourceField: ['assigned_by_id'], destSchema: user, destField: ['id'] }),
 }));
 
+export const groupGuestAccessRelationships = relationships(groupGuestAccess, ({ one, many }) => ({
+  group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
+  user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
+  invited_by: one({ sourceField: ['invited_by_id'], destSchema: user, destField: ['id'] }),
+  guest_roles: many({
+    sourceField: ['id'],
+    destSchema: groupGuestRole,
+    destField: ['group_guest_access_id'],
+  }),
+}));
+
+export const groupGuestRoleRelationships = relationships(groupGuestRole, ({ one }) => ({
+  group_guest_access: one({
+    sourceField: ['group_guest_access_id'],
+    destSchema: groupGuestAccess,
+    destField: ['id'],
+  }),
+  role: one({ sourceField: ['role_id'], destSchema: role, destField: ['id'] }),
+  assigned_by: one({ sourceField: ['assigned_by_id'], destSchema: user, destField: ['id'] }),
+}));
+
+export const groupSiblingSourceRelationships = relationships(groupSiblingSource, ({ one }) => ({
+  group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
+  source_group: one({ sourceField: ['source_group_id'], destSchema: group, destField: ['id'] }),
+}));
+
 export const groupRelationshipRelationships = relationships(groupRelationship, ({ one }) => ({
   group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
   related_group: one({ sourceField: ['related_group_id'], destSchema: group, destField: ['id'] }),
@@ -399,6 +469,16 @@ export const roleRelationships = relationships(role, helpers => ({
     sourceField: ['id'],
     destSchema: groupMembershipRole,
     destField: ['role_id'],
+  }),
+  group_guest_roles: helpers.many({
+    sourceField: ['id'],
+    destSchema: groupGuestRole,
+    destField: ['role_id'],
+  }),
+  sibling_groups: helpers.many({
+    sourceField: ['id'],
+    destSchema: group,
+    destField: ['sibling_role_id'],
   }),
   event_participant_roles: helpers.many({
     sourceField: ['id'],
@@ -501,12 +581,14 @@ export const eventParticipantRoleRelationships = relationships(eventParticipantR
 export const eventDelegateRelationships = relationships(eventDelegate, ({ one }) => ({
   event: one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
   user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
+  group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
 }));
 
 export const groupDelegateAllocationRelationships = relationships(
   groupDelegateAllocation,
   ({ one }) => ({
     event: one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
+    group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
   })
 );
 
@@ -607,6 +689,7 @@ export const amendmentCollaboratorRelationships = relationships(
   ({ one }) => ({
     amendment: one({ sourceField: ['amendment_id'], destSchema: amendment, destField: ['id'] }),
     user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
+    role: one({ sourceField: ['role_id'], destSchema: role, destField: ['id'] }),
   })
 );
 
@@ -903,7 +986,7 @@ export const messageRelationships = relationships(message, ({ one }) => ({
 // ============================================
 // Notification relationships
 // ============================================
-export const notificationRelationships = relationships(notification, ({ one }) => ({
+export const notificationRelationships = relationships(notification, ({ one, many }) => ({
   recipient: one({ sourceField: ['recipient_id'], destSchema: user, destField: ['id'] }),
   sender: one({ sourceField: ['sender_id'], destSchema: user, destField: ['id'] }),
   related_user: one({ sourceField: ['related_user_id'], destSchema: user, destField: ['id'] }),
@@ -951,6 +1034,11 @@ export const notificationRelationships = relationships(notification, ({ one }) =
     destField: ['id'],
   }),
   recipient_blog: one({ sourceField: ['recipient_blog_id'], destSchema: blog, destField: ['id'] }),
+  reads: many({
+    sourceField: ['id'],
+    destSchema: notificationRead,
+    destField: ['notification_id'],
+  }),
 }));
 
 export const pushSubscriptionRelationships = relationships(pushSubscription, ({ one }) => ({
@@ -1332,6 +1420,9 @@ export const allRelationships = [
   groupRelationships,
   groupMembershipRelationships,
   groupMembershipRoleRelationships,
+  groupGuestAccessRelationships,
+  groupGuestRoleRelationships,
+  groupSiblingSourceRelationships,
   groupRelationshipRelationships,
   roleRelationships,
   actionRightRelationships,

@@ -55,11 +55,16 @@ export const entityRouteAccessFn = createServerFn({ method: 'POST' })
         }
 
         case 'group': {
-          const [group, memberships] = await Promise.all([
+          const [group, memberships, guestAccesses] = await Promise.all([
             tx.run(zql.group.where('id', data.entityId).one()),
             userId
               ? tx.run(
                   zql.group_membership.where('group_id', data.entityId).where('user_id', userId)
+                )
+              : Promise.resolve([]),
+            userId
+              ? tx.run(
+                  zql.group_guest_access.where('group_id', data.entityId).where('user_id', userId)
                 )
               : Promise.resolve([]),
           ]);
@@ -71,7 +76,8 @@ export const entityRouteAccessFn = createServerFn({ method: 'POST' })
               ? hasPrivateGroupRouteAccess(
                   group.owner_id,
                   userId,
-                  memberships.map(membership => membership.status)
+                  memberships.map(membership => membership.status),
+                  guestAccesses.map(guestAccess => guestAccess.status)
                 )
               : false,
           };

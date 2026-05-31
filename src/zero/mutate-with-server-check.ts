@@ -1,3 +1,8 @@
+import {
+  GroupConflictError,
+  parseGroupConflictResponseMessage,
+} from '@/features/groups/logic/groupConflict';
+
 /**
  * Utilities for Zero mutation server interaction.
  *
@@ -31,7 +36,7 @@ interface MutationResultLike {
 export async function serverConfirmed(result: MutationResultLike): Promise<void> {
   const serverResult = await result.server;
   if (serverResult.type === 'error') {
-    throw new Error(serverResult.error?.message ?? 'Mutation failed on server');
+    throw toMutationError(serverResult.error?.message);
   }
 }
 
@@ -53,10 +58,10 @@ export async function serverConfirmed(result: MutationResultLike): Promise<void>
  */
 export function onServerError(
   result: MutationResultLike,
-  onError: (message: string) => void,
+  onError: (message: string) => void
 ): void {
   result.server
-    .then((serverResult) => {
+    .then(serverResult => {
       if (serverResult.type === 'error') {
         onError(serverResult.error?.message ?? 'Mutation failed on server');
       }
@@ -64,4 +69,13 @@ export function onServerError(
     .catch((err: unknown) => {
       onError(err instanceof Error ? err.message : 'Mutation failed on server');
     });
+}
+
+export function toMutationError(message: string | null | undefined): Error {
+  const conflictResponse = parseGroupConflictResponseMessage(message);
+  if (conflictResponse) {
+    return new GroupConflictError(conflictResponse);
+  }
+
+  return new Error(message ?? 'Mutation failed on server');
 }

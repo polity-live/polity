@@ -5,8 +5,9 @@
  * with special handling for PermissionError to show a permission-denied toast.
  */
 
-import { toast } from 'sonner'
-import { isPermissionError } from './errors'
+import { toast } from 'sonner';
+import { isPermissionError } from './errors';
+import { toGroupConflictError } from '@/features/groups/logic/groupConflict';
 
 /**
  * Handle a mutation error. Shows a specific toast for PermissionError,
@@ -19,16 +20,22 @@ import { isPermissionError } from './errors'
 export function handleMutationError(
   error: unknown,
   fallbackMessage: string,
-  t?: (key: string) => string,
+  t?: (key: string) => string
 ): void {
+  const groupConflictError = toGroupConflictError(error);
+  if (groupConflictError) {
+    toast.error(groupConflictError.response.summary ?? fallbackMessage, {
+      description: groupConflictError.response.conflicts[0]?.explanation,
+    });
+    return;
+  }
+
   if (isPermissionError(error)) {
-    const msg = t
-      ? t('errors.permissionDenied')
-      : 'Permission denied'
+    const msg = t ? t('errors.permissionDenied') : 'Permission denied';
     toast.error(msg, {
       description: error.message,
-    })
+    });
   } else {
-    toast.error(fallbackMessage)
+    toast.error(fallbackMessage);
   }
 }

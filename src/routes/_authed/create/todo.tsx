@@ -5,7 +5,6 @@ import { useCreateTodoForm } from '@/features/create/hooks/useCreateTodoForm';
 
 const createTodoSearchSchema = z.object({
   groupId: z.string().optional(),
-  returnGroupId: z.string().optional(),
   returnSection: z.literal('todos').optional(),
 });
 

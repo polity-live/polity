@@ -24,6 +24,7 @@ import {
 } from '@/features/shared/ui/ui/table';
 import { GripVertical, Shield } from 'lucide-react';
 import { ACTION_RIGHTS } from '@/zero/rbac/constants';
+import { getActionRightSections } from '@/features/groups/logic/actionRightSections';
 import type { ParticipationRoleLike } from '@/features/shared/types/participation';
 import { RoleTag } from './RoleTag';
 
@@ -35,17 +36,26 @@ interface RolesPermissionsTableProps<TRole extends ParticipationRoleLike> {
     action: string,
     currentlyHas: boolean
   ) => void;
-  onReorderRoles: (orderedRoleIds: string[]) => void;
+  onReorderRoles?: (orderedRoleIds: string[]) => void;
+  actionRights?: readonly (typeof ACTION_RIGHTS)[number][];
+  title?: string;
+  description?: string;
+  isPermissionDisabled?: (role: TRole, resource: string, action: string) => string | null;
 }
 
 export function RolesPermissionsTable<TRole extends ParticipationRoleLike>({
   roles,
   onTogglePermission,
   onReorderRoles,
+  actionRights = ACTION_RIGHTS,
+  title = 'Role Permissions',
+  description = 'Manage roles and their action rights by capability area. Drag columns to reorder — left is least privileged, right is most privileged.',
+  isPermissionDisabled,
 }: RolesPermissionsTableProps<TRole>) {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const dragCounter = useRef(0);
+  const actionRightSections = getActionRightSections(actionRights);
 
   const handleDragStart = (index: number) => {
     setDraggedIndex(index);
@@ -75,6 +85,13 @@ export function RolesPermissionsTable<TRole extends ParticipationRoleLike>({
       return;
     }
 
+    if (!onReorderRoles) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      dragCounter.current = 0;
+      return;
+    }
+
     const reordered = [...roles];
     const [moved] = reordered.splice(draggedIndex, 1);
     reordered.splice(dropIndex, 0, moved);
@@ -97,80 +114,113 @@ export function RolesPermissionsTable<TRole extends ParticipationRoleLike>({
         <div>
           <CardTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5" />
-            Role Permissions
+            {title}
           </CardTitle>
-          <CardDescription>
-            Manage roles and their action rights. Drag columns to reorder — left is least
-            privileged, right is most privileged.
-          </CardDescription>
+          <CardDescription>{description}</CardDescription>
         </div>
       </CardHeader>
       <CardContent>
         {roles && roles.length > 0 ? (
-          <div className="border-border/70 overflow-x-auto rounded-2xl border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="min-w-[200px]">Action Right</TableHead>
-                  {roles.map((role, index) => (
-                    <TableHead
-                      key={role.id}
-                      className={`min-w-[120px] text-center transition-colors ${
-                        draggedIndex === index ? 'opacity-50' : ''
-                      } ${dragOverIndex === index && draggedIndex !== index ? 'bg-accent' : ''}`}
-                      draggable
-                      onDragStart={() => handleDragStart(index)}
-                      onDragEnter={() => handleDragEnter(index)}
-                      onDragLeave={handleDragLeave}
-                      onDragOver={handleDragOver}
-                      onDrop={() => handleDrop(index)}
-                      onDragEnd={handleDragEnd}
-                    >
-                      <div className="flex flex-col items-center gap-1 py-1">
-                        <div className="flex cursor-grab items-center gap-1">
-                          <GripVertical className="text-muted-foreground h-3 w-3" />
-                          <RoleTag
-                            roleId={role.id}
-                            roleName={role.name || 'Role'}
-                            className="pointer-events-none text-[11px]"
-                          />
-                        </div>
-                        <span className="text-muted-foreground text-xs font-normal">
-                          {role.assignment_mode === 'elected' ? 'Election' : 'Assignment'}
-                        </span>
-                      </div>
-                    </TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {ACTION_RIGHTS.map(({ resource, action, label }) => {
-                  const rightKey = `${resource}-${action}`;
-                  return (
-                    <TableRow key={rightKey}>
-                      <TableCell className="font-medium">{label}</TableCell>
-                      {roles.map(role => {
-                        const hasRight = role.action_rights?.some(
-                          ar => ar.resource === resource && ar.action === action
-                        );
-                        return (
-                          <TableCell key={role.id} className="text-center">
-                            <div className="flex justify-center">
-                              <Checkbox
-                                checked={hasRight}
-                                onCheckedChange={() =>
-                                  onTogglePermission(role.id, resource, action, hasRight || false)
-                                }
-                              />
+          <div className="space-y-8">
+            {actionRightSections.map(section => (
+              <section
+                key={section.id}
+                aria-labelledby={`action-right-section-heading-${section.id}`}
+                data-testid={`action-right-section-${section.id}`}
+                className="space-y-3"
+              >
+                <div>
+                  <h3
+                    id={`action-right-section-heading-${section.id}`}
+                    className="text-base font-semibold"
+                  >
+                    {section.title}
+                  </h3>
+                  <p className="text-muted-foreground text-sm">{section.description}</p>
+                </div>
+
+                <div className="border-border/70 overflow-x-auto rounded-2xl border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="min-w-[200px]">Action Right</TableHead>
+                        {roles.map((role, index) => (
+                          <TableHead
+                            key={role.id}
+                            className={`min-w-[120px] text-center transition-colors ${
+                              draggedIndex === index ? 'opacity-50' : ''
+                            } ${dragOverIndex === index && draggedIndex !== index ? 'bg-accent' : ''}`}
+                            draggable={Boolean(onReorderRoles)}
+                            onDragStart={onReorderRoles ? () => handleDragStart(index) : undefined}
+                            onDragEnter={onReorderRoles ? () => handleDragEnter(index) : undefined}
+                            onDragLeave={onReorderRoles ? handleDragLeave : undefined}
+                            onDragOver={onReorderRoles ? handleDragOver : undefined}
+                            onDrop={onReorderRoles ? () => handleDrop(index) : undefined}
+                            onDragEnd={onReorderRoles ? handleDragEnd : undefined}
+                          >
+                            <div className="flex flex-col items-center gap-1 py-1">
+                              <div
+                                className={`flex items-center gap-1 ${onReorderRoles ? 'cursor-grab' : 'cursor-default'}`}
+                              >
+                                {onReorderRoles ? (
+                                  <GripVertical className="text-muted-foreground h-3 w-3" />
+                                ) : null}
+                                <RoleTag
+                                  roleId={role.id}
+                                  roleName={role.name || 'Role'}
+                                  className="pointer-events-none text-[11px]"
+                                />
+                              </div>
+                              <span className="text-muted-foreground text-xs font-normal">
+                                {role.assignment_mode === 'elected' ? 'Election' : 'Assignment'}
+                              </span>
                             </div>
-                          </TableCell>
+                          </TableHead>
+                        ))}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {section.rights.map(({ resource, action, label }) => {
+                        const rightKey = `${resource}-${action}`;
+                        return (
+                          <TableRow key={rightKey}>
+                            <TableCell className="font-medium">{label}</TableCell>
+                            {roles.map(role => {
+                              const hasRight = role.action_rights?.some(
+                                ar => ar.resource === resource && ar.action === action
+                              );
+                              const disabledReason =
+                                isPermissionDisabled?.(role, resource, action) ?? null;
+                              return (
+                                <TableCell key={role.id} className="text-center">
+                                  <div
+                                    className="flex justify-center"
+                                    title={disabledReason ?? undefined}
+                                  >
+                                    <Checkbox
+                                      checked={hasRight}
+                                      disabled={Boolean(disabledReason)}
+                                      onCheckedChange={() =>
+                                        onTogglePermission(
+                                          role.id,
+                                          resource,
+                                          action,
+                                          hasRight || false
+                                        )
+                                      }
+                                    />
+                                  </div>
+                                </TableCell>
+                              );
+                            })}
+                          </TableRow>
                         );
                       })}
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                    </TableBody>
+                  </Table>
+                </div>
+              </section>
+            ))}
           </div>
         ) : (
           <div className="py-12 text-center">

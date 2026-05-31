@@ -16,6 +16,7 @@ interface GroupTypeSectionProps {
 export function GroupTypeSection({ groupType }: GroupTypeSectionProps) {
   const { t } = useTranslation();
   const isHierarchical = groupType === 'hierarchical';
+  const isSibling = groupType === 'sibling';
 
   return (
     <Card>
@@ -28,15 +29,19 @@ export function GroupTypeSection({ groupType }: GroupTypeSectionProps) {
           <div className="space-y-1">
             <p className="text-sm font-medium">{t('features.groups.editPage.groupType.label')}</p>
             <p className="text-muted-foreground text-sm">
-              {isHierarchical
-                ? t('features.groups.editPage.groupType.hierarchicalDescription')
-                : t('features.groups.editPage.groupType.baseDescription')}
+              {isSibling
+                ? 'Diese Gruppe ist als Geschwistergruppe mit einer anderen Gruppe verbunden.'
+                : isHierarchical
+                  ? t('features.groups.editPage.groupType.hierarchicalDescription')
+                  : t('features.groups.editPage.groupType.baseDescription')}
             </p>
           </div>
-          <Badge variant={isHierarchical ? 'default' : 'secondary'}>
-            {isHierarchical
-              ? t('components.badges.hierarchicalGroup')
-              : t('components.badges.baseGroup')}
+          <Badge variant={isSibling || isHierarchical ? 'default' : 'secondary'}>
+            {isSibling
+              ? 'Geschwistergruppe'
+              : isHierarchical
+                ? t('components.badges.hierarchicalGroup')
+                : t('components.badges.baseGroup')}
           </Badge>
         </div>
       </CardContent>

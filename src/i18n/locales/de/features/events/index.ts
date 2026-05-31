@@ -34,6 +34,14 @@ export const eventsTranslations = {
       endDate: 'Enddatum',
       endTime: 'Endzeit',
     },
+    timeSeries: {
+      title: 'Zeit & Serie',
+      description: 'Plane Start, Ende, Wiederholung und zeitliche Fristen an einer Stelle.',
+      validation: {
+        startDateRequired: 'Serien benötigen ein Startdatum.',
+        weekdaysRequired: 'Wähle mindestens einen Wochentag für eine wöchentliche Serie.',
+      },
+    },
     locationCapacity: {
       title: 'Ort & Kapazität',
       description: 'Wo findet die Veranstaltung statt und wie viele können teilnehmen?',
@@ -90,7 +98,7 @@ export const eventsTranslations = {
     vote: 'Abstimmung',
     openChangeRequests: 'Offene Änderungsanträge',
     itemsCount: 'Tagesordnungspunkte ({{count}})',
-    searchPlaceholder: 'Tagesordnungspunkte suchen...',
+    searchPlaceholder: 'Tagesordnungspunkte suchen (z. B. TOP-1 oder Titel)...',
     filters: 'Filter',
     filtersDescription: 'Tagesordnungspunkte verfeinern',
     type: 'Typ',

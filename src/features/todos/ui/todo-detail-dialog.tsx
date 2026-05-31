@@ -76,6 +76,7 @@ interface TodoFormData {
 }
 
 interface TodoDetailDialogProps {
+  canManageTodos?: boolean;
   todo: Todo;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -101,7 +102,12 @@ function getInitialFormData(todo: Todo): TodoFormData {
   };
 }
 
-export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogProps) {
+export function TodoDetailDialog({
+  canManageTodos = true,
+  todo,
+  open,
+  onOpenChange,
+}: TodoDetailDialogProps) {
   const { t } = useTranslation();
   const { updateTodo, assignUser, unassignUser } = useTodoActions();
   const [isEditing, setIsEditing] = useState(false);
@@ -154,6 +160,10 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
   };
 
   const handleSave = async () => {
+    if (!canManageTodos) {
+      return;
+    }
+
     setIsSaving(true);
     try {
       const updates: Omit<Parameters<typeof updateTodo>[0], 'id'> = {
@@ -243,7 +253,7 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
               )}
             </DialogTitle>
             <div className="flex shrink-0 items-center gap-2 self-end sm:self-start">
-              {isEditing ? (
+              {isEditing && canManageTodos ? (
                 <>
                   <Button onClick={handleSave} disabled={isSaving} size="sm">
                     <Save className="mr-2 h-4 w-4" />
@@ -254,12 +264,12 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                     {t('features.todos.detail.cancel')}
                   </Button>
                 </>
-              ) : (
+              ) : canManageTodos ? (
                 <Button onClick={() => setIsEditing(true)} variant="outline" size="sm">
                   <Edit className="mr-2 h-4 w-4" />
                   {t('features.todos.actions.edit')}
                 </Button>
-              )}
+              ) : null}
               <DialogClose asChild>
                 <Button
                   type="button"
@@ -281,7 +291,7 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
               <label className="mb-2 block text-sm font-medium">
                 {t('features.todos.detail.status')}
               </label>
-              {isEditing ? (
+              {isEditing && canManageTodos ? (
                 <Select
                   value={formData.status}
                   onValueChange={(v: TodoStatus) => setFormData({ ...formData, status: v })}
@@ -328,7 +338,7 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
               <label className="mb-2 block text-sm font-medium">
                 {t('features.todos.detail.priority')}
               </label>
-              {isEditing ? (
+              {isEditing && canManageTodos ? (
                 <Select
                   value={formData.priority}
                   onValueChange={(v: TodoPriority) => setFormData({ ...formData, priority: v })}
@@ -377,7 +387,7 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
             <label className="mb-2 block text-sm font-medium">
               {t('features.todos.detail.description')}
             </label>
-            {isEditing ? (
+            {isEditing && canManageTodos ? (
               <Textarea
                 value={formData.description}
                 onChange={e => setFormData({ ...formData, description: e.target.value })}
@@ -396,7 +406,7 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
             <label className="mb-2 block text-sm font-medium">
               {t('features.todos.dueDate.title')}
             </label>
-            {isEditing ? (
+            {isEditing && canManageTodos ? (
               <Input
                 type="date"
                 value={formData.dueDate}
@@ -424,7 +434,7 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
 
           {/* Visibility */}
           <div>
-            {isEditing ? (
+            {isEditing && canManageTodos ? (
               <VisibilitySelector
                 value={formData.visibility}
                 onChange={visibility => setFormData({ ...formData, visibility })}
@@ -475,7 +485,7 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
               <Users className="mr-2 inline h-4 w-4" />
               {t('features.todos.detail.assignedTo')}
             </label>
-            {isEditing ? (
+            {isEditing && canManageTodos ? (
               <div className="space-y-3">
                 {/* Show currently selected users */}
                 {selectedUserIds.length > 0 && (
@@ -652,7 +662,7 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
           {/* Tags */}
           {(isEditing || (todo.tags && todo.tags.length > 0)) && (
             <div>
-              {isEditing ? (
+              {isEditing && canManageTodos ? (
                 <HashtagEditor
                   value={formData.tags}
                   onChange={tags => setFormData({ ...formData, tags })}
@@ -666,7 +676,7 @@ export function TodoDetailDialog({ todo, open, onOpenChange }: TodoDetailDialogP
                     {t('features.todos.detail.tags')}
                   </label>
                   <div className="flex flex-wrap gap-2">
-                    {todo.tags.map((tag: string, idx: number) => (
+                    {(todo.tags ?? []).map((tag: string, idx: number) => (
                       <Badge key={idx} variant="secondary">
                         {tag}
                       </Badge>

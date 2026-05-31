@@ -1,0 +1,60 @@
+import { type ReactNode } from 'react';
+import { getElectionModeLabel, type ElectionMode } from '@/features/elections/logic/electionMode';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Label } from '@/features/shared/ui/ui/label';
+import { cn } from '@/features/shared/utils/utils';
+
+interface ElectionModeInputProps {
+  value: ElectionMode;
+  onChange: (value: ElectionMode) => void;
+  label?: string;
+  hint?: string;
+  className?: string;
+  descriptions?: Partial<Record<ElectionMode, ReactNode>>;
+}
+
+export function ElectionModeInput({
+  value,
+  onChange,
+  label = 'Wahltyp',
+  hint,
+  className,
+  descriptions,
+}: ElectionModeInputProps) {
+  return (
+    <div className={cn('space-y-3', className)}>
+      <div className="space-y-1">
+        <Label>{label}</Label>
+        {hint ? <p className="text-muted-foreground text-sm">{hint}</p> : null}
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2">
+        {(['list', 'single'] as ElectionMode[]).map(mode => (
+          <button
+            key={mode}
+            type="button"
+            onClick={() => onChange(mode)}
+            className={cn(
+              'rounded-2xl border p-4 text-left transition-all',
+              value === mode
+                ? 'border-primary bg-primary/5 shadow-sm'
+                : 'border-border hover:border-primary/40 hover:bg-muted/40'
+            )}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-1">
+                <p className="font-medium">{getElectionModeLabel(mode)}</p>
+                {descriptions?.[mode] ? (
+                  <div className="text-muted-foreground text-sm">{descriptions[mode]}</div>
+                ) : null}
+              </div>
+              <Badge variant={value === mode ? 'default' : 'outline'}>
+                {value === mode ? 'Aktiv' : 'Waehlen'}
+              </Badge>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}

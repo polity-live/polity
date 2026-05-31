@@ -1,5 +1,6 @@
 import { defineMutator } from '@rocicorp/zero';
 import { z } from 'zod';
+import { normalizeDelegateElectionMode } from '@/features/elections/logic/electionMode';
 import { zql } from '../schema';
 import {
   eventCreateSchema,
@@ -21,6 +22,10 @@ import {
   cancelMeetingBookingSchema,
 } from './schema';
 import { can } from '../rbac/can';
+
+function isAssemblyEventType(eventType: string | null | undefined) {
+  return eventType === 'general_assembly' || eventType === 'delegate_assembly';
+}
 
 async function loadParticipantForRoleMutation(
   tx: Parameters<typeof can>[0],
@@ -200,15 +205,42 @@ async function clearEventRoleDefaults(
   }
 }
 
+async function assertValidEventRoleDefaults(
+  tx: Parameters<typeof can>[0],
+  args: {
+    eventId: string;
+    assigneeKind: 'member' | 'guest';
+    defaultRequestRole: boolean;
+  }
+) {
+  if (!args.defaultRequestRole) {
+    return;
+  }
+
+  const event = await tx.run(zql.event.where('id', args.eventId).one());
+  const assemblyEvent = isAssemblyEventType(event?.event_type);
+
+  if (assemblyEvent && args.assigneeKind !== 'guest') {
+    throw new Error('Assembly event request roles must be guest roles.');
+  }
+
+  if (!assemblyEvent && args.assigneeKind === 'guest') {
+    throw new Error('Guest roles can only be used as request roles for assembly events.');
+  }
+}
+
 /** Shared mutators — run on both client and server. Server mutators may override these. */
 export const eventSharedMutators = {
   create: defineMutator(eventCreateSchema, async ({ tx, ctx: { userID }, args }) => {
     const now = Date.now();
-    const { invited_user_ids, ...eventArgs } = args;
+    const { invited_user_ids, debug_correlation_id, ...eventArgs } = args;
     void invited_user_ids;
+    void debug_correlation_id;
+    const delegateElectionMode = normalizeDelegateElectionMode(args.delegate_election_mode);
 
     await tx.mutate.event.insert({
       ...eventArgs,
+      delegate_election_mode: delegateElectionMode,
       creator_id: userID,
       participant_count: 1,
       subscriber_count: 0,
@@ -237,7 +269,18 @@ export const eventSharedMutators = {
   }),
 
   update: defineMutator(eventUpdateSchema, async ({ tx, args }) => {
-    await tx.mutate.event.update({ ...args, updated_at: Date.now() });
+    const currentEvent = await tx.run(zql.event.where('id', args.id).one());
+    const { debug_correlation_id, ...eventArgs } = args;
+    void debug_correlation_id;
+    const delegateElectionMode = normalizeDelegateElectionMode(
+      eventArgs.delegate_election_mode ?? currentEvent?.delegate_election_mode
+    );
+
+    await tx.mutate.event.update({
+      ...eventArgs,
+      delegate_election_mode: delegateElectionMode,
+      updated_at: Date.now(),
+    });
   }),
 
   cancel: defineMutator(eventCancelSchema, async ({ tx, ctx: { userID }, args }) => {
@@ -373,6 +416,13 @@ export const eventSharedMutators = {
     const existingRoles = await tx.run(
       zql.role.where('event_id', args.event_id).where('scope', 'event')
     );
+    const assigneeKind = args.assignee_kind ?? 'member';
+
+    await assertValidEventRoleDefaults(tx, {
+      eventId: args.event_id,
+      assigneeKind,
+      defaultRequestRole: Boolean(args.default_request_role),
+    });
 
     await clearEventRoleDefaults(tx, {
       eventId: args.event_id,
@@ -401,6 +451,7 @@ export const eventSharedMutators = {
       scheduled_revote_date: args.scheduled_revote_date ?? null,
       default_request_role: args.default_request_role ?? false,
       default_invite_role: args.default_invite_role ?? false,
+      assignee_kind: assigneeKind,
       sort_order: args.sort_order ?? existingRoles.length,
       created_at: now,
     });
@@ -409,6 +460,15 @@ export const eventSharedMutators = {
   updateRole: defineMutator(updateEventRoleSchema, async ({ tx, args }) => {
     const role = await tx.run(zql.role.where('id', args.id).one());
     if (role?.event_id) {
+      const nextAssigneeKind = args.assignee_kind ?? role.assignee_kind ?? 'member';
+      const nextDefaultRequestRole = args.default_request_role ?? role.default_request_role;
+
+      await assertValidEventRoleDefaults(tx, {
+        eventId: role.event_id,
+        assigneeKind: nextAssigneeKind === 'guest' ? 'guest' : 'member',
+        defaultRequestRole: Boolean(nextDefaultRequestRole),
+      });
+
       await clearEventRoleDefaults(tx, {
         eventId: role.event_id,
         keepRoleId: role.id,

@@ -9,6 +9,7 @@ import { TodoTimelineCard } from '@/features/timeline/ui/cards/TodoTimelineCard'
 import type { Todo, TodoStatus } from '../types/todo.types';
 
 interface KanbanBoardProps {
+  canManageTodos?: boolean;
   todos: Todo[];
 }
 
@@ -21,7 +22,7 @@ function isTodoStatus(status: string | null | undefined): status is TodoStatus {
   );
 }
 
-export function KanbanBoard({ todos }: KanbanBoardProps) {
+export function KanbanBoard({ canManageTodos = true, todos }: KanbanBoardProps) {
   const { t } = useTranslation();
   const { updateTodo } = useTodoActions();
   const [draggedTodoId, setDraggedTodoId] = useState<string | null>(null);
@@ -52,6 +53,10 @@ export function KanbanBoard({ todos }: KanbanBoardProps) {
   ];
 
   const handleDragStart = (todoId: string) => {
+    if (!canManageTodos) {
+      return;
+    }
+
     setDraggedTodoId(todoId);
   };
 
@@ -60,7 +65,7 @@ export function KanbanBoard({ todos }: KanbanBoardProps) {
   };
 
   const handleDrop = async (status: TodoStatus) => {
-    if (!draggedTodoId) return;
+    if (!canManageTodos || !draggedTodoId) return;
 
     try {
       const updates: Parameters<typeof updateTodo>[0] = {
@@ -126,6 +131,7 @@ export function KanbanBoard({ todos }: KanbanBoardProps) {
               <div className="space-y-3">
                 {columnTodos.map(todo => (
                   <TodoKanbanTimelineCard
+                    canManageTodos={canManageTodos}
                     key={todo.id}
                     todo={todo}
                     onDragStart={handleDragStart}
@@ -142,6 +148,7 @@ export function KanbanBoard({ todos }: KanbanBoardProps) {
 
       {selectedTodo && (
         <TodoDetailDialog
+          canManageTodos={canManageTodos}
           todo={selectedTodo}
           open={isDetailDialogOpen}
           onOpenChange={setIsDetailDialogOpen}
@@ -152,6 +159,7 @@ export function KanbanBoard({ todos }: KanbanBoardProps) {
 }
 
 interface TodoKanbanTimelineCardProps {
+  canManageTodos: boolean;
   todo: Todo;
   onDragStart: (todoId: string) => void;
   onClick: (todo: Todo) => void;
@@ -160,6 +168,7 @@ interface TodoKanbanTimelineCardProps {
 }
 
 function TodoKanbanTimelineCard({
+  canManageTodos,
   todo,
   onDragStart,
   onClick,
@@ -187,9 +196,9 @@ function TodoKanbanTimelineCard({
 
   return (
     <div
-      draggable
+      draggable={canManageTodos}
       onMouseDown={handleMouseDown}
-      onDragStart={handleDragStart}
+      onDragStart={canManageTodos ? handleDragStart : undefined}
       onDragEnd={() => setIsDraggingCard(false)}
       className={isDragging ? 'opacity-50' : undefined}
     >
@@ -206,7 +215,8 @@ function TodoKanbanTimelineCard({
           status: isTodoStatus(todo.status) ? todo.status : undefined,
           creatorId: todo.creator?.id ?? undefined,
         }}
-        onToggle={() => onToggleComplete(todo)}
+        canManageTodos={canManageTodos}
+        onToggle={canManageTodos ? () => onToggleComplete(todo) : undefined}
         onCardClick={handleClick}
         linkToDetail={false}
         showStatusAction={false}

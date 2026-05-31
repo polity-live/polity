@@ -1,5 +1,6 @@
-import { defineMutator } from '@rocicorp/zero'
-import { zql } from '../schema'
+import { defineMutator } from '@rocicorp/zero';
+import { can } from '../rbac/can';
+import { zql } from '../schema';
 import {
   createHashtagSchema,
   deleteHashtagSchema,
@@ -15,197 +16,154 @@ import {
   createReactionSchema,
   deleteReactionSchema,
   createTimelineEventSchema,
-} from './schema'
-import {
-  createSubscriberSchema,
-  deleteSubscriberSchema,
-} from '../network/schema'
+} from './schema';
+import { createSubscriberSchema, deleteSubscriberSchema } from '../network/schema';
 
 /** Shared mutators — run on both client and server. Server mutators may override these. */
 export const commonSharedMutators = {
   // Subscribe to an entity
-  subscribe: defineMutator(
-    createSubscriberSchema,
-    async ({ tx, ctx: { userID }, args }) => {
-      const now = Date.now()
-      await tx.mutate.subscriber.insert({
-        ...args,
-        subscriber_id: userID,
-        created_at: now,
-      })
-    }
-  ),
+  subscribe: defineMutator(createSubscriberSchema, async ({ tx, ctx: { userID }, args }) => {
+    const now = Date.now();
+    await tx.mutate.subscriber.insert({
+      ...args,
+      subscriber_id: userID,
+      created_at: now,
+    });
+  }),
 
   // Unsubscribe from an entity
-  unsubscribe: defineMutator(
-    deleteSubscriberSchema,
-    async ({ tx, args }) => {
-      await tx.mutate.subscriber.delete({ id: args.id })
-    }
-  ),
+  unsubscribe: defineMutator(deleteSubscriberSchema, async ({ tx, args }) => {
+    await tx.mutate.subscriber.delete({ id: args.id });
+  }),
 
   // Add a canonical hashtag
-  addHashtag: defineMutator(
-    createHashtagSchema,
-    async ({ tx, args }) => {
-      const now = Date.now()
-      await tx.mutate.hashtag.insert({
-        ...args,
-        created_at: now,
-      })
-    }
-  ),
+  addHashtag: defineMutator(createHashtagSchema, async ({ tx, args }) => {
+    const now = Date.now();
+    await tx.mutate.hashtag.insert({
+      ...args,
+      created_at: now,
+    });
+  }),
 
   // Delete a canonical hashtag
-  deleteHashtag: defineMutator(
-    deleteHashtagSchema,
-    async ({ tx, args }) => {
-      await tx.mutate.hashtag.delete({ id: args.id })
-    }
-  ),
+  deleteHashtag: defineMutator(deleteHashtagSchema, async ({ tx, args }) => {
+    await tx.mutate.hashtag.delete({ id: args.id });
+  }),
 
   // ── Junction table mutators ────────────────────────────────────────
 
-  linkUserHashtag: defineMutator(
-    createUserHashtagSchema,
-    async ({ tx, args }) => {
-      const now = Date.now()
-      await tx.mutate.user_hashtag.insert({ ...args, created_at: now })
-    }
-  ),
+  linkUserHashtag: defineMutator(createUserHashtagSchema, async ({ tx, args }) => {
+    const now = Date.now();
+    await tx.mutate.user_hashtag.insert({ ...args, created_at: now });
+  }),
 
-  unlinkUserHashtag: defineMutator(
-    deleteJunctionHashtagSchema,
-    async ({ tx, args }) => {
-      await tx.mutate.user_hashtag.delete({ id: args.id })
-    }
-  ),
+  unlinkUserHashtag: defineMutator(deleteJunctionHashtagSchema, async ({ tx, args }) => {
+    await tx.mutate.user_hashtag.delete({ id: args.id });
+  }),
 
-  linkGroupHashtag: defineMutator(
-    createGroupHashtagSchema,
-    async ({ tx, args }) => {
-      const now = Date.now()
-      await tx.mutate.group_hashtag.insert({ ...args, created_at: now })
-    }
-  ),
+  linkGroupHashtag: defineMutator(createGroupHashtagSchema, async ({ tx, args }) => {
+    const now = Date.now();
+    await tx.mutate.group_hashtag.insert({ ...args, created_at: now });
+  }),
 
-  unlinkGroupHashtag: defineMutator(
-    deleteJunctionHashtagSchema,
-    async ({ tx, args }) => {
-      await tx.mutate.group_hashtag.delete({ id: args.id })
-    }
-  ),
+  unlinkGroupHashtag: defineMutator(deleteJunctionHashtagSchema, async ({ tx, args }) => {
+    await tx.mutate.group_hashtag.delete({ id: args.id });
+  }),
 
-  linkAmendmentHashtag: defineMutator(
-    createAmendmentHashtagSchema,
-    async ({ tx, args }) => {
-      const now = Date.now()
-      await tx.mutate.amendment_hashtag.insert({ ...args, created_at: now })
-    }
-  ),
+  linkAmendmentHashtag: defineMutator(createAmendmentHashtagSchema, async ({ tx, args }) => {
+    const now = Date.now();
+    await tx.mutate.amendment_hashtag.insert({ ...args, created_at: now });
+  }),
 
-  unlinkAmendmentHashtag: defineMutator(
-    deleteJunctionHashtagSchema,
-    async ({ tx, args }) => {
-      await tx.mutate.amendment_hashtag.delete({ id: args.id })
-    }
-  ),
+  unlinkAmendmentHashtag: defineMutator(deleteJunctionHashtagSchema, async ({ tx, args }) => {
+    await tx.mutate.amendment_hashtag.delete({ id: args.id });
+  }),
 
-  linkEventHashtag: defineMutator(
-    createEventHashtagSchema,
-    async ({ tx, args }) => {
-      const now = Date.now()
-      await tx.mutate.event_hashtag.insert({ ...args, created_at: now })
-    }
-  ),
+  linkEventHashtag: defineMutator(createEventHashtagSchema, async ({ tx, args }) => {
+    const now = Date.now();
+    await tx.mutate.event_hashtag.insert({ ...args, created_at: now });
+  }),
 
-  unlinkEventHashtag: defineMutator(
-    deleteJunctionHashtagSchema,
-    async ({ tx, args }) => {
-      await tx.mutate.event_hashtag.delete({ id: args.id })
-    }
-  ),
+  unlinkEventHashtag: defineMutator(deleteJunctionHashtagSchema, async ({ tx, args }) => {
+    await tx.mutate.event_hashtag.delete({ id: args.id });
+  }),
 
-  linkBlogHashtag: defineMutator(
-    createBlogHashtagSchema,
-    async ({ tx, args }) => {
-      const now = Date.now()
-      await tx.mutate.blog_hashtag.insert({ ...args, created_at: now })
-    }
-  ),
+  linkBlogHashtag: defineMutator(createBlogHashtagSchema, async ({ tx, args }) => {
+    const now = Date.now();
+    await tx.mutate.blog_hashtag.insert({ ...args, created_at: now });
+  }),
 
-  unlinkBlogHashtag: defineMutator(
-    deleteJunctionHashtagSchema,
-    async ({ tx, args }) => {
-      await tx.mutate.blog_hashtag.delete({ id: args.id })
-    }
-  ),
+  unlinkBlogHashtag: defineMutator(deleteJunctionHashtagSchema, async ({ tx, args }) => {
+    await tx.mutate.blog_hashtag.delete({ id: args.id });
+  }),
 
-  linkStatementHashtag: defineMutator(
-    createStatementHashtagSchema,
-    async ({ tx, args }) => {
-      const now = Date.now()
-      await tx.mutate.statement_hashtag.insert({ ...args, created_at: now })
-    }
-  ),
+  linkStatementHashtag: defineMutator(createStatementHashtagSchema, async ({ tx, args }) => {
+    const now = Date.now();
+    await tx.mutate.statement_hashtag.insert({ ...args, created_at: now });
+  }),
 
-  unlinkStatementHashtag: defineMutator(
-    deleteJunctionHashtagSchema,
-    async ({ tx, args }) => {
-      await tx.mutate.statement_hashtag.delete({ id: args.id })
-    }
-  ),
+  unlinkStatementHashtag: defineMutator(deleteJunctionHashtagSchema, async ({ tx, args }) => {
+    await tx.mutate.statement_hashtag.delete({ id: args.id });
+  }),
 
   // Create a link
-  createLink: defineMutator(
-    createLinkSchema,
-    async ({ tx, args }) => {
-      const now = Date.now()
-      await tx.mutate.link.insert({
-        ...args,
-        created_at: now,
-      })
+  createLink: defineMutator(createLinkSchema, async ({ tx, ctx, args }) => {
+    if (args.group_id) {
+      await can(tx, ctx, {
+        action: 'manage',
+        resource: 'groupLinks',
+        groupId: args.group_id,
+      });
     }
-  ),
+
+    const now = Date.now();
+    await tx.mutate.link.insert({
+      ...args,
+      created_at: now,
+    });
+  }),
 
   // Create a reaction
-  createReaction: defineMutator(
-    createReactionSchema,
-    async ({ tx, ctx: { userID }, args }) => {
-      const now = Date.now()
-      await tx.mutate.reaction.insert({
-        ...args,
-        user_id: userID,
-        created_at: now,
-      })
-    }
-  ),
+  createReaction: defineMutator(createReactionSchema, async ({ tx, ctx: { userID }, args }) => {
+    const now = Date.now();
+    await tx.mutate.reaction.insert({
+      ...args,
+      user_id: userID,
+      created_at: now,
+    });
+  }),
 
   // NOTE: server-only mutator — should be called from server context only
-  createTimelineEvent: defineMutator(
-    createTimelineEventSchema,
-    async ({ tx, args }) => {
-      const now = Date.now()
-      await tx.mutate.timeline_event.insert({
-        ...args,
-        created_at: now,
-      })
-    }
-  ),
+  createTimelineEvent: defineMutator(createTimelineEventSchema, async ({ tx, args }) => {
+    const now = Date.now();
+    await tx.mutate.timeline_event.insert({
+      ...args,
+      created_at: now,
+    });
+  }),
 
   // Delete a link
-  deleteLink: defineMutator(
-    deleteLinkSchema,
-    async ({ tx, args }) => {
-      await tx.mutate.link.delete({ id: args.id })
+  deleteLink: defineMutator(deleteLinkSchema, async ({ tx, ctx, args }) => {
+    if (tx.location !== 'client') {
+      const existingLink = await tx.run(zql.link.where('id', args.id).one());
+      if (!existingLink) {
+        throw new Error('Link not found');
+      }
+
+      if (existingLink.group_id) {
+        await can(tx, ctx, {
+          action: 'manage',
+          resource: 'groupLinks',
+          groupId: existingLink.group_id,
+        });
+      }
     }
-  ),
+
+    await tx.mutate.link.delete({ id: args.id });
+  }),
 
   // Delete a reaction
-  deleteReaction: defineMutator(
-    deleteReactionSchema,
-    async ({ tx, args }) => {
-      await tx.mutate.reaction.delete({ id: args.id })
-    }
-  ),
-}
+  deleteReaction: defineMutator(deleteReactionSchema, async ({ tx, args }) => {
+    await tx.mutate.reaction.delete({ id: args.id });
+  }),
+};

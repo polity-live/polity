@@ -37,7 +37,6 @@ import {
 } from '@/zero/rbac/workflow-constants';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
-import { notifyAmendmentProfileUpdated } from '@/features/notifications/utils/notification-helpers.ts';
 import { CreateReviewCard, SummaryField } from '@/features/shared/ui/ui/create-review-card';
 import {
   hasMinLength,
@@ -313,14 +312,6 @@ export function AmendmentEditContent({
           });
         }
       }
-      // Notify about profile update (edit mode only)
-      if (!isCreating) {
-        await notifyAmendmentProfileUpdated({
-          senderId: currentUserId,
-          amendmentId,
-          amendmentTitle: formData.title,
-        });
-      }
       toast.success(
         isCreating
           ? t('pages.create.success.created')
@@ -385,12 +376,17 @@ export function AmendmentEditContent({
         </div>
         <div className="max-w-2xl">
           <CreateReviewCard
+            entityType="amendment"
             badge={t('pages.create.amendment.reviewBadge')}
             secondaryBadge={workflowStatusOption.label}
             title={formData.title || 'Untitled Amendment'}
             subtitle={formData.subtitle || undefined}
             hashtags={formData.hashtags}
-            gradient="from-violet-100 to-purple-100 dark:from-violet-900/40 dark:to-purple-900/50"
+            media={{
+              imageUrl: formData.imageURL || undefined,
+              imageAlt: formData.title || 'Amendment image',
+              videoUrl: formData.videoURL || undefined,
+            }}
           >
             {formData.code && (
               <SummaryField

@@ -20,14 +20,20 @@ import { useUserState } from '@/zero/users/useUserState';
 import { useAuth } from '@/providers/auth-provider';
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
 import {
+  getSiblingMembershipModeLabel,
+  getGroupRelationshipDirectionOptions,
   getCurrentGroupRelationshipLabel,
-  getGroupRelationshipRightLabel,
+  GroupRelationshipRightSentenceList,
   GroupRelationshipRightsSelector,
   GroupRelationshipTypeSelect,
-  invertGroupRelationshipType,
+  type GroupRelationshipDirection,
   type GroupRelationshipRight,
   type GroupRelationshipType,
 } from '@/features/network/ui/GroupRelationshipFields';
+import {
+  getHierarchyPairForSelection,
+  getStoredHierarchyRelationshipTypeForSource,
+} from '@/features/network/logic/groupRelationshipOrientation';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
@@ -69,47 +75,177 @@ import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import type { CreateFormConfig } from '../types/create-form.types';
 import { CreateTypeaheadField } from '../ui/CreateFields';
 
-type GroupType = 'base' | 'hierarchical';
+type GroupType = 'base' | 'hierarchical' | 'sibling';
+type SiblingMembershipMode = 'open' | 'elected' | 'parliament';
+type RelationshipDirection = GroupRelationshipDirection;
+type LinkedGroupType = GroupRelationshipType | 'sibling';
 
 interface LinkedGroup {
   groupId: string;
   groupName: string;
-  type: GroupRelationshipType;
-  rights: GroupRelationshipRight[];
+  type: LinkedGroupType;
+  siblingMembershipMode?: SiblingMembershipMode;
+  rightDirections: Record<GroupRelationshipRight, RelationshipDirection>;
 }
+
+const INITIAL_SIBLING_RIGHT_DIRECTIONS: Record<GroupRelationshipRight, RelationshipDirection> = {
+  informationRight: 'none',
+  amendmentRight: 'none',
+  rightToSpeak: 'none',
+  activeVotingRight: 'none',
+  passiveVotingRight: 'none',
+};
+
+const RELATIONSHIP_RIGHTS = Object.keys(
+  INITIAL_SIBLING_RIGHT_DIRECTIONS
+) as GroupRelationshipRight[];
 
 interface CsvInviteSummary extends InviteCsvMatchResult {
   matchedNames: string[];
 }
 
+interface ConfiguredConnectedGroup {
+  groupId: string;
+  groupName: string;
+  membershipMode: SiblingMembershipMode;
+  roleId: string;
+  rightDirections: Record<GroupRelationshipRight, RelationshipDirection>;
+}
+
+function createInitialRelationshipDirections(): Record<
+  GroupRelationshipRight,
+  RelationshipDirection
+> {
+  return { ...INITIAL_SIBLING_RIGHT_DIRECTIONS };
+}
+
+function getSelectedRights(rightDirections: Record<GroupRelationshipRight, RelationshipDirection>) {
+  return RELATIONSHIP_RIGHTS.filter(right => rightDirections[right] !== 'none');
+}
+
+function hasSelectedRights(rightDirections: Record<GroupRelationshipRight, RelationshipDirection>) {
+  return getSelectedRights(rightDirections).length > 0;
+}
+
+function toggleRightDirection(
+  rightDirections: Record<GroupRelationshipRight, RelationshipDirection>,
+  right: GroupRelationshipRight
+) {
+  return {
+    ...rightDirections,
+    [right]: rightDirections[right] === 'none' ? 'outgoing' : 'none',
+  };
+}
+
 function getRelationshipBadgeClasses(type: LinkedGroup['type']) {
+  if (type === 'sibling') {
+    return 'border-violet-300 bg-violet-50 text-violet-800';
+  }
+
   return type === 'parent'
     ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
     : 'border-sky-300 bg-sky-50 text-sky-800';
 }
 
-function getRightBadgeClasses(right: string) {
-  switch (right) {
-    case 'informationRight':
-      return 'border-blue-200 bg-blue-50 text-blue-800';
-    case 'amendmentRight':
-      return 'border-amber-200 bg-amber-50 text-amber-800';
-    case 'rightToSpeak':
-      return 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-800';
-    case 'activeVotingRight':
-      return 'border-emerald-200 bg-emerald-50 text-emerald-800';
-    case 'passiveVotingRight':
-      return 'border-violet-200 bg-violet-50 text-violet-800';
-    default:
-      return 'border-muted bg-muted/50 text-foreground';
+function canInviteOfficialMembers(
+  groupType: GroupType,
+  siblingMembershipMode: SiblingMembershipMode
+) {
+  return groupType === 'base' || (groupType === 'sibling' && siblingMembershipMode === 'open');
+}
+
+function canInviteGuests(groupType: GroupType, siblingMembershipMode: SiblingMembershipMode) {
+  return (
+    groupType === 'hierarchical' ||
+    (groupType === 'sibling' &&
+      (siblingMembershipMode === 'elected' || siblingMembershipMode === 'parliament'))
+  );
+}
+
+function buildRelationshipRequests(args: {
+  currentGroupId: string;
+  otherGroupId: string;
+  linkType: LinkedGroupType;
+  rightDirections: Record<GroupRelationshipRight, RelationshipDirection>;
+}) {
+  const requests: {
+    group_id: string;
+    related_group_id: string;
+    relationship_type: GroupRelationshipType | 'sibling';
+    with_right: GroupRelationshipRight;
+  }[] = [];
+
+  if (args.linkType === 'sibling') {
+    for (const right of RELATIONSHIP_RIGHTS) {
+      const direction = args.rightDirections[right];
+      if (direction === 'outgoing' || direction === 'bidirectional') {
+        requests.push({
+          group_id: args.currentGroupId,
+          related_group_id: args.otherGroupId,
+          relationship_type: 'sibling',
+          with_right: right,
+        });
+      }
+
+      if (direction === 'incoming' || direction === 'bidirectional') {
+        requests.push({
+          group_id: args.otherGroupId,
+          related_group_id: args.currentGroupId,
+          relationship_type: 'sibling',
+          with_right: right,
+        });
+      }
+    }
+
+    return requests;
   }
+
+  const hierarchyPair = getHierarchyPairForSelection({
+    currentGroupId: args.currentGroupId,
+    otherGroupId: args.otherGroupId,
+    relationshipType: args.linkType,
+  });
+
+  for (const right of RELATIONSHIP_RIGHTS) {
+    const direction = args.rightDirections[right];
+    if (direction === 'none') {
+      continue;
+    }
+
+    if (direction === 'outgoing' || direction === 'bidirectional') {
+      requests.push({
+        group_id: args.currentGroupId,
+        related_group_id: args.otherGroupId,
+        relationship_type: getStoredHierarchyRelationshipTypeForSource(
+          args.currentGroupId,
+          hierarchyPair
+        ),
+        with_right: right,
+      });
+    }
+
+    if (direction === 'incoming' || direction === 'bidirectional') {
+      requests.push({
+        group_id: args.otherGroupId,
+        related_group_id: args.currentGroupId,
+        relationship_type: getStoredHierarchyRelationshipTypeForSource(
+          args.otherGroupId,
+          hierarchyPair
+        ),
+        with_right: right,
+      });
+    }
+  }
+
+  return requests;
 }
 
 export function useCreateGroupForm(): CreateFormConfig {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { createGroup, inviteMember, createRelationship } = useGroupActions();
+  const { createGroup, createRole, inviteGuest, inviteMember, createRelationship } =
+    useGroupActions();
   const { createEvent } = useEventActions();
   const commonActions = useCommonActions();
   const { groups: allGroups } = useAllGroups();
@@ -117,6 +253,15 @@ export function useCreateGroupForm(): CreateFormConfig {
 
   const [groupId] = useState(() => crypto.randomUUID());
   const [groupType, setGroupType] = useState<GroupType>('base');
+  const [connectedGroupId, setConnectedGroupId] = useState('');
+  const [siblingMembershipMode, setSiblingMembershipMode] = useState<SiblingMembershipMode>('open');
+  const [connectedRoleId, setConnectedRoleId] = useState('');
+  const [siblingRelationshipDirections, setSiblingRelationshipDirections] = useState<
+    Record<GroupRelationshipRight, RelationshipDirection>
+  >(createInitialRelationshipDirections);
+  const [configuredConnectedGroup, setConfiguredConnectedGroup] =
+    useState<ConfiguredConnectedGroup | null>(null);
+  const [showConnectedGroupComposer, setShowConnectedGroupComposer] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [descriptionContent, setDescriptionContent] = useState<Value>(EMPTY_RICH_TEXT_VALUE);
@@ -141,11 +286,20 @@ export function useCreateGroupForm(): CreateFormConfig {
   // Link groups state
   const [linkedGroups, setLinkedGroups] = useState<LinkedGroup[]>([]);
   const [linkGroupId, setLinkGroupId] = useState('');
-  const [linkType, setLinkType] = useState<GroupRelationshipType>('parent');
-  const [linkRights, setLinkRights] = useState<Set<GroupRelationshipRight>>(new Set());
+  const [linkType, setLinkType] = useState<LinkedGroupType>('parent');
+  const [linkRightDirections, setLinkRightDirections] = useState<
+    Record<GroupRelationshipRight, RelationshipDirection>
+  >(createInitialRelationshipDirections);
+  const [showSiblingLinkComposer, setShowSiblingLinkComposer] = useState(false);
+
+  const relationshipDirectionOptions = useMemo(() => getGroupRelationshipDirectionOptions(t), [t]);
 
   const { relationships: draftRelationships, relationshipsAsTarget: draftRelationshipsAsTarget } =
     useGroupState({ groupId: linkGroupId ? groupId : undefined });
+  const activeConnectedGroupId = linkType === 'sibling' ? linkGroupId : connectedGroupId;
+  const { roles: connectedGroupRoles } = useGroupState({
+    groupId: activeConnectedGroupId || undefined,
+  });
 
   // Constitutional event state
   const [createConstitutionalEvent, setCreateConstitutionalEvent] = useState(false);
@@ -157,12 +311,65 @@ export function useCreateGroupForm(): CreateFormConfig {
   const { allHashtags } = useCommonState({ loadAllHashtags: true });
   const emailValidationMessage = t('common.validation.emailHint', 'Enter a valid email address.');
   const emailIsValid = isValidOptionalEmailAddress(email);
+  const radioGroupType = groupType === 'sibling' ? 'hierarchical' : groupType;
+  const resolvedGroupType: GroupType =
+    groupType === 'sibling' || (groupType === 'hierarchical' && configuredConnectedGroup)
+      ? 'sibling'
+      : groupType;
+  const effectiveSiblingMembershipMode =
+    configuredConnectedGroup?.membershipMode ?? siblingMembershipMode;
+  const allowOfficialMemberInvites = canInviteOfficialMembers(
+    resolvedGroupType,
+    effectiveSiblingMembershipMode
+  );
+  const allowGuestInvites = canInviteGuests(resolvedGroupType, effectiveSiblingMembershipMode);
 
   useEffect(() => {
     if (groupType === 'base' && linkType !== 'child') {
       setLinkType('child');
     }
   }, [groupType, linkType]);
+
+  useEffect(() => {
+    if (groupType === 'base' || linkType !== 'sibling') {
+      setConfiguredConnectedGroup(null);
+      setShowConnectedGroupComposer(false);
+      setConnectedGroupId('');
+      setConnectedRoleId('');
+      setSiblingRelationshipDirections(createInitialRelationshipDirections());
+    }
+  }, [groupType, linkType]);
+
+  useEffect(() => {
+    if (siblingMembershipMode !== 'elected') {
+      setConnectedRoleId('');
+    }
+  }, [siblingMembershipMode]);
+
+  useEffect(() => {
+    setConnectedRoleId('');
+  }, [activeConnectedGroupId]);
+
+  useEffect(() => {
+    setLinkedGroups(currentLinks => currentLinks.filter(link => link.type !== 'sibling'));
+    setShowSiblingLinkComposer(false);
+    setLinkGroupId('');
+    setLinkRightDirections(createInitialRelationshipDirections());
+  }, [groupType]);
+
+  const resetSiblingLinkComposer = useCallback(() => {
+    setShowSiblingLinkComposer(true);
+    setLinkGroupId('');
+    setLinkRightDirections(createInitialRelationshipDirections());
+  }, []);
+
+  const resetConnectedGroupComposer = useCallback(() => {
+    setShowConnectedGroupComposer(true);
+    setConnectedGroupId('');
+    setSiblingMembershipMode('open');
+    setConnectedRoleId('');
+    setSiblingRelationshipDirections(createInitialRelationshipDirections());
+  }, []);
 
   const handleDescriptionContentChange = useCallback((value: Value) => {
     setDescriptionContent(value);
@@ -236,16 +443,53 @@ export function useCreateGroupForm(): CreateFormConfig {
   );
 
   const handleAddLinkedGroup = useCallback(() => {
-    if (!linkGroupId || linkRights.size === 0) {
+    if (!linkGroupId || !hasSelectedRights(linkRightDirections)) {
       toast.error(t('pages.create.group.selectGroupAndRights'));
       return;
     }
+
+    if (linkType === 'sibling') {
+      const group = allGroups.find(g => g.id === linkGroupId);
+
+      if (group?.group_type === 'sibling') {
+        toast.error(
+          'Geschwistergruppen koennen nur mit Basis- oder hierarchischen Gruppen verbunden werden.'
+        );
+        return;
+      }
+
+      if (siblingMembershipMode === 'elected' && !connectedRoleId) {
+        toast.error('Bitte waehle eine Rolle der verbundenen Gruppe aus.');
+        return;
+      }
+
+      setConfiguredConnectedGroup({
+        groupId: linkGroupId,
+        groupName: group?.name ?? linkGroupId,
+        membershipMode: siblingMembershipMode,
+        roleId: connectedRoleId,
+        rightDirections: { ...linkRightDirections },
+      });
+      setLinkGroupId('');
+      setLinkRightDirections(createInitialRelationshipDirections());
+      setSiblingMembershipMode('open');
+      setConnectedRoleId('');
+      setShowSiblingLinkComposer(false);
+      return;
+    }
+
     const existing = linkedGroups.find(g => g.groupId === linkGroupId);
     if (existing) {
       toast.info(t('pages.create.group.groupAlreadyLinked'));
       setLinkedGroups(prev =>
         prev.map(g =>
-          g.groupId === linkGroupId ? { ...g, type: linkType, rights: [...linkRights] } : g
+          g.groupId === linkGroupId
+            ? {
+                ...g,
+                type: linkType,
+                rightDirections: { ...linkRightDirections },
+              }
+            : g
         )
       );
     } else {
@@ -256,16 +500,76 @@ export function useCreateGroupForm(): CreateFormConfig {
           groupId: linkGroupId,
           groupName: group?.name ?? linkGroupId,
           type: linkType,
-          rights: [...linkRights],
+          rightDirections: { ...linkRightDirections },
         },
       ]);
     }
     setLinkGroupId('');
-    setLinkRights(new Set());
-  }, [linkGroupId, linkType, linkRights, linkedGroups, allGroups, t]);
+    setLinkRightDirections(createInitialRelationshipDirections());
+    setShowSiblingLinkComposer(false);
+  }, [
+    linkGroupId,
+    linkRightDirections,
+    linkType,
+    linkedGroups,
+    allGroups,
+    t,
+    siblingMembershipMode,
+    connectedRoleId,
+    linkType,
+    linkedGroups,
+  ]);
 
-  const handleRemoveLinkedGroup = useCallback((gId: string) => {
-    setLinkedGroups(prev => prev.filter(g => g.groupId !== gId));
+  const handleRemoveLinkedGroup = useCallback(
+    (gId: string) => {
+      setLinkedGroups(prev => prev.filter(g => g.groupId !== gId));
+      if (groupType === 'sibling' && configuredConnectedGroup?.groupId === gId) {
+        setConfiguredConnectedGroup(null);
+      }
+    },
+    [groupType, configuredConnectedGroup]
+  );
+
+  const handleAddConfiguredConnectedGroup = useCallback(() => {
+    if (!connectedGroupId) {
+      toast.error('Bitte waehle eine verbundene Gruppe aus.');
+      return;
+    }
+
+    if (siblingMembershipMode === 'elected' && !connectedRoleId) {
+      toast.error('Bitte waehle eine Rolle der verbundenen Gruppe aus.');
+      return;
+    }
+
+    const connectedGroup = allGroups.find(group => group.id === connectedGroupId);
+
+    setConfiguredConnectedGroup({
+      groupId: connectedGroupId,
+      groupName: connectedGroup?.name ?? connectedGroupId,
+      membershipMode: siblingMembershipMode,
+      roleId: connectedRoleId,
+      rightDirections: { ...siblingRelationshipDirections },
+    });
+    setShowConnectedGroupComposer(false);
+    setConnectedGroupId('');
+    setSiblingMembershipMode('open');
+    setConnectedRoleId('');
+    setSiblingRelationshipDirections(createInitialRelationshipDirections());
+  }, [
+    allGroups,
+    connectedGroupId,
+    connectedRoleId,
+    siblingMembershipMode,
+    siblingRelationshipDirections,
+  ]);
+
+  const handleRemoveConfiguredConnectedGroup = useCallback(() => {
+    setConfiguredConnectedGroup(null);
+    setShowConnectedGroupComposer(false);
+    setConnectedGroupId('');
+    setSiblingMembershipMode('open');
+    setConnectedRoleId('');
+    setSiblingRelationshipDirections(createInitialRelationshipDirections());
   }, []);
 
   const handleSubmit = async () => {
@@ -276,8 +580,32 @@ export function useCreateGroupForm(): CreateFormConfig {
       return;
     }
 
+    if (resolvedGroupType === 'sibling') {
+      if (!configuredConnectedGroup) {
+        toast.error('Bitte waehle eine verbundene Gruppe aus.');
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
+      const derivedParliamentSourceGroupIds =
+        resolvedGroupType === 'sibling' && configuredConnectedGroup?.membershipMode === 'parliament'
+          ? Array.from(
+              new Set(
+                [
+                  {
+                    groupId: configuredConnectedGroup.groupId,
+                    rightDirections: configuredConnectedGroup.rightDirections,
+                  },
+                  ...linkedGroups,
+                ]
+                  .filter(connection => connection.rightDirections.passiveVotingRight !== 'none')
+                  .map(connection => connection.groupId)
+              )
+            )
+          : [];
+
       const createGroupResult = createGroup({
         id: groupId,
         name: name.trim(),
@@ -303,7 +631,22 @@ export function useCreateGroupForm(): CreateFormConfig {
         snapchat: null,
         tiktok: null,
         visibility,
-        group_type: groupType,
+        group_type: resolvedGroupType,
+        connected_group_id:
+          resolvedGroupType === 'sibling' ? (configuredConnectedGroup?.groupId ?? null) : null,
+        sibling_membership_mode:
+          resolvedGroupType === 'sibling'
+            ? (configuredConnectedGroup?.membershipMode ?? null)
+            : null,
+        sibling_role_id:
+          resolvedGroupType === 'sibling' && configuredConnectedGroup?.membershipMode === 'elected'
+            ? configuredConnectedGroup.roleId || null
+            : null,
+        parliament_source_group_ids:
+          resolvedGroupType === 'sibling' &&
+          configuredConnectedGroup?.membershipMode === 'parliament'
+            ? derivedParliamentSourceGroupIds
+            : [],
         owner_id: null,
       });
       await serverConfirmed(createGroupResult);
@@ -311,27 +654,76 @@ export function useCreateGroupForm(): CreateFormConfig {
         await commonActions.syncEntityHashtags('group', groupId, hashtags, [], allHashtags ?? []);
       }
 
-      // Invite members
-      for (const userId of invitedUserIds) {
-        await inviteMember({
-          id: crypto.randomUUID(),
-          user_id: userId,
+      if (allowOfficialMemberInvites) {
+        for (const userId of invitedUserIds) {
+          await inviteMember({
+            id: crypto.randomUUID(),
+            user_id: userId,
+            group_id: groupId,
+            visibility: '',
+            status: 'invited',
+          });
+        }
+      } else if (allowGuestInvites && invitedUserIds.length > 0) {
+        const guestRoleId = crypto.randomUUID();
+        const guestRoleResult = createRole({
+          id: guestRoleId,
+          name: 'Guest',
+          description: 'Initial guest access created during group setup.',
+          scope: 'group',
           group_id: groupId,
-          visibility: '',
-          status: 'invited',
+          event_id: null,
+          amendment_id: null,
+          blog_id: null,
+          visibility: 'private',
+          assignee_kind: 'guest',
+          assignment_mode: 'assigned',
+          default_request_role: false,
+          default_invite_role: false,
+          is_recurring: false,
+          sort_order: -1,
         });
+        await serverConfirmed(guestRoleResult);
+
+        for (const userId of invitedUserIds) {
+          await inviteGuest({
+            id: crypto.randomUUID(),
+            group_id: groupId,
+            user_id: userId,
+            status: 'invited',
+            role_ids: [guestRoleId],
+            invited_by_id: user?.id ?? null,
+          });
+        }
+      }
+
+      if (resolvedGroupType === 'sibling' && configuredConnectedGroup) {
+        for (const relationship of buildRelationshipRequests({
+          currentGroupId: groupId,
+          otherGroupId: configuredConnectedGroup.groupId,
+          linkType: 'sibling',
+          rightDirections: configuredConnectedGroup.rightDirections,
+        })) {
+          await createRelationship({
+            id: crypto.randomUUID(),
+            ...relationship,
+            status: 'requested',
+            initiator_group_id: groupId,
+          });
+        }
       }
 
       // Create group relationships
       for (const link of linkedGroups) {
-        const isParent = link.type === 'parent';
-        for (const right of link.rights) {
+        for (const relationship of buildRelationshipRequests({
+          currentGroupId: groupId,
+          otherGroupId: link.groupId,
+          linkType: link.type,
+          rightDirections: link.rightDirections,
+        })) {
           await createRelationship({
             id: crypto.randomUUID(),
-            group_id: isParent ? groupId : link.groupId,
-            related_group_id: isParent ? link.groupId : groupId,
-            relationship_type: invertGroupRelationshipType(link.type),
-            with_right: right,
+            ...relationship,
             status: 'requested',
             initiator_group_id: groupId,
           });
@@ -372,23 +764,115 @@ export function useCreateGroupForm(): CreateFormConfig {
   });
 
   const selectedLinkedGroupName = allGroups.find(group => group.id === linkGroupId)?.name ?? '';
+  const configuredConnectedGroupName =
+    allGroups.find(group => group.id === configuredConnectedGroup?.groupId)?.name ??
+    configuredConnectedGroup?.groupName ??
+    '';
+  const groupTypeLabel =
+    resolvedGroupType === 'base'
+      ? t('pages.create.group.groupTypes.base')
+      : resolvedGroupType === 'hierarchical'
+        ? t('pages.create.group.groupTypes.hierarchical')
+        : t('common.network.sibling', 'Geschwistergruppe');
+  const visibilityLabel =
+    visibility === 'public'
+      ? t('pages.create.common.public')
+      : visibility === 'authenticated'
+        ? t('pages.create.common.authenticated')
+        : t('pages.create.common.private');
+  const invitedUserNames = invitedUserIds
+    .map(invitedUserId => {
+      const matchedUser = allUsers.find(currentUser => currentUser.id === invitedUserId);
+      if (!matchedUser) {
+        return invitedUserId;
+      }
+
+      return (
+        [matchedUser.first_name, matchedUser.last_name].filter(Boolean).join(' ').trim() ||
+        matchedUser.handle ||
+        matchedUser.email ||
+        matchedUser.id
+      );
+    })
+    .filter(Boolean);
+  const connectedGroupRights = configuredConnectedGroup
+    ? getSelectedRights(configuredConnectedGroup.rightDirections)
+    : [];
+  const linkedGroupReviewData = linkedGroups.map(linkedGroup => ({
+    id: linkedGroup.groupId,
+    groupName: linkedGroup.groupName,
+    type: linkedGroup.type,
+    relationshipLabel: getCurrentGroupRelationshipLabel({
+      relationshipType: linkedGroup.type,
+      currentGroupName: name,
+      selectedGroupName: linkedGroup.groupName,
+      siblingMembershipMode: linkedGroup.siblingMembershipMode,
+      t,
+    }),
+    rights: getSelectedRights(linkedGroup.rightDirections),
+    rightDirections: linkedGroup.rightDirections,
+  }));
+  const constitutionalEventStart =
+    eventStartDate || eventStartTime
+      ? `${eventStartDate || ''}${eventStartTime ? ` ${eventStartTime}` : ''}`.trim()
+      : '';
+  const selectableConnectedGroups = useMemo(
+    () => allGroups.filter(group => group.id !== groupId && group.group_type !== 'sibling'),
+    [allGroups, groupId]
+  );
+  const selectableLinkGroups = useMemo(
+    () => allGroups.filter(group => group.id !== groupId),
+    [allGroups, groupId]
+  );
+  const selectableConnectedRoles = useMemo(
+    () =>
+      (connectedGroupRoles ?? []).filter(
+        role => role.scope === 'group' && role.assignee_kind !== 'guest'
+      ),
+    [connectedGroupRoles]
+  );
+  const selectedLinkRights = useMemo(
+    () => new Set(getSelectedRights(linkRightDirections)),
+    [linkRightDirections]
+  );
+  const selectedConnectedRights = useMemo(
+    () => new Set(getSelectedRights(siblingRelationshipDirections)),
+    [siblingRelationshipDirections]
+  );
+  const configuredConnectedRights = useMemo(
+    () =>
+      new Set(
+        getSelectedRights(
+          configuredConnectedGroup?.rightDirections ?? createInitialRelationshipDirections()
+        )
+      ),
+    [configuredConnectedGroup]
+  );
 
   const existingRightStatuses = useMemo(() => {
     if (!linkGroupId) {
       return undefined;
     }
 
-    const statuses = buildExistingRightStatusesForDirection(
-      [...(draftRelationships ?? []), ...(draftRelationshipsAsTarget ?? [])],
-      {
-        currentGroupId: groupId,
-        otherGroupId: linkGroupId,
-        relationshipType: linkType,
-      }
+    const statuses = new Map(
+      buildExistingRightStatusesForDirection(
+        [...(draftRelationships ?? []), ...(draftRelationshipsAsTarget ?? [])],
+        {
+          currentGroupId: groupId,
+          otherGroupId: linkGroupId,
+          relationshipType: linkType,
+        }
+      )
     );
 
     const pendingLink = linkedGroups.find(group => group.groupId === linkGroupId);
-    pendingLink?.rights.forEach(right => {
+    const pendingSiblingGroup =
+      configuredConnectedGroup?.groupId === linkGroupId ? configuredConnectedGroup : null;
+    getSelectedRights(
+      pendingSiblingGroup?.rightDirections ??
+        pendingLink?.rightDirections ??
+        createInitialRelationshipDirections()
+    ).forEach(right => {
       if (!statuses.has(right)) {
         statuses.set(right, 'outgoing');
       }
@@ -402,6 +886,7 @@ export function useCreateGroupForm(): CreateFormConfig {
     draftRelationships,
     draftRelationshipsAsTarget,
     linkedGroups,
+    configuredConnectedGroup,
   ]);
 
   const config = useMemo(
@@ -447,12 +932,17 @@ export function useCreateGroupForm(): CreateFormConfig {
               />
               <div className="space-y-2">
                 <Label>{t('pages.create.group.groupType')}</Label>
-                <RadioGroup value={groupType} onValueChange={v => setGroupType(v as GroupType)}>
+                <RadioGroup
+                  value={radioGroupType}
+                  onValueChange={value => setGroupType(value as GroupType)}
+                >
                   <div className="space-y-2">
                     <Label
                       htmlFor="group-type-base"
                       className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
-                        groupType === 'base' ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
+                        radioGroupType === 'base'
+                          ? 'border-primary bg-primary/5'
+                          : 'hover:bg-muted/50'
                       }`}
                     >
                       <RadioGroupItem value="base" id="group-type-base" className="mt-0.5" />
@@ -468,7 +958,7 @@ export function useCreateGroupForm(): CreateFormConfig {
                     <Label
                       htmlFor="group-type-hierarchical"
                       className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
-                        groupType === 'hierarchical'
+                        radioGroupType === 'hierarchical'
                           ? 'border-primary bg-primary/5'
                           : 'hover:bg-muted/50'
                       }`}
@@ -490,6 +980,314 @@ export function useCreateGroupForm(): CreateFormConfig {
                   </div>
                 </RadioGroup>
               </div>
+            </div>
+          ),
+        },
+        {
+          label: t('pages.create.group.linkGroups'),
+          isValid: () => linkType !== 'sibling' || configuredConnectedGroup !== null,
+          content: (
+            <div className="space-y-6">
+              <div className="space-y-4 rounded-lg border p-4">
+                <div className="space-y-1">
+                  <Label>Verbindungen zu anderen Gruppen</Label>
+                  <p className="text-muted-foreground text-xs">
+                    {groupType === 'base'
+                      ? t('pages.create.group.tips.linkGroups')
+                      : 'Waehle zuerst eine Gruppe. Im Beziehungstyp entscheidest du dann, ob diese Gruppe uebergeordnet, untergeordnet oder eine Geschwistergruppe ist.'}
+                  </p>
+                </div>
+
+                <CreateTypeaheadField
+                  label={t('pages.create.group.selectGroup')}
+                  items={toTypeaheadItems(
+                    selectableLinkGroups,
+                    'group',
+                    group => group.name || 'Group',
+                    group =>
+                      typeof group.description === 'string'
+                        ? group.description.substring(0, 60)
+                        : undefined,
+                    undefined,
+                    group => `/group/${group.id}`
+                  )}
+                  value={linkGroupId || undefined}
+                  onChange={item => setLinkGroupId(item?.id ?? '')}
+                  placeholder={t('pages.create.group.searchGroups')}
+                  showAllOnFocus
+                />
+
+                {linkGroupId ? (
+                  <>
+                    <GroupRelationshipTypeSelect
+                      id="create-group-relationship-type"
+                      label={t('pages.create.group.relationshipType')}
+                      value={linkType}
+                      currentGroupName={name}
+                      selectedGroupName={selectedLinkedGroupName}
+                      siblingMembershipMode={
+                        linkType === 'sibling' ? siblingMembershipMode : undefined
+                      }
+                      onValueChange={value => setLinkType(value)}
+                      disabledOptions={{
+                        parent: groupType === 'base',
+                        sibling: groupType === 'base',
+                      }}
+                      helperText={
+                        groupType === 'base'
+                          ? t('common.network.baseGroupsCanOnlyBeChildren')
+                          : undefined
+                      }
+                    />
+
+                    {linkType === 'sibling' ? (
+                      <>
+                        <div className="space-y-2">
+                          <Label>Geschwistergruppentyp</Label>
+                          <RadioGroup
+                            value={siblingMembershipMode}
+                            onValueChange={value =>
+                              setSiblingMembershipMode(value as SiblingMembershipMode)
+                            }
+                          >
+                            <div className="grid gap-2 md:grid-cols-3">
+                              {[
+                                {
+                                  value: 'open',
+                                  title: getSiblingMembershipModeLabel('open', t),
+                                  description:
+                                    'Mitglieder der verbundenen Gruppe koennen selbst beitreten.',
+                                },
+                                {
+                                  value: 'elected',
+                                  title: getSiblingMembershipModeLabel('elected', t),
+                                  description:
+                                    'Eine Rolle der verbundenen Gruppe erzeugt die Mitgliedschaft automatisch.',
+                                },
+                                {
+                                  value: 'parliament',
+                                  title: getSiblingMembershipModeLabel('parliament', t),
+                                  description:
+                                    'Mitgliedschaft wird indirekt aus verbundenen Gruppen mit passivem Wahlrecht abgeleitet.',
+                                },
+                              ].map(option => (
+                                <Label
+                                  key={option.value}
+                                  htmlFor={`sibling-mode-${option.value}`}
+                                  className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
+                                    siblingMembershipMode === option.value
+                                      ? 'border-primary bg-primary/5'
+                                      : 'hover:bg-muted/50'
+                                  }`}
+                                >
+                                  <RadioGroupItem
+                                    value={option.value}
+                                    id={`sibling-mode-${option.value}`}
+                                    className="mt-0.5"
+                                  />
+                                  <div>
+                                    <div className="text-sm font-medium">{option.title}</div>
+                                    <div className="text-muted-foreground text-xs">
+                                      {option.description}
+                                    </div>
+                                  </div>
+                                </Label>
+                              ))}
+                            </div>
+                          </RadioGroup>
+                        </div>
+
+                        {siblingMembershipMode === 'elected' ? (
+                          <CreateTypeaheadField
+                            label="Verbundene Rolle"
+                            required
+                            items={toTypeaheadItems(
+                              selectableConnectedRoles,
+                              'role',
+                              role => role.name || 'Role',
+                              role => role.description || undefined
+                            )}
+                            value={connectedRoleId || undefined}
+                            onChange={item => setConnectedRoleId(item?.id ?? '')}
+                            placeholder="Mitgliedsrolle der verbundenen Gruppe waehlen"
+                            showAllOnFocus
+                          />
+                        ) : null}
+                      </>
+                    ) : null}
+
+                    <GroupRelationshipRightsSelector
+                      label={t('pages.create.group.selectRights')}
+                      helperText={t('common.network.existingRightsStatusHint')}
+                      selectedRights={selectedLinkRights}
+                      onToggleRight={right =>
+                        setLinkRightDirections(currentDirections =>
+                          toggleRightDirection(currentDirections, right)
+                        )
+                      }
+                      existingRightStatuses={existingRightStatuses}
+                      rightDirections={linkRightDirections}
+                      onDirectionChange={(right, direction) =>
+                        setLinkRightDirections(currentDirections => ({
+                          ...currentDirections,
+                          [right]: direction,
+                        }))
+                      }
+                      directionOptions={relationshipDirectionOptions}
+                      currentGroupName={name}
+                      selectedGroupName={selectedLinkedGroupName}
+                      currentGroupId={groupId}
+                      selectedGroupId={linkGroupId || undefined}
+                    />
+                  </>
+                ) : null}
+
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAddLinkedGroup}
+                    disabled={
+                      !linkGroupId ||
+                      !hasSelectedRights(linkRightDirections) ||
+                      (linkType === 'sibling' &&
+                        siblingMembershipMode === 'elected' &&
+                        !connectedRoleId)
+                    }
+                  >
+                    <Link2 className="mr-1 h-4 w-4" />
+                    {linkType === 'sibling'
+                      ? 'Geschwistergruppe konfigurieren'
+                      : t('pages.create.group.addGroupLink')}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setLinkGroupId('');
+                      setLinkRightDirections(createInitialRelationshipDirections());
+                      setSiblingMembershipMode('open');
+                      setConnectedRoleId('');
+                    }}
+                  >
+                    Abbrechen
+                  </Button>
+                </div>
+              </div>
+
+              {configuredConnectedGroup ? (
+                <div className="space-y-2">
+                  <Label className="text-muted-foreground text-xs">
+                    Verbundene Geschwistergruppe
+                  </Label>
+                  <div className="flex items-start gap-3 rounded-md border p-3">
+                    <div className="flex flex-col gap-1">
+                      <Badge
+                        className={cn(
+                          'border text-xs hover:opacity-100',
+                          getRelationshipBadgeClasses('sibling')
+                        )}
+                      >
+                        {t('common.network.sibling', 'Geschwistergruppe')}
+                      </Badge>
+                      <Badge className="border-muted bg-muted/50 text-foreground text-xs hover:opacity-100">
+                        {getSiblingMembershipModeLabel(configuredConnectedGroup.membershipMode, t)}
+                      </Badge>
+                    </div>
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <div className="space-y-1">
+                        <span className="block text-sm font-medium">
+                          {configuredConnectedGroup.groupName}
+                        </span>
+                        <p className="text-muted-foreground text-xs">
+                          {getCurrentGroupRelationshipLabel({
+                            relationshipType: 'sibling',
+                            currentGroupName: name,
+                            selectedGroupName: configuredConnectedGroup.groupName,
+                            siblingMembershipMode: configuredConnectedGroup.membershipMode,
+                            t,
+                          })}
+                        </p>
+                      </div>
+                      <GroupRelationshipRightSentenceList
+                        rights={connectedGroupRights}
+                        rightDirections={configuredConnectedGroup.rightDirections}
+                        currentGroupName={name}
+                        selectedGroupName={configuredConnectedGroup.groupName}
+                        currentGroupId={groupId}
+                        selectedGroupId={configuredConnectedGroup.groupId}
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0"
+                      onClick={handleRemoveConfiguredConnectedGroup}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+
+              {linkedGroups.length > 0 ? (
+                <div className="space-y-2">
+                  <Label className="text-muted-foreground text-xs">
+                    {t('pages.create.group.linkedGroups')}
+                  </Label>
+                  {linkedGroups.map(linkedGroup => (
+                    <div
+                      key={`${linkedGroup.type}-${linkedGroup.groupId}`}
+                      className="flex items-start gap-3 rounded-md border p-3"
+                    >
+                      <Badge
+                        className={cn(
+                          'border text-xs hover:opacity-100',
+                          getRelationshipBadgeClasses(linkedGroup.type)
+                        )}
+                      >
+                        {linkedGroup.type === 'parent'
+                          ? t('pages.create.group.parent')
+                          : t('pages.create.group.child')}
+                      </Badge>
+                      <div className="min-w-0 flex-1 space-y-2">
+                        <div className="space-y-1">
+                          <span className="block text-sm font-medium">{linkedGroup.groupName}</span>
+                          <p className="text-muted-foreground text-xs">
+                            {getCurrentGroupRelationshipLabel({
+                              relationshipType: linkedGroup.type,
+                              currentGroupName: name,
+                              selectedGroupName: linkedGroup.groupName,
+                              siblingMembershipMode: linkedGroup.siblingMembershipMode,
+                              t,
+                            })}
+                          </p>
+                        </div>
+                        <GroupRelationshipRightSentenceList
+                          rights={linkedGroup.rights}
+                          rightDirections={linkedGroup.rightDirections}
+                          currentGroupName={name}
+                          selectedGroupName={linkedGroup.groupName}
+                          currentGroupId={groupId}
+                          selectedGroupId={linkedGroup.groupId}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                        onClick={() => handleRemoveLinkedGroup(linkedGroup.groupId)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
             </div>
           ),
         },
@@ -585,21 +1383,27 @@ export function useCreateGroupForm(): CreateFormConfig {
             </div>
           ),
         },
-        // Step 4: Invite Members
+        // Step 4: Invite People
         {
-          label: t('pages.create.group.inviteMembers'),
+          label: allowGuestInvites ? 'Gaeste einladen' : t('pages.create.group.inviteMembers'),
           isValid: () => true,
           optional: true,
           content: (
             <div className="space-y-4">
               <p className="text-muted-foreground text-xs">
-                {t('pages.create.group.tips.inviteMembers')}
+                {allowGuestInvites
+                  ? 'Diese Gruppe vergibt Mitgliedschaft automatisch. Du kannst hier stattdessen Gaeste mit einer Gastrolle einladen.'
+                  : t('pages.create.group.tips.inviteMembers')}
               </p>
               <UserSearchInput
                 value={invitedUserIds}
                 onChange={setInvitedUserIds}
-                label={t('pages.create.group.searchUsers')}
-                placeholder={t('pages.create.group.searchUsers')}
+                label={allowGuestInvites ? 'Gaeste suchen' : t('pages.create.group.searchUsers')}
+                placeholder={
+                  allowGuestInvites
+                    ? 'Gaeste nach Name oder Handle suchen'
+                    : t('pages.create.group.searchUsers')
+                }
                 excludeUserId={user?.id}
                 multi
               />
@@ -607,9 +1411,15 @@ export function useCreateGroupForm(): CreateFormConfig {
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2 text-base">
                     <FileSpreadsheet className="h-4 w-4 text-emerald-700" />
-                    {t('pages.create.group.csvGuideTitle')}
+                    {allowGuestInvites
+                      ? 'Gaeste per CSV vorbereiten'
+                      : t('pages.create.group.csvGuideTitle')}
                   </CardTitle>
-                  <CardDescription>{t('pages.create.group.csvGuideDescription')}</CardDescription>
+                  <CardDescription>
+                    {allowGuestInvites
+                      ? 'Importiere Gaeste aus einer CSV mit Vor- und Nachname.'
+                      : t('pages.create.group.csvGuideDescription')}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <Accordion type="single" collapsible>
@@ -650,7 +1460,10 @@ export function useCreateGroupForm(): CreateFormConfig {
                   className="hover:bg-muted/50 flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm transition-colors"
                 >
                   <Upload className="h-4 w-4" />
-                  {t('pages.create.group.inviteMembersOptional')} (CSV)
+                  {allowGuestInvites
+                    ? 'Gaeste importieren'
+                    : t('pages.create.group.inviteMembersOptional')}{' '}
+                  (CSV)
                 </Label>
                 <input
                   id="csv-upload"
@@ -776,135 +1589,9 @@ export function useCreateGroupForm(): CreateFormConfig {
               )}
               {invitedUserIds.length > 0 && (
                 <p className="text-muted-foreground text-sm">
-                  {invitedUserIds.length} {t('pages.create.group.invited')}
+                  {invitedUserIds.length}{' '}
+                  {allowGuestInvites ? 'Gaeste vorgemerkt' : t('pages.create.group.invited')}
                 </p>
-              )}
-            </div>
-          ),
-        },
-        // Step 5: Link Groups
-        {
-          label: t('pages.create.group.linkGroups'),
-          isValid: () => true,
-          optional: true,
-          content: (
-            <div className="space-y-4">
-              <p className="text-muted-foreground text-xs">
-                {t('pages.create.group.tips.linkGroups')}
-              </p>
-              <CreateTypeaheadField
-                label={t('pages.create.group.selectGroup')}
-                items={toTypeaheadItems(
-                  allGroups.filter(g => g.id !== groupId),
-                  'group',
-                  g => g.name || 'Group',
-                  g =>
-                    typeof g.description === 'string' ? g.description.substring(0, 60) : undefined
-                )}
-                value={linkGroupId || undefined}
-                onChange={item => setLinkGroupId(item?.id ?? '')}
-                placeholder={t('pages.create.group.searchGroups')}
-              />
-              {linkGroupId ? (
-                <>
-                  <GroupRelationshipTypeSelect
-                    id="create-group-relationship-type"
-                    label={t('pages.create.group.relationshipType')}
-                    value={linkType}
-                    currentGroupName={name}
-                    selectedGroupName={selectedLinkedGroupName}
-                    onValueChange={setLinkType}
-                    disabledOptions={{ parent: groupType === 'base' }}
-                    helperText={
-                      groupType === 'base'
-                        ? t('common.network.baseGroupsCanOnlyBeChildren')
-                        : undefined
-                    }
-                  />
-                  <GroupRelationshipRightsSelector
-                    label={t('pages.create.group.selectRights')}
-                    helperText={t('common.network.existingRightsStatusHint')}
-                    selectedRights={linkRights}
-                    onToggleRight={right => {
-                      setLinkRights(prev => {
-                        const next = new Set(prev);
-                        if (next.has(right)) {
-                          next.delete(right);
-                        } else {
-                          next.add(right);
-                        }
-                        return next;
-                      });
-                    }}
-                    existingRightStatuses={existingRightStatuses}
-                  />
-                </>
-              ) : null}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleAddLinkedGroup}
-                disabled={!linkGroupId || linkRights.size === 0}
-              >
-                <Link2 className="mr-1 h-4 w-4" />
-                {t('pages.create.group.addGroupLink')}
-              </Button>
-              {linkedGroups.length > 0 && (
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground text-xs">
-                    {t('pages.create.group.linkedGroups')}
-                  </Label>
-                  {linkedGroups.map(lg => (
-                    <div key={lg.groupId} className="flex items-start gap-3 rounded-md border p-3">
-                      <Badge
-                        className={cn(
-                          'border text-xs hover:opacity-100',
-                          getRelationshipBadgeClasses(lg.type)
-                        )}
-                      >
-                        {lg.type === 'parent'
-                          ? t('pages.create.group.parent')
-                          : t('pages.create.group.child')}
-                      </Badge>
-                      <div className="min-w-0 flex-1 space-y-2">
-                        <div className="space-y-1">
-                          <span className="block text-sm font-medium">{lg.groupName}</span>
-                          <p className="text-muted-foreground text-xs">
-                            {getCurrentGroupRelationshipLabel({
-                              relationshipType: lg.type,
-                              currentGroupName: name,
-                              selectedGroupName: lg.groupName,
-                              t,
-                            })}
-                          </p>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {lg.rights.map(right => (
-                            <Badge
-                              key={right}
-                              className={cn(
-                                'border text-xs hover:opacity-100',
-                                getRightBadgeClasses(right)
-                              )}
-                            >
-                              {getGroupRelationshipRightLabel(right, t)}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0"
-                        onClick={() => handleRemoveLinkedGroup(lg.groupId)}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
               )}
             </div>
           ),
@@ -964,51 +1651,142 @@ export function useCreateGroupForm(): CreateFormConfig {
             <CreateSummaryStep
               entityType="group"
               badge={t('pages.create.group.reviewBadge')}
+              secondaryBadge={groupTypeLabel}
               title={name || t('pages.create.group.namePlaceholder')}
               subtitle={description || undefined}
+              media={imageURL ? { imageUrl: imageURL, imageAlt: name || 'Group image' } : undefined}
               hashtags={hashtags.length > 0 ? hashtags : undefined}
-              fields={[
+              sections={[
                 {
-                  ...(email ? [{ label: t('pages.create.group.emailLabel'), value: email }] : []),
+                  title: t('pages.create.group.basicInfo'),
+                  fields: [
+                    ...(email ? [{ label: t('pages.create.group.emailLabel'), value: email }] : []),
+                    {
+                      label: t('pages.create.group.groupType'),
+                      value: groupTypeLabel,
+                    },
+                    {
+                      label: t('pages.create.common.visibility'),
+                      value: visibilityLabel,
+                    },
+                    ...(resolvedGroupType === 'sibling' && configuredConnectedGroupName
+                      ? [
+                          { label: 'Verbundene Gruppe', value: configuredConnectedGroupName },
+                          {
+                            label: 'Mitgliedschaftsmodus',
+                            value: getSiblingMembershipModeLabel(
+                              configuredConnectedGroup?.membershipMode ??
+                                effectiveSiblingMembershipMode,
+                              t
+                            ),
+                          },
+                          ...(connectedGroupRights.length > 0
+                            ? [
+                                {
+                                  label: 'Rechte',
+                                  value: configuredConnectedGroup ? (
+                                    <GroupRelationshipRightSentenceList
+                                      rights={connectedGroupRights}
+                                      rightDirections={configuredConnectedGroup.rightDirections}
+                                      currentGroupName={name}
+                                      selectedGroupName={configuredConnectedGroup.groupName}
+                                      currentGroupId={groupId}
+                                      selectedGroupId={configuredConnectedGroup.groupId}
+                                    />
+                                  ) : null,
+                                },
+                              ]
+                            : []),
+                        ]
+                      : []),
+                  ],
                 },
                 {
-                  label: t('pages.create.group.groupType'),
-                  value:
-                    groupType === 'base'
-                      ? t('pages.create.group.groupTypes.base')
-                      : t('pages.create.group.groupTypes.hierarchical'),
+                  title: t('pages.create.group.locationLabel'),
+                  fields: [
+                    ...(locationSummary
+                      ? [{ label: t('pages.create.group.locationLabel'), value: locationSummary }]
+                      : []),
+                    ...(imageURL
+                      ? [{ label: t('pages.create.group.imageLabel'), value: 'Attached' }]
+                      : []),
+                  ],
                 },
-                ...(locationSummary
-                  ? [{ label: t('pages.create.group.locationLabel'), value: locationSummary }]
-                  : []),
-                { label: t('pages.create.common.visibility'), value: visibility },
-                ...(invitedUserIds.length > 0
-                  ? [
-                      {
-                        label: t('pages.create.group.invitedMembersLabel'),
-                        value: `${invitedUserIds.length} ${t('pages.create.group.invited')}`,
-                      },
-                    ]
-                  : []),
-                ...(linkedGroups.length > 0
-                  ? [
-                      {
-                        label: t('pages.create.group.groupLinksLabel'),
-                        value: linkedGroups
-                          .map(g =>
-                            getCurrentGroupRelationshipLabel({
-                              relationshipType: g.type,
-                              currentGroupName: name,
-                              selectedGroupName: g.groupName,
-                              t,
-                            })
-                          )
-                          .join(', '),
-                      },
-                    ]
-                  : []),
+                {
+                  title: allowGuestInvites
+                    ? 'Gaeste einladen'
+                    : t('pages.create.group.inviteMembers'),
+                  fields: [
+                    ...(invitedUserNames.length > 0
+                      ? [
+                          {
+                            label: allowGuestInvites
+                              ? 'Eingeladene Gaeste'
+                              : t('pages.create.group.invitedMembersLabel'),
+                            value: invitedUserNames.join(', '),
+                          },
+                        ]
+                      : []),
+                  ],
+                },
+                {
+                  title: t('pages.create.group.groupLinksLabel'),
+                  content:
+                    linkedGroupReviewData.length > 0 ? (
+                      <div className="space-y-3">
+                        {linkedGroupReviewData.map(linkedGroup => (
+                          <div
+                            key={linkedGroup.id}
+                            className="border-border/70 bg-card/70 rounded-xl border p-3"
+                          >
+                            <p className="text-sm font-semibold">{linkedGroup.groupName}</p>
+                            <p className="text-muted-foreground mt-1 text-sm">
+                              {linkedGroup.relationshipLabel}
+                            </p>
+                            {linkedGroup.rights.length > 0 ? (
+                              <GroupRelationshipRightSentenceList
+                                className="mt-3"
+                                rights={linkedGroup.rights}
+                                rightDirections={linkedGroup.rightDirections}
+                                currentGroupName={name}
+                                selectedGroupName={linkedGroup.groupName}
+                                currentGroupId={groupId}
+                                selectedGroupId={linkedGroup.id}
+                              />
+                            ) : null}
+                          </div>
+                        ))}
+                      </div>
+                    ) : undefined,
+                },
                 ...(createConstitutionalEvent && eventName
-                  ? [{ label: t('pages.create.group.constitutionalEventLabel'), value: eventName }]
+                  ? [
+                      {
+                        title: t('pages.create.group.createConstitutionalEvent'),
+                        fields: [
+                          {
+                            label: t('pages.create.group.constitutionalEventLabel'),
+                            value: eventName,
+                          },
+                          ...(eventLocation
+                            ? [
+                                {
+                                  label: t('pages.create.group.eventLocation'),
+                                  value: eventLocation,
+                                },
+                              ]
+                            : []),
+                          ...(constitutionalEventStart
+                            ? [
+                                {
+                                  label: t('pages.create.event.startDate'),
+                                  value: constitutionalEventStart,
+                                },
+                              ]
+                            : []),
+                        ],
+                      },
+                    ]
                   : []),
               ]}
             />
@@ -1027,25 +1805,57 @@ export function useCreateGroupForm(): CreateFormConfig {
       city,
       street,
       house_number,
+      locationSummary,
       imageURL,
       hashtags,
       visibility,
+      visibilityLabel,
       groupType,
+      resolvedGroupType,
+      groupTypeLabel,
+      connectedGroupId,
+      configuredConnectedGroup,
+      configuredConnectedGroupName,
+      connectedGroupRights,
+      effectiveSiblingMembershipMode,
+      siblingMembershipMode,
+      connectedRoleId,
+      siblingRelationshipDirections,
       isSubmitting,
       groupId,
       t,
       invitedUserIds,
+      invitedUserNames,
       linkedGroups,
+      linkedGroupReviewData,
       linkGroupId,
       linkType,
-      linkRights,
+      linkRightDirections,
+      allowGuestInvites,
+      allowOfficialMemberInvites,
+      selectedLinkRights,
+      selectedConnectedRights,
+      configuredConnectedRights,
+      selectableConnectedGroups,
+      selectableConnectedRoles,
+      selectableLinkGroups,
+      selectedLinkedGroupName,
+      showConnectedGroupComposer,
+      showSiblingLinkComposer,
       allGroups,
       createConstitutionalEvent,
       eventName,
       eventLocation,
       eventStartDate,
       eventStartTime,
+      constitutionalEventStart,
       handleDescriptionContentChange,
+      handleAddLinkedGroup,
+      handleRemoveLinkedGroup,
+      handleAddConfiguredConnectedGroup,
+      handleRemoveConfiguredConnectedGroup,
+      resetConnectedGroupComposer,
+      resetSiblingLinkComposer,
       emailIsValid,
       emailValidationMessage,
       user,

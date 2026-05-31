@@ -16,6 +16,7 @@
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
     "seed": "tsx scripts/seed.ts",
+    "seed:political-demo": "tsx scripts/seed-political-demo.ts",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
     "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
     "lint:check": "npx eslint . --ext .ts,.tsx",

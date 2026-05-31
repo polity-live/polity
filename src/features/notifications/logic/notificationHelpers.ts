@@ -91,6 +91,16 @@ export function getNotificationNavigationTarget(
     }
   }
 
+  if (
+    (notification.type === 'event_invite' || notification.type === 'participation_invite') &&
+    notification.recipient_id
+  ) {
+    return {
+      kind: 'route',
+      to: `/user/${notification.recipient_id}/memberships`,
+    };
+  }
+
   if (isMessageNotification(notification) && notification.related_user_id) {
     return {
       kind: 'messages',
@@ -171,49 +181,68 @@ export function filterAccessibleNotifications(
     return roleCandidates.some(role => role.action_rights?.some(right => matcher(right)));
   };
 
+  const hasNotificationRight = (
+    actor:
+      | {
+          role?: {
+            action_rights?: readonly { action?: string | null; resource?: string | null }[] | null;
+          } | null;
+          roles?:
+            | readonly {
+                action_rights?:
+                  | readonly { action?: string | null; resource?: string | null }[]
+                  | null;
+              }[]
+            | null;
+          membership_roles?:
+            | readonly {
+                role?: {
+                  action_rights?:
+                    | readonly { action?: string | null; resource?: string | null }[]
+                    | null;
+                } | null;
+              }[]
+            | null;
+          participant_roles?:
+            | readonly {
+                role?: {
+                  action_rights?:
+                    | readonly { action?: string | null; resource?: string | null }[]
+                    | null;
+                } | null;
+              }[]
+            | null;
+        }
+      | null
+      | undefined,
+    resource: 'groupNotifications' | 'notifications'
+  ) =>
+    hasAnyRight(
+      actor,
+      right =>
+        right.resource === resource &&
+        (right.action === 'viewNotifications' || right.action === 'manageNotifications')
+    );
+
   return notifications.filter(n => {
     // Personal notifications
     if (n.recipient?.id === userId) return true;
 
-    // Entity notifications where user has relevant management rights
+    // Entity notifications where the user currently has notification access rights
     if (n.recipient_group?.memberships && n.recipient_group.memberships.length > 0) {
-      const membership = n.recipient_group.memberships[0];
-      return hasAnyRight(
-        membership,
-        right =>
-          (right.resource === 'groupNotifications' && right.action === 'viewNotifications') ||
-          (right.resource === 'groupNotifications' && right.action === 'manageNotifications') ||
-          (right.resource === 'groupMemberships' && right.action === 'manage') ||
-          (right.resource === 'groups' && right.action === 'manage')
-      );
+      return hasNotificationRight(n.recipient_group.memberships[0], 'groupNotifications');
     }
 
     if (n.recipient_event?.participants && n.recipient_event.participants.length > 0) {
-      const participant = n.recipient_event.participants[0];
-      return hasAnyRight(
-        participant,
-        right =>
-          (right.resource === 'groupNotifications' && right.action === 'viewNotifications') ||
-          (right.resource === 'groupNotifications' && right.action === 'manageNotifications') ||
-          (right.resource === 'events' && right.action === 'manage_participants') ||
-          (right.resource === 'events' && right.action === 'manage')
-      );
+      return hasNotificationRight(n.recipient_event.participants[0], 'notifications');
     }
 
     if (n.recipient_amendment?.collaborators && n.recipient_amendment.collaborators.length > 0) {
-      return true; // User is a collaborator on this amendment
+      return hasNotificationRight(n.recipient_amendment.collaborators[0], 'notifications');
     }
 
     if (n.recipient_blog?.bloggers && n.recipient_blog.bloggers.length > 0) {
-      const blogger = n.recipient_blog.bloggers[0];
-      return hasAnyRight(
-        blogger,
-        right =>
-          (right.resource === 'groupNotifications' && right.action === 'viewNotifications') ||
-          (right.resource === 'groupNotifications' && right.action === 'manageNotifications') ||
-          (right.resource === 'blogBloggers' && right.action === 'manage') ||
-          (right.resource === 'blogs' && right.action === 'manage')
-      );
+      return hasNotificationRight(n.recipient_blog.bloggers[0], 'notifications');
     }
 
     return false;

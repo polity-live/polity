@@ -60,6 +60,7 @@ interface EditElectionVoteDialogProps {
   agendaItemId?: string;
   agendaItemTitle?: string | null;
   agendaItemDescription?: string | null;
+  agendaItemDuration?: number | null;
   /** Set for election agenda items */
   election?: ElectionSettings | null;
   /** Set for vote agenda items */
@@ -74,6 +75,7 @@ export function EditElectionVoteDialog({
   agendaItemId,
   agendaItemTitle,
   agendaItemDescription,
+  agendaItemDuration,
   election,
   vote,
   choices = [],
@@ -90,39 +92,62 @@ export function EditElectionVoteDialog({
   const [majorityType, setMajorityType] = useState(entity?.majority_type || 'relative');
   const [closingType, setClosingType] = useState(entity?.closing_type || 'moderator');
   const [closingDuration, setClosingDuration] = useState(
-    entity?.closing_duration_seconds ? Math.round(entity.closing_duration_seconds / 60) : 5,
+    entity?.closing_duration_seconds ? Math.round(entity.closing_duration_seconds / 60) : 5
   );
-  const [visibility, setVisibility] = useState<Visibility>((entity?.visibility as Visibility) ?? 'public');
+  const [visibility, setVisibility] = useState<Visibility>(
+    (entity?.visibility as Visibility) ?? 'public'
+  );
   const [maxVotes, setMaxVotes] = useState(election?.max_votes ?? 1);
   const [title, setTitle] = useState(agendaItemTitle ?? '');
   const [description, setDescription] = useState(agendaItemDescription ?? '');
+  const [duration, setDuration] = useState(
+    typeof agendaItemDuration === 'number' && agendaItemDuration > 0 ? agendaItemDuration : 30
+  );
   const [localChoices, setLocalChoices] = useState<VoteChoice[]>(choices);
   const [newChoiceLabel, setNewChoiceLabel] = useState('');
   const [saving, setSaving] = useState(false);
 
   // Sync state when dialog opens or entity changes
   useEffect(() => {
-    if (open && entity) {
+    if (!open) {
+      return;
+    }
+
+    if (entity) {
       setMajorityType(entity.majority_type || 'relative');
       setClosingType(entity.closing_type || 'moderator');
       setClosingDuration(
-        entity.closing_duration_seconds ? Math.round(entity.closing_duration_seconds / 60) : 5,
+        entity.closing_duration_seconds ? Math.round(entity.closing_duration_seconds / 60) : 5
       );
       setVisibility((entity.visibility as Visibility) ?? 'public');
-      if (isElection && election) {
-        setMaxVotes(election.max_votes ?? 1);
-      }
-      setTitle(agendaItemTitle ?? '');
-      setDescription(agendaItemDescription ?? '');
-      setLocalChoices(choices);
-      setNewChoiceLabel('');
     }
-  }, [open, entity, isElection, election, agendaItemTitle, agendaItemDescription, choices]);
+
+    if (isElection && election) {
+      setMaxVotes(election.max_votes ?? 1);
+    }
+
+    setTitle(agendaItemTitle ?? '');
+    setDescription(agendaItemDescription ?? '');
+    setDuration(
+      typeof agendaItemDuration === 'number' && agendaItemDuration > 0 ? agendaItemDuration : 30
+    );
+    setLocalChoices(choices);
+    setNewChoiceLabel('');
+  }, [
+    open,
+    entity,
+    isElection,
+    election,
+    agendaItemTitle,
+    agendaItemDescription,
+    agendaItemDuration,
+    choices,
+  ]);
 
   const handleAddChoice = () => {
     const label = newChoiceLabel.trim();
     if (!label) return;
-    setLocalChoices((prev) => [
+    setLocalChoices(prev => [
       ...prev,
       {
         id: crypto.randomUUID(),
@@ -134,22 +159,24 @@ export function EditElectionVoteDialog({
   };
 
   const handleRemoveChoice = (id: string) => {
-    setLocalChoices((prev) => prev.filter((c) => c.id !== id));
+    setLocalChoices(prev => prev.filter(c => c.id !== id));
   };
 
   const handleSave = async () => {
-    if (!entity) return;
+    if (!agendaItemId && !entity) return;
     setSaving(true);
     try {
       const durationSeconds = closingType === 'time' ? closingDuration * 60 : null;
       const normalizedTitle = title.trim() || null;
       const normalizedDescription = description.trim() || null;
+      const normalizedDuration = Number.isFinite(duration) ? Math.max(1, duration) : 30;
 
       if (agendaItemId) {
         await agendaActions.updateAgendaItem({
           id: agendaItemId,
           title: normalizedTitle,
           description: normalizedDescription,
+          duration: normalizedDuration,
         });
       }
 
@@ -174,8 +201,8 @@ export function EditElectionVoteDialog({
         });
 
         // Sync choices — add new, remove deleted
-        const existingIds = new Set(choices.map((c) => c.id));
-        const localIds = new Set(localChoices.map((c) => c.id));
+        const existingIds = new Set(choices.map(c => c.id));
+        const localIds = new Set(localChoices.map(c => c.id));
 
         // Add new choices
         for (const lc of localChoices) {
@@ -221,13 +248,11 @@ export function EditElectionVoteDialog({
 
         <div className="space-y-5 py-4">
           <div className="space-y-2">
-            <Label htmlFor="agenda-title">
-              {t('features.events.agenda.item.title', 'Title')}
-            </Label>
+            <Label htmlFor="agenda-title">{t('features.events.agenda.item.title', 'Title')}</Label>
             <Input
               id="agenda-title"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={e => setTitle(e.target.value)}
               placeholder={t(
                 'features.events.agenda.editItemTitlePlaceholder',
                 'Enter agenda item title'
@@ -242,12 +267,26 @@ export function EditElectionVoteDialog({
             <Textarea
               id="agenda-description"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={e => setDescription(e.target.value)}
               rows={4}
               placeholder={t(
                 'features.events.agenda.editItemDescriptionPlaceholder',
                 'Add context for this agenda item...'
               )}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="agenda-duration">
+              {t('features.events.agenda.duration', 'Duration (minutes)')}
+            </Label>
+            <Input
+              id="agenda-duration"
+              type="number"
+              min={1}
+              max={480}
+              value={duration}
+              onChange={e => setDuration(Number(e.target.value) || 1)}
             />
           </div>
 
@@ -294,15 +333,13 @@ export function EditElectionVoteDialog({
           {/* Duration (only when time-based) */}
           {closingType === 'time' && (
             <div className="space-y-2">
-              <Label>
-                {t('features.events.agenda.closingDuration', 'Duration (minutes)')}
-              </Label>
+              <Label>{t('features.events.agenda.closingDuration', 'Duration (minutes)')}</Label>
               <Input
                 type="number"
                 min={1}
                 max={120}
                 value={closingDuration}
-                onChange={(e) => setClosingDuration(Number(e.target.value) || 1)}
+                onChange={e => setClosingDuration(Number(e.target.value) || 1)}
               />
             </div>
           )}
@@ -318,7 +355,7 @@ export function EditElectionVoteDialog({
                 type="number"
                 min={1}
                 value={maxVotes}
-                onChange={(e) => setMaxVotes(Number(e.target.value) || 1)}
+                onChange={e => setMaxVotes(Number(e.target.value) || 1)}
               />
             </div>
           )}
@@ -328,7 +365,7 @@ export function EditElectionVoteDialog({
             <div className="space-y-2">
               <Label>{t('features.events.agenda.choices', 'Choices')}</Label>
               <div className="space-y-2">
-                {localChoices.map((choice) => (
+                {localChoices.map(choice => (
                   <div key={choice.id} className="flex items-center gap-2">
                     <span className="flex-1 text-sm">{choice.label}</span>
                     <Button
@@ -346,8 +383,8 @@ export function EditElectionVoteDialog({
                   <Input
                     placeholder={t('features.events.agenda.newChoice', 'New choice…')}
                     value={newChoiceLabel}
-                    onChange={(e) => setNewChoiceLabel(e.target.value)}
-                    onKeyDown={(e) => {
+                    onChange={e => setNewChoiceLabel(e.target.value)}
+                    onKeyDown={e => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
                         handleAddChoice();

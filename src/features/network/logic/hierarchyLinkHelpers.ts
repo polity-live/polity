@@ -1,7 +1,12 @@
-import { detectLinkConflicts } from '@/features/groups/logic/hierarchy';
+import {
+  detectDuplicateHierarchyPaths,
+  detectLinkConflicts,
+  type HierarchyDuplicatePathConflict,
+} from '@/features/groups/logic/hierarchy';
 import { isActiveGroupRelationshipStatus } from './networkRelationshipHelpers';
 import type { GroupRelationship as GroupRelationshipRow } from '@/zero/network/schema';
 import type { NormalizedGroupRelationship } from '../types/network.types';
+import { getHierarchyRelationshipPair } from './groupRelationshipOrientation';
 
 /** Passive voting right defines the formal hierarchy tree. */
 export const HIERARCHY_TREE_RIGHT = 'passiveVotingRight';
@@ -91,7 +96,36 @@ function buildActiveParentChildLinksForConflictCheck(
 export interface DirectMembershipShape {
   group_id: string;
   user_id: string;
-  source: string | null;
+  source: string;
+  status: string | null;
+}
+
+function buildDuplicatePathConflictKey(conflict: HierarchyDuplicatePathConflict): string {
+  const paths = conflict.paths
+    .map(path => path.join('>'))
+    .sort()
+    .join('|');
+
+  return `${conflict.baseGroupId}:${conflict.targetGroupId}:${paths}`;
+}
+
+export function getHierarchyLinkDuplicatePathConflicts(
+  relationship: NormalizedGroupRelationship,
+  allRelationships: NormalizedGroupRelationship[]
+): HierarchyDuplicatePathConflict[] {
+  if (relationship.with_right !== HIERARCHY_TREE_RIGHT) {
+    return [];
+  }
+
+  const afterRelationships = buildPvrRelationshipsForConflictCheck(allRelationships, relationship);
+  const beforeRelationships = buildPvrRelationshipsForConflictCheck(allRelationships);
+  const beforeConflictKeys = new Set(
+    detectDuplicateHierarchyPaths(beforeRelationships).map(buildDuplicatePathConflictKey)
+  );
+
+  return detectDuplicateHierarchyPaths(afterRelationships).filter(
+    conflict => !beforeConflictKeys.has(buildDuplicatePathConflictKey(conflict))
+  );
 }
 
 /**
@@ -106,6 +140,11 @@ export function getHierarchyLinkConflictUserIds(
     return [];
   }
 
+  const pair = getHierarchyRelationshipPair(relationship);
+  if (!pair) {
+    return [];
+  }
+
   const pvrRelationships = buildPvrRelationshipsForConflictCheck(
     allRelationships,
     relationship.with_right === HIERARCHY_TREE_RIGHT ? relationship : undefined
@@ -117,8 +156,8 @@ export function getHierarchyLinkConflictUserIds(
   );
 
   return detectLinkConflicts(
-    relationship.group_id,
-    relationship.related_group_id,
+    pair.parentGroupId,
+    pair.childGroupId,
     pvrRelationships,
     directMemberships,
     activeParentChildLinks
@@ -131,6 +170,7 @@ export function canActivateHierarchyLink(
   directMemberships: DirectMembershipShape[]
 ): boolean {
   return (
-    getHierarchyLinkConflictUserIds(relationship, allRelationships, directMemberships).length === 0
+    getHierarchyLinkConflictUserIds(relationship, allRelationships, directMemberships).length ===
+      0 && getHierarchyLinkDuplicatePathConflicts(relationship, allRelationships).length === 0
   );
 }

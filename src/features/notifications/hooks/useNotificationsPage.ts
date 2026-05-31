@@ -16,7 +16,7 @@ export function useNotificationsPage() {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const { data, isLoading, userId } = useUserNotifications();
-  const { markRead } = useZeroNotificationActions();
+  const { markRead, markEntityNotificationRead } = useZeroNotificationActions();
 
   const notifications = useMemo(
     () => data?.notifications ?? EMPTY_NOTIFICATIONS,
@@ -27,11 +27,19 @@ export function useNotificationsPage() {
   const { handleNotificationClick, handleDeleteNotification } = useNotificationActions();
 
   const handleMarkAllAsRead = useCallback(async () => {
-    const unreadIds = filteredNotifications.unread.map(n => n.id);
-    for (const id of unreadIds) {
-      await markRead({ id });
+    for (const notification of filteredNotifications.unread) {
+      if (notification.recipient_entity_id && notification.recipient_entity_type) {
+        await markEntityNotificationRead({
+          id: crypto.randomUUID(),
+          notification_id: notification.id,
+          entity_id: notification.recipient_entity_id,
+          entity_type: notification.recipient_entity_type,
+        });
+      } else {
+        await markRead({ id: notification.id });
+      }
     }
-  }, [filteredNotifications.unread, markRead]);
+  }, [filteredNotifications.unread, markEntityNotificationRead, markRead]);
 
   // Filter notifications based on search query
   const searchFilteredNotifications = useMemo(() => {

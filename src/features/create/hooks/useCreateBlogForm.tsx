@@ -1,9 +1,9 @@
-import { useState, useMemo } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useAuth } from '@/providers/auth-provider';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
-import { useGroupState } from '@/zero/groups/useGroupState';
+import { useGroupById, useGroupState } from '@/zero/groups/useGroupState';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { toast } from 'sonner';
 import { VisibilityInput } from '../ui/inputs/VisibilityInput';
@@ -11,13 +11,20 @@ import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import { CreateInputField, CreateTypeaheadField } from '../ui/CreateFields';
+import { mergeCreateSearchParams } from '../logic/createSearchParams';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import type { CreateFormConfig } from '../types/create-form.types';
 
+interface CreateBlogSearch {
+  groupId?: string;
+}
+
 export function useCreateBlogForm(): CreateFormConfig {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const searchParams = useSearch({ strict: false }) as CreateBlogSearch;
+  const groupIdParam = searchParams.groupId ?? '';
   const { user } = useAuth();
   const { createBlogFull } = useBlogActions();
   const commonActions = useCommonActions();
@@ -37,9 +44,44 @@ export function useCreateBlogForm(): CreateFormConfig {
   const [visibility, setVisibility] = useState<'public' | 'authenticated' | 'private'>('public');
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [imageURL, setImageURL] = useState('');
-  const [groupId, setGroupId] = useState<string | null>(null);
+  const [groupId, setGroupId] = useState<string | null>(() => groupIdParam || null);
   const [groupName, setGroupName] = useState<string>('');
+  const { group } = useGroupById(groupId ?? undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const visibilityLabel =
+    visibility === 'public'
+      ? t('pages.create.common.public')
+      : visibility === 'authenticated'
+        ? t('pages.create.common.authenticated')
+        : t('pages.create.common.private');
+
+  useEffect(() => {
+    setGroupId(groupIdParam || null);
+  }, [groupIdParam]);
+
+  useEffect(() => {
+    if (!groupId) {
+      if (groupName) {
+        setGroupName('');
+      }
+      return;
+    }
+
+    const nextGroupName = group?.name ?? '';
+    if (nextGroupName && groupName !== nextGroupName) {
+      setGroupName(nextGroupName);
+    }
+  }, [group?.name, groupId, groupName]);
+
+  const syncGroupSearch = (nextGroupId: string | null) => {
+    navigate({
+      to: '/create/blog-entry',
+      search: mergeCreateSearchParams(searchParams, {
+        groupId: nextGroupId || undefined,
+      }),
+      replace: true,
+    });
+  };
 
   const handleSubmit = async () => {
     if (!user?.id || !title.trim()) return;
@@ -212,8 +254,10 @@ export function useCreateBlogForm(): CreateFormConfig {
                 entityTypes={['group']}
                 value={groupId ?? undefined}
                 onChange={item => {
-                  setGroupId(item?.id ?? null);
+                  const nextGroupId = item?.id ?? null;
+                  setGroupId(nextGroupId);
                   setGroupName(item?.label ?? '');
+                  syncGroupSearch(nextGroupId);
                 }}
                 placeholder={t('pages.create.blog.groupPlaceholder', 'Search groups...')}
                 filterFn={item => memberGroupIds.has(item.id)}
@@ -243,22 +287,39 @@ export function useCreateBlogForm(): CreateFormConfig {
             <CreateSummaryStep
               entityType="blog"
               badge={t('pages.create.blog.reviewBadge')}
+              secondaryBadge={visibilityLabel}
               title={title || t('pages.create.blog.titlePlaceholder')}
+              media={
+                imageURL ? { imageUrl: imageURL, imageAlt: title || 'Blog cover image' } : undefined
+              }
               hashtags={hashtags.length > 0 ? hashtags : undefined}
-              fields={[
-                { label: t('pages.create.blog.dateLabel'), value: date },
+              sections={[
                 {
-                  label: t('pages.create.common.visibility'),
-                  value: visibility,
+                  title: t('pages.create.blog.basicInfo'),
+                  fields: [
+                    { label: t('pages.create.blog.dateLabel'), value: date },
+                    ...(groupName
+                      ? [
+                          {
+                            label: t('pages.create.blog.attachTo', 'Attach to group'),
+                            value: groupName,
+                          },
+                        ]
+                      : []),
+                  ],
                 },
-                ...(groupName
-                  ? [
-                      {
-                        label: t('pages.create.blog.attachTo', 'Attach to group'),
-                        value: groupName,
-                      },
-                    ]
-                  : []),
+                {
+                  title: t('pages.create.blog.visibilityAndTags'),
+                  fields: [
+                    {
+                      label: t('pages.create.common.visibility'),
+                      value: visibilityLabel,
+                    },
+                    ...(imageURL
+                      ? [{ label: t('pages.create.blog.coverImage'), value: 'Attached' }]
+                      : []),
+                  ],
+                },
               ]}
             />
           ),
@@ -269,6 +330,7 @@ export function useCreateBlogForm(): CreateFormConfig {
       title,
       date,
       visibility,
+      visibilityLabel,
       hashtags,
       imageURL,
       isSubmitting,
@@ -277,6 +339,7 @@ export function useCreateBlogForm(): CreateFormConfig {
       groupName,
       t,
       memberGroupIds,
+      syncGroupSearch,
     ]
   );
 

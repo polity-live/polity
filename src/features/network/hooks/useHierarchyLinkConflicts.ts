@@ -63,6 +63,7 @@ export function useHierarchyLinkConflicts(
         group_id: row.group_id,
         user_id: row.user_id,
         source: row.source,
+        status: row.status,
       })),
     [directMembershipsRaw]
   );

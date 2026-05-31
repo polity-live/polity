@@ -70,7 +70,7 @@ export const eventQueries = {
             roleLinkQuery.related('role', roleQuery => roleQuery.related('action_rights'))
           )
       )
-      .related('delegates', delegateQuery => delegateQuery.related('user'))
+      .related('delegates', delegateQuery => delegateQuery.related('user').related('group'))
       .related('agenda_items', agendaItemQuery => agendaItemQuery.related('election'))
       .related('roles')
   ),
@@ -180,6 +180,8 @@ export const eventQueries = {
       .where('event_id', eventId)
       .where('scope', 'event')
       .related('holders', q => q.related('user'))
+      .related('action_rights')
+      .related('elections')
   ),
 
   /** Agenda items for an event with election→candidates and amendment */
@@ -255,8 +257,21 @@ export const eventQueries = {
   delegatesFull: defineQuery(z.object({ id: z.string() }), ({ args: { id } }) =>
     zql.event
       .where('id', id)
-      .related('delegates', q => q.related('user'))
-      .related('delegate_allocations')
+      .related('group')
+      .related('delegates', q => q.related('user').related('group'))
+      .related('delegate_allocations', q => q.related('group'))
+  ),
+
+  /** Delegate allocations assigned to one source group across target events. */
+  delegateAllocationsBySourceGroup: defineQuery(
+    z.object({ groupId: z.string() }),
+    ({ args: { groupId } }) =>
+      zql.group_delegate_allocation
+        .where('group_id', groupId)
+        .related('event', q =>
+          q.related('group').related('delegates', dq => dq.related('user').related('group'))
+        )
+        .related('group')
   ),
 
   /** Group relationships by group with related_group and group */
@@ -284,6 +299,7 @@ export const eventQueries = {
       .related('group')
       .related('event_hashtags', q => q.related('hashtag'))
       .related('roles', q => q.related('holders', q => q.related('user')))
+      .related('delegates', q => q.related('user').related('group'))
       .related('participants', q =>
         q.related('user').related('participant_roles', pq => pq.related('role'))
       )

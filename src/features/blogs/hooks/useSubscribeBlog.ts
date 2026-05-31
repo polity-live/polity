@@ -1,9 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useBlogState } from '@/zero/blogs/useBlogState';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
-import { useUserState } from '@/zero/users/useUserState';
 import { useAuth } from '@/providers/auth-provider';
-import { notifyBlogNewSubscriber } from '@/features/notifications/utils/notification-helpers.ts';
 import { toast } from 'sonner';
 
 /**
@@ -12,20 +10,17 @@ import { toast } from 'sonner';
  */
 export function useSubscribeBlog(targetBlogId?: string) {
   const { user: authUser } = useAuth();
-  const { blog, subscribers, subscriberCount: persistedSubscriberCount } = useBlogState({
+  const { subscribers, subscriberCount: persistedSubscriberCount } = useBlogState({
     blogId: targetBlogId,
     includeSubscribers: true,
   });
   const { subscribeToBlog, unsubscribeFromBlog } = useBlogActions();
-  const { currentUser } = useUserState();
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subscriberCount, setSubscriberCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const optimisticTargetRef = useRef<boolean | null>(null);
   const createdSubscriptionIdRef = useRef<string | null>(null);
 
-  const currentUserName = currentUser?.first_name || 'Someone';
-  const blogTitle = blog?.title || 'Blog';
   const subscriptionData = { subscribers: subscribers ?? [] };
   const subscriptionLoading = false;
 
@@ -81,18 +76,6 @@ export function useSubscribeBlog(targetBlogId?: string) {
         event_id: null,
         blog_id: targetBlogId,
       });
-
-      // Send notification (routed through Zero via dispatch pattern)
-      try {
-        await notifyBlogNewSubscriber({
-          senderId: authUser.id,
-          senderName: currentUserName,
-          blogId: targetBlogId,
-          blogTitle: blogTitle,
-        });
-      } catch {
-        /* notification delivery is best-effort */
-      }
       toast.success('Successfully subscribed to blog');
     } catch (error) {
       // Revert optimistic update

@@ -4,6 +4,7 @@
  * Displays pending membership requests for group admins to approve or reject.
  */
 
+import { Link } from '@tanstack/react-router';
 import {
   Card,
   CardContent,
@@ -25,12 +26,17 @@ import { Check, Trash2, Users } from 'lucide-react';
 import { getMembershipDisplayRoles } from '../logic/buildMembershipRightsSummary';
 import type { ParticipationLike } from '@/features/shared/types/participation';
 import { RoleTag } from './RoleTag';
+import { useGroupConflictPreflight } from '../hooks/useGroupConflictPreflight';
+import type { GroupConflictMembershipPreflight } from '../logic/groupConflictPreflight';
+import { GroupConflictDialog } from './GroupConflictPanel';
 
 interface PendingRequestsTableProps<TParticipation extends ParticipationLike> {
   requests: TParticipation[];
   onApprove: (membershipId: string, userId: string) => void;
   onReject: (membershipId: string, userId: string) => void;
-  onNavigateToUser: (userId: string) => void;
+  getApprovePreflightInput?: (
+    membership: TParticipation
+  ) => GroupConflictMembershipPreflight | null | undefined;
   title?: string;
   description?: string;
   roleColumnLabel?: string;
@@ -40,11 +46,68 @@ interface PendingRequestsTableProps<TParticipation extends ParticipationLike> {
   secondaryActionLabel?: string;
 }
 
+interface PendingRequestActionCellProps<TParticipation extends ParticipationLike> {
+  membership: TParticipation;
+  onApprove: (membershipId: string, userId: string) => void;
+  onReject: (membershipId: string, userId: string) => void;
+  getApprovePreflightInput?: (
+    membership: TParticipation
+  ) => GroupConflictMembershipPreflight | null | undefined;
+  primaryActionLabel: string;
+  secondaryActionLabel: string;
+}
+
+function PendingRequestActionCell<TParticipation extends ParticipationLike>({
+  membership,
+  onApprove,
+  onReject,
+  getApprovePreflightInput,
+  primaryActionLabel,
+  secondaryActionLabel,
+}: PendingRequestActionCellProps<TParticipation>) {
+  const userId = membership.user?.id ?? null;
+  const preflightInput = getApprovePreflightInput?.(membership) ?? null;
+  const { response, blocking } = useGroupConflictPreflight(preflightInput, {
+    enabled: Boolean(preflightInput),
+  });
+
+  return (
+    <div className="flex justify-end gap-2">
+      <Button
+        variant="default"
+        size="sm"
+        disabled={!userId || blocking}
+        onClick={() => userId && onApprove(membership.id, userId)}
+      >
+        <Check className="mr-1 h-4 w-4" />
+        {primaryActionLabel}
+      </Button>
+      {blocking ? (
+        <GroupConflictDialog
+          response={response}
+          triggerLabel="Warum?"
+          triggerVariant="ghost"
+          title="Warum ist diese Freigabe blockiert?"
+        />
+      ) : null}
+      <Button
+        variant="ghost"
+        size="sm"
+        disabled={!userId}
+        onClick={() => userId && onReject(membership.id, userId)}
+      >
+        <Trash2 className="h-4 w-4" />
+        <span className="ml-2">{secondaryActionLabel}</span>
+      </Button>
+    </div>
+  );
+}
+
 export function PendingRequestsTable<TParticipation extends ParticipationLike>({
   requests,
   onApprove,
   onReject,
-  onNavigateToUser,
+  getApprovePreflightInput,
   title = 'Pending Join Requests',
   description = 'Review and approve membership requests',
   roleColumnLabel = 'Requested Role',
@@ -91,30 +154,49 @@ export function PendingRequestsTable<TParticipation extends ParticipationLike>({
               return (
                 <TableRow key={membership.id}>
                   <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar
-                        className="h-10 w-10 cursor-pointer"
-                        onClick={() => user?.id && onNavigateToUser(user.id)}
+                    {user?.id ? (
+                      <Link
+                        to="/user/$id"
+                        params={{ id: user.id }}
+                        className="group flex items-center gap-3"
                       >
-                        <AvatarImage src={userAvatar} alt={userName} />
-                        <AvatarFallback>
-                          {userName
-                            .split(' ')
-                            .map((n: string) => n[0])
-                            .join('')
-                            .toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div
-                        className="cursor-pointer hover:underline"
-                        onClick={() => user?.id && onNavigateToUser(user.id)}
-                      >
-                        <div className="font-medium">{userName}</div>
-                        {userHandle && (
-                          <div className="text-muted-foreground text-sm">@{userHandle}</div>
-                        )}
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={userAvatar} alt={userName} />
+                          <AvatarFallback>
+                            {userName
+                              .split(' ')
+                              .map((n: string) => n[0])
+                              .join('')
+                              .toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="group-hover:underline">
+                          <div className="font-medium">{userName}</div>
+                          {userHandle && (
+                            <div className="text-muted-foreground text-sm">@{userHandle}</div>
+                          )}
+                        </div>
+                      </Link>
+                    ) : (
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={userAvatar} alt={userName} />
+                          <AvatarFallback>
+                            {userName
+                              .split(' ')
+                              .map((n: string) => n[0])
+                              .join('')
+                              .toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="font-medium">{userName}</div>
+                          {userHandle && (
+                            <div className="text-muted-foreground text-sm">@{userHandle}</div>
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-2">
@@ -131,24 +213,14 @@ export function PendingRequestsTable<TParticipation extends ParticipationLike>({
                   </TableCell>
                   <TableCell className="text-muted-foreground">{createdAt}</TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onClick={() => user?.id && onApprove(membership.id, user.id)}
-                      >
-                        <Check className="mr-1 h-4 w-4" />
-                        {primaryActionLabel}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => user?.id && onReject(membership.id, user.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        <span className="ml-2">{secondaryActionLabel}</span>
-                      </Button>
-                    </div>
+                    <PendingRequestActionCell
+                      membership={membership}
+                      onApprove={onApprove}
+                      onReject={onReject}
+                      getApprovePreflightInput={getApprovePreflightInput}
+                      primaryActionLabel={primaryActionLabel}
+                      secondaryActionLabel={secondaryActionLabel}
+                    />
                   </TableCell>
                 </TableRow>
               );

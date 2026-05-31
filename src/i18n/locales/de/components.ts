@@ -92,6 +92,10 @@ export const componentsTranslations = {
   columnElement: {
     dragToMove: 'Ziehen, um Spalte zu verschieben',
   },
+  tableColumns: {
+    partGroup: 'Teilgruppe',
+    baseGroup: 'Basisgruppe',
+  },
   pushNotifications: {
     title: 'Push-Benachrichtigungen',
     enabled: 'Aktiviert',

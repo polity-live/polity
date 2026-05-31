@@ -11,7 +11,6 @@ import { useEventActions } from '@/zero/events/useEventActions';
 import { useEventWithAgendaAndParticipants } from '@/zero/events/useEventState';
 import { useAuth } from '@/providers/auth-provider';
 import { usePermissions } from '@/zero/rbac';
-import { notifyAgendaItemActivated } from '@/features/notifications/utils/notification-helpers.ts';
 import { toast } from 'sonner';
 
 interface AgendaItem {
@@ -26,16 +25,21 @@ interface AgendaItem {
 
 interface UseAgendaNavigationResult {
   currentAgendaItem: AgendaItem | null;
+  startableAgendaItem: AgendaItem | null;
   currentIndex: number;
   totalItems: number;
   canNavigate: boolean;
   isLoading: boolean;
   activateAgendaItem: (itemId: string) => Promise<void>;
+  startFirstPendingItem: () => Promise<void>;
   moveToNextItem: () => Promise<void>;
   moveToPreviousItem: () => Promise<void>;
   completeCurrentItem: () => Promise<void>;
   hasNextItem: boolean;
   hasPreviousItem: boolean;
+  hasStartableItem: boolean;
+  canMoveToNextItem: boolean;
+  isCurrentItemCompleted: boolean;
 }
 
 export function useAgendaNavigation(eventId: string): UseAgendaNavigationResult {
@@ -50,7 +54,7 @@ export function useAgendaNavigation(eventId: string): UseAgendaNavigationResult 
   const agendaItems: AgendaItem[] = useMemo(() => {
     if (!event?.agenda_items) return [];
     return [...event.agenda_items]
-      .map((item) => ({
+      .map(item => ({
         id: item.id,
         title: item.title,
         type: item.type,
@@ -64,9 +68,29 @@ export function useAgendaNavigation(eventId: string): UseAgendaNavigationResult 
 
   const currentAgendaItemId = useMemo(() => {
     if (!event?.agenda_items) return null;
-    const inProgress = [...event.agenda_items].find((item) => item.status === 'in-progress');
-    return inProgress?.id || null;
-  }, [event?.agenda_items]);
+
+    const activeItem = [...event.agenda_items].find(item => {
+      const isActive = item.status === 'in-progress' || item.status === 'active';
+      const isCompleted = item.status === 'completed' || Boolean(item.completed_at);
+      return isActive && !isCompleted;
+    });
+
+    if (activeItem) {
+      return activeItem.id;
+    }
+
+    if (event.current_agenda_item_id) {
+      const currentItem = event.agenda_items.find(item => item.id === event.current_agenda_item_id);
+      if (
+        currentItem &&
+        (currentItem.status === 'in-progress' || currentItem.status === 'active')
+      ) {
+        return currentItem.id;
+      }
+    }
+
+    return null;
+  }, [event?.agenda_items, event?.current_agenda_item_id]);
 
   const currentAgendaItem = useMemo(() => {
     if (!currentAgendaItemId) return null;
@@ -82,6 +106,15 @@ export function useAgendaNavigation(eventId: string): UseAgendaNavigationResult 
 
   const hasNextItem = currentIndex < agendaItems.length - 1;
   const hasPreviousItem = currentIndex > 0;
+  const startableAgendaItem = useMemo(
+    () =>
+      agendaItems.find(item => !(item.status === 'completed' || Boolean(item.completedAt))) ?? null,
+    [agendaItems]
+  );
+  const hasStartableItem = !currentAgendaItem && Boolean(startableAgendaItem);
+  const isCurrentItemCompleted =
+    currentAgendaItem?.status === 'completed' || Boolean(currentAgendaItem?.completedAt);
+  const canMoveToNextItem = hasNextItem && isCurrentItemCompleted;
 
   const activateAgendaItem = useCallback(
     async (itemId: string) => {
@@ -110,14 +143,13 @@ export function useAgendaNavigation(eventId: string): UseAgendaNavigationResult 
         await updateAgendaItem({
           id: itemId,
           status: 'in-progress',
+          start_time: Date.now(),
           activated_at: Date.now(),
         });
         await updateEvent({
           id: eventId,
+          current_agenda_item_id: itemId,
         });
-
-        if (event?.title) {
-        }
 
         toast.success(`Activated: ${item.title}`);
       } catch (error) {
@@ -131,15 +163,29 @@ export function useAgendaNavigation(eventId: string): UseAgendaNavigationResult 
     [user, canManageAgenda, eventId, event?.title, currentAgendaItem, agendaItems]
   );
 
+  const startFirstPendingItem = useCallback(async () => {
+    if (!startableAgendaItem) {
+      toast.info('No remaining agenda item to start');
+      return;
+    }
+
+    await activateAgendaItem(startableAgendaItem.id);
+  }, [startableAgendaItem, activateAgendaItem]);
+
   const moveToNextItem = useCallback(async () => {
     if (!hasNextItem) {
       toast.info('No more agenda items');
       return;
     }
 
+    if (!isCurrentItemCompleted) {
+      toast.info('Complete the current agenda item first');
+      return;
+    }
+
     const nextItem = agendaItems[currentIndex + 1];
     await activateAgendaItem(nextItem.id);
-  }, [hasNextItem, currentIndex, agendaItems, activateAgendaItem]);
+  }, [hasNextItem, isCurrentItemCompleted, currentIndex, agendaItems, activateAgendaItem]);
 
   const moveToPreviousItem = useCallback(async () => {
     if (!hasPreviousItem) {
@@ -163,38 +209,14 @@ export function useAgendaNavigation(eventId: string): UseAgendaNavigationResult 
       await updateAgendaItem({
         id: currentAgendaItem.id,
         status: 'completed',
+        start_time: currentAgendaItem.activatedAt ?? Date.now(),
+        end_time: Date.now(),
         completed_at: Date.now(),
       });
-
-      // Auto-advance to next item if available
-      if (hasNextItem) {
-        const nextItem = agendaItems[currentIndex + 1];
-        await updateAgendaItem({
-          id: nextItem.id,
-          status: 'in-progress',
-          activated_at: Date.now(),
-        });
-        await updateEvent({
-          id: eventId,
-        });
-
-        // Send notification for next item
-        if (event?.title && nextItem.title && nextItem.type) {
-          await notifyAgendaItemActivated({
-            senderId: user.id,
-            eventId,
-            eventTitle: event.title,
-            agendaItemId: nextItem.id,
-            agendaItemTitle: nextItem.title,
-            agendaItemType: nextItem.type,
-          });
-        }
-      } else {
-        // Clear current item if no more items
-        await updateEvent({
-          id: eventId,
-        });
-      }
+      await updateEvent({
+        id: eventId,
+        current_agenda_item_id: null,
+      });
 
       toast.success(`Completed: ${currentAgendaItem.title}`);
     } catch (error) {
@@ -204,28 +226,24 @@ export function useAgendaNavigation(eventId: string): UseAgendaNavigationResult 
     } finally {
       setIsLoading(false);
     }
-  }, [
-    user,
-    canManageAgenda,
-    currentAgendaItem,
-    hasNextItem,
-    currentIndex,
-    agendaItems,
-    eventId,
-    event?.title,
-  ]);
+  }, [user, canManageAgenda, currentAgendaItem, eventId]);
 
   return {
     currentAgendaItem,
+    startableAgendaItem,
     currentIndex,
     totalItems: agendaItems.length,
     canNavigate: canManageAgenda,
     isLoading: isLoading || queryLoading,
     activateAgendaItem,
+    startFirstPendingItem,
     moveToNextItem,
     moveToPreviousItem,
     completeCurrentItem,
     hasNextItem,
     hasPreviousItem,
+    hasStartableItem,
+    canMoveToNextItem,
+    isCurrentItemCompleted,
   };
 }

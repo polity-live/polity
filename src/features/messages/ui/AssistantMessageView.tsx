@@ -36,8 +36,8 @@ export function AssistantMessageView({
   const assistantChat = useAssistantChat(conversation, currentUserId);
 
   return (
-    <Card className={cn('flex flex-col overflow-hidden md:col-span-2', className)}>
-      <div className="flex h-full flex-col">
+    <Card className={cn('flex h-full min-h-0 flex-col overflow-hidden md:col-span-2', className)}>
+      <div className="flex h-full min-h-0 flex-col">
         <ConversationHeader
           conversation={conversation}
           currentUserId={currentUserId}

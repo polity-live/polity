@@ -1,8 +1,13 @@
 'use client';
 
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { UserCheck, Vote, Users, FileText, ShieldCheck, ScrollText, Building2 } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  getElectionModeSummaryLabel,
+  type ElectionMode,
+} from '@/features/elections/logic/electionMode';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { cn } from '@/features/shared/utils/utils';
 import { CountdownTimer, EndedAgo } from '@/features/decision-terminal/ui/CountdownTimer';
@@ -145,6 +150,29 @@ export function AgendaTypeBadge({ type, className }: { type: AgendaItemType; cla
   );
 }
 
+export function AgendaElectionModeBadge({
+  electionMode,
+  seatCount,
+  className,
+}: {
+  electionMode: ElectionMode;
+  seatCount?: number | null;
+  className?: string;
+}) {
+  return (
+    <Badge
+      variant="outline"
+      className={cn(
+        'font-mono text-[11px] font-bold tracking-wide uppercase',
+        'border-emerald-500/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400',
+        className
+      )}
+    >
+      {getElectionModeSummaryLabel(electionMode, seatCount)}
+    </Badge>
+  );
+}
+
 /**
  * Clickable entity badge for related amendment or role/group.
  * Follows the same visual style as AgendaTypeBadge.
@@ -194,6 +222,32 @@ export function AgendaCountdownPill({
   tone?: AgendaCountdownTone;
   className?: string;
 }) {
+  const endTimestamp = useMemo(() => new Date(endsAt).getTime(), [endsAt]);
+  const [isExpired, setIsExpired] = useState(() =>
+    Number.isFinite(endTimestamp) ? endTimestamp <= Date.now() : true
+  );
+
+  useEffect(() => {
+    if (!Number.isFinite(endTimestamp)) {
+      setIsExpired(true);
+      return;
+    }
+
+    const updateExpiredState = () => setIsExpired(endTimestamp <= Date.now());
+    updateExpiredState();
+
+    if (endTimestamp <= Date.now()) {
+      return;
+    }
+
+    const interval = setInterval(updateExpiredState, 1000);
+    return () => clearInterval(interval);
+  }, [endTimestamp]);
+
+  if (isExpired) {
+    return null;
+  }
+
   return (
     <div
       className={cn(
@@ -214,6 +268,11 @@ export function AgendaEndedPill({
   endedAt: Date | string;
   className?: string;
 }) {
+  const endTimestamp = new Date(endedAt).getTime();
+  if (!Number.isFinite(endTimestamp) || endTimestamp > Date.now()) {
+    return null;
+  }
+
   return (
     <div
       className={cn(

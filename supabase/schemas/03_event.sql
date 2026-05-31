@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS public.event (
   delegate_approval_type TEXT,
   delegate_check_mode TEXT,
   main_group_delegate_allocation_mode TEXT,
+  delegate_election_mode TEXT NOT NULL DEFAULT 'list',
   current_agenda_item_id UUID,
   amendment_deadline TIMESTAMPTZ,
   registration_deadline TIMESTAMPTZ,

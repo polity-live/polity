@@ -6,13 +6,22 @@ import { useNotificationActions as useZeroNotificationActions } from '@/zero/not
 
 export function useNotificationActions() {
   const navigate = useNavigate();
-  const { markRead, deleteNotification } = useZeroNotificationActions();
+  const { markRead, markEntityNotificationRead, deleteNotification } = useZeroNotificationActions();
 
   const handleNotificationClick = useCallback(
     async (notification: Notification) => {
       // Mark as read if not already
       if (!notification.is_read) {
-        await markRead({ id: notification.id });
+        if (notification.recipient_entity_id && notification.recipient_entity_type) {
+          await markEntityNotificationRead({
+            id: crypto.randomUUID(),
+            notification_id: notification.id,
+            entity_id: notification.recipient_entity_id,
+            entity_type: notification.recipient_entity_type,
+          });
+        } else {
+          await markRead({ id: notification.id });
+        }
       }
 
       const navigationTarget = getNotificationNavigationTarget(notification);
@@ -73,7 +82,7 @@ export function useNotificationActions() {
         }
       }
     },
-    [markRead, navigate]
+    [markEntityNotificationRead, markRead, navigate]
   );
 
   const handleDeleteNotification = useCallback(

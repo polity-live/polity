@@ -4,6 +4,7 @@
  * Displays pending invitations that haven't been accepted yet.
  */
 
+import { Link } from '@tanstack/react-router';
 import {
   Card,
   CardContent,
@@ -29,7 +30,6 @@ import { RoleTag } from './RoleTag';
 interface PendingInvitationsTableProps<TParticipation extends ParticipationLike> {
   invitations: TParticipation[];
   onWithdraw: (membershipId: string, userId: string) => void;
-  onNavigateToUser: (userId: string) => void;
   title?: string;
   description?: string;
   roleColumnLabel?: string;
@@ -41,7 +41,6 @@ interface PendingInvitationsTableProps<TParticipation extends ParticipationLike>
 export function PendingInvitationsTable<TParticipation extends ParticipationLike>({
   invitations,
   onWithdraw,
-  onNavigateToUser,
   title = 'Pending Invitations',
   description = "Users who have been invited but haven't accepted yet",
   roleColumnLabel = 'Invited Role',
@@ -87,30 +86,49 @@ export function PendingInvitationsTable<TParticipation extends ParticipationLike
               return (
                 <TableRow key={membership.id}>
                   <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar
-                        className="h-10 w-10 cursor-pointer"
-                        onClick={() => user?.id && onNavigateToUser(user.id)}
+                    {user?.id ? (
+                      <Link
+                        to="/user/$id"
+                        params={{ id: user.id }}
+                        className="group flex items-center gap-3"
                       >
-                        <AvatarImage src={userAvatar} alt={userName} />
-                        <AvatarFallback>
-                          {userName
-                            .split(' ')
-                            .map((n: string) => n[0])
-                            .join('')
-                            .toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div
-                        className="cursor-pointer hover:underline"
-                        onClick={() => user?.id && onNavigateToUser(user.id)}
-                      >
-                        <div className="font-medium">{userName}</div>
-                        {userHandle && (
-                          <div className="text-muted-foreground text-sm">@{userHandle}</div>
-                        )}
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={userAvatar} alt={userName} />
+                          <AvatarFallback>
+                            {userName
+                              .split(' ')
+                              .map((n: string) => n[0])
+                              .join('')
+                              .toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="group-hover:underline">
+                          <div className="font-medium">{userName}</div>
+                          {userHandle && (
+                            <div className="text-muted-foreground text-sm">@{userHandle}</div>
+                          )}
+                        </div>
+                      </Link>
+                    ) : (
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={userAvatar} alt={userName} />
+                          <AvatarFallback>
+                            {userName
+                              .split(' ')
+                              .map((n: string) => n[0])
+                              .join('')
+                              .toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="font-medium">{userName}</div>
+                          {userHandle && (
+                            <div className="text-muted-foreground text-sm">@{userHandle}</div>
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-2">

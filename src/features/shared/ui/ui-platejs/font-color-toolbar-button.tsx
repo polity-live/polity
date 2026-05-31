@@ -3,7 +3,7 @@ import React from 'react';
 import type { DropdownMenuItemProps, DropdownMenuProps } from '@radix-ui/react-dropdown-menu';
 
 import { useComposedRef } from '@udecode/cn';
-import { debounce } from 'lodash';
+import debounce from 'lodash/debounce';
 import { EraserIcon, PlusIcon } from 'lucide-react';
 import { useEditorRef, useEditorSelector } from 'platejs/react';
 import { useTranslation } from 'react-i18next';
@@ -242,7 +242,7 @@ function ColorCustom({
                 size: 'icon',
                 variant: 'outline',
               }),
-              'absolute bottom-2 right-2 top-1 flex size-8 items-center justify-center rounded-full'
+              'absolute top-1 right-2 bottom-2 flex size-8 items-center justify-center rounded-full'
             )}
             onSelect={e => {
               e.preventDefault();
@@ -318,9 +318,9 @@ function ColorDropdownMenuItem({
           size: 'icon',
           variant: 'outline',
         }),
-        'my-1 flex size-6 items-center justify-center rounded-full border border-solid border-muted p-0 transition-all hover:scale-125',
+        'border-muted my-1 flex size-6 items-center justify-center rounded-full border border-solid p-0 transition-all hover:scale-125',
         !isBrightColor && 'border-transparent',
-        isSelected && 'border-2 border-primary',
+        isSelected && 'border-primary border-2',
         className
       )}
       style={{ backgroundColor: value }}

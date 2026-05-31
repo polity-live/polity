@@ -9,6 +9,9 @@
  */
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { shouldDispatchNotification } from '@/features/notifications/logic/notificationTypeSettingMap';
+import type { NotificationSettings } from '@/features/notifications/types/notification-settings.types';
+import type { NotificationType } from '@/features/notifications/types/notification.types';
 
 // ── Dispatch pattern ─────────────────────────────────────────────────────────
 // On the client, a Zero-backed dispatch is injected at app startup.
@@ -76,168 +79,6 @@ function getServerSupabase(): SupabaseClient {
 
 export type EntityType = 'group' | 'event' | 'amendment' | 'blog' | 'user';
 
-export type NotificationType =
-  // Legacy types
-  | 'group_invite'
-  | 'event_invite'
-  | 'message'
-  | 'follow'
-  | 'mention'
-  | 'event_update'
-  | 'group_update'
-  // Membership notifications
-  | 'membership_approved'
-  | 'membership_rejected'
-  | 'membership_role_changed'
-  | 'membership_removed'
-  | 'membership_withdrawn'
-  | 'membership_request'
-  // Collaboration notifications
-  | 'collaboration_approved'
-  | 'collaboration_rejected'
-  | 'collaboration_role_changed'
-  | 'collaboration_removed'
-  | 'collaboration_withdrawn'
-  | 'collaboration_request'
-  // Participation notifications
-  | 'participation_approved'
-  | 'participation_rejected'
-  | 'participation_role_changed'
-  | 'participation_removed'
-  | 'participation_withdrawn'
-  | 'participation_request'
-  // Group admin notifications
-  | 'group_admin_promoted'
-  | 'group_admin_demoted'
-  | 'group_access_role_created'
-  | 'group_access_role_deleted'
-  | 'group_access_role_updated'
-  // Group resource notifications
-  | 'group_link_added'
-  | 'group_link_removed'
-  | 'group_document_added'
-  | 'group_document_removed'
-  | 'group_new_subscriber'
-  // Standalone document notifications
-  | 'document_collaborator_invited'
-  // Group role notifications
-  | 'group_role_created'
-  | 'group_role_deleted'
-  | 'group_role_assigned'
-  | 'group_role_vacated'
-  | 'group_election_created'
-  // Group event notifications
-  | 'group_event_created'
-  // Group relationship notifications
-  | 'group_relationship_request'
-  | 'group_relationship_approved'
-  | 'group_relationship_rejected'
-  // Group todo notifications
-  | 'group_todo_assigned'
-  | 'group_todo_updated'
-  | 'group_todo_deleted'
-  // Group payment notifications
-  | 'group_payment_created'
-  | 'group_payment_deleted'
-  // Event notifications
-  | 'event_organizer_promoted'
-  | 'event_organizer_demoted'
-  | 'event_agenda_item_created'
-  | 'event_agenda_item_deleted'
-  | 'event_agenda_item_transferred'
-  | 'event_schedule_changed'
-  | 'event_candidate_added'
-  | 'event_election_started'
-  | 'event_election_ended'
-  | 'event_role_created'
-  | 'event_role_deleted'
-  | 'event_delegates_finalized'
-  | 'event_delegate_nominated'
-  | 'event_meeting_booked'
-  | 'event_meeting_cancelled'
-  | 'event_speaker_added'
-  | 'event_new_subscriber'
-  // Agenda and voting notifications
-  | 'agenda_item_activated'
-  | 'voting_phase_started'
-  | 'voting_phase_ending_soon'
-  | 'voting_completed'
-  | 'amendment_forwarded'
-  | 'election_result'
-  | 'revote_scheduled'
-  | 'event_cancelled'
-  | 'agenda_items_reassigned'
-  | 'amendment_path_recalculation_required'
-  // Supporter confirmation notifications
-  | 'support_confirmation_required'
-  | 'support_confirmed'
-  | 'support_declined'
-  // Amendment notifications
-  | 'amendment_workflow_changed'
-  | 'amendment_path_advanced'
-  | 'amendment_cloned'
-  | 'amendment_group_support'
-  | 'amendment_comment_added'
-  | 'change_request_created'
-  | 'change_request_accepted'
-  | 'change_request_rejected'
-  | 'change_request_vote_cast'
-  | 'amendment_version_created'
-  | 'voting_session_started'
-  | 'voting_session_completed'
-  | 'amendment_vote_cast'
-  | 'amendment_new_subscriber'
-  // Blog notifications
-  | 'blog_new_subscriber'
-  | 'blog_vote_cast'
-  | 'blog_updated'
-  | 'blog_writer_joined'
-  | 'blog_role_changed'
-  | 'blog_comment_added'
-  | 'blog_writer_request'
-  | 'blog_writer_invite'
-  | 'blog_writer_removed'
-  | 'blog_role_created'
-  | 'blog_role_deleted'
-  // Todo notifications
-  | 'todo_assigned'
-  | 'todo_updated'
-  | 'todo_completed'
-  | 'todo_deleted'
-  | 'todo_due_soon'
-  | 'todo_overdue'
-  // User/social notifications
-  | 'new_follower'
-  | 'direct_message'
-  | 'conversation_request'
-  | 'conversation_accepted'
-  // User response notifications (Phase 12.4)
-  | 'group_invitation_accepted'
-  | 'group_invitation_declined'
-  | 'group_request_withdrawn'
-  | 'event_invitation_accepted'
-  | 'event_invitation_declined'
-  | 'event_request_withdrawn'
-  | 'collaboration_invitation_accepted'
-  | 'collaboration_invitation_declined'
-  | 'collaboration_request_withdrawn'
-  | 'blog_invitation_accepted'
-  | 'blog_invitation_declined'
-  | 'blog_request_withdrawn'
-  | 'blog_writer_left'
-  // Profile update notifications
-  | 'amendment_profile_updated'
-  | 'group_profile_updated'
-  | 'event_profile_updated'
-  // Amendment additional notifications
-  | 'amendment_target_set'
-  | 'amendment_rejected'
-  // Blog additional notifications
-  | 'blog_published'
-  | 'blog_deleted'
-  // Group additional notifications
-  | 'group_new_amendment';
-
 export interface NotificationConfig {
   // Sender information
   senderId: string; // The user performing the action
@@ -264,121 +105,6 @@ export interface NotificationConfig {
   relatedAmendmentId?: string;
   relatedBlogId?: string;
   relatedUserId?: string;
-}
-
-/**
- * Queries for all user IDs who have viewNotifications (or manageNotifications)
- * rights for a given entity. Returns user IDs excluding the sender.
- *
- * Server-side only — requires Supabase service_role.
- */
-async function getEntityMembersWithViewRight(
-  entityType: EntityType,
-  entityId: string,
-  excludeUserId?: string
-): Promise<string[]> {
-  const supabase = getServerSupabase();
-
-  if (entityType === 'group' || entityType === 'event') {
-    const membershipTable =
-      entityType === 'group'
-        ? { table: 'group_membership', fk: 'group_id', roleTable: 'group_membership_role' }
-        : { table: 'event_participant', fk: 'event_id', roleTable: 'event_participant_role' };
-    const activeStatuses =
-      entityType === 'group'
-        ? ['active', 'member', 'admin', 'owner']
-        : ['active', 'confirmed', 'member', 'admin', 'organizer'];
-
-    const { data: memberships, error: membershipError } = await supabase
-      .from(membershipTable.table)
-      .select('id, user_id, status')
-      .eq(membershipTable.fk, entityId)
-      .in('status', activeStatuses);
-
-    if (membershipError || !memberships) {
-      console.error('[Notification] Failed to query entity members:', membershipError);
-      return [];
-    }
-
-    const membershipIds = memberships.map(membership => membership.id).filter(Boolean);
-    if (membershipIds.length === 0) return [];
-
-    const { data: roleLinks, error: roleLinkError } = await supabase
-      .from(membershipTable.roleTable)
-      .select(
-        'group_membership_id, event_participant_id, role:role_id(action_rights:action_right(resource, action))'
-      )
-      .in(entityType === 'group' ? 'group_membership_id' : 'event_participant_id', membershipIds);
-
-    if (roleLinkError || !roleLinks) {
-      console.error('[Notification] Failed to query entity member roles:', roleLinkError);
-      return [];
-    }
-
-    const rightsByMembershipId = new Map<string, { resource: string; action: string }[]>();
-
-    for (const link of roleLinks) {
-      const membershipId =
-        entityType === 'group' ? link.group_membership_id : link.event_participant_id;
-      if (!membershipId) continue;
-
-      const role = link.role as { action_rights?: { resource: string; action: string }[] } | null;
-      const existingRights = rightsByMembershipId.get(membershipId) ?? [];
-      rightsByMembershipId.set(membershipId, [...existingRights, ...(role?.action_rights ?? [])]);
-    }
-
-    const userIds: string[] = [];
-    for (const membership of memberships) {
-      const rights = rightsByMembershipId.get(membership.id) ?? [];
-      const hasViewRight = rights.some(
-        r =>
-          (r.resource === 'groupNotifications' && r.action === 'viewNotifications') ||
-          (r.resource === 'groupNotifications' && r.action === 'manageNotifications')
-      );
-      if (hasViewRight && membership.user_id && membership.user_id !== excludeUserId) {
-        userIds.push(membership.user_id);
-      }
-    }
-
-    return [...new Set(userIds)];
-  }
-
-  const membershipTable: Record<string, { table: string; fk: string }> = {
-    amendment: { table: 'amendment_collaborator', fk: 'amendment_id' },
-    blog: { table: 'blog_blogger', fk: 'blog_id' },
-  };
-
-  const config = membershipTable[entityType];
-  if (!config) return [];
-
-  const { data: members, error } = await supabase
-    .from(config.table)
-    .select('user_id, role:role_id(action_rights:action_right(resource, action))')
-    .eq(config.fk, entityId)
-    .in('status', ['member', 'admin', 'owner', 'organizer', 'writer']);
-
-  if (error || !members) {
-    console.error('[Notification] Failed to query entity members:', error);
-    return [];
-  }
-
-  const userIds: string[] = [];
-  for (const member of members) {
-    const role = member.role as {
-      action_rights?: { resource: string; action: string }[];
-    } | null;
-    const rights = role?.action_rights ?? [];
-    const hasViewRight = rights.some(
-      r =>
-        (r.resource === 'groupNotifications' && r.action === 'viewNotifications') ||
-        (r.resource === 'groupNotifications' && r.action === 'manageNotifications')
-    );
-    if (hasViewRight && member.user_id && member.user_id !== excludeUserId) {
-      userIds.push(member.user_id);
-    }
-  }
-
-  return [...new Set(userIds)];
 }
 
 /**
@@ -449,12 +175,111 @@ function mapConfigToInput(
   return input;
 }
 
+const SELF_PERSONAL_COPY_TYPES = new Set<NotificationType>([
+  'membership_request',
+  'membership_withdrawn',
+  'group_request_withdrawn',
+  'group_invitation_accepted',
+  'group_invitation_declined',
+  'participation_request',
+  'participation_withdrawn',
+  'event_request_withdrawn',
+  'event_invitation_accepted',
+  'event_invitation_declined',
+  'collaboration_request',
+  'collaboration_withdrawn',
+  'collaboration_request_withdrawn',
+  'collaboration_invitation_accepted',
+  'collaboration_invitation_declined',
+  'blog_writer_request',
+  'blog_writer_left',
+  'blog_request_withdrawn',
+  'blog_invitation_accepted',
+  'blog_invitation_declined',
+]);
+
+function replaceActorNameWithYou(message: string, actorName: string): string {
+  const escapedName = actorName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return message
+    .replace(new RegExp(`^${escapedName}\\b`), 'You')
+    .replace(/^You has\b/, 'You have')
+    .replace(/^You wants\b/, 'You want')
+    .replace(/^You is\b/, 'You are')
+    .replace(/^You was\b/, 'You were');
+}
+
+async function getRecipientNotificationSettings(
+  userId: string
+): Promise<NotificationSettings | null> {
+  const { data, error } = await getServerSupabase()
+    .from('notification_setting')
+    .select('*')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) {
+    console.error('[Notification] Failed to load recipient notification settings:', error);
+    return null;
+  }
+
+  return (data as NotificationSettings | null) ?? null;
+}
+
+async function personalizeNotificationConfig(
+  config: NotificationConfig
+): Promise<NotificationConfig> {
+  if (!config.recipientUserId || config.recipientUserId !== config.senderId) {
+    return config;
+  }
+
+  const { data: sender, error } = await getServerSupabase()
+    .from('user')
+    .select('first_name, last_name, email')
+    .eq('id', config.senderId)
+    .maybeSingle();
+
+  if (error) {
+    console.error('[Notification] Failed to load sender for personalization:', error);
+    return config;
+  }
+
+  const actorName =
+    [sender?.first_name, sender?.last_name].filter(Boolean).join(' ') || sender?.email || null;
+  if (!actorName) {
+    return config;
+  }
+
+  return {
+    ...config,
+    message: replaceActorNameWithYou(config.message, actorName),
+  };
+}
+
+async function insertServerNotification(config: NotificationConfig, notificationId: string) {
+  if (config.recipientUserId) {
+    const settings = await getRecipientNotificationSettings(config.recipientUserId);
+    if (!shouldDispatchNotification(config.type, settings)) {
+      return false;
+    }
+  }
+
+  const personalizedConfig = await personalizeNotificationConfig(config);
+  const input = mapConfigToInput(personalizedConfig, notificationId);
+  const { error } = await getServerSupabase().from('notification').insert(input);
+
+  if (error) {
+    console.error('[Notification] Failed to create notification:', error);
+    return false;
+  }
+
+  return true;
+}
+
 /**
  * Creates a notification.
  *
  * On the client (dispatch configured), inserts via Zero mutator.
- * On the server (no dispatch), inserts via Supabase service_role
- * and also creates personal copies for entity members.
+ * On the server (no dispatch), inserts via Supabase service_role.
  */
 export async function createNotification(config: NotificationConfig): Promise<string> {
   const notificationId = crypto.randomUUID();
@@ -469,7 +294,7 @@ export async function createNotification(config: NotificationConfig): Promise<st
     }
 
     // Trigger push notification (client-side only, fire-and-forget)
-    if (config.recipientUserId) {
+    if (config.recipientUserId && config.recipientUserId !== config.senderId) {
       sendPushNotification(config.recipientUserId, {
         title: config.title,
         message: config.message,
@@ -482,47 +307,24 @@ export async function createNotification(config: NotificationConfig): Promise<st
     }
   } else {
     // ── Server-side: insert via Supabase service_role ─────────────────
-    const { error } = await getServerSupabase().from('notification').insert(input);
-    if (error) {
-      console.error('[Notification] Failed to create notification:', error);
-    }
+    await insertServerNotification(config, notificationId);
 
-    // For entity notifications, also create personal copies
-    if (config.recipientEntityType && config.recipientEntityId) {
-      getEntityMembersWithViewRight(
-        config.recipientEntityType,
-        config.recipientEntityId,
-        config.senderId
-      )
-        .then(async userIds => {
-          if (userIds.length === 0) return;
-
-          const personalCopies = userIds.map(uid => {
-            const copy = mapConfigToInput(
-              {
-                ...config,
-                recipientUserId: uid,
-                recipientEntityType: undefined,
-                recipientEntityId: undefined,
-                // Keep entity context for the entity tab in /notifications
-                onBehalfOfEntityType: config.recipientEntityType,
-                onBehalfOfEntityId: config.recipientEntityId,
-              },
-              crypto.randomUUID()
-            );
-            return copy;
-          });
-
-          const { error: copyError } = await getServerSupabase()
-            .from('notification')
-            .insert(personalCopies);
-          if (copyError) {
-            console.error('[Notification] Failed to create personal copies:', copyError);
-          }
-        })
-        .catch((err: unknown) => {
-          console.error('[Notification] Error creating personal copies:', err);
-        });
+    if (
+      config.recipientEntityType &&
+      config.recipientEntityId &&
+      SELF_PERSONAL_COPY_TYPES.has(config.type)
+    ) {
+      await insertServerNotification(
+        {
+          ...config,
+          recipientUserId: config.senderId,
+          recipientEntityType: undefined,
+          recipientEntityId: undefined,
+          onBehalfOfEntityType: config.onBehalfOfEntityType ?? config.recipientEntityType,
+          onBehalfOfEntityId: config.onBehalfOfEntityId ?? config.recipientEntityId,
+        },
+        crypto.randomUUID()
+      );
     }
   }
 
@@ -709,7 +511,7 @@ export async function notifyMembershipRemoved(params: {
     recipientUserId: params.recipientUserId,
     onBehalfOfEntityType: 'group',
     onBehalfOfEntityId: params.groupId,
-    type: 'membership_removed',
+    type: 'member_removed',
     title: 'Removed from Group',
     message: `You have been removed from ${params.groupName}`,
     relatedEntityType: 'group',
@@ -721,7 +523,7 @@ export async function notifyMembershipRemoved(params: {
     senderId: params.senderId,
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
-    type: 'membership_removed',
+    type: 'member_removed',
     title: 'Member Removed',
     message: `A member has been removed from ${params.groupName}`,
     actionUrl: `/group/${params.groupId}/memberships`,
@@ -794,7 +596,7 @@ export async function notifyEventInvite(params: {
     type: 'event_invite',
     title: 'Event Invitation',
     message: `You've been invited to ${params.eventTitle}`,
-    actionUrl: `/event/${params.eventId}/participants`,
+    actionUrl: `/user/${params.recipientUserId}/memberships`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
   });
@@ -883,7 +685,7 @@ export async function notifyParticipationRemoved(params: {
     recipientUserId: params.recipientUserId,
     onBehalfOfEntityType: 'event',
     onBehalfOfEntityId: params.eventId,
-    type: 'participation_removed',
+    type: 'participant_removed',
     title: 'Removed from Event',
     message: `You have been removed from ${params.eventTitle}`,
     relatedEntityType: 'event',
@@ -953,7 +755,7 @@ export async function notifyGroupEventCreated(params: {
     recipientUserId: params.recipientUserId,
     onBehalfOfEntityType: 'group',
     onBehalfOfEntityId: params.groupId,
-    type: 'group_event_created',
+    type: 'group_new_event',
     title: 'New Event',
     message: `${params.groupName} has created a new event: ${params.eventTitle}`,
     actionUrl: `/event/${params.eventId}`,
@@ -977,7 +779,7 @@ export async function notifyCollaborationInvite(params: {
     recipientUserId: params.recipientUserId,
     onBehalfOfEntityType: 'amendment',
     onBehalfOfEntityId: params.amendmentId,
-    type: 'group_invite', // Using existing type, can be updated
+    type: 'collaboration_invite',
     title: 'Collaboration Invitation',
     message: `You've been invited to collaborate on ${params.amendmentTitle}`,
     actionUrl: `/amendment/${params.amendmentId}/collaborators`,
@@ -1069,7 +871,7 @@ export async function notifyCollaborationRemoved(params: {
     recipientUserId: params.recipientUserId,
     onBehalfOfEntityType: 'amendment',
     onBehalfOfEntityId: params.amendmentId,
-    type: 'collaboration_removed',
+    type: 'collaborator_removed',
     title: 'Removed from Amendment',
     message: `You have been removed from ${params.amendmentTitle}`,
     relatedEntityType: 'amendment',
@@ -1178,15 +980,14 @@ export async function notifyAdminDemoted(params: {
  */
 export async function notifyAccessRoleCreated(params: {
   senderId: string;
-  recipientUserId: string;
   groupId: string;
   groupName: string;
   roleName: string;
 }) {
   return createNotification({
     senderId: params.senderId,
-    recipientEntityType: 'user',
-    recipientEntityId: params.recipientUserId,
+    recipientEntityType: 'group',
+    recipientEntityId: params.groupId,
     type: 'group_access_role_created',
     title: 'New Role Created',
     message: `A new role "${params.roleName}" has been created in ${params.groupName}`,
@@ -1201,15 +1002,14 @@ export async function notifyAccessRoleCreated(params: {
  */
 export async function notifyAccessRoleDeleted(params: {
   senderId: string;
-  recipientUserId: string;
   groupId: string;
   groupName: string;
   roleName: string;
 }) {
   return createNotification({
     senderId: params.senderId,
-    recipientEntityType: 'user',
-    recipientEntityId: params.recipientUserId,
+    recipientEntityType: 'group',
+    recipientEntityId: params.groupId,
     type: 'group_access_role_deleted',
     title: 'Role Deleted',
     message: `The role "${params.roleName}" has been deleted from ${params.groupName}`,
@@ -1224,15 +1024,14 @@ export async function notifyAccessRoleDeleted(params: {
  */
 export async function notifyActionRightsChanged(params: {
   senderId: string;
-  recipientUserId: string;
   groupId: string;
   groupName: string;
   roleName: string;
 }) {
   return createNotification({
     senderId: params.senderId,
-    recipientEntityType: 'user',
-    recipientEntityId: params.recipientUserId,
+    recipientEntityType: 'group',
+    recipientEntityId: params.groupId,
     type: 'group_access_role_updated',
     title: 'Role Permissions Updated',
     message: `The permissions for "${params.roleName}" have been updated in ${params.groupName}`,
@@ -1392,8 +1191,9 @@ export async function notifyRoleCreated(params: {
 }) {
   return createNotification({
     senderId: params.senderId,
-    recipientEntityType: 'user',
-    recipientEntityId: params.recipientUserId,
+    recipientUserId: params.recipientUserId,
+    onBehalfOfEntityType: 'group',
+    onBehalfOfEntityId: params.groupId,
     type: 'group_role_created',
     title: 'New Role Created',
     message: `A new role "${params.roleTitle}" has been created in ${params.groupName}`,
@@ -1437,8 +1237,9 @@ export async function notifyRoleDeleted(params: {
 }) {
   return createNotification({
     senderId: params.senderId,
-    recipientEntityType: 'user',
-    recipientEntityId: params.recipientUserId,
+    recipientUserId: params.recipientUserId,
+    onBehalfOfEntityType: 'group',
+    onBehalfOfEntityId: params.groupId,
     type: 'group_role_deleted',
     title: 'Role Deleted',
     message: `The role "${params.roleTitle}" has been deleted from ${params.groupName}`,
@@ -1508,8 +1309,9 @@ export async function notifyElectionCreated(params: {
 }) {
   return createNotification({
     senderId: params.senderId,
-    recipientEntityType: 'user',
-    recipientEntityId: params.recipientUserId,
+    recipientUserId: params.recipientUserId,
+    onBehalfOfEntityType: 'group',
+    onBehalfOfEntityId: params.groupId,
     type: 'group_election_created',
     title: 'Election Created',
     message: `An election has been created for "${params.roleTitle}" in ${params.groupName}`,
@@ -2851,24 +2653,39 @@ export async function notifyBlogNewSubscriber(params: {
 export async function notifyBlogVoted(params: {
   senderId: string;
   senderName: string;
-  recipientUserId: string;
+  recipientUserId?: string;
   blogId: string;
   blogTitle: string;
   voteType: 'upvote' | 'downvote';
   groupId?: string;
   ownerId?: string;
 }) {
+  if (params.recipientUserId && params.recipientUserId !== params.senderId) {
+    await createNotification({
+      senderId: params.senderId,
+      recipientUserId: params.recipientUserId,
+      onBehalfOfEntityType: 'blog',
+      onBehalfOfEntityId: params.blogId,
+      type: 'blog_vote_cast',
+      title: params.voteType === 'upvote' ? 'Blog Upvoted' : 'Blog Downvoted',
+      message: `${params.senderName} has ${params.voteType}d ${params.blogTitle}`,
+      actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId),
+      relatedEntityType: 'blog',
+      relatedBlogId: params.blogId,
+    });
+  }
+
   return createNotification({
     senderId: params.senderId,
-    recipientUserId: params.recipientUserId,
-    onBehalfOfEntityType: 'blog',
-    onBehalfOfEntityId: params.blogId,
+    recipientEntityType: 'blog',
+    recipientEntityId: params.blogId,
     type: 'blog_vote_cast',
     title: params.voteType === 'upvote' ? 'Blog Upvoted' : 'Blog Downvoted',
     message: `${params.senderName} has ${params.voteType}d ${params.blogTitle}`,
     actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
+    relatedUserId: params.senderId,
   });
 }
 
@@ -2877,23 +2694,41 @@ export async function notifyBlogVoted(params: {
  */
 export async function notifyBloggerJoined(params: {
   senderId: string;
-  senderName: string;
+  senderName?: string;
+  recipientUserId?: string;
   blogId: string;
   blogTitle: string;
   groupId?: string;
   ownerId?: string;
 }) {
+  if (params.recipientUserId) {
+    await createNotification({
+      senderId: params.senderId,
+      recipientUserId: params.recipientUserId,
+      onBehalfOfEntityType: 'blog',
+      onBehalfOfEntityId: params.blogId,
+      type: 'blog_writer_joined',
+      title: 'Writer Approved',
+      message: `You are now a writer for ${params.blogTitle}`,
+      actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId),
+      relatedEntityType: 'blog',
+      relatedBlogId: params.blogId,
+    });
+  }
+
   return createNotification({
     senderId: params.senderId,
     recipientEntityType: 'blog',
     recipientEntityId: params.blogId,
     type: 'blog_writer_joined',
     title: 'Writer Joined',
-    message: `${params.senderName} has joined ${params.blogTitle} as a writer`,
+    message: params.senderName
+      ? `${params.senderName} has joined ${params.blogTitle} as a writer`
+      : `A new writer has joined ${params.blogTitle}`,
     actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
-    relatedUserId: params.senderId,
+    relatedUserId: params.recipientUserId ?? params.senderId,
   });
 }
 
@@ -2909,7 +2744,7 @@ export async function notifyBloggerRoleChanged(params: {
   groupId?: string;
   ownerId?: string;
 }) {
-  return createNotification({
+  await createNotification({
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     onBehalfOfEntityType: 'blog',
@@ -2920,6 +2755,19 @@ export async function notifyBloggerRoleChanged(params: {
     actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
+  });
+
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'blog',
+    recipientEntityId: params.blogId,
+    type: 'blog_role_changed',
+    title: 'Role Changed',
+    message: `A writer's role in ${params.blogTitle} has been changed to ${params.newRole}`,
+    actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId, '/bloggers'),
+    relatedEntityType: 'blog',
+    relatedBlogId: params.blogId,
+    relatedUserId: params.recipientUserId,
   });
 }
 
@@ -2984,7 +2832,7 @@ export async function notifyBloggerInvited(params: {
   groupId?: string;
   ownerId?: string;
 }) {
-  return createNotification({
+  await createNotification({
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     onBehalfOfEntityType: 'blog',
@@ -2995,6 +2843,19 @@ export async function notifyBloggerInvited(params: {
     actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
+  });
+
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'blog',
+    recipientEntityId: params.blogId,
+    type: 'blog_writer_invite',
+    title: 'Writer Invited',
+    message: `A writer invitation has been sent for ${params.blogTitle}`,
+    actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId, '/bloggers'),
+    relatedEntityType: 'blog',
+    relatedBlogId: params.blogId,
+    relatedUserId: params.recipientUserId,
   });
 }
 
@@ -3009,7 +2870,7 @@ export async function notifyBloggerRemoved(params: {
   groupId?: string;
   ownerId?: string;
 }) {
-  return createNotification({
+  await createNotification({
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     onBehalfOfEntityType: 'blog',
@@ -3021,6 +2882,27 @@ export async function notifyBloggerRemoved(params: {
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
   });
+
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'blog',
+    recipientEntityId: params.blogId,
+    type: 'blog_writer_removed',
+    title: 'Writer Removed',
+    message: `A writer has been removed from ${params.blogTitle}`,
+    actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId, '/bloggers'),
+    relatedEntityType: 'blog',
+    relatedBlogId: params.blogId,
+    relatedUserId: params.recipientUserId,
+  });
+}
+
+export async function notifyBlogWriterApproved(params: Parameters<typeof notifyBloggerJoined>[0]) {
+  return notifyBloggerJoined(params);
+}
+
+export async function notifyBlogWriterRemoved(params: Parameters<typeof notifyBloggerRemoved>[0]) {
+  return notifyBloggerRemoved(params);
 }
 
 /**
@@ -3065,6 +2947,27 @@ export async function notifyBlogRoleDeleted(params: {
     type: 'blog_role_deleted',
     title: 'Role Deleted',
     message: `The role "${params.roleName}" has been deleted from ${params.blogTitle}`,
+    actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId, '/bloggers'),
+    relatedEntityType: 'blog',
+    relatedBlogId: params.blogId,
+  });
+}
+
+export async function notifyBlogRoleUpdated(params: {
+  senderId: string;
+  blogId: string;
+  blogTitle: string;
+  roleName: string;
+  groupId?: string;
+  ownerId?: string;
+}) {
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'blog',
+    recipientEntityId: params.blogId,
+    type: 'blog_role_changed',
+    title: 'Role Updated',
+    message: `The role "${params.roleName}" has been updated in ${params.blogTitle}`,
     actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId, '/bloggers'),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
@@ -3650,6 +3553,29 @@ export async function notifyAmendmentRejected(params: {
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
     relatedEventId: params.eventId,
+  });
+}
+
+/**
+ * Send notification when a blog is updated
+ */
+export async function notifyBlogUpdated(params: {
+  senderId: string;
+  blogId: string;
+  blogTitle: string;
+  groupId?: string;
+  ownerId?: string;
+}) {
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'blog',
+    recipientEntityId: params.blogId,
+    type: 'blog_updated',
+    title: 'Blog Updated',
+    message: `${params.blogTitle} has been updated`,
+    actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId),
+    relatedEntityType: 'blog',
+    relatedBlogId: params.blogId,
   });
 }
 

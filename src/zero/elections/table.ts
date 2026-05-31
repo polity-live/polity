@@ -13,6 +13,8 @@ export const election = table('election')
     closing_duration_seconds: number().optional(),
     closing_end_time: number().optional(),
     visibility: string(),
+    election_mode: string().optional(),
+    seat_count: number().optional(),
     max_votes: number(),
     created_at: number(),
     updated_at: number(),

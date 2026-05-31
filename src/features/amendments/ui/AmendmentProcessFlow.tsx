@@ -13,12 +13,7 @@ import {
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog';
 import { Button } from '@/features/shared/ui/ui/button';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/features/shared/ui/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useVoteActions } from '@/zero/votes/useVoteActions';
@@ -32,14 +27,13 @@ import {
   getActiveUserGroupIds,
 } from '@/features/amendments/logic/amendmentPathHelpers';
 import { useCreateAmendmentPath } from '@/features/amendments/hooks/useCreateAmendmentPath';
-import { CalendarIcon, Target, X, RefreshCw, User, Users, ArrowDown, MapPin } from 'lucide-react';
+import { CalendarIcon, Target, X, RefreshCw, User, Users, ArrowDown } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
 import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { notifyAmendmentTargetSet } from '@/features/notifications/utils/notification-helpers.ts';
 import type { NetworkGroupEntity } from '@/features/network/types/network.types';
 import type { EventByGroupRow } from '@/zero/events/useEventState';
 import { AmendmentPathVisualization } from '@/features/network/ui/AmendmentPathVisualization';
@@ -103,11 +97,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
   const [targetSelectionDialog, setTargetSelectionDialog] = useState(false);
   const [targetCollaboratorUserId, setTargetCollaboratorUserId] = useState<string>('');
 
-  const {
-    updateAmendment,
-    deletePathSegment,
-    deletePath,
-  } = useAmendmentActions();
+  const { updateAmendment, deletePathSegment, deletePath } = useAmendmentActions();
   const { createVote, deleteVote } = useVoteActions();
   const { createAgendaItem: createAgendaItemAction, deleteAgendaItem: deleteAgendaItemAction } =
     useAgendaActions();
@@ -284,9 +274,10 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
       }
 
       // Use the pre-calculated path from the selector (supports both hierarchy and workflow)
-      const pathWithEvents = pendingTarget.pathWithEvents && pendingTarget.pathWithEvents.length > 0
-        ? pendingTarget.pathWithEvents
-        : calculatePathWithEvents(groupId);
+      const pathWithEvents =
+        pendingTarget.pathWithEvents && pendingTarget.pathWithEvents.length > 0
+          ? pendingTarget.pathWithEvents
+          : calculatePathWithEvents(groupId);
 
       if (!pathWithEvents || pathWithEvents.length === 0) {
         toast.error(t('features.amendments.process.noValidPath'));
@@ -300,7 +291,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
         groupId,
         eventId,
         eventData.title ?? null,
-        eventData.start_date ?? null,
+        eventData.start_date ?? null
       );
 
       // Persist agenda items, votes, path and segments
@@ -317,17 +308,6 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
         id: amendmentId,
         group_id: groupId,
         event_id: eventId,
-      });
-
-      // Notify about target being set
-      await notifyAmendmentTargetSet({
-        senderId: user.id,
-        amendmentId,
-        amendmentTitle: amendment.title ?? '',
-        groupId,
-        groupName: groupData.name ?? undefined,
-        eventId,
-        eventTitle: eventData.title ?? undefined,
       });
 
       toast.success(
@@ -398,7 +378,8 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
 
   // Handle changing event for a specific group in the path
   const handleChangeEvent = async (groupId: string, newEventId: string) => {
-    if (!amendment || !amendmentPath || !enrichedPathData || enrichedPathData.length === 0 || !user) return;
+    if (!amendment || !amendmentPath || !enrichedPathData || enrichedPathData.length === 0 || !user)
+      return;
 
     try {
       setIsSaving(true);
@@ -564,7 +545,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                 {/* Timeline */}
                 <div className="relative pl-10">
                   {/* Vertical connector line */}
-                  <div className="absolute top-0 bottom-0 left-[18px] w-px bg-border"></div>
+                  <div className="bg-border absolute top-0 bottom-0 left-[18px] w-px"></div>
 
                   {/* Timeline items */}
                   <div className="space-y-1">
@@ -581,17 +562,17 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                           <div className="relative flex items-start gap-3 py-3">
                             {/* Timeline dot */}
                             <div
-                              className={`absolute -left-10 top-3.5 z-10 flex h-[18px] w-[18px] items-center justify-center rounded-full ring-2 ring-background ${
+                              className={`ring-background absolute top-3.5 -left-10 z-10 flex h-[18px] w-[18px] items-center justify-center rounded-full ring-2 ${
                                 isNextEvent
-                                  ? 'bg-primary shadow-sm shadow-primary/30'
+                                  ? 'bg-primary shadow-primary/30 shadow-sm'
                                   : isTarget
-                                    ? 'bg-destructive shadow-sm shadow-destructive/30'
+                                    ? 'bg-destructive shadow-destructive/30 shadow-sm'
                                     : isPending
                                       ? 'bg-muted-foreground/40'
                                       : 'bg-primary/70'
                               }`}
                             >
-                              <span className="text-[9px] font-bold text-primary-foreground">
+                              <span className="text-primary-foreground text-[9px] font-bold">
                                 {index + 1}
                               </span>
                             </div>
@@ -608,9 +589,13 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                                       : 'border-border bg-card'
                               }`}
                             >
-                              <div className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md ${
-                                isTarget ? 'bg-destructive/10 text-destructive' : 'bg-primary/10 text-primary'
-                              }`}>
+                              <div
+                                className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md ${
+                                  isTarget
+                                    ? 'bg-destructive/10 text-destructive'
+                                    : 'bg-primary/10 text-primary'
+                                }`}
+                              >
                                 <Users className="h-4 w-4" />
                               </div>
 
@@ -630,7 +615,10 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                                     </Badge>
                                   )}
                                   {isPending && (
-                                    <Badge variant="outline" className="h-5 px-1.5 text-[10px] text-muted-foreground">
+                                    <Badge
+                                      variant="outline"
+                                      className="text-muted-foreground h-5 px-1.5 text-[10px]"
+                                    >
                                       {t('features.amendments.process.awaitingPrevious')}
                                     </Badge>
                                   )}
@@ -642,23 +630,26 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                           {/* Event sub-node (indented, connected to group) */}
                           <div className="relative ml-6 flex items-start gap-3 pb-2">
                             {/* Small connector dot */}
-                            <div className="absolute -left-[33px] top-3 z-10 h-2 w-2 rounded-full bg-muted-foreground/30 ring-2 ring-background"></div>
+                            <div className="bg-muted-foreground/30 ring-background absolute top-3 -left-[33px] z-10 h-2 w-2 rounded-full ring-2"></div>
 
                             {segment.eventId && segment.eventTitle ? (
-                              <div className="flex min-w-0 flex-1 items-center gap-3 rounded-lg border border-border bg-card px-3 py-2.5">
+                              <div className="border-border bg-card flex min-w-0 flex-1 items-center gap-3 rounded-lg border px-3 py-2.5">
                                 {/* Date badge */}
                                 {segment.eventStartDate ? (
                                   <div className="flex h-10 w-10 flex-shrink-0 flex-col items-center justify-center rounded-md bg-orange-500/10 text-orange-600 dark:text-orange-400">
-                                    <span className="text-[10px] font-medium uppercase leading-none">
-                                      {new Date(segment.eventStartDate).toLocaleDateString('en-US', { month: 'short' })}
+                                    <span className="text-[10px] leading-none font-medium uppercase">
+                                      {new Date(segment.eventStartDate).toLocaleDateString(
+                                        'en-US',
+                                        { month: 'short' }
+                                      )}
                                     </span>
-                                    <span className="text-sm font-bold leading-tight">
+                                    <span className="text-sm leading-tight font-bold">
                                       {new Date(segment.eventStartDate).getDate()}
                                     </span>
                                   </div>
                                 ) : (
-                                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-muted">
-                                    <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                                  <div className="bg-muted flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md">
+                                    <CalendarIcon className="text-muted-foreground h-4 w-4" />
                                   </div>
                                 )}
 
@@ -667,14 +658,17 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                                     {segment.eventTitle}
                                   </span>
                                   {segment.eventStartDate && (
-                                    <span className="text-xs text-muted-foreground">
-                                      {new Date(segment.eventStartDate).toLocaleDateString('en-US', {
-                                        weekday: 'short',
-                                        month: 'short',
-                                        day: 'numeric',
-                                        hour: 'numeric',
-                                        minute: '2-digit',
-                                      })}
+                                    <span className="text-muted-foreground text-xs">
+                                      {new Date(segment.eventStartDate).toLocaleDateString(
+                                        'en-US',
+                                        {
+                                          weekday: 'short',
+                                          month: 'short',
+                                          day: 'numeric',
+                                          hour: 'numeric',
+                                          minute: '2-digit',
+                                        }
+                                      )}
                                     </span>
                                   )}
                                 </div>
@@ -682,7 +676,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                                 <Button
                                   size="icon"
                                   variant="ghost"
-                                  className="h-7 w-7 flex-shrink-0 text-muted-foreground hover:text-foreground"
+                                  className="text-muted-foreground hover:text-foreground h-7 w-7 flex-shrink-0"
                                   onClick={() =>
                                     setEventChangeDialog({
                                       open: true,
@@ -696,17 +690,17 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                                 </Button>
                               </div>
                             ) : (
-                              <div className="flex min-w-0 flex-1 items-center gap-3 rounded-lg border border-dashed border-border bg-muted/20 px-3 py-2.5">
-                                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-muted">
-                                  <CalendarIcon className="h-4 w-4 text-muted-foreground/50" />
+                              <div className="border-border bg-muted/20 flex min-w-0 flex-1 items-center gap-3 rounded-lg border border-dashed px-3 py-2.5">
+                                <div className="bg-muted flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md">
+                                  <CalendarIcon className="text-muted-foreground/50 h-4 w-4" />
                                 </div>
-                                <span className="flex-1 text-sm italic text-muted-foreground">
+                                <span className="text-muted-foreground flex-1 text-sm italic">
                                   {t('features.amendments.process.noUpcomingEvent')}
                                 </span>
                                 <Button
                                   size="icon"
                                   variant="ghost"
-                                  className="h-7 w-7 flex-shrink-0 text-muted-foreground hover:text-foreground"
+                                  className="text-muted-foreground hover:text-foreground h-7 w-7 flex-shrink-0"
                                   onClick={() =>
                                     setEventChangeDialog({
                                       open: true,
@@ -725,8 +719,8 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                           {/* Arrow connector between nodes */}
                           {!isLast && (
                             <div className="relative flex justify-start py-0.5">
-                              <div className="absolute -left-10 top-0 flex h-5 w-[18px] items-center justify-center">
-                                <ArrowDown className="h-3.5 w-3.5 text-muted-foreground/40" />
+                              <div className="absolute top-0 -left-10 flex h-5 w-[18px] items-center justify-center">
+                                <ArrowDown className="text-muted-foreground/40 h-3.5 w-3.5" />
                               </div>
                             </div>
                           )}
@@ -796,7 +790,8 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                       'user',
                       u => `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() || 'User',
                       u => u.email ?? undefined,
-                      u => u.avatar
+                      u => u.avatar,
+                      u => `/user/${u.id}`
                     )}
                     value={selectedUserId}
                     onChange={(item: TypeaheadItem | null) => setSelectedUserId(item?.id ?? '')}
@@ -998,7 +993,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                     );
                   }
 
-                  return upcomingEvents.map((event) => {
+                  return upcomingEvents.map(event => {
                     const isCurrentEvent = event.id === eventChangeDialog?.currentEventId;
 
                     return (
@@ -1020,9 +1015,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                             id: event.id,
                             title: event.title ?? '',
                             description: event.description ?? undefined,
-                            startDate: event.start_date
-                              ? new Date(event.start_date)
-                              : new Date(),
+                            startDate: event.start_date ? new Date(event.start_date) : new Date(),
                             location: event.location_name ?? undefined,
                             attendeeCount: event.participant_count ?? 0,
                           }}
@@ -1088,7 +1081,23 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                 email: u.email ?? undefined,
                 avatar: u.avatar ?? undefined,
               }))}
-              onSelect={({ groupId, groupData, eventId, eventData, pathWithEvents, selectedUserId: selUserId, pathMode, workflowId }) => {
+              onSelect={selection => {
+                if (!selection) {
+                  setPendingTarget(null);
+                  return;
+                }
+
+                const {
+                  groupId,
+                  groupData,
+                  eventId,
+                  eventData,
+                  pathWithEvents,
+                  selectedUserId: selUserId,
+                  pathMode,
+                  workflowId,
+                } = selection;
+
                 setPendingTarget({
                   groupId,
                   groupData: {

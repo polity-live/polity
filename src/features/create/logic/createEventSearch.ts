@@ -14,6 +14,7 @@ export type CreateEventType = (typeof createEventTypeValues)[number];
 
 export const createEventSearchSchema = z.object({
   eventType: z.enum(createEventTypeValues).optional(),
+  groupId: z.string().optional(),
   startDate: z.string().regex(dateInputPattern).optional(),
   startTime: z.string().regex(timeInputPattern).optional(),
   endDate: z.string().regex(dateInputPattern).optional(),

@@ -122,6 +122,8 @@ export const DEFAULT_BLOG_ROLES = [
     permissions: [
       { resource: 'blogs' as ResourceType, action: 'manage' as ActionType },
       { resource: 'blogBloggers' as ResourceType, action: 'manage' as ActionType },
+      { resource: 'notifications' as ResourceType, action: 'manageNotifications' as ActionType },
+      { resource: 'notifications' as ResourceType, action: 'viewNotifications' as ActionType },
     ],
   },
   {
@@ -130,6 +132,7 @@ export const DEFAULT_BLOG_ROLES = [
     permissions: [
       { resource: 'blogs' as ResourceType, action: 'view' as ActionType },
       { resource: 'blogs' as ResourceType, action: 'update' as ActionType },
+      { resource: 'notifications' as ResourceType, action: 'viewNotifications' as ActionType },
     ],
   },
 ];
@@ -217,10 +220,7 @@ export const DEFAULT_AMENDMENT_ROLES = [
     permissions: [
       { resource: 'amendments' as ResourceType, action: 'view' as ActionType },
       { resource: 'amendments' as ResourceType, action: 'update' as ActionType },
-      {
-        resource: 'groupNotifications' as ResourceType,
-        action: 'viewNotifications' as ActionType,
-      },
+      { resource: 'notifications' as ResourceType, action: 'viewNotifications' as ActionType },
     ],
   },
 ];
@@ -234,6 +234,7 @@ export const DEFAULT_EVENT_ROLES = [
     description: 'Event organizer with full permissions',
     default_request_role: false,
     default_invite_role: false,
+    assignee_kind: 'member' as const,
     permissions: [
       { resource: 'events' as ResourceType, action: 'view' as ActionType },
       { resource: 'events' as ResourceType, action: 'update' as ActionType },
@@ -264,6 +265,7 @@ export const DEFAULT_EVENT_ROLES = [
     description: 'Event participant with voting rights',
     default_request_role: false,
     default_invite_role: false,
+    assignee_kind: 'member' as const,
     permissions: [
       { resource: 'events' as ResourceType, action: 'view' as ActionType },
       { resource: 'events' as ResourceType, action: 'active_voting' as ActionType },
@@ -279,6 +281,7 @@ export const DEFAULT_EVENT_ROLES = [
     description: 'Regular event participant',
     default_request_role: true,
     default_invite_role: true,
+    assignee_kind: 'member' as const,
     permissions: [
       { resource: 'events' as ResourceType, action: 'view' as ActionType },
       { resource: 'events' as ResourceType, action: 'active_voting' as ActionType },
@@ -291,6 +294,22 @@ export const DEFAULT_EVENT_ROLES = [
     ],
   },
 ];
+
+export const DEFAULT_ASSEMBLY_EVENT_GUEST_ROLE = {
+  name: 'Gast',
+  description: 'Guest participant for assembly events',
+  default_request_role: true,
+  default_invite_role: false,
+  assignee_kind: 'guest' as const,
+  permissions: [
+    { resource: 'events' as ResourceType, action: 'view' as ActionType },
+    { resource: 'agendaItems' as ResourceType, action: 'view' as ActionType },
+    {
+      resource: 'notifications' as ResourceType,
+      action: 'viewNotifications' as ActionType,
+    },
+  ],
+} as const;
 
 /**
  * Available action rights for group membership management UI.
@@ -357,3 +376,18 @@ export const ACTION_RIGHTS = [
   { resource: 'messages', action: 'manage', label: 'Manage Messages' },
   { resource: 'messages', action: 'view', label: 'View Messages' },
 ] as const;
+
+export const EVENT_ACTION_RIGHTS = ACTION_RIGHTS.filter(
+  right =>
+    (right.resource === 'agendaItems' && ['manage', 'view'].includes(right.action)) ||
+    (right.resource === 'elections' && right.action === 'manage') ||
+    (right.resource === 'events' &&
+      [
+        'manage',
+        'manage_participants',
+        'manage_speakers',
+        'manage_votes',
+        'active_voting',
+        'passive_voting',
+      ].includes(right.action))
+);

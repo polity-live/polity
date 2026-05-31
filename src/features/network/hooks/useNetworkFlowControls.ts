@@ -1,20 +1,87 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { RIGHT_TYPES } from '@/features/network/ui/RightFilters';
 import type { NetworkDialogEntity } from '@/features/network/ui/NetworkEntityDialog';
 import type { NetworkRelationshipKind } from '@/features/network/logic/networkRelationshipHelpers';
+import type {
+  NetworkConnectionDirectionFilter,
+  NetworkDepthFilter,
+  NetworkUserConnectionDirection,
+} from '@/features/network/types/networkEdge.types';
 
 export function useNetworkFlowControls() {
-  const [showIndirect, setShowIndirect] = useState(false);
+  const [relationshipDepthFilter, setRelationshipDepthFilter] = useState<NetworkDepthFilter>('all');
   const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
   const [isInteractive, setIsInteractive] = useState(true);
   const [selectedRights, setSelectedRights] = useState<Set<string>>(new Set(RIGHT_TYPES));
-  const [selectedRelationshipKinds, setSelectedRelationshipKinds] = useState<
-    Set<NetworkRelationshipKind>
-  >(new Set<NetworkRelationshipKind>(['active']));
+  const [relationshipStatusFilter, setRelationshipStatusFilter] =
+    useState<NetworkRelationshipKind>('active');
+  const [connectionDirectionFilter, setConnectionDirectionFilter] =
+    useState<NetworkConnectionDirectionFilter>('all');
   const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [legendCollapsed, setLegendCollapsed] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedEntity, setSelectedEntity] = useState<NetworkDialogEntity | null>(null);
+
+  // Temporary compatibility layer while flows move from bool/set filters to row-based filters.
+  const showIndirect = relationshipDepthFilter !== 'direct';
+
+  const setShowIndirect = useCallback((nextShowIndirect: boolean) => {
+    setRelationshipDepthFilter(nextShowIndirect ? 'all' : 'direct');
+  }, []);
+
+  const selectedRelationshipKinds = useMemo(
+    () => new Set<NetworkRelationshipKind>([relationshipStatusFilter]),
+    [relationshipStatusFilter]
+  );
+
+  const setSelectedRelationshipKinds = useCallback((nextKinds: Set<NetworkRelationshipKind>) => {
+    if (nextKinds.has('active')) {
+      setRelationshipStatusFilter('active');
+      return;
+    }
+
+    if (nextKinds.has('incoming')) {
+      setRelationshipStatusFilter('incoming');
+      return;
+    }
+
+    if (nextKinds.has('outgoing')) {
+      setRelationshipStatusFilter('outgoing');
+      return;
+    }
+
+    setRelationshipStatusFilter('active');
+  }, []);
+
+  const selectedConnectionDirections = useMemo(() => {
+    if (connectionDirectionFilter === 'all') {
+      return new Set<NetworkUserConnectionDirection>(['incoming', 'outgoing']);
+    }
+
+    return new Set<NetworkUserConnectionDirection>([connectionDirectionFilter]);
+  }, [connectionDirectionFilter]);
+
+  const setSelectedConnectionDirections = useCallback(
+    (nextDirections: Set<NetworkUserConnectionDirection>) => {
+      if (nextDirections.has('incoming') && nextDirections.has('outgoing')) {
+        setConnectionDirectionFilter('all');
+        return;
+      }
+
+      if (nextDirections.has('incoming')) {
+        setConnectionDirectionFilter('incoming');
+        return;
+      }
+
+      if (nextDirections.has('outgoing')) {
+        setConnectionDirectionFilter('outgoing');
+        return;
+      }
+
+      setConnectionDirectionFilter('all');
+    },
+    []
+  );
 
   const toggleRight = useCallback((right: string) => {
     setSelectedRights(prev => {
@@ -29,16 +96,19 @@ export function useNetworkFlowControls() {
   }, []);
 
   const toggleRelationshipKind = useCallback((relationshipKind: NetworkRelationshipKind) => {
-    setSelectedRelationshipKinds(prev => {
-      const next = new Set(prev);
-      if (next.has(relationshipKind)) {
-        next.delete(relationshipKind);
-      } else {
-        next.add(relationshipKind);
-      }
-      return next;
-    });
+    setRelationshipStatusFilter(currentFilter =>
+      currentFilter === relationshipKind ? 'active' : relationshipKind
+    );
   }, []);
+
+  const toggleConnectionDirection = useCallback(
+    (connectionDirection: NetworkUserConnectionDirection) => {
+      setConnectionDirectionFilter(currentFilter =>
+        currentFilter === connectionDirection ? 'all' : connectionDirection
+      );
+    },
+    []
+  );
 
   const handleInteractiveChange = useCallback((interactiveState: boolean) => {
     setIsInteractive(interactiveState);
@@ -48,6 +118,8 @@ export function useNetworkFlowControls() {
   }, []);
 
   return {
+    relationshipDepthFilter,
+    setRelationshipDepthFilter,
     showIndirect,
     setShowIndirect,
     selectedNodes,
@@ -56,8 +128,14 @@ export function useNetworkFlowControls() {
     setIsInteractive,
     selectedRights,
     setSelectedRights,
+    relationshipStatusFilter,
+    setRelationshipStatusFilter,
     selectedRelationshipKinds,
     setSelectedRelationshipKinds,
+    connectionDirectionFilter,
+    setConnectionDirectionFilter,
+    selectedConnectionDirections,
+    setSelectedConnectionDirections,
     panelCollapsed,
     setPanelCollapsed,
     legendCollapsed,
@@ -68,6 +146,7 @@ export function useNetworkFlowControls() {
     setSelectedEntity,
     toggleRight,
     toggleRelationshipKind,
+    toggleConnectionDirection,
     handleInteractiveChange,
   };
 }

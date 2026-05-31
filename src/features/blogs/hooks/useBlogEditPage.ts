@@ -5,7 +5,6 @@ import { useBlogState } from '@/zero/blogs/useBlogState';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
-import { notifyBlogPublished } from '@/features/notifications/utils/notification-helpers.ts';
 import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
 
 export interface BlogFormData {
@@ -104,7 +103,7 @@ export function useBlogEditPage(blogId: string, actorId?: string) {
         visibility: formData.visibility,
       });
 
-      // Timeline and notifications are server-only — send separately
+      // Timeline remains best-effort on the client; notifications are server-driven.
       try {
         if (formData.visibility === 'public' && actorId) {
           if (formData.imageURL && formData.imageURL !== blog.image_url) {
@@ -121,16 +120,8 @@ export function useBlogEditPage(blogId: string, actorId?: string) {
             });
           }
         }
-
-        if (formData.visibility === 'public' && blog.visibility !== 'public' && actorId) {
-          await notifyBlogPublished({
-            senderId: actorId,
-            blogId,
-            blogTitle: formData.title,
-          });
-        }
       } catch {
-        /* timeline/notification delivery is best-effort */
+        /* timeline delivery is best-effort */
       }
 
       // Sync hashtags via junction tables

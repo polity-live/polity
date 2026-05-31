@@ -11,13 +11,13 @@ export const Route = createFileRoute('/_authed/group/$id/settings')({
 function GroupSettingsPage() {
   const { id } = Route.useParams();
 
-  const { can, isLoading } = usePermissions({ groupId: id });
+  const { can, isMember, isLoading } = usePermissions({ groupId: id });
 
   if (isLoading) {
     return <GlobalLoadingAnimation connectionStatus="connecting" />;
   }
 
-  if (!can('manage', 'groups')) {
+  if (!isMember() || !can('manage', 'groups')) {
     return <AccessDenied />;
   }
 

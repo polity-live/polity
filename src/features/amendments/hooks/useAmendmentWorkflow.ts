@@ -16,7 +16,6 @@ import {
   isTerminalStatus,
   EDITING_MODE_TRANSITIONS,
 } from '@/zero/rbac/workflow-constants';
-import { notifyWorkflowChanged } from '@/features/notifications/utils/notification-helpers.ts';
 
 interface UseAmendmentWorkflowProps {
   amendmentId: string;
@@ -32,8 +31,6 @@ export function useAmendmentWorkflow({
   currentStatus,
   currentEventId,
   agendaItemId,
-  senderId,
-  amendmentTitle,
 }: UseAmendmentWorkflowProps) {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const { updateAmendment } = useAmendmentActions();
@@ -65,23 +62,21 @@ export function useAmendmentWorkflow({
 
         // Auto-initialize CR voting when transitioning to vote_event
         if (targetStatus === 'vote_event' && agendaItemId) {
-          console.log('[useAmendmentWorkflow] Initializing CR voting — amendmentId:', amendmentId, 'agendaItemId:', agendaItemId);
+          console.log(
+            '[useAmendmentWorkflow] Initializing CR voting — amendmentId:',
+            amendmentId,
+            'agendaItemId:',
+            agendaItemId
+          );
           await initializeChangeRequestVoting({
             amendment_id: amendmentId,
             agenda_item_id: agendaItemId,
           });
         } else if (targetStatus === 'vote_event' && !agendaItemId) {
-          console.warn('[useAmendmentWorkflow] Cannot initialize CR voting — agendaItemId is missing! amendmentId:', amendmentId);
-        }
-
-        // Send notification to collaborators
-        if (senderId) {
-          await notifyWorkflowChanged({
-            senderId,
-            amendmentId,
-            amendmentTitle: amendmentTitle || 'Amendment',
-            newStatus: targetStatus,
-          });
+          console.warn(
+            '[useAmendmentWorkflow] Cannot initialize CR voting — agendaItemId is missing! amendmentId:',
+            amendmentId
+          );
         }
 
         toast.success(`Workflow geändert zu: ${targetStatus}`);
@@ -149,11 +144,7 @@ export function useAmendmentWorkflow({
   const submitToEvent = useCallback(
     async (eventId: string): Promise<boolean> => {
       // Can submit from all collaborator phase
-      const allowedPhases: EditingMode[] = [
-        'edit',
-        'suggest_internal',
-        'vote_internal',
-      ];
+      const allowedPhases: EditingMode[] = ['edit', 'suggest_internal', 'vote_internal'];
 
       if (!allowedPhases.includes(currentStatus)) {
         toast.error('Amendment kann nicht in diesem Status an ein Event weitergeleitet werden.');

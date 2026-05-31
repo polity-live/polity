@@ -1,14 +1,19 @@
 import { useState } from 'react';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
+import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import { toast } from 'sonner';
+import { useAuth } from '@/providers/auth-provider';
 
 /**
  * Hook for group membership mutations
  */
 export function useGroupMutations(groupId: string) {
   const [isLoading, setIsLoading] = useState(false);
+  const { session } = useAuth();
   const {
     inviteMember,
+    inviteGuest,
+    revokeGuestAccess,
     updateMemberRole,
     syncMembershipRoles,
     leaveGroup: leaveGroupAction,
@@ -16,6 +21,52 @@ export function useGroupMutations(groupId: string) {
     deleteRole: deleteRoleAction,
     assignActionRight,
   } = useGroupActions();
+
+  const logGeneralAssemblyEventSearchResults = async (
+    membershipId: string,
+    membershipUserId: string
+  ) => {
+    if (!session?.access_token) {
+      console.warn('General assembly event search results unavailable', {
+        flow: 'group-membership-request-approve',
+        reason: 'missing-access-token',
+        membershipId,
+        membershipUserId,
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `/api/debug/group-general-assemblies?membershipId=${encodeURIComponent(membershipId)}`,
+        {
+          headers: {
+            authorization: `Bearer ${session.access_token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        console.warn('General assembly event search results unavailable', {
+          flow: 'group-membership-request-approve',
+          membershipId,
+          membershipUserId,
+          status: response.status,
+        });
+        return;
+      }
+
+      const payload = await response.json();
+      console.info('General assembly event search results', payload);
+    } catch (error) {
+      console.error('General assembly event search failed', {
+        flow: 'group-membership-request-approve',
+        membershipId,
+        membershipUserId,
+        error,
+      });
+    }
+  };
 
   /**
    * Invite users to the group
@@ -38,21 +89,24 @@ export function useGroupMutations(groupId: string) {
 
       for (const userId of userIds) {
         const membershipId = crypto.randomUUID();
-        await inviteMember({
-          id: membershipId,
-          user_id: userId,
-          group_id: groupId,
-          initial_role_id: dedupedRoleIds[0] ?? null,
-          visibility: '',
-          status: 'invited',
-        });
-
+        await serverConfirmed(
+          inviteMember({
+            id: membershipId,
+            user_id: userId,
+            group_id: groupId,
+            initial_role_id: dedupedRoleIds[0] ?? null,
+            visibility: '',
+            status: 'invited',
+          })
+        );
         if (dedupedRoleIds.length > 0) {
-          await syncMembershipRoles({
-            group_membership_id: membershipId,
-            role_ids: dedupedRoleIds,
-            assigned_by_id: senderId ?? null,
-          });
+          await serverConfirmed(
+            syncMembershipRoles({
+              group_membership_id: membershipId,
+              role_ids: dedupedRoleIds,
+              assigned_by_id: senderId ?? null,
+            })
+          );
         }
       }
       toast.success(`Successfully invited ${userIds.length} user(s)`);
@@ -60,6 +114,52 @@ export function useGroupMutations(groupId: string) {
     } catch (error) {
       console.error('Failed to invite users:', error);
       toast.error('Failed to invite users');
+      return { success: false, error };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const inviteGuests = async (userIds: string[], roleIds: string[], senderId?: string) => {
+    if (userIds.length === 0 || roleIds.length === 0) {
+      return { success: false, error: 'Guests require at least one role and one user' };
+    }
+
+    setIsLoading(true);
+    try {
+      for (const userId of userIds) {
+        await serverConfirmed(
+          inviteGuest({
+            id: crypto.randomUUID(),
+            group_id: groupId,
+            user_id: userId,
+            status: 'invited',
+            role_ids: roleIds,
+            invited_by_id: senderId ?? null,
+          })
+        );
+      }
+
+      toast.success(`Successfully invited ${userIds.length} guest(s)`);
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to invite guests:', error);
+      toast.error('Failed to invite guests');
+      return { success: false, error };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const revokeGuest = async (guestAccessId: string) => {
+    setIsLoading(true);
+    try {
+      await serverConfirmed(revokeGuestAccess({ id: guestAccessId }));
+      toast.success('Guest access revoked');
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to revoke guest access:', error);
+      toast.error('Failed to revoke guest access');
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -85,15 +185,57 @@ export function useGroupMutations(groupId: string) {
 
     setIsLoading(true);
     try {
-      await updateMemberRole({
+      console.info('Client mutation started', {
+        flow: 'group-membership-request-approve',
+        membershipId,
+        groupId,
+        actorUserId: senderId ?? null,
+        membershipUserId: userId,
+      });
+
+      const result = updateMemberRole({
         id: membershipId,
         status: 'active',
       });
 
+      console.info('Server validation started', {
+        flow: 'group-membership-request-approve',
+        membershipId,
+        groupId,
+        actorUserId: senderId ?? null,
+        membershipUserId: userId,
+      });
+
+      await serverConfirmed(result);
+
+      console.info('Server successful', {
+        flow: 'group-membership-request-approve',
+        membershipId,
+        groupId,
+        actorUserId: senderId ?? null,
+        membershipUserId: userId,
+      });
+
+      await logGeneralAssemblyEventSearchResults(membershipId, userId);
+
+      console.info('Client successful', {
+        flow: 'group-membership-request-approve',
+        membershipId,
+        groupId,
+        actorUserId: senderId ?? null,
+        membershipUserId: userId,
+      });
       toast.success('Membership approved');
       return { success: true };
     } catch (error) {
-      console.error('Failed to approve membership:', error);
+      console.error('Client error', {
+        flow: 'group-membership-request-approve',
+        membershipId,
+        groupId,
+        actorUserId: senderId ?? null,
+        membershipUserId: userId,
+        error,
+      });
       toast.error('Failed to approve membership');
       return { success: false, error };
     } finally {
@@ -118,14 +260,52 @@ export function useGroupMutations(groupId: string) {
 
     setIsLoading(true);
     try {
-      const transactions = [leaveGroupAction({ id: membershipId })];
+      console.info('Client mutation started', {
+        flow: 'group-membership-request-reject',
+        membershipId,
+        groupId,
+        actorUserId: senderId ?? null,
+        membershipUserId: userId,
+      });
 
-      await Promise.all(transactions);
+      const result = leaveGroupAction({ id: membershipId });
 
+      console.info('Server validation started', {
+        flow: 'group-membership-request-reject',
+        membershipId,
+        groupId,
+        actorUserId: senderId ?? null,
+        membershipUserId: userId,
+      });
+
+      await serverConfirmed(result);
+
+      console.info('Server successful', {
+        flow: 'group-membership-request-reject',
+        membershipId,
+        groupId,
+        actorUserId: senderId ?? null,
+        membershipUserId: userId,
+      });
+
+      console.info('Client successful', {
+        flow: 'group-membership-request-reject',
+        membershipId,
+        groupId,
+        actorUserId: senderId ?? null,
+        membershipUserId: userId,
+      });
       toast.success('Membership request rejected');
       return { success: true };
     } catch (error) {
-      console.error('Failed to reject membership:', error);
+      console.error('Client error', {
+        flow: 'group-membership-request-reject',
+        membershipId,
+        groupId,
+        actorUserId: senderId ?? null,
+        membershipUserId: userId,
+        error,
+      });
       toast.error('Failed to reject membership');
       return { success: false, error };
     } finally {
@@ -152,12 +332,52 @@ export function useGroupMutations(groupId: string) {
 
     setIsLoading(true);
     try {
-      await leaveGroupAction({ id: membershipId });
+      console.info('Client mutation started', {
+        flow: 'group-member-remove',
+        membershipId,
+        groupId,
+        actorUserId: senderId ?? null,
+        membershipUserId: userId,
+      });
 
+      const result = leaveGroupAction({ id: membershipId });
+
+      console.info('Server validation started', {
+        flow: 'group-member-remove',
+        membershipId,
+        groupId,
+        actorUserId: senderId ?? null,
+        membershipUserId: userId,
+      });
+
+      await serverConfirmed(result);
+
+      console.info('Server successful', {
+        flow: 'group-member-remove',
+        membershipId,
+        groupId,
+        actorUserId: senderId ?? null,
+        membershipUserId: userId,
+      });
+
+      console.info('Client successful', {
+        flow: 'group-member-remove',
+        membershipId,
+        groupId,
+        actorUserId: senderId ?? null,
+        membershipUserId: userId,
+      });
       toast.success('Member removed successfully');
       return { success: true };
     } catch (error) {
-      console.error('Failed to remove member:', error);
+      console.error('Client error', {
+        flow: 'group-member-remove',
+        membershipId,
+        groupId,
+        actorUserId: senderId ?? null,
+        membershipUserId: userId,
+        error,
+      });
       toast.error('Failed to remove member');
       return { success: false, error };
     } finally {
@@ -207,11 +427,13 @@ export function useGroupMutations(groupId: string) {
 
     setIsLoading(true);
     try {
-      await syncMembershipRoles({
-        group_membership_id: membershipId,
-        role_ids: roleIds,
-        assigned_by_id: senderId ?? null,
-      });
+      await serverConfirmed(
+        syncMembershipRoles({
+          group_membership_id: membershipId,
+          role_ids: roleIds,
+          assigned_by_id: senderId ?? null,
+        })
+      );
 
       toast.success('Member role updated');
       return { success: true };
@@ -392,6 +614,8 @@ export function useGroupMutations(groupId: string) {
     removeMember,
     changeMemberRole,
     changeMemberRoles,
+    inviteGuests,
+    revokeGuest,
     createRole,
     deleteRole,
     promoteToAdmin,

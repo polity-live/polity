@@ -23,6 +23,7 @@ import {
   getMembershipDisplayRoles,
   getMembershipRoleSummary,
 } from '@/features/groups/logic/buildMembershipRightsSummary';
+import type { ActionRightOption } from '@/features/groups/types/group.types';
 import type { SearchCardGradientEntity } from '@/features/shared/utils/search-card-gradients';
 import type { ParticipationLike } from '@/features/shared/types/participation';
 
@@ -37,6 +38,7 @@ interface MemberRightsDialogProps<TParticipation extends ParticipationLike> {
   profileButtonLabel?: string;
   closeButtonLabel?: string;
   emptyRightsLabel?: string;
+  actionRightsCatalog?: readonly ActionRightOption[];
 }
 
 export function MemberRightsDialog<TParticipation extends ParticipationLike>({
@@ -50,10 +52,11 @@ export function MemberRightsDialog<TParticipation extends ParticipationLike>({
   profileButtonLabel = 'Open Profile',
   closeButtonLabel = 'Close',
   emptyRightsLabel = "No explicit action rights are currently assigned through this member's roles.",
+  actionRightsCatalog,
 }: MemberRightsDialogProps<TParticipation>) {
   const rightsSummary = useMemo(
-    () => (membership ? buildMembershipRightsSummary(membership) : []),
-    [membership]
+    () => (membership ? buildMembershipRightsSummary(membership, actionRightsCatalog) : []),
+    [actionRightsCatalog, membership]
   );
   const displayRoles = useMemo(
     () => (membership ? getMembershipDisplayRoles(membership) : []),

@@ -1,15 +1,17 @@
-import { useState, useMemo } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import { useCallback, useMemo, useState } from 'react';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useAuth } from '@/providers/auth-provider';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
+import { SummaryPillList } from '@/features/shared/ui/ui/create-review-card';
 import { VisibilityInput } from '../ui/inputs/VisibilityInput';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import { CreateInputField } from '../ui/CreateFields';
 import {
   TargetGroupEventSelector,
   TargetGroupEventDisplay,
+  type TargetGroupEventSelection,
 } from '@/features/amendments/ui/TargetGroupEventSelector';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
@@ -17,11 +19,11 @@ import { useCommonState, useCommonActions } from '@/zero/common';
 import { enrichPathSegments } from '@/features/amendments/logic/amendmentPathHelpers';
 import { useCreateAmendmentPath } from '@/features/amendments/hooks/useCreateAmendmentPath';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
+import { mergeCreateSearchParams } from '../logic/createSearchParams';
 import type { CreateFormConfig } from '../types/create-form.types';
 
 interface CreateTargetGroupData {
   id: string;
-  abbr?: string | null;
   name?: string | null;
   description?: string | null;
   member_count?: number | null;
@@ -38,9 +40,15 @@ interface CreateTargetEventData {
   participant_count?: number | null;
 }
 
+interface CreateAmendmentSearch {
+  groupId?: string;
+}
+
 export function useCreateAmendmentForm(): CreateFormConfig {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const searchParams = useSearch({ strict: false }) as CreateAmendmentSearch;
+  const groupIdParam = searchParams.groupId ?? '';
   const { user } = useAuth();
   const { createAmendment } = useAmendmentActions();
   const { createDocument, addCollaborator } = useDocumentActions();
@@ -68,8 +76,71 @@ export function useCreateAmendmentForm(): CreateFormConfig {
     workflowId: string | null;
   } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const visibilityLabel =
+    visibility === 'public'
+      ? t('pages.create.common.public')
+      : visibility === 'authenticated'
+        ? t('pages.create.common.authenticated')
+        : t('pages.create.common.private');
 
   const { allHashtags } = useCommonState({ loadAllHashtags: true });
+
+  const syncGroupSearch = useCallback(
+    (nextGroupId: string) => {
+      navigate({
+        to: '/create/amendment',
+        search: mergeCreateSearchParams(searchParams, {
+          groupId: nextGroupId || undefined,
+        }),
+        replace: true,
+        resetScroll: false,
+      });
+    },
+    [navigate, searchParams]
+  );
+
+  const handleGroupSelectionChange = useCallback(
+    (groupId: string | null) => {
+      syncGroupSearch(groupId ?? '');
+    },
+    [syncGroupSearch]
+  );
+
+  const handleTargetSelection = useCallback((selection: TargetGroupEventSelection | null) => {
+    if (!selection) {
+      setTargetSelection(null);
+      return;
+    }
+
+    setTargetSelection({
+      groupId: selection.groupId,
+      groupData: {
+        id: selection.groupData.id,
+        name: selection.groupData.name ?? null,
+        description:
+          typeof selection.groupData.description === 'string'
+            ? selection.groupData.description
+            : null,
+        member_count: selection.groupData.member_count ?? null,
+        event_count: selection.groupData.event_count ?? null,
+        amendment_count: selection.groupData.amendment_count ?? null,
+      },
+      eventId: selection.eventId,
+      eventData: {
+        id: selection.eventData.id,
+        title: selection.eventData.title ?? null,
+        start_date: selection.eventData.start_date ?? null,
+        location_name: selection.eventData.location_name ?? null,
+        description:
+          typeof selection.eventData.description === 'string'
+            ? selection.eventData.description
+            : null,
+        participant_count: selection.eventData.participant_count ?? null,
+      },
+      pathWithEvents: selection.pathWithEvents,
+      workflowId: selection.workflowId,
+    });
+  }, []);
 
   const handleSubmit = async () => {
     if (!title.trim() || !user?.id) return;
@@ -210,17 +281,9 @@ export function useCreateAmendmentForm(): CreateFormConfig {
               {user?.id ? (
                 <TargetGroupEventSelector
                   userId={user.id}
-                  onSelect={selection => {
-                    setTargetSelection({
-                      groupId: selection.groupId,
-                      groupData: selection.groupData,
-                      eventId: selection.eventId,
-                      eventData: selection.eventData,
-                      pathWithEvents: selection.pathWithEvents,
-                      workflowId: selection.workflowId,
-                    });
-                  }}
-                  selectedGroupId={targetSelection?.groupId}
+                  onGroupSelectionChange={handleGroupSelectionChange}
+                  onSelect={handleTargetSelection}
+                  selectedGroupId={targetSelection?.groupId ?? groupIdParam}
                   selectedEventId={targetSelection?.eventId}
                 />
               ) : (
@@ -261,19 +324,50 @@ export function useCreateAmendmentForm(): CreateFormConfig {
               badge={t('pages.create.amendment.reviewBadge')}
               title={title || t('pages.create.amendment.titlePlaceholder')}
               subtitle={subtitle || undefined}
+              media={
+                imageURL ? { imageUrl: imageURL, imageAlt: title || 'Amendment image' } : undefined
+              }
               hashtags={hashtags.length > 0 ? hashtags : undefined}
-              fields={[
-                ...(targetSelection
-                  ? [
-                      {
-                        label: t('pages.create.amendment.target'),
-                        value: `${String(targetSelection.groupData.name ?? '')} -> ${String(targetSelection.eventData.title ?? '')}`,
-                      },
-                    ]
-                  : []),
+              sections={[
                 {
-                  label: t('pages.create.common.visibility'),
-                  value: visibility,
+                  title: t('pages.create.amendment.targetGroupEvent'),
+                  fields: [
+                    ...(targetSelection
+                      ? [
+                          {
+                            label: t('pages.create.amendment.target'),
+                            value: `${String(targetSelection.groupData.name ?? '')} -> ${String(targetSelection.eventData.title ?? '')}`,
+                          },
+                          ...(targetSelection.pathWithEvents.length > 0
+                            ? [
+                                {
+                                  label: 'Path',
+                                  value: (
+                                    <SummaryPillList
+                                      items={targetSelection.pathWithEvents.map(
+                                        segment =>
+                                          `${segment.groupName}: ${segment.eventTitle || t('pages.create.common.notSelected')}`
+                                      )}
+                                    />
+                                  ),
+                                },
+                              ]
+                            : []),
+                        ]
+                      : []),
+                  ],
+                },
+                {
+                  title: t('pages.create.amendment.visibilityAndTags'),
+                  fields: [
+                    {
+                      label: t('pages.create.common.visibility'),
+                      value: visibilityLabel,
+                    },
+                    ...(imageURL
+                      ? [{ label: t('pages.create.amendment.imageLabel'), value: 'Attached' }]
+                      : []),
+                  ],
                 },
               ]}
             />
@@ -286,10 +380,15 @@ export function useCreateAmendmentForm(): CreateFormConfig {
       subtitle,
       imageURL,
       visibility,
+      visibilityLabel,
       hashtags,
       targetSelection,
+      groupIdParam,
       isSubmitting,
       amendmentId,
+      handleGroupSelectionChange,
+      handleTargetSelection,
+      syncGroupSearch,
       t,
       user?.id,
     ]

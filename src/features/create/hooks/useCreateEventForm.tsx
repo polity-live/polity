@@ -1,24 +1,23 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import type { Value } from 'platejs';
 import { useNavigate, useSearch } from '@tanstack/react-router';
+import { toast } from 'sonner';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Label } from '@/features/shared/ui/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/features/shared/ui/ui/tabs';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
-import { DateTimeRangeInput } from '../ui/inputs/DateTimeRangeInput';
 import { CreateInputField } from '../ui/CreateFields';
 import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
 import { VisibilityInput } from '../ui/inputs/VisibilityInput';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import { EventTypeInput } from '../ui/inputs/EventTypeInput';
-import { RecurringPatternInput } from '../ui/inputs/RecurringPatternInput';
 import { DelegateAllocationInput, type DelegateConfig } from '../ui/inputs/DelegateAllocationInput';
 import { GeoAddressPicker } from '@/features/shared/ui/form/GeoAddressPicker';
 import { useEventActions } from '@/zero/events/useEventActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
-import { useUserGroupsWithManageEvents } from '@/zero/groups/useGroupState';
+import { useCurrentUserActiveGroupIds, useGroupById } from '@/zero/groups/useGroupState';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import type { CreateFormConfig } from '../types/create-form.types';
 import { type RecurrencePattern } from '@/features/events/logic/rruleHelpers';
@@ -30,6 +29,7 @@ import {
   toZeroRichTextValue,
 } from '@/features/shared/logic/richText';
 import { CreateTypeaheadField } from '../ui/CreateFields';
+import { mergeCreateSearchParams } from '../logic/createSearchParams';
 import {
   type CreateEventType,
   getCreateEventSearchDefaults,
@@ -37,6 +37,15 @@ import {
 } from '../logic/createEventSearch';
 import { getEventTypeTranslationKey } from '@/features/events/logic/getEventTypeTranslationKey';
 import { buildRecurringEventFields } from '@/features/events/logic/buildRecurringEventFields';
+import { buildEventTemporalFields } from '@/features/events/logic/buildEventTemporalFields';
+import {
+  getEventTimeSeriesValidationError,
+  hasRequiredEventDateTimeRange,
+} from '@/features/events/logic/eventTimeSeriesValidation';
+import { buildRRule, getRecurrenceDescription } from '@/features/events/logic/rruleHelpers';
+import { EventTimeSeriesSection } from '@/features/events/ui/EventTimeSeriesSection';
+import { ElectionModeInput } from '@/features/elections/ui/ElectionModeInput';
+import { type ElectionMode } from '@/features/elections/logic/electionMode';
 
 type EventType = CreateEventType;
 type MeetingType = 'one-on-one' | 'public-meeting';
@@ -48,18 +57,21 @@ export function useCreateEventForm(): CreateFormConfig {
   const { createEvent } = useEventActions();
   const commonActions = useCommonActions();
   const prefilledSearch = useMemo(() => getCreateEventSearchDefaults(searchParams), [searchParams]);
+  const groupIdParam = searchParams.groupId ?? '';
 
   const [eventId] = useState(() => crypto.randomUUID());
   const [eventType, setEventType] = useState<EventType>(() => prefilledSearch.eventType);
   const [meetingType, setMeetingType] = useState<MeetingType>('one-on-one');
   const [meetingMaxBookings, setMeetingMaxBookings] = useState('10');
-  const [groupId, setGroupId] = useState('');
+  const [groupId, setGroupId] = useState(() => groupIdParam);
   const [groupName, setGroupName] = useState('');
+  const { group } = useGroupById(groupId || undefined);
   const [delegateConfig, setDelegateConfig] = useState<DelegateConfig>({
     allocationMode: 'ratio',
     totalDelegates: 10,
     delegateRatio: 10,
   });
+  const [delegateElectionMode, setDelegateElectionMode] = useState<ElectionMode>('list');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [descriptionContent, setDescriptionContent] = useState<Value>(EMPTY_RICH_TEXT_VALUE);
@@ -102,7 +114,7 @@ export function useCreateEventForm(): CreateFormConfig {
   });
 
   const { allHashtags } = useCommonState({ loadAllHashtags: true });
-  const { manageEventGroupIds } = useUserGroupsWithManageEvents();
+  const { activeGroupIds } = useCurrentUserActiveGroupIds();
   const isMeetingEvent = eventType === 'meeting';
   const groupRequired = eventType === 'general_assembly' || eventType === 'delegate_assembly';
   const normalizedMeetingBookings =
@@ -112,14 +124,134 @@ export function useCreateEventForm(): CreateFormConfig {
       ? 'public'
       : 'private'
     : visibility;
+  const eventTypeLabel = t(
+    `pages.create.event.eventTypes.${getEventTypeTranslationKey(eventType)}`
+  );
+  const meetingFormatLabel =
+    meetingType === 'public-meeting'
+      ? t('pages.create.event.meetingFormats.publicMeeting')
+      : t('pages.create.event.meetingFormats.oneOnOne');
+  const delegateAllocationLabel =
+    delegateConfig.allocationMode === 'ratio'
+      ? `1:${delegateConfig.delegateRatio}`
+      : `${delegateConfig.totalDelegates} total`;
+  const delegateElectionModeLabel = delegateElectionMode === 'list' ? 'Listenwahl' : 'Einzelwahl';
+  const locationTypeLabel =
+    locationType === 'online'
+      ? t('pages.create.event.locationTypes.online')
+      : t('pages.create.event.locationTypes.physical');
+  const visibilityLabel =
+    effectiveVisibility === 'public'
+      ? t('pages.create.common.public')
+      : effectiveVisibility === 'authenticated'
+        ? t('pages.create.common.authenticated')
+        : t('pages.create.common.private');
+  const recurrenceRule = isRecurring
+    ? buildRRule({
+        pattern: recurrencePattern,
+        interval: recurrenceInterval,
+        weekdays: recurrenceWeekdays,
+        endDate: recurrenceEndDate || null,
+      })
+    : null;
+  const recurrenceSummary = isRecurring
+    ? recurrenceRule
+      ? getRecurrenceDescription(recurrenceRule, t)
+      : t(`pages.create.event.recurringPatterns.${recurrencePattern}`)
+    : null;
+  const timeSeriesValidationError = getEventTimeSeriesValidationError({
+    startDate,
+    startTime,
+    endDate,
+    endTime,
+    recurrencePattern,
+    recurrenceWeekdays,
+    requireCompleteDateTimeRange: true,
+  });
+  const hasRequiredDateTimeRange = hasRequiredEventDateTimeRange({
+    startDate,
+    startTime,
+    endDate,
+    endTime,
+  });
+  const timeSeriesValidationMessage =
+    timeSeriesValidationError === 'missing-required-range'
+      ? t('pages.create.event.timeSeries.validation.dateTimeRangeRequired')
+      : timeSeriesValidationError === 'missing-start-date'
+        ? t('pages.create.event.timeSeries.validation.startDateRequired')
+        : timeSeriesValidationError === 'missing-weekdays'
+          ? t('pages.create.event.timeSeries.validation.weekdaysRequired')
+          : null;
 
   const handleDescriptionContentChange = useCallback((value: Value) => {
     setDescriptionContent(value);
     setDescription(richTextToPlainText(value));
   }, []);
 
+  useEffect(() => {
+    setGroupId(groupIdParam);
+  }, [groupIdParam]);
+
+  useEffect(() => {
+    if (!groupId) {
+      if (groupName) {
+        setGroupName('');
+      }
+      return;
+    }
+
+    const nextGroupName = group?.name ?? '';
+    if (nextGroupName && groupName !== nextGroupName) {
+      setGroupName(nextGroupName);
+    }
+  }, [group?.name, groupId, groupName]);
+
+  const syncGroupSearch = useCallback(
+    (nextGroupId: string) => {
+      navigate({
+        to: '/create/event',
+        search: mergeCreateSearchParams(searchParams, {
+          groupId: nextGroupId || undefined,
+        }),
+        replace: true,
+      });
+    },
+    [navigate, searchParams]
+  );
+
   const handleSubmit = async () => {
     if (!title.trim()) return;
+    if (
+      eventType === 'delegate_assembly' &&
+      (!group ||
+        (group.group_type !== 'hierarchical' &&
+          !(
+            group.group_type === 'sibling' &&
+            (group.sibling_membership_mode === 'parliament' ||
+              group.sibling_membership_mode === 'elected')
+          )))
+    ) {
+      toast.error(
+        'Delegiertenversammlungen koennen nur fuer hierarchische Gruppen oder sibling Gruppen mit Parlament/gewaehlt erstellt werden.'
+      );
+      return;
+    }
+
+    if (timeSeriesValidationError === 'missing-required-range') {
+      toast.error(t('pages.create.event.timeSeries.validation.dateTimeRangeRequired'));
+      return;
+    }
+
+    if (timeSeriesValidationError === 'missing-start-date') {
+      toast.error(t('pages.create.event.timeSeries.validation.startDateRequired'));
+      return;
+    }
+
+    if (timeSeriesValidationError === 'missing-weekdays') {
+      toast.error(t('pages.create.event.timeSeries.validation.weekdaysRequired'));
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const recurringFields = buildRecurringEventFields({
@@ -131,6 +263,15 @@ export function useCreateEventForm(): CreateFormConfig {
           endDate: recurrenceEndDate || null,
         },
       });
+      const { start_date, end_date, amendment_deadline, delegates_nomination_deadline } =
+        buildEventTemporalFields({
+          startDate,
+          startTime,
+          endDate,
+          endTime,
+          amendmentDeadline,
+          delegatesNominationDeadline,
+        });
 
       const createEventResult = createEvent({
         id: eventId,
@@ -147,8 +288,8 @@ export function useCreateEventForm(): CreateFormConfig {
         house_number: locationType === 'physical' ? houseNumber || null : null,
         latitude: locationType === 'physical' ? latitude : null,
         longitude: locationType === 'physical' ? longitude : null,
-        start_date: startDate ? new Date(`${startDate}T${startTime || '00:00'}`).getTime() : null,
-        end_date: endDate ? new Date(`${endDate}T${endTime || '00:00'}`).getTime() : null,
+        start_date,
+        end_date,
         visibility: effectiveVisibility,
         image_url: imageURL || null,
         capacity: isMeetingEvent ? null : capacity ? parseInt(capacity, 10) : null,
@@ -156,11 +297,20 @@ export function useCreateEventForm(): CreateFormConfig {
         group_id: groupId || null,
         creator_id: '',
         ...recurringFields,
-        delegates_nomination_deadline: delegatesNominationDeadline
-          ? new Date(delegatesNominationDeadline).getTime()
-          : null,
-        amendment_deadline: amendmentDeadline ? new Date(amendmentDeadline).getTime() : null,
+        delegates_nomination_deadline,
+        amendment_deadline,
         has_delegates: eventType === 'delegate_assembly',
+        delegate_seat_allocation_type:
+          eventType === 'delegate_assembly'
+            ? delegateConfig.allocationMode === 'total'
+              ? 'fixed_total'
+              : 'members_per_delegate'
+            : null,
+        main_group_delegate_allocation_mode:
+          eventType === 'delegate_assembly' && delegateConfig.allocationMode === 'ratio'
+            ? String(Math.max(1, delegateConfig.delegateRatio || 1))
+            : null,
+        delegate_election_mode: eventType === 'delegate_assembly' ? delegateElectionMode : null,
         meeting_type: isMeetingEvent ? meetingType : null,
         is_bookable: isMeetingEvent,
         max_bookings: isMeetingEvent ? normalizedMeetingBookings : null,
@@ -290,19 +440,23 @@ export function useCreateEventForm(): CreateFormConfig {
           isValid: () => (groupRequired ? !!groupId : true),
           optional: !groupRequired,
           content: (
-            <CreateTypeaheadField
-              label={t('pages.create.event.associatedGroupLabel')}
-              hint={t('pages.create.event.tips.group')}
-              required={groupRequired}
-              entityTypes={['group']}
-              value={groupId || undefined}
-              onChange={item => {
-                setGroupId(item?.id ?? '');
-                setGroupName(item?.label ?? '');
-              }}
-              filterFn={item => manageEventGroupIds.has(item.id)}
-              placeholder={t('pages.create.event.associatedGroupPlaceholder')}
-            />
+            <div className="space-y-4">
+              <CreateTypeaheadField
+                label={t('pages.create.event.associatedGroupLabel')}
+                hint={t('pages.create.event.tips.group')}
+                required={groupRequired}
+                entityTypes={['group']}
+                value={groupId || undefined}
+                onChange={item => {
+                  const nextGroupId = item?.id ?? '';
+                  setGroupId(nextGroupId);
+                  setGroupName(item?.label ?? '');
+                  syncGroupSearch(nextGroupId);
+                }}
+                filterFn={item => activeGroupIds.has(item.id)}
+                placeholder={t('pages.create.event.associatedGroupPlaceholder')}
+              />
+            </div>
           ),
         },
         // 4. Delegate Allocation (only for delegate_assembly)
@@ -312,50 +466,76 @@ export function useCreateEventForm(): CreateFormConfig {
                 label: t('pages.create.event.delegateAllocation'),
                 isValid: () => true,
                 content: (
-                  <DelegateAllocationInput value={delegateConfig} onChange={setDelegateConfig} />
+                  <div className="space-y-4">
+                    <DelegateAllocationInput value={delegateConfig} onChange={setDelegateConfig} />
+                    <ElectionModeInput
+                      value={delegateElectionMode}
+                      onChange={setDelegateElectionMode}
+                      label="Delegiertenwahl"
+                      hint="Dieser Modus wird als Default fuer Untergruppen-Auftraege und vorbefuellte Delegiertenwahlen verwendet."
+                      descriptions={{
+                        list: 'Untergruppen vergeben mehrere Stimmen in einer Listenwahl.',
+                        single: 'Untergruppen legen pro Delegiertensitz eine eigene Wahl an.',
+                      }}
+                    />
+                  </div>
                 ),
               },
             ]
           : []),
-        // 5. Date & Time (4 separate inputs)
+        // 5. Date, time, recurrence, and time-based deadlines
         {
-          label: t('pages.create.event.dateTime'),
-          isValid: () => true,
-          optional: true,
+          label: t('pages.create.event.timeSeries.tabLabel'),
+          isValid: () => timeSeriesValidationError === null,
           content: (
-            <DateTimeRangeInput
+            <EventTimeSeriesSection
               startDate={startDate}
               startTime={startTime}
               endDate={endDate}
               endTime={endTime}
-              onChange={(field, value) => {
+              onDateTimeChange={(field, value) => {
                 if (field === 'startDate') setStartDate(value);
                 else if (field === 'startTime') setStartTime(value);
                 else if (field === 'endDate') setEndDate(value);
                 else if (field === 'endTime') setEndTime(value);
               }}
+              recurrencePattern={recurrencePattern}
+              onRecurrencePatternChange={setRecurrencePattern}
+              recurrenceEndDate={recurrenceEndDate}
+              onRecurrenceEndDateChange={setRecurrenceEndDate}
+              recurrenceInterval={recurrenceInterval}
+              onRecurrenceIntervalChange={setRecurrenceInterval}
+              recurrenceWeekdays={recurrenceWeekdays}
+              onRecurrenceWeekdaysChange={setRecurrenceWeekdays}
+              validationMessage={timeSeriesValidationMessage}
+              deadlines={[
+                ...(eventType === 'delegate_assembly'
+                  ? [
+                      {
+                        id: 'delegatesNominationDeadline',
+                        label: t('pages.create.event.delegateNominationDeadline'),
+                        value: delegatesNominationDeadline,
+                        onChange: setDelegatesNominationDeadline,
+                        hint: t('pages.create.event.delegateNominationDeadlineDesc'),
+                      },
+                    ]
+                  : []),
+                ...(eventType === 'delegate_assembly' || eventType === 'general_assembly'
+                  ? [
+                      {
+                        id: 'amendmentDeadline',
+                        label: t('pages.create.event.amendmentCutoffDeadline'),
+                        value: amendmentDeadline,
+                        onChange: setAmendmentDeadline,
+                        hint: t('pages.create.event.amendmentCutoffDeadlineDesc'),
+                      },
+                    ]
+                  : []),
+              ]}
             />
           ),
         },
-        // 6. Recurring
-        {
-          label: t('pages.create.event.recurring'),
-          isValid: () => true,
-          optional: true,
-          content: (
-            <RecurringPatternInput
-              value={recurrencePattern}
-              onChange={setRecurrencePattern}
-              endDate={recurrenceEndDate}
-              onEndDateChange={setRecurrenceEndDate}
-              interval={recurrenceInterval}
-              onIntervalChange={setRecurrenceInterval}
-              weekdays={recurrenceWeekdays}
-              onWeekdaysChange={setRecurrenceWeekdays}
-            />
-          ),
-        },
-        // 7. Location (tabbed: Physical / Online)
+        // 6. Location (tabbed: Physical / Online)
         {
           label: t('pages.create.event.location'),
           isValid: () => true,
@@ -463,37 +643,7 @@ export function useCreateEventForm(): CreateFormConfig {
             </div>
           ),
         },
-        // 8. Deadlines (for delegate/general assembly)
-        ...(eventType === 'delegate_assembly' || eventType === 'general_assembly'
-          ? [
-              {
-                label: t('pages.create.event.deadlines'),
-                isValid: () => true,
-                optional: true,
-                content: (
-                  <div className="space-y-4">
-                    {eventType === 'delegate_assembly' && (
-                      <CreateInputField
-                        label={t('pages.create.event.delegateNominationDeadline')}
-                        hint={t('pages.create.event.delegateNominationDeadlineDesc')}
-                        type="datetime-local"
-                        value={delegatesNominationDeadline}
-                        onValueChange={setDelegatesNominationDeadline}
-                      />
-                    )}
-                    <CreateInputField
-                      label={t('pages.create.event.amendmentCutoffDeadline')}
-                      hint={t('pages.create.event.amendmentCutoffDeadlineDesc')}
-                      type="datetime-local"
-                      value={amendmentDeadline}
-                      onValueChange={setAmendmentDeadline}
-                    />
-                  </div>
-                ),
-              },
-            ]
-          : []),
-        // 9. Settings
+        // 7. Settings
         {
           label: t('pages.create.event.settings'),
           isValid: () => true,
@@ -509,114 +659,139 @@ export function useCreateEventForm(): CreateFormConfig {
             </div>
           ),
         },
-        // 10. Review
+        // 8. Review
         {
           label: t('pages.create.common.review'),
-          isValid: () => !!title.trim(),
+          isValid: () =>
+            !!title.trim() && hasRequiredDateTimeRange && timeSeriesValidationError === null,
           content: (
             <CreateSummaryStep
               entityType="event"
               badge={t('pages.create.event.reviewBadge')}
+              secondaryBadge={eventTypeLabel}
               title={title || t('pages.create.event.titlePlaceholder')}
               subtitle={description || undefined}
+              media={
+                imageURL
+                  ? { imageUrl: imageURL, imageAlt: title || 'Event cover image' }
+                  : undefined
+              }
               hashtags={hashtags.length > 0 ? hashtags : undefined}
-              fields={[
+              sections={[
                 {
-                  label: t('pages.create.event.eventType'),
-                  value: t(
-                    `pages.create.event.eventTypes.${getEventTypeTranslationKey(eventType)}`
-                  ),
+                  title: t('pages.create.event.basicInfo'),
+                  fields: [
+                    {
+                      label: t('pages.create.event.eventType'),
+                      value: eventTypeLabel,
+                    },
+                    ...(groupId
+                      ? [{ label: t('pages.create.event.associatedGroup'), value: groupName }]
+                      : []),
+                    ...(isMeetingEvent
+                      ? [
+                          {
+                            label: t('pages.create.event.meetingFormat'),
+                            value: meetingFormatLabel,
+                          },
+                          {
+                            label: t('pages.create.event.bookingLimit'),
+                            value: String(normalizedMeetingBookings),
+                          },
+                        ]
+                      : []),
+                    ...(!isMeetingEvent && capacity
+                      ? [{ label: t('pages.create.event.capacityLabel'), value: capacity }]
+                      : []),
+                    ...(eventType === 'delegate_assembly'
+                      ? [
+                          {
+                            label: t('pages.create.event.delegateAllocation'),
+                            value: delegateAllocationLabel,
+                          },
+                          {
+                            label: 'Delegiertenwahl',
+                            value: delegateElectionModeLabel,
+                          },
+                        ]
+                      : []),
+                    {
+                      label: t('pages.create.common.visibility'),
+                      value: visibilityLabel,
+                    },
+                  ],
                 },
-                ...(isMeetingEvent
-                  ? [
-                      {
-                        label: t('pages.create.event.meetingFormat'),
-                        value:
-                          meetingType === 'public-meeting'
-                            ? t('pages.create.event.meetingFormats.publicMeeting')
-                            : t('pages.create.event.meetingFormats.oneOnOne'),
-                      },
-                      {
-                        label: t('pages.create.event.bookingLimit'),
-                        value: String(normalizedMeetingBookings),
-                      },
-                    ]
-                  : []),
-                ...(groupId
-                  ? [{ label: t('pages.create.event.associatedGroup'), value: groupName }]
-                  : []),
-                ...(eventType === 'delegate_assembly'
-                  ? [
-                      {
-                        label: t('pages.create.event.delegateAllocation'),
-                        value:
-                          delegateConfig.allocationMode === 'ratio'
-                            ? `1:${delegateConfig.delegateRatio}`
-                            : `${delegateConfig.totalDelegates} total`,
-                      },
-                    ]
-                  : []),
-                ...(startDate
-                  ? [
-                      {
-                        label: t('pages.create.event.startDate'),
-                        value: `${startDate}${startTime ? ` ${startTime}` : ''}`,
-                      },
-                    ]
-                  : []),
-                ...(endDate
-                  ? [
-                      {
-                        label: t('pages.create.event.endDate'),
-                        value: `${endDate}${endTime ? ` ${endTime}` : ''}`,
-                      },
-                    ]
-                  : []),
                 {
-                  label: t('pages.create.event.location'),
-                  value:
-                    locationType === 'online'
-                      ? t('pages.create.event.onlineMeeting')
-                      : locationSummary || t('pages.create.event.inPerson'),
+                  title: t('pages.create.event.dateTime'),
+                  fields: [
+                    ...(startDate
+                      ? [
+                          {
+                            label: t('pages.create.event.startDate'),
+                            value: `${startDate}${startTime ? ` ${startTime}` : ''}`,
+                          },
+                        ]
+                      : []),
+                    ...(endDate
+                      ? [
+                          {
+                            label: t('pages.create.event.endDate'),
+                            value: `${endDate}${endTime ? ` ${endTime}` : ''}`,
+                          },
+                        ]
+                      : []),
+                    ...(recurrenceSummary
+                      ? [
+                          {
+                            label: t('pages.create.event.recurring'),
+                            value: recurrenceSummary,
+                          },
+                          ...(recurrenceEndDate
+                            ? [
+                                {
+                                  label: t('pages.create.event.recurringEnds'),
+                                  value: recurrenceEndDate,
+                                },
+                              ]
+                            : []),
+                        ]
+                      : []),
+                    ...(delegatesNominationDeadline
+                      ? [
+                          {
+                            label: t('pages.create.event.delegateNominationDeadline'),
+                            value: delegatesNominationDeadline,
+                          },
+                        ]
+                      : []),
+                    ...(amendmentDeadline
+                      ? [
+                          {
+                            label: t('pages.create.event.amendmentCutoffDeadline'),
+                            value: amendmentDeadline,
+                          },
+                        ]
+                      : []),
+                  ],
                 },
-                ...(locationType === 'online' && onlineLink
-                  ? [{ label: t('pages.create.event.meetingLink'), value: onlineLink }]
-                  : []),
-                ...(!isMeetingEvent && capacity
-                  ? [{ label: t('pages.create.event.capacityLabel'), value: capacity }]
-                  : []),
-                ...(isRecurring
-                  ? [
-                      {
-                        label: t('pages.create.event.recurring'),
-                        value: recurrencePattern.replace('-', ' '),
-                      },
-                    ]
-                  : []),
-                ...(delegatesNominationDeadline
-                  ? [
-                      {
-                        label: t('pages.create.event.delegateNominationDeadline'),
-                        value: delegatesNominationDeadline,
-                      },
-                    ]
-                  : []),
-                ...(amendmentDeadline
-                  ? [
-                      {
-                        label: t('pages.create.event.amendmentCutoffDeadline'),
-                        value: amendmentDeadline,
-                      },
-                    ]
-                  : []),
                 {
-                  label: t('pages.create.common.visibility'),
-                  value:
-                    effectiveVisibility === 'public'
-                      ? t('pages.create.common.public')
-                      : effectiveVisibility === 'authenticated'
-                        ? t('pages.create.common.authenticated')
-                        : t('pages.create.common.private'),
+                  title: t('pages.create.event.location'),
+                  fields: [
+                    {
+                      label: t('pages.create.event.location'),
+                      value: locationTypeLabel,
+                    },
+                    {
+                      label: t('pages.create.event.venueName'),
+                      value:
+                        locationType === 'online'
+                          ? t('pages.create.event.onlineMeeting')
+                          : locationSummary || t('pages.create.event.inPerson'),
+                    },
+                    ...(locationType === 'online' && onlineLink
+                      ? [{ label: t('pages.create.event.meetingLink'), value: onlineLink }]
+                      : []),
+                  ],
                 },
               ]}
             />
@@ -651,10 +826,21 @@ export function useCreateEventForm(): CreateFormConfig {
       meetingMaxBookings,
       normalizedMeetingBookings,
       effectiveVisibility,
+      eventTypeLabel,
+      meetingFormatLabel,
+      delegateAllocationLabel,
+      locationTypeLabel,
+      visibilityLabel,
+      recurrenceSummary,
+      hasRequiredDateTimeRange,
+      timeSeriesValidationError,
+      timeSeriesValidationMessage,
       isMeetingEvent,
       groupId,
       groupName,
       delegateConfig,
+      delegateElectionMode,
+      delegateElectionModeLabel,
       isSubmitting,
       recurrencePattern,
       recurrenceInterval,
@@ -666,7 +852,8 @@ export function useCreateEventForm(): CreateFormConfig {
       eventId,
       groupRequired,
       handleDescriptionContentChange,
-      manageEventGroupIds,
+      activeGroupIds,
+      syncGroupSearch,
       t,
     ]
   );

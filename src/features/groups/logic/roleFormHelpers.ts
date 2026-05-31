@@ -2,10 +2,17 @@ import { buildRecurringEventFields } from '@/features/events/logic/buildRecurrin
 import { parseRRuleToFormState } from '@/features/events/logic/rruleHelpers';
 import type { GroupRole, RoleEditorFormState } from '../types/group.types';
 
+interface RoleEditorMutationOptions {
+  allowGuestRequestDefault?: boolean;
+  allowGuestInviteDefault?: boolean;
+  includeRecurringFields?: boolean;
+}
+
 export function emptyRoleEditorForm(): RoleEditorFormState {
   return {
     name: '',
     description: '',
+    assignee_kind: 'member',
     assignment_mode: 'assigned',
     visibility: 'public',
     term_pattern: 'none',
@@ -23,6 +30,7 @@ export function roleToEditorForm(role: GroupRole): RoleEditorFormState {
   return {
     name: role.name ?? '',
     description: role.description ?? '',
+    assignee_kind: role.assignee_kind === 'guest' ? 'guest' : 'member',
     assignment_mode: role.assignment_mode === 'elected' ? 'elected' : 'assigned',
     visibility:
       role.visibility === 'authenticated' || role.visibility === 'private'
@@ -43,6 +51,18 @@ export function roleToEditorForm(role: GroupRole): RoleEditorFormState {
 }
 
 export function roleEditorFormToMutation(form: RoleEditorFormState) {
+  return roleEditorFormToMutationWithOptions(form);
+}
+
+export function roleEditorFormToMutationWithOptions(
+  form: RoleEditorFormState,
+  options: RoleEditorMutationOptions = {}
+) {
+  const {
+    allowGuestRequestDefault = false,
+    allowGuestInviteDefault = false,
+    includeRecurringFields = true,
+  } = options;
   const recurrence =
     form.term_pattern === 'none'
       ? null
@@ -56,14 +76,19 @@ export function roleEditorFormToMutation(form: RoleEditorFormState) {
   return {
     name: form.name.trim(),
     description: form.description.trim() || null,
+    assignee_kind: form.assignee_kind,
     assignment_mode: form.assignment_mode,
     visibility: form.visibility,
-    term_start_date: toTimestamp(form.term_start_date),
-    scheduled_revote_date: toTimestamp(form.scheduled_revote_date),
-    default_request_role: form.default_request_role,
-    default_invite_role: form.default_invite_role,
+    term_start_date: includeRecurringFields ? toTimestamp(form.term_start_date) : null,
+    scheduled_revote_date: includeRecurringFields ? toTimestamp(form.scheduled_revote_date) : null,
+    default_request_role:
+      form.assignee_kind === 'guest' && !allowGuestRequestDefault
+        ? false
+        : form.default_request_role,
+    default_invite_role:
+      form.assignee_kind === 'guest' && !allowGuestInviteDefault ? false : form.default_invite_role,
     ...buildRecurringEventFields({
-      isRecurring: form.term_pattern !== 'none',
+      isRecurring: includeRecurringFields && form.term_pattern !== 'none',
       recurrence,
     }),
   };

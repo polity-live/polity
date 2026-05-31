@@ -1,3 +1,5 @@
+import { Link } from '@tanstack/react-router';
+import { useTranslation } from 'react-i18next';
 import {
   Card,
   CardContent,
@@ -15,18 +17,23 @@ import {
   TableHeader,
   TableRow,
 } from '@/features/shared/ui/ui/table';
+import { Eye } from 'lucide-react';
 import { TableTag } from '@/features/shared/ui/ui/table-tag';
+import { getTableTagSurfaceClassName } from '@/features/shared/ui/ui/table-tag';
+import { badgeVariants } from '@/features/shared/ui/ui/badge';
+import { cn } from '@/features/shared/utils/utils.ts';
 import type { SearchCardGradientEntity } from '@/features/shared/utils/search-card-gradients';
 import type {
   ParticipationLike,
   ParticipationRoleLike,
 } from '@/features/shared/types/participation';
 import { getMembershipDisplayRoles } from '@/features/groups/logic/buildMembershipRightsSummary';
+import { getMembershipProvenanceDisplayLabel } from '@/features/groups/logic/membershipComposition';
 import { RoleTag } from './RoleTag';
 
 interface MembershipsByRoleTablesProps<
   TRole extends ParticipationRoleLike,
-  TParticipation extends ParticipationLike<TRole>,
+  TParticipation extends ParticipationLike,
 > {
   roles: TRole[];
   members: TParticipation[];
@@ -39,13 +46,17 @@ interface MembershipsByRoleTablesProps<
   defaultInviteLabel?: string;
   noOtherRolesLabel?: string;
   removeActionLabel?: string;
+  secondaryActionLabel?: string;
+  onSecondaryAction?: (membership: TParticipation) => void;
   derivedRemoveTooltip?: string;
+  secondaryActionTooltip?: string;
   emptyStateLabel?: string;
+  showProvenanceColumns?: boolean;
 }
 
 export function MembershipsByRoleTables<
   TRole extends ParticipationRoleLike,
-  TParticipation extends ParticipationLike<TRole>,
+  TParticipation extends ParticipationLike,
 >({
   roles,
   members,
@@ -58,9 +69,41 @@ export function MembershipsByRoleTables<
   defaultInviteLabel = 'Default invite',
   noOtherRolesLabel = 'No other roles',
   removeActionLabel = 'Remove',
+  secondaryActionLabel,
+  onSecondaryAction,
   derivedRemoveTooltip = 'Derived memberships cannot be edited directly.',
+  secondaryActionTooltip,
   emptyStateLabel = 'No members currently carry this role.',
+  showProvenanceColumns = false,
 }: MembershipsByRoleTablesProps<TRole, TParticipation>) {
+  const { t } = useTranslation();
+
+  const renderProvenanceGroupTag = (
+    membership: TParticipation,
+    column: 'partGroup' | 'baseGroup'
+  ) => {
+    const group = column === 'partGroup' ? membership.partGroup : membership.baseGroup;
+    const label = getMembershipProvenanceDisplayLabel(membership, column);
+
+    if (!group?.id) {
+      return <span>{label}</span>;
+    }
+
+    return (
+      <Link
+        to="/group/$id"
+        params={{ id: group.id }}
+        className={cn(
+          badgeVariants({ variant: 'outline' }),
+          getTableTagSurfaceClassName('group'),
+          'hover:opacity-90'
+        )}
+      >
+        {label}
+      </Link>
+    );
+  };
+
   return (
     <div className="space-y-4">
       {roles.map(role => {
@@ -103,6 +146,12 @@ export function MembershipsByRoleTables<
                     <TableRow>
                       <TableHead>User</TableHead>
                       <TableHead>Other Roles</TableHead>
+                      {showProvenanceColumns ? (
+                        <TableHead>{t('components.tableColumns.partGroup')}</TableHead>
+                      ) : null}
+                      {showProvenanceColumns ? (
+                        <TableHead>{t('components.tableColumns.baseGroup')}</TableHead>
+                      ) : null}
                       <TableHead>Joined</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -121,31 +170,55 @@ export function MembershipsByRoleTables<
                         return (
                           <TableRow key={`${role.id}-${membership.id}`}>
                             <TableCell>
-                              <button
-                                type="button"
-                                className="flex items-center gap-3 text-left"
-                                onClick={() => onOpenRightsDialog(membership)}
-                              >
-                                <Avatar className="h-9 w-9">
-                                  <AvatarImage src={user?.avatar || undefined} alt={userName} />
-                                  <AvatarFallback>
-                                    {userName
-                                      .split(' ')
-                                      .map(part => part[0])
-                                      .join('')
-                                      .slice(0, 2)
-                                      .toUpperCase()}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div className="hover:underline">
-                                  <div className="font-medium">{userName}</div>
-                                  {user?.handle ? (
-                                    <div className="text-muted-foreground text-sm">
-                                      @{user.handle}
-                                    </div>
-                                  ) : null}
+                              {user?.id ? (
+                                <Link
+                                  to="/user/$id"
+                                  params={{ id: user.id }}
+                                  className="group flex items-center gap-3 text-left"
+                                >
+                                  <Avatar className="h-9 w-9">
+                                    <AvatarImage src={user?.avatar || undefined} alt={userName} />
+                                    <AvatarFallback>
+                                      {userName
+                                        .split(' ')
+                                        .map(part => part[0])
+                                        .join('')
+                                        .slice(0, 2)
+                                        .toUpperCase()}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div className="group-hover:underline">
+                                    <div className="font-medium">{userName}</div>
+                                    {user?.handle ? (
+                                      <div className="text-muted-foreground text-sm">
+                                        @{user.handle}
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                </Link>
+                              ) : (
+                                <div className="flex items-center gap-3 text-left">
+                                  <Avatar className="h-9 w-9">
+                                    <AvatarImage src={user?.avatar || undefined} alt={userName} />
+                                    <AvatarFallback>
+                                      {userName
+                                        .split(' ')
+                                        .map(part => part[0])
+                                        .join('')
+                                        .slice(0, 2)
+                                        .toUpperCase()}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div>
+                                    <div className="font-medium">{userName}</div>
+                                    {user?.handle ? (
+                                      <div className="text-muted-foreground text-sm">
+                                        @{user.handle}
+                                      </div>
+                                    ) : null}
+                                  </div>
                                 </div>
-                              </button>
+                              )}
                             </TableCell>
                             <TableCell>
                               <div className="flex flex-wrap gap-2">
@@ -164,32 +237,65 @@ export function MembershipsByRoleTables<
                                 )}
                               </div>
                             </TableCell>
+                            {showProvenanceColumns ? (
+                              <TableCell className="text-muted-foreground">
+                                {renderProvenanceGroupTag(membership, 'partGroup')}
+                              </TableCell>
+                            ) : null}
+                            {showProvenanceColumns ? (
+                              <TableCell className="text-muted-foreground">
+                                {renderProvenanceGroupTag(membership, 'baseGroup')}
+                              </TableCell>
+                            ) : null}
                             <TableCell className="text-muted-foreground">
                               {membership.created_at
                                 ? new Date(membership.created_at).toLocaleDateString()
                                 : 'N/A'}
                             </TableCell>
                             <TableCell className="text-right">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                disabled={membership.source === 'derived'}
-                                onClick={() => onRemoveRole(membership, role.id)}
-                                title={
-                                  membership.source === 'derived'
-                                    ? derivedRemoveTooltip
-                                    : 'Remove this role from the member.'
-                                }
-                              >
-                                {removeActionLabel}
-                              </Button>
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => onOpenRightsDialog(membership)}
+                                >
+                                  <Eye className="mr-1 h-4 w-4" />
+                                  Rights
+                                </Button>
+                                {onSecondaryAction ? (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => onSecondaryAction(membership)}
+                                    title={secondaryActionTooltip}
+                                  >
+                                    {secondaryActionLabel || 'Manage'}
+                                  </Button>
+                                ) : null}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  disabled={membership.source === 'derived'}
+                                  onClick={() => onRemoveRole(membership, role.id)}
+                                  title={
+                                    membership.source === 'derived'
+                                      ? derivedRemoveTooltip
+                                      : 'Remove this role from the member.'
+                                  }
+                                >
+                                  {removeActionLabel}
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         );
                       })
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={4} className="text-muted-foreground py-8 text-center">
+                        <TableCell
+                          colSpan={showProvenanceColumns ? 6 : 4}
+                          className="text-muted-foreground py-8 text-center"
+                        >
                           {emptyStateLabel}
                         </TableCell>
                       </TableRow>

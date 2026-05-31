@@ -14,7 +14,7 @@ export default defineConfig({
   vite: {
     plugins: [tsConfigPaths(), tailwindcss()],
     ssr: {
-      noExternal: ['zustand'],
+      noExternal: ['zustand', '@platejs/math', '@platejs/math/react', 'katex', 'react-tweet'],
     },
     css: {
       devSourcemap: true,

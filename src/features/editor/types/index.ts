@@ -18,7 +18,13 @@ export type EditorEntityType = 'amendment' | 'blog' | 'document' | 'groupDocumen
 /**
  * Editor editing modes
  */
-export type EditorMode = 'edit' | 'view' | 'vote_internal' | 'vote_event' | 'suggest_internal' | 'suggest_event';
+export type EditorMode =
+  | 'edit'
+  | 'view'
+  | 'vote_internal'
+  | 'vote_event'
+  | 'suggest_internal'
+  | 'suggest_event';
 
 /**
  * Capabilities available for an editor instance
@@ -268,6 +274,7 @@ export interface EditorViewProps {
   entityType: EditorEntityType;
   entityId: string;
   userId?: string;
+  readOnly?: boolean;
   userRecord?: {
     id: string;
     name?: string;

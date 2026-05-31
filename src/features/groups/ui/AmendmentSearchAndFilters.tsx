@@ -2,7 +2,13 @@
 
 import { Input } from '@/features/shared/ui/ui/input';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Label } from '@/features/shared/ui/ui/label';
 import {
@@ -12,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/features/shared/ui/ui/select';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { Filter, Hash, Search as SearchIcon } from 'lucide-react';
 import type { AmendmentFilters } from '../hooks/useAmendmentFilters';
 
@@ -38,13 +45,15 @@ export function AmendmentSearchAndFilters({
   onClearStatusFilter,
   onClearHashtagFilter,
 }: AmendmentSearchAndFiltersProps) {
+  const { t } = useTranslation();
+
   return (
-    <div className="mb-6 space-y-4">
+    <div className="space-y-4">
       <div className="flex gap-2">
         <div className="relative flex-1">
-          <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <SearchIcon className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <Input
-            placeholder="Search amendments..."
+            placeholder={t('features.groups.amendments.searchPlaceholder')}
             value={filters.searchQuery}
             onChange={e => onSearchChange(e.target.value)}
             className="pl-10"
@@ -58,16 +67,14 @@ export function AmendmentSearchAndFilters({
       {/* Active Filters Display */}
       {hasActiveFilters && !showFilters && (
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Active filters:</span>
+          <span className="text-muted-foreground text-sm">
+            {t('features.groups.common.filters.active', 'Active filters:')}
+          </span>
           {filters.statusFilter !== 'all' && (
-            <Badge
-              variant="secondary"
-              className="cursor-pointer"
-              onClick={onClearStatusFilter}
-            >
+            <Badge variant="secondary" className="cursor-pointer" onClick={onClearStatusFilter}>
               Status: {filters.statusFilter}
               <button
-                className="ml-2 hover:text-destructive"
+                className="hover:text-destructive ml-2"
                 onClick={e => {
                   e.stopPropagation();
                   onClearStatusFilter();
@@ -78,15 +85,11 @@ export function AmendmentSearchAndFilters({
             </Badge>
           )}
           {filters.hashtagFilter && (
-            <Badge
-              variant="secondary"
-              className="cursor-pointer"
-              onClick={onClearHashtagFilter}
-            >
+            <Badge variant="secondary" className="cursor-pointer" onClick={onClearHashtagFilter}>
               <Hash className="mr-1 h-3 w-3" />
               {filters.hashtagFilter.replace(/^#/, '')}
               <button
-                className="ml-2 hover:text-destructive"
+                className="hover:text-destructive ml-2"
                 onClick={e => {
                   e.stopPropagation();
                   onClearHashtagFilter();
@@ -103,38 +106,57 @@ export function AmendmentSearchAndFilters({
       {showFilters && (
         <Card>
           <CardHeader>
-            <CardTitle>Filters</CardTitle>
-            <CardDescription>Refine your search results</CardDescription>
+            <CardTitle>{t('features.groups.common.filters.title', 'Filters')}</CardTitle>
+            <CardDescription>
+              {t('features.groups.common.filters.refine', 'Refine your search results')}
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="status-filter">Filter by Status</Label>
+              <Label htmlFor="status-filter">
+                {t('features.groups.common.filters.status', 'Filter by Status')}
+              </Label>
               <Select value={filters.statusFilter} onValueChange={onStatusChange}>
                 <SelectTrigger id="status-filter">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="all">
+                    {t('features.groups.common.filters.allStatuses', 'All Statuses')}
+                  </SelectItem>
+                  <SelectItem value="draft">
+                    {t('features.groups.common.status.draft', 'Draft')}
+                  </SelectItem>
+                  <SelectItem value="pending">
+                    {t('features.groups.common.status.pending', 'Pending')}
+                  </SelectItem>
+                  <SelectItem value="approved">
+                    {t('features.groups.common.status.approved', 'Approved')}
+                  </SelectItem>
+                  <SelectItem value="rejected">
+                    {t('features.groups.common.status.rejected', 'Rejected')}
+                  </SelectItem>
+                  <SelectItem value="active">
+                    {t('features.groups.common.status.active', 'Active')}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="hashtag-filter">Filter by Hashtag</Label>
+              <Label htmlFor="hashtag-filter">
+                {t('features.groups.common.filters.hashtag', 'Filter by Hashtag')}
+              </Label>
               <Input
                 id="hashtag-filter"
-                placeholder="Enter hashtag to filter..."
+                placeholder={t('features.groups.events.hashtagPlaceholder')}
                 value={filters.hashtagFilter}
                 onChange={e => onHashtagChange(e.target.value)}
               />
               {filters.hashtagFilter && (
-                <p className="text-xs text-muted-foreground">
-                  Filtering by: #{filters.hashtagFilter}
+                <p className="text-muted-foreground text-xs">
+                  {t('features.groups.common.filters.filteringBy', 'Filtering by:')} #
+                  {filters.hashtagFilter}
                 </p>
               )}
             </div>

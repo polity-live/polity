@@ -21,6 +21,7 @@ interface GroupDocumentsListProps {
   groupName?: string;
   userId?: string;
   storageKey?: string;
+  canManageDocuments?: boolean;
 }
 
 type GroupDocumentItem = ReturnType<typeof useGroupDocuments>['documents'][number];
@@ -53,6 +54,7 @@ export function GroupDocumentsList({
   groupName,
   userId,
   storageKey = `group-${groupId}-documents`,
+  canManageDocuments = true,
 }: GroupDocumentsListProps) {
   const navigate = useNavigate();
   const { documents, isLoading } = useGroupDocuments(groupId);
@@ -173,26 +175,32 @@ export function GroupDocumentsList({
   if (documents.length === 0) {
     return (
       <>
-        <div className="mb-6">
-          <CreateDocumentDialog
-            groupId={groupId}
-            groupName={groupName}
-            onCreateDocument={handleCreateDocument}
-            isCreating={isCreating}
-          />
-        </div>
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-20 text-center">
-            <FileText className="text-muted-foreground mb-4 h-16 w-16" />
-            <p className="text-muted-foreground mb-4 text-lg">
-              No documents yet. Create your first document to get started.
-            </p>
+        {canManageDocuments ? (
+          <div className="mb-6">
             <CreateDocumentDialog
               groupId={groupId}
               groupName={groupName}
               onCreateDocument={handleCreateDocument}
               isCreating={isCreating}
             />
+          </div>
+        ) : null}
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-20 text-center">
+            <FileText className="text-muted-foreground mb-4 h-16 w-16" />
+            <p className="text-muted-foreground mb-4 text-lg">
+              {canManageDocuments
+                ? 'No documents yet. Create your first document to get started.'
+                : 'No documents available yet.'}
+            </p>
+            {canManageDocuments ? (
+              <CreateDocumentDialog
+                groupId={groupId}
+                groupName={groupName}
+                onCreateDocument={handleCreateDocument}
+                isCreating={isCreating}
+              />
+            ) : null}
           </CardContent>
         </Card>
       </>
@@ -201,14 +209,16 @@ export function GroupDocumentsList({
 
   return (
     <>
-      <div className="mb-6 flex justify-between">
-        <CreateDocumentDialog
-          groupId={groupId}
-          groupName={groupName}
-          onCreateDocument={handleCreateDocument}
-          isCreating={isCreating}
-        />
-      </div>
+      {canManageDocuments ? (
+        <div className="mb-6 flex justify-between">
+          <CreateDocumentDialog
+            groupId={groupId}
+            groupName={groupName}
+            onCreateDocument={handleCreateDocument}
+            isCreating={isCreating}
+          />
+        </div>
+      ) : null}
 
       <PqlToolbar
         fields={fields}
@@ -234,7 +244,9 @@ export function GroupDocumentsList({
             <p className="text-muted-foreground mb-2 text-lg">
               {hasActiveFilters
                 ? 'No documents match the current search and filters.'
-                : 'No documents yet. Create your first document to get started.'}
+                : canManageDocuments
+                  ? 'No documents yet. Create your first document to get started.'
+                  : 'No documents available yet.'}
             </p>
           </CardContent>
         </Card>

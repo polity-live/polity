@@ -50,6 +50,7 @@ export interface TodoTimelineCardProps {
   onVolunteer?: () => void;
   onShare?: () => void;
   className?: string;
+  canManageTodos?: boolean;
   showStatusAction?: boolean;
   linkToDetail?: boolean;
   onCardClick?: () => void;
@@ -115,6 +116,7 @@ export function TodoTimelineCard({
   todo,
   onToggle,
   className,
+  canManageTodos = true,
   showStatusAction = true,
   linkToDetail = true,
   onCardClick,
@@ -217,24 +219,26 @@ export function TodoTimelineCard({
         }
       >
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <button
-            onClick={e => {
-              e.stopPropagation();
-              onToggle?.();
-            }}
-            className="text-foreground inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/80 px-2.5 py-1 text-xs font-medium shadow-sm backdrop-blur transition-colors hover:bg-white dark:border-gray-700/70 dark:bg-gray-950/70 dark:text-gray-100 dark:hover:bg-gray-950"
-          >
-            {todo.isCompleted ? (
-              <CheckSquare className="h-4 w-4 text-green-600" />
-            ) : (
-              <Square className="text-muted-foreground hover:text-primary h-4 w-4 transition-colors" />
-            )}
-            <span>
-              {todo.isCompleted
-                ? t('features.todos.status.completed')
-                : t('features.todos.actions.markComplete')}
-            </span>
-          </button>
+          {canManageTodos ? (
+            <button
+              onClick={e => {
+                e.stopPropagation();
+                onToggle?.();
+              }}
+              className="text-foreground inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/80 px-2.5 py-1 text-xs font-medium shadow-sm backdrop-blur transition-colors hover:bg-white dark:border-gray-700/70 dark:bg-gray-950/70 dark:text-gray-100 dark:hover:bg-gray-950"
+            >
+              {todo.isCompleted ? (
+                <CheckSquare className="h-4 w-4 text-green-600" />
+              ) : (
+                <Square className="text-muted-foreground hover:text-primary h-4 w-4 transition-colors" />
+              )}
+              <span>
+                {todo.isCompleted
+                  ? t('features.todos.status.completed')
+                  : t('features.todos.actions.markComplete')}
+              </span>
+            </button>
+          ) : null}
 
           {urgency && !todo.isCompleted && (
             <Badge variant="outline" className={cn('text-xs', urgency.bgColor, urgency.color)}>
@@ -312,7 +316,7 @@ export function TodoTimelineCard({
       </TimelineCardContent>
 
       <TimelineCardActions>
-        {showStatusAction && (
+        {canManageTodos && showStatusAction && (
           <Popover open={statusOpen} onOpenChange={setStatusOpen}>
             <PopoverTrigger asChild onClick={e => e.stopPropagation()}>
               <Button variant="outline" size="sm" className="flex items-center gap-1.5">
@@ -344,21 +348,23 @@ export function TodoTimelineCard({
           </Popover>
         )}
 
-        <TimelineCardActionButton
-          icon={isAssignedToMe ? UserCheck : UserPlus}
-          label={
-            isAssignedToMe
-              ? t('features.todos.assignee.assignedToMe')
-              : t('features.todos.assignee.assignToMe')
-          }
-          onClick={e => {
-            e?.preventDefault();
-            e?.stopPropagation();
-            handleAssignToMe();
-          }}
-          disabled={assigning || isAssignedToMe}
-          variant={isAssignedToMe ? 'secondary' : 'outline'}
-        />
+        {canManageTodos ? (
+          <TimelineCardActionButton
+            icon={isAssignedToMe ? UserCheck : UserPlus}
+            label={
+              isAssignedToMe
+                ? t('features.todos.assignee.assignedToMe')
+                : t('features.todos.assignee.assignToMe')
+            }
+            onClick={e => {
+              e?.preventDefault();
+              e?.stopPropagation();
+              handleAssignToMe();
+            }}
+            disabled={assigning || isAssignedToMe}
+            variant={isAssignedToMe ? 'secondary' : 'outline'}
+          />
+        ) : null}
 
         <div onClick={e => e.preventDefault()}>
           <ShareButton

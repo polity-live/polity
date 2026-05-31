@@ -1,4 +1,5 @@
 import { buildRRule, type RecurrenceFormState } from './rruleHelpers';
+import { toLocalEndOfDayTimestamp } from '@/features/shared/logic/localDateTime';
 
 interface BuildRecurringEventFieldsArgs {
   isRecurring: boolean;
@@ -42,6 +43,6 @@ export function buildRecurringEventFields({
       recurrence.pattern === 'weekly' && recurrence.weekdays.length > 0
         ? recurrence.weekdays
         : null,
-    recurrence_end_date: recurrence.endDate ? new Date(recurrence.endDate).getTime() : null,
+    recurrence_end_date: toLocalEndOfDayTimestamp(recurrence.endDate),
   };
 }

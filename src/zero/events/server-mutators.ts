@@ -12,7 +12,7 @@ import {
   recomputeGroupCounters,
   syncUserWithEventConversation,
 } from '../server-helpers';
-import { DEFAULT_EVENT_ROLES } from '../rbac/constants';
+import { DEFAULT_ASSEMBLY_EVENT_GUEST_ROLE, DEFAULT_EVENT_ROLES } from '../rbac/constants';
 import {
   eventCreateSchema,
   eventParticipantCreateSchema,
@@ -25,6 +25,8 @@ import {
   bookMeetingSchema,
   cancelMeetingBookingSchema,
 } from './schema';
+import { reconcileGeneralAssemblyParticipantsForEvent } from './assembly-reconcile';
+import { reconcileDelegateAllocationsForEvent } from './delegate-allocation-reconcile';
 
 async function addEventParticipantRoleLink(
   tx: Parameters<typeof mutators.events.create.fn>[0]['tx'],
@@ -155,6 +157,34 @@ async function assertEventParticipationEligibility(
   return event;
 }
 
+function isAssemblyEventType(eventType: string | null | undefined) {
+  return eventType === 'general_assembly' || eventType === 'delegate_assembly';
+}
+
+async function assertDelegateAssemblyGroupEligibility(
+  tx: Parameters<typeof mutators.events.create.fn>[0]['tx'],
+  groupId: string | null | undefined
+) {
+  if (!groupId) {
+    throw new Error('Delegate assemblies must be linked to a group.');
+  }
+
+  const group = await tx.run(zql.group.where('id', groupId).one());
+  if (!group) {
+    throw new Error('Associated group not found.');
+  }
+
+  const isEligibleSiblingGroup =
+    group.group_type === 'sibling' &&
+    (group.sibling_membership_mode === 'parliament' || group.sibling_membership_mode === 'elected');
+
+  if (group.group_type !== 'hierarchical' && !isEligibleSiblingGroup) {
+    throw new Error(
+      'Delegate assemblies can only be created for hierarchical groups or elected/parliament sibling groups.'
+    );
+  }
+}
+
 async function assertEventStatusTransitionEligibility(
   tx: Parameters<typeof mutators.events.create.fn>[0]['tx'],
   args: {
@@ -183,17 +213,30 @@ async function assertEventStatusTransitionEligibility(
 /** Server-only mutators — override the shared mutators with additional server-side logic (e.g. notifications). */
 export const eventServerMutators = {
   create: defineMutator(eventCreateSchema, async ({ tx, ctx, args }) => {
+    if (args.event_type === 'delegate_assembly') {
+      await assertDelegateAssemblyGroupEligibility(tx, args.group_id);
+    }
+
     await mutators.events.create.fn({ tx, ctx, args });
 
     const now = Date.now();
 
-    // Create default event roles (Organizer, Voter, Participant) with action rights
+    const eventRoleTemplates = isAssemblyEventType(args.event_type)
+      ? [
+          ...DEFAULT_EVENT_ROLES.map(role =>
+            role.name === 'Participant' ? { ...role, default_request_role: false } : role
+          ),
+          DEFAULT_ASSEMBLY_EVENT_GUEST_ROLE,
+        ]
+      : DEFAULT_EVENT_ROLES;
+
+    // Create default event roles with action rights
     const organizerRoleId = crypto.randomUUID();
     const roleIds: Record<string, string> = {};
-    const totalRoles = DEFAULT_EVENT_ROLES.length;
+    const totalRoles = eventRoleTemplates.length;
 
     for (let index = 0; index < totalRoles; index++) {
-      const roleDef = DEFAULT_EVENT_ROLES[index];
+      const roleDef = eventRoleTemplates[index];
       const roleId = roleDef.name === 'Organizer' ? organizerRoleId : crypto.randomUUID();
       roleIds[roleDef.name] = roleId;
 
@@ -218,6 +261,7 @@ export const eventServerMutators = {
         scheduled_revote_date: null,
         default_request_role: roleDef.default_request_role ?? false,
         default_invite_role: roleDef.default_invite_role ?? false,
+        assignee_kind: roleDef.assignee_kind ?? 'member',
         sort_order: totalRoles - 1 - index,
         created_at: now,
       });
@@ -237,7 +281,7 @@ export const eventServerMutators = {
       }
     }
 
-    const defaultInviteRole = DEFAULT_EVENT_ROLES.find(roleDef => roleDef.default_invite_role);
+    const defaultInviteRole = eventRoleTemplates.find(roleDef => roleDef.default_invite_role);
     const defaultInviteRoleId = defaultInviteRole
       ? (roleIds[defaultInviteRole.name] ?? null)
       : (roleIds.Participant ?? null);
@@ -292,29 +336,11 @@ export const eventServerMutators = {
 
     // Auto-invite group members for General Assembly events
     if (args.event_type === 'general_assembly' && args.group_id) {
-      const memberships = await tx.run(zql.group_membership.where('group_id', args.group_id));
-      const members = memberships.filter(membership => isActiveGroupStatus(membership.status));
-      for (const member of members) {
-        if (member.user_id === ctx.userID) continue; // skip creator (already added)
-        const participationId = crypto.randomUUID();
-        await tx.mutate.event_participant.insert({
-          id: participationId,
-          event_id: args.id,
-          user_id: member.user_id,
-          group_id: args.group_id,
-          status: 'invited',
-          visibility: args.visibility ?? 'public',
-          created_at: now,
-        });
+      await reconcileGeneralAssemblyParticipantsForEvent(tx, args.id, ctx.userID);
+    }
 
-        if (defaultInviteRoleId) {
-          await syncEventParticipantRoleLinks(tx, {
-            event_participant_id: participationId,
-            role_ids: [defaultInviteRoleId],
-            assigned_by_id: ctx.userID,
-          });
-        }
-      }
+    if (args.event_type === 'delegate_assembly') {
+      await reconcileDelegateAllocationsForEvent(tx, args.id);
     }
 
     // Auto-invite specific users for OnInvite events
@@ -398,7 +424,7 @@ export const eventServerMutators = {
       const eTitle = await eventTitle(tx, args.event_id);
       fireNotification('notifyEventInvite', {
         senderId: ctx.userID,
-        recipientId: args.user_id,
+        recipientUserId: args.user_id,
         eventId: args.event_id,
         eventTitle: eTitle,
       });
@@ -452,14 +478,14 @@ export const eventServerMutators = {
       if (status === 'requested') {
         fireNotification('notifyParticipationRejected', {
           senderId: ctx.userID,
-          recipientId: partUserId,
+          recipientUserId: partUserId,
           eventId: eId,
           eventTitle: eTitle,
         });
       } else {
         fireNotification('notifyParticipationRemoved', {
           senderId: ctx.userID,
-          recipientId: partUserId,
+          recipientUserId: partUserId,
           eventId: eId,
           eventTitle: eTitle,
         });
@@ -517,7 +543,7 @@ export const eventServerMutators = {
         } else {
           fireNotification('notifyParticipationApproved', {
             senderId: ctx.userID,
-            recipientId: partUserId,
+            recipientUserId: partUserId,
             eventId: eId,
             eventTitle: eTitle,
           });
@@ -534,7 +560,7 @@ export const eventServerMutators = {
       if (legacyRoleChanged && args.role_id) {
         fireNotification('notifyOrganizerPromoted', {
           senderId: ctx.userID,
-          recipientId: partUserId,
+          recipientUserId: partUserId,
           eventId: eId,
           eventTitle: eTitle,
         });
@@ -544,6 +570,13 @@ export const eventServerMutators = {
 
   update: defineMutator(eventUpdateSchema, async ({ tx, ctx, args }) => {
     const previousEvent = await tx.run(zql.event.where('id', args.id).one());
+    const nextEventType = args.event_type ?? previousEvent?.event_type ?? null;
+    const nextGroupId =
+      args.group_id !== undefined ? args.group_id : (previousEvent?.group_id ?? null);
+
+    if (nextEventType === 'delegate_assembly') {
+      await assertDelegateAssemblyGroupEligibility(tx, nextGroupId);
+    }
 
     await mutators.events.update.fn({ tx, ctx, args });
 
@@ -566,6 +599,14 @@ export const eventServerMutators = {
       eventId: args.id,
       eventTitle: eTitle,
     });
+
+    if (nextEventType === 'general_assembly') {
+      await reconcileGeneralAssemblyParticipantsForEvent(tx, args.id, ctx.userID);
+    }
+
+    if (nextEventType === 'delegate_assembly') {
+      await reconcileDelegateAllocationsForEvent(tx, args.id);
+    }
   }),
 
   cancel: defineMutator(eventCancelSchema, async ({ tx, ctx, args }) => {

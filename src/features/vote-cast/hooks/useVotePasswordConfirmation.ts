@@ -11,6 +11,7 @@ import { useZero } from '@rocicorp/zero/react';
 import { toast } from 'sonner';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { mutators } from '@/zero/mutators';
+import { serverConfirmed } from '@/zero/mutate-with-server-check';
 
 export function useVotePasswordConfirmation() {
   const zero = useZero();
@@ -39,7 +40,8 @@ export function useVotePasswordConfirmation() {
       setError(null);
 
       try {
-        await zero.mutate(mutators.votingPassword.verifyVotingPassword({ password }));
+        const result = zero.mutate(mutators.votingPassword.verifyVotingPassword({ password }));
+        await serverConfirmed(result);
 
         // Password verified — run the pending vote callback
         if (pendingCallback) {
@@ -57,7 +59,7 @@ export function useVotePasswordConfirmation() {
         setIsVerifying(false);
       }
     },
-    [zero, t, pendingCallback],
+    [zero, t, pendingCallback]
   );
 
   const close = useCallback(() => {

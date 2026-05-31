@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useTodoActions } from '@/zero/todos/useTodoActions';
 import { useCommonActions } from '@/zero/common/useCommonActions';
-import { useNotificationActions } from '@/zero/notifications/useNotificationActions';
 
 /**
  * Orchestration hook for todo mutations.
@@ -11,7 +10,6 @@ export function useTodoMutations() {
   const [isLoading, setIsLoading] = useState(false);
   const todoActions = useTodoActions();
   const commonActions = useCommonActions();
-  const notificationActions = useNotificationActions();
 
   const createTodo = async (todoData: {
     title: string;
@@ -87,37 +85,6 @@ export function useTodoMutations() {
         });
       }
 
-      if (todoData.senderId && todoData.assigneeId && todoData.assigneeId !== todoData.senderId) {
-        await notificationActions.createNotification({
-          id: crypto.randomUUID(),
-          sender_id: todoData.senderId,
-          recipient_id: todoData.assigneeId,
-          type: 'todo_assigned',
-          category: null,
-          title: 'Task Assigned',
-          message: `You have been assigned "${todoData.title}"`,
-          action_url: '/todos',
-          related_entity_type: '',
-          on_behalf_of_entity_type: '',
-          on_behalf_of_entity_id: null,
-          recipient_entity_type: '',
-          recipient_entity_id: null,
-          related_user_id: null,
-          related_group_id: null,
-          related_amendment_id: null,
-          related_event_id: null,
-          related_blog_id: null,
-          on_behalf_of_group_id: null,
-          on_behalf_of_event_id: null,
-          on_behalf_of_amendment_id: null,
-          on_behalf_of_blog_id: null,
-          recipient_group_id: null,
-          recipient_event_id: null,
-          recipient_amendment_id: null,
-          recipient_blog_id: null,
-        });
-      }
-
       return { success: true, todoId };
     } catch (error) {
       console.error('Failed to create todo:', error);
@@ -173,43 +140,6 @@ export function useTodoMutations() {
         });
       }
 
-      if (
-        updates.status === 'completed' &&
-        options?.senderId &&
-        options?.creatorId &&
-        options.senderId !== options.creatorId &&
-        options.todoTitle
-      ) {
-        await notificationActions.createNotification({
-          id: crypto.randomUUID(),
-          sender_id: options.senderId,
-          recipient_id: options.creatorId,
-          type: 'todo_completed',
-          category: null,
-          title: 'Task Completed',
-          message: `${options.senderName || 'Someone'} has completed "${options.todoTitle}"`,
-          action_url: '/todos',
-          related_entity_type: '',
-          on_behalf_of_entity_type: '',
-          on_behalf_of_entity_id: null,
-          recipient_entity_type: '',
-          recipient_entity_id: null,
-          related_user_id: null,
-          related_group_id: null,
-          related_amendment_id: null,
-          related_event_id: null,
-          related_blog_id: null,
-          on_behalf_of_group_id: null,
-          on_behalf_of_event_id: null,
-          on_behalf_of_amendment_id: null,
-          on_behalf_of_blog_id: null,
-          recipient_group_id: null,
-          recipient_event_id: null,
-          recipient_amendment_id: null,
-          recipient_blog_id: null,
-        });
-      }
-
       return { success: true };
     } catch (error) {
       console.error('Failed to update todo:', error);
@@ -221,51 +151,18 @@ export function useTodoMutations() {
 
   const deleteTodo = async (
     todoId: string,
-    params?: {
+    _params?: {
       senderId?: string;
       senderName?: string;
       todoTitle?: string;
       assigneeUserIds?: string[];
     }
   ) => {
+    void _params;
+
     setIsLoading(true);
     try {
       await todoActions.deleteTodo(todoId);
-
-      if (params?.senderId && params?.senderName && params?.todoTitle && params?.assigneeUserIds) {
-        for (const assigneeId of params.assigneeUserIds) {
-          if (assigneeId !== params.senderId) {
-            await notificationActions.createNotification({
-              id: crypto.randomUUID(),
-              sender_id: params.senderId,
-              recipient_id: assigneeId,
-              type: 'todo_deleted',
-              category: null,
-              title: 'Task Deleted',
-              message: `${params.senderName} has deleted "${params.todoTitle}"`,
-              action_url: '/todos',
-              related_entity_type: '',
-              on_behalf_of_entity_type: '',
-              on_behalf_of_entity_id: null,
-              recipient_entity_type: '',
-              recipient_entity_id: null,
-              related_user_id: null,
-              related_group_id: null,
-              related_amendment_id: null,
-              related_event_id: null,
-              related_blog_id: null,
-              on_behalf_of_group_id: null,
-              on_behalf_of_event_id: null,
-              on_behalf_of_amendment_id: null,
-              on_behalf_of_blog_id: null,
-              recipient_group_id: null,
-              recipient_event_id: null,
-              recipient_amendment_id: null,
-              recipient_blog_id: null,
-            });
-          }
-        }
-      }
 
       return { success: true };
     } catch (error) {

@@ -4,8 +4,11 @@ import { createNavItemsUnauthenticated } from '@/features/navigation/nav-items/n
 import { useInitialRoute } from '@/features/navigation/state/useInitialRoute.tsx';
 import { useNavigate, useLocation } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
-import { useUnreadNotificationsCount, useUnreadMessagesCount } from '@/features/navigation/state/use-unread-counts.ts';
-import { useAuth } from '@/providers/auth-provider.tsx';
+import {
+  useUnreadNotificationsCount,
+  useUnreadMessagesCount,
+} from '@/features/navigation/state/use-unread-counts.ts';
+import { hasGroupOperationAccess } from '@/features/groups/logic/hasGroupOperationAccess';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState.ts';
 import type { NavigationItem } from '@/features/navigation/types/navigation.types.tsx';
 import { usePermissions } from '@/zero/rbac/usePermissions.ts';
@@ -76,7 +79,10 @@ export function useNavigation() {
   const userId = pathname.match(/^\/user\/([^/]+)/)?.[1];
   const groupId = pathname.match(/^\/group\/([^/]+)/)?.[1];
   const amendmentId = pathname.match(/^\/amendment\/([^/]+)/)?.[1];
-  const blogId = pathname.match(/^\/blog\/([^/]+)/)?.[1];
+  const blogId =
+    pathname.match(/^\/blog\/([^/]+)/)?.[1] ??
+    pathname.match(/^\/group\/[^/]+\/blog\/([^/]+)/)?.[1] ??
+    pathname.match(/^\/user\/[^/]+\/blog\/([^/]+)/)?.[1];
 
   // Entity unread notification counts for secondary nav badges
   const groupUnread = useEntityUnreadCount(groupId ?? '', 'group');
@@ -85,7 +91,11 @@ export function useNavigation() {
   const blogUnread = useEntityUnreadCount(blogId ?? '', 'blog');
 
   // Fetch amendment data via facade for permission context
-  const { amendment: amendmentData, collaborators: amendmentCollaborators, roles: amendmentRoles } = useAmendmentState({
+  const {
+    amendment: amendmentData,
+    collaborators: amendmentCollaborators,
+    roles: amendmentRoles,
+  } = useAmendmentState({
     amendmentId: amendmentId || undefined,
     includeRoles: Boolean(amendmentId),
   });
@@ -127,30 +137,42 @@ export function useNavigation() {
   }, [amendmentData, amendmentCollaborators, amendmentRoles]);
 
   const permissionGroupId = groupId ?? amendmentData?.group?.id;
-  
+
   // Let's use the permission hook
-  const { 
+  const {
     canManage,
     canView,
     canUpdate,
     can,
-    isMe, 
+    isMe,
+    isMember,
+    isParticipant,
     isABlogger,
-    isAuthor: isAmendmentAuthor,
-    isMember
+    isCollaborator,
+    isAuthor,
   } = usePermissions({
     groupId: permissionGroupId,
     eventId,
     blogId,
     amendmentId,
-    amendment
+    amendment,
   });
 
   const getSecondaryNavItems = (currentPrimaryRoute: string | null) => {
     // Determine permissions based on the hook results
     const isEventAdmin = canManage('events') || canManage('eventParticipants'); // 'manage_participants' implies manage
-    const isGroupAdmin = canManage('groups') || canManage('groupMemberships');
-    
+    const isGroupMember = isMember();
+    const canEditGroup = isGroupMember && canManage('groups');
+    const canAccessGroupEditor = isGroupMember && canView('groupDocuments');
+    const canAccessGroupOperation =
+      isGroupMember &&
+      hasGroupOperationAccess({
+        canViewDocuments: canView('groupDocuments'),
+        canViewLinks: canView('groupLinks'),
+        canViewPayments: canView('groupPayments'),
+        canViewTodos: canView('groupTodos'),
+      });
+
     // For amendment, we check if user can view or manage it
     const canViewAmendment = canView('amendments');
     const canUpdateAmendment = canUpdate('amendments');
@@ -161,18 +183,21 @@ export function useNavigation() {
     const isBlogOwner = blogId ? canManage('blogBloggers') : false;
 
     const isOwnUser = isMe(userId);
-    const isGroupMember = isMember();
-    
+
     // Check if user can manage group memberships (for Members nav item)
-    const canManageMembers = canManage('groupMemberships');
+    const canManageMembers = isGroupMember && canManage('groupMemberships');
 
     // Notification rights are scoped differently by entity type.
     const canViewNotifications =
       currentPrimaryRoute === 'group'
-        ? can('viewNotifications', 'groupNotifications')
-        : currentPrimaryRoute === 'event' || currentPrimaryRoute === 'amendment'
-          ? can('viewNotifications', 'notifications')
-          : false;
+        ? isGroupMember && can('viewNotifications', 'groupNotifications')
+        : currentPrimaryRoute === 'event'
+          ? isParticipant() && can('viewNotifications', 'notifications')
+          : currentPrimaryRoute === 'amendment'
+            ? (isCollaborator() || isAuthor()) && can('viewNotifications', 'notifications')
+            : currentPrimaryRoute === 'blog'
+              ? isABlogger() && can('viewNotifications', 'notifications')
+              : false;
 
     const baseSecondaryItems = baseGetSecondaryNavItems(
       currentPrimaryRoute,
@@ -181,7 +206,7 @@ export function useNavigation() {
       isOwnUser,
       groupId,
       amendmentId,
-      isGroupAdmin,
+      canEditGroup,
       isEventAdmin,
       canViewAmendment,
       canUpdateAmendment,
@@ -190,24 +215,29 @@ export function useNavigation() {
       isBlogOwner,
       isGroupMember,
       canManageMembers,
-      canViewNotifications
+      canViewNotifications,
+      canAccessGroupOperation,
+      canAccessGroupEditor
     );
     if (!baseSecondaryItems) return null;
 
     // Determine entity unread count based on current route
     const entityUnreadCount =
-      currentPrimaryRoute === 'group' ? groupUnread :
-      currentPrimaryRoute === 'event' ? eventUnread :
-      currentPrimaryRoute === 'amendment' ? amendmentUnread :
-      currentPrimaryRoute === 'blog' ? blogUnread : 0;
+      currentPrimaryRoute === 'group'
+        ? groupUnread
+        : currentPrimaryRoute === 'event'
+          ? eventUnread
+          : currentPrimaryRoute === 'amendment'
+            ? amendmentUnread
+            : currentPrimaryRoute === 'blog'
+              ? blogUnread
+              : 0;
 
     // Secondary items are already localized in the nav item factories.
     // Rebuilding keys from item.id breaks route-style ids like "blogs-and-statements".
     return baseSecondaryItems.map(item => ({
       ...item,
-      ...(item.id === 'notifications' && entityUnreadCount > 0
-        ? { badge: entityUnreadCount }
-        : {}),
+      ...(item.id === 'notifications' && entityUnreadCount > 0 ? { badge: entityUnreadCount } : {}),
     }));
   };
 

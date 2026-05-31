@@ -1,7 +1,5 @@
 'use client';
 
-import type { ReactNode } from 'react';
-
 import {
   Dialog,
   DialogContent,
@@ -13,12 +11,24 @@ import {
 import { Button } from '@/features/shared/ui/ui/button';
 import { GroupSearchCard } from '@/features/search/ui/GroupSearchCard';
 import { GroupEventsList } from './GroupEventsList';
-import { RightBadge } from './RightBadge';
 import { Badge } from '@/features/shared/ui/ui/badge';
+import {
+  getGroupRelationshipDirectionOptions,
+  getCurrentGroupRelationshipLabel,
+  type GroupRelationshipDirection,
+  type GroupRelationshipRight,
+  GroupRelationshipRightsSelector,
+  GroupRelationshipTypeSelect,
+} from './GroupRelationshipFields';
+import {
+  getRelationshipDirectionForPreview,
+  getRelationshipPreviewData,
+} from '../logic/networkRelationshipDialogHelpers';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { EventByGroupRow } from '@/zero/events/useEventState';
 import type { NetworkRelationshipKind } from '@/features/network/logic/networkRelationshipHelpers';
+import type { NetworkRelationshipDialogData } from '@/features/network/types/networkEdge.types';
 import type { NetworkGroupEntity } from '../types/network.types';
 
 interface NetworkEventData {
@@ -37,18 +47,6 @@ interface NetworkUserData {
   avatarFile?: { url?: string | null } | null;
 }
 
-interface NetworkRelationshipData {
-  id?: string;
-  source?: string;
-  target?: string;
-  sourceName?: string | null;
-  targetName?: string | null;
-  rights?: string[];
-  relationshipKinds?: NetworkRelationshipKind[];
-  rightRelationshipKinds?: Record<string, NetworkRelationshipKind>;
-  label?: string | null | ReactNode;
-}
-
 interface NetworkGroupData extends Partial<NetworkGroupEntity> {
   id: string;
   name?: string | null;
@@ -60,7 +58,7 @@ export type NetworkDialogEntity =
   | { type: 'group'; data: NetworkGroupData }
   | { type: 'event'; data: NetworkEventData }
   | { type: 'user'; data: NetworkUserData }
-  | { type: 'relationship'; data: NetworkRelationshipData };
+  | { type: 'relationship'; data: NetworkRelationshipDialogData };
 
 interface NetworkEntityDialogProps {
   open: boolean;
@@ -85,7 +83,65 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
     }
   };
 
+  const getRelationshipSentence = (relationship: NetworkRelationshipDialogData) => {
+    const sourceName =
+      relationship.sourceName ?? relationship.source ?? t('common.labels.source', 'Source');
+    const targetName =
+      relationship.targetName ?? relationship.target ?? t('common.labels.target', 'Target');
+
+    switch (relationship.relationshipType) {
+      case 'parent':
+        return `${t('common.network.parent')} ${sourceName} → ${t('common.network.child')} ${targetName}`;
+      case 'sibling':
+        return `${t('common.network.sibling')} ${sourceName} ↔ ${t('common.network.sibling')} ${targetName}`;
+      default:
+        return typeof relationship.label === 'string' ? relationship.label : null;
+    }
+  };
+
+  const getExistingRightStatuses = (relationship: NetworkRelationshipDialogData) => {
+    const statuses = new Map<string, 'accepted' | 'incoming' | 'outgoing'>();
+
+    Object.entries(relationship.rightRelationshipKinds ?? {}).forEach(
+      ([right, relationshipKind]) => {
+        if (relationshipKind === 'incoming' || relationshipKind === 'outgoing') {
+          statuses.set(right, relationshipKind);
+          return;
+        }
+
+        if (relationshipKind === 'active') {
+          statuses.set(right, 'accepted');
+        }
+      }
+    );
+
+    return statuses;
+  };
+
+  const getRightDirectionDetails = (relationship: NetworkRelationshipDialogData) => {
+    const previewData = getRelationshipPreviewData(relationship);
+
+    if (!previewData || !relationship.rights || relationship.rights.length === 0) {
+      return [] as {
+        right: string;
+        direction: GroupRelationshipDirection;
+      }[];
+    }
+
+    return relationship.rights.map(right => ({
+      right,
+      direction: getRelationshipDirectionForPreview({
+        edgeDirection: relationship.rightEdgeDirections?.[right] ?? 'forward',
+        isIncomingPerspective: previewData.isIncomingPerspective,
+      }),
+    }));
+  };
+
   if (!entity) return null;
+
+  const relationshipPreviewData =
+    entity.type === 'relationship' ? getRelationshipPreviewData(entity.data) : null;
+  const relationshipDirectionOptions = getGroupRelationshipDirectionOptions(t);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -196,48 +252,28 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
           {/* Relationship Details */}
           {entity.type === 'relationship' && entity.data && (
             <div className="space-y-4">
-              {/* Direction: Parent → Child */}
-              {(entity.data.sourceName || entity.data.targetName) && (
-                <div className="bg-muted/30 flex items-center gap-2 rounded-lg border p-3">
-                  <button
-                    type="button"
-                    className="hover:bg-muted/50 flex-1 cursor-pointer rounded-md p-1.5 text-center transition-colors"
-                    onClick={() => {
-                      if (entity.data.source) {
-                        const groupId = entity.data.source.replace(/^(parent-|child-)/, '');
-                        navigate({ to: `/group/${groupId}` });
-                        onOpenChange(false);
-                      }
-                    }}
-                  >
-                    <p className="text-muted-foreground text-xs font-medium uppercase">
-                      {t('common.labels.parentGroup', 'Parent')}
-                    </p>
-                    <p className="text-primary text-sm font-semibold underline-offset-2 hover:underline">
-                      {entity.data.sourceName ?? entity.data.source}
-                    </p>
-                  </button>
-                  <div className="text-muted-foreground">→</div>
-                  <button
-                    type="button"
-                    className="hover:bg-muted/50 flex-1 cursor-pointer rounded-md p-1.5 text-center transition-colors"
-                    onClick={() => {
-                      if (entity.data.target) {
-                        const groupId = entity.data.target.replace(/^(parent-|child-)/, '');
-                        navigate({ to: `/group/${groupId}` });
-                        onOpenChange(false);
-                      }
-                    }}
-                  >
-                    <p className="text-muted-foreground text-xs font-medium uppercase">
-                      {t('common.labels.childGroup', 'Child')}
-                    </p>
-                    <p className="text-primary text-sm font-semibold underline-offset-2 hover:underline">
-                      {entity.data.targetName ?? entity.data.target}
-                    </p>
-                  </button>
+              {relationshipPreviewData ? (
+                <div className="space-y-2 rounded-lg border p-4">
+                  <GroupRelationshipTypeSelect
+                    label={t('common.network.relationshipTypeLabel')}
+                    value={relationshipPreviewData.relationshipType}
+                    currentGroupName={relationshipPreviewData.currentGroupName}
+                    selectedGroupName={relationshipPreviewData.selectedGroupName}
+                    onValueChange={() => undefined}
+                    disabled
+                    helperText={getCurrentGroupRelationshipLabel({
+                      relationshipType: relationshipPreviewData.relationshipType,
+                      currentGroupName: relationshipPreviewData.currentGroupName,
+                      selectedGroupName: relationshipPreviewData.selectedGroupName,
+                      t,
+                    })}
+                  />
                 </div>
-              )}
+              ) : getRelationshipSentence(entity.data) ? (
+                <div className="bg-muted/30 flex items-center gap-2 rounded-lg border p-3">
+                  <p className="text-base font-semibold">{getRelationshipSentence(entity.data)}</p>
+                </div>
+              ) : null}
 
               {(!entity.data.rights || entity.data.rights.length === 0) &&
                 entity.data.relationshipKinds &&
@@ -274,29 +310,43 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
 
               {entity.data.rights && (entity.data.rights as string[]).length > 0 ? (
                 <div className="space-y-3">
-                  <div>
-                    <p className="text-muted-foreground text-sm font-medium">
-                      {t('common.labels.relationshipRights')}
-                    </p>
-                    <p className="text-muted-foreground mt-1 text-xs">
-                      {(entity.data.rights as string[]).length} {t('common.labels.rightsGranted')}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {(entity.data.rights as string[]).map((right: string) => (
-                      <RightBadge
-                        key={right}
-                        right={right}
-                        requestKind={
-                          entity.data.rightRelationshipKinds?.[right] === 'incoming' ||
-                          entity.data.rightRelationshipKinds?.[right] === 'outgoing'
-                            ? entity.data.rightRelationshipKinds[right]
-                            : null
-                        }
-                        className="px-3 py-1.5 text-sm"
-                      />
-                    ))}
-                  </div>
+                  {relationshipPreviewData ? (
+                    <GroupRelationshipRightsSelector
+                      label={t('common.network.selectRights')}
+                      helperText={t(
+                        'common.network.directionDetails',
+                        'Richtung der einzelnen Rechte'
+                      )}
+                      selectedRights={new Set(entity.data.rights as GroupRelationshipRight[])}
+                      onToggleRight={() => undefined}
+                      existingRightStatuses={getExistingRightStatuses(entity.data)}
+                      rightDirections={
+                        Object.fromEntries(
+                          getRightDirectionDetails(entity.data).map(({ right, direction }) => [
+                            right,
+                            direction,
+                          ])
+                        ) as Partial<Record<GroupRelationshipRight, GroupRelationshipDirection>>
+                      }
+                      onDirectionChange={() => undefined}
+                      directionOptions={relationshipDirectionOptions}
+                      currentGroupName={relationshipPreviewData.currentGroupName}
+                      selectedGroupName={relationshipPreviewData.selectedGroupName}
+                      currentGroupId={relationshipPreviewData.currentGroupId}
+                      selectedGroupId={relationshipPreviewData.selectedGroupId}
+                      disabled
+                      optionsContainerClassName="max-h-[min(42dvh,22rem)] overflow-y-auto pr-1"
+                    />
+                  ) : (
+                    <div>
+                      <p className="text-muted-foreground text-sm font-medium">
+                        {t('common.network.selectRights')}
+                      </p>
+                      <p className="text-muted-foreground mt-1 text-xs">
+                        {(entity.data.rights as string[]).length} {t('common.labels.rightsGranted')}
+                      </p>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="rounded-lg border p-4">

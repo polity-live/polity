@@ -16,6 +16,7 @@ export type NotificationType =
   | 'membership_approved' // 1.2: Request approved
   | 'membership_rejected' // 1.2: Request rejected
   | 'membership_invite' // 1.3: User invited
+  | 'membership_role_changed' // 1.3b: Membership role changed
   | 'membership_withdrawn' // Member left/withdrew
   | 'member_removed' // 1.4: Member removed
   | 'group_new_event' // 1.5: New event created
@@ -33,6 +34,7 @@ export type NotificationType =
   | 'group_access_role_updated' // 1.14: Access role action rights changed
   | 'group_todo_assigned' // 1.15: Todo assigned
   | 'group_todo_updated' // 1.15: Todo updated
+  | 'group_todo_deleted' // 1.15b: Todo deleted
   | 'group_payment_created' // 1.16: Payment created
   | 'group_payment_deleted' // 1.16: Payment deleted
   | 'group_relationship_request' // 1.17: Relationship requested
@@ -52,6 +54,7 @@ export type NotificationType =
   | 'participation_approved' // 2.2: Request approved
   | 'participation_rejected' // 2.2: Request rejected
   | 'participation_invite' // 2.3: User invited
+  | 'participation_role_changed' // 2.3b: Participant role changed
   | 'participation_withdrawn' // Participant left/withdrew
   | 'participant_removed' // 2.4: Participant removed
   | 'event_profile_updated' // 2.5: Profile updated
@@ -60,6 +63,7 @@ export type NotificationType =
   | 'event_organizer_demoted' // 2.8: Demoted from organizer
   | 'event_agenda_item_created' // 2.9: Agenda item created
   | 'event_agenda_item_deleted' // 2.9: Agenda item deleted
+  | 'event_agenda_item_transferred' // 2.9b: Agenda item transferred
   | 'event_schedule_changed' // 2.10: Schedule changed
   | 'event_candidate_added' // 2.11: Election candidate added
   | 'event_election_started' // 2.11: Election started
@@ -74,11 +78,22 @@ export type NotificationType =
   | 'event_invitation_accepted' // 2.16: Invitation accepted
   | 'event_invitation_declined' // 2.17: Invitation declined
   | 'event_request_withdrawn' // 2.18: Request withdrawn
+  | 'agenda_item_activated' // 2.19: Agenda item activated
+  | 'voting_phase_started' // 2.20: Voting phase started
+  | 'voting_phase_ending_soon' // 2.21: Voting phase ending soon
+  | 'voting_completed' // 2.22: Voting completed
+  | 'amendment_forwarded' // 2.23: Amendment forwarded
+  | 'election_result' // 2.24: Election result published
+  | 'revote_scheduled' // 2.25: Revote scheduled
+  | 'event_cancelled' // 2.26: Event cancelled
+  | 'agenda_items_reassigned' // 2.27: Agenda items reassigned
+  | 'amendment_path_recalculation_required' // 2.28: Amendment path recalculation required
   // Amendment Notifications (3.x)
   | 'collaboration_request' // 3.1: Collaboration requested
   | 'collaboration_approved' // 3.2: Collaboration approved
   | 'collaboration_rejected' // 3.2: Collaboration rejected
   | 'collaboration_invite' // 3.3: Collaborator invited
+  | 'collaboration_role_changed' // 3.3b: Collaborator role changed
   | 'collaboration_withdrawn' // Collaborator left/withdrew
   | 'collaborator_removed' // 3.4: Collaborator removed
   | 'amendment_profile_updated' // 3.5: Profile updated
@@ -90,6 +105,9 @@ export type NotificationType =
   | 'amendment_cloned' // 3.11: Amendment cloned
   | 'amendment_group_support' // 3.12: Group support added
   | 'amendment_target_set' // 3.12b: Target group/event set
+  | 'support_confirmation_required' // 3.12c: Support confirmation required
+  | 'support_confirmed' // 3.12d: Support confirmed
+  | 'support_declined' // 3.12e: Support declined
   | 'amendment_comment_added' // 3.13: Comment added
   | 'change_request_created' // 3.14: Change request created
   | 'change_request_accepted' // 3.14: Change request accepted
@@ -125,6 +143,7 @@ export type NotificationType =
   | 'todo_assigned' // 5.1: Task assigned
   | 'todo_updated' // 5.2: Task updated
   | 'todo_completed' // 5.3: Task completed
+  | 'todo_deleted' // 5.3b: Task deleted
   | 'todo_due_soon' // 5.4: Task due soon
   | 'todo_overdue' // 5.5: Task overdue
   // Statement Notifications (6.x)
@@ -137,6 +156,7 @@ export type NotificationType =
   | 'conversation_request' // 7.4: Conversation request
   | 'conversation_accepted' // Conversation accepted
   // Additional Notifications (8.x)
+  | 'document_collaborator_invited' // 8.0: Document collaborator invited
   | 'role_assigned' // 8.1: Role assigned
   | 'role_removed' // 8.1: Role removed
   | 'election_results_published' // 8.2: Election results

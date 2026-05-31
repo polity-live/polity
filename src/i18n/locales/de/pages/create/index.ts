@@ -226,6 +226,24 @@ export const createPageTranslations = {
     recurringEnds: 'Wiederholung endet am',
     recurringInterval: 'Alle N Perioden wiederholen',
     recurringWeekdays: 'An diesen Tagen wiederholen',
+    timeSeries: {
+      tabLabel: 'Zeit & Serie',
+      validation: {
+        dateTimeRangeRequired:
+          'Setze Startdatum, Startzeit, Enddatum und Endzeit, bevor du das Event erstellst.',
+        startDateRequired: 'Für wiederkehrende Events brauchst du ein Startdatum.',
+        weekdaysRequired: 'Wähle mindestens einen Wochentag für eine wöchentliche Serie.',
+      },
+    },
+    timeSeriesSummary: {
+      start: 'Start',
+      end: 'Ende',
+      series: 'Serie',
+      notScheduled: 'Noch nicht geplant',
+      openEnded: 'Offenes Ende',
+      deadlines: 'Fristen',
+      deadlinesDescription: 'Lege hier alle zeitbezogenen Stichtage für dieses Event fest.',
+    },
     recurringPatterns: {
       none: 'Einmalig',
       noneDesc: 'Das Event findet nur einmal statt',

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, type KeyboardEvent, type ReactNode } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import {
   Dialog,
@@ -11,13 +11,15 @@ import {
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { AlertTriangle, Check, Mail, Trash2 } from 'lucide-react';
+import { AlertTriangle, Check, Loader2, Mail, Trash2 } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { toast } from 'sonner';
 import type { NormalizedGroupRelationship } from '../types/network.types';
 import type { HierarchyConflictUser } from '../hooks/useHierarchyLinkConflicts';
+import { useGroupConflictPreflight } from '@/features/groups/hooks/useGroupConflictPreflight';
+import { GroupConflictPanel } from '@/features/groups/ui/GroupConflictPanel';
+import { UserSearchCard } from '@/features/search/ui/UserSearchCard';
 
 interface HierarchyConflictDialogProps {
   open: boolean;
@@ -30,58 +32,6 @@ interface HierarchyConflictDialogProps {
   canAccept: boolean;
   onAccept: () => Promise<void>;
   onReject: () => Promise<void>;
-}
-
-interface ConflictSectionUserItemProps {
-  user: HierarchyConflictUser;
-  description: string;
-  actions: ReactNode;
-  onOpenMessage: (user: HierarchyConflictUser) => void;
-}
-
-function ConflictSectionUserItem({
-  user,
-  description,
-  actions,
-  onOpenMessage,
-}: ConflictSectionUserItemProps) {
-  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      onOpenMessage(user);
-    }
-  };
-
-  return (
-    <li>
-      <div
-        role="button"
-        tabIndex={0}
-        className="hover:bg-accent/60 focus-visible:ring-ring flex cursor-pointer items-center justify-between gap-3 rounded-2xl border p-3 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none"
-        onClick={() => onOpenMessage(user)}
-        onKeyDown={handleKeyDown}
-      >
-        <div className="flex min-w-0 items-center gap-3">
-          <Avatar className="h-12 w-12 rounded-2xl">
-            <AvatarImage src={user.avatarUrl ?? undefined} alt={user.displayName} />
-            <AvatarFallback className="rounded-2xl">
-              {user.displayName.slice(0, 2).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div className="min-w-0">
-            <p className="truncate font-semibold">{user.displayName}</p>
-            <p className="text-muted-foreground truncate text-sm">{description}</p>
-          </div>
-        </div>
-        <div
-          className="flex shrink-0 flex-wrap items-center justify-end gap-2"
-          onClick={event => event.stopPropagation()}
-        >
-          {actions}
-        </div>
-      </div>
-    </li>
-  );
 }
 
 export function HierarchyConflictDialog({
@@ -101,6 +51,17 @@ export function HierarchyConflictDialog({
   const { leaveGroup } = useGroupActions();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [removingUserId, setRemovingUserId] = useState<string | null>(null);
+  const relationshipPreflight = useGroupConflictPreflight(
+    open && relationships.length > 0
+      ? {
+          kind: 'relationship_activation',
+          relationship_ids: relationships.map(relationship => relationship.id),
+        }
+      : null,
+    {
+      enabled: open && relationships.length > 0,
+    }
+  );
 
   const rightsLabel = useMemo(
     () =>
@@ -110,6 +71,8 @@ export function HierarchyConflictDialog({
         .join(', '),
     [relationships]
   );
+  const hasStructuredConflicts = relationshipPreflight.response.conflicts.length > 0;
+  const hasLegacyConflictUsers = affectedUsers.length > 0 || partnerUsers.length > 0;
 
   const handleMessage = (user: HierarchyConflictUser) => {
     navigate({
@@ -141,7 +104,7 @@ export function HierarchyConflictDialog({
   };
 
   const handleAccept = async () => {
-    if (!canAccept) {
+    if (!canAccept || relationshipPreflight.blocking || relationshipPreflight.isLoading) {
       return;
     }
 
@@ -183,7 +146,12 @@ export function HierarchyConflictDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {affectedUsers.length === 0 && partnerUsers.length === 0 ? (
+        {relationshipPreflight.isLoading ? (
+          <div className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Konflikte werden geprueft ...</span>
+          </div>
+        ) : !hasStructuredConflicts && !hasLegacyConflictUsers ? (
           <div className="flex items-center gap-2 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm">
             <Check className="h-4 w-4 shrink-0 text-emerald-600" />
             <span>{t('common.network.linkPossibleDescription')}</span>
@@ -192,8 +160,14 @@ export function HierarchyConflictDialog({
           <div className="space-y-4">
             <div className="border-destructive/30 bg-destructive/10 flex items-start gap-2 rounded-md border px-3 py-2 text-sm">
               <AlertTriangle className="text-destructive mt-0.5 h-4 w-4 shrink-0" />
-              <span>{t('common.network.linkConflictDescription')}</span>
+              <span>
+                {relationshipPreflight.response.summary ??
+                  t('common.network.linkConflictDescription')}
+              </span>
             </div>
+            {hasStructuredConflicts ? (
+              <GroupConflictPanel response={relationshipPreflight.response} />
+            ) : null}
             <div className="space-y-4">
               <section className="bg-muted/20 space-y-3 rounded-2xl border p-4">
                 <div className="space-y-1">
@@ -203,45 +177,50 @@ export function HierarchyConflictDialog({
                   <p className="text-muted-foreground text-sm">{affectedMembersDescription}</p>
                 </div>
                 {affectedUsers.length > 0 ? (
-                  <ul className="space-y-2">
-                    {affectedUsers.map(user => (
-                      <ConflictSectionUserItem
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {affectedUsers.map((user, index) => (
+                      <UserSearchCard
                         key={user.userId}
-                        user={user}
-                        description={t('common.network.directMemberOfYourGroup')}
-                        onOpenMessage={handleMessage}
+                        index={index}
+                        user={{
+                          id: user.userId,
+                          first_name: user.displayName,
+                          avatar: user.avatarUrl,
+                        }}
                         actions={
                           <>
                             <Button
                               type="button"
                               variant="outline"
                               size="sm"
+                              className="h-8 px-2 text-xs"
                               onClick={event => {
                                 event.stopPropagation();
                                 handleMessage(user);
                               }}
                             >
-                              <Mail className="mr-1 h-3.5 w-3.5" />
+                              <Mail className="mr-1 h-3 w-3" />
                               {t('features.timeline.cards.message')}
                             </Button>
                             <Button
                               type="button"
                               variant="outline"
                               size="sm"
+                              className="h-8 px-2 text-xs"
                               disabled={removingUserId === user.userId || isSubmitting}
                               onClick={async event => {
                                 event.stopPropagation();
                                 await handleRemoveFromGroup(user);
                               }}
                             >
-                              <Trash2 className="mr-1 h-3.5 w-3.5" />
+                              <Trash2 className="mr-1 h-3 w-3" />
                               {t('common.network.removeFromGroup')}
                             </Button>
                           </>
                         }
                       />
                     ))}
-                  </ul>
+                  </div>
                 ) : (
                   <div className="text-muted-foreground rounded-2xl border border-dashed px-3 py-6 text-sm">
                     {t('common.network.noAffectedMembers')}
@@ -257,32 +236,34 @@ export function HierarchyConflictDialog({
                   <p className="text-muted-foreground text-sm">{futurePartnersDescription}</p>
                 </div>
                 {partnerUsers.length > 0 ? (
-                  <ul className="space-y-2">
-                    {partnerUsers.map(user => (
-                      <ConflictSectionUserItem
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {partnerUsers.map((user, index) => (
+                      <UserSearchCard
                         key={user.userId}
-                        user={user}
-                        description={t('common.network.directMemberOfGroup', {
-                          groupName: otherGroupName,
-                        })}
-                        onOpenMessage={handleMessage}
+                        index={index}
+                        user={{
+                          id: user.userId,
+                          first_name: user.displayName,
+                          avatar: user.avatarUrl,
+                        }}
                         actions={
                           <Button
                             type="button"
                             variant="outline"
                             size="sm"
+                            className="h-8 px-2 text-xs"
                             onClick={event => {
                               event.stopPropagation();
                               handleMessage(user);
                             }}
                           >
-                            <Mail className="mr-1 h-3.5 w-3.5" />
+                            <Mail className="mr-1 h-3 w-3" />
                             {t('features.timeline.cards.message')}
                           </Button>
                         }
                       />
                     ))}
-                  </ul>
+                  </div>
                 ) : (
                   <div className="text-muted-foreground rounded-2xl border border-dashed px-3 py-6 text-sm">
                     {t('common.network.noFuturePartners', { groupName: otherGroupName })}
@@ -305,7 +286,16 @@ export function HierarchyConflictDialog({
           <Button type="button" variant="outline" disabled={isSubmitting} onClick={handleReject}>
             {t('common.network.reject')}
           </Button>
-          <Button type="button" disabled={!canAccept || isSubmitting} onClick={handleAccept}>
+          <Button
+            type="button"
+            disabled={
+              !canAccept ||
+              isSubmitting ||
+              relationshipPreflight.blocking ||
+              relationshipPreflight.isLoading
+            }
+            onClick={handleAccept}
+          >
             {t('common.network.accept')}
           </Button>
         </DialogFooter>

@@ -1,6 +1,15 @@
 export { groupQueries } from './queries';
 export { groupSharedMutators } from './shared-mutators';
-export type { Group, GroupMembership, Role, RoleHolderHistory, ActionRight } from './schema';
+export type {
+  Group,
+  GroupMembership,
+  GroupGuestAccess,
+  GroupGuestRole,
+  GroupSiblingSource,
+  Role,
+  RoleHolderHistory,
+  ActionRight,
+} from './schema';
 export type { GroupRelationship } from '../network/schema';
 
 // Facade Hooks
@@ -14,6 +23,7 @@ export {
   useAllDocuments,
   useGroupById,
   useGroupMemberships,
+  useGroupGuestAccesses,
   useGroupAccessRoles,
   useGroupNetwork,
   useGroupAmendments,

@@ -4,10 +4,10 @@ import { test, expect } from '../fixtures/test-base';
 import { TEST_ENTITY_IDS } from '../test-entity-ids';
 
 test.describe('Event Voting - Cast Vote with Password Confirmation', () => {
-  test('Vote dialog shows choice then confirm then password flow', async ({ authenticatedPage: page }) => {
-    await page.goto(
-      `/event/${TEST_ENTITY_IDS.EVENT}/agenda/${TEST_ENTITY_IDS.testAgendaItem1}`
-    );
+  test('Vote dialog shows choice then confirm then password flow', async ({
+    authenticatedPage: page,
+  }) => {
+    await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/agenda/${TEST_ENTITY_IDS.testAgendaItem1}`);
     await page.waitForLoadState('networkidle');
 
     // Find Vote button
@@ -41,9 +41,9 @@ test.describe('Event Voting - Cast Vote with Password Confirmation', () => {
       await page.waitForTimeout(500);
 
       // Step 3: Password input should appear
-      const passwordInput = dialog.locator('input[inputmode="numeric"]').or(
-        dialog.locator('input[type="password"]')
-      );
+      const passwordInput = dialog
+        .locator('input[inputmode="numeric"]')
+        .or(dialog.locator('input[type="password"]'));
 
       if ((await passwordInput.count()) > 0) {
         await expect(passwordInput.first()).toBeVisible();
@@ -59,9 +59,7 @@ test.describe('Event Voting - Cast Vote with Password Confirmation', () => {
   });
 
   test('Wrong password shows error in vote dialog', async ({ authenticatedPage: page }) => {
-    await page.goto(
-      `/event/${TEST_ENTITY_IDS.EVENT}/agenda/${TEST_ENTITY_IDS.testAgendaItem1}`
-    );
+    await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/agenda/${TEST_ENTITY_IDS.testAgendaItem1}`);
     await page.waitForLoadState('networkidle');
 
     const voteButton = page.getByRole('button', { name: /^vote$/i });
@@ -85,30 +83,40 @@ test.describe('Event Voting - Cast Vote with Password Confirmation', () => {
       await page.waitForTimeout(500);
     }
 
-    const passwordInput = dialog.locator('input[inputmode="numeric"]').or(
-      dialog.locator('input[type="password"]')
-    );
+    const passwordInput = dialog
+      .locator('input[inputmode="numeric"]')
+      .or(dialog.locator('input[type="password"]'));
 
     if ((await passwordInput.count()) > 0) {
+      // Snapshot current participation count to verify no vote is cast.
+      const countBefore = await page.locator('[data-testid="vote-participation-count"]').count();
+
       // Enter an intentionally wrong password
       await passwordInput.first().fill('0000');
-      await page.waitForTimeout(1000);
-
-      // Should show error state
-      const errorState = dialog.getByText(/invalid|wrong|incorrect|error/i).or(
-        dialog.locator('.text-destructive, .text-red-500')
-      );
-
-      if ((await errorState.count()) > 0) {
-        await expect(errorState.first()).toBeVisible();
+      const submitBtn = dialog.getByRole('button', { name: /submit|confirm|verify/i });
+      if ((await submitBtn.count()) > 0) {
+        await submitBtn.click();
       }
+      // Wait for server round-trip
+      await page.waitForTimeout(2000);
+
+      // Dialog must still be open — wrong PIN must not dismiss it.
+      await expect(dialog).toBeVisible();
+
+      // Error message must be displayed.
+      const errorState = dialog
+        .getByText(/invalid|wrong|incorrect|error/i)
+        .or(dialog.locator('.text-destructive, .text-red-500'));
+      await expect(errorState.first()).toBeVisible();
+
+      // Vote count must not have changed.
+      const countAfter = await page.locator('[data-testid="vote-participation-count"]').count();
+      expect(countAfter).toBe(countBefore);
     }
   });
 
   test('Indication vote does not require password', async ({ authenticatedPage: page }) => {
-    await page.goto(
-      `/event/${TEST_ENTITY_IDS.EVENT}/agenda/${TEST_ENTITY_IDS.testAgendaItem1}`
-    );
+    await page.goto(`/event/${TEST_ENTITY_IDS.EVENT}/agenda/${TEST_ENTITY_IDS.testAgendaItem1}`);
     await page.waitForLoadState('networkidle');
 
     // Check for indication phase

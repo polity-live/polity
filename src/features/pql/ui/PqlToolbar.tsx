@@ -180,44 +180,35 @@ export function PqlToolbar<TItem, TFieldKey extends string>({
                             ) : null}
                           </div>
                           {(quickFilter.inputKind ?? 'buttons') === 'typeahead' ? (
-                            <div className="space-y-2">
+                            quickFilter.multiple ? (
                               <TypeaheadSearch
                                 items={quickFilter.typeaheadItems ?? []}
-                                value=""
-                                onChange={item => {
-                                  if (!item || values.includes(item.id)) {
-                                    return;
-                                  }
-
-                                  onQuickFilterValuesChange(quickFilter.fieldKey, [
-                                    ...values,
-                                    item.id,
-                                  ]);
-                                }}
+                                multiple
+                                values={values}
+                                onValuesChange={nextValues =>
+                                  onQuickFilterValuesChange(quickFilter.fieldKey, nextValues)
+                                }
                                 placeholder={
                                   quickFilter.placeholder ??
                                   `Search ${quickFilter.label ?? field?.label ?? ''}...`
                                 }
                               />
-                              {values.length > 0 ? (
-                                <div className="flex flex-wrap gap-2">
-                                  {values.map(value => (
-                                    <Badge key={value} variant="secondary" className="gap-1 py-1">
-                                      <span>{getOptionLabel(field, value)}</span>
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          onQuickFilterToggle(quickFilter.fieldKey, value)
-                                        }
-                                        aria-label={`Remove ${getOptionLabel(field, value)}`}
-                                      >
-                                        <X className="h-3 w-3" />
-                                      </button>
-                                    </Badge>
-                                  ))}
-                                </div>
-                              ) : null}
-                            </div>
+                            ) : (
+                              <TypeaheadSearch
+                                items={quickFilter.typeaheadItems ?? []}
+                                value={values[0]}
+                                onChange={item =>
+                                  onQuickFilterValuesChange(
+                                    quickFilter.fieldKey,
+                                    item ? [item.id] : []
+                                  )
+                                }
+                                placeholder={
+                                  quickFilter.placeholder ??
+                                  `Search ${quickFilter.label ?? field?.label ?? ''}...`
+                                }
+                              />
+                            )
                           ) : quickFilter.inputKind === 'hashtag' ? (
                             <HashtagInput
                               value={values}

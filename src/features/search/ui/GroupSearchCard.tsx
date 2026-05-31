@@ -10,7 +10,10 @@ import { type SearchGroup } from '../types/search.types';
 interface BasicGroupData {
   id: string;
   name?: string | null;
-  description?: string | null;
+  description?: unknown;
+  member_count?: number | null;
+  event_count?: number | null;
+  amendment_count?: number | null;
 }
 
 interface GroupSearchCardProps {
@@ -57,15 +60,17 @@ export function GroupSearchCard({ group }: GroupSearchCardProps) {
   }
 
   // Fallback for NetworkGroupEntity or other basic group data
+  const description = richTextToPlainText(group.description);
+
   return (
     <GroupTimelineCard
       group={{
         id: String(group.id ?? ''),
         name: group.name ?? '',
-        description: group.description ?? undefined,
-        memberCount: 0,
-        eventCount: 0,
-        amendmentCount: 0,
+        description: description || undefined,
+        memberCount: group.member_count ?? 0,
+        eventCount: group.event_count ?? 0,
+        amendmentCount: group.amendment_count ?? 0,
       }}
     />
   );

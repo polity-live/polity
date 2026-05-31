@@ -8,6 +8,7 @@ import { zql, type Schema } from './schema';
 type ZeroTransaction = Transaction<Schema>;
 
 export const ACTIVE_GROUP_STATUSES = new Set(['active', 'member', 'admin']);
+export const ACTIVE_GROUP_GUEST_STATUSES = new Set(['active']);
 export const ACTIVE_EVENT_STATUSES = new Set(['active', 'confirmed', 'member', 'admin']);
 const ACTIVE_COLLABORATOR_STATUSES = new Set(['collaborator', 'member', 'admin']);
 
@@ -21,6 +22,28 @@ export function isActiveGroupStatus(status: string | null | undefined) {
 
 export function isActiveEventStatus(status: string | null | undefined) {
   return ACTIVE_EVENT_STATUSES.has(status ?? '');
+}
+
+export function isActiveGroupGuestStatus(status: string | null | undefined) {
+  return ACTIVE_GROUP_GUEST_STATUSES.has(status ?? '');
+}
+
+/**
+ * Throws if the user has a voting PIN and has not verified it within the last
+ * `maxAgeMs` milliseconds (default: 120 seconds).  If the user has no PIN set
+ * the check passes — enforcement only applies to users who opted in to a PIN.
+ */
+export async function requireRecentVotingPasswordVerification(
+  tx: ZeroTransaction,
+  userId: string,
+  maxAgeMs = 120_000
+): Promise<void> {
+  const record = await tx.run(zql.voting_password.where('user_id', userId).one());
+  if (!record) return; // No PIN configured — no enforcement required.
+  const verifiedAt = record.last_verified_at;
+  if (!verifiedAt || Date.now() - verifiedAt > maxAgeMs) {
+    throw new Error('Please verify your voting PIN before casting a vote.');
+  }
 }
 
 /** Read group name by id. */
@@ -62,9 +85,21 @@ export async function userName(tx: Transaction<Schema>, userId: string): Promise
 export async function roleName(
   tx: Transaction<Schema>,
   roleId: string
-): Promise<{ name: string; groupId: string | null }> {
+): Promise<{
+  name: string;
+  groupId: string | null;
+  eventId: string | null;
+  amendmentId: string | null;
+  blogId: string | null;
+}> {
   const r = await tx.run(zql.role.where('id', roleId).one());
-  return { name: r?.name ?? 'Role', groupId: r?.group_id ?? null };
+  return {
+    name: r?.name ?? 'Role',
+    groupId: r?.group_id ?? null,
+    eventId: r?.event_id ?? null,
+    amendmentId: r?.amendment_id ?? null,
+    blogId: r?.blog_id ?? null,
+  };
 }
 
 async function ensureConversationParticipant(
@@ -212,7 +247,12 @@ export async function syncUserWithGroupConversation(
   const memberships = await tx.run(
     zql.group_membership.where('group_id', args.groupId).where('user_id', args.userId)
   );
-  const shouldParticipate = memberships.some(membership => isActiveGroupStatus(membership.status));
+  const guestAccesses = await tx.run(
+    zql.group_guest_access.where('group_id', args.groupId).where('user_id', args.userId)
+  );
+  const shouldParticipate =
+    memberships.some(membership => isActiveGroupStatus(membership.status)) ||
+    guestAccesses.some(guestAccess => isActiveGroupGuestStatus(guestAccess.status));
 
   if (shouldParticipate) {
     await ensureConversationParticipant(tx, conversation.id, args.userId);
@@ -295,6 +335,49 @@ export async function recomputeGroupCounters(
     event_count: activeEvents,
     amendment_count: amendments.length,
   });
+}
+
+const DEFAULT_AGENDA_DURATION_MS = 30 * 60_000;
+
+/**
+ * Projects the event end time by summing all agenda item durations in order.
+ * If the projected end time exceeds the current event.end_date (or no end_date exists),
+ * updates event.end_date. Never shrinks the end time.
+ */
+export async function recomputeEventEndDate(tx: ZeroTransaction, eventId: string): Promise<void> {
+  const [event, agendaItems] = await Promise.all([
+    tx.run(zql.event.where('id', eventId).one()),
+    tx.run(zql.agenda_item.where('event_id', eventId).orderBy('order_index', 'asc')),
+  ]);
+
+  if (!event || typeof event.start_date !== 'number' || event.start_date <= 0) {
+    return;
+  }
+
+  let currentStart = event.start_date;
+  for (const item of agendaItems) {
+    const durationMs =
+      typeof item.duration === 'number' && item.duration > 0
+        ? item.duration * 60_000
+        : DEFAULT_AGENDA_DURATION_MS;
+    const scheduledEnd = currentStart + durationMs;
+    const actualEnd =
+      typeof item.completed_at === 'number' && item.completed_at > 0
+        ? item.completed_at
+        : typeof item.end_time === 'number' && item.end_time > 0
+          ? item.end_time
+          : undefined;
+    currentStart = actualEnd ?? scheduledEnd;
+  }
+
+  const projectedEnd = currentStart;
+  if (projectedEnd > (event.end_date ?? 0)) {
+    await tx.mutate.event.update({
+      id: eventId,
+      end_date: projectedEnd,
+      updated_at: Date.now(),
+    });
+  }
 }
 
 export async function recomputeEventCounters(

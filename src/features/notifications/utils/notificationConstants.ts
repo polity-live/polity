@@ -55,6 +55,7 @@ const NOTIFICATION_ICON_MAP: Record<string, LucideIcon> = {
   membership_approved: UserCheck,
   membership_rejected: UserX,
   membership_invite: UserPlus,
+  membership_role_changed: Shield,
   membership_withdrawn: UserMinus,
   member_removed: UserMinus,
   group_invitation_accepted: UserCheck,
@@ -70,6 +71,7 @@ const NOTIFICATION_ICON_MAP: Record<string, LucideIcon> = {
   group_link_removed: Unlink,
   group_document_added: FilePlus,
   group_document_removed: FileX,
+  document_collaborator_invited: FilePlus,
 
   // Group — Admin
   group_admin_promoted: ShieldCheck,
@@ -81,6 +83,7 @@ const NOTIFICATION_ICON_MAP: Record<string, LucideIcon> = {
   // Group — Todos
   group_todo_assigned: CheckCircle,
   group_todo_updated: Edit,
+  group_todo_deleted: Trash2,
 
   // Group — Payments
   group_payment_created: CreditCard,
@@ -104,6 +107,7 @@ const NOTIFICATION_ICON_MAP: Record<string, LucideIcon> = {
   participation_approved: UserCheck,
   participation_rejected: UserX,
   participation_invite: UserPlus,
+  participation_role_changed: Shield,
   participation_withdrawn: UserMinus,
   participant_removed: UserMinus,
   event_invitation_accepted: UserCheck,
@@ -117,6 +121,7 @@ const NOTIFICATION_ICON_MAP: Record<string, LucideIcon> = {
   event_organizer_demoted: ShieldX,
   event_agenda_item_created: FileText,
   event_agenda_item_deleted: FileX,
+  event_agenda_item_transferred: Workflow,
   event_schedule_changed: Calendar,
 
   // Event — Elections & Roles
@@ -132,12 +137,23 @@ const NOTIFICATION_ICON_MAP: Record<string, LucideIcon> = {
   event_meeting_booked: Calendar,
   event_meeting_cancelled: XCircle,
   event_speaker_added: Megaphone,
+  agenda_item_activated: CheckCircle,
+  voting_phase_started: Vote,
+  voting_phase_ending_soon: Clock,
+  voting_completed: CheckCircle,
+  amendment_forwarded: GitBranch,
+  election_result: Vote,
+  revote_scheduled: Vote,
+  event_cancelled: XCircle,
+  agenda_items_reassigned: Workflow,
+  amendment_path_recalculation_required: AlertTriangle,
 
   // Amendment — Collaboration
   collaboration_request: UserPlus,
   collaboration_approved: UserCheck,
   collaboration_rejected: UserX,
   collaboration_invite: UserPlus,
+  collaboration_role_changed: Shield,
   collaboration_withdrawn: UserMinus,
   collaborator_removed: UserMinus,
   collaboration_invitation_accepted: UserCheck,
@@ -154,6 +170,9 @@ const NOTIFICATION_ICON_MAP: Record<string, LucideIcon> = {
   amendment_cloned: Copy,
   amendment_group_support: Users,
   amendment_target_set: Target,
+  support_confirmation_required: AlertTriangle,
+  support_confirmed: CheckCircle,
+  support_declined: XCircle,
   amendment_comment_added: MessageSquare,
 
   // Amendment — Change Requests
@@ -192,6 +211,7 @@ const NOTIFICATION_ICON_MAP: Record<string, LucideIcon> = {
   todo_assigned: CheckCircle,
   todo_updated: Edit,
   todo_completed: CheckCircle,
+  todo_deleted: Trash2,
   todo_due_soon: Clock,
   todo_overdue: AlertTriangle,
 
@@ -235,6 +255,7 @@ const NOTIFICATION_COLOR_MAP: Record<string, string> = {
   membership_approved: 'text-green-500',
   membership_rejected: 'text-red-500',
   membership_invite: 'text-blue-400',
+  membership_role_changed: 'text-slate-500',
   membership_withdrawn: 'text-slate-500',
   member_removed: 'text-red-500',
   group_invitation_accepted: 'text-green-500',
@@ -250,6 +271,7 @@ const NOTIFICATION_COLOR_MAP: Record<string, string> = {
   group_link_removed: 'text-slate-500',
   group_document_added: 'text-cyan-400',
   group_document_removed: 'text-slate-500',
+  document_collaborator_invited: 'text-cyan-500',
 
   // Group — Admin (slate tones)
   group_admin_promoted: 'text-emerald-500',
@@ -261,6 +283,7 @@ const NOTIFICATION_COLOR_MAP: Record<string, string> = {
   // Group — Todos
   group_todo_assigned: 'text-blue-500',
   group_todo_updated: 'text-blue-400',
+  group_todo_deleted: 'text-red-500',
 
   // Group — Payments
   group_payment_created: 'text-emerald-500',
@@ -284,6 +307,7 @@ const NOTIFICATION_COLOR_MAP: Record<string, string> = {
   participation_approved: 'text-green-500',
   participation_rejected: 'text-red-500',
   participation_invite: 'text-purple-400',
+  participation_role_changed: 'text-slate-500',
   participation_withdrawn: 'text-slate-500',
   participant_removed: 'text-red-500',
   event_invitation_accepted: 'text-green-500',
@@ -297,6 +321,7 @@ const NOTIFICATION_COLOR_MAP: Record<string, string> = {
   event_organizer_demoted: 'text-orange-500',
   event_agenda_item_created: 'text-indigo-400',
   event_agenda_item_deleted: 'text-slate-500',
+  event_agenda_item_transferred: 'text-indigo-400',
   event_schedule_changed: 'text-indigo-500',
 
   // Event — Elections & Roles
@@ -312,12 +337,23 @@ const NOTIFICATION_COLOR_MAP: Record<string, string> = {
   event_meeting_booked: 'text-purple-500',
   event_meeting_cancelled: 'text-red-500',
   event_speaker_added: 'text-purple-400',
+  agenda_item_activated: 'text-emerald-500',
+  voting_phase_started: 'text-violet-500',
+  voting_phase_ending_soon: 'text-orange-500',
+  voting_completed: 'text-emerald-500',
+  amendment_forwarded: 'text-amber-500',
+  election_result: 'text-violet-500',
+  revote_scheduled: 'text-violet-500',
+  event_cancelled: 'text-red-500',
+  agenda_items_reassigned: 'text-indigo-500',
+  amendment_path_recalculation_required: 'text-orange-500',
 
   // Amendment — Collaboration (amber tones)
   collaboration_request: 'text-amber-500',
   collaboration_approved: 'text-green-500',
   collaboration_rejected: 'text-red-500',
   collaboration_invite: 'text-amber-400',
+  collaboration_role_changed: 'text-slate-500',
   collaboration_withdrawn: 'text-slate-500',
   collaborator_removed: 'text-red-500',
   collaboration_invitation_accepted: 'text-green-500',
@@ -334,6 +370,9 @@ const NOTIFICATION_COLOR_MAP: Record<string, string> = {
   amendment_cloned: 'text-amber-400',
   amendment_group_support: 'text-blue-500',
   amendment_target_set: 'text-amber-500',
+  support_confirmation_required: 'text-orange-500',
+  support_confirmed: 'text-green-500',
+  support_declined: 'text-red-500',
   amendment_comment_added: 'text-green-500',
 
   // Amendment — Change Requests
@@ -372,6 +411,7 @@ const NOTIFICATION_COLOR_MAP: Record<string, string> = {
   todo_assigned: 'text-blue-500',
   todo_updated: 'text-blue-400',
   todo_completed: 'text-green-500',
+  todo_deleted: 'text-red-500',
   todo_due_soon: 'text-orange-500',
   todo_overdue: 'text-red-500',
 

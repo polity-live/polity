@@ -6,12 +6,16 @@ import { useState } from 'react';
 import { useGroupTodos as useFacadeGroupTodos } from '@/zero/groups/useGroupState';
 import { useTodoActions } from '@/zero/todos/useTodoActions';
 import { toast } from 'sonner';
-import { notifyTodoAssigned, notifyTodoUpdated, notifyTodoCompleted } from '@/features/notifications/utils/notification-helpers.ts';
 
 export function useGroupTodos(groupId: string, userId?: string) {
   const [isLoading, setIsLoading] = useState(false);
   const { todos: todosData, isLoading: isQuerying } = useFacadeGroupTodos(groupId);
-  const { createTodo: createTodoAction, updateTodo: updateTodoAction, deleteTodo: deleteTodoAction, assignUser: assignUserAction } = useTodoActions();
+  const {
+    createTodo: createTodoAction,
+    updateTodo: updateTodoAction,
+    deleteTodo: deleteTodoAction,
+    assignUser: assignUserAction,
+  } = useTodoActions();
 
   const todos = todosData;
 
@@ -31,7 +35,6 @@ export function useGroupTodos(groupId: string, userId?: string) {
     setIsLoading(true);
     try {
       const todoId = crypto.randomUUID();
-      const now = Date.now();
 
       await createTodoAction({
         id: todoId,
@@ -71,10 +74,14 @@ export function useGroupTodos(groupId: string, userId?: string) {
   const updateTodoStatus = async (
     todoId: string,
     newStatus: string,
-    senderId?: string,
-    groupName?: string,
-    assigneeUserIds?: string[]
+    _senderId?: string,
+    _groupName?: string,
+    _assigneeUserIds?: string[]
   ) => {
+    void _senderId;
+    void _groupName;
+    void _assigneeUserIds;
+
     setIsLoading(true);
     try {
       await updateTodoAction({
@@ -101,11 +108,16 @@ export function useGroupTodos(groupId: string, userId?: string) {
 
   const deleteTodo = async (
     todoId: string,
-    todoTitle?: string,
-    senderId?: string,
-    groupName?: string,
-    assigneeUserIds?: string[]
+    _todoTitle?: string,
+    _senderId?: string,
+    _groupName?: string,
+    _assigneeUserIds?: string[]
   ) => {
+    void _todoTitle;
+    void _senderId;
+    void _groupName;
+    void _assigneeUserIds;
+
     setIsLoading(true);
     try {
       await deleteTodoAction(todoId);

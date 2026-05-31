@@ -7,6 +7,7 @@ export interface ParticipationRoleLike {
   id: string;
   name?: string | null;
   description?: string | null;
+  assignee_kind?: string | null;
   assignment_mode?: string | null;
   sort_order?: number | null;
   default_request_role?: boolean | null;
@@ -23,12 +24,32 @@ export interface ParticipationUserLike {
   email?: string | null;
 }
 
+export interface ParticipationGroupLike {
+  id?: string | null;
+  name?: string | null;
+  group_type?: string | null;
+}
+
+export interface ParticipationProvenanceGroupLike {
+  id: string;
+  name: string;
+  group_type?: string | null;
+}
+
 export interface ParticipationLike<TRole extends ParticipationRoleLike = ParticipationRoleLike> {
   id: string;
+  user_id?: string | null;
+  group_id?: string | null;
+  source_group_id?: string | null;
   user?: ParticipationUserLike | null;
+  group?: ParticipationGroupLike | null;
+  source_group?: ParticipationGroupLike | null;
   created_at?: number | null;
   status?: string | null;
   source?: string | null;
   roles?: readonly TRole[] | null;
   role?: TRole | null;
+  partGroup?: ParticipationProvenanceGroupLike | null;
+  baseGroup?: ParticipationProvenanceGroupLike | null;
+  provenanceBucketLabel?: string | null;
 }

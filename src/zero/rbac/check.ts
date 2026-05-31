@@ -14,6 +14,7 @@ import type {
   ResourceType,
   ActionType,
   Membership,
+  GuestAccess,
   Participation,
   BloggerRelation,
   Amendment,
@@ -27,8 +28,10 @@ import type {
 export interface PermissionData {
   userId: string;
   memberships?: Membership[];
+  guestAccesses?: GuestAccess[];
   participations?: Participation[];
   bloggerRelations?: BloggerRelation[];
+  ownedGroupIds?: string[];
 }
 
 /** Identifies the scope a permission check targets. */
@@ -56,7 +59,15 @@ export function checkPermission(
 ): boolean {
   if (!data.userId) return false;
 
-  if (scope.groupId && hasGroupPermission(data.memberships, scope.groupId, resource, action)) {
+  if (scope.groupId && data.ownedGroupIds?.includes(scope.groupId)) {
+    return true;
+  }
+
+  if (
+    scope.groupId &&
+    (hasGroupPermission(data.memberships, scope.groupId, resource, action) ||
+      hasGroupPermission(data.guestAccesses, scope.groupId, resource, action))
+  ) {
     return true;
   }
 

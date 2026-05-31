@@ -94,6 +94,8 @@ export function GroupTimelineCard({
     membership.isMember;
   const isInvited = resolvedMembershipStatus === 'invited' || membership.isInvited;
   const hasRequested = resolvedMembershipStatus === 'requested' || membership.hasRequested;
+  const requestMembershipDisabled =
+    !isMember && !isInvited && !hasRequested && !membership.canRequestJoin;
 
   // Get membership button label based on status
   const getMembershipLabel = () => {
@@ -199,7 +201,7 @@ export function GroupTimelineCard({
             <Button
               variant={getMembershipVariant()}
               size="sm"
-              disabled={isMembershipLoading || membership.isLoading}
+              disabled={isMembershipLoading || membership.isLoading || requestMembershipDisabled}
               className="flex items-center gap-1.5"
             >
               <MembershipIcon className="h-3.5 w-3.5" />
@@ -277,7 +279,9 @@ export function GroupTimelineCard({
                     (onRequestMembership || membership.requestJoin)?.();
                     setMembershipOpen(false);
                   }}
-                  disabled={isMembershipLoading || membership.isLoading}
+                  disabled={
+                    isMembershipLoading || membership.isLoading || requestMembershipDisabled
+                  }
                   className="justify-start"
                 >
                   {t('features.timeline.cards.group.requestMembership')}

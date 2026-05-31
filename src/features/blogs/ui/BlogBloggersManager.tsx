@@ -30,7 +30,13 @@ import {
 import { Tabs, TabsContent, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import { ScrollableTabsList } from '@/features/shared/ui/ui/scrollable-tabs';
 import { Checkbox } from '@/features/shared/ui/ui/checkbox';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import {
@@ -61,19 +67,18 @@ import { toast } from 'sonner';
 import { useAuth } from '@/providers/auth-provider';
 import { usePermissions } from '@/zero/rbac/usePermissions';
 import type { User } from '@/zero';
-import {
-  notifyBloggerInvited,
-  notifyBloggerRoleChanged,
-  notifyBloggerRemoved,
-  notifyBlogRoleCreated,
-  notifyBlogRoleDeleted,
-} from '@/features/notifications/utils/notification-helpers.ts';
 
 // Define available action rights for blogs
 const ACTION_RIGHTS = [
   { resource: 'blogs', action: 'update', label: 'Update Blog' },
   { resource: 'blogs', action: 'delete', label: 'Delete Blog' },
   { resource: 'blogBloggers', action: 'manage', label: 'Manage Bloggers' },
+  { resource: 'notifications', action: 'viewNotifications', label: 'View Notifications' },
+  {
+    resource: 'notifications',
+    action: 'manageNotifications',
+    label: 'Manage Notifications',
+  },
 ];
 
 function displayName(u: Pick<User, 'first_name' | 'last_name'> | undefined | null): string {
@@ -168,18 +173,6 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
         });
       }
 
-      // Send notifications to invited users
-      if (currentUserId) {
-        for (const userId of selectedUsers) {
-          await notifyBloggerInvited({
-            senderId: currentUserId,
-            recipientUserId: userId,
-            blogId,
-            blogTitle: blog?.title || 'Blog',
-          });
-        }
-      }
-
       toast.success(
         `Invited ${selectedUsers.length} ${selectedUsers.length === 1 ? 'blogger' : 'bloggers'}`
       );
@@ -197,21 +190,9 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
   };
 
   // Handle role updates
-  const handleUpdateRole = async (bloggerId: string, newRoleId: string, userId?: string) => {
+  const handleUpdateRole = async (bloggerId: string, newRoleId: string) => {
     try {
       await blogActions.updateEntry({ id: bloggerId, role_id: newRoleId });
-
-      // Send notification to the blogger about role change
-      if (currentUserId && userId) {
-        const newRole = rolesData.roles.find(r => r.id === newRoleId);
-        await notifyBloggerRoleChanged({
-          senderId: currentUserId,
-          recipientUserId: userId,
-          blogId,
-          blogTitle: blog?.title || 'Blog',
-          newRole: newRole?.name || 'Unknown Role',
-        });
-      }
       toast.success('Blogger role updated successfully');
     } catch (err) {
       console.error('Error updating role:', err);
@@ -220,19 +201,9 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
   };
 
   // Handle removing blogger
-  const handleRemoveBlogger = async (bloggerId: string, userId?: string) => {
+  const handleRemoveBlogger = async (bloggerId: string) => {
     try {
       await blogActions.deleteEntry(bloggerId);
-
-      // Send notification to the removed blogger
-      if (currentUserId && userId) {
-        await notifyBloggerRemoved({
-          senderId: currentUserId,
-          recipientUserId: userId,
-          blogId,
-          blogTitle: blog?.title || 'Blog',
-        });
-      }
       toast.success('Blogger removed successfully');
     } catch (err) {
       console.error('Error removing blogger:', err);
@@ -299,16 +270,6 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
         sort_order: 0,
       });
 
-      // Send notification about new role
-      if (currentUserId) {
-        await notifyBlogRoleCreated({
-          senderId: currentUserId,
-          blogId,
-          blogTitle: blog?.title || 'Blog',
-          roleName: newRoleName,
-        });
-      }
-
       toast.success('Role created successfully');
 
       setNewRoleName('');
@@ -321,19 +282,9 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
   };
 
   // Handle deleting a role
-  const handleDeleteRole = async (roleId: string, roleName?: string) => {
+  const handleDeleteRole = async (roleId: string) => {
     try {
       await groupActions.deleteRole({ id: roleId });
-
-      // Send notification about role deletion
-      if (currentUserId && roleName) {
-        await notifyBlogRoleDeleted({
-          senderId: currentUserId,
-          blogId,
-          blogTitle: blog?.title || 'Blog',
-          roleName,
-        });
-      }
       toast.success('Role deleted successfully');
     } catch (error) {
       console.error('Failed to delete role:', error);
@@ -610,9 +561,7 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                             {canManageBloggers && blogger.user?.id !== currentUserId ? (
                               <Select
                                 value={blogger.role?.id}
-                                onValueChange={newRoleId =>
-                                  handleUpdateRole(blogger.id, newRoleId, blogger.user?.id)
-                                }
+                                onValueChange={newRoleId => handleUpdateRole(blogger.id, newRoleId)}
                               >
                                 <SelectTrigger className="w-[180px]">
                                   <SelectValue placeholder="Select role" />

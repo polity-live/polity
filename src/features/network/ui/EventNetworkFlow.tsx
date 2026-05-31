@@ -7,15 +7,48 @@ import { useEventWithGroup, useGroupRelationships } from '@/zero/events/useEvent
 import { NetworkFlowBase } from '@/features/network/ui/NetworkFlowBase';
 import { type NetworkGroupEntity } from '../types/network.types';
 import { NetworkEntityDialog } from '@/features/network/ui/NetworkEntityDialog';
-import { NetworkControlPanel } from '@/features/network/ui/NetworkControlPanel';
+import {
+  NetworkControlPanel,
+  NETWORK_FILTER_ACTIVE_CLASS_NAMES,
+} from '@/features/network/ui/NetworkControlPanel';
 import { useNetworkFlowControls } from '@/features/network/hooks/useNetworkFlowControls';
-import { buildDirectRelationships, buildIndirectRelationships } from '@/features/network/logic/networkRelationshipHelpers';
-import { filterEdgesByRights, filterNodesByEdges } from '@/features/network/logic/networkFilterHelpers';
-import { getGroupDisplayLabel } from '@/features/network/ui/networkVisualHelpers';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import {
+  getAnchorUsageConnectionDirection,
+  buildHierarchyRightEdgeDirections,
+  buildNetworkRelationshipDialogData,
+  buildRelationshipEdgeMarkers,
+  createNetworkRelationshipEdgeData,
+  getRelationshipStrokeColor,
+} from '@/features/network/logic/networkEdgeHelpers';
+import {
+  buildDirectRelationships,
+  buildIndirectRelationships,
+} from '@/features/network/logic/networkRelationshipHelpers';
+import {
+  filterEdgesByRelationshipStatus,
+  filterEdgesByConnectionDirections,
+  filterEdgesByRights,
+  filterNodesByEdges,
+} from '@/features/network/logic/networkFilterHelpers';
+import {
+  createGroupNodeLegendItem,
+  getGroupNodeDisplayLabel,
+  getGroupNodeStyle,
+} from '@/features/network/ui/networkVisualHelpers';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { usePermissions } from '@/zero/rbac';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import type {
+  EditableRightsLabelEdgeData,
+  NetworkConnectionDirection,
+} from '../types/networkEdge.types';
 
 interface EventNode extends Node {
   data: {
@@ -36,17 +69,105 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
   const navigate = useNavigate();
   const controls = useNetworkFlowControls();
   const {
-    showIndirect, setShowIndirect,
-    selectedNodes, isInteractive, setIsInteractive,
+    relationshipDepthFilter,
+    setRelationshipDepthFilter,
+    selectedNodes,
+    isInteractive,
+    relationshipStatusFilter,
+    setRelationshipStatusFilter,
+    connectionDirectionFilter,
+    setConnectionDirectionFilter,
     selectedRights,
-    panelCollapsed, setPanelCollapsed,
-    legendCollapsed, setLegendCollapsed,
-    dialogOpen, setDialogOpen,
-    selectedEntity, setSelectedEntity,
-    toggleRight, handleInteractiveChange,
+    selectedConnectionDirections,
+    panelCollapsed,
+    setPanelCollapsed,
+    legendCollapsed,
+    setLegendCollapsed,
+    dialogOpen,
+    setDialogOpen,
+    selectedEntity,
+    setSelectedEntity,
+    toggleRight,
+    handleInteractiveChange,
   } = controls;
   const [nodes, setNodes, onNodesChange] = useNodesState<EventNode>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<EditableRightsLabelEdgeData>>([]);
+
+  const allLabel = t('common.labels.all', 'All');
+
+  const depthFilters = useMemo(
+    () => [
+      {
+        id: 'all',
+        label: allLabel,
+        active: relationshipDepthFilter === 'all',
+        onToggle: () => setRelationshipDepthFilter('all'),
+        activeClassName: NETWORK_FILTER_ACTIVE_CLASS_NAMES.neutral,
+      },
+      {
+        id: 'direct',
+        label: t('common.network.direct'),
+        active: relationshipDepthFilter === 'direct',
+        onToggle: () => setRelationshipDepthFilter('direct'),
+        activeClassName: NETWORK_FILTER_ACTIVE_CLASS_NAMES.neutral,
+      },
+    ],
+    [allLabel, relationshipDepthFilter, setRelationshipDepthFilter, t]
+  );
+
+  const relationshipStatusFilters = useMemo(
+    () => [
+      {
+        id: 'active',
+        label: t('common.network.active'),
+        active: relationshipStatusFilter === 'active',
+        onToggle: () => setRelationshipStatusFilter('active'),
+        activeClassName: NETWORK_FILTER_ACTIVE_CLASS_NAMES.green,
+      },
+      {
+        id: 'incoming',
+        label: t('common.network.incomingRequest'),
+        active: relationshipStatusFilter === 'incoming',
+        onToggle: () => setRelationshipStatusFilter('incoming'),
+        activeClassName: NETWORK_FILTER_ACTIVE_CLASS_NAMES.blue,
+      },
+      {
+        id: 'outgoing',
+        label: t('common.network.outgoingRequest'),
+        active: relationshipStatusFilter === 'outgoing',
+        onToggle: () => setRelationshipStatusFilter('outgoing'),
+        activeClassName: NETWORK_FILTER_ACTIVE_CLASS_NAMES.orange,
+      },
+    ],
+    [relationshipStatusFilter, setRelationshipStatusFilter, t]
+  );
+
+  const connectionDirectionFilters = useMemo(
+    () => [
+      {
+        id: 'all',
+        label: allLabel,
+        active: connectionDirectionFilter === 'all',
+        onToggle: () => setConnectionDirectionFilter('all'),
+        activeClassName: NETWORK_FILTER_ACTIVE_CLASS_NAMES.purple,
+      },
+      {
+        id: 'incoming',
+        label: t('common.network.incomingConnections', 'Eingehend'),
+        active: connectionDirectionFilter === 'incoming',
+        onToggle: () => setConnectionDirectionFilter('incoming'),
+        activeClassName: NETWORK_FILTER_ACTIVE_CLASS_NAMES.blue,
+      },
+      {
+        id: 'outgoing',
+        label: t('common.network.outgoingConnections', 'Ausgehend'),
+        active: connectionDirectionFilter === 'outgoing',
+        onToggle: () => setConnectionDirectionFilter('outgoing'),
+        activeClassName: NETWORK_FILTER_ACTIVE_CLASS_NAMES.orange,
+      },
+    ],
+    [allLabel, connectionDirectionFilter, setConnectionDirectionFilter, t]
+  );
 
   // Fetch the specific event with its group
   const { event } = useEventWithGroup(eventId);
@@ -73,8 +194,8 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
         <CardHeader>
           <CardTitle>This event is not associated with a group</CardTitle>
           <CardDescription>
-            Network visualization is only available for events that belong to a group.
-            Associate this event with a group in the settings page to enable the network view.
+            Network visualization is only available for events that belong to a group. Associate
+            this event with a group in the settings page to enable the network view.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-3">
@@ -100,9 +221,18 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
       return;
     }
 
-    const { parents, children } = showIndirect
-      ? buildIndirectRelationships(stableRelationships, group.id)
-      : buildDirectRelationships(stableRelationships, group.id);
+    const relationshipTree =
+      relationshipDepthFilter === 'direct'
+        ? buildDirectRelationships(stableRelationships, group.id)
+        : buildIndirectRelationships(stableRelationships, group.id);
+    const showAllDepth = relationshipDepthFilter === 'all';
+    const showIndirectOnly = relationshipDepthFilter === 'indirect';
+    const parents = showIndirectOnly
+      ? relationshipTree.parents.filter(parent => (parent.level ?? 1) > 1)
+      : relationshipTree.parents;
+    const children = showIndirectOnly
+      ? relationshipTree.children.filter(child => (child.level ?? 1) > 1)
+      : relationshipTree.children;
 
     const newNodes: EventNode[] = [];
     const newEdges: Edge[] = [];
@@ -111,8 +241,8 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
     const groupNameMap = new Map<string, string>();
     groupNameMap.set(group.id, group.name ?? '');
     groupNameMap.set(eventId, event.title ?? '');
-    parents.forEach((p) => groupNameMap.set(p.group.id, p.group.name ?? ''));
-    children.forEach((c) => groupNameMap.set(c.group.id, c.group.name ?? ''));
+    parents.forEach(p => groupNameMap.set(p.group.id, p.group.name ?? ''));
+    children.forEach(c => groupNameMap.set(c.group.id, c.group.name ?? ''));
 
     // Add center node (event)
     newNodes.push({
@@ -144,23 +274,17 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
       type: 'default',
       position: { x: 400, y: 450 },
       data: {
-          label: getGroupDisplayLabel(group.name, group.group_type),
+        label: getGroupNodeDisplayLabel(group.name, 'current'),
         description: group.description ?? '',
         level: 1,
         type: 'group',
         groupData: group,
       },
-      style: {
-        background: '#bbdefb',
-        color: '#333',
-        border: '2px solid #90caf9',
-        borderRadius: '5px',
-        padding: '10px',
-        fontSize: '13px',
-        fontWeight: 'bold',
+      style: getGroupNodeStyle('current', {
         width: 180,
-        textAlign: 'center',
-      },
+        fontSize: '13px',
+        fontWeight: '700',
+      }),
     });
 
     // Add edge from event to its group
@@ -177,13 +301,21 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
     });
 
     // Add parent nodes
-    parents.forEach((parent) => {
+    parents.forEach(parent => {
+      const edgeTarget = showAllDepth && parent.childId ? parent.childId : group.id;
+      const rightEdgeDirections = buildHierarchyRightEdgeDirections(
+        stableRelationships,
+        parent.group.id,
+        edgeTarget
+      );
+      const strokeColor = getRelationshipStrokeColor('#fbc02d', rightEdgeDirections);
+
       const level = parent.level || 1;
       const yOffset = -150 * level;
-      const totalAtLevel = parents.filter((p) => (p.level || 1) === level).length;
+      const totalAtLevel = parents.filter(p => (p.level || 1) === level).length;
       const indexAtLevel = parents
-        .filter((p) => (p.level || 1) === level)
-        .findIndex((p) => p.group.id === parent.group.id);
+        .filter(p => (p.level || 1) === level)
+        .findIndex(p => p.group.id === parent.group.id);
       const xOffset = (indexAtLevel - (totalAtLevel - 1) / 2) * 250;
 
       newNodes.push({
@@ -191,43 +323,65 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
         type: 'default',
         position: { x: 400 + xOffset, y: 450 + yOffset },
         data: {
-          label: getGroupDisplayLabel(parent.group.name, parent.group.group_type),
+          label: getGroupNodeDisplayLabel(parent.group.name, 'parent'),
           description: parent.group.description ?? undefined,
           level: level + 1,
           type: 'group',
           groupData: parent.group,
         },
-        style: {
-          background: level === 1 ? '#fff9c4' : '#ffe0b2',
-          color: '#333',
-          border: '1px solid #fbc02d',
-          borderRadius: '5px',
-          padding: '10px',
-          fontSize: '12px',
+        style: getGroupNodeStyle('parent', {
           width: 160,
-          textAlign: 'center',
-        },
+          fontSize: '12px',
+        }),
       });
 
       newEdges.push({
-        id: `${parent.group.id}-${parent.childId || group.id}`,
+        id: `${parent.group.id}-${edgeTarget}`,
         source: parent.group.id,
-        target: parent.childId || group.id,
+        target: edgeTarget,
         type: 'rightsLabel',
         animated: true,
-        data: { rights: parent.rights, sourceName: groupNameMap.get(parent.group.id) ?? null, targetName: groupNameMap.get(parent.childId || group.id) ?? null },
-        style: { stroke: '#fbc02d', strokeWidth: 2 },
+        ...buildRelationshipEdgeMarkers(strokeColor, rightEdgeDirections),
+        data: createNetworkRelationshipEdgeData({
+          rights: parent.rights,
+          relationshipKinds: parent.relationshipKinds,
+          rightRelationshipKinds: parent.rightRelationshipKinds,
+          relationshipType: 'parent',
+          rightEdgeDirections,
+          rightConnectionDirections: Object.fromEntries(
+            parent.rights.map(right => [
+              right,
+              getAnchorUsageConnectionDirection({
+                edgeDirection: rightEdgeDirections[right] ?? 'forward',
+                anchorSide: 'target',
+              }),
+            ])
+          ) as Record<string, NetworkConnectionDirection>,
+          userConnectionDirections: ['incoming'],
+          sourceName: groupNameMap.get(parent.group.id) ?? null,
+          targetName: groupNameMap.get(edgeTarget) ?? null,
+          relationshipDepth: (parent.level ?? 1) === 1 ? 'direct' : 'indirect',
+        }),
+        style: { stroke: strokeColor, strokeWidth: 2 },
       });
     });
 
     // Add child nodes
-    children.forEach((child) => {
+    children.forEach(child => {
+      const edgeSource = showAllDepth && child.parentId ? child.parentId : group.id;
+      const rightEdgeDirections = buildHierarchyRightEdgeDirections(
+        stableRelationships,
+        edgeSource,
+        child.group.id
+      );
+      const strokeColor = getRelationshipStrokeColor('#4caf50', rightEdgeDirections);
+
       const level = child.level || 1;
       const yOffset = 150 * level;
-      const totalAtLevel = children.filter((c) => (c.level || 1) === level).length;
+      const totalAtLevel = children.filter(c => (c.level || 1) === level).length;
       const indexAtLevel = children
-        .filter((c) => (c.level || 1) === level)
-        .findIndex((c) => c.group.id === child.group.id);
+        .filter(c => (c.level || 1) === level)
+        .findIndex(c => c.group.id === child.group.id);
       const xOffset = (indexAtLevel - (totalAtLevel - 1) / 2) * 250;
 
       newNodes.push({
@@ -235,47 +389,77 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
         type: 'default',
         position: { x: 400 + xOffset, y: 450 + yOffset },
         data: {
-          label: getGroupDisplayLabel(child.group.name, child.group.group_type),
+          label: getGroupNodeDisplayLabel(child.group.name, 'child'),
           description: child.group.description ?? undefined,
           level: level + 1,
           type: 'group',
           groupData: child.group,
         },
-        style: {
-          background: level === 1 ? '#c8e6c9' : '#b2dfdb',
-          color: '#333',
-          border: '1px solid #4caf50',
-          borderRadius: '5px',
-          padding: '10px',
-          fontSize: '12px',
+        style: getGroupNodeStyle('child', {
           width: 160,
-          textAlign: 'center',
-        },
+          fontSize: '12px',
+        }),
       });
 
       newEdges.push({
-        id: `${child.parentId || group.id}-${child.group.id}`,
-        source: child.parentId || group.id,
+        id: `${edgeSource}-${child.group.id}`,
+        source: edgeSource,
         target: child.group.id,
         type: 'rightsLabel',
         animated: true,
-        data: { rights: child.rights, sourceName: groupNameMap.get(child.parentId || group.id) ?? null, targetName: groupNameMap.get(child.group.id) ?? null },
-        style: { stroke: '#4caf50', strokeWidth: 2 },
+        ...buildRelationshipEdgeMarkers(strokeColor, rightEdgeDirections),
+        data: createNetworkRelationshipEdgeData({
+          rights: child.rights,
+          relationshipKinds: child.relationshipKinds,
+          rightRelationshipKinds: child.rightRelationshipKinds,
+          relationshipType: 'parent',
+          rightEdgeDirections,
+          rightConnectionDirections: Object.fromEntries(
+            child.rights.map(right => [
+              right,
+              getAnchorUsageConnectionDirection({
+                edgeDirection: rightEdgeDirections[right] ?? 'forward',
+                anchorSide: 'source',
+              }),
+            ])
+          ) as Record<string, NetworkConnectionDirection>,
+          userConnectionDirections: ['outgoing'],
+          sourceName: groupNameMap.get(edgeSource) ?? null,
+          targetName: groupNameMap.get(child.group.id) ?? null,
+          relationshipDepth: (child.level ?? 1) === 1 ? 'direct' : 'indirect',
+        }),
+        style: { stroke: strokeColor, strokeWidth: 2 },
       });
     });
 
     setNodes(newNodes);
     setEdges(newEdges);
-  }, [event, group, eventId, showIndirect, stableRelationships]);
+  }, [event, group, eventId, relationshipDepthFilter, stableRelationships]);
 
   // Filter edges based on selected rights (always show event-to-group edge)
   const eventToGroupEdgeIds = useMemo(() => {
     return new Set(edges.filter(e => e.source === eventId).map(e => e.id));
   }, [edges, eventId]);
 
-  const filteredEdges = useMemo(() => {
+  const rightsFilteredEdges = useMemo(() => {
     return filterEdgesByRights(edges, selectedRights, eventToGroupEdgeIds);
   }, [edges, selectedRights, eventToGroupEdgeIds]);
+
+  const statusFilteredEdges = useMemo(() => {
+    return filterEdgesByRelationshipStatus(
+      rightsFilteredEdges,
+      relationshipStatusFilter,
+      eventToGroupEdgeIds
+    );
+  }, [eventToGroupEdgeIds, relationshipStatusFilter, rightsFilteredEdges]);
+
+  const filteredEdges = useMemo(() => {
+    return filterEdgesByConnectionDirections(
+      statusFilteredEdges,
+      selectedConnectionDirections,
+      eventToGroupEdgeIds
+    );
+  }, [eventToGroupEdgeIds, selectedConnectionDirections, statusFilteredEdges]);
 
   // Filter nodes to only show those connected via visible edges
   const alwaysIncludeIds = useMemo(() => {
@@ -324,23 +508,16 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
 
       setSelectedEntity({
         type: 'relationship',
-        data: {
-          source: edge.source,
-          target: edge.target,
-          sourceName: typeof edge.data?.sourceName === 'string' ? edge.data.sourceName : null,
-          targetName: typeof edge.data?.targetName === 'string' ? edge.data.targetName : null,
-          rights: Array.isArray(edge.data?.rights) ? (edge.data.rights as string[]) : [],
-          label: typeof edge.label === 'string' ? edge.label : null,
-        },
+        data: buildNetworkRelationshipDialogData(edge, t),
       });
       setDialogOpen(true);
     },
-    [isInteractive]
+    [isInteractive, t]
   );
 
   if (!event) {
     return (
-      <div className="flex h-full min-h-0 items-center justify-center rounded-lg border bg-background">
+      <div className="bg-background flex h-full min-h-0 items-center justify-center rounded-lg border">
         <p className="text-muted-foreground">Event not found</p>
       </div>
     );
@@ -348,12 +525,12 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
 
   if (!group) {
     return (
-      <div className="flex h-full min-h-0 items-center justify-center rounded-lg border bg-background px-4">
+      <div className="bg-background flex h-full min-h-0 items-center justify-center rounded-lg border px-4">
         <div className="text-center">
           <p className="text-muted-foreground">This event is not associated with a group</p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Network visualization is only available for events that belong to a group.
-            Associate this event with a group in the settings page to enable the network view.
+          <p className="text-muted-foreground mt-2 text-sm">
+            Network visualization is only available for events that belong to a group. Associate
+            this event with a group in the settings page to enable the network view.
           </p>
           <div className="mt-4 flex justify-center gap-3">
             {canManageEvent ? (
@@ -409,30 +586,25 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
               label: t('common.network.eventCenter', 'Event (Center)'),
               swatchClassName: 'h-4 w-4 rounded border-2 border-[#66bb6a] bg-[#e8f5e9]',
             },
-            {
-              id: 'event-group',
-              label: t('common.network.eventGroup', "Event's Group"),
-              swatchClassName: 'h-4 w-4 rounded border border-[#90caf9] bg-[#bbdefb]',
-            },
-            {
-              id: 'parent-groups',
-              label: t('common.network.parentGroups'),
-              swatchClassName: 'h-4 w-4 rounded border border-[#fbc02d] bg-[#fff9c4]',
-            },
-            {
-              id: 'child-groups',
-              label: t('common.network.childGroups'),
-              swatchClassName: 'h-4 w-4 rounded border border-[#4caf50] bg-[#c8e6c9]',
-            },
+            createGroupNodeLegendItem({
+              id: 'current-group',
+              label: t('common.network.currentGroup', 'Aktuelle Gruppe'),
+              visualVariant: 'current',
+            }),
+            createGroupNodeLegendItem({
+              id: 'parent-group',
+              label: t('common.network.parentGroup', 'Übergeordnete Gruppe'),
+              visualVariant: 'parent',
+            }),
+            createGroupNodeLegendItem({
+              id: 'child-group',
+              label: t('common.network.childGroup', 'Untergeordnete Gruppe'),
+              visualVariant: 'child',
+            }),
           ]}
-          showGroupTypeLegend
-          baseGroupLabel={t('common.network.baseGroup', '◉ Base group')}
-          hierarchicalGroupLabel={t('common.network.hierarchicalGroup', '🏛 Hierarchical group')}
-          showDisplayControls
-          showIndirect={showIndirect}
-          onShowIndirectChange={setShowIndirect}
+          depthFilters={depthFilters}
           isInteractive={isInteractive}
-          onInteractiveChange={setIsInteractive}
+          onInteractiveChange={handleInteractiveChange}
           directLabel={t('common.network.direct')}
           indirectLabel={t('common.network.indirect')}
           lockLabel={t('common.network.lockEditor')}
@@ -440,6 +612,16 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
           showRightsFilter
           selectedRights={selectedRights}
           onToggleRight={toggleRight}
+          connectionDirectionFilters={connectionDirectionFilters}
+          relationshipStatusFilters={relationshipStatusFilters}
+          showConnectionDirectionLegend
+          connectionDirectionLegendTitle={t(
+            'common.network.connectionDirections',
+            'Verbindungsrichtungen'
+          )}
+          bidirectionalConnectionLabel={t('common.network.bidirectional', 'Beidseitig')}
+          incomingConnectionLabel={t('common.network.incomingConnections', 'Eingehend')}
+          outgoingConnectionLabel={t('common.network.outgoingConnections', 'Ausgehend')}
           showRightsLegend
         />
       }

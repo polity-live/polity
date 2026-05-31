@@ -1,49 +1,57 @@
-import { CreateReviewCard, SummaryField } from '@/features/shared/ui/ui/create-review-card'
 import {
-  getContentTypeGradient,
-  type ContentType,
-} from '@/features/timeline/constants/content-type-config'
-import type { ReactNode } from 'react'
-
-interface SummaryFieldEntry {
-  label: string
-  value: ReactNode
-}
+  CreateReviewCard,
+  type ReviewCardField,
+  type ReviewCardSection,
+  type ReviewMediaPreview,
+} from '@/features/shared/ui/ui/create-review-card';
+import type { ContentType } from '@/features/timeline/constants/content-type-config';
+import type { ReactNode } from 'react';
 
 interface CreateSummaryStepProps {
-  entityType: ContentType
-  badge: string
-  title: string
-  subtitle?: string
-  hashtags?: string[]
-  fields: SummaryFieldEntry[]
-  /** Extra content to render below the fields (e.g., images, lists) */
-  children?: ReactNode
+  entityType: ContentType;
+  badge: string;
+  secondaryBadge?: string;
+  title: string;
+  subtitle?: string;
+  hashtags?: string[];
+  fields?: ReviewCardField[];
+  sections?: ReviewCardSection[];
+  media?: ReviewMediaPreview;
+  /** Extra content to render below the sections. */
+  children?: ReactNode;
 }
 
 export function CreateSummaryStep({
   entityType,
   badge,
+  secondaryBadge,
   title,
   subtitle,
   hashtags,
   fields,
+  sections,
+  media,
   children,
 }: CreateSummaryStepProps) {
-  const gradient = getContentTypeGradient(entityType).replace('bg-gradient-to-br ', '')
+  const resolvedSections =
+    sections && sections.length > 0
+      ? sections
+      : fields && fields.length > 0
+        ? [{ fields }]
+        : undefined;
 
   return (
     <CreateReviewCard
+      entityType={entityType}
       badge={badge}
+      secondaryBadge={secondaryBadge}
       title={title}
       subtitle={subtitle}
       hashtags={hashtags}
-      gradient={gradient}
+      media={media}
+      sections={resolvedSections}
     >
-      {fields.map((field, i) => (
-        <SummaryField key={i} label={field.label} value={field.value} />
-      ))}
       {children}
     </CreateReviewCard>
-  )
+  );
 }

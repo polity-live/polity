@@ -5,6 +5,7 @@
 export { useGroupById as useGroupData } from '@/zero/groups/useGroupState';
 export {
   useGroupMemberships,
+  useGroupGuestAccesses,
   useGroupAccessRoles,
   useUserSearch,
 } from '@/zero/groups/useGroupState';

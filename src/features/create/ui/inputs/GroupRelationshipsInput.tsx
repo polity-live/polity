@@ -117,7 +117,9 @@ export function GroupRelationshipsInput({ value, onChange }: GroupRelationshipsI
             availableGroups,
             'group',
             g => g.name || 'Group',
-            g => (typeof g.description === 'string' ? g.description.substring(0, 60) : undefined)
+            g => (typeof g.description === 'string' ? g.description.substring(0, 60) : undefined),
+            undefined,
+            g => `/group/${g.id}`
           )}
           value={selectedGroupId}
           onChange={(item: TypeaheadItem | null) => setSelectedGroupId(item?.id ?? '')}

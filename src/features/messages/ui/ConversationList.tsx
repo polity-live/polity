@@ -52,7 +52,7 @@ export function ConversationList({
   return (
     <Card
       className={cn(
-        'flex flex-col overflow-hidden md:col-span-1',
+        'flex h-full min-h-0 flex-col overflow-hidden md:col-span-1',
         selectedConversationId && 'hidden md:flex',
         className
       )}
@@ -125,7 +125,7 @@ export function ConversationList({
         </div>
       </CardHeader>
       <Separator />
-      <div className="flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="space-y-1 p-4">
           {conversations.length === 0 ? (
             <div className="py-8 text-center">

@@ -1,43 +1,44 @@
-'use client'
+'use client';
 
-import type { CandidatesByElectionRow } from '@/zero/elections/queries'
-import type { ChoicesByVoteRow } from '@/zero/votes/queries'
+import type { CandidatesByElectionRow } from '@/zero/elections/queries';
+import type { ChoicesByVoteRow } from '@/zero/votes/queries';
 
 interface CandidateSelectionEntry {
-  candidate_id: string
+  candidate_id: string;
 }
 
 interface CandidateStats {
-  candidate: CandidatesByElectionRow
-  indicativeCount: number
-  finalCount: number
-  indicativePercentage: number
-  finalPercentage: number
+  candidate: CandidatesByElectionRow;
+  indicativeCount: number;
+  finalCount: number;
+  indicativePercentage: number;
+  finalPercentage: number;
 }
 
 interface ChoiceDecisionEntry {
-  choice_id: string
+  choice_id: string;
 }
 
 interface ChoiceStats {
-  choice: ChoicesByVoteRow
-  indicativeCount: number
-  finalCount: number
-  indicativePercentage: number
-  finalPercentage: number
+  choice: ChoicesByVoteRow;
+  indicativeCount: number;
+  finalCount: number;
+  indicativePercentage: number;
+  finalPercentage: number;
 }
 
-export type VotingPhase = 'unknown' | 'indicative' | 'final' | 'closed'
+export type VotingPhase = 'unknown' | 'indicative' | 'final' | 'closed';
 
 /**
  * Derive the voting phase from election/vote status.
  */
 export function getVotingPhase(status?: string | null): VotingPhase {
-  if (!status) return 'unknown'
-  if (status === 'indicative') return 'indicative'
-  if (status === 'final' || status === 'final_vote') return 'final'
-  if (status === 'closed') return 'closed'
-  return 'unknown'
+  if (!status) return 'unknown';
+  if (status === 'indicative') return 'indicative';
+  if (status === 'final' || status === 'final_vote') return 'final';
+  if (status === 'closed' || status === 'runoff_required' || status === 'no_winner')
+    return 'closed';
+  return 'unknown';
 }
 
 /**
@@ -45,19 +46,19 @@ export function getVotingPhase(status?: string | null): VotingPhase {
  */
 export function calculateElectionStats(
   candidates: CandidatesByElectionRow[],
-  indicativeSelections: ReadonlyArray<CandidateSelectionEntry>,
-  finalSelections: ReadonlyArray<CandidateSelectionEntry>,
+  indicativeSelections: readonly CandidateSelectionEntry[],
+  finalSelections: readonly CandidateSelectionEntry[]
 ): { candidates: CandidateStats[]; totalIndicative: number; totalFinal: number } {
   if (!candidates?.length) {
-    return { candidates: [], totalIndicative: 0, totalFinal: 0 }
+    return { candidates: [], totalIndicative: 0, totalFinal: 0 };
   }
 
-  const totalIndicative = indicativeSelections.length
-  const totalFinal = finalSelections.length
+  const totalIndicative = indicativeSelections.length;
+  const totalFinal = finalSelections.length;
 
-  const candidateStats = candidates.map((candidate) => {
-    const indCount = indicativeSelections.filter((s) => s.candidate_id === candidate.id).length
-    const finCount = finalSelections.filter((s) => s.candidate_id === candidate.id).length
+  const candidateStats = candidates.map(candidate => {
+    const indCount = indicativeSelections.filter(s => s.candidate_id === candidate.id).length;
+    const finCount = finalSelections.filter(s => s.candidate_id === candidate.id).length;
 
     return {
       candidate,
@@ -65,10 +66,10 @@ export function calculateElectionStats(
       finalCount: finCount,
       indicativePercentage: totalIndicative > 0 ? (indCount / totalIndicative) * 100 : 0,
       finalPercentage: totalFinal > 0 ? (finCount / totalFinal) * 100 : 0,
-    }
-  })
+    };
+  });
 
-  return { candidates: candidateStats, totalIndicative, totalFinal }
+  return { candidates: candidateStats, totalIndicative, totalFinal };
 }
 
 /**
@@ -76,19 +77,19 @@ export function calculateElectionStats(
  */
 export function calculateVoteStats(
   choices: ChoicesByVoteRow[],
-  indicativeDecisions: ReadonlyArray<ChoiceDecisionEntry>,
-  finalDecisions: ReadonlyArray<ChoiceDecisionEntry>,
+  indicativeDecisions: readonly ChoiceDecisionEntry[],
+  finalDecisions: readonly ChoiceDecisionEntry[]
 ): { choices: ChoiceStats[]; totalIndicative: number; totalFinal: number } {
   if (!choices?.length) {
-    return { choices: [], totalIndicative: 0, totalFinal: 0 }
+    return { choices: [], totalIndicative: 0, totalFinal: 0 };
   }
 
-  const totalIndicative = indicativeDecisions.length
-  const totalFinal = finalDecisions.length
+  const totalIndicative = indicativeDecisions.length;
+  const totalFinal = finalDecisions.length;
 
-  const choiceStats = choices.map((choice) => {
-    const indCount = indicativeDecisions.filter((d) => d.choice_id === choice.id).length
-    const finCount = finalDecisions.filter((d) => d.choice_id === choice.id).length
+  const choiceStats = choices.map(choice => {
+    const indCount = indicativeDecisions.filter(d => d.choice_id === choice.id).length;
+    const finCount = finalDecisions.filter(d => d.choice_id === choice.id).length;
 
     return {
       choice,
@@ -96,10 +97,10 @@ export function calculateVoteStats(
       finalCount: finCount,
       indicativePercentage: totalIndicative > 0 ? (indCount / totalIndicative) * 100 : 0,
       finalPercentage: totalFinal > 0 ? (finCount / totalFinal) * 100 : 0,
-    }
-  })
+    };
+  });
 
-  return { choices: choiceStats, totalIndicative, totalFinal }
+  return { choices: choiceStats, totalIndicative, totalFinal };
 }
 
 /**
@@ -110,5 +111,5 @@ export function useAgendaItemVoting() {
     getVotingPhase,
     calculateElectionStats,
     calculateVoteStats,
-  }
+  };
 }

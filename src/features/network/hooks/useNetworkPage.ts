@@ -9,17 +9,15 @@ import { useWorkflowEditor } from './useWorkflowEditor';
 import { useHierarchyLinkConflicts } from './useHierarchyLinkConflicts';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { toast } from 'sonner';
+import { getRelationshipTypeForGroup } from '../logic/groupRelationshipOrientation';
+import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import type {
+  GroupRelationshipFilter,
+  GroupedRelationshipRequest,
+  GroupedRelationshipSummary,
   NetworkTab,
   NormalizedGroupRelationship,
-  NetworkGroupEntity,
 } from '../types/network.types';
-
-interface GroupedRelationshipRequests {
-  group: NetworkGroupEntity;
-  rels: NormalizedGroupRelationship[];
-  type: 'parent' | 'child';
-}
 
 export function useNetworkPage(groupId: string) {
   const { t } = useTranslation();
@@ -47,7 +45,7 @@ export function useNetworkPage(groupId: string) {
 
   // Search & filter state for manage tab
   const [searchQuery, setSearchQuery] = useState('');
-  const [directionFilter, setDirectionFilter] = useState<'all' | 'parent' | 'child'>('all');
+  const [directionFilter, setDirectionFilter] = useState<GroupRelationshipFilter>('all');
   const [manageRightFilter, setManageRightFilter] = useState<Set<string>>(new Set(RIGHT_TYPES));
 
   const toggleManageRightFilter = useCallback((right: string) => {
@@ -64,18 +62,19 @@ export function useNetworkPage(groupId: string) {
 
   // Group incoming requests by source group
   const groupedIncoming = useMemo(() => {
-    const groups = new Map<string, GroupedRelationshipRequests>();
+    const groups = new Map<string, GroupedRelationshipRequest>();
     incomingRequests.forEach(rel => {
-      const isParent = rel.related_group?.id === groupId;
-      const otherGroup = isParent ? rel.group : rel.related_group;
+      const otherGroup = rel.group?.id === groupId ? rel.related_group : rel.group;
+      const relationshipType = getRelationshipTypeForGroup(rel, groupId);
       if (!otherGroup) return;
+      if (!relationshipType) return;
 
       let entry = groups.get(otherGroup.id);
       if (!entry) {
         entry = {
           group: otherGroup,
           rels: [],
-          type: isParent ? 'parent' : 'child',
+          type: relationshipType,
         };
         groups.set(otherGroup.id, entry);
       }
@@ -86,18 +85,19 @@ export function useNetworkPage(groupId: string) {
 
   // Group outgoing requests by target group
   const groupedOutgoing = useMemo(() => {
-    const groups = new Map<string, GroupedRelationshipRequests>();
+    const groups = new Map<string, GroupedRelationshipRequest>();
     outgoingRequests.forEach(rel => {
-      const isParent = rel.related_group?.id === groupId;
-      const otherGroup = isParent ? rel.group : rel.related_group;
+      const otherGroup = rel.group?.id === groupId ? rel.related_group : rel.group;
+      const relationshipType = getRelationshipTypeForGroup(rel, groupId);
       if (!otherGroup) return;
+      if (!relationshipType) return;
 
       let entry = groups.get(otherGroup.id);
       if (!entry) {
         entry = {
           group: otherGroup,
           rels: [],
-          type: isParent ? 'parent' : 'child',
+          type: relationshipType,
         };
         groups.set(otherGroup.id, entry);
       }
@@ -108,13 +108,41 @@ export function useNetworkPage(groupId: string) {
 
   // Filtered active relationships for manage tab
   const filteredRelationships = useMemo(() => {
-    let items: { group: NetworkGroupEntity; rights: string[]; type: 'parent' | 'child' }[] = [];
+    let items: GroupedRelationshipSummary[] = [];
 
     if (directionFilter !== 'child') {
-      items = items.concat(networkData.parents.map(p => ({ ...p, type: 'parent' as const })));
+      items = [
+        ...items,
+        ...networkData.parents.map(item => ({
+          group: item.group,
+          rights: item.rights,
+          type: 'parent' as const,
+        })),
+      ];
     }
     if (directionFilter !== 'parent') {
-      items = items.concat(networkData.children.map(c => ({ ...c, type: 'child' as const })));
+      items = [
+        ...items,
+        ...networkData.children.map(item => ({
+          group: item.group,
+          rights: item.rights,
+          type: 'child' as const,
+        })),
+      ];
+    }
+    if (directionFilter !== 'sibling') {
+      items = [
+        ...items,
+        ...networkData.siblings.map(item => ({
+          group: item.group,
+          rights: item.rights,
+          type: 'sibling' as const,
+        })),
+      ];
+    }
+
+    if (directionFilter !== 'all') {
+      items = items.filter(item => item.type === directionFilter);
     }
 
     // Filter by right type
@@ -128,11 +156,12 @@ export function useNetworkPage(groupId: string) {
     // Filter by search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      items = items.filter(
-        item =>
-          item.group.name?.toLowerCase().includes(query) ||
-          item.group.description?.toLowerCase().includes(query)
-      );
+      items = items.filter(item => {
+        const description =
+          typeof item.group.description === 'string' ? item.group.description.toLowerCase() : '';
+
+        return item.group.name?.toLowerCase().includes(query) || description.includes(query);
+      });
     }
 
     return items;
@@ -181,7 +210,8 @@ export function useNetworkPage(groupId: string) {
       }
 
       for (const rel of rels) {
-        await updateRelationship({ id: rel.id, status: 'active' });
+        const result = updateRelationship({ id: rel.id, status: 'active' });
+        await serverConfirmed(result);
       }
     },
     [canActivateLink, updateRelationship, t]
@@ -190,7 +220,10 @@ export function useNetworkPage(groupId: string) {
   const handleRejectRequest = useCallback(
     async (rels: NormalizedGroupRelationship[]) => {
       for (const rel of rels) {
-        await deleteRelationship({ id: rel.id });
+        const result = deleteRelationship({ id: rel.id });
+        if (result) {
+          await serverConfirmed(result);
+        }
       }
     },
     [deleteRelationship]
@@ -204,7 +237,10 @@ export function useNetworkPage(groupId: string) {
           (rel.related_group?.id === groupId && rel.group?.id === targetGroupId)
       );
       for (const rel of rels) {
-        await deleteRelationship({ id: rel.id });
+        const result = deleteRelationship({ id: rel.id });
+        if (result) {
+          await serverConfirmed(result);
+        }
       }
     },
     [activeRelationships, groupId, deleteRelationship]

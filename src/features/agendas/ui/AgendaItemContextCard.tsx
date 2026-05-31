@@ -37,7 +37,9 @@ import {
   AgendaEndedPill,
   AgendaStatusBadge,
   AgendaTypeBadge,
+  AgendaElectionModeBadge,
 } from './AgendaBadges';
+import type { ElectionMode } from '@/features/elections/logic/electionMode';
 
 interface AgendaItemContextCardProps {
   agendaItem: {
@@ -68,12 +70,14 @@ interface AgendaItemContextCardProps {
   election?: {
     id: string;
     title?: string | null;
+    election_mode?: ElectionMode | null;
+    seat_count?: number | null;
     role?: {
       id: string;
       title?: string | null;
       description?: string | null;
       term?: string | null;
-      group_id: string;
+      group_id?: string | null;
       group?: { id: string; name?: string | null } | null;
     } | null;
   } | null;
@@ -212,6 +216,13 @@ export function AgendaItemContextCard({
                     {durationMinutes} {t('common.minutes')}
                   </div>
                 )}
+                {election?.election_mode ? (
+                  <AgendaElectionModeBadge
+                    electionMode={election.election_mode}
+                    seatCount={election.seat_count}
+                    className="border-white/50 bg-white/70 text-gray-700 dark:border-gray-700 dark:bg-gray-900/60 dark:text-gray-200"
+                  />
+                ) : null}
               </div>
             </div>
           </div>
@@ -542,6 +553,12 @@ function ElectionDetailsSection({
             )}
 
             <div className="flex flex-wrap gap-2">
+              {election.election_mode ? (
+                <AgendaElectionModeBadge
+                  electionMode={election.election_mode}
+                  seatCount={election.seat_count}
+                />
+              ) : null}
               {role?.term && (
                 <Badge variant="secondary" className="text-xs">
                   <Calendar className="mr-1 h-3 w-3" />

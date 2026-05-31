@@ -35,6 +35,21 @@ CREATE INDEX idx_group_relationship_related ON public.group_relationship (relate
 ALTER TABLE public.group_relationship ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.group_relationship FOR ALL TO service_role USING (true);
 
+-- Sibling parliament source groups
+CREATE TABLE IF NOT EXISTS public.group_sibling_source (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
+  source_group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (group_id, source_group_id)
+);
+
+CREATE INDEX idx_group_sibling_source_group ON public.group_sibling_source (group_id);
+CREATE INDEX idx_group_sibling_source_source ON public.group_sibling_source (source_group_id);
+
+ALTER TABLE public.group_sibling_source ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.group_sibling_source FOR ALL TO service_role USING (true);
+
 -- Subscriber table
 CREATE TABLE IF NOT EXISTS public.subscriber (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

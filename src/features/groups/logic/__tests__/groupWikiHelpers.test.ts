@@ -1,6 +1,21 @@
 import { describe, expect, it } from 'vitest';
 
-import { groupRelationshipsByGroup } from '../groupWikiHelpers';
+import { countAcceptedMemberships, groupRelationshipsByGroup } from '../groupWikiHelpers';
+
+describe('countAcceptedMemberships', () => {
+  it('counts only accepted membership statuses', () => {
+    expect(
+      countAcceptedMemberships([
+        { id: 'active', status: 'active' },
+        { id: 'member', status: 'member' },
+        { id: 'admin', status: 'admin' },
+        { id: 'requested', status: 'requested' },
+        { id: 'invited', status: 'invited' },
+        { id: 'unknown', status: null },
+      ])
+    ).toBe(3);
+  });
+});
 
 describe('groupRelationshipsByGroup', () => {
   it('returns only active child groups and aggregates their rights', () => {

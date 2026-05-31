@@ -23,7 +23,12 @@ interface BlogItem {
 interface StatementItem {
   id: string;
   text?: string | null;
-  user?: { first_name?: string | null; last_name?: string | null; handle?: string | null; avatar?: string | null } | null;
+  user?: {
+    first_name?: string | null;
+    last_name?: string | null;
+    handle?: string | null;
+    avatar?: string | null;
+  } | null;
   upvotes?: number | null;
   downvotes?: number | null;
   comment_count?: number | null;
@@ -34,6 +39,7 @@ interface StatementItem {
 }
 
 interface BlogsAndStatementsViewProps {
+  groupId: string;
   blogs: BlogItem[];
   statements: StatementItem[];
   filter: ContentFilter;
@@ -41,11 +47,14 @@ interface BlogsAndStatementsViewProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   canManage: boolean;
+  canCreateBlog: boolean;
+  canCreateStatement: boolean;
   getEditorUrl: (blogId: string) => string;
   onDeleteBlog: (blogId: string, blogTitle: string) => void;
 }
 
 export function BlogsAndStatementsView({
+  groupId,
   blogs,
   statements,
   filter,
@@ -53,6 +62,8 @@ export function BlogsAndStatementsView({
   searchQuery,
   setSearchQuery,
   canManage,
+  canCreateBlog,
+  canCreateStatement,
   getEditorUrl,
   onDeleteBlog,
 }: BlogsAndStatementsViewProps) {
@@ -67,39 +78,43 @@ export function BlogsAndStatementsView({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">
-          {t('navigation.secondary.group.blogsAndStatements')}
-        </h1>
-        <div className="flex gap-2">
-          <Link to="/create/blog-entry">
-            <Button size="sm">
-              <Plus className="mr-1 h-4 w-4" />
-              Blog
-            </Button>
-          </Link>
-          <Link to="/create/statement">
-            <Button size="sm" variant="outline">
-              <Plus className="mr-1 h-4 w-4" />
-              Statement
-            </Button>
-          </Link>
-        </div>
+        <h1 className="text-3xl font-bold">{t('navigation.secondary.group.blogsAndStatements')}</h1>
+        {canCreateBlog || canCreateStatement ? (
+          <div className="flex gap-2">
+            {canCreateBlog ? (
+              <Link to="/create/blog-entry" search={{ groupId }}>
+                <Button size="sm">
+                  <Plus className="mr-1 h-4 w-4" />
+                  Blog
+                </Button>
+              </Link>
+            ) : null}
+            {canCreateStatement ? (
+              <Link to="/create/statement" search={{ groupId }}>
+                <Button size="sm" variant="outline">
+                  <Plus className="mr-1 h-4 w-4" />
+                  Statement
+                </Button>
+              </Link>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
       {/* Search + filter bar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
-          <Search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+          <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <Input
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
             placeholder="Search..."
             className="pl-9"
           />
         </div>
 
         <div className="flex gap-1">
-          {filters.map((f) => (
+          {filters.map(f => (
             <Button
               key={f.value}
               variant={filter === f.value ? 'default' : 'outline'}
@@ -121,7 +136,7 @@ export function BlogsAndStatementsView({
             </h2>
           )}
           <div className="grid gap-4 sm:grid-cols-2">
-            {blogs.map((blog) => (
+            {blogs.map(blog => (
               <div key={blog.id} className="relative">
                 <BlogTimelineCard
                   blog={{
@@ -133,21 +148,27 @@ export function BlogsAndStatementsView({
                     groupId: blog.group_id,
                     authorId: blog.user_id ?? undefined,
                     publishedAt: blog.date ?? undefined,
-                    hashtags: (blog.blog_hashtags ?? []).map((bh) => bh.hashtag).filter((h): h is { id: string; tag: string } => !!h),
+                    hashtags: (blog.blog_hashtags ?? [])
+                      .map(bh => bh.hashtag)
+                      .filter((h): h is { id: string; tag: string } => !!h),
                   }}
                 />
                 {canManage && (
-                  <div className="absolute right-2 top-2 flex gap-1">
+                  <div className="absolute top-2 right-2 flex gap-1">
                     <Link to={getEditorUrl(blog.id)}>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 bg-background/80 backdrop-blur-sm">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="bg-background/80 h-7 w-7 backdrop-blur-sm"
+                      >
                         <Edit className="h-3.5 w-3.5" />
                       </Button>
                     </Link>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 bg-background/80 backdrop-blur-sm text-destructive hover:text-destructive"
-                      onClick={(e) => {
+                      className="bg-background/80 text-destructive hover:text-destructive h-7 w-7 backdrop-blur-sm"
+                      onClick={e => {
                         e.preventDefault();
                         e.stopPropagation();
                         onDeleteBlog(blog.id, blog.title ?? '');
@@ -172,14 +193,16 @@ export function BlogsAndStatementsView({
             </h2>
           )}
           <div className="grid gap-4 sm:grid-cols-2">
-            {statements.map((s) => (
+            {statements.map(s => (
               <StatementTimelineCard
                 key={s.id}
                 statement={{
                   id: s.id,
                   content: s.text ?? '',
                   authorName: s.user
-                    ? [s.user.first_name, s.user.last_name].filter(Boolean).join(' ') || s.user.handle || ''
+                    ? [s.user.first_name, s.user.last_name].filter(Boolean).join(' ') ||
+                      s.user.handle ||
+                      ''
                     : '',
                   authorAvatar: s.user?.avatar ?? undefined,
                   supportCount: s.upvotes ?? undefined,
@@ -188,7 +211,9 @@ export function BlogsAndStatementsView({
                   imageUrl: s.image_url ?? undefined,
                   videoUrl: s.video_url ?? undefined,
                   groupId: s.group_id ?? undefined,
-                  hashtags: (s.statement_hashtags ?? []).map((sh) => sh.hashtag).filter((h): h is { id: string; tag: string } => !!h),
+                  hashtags: (s.statement_hashtags ?? [])
+                    .map(sh => sh.hashtag)
+                    .filter((h): h is { id: string; tag: string } => !!h),
                 }}
               />
             ))}
@@ -197,11 +222,14 @@ export function BlogsAndStatementsView({
       )}
 
       {/* Empty state */}
-      {filter !== 'statements' && blogs.length === 0 && filter !== 'blogs' && statements.length === 0 && (
-        <div className="py-12 text-center">
-          <p className="text-muted-foreground">No content yet.</p>
-        </div>
-      )}
+      {filter !== 'statements' &&
+        blogs.length === 0 &&
+        filter !== 'blogs' &&
+        statements.length === 0 && (
+          <div className="py-12 text-center">
+            <p className="text-muted-foreground">No content yet.</p>
+          </div>
+        )}
     </div>
   );
 }

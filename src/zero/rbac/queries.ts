@@ -7,8 +7,23 @@ export const rbacQueries = {
   membershipPermissions: defineQuery(z.object({ userId: z.string() }), ({ args: { userId } }) =>
     zql.group_membership
       .where('user_id', userId)
+      .where('status', 'IN', ['active', 'member', 'admin'])
       .related('membership_roles', q => q.related('role', rq => rq.related('action_rights')))
       .related('group')
+  ),
+
+  /** Active guest accesses for a user with attached guest roles→action_rights and group */
+  guestPermissions: defineQuery(z.object({ userId: z.string() }), ({ args: { userId } }) =>
+    zql.group_guest_access
+      .where('user_id', userId)
+      .where('status', 'active')
+      .related('guest_roles', q => q.related('role', rq => rq.related('action_rights')))
+      .related('group')
+  ),
+
+  /** Groups owned by the user, used as an owner fallback in RBAC checks */
+  ownedGroupPermissions: defineQuery(z.object({ userId: z.string() }), ({ args: { userId } }) =>
+    zql.group.where('owner_id', userId)
   ),
 
   /** Event participations for a user with attached roles→action_rights and event */

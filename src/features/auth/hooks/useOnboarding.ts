@@ -5,7 +5,6 @@ import { useUserActions } from '@/zero/users/useUserActions';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useAuth } from '@/providers/auth-provider';
 import { toast } from 'sonner';
-import { notifyMembershipRequest } from '@/features/notifications/utils/notification-helpers.ts';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 export type OnboardingStep = 'name' | 'groupSearch' | 'confirm' | 'ariaKai' | 'summary';
@@ -145,14 +144,6 @@ export function useOnboarding(): UseOnboardingReturn {
         group_id: data.selectedGroup.id,
         status: 'requested',
         visibility: '',
-      });
-
-      // Notify group admins/members with manage rights
-      await notifyMembershipRequest({
-        senderId: user.id,
-        senderName: user.email?.split('@')[0] || 'A user',
-        groupId: data.selectedGroup.id,
-        groupName: data.selectedGroup.name,
       });
 
       setData(prev => ({ ...prev, requestMembership: true, membershipRequestSent: true }));

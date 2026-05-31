@@ -8,12 +8,30 @@ import { useEventActions } from '@/zero/events/useEventActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
 import { useAuth } from '@/providers/auth-provider';
 import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { buildRecurringEventFields } from '@/features/events/logic/buildRecurringEventFields';
+import { buildEventTemporalFields } from '@/features/events/logic/buildEventTemporalFields';
+import { getEventTimeSeriesValidationError } from '@/features/events/logic/eventTimeSeriesValidation';
+import {
+  parseRRuleToFormState,
+  type RecurrencePattern,
+} from '@/features/events/logic/rruleHelpers';
 import {
   EMPTY_RICH_TEXT_VALUE,
   richTextToPlainText,
   toRichTextValue,
   toZeroRichTextValue,
 } from '@/features/shared/logic/richText';
+import {
+  formatLocalDateInput,
+  formatLocalTimeInput,
+  formatLocalDateTimeInput,
+  getIsoWeekdayIndex,
+} from '@/features/shared/logic/localDateTime';
+import {
+  normalizeDelegateElectionMode,
+  type ElectionMode,
+} from '@/features/elections/logic/electionMode';
 
 export interface EventFormData {
   title: string;
@@ -42,6 +60,30 @@ export interface EventFormData {
   registrationDeadline: string;
   amendmentDeadline: string;
   candidacyDeadline: string;
+  delegatesNominationDeadline: string;
+  delegateAllocationMode: 'ratio' | 'total';
+  delegateTotalSeats: string;
+  delegateMembersPerSeat: string;
+  delegateElectionMode: ElectionMode;
+  recurrencePattern: RecurrencePattern;
+  recurrenceInterval: number;
+  recurrenceWeekdays: number[];
+  recurrenceEndDate: string;
+}
+
+const RECURRENCE_PATTERNS: RecurrencePattern[] = [
+  'none',
+  'daily',
+  'weekly',
+  'monthly',
+  'yearly',
+  'four-yearly',
+];
+
+function normalizeRecurrencePattern(value: string | null | undefined): RecurrencePattern {
+  return RECURRENCE_PATTERNS.includes(value as RecurrencePattern)
+    ? (value as RecurrencePattern)
+    : 'none';
 }
 
 /**
@@ -51,6 +93,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
   const navigate = useNavigate();
   const isCreating = mode === 'create';
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   const [formData, setFormData] = useState<EventFormData>({
     title: '',
@@ -79,6 +122,15 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
     registrationDeadline: '',
     amendmentDeadline: '',
     candidacyDeadline: '',
+    delegatesNominationDeadline: '',
+    delegateAllocationMode: 'ratio',
+    delegateTotalSeats: '',
+    delegateMembersPerSeat: '10',
+    delegateElectionMode: 'list',
+    recurrencePattern: 'none',
+    recurrenceInterval: 1,
+    recurrenceWeekdays: [],
+    recurrenceEndDate: '',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -110,17 +162,43 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
   useEffect(() => {
     if (event && !initializedRef.current) {
       initializedRef.current = true;
-      // Format dates into separate date and time parts
-      const formatDatePart = (date: string | number | null | undefined) => {
-        if (!date) return '';
-        const d = new Date(date);
-        return d.toISOString().slice(0, 10); // YYYY-MM-DD
-      };
-      const formatTimePart = (date: string | number | null | undefined) => {
-        if (!date) return '';
-        const d = new Date(date);
-        return d.toISOString().slice(11, 16); // HH:mm
-      };
+      let recurrencePattern: RecurrencePattern = 'none';
+      let recurrenceInterval = 1;
+      let recurrenceWeekdays: number[] = [];
+      let recurrenceEndDate = '';
+
+      if (event.is_recurring) {
+        try {
+          const parsedRecurrence = event.recurrence_rule
+            ? parseRRuleToFormState(event.recurrence_rule)
+            : null;
+
+          if (parsedRecurrence) {
+            recurrencePattern = parsedRecurrence.pattern;
+            recurrenceInterval = parsedRecurrence.interval;
+            recurrenceWeekdays = [...parsedRecurrence.weekdays];
+            recurrenceEndDate = parsedRecurrence.endDate ?? '';
+          } else {
+            recurrencePattern = normalizeRecurrencePattern(event.recurrence_pattern);
+            recurrenceInterval = event.recurrence_interval ?? 1;
+            recurrenceWeekdays = Array.isArray(event.recurrence_days)
+              ? [...event.recurrence_days].sort((left, right) => left - right)
+              : [];
+            recurrenceEndDate = formatLocalDateInput(event.recurrence_end_date);
+          }
+        } catch {
+          recurrencePattern = normalizeRecurrencePattern(event.recurrence_pattern);
+          recurrenceInterval = event.recurrence_interval ?? 1;
+          recurrenceWeekdays = Array.isArray(event.recurrence_days)
+            ? [...event.recurrence_days].sort((left, right) => left - right)
+            : [];
+          recurrenceEndDate = formatLocalDateInput(event.recurrence_end_date);
+        }
+
+        if (recurrencePattern === 'weekly' && recurrenceWeekdays.length === 0 && event.start_date) {
+          recurrenceWeekdays = [getIsoWeekdayIndex(event.start_date)];
+        }
+      }
 
       setFormData({
         title: event.title || '',
@@ -140,24 +218,34 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
         houseNumber: event.house_number || '',
         latitude: event.latitude ?? null,
         longitude: event.longitude ?? null,
-        startDate: formatDatePart(event.start_date),
-        startTime: formatTimePart(event.start_date),
-        endDate: formatDatePart(event.end_date),
-        endTime: formatTimePart(event.end_date),
+        startDate: formatLocalDateInput(event.start_date),
+        startTime: formatLocalTimeInput(event.start_date),
+        endDate: formatLocalDateInput(event.end_date),
+        endTime: formatLocalTimeInput(event.end_date),
         capacity: event.capacity?.toString() || '',
         groupId: event.group_id || '',
         imageURL: event.image_url || '',
         visibility: (event.visibility as Visibility) ?? 'public',
         tags: [],
-        registrationDeadline: event.registration_deadline
-          ? new Date(event.registration_deadline).toISOString().slice(0, 16)
-          : '',
-        amendmentDeadline: event.amendment_deadline
-          ? new Date(event.amendment_deadline).toISOString().slice(0, 16)
-          : '',
-        candidacyDeadline: event.candidacy_deadline
-          ? new Date(event.candidacy_deadline).toISOString().slice(0, 16)
-          : '',
+        registrationDeadline: formatLocalDateTimeInput(event.registration_deadline),
+        amendmentDeadline: formatLocalDateTimeInput(event.amendment_deadline),
+        candidacyDeadline: formatLocalDateTimeInput(event.candidacy_deadline),
+        delegatesNominationDeadline: formatLocalDateTimeInput(event.delegates_nomination_deadline),
+        delegateAllocationMode:
+          event.delegate_seat_allocation_type === 'fixed_total' || event.total_delegate_seats
+            ? 'total'
+            : 'ratio',
+        delegateTotalSeats: event.total_delegate_seats?.toString() || '',
+        delegateMembersPerSeat:
+          event.main_group_delegate_allocation_mode &&
+          !Number.isNaN(Number.parseInt(event.main_group_delegate_allocation_mode, 10))
+            ? String(Math.max(1, Number.parseInt(event.main_group_delegate_allocation_mode, 10)))
+            : '10',
+        delegateElectionMode: normalizeDelegateElectionMode(event.delegate_election_mode),
+        recurrencePattern,
+        recurrenceInterval,
+        recurrenceWeekdays,
+        recurrenceEndDate,
       });
     }
   }, [event]);
@@ -174,6 +262,12 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
       descriptionContent: value,
     }));
   };
+
+  const timeSeriesValidationError = getEventTimeSeriesValidationError({
+    startDate: formData.startDate,
+    recurrencePattern: formData.recurrencePattern,
+    recurrenceWeekdays: formData.recurrenceWeekdays,
+  });
 
   const removeImage = () => {
     if (isCreating) {
@@ -192,6 +286,43 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
     setIsSubmitting(true);
 
     try {
+      if (timeSeriesValidationError === 'missing-start-date') {
+        toast.error(t('features.events.editPage.timeSeries.validation.startDateRequired'));
+        return;
+      }
+
+      if (timeSeriesValidationError === 'missing-weekdays') {
+        toast.error(t('features.events.editPage.timeSeries.validation.weekdaysRequired'));
+        return;
+      }
+
+      const recurringFields = buildRecurringEventFields({
+        isRecurring: formData.recurrencePattern !== 'none',
+        recurrence: {
+          pattern: formData.recurrencePattern,
+          interval: formData.recurrenceInterval,
+          weekdays: formData.recurrenceWeekdays,
+          endDate: formData.recurrenceEndDate || null,
+        },
+      });
+      const {
+        start_date,
+        end_date,
+        registration_deadline,
+        amendment_deadline,
+        candidacy_deadline,
+        delegates_nomination_deadline,
+      } = buildEventTemporalFields({
+        startDate: formData.startDate,
+        startTime: formData.startTime,
+        endDate: formData.endDate,
+        endTime: formData.endTime,
+        registrationDeadline: formData.registrationDeadline,
+        amendmentDeadline: formData.amendmentDeadline,
+        candidacyDeadline: formData.candidacyDeadline,
+        delegatesNominationDeadline: formData.delegatesNominationDeadline,
+      });
+
       if (isCreating) {
         if (!user?.id) {
           toast.error('You must be logged in to create an event');
@@ -216,17 +347,32 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
           house_number: formData.locationType === 'physical' ? formData.houseNumber || null : null,
           latitude: formData.locationType === 'physical' ? formData.latitude : null,
           longitude: formData.locationType === 'physical' ? formData.longitude : null,
-          start_date: formData.startDate
-            ? new Date(`${formData.startDate}T${formData.startTime || '00:00'}`).getTime()
-            : null,
-          end_date: formData.endDate
-            ? new Date(`${formData.endDate}T${formData.endTime || '00:00'}`).getTime()
-            : null,
+          start_date,
+          end_date,
           visibility: formData.visibility,
           image_url: formData.imageURL || null,
           capacity: formData.capacity ? parseInt(formData.capacity, 10) : null,
           group_id: formData.groupId || null,
           creator_id: user.id,
+          delegates_nomination_deadline,
+          has_delegates: event?.event_type === 'delegate_assembly',
+          delegate_seat_allocation_type:
+            event?.event_type === 'delegate_assembly'
+              ? formData.delegateAllocationMode === 'total'
+                ? 'fixed_total'
+                : 'members_per_delegate'
+              : null,
+          total_delegate_seats:
+            event?.event_type === 'delegate_assembly' && formData.delegateAllocationMode === 'total'
+              ? Math.max(1, Number.parseInt(formData.delegateTotalSeats, 10) || 1)
+              : null,
+          main_group_delegate_allocation_mode:
+            event?.event_type === 'delegate_assembly' && formData.delegateAllocationMode === 'ratio'
+              ? String(Math.max(1, Number.parseInt(formData.delegateMembersPerSeat, 10) || 1))
+              : null,
+          delegate_election_mode:
+            event?.event_type === 'delegate_assembly' ? formData.delegateElectionMode : null,
+          ...recurringFields,
         };
 
         await createEvent(createData);
@@ -254,25 +400,34 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
           house_number: formData.locationType === 'physical' ? formData.houseNumber || null : null,
           latitude: formData.locationType === 'physical' ? formData.latitude : null,
           longitude: formData.locationType === 'physical' ? formData.longitude : null,
-          start_date: formData.startDate
-            ? new Date(`${formData.startDate}T${formData.startTime || '00:00'}`).getTime()
-            : undefined,
-          end_date: formData.endDate
-            ? new Date(`${formData.endDate}T${formData.endTime || '00:00'}`).getTime()
-            : undefined,
+          start_date,
+          end_date,
           visibility: formData.visibility,
           image_url: formData.imageURL || null,
           capacity: formData.capacity ? parseInt(formData.capacity, 10) : null,
           group_id: formData.groupId || null,
-          registration_deadline: formData.registrationDeadline
-            ? new Date(formData.registrationDeadline).getTime()
-            : undefined,
-          amendment_deadline: formData.amendmentDeadline
-            ? new Date(formData.amendmentDeadline).getTime()
-            : undefined,
-          candidacy_deadline: formData.candidacyDeadline
-            ? new Date(formData.candidacyDeadline).getTime()
-            : undefined,
+          registration_deadline,
+          amendment_deadline,
+          candidacy_deadline,
+          delegates_nomination_deadline,
+          has_delegates: event.event_type === 'delegate_assembly',
+          delegate_seat_allocation_type:
+            event.event_type === 'delegate_assembly'
+              ? formData.delegateAllocationMode === 'total'
+                ? 'fixed_total'
+                : 'members_per_delegate'
+              : null,
+          total_delegate_seats:
+            event.event_type === 'delegate_assembly' && formData.delegateAllocationMode === 'total'
+              ? Math.max(1, Number.parseInt(formData.delegateTotalSeats, 10) || 1)
+              : null,
+          main_group_delegate_allocation_mode:
+            event.event_type === 'delegate_assembly' && formData.delegateAllocationMode === 'ratio'
+              ? String(Math.max(1, Number.parseInt(formData.delegateMembersPerSeat, 10) || 1))
+              : null,
+          delegate_election_mode:
+            event.event_type === 'delegate_assembly' ? formData.delegateElectionMode : null,
+          ...recurringFields,
         };
 
         await updateEvent(updateData);
@@ -300,6 +455,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
     setFormData,
     updateField,
     updateDescriptionContent,
+    timeSeriesValidationError,
     removeImage,
     handleSubmit,
     isSubmitting,

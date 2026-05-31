@@ -8,154 +8,214 @@
  * For amendment votes: uses castIndicativeVote / castFinalVote from useVoteActions.
  */
 
-import { useCallback, useMemo } from 'react'
-import { useElectionActions } from '@/zero/elections/useElectionActions'
-import { useVoteActions } from '@/zero/votes/useVoteActions'
-import { usePermissions } from '@/zero/rbac'
-import { useAuth } from '@/providers/auth-provider'
-import { canUserVote, canUserBeCandidate, type VotingPhase } from '../logic/votePhaseHelpers'
+import { useCallback, useMemo } from 'react';
+import { useElectionActions } from '@/zero/elections/useElectionActions';
+import { useVoteActions } from '@/zero/votes/useVoteActions';
+import { usePermissions } from '@/zero/rbac';
+import { useAuth } from '@/providers/auth-provider';
+import { canUserVote, canUserBeCandidate, type VotingPhase } from '../logic/votePhaseHelpers';
+import {
+  createElectionFlowCorrelationId,
+  logElectionFlowClient,
+  logElectionFlowClientError,
+} from '@/features/elections/logic/electionFlowLogging';
 
 interface UseVoteCastingOptions {
-  agendaItemId: string
-  electionId?: string
-  voteId?: string
-  eventId?: string
+  agendaItemId: string;
+  electionId?: string;
+  voteId?: string;
+  eventId?: string;
   /** Election or vote status — drives phase derivation */
-  status?: string | null
+  status?: string | null;
   /** User's elector record id (for elections) */
-  electorId?: string
+  electorId?: string;
   /** User's voter record id (for votes) */
-  voterId?: string
+  voterId?: string;
   /** Whether the election/vote is public */
-  isPublic?: boolean
+  isPublic?: boolean;
 }
 
 export function useVoteCasting(options: UseVoteCastingOptions) {
-  const {
-    electionId,
-    voteId,
-    eventId,
-    status,
-    electorId,
-    voterId,
-    isPublic = true,
-  } = options
-  const { user } = useAuth()
-  const userId = user?.id
+  const { electionId, voteId, eventId, status, electorId, voterId, isPublic = true } = options;
+  const { user } = useAuth();
+  const userId = user?.id;
 
-  const { can } = usePermissions({ eventId })
+  const { can } = usePermissions({ eventId });
 
-  const electionActions = useElectionActions()
-  const voteActions = useVoteActions()
+  const electionActions = useElectionActions();
+  const voteActions = useVoteActions();
 
   // Derive phase from election/vote status
   const phase: VotingPhase = useMemo(() => {
-    if (status === 'final' || status === 'final_vote') return 'final_vote'
-    if (status === 'closed') return 'closed'
-    return 'indication'
-  }, [status])
+    if (status === 'final' || status === 'final_vote') return 'final_vote';
+    if (status === 'closed') return 'closed';
+    return 'indication';
+  }, [status]);
 
-  const isIndicationPhase = phase === 'indication'
-  const isFinalVotePhase = phase === 'final_vote'
-  const isClosed = phase === 'closed'
+  const isIndicationPhase = phase === 'indication';
+  const isFinalVotePhase = phase === 'final_vote';
+  const isClosed = phase === 'closed';
 
   // Permissions
-  const userCanVote = canUserVote({ can }, phase)
-  const userCanBeCandidate = canUserBeCandidate({ can })
-  const canManageVoting = can('manage', 'agendaItems')
+  const userCanVote = canUserVote({ can }, phase);
+  const userCanBeCandidate = canUserBeCandidate({ can });
+  const canManageVoting = can('manage', 'agendaItems');
 
   // Cast an election vote (creates participation + selection(s))
   const castElectionVote = useCallback(
     async (candidateIds: string[]) => {
-      if (!userId || !userCanVote || !electionId) return
+      if (!userId || !userCanVote || !electionId) return;
 
-      let resolvedElectorId = electorId
-      if (!resolvedElectorId) {
-        resolvedElectorId = crypto.randomUUID()
-        await electionActions.createElector({
-          id: resolvedElectorId,
+      const correlationId = createElectionFlowCorrelationId('election-vote-cast');
+      logElectionFlowClient('election-vote-cast', 'submit-started', {
+        correlationId,
+        electionId,
+        candidateIds,
+        phase,
+      });
+
+      try {
+        let resolvedElectorId = electorId;
+        if (!resolvedElectorId) {
+          resolvedElectorId = crypto.randomUUID();
+          await electionActions.createElector({
+            id: resolvedElectorId,
+            election_id: electionId,
+            user_id: userId,
+          });
+        }
+
+        const participationId = crypto.randomUUID();
+        const participationArgs = {
+          id: participationId,
           election_id: electionId,
-          user_id: userId,
-        })
-      }
+          elector_id: resolvedElectorId,
+        };
 
-      const participationId = crypto.randomUUID()
-      const participationArgs = {
-        id: participationId,
-        election_id: electionId,
-        elector_id: resolvedElectorId,
-      }
+        const selections = candidateIds.map(candidateId => ({
+          id: crypto.randomUUID(),
+          election_id: electionId,
+          candidate_id: candidateId,
+          elector_participation_id: isPublic ? participationId : null,
+        }));
 
-      const selections = candidateIds.map((candidateId) => ({
-        id: crypto.randomUUID(),
-        election_id: electionId,
-        candidate_id: candidateId,
-        elector_participation_id: isPublic ? participationId : null,
-      }))
+        if (isIndicationPhase) {
+          await electionActions.castIndicativeVote(participationArgs, selections);
+        } else {
+          await electionActions.castFinalVote(participationArgs, selections);
+        }
 
-      if (isIndicationPhase) {
-        await electionActions.castIndicativeVote(participationArgs, selections)
-      } else {
-        await electionActions.castFinalVote(participationArgs, selections)
+        logElectionFlowClient('election-vote-cast', 'submit-confirmed', {
+          correlationId,
+          electionId,
+          candidateIds,
+          phase,
+        });
+      } catch (error) {
+        logElectionFlowClientError('election-vote-cast', 'submit-failed', {
+          correlationId,
+          electionId,
+          candidateIds,
+          phase,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        throw error;
       }
     },
-    [userId, userCanVote, electionId, electorId, isPublic, isIndicationPhase, electionActions],
-  )
+    [
+      electionActions,
+      electionId,
+      electorId,
+      isIndicationPhase,
+      isPublic,
+      phase,
+      userCanVote,
+      userId,
+    ]
+  );
 
   // Cast an amendment/discussion vote (creates participation + decision)
   const castAmendmentVote = useCallback(
     async (choiceId: string) => {
-      if (!userId || !userCanVote || !voteId) return
+      if (!userId || !userCanVote || !voteId) return;
 
-      let resolvedVoterId = voterId
-      if (!resolvedVoterId) {
-        resolvedVoterId = crypto.randomUUID()
-        await voteActions.createVoter({
-          id: resolvedVoterId,
+      const correlationId = createElectionFlowCorrelationId('vote-cast');
+      logElectionFlowClient('vote-cast', 'submit-started', {
+        correlationId,
+        voteId,
+        choiceId,
+        phase,
+      });
+
+      try {
+        let resolvedVoterId = voterId;
+        if (!resolvedVoterId) {
+          resolvedVoterId = crypto.randomUUID();
+          await voteActions.createVoter({
+            id: resolvedVoterId,
+            vote_id: voteId,
+            user_id: userId,
+          });
+        }
+
+        const participationId = crypto.randomUUID();
+        const participationArgs = {
+          id: participationId,
           vote_id: voteId,
-          user_id: userId,
-        })
-      }
+          voter_id: resolvedVoterId,
+        };
 
-      const participationId = crypto.randomUUID()
-      const participationArgs = {
-        id: participationId,
-        vote_id: voteId,
-        voter_id: resolvedVoterId,
-      }
+        const decisions = [
+          {
+            id: crypto.randomUUID(),
+            vote_id: voteId,
+            choice_id: choiceId,
+            voter_participation_id: isPublic ? participationId : null,
+          },
+        ];
 
-      const decisions = [{
-        id: crypto.randomUUID(),
-        vote_id: voteId,
-        choice_id: choiceId,
-        voter_participation_id: isPublic ? participationId : null,
-      }]
+        if (isIndicationPhase) {
+          await voteActions.castIndicativeVote(participationArgs, decisions);
+        } else {
+          await voteActions.castFinalVote(participationArgs, decisions);
+        }
 
-      if (isIndicationPhase) {
-        await voteActions.castIndicativeVote(participationArgs, decisions)
-      } else {
-        await voteActions.castFinalVote(participationArgs, decisions)
+        logElectionFlowClient('vote-cast', 'submit-confirmed', {
+          correlationId,
+          voteId,
+          choiceId,
+          phase,
+        });
+      } catch (error) {
+        logElectionFlowClientError('vote-cast', 'submit-failed', {
+          correlationId,
+          voteId,
+          choiceId,
+          phase,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        throw error;
       }
     },
-    [userId, userCanVote, voteId, voterId, isPublic, isIndicationPhase, voteActions],
-  )
+    [isIndicationPhase, isPublic, phase, userCanVote, userId, voteActions, voteId, voterId]
+  );
 
   // Advance election/vote phase via status update
   const advanceElectionPhase = useCallback(
     async (newStatus: string) => {
-      if (!canManageVoting || !electionId) return
-      await electionActions.updateElection({ id: electionId, status: newStatus })
+      if (!canManageVoting || !electionId) return;
+      await electionActions.updateElection({ id: electionId, status: newStatus });
     },
-    [canManageVoting, electionId, electionActions],
-  )
+    [canManageVoting, electionId, electionActions]
+  );
 
   const advanceVotePhase = useCallback(
     async (newStatus: string) => {
-      if (!canManageVoting || !voteId) return
-      await voteActions.updateVote({ id: voteId, status: newStatus })
+      if (!canManageVoting || !voteId) return;
+      await voteActions.updateVote({ id: voteId, status: newStatus });
     },
-    [canManageVoting, voteId, voteActions],
-  )
+    [canManageVoting, voteId, voteActions]
+  );
 
   return {
     // Phase
@@ -177,5 +237,5 @@ export function useVoteCasting(options: UseVoteCastingOptions) {
     castElectionVote,
     advanceElectionPhase,
     advanceVotePhase,
-  }
+  };
 }

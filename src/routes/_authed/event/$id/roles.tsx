@@ -1,11 +1,11 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { EventRoles } from '@/features/roles/ui/EventRoles';
+import { createFileRoute, redirect } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/_authed/event/$id/roles')({
-  component: EventRolesPage,
+  beforeLoad: ({ params }) => {
+    throw redirect({
+      to: '/event/$id/participants',
+      params: { id: params.id },
+      search: { tab: 'roles' },
+    });
+  },
 });
-
-function EventRolesPage() {
-  const { id } = Route.useParams();
-  return <EventRoles eventId={id} />;
-}

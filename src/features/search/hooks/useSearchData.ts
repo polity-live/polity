@@ -5,6 +5,7 @@ import { useSearchState } from '@/zero/shared/useSearchState';
 type Cursor = [string, string, any, number];
 
 export function useSearchData(
+  searchQuery = '',
   cursors: {
     users?: { after?: Cursor; first: number };
     groups?: { after?: Cursor; first: number };
@@ -27,6 +28,7 @@ export function useSearchData(
 
   const searchState = useSearchState({
     userId: user?.id,
+    query: searchQuery,
     limits: {
       users: cursors.users?.first ?? 20,
       groups: cursors.groups?.first ?? 20,

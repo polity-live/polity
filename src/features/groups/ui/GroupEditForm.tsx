@@ -20,6 +20,20 @@ import { useState, useRef } from 'react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { CreateReviewCard, SummaryField } from '@/features/shared/ui/ui/create-review-card';
 import { formatLocation } from '@/features/shared/logic/locationHelpers';
+import { useAllGroups, useGroupState } from '@/zero/groups/useGroupState';
+import { getGroupRelationshipRightLabel } from '@/features/network/ui/GroupRelationshipFields';
+import { RIGHT_TYPES, type RightType } from '@/features/network/ui/RightFilters';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/features/shared/ui/ui/select';
+import { Label } from '@/features/shared/ui/ui/label';
+import { Checkbox } from '@/features/shared/ui/ui/checkbox';
+import { useGroupConflictPreflight } from '../hooks/useGroupConflictPreflight';
+import { GroupConflictDialog, GroupConflictPanel } from './GroupConflictPanel';
 
 interface GroupEditFormProps {
   groupId: string;
@@ -51,8 +65,46 @@ export function GroupEditForm({
     handleSubmit,
     isSubmitting,
   } = useGroupUpdate(groupId, initialData, { actorId, visibility, groupType });
+  const { groups: allGroups } = useAllGroups();
+  const { roles: connectedGroupRoles } = useGroupState({
+    groupId: formData.connected_group_id ?? undefined,
+  });
+  const selectableConnectedGroups = allGroups.filter(
+    group => group.id !== groupId && group.group_type !== 'sibling'
+  );
+  const selectableConnectedRoles = (connectedGroupRoles ?? []).filter(
+    role => role.scope === 'group' && role.assignee_kind !== 'guest'
+  );
+  const relationshipDirectionOptions: {
+    value: GroupFormData['connected_relationship_directions'][RightType];
+    label: string;
+  }[] = [
+    { value: 'none', label: 'Keine' },
+    { value: 'outgoing', label: 'Aktuelle Gruppe -> andere' },
+    { value: 'incoming', label: 'Andere -> aktuelle Gruppe' },
+    { value: 'bidirectional', label: 'Beidseitig' },
+  ];
+  const siblingConfigurationPreflight = useGroupConflictPreflight(
+    groupType === 'sibling'
+      ? {
+          kind: 'sibling_configuration',
+          group_id: groupId,
+          group_type: 'sibling',
+          connected_group_id: formData.connected_group_id ?? null,
+          sibling_membership_mode: formData.sibling_membership_mode ?? null,
+          sibling_role_id: formData.sibling_role_id ?? null,
+          parliament_source_group_ids: formData.parliament_source_group_ids ?? [],
+        }
+      : null,
+    { enabled: groupType === 'sibling' }
+  );
 
   const onFormSubmit = (e: React.FormEvent) => {
+    if (siblingConfigurationPreflight.blocking) {
+      e.preventDefault();
+      return;
+    }
+
     if (isCreating && !showReview) {
       e.preventDefault();
       if (!formData.name.trim()) return;
@@ -76,11 +128,16 @@ export function GroupEditForm({
         </div>
         <div className="max-w-2xl">
           <CreateReviewCard
+            entityType="group"
             badge={t('pages.create.group.reviewBadge')}
             title={formData.name || 'Untitled Group'}
             subtitle={formData.description || undefined}
             hashtags={formData.hashtags}
-            gradient="from-sky-100 to-indigo-100 dark:from-sky-900/40 dark:to-indigo-900/50"
+            media={
+              formData.imageURL
+                ? { imageUrl: formData.imageURL, imageAlt: formData.name || 'Group image' }
+                : undefined
+            }
           >
             {formatLocation(formData) && (
               <SummaryField
@@ -93,7 +150,11 @@ export function GroupEditForm({
             <Button variant="outline" onClick={() => setShowReview(false)}>
               {t('pages.create.previous')}
             </Button>
-            <Button onClick={confirmCreate} disabled={isSubmitting} className="flex-1">
+            <Button
+              onClick={confirmCreate}
+              disabled={isSubmitting || siblingConfigurationPreflight.blocking}
+              className="flex-1"
+            >
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -106,7 +167,7 @@ export function GroupEditForm({
           </div>
         </div>
         {/* Hidden form to allow real submission */}
-        <form ref={formRef} onSubmit={handleSubmit} className="hidden" />
+        <form ref={formRef} onSubmit={onFormSubmit} className="hidden" />
       </div>
     );
   }
@@ -138,6 +199,176 @@ export function GroupEditForm({
       {/* Group Type */}
       {groupType && <GroupTypeSection groupType={groupType} />}
 
+      {groupType === 'sibling' ? (
+        <div className="space-y-4 rounded-lg border p-4">
+          <div className="space-y-2">
+            <Label>Verbundene Gruppe</Label>
+            <Select
+              value={formData.connected_group_id ?? ''}
+              onValueChange={value => updateField('connected_group_id', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Gruppe waehlen" />
+              </SelectTrigger>
+              <SelectContent>
+                {selectableConnectedGroups.map(group => (
+                  <SelectItem key={group.id} value={group.id}>
+                    {group.name || 'Group'}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Mitgliedschaftsmodus</Label>
+            <Select
+              value={formData.sibling_membership_mode ?? 'open'}
+              onValueChange={value =>
+                updateField(
+                  'sibling_membership_mode',
+                  value as GroupFormData['sibling_membership_mode']
+                )
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="open">Offen</SelectItem>
+                <SelectItem value="elected">Gewaehlt</SelectItem>
+                <SelectItem value="parliament">Parlament</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {formData.sibling_membership_mode === 'elected' ? (
+            <div className="space-y-2">
+              <Label>Verbundene Rolle</Label>
+              <Select
+                value={formData.sibling_role_id ?? ''}
+                onValueChange={value => updateField('sibling_role_id', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Rolle waehlen" />
+                </SelectTrigger>
+                <SelectContent>
+                  {selectableConnectedRoles.map(role => (
+                    <SelectItem key={role.id} value={role.id}>
+                      {role.name || 'Role'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : null}
+
+          {formData.sibling_membership_mode === 'parliament' ? (
+            <div className="space-y-2">
+              <Label>Parlamentsquellen</Label>
+              <div className="grid gap-2 rounded-lg border p-3">
+                {allGroups
+                  .filter(group => group.id !== groupId)
+                  .map(group => {
+                    const checked =
+                      formData.parliament_source_group_ids?.includes(group.id) ?? false;
+                    return (
+                      <Label
+                        key={group.id}
+                        className="flex items-center gap-3 rounded-md border px-3 py-2"
+                      >
+                        <Checkbox
+                          checked={checked}
+                          onCheckedChange={nextChecked =>
+                            updateField(
+                              'parliament_source_group_ids',
+                              nextChecked === true
+                                ? [
+                                    ...new Set([
+                                      ...(formData.parliament_source_group_ids ?? []),
+                                      group.id,
+                                    ]),
+                                  ]
+                                : (formData.parliament_source_group_ids ?? []).filter(
+                                    currentId => currentId !== group.id
+                                  )
+                            )
+                          }
+                        />
+                        <span className="text-sm">{group.name || 'Group'}</span>
+                      </Label>
+                    );
+                  })}
+              </div>
+            </div>
+          ) : null}
+
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label>Rechterichtung</Label>
+              <p className="text-muted-foreground text-xs">
+                Lege pro Recht fest, in welche Richtung die Verbindung zur verbundenen Gruppe wirkt.
+              </p>
+            </div>
+            <div className="grid gap-3">
+              {RIGHT_TYPES.map(right => (
+                <div
+                  key={right}
+                  className="grid gap-2 rounded-lg border p-3 md:grid-cols-[220px_minmax(0,1fr)] md:items-center"
+                >
+                  <div className="text-sm font-medium">
+                    {getGroupRelationshipRightLabel(right, t)}
+                  </div>
+                  <Select
+                    value={formData.connected_relationship_directions[right]}
+                    onValueChange={value =>
+                      updateField('connected_relationship_directions', {
+                        ...formData.connected_relationship_directions,
+                        [right]:
+                          value as GroupFormData['connected_relationship_directions'][RightType],
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {relationshipDirectionOptions.map(option => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {siblingConfigurationPreflight.blocking ? (
+            <div className="space-y-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold">
+                    {siblingConfigurationPreflight.response.summary ??
+                      'Diese Konfiguration ist aktuell blockiert.'}
+                  </div>
+                  <div className="text-muted-foreground text-sm">
+                    Bitte bereinige die Konflikte, bevor du speicherst.
+                  </div>
+                </div>
+                <GroupConflictDialog
+                  response={siblingConfigurationPreflight.response}
+                  triggerLabel="Details"
+                  title="Warum ist diese Konfiguration blockiert?"
+                />
+              </div>
+              <GroupConflictPanel response={siblingConfigurationPreflight.response} />
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
       {/* Location Information */}
       <LocationInfoSection formData={formData} onChange={updateField} />
 
@@ -163,7 +394,11 @@ export function GroupEditForm({
             Cancel
           </Button>
         )}
-        <Button type="submit" disabled={isSubmitting} className="flex-1">
+        <Button
+          type="submit"
+          disabled={isSubmitting || siblingConfigurationPreflight.blocking}
+          className="flex-1"
+        >
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -13,7 +13,9 @@ import { useGroupData } from '../hooks/useGroupData';
 import { GroupEditForm } from './GroupEditForm';
 import { useAuth } from '@/providers/auth-provider';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { RIGHT_TYPES, type RightType } from '@/features/network/ui/RightFilters';
 import { richTextToPlainText, toRichTextValue } from '@/features/shared/logic/richText';
+import type { GroupFormData, GroupType, RelationshipDirection } from '../hooks/useGroupUpdate';
 
 interface GroupEditProps {
   groupId: string;
@@ -24,6 +26,74 @@ export function GroupEdit({ groupId }: GroupEditProps) {
   const { t } = useTranslation();
   const { group, isLoading } = useGroupData(groupId);
   const { user } = useAuth();
+  const connectedRelationshipDirections: Record<RightType, RelationshipDirection> = {
+    informationRight: 'none',
+    amendmentRight: 'none',
+    rightToSpeak: 'none',
+    activeVotingRight: 'none',
+    passiveVotingRight: 'none',
+  };
+
+  const connectedGroupId = group?.connected_group_id ?? null;
+
+  if (group?.group_type === 'sibling' && connectedGroupId) {
+    for (const right of RIGHT_TYPES) {
+      const hasOutgoing = (group.relationships_as_source ?? []).some(
+        relationship =>
+          relationship.relationship_type === 'sibling' &&
+          relationship.related_group_id === connectedGroupId &&
+          relationship.with_right === right
+      );
+      const hasIncoming = (group.relationships_as_target ?? []).some(
+        relationship =>
+          relationship.relationship_type === 'sibling' &&
+          relationship.group_id === connectedGroupId &&
+          relationship.with_right === right
+      );
+
+      connectedRelationshipDirections[right] = hasOutgoing
+        ? hasIncoming
+          ? 'bidirectional'
+          : 'outgoing'
+        : hasIncoming
+          ? 'incoming'
+          : 'none';
+    }
+  }
+
+  const initialFormData: Partial<GroupFormData> | undefined = group
+    ? ({
+        name: group.name ?? '',
+        description: richTextToPlainText(group.description),
+        descriptionContent: toRichTextValue(group.description) as Value,
+        email: group.email ?? '',
+        country: group.country ?? '',
+        region: group.region ?? '',
+        post_code: group.post_code ?? '',
+        website: group.website ?? '',
+        youtube: group.youtube ?? '',
+        linkedin: group.linkedin ?? '',
+        whatsapp: group.whatsapp ?? '',
+        instagram: group.instagram ?? '',
+        twitter: group.twitter ?? group.x ?? '',
+        facebook: group.facebook ?? '',
+        snapchat: group.snapchat ?? '',
+        tiktok: group.tiktok ?? '',
+        city: group.city ?? '',
+        street: group.street ?? '',
+        house_number: group.house_number ?? '',
+        latitude: group.latitude ?? null,
+        longitude: group.longitude ?? null,
+        imageURL: group.image_url ?? '',
+        connected_group_id: group.connected_group_id ?? null,
+        sibling_membership_mode:
+          (group.sibling_membership_mode as GroupFormData['sibling_membership_mode']) ?? null,
+        sibling_role_id: group.sibling_role_id ?? null,
+        parliament_source_group_ids:
+          (group.sibling_sources ?? []).map(sourceLink => sourceLink.source_group_id) ?? [],
+        connected_relationship_directions: connectedRelationshipDirections,
+      } as Partial<GroupFormData>)
+    : undefined;
 
   // Loading state
   if (isLoading) {
@@ -64,38 +134,11 @@ export function GroupEdit({ groupId }: GroupEditProps) {
 
       <GroupEditForm
         groupId={groupId}
-        initialData={
-          group
-            ? {
-                name: group.name ?? '',
-                description: richTextToPlainText(group.description),
-                descriptionContent: toRichTextValue(group.description) as Value,
-                email: group.email ?? '',
-                country: group.country ?? '',
-                region: group.region ?? '',
-                post_code: group.post_code ?? '',
-                website: group.website ?? '',
-                youtube: group.youtube ?? '',
-                linkedin: group.linkedin ?? '',
-                whatsapp: group.whatsapp ?? '',
-                instagram: group.instagram ?? '',
-                twitter: group.twitter ?? group.x ?? '',
-                facebook: group.facebook ?? '',
-                snapchat: group.snapchat ?? '',
-                tiktok: group.tiktok ?? '',
-                city: group.city ?? '',
-                street: group.street ?? '',
-                house_number: group.house_number ?? '',
-                latitude: group.latitude ?? null,
-                longitude: group.longitude ?? null,
-                imageURL: group.image_url ?? '',
-              }
-            : undefined
-        }
+        initialData={initialFormData}
         onCancel={() => navigate({ to: `/group/${groupId}` })}
         actorId={user?.id ?? undefined}
         visibility={group?.visibility as 'public' | 'private' | 'authenticated' | undefined}
-        groupType={group.group_type}
+        groupType={group.group_type as GroupType}
       />
     </div>
   );

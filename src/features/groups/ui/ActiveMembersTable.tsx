@@ -4,6 +4,8 @@
  * Displays active group members with role management and actions.
  */
 
+import { Link } from '@tanstack/react-router';
+import { useTranslation } from 'react-i18next';
 import {
   Card,
   CardContent,
@@ -21,8 +23,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/features/shared/ui/ui/table';
-import { ArrowDown, ArrowUp, ArrowUpDown, Trash2, Users } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Eye, Trash2, Users } from 'lucide-react';
 import { getMembershipDisplayRoles } from '../logic/buildMembershipRightsSummary';
+import { getMembershipProvenanceDisplayLabel } from '../logic/membershipComposition';
+import { getTableTagSurfaceClassName } from '@/features/shared/ui/ui/table-tag';
+import { badgeVariants } from '@/features/shared/ui/ui/badge';
+import { cn } from '@/features/shared/utils/utils.ts';
 import type { ParticipationLike } from '@/features/shared/types/participation';
 import type { MembershipSort, MembershipSortField } from '../types/group.types';
 import { RoleTag } from './RoleTag';
@@ -39,6 +45,7 @@ interface ActiveMembersTableProps<TMembership extends ParticipationLike> {
   fallbackRoleLabel?: string;
   manageRolesLabel?: string;
   removeLabel?: string;
+  showProvenanceColumns?: boolean;
 }
 
 export function ActiveMembersTable<TMembership extends ParticipationLike>({
@@ -53,7 +60,33 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
   fallbackRoleLabel = 'Member',
   manageRolesLabel = 'Manage Roles',
   removeLabel = 'Remove',
+  showProvenanceColumns = false,
 }: ActiveMembersTableProps<TMembership>) {
+  const { t } = useTranslation();
+
+  const renderProvenanceGroupTag = (membership: TMembership, column: 'partGroup' | 'baseGroup') => {
+    const group = column === 'partGroup' ? membership.partGroup : membership.baseGroup;
+    const label = getMembershipProvenanceDisplayLabel(membership, column);
+
+    if (!group?.id) {
+      return <span>{label}</span>;
+    }
+
+    return (
+      <Link
+        to="/group/$id"
+        params={{ id: group.id }}
+        className={cn(
+          badgeVariants({ variant: 'outline' }),
+          getTableTagSurfaceClassName('group'),
+          'hover:opacity-90'
+        )}
+      >
+        {label}
+      </Link>
+    );
+  };
+
   return (
     <Card className="border-border/70 from-background to-muted/20 mb-6 bg-gradient-to-b">
       <CardHeader>
@@ -77,6 +110,12 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
                   <TableHead>
                     <SortButton label="Role" field="role" sort={sort} onSortChange={onSortChange} />
                   </TableHead>
+                  {showProvenanceColumns ? (
+                    <TableHead>{t('components.tableColumns.partGroup')}</TableHead>
+                  ) : null}
+                  {showProvenanceColumns ? (
+                    <TableHead>{t('components.tableColumns.baseGroup')}</TableHead>
+                  ) : null}
                   <TableHead>Joined</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -88,6 +127,7 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
                     [user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'Unknown User';
                   const userAvatar = user?.avatar || '';
                   const userHandle = user?.handle || '';
+                  const userId = user?.id || null;
                   const displayRoles = getMembershipDisplayRoles(membership);
                   const createdAt = membership.created_at
                     ? new Date(membership.created_at).toLocaleDateString()
@@ -96,28 +136,49 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
                   return (
                     <TableRow key={membership.id}>
                       <TableCell>
-                        <button
-                          type="button"
-                          className="flex items-center gap-3 text-left"
-                          onClick={() => onOpenRightsDialog(membership)}
-                        >
-                          <Avatar className="h-10 w-10">
-                            <AvatarImage src={userAvatar} alt={userName} />
-                            <AvatarFallback>
-                              {userName
-                                .split(' ')
-                                .map((n: string) => n[0])
-                                .join('')
-                                .toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="hover:underline">
-                            <div className="font-medium">{userName}</div>
-                            {userHandle && (
-                              <div className="text-muted-foreground text-sm">@{userHandle}</div>
-                            )}
+                        {user?.id ? (
+                          <Link
+                            to="/user/$id"
+                            params={{ id: user.id }}
+                            className="group flex items-center gap-3 text-left"
+                          >
+                            <Avatar className="h-10 w-10">
+                              <AvatarImage src={userAvatar} alt={userName} />
+                              <AvatarFallback>
+                                {userName
+                                  .split(' ')
+                                  .map((n: string) => n[0])
+                                  .join('')
+                                  .toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="group-hover:underline">
+                              <div className="font-medium">{userName}</div>
+                              {userHandle && (
+                                <div className="text-muted-foreground text-sm">@{userHandle}</div>
+                              )}
+                            </div>
+                          </Link>
+                        ) : (
+                          <div className="flex items-center gap-3 text-left">
+                            <Avatar className="h-10 w-10">
+                              <AvatarImage src={userAvatar} alt={userName} />
+                              <AvatarFallback>
+                                {userName
+                                  .split(' ')
+                                  .map((n: string) => n[0])
+                                  .join('')
+                                  .toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="font-medium">{userName}</div>
+                              {userHandle && (
+                                <div className="text-muted-foreground text-sm">@{userHandle}</div>
+                              )}
+                            </div>
                           </div>
-                        </button>
+                        )}
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-2">
@@ -136,9 +197,27 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
                           )}
                         </div>
                       </TableCell>
+                      {showProvenanceColumns ? (
+                        <TableCell className="text-muted-foreground">
+                          {renderProvenanceGroupTag(membership, 'partGroup')}
+                        </TableCell>
+                      ) : null}
+                      {showProvenanceColumns ? (
+                        <TableCell className="text-muted-foreground">
+                          {renderProvenanceGroupTag(membership, 'baseGroup')}
+                        </TableCell>
+                      ) : null}
                       <TableCell className="text-muted-foreground">{createdAt}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => onOpenRightsDialog(membership)}
+                          >
+                            <Eye className="mr-1 h-4 w-4" />
+                            Rights
+                          </Button>
                           <Button
                             variant="outline"
                             size="sm"
@@ -147,11 +226,11 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
                             <ArrowUpDown className="mr-1 h-4 w-4" />
                             {manageRolesLabel}
                           </Button>
-                          {membership.source !== 'derived' && user?.id && (
+                          {membership.source !== 'derived' && userId && (
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => onRemove(membership.id, user.id)}
+                              onClick={() => onRemove(membership.id, userId)}
                             >
                               <Trash2 className="h-4 w-4" />
                               <span className="ml-2">{removeLabel}</span>

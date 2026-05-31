@@ -16,6 +16,8 @@ const baseElectionSchema = z.object({
   closing_duration_seconds: z.number().nullable(),
   closing_end_time: nullableTimestampSchema,
   visibility: z.string(),
+  election_mode: z.string().nullable(),
+  seat_count: z.number().nullable(),
   max_votes: z.number(),
   created_at: timestampSchema,
   updated_at: timestampSchema,
@@ -27,6 +29,9 @@ export const createElectionSchema = baseElectionSchema
   .extend({
     id: z.string(),
     position_id: z.string().nullable().optional(),
+    election_mode: z.string().nullable().optional(),
+    seat_count: z.number().nullable().optional(),
+    debug_correlation_id: z.string().optional(),
   });
 export const updateElectionSchema = baseElectionSchema
   .pick({
@@ -38,11 +43,17 @@ export const updateElectionSchema = baseElectionSchema
     closing_duration_seconds: true,
     closing_end_time: true,
     visibility: true,
+    election_mode: true,
+    seat_count: true,
     max_votes: true,
     role_id: true,
   })
   .partial()
-  .extend({ id: z.string(), position_id: z.string().nullable().optional() });
+  .extend({
+    id: z.string(),
+    position_id: z.string().nullable().optional(),
+    debug_correlation_id: z.string().optional(),
+  });
 export const deleteElectionSchema = z.object({ id: z.string() });
 
 // ============================================

@@ -31,6 +31,16 @@ export function useDocumentActions() {
     (args: Parameters<typeof mutators.documents.updateContent>[0]) => {
       const result = zero.mutate(mutators.documents.updateContent(args));
       onServerError(result, () => toast.error(t('features.documents.toasts.updateFailed')));
+      return result;
+    },
+    [zero]
+  );
+
+  const updateGroupDocumentTitle = useCallback(
+    (args: Parameters<typeof mutators.documents.updateGroupDocumentTitle>[0]) => {
+      const result = zero.mutate(mutators.documents.updateGroupDocumentTitle(args));
+      onServerError(result, () => toast.error(t('features.documents.toasts.updateFailed')));
+      return result;
     },
     [zero]
   );
@@ -178,6 +188,7 @@ export function useDocumentActions() {
     // CRUD
     createDocument,
     updateDocument,
+    updateGroupDocumentTitle,
     deleteDocument,
 
     // Versions

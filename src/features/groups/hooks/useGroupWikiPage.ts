@@ -1,6 +1,7 @@
 import { useGroupWikiData } from '@/zero/groups/useGroupState';
 import { useSubscribeGroup } from '@/features/groups/hooks/useSubscribeGroup';
 import { useGroupMembership } from '@/features/groups/hooks/useGroupMembership';
+import { countAcceptedMemberships } from '@/features/groups/logic/groupWikiHelpers';
 import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
 import { useAuth } from '@/providers/auth-provider';
 
@@ -21,6 +22,11 @@ export function useGroupWikiPage(groupId: string) {
     isMember,
     hasRequested,
     isInvited,
+    canRequestJoin,
+    canAcceptInvitation,
+    requestJoinDisabledReason,
+    requestJoinConflictResponse,
+    acceptInvitationConflictResponse,
     memberCount: membershipCount,
     isLoading: membershipLoading,
     requestJoin,
@@ -32,7 +38,8 @@ export function useGroupWikiPage(groupId: string) {
   const { group } = useGroupWikiData(groupId);
 
   // ── Derived counts ────────────────────────────────────────────────
-  const memberCount = group?.member_count ?? membershipCount ?? group?.memberships?.length ?? 0;
+  const memberCount =
+    group?.member_count ?? membershipCount ?? countAcceptedMemberships(group?.memberships);
   const eventsCount = group?.event_count ?? group?.events?.length ?? 0;
   const amendmentsCount = group?.amendment_count ?? group?.amendments?.length ?? 0;
 
@@ -58,12 +65,19 @@ export function useGroupWikiPage(groupId: string) {
 
     // Group type
     isHierarchical: group?.group_type === 'hierarchical',
+    isSibling: group?.group_type === 'sibling',
+    isOpenSibling: group?.group_type === 'sibling' && group?.sibling_membership_mode === 'open',
 
     // Membership
     status,
     isMember,
     hasRequested,
     isInvited,
+    canRequestJoin,
+    canAcceptInvitation,
+    requestJoinDisabledReason,
+    requestJoinConflictResponse,
+    acceptInvitationConflictResponse,
     membershipLoading,
     requestJoin,
     leaveGroup,

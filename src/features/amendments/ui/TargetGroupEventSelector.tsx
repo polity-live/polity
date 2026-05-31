@@ -22,19 +22,22 @@ import { Target, User, ChevronRight } from 'lucide-react';
 import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCard';
 import { EventTimelineCard } from '@/features/timeline/ui/cards/EventTimelineCard';
 
+export interface TargetGroupEventSelection {
+  groupId: string;
+  groupData: AmendmentNetworkGroup;
+  eventId: string;
+  eventData: AmendmentNetworkEvent;
+  pathWithEvents: PathWithEventSegment[];
+  selectedUserId: string;
+  pathMode: 'hierarchy' | 'workflow';
+  workflowId: string | null;
+}
+
 interface TargetGroupEventSelectorProps {
   userId: string;
   collaborators?: { id: string; name?: string; email?: string; avatar?: string }[];
-  onSelect: (data: {
-    groupId: string;
-    groupData: AmendmentNetworkGroup;
-    eventId: string;
-    eventData: AmendmentNetworkEvent;
-    pathWithEvents: PathWithEventSegment[];
-    selectedUserId: string;
-    pathMode: 'hierarchy' | 'workflow';
-    workflowId: string | null;
-  }) => void;
+  onSelect: (data: TargetGroupEventSelection | null) => void;
+  onGroupSelectionChange?: (groupId: string | null) => void;
   selectedGroupId?: string;
   selectedEventId?: string;
   /** Pass true when rendered inside a Dialog to avoid portal/focus-trap conflicts */
@@ -45,10 +48,15 @@ export function TargetGroupEventSelector({
   userId,
   collaborators = [],
   onSelect,
+  onGroupSelectionChange,
   selectedGroupId,
   selectedEventId,
   disablePortal = false,
 }: TargetGroupEventSelectorProps) {
+  const hasInitializedUserSelection = useRef(false);
+  const lastAppliedPrefillRef = useRef<string | null>(null);
+  const ignoredControlledGroupIdRef = useRef<string | null>(null);
+  const onGroupSelectionChangeRef = useRef(onGroupSelectionChange);
   const [selectedUserId, setSelectedUserId] = useState<string>(userId);
   const [selectedGroup, setSelectedGroup] = useState<{
     id: string;
@@ -82,6 +90,10 @@ export function TargetGroupEventSelector({
     eventGroupId: selectedGroup?.id,
   });
 
+  useEffect(() => {
+    onGroupSelectionChangeRef.current = onGroupSelectionChange;
+  }, [onGroupSelectionChange]);
+
   const networkData = {
     groups: groups ?? [],
     groupRelationships: groupRelationshipsData ?? [],
@@ -89,9 +101,31 @@ export function TargetGroupEventSelector({
     events: eventsData ?? [],
   };
 
+  const clearEmittedSelection = useCallback(() => {
+    if (lastEmittedSelectionRef.current === null) {
+      return;
+    }
+
+    lastEmittedSelectionRef.current = null;
+    onSelect(null);
+  }, [onSelect]);
+
   // Initialize selection from controlled props when network data becomes available.
   useEffect(() => {
-    if (!selectedGroupId) return;
+    if (!selectedGroupId) {
+      lastAppliedPrefillRef.current = null;
+      ignoredControlledGroupIdRef.current = null;
+      return;
+    }
+
+    if (ignoredControlledGroupIdRef.current === selectedGroupId) {
+      return;
+    }
+
+    const prefillSignature = `${selectedGroupId}:${selectedEventId ?? ''}`;
+    if (lastAppliedPrefillRef.current === prefillSignature) {
+      return;
+    }
 
     const initialGroup = networkData.groups.find(group => group.id === selectedGroupId);
     if (!initialGroup) return;
@@ -100,6 +134,7 @@ export function TargetGroupEventSelector({
 
     if (!selectedEventId) {
       setSelectedEvent(null);
+      lastAppliedPrefillRef.current = prefillSignature;
       return;
     }
 
@@ -109,23 +144,29 @@ export function TargetGroupEventSelector({
 
     if (initialEvent) {
       setSelectedEvent({ id: initialEvent.id, data: initialEvent });
+      lastAppliedPrefillRef.current = prefillSignature;
     }
   }, [networkData.events, networkData.groups, selectedEventId, selectedGroupId]);
 
-  // Reset selection when user changes
+  // Reset selection only when the selected user actually changes after initial mount.
+  // This avoids clearing a preselected group passed via selectedGroupId on first render.
   useEffect(() => {
+    if (!hasInitializedUserSelection.current) {
+      hasInitializedUserSelection.current = true;
+      return;
+    }
+
     setSelectedGroup(null);
     setSelectedEvent(null);
     setPathWithEvents([]);
     setPathValidationError(null);
-    lastEmittedSelectionRef.current = null;
+    onGroupSelectionChangeRef.current?.(null);
   }, [selectedUserId]);
 
   // Seed the computed path when user picks target group/event.
   useEffect(() => {
     if (!selectedGroup || !selectedEvent) {
       setPathWithEvents([]);
-      lastEmittedSelectionRef.current = null;
       return;
     }
 
@@ -183,21 +224,37 @@ export function TargetGroupEventSelector({
     });
   };
 
-  // Get connected groups for the selected user
-  const getConnectedGroups = () => {
-    if (!networkData) return [];
-
+  const connectedGroups = useMemo(() => {
     const currentUserId = selectedUserId || userId;
     const userGroupIds = getActiveUserGroupIds(networkData.groupMemberships, currentUserId);
 
-    return getUpwardConnectedGroupsForUser(
+    const derivedConnectedGroups = getUpwardConnectedGroupsForUser(
       userGroupIds,
       networkData.groups,
       networkData.groupRelationships
     );
-  };
 
-  const connectedGroups = getConnectedGroups();
+    if (!selectedGroupId) {
+      return derivedConnectedGroups;
+    }
+
+    const alreadyIncluded = derivedConnectedGroups.some(group => group.id === selectedGroupId);
+    if (alreadyIncluded) {
+      return derivedConnectedGroups;
+    }
+
+    const preselectedGroup = networkData.groups.find(group => group.id === selectedGroupId);
+    return preselectedGroup
+      ? [preselectedGroup, ...derivedConnectedGroups]
+      : derivedConnectedGroups;
+  }, [
+    selectedUserId,
+    userId,
+    networkData.groupMemberships,
+    networkData.groups,
+    networkData.groupRelationships,
+    selectedGroupId,
+  ]);
 
   const getUpcomingEventsForGroup = useCallback(
     (groupId: string): AmendmentNetworkEvent[] => {
@@ -240,7 +297,9 @@ export function TargetGroupEventSelector({
             : 'No date';
 
           return event.location_name ? `${dateLabel} - ${event.location_name}` : dateLabel;
-        }
+        },
+        undefined,
+        event => `/event/${event.id}`
       ),
     [upcomingEvents]
   );
@@ -268,7 +327,26 @@ export function TargetGroupEventSelector({
 
   const updatePathSegmentEvent = useCallback(
     (groupId: string, item: TypeaheadItem | null) => {
-      if (!item) return;
+      if (!item) {
+        setPathWithEvents(previous =>
+          previous.map(segment =>
+            segment.groupId === groupId
+              ? {
+                  ...segment,
+                  eventId: null,
+                  eventTitle: '',
+                  eventStartDate: null,
+                }
+              : segment
+          )
+        );
+
+        if (selectedGroup?.id === groupId) {
+          setSelectedEvent(null);
+        }
+
+        return;
+      }
 
       // For the target group, search upcomingEvents (from groupEventsResult) first
       const event =
@@ -300,13 +378,14 @@ export function TargetGroupEventSelector({
   useEffect(() => {
     if (!selectedGroup || !selectedEvent || pathWithEvents.length === 0) {
       setPathValidationError(null);
+      clearEmittedSelection();
       return;
     }
 
     const validationError = validatePathEventOrder(pathWithEvents);
     setPathValidationError(validationError);
     if (validationError) {
-      lastEmittedSelectionRef.current = null;
+      clearEmittedSelection();
       return;
     }
 
@@ -351,7 +430,50 @@ export function TargetGroupEventSelector({
     selectedGroup,
     selectedUserId,
     validatePathEventOrder,
+    clearEmittedSelection,
   ]);
+
+  const handleGroupSelection = useCallback(
+    (availableGroups: readonly AmendmentNetworkGroup[], item: TypeaheadItem | null) => {
+      if (!item) {
+        ignoredControlledGroupIdRef.current = selectedGroup?.id ?? selectedGroupId ?? null;
+        setSelectedGroup(null);
+        setSelectedEvent(null);
+        setPathWithEvents([]);
+        setPathValidationError(null);
+        onGroupSelectionChange?.(null);
+        return;
+      }
+
+      const group = availableGroups.find(currentGroup => currentGroup.id === item.id);
+      if (!group) {
+        return;
+      }
+
+      ignoredControlledGroupIdRef.current = null;
+      setSelectedGroup({ id: group.id, data: group });
+      setSelectedEvent(null);
+      setPathWithEvents([]);
+      setPathValidationError(null);
+      onGroupSelectionChange?.(group.id);
+    },
+    [onGroupSelectionChange, selectedGroup?.id, selectedGroupId]
+  );
+
+  const handleEventSelection = useCallback(
+    (availableEvents: readonly AmendmentNetworkEvent[], item: TypeaheadItem | null) => {
+      if (!item) {
+        setSelectedEvent(null);
+        return;
+      }
+
+      const event = availableEvents.find(currentEvent => currentEvent.id === item.id);
+      if (event) {
+        setSelectedEvent({ id: event.id, data: event });
+      }
+    },
+    []
+  );
 
   return (
     <div className="space-y-4">
@@ -366,7 +488,8 @@ export function TargetGroupEventSelector({
                 'user',
                 u => u.name || 'User',
                 u => u.email,
-                u => u.avatar
+                u => u.avatar,
+                u => `/user/${u.id}`
               )}
               value={selectedUserId}
               onChange={(item: TypeaheadItem | null) => setSelectedUserId(item?.id ?? '')}
@@ -417,18 +540,16 @@ export function TargetGroupEventSelector({
                     'group',
                     g => g.name || 'Group',
                     g =>
-                      typeof g.description === 'string' ? g.description.substring(0, 60) : undefined
+                      typeof g.description === 'string'
+                        ? g.description.substring(0, 60)
+                        : undefined,
+                    undefined,
+                    g => `/group/${g.id}`
                   )}
                   value={selectedGroup?.id || ''}
-                  onChange={(item: TypeaheadItem | null) => {
-                    if (item) {
-                      const group = connectedGroups.find(g => g.id === item.id);
-                      if (group) {
-                        setSelectedGroup({ id: group.id, data: group });
-                        setSelectedEvent(null);
-                      }
-                    }
-                  }}
+                  onChange={(item: TypeaheadItem | null) =>
+                    handleGroupSelection(connectedGroups, item)
+                  }
                   placeholder="Search for a group..."
                   disablePortal={disablePortal}
                 />
@@ -444,14 +565,9 @@ export function TargetGroupEventSelector({
                   <TypeaheadSearch
                     items={targetEventItems}
                     value={selectedEvent?.id || ''}
-                    onChange={(item: TypeaheadItem | null) => {
-                      if (!item) {
-                        setSelectedEvent(null);
-                        return;
-                      }
-                      const event = upcomingEvents.find(entry => entry.id === item.id);
-                      if (event) setSelectedEvent({ id: event.id, data: event });
-                    }}
+                    onChange={(item: TypeaheadItem | null) =>
+                      handleEventSelection(upcomingEvents, item)
+                    }
                     placeholder="Search for an event..."
                     disablePortal={disablePortal}
                   />
@@ -469,7 +585,9 @@ export function TargetGroupEventSelector({
                   allWorkflows,
                   'group',
                   w => w.name || 'Untitled Workflow',
-                  w => (w.group?.name ? `Group: ${w.group.name}` : undefined)
+                  w => (w.group?.name ? `Group: ${w.group.name}` : undefined),
+                  undefined,
+                  w => (w.group_id ? `/group/${w.group_id}` : undefined)
                 )}
                 value={selectedWorkflowId}
                 onChange={(item: TypeaheadItem | null) => {
@@ -477,6 +595,7 @@ export function TargetGroupEventSelector({
                   setSelectedGroup(null);
                   setSelectedEvent(null);
                   setPathWithEvents([]);
+                  setPathValidationError(null);
                 }}
                 placeholder="Select a workflow..."
                 disablePortal={disablePortal}
@@ -506,18 +625,14 @@ export function TargetGroupEventSelector({
                             g =>
                               typeof g.description === 'string'
                                 ? g.description.substring(0, 60)
-                                : undefined
+                                : undefined,
+                            undefined,
+                            g => `/group/${g.id}`
                           )}
                           value={selectedGroup?.id || ''}
-                          onChange={(item: TypeaheadItem | null) => {
-                            if (item) {
-                              const group = workflowGroups.find(g => g.id === item.id);
-                              if (group) {
-                                setSelectedGroup({ id: group.id, data: group });
-                                setSelectedEvent(null);
-                              }
-                            }
-                          }}
+                          onChange={(item: TypeaheadItem | null) =>
+                            handleGroupSelection(workflowGroups, item)
+                          }
                           placeholder="Search for a group..."
                           disablePortal={disablePortal}
                         />
@@ -535,14 +650,9 @@ export function TargetGroupEventSelector({
                           <TypeaheadSearch
                             items={targetEventItems}
                             value={selectedEvent?.id || ''}
-                            onChange={(item: TypeaheadItem | null) => {
-                              if (!item) {
-                                setSelectedEvent(null);
-                                return;
-                              }
-                              const event = upcomingEvents.find(entry => entry.id === item.id);
-                              if (event) setSelectedEvent({ id: event.id, data: event });
-                            }}
+                            onChange={(item: TypeaheadItem | null) =>
+                              handleEventSelection(upcomingEvents, item)
+                            }
                             placeholder="Search for an event..."
                             disablePortal={disablePortal}
                           />
@@ -570,18 +680,14 @@ export function TargetGroupEventSelector({
                   'group',
                   g => g.name || 'Group',
                   g =>
-                    typeof g.description === 'string' ? g.description.substring(0, 60) : undefined
+                    typeof g.description === 'string' ? g.description.substring(0, 60) : undefined,
+                  undefined,
+                  g => `/group/${g.id}`
                 )}
                 value={selectedGroup?.id || ''}
-                onChange={(item: TypeaheadItem | null) => {
-                  if (item) {
-                    const group = connectedGroups.find(g => g.id === item.id);
-                    if (group) {
-                      setSelectedGroup({ id: group.id, data: group });
-                      setSelectedEvent(null);
-                    }
-                  }
-                }}
+                onChange={(item: TypeaheadItem | null) =>
+                  handleGroupSelection(connectedGroups, item)
+                }
                 placeholder="Search for a group..."
                 disablePortal={disablePortal}
               />
@@ -597,14 +703,9 @@ export function TargetGroupEventSelector({
                 <TypeaheadSearch
                   items={targetEventItems}
                   value={selectedEvent?.id || ''}
-                  onChange={(item: TypeaheadItem | null) => {
-                    if (!item) {
-                      setSelectedEvent(null);
-                      return;
-                    }
-                    const event = upcomingEvents.find(entry => entry.id === item.id);
-                    if (event) setSelectedEvent({ id: event.id, data: event });
-                  }}
+                  onChange={(item: TypeaheadItem | null) =>
+                    handleEventSelection(upcomingEvents, item)
+                  }
                   placeholder="Search for an event..."
                   disablePortal={disablePortal}
                 />
@@ -662,7 +763,9 @@ export function TargetGroupEventSelector({
                                 hour: 'numeric',
                                 minute: '2-digit',
                               })
-                            : 'No date'
+                            : 'No date',
+                        undefined,
+                        event => `/event/${event.id}`
                       )}
                       value={segment.eventId ?? undefined}
                       onChange={(item: TypeaheadItem | null) =>
@@ -690,7 +793,6 @@ export function TargetGroupEventSelector({
 
 interface DisplayGroupData {
   id: string;
-  abbr?: string | null;
   name?: string | null;
   description?: string | null;
   member_count?: number | null;

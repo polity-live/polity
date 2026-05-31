@@ -111,6 +111,7 @@ export const navigationTranslations = {
   userMenu: {
     profile: 'Profil',
     settings: 'Einstellungen',
+    searchGroupsPlaceholder: 'Gruppen suchen...',
   },
   demo: {
     title: 'Dynamische Navigations-Demo',

@@ -30,10 +30,15 @@ interface RelatedGroupLike {
   id: string;
   name?: string | null;
   description?: string | null;
+  group_type?: string | null;
   member_count?: number;
-  memberships?: readonly { id: string }[];
+  memberships?: readonly { id: string; status?: string | null }[];
   amendments?: readonly { id: string }[];
   events?: readonly { id: string }[];
+}
+
+interface MembershipStatusLike {
+  status?: string | null;
 }
 
 interface RelationshipRow {
@@ -45,6 +50,17 @@ interface RelationshipRow {
 
 type GroupEntry = RelationshipRow['group'] & {};
 
+export function countAcceptedMemberships(
+  memberships: readonly MembershipStatusLike[] | null | undefined
+) {
+  return (memberships ?? []).filter(
+    membership =>
+      membership.status === 'active' ||
+      membership.status === 'member' ||
+      membership.status === 'admin'
+  ).length;
+}
+
 export function groupRelationshipsByGroup(
   relationships: RelationshipRow[],
   type: 'parent' | 'child'
@@ -53,6 +69,10 @@ export function groupRelationshipsByGroup(
 
   relationships?.forEach(rel => {
     if (!isActiveGroupRelationshipStatus(rel.status)) {
+      return;
+    }
+
+    if (rel.group?.group_type === 'sibling' || rel.related_group?.group_type === 'sibling') {
       return;
     }
 

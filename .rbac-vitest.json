@@ -1,0 +1,1021 @@
+{
+  "numTotalTestSuites": 51,
+  "numPassedTestSuites": 51,
+  "numFailedTestSuites": 0,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 85,
+  "numPassedTests": 85,
+  "numFailedTests": 0,
+  "numPendingTests": 0,
+  "numTodoTests": 0,
+  "snapshot": {
+    "added": 0,
+    "failure": false,
+    "filesAdded": 0,
+    "filesRemoved": 0,
+    "filesRemovedList": [],
+    "filesUnmatched": 0,
+    "filesUpdated": 0,
+    "matched": 0,
+    "total": 0,
+    "unchecked": 0,
+    "uncheckedKeysByFile": [],
+    "unmatched": 0,
+    "updated": 0,
+    "didUpdate": false
+  },
+  "startTime": 1779833902600,
+  "success": true,
+  "testResults": [
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": ["group relationship routes"],
+          "fullName": "group relationship routes shows the manage-network tab for users with view but without manage rights",
+          "status": "passed",
+          "title": "shows the manage-network tab for users with view but without manage rights",
+          "duration": 110.17459999999983,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["group relationship routes"],
+          "fullName": "group relationship routes keeps the network page on the current tab when relationship view rights are missing",
+          "status": "passed",
+          "title": "keeps the network page on the current tab when relationship view rights are missing",
+          "duration": 16.969900000000052,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["group relationship routes"],
+          "fullName": "group relationship routes blocks the direct relationships route when relationship view rights are missing",
+          "status": "passed",
+          "title": "blocks the direct relationships route when relationship view rights are missing",
+          "duration": 9.684499999999389,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["group relationship routes"],
+          "fullName": "group relationship routes renders the direct relationships route in read-only mode for users with view rights only",
+          "status": "passed",
+          "title": "renders the direct relationships route in read-only mode for users with view rights only",
+          "duration": 8.344500000000153,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ],
+      "startTime": 1779833906819,
+      "endTime": 1779833906964.3445,
+      "status": "passed",
+      "message": "",
+      "name": "C:/instant-to-zero/polity/src/features/network/__tests__/groupRelationshipRoutes.test.tsx"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": ["commonSharedMutators link authorization"],
+          "fullName": "commonSharedMutators link authorization rejects group link creation without manage rights",
+          "status": "passed",
+          "title": "rejects group link creation without manage rights",
+          "duration": 15.99659999999949,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["commonSharedMutators link authorization"],
+          "fullName": "commonSharedMutators link authorization checks manage rights before deleting a group link",
+          "status": "passed",
+          "title": "checks manage rights before deleting a group link",
+          "duration": 2.355999999999767,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ],
+      "startTime": 1779833907937,
+      "endTime": 1779833907955.356,
+      "status": "passed",
+      "message": "",
+      "name": "C:/instant-to-zero/polity/src/zero/common/__tests__/commonSharedMutators.links.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": ["groupSharedMutators relationship authorization"],
+          "fullName": "groupSharedMutators relationship authorization rejects createRelationship when manage rights are missing on the initiator group",
+          "status": "passed",
+          "title": "rejects createRelationship when manage rights are missing on the initiator group",
+          "duration": 8.363400000000183,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["groupSharedMutators relationship authorization"],
+          "fullName": "groupSharedMutators relationship authorization rejects createRelationship when initiator_group_id is not one of the relationship endpoints",
+          "status": "passed",
+          "title": "rejects createRelationship when initiator_group_id is not one of the relationship endpoints",
+          "duration": 3.69629999999961,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["groupSharedMutators relationship authorization"],
+          "fullName": "groupSharedMutators relationship authorization allows updateRelationship when the user can manage either relationship endpoint",
+          "status": "passed",
+          "title": "allows updateRelationship when the user can manage either relationship endpoint",
+          "duration": 8.45220000000063,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["groupSharedMutators relationship authorization"],
+          "fullName": "groupSharedMutators relationship authorization allows deleteRelationship when the user can manage the related group endpoint",
+          "status": "passed",
+          "title": "allows deleteRelationship when the user can manage the related group endpoint",
+          "duration": 1.9948999999996886,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["groupSharedMutators relationship authorization"],
+          "fullName": "groupSharedMutators relationship authorization rejects deleteRelationship when the user cannot manage either endpoint",
+          "status": "passed",
+          "title": "rejects deleteRelationship when the user cannot manage either endpoint",
+          "duration": 1.6975000000002183,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ],
+      "startTime": 1779833908194,
+      "endTime": 1779833908219.6975,
+      "status": "passed",
+      "message": "",
+      "name": "C:/instant-to-zero/polity/src/zero/groups/__tests__/groupSharedMutators.relationships.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": ["TargetGroupEventSelector"],
+          "fullName": "TargetGroupEventSelector keeps the selected group in place when the event is cleared, and fully clears on group removal",
+          "status": "passed",
+          "title": "keeps the selected group in place when the event is cleared, and fully clears on group removal",
+          "duration": 548.3238999999994,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ],
+      "startTime": 1779833910626,
+      "endTime": 1779833911174.324,
+      "status": "passed",
+      "message": "",
+      "name": "C:/instant-to-zero/polity/src/features/amendments/ui/__tests__/TargetGroupEventSelector.test.tsx"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": ["mergeCreateSearchParams"],
+          "fullName": "mergeCreateSearchParams preserves unrelated search params while updating the group prefill",
+          "status": "passed",
+          "title": "preserves unrelated search params while updating the group prefill",
+          "duration": 4.191900000000032,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["mergeCreateSearchParams"],
+          "fullName": "mergeCreateSearchParams removes empty group prefills without dropping other route state",
+          "status": "passed",
+          "title": "removes empty group prefills without dropping other route state",
+          "duration": 0.7145000000000437,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ],
+      "startTime": 1779833907753,
+      "endTime": 1779833907758.7146,
+      "status": "passed",
+      "message": "",
+      "name": "C:/instant-to-zero/polity/src/features/create/logic/__tests__/createSearchParams.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": ["CreateSummaryStep"],
+          "fullName": "CreateSummaryStep renders structured sections and falls back from legacy fields when needed",
+          "status": "passed",
+          "title": "renders structured sections and falls back from legacy fields when needed",
+          "duration": 193.5595999999996,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["CreateSummaryStep"],
+          "fullName": "CreateSummaryStep renders grouped group review details like invites and constitutional event settings",
+          "status": "passed",
+          "title": "renders grouped group review details like invites and constitutional event settings",
+          "duration": 62.089600000000246,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["CreateSummaryStep"],
+          "fullName": "CreateSummaryStep renders event and statement review details with media, recurrence, and survey options",
+          "status": "passed",
+          "title": "renders event and statement review details with media, recurrence, and survey options",
+          "duration": 229.08579999999984,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["CreateSummaryStep"],
+          "fullName": "CreateSummaryStep renders payment counterpart settings and todo assignee details",
+          "status": "passed",
+          "title": "renders payment counterpart settings and todo assignee details",
+          "duration": 78.49240000000009,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ],
+      "startTime": 1779833907133,
+      "endTime": 1779833907697.4924,
+      "status": "passed",
+      "message": "",
+      "name": "C:/instant-to-zero/polity/src/features/create/ui/__tests__/CreateSummaryStep.test.tsx"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": ["CreateTypeaheadField"],
+          "fullName": "CreateTypeaheadField validates required single-select fields",
+          "status": "passed",
+          "title": "validates required single-select fields",
+          "duration": 162.95050000000083,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["CreateTypeaheadField"],
+          "fullName": "CreateTypeaheadField validates required multi-select fields",
+          "status": "passed",
+          "title": "validates required multi-select fields",
+          "duration": 48.72100000000137,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ],
+      "startTime": 1779833912460,
+      "endTime": 1779833912671.721,
+      "status": "passed",
+      "message": "",
+      "name": "C:/instant-to-zero/polity/src/features/create/ui/__tests__/CreateTypeaheadField.test.tsx"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": ["buildRecurringEventFields"],
+          "fullName": "buildRecurringEventFields clears recurrence fields when recurrence is disabled",
+          "status": "passed",
+          "title": "clears recurrence fields when recurrence is disabled",
+          "duration": 4.732999999999947,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["buildRecurringEventFields"],
+          "fullName": "buildRecurringEventFields builds complete recurrence fields for a valid weekly series",
+          "status": "passed",
+          "title": "builds complete recurrence fields for a valid weekly series",
+          "duration": 4.966699999999946,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["buildRecurringEventFields"],
+          "fullName": "buildRecurringEventFields fails closed for invalid weekly series without weekdays",
+          "status": "passed",
+          "title": "fails closed for invalid weekly series without weekdays",
+          "duration": 0.39210000000002765,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ],
+      "startTime": 1779833904188,
+      "endTime": 1779833904198.392,
+      "status": "passed",
+      "message": "",
+      "name": "C:/instant-to-zero/polity/src/features/events/logic/__tests__/buildRecurringEventFields.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": ["localDateTime helpers"],
+          "fullName": "localDateTime helpers roundtrips local date and time inputs without shifting them",
+          "status": "passed",
+          "title": "roundtrips local date and time inputs without shifting them",
+          "duration": 5.033800000000042,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["localDateTime helpers"],
+          "fullName": "localDateTime helpers roundtrips datetime-local inputs without UTC drift",
+          "status": "passed",
+          "title": "roundtrips datetime-local inputs without UTC drift",
+          "duration": 0.9442999999999984,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["localDateTime helpers"],
+          "fullName": "localDateTime helpers stores recurrence end dates at the end of the selected local day",
+          "status": "passed",
+          "title": "stores recurrence end dates at the end of the selected local day",
+          "duration": 0.5955999999999904,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["localDateTime helpers"],
+          "fullName": "localDateTime helpers parses date inputs into stable local dates",
+          "status": "passed",
+          "title": "parses date inputs into stable local dates",
+          "duration": 0.698500000000081,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ],
+      "startTime": 1779833906570,
+      "endTime": 1779833906577.6985,
+      "status": "passed",
+      "message": "",
+      "name": "C:/instant-to-zero/polity/src/features/events/logic/__tests__/localDateTime.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": ["rruleHelpers"],
+          "fullName": "rruleHelpers roundtrips { pattern: 'daily', interval: 2, weekdays: [], endDate: '2026-05-26' } recurrence state",
+          "status": "passed",
+          "title": "roundtrips { pattern: 'daily', interval: 2, weekdays: [], endDate: '2026-05-26' } recurrence state",
+          "duration": 8.539700000000039,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["rruleHelpers"],
+          "fullName": "rruleHelpers roundtrips { pattern: 'weekly', interval: 1, weekdays: [ +0, 2, 4 ], endDate: '2026-06-30' } recurrence state",
+          "status": "passed",
+          "title": "roundtrips { pattern: 'weekly', interval: 1, weekdays: [ +0, 2, 4 ], endDate: '2026-06-30' } recurrence state",
+          "duration": 1.7740999999998621,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["rruleHelpers"],
+          "fullName": "rruleHelpers roundtrips { pattern: 'monthly', interval: 3, weekdays: [], endDate: '2026-09-01' } recurrence state",
+          "status": "passed",
+          "title": "roundtrips { pattern: 'monthly', interval: 3, weekdays: [], endDate: '2026-09-01' } recurrence state",
+          "duration": 1.0576999999998407,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["rruleHelpers"],
+          "fullName": "rruleHelpers roundtrips { pattern: 'yearly', interval: 2, weekdays: [], endDate: '2027-01-15' } recurrence state",
+          "status": "passed",
+          "title": "roundtrips { pattern: 'yearly', interval: 2, weekdays: [], endDate: '2027-01-15' } recurrence state",
+          "duration": 0.8185000000000855,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["rruleHelpers"],
+          "fullName": "rruleHelpers roundtrips { pattern: 'four-yearly', interval: 2, weekdays: [], endDate: '2030-11-03' } recurrence state",
+          "status": "passed",
+          "title": "roundtrips { pattern: 'four-yearly', interval: 2, weekdays: [], endDate: '2030-11-03' } recurrence state",
+          "duration": 0.7841000000000804,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["rruleHelpers"],
+          "fullName": "rruleHelpers rejects weekly recurrence without explicit weekdays",
+          "status": "passed",
+          "title": "rejects weekly recurrence without explicit weekdays",
+          "duration": 0.35199999999986176,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ],
+      "startTime": 1779833904197,
+      "endTime": 1779833904210.352,
+      "status": "passed",
+      "message": "",
+      "name": "C:/instant-to-zero/polity/src/features/events/logic/__tests__/rruleHelpers.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": ["countAcceptedMemberships"],
+          "fullName": "countAcceptedMemberships counts only accepted membership statuses",
+          "status": "passed",
+          "title": "counts only accepted membership statuses",
+          "duration": 3.6931999999999334,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["groupRelationshipsByGroup"],
+          "fullName": "groupRelationshipsByGroup returns only active child groups and aggregates their rights",
+          "status": "passed",
+          "title": "returns only active child groups and aggregates their rights",
+          "duration": 1.852100000000064,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["groupRelationshipsByGroup"],
+          "fullName": "groupRelationshipsByGroup returns only active parent groups, including legacy null statuses",
+          "status": "passed",
+          "title": "returns only active parent groups, including legacy null statuses",
+          "duration": 0.84050000000002,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ],
+      "startTime": 1779833907705,
+      "endTime": 1779833907711.8406,
+      "status": "passed",
+      "message": "",
+      "name": "C:/instant-to-zero/polity/src/features/groups/logic/__tests__/groupWikiHelpers.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": ["groupRelationshipDisplay"],
+          "fullName": "groupRelationshipDisplay keeps an outgoing request anchored to the current group perspective",
+          "status": "passed",
+          "title": "keeps an outgoing request anchored to the current group perspective",
+          "duration": 3.92470000000003,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["groupRelationshipDisplay"],
+          "fullName": "groupRelationshipDisplay maps the same request to an incoming parent view for the recipient group",
+          "status": "passed",
+          "title": "maps the same request to an incoming parent view for the recipient group",
+          "duration": 0.8070999999999913,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["groupRelationshipDisplay"],
+          "fullName": "groupRelationshipDisplay preserves active hierarchy rows when the current group is the parent",
+          "status": "passed",
+          "title": "preserves active hierarchy rows when the current group is the parent",
+          "duration": 0.40260000000000673,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["groupRelationshipDisplay"],
+          "fullName": "groupRelationshipDisplay returns null when the current group is not part of the relationship",
+          "status": "passed",
+          "title": "returns null when the current group is not part of the relationship",
+          "duration": 0.6385000000000218,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ],
+      "startTime": 1779833906730,
+      "endTime": 1779833906735.6384,
+      "status": "passed",
+      "message": "",
+      "name": "C:/instant-to-zero/polity/src/features/network/logic/__tests__/groupRelationshipDisplay.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": ["groupRelationshipSentence"],
+          "fullName": "groupRelationshipSentence renders the current group label with its canonical sentence-start wording",
+          "status": "passed",
+          "title": "renders the current group label with its canonical sentence-start wording",
+          "duration": 2.877899999999954,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["groupRelationshipSentence"],
+          "fullName": "groupRelationshipSentence renders incoming rights from the current group perspective",
+          "status": "passed",
+          "title": "renders incoming rights from the current group perspective",
+          "duration": 0.8442000000000007,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["groupRelationshipSentence"],
+          "fullName": "groupRelationshipSentence renders outgoing rights as granted to the other group",
+          "status": "passed",
+          "title": "renders outgoing rights as granted to the other group",
+          "duration": 0.42020000000002256,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["groupRelationshipSentence"],
+          "fullName": "groupRelationshipSentence renders bidirectional rights as mutual sharing",
+          "status": "passed",
+          "title": "renders bidirectional rights as mutual sharing",
+          "duration": 0.502399999999966,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ],
+      "startTime": 1779833907708,
+      "endTime": 1779833907712.5024,
+      "status": "passed",
+      "message": "",
+      "name": "C:/instant-to-zero/polity/src/features/network/logic/__tests__/groupRelationshipSentence.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": ["hierarchyLinkHelpers"],
+          "fullName": "hierarchyLinkHelpers detects conflicts for passive voting right links",
+          "status": "passed",
+          "title": "detects conflicts for passive voting right links",
+          "duration": 5.938499999999976,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["hierarchyLinkHelpers"],
+          "fullName": "hierarchyLinkHelpers detects conflicts for information right when a passive sibling exists",
+          "status": "passed",
+          "title": "detects conflicts for information right when a passive sibling exists",
+          "duration": 0.753099999999904,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["hierarchyLinkHelpers"],
+          "fullName": "hierarchyLinkHelpers detects conflicts for information right when only information siblings exist",
+          "status": "passed",
+          "title": "detects conflicts for information right when only information siblings exist",
+          "duration": 0.525899999999865,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["hierarchyLinkHelpers"],
+          "fullName": "hierarchyLinkHelpers treats relationship_type parent as the same hierarchy edge when the row direction is reversed",
+          "status": "passed",
+          "title": "treats relationship_type parent as the same hierarchy edge when the row direction is reversed",
+          "duration": 1.0040000000001328,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["hierarchyLinkHelpers"],
+          "fullName": "hierarchyLinkHelpers detects conflicts for amendment and speak rights",
+          "status": "passed",
+          "title": "detects conflicts for amendment and speak rights",
+          "duration": 0.8902000000000498,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["hierarchyLinkHelpers"],
+          "fullName": "hierarchyLinkHelpers allows activation when member sets are disjoint",
+          "status": "passed",
+          "title": "allows activation when member sets are disjoint",
+          "duration": 1.0602000000001226,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ],
+      "startTime": 1779833905642,
+      "endTime": 1779833905653.0603,
+      "status": "passed",
+      "message": "",
+      "name": "C:/instant-to-zero/polity/src/features/network/logic/__tests__/hierarchyLinkHelpers.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": ["networkEdgeHelpers"],
+          "fullName": "networkEdgeHelpers keeps the fallback stroke color for single-direction edges",
+          "status": "passed",
+          "title": "keeps the fallback stroke color for single-direction edges",
+          "duration": 2.9816999999999325,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["networkEdgeHelpers"],
+          "fullName": "networkEdgeHelpers uses the shared bidirectional color when a right is explicitly bidirectional",
+          "status": "passed",
+          "title": "uses the shared bidirectional color when a right is explicitly bidirectional",
+          "duration": 0.5777000000000498,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["networkEdgeHelpers"],
+          "fullName": "networkEdgeHelpers uses the shared bidirectional color when different rights point in opposite directions",
+          "status": "passed",
+          "title": "uses the shared bidirectional color when different rights point in opposite directions",
+          "duration": 0.3627999999999929,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["networkEdgeHelpers"],
+          "fullName": "networkEdgeHelpers uses the connection-direction color when the visible rights are unidirectional",
+          "status": "passed",
+          "title": "uses the connection-direction color when the visible rights are unidirectional",
+          "duration": 0.4274999999998954,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["networkEdgeHelpers"],
+          "fullName": "networkEdgeHelpers prefers purple over incoming/outgoing colors when visible rights are mixed-opposite",
+          "status": "passed",
+          "title": "prefers purple over incoming/outgoing colors when visible rights are mixed-opposite",
+          "duration": 0.45900000000006,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["networkEdgeHelpers"],
+          "fullName": "networkEdgeHelpers maps forward and backward edge directions to anchor-usage directions",
+          "status": "passed",
+          "title": "maps forward and backward edge directions to anchor-usage directions",
+          "duration": 0.7157999999999447,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ],
+      "startTime": 1779833907672,
+      "endTime": 1779833907677.7158,
+      "status": "passed",
+      "message": "",
+      "name": "C:/instant-to-zero/polity/src/features/network/logic/__tests__/networkEdgeHelpers.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": ["networkFilterHelpers"],
+          "fullName": "networkFilterHelpers shows a mixed-direction edge as purple when both visible rights remain",
+          "status": "passed",
+          "title": "shows a mixed-direction edge as purple when both visible rights remain",
+          "duration": 4.695400000000063,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["networkFilterHelpers"],
+          "fullName": "networkFilterHelpers keeps only incoming rights and recolors the edge blue",
+          "status": "passed",
+          "title": "keeps only incoming rights and recolors the edge blue",
+          "duration": 1.2247999999999593,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["networkFilterHelpers"],
+          "fullName": "networkFilterHelpers keeps only outgoing rights and recolors the edge orange",
+          "status": "passed",
+          "title": "keeps only outgoing rights and recolors the edge orange",
+          "duration": 0.579300000000103,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["networkFilterHelpers"],
+          "fullName": "networkFilterHelpers does not fall back to the edge-level direction when per-right directions exist",
+          "status": "passed",
+          "title": "does not fall back to the edge-level direction when per-right directions exist",
+          "duration": 0.5724999999999909,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ],
+      "startTime": 1779833905931,
+      "endTime": 1779833905938.5725,
+      "status": "passed",
+      "message": "",
+      "name": "C:/instant-to-zero/polity/src/features/network/logic/__tests__/networkFilterHelpers.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": ["networkRelationshipDialogHelpers"],
+          "fullName": "networkRelationshipDialogHelpers keeps sibling preview anchored to the source group for incoming-only edges",
+          "status": "passed",
+          "title": "keeps sibling preview anchored to the source group for incoming-only edges",
+          "duration": 4.462400000000002,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["networkRelationshipDialogHelpers"],
+          "fullName": "networkRelationshipDialogHelpers still swaps incoming hierarchy edges into the current-group perspective",
+          "status": "passed",
+          "title": "still swaps incoming hierarchy edges into the current-group perspective",
+          "duration": 0.7437999999999647,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ],
+      "startTime": 1779833906798,
+      "endTime": 1779833906803.744,
+      "status": "passed",
+      "message": "",
+      "name": "C:/instant-to-zero/polity/src/features/network/logic/__tests__/networkRelationshipDialogHelpers.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": ["networkRelationshipHelpers"],
+          "fullName": "networkRelationshipHelpers treats only active or accepted sibling relationships as accepted",
+          "status": "passed",
+          "title": "treats only active or accepted sibling relationships as accepted",
+          "duration": 3.3489999999999327,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["networkRelationshipHelpers"],
+          "fullName": "networkRelationshipHelpers returns only unique accepted sibling groups for the current group",
+          "status": "passed",
+          "title": "returns only unique accepted sibling groups for the current group",
+          "duration": 1.8808000000001357,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["networkRelationshipHelpers"],
+          "fullName": "networkRelationshipHelpers does not traverse into active islands hidden behind pending relationships",
+          "status": "passed",
+          "title": "does not traverse into active islands hidden behind pending relationships",
+          "duration": 2.0009000000000015,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["networkRelationshipHelpers"],
+          "fullName": "networkRelationshipHelpers keeps matching outgoing request relationships visible for request filters",
+          "status": "passed",
+          "title": "keeps matching outgoing request relationships visible for request filters",
+          "duration": 0.9716000000000804,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["networkRelationshipHelpers"],
+          "fullName": "networkRelationshipHelpers keeps indirect sibling groups attached to the reachable child branch",
+          "status": "passed",
+          "title": "keeps indirect sibling groups attached to the reachable child branch",
+          "duration": 2.078700000000026,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["networkRelationshipHelpers"],
+          "fullName": "networkRelationshipHelpers treats a root sibling as the anchor for indirect parent traversal",
+          "status": "passed",
+          "title": "treats a root sibling as the anchor for indirect parent traversal",
+          "duration": 0.8148999999998523,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["networkRelationshipHelpers"],
+          "fullName": "networkRelationshipHelpers preserves hierarchy depth when traversing through siblings",
+          "status": "passed",
+          "title": "preserves hierarchy depth when traversing through siblings",
+          "duration": 0.9928999999999633,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["networkRelationshipHelpers"],
+          "fullName": "networkRelationshipHelpers does not traverse through pending sibling edges into active descendants",
+          "status": "passed",
+          "title": "does not traverse through pending sibling edges into active descendants",
+          "duration": 0.7199000000000524,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["networkRelationshipHelpers"],
+          "fullName": "networkRelationshipHelpers keeps the shallowest mixed placement when a node is reachable through multiple paths",
+          "status": "passed",
+          "title": "keeps the shallowest mixed placement when a node is reachable through multiple paths",
+          "duration": 1.2585999999998876,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ],
+      "startTime": 1779833904231,
+      "endTime": 1779833904245.2585,
+      "status": "passed",
+      "message": "",
+      "name": "C:/instant-to-zero/polity/src/features/network/logic/__tests__/networkRelationshipHelpers.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": ["ManageNetworkTab"],
+          "fullName": "ManageNetworkTab renders a read-only management view for users with only relationship view rights",
+          "status": "passed",
+          "title": "renders a read-only management view for users with only relationship view rights",
+          "duration": 246.70809999999983,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["ManageNetworkTab"],
+          "fullName": "ManageNetworkTab shows create, row actions, and workflows for users with manage rights",
+          "status": "passed",
+          "title": "shows create, row actions, and workflows for users with manage rights",
+          "duration": 102.28229999999894,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ],
+      "startTime": 1779833911653,
+      "endTime": 1779833912002.2822,
+      "status": "passed",
+      "message": "",
+      "name": "C:/instant-to-zero/polity/src/features/network/ui/__tests__/ManageNetworkTab.test.tsx"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": ["PqlToolbar"],
+          "fullName": "PqlToolbar uses the reusable multi-select typeahead for quick filters",
+          "status": "passed",
+          "title": "uses the reusable multi-select typeahead for quick filters",
+          "duration": 470.11339999999836,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ],
+      "startTime": 1779833910998,
+      "endTime": 1779833911468.1133,
+      "status": "passed",
+      "message": "",
+      "name": "C:/instant-to-zero/polity/src/features/pql/ui/__tests__/PqlToolbar.test.tsx"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": ["typeaheadHelpers"],
+          "fullName": "typeaheadHelpers adds and removes multi selections without duplicates",
+          "status": "passed",
+          "title": "adds and removes multi selections without duplicates",
+          "duration": 4.455499999999802,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["typeaheadHelpers"],
+          "fullName": "typeaheadHelpers filters across labels, descriptions, hashtags, and keywords",
+          "status": "passed",
+          "title": "filters across labels, descriptions, hashtags, and keywords",
+          "duration": 0.950800000000072,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["typeaheadHelpers"],
+          "fullName": "typeaheadHelpers sorts by relevance and uses entity order as a tie-breaker",
+          "status": "passed",
+          "title": "sorts by relevance and uses entity order as a tie-breaker",
+          "duration": 0.8587999999999738,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["typeaheadHelpers"],
+          "fullName": "typeaheadHelpers groups results with the shared mixed-entity ordering and excludes role from the mixed constant",
+          "status": "passed",
+          "title": "groups results with the shared mixed-entity ordering and excludes role from the mixed constant",
+          "duration": 2.796199999999999,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ],
+      "startTime": 1779833905480,
+      "endTime": 1779833905489.7961,
+      "status": "passed",
+      "message": "",
+      "name": "C:/instant-to-zero/polity/src/features/shared/logic/__tests__/typeaheadHelpers.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": ["InviteDialog"],
+          "fullName": "InviteDialog uses the reusable multi-select typeahead for collaborator invites",
+          "status": "passed",
+          "title": "uses the reusable multi-select typeahead for collaborator invites",
+          "duration": 622.6886999999997,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ],
+      "startTime": 1779833910552,
+      "endTime": 1779833911174.6887,
+      "status": "passed",
+      "message": "",
+      "name": "C:/instant-to-zero/polity/src/features/amendments/collaborators/ui/__tests__/InviteDialog.test.tsx"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": ["UserSearchInput"],
+          "fullName": "UserSearchInput uses the built-in multi-select flow and keeps selected cards below the field",
+          "status": "passed",
+          "title": "uses the built-in multi-select flow and keeps selected cards below the field",
+          "duration": 217.32980000000134,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ],
+      "startTime": 1779833912461,
+      "endTime": 1779833912678.3298,
+      "status": "passed",
+      "message": "",
+      "name": "C:/instant-to-zero/polity/src/features/create/ui/inputs/__tests__/UserSearchInput.test.tsx"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": ["TypeaheadSearch"],
+          "fullName": "TypeaheadSearch shows a compact single-selection card from the full source dataset and clears it",
+          "status": "passed",
+          "title": "shows a compact single-selection card from the full source dataset and clears it",
+          "duration": 258.4252999999999,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["TypeaheadSearch"],
+          "fullName": "TypeaheadSearch supports repeated multi-selection with stacked cards and removal",
+          "status": "passed",
+          "title": "supports repeated multi-selection with stacked cards and removal",
+          "duration": 229.8179,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["TypeaheadSearch"],
+          "fullName": "TypeaheadSearch renders the dropdown inline when disablePortal is enabled",
+          "status": "passed",
+          "title": "renders the dropdown inline when disablePortal is enabled",
+          "duration": 30.669700000000375,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["TypeaheadSearch"],
+          "fullName": "TypeaheadSearch supports mixed-entity dropdown grouping with the shared all-entity constant",
+          "status": "passed",
+          "title": "supports mixed-entity dropdown grouping with the shared all-entity constant",
+          "duration": 171.58430000000044,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ],
+      "startTime": 1779833910508,
+      "endTime": 1779833911199.5842,
+      "status": "passed",
+      "message": "",
+      "name": "C:/instant-to-zero/polity/src/features/shared/ui/typeahead/__tests__/TypeaheadSearch.test.tsx"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": ["CreateReviewCard"],
+          "fullName": "CreateReviewCard renders themed header badges, sections, and media previews",
+          "status": "passed",
+          "title": "renders themed header badges, sections, and media previews",
+          "duration": 333.64530000000013,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ],
+      "startTime": 1779833907128,
+      "endTime": 1779833907461.6453,
+      "status": "passed",
+      "message": "",
+      "name": "C:/instant-to-zero/polity/src/features/shared/ui/ui/__tests__/create-review-card.test.tsx"
+    }
+  ]
+}

@@ -32,6 +32,7 @@ import { AgendaVoteSection } from './AgendaVoteSection';
 import { AccreditationSection } from './AccreditationSection';
 import type { CandidatesByElectionRow } from '@/zero/elections/queries';
 import type { ChoicesByVoteRow } from '@/zero/votes/queries';
+import { normalizeElectionMode } from '@/features/elections/logic/electionMode';
 
 function getYouTubeVideoId(url: string): string | null {
   if (!url) return null;
@@ -328,6 +329,14 @@ export function EventStreamSection({
             {election && candidates.length > 0 && (
               <AgendaElectionSection
                 roleName={election.title ?? t('features.events.agenda.role')}
+                electionMode={
+                  (election as { election_mode?: string | null }).election_mode
+                    ? normalizeElectionMode(
+                        (election as { election_mode?: string | null }).election_mode
+                      )
+                    : null
+                }
+                seatCount={(election as { seat_count?: number | null }).seat_count ?? null}
                 candidates={candidates}
                 indicativeSelections={indicativeSelections}
                 finalSelections={finalSelections}

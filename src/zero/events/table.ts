@@ -63,6 +63,7 @@ export const event = table('event')
     delegate_approval_type: string().optional(),
     delegate_check_mode: string().optional(),
     main_group_delegate_allocation_mode: string().optional(),
+    delegate_election_mode: string().optional(),
     current_agenda_item_id: string().optional(),
     amendment_deadline: number().optional(),
     registration_deadline: number().optional(),

@@ -9,7 +9,6 @@ import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
-import { notifyDocumentCreated, notifyDocumentDeleted } from '@/features/notifications/utils/notification-helpers.ts';
 
 interface UseDocumentMutationsResult {
   createDocument: (title: string, groupId: string, userId: string) => Promise<string | null>;
@@ -28,9 +27,15 @@ interface UseDocumentMutationsResult {
  * const { createDocument, isCreating } = useDocumentMutations(groupId);
  * const docId = await createDocument('My Document', groupId, userId);
  */
-export function useDocumentMutations(groupId: string): UseDocumentMutationsResult {
+export function useDocumentMutations(_groupId: string): UseDocumentMutationsResult {
+  void _groupId;
+
   const navigate = useNavigate();
-  const { createDocument: createDocAction, deleteDocument: deleteDocAction, addCollaborator } = useDocumentActions();
+  const {
+    createDocument: createDocAction,
+    deleteDocument: deleteDocAction,
+    addCollaborator,
+  } = useDocumentActions();
   const { createAmendment } = useAmendmentActions();
   const [isCreating, setIsCreating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -42,9 +47,12 @@ export function useDocumentMutations(groupId: string): UseDocumentMutationsResul
     title: string,
     groupId: string,
     userId: string,
-    groupName?: string,
-    adminUserIds?: string[]
+    _groupName?: string,
+    _adminUserIds?: string[]
   ): Promise<string | null> => {
+    void _groupName;
+    void _adminUserIds;
+
     if (!title.trim()) {
       toast.error('Please enter a document title');
       return null;
@@ -126,11 +134,16 @@ export function useDocumentMutations(groupId: string): UseDocumentMutationsResul
    */
   const deleteDocument = async (
     documentId: string,
-    documentTitle?: string,
-    senderId?: string,
-    groupName?: string,
-    adminUserIds?: string[]
+    _documentTitle?: string,
+    _senderId?: string,
+    _groupName?: string,
+    _adminUserIds?: string[]
   ): Promise<boolean> => {
+    void _documentTitle;
+    void _senderId;
+    void _groupName;
+    void _adminUserIds;
+
     setIsDeleting(true);
 
     try {

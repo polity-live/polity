@@ -1,83 +1,37 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/features/shared/ui/ui/card';
-import { Badge } from '@/features/shared/ui/ui/badge';
-import { Users } from 'lucide-react';
-import { GRADIENTS } from '@/features/users/state/gradientColors';
-import { formatLocation } from '@/features/shared/logic/locationHelpers';
-
 import { type SearchUser } from '../types/search.types';
+import { UserTimelineCard } from '@/features/timeline/ui/cards/UserTimelineCard';
 
 interface UserSearchCardProps {
-  user: SearchUser;
+  user: Partial<SearchUser> & {
+    id: string;
+    first_name?: string;
+    last_name?: string;
+    handle?: string;
+    avatar?: string | null;
+    bio?: string | null;
+    location?: string | null;
+  };
   index?: number;
+  actions?: React.ReactNode;
 }
 
-export function UserSearchCard({ user, index }: UserSearchCardProps) {
-  // User ID is now directly on the $users entity
-  const userId = user.id;
-
-  // Get avatar from possible sources
-  const avatar = user.avatar || '';
-
-  // Build display name from first_name + last_name
+export function UserSearchCard({ user, actions }: UserSearchCardProps) {
   const displayName =
     [user.first_name, user.last_name].filter(Boolean).join(' ').trim() ||
     user.handle ||
     'Unknown User';
 
-  // Get gradient class for this user card
-  const gradientClass = GRADIENTS[(index || 0) % GRADIENTS.length];
-  const location = formatLocation(user);
-
   return (
-    <a href={`/user/${userId}`} className="block">
-      <Card className="group cursor-pointer overflow-hidden transition-all hover:shadow-lg">
-        {/* Gradient Header */}
-        <div className={`relative h-24 ${gradientClass}`}>
-          <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/20" />
-        </div>
-
-        <CardHeader className="pt-4 pb-3">
-          <div className="mb-3 flex items-start gap-3">
-            {/* Avatar next to name */}
-            <div className="border-background h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border-2 shadow-md">
-              {avatar ? (
-                <img
-                  src={avatar}
-                  alt={displayName}
-                  className="h-full w-full object-cover transition-transform group-hover:scale-110"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 text-lg font-bold text-white">
-                  {displayName.charAt(0).toUpperCase()}
-                </div>
-              )}
-            </div>
-
-            {/* Name and handle */}
-            <div className="min-w-0 flex-1">
-              <CardTitle className="text-lg leading-tight">{displayName}</CardTitle>
-              {user.handle && <CardDescription className="mt-0.5">@{user.handle}</CardDescription>}
-            </div>
-
-            {/* Badge */}
-            <Badge variant="secondary" className="flex-shrink-0 text-xs">
-              <Users className="mr-1 h-3 w-3" />
-              User
-            </Badge>
-          </div>
-        </CardHeader>
-
-        <CardContent className="pt-0">
-          {user.bio && <p className="text-muted-foreground line-clamp-2 text-sm">{user.bio}</p>}
-          {location && <p className="text-muted-foreground mt-2 text-xs">{location}</p>}
-        </CardContent>
-      </Card>
-    </a>
+    <UserTimelineCard
+      user={{
+        id: user.id,
+        name: displayName,
+        handle: user.handle ?? undefined,
+        avatarUrl: user.avatar ?? undefined,
+        bio: user.bio ?? undefined,
+        location: user.location ?? undefined,
+      }}
+      actions={actions}
+    />
   );
 }
