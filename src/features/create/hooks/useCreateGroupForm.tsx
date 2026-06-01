@@ -25,6 +25,7 @@ import {
   getCurrentGroupRelationshipLabel,
   GroupRelationshipRightSentenceList,
   GroupRelationshipRightsSelector,
+  SiblingMembershipModeDescription,
   GroupRelationshipTypeSelect,
   type GroupRelationshipDirection,
   type GroupRelationshipRight,
@@ -451,13 +452,6 @@ export function useCreateGroupForm(): CreateFormConfig {
     if (linkType === 'sibling') {
       const group = allGroups.find(g => g.id === linkGroupId);
 
-      if (group?.group_type === 'sibling') {
-        toast.error(
-          'Geschwistergruppen koennen nur mit Basis- oder hierarchischen Gruppen verbunden werden.'
-        );
-        return;
-      }
-
       if (siblingMembershipMode === 'elected' && !connectedRoleId) {
         toast.error('Bitte waehle eine Rolle der verbundenen Gruppe aus.');
         return;
@@ -817,7 +811,7 @@ export function useCreateGroupForm(): CreateFormConfig {
       ? `${eventStartDate || ''}${eventStartTime ? ` ${eventStartTime}` : ''}`.trim()
       : '';
   const selectableConnectedGroups = useMemo(
-    () => allGroups.filter(group => group.id !== groupId && group.group_type !== 'sibling'),
+    () => allGroups.filter(group => group.id !== groupId),
     [allGroups, groupId]
   );
   const selectableLinkGroups = useMemo(
@@ -1055,20 +1049,14 @@ export function useCreateGroupForm(): CreateFormConfig {
                                 {
                                   value: 'open',
                                   title: getSiblingMembershipModeLabel('open', t),
-                                  description:
-                                    'Mitglieder der verbundenen Gruppe koennen selbst beitreten.',
                                 },
                                 {
                                   value: 'elected',
                                   title: getSiblingMembershipModeLabel('elected', t),
-                                  description:
-                                    'Eine Rolle der verbundenen Gruppe erzeugt die Mitgliedschaft automatisch.',
                                 },
                                 {
                                   value: 'parliament',
                                   title: getSiblingMembershipModeLabel('parliament', t),
-                                  description:
-                                    'Mitgliedschaft wird indirekt aus verbundenen Gruppen mit passivem Wahlrecht abgeleitet.',
                                 },
                               ].map(option => (
                                 <Label
@@ -1085,11 +1073,16 @@ export function useCreateGroupForm(): CreateFormConfig {
                                     id={`sibling-mode-${option.value}`}
                                     className="mt-0.5"
                                   />
-                                  <div>
+                                  <div className="space-y-2">
                                     <div className="text-sm font-medium">{option.title}</div>
-                                    <div className="text-muted-foreground text-xs">
-                                      {option.description}
-                                    </div>
+                                    <SiblingMembershipModeDescription
+                                      siblingMembershipMode={option.value as SiblingMembershipMode}
+                                      currentGroupName={name}
+                                      selectedGroupName={selectedLinkedGroupName}
+                                      currentGroupId={groupId}
+                                      selectedGroupId={linkGroupId || undefined}
+                                      className="text-muted-foreground"
+                                    />
                                   </div>
                                 </Label>
                               ))}

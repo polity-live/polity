@@ -1,8 +1,9 @@
 import { mutators } from '../mutators';
+import { getDefaultOfflineParticipationChannel } from '../offline-roster-helpers';
 import {
-  getDefaultOfflineParticipationChannel,
-  getOfflineRosterMembersForGeneralAssembly,
-} from '../offline-roster-helpers';
+  buildOfflineMembershipPersonKey,
+  loadEffectiveOfflineMembershipsForGroup,
+} from '../groups/offline-membership-helpers';
 import { zql } from '../schema';
 import { fireNotification } from '../server-notify';
 import {
@@ -167,14 +168,14 @@ export async function reconcileGeneralAssemblyParticipantsForEvent(
   const shouldSeedOfflineParticipants = attendanceMode !== 'online';
   const [
     { eligibleUserIds, descendantBaseGroupIds },
-    eligibleOfflineMembers,
+    eligibleOfflineMemberships,
     eventRoles,
     participants,
     existingOfflineParticipants,
   ] = await Promise.all([
     getEligibleGeneralAssemblyUserIds(tx, event.group_id),
     shouldSeedOfflineParticipants
-      ? getOfflineRosterMembersForGeneralAssembly(tx, event.group_id)
+      ? loadEffectiveOfflineMembershipsForGroup(tx, event.group_id)
       : Promise.resolve([]),
     tx.run(
       zql.role.where('event_id', event.id).where('scope', 'event').orderBy('sort_order', 'asc')
@@ -263,18 +264,36 @@ export async function reconcileGeneralAssemblyParticipantsForEvent(
   }
 
   if (shouldSeedOfflineParticipants) {
-    const desiredOfflineMembersByKey = new Map<string, (typeof eligibleOfflineMembers)[number]>();
+    const desiredOfflineMembersByKey = new Map<
+      string,
+      (typeof eligibleOfflineMemberships)[number]
+    >();
 
-    for (const offlineMember of eligibleOfflineMembers) {
-      const personKey = offlineMember.connected_user_id
-        ? `user:${offlineMember.connected_user_id}`
-        : `offline:${offlineMember.id}`;
+    for (const membership of eligibleOfflineMemberships) {
+      const offlineMember = membership.group_offline_member;
+      if (!offlineMember) {
+        continue;
+      }
+
+      const personKey = buildOfflineMembershipPersonKey({
+        offlineMemberId: offlineMember.id,
+        connectedUserId: offlineMember.connected_user_id,
+      });
+      if (!personKey) {
+        continue;
+      }
+
       if (!desiredOfflineMembersByKey.has(personKey)) {
-        desiredOfflineMembersByKey.set(personKey, offlineMember);
+        desiredOfflineMembersByKey.set(personKey, membership);
       }
     }
 
-    for (const offlineMember of desiredOfflineMembersByKey.values()) {
+    for (const membership of desiredOfflineMembersByKey.values()) {
+      const offlineMember = membership.group_offline_member;
+      if (!offlineMember) {
+        continue;
+      }
+
       const existingOfflineParticipant =
         offlineParticipantsBySourceId.get(offlineMember.id) ??
         [...offlineParticipantsById.values()].find(participant =>

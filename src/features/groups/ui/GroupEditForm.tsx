@@ -69,9 +69,7 @@ export function GroupEditForm({
   const { roles: connectedGroupRoles } = useGroupState({
     groupId: formData.connected_group_id ?? undefined,
   });
-  const selectableConnectedGroups = allGroups.filter(
-    group => group.id !== groupId && group.group_type !== 'sibling'
-  );
+  const selectableConnectedGroups = allGroups.filter(group => group.id !== groupId);
   const selectableConnectedRoles = (connectedGroupRoles ?? []).filter(
     role => role.scope === 'group' && role.assignee_kind !== 'guest'
   );

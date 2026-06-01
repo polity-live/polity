@@ -332,6 +332,16 @@ export const commonTranslations = {
     directionAnd: 'und',
     directionHaveMutually: 'haben gegenseitig',
     directionMutuallySend: 'einander schicken',
+    siblingMembershipExplanationOpenBeforeSource: 'Mitglieder von',
+    siblingMembershipExplanationOpenBetweenGroups: 'koennen',
+    siblingMembershipExplanationOpenAfterTarget: 'selbst beitreten.',
+    siblingMembershipExplanationElectedBeforeSource: 'Eine Gruppenrolle in',
+    siblingMembershipExplanationElectedBetweenGroups: 'erzeugt die Mitgliedschaft in',
+    siblingMembershipExplanationElectedAfterTarget: 'automatisch.',
+    siblingMembershipExplanationParliamentBeforeTarget: 'Mitgliedschaft in',
+    siblingMembershipExplanationParliamentBetweenGroups:
+      'wird aus Gruppen abgeleitet, die passives Wahlrecht in',
+    siblingMembershipExplanationParliamentAfterSource: 'haben.',
     currentGroupHasRightIn: '{{currentGroupName}} hat {{rightLabel}} in {{selectedGroupName}}',
     currentGroupGrantsRightTo:
       '{{currentGroupName}} vergibt {{rightLabel}} an {{selectedGroupName}}',

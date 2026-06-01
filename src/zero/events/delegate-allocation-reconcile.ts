@@ -13,7 +13,10 @@ import {
 import { getMembershipDisplayRoles } from '@/features/groups/logic/buildMembershipRightsSummary';
 import { getHierarchyRelationshipPair } from '@/features/network/logic/groupRelationshipOrientation';
 import type { GroupRelationship as GroupRelationshipRow } from '@/zero/network/schema';
-import { loadOfflineRosterMembersForGroup } from '../offline-roster-helpers';
+import {
+  buildOfflineMembershipPersonKey,
+  loadEffectiveOfflineMembershipsForGroup,
+} from '../groups/offline-membership-helpers';
 import { mutators } from '../mutators';
 import { zql } from '../schema';
 
@@ -268,7 +271,7 @@ export async function reconcileDelegateAllocationsForEvent(tx: EventServerTx, ev
   const targetMemberships = (await loadGroupMemberships(tx, [targetGroup.id])).filter(
     isActiveMembership
   );
-  const [siblingSourceLinks, relationships, existingRows, confirmedDelegates, offlineMembers] =
+  const [siblingSourceLinks, relationships, existingRows, confirmedDelegates, offlineMemberships] =
     await Promise.all([
       targetGroup.group_type === 'sibling'
         ? tx.run(zql.group_sibling_source.where('group_id', targetGroup.id))
@@ -276,7 +279,7 @@ export async function reconcileDelegateAllocationsForEvent(tx: EventServerTx, ev
       loadNetworkRelationships(tx),
       tx.run(zql.group_delegate_allocation.where('event_id', eventId)),
       tx.run(zql.event_delegate.where('event_id', eventId).where('status', 'confirmed')),
-      loadOfflineRosterMembersForGroup(tx, targetGroup.id),
+      loadEffectiveOfflineMembershipsForGroup(tx, targetGroup.id),
     ]);
   const configuredSourceGroupIds =
     targetGroup.group_type !== 'sibling'
@@ -307,11 +310,6 @@ export async function reconcileDelegateAllocationsForEvent(tx: EventServerTx, ev
   });
 
   const memberCountsByPartGroupId = new Map<string, number>();
-  const activeMembershipUserIds = new Set(
-    membershipsWithProvenance
-      .map(membership => membership.user_id)
-      .filter((userId): userId is string => Boolean(userId))
-  );
 
   for (const membership of membershipsWithProvenance) {
     const partGroupId = membership.partGroup?.id;
@@ -330,7 +328,11 @@ export async function reconcileDelegateAllocationsForEvent(tx: EventServerTx, ev
     targetGroup,
     ...relationships.flatMap(relationship => [relationship.group, relationship.related_group]),
     ...rootMemberships.flatMap(membership => [membership.group, membership.source_group]),
-    ...offlineMembers.map(offlineMember => offlineMember.group),
+    ...offlineMemberships.flatMap(membership => [
+      membership.group,
+      membership.source_group,
+      membership.group_offline_member?.group,
+    ]),
   ]) {
     if (group?.id) {
       groupsById.set(group.id, group as MembershipCompositionGroupLike);
@@ -345,24 +347,27 @@ export async function reconcileDelegateAllocationsForEvent(tx: EventServerTx, ev
   });
   const seenOfflinePersonKeys = new Set<string>();
 
-  for (const offlineMember of offlineMembers) {
-    const personKey = offlineMember.connected_user_id
-      ? `user:${offlineMember.connected_user_id}`
-      : `offline:${offlineMember.id}`;
-    if (
-      seenOfflinePersonKeys.has(personKey) ||
-      (offlineMember.connected_user_id &&
-        activeMembershipUserIds.has(offlineMember.connected_user_id))
-    ) {
+  for (const offlineMembership of offlineMemberships) {
+    const offlineMember = offlineMembership.group_offline_member;
+    if (!offlineMember) {
+      continue;
+    }
+
+    const personKey = buildOfflineMembershipPersonKey({
+      offlineMemberId: offlineMember.id,
+      connectedUserId: offlineMember.connected_user_id,
+    });
+    if (!personKey || seenOfflinePersonKeys.has(personKey)) {
       continue;
     }
 
     seenOfflinePersonKeys.add(personKey);
 
-    const rootGroupId = resolveOfflineRootGroupId(offlineMember.group_id);
+    const baseGroupId = offlineMember.group_id;
+    const rootGroupId = resolveOfflineRootGroupId(baseGroupId);
     const partGroupId = resolvePartGroupIdForBase({
       rootGroupId,
-      baseGroupId: offlineMember.group_id,
+      baseGroupId,
       relationships,
     });
 

@@ -1,5 +1,9 @@
 import { type Transaction } from '@rocicorp/zero';
 import { resolveChildBaseGroups } from '@/features/groups/logic/hierarchy';
+import {
+  buildOfflineMembershipPersonKey,
+  loadEffectiveOfflineMembershipsForGroup,
+} from './groups/offline-membership-helpers';
 import { zql, type Schema } from './schema';
 
 type ZeroTransaction = Transaction<Schema>;
@@ -155,18 +159,33 @@ export async function loadOfflineRosterMembersForGroup(tx: ZeroTransaction, grou
 }
 
 export async function computeDistinctGroupMemberCount(tx: ZeroTransaction, groupId: string) {
-  const [memberships, offlineMembers] = await Promise.all([
+  const [memberships, offlineMemberships] = await Promise.all([
     tx.run(zql.group_membership.where('group_id', groupId)),
-    loadOfflineRosterMembersForGroup(tx, groupId),
+    loadEffectiveOfflineMembershipsForGroup(tx, groupId),
   ]);
 
   const activeUserIds = memberships
     .filter(membership => isActiveGroupStatus(membership.status))
     .map(membership => membership.user_id);
+  const offlinePeople = offlineMemberships
+    .map(membership => membership.group_offline_member)
+    .filter(
+      (
+        offlineMember
+      ): offlineMember is NonNullable<
+        (typeof offlineMemberships)[number]['group_offline_member']
+      > =>
+        Boolean(
+          buildOfflineMembershipPersonKey({
+            offlineMemberId: offlineMember?.id,
+            connectedUserId: offlineMember?.connected_user_id,
+          })
+        )
+    );
 
   return buildDistinctPersonIds({
     activeUserIds,
-    offlinePeople: offlineMembers,
+    offlinePeople,
   }).size;
 }
 

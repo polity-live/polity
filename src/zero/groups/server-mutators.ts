@@ -25,6 +25,9 @@ import {
   groupOfflineMemberUpdateSchema,
   groupOfflineMemberDeleteSchema,
   groupOfflineMemberBulkImportSchema,
+  groupOfflineMembershipRoleAssignSchema,
+  groupOfflineMembershipRoleUnassignSchema,
+  groupOfflineMembershipRolesSyncSchema,
   groupMembershipLegacyRoleUpdateSchema,
   groupMembershipRoleAssignSchema,
   groupMembershipRoleUnassignSchema,
@@ -56,6 +59,12 @@ import {
   recomputeSiblingGroupMemberships,
   recomputeSiblingMembershipsForGroup,
 } from './membership-helpers';
+import {
+  clearAutomaticOfflineSiblingMemberships,
+  reconcileOfflineHierarchyForBaseGroup,
+  recomputeOfflineSiblingGroupMemberships,
+  recomputeOfflineSiblingMembershipsForGroup,
+} from './offline-membership-helpers';
 import { getHierarchyRelationshipPair } from '@/features/network/logic/groupRelationshipOrientation';
 import { assertNoBlockingGroupConflicts } from '@/server/group-conflict-validation';
 
@@ -153,12 +162,15 @@ async function reconcileBaseGroupHierarchyMemberships(
   const affectedMembershipGroupIds = new Set<string>();
 
   for (const baseGroupId of [...new Set(baseGroupIds.filter(Boolean))]) {
-    const { affectedGroupIds } = await reconcileHierarchyForBaseGroup(
-      tx,
-      baseGroupId,
-      assignedById
-    );
-    for (const affectedGroupId of affectedGroupIds) {
+    const [
+      { affectedGroupIds: onlineAffectedGroupIds },
+      { affectedGroupIds: offlineAffectedGroupIds },
+    ] = await Promise.all([
+      reconcileHierarchyForBaseGroup(tx, baseGroupId, assignedById),
+      reconcileOfflineHierarchyForBaseGroup(tx, baseGroupId),
+    ]);
+
+    for (const affectedGroupId of [...onlineAffectedGroupIds, ...offlineAffectedGroupIds]) {
       affectedMembershipGroupIds.add(affectedGroupId);
     }
   }
@@ -311,8 +323,47 @@ async function recomputeSiblingMembershipsForGroups(
   groupIds: Iterable<string>,
   assignedById?: string | null
 ) {
+  const affectedGroupIds = new Set<string>();
+
   for (const groupId of new Set([...groupIds].filter(Boolean))) {
-    await recomputeSiblingMembershipsForGroup(tx, groupId, assignedById);
+    for (const affectedGroupId of await recomputeSiblingMembershipsForGroup(
+      tx,
+      groupId,
+      assignedById
+    )) {
+      affectedGroupIds.add(affectedGroupId);
+    }
+
+    for (const affectedGroupId of await recomputeOfflineSiblingMembershipsForGroup(tx, groupId)) {
+      affectedGroupIds.add(affectedGroupId);
+    }
+  }
+
+  return affectedGroupIds;
+}
+
+async function expandAffectedGroupsWithSiblingMemberships(
+  tx: GroupServerTx,
+  groupIds: Iterable<string>,
+  assignedById?: string | null
+) {
+  const affectedGroupIds = new Set<string>([...groupIds].filter(Boolean));
+  const siblingAffectedGroupIds = await recomputeSiblingMembershipsForGroups(
+    tx,
+    affectedGroupIds,
+    assignedById
+  );
+
+  for (const affectedGroupId of siblingAffectedGroupIds) {
+    affectedGroupIds.add(affectedGroupId);
+  }
+
+  return affectedGroupIds;
+}
+
+async function recomputeGroupCountersForGroups(tx: GroupServerTx, groupIds: Iterable<string>) {
+  for (const groupId of new Set([...groupIds].filter(Boolean))) {
+    await recomputeGroupCounters(tx, groupId);
   }
 }
 
@@ -460,6 +511,8 @@ export const groupServerMutators = {
 
     if (args.group_type === 'sibling') {
       await recomputeSiblingGroupMemberships(tx, args.id, ctx.userID);
+      await recomputeOfflineSiblingGroupMemberships(tx, args.id);
+      await recomputeGroupCounters(tx, args.id);
     }
   }),
 
@@ -472,8 +525,23 @@ export const groupServerMutators = {
     });
 
     await mutators.groups.createOfflineMember.fn({ tx, ctx, args });
-    await recomputeGroupCounters(tx, args.group_id);
-    await reconcileMembershipDrivenEventsForGroups(tx, [args.group_id], ctx.userID);
+    const affectedMembershipGroupIds = new Set<string>([args.group_id]);
+    const reconciledGroupIds = await reconcileBaseGroupHierarchyMemberships(
+      tx,
+      [args.group_id],
+      ctx.userID
+    );
+    for (const affectedGroupId of reconciledGroupIds) {
+      affectedMembershipGroupIds.add(affectedGroupId);
+    }
+
+    const expandedAffectedGroupIds = await expandAffectedGroupsWithSiblingMemberships(
+      tx,
+      affectedMembershipGroupIds,
+      ctx.userID
+    );
+    await recomputeGroupCountersForGroups(tx, expandedAffectedGroupIds);
+    await reconcileMembershipDrivenEventsForGroups(tx, expandedAffectedGroupIds, ctx.userID);
 
     console.info('Server successful', {
       flow: 'group-offline-member-create',
@@ -501,12 +569,23 @@ export const groupServerMutators = {
       return;
     }
 
-    await recomputeGroupCounters(tx, existingOfflineMember.group_id);
-    await reconcileMembershipDrivenEventsForGroups(
+    const affectedMembershipGroupIds = new Set<string>([existingOfflineMember.group_id]);
+    const reconciledGroupIds = await reconcileBaseGroupHierarchyMemberships(
       tx,
       [existingOfflineMember.group_id],
       ctx.userID
     );
+    for (const affectedGroupId of reconciledGroupIds) {
+      affectedMembershipGroupIds.add(affectedGroupId);
+    }
+
+    const expandedAffectedGroupIds = await expandAffectedGroupsWithSiblingMemberships(
+      tx,
+      affectedMembershipGroupIds,
+      ctx.userID
+    );
+    await recomputeGroupCountersForGroups(tx, expandedAffectedGroupIds);
+    await reconcileMembershipDrivenEventsForGroups(tx, expandedAffectedGroupIds, ctx.userID);
 
     console.info('Server successful', {
       flow: 'group-offline-member-update',
@@ -533,12 +612,23 @@ export const groupServerMutators = {
       return;
     }
 
-    await recomputeGroupCounters(tx, existingOfflineMember.group_id);
-    await reconcileMembershipDrivenEventsForGroups(
+    const affectedMembershipGroupIds = new Set<string>([existingOfflineMember.group_id]);
+    const reconciledGroupIds = await reconcileBaseGroupHierarchyMemberships(
       tx,
       [existingOfflineMember.group_id],
       ctx.userID
     );
+    for (const affectedGroupId of reconciledGroupIds) {
+      affectedMembershipGroupIds.add(affectedGroupId);
+    }
+
+    const expandedAffectedGroupIds = await expandAffectedGroupsWithSiblingMemberships(
+      tx,
+      affectedMembershipGroupIds,
+      ctx.userID
+    );
+    await recomputeGroupCountersForGroups(tx, expandedAffectedGroupIds);
+    await reconcileMembershipDrivenEventsForGroups(tx, expandedAffectedGroupIds, ctx.userID);
 
     console.info('Server successful', {
       flow: 'group-offline-member-delete',
@@ -560,8 +650,23 @@ export const groupServerMutators = {
       });
 
       await mutators.groups.importOfflineMembers.fn({ tx, ctx, args });
-      await recomputeGroupCounters(tx, args.group_id);
-      await reconcileMembershipDrivenEventsForGroups(tx, [args.group_id], ctx.userID);
+      const affectedMembershipGroupIds = new Set<string>([args.group_id]);
+      const reconciledGroupIds = await reconcileBaseGroupHierarchyMemberships(
+        tx,
+        [args.group_id],
+        ctx.userID
+      );
+      for (const affectedGroupId of reconciledGroupIds) {
+        affectedMembershipGroupIds.add(affectedGroupId);
+      }
+
+      const expandedAffectedGroupIds = await expandAffectedGroupsWithSiblingMemberships(
+        tx,
+        affectedMembershipGroupIds,
+        ctx.userID
+      );
+      await recomputeGroupCountersForGroups(tx, expandedAffectedGroupIds);
+      await reconcileMembershipDrivenEventsForGroups(tx, expandedAffectedGroupIds, ctx.userID);
 
       console.info('Server successful', {
         flow: 'group-offline-member-import',
@@ -611,8 +716,12 @@ export const groupServerMutators = {
 
     // Only accepted base-group memberships should materialize into hierarchy ancestors.
     if (!group || group.group_type !== 'base' || !isActiveGroupStatus(args.status)) {
-      await recomputeSiblingMembershipsForGroup(tx, args.group_id, ctx.userID);
-      await reconcileMembershipDrivenEventsForGroups(tx, affectedMembershipGroupIds, ctx.userID);
+      const expandedAffectedGroupIds = await expandAffectedGroupsWithSiblingMemberships(
+        tx,
+        affectedMembershipGroupIds,
+        ctx.userID
+      );
+      await reconcileMembershipDrivenEventsForGroups(tx, expandedAffectedGroupIds, ctx.userID);
       return;
     }
 
@@ -625,11 +734,12 @@ export const groupServerMutators = {
       affectedMembershipGroupIds.add(affectedGroupId);
     }
 
-    for (const affectedGroupId of affectedMembershipGroupIds) {
-      await recomputeSiblingMembershipsForGroup(tx, affectedGroupId, ctx.userID);
-    }
-
-    await reconcileMembershipDrivenEventsForGroups(tx, affectedMembershipGroupIds, ctx.userID);
+    const expandedAffectedGroupIds = await expandAffectedGroupsWithSiblingMemberships(
+      tx,
+      affectedMembershipGroupIds,
+      ctx.userID
+    );
+    await reconcileMembershipDrivenEventsForGroups(tx, expandedAffectedGroupIds, ctx.userID);
   }),
 
   inviteMember: defineMutator(groupMembershipCreateSchema, async ({ tx, ctx, args }) => {
@@ -657,7 +767,12 @@ export const groupServerMutators = {
       return;
     }
 
-    await recomputeSiblingMembershipsForGroup(tx, membership.group_id, ctx.userID);
+    const expandedAffectedGroupIds = await expandAffectedGroupsWithSiblingMemberships(
+      tx,
+      [membership.group_id],
+      ctx.userID
+    );
+    await reconcileMembershipDrivenEventsForGroups(tx, expandedAffectedGroupIds, ctx.userID);
   }),
 
   removeMembershipRole: defineMutator(
@@ -673,7 +788,12 @@ export const groupServerMutators = {
         return;
       }
 
-      await recomputeSiblingMembershipsForGroup(tx, membership.group_id, ctx.userID);
+      const expandedAffectedGroupIds = await expandAffectedGroupsWithSiblingMemberships(
+        tx,
+        [membership.group_id],
+        ctx.userID
+      );
+      await reconcileMembershipDrivenEventsForGroups(tx, expandedAffectedGroupIds, ctx.userID);
     }
   ),
 
@@ -688,8 +808,82 @@ export const groupServerMutators = {
       return;
     }
 
-    await recomputeSiblingMembershipsForGroup(tx, membership.group_id, ctx.userID);
+    const expandedAffectedGroupIds = await expandAffectedGroupsWithSiblingMemberships(
+      tx,
+      [membership.group_id],
+      ctx.userID
+    );
+    await reconcileMembershipDrivenEventsForGroups(tx, expandedAffectedGroupIds, ctx.userID);
   }),
+
+  addOfflineMembershipRole: defineMutator(
+    groupOfflineMembershipRoleAssignSchema,
+    async ({ tx, ctx, args }) => {
+      const membership = await tx.run(
+        zql.group_offline_membership.where('id', args.group_offline_membership_id).one()
+      );
+
+      await mutators.groups.addOfflineMembershipRole.fn({ tx, ctx, args });
+
+      if (!membership) {
+        return;
+      }
+
+      const expandedAffectedGroupIds = await expandAffectedGroupsWithSiblingMemberships(
+        tx,
+        [membership.group_id],
+        ctx.userID
+      );
+      await recomputeGroupCountersForGroups(tx, expandedAffectedGroupIds);
+      await reconcileMembershipDrivenEventsForGroups(tx, expandedAffectedGroupIds, ctx.userID);
+    }
+  ),
+
+  removeOfflineMembershipRole: defineMutator(
+    groupOfflineMembershipRoleUnassignSchema,
+    async ({ tx, ctx, args }) => {
+      const membership = await tx.run(
+        zql.group_offline_membership.where('id', args.group_offline_membership_id).one()
+      );
+
+      await mutators.groups.removeOfflineMembershipRole.fn({ tx, ctx, args });
+
+      if (!membership) {
+        return;
+      }
+
+      const expandedAffectedGroupIds = await expandAffectedGroupsWithSiblingMemberships(
+        tx,
+        [membership.group_id],
+        ctx.userID
+      );
+      await recomputeGroupCountersForGroups(tx, expandedAffectedGroupIds);
+      await reconcileMembershipDrivenEventsForGroups(tx, expandedAffectedGroupIds, ctx.userID);
+    }
+  ),
+
+  syncOfflineMembershipRoles: defineMutator(
+    groupOfflineMembershipRolesSyncSchema,
+    async ({ tx, ctx, args }) => {
+      const membership = await tx.run(
+        zql.group_offline_membership.where('id', args.group_offline_membership_id).one()
+      );
+
+      await mutators.groups.syncOfflineMembershipRoles.fn({ tx, ctx, args });
+
+      if (!membership) {
+        return;
+      }
+
+      const expandedAffectedGroupIds = await expandAffectedGroupsWithSiblingMemberships(
+        tx,
+        [membership.group_id],
+        ctx.userID
+      );
+      await recomputeGroupCountersForGroups(tx, expandedAffectedGroupIds);
+      await reconcileMembershipDrivenEventsForGroups(tx, expandedAffectedGroupIds, ctx.userID);
+    }
+  ),
 
   inviteGuest: defineMutator(groupGuestAccessCreateSchema, async ({ tx, ctx, args }) => {
     await mutators.groups.inviteGuest.fn({ tx, ctx, args });
@@ -790,8 +984,12 @@ export const groupServerMutators = {
     // Propagate derived memberships when accepting invitation to a base group
     const group = await tx.run(zql.group.where('id', membership.group_id).one());
     if (!group || group.group_type !== 'base') {
-      await recomputeSiblingMembershipsForGroup(tx, membership.group_id, ctx.userID);
-      await reconcileMembershipDrivenEventsForGroups(tx, affectedMembershipGroupIds, ctx.userID);
+      const expandedAffectedGroupIds = await expandAffectedGroupsWithSiblingMemberships(
+        tx,
+        affectedMembershipGroupIds,
+        ctx.userID
+      );
+      await reconcileMembershipDrivenEventsForGroups(tx, expandedAffectedGroupIds, ctx.userID);
       console.info('Server successful', {
         flow: 'group-membership-invitation-accept',
         membershipId: args.id,
@@ -812,11 +1010,12 @@ export const groupServerMutators = {
       affectedMembershipGroupIds.add(affectedGroupId);
     }
 
-    for (const affectedGroupId of affectedMembershipGroupIds) {
-      await recomputeSiblingMembershipsForGroup(tx, affectedGroupId, ctx.userID);
-    }
-
-    await reconcileMembershipDrivenEventsForGroups(tx, affectedMembershipGroupIds, ctx.userID);
+    const expandedAffectedGroupIds = await expandAffectedGroupsWithSiblingMemberships(
+      tx,
+      affectedMembershipGroupIds,
+      ctx.userID
+    );
+    await reconcileMembershipDrivenEventsForGroups(tx, expandedAffectedGroupIds, ctx.userID);
 
     console.info('Server successful', {
       flow: 'group-membership-invitation-accept',
@@ -913,11 +1112,12 @@ export const groupServerMutators = {
       }
     }
 
-    for (const affectedGroupId of affectedMembershipGroupIds) {
-      await recomputeSiblingMembershipsForGroup(tx, affectedGroupId, ctx.userID);
-    }
-
-    await reconcileMembershipDrivenEventsForGroups(tx, affectedMembershipGroupIds, ctx.userID);
+    const expandedAffectedGroupIds = await expandAffectedGroupsWithSiblingMemberships(
+      tx,
+      affectedMembershipGroupIds,
+      ctx.userID
+    );
+    await reconcileMembershipDrivenEventsForGroups(tx, expandedAffectedGroupIds, ctx.userID);
 
     console.info('Server successful', {
       flow: 'group-membership-delete',
@@ -1067,12 +1267,16 @@ export const groupServerMutators = {
         });
       }
 
-      for (const affectedGroupId of affectedMembershipGroupIds) {
-        await recomputeSiblingMembershipsForGroup(tx, affectedGroupId, ctx.userID);
-      }
+      const shouldReconcileMembershipDrivenEvents =
+        becameActive || lostActiveAccess || legacyRoleChanged;
 
-      if (becameActive || lostActiveAccess) {
-        await reconcileMembershipDrivenEventsForGroups(tx, affectedMembershipGroupIds, ctx.userID);
+      if (shouldReconcileMembershipDrivenEvents) {
+        const expandedAffectedGroupIds = await expandAffectedGroupsWithSiblingMemberships(
+          tx,
+          affectedMembershipGroupIds,
+          ctx.userID
+        );
+        await reconcileMembershipDrivenEventsForGroups(tx, expandedAffectedGroupIds, ctx.userID);
       }
 
       if (isActivationTrace) {
@@ -1124,11 +1328,13 @@ export const groupServerMutators = {
 
     if (previousGroup?.group_type === 'sibling' && updatedGroup?.group_type !== 'sibling') {
       await clearAutomaticSiblingMemberships(tx, args.id);
+      await clearAutomaticOfflineSiblingMemberships(tx, args.id);
     }
 
+    const directlyAffectedGroupIds = new Set<string>([args.id]);
     if (updatedGroup?.group_type === 'sibling') {
       await recomputeSiblingGroupMemberships(tx, args.id, ctx.userID);
-      await recomputeSiblingMembershipsForGroup(tx, args.id, ctx.userID);
+      await recomputeOfflineSiblingGroupMemberships(tx, args.id);
     }
 
     const affectedConnectedGroupIds = new Set<string>();
@@ -1139,14 +1345,16 @@ export const groupServerMutators = {
       affectedConnectedGroupIds.add(updatedGroup.connected_group_id);
     }
     for (const connectedGroupId of affectedConnectedGroupIds) {
-      await recomputeSiblingMembershipsForGroup(tx, connectedGroupId, ctx.userID);
+      directlyAffectedGroupIds.add(connectedGroupId);
     }
 
-    await reconcileMembershipDrivenEventsForGroups(
+    const expandedAffectedGroupIds = await expandAffectedGroupsWithSiblingMemberships(
       tx,
-      [args.id, ...affectedConnectedGroupIds],
+      directlyAffectedGroupIds,
       ctx.userID
     );
+    await recomputeGroupCountersForGroups(tx, expandedAffectedGroupIds);
+    await reconcileMembershipDrivenEventsForGroups(tx, expandedAffectedGroupIds, ctx.userID);
 
     const gName = args.name ?? (await groupName(tx, args.id));
     fireNotification('notifyGroupProfileUpdated', {
@@ -1342,7 +1550,16 @@ export const groupServerMutators = {
       }
     }
 
-    await recomputeSiblingMembershipsForGroups(tx, affectedMembershipGroupIds, ctx.userID);
+    const siblingAffectedGroupIds = await recomputeSiblingMembershipsForGroups(
+      tx,
+      affectedMembershipGroupIds,
+      ctx.userID
+    );
+    for (const affectedGroupId of siblingAffectedGroupIds) {
+      affectedMembershipGroupIds.add(affectedGroupId);
+    }
+
+    await recomputeGroupCountersForGroups(tx, affectedMembershipGroupIds);
     await reconcileMembershipDrivenEventsForGroups(tx, affectedMembershipGroupIds, ctx.userID);
   }),
 
@@ -1414,7 +1631,16 @@ export const groupServerMutators = {
       }
     }
 
-    await recomputeSiblingMembershipsForGroups(tx, affectedMembershipGroupIds, ctx.userID);
+    const siblingAffectedGroupIds = await recomputeSiblingMembershipsForGroups(
+      tx,
+      affectedMembershipGroupIds,
+      ctx.userID
+    );
+    for (const affectedGroupId of siblingAffectedGroupIds) {
+      affectedMembershipGroupIds.add(affectedGroupId);
+    }
+
+    await recomputeGroupCountersForGroups(tx, affectedMembershipGroupIds);
     await reconcileMembershipDrivenEventsForGroups(tx, affectedMembershipGroupIds, ctx.userID);
   }),
 
@@ -1442,7 +1668,16 @@ export const groupServerMutators = {
       }
     }
 
-    await recomputeSiblingMembershipsForGroups(tx, affectedMembershipGroupIds, ctx.userID);
+    const siblingAffectedGroupIds = await recomputeSiblingMembershipsForGroups(
+      tx,
+      affectedMembershipGroupIds,
+      ctx.userID
+    );
+    for (const affectedGroupId of siblingAffectedGroupIds) {
+      affectedMembershipGroupIds.add(affectedGroupId);
+    }
+
+    await recomputeGroupCountersForGroups(tx, affectedMembershipGroupIds);
     await reconcileMembershipDrivenEventsForGroups(tx, affectedMembershipGroupIds, ctx.userID);
   }),
 };

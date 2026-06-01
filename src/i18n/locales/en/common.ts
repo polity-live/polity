@@ -319,6 +319,16 @@ export const commonTranslations = {
     directionAnd: 'and',
     directionHaveMutually: 'share mutually',
     directionMutuallySend: 'to each other',
+    siblingMembershipExplanationOpenBeforeSource: 'Members of',
+    siblingMembershipExplanationOpenBetweenGroups: 'can join',
+    siblingMembershipExplanationOpenAfterTarget: 'directly.',
+    siblingMembershipExplanationElectedBeforeSource: 'A group role in',
+    siblingMembershipExplanationElectedBetweenGroups: 'creates membership in',
+    siblingMembershipExplanationElectedAfterTarget: 'automatically.',
+    siblingMembershipExplanationParliamentBeforeTarget: 'Membership in',
+    siblingMembershipExplanationParliamentBetweenGroups:
+      'is derived from groups that have passive voting rights in',
+    siblingMembershipExplanationParliamentAfterSource: '.',
     currentGroupHasRightIn: '{{currentGroupName}} has {{rightLabel}} in {{selectedGroupName}}',
     currentGroupGrantsRightTo:
       '{{currentGroupName}} grants {{rightLabel}} to {{selectedGroupName}}',

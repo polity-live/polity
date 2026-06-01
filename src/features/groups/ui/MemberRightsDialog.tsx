@@ -68,6 +68,7 @@ export function MemberRightsDialog<TParticipation extends ParticipationLike>({
       'Unknown User'
     : 'Unknown User';
   const roleSummary = membership ? getMembershipRoleSummary(membership) : 'Member';
+  const profileUserId = membership?.user?.id ?? null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -168,8 +169,8 @@ export function MemberRightsDialog<TParticipation extends ParticipationLike>({
         </div>
 
         <DialogFooter>
-          {membership?.user?.id ? (
-            <Button variant="outline" onClick={() => onNavigateToUser(membership.user.id)}>
+          {profileUserId ? (
+            <Button variant="outline" onClick={() => onNavigateToUser(profileUserId)}>
               {profileButtonLabel}
             </Button>
           ) : null}

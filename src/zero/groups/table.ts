@@ -68,10 +68,34 @@ export const groupOfflineMember = table('group_offline_member')
   })
   .primaryKey('id');
 
+export const groupOfflineMembership = table('group_offline_membership')
+  .columns({
+    id: string(),
+    group_offline_member_id: string(),
+    group_id: string(),
+    status: string().optional(),
+    visibility: string(),
+    source: string(),
+    source_group_id: string().optional(),
+    created_at: number(),
+  })
+  .primaryKey('id');
+
 export const groupMembershipRole = table('group_membership_role')
   .columns({
     id: string(),
     group_membership_id: string(),
+    role_id: string(),
+    assigned_at: number(),
+    assigned_by_id: string().optional(),
+    created_at: number(),
+  })
+  .primaryKey('id');
+
+export const groupOfflineMembershipRole = table('group_offline_membership_role')
+  .columns({
+    id: string(),
+    group_offline_membership_id: string(),
     role_id: string(),
     assigned_at: number(),
     assigned_by_id: string().optional(),

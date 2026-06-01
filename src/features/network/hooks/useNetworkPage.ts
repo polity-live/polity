@@ -258,7 +258,14 @@ export function useNetworkPage(groupId: string) {
   const { groups: allGroupsRaw } = useAllGroups();
   const availableGroups = useMemo(() => {
     return allGroupsRaw
-      .map(g => ({ id: g.id, name: g.name }))
+      .map(g => ({
+        id: g.id,
+        name: g.name,
+        description: g.description,
+        member_count: g.member_count,
+        event_count: g.event_count,
+        amendment_count: g.amendment_count,
+      }))
       .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
   }, [allGroupsRaw]);
 

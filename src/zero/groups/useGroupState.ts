@@ -22,7 +22,7 @@ interface GroupRoleDisplayLike {
 }
 
 interface GroupRoleLike {
-  id?: string | null;
+  id: string;
   name?: string | null;
   sort_order?: number | null;
   action_rights?: readonly { resource?: string | null; action?: string | null }[] | null;
@@ -33,6 +33,10 @@ interface GroupMembershipRoleLinkLike<TRole extends GroupRoleLike = GroupRoleLik
 }
 
 interface GroupGuestRoleLinkLike<TRole extends GroupRoleLike = GroupRoleLike> {
+  role?: TRole | null;
+}
+
+interface GroupOfflineMembershipRoleLinkLike<TRole extends GroupRoleLike = GroupRoleLike> {
   role?: TRole | null;
 }
 
@@ -96,6 +100,67 @@ function normalizeGuestAccesses<
       role: selectPrimaryGroupRole(roles) ?? guestAccess.role ?? null,
     };
   });
+}
+
+function normalizeOfflineMemberships<
+  TMembership extends {
+    user_id?: string | null;
+    status?: string | null;
+    group_offline_member_id?: string | null;
+    group_offline_member?: {
+      id?: string | null;
+      first_name?: string | null;
+      last_name?: string | null;
+      connected_user_id?: string | null;
+      connected_user?: {
+        id?: string | null;
+        first_name?: string | null;
+        last_name?: string | null;
+        handle?: string | null;
+        avatar?: string | null;
+        email?: string | null;
+      } | null;
+      group?: { id?: string | null; name?: string | null; group_type?: string | null } | null;
+    } | null;
+    membership_roles?: readonly GroupOfflineMembershipRoleLinkLike<TRole>[] | null;
+    role?: TRole | null;
+  },
+  TRole extends GroupRoleLike,
+>(memberships: readonly TMembership[] | null | undefined) {
+  return (memberships || [])
+    .filter(
+      membership =>
+        (membership.status === 'active' ||
+          membership.status === 'admin' ||
+          membership.status === 'member') &&
+        !membership.group_offline_member?.connected_user_id
+    )
+    .map(membership => {
+      const roles: TRole[] = [];
+      for (const link of membership.membership_roles || []) {
+        if (link.role) {
+          roles.push(link.role);
+        }
+      }
+
+      const offlineMember = membership.group_offline_member;
+      return {
+        ...membership,
+        user_id: membership.group_offline_member_id
+          ? `offline:${membership.group_offline_member_id}`
+          : membership.user_id,
+        user: {
+          id: null,
+          first_name: offlineMember?.first_name ?? null,
+          last_name: offlineMember?.last_name ?? null,
+          handle: null,
+          avatar: null,
+          email: null,
+        },
+        roles,
+        role: selectPrimaryGroupRole(roles) ?? membership.role ?? null,
+      };
+    });
 }
 
 function mapRoleForDisplay<T extends GroupRoleDisplayLike>(role: T) {
@@ -603,6 +668,33 @@ export function useGroupOfflineMembers(groupId?: string) {
   return {
     offlineMembers: offlineMembersData || [],
     isLoading: groupId != null && offlineMembersResult.type === 'unknown',
+  };
+}
+
+export function useGroupOfflineMemberships(groupId?: string) {
+  const [offlineMembershipsData, offlineMembershipsResult] = useQuery(
+    groupId ? queries.groups.offlineMembershipsWithRolesAndRights({ groupId }) : undefined
+  );
+
+  return {
+    offlineMemberships: normalizeOfflineMemberships(offlineMembershipsData),
+    isLoading: groupId != null && offlineMembershipsResult.type === 'unknown',
+  };
+}
+
+export function useGroupOfflineMembershipsByGroupIds(groupIds?: readonly string[]) {
+  const normalizedGroupIds = groupIds ? [...new Set(groupIds.filter(Boolean))] : [];
+  const [offlineMembershipsData, offlineMembershipsResult] = useQuery(
+    normalizedGroupIds.length > 0
+      ? queries.groups.offlineMembershipsWithRolesAndRightsByGroupIds({
+          groupIds: normalizedGroupIds,
+        })
+      : undefined
+  );
+
+  return {
+    offlineMemberships: normalizeOfflineMemberships(offlineMembershipsData),
+    isLoading: normalizedGroupIds.length > 0 && offlineMembershipsResult.type === 'unknown',
   };
 }
 

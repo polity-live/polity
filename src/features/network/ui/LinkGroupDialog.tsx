@@ -47,6 +47,7 @@ import {
   getSiblingMembershipModeLabel,
   getGroupRelationshipDirectionOptions,
   GroupRelationshipRightsSelector,
+  SiblingMembershipModeDescription,
   GroupRelationshipTypeSelect,
   invertGroupRelationshipType,
   type GroupRelationshipRight,
@@ -792,20 +793,14 @@ export function LinkGroupDialog({
                           {
                             value: 'open',
                             title: getSiblingMembershipModeLabel('open', t),
-                            description:
-                              'Mitglieder der verbundenen Gruppe koennen dieser Gruppe direkt beitreten.',
                           },
                           {
                             value: 'elected',
                             title: getSiblingMembershipModeLabel('elected', t),
-                            description:
-                              'Eine Rolle der verbundenen Gruppe erzeugt die Mitgliedschaft automatisch.',
                           },
                           {
                             value: 'parliament',
                             title: getSiblingMembershipModeLabel('parliament', t),
-                            description:
-                              'Mitgliedschaft wird aus Gruppen mit passivem Wahlrecht abgeleitet.',
                           },
                         ].map(option => (
                           <Label
@@ -822,11 +817,16 @@ export function LinkGroupDialog({
                               value={option.value}
                               className="mt-0.5"
                             />
-                            <div>
+                            <div className="space-y-2">
                               <div className="text-sm font-medium">{option.title}</div>
-                              <div className="text-muted-foreground text-xs">
-                                {option.description}
-                              </div>
+                              <SiblingMembershipModeDescription
+                                siblingMembershipMode={option.value as SiblingMembershipMode}
+                                currentGroupName={currentGroupName}
+                                selectedGroupName={selectedGroupName}
+                                currentGroupId={currentGroupId}
+                                selectedGroupId={selectedGroupId}
+                                className="text-muted-foreground"
+                              />
                             </div>
                           </Label>
                         ))}
@@ -855,9 +855,17 @@ export function LinkGroupDialog({
                     </div>
                   ) : null}
 
-                  <p className="text-muted-foreground text-xs">
-                    Aktiver Modus: {getSiblingMembershipModeLabel(siblingMembershipMode, t)}
-                  </p>
+                  <div className="space-y-1">
+                    <p className="text-muted-foreground text-xs font-medium">Aktiver Modus</p>
+                    <SiblingMembershipModeDescription
+                      siblingMembershipMode={siblingMembershipMode}
+                      currentGroupName={currentGroupName}
+                      selectedGroupName={selectedGroupName}
+                      currentGroupId={currentGroupId}
+                      selectedGroupId={selectedGroupId}
+                      className="text-muted-foreground"
+                    />
+                  </div>
                 </div>
               ) : null}
 

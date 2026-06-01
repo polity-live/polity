@@ -6,7 +6,9 @@ import {
   group,
   groupMembership,
   groupOfflineMember,
+  groupOfflineMembership,
   groupMembershipRole,
+  groupOfflineMembershipRole,
   groupGuestAccess,
   groupGuestRole,
   groupSiblingSource,
@@ -120,7 +122,9 @@ export const schema = createSchema({
     group,
     groupMembership,
     groupOfflineMember,
+    groupOfflineMembership,
     groupMembershipRole,
+    groupOfflineMembershipRole,
     groupGuestAccess,
     groupGuestRole,
     groupSiblingSource,
@@ -256,7 +260,9 @@ export type Follow = Row<Schema['tables']['follow']>;
 export type Group = Row<Schema['tables']['group']>;
 export type GroupMembership = Row<Schema['tables']['group_membership']>;
 export type GroupOfflineMember = Row<Schema['tables']['group_offline_member']>;
+export type GroupOfflineMembership = Row<Schema['tables']['group_offline_membership']>;
 export type GroupMembershipRole = Row<Schema['tables']['group_membership_role']>;
+export type GroupOfflineMembershipRole = Row<Schema['tables']['group_offline_membership_role']>;
 export type GroupGuestAccess = Row<Schema['tables']['group_guest_access']>;
 export type GroupGuestRole = Row<Schema['tables']['group_guest_role']>;
 export type GroupSiblingSource = Row<Schema['tables']['group_sibling_source']>;

@@ -272,6 +272,54 @@ export function useGroupActions() {
     [zero]
   );
 
+  const addOfflineMembershipRole = useCallback(
+    (args: Parameters<typeof mutators.groups.addOfflineMembershipRole>[0]) => {
+      const result = zero.mutate(mutators.groups.addOfflineMembershipRole(args));
+      toast.success(t('features.groups.toasts.memberRoleUpdated'));
+      onServerError(result, msg =>
+        handleMutationError(
+          toMutationError(msg),
+          t('features.groups.toasts.memberRoleUpdateFailed'),
+          t
+        )
+      );
+      return result;
+    },
+    [zero]
+  );
+
+  const removeOfflineMembershipRole = useCallback(
+    (args: Parameters<typeof mutators.groups.removeOfflineMembershipRole>[0]) => {
+      const result = zero.mutate(mutators.groups.removeOfflineMembershipRole(args));
+      toast.success(t('features.groups.toasts.memberRoleUpdated'));
+      onServerError(result, msg =>
+        handleMutationError(
+          toMutationError(msg),
+          t('features.groups.toasts.memberRoleUpdateFailed'),
+          t
+        )
+      );
+      return result;
+    },
+    [zero]
+  );
+
+  const syncOfflineMembershipRoles = useCallback(
+    (args: Parameters<typeof mutators.groups.syncOfflineMembershipRoles>[0]) => {
+      const result = zero.mutate(mutators.groups.syncOfflineMembershipRoles(args));
+      toast.success(t('features.groups.toasts.memberRoleUpdated'));
+      onServerError(result, msg =>
+        handleMutationError(
+          toMutationError(msg),
+          t('features.groups.toasts.memberRoleUpdateFailed'),
+          t
+        )
+      );
+      return result;
+    },
+    [zero]
+  );
+
   // ── Roles ──────────────────────────────────────────────────────────
   const createRole = useCallback(
     (args: Parameters<typeof mutators.groups.createRole>[0]) => {
@@ -512,6 +560,9 @@ export function useGroupActions() {
     addMembershipRole,
     removeMembershipRole,
     syncMembershipRoles,
+    addOfflineMembershipRole,
+    removeOfflineMembershipRole,
+    syncOfflineMembershipRoles,
     syncGuestRoles,
 
     // Roles

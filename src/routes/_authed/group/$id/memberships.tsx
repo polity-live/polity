@@ -46,8 +46,13 @@ import { getMembershipDisplayRoles } from '@/features/groups/logic/buildMembersh
 import { resolveChildBaseGroups } from '@/features/groups/logic/hierarchy';
 import { queries } from '@/zero/queries';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
-import { useGroupState } from '@/zero/groups/useGroupState';
+import { useGroupOfflineMembershipsByGroupIds, useGroupState } from '@/zero/groups/useGroupState';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
+import type {
+  ParticipationProvenanceGroupLike,
+  ParticipationRoleLike,
+  ParticipationUserLike,
+} from '@/features/shared/types/participation';
 import type {
   GroupMembershipWithUser,
   GroupRole,
@@ -55,10 +60,52 @@ import type {
   MembershipSortField,
   MembershipTab,
 } from '@/features/groups/types/group.types';
+import type { GroupOfflineMembershipWithRolesAndRightsByGroupIdsRow } from '@/zero/groups/queries';
 
 export const Route = createFileRoute('/_authed/group/$id/memberships')({
   component: GroupMembershipsPage,
 });
+
+type EffectiveOfflineMembership = GroupOfflineMembershipWithRolesAndRightsByGroupIdsRow & {
+  membershipKind: 'offline';
+  user_id: string;
+  user: ParticipationUserLike;
+  roles: ParticipationRoleLike[];
+  role: ParticipationRoleLike | null;
+  partGroup?: ParticipationProvenanceGroupLike | null;
+  baseGroup?: ParticipationProvenanceGroupLike | null;
+};
+
+type MembershipParticipant = GroupMembershipWithUser | EffectiveOfflineMembership;
+
+function isOfflineMembershipParticipant(
+  membership: MembershipParticipant | null | undefined
+): membership is EffectiveOfflineMembership {
+  return Boolean(
+    membership && 'membershipKind' in membership && membership.membershipKind === 'offline'
+  );
+}
+
+function toProvenanceGroup(
+  groupRef:
+    | {
+        id: string;
+        name?: string | null;
+        group_type?: string | null;
+      }
+    | null
+    | undefined
+) {
+  if (!groupRef?.id) {
+    return null;
+  }
+
+  return {
+    id: groupRef.id,
+    name: groupRef.name || groupRef.id,
+    group_type: groupRef.group_type ?? null,
+  };
+}
 
 function GroupMembershipsPage() {
   const { id: groupId } = Route.useParams();
@@ -162,24 +209,40 @@ function GroupMembershipsContent({
     removeMember,
     changeMemberRoles,
   } = useGroupMutations(groupId);
-  const { createOfflineMember, updateOfflineMember, deleteOfflineMember, importOfflineMembers } =
-    useGroupActions();
+  const {
+    createOfflineMember,
+    updateOfflineMember,
+    deleteOfflineMember,
+    importOfflineMembers,
+    syncOfflineMembershipRoles,
+  } = useGroupActions();
 
   const [changeRoleOpen, setChangeRoleOpen] = useState(false);
-  const [changeRoleMembership, setChangeRoleMembership] = useState<GroupMembershipWithUser | null>(
+  const [changeRoleMembership, setChangeRoleMembership] = useState<MembershipParticipant | null>(
     null
   );
   const [memberRightsOpen, setMemberRightsOpen] = useState(false);
   const [memberRightsMembership, setMemberRightsMembership] =
-    useState<GroupMembershipWithUser | null>(null);
+    useState<MembershipParticipant | null>(null);
 
-  const handleOpenChangeRoleDialog = (membership: GroupMembershipWithUser) => {
+  const handleOpenChangeRoleDialog = (membership: MembershipParticipant) => {
     setChangeRoleMembership(membership);
     setChangeRoleOpen(true);
   };
 
   const handleConfirmRoleChange = async (newRoleIds: string[]) => {
     if (!changeRoleMembership) return;
+
+    if (isOfflineMembershipParticipant(changeRoleMembership)) {
+      await serverConfirmed(
+        syncOfflineMembershipRoles({
+          group_offline_membership_id: changeRoleMembership.id,
+          role_ids: newRoleIds,
+          assigned_by_id: authUser?.id ?? null,
+        })
+      );
+      return;
+    }
 
     const userId = changeRoleMembership.user?.id;
     if (!userId) return;
@@ -194,7 +257,7 @@ function GroupMembershipsContent({
     );
   };
 
-  const handleOpenMemberRights = (membership: GroupMembershipWithUser) => {
+  const handleOpenMemberRights = (membership: MembershipParticipant) => {
     setMemberRightsMembership(membership);
     setMemberRightsOpen(true);
   };
@@ -293,15 +356,26 @@ function GroupMembershipsContent({
   };
 
   const handleRemoveRoleFromMembershipTypeView = async (
-    membership: GroupMembershipWithUser,
+    membership: MembershipParticipant,
     roleId: string
   ) => {
-    const userId = membership.user?.id;
-    if (!userId) return;
-
     const nextRoleIds = getMembershipDisplayRoles(membership)
       .filter(role => role.id !== roleId)
       .map(role => role.id);
+
+    if (isOfflineMembershipParticipant(membership)) {
+      await serverConfirmed(
+        syncOfflineMembershipRoles({
+          group_offline_membership_id: membership.id,
+          role_ids: nextRoleIds,
+          assigned_by_id: authUser?.id ?? null,
+        })
+      );
+      return;
+    }
+
+    const userId = membership.user?.id;
+    if (!userId) return;
 
     await changeMemberRoles(
       membership.id,
@@ -377,9 +451,11 @@ function GroupMembershipsContent({
       ? queries.groups.offlineMembersByGroupIds({ groupIds: compositionGroupIds })
       : undefined
   );
+  const { offlineMemberships: offlineMembershipsData } =
+    useGroupOfflineMembershipsByGroupIds(compositionGroupIds);
 
   const groupsById = useMemo(() => {
-    const nextMap = new Map<string, OfflineRosterGroupReference>();
+    const nextMap = new Map<string, OfflineRosterGroupReference & { group_type?: string | null }>();
     if (group?.id) {
       nextMap.set(group.id, group);
     }
@@ -396,8 +472,22 @@ function GroupMembershipsContent({
         nextMap.set(offlineMember.group.id, offlineMember.group);
       }
     }
+    for (const offlineMembership of offlineMembershipsData || []) {
+      if (offlineMembership.group?.id) {
+        nextMap.set(offlineMembership.group.id, offlineMembership.group);
+      }
+      if (offlineMembership.source_group?.id) {
+        nextMap.set(offlineMembership.source_group.id, offlineMembership.source_group);
+      }
+      if (offlineMembership.group_offline_member?.group?.id) {
+        nextMap.set(
+          offlineMembership.group_offline_member.group.id,
+          offlineMembership.group_offline_member.group
+        );
+      }
+    }
     return nextMap;
-  }, [allRelationshipsWithGroups, group, offlineMembersData]);
+  }, [allRelationshipsWithGroups, group, offlineMembersData, offlineMembershipsData]);
 
   const siblingRootGroupIds = useMemo(() => {
     if (!group || group.group_type !== 'sibling') {
@@ -413,10 +503,134 @@ function GroupMembershipsContent({
       .filter((candidate): candidate is string => Boolean(candidate));
   }, [group]);
 
+  const effectiveOfflineMemberships = useMemo<EffectiveOfflineMembership[]>(() => {
+    const searchValue = memberSearchQuery.trim().toLowerCase();
+
+    return (offlineMembershipsData || [])
+      .filter(membership => membership.group_id === groupId)
+      .filter(membership => {
+        if (!searchValue) {
+          return true;
+        }
+
+        const offlineMember = membership.group_offline_member;
+        const haystack = [
+          offlineMember?.first_name,
+          offlineMember?.last_name,
+          offlineMember?.reason_not_signed_up,
+          offlineMember?.connected_user?.first_name,
+          offlineMember?.connected_user?.last_name,
+          offlineMember?.connected_user?.handle,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+
+        return haystack.includes(searchValue);
+      })
+      .map(membership => {
+        const offlineMember = membership.group_offline_member;
+        const baseGroupRef =
+          groupsById.get(offlineMember?.group_id || '') || offlineMember?.group || null;
+
+        let partGroupRef: (OfflineRosterGroupReference & { group_type?: string | null }) | null =
+          null;
+        if (showComposition) {
+          if (group?.group_type === 'hierarchical') {
+            partGroupRef = group;
+          } else if (group?.group_type === 'sibling') {
+            const baseGroupId = offlineMember?.group_id || '';
+            const matchedRootGroupId =
+              siblingRootGroupIds.find(rootGroupId => {
+                if (rootGroupId === baseGroupId) {
+                  return true;
+                }
+
+                const rootGroup = groupsById.get(rootGroupId);
+                if (rootGroup?.group_type !== 'hierarchical') {
+                  return false;
+                }
+
+                return resolveChildBaseGroups(
+                  rootGroupId,
+                  [...allRelationshipsWithGroups],
+                  groupsById
+                ).includes(baseGroupId);
+              }) ||
+              membership.source_group_id ||
+              baseGroupId;
+
+            partGroupRef =
+              groupsById.get(matchedRootGroupId) || membership.source_group || baseGroupRef;
+          }
+        }
+
+        return {
+          ...membership,
+          membershipKind: 'offline' as const,
+          user_id: `offline:${membership.group_offline_member_id}`,
+          user: {
+            id: null,
+            first_name: offlineMember?.first_name ?? null,
+            last_name: offlineMember?.last_name ?? null,
+            handle: null,
+            avatar: null,
+            email: null,
+          },
+          roles: membership.roles ?? [],
+          role: membership.role ?? null,
+          partGroup: showComposition ? toProvenanceGroup(partGroupRef) : null,
+          baseGroup: showComposition ? toProvenanceGroup(baseGroupRef) : null,
+        };
+      });
+  }, [
+    allRelationshipsWithGroups,
+    group,
+    groupId,
+    groupsById,
+    memberSearchQuery,
+    offlineMembershipsData,
+    showComposition,
+    siblingRootGroupIds,
+  ]);
+
   const offlineRows = useMemo(() => {
     const searchValue = memberSearchQuery.trim().toLowerCase();
 
+    if (showComposition) {
+      return effectiveOfflineMemberships.map<OfflineRosterRow>(membership => {
+        const offlineMember = membership.group_offline_member;
+        return {
+          id: offlineMember?.id || membership.id,
+          kind: 'offline',
+          effectiveMembershipId: membership.id,
+          firstName: offlineMember?.first_name || '',
+          lastName: offlineMember?.last_name || '',
+          isActiveUser: false,
+          reasonNotSignedUp: offlineMember?.reason_not_signed_up,
+          connectedUser: offlineMember?.connected_user ?? null,
+          partGroup: membership.partGroup || null,
+          baseGroup: membership.baseGroup || null,
+          roles: membership.roles,
+          canViewRights: true,
+          canManageRoles: canManageMembers,
+          readOnlyIdentity: true,
+          canConnect: false,
+          canEdit: false,
+          canDelete: false,
+        };
+      });
+    }
+
+    const effectiveMembershipByOfflineMemberId = new Map(
+      effectiveOfflineMemberships.map(membership => [
+        membership.group_offline_member_id,
+        membership,
+      ])
+    );
+
     return (offlineMembersData || [])
+      .filter(offlineMember => offlineMember.group_id === groupId)
       .filter(offlineMember => {
         if (!searchValue) {
           return true;
@@ -437,40 +651,14 @@ function GroupMembershipsContent({
         return haystack.includes(searchValue);
       })
       .map<OfflineRosterRow>(offlineMember => {
+        const effectiveMembership = effectiveMembershipByOfflineMemberId.get(offlineMember.id);
         let partGroup: OfflineRosterGroupReference | null | undefined;
         let baseGroup: OfflineRosterGroupReference | null | undefined;
-
-        if (showComposition) {
-          baseGroup = groupsById.get(offlineMember.group_id) || offlineMember.group || null;
-
-          if (group?.group_type === 'hierarchical') {
-            partGroup = group;
-          } else if (group?.group_type === 'sibling') {
-            const matchedRootGroupId =
-              siblingRootGroupIds.find(rootGroupId => {
-                if (rootGroupId === offlineMember.group_id) {
-                  return true;
-                }
-
-                const rootGroup = groupsById.get(rootGroupId);
-                if (rootGroup?.group_type !== 'hierarchical') {
-                  return false;
-                }
-
-                return resolveChildBaseGroups(
-                  rootGroupId,
-                  [...allRelationshipsWithGroups],
-                  groupsById
-                ).includes(offlineMember.group_id);
-              }) || offlineMember.group_id;
-
-            partGroup = groupsById.get(matchedRootGroupId) || offlineMember.group || null;
-          }
-        }
 
         return {
           id: offlineMember.id,
           kind: 'offline',
+          effectiveMembershipId: effectiveMembership?.id ?? null,
           firstName: offlineMember.first_name,
           lastName: offlineMember.last_name,
           isActiveUser: false,
@@ -478,20 +666,22 @@ function GroupMembershipsContent({
           connectedUser: offlineMember.connected_user ?? null,
           partGroup,
           baseGroup,
-          readOnlyIdentity: showComposition,
-          canConnect: !showComposition,
-          canEdit: !showComposition,
-          canDelete: !showComposition,
+          roles: effectiveMembership?.roles ?? [],
+          canViewRights: Boolean(effectiveMembership),
+          canManageRoles: canManageMembers && Boolean(effectiveMembership),
+          readOnlyIdentity: false,
+          canConnect: true,
+          canEdit: true,
+          canDelete: true,
         };
       });
   }, [
-    allRelationshipsWithGroups,
-    group,
-    groupsById,
+    canManageMembers,
+    effectiveOfflineMemberships,
+    groupId,
     memberSearchQuery,
     offlineMembersData,
     showComposition,
-    siblingRootGroupIds,
   ]);
 
   const allUserRows = useMemo<OfflineRosterRow[]>(() => {
@@ -503,12 +693,23 @@ function GroupMembershipsContent({
       isActiveUser: true,
       connectedUser: null,
       reasonNotSignedUp: null,
+      roles: getMembershipDisplayRoles(membership),
       partGroup: showComposition ? membership.partGroup || null : null,
       baseGroup: showComposition ? membership.baseGroup || null : null,
     }));
 
     return [...activeRows, ...offlineRows];
   }, [activeMembers, offlineRows, showComposition]);
+
+  const membershipsByRoleMembers = useMemo<MembershipParticipant[]>(
+    () => [...activeMembers, ...effectiveOfflineMemberships],
+    [activeMembers, effectiveOfflineMemberships]
+  );
+  const offlineMembershipsById = useMemo(
+    () =>
+      new Map(effectiveOfflineMemberships.map(membership => [membership.id, membership] as const)),
+    [effectiveOfflineMemberships]
+  );
 
   const offlineConnectedUserIds = useMemo(
     () =>
@@ -524,9 +725,8 @@ function GroupMembershipsContent({
     () =>
       activeMemberships
         .map(membership => membership.user)
-        .filter(
-          (user): user is NonNullable<(typeof activeMemberships)[number]['user']> =>
-            Boolean(user?.id) && !offlineConnectedUserIds.has(user.id)
+        .filter((user): user is OfflineRosterCandidateUser =>
+          Boolean(user && user.id && !offlineConnectedUserIds.has(user.id))
         ),
     [activeMemberships, offlineConnectedUserIds]
   );
@@ -692,6 +892,26 @@ function GroupMembershipsContent({
               connectedUserCandidates={connectedUserCandidates}
               showManageButton={canManageMembers && !showComposition}
               showProvenanceColumns={showComposition}
+              onOpenRightsDialog={row => {
+                if (!row.effectiveMembershipId) {
+                  return;
+                }
+
+                const membership = offlineMembershipsById.get(row.effectiveMembershipId);
+                if (membership) {
+                  handleOpenMemberRights(membership);
+                }
+              }}
+              onOpenChangeRoleDialog={row => {
+                if (!row.effectiveMembershipId) {
+                  return;
+                }
+
+                const membership = offlineMembershipsById.get(row.effectiveMembershipId);
+                if (membership) {
+                  handleOpenChangeRoleDialog(membership);
+                }
+              }}
               manageDialogTitle="Manage non signed up users"
               manageDialogDescription="Add single offline users or import them from CSV so the full group roster remains complete."
               onCreate={(entry, correlationId) =>
@@ -755,7 +975,7 @@ function GroupMembershipsContent({
           <div className="space-y-4">
             <MembershipsByRoleTables
               roles={[...memberRoles]}
-              members={activeMembers}
+              members={membershipsByRoleMembers}
               onOpenRightsDialog={handleOpenMemberRights}
               onRemoveRole={handleRemoveRoleFromMembershipTypeView}
               onSecondaryAction={handleOpenChangeRoleDialog}

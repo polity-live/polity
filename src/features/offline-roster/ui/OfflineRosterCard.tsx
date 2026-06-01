@@ -39,9 +39,11 @@ import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import { cn } from '@/features/shared/utils/utils';
 import { getTableTagSurfaceClassName } from '@/features/shared/ui/ui/table-tag';
 import {
+  ArrowUpDown,
   Check,
   CircleCheck,
   CircleX,
+  Eye,
   Link2,
   Pencil,
   Trash2,
@@ -67,17 +69,21 @@ export interface OfflineRosterGroupReference {
 export interface OfflineRosterRow {
   id: string;
   kind: 'active' | 'offline';
+  effectiveMembershipId?: string | null;
   firstName: string;
   lastName: string;
   isActiveUser: boolean;
   reasonNotSignedUp?: string | null;
   connectedUser?: OfflineRosterConnectedUser | null;
+  roles?: readonly { id: string; name?: string | null }[] | null;
   partGroup?: OfflineRosterGroupReference | null;
   baseGroup?: OfflineRosterGroupReference | null;
   readOnlyIdentity?: boolean;
   canConnect?: boolean;
   canEdit?: boolean;
   canDelete?: boolean;
+  canViewRights?: boolean;
+  canManageRoles?: boolean;
   canConfirmParticipation?: boolean;
   canWithdrawParticipation?: boolean;
   canToggleChannel?: boolean;
@@ -119,6 +125,8 @@ interface OfflineRosterCardProps {
     correlationId: string
   ) => Promise<unknown>;
   onDelete?: (row: OfflineRosterRow, correlationId: string) => Promise<unknown>;
+  onOpenRightsDialog?: (row: OfflineRosterRow) => void;
+  onOpenChangeRoleDialog?: (row: OfflineRosterRow) => void;
   onSetParticipationStatus?: (
     row: OfflineRosterRow,
     nextStatus: 'listed' | 'confirmed',
@@ -312,6 +320,8 @@ export function OfflineRosterCard({
   onConnect,
   onEdit,
   onDelete,
+  onOpenRightsDialog,
+  onOpenChangeRoleDialog,
   onSetParticipationStatus,
   onToggleChannel,
 }: OfflineRosterCardProps) {
@@ -390,6 +400,13 @@ export function OfflineRosterCard({
         user => `/user/${user.id}`
       ),
     [connectedUserCandidates]
+  );
+  const showRolesColumn = useMemo(
+    () =>
+      rows.some(
+        row => (row.roles && row.roles.length > 0) || row.canViewRights || row.canManageRoles
+      ),
+    [rows]
   );
 
   const handleCloseManageDialog = (open: boolean) => {
@@ -619,6 +636,7 @@ export function OfflineRosterCard({
                     <TableHead>Firstname</TableHead>
                     <TableHead>Lastname</TableHead>
                     <TableHead>Connected Active User</TableHead>
+                    {showRolesColumn ? <TableHead>Roles</TableHead> : null}
                     <TableHead>Reason why not signed up</TableHead>
                     {showProvenanceColumns ? <TableHead>Part group</TableHead> : null}
                     {showProvenanceColumns ? <TableHead>Base group</TableHead> : null}
@@ -654,6 +672,21 @@ export function OfflineRosterCard({
                             <span className="text-muted-foreground">-</span>
                           )}
                         </TableCell>
+                        {showRolesColumn ? (
+                          <TableCell>
+                            <div className="flex flex-wrap gap-2">
+                              {row.roles && row.roles.length > 0 ? (
+                                row.roles.map(role => (
+                                  <Badge key={`${row.id}-${role.id}`} variant="outline">
+                                    {role.name || 'Role'}
+                                  </Badge>
+                                ))
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
+                            </div>
+                          </TableCell>
+                        ) : null}
                         <TableCell>
                           <div className="space-y-2">
                             <span>{row.reasonNotSignedUp || '-'}</span>
@@ -693,6 +726,28 @@ export function OfflineRosterCard({
                         ) : null}
                         <TableCell className="text-right">
                           <div className="flex flex-wrap justify-end gap-2">
+                            {row.canViewRights ? (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => onOpenRightsDialog?.(row)}
+                              >
+                                <Eye className="mr-2 h-4 w-4" />
+                                Rights
+                              </Button>
+                            ) : null}
+                            {row.canManageRoles ? (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => onOpenChangeRoleDialog?.(row)}
+                              >
+                                <ArrowUpDown className="mr-2 h-4 w-4" />
+                                Manage Roles
+                              </Button>
+                            ) : null}
                             {row.canConfirmParticipation ? (
                               <Button
                                 type="button"

@@ -23,6 +23,7 @@ import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCar
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { useGroupWikiPage } from '@/features/groups/hooks/useGroupWikiPage';
+import { SiblingMembershipModeDescription } from '@/features/network/ui/GroupRelationshipFields';
 import { buildGroupWikiIncumbentSections } from '@/features/groups/logic/buildGroupWikiIncumbentSections';
 import {
   countAcceptedMemberships,
@@ -274,7 +275,18 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
                     : 'Geschwistergruppe'}
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            {group.sibling_membership_mode ? (
+              <div className="border-border/70 bg-background/80 rounded-lg border px-3 py-3 shadow-sm">
+                <SiblingMembershipModeDescription
+                  siblingMembershipMode={group.sibling_membership_mode}
+                  currentGroupName={group.name ?? ''}
+                  selectedGroupName={connectedGroup.name ?? ''}
+                  currentGroupId={groupId}
+                  selectedGroupId={String(connectedGroup.id)}
+                />
+              </div>
+            ) : null}
             <GroupTimelineCard
               group={{
                 id: String(connectedGroup.id),

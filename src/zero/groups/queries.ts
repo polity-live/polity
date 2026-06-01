@@ -112,6 +112,34 @@ export const groupQueries = {
         .orderBy('created_at', 'asc')
   ),
 
+  offlineMembershipsWithRolesAndRights: defineQuery(
+    z.object({ groupId: z.string() }),
+    ({ args: { groupId } }) =>
+      zql.group_offline_membership
+        .where('group_id', groupId)
+        .related('group')
+        .related('source_group')
+        .related('group_offline_member', q =>
+          q.related('group').related('connected_user').related('created_by')
+        )
+        .related('membership_roles', q => q.related('role', rq => rq.related('action_rights')))
+        .orderBy('created_at', 'asc')
+  ),
+
+  offlineMembershipsWithRolesAndRightsByGroupIds: defineQuery(
+    z.object({ groupIds: z.array(z.string()) }),
+    ({ args: { groupIds } }) =>
+      zql.group_offline_membership
+        .where('group_id', 'IN', groupIds)
+        .related('group')
+        .related('source_group')
+        .related('group_offline_member', q =>
+          q.related('group').related('connected_user').related('created_by')
+        )
+        .related('membership_roles', q => q.related('role', rq => rq.related('action_rights')))
+        .orderBy('created_at', 'asc')
+  ),
+
   // ── New queries (extracted from hooks.ts) ─────────────────────────
 
   /** Deep-relational query powering the GroupWiki page */
@@ -394,6 +422,12 @@ export type GroupMembershipWithRelationsRow = QueryRowType<
 export type GroupOfflineMemberRow = QueryRowType<typeof groupQueries.offlineMembersByGroup>;
 export type GroupOfflineMemberByGroupIdsRow = QueryRowType<
   typeof groupQueries.offlineMembersByGroupIds
+>;
+export type GroupOfflineMembershipWithRolesAndRightsRow = QueryRowType<
+  typeof groupQueries.offlineMembershipsWithRolesAndRights
+>;
+export type GroupOfflineMembershipWithRolesAndRightsByGroupIdsRow = QueryRowType<
+  typeof groupQueries.offlineMembershipsWithRolesAndRightsByGroupIds
 >;
 export type GroupMembershipsByUserRow = QueryRowType<typeof groupQueries.membershipsByUser>;
 export type GroupAccessRoleWithRightsRow = QueryRowType<typeof groupQueries.accessRolesWithRights>;

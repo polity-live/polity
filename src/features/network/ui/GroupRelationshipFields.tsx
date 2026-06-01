@@ -362,6 +362,128 @@ export function GroupRelationshipTypePreview({
   );
 }
 
+function getSafeRelationshipGroupNames(args: {
+  currentGroupName: string;
+  selectedGroupName: string;
+  t: TranslateFn;
+}) {
+  return {
+    safeCurrentGroupName: getSafeGroupName(
+      args.currentGroupName,
+      args.t('common.network.thisGroup')
+    ),
+    safeSelectedGroupName: getSafeGroupName(args.selectedGroupName, args.t('common.unspecified')),
+  };
+}
+
+export function SiblingMembershipModeDescription({
+  siblingMembershipMode,
+  currentGroupName,
+  selectedGroupName,
+  currentGroupId,
+  selectedGroupId,
+  className,
+}: {
+  siblingMembershipMode: SiblingMembershipMode;
+  currentGroupName: string;
+  selectedGroupName: string;
+  currentGroupId?: string;
+  selectedGroupId?: string;
+  className?: string;
+}) {
+  const { t } = useTranslation();
+  const { safeCurrentGroupName, safeSelectedGroupName } = getSafeRelationshipGroupNames({
+    currentGroupName,
+    selectedGroupName,
+    t,
+  });
+  const parliamentAfterSource = t(
+    'common.network.siblingMembershipExplanationParliamentAfterSource',
+    'haben.'
+  );
+
+  const currentTag = (
+    <GroupRelationshipNameTag
+      name={safeCurrentGroupName}
+      kind="current"
+      caseStyle="embedded"
+      groupId={currentGroupId}
+    />
+  );
+  const selectedTag = (
+    <GroupRelationshipNameTag
+      name={safeSelectedGroupName}
+      kind="selected"
+      caseStyle="embedded"
+      groupId={selectedGroupId}
+    />
+  );
+
+  if (siblingMembershipMode === 'open') {
+    return (
+      <div className={cn('flex flex-wrap items-center gap-1.5 leading-relaxed', className)}>
+        <span className="text-xs">
+          {t('common.network.siblingMembershipExplanationOpenBeforeSource', 'Mitglieder von')}
+        </span>
+        {selectedTag}
+        <span className="text-xs">
+          {t('common.network.siblingMembershipExplanationOpenBetweenGroups', 'koennen')}
+        </span>
+        {currentTag}
+        <span className="text-xs">
+          {t('common.network.siblingMembershipExplanationOpenAfterTarget', 'selbst beitreten.')}
+        </span>
+      </div>
+    );
+  }
+
+  if (siblingMembershipMode === 'elected') {
+    return (
+      <div className={cn('flex flex-wrap items-center gap-1.5 leading-relaxed', className)}>
+        <span className="text-xs">
+          {t(
+            'common.network.siblingMembershipExplanationElectedBeforeSource',
+            'Eine Gruppenrolle in'
+          )}
+        </span>
+        {selectedTag}
+        <span className="text-xs">
+          {t(
+            'common.network.siblingMembershipExplanationElectedBetweenGroups',
+            'erzeugt die Mitgliedschaft in'
+          )}
+        </span>
+        {currentTag}
+        <span className="text-xs">
+          {t('common.network.siblingMembershipExplanationElectedAfterTarget', 'automatisch.')}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn('flex flex-wrap items-center gap-1.5 leading-relaxed', className)}>
+      <span className="text-xs">
+        {t(
+          'common.network.siblingMembershipExplanationParliamentBeforeTarget',
+          'Mitgliedschaft in'
+        )}
+      </span>
+      {currentTag}
+      <span className="text-xs">
+        {t(
+          'common.network.siblingMembershipExplanationParliamentBetweenGroups',
+          'wird aus Gruppen abgeleitet, die passives Wahlrecht in'
+        )}
+      </span>
+      {selectedTag}
+      <span className={cn('text-xs', /^[.,;:!?]/.test(parliamentAfterSource) && '-ml-1')}>
+        {parliamentAfterSource}
+      </span>
+    </div>
+  );
+}
+
 function RelationshipTypeOptionContent({
   relationshipType,
   currentGroupName,

@@ -13,6 +13,9 @@ import {
   groupOfflineMemberUpdateSchema,
   groupOfflineMemberDeleteSchema,
   groupOfflineMemberBulkImportSchema,
+  groupOfflineMembershipRoleAssignSchema,
+  groupOfflineMembershipRoleUnassignSchema,
+  groupOfflineMembershipRolesSyncSchema,
   groupMembershipRoleAssignSchema,
   groupMembershipRoleUnassignSchema,
   groupMembershipRolesSyncSchema,
@@ -42,6 +45,7 @@ import {
   syncSiblingSourceGroups,
   userHasActiveMembershipInGroup,
 } from './membership-helpers';
+import { ensureOfflineDirectMembership } from './offline-membership-helpers';
 
 async function authorizeScopedRoleMutation(
   tx: Parameters<typeof can>[0],
@@ -86,6 +90,27 @@ async function loadMembershipForRoleMutation(
   return membership;
 }
 
+async function loadOfflineMembershipForRoleMutation(
+  tx: Parameters<typeof can>[0],
+  ctx: Parameters<typeof can>[1],
+  groupOfflineMembershipId: string
+) {
+  const membership = await tx.run(
+    zql.group_offline_membership.where('id', groupOfflineMembershipId).one()
+  );
+  if (!membership) {
+    throw new Error('Offline membership not found');
+  }
+
+  await can(tx, ctx, {
+    action: 'manage',
+    resource: 'groupMemberships',
+    groupId: membership.group_id,
+  });
+
+  return membership;
+}
+
 async function loadGuestAccessForRoleMutation(
   tx: Parameters<typeof can>[0],
   ctx: Parameters<typeof can>[1],
@@ -115,12 +140,16 @@ async function loadRole(tx: Parameters<typeof can>[0], roleId: string) {
 
 async function assertRolesAssignableToMembers(
   tx: Parameters<typeof can>[0],
-  roleIds: readonly string[]
+  roleIds: readonly string[],
+  groupId?: string
 ) {
   for (const roleId of [...new Set(roleIds.filter(Boolean))]) {
     const role = await loadRole(tx, roleId);
     if (role.assignee_kind === 'guest') {
       throw new Error('Guest roles cannot be assigned to official group memberships.');
+    }
+    if (groupId && (role.group_id !== groupId || role.scope !== 'group')) {
+      throw new Error('Membership roles must belong to the target group.');
     }
   }
 }
@@ -253,6 +282,93 @@ async function syncGroupMembershipRoles(
   }
 }
 
+async function addGroupOfflineMembershipRole(
+  tx: Parameters<typeof can>[0],
+  args: {
+    group_offline_membership_id: string;
+    role_id: string;
+    assigned_by_id?: string | null;
+  }
+) {
+  const existingLink = await tx.run(
+    zql.group_offline_membership_role
+      .where('group_offline_membership_id', args.group_offline_membership_id)
+      .where('role_id', args.role_id)
+      .one()
+  );
+
+  if (existingLink) {
+    return existingLink.id;
+  }
+
+  const now = Date.now();
+  const id = crypto.randomUUID();
+
+  await tx.mutate.group_offline_membership_role.insert({
+    id,
+    group_offline_membership_id: args.group_offline_membership_id,
+    role_id: args.role_id,
+    assigned_at: now,
+    assigned_by_id: args.assigned_by_id ?? null,
+    created_at: now,
+  });
+
+  return id;
+}
+
+async function removeGroupOfflineMembershipRole(
+  tx: Parameters<typeof can>[0],
+  args: {
+    group_offline_membership_id: string;
+    role_id: string;
+  }
+) {
+  const existingLinks = await tx.run(
+    zql.group_offline_membership_role
+      .where('group_offline_membership_id', args.group_offline_membership_id)
+      .where('role_id', args.role_id)
+  );
+
+  for (const link of existingLinks) {
+    await tx.mutate.group_offline_membership_role.delete({ id: link.id });
+  }
+}
+
+async function syncGroupOfflineMembershipRoles(
+  tx: Parameters<typeof can>[0],
+  args: {
+    group_offline_membership_id: string;
+    role_ids: string[];
+    assigned_by_id?: string | null;
+  }
+) {
+  const desiredRoleIds = [...new Set(args.role_ids.filter(Boolean))];
+  const existingLinks = await tx.run(
+    zql.group_offline_membership_role.where(
+      'group_offline_membership_id',
+      args.group_offline_membership_id
+    )
+  );
+  const existingRoleIds = new Set(existingLinks.map(link => link.role_id));
+  const desiredRoleIdSet = new Set(desiredRoleIds);
+
+  for (const link of existingLinks) {
+    if (!desiredRoleIdSet.has(link.role_id)) {
+      await tx.mutate.group_offline_membership_role.delete({ id: link.id });
+    }
+  }
+
+  for (const roleId of desiredRoleIds) {
+    if (!existingRoleIds.has(roleId)) {
+      await addGroupOfflineMembershipRole(tx, {
+        group_offline_membership_id: args.group_offline_membership_id,
+        role_id: roleId,
+        assigned_by_id: args.assigned_by_id,
+      });
+    }
+  }
+}
+
 async function addGroupGuestRole(
   tx: Parameters<typeof can>[0],
   args: {
@@ -371,6 +487,27 @@ async function resolveDefaultMembershipRoleId(
   }
 
   return memberRoles.find(role => role.name === 'Member')?.id ?? null;
+}
+
+async function assignDefaultInviteRoleToOfflineMembership(
+  tx: Parameters<typeof can>[0],
+  args: {
+    groupId: string;
+    groupOfflineMembershipId: string;
+    assignedById?: string | null;
+  }
+) {
+  const initialRoleId = await resolveDefaultMembershipRoleId(tx, args.groupId, 'invited');
+
+  if (!initialRoleId) {
+    return;
+  }
+
+  await syncGroupOfflineMembershipRoles(tx, {
+    group_offline_membership_id: args.groupOfflineMembershipId,
+    role_ids: [initialRoleId],
+    assigned_by_id: args.assignedById,
+  });
 }
 
 async function clearGroupRoleDefaults(
@@ -654,6 +791,16 @@ export const groupSharedMutators = {
       created_at: now,
       updated_at: now,
     });
+
+    const offlineMembershipId = await ensureOfflineDirectMembership(tx, {
+      groupId: args.group_id,
+      groupOfflineMemberId: args.id,
+    });
+    await assignDefaultInviteRoleToOfflineMembership(tx, {
+      groupId: args.group_id,
+      groupOfflineMembershipId: offlineMembershipId,
+      assignedById: ctx.userID,
+    });
   }),
 
   updateOfflineMember: defineMutator(groupOfflineMemberUpdateSchema, async ({ tx, ctx, args }) => {
@@ -723,8 +870,9 @@ export const groupSharedMutators = {
         }
 
         seenImportKeys.add(dedupeKey);
+        const offlineMemberId = crypto.randomUUID();
         await tx.mutate.group_offline_member.insert({
-          id: crypto.randomUUID(),
+          id: offlineMemberId,
           group_id: args.group_id,
           first_name: firstName,
           last_name: lastName,
@@ -733,6 +881,16 @@ export const groupSharedMutators = {
           created_by_id: ctx.userID,
           created_at: now,
           updated_at: now,
+        });
+
+        const offlineMembershipId = await ensureOfflineDirectMembership(tx, {
+          groupId: args.group_id,
+          groupOfflineMemberId: offlineMemberId,
+        });
+        await assignDefaultInviteRoleToOfflineMembership(tx, {
+          groupId: args.group_id,
+          groupOfflineMembershipId: offlineMembershipId,
+          assignedById: ctx.userID,
         });
       }
     }
@@ -744,7 +902,7 @@ export const groupSharedMutators = {
     const now = Date.now();
     const { initial_role_id, ...membershipArgs } = args;
     if (initial_role_id) {
-      await assertRolesAssignableToMembers(tx, [initial_role_id]);
+      await assertRolesAssignableToMembers(tx, [initial_role_id], args.group_id);
     }
     await tx.mutate.group_membership.insert({
       ...membershipArgs,
@@ -787,7 +945,7 @@ export const groupSharedMutators = {
     const now = Date.now();
     const { initial_role_id, ...membershipArgs } = args;
     if (initial_role_id) {
-      await assertRolesAssignableToMembers(tx, [initial_role_id]);
+      await assertRolesAssignableToMembers(tx, [initial_role_id], args.group_id);
     }
     await tx.mutate.group_membership.insert({
       ...membershipArgs,
@@ -826,8 +984,8 @@ export const groupSharedMutators = {
   }),
 
   addMembershipRole: defineMutator(groupMembershipRoleAssignSchema, async ({ tx, ctx, args }) => {
-    await loadMembershipForRoleMutation(tx, ctx, args.group_membership_id);
-    await assertRolesAssignableToMembers(tx, [args.role_id]);
+    const membership = await loadMembershipForRoleMutation(tx, ctx, args.group_membership_id);
+    await assertRolesAssignableToMembers(tx, [args.role_id], membership.group_id);
     await addGroupMembershipRole(tx, args);
   }),
 
@@ -840,10 +998,44 @@ export const groupSharedMutators = {
   ),
 
   syncMembershipRoles: defineMutator(groupMembershipRolesSyncSchema, async ({ tx, ctx, args }) => {
-    await loadMembershipForRoleMutation(tx, ctx, args.group_membership_id);
-    await assertRolesAssignableToMembers(tx, args.role_ids);
+    const membership = await loadMembershipForRoleMutation(tx, ctx, args.group_membership_id);
+    await assertRolesAssignableToMembers(tx, args.role_ids, membership.group_id);
     await syncGroupMembershipRoles(tx, args);
   }),
+
+  addOfflineMembershipRole: defineMutator(
+    groupOfflineMembershipRoleAssignSchema,
+    async ({ tx, ctx, args }) => {
+      const membership = await loadOfflineMembershipForRoleMutation(
+        tx,
+        ctx,
+        args.group_offline_membership_id
+      );
+      await assertRolesAssignableToMembers(tx, [args.role_id], membership.group_id);
+      await addGroupOfflineMembershipRole(tx, args);
+    }
+  ),
+
+  removeOfflineMembershipRole: defineMutator(
+    groupOfflineMembershipRoleUnassignSchema,
+    async ({ tx, ctx, args }) => {
+      await loadOfflineMembershipForRoleMutation(tx, ctx, args.group_offline_membership_id);
+      await removeGroupOfflineMembershipRole(tx, args);
+    }
+  ),
+
+  syncOfflineMembershipRoles: defineMutator(
+    groupOfflineMembershipRolesSyncSchema,
+    async ({ tx, ctx, args }) => {
+      const membership = await loadOfflineMembershipForRoleMutation(
+        tx,
+        ctx,
+        args.group_offline_membership_id
+      );
+      await assertRolesAssignableToMembers(tx, args.role_ids, membership.group_id);
+      await syncGroupOfflineMembershipRoles(tx, args);
+    }
+  ),
 
   updateMemberRole: defineMutator(
     groupMembershipLegacyRoleUpdateSchema,
@@ -855,8 +1047,8 @@ export const groupSharedMutators = {
       }
 
       if (role_id !== undefined) {
-        await loadMembershipForRoleMutation(tx, ctx, args.id);
-        await assertRolesAssignableToMembers(tx, role_id ? [role_id] : []);
+        const membership = await loadMembershipForRoleMutation(tx, ctx, args.id);
+        await assertRolesAssignableToMembers(tx, role_id ? [role_id] : [], membership.group_id);
         await syncGroupMembershipRoles(tx, {
           group_membership_id: args.id,
           role_ids: role_id ? [role_id] : [],

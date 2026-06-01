@@ -18,6 +18,9 @@ import type { ParticipationProvenanceGroupLike } from '@/features/shared/types/p
 export type GroupMembershipWithUser = GroupMembershipWithRolesAndRightsRow & {
   roles?: GroupAccessRoleWithRightsRow[];
   role?: GroupAccessRoleWithRightsRow | null;
+  partGroup?: ParticipationProvenanceGroupLike | null;
+  baseGroup?: ParticipationProvenanceGroupLike | null;
+  provenanceBucketLabel?: string | null;
 };
 
 // ── UI-only types (not in Zero schema) ──────────────────────────────

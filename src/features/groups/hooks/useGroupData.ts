@@ -7,5 +7,6 @@ export {
   useGroupMemberships,
   useGroupGuestAccesses,
   useGroupAccessRoles,
+  useGroupOfflineMemberships,
   useUserSearch,
 } from '@/zero/groups/useGroupState';

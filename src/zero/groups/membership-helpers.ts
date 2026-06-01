@@ -7,6 +7,11 @@ import {
   syncUserWithGroupConversation,
 } from '../server-helpers';
 import { resolveHierarchicalAncestors } from '@/features/groups/logic/hierarchy';
+import {
+  HIERARCHY_DERIVED_MEMBERSHIP_SOURCE,
+  SIBLING_ELECTED_MEMBERSHIP_SOURCE,
+  SIBLING_PARLIAMENT_MEMBERSHIP_SOURCE,
+} from './membership-source-constants';
 
 type ZeroTransactionLike = Pick<ZeroTransaction, 'run' | 'mutate'>;
 type ServerHelperTx = Parameters<typeof recomputeGroupCounters>[0];
@@ -14,10 +19,6 @@ type ServerHelperTx = Parameters<typeof recomputeGroupCounters>[0];
 function asServerHelperTx(tx: ZeroTransactionLike) {
   return tx as ServerHelperTx;
 }
-
-export const HIERARCHY_DERIVED_MEMBERSHIP_SOURCE = 'derived';
-export const SIBLING_ELECTED_MEMBERSHIP_SOURCE = 'sibling_elected';
-export const SIBLING_PARLIAMENT_MEMBERSHIP_SOURCE = 'sibling_parliament';
 
 const SIBLING_AUTOMATIC_SOURCES = new Set([
   SIBLING_ELECTED_MEMBERSHIP_SOURCE,
@@ -458,6 +459,8 @@ export async function recomputeSiblingMembershipsForGroup(
       queue.push(siblingGroupId);
     }
   }
+
+  return recomputedSiblingGroups;
 }
 
 export async function clearAutomaticSiblingMemberships(tx: ZeroTransactionLike, groupId: string) {
@@ -639,10 +642,6 @@ export async function assertValidSiblingConfiguration(
   const connectedGroup = await tx.run(zql.group.where('id', args.connectedGroupId).one());
   if (!connectedGroup) {
     throw new Error('Connected group not found.');
-  }
-
-  if (connectedGroup.group_type === 'sibling') {
-    throw new Error('Sibling groups can only connect to base or hierarchical groups.');
   }
 
   if (args.siblingMembershipMode === 'elected') {

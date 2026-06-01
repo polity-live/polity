@@ -87,7 +87,14 @@ interface ManageNetworkTabProps {
   workflowDraftDescription: string;
   onWorkflowDraftDescriptionChange: (description: string) => void;
   workflowDraftSteps: { group_id: string; label: string | null }[];
-  availableGroups: { id: string; name: string | null }[];
+  availableGroups: {
+    id: string;
+    name: string | null;
+    description?: unknown;
+    member_count?: number | null;
+    event_count?: number | null;
+    amendment_count?: number | null;
+  }[];
   onOpenNewWorkflow: () => void;
   onOpenEditWorkflow: (workflow: WorkflowWithStepsRow) => void;
   onCloseWorkflowEditor: () => void;

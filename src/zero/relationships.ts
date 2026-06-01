@@ -7,7 +7,9 @@ import {
   group,
   groupMembership,
   groupOfflineMember,
+  groupOfflineMembership,
   groupMembershipRole,
+  groupOfflineMembershipRole,
   groupGuestAccess,
   groupGuestRole,
   groupSiblingSource,
@@ -391,6 +393,11 @@ export const groupRelationships = relationships(group, ({ one, many }) => ({
     destSchema: groupOfflineMember,
     destField: ['group_id'],
   }),
+  offline_memberships: many({
+    sourceField: ['id'],
+    destSchema: groupOfflineMembership,
+    destField: ['group_id'],
+  }),
   guest_accesses: many({
     sourceField: ['id'],
     destSchema: groupGuestAccess,
@@ -470,6 +477,11 @@ export const groupOfflineMemberRelationships = relationships(
       destSchema: eventOfflineParticipant,
       destField: ['group_offline_member_id'],
     }),
+    offline_memberships: many({
+      sourceField: ['id'],
+      destSchema: groupOfflineMembership,
+      destField: ['group_offline_member_id'],
+    }),
   })
 );
 
@@ -482,6 +494,37 @@ export const groupMembershipRoleRelationships = relationships(groupMembershipRol
   role: one({ sourceField: ['role_id'], destSchema: role, destField: ['id'] }),
   assigned_by: one({ sourceField: ['assigned_by_id'], destSchema: user, destField: ['id'] }),
 }));
+
+export const groupOfflineMembershipRelationships = relationships(
+  groupOfflineMembership,
+  ({ one, many }) => ({
+    group_offline_member: one({
+      sourceField: ['group_offline_member_id'],
+      destSchema: groupOfflineMember,
+      destField: ['id'],
+    }),
+    group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
+    source_group: one({ sourceField: ['source_group_id'], destSchema: group, destField: ['id'] }),
+    membership_roles: many({
+      sourceField: ['id'],
+      destSchema: groupOfflineMembershipRole,
+      destField: ['group_offline_membership_id'],
+    }),
+  })
+);
+
+export const groupOfflineMembershipRoleRelationships = relationships(
+  groupOfflineMembershipRole,
+  ({ one }) => ({
+    group_offline_membership: one({
+      sourceField: ['group_offline_membership_id'],
+      destSchema: groupOfflineMembership,
+      destField: ['id'],
+    }),
+    role: one({ sourceField: ['role_id'], destSchema: role, destField: ['id'] }),
+    assigned_by: one({ sourceField: ['assigned_by_id'], destSchema: user, destField: ['id'] }),
+  })
+);
 
 export const groupGuestAccessRelationships = relationships(groupGuestAccess, ({ one, many }) => ({
   group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
@@ -520,6 +563,11 @@ export const roleRelationships = relationships(role, helpers => ({
   group_membership_roles: helpers.many({
     sourceField: ['id'],
     destSchema: groupMembershipRole,
+    destField: ['role_id'],
+  }),
+  group_offline_membership_roles: helpers.many({
+    sourceField: ['id'],
+    destSchema: groupOfflineMembershipRole,
     destField: ['role_id'],
   }),
   group_guest_roles: helpers.many({
@@ -1520,7 +1568,9 @@ export const allRelationships = [
   groupRelationships,
   groupMembershipRelationships,
   groupOfflineMemberRelationships,
+  groupOfflineMembershipRelationships,
   groupMembershipRoleRelationships,
+  groupOfflineMembershipRoleRelationships,
   groupGuestAccessRelationships,
   groupGuestRoleRelationships,
   groupSiblingSourceRelationships,
