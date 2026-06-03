@@ -28,11 +28,32 @@ function filterHierarchySafeRelationships(
   });
 }
 
+function getActiveHierarchyRelationships(
+  relationships: GroupRelationshipRow[],
+  groupsById?: GroupTypeLookup
+) {
+  const dedupedByPair = new Map<string, GroupRelationshipRow>();
+
+  for (const relationship of filterHierarchySafeRelationships(relationships, groupsById)) {
+    const pair = getHierarchyRelationshipPair(relationship);
+    if (!pair || !isActiveRelationshipStatus(relationship.status)) {
+      continue;
+    }
+
+    const key = `${pair.parentGroupId}:${pair.childGroupId}`;
+    if (!dedupedByPair.has(key)) {
+      dedupedByPair.set(key, relationship);
+    }
+  }
+
+  return [...dedupedByPair.values()];
+}
+
 // ── Traversal helpers ───────────────────────────────────────────────
 
 /**
  * Resolve all hierarchical ancestor group IDs reachable from `baseGroupId`
- * by walking **upward** through `passiveVotingRight` links.
+ * by walking **upward** through active structural parent/child links.
  *
  * Returns the IDs in bottom-up order (nearest parent first).
  */
@@ -41,9 +62,7 @@ export function resolveHierarchicalAncestors(
   relationships: GroupRelationshipRow[],
   groupsById?: GroupTypeLookup
 ): string[] {
-  const pvr = filterHierarchySafeRelationships(relationships, groupsById).filter(
-    r => r.with_right === 'passiveVotingRight' && r.status === 'active'
-  );
+  const hierarchyRelationships = getActiveHierarchyRelationships(relationships, groupsById);
 
   const ancestors: string[] = [];
   const visited = new Set<string>();
@@ -55,7 +74,7 @@ export function resolveHierarchicalAncestors(
       continue;
     }
     // Find parents of `current` (current is the child → related_group_id)
-    for (const rel of pvr) {
+    for (const rel of hierarchyRelationships) {
       const pair = getHierarchyRelationshipPair(rel);
       if (!pair) {
         continue;
@@ -74,7 +93,7 @@ export function resolveHierarchicalAncestors(
 
 /**
  * Resolve all **base-group member user IDs** reachable from a hierarchical
- * group by walking **downward** through `passiveVotingRight` links.
+ * group by walking **downward** through active structural parent/child links.
  *
  * Only returns users with `source === 'direct'` in the leaf base groups.
  */
@@ -84,9 +103,7 @@ export function resolveBaseGroupMembers(
   memberships: GroupMembershipRow[],
   groupsById?: GroupTypeLookup
 ): string[] {
-  const pvr = filterHierarchySafeRelationships(relationships, groupsById).filter(
-    r => r.with_right === 'passiveVotingRight' && r.status === 'active'
-  );
+  const hierarchyRelationships = getActiveHierarchyRelationships(relationships, groupsById);
 
   // Collect all descendant base groups
   const baseGroupIds = new Set<string>();
@@ -99,14 +116,14 @@ export function resolveBaseGroupMembers(
       continue;
     }
     // Find children of `current` (current is the parent → group_id)
-    for (const rel of pvr) {
+    for (const rel of hierarchyRelationships) {
       const pair = getHierarchyRelationshipPair(rel);
       if (!pair || pair.parentGroupId !== current || visited.has(pair.childGroupId)) {
         continue;
       }
 
       visited.add(pair.childGroupId);
-      const hasChildren = pvr.some(candidate => {
+      const hasChildren = hierarchyRelationships.some(candidate => {
         const candidatePair = getHierarchyRelationshipPair(candidate);
         return candidatePair?.parentGroupId === pair.childGroupId;
       });
@@ -172,16 +189,14 @@ export function checkExclusivityConstraint(
 }
 
 /**
- * Find all base (leaf) groups below a given group in the passive-voting-right tree.
+ * Find all base (leaf) groups below a given group in the active structural hierarchy tree.
  */
 export function resolveChildBaseGroups(
   groupId: string,
   relationships: GroupRelationshipRow[],
   groupsById?: GroupTypeLookup
 ): string[] {
-  const pvr = filterHierarchySafeRelationships(relationships, groupsById).filter(
-    r => r.with_right === 'passiveVotingRight' && r.status === 'active'
-  );
+  const hierarchyRelationships = getActiveHierarchyRelationships(relationships, groupsById);
 
   const baseGroups: string[] = [];
   const visited = new Set<string>();
@@ -192,14 +207,14 @@ export function resolveChildBaseGroups(
     if (current == null) {
       continue;
     }
-    for (const rel of pvr) {
+    for (const rel of hierarchyRelationships) {
       const pair = getHierarchyRelationshipPair(rel);
       if (!pair || pair.parentGroupId !== current || visited.has(pair.childGroupId)) {
         continue;
       }
 
       visited.add(pair.childGroupId);
-      const hasChildren = pvr.some(candidate => {
+      const hasChildren = hierarchyRelationships.some(candidate => {
         const candidatePair = getHierarchyRelationshipPair(candidate);
         return candidatePair?.parentGroupId === pair.childGroupId;
       });
@@ -229,13 +244,13 @@ function isActiveDirectMembership(
   );
 }
 
-/** Base groups represented by a node in the passive-voting-right tree (leaf = the node itself). */
+/** Base groups represented by a node in the structural hierarchy tree (leaf = the node itself). */
 function collectBaseGroupIdsUnderGroup(
   groupId: string,
-  pvrRelationships: GroupRelationshipRow[],
+  hierarchyRelationships: GroupRelationshipRow[],
   groupsById?: GroupTypeLookup
 ): string[] {
-  const fromTree = resolveChildBaseGroups(groupId, pvrRelationships, groupsById);
+  const fromTree = resolveChildBaseGroups(groupId, hierarchyRelationships, groupsById);
   return fromTree.length > 0 ? fromTree : [groupId];
 }
 
@@ -243,7 +258,7 @@ function collectBaseGroupIdsUnderGroup(
  * Detect member-overlap conflicts that would arise from linking `childGroupId`
  * under `parentGroupId` in the hierarchy.
  *
- * `pvrRelationships` defines the passive-voting-right tree. `activeParentChildLinks`
+ * `pvrRelationships` defines the active structural hierarchy tree. `activeParentChildLinks`
  * adds sibling subtrees from already-active links of any right type.
  *
  * Returns user IDs that appear in both the new child and an existing sibling base group.
@@ -256,11 +271,11 @@ export function detectLinkConflicts(
   activeParentChildLinks: GroupRelationshipRow[] = [],
   groupsById?: GroupTypeLookup
 ): string[] {
-  const hierarchySafePvrRelationships = filterHierarchySafeRelationships(
+  const hierarchySafePvrRelationships = getActiveHierarchyRelationships(
     pvrRelationships,
     groupsById
   );
-  const hierarchySafeParentChildLinks = filterHierarchySafeRelationships(
+  const hierarchySafeParentChildLinks = getActiveHierarchyRelationships(
     activeParentChildLinks,
     groupsById
   );
@@ -332,13 +347,10 @@ function collectPathMapForBaseGroup(
   baseGroupId: string,
   relationships: GroupRelationshipRow[]
 ): Map<string, string[][]> {
-  const activePvrRelationships = relationships.filter(
-    relationship =>
-      relationship.with_right === 'passiveVotingRight' && relationship.status === 'active'
-  );
+  const activeHierarchyRelationships = getActiveHierarchyRelationships(relationships);
   const parentIdsByChildId = new Map<string, string[]>();
 
-  for (const relationship of activePvrRelationships) {
+  for (const relationship of activeHierarchyRelationships) {
     const pair = getHierarchyRelationshipPair(relationship);
     if (!pair) {
       continue;
@@ -379,13 +391,7 @@ export function detectDuplicateHierarchyPaths(
   relationships: GroupRelationshipRow[],
   groupsById?: GroupTypeLookup
 ): HierarchyDuplicatePathConflict[] {
-  const hierarchySafeRelationships = filterHierarchySafeRelationships(
-    relationships,
-    groupsById
-  ).filter(
-    relationship =>
-      relationship.with_right === 'passiveVotingRight' && relationship.status === 'active'
-  );
+  const hierarchySafeRelationships = getActiveHierarchyRelationships(relationships, groupsById);
 
   const childIds = new Set<string>();
   const parentIds = new Set<string>();

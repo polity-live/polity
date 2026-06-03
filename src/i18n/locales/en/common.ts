@@ -292,6 +292,7 @@ export const commonTranslations = {
     thisGroupEmbedded: 'this group',
     thisGroupWithName: 'This group ({{groupName}})',
     thisGroupWithNameEmbedded: 'this group ({{groupName}})',
+    membershipModeLabel: 'Membership mode',
     relationshipTypeLabel: 'Relationship type',
     selectRights: 'Select rights (multiple possible)',
     existingRightsStatusHint: 'Existing rights are marked with their current status.',

@@ -3,7 +3,8 @@
 import React, { useCallback, useMemo, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useNodesState, useEdgesState, type Node, type Edge } from '@xyflow/react';
-import { useEventWithGroup, useGroupRelationships } from '@/zero/events/useEventState';
+import { useEventWithGroup } from '@/zero/events/useEventState';
+import { useNetworkLinkState } from '@/zero/network';
 import { NetworkFlowBase } from '@/features/network/ui/NetworkFlowBase';
 import { type NetworkGroupEntity } from '../types/network.types';
 import { NetworkEntityDialog } from '@/features/network/ui/NetworkEntityDialog';
@@ -49,6 +50,7 @@ import type {
   EditableRightsLabelEdgeData,
   NetworkConnectionDirection,
 } from '../types/networkEdge.types';
+import { explodeNetworkLinksToRelationships } from '../logic/networkLinkDerived';
 
 interface EventNode extends Node {
   data: {
@@ -62,6 +64,10 @@ interface EventNode extends Node {
 
 interface EventNetworkFlowProps {
   eventId: string;
+}
+
+function toDisplayText(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined;
 }
 
 export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
@@ -175,10 +181,8 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
   const group = event?.group;
   const canManageEvent = can('manage', 'events');
 
-  // Fetch group relationships
-  const { relationships } = useGroupRelationships();
-
-  console.log('EventNetworkFlow Debug:', { event, group });
+  const { allLinks } = useNetworkLinkState();
+  const relationships = useMemo(() => explodeNetworkLinksToRelationships(allLinks), [allLinks]);
 
   // Memoize relationships to prevent infinite loops
   const stableRelationships = useMemo(() => {
@@ -251,7 +255,7 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
       position: { x: 400, y: 300 },
       data: {
         label: event.title ?? '',
-        description: event.description ?? '',
+        description: toDisplayText(event.description) ?? '',
         level: 0,
         type: 'event',
       },
@@ -275,7 +279,7 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
       position: { x: 400, y: 450 },
       data: {
         label: getGroupNodeDisplayLabel(group.name, 'current'),
-        description: group.description ?? '',
+        description: toDisplayText(group.description) ?? '',
         level: 1,
         type: 'group',
         groupData: group,
@@ -324,7 +328,7 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
         position: { x: 400 + xOffset, y: 450 + yOffset },
         data: {
           label: getGroupNodeDisplayLabel(parent.group.name, 'parent'),
-          description: parent.group.description ?? undefined,
+          description: toDisplayText(parent.group.description),
           level: level + 1,
           type: 'group',
           groupData: parent.group,
@@ -361,6 +365,7 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
           sourceName: groupNameMap.get(parent.group.id) ?? null,
           targetName: groupNameMap.get(edgeTarget) ?? null,
           relationshipDepth: (parent.level ?? 1) === 1 ? 'direct' : 'indirect',
+          anchorStrategy: 'inner-auto',
         }),
         style: { stroke: strokeColor, strokeWidth: 2 },
       });
@@ -390,7 +395,7 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
         position: { x: 400 + xOffset, y: 450 + yOffset },
         data: {
           label: getGroupNodeDisplayLabel(child.group.name, 'child'),
-          description: child.group.description ?? undefined,
+          description: toDisplayText(child.group.description),
           level: level + 1,
           type: 'group',
           groupData: child.group,
@@ -427,6 +432,7 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
           sourceName: groupNameMap.get(edgeSource) ?? null,
           targetName: groupNameMap.get(child.group.id) ?? null,
           relationshipDepth: (child.level ?? 1) === 1 ? 'direct' : 'indirect',
+          anchorStrategy: 'inner-auto',
         }),
         style: { stroke: strokeColor, strokeWidth: 2 },
       });
@@ -487,13 +493,20 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
       if (nodeData.type === 'event') {
         setSelectedEntity({
           type: 'event',
-          data: { id: eventId, title: event?.title ?? '', description: event?.description ?? '' },
+          data: {
+            id: eventId,
+            title: event?.title ?? '',
+            description: toDisplayText(event?.description) ?? '',
+          },
         });
         setDialogOpen(true);
       } else if (nodeData.type === 'group' && nodeData.groupData) {
         setSelectedEntity({
           type: 'group',
-          data: nodeData.groupData,
+          data: {
+            ...nodeData.groupData,
+            description: toDisplayText(nodeData.groupData.description) ?? null,
+          },
         });
         setDialogOpen(true);
       }

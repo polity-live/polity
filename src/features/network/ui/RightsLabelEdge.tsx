@@ -2,6 +2,7 @@ import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath, useReactFlow } from '@x
 import type { EdgeProps, XYPosition } from '@xyflow/react';
 import { X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { resolveInnerAutoEdgeAnchors } from '@/features/network/logic/networkEdgeHelpers';
 import { RightBadge } from '@/features/network/ui/RightBadge';
 import { useEdgeClickContext } from '@/features/network/ui/NetworkFlowBase';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -28,6 +29,8 @@ const EDGE_DRAG_THRESHOLD = 4;
 
 export function RightsLabelEdge({
   id,
+  source,
+  target,
   sourceX,
   sourceY,
   targetX,
@@ -48,11 +51,80 @@ export function RightsLabelEdge({
   const edgeEditingEnabled = data?.edgeEditingEnabled === true;
   const onBendPointsChange = data?.onBendPointsChange;
 
+  const resolvedEdgeEndpoints = useMemo(() => {
+    const shouldResolveInnerAnchors =
+      data?.anchorStrategy === 'inner-auto' || data?.useInnerVerticalAnchors === true;
+
+    if (!shouldResolveInnerAnchors) {
+      return {
+        sourceX,
+        sourceY,
+        targetX,
+        targetY,
+        sourcePosition,
+        targetPosition,
+      };
+    }
+
+    const sourceNode = reactFlowInstance.getInternalNode(source);
+    const targetNode = reactFlowInstance.getInternalNode(target);
+
+    const sourceWidth = sourceNode?.measured.width ?? sourceNode?.width;
+    const sourceHeight = sourceNode?.measured.height ?? sourceNode?.height;
+    const targetWidth = targetNode?.measured.width ?? targetNode?.width;
+    const targetHeight = targetNode?.measured.height ?? targetNode?.height;
+
+    if (
+      !sourceNode?.internals.positionAbsolute ||
+      !targetNode?.internals.positionAbsolute ||
+      !sourceWidth ||
+      !sourceHeight ||
+      !targetWidth ||
+      !targetHeight
+    ) {
+      return {
+        sourceX,
+        sourceY,
+        targetX,
+        targetY,
+        sourcePosition,
+        targetPosition,
+      };
+    }
+
+    return resolveInnerAutoEdgeAnchors({
+      sourceRect: {
+        x: sourceNode.internals.positionAbsolute.x,
+        y: sourceNode.internals.positionAbsolute.y,
+        width: sourceWidth,
+        height: sourceHeight,
+      },
+      targetRect: {
+        x: targetNode.internals.positionAbsolute.x,
+        y: targetNode.internals.positionAbsolute.y,
+        width: targetWidth,
+        height: targetHeight,
+      },
+    });
+  }, [
+    data?.anchorStrategy,
+    data?.useInnerVerticalAnchors,
+    reactFlowInstance,
+    source,
+    sourcePosition,
+    sourceX,
+    sourceY,
+    target,
+    targetPosition,
+    targetX,
+    targetY,
+  ]);
+
   const edgeSegments = useMemo(() => {
     const segmentPoints: XYPosition[] = [
-      { x: sourceX, y: sourceY },
+      { x: resolvedEdgeEndpoints.sourceX, y: resolvedEdgeEndpoints.sourceY },
       ...bendPoints,
-      { x: targetX, y: targetY },
+      { x: resolvedEdgeEndpoints.targetX, y: resolvedEdgeEndpoints.targetY },
     ];
 
     return segmentPoints.slice(0, -1).map((segmentSource, index) => {
@@ -62,8 +134,8 @@ export function RightsLabelEdge({
         sourceY: segmentSource.y,
         targetX: segmentTarget.x,
         targetY: segmentTarget.y,
-        sourcePosition,
-        targetPosition,
+        sourcePosition: resolvedEdgeEndpoints.sourcePosition,
+        targetPosition: resolvedEdgeEndpoints.targetPosition,
       });
 
       return {
@@ -72,7 +144,7 @@ export function RightsLabelEdge({
         labelY,
       };
     });
-  }, [bendPoints, sourcePosition, sourceX, sourceY, targetPosition, targetX, targetY]);
+  }, [bendPoints, resolvedEdgeEndpoints]);
 
   const middleSegment = edgeSegments[Math.floor(edgeSegments.length / 2)] ?? null;
 

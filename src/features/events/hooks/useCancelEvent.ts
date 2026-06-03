@@ -73,7 +73,7 @@ export function useCancelEvent(eventId: string): UseCancelEventResult {
           ? {
               id: item.election[0].id,
               role: item.election[0].role
-                ? { id: item.election[0].role.id, name: item.election[0].role.title || '' }
+                ? { id: item.election[0].role.id, name: item.election[0].role.name || '' }
                 : undefined,
             }
           : undefined,

@@ -233,30 +233,50 @@ async function resolveDefaultEventParticipantRoleId(
   status: string | null | undefined,
   explicitRoleId?: string | null
 ) {
-  if (explicitRoleId) {
-    return explicitRoleId;
-  }
-
   if (status !== 'requested' && status !== 'invited') {
     return null;
+  }
+
+  const event = await tx.run(zql.event.where('id', eventId).one());
+  const assemblyEvent = isAssemblyEventType(event?.event_type);
+  const requiredAssigneeKind = assemblyEvent ? 'guest' : null;
+
+  if (explicitRoleId) {
+    if (!requiredAssigneeKind) {
+      return explicitRoleId;
+    }
+
+    const explicitRole = await tx.run(zql.role.where('id', explicitRoleId).one());
+    if (explicitRole?.event_id === eventId && explicitRole.assignee_kind === requiredAssigneeKind) {
+      return explicitRoleId;
+    }
+
+    throw new Error('Assembly event invite and request roles must be guest roles.');
   }
 
   const roles = await tx.run(
     zql.role.where('event_id', eventId).where('scope', 'event').orderBy('sort_order', 'asc')
   );
+  const eligibleRoles = requiredAssigneeKind
+    ? roles.filter(role => role.assignee_kind === requiredAssigneeKind)
+    : roles;
 
   if (status === 'requested') {
-    const configuredRole = roles.find(role => role.default_request_role);
+    const configuredRole = eligibleRoles.find(role => role.default_request_role);
     if (configuredRole?.id) {
       return configuredRole.id;
     }
   }
 
   if (status === 'invited') {
-    const configuredRole = roles.find(role => role.default_invite_role);
+    const configuredRole = eligibleRoles.find(role => role.default_invite_role);
     if (configuredRole?.id) {
       return configuredRole.id;
     }
+  }
+
+  if (requiredAssigneeKind) {
+    return eligibleRoles.find(role => role.name === 'Gast')?.id ?? eligibleRoles[0]?.id ?? null;
   }
 
   return roles.find(role => role.name === 'Participant')?.id ?? null;
@@ -308,9 +328,10 @@ async function assertValidEventRoleDefaults(
     eventId: string;
     assigneeKind: 'member' | 'guest';
     defaultRequestRole: boolean;
+    defaultInviteRole: boolean;
   }
 ) {
-  if (!args.defaultRequestRole) {
+  if (!args.defaultRequestRole && !args.defaultInviteRole) {
     return;
   }
 
@@ -318,11 +339,11 @@ async function assertValidEventRoleDefaults(
   const assemblyEvent = isAssemblyEventType(event?.event_type);
 
   if (assemblyEvent && args.assigneeKind !== 'guest') {
-    throw new Error('Assembly event request roles must be guest roles.');
+    throw new Error('Assembly event invite and request roles must be guest roles.');
   }
 
   if (!assemblyEvent && args.assigneeKind === 'guest') {
-    throw new Error('Guest roles can only be used as request roles for assembly events.');
+    throw new Error('Guest roles can only be used as invite or request roles for assembly events.');
   }
 }
 
@@ -570,7 +591,7 @@ export const eventSharedMutators = {
 
   joinEvent: defineMutator(eventParticipantCreateSchema, async ({ tx, ctx: { userID }, args }) => {
     const now = Date.now();
-    const { initial_role_id, visibility, ...participantArgs } = args;
+    const { initial_role_id, initial_role_ids, visibility, ...participantArgs } = args;
     await tx.mutate.event_participant.insert({
       ...participantArgs,
       user_id: userID,
@@ -579,17 +600,28 @@ export const eventSharedMutators = {
       created_at: now,
     });
 
-    const initialRoleId = await resolveDefaultEventParticipantRoleId(
-      tx,
-      args.event_id,
-      args.status ?? 'requested',
-      initial_role_id
-    );
+    const explicitRoleIds = (initial_role_ids ?? []).filter(Boolean);
+    const roleIds =
+      explicitRoleIds.length > 0
+        ? explicitRoleIds
+        : (() => {
+            const resolvedRoleIdPromise = resolveDefaultEventParticipantRoleId(
+              tx,
+              args.event_id,
+              args.status ?? 'requested',
+              initial_role_id
+            );
+            return resolvedRoleIdPromise;
+          })();
 
-    if (initialRoleId) {
+    const normalizedRoleIds = Array.isArray(roleIds)
+      ? roleIds
+      : [await roleIds].filter((roleId): roleId is string => Boolean(roleId));
+
+    if (normalizedRoleIds.length > 0) {
       await syncEventParticipantRoles(tx, {
         event_participant_id: args.id,
-        role_ids: [initialRoleId],
+        role_ids: normalizedRoleIds,
         assigned_by_id: userID,
       });
     }
@@ -602,7 +634,7 @@ export const eventSharedMutators = {
       throw new Error('user_id is required when inviting an event participant');
     }
 
-    const { initial_role_id, visibility, ...participantArgs } = args;
+    const { initial_role_id, initial_role_ids, visibility, ...participantArgs } = args;
 
     await tx.mutate.event_participant.insert({
       ...participantArgs,
@@ -612,17 +644,28 @@ export const eventSharedMutators = {
       created_at: now,
     });
 
-    const initialRoleId = await resolveDefaultEventParticipantRoleId(
-      tx,
-      args.event_id,
-      'invited',
-      initial_role_id
-    );
+    const explicitRoleIds = (initial_role_ids ?? []).filter(Boolean);
+    const roleIds =
+      explicitRoleIds.length > 0
+        ? explicitRoleIds
+        : (() => {
+            const resolvedRoleIdPromise = resolveDefaultEventParticipantRoleId(
+              tx,
+              args.event_id,
+              'invited',
+              initial_role_id
+            );
+            return resolvedRoleIdPromise;
+          })();
 
-    if (initialRoleId) {
+    const normalizedRoleIds = Array.isArray(roleIds)
+      ? roleIds
+      : [await roleIds].filter((roleId): roleId is string => Boolean(roleId));
+
+    if (normalizedRoleIds.length > 0) {
       await syncEventParticipantRoles(tx, {
         event_participant_id: args.id,
-        role_ids: [initialRoleId],
+        role_ids: normalizedRoleIds,
         assigned_by_id: null,
       });
     }
@@ -695,6 +738,7 @@ export const eventSharedMutators = {
       eventId: args.event_id,
       assigneeKind,
       defaultRequestRole: Boolean(args.default_request_role),
+      defaultInviteRole: Boolean(args.default_invite_role),
     });
 
     await clearEventRoleDefaults(tx, {
@@ -740,6 +784,7 @@ export const eventSharedMutators = {
         eventId: role.event_id,
         assigneeKind: nextAssigneeKind === 'guest' ? 'guest' : 'member',
         defaultRequestRole: Boolean(nextDefaultRequestRole),
+        defaultInviteRole: Boolean(args.default_invite_role ?? role.default_invite_role),
       });
 
       await clearEventRoleDefaults(tx, {

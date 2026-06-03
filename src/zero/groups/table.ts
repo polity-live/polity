@@ -31,10 +31,6 @@ export const group = table('group')
     snapchat: string().optional(),
     tiktok: string().optional(),
     visibility: string(),
-    group_type: string(),
-    connected_group_id: string().optional(),
-    sibling_membership_mode: string().optional(),
-    sibling_role_id: string().optional(),
     owner_id: string().optional(),
     created_at: number(),
     updated_at: number(),
@@ -122,15 +118,6 @@ export const groupGuestRole = table('group_guest_role')
     role_id: string(),
     assigned_at: number(),
     assigned_by_id: string().optional(),
-    created_at: number(),
-  })
-  .primaryKey('id');
-
-export const groupSiblingSource = table('group_sibling_source')
-  .columns({
-    id: string(),
-    group_id: string(),
-    source_group_id: string(),
     created_at: number(),
   })
   .primaryKey('id');

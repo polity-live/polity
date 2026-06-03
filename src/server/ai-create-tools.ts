@@ -892,12 +892,6 @@ export function buildAiCreateTools(userId: string) {
               snapchat: null,
               tiktok: null,
               visibility,
-              group_type: groupType,
-              connected_group_id: resolvedConnectedGroupId,
-              sibling_membership_mode:
-                groupType === 'sibling' ? (siblingMembershipMode ?? null) : null,
-              sibling_role_id: resolvedConnectedRoleId,
-              parliament_source_group_ids: resolvedParliamentSourceGroupIds,
               owner_id: userId,
             }),
             ctx
@@ -922,42 +916,77 @@ export function buildAiCreateTools(userId: string) {
           }
 
           if (groupType === 'sibling' && resolvedConnectedGroupId) {
-            for (const [right, direction] of Object.entries(relationshipRights)) {
+            const rights = Object.entries(relationshipRights).flatMap(([right, direction]) => {
               if (direction === 'none') {
-                continue;
+                return [];
               }
 
-              if (direction === 'outgoing' || direction === 'bidirectional') {
-                await runZeroMutator(
-                  tx,
-                  serverMutators.groups.createRelationship({
-                    id: crypto.randomUUID(),
-                    group_id: groupId,
-                    related_group_id: resolvedConnectedGroupId,
-                    relationship_type: 'sibling',
-                    with_right: right,
-                    status: 'requested',
-                    initiator_group_id: groupId,
-                  }),
-                  ctx
-                );
-              }
+              const canonicalDirection =
+                direction === 'bidirectional'
+                  ? 'bidirectional'
+                  : direction === 'outgoing'
+                    ? 'forward'
+                    : 'backward';
 
-              if (direction === 'incoming' || direction === 'bidirectional') {
-                await runZeroMutator(
-                  tx,
-                  serverMutators.groups.createRelationship({
-                    id: crypto.randomUUID(),
-                    group_id: resolvedConnectedGroupId,
-                    related_group_id: groupId,
-                    relationship_type: 'sibling',
-                    with_right: right,
-                    status: 'requested',
-                    initiator_group_id: groupId,
-                  }),
-                  ctx
-                );
-              }
+              return [
+                {
+                  right_key: right as
+                    | 'informationRight'
+                    | 'amendmentRight'
+                    | 'rightToSpeak'
+                    | 'activeVotingRight'
+                    | 'passiveVotingRight',
+                  direction: canonicalDirection as 'forward' | 'backward' | 'bidirectional',
+                  status: 'requested' as const,
+                  initiator_group_id: groupId,
+                },
+              ];
+            });
+
+            if (rights.length > 0) {
+              await runZeroMutator(
+                tx,
+                serverMutators.network.createNetworkLink({
+                  id: crypto.randomUUID(),
+                  source_group_id: groupId,
+                  target_group_id: resolvedConnectedGroupId,
+                  structural_relation: 'sibling',
+                  status: 'requested',
+                  rights,
+                  membership_rule: {
+                    membership_mode:
+                      siblingMembershipMode === 'elected'
+                        ? 'role_members'
+                        : siblingMembershipMode === 'parliament'
+                          ? 'selected_source_groups'
+                          : 'none',
+                    role_id: siblingMembershipMode === 'elected' ? resolvedConnectedRoleId : null,
+                    source_group_ids:
+                      siblingMembershipMode === 'parliament'
+                        ? resolvedParliamentSourceGroupIds
+                        : null,
+                    forward: {
+                      membership_mode: 'none',
+                      role_id: null,
+                      source_group_ids: null,
+                    },
+                    backward: {
+                      membership_mode:
+                        siblingMembershipMode === 'elected'
+                          ? 'role_members'
+                          : siblingMembershipMode === 'parliament'
+                            ? 'selected_source_groups'
+                            : 'none',
+                      role_id: siblingMembershipMode === 'elected' ? resolvedConnectedRoleId : null,
+                      source_group_ids:
+                        siblingMembershipMode === 'parliament'
+                          ? resolvedParliamentSourceGroupIds
+                          : null,
+                    },
+                  },
+                }),
+                ctx
+              );
             }
           }
 

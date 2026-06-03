@@ -120,6 +120,18 @@ export function useGroupActions() {
     [zero]
   );
 
+  const requestGuestAccess = useCallback(
+    (args: Parameters<typeof mutators.groups.requestGuestAccess>[0]) => {
+      const result = zero.mutate(mutators.groups.requestGuestAccess(args));
+      toast.success(t('features.auth.success.membershipRequestSent'));
+      onServerError(result, msg =>
+        handleMutationError(toMutationError(msg), t('features.groups.toasts.joinFailed'), t)
+      );
+      return result;
+    },
+    [zero]
+  );
+
   const leaveGroup = useCallback(
     (args: Parameters<typeof mutators.groups.leaveGroup>[0]) => {
       const result = zero.mutate(mutators.groups.leaveGroup(args));
@@ -457,55 +469,6 @@ export function useGroupActions() {
     [zero]
   );
 
-  // ── Relationships ──────────────────────────────────────────────────
-  const createRelationship = useCallback(
-    (args: Parameters<typeof mutators.groups.createRelationship>[0]) => {
-      const result = zero.mutate(mutators.groups.createRelationship(args));
-      toast.success(t('features.groups.toasts.relationshipCreated'));
-      onServerError(result, msg =>
-        handleMutationError(
-          toMutationError(msg),
-          t('features.groups.toasts.relationshipCreateFailed'),
-          t
-        )
-      );
-      return result;
-    },
-    [zero]
-  );
-
-  const updateRelationship = useCallback(
-    (args: Parameters<typeof mutators.groups.updateRelationship>[0]) => {
-      const result = zero.mutate(mutators.groups.updateRelationship(args));
-      toast.success(t('features.groups.toasts.relationshipUpdated'));
-      onServerError(result, msg =>
-        handleMutationError(
-          toMutationError(msg),
-          t('features.groups.toasts.relationshipUpdateFailed'),
-          t
-        )
-      );
-      return result;
-    },
-    [zero]
-  );
-
-  const deleteRelationship = useCallback(
-    (args: Parameters<typeof mutators.groups.deleteRelationship>[0]) => {
-      const result = zero.mutate(mutators.groups.deleteRelationship(args));
-      toast.success(t('features.groups.toasts.relationshipDeleted'));
-      onServerError(result, msg =>
-        handleMutationError(
-          toMutationError(msg),
-          t('features.groups.toasts.relationshipDeleteFailed'),
-          t
-        )
-      );
-      return result;
-    },
-    [zero]
-  );
-
   const createRoleHolderHistory = useCallback(
     (args: Parameters<typeof mutators.groups.createRoleHolderHistory>[0]) => {
       const result = zero.mutate(mutators.groups.createRoleHolderHistory(args));
@@ -550,6 +513,7 @@ export function useGroupActions() {
 
     // Membership
     joinGroup,
+    requestGuestAccess,
     leaveGroup,
     inviteMember,
     acceptInvitation,
@@ -572,11 +536,6 @@ export function useGroupActions() {
     assignActionRight,
     removeActionRight,
     setupGroupAdminRoles,
-
-    // Relationships
-    createRelationship,
-    updateRelationship,
-    deleteRelationship,
 
     createRoleHolderHistory,
     updateRoleHolderHistory,

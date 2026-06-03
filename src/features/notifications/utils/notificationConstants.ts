@@ -90,9 +90,9 @@ const NOTIFICATION_ICON_MAP: Record<string, LucideIcon> = {
   group_payment_deleted: CreditCard,
 
   // Group — Relationships
-  group_relationship_request: Link,
-  group_relationship_approved: Link,
-  group_relationship_rejected: Unlink,
+  network_link_request: Link,
+  network_link_approved: Link,
+  network_link_rejected: Unlink,
 
   // Group — Roles & Elections
   group_role_created: Briefcase,
@@ -290,9 +290,9 @@ const NOTIFICATION_COLOR_MAP: Record<string, string> = {
   group_payment_deleted: 'text-red-500',
 
   // Group — Relationships
-  group_relationship_request: 'text-blue-500',
-  group_relationship_approved: 'text-green-500',
-  group_relationship_rejected: 'text-red-500',
+  network_link_request: 'text-blue-500',
+  network_link_approved: 'text-green-500',
+  network_link_rejected: 'text-red-500',
 
   // Group — Roles & Elections
   group_role_created: 'text-violet-500',

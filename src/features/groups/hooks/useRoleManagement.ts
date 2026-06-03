@@ -5,10 +5,13 @@
 import { useState } from 'react';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { toast } from 'sonner';
-import { roleEditorFormToMutation } from '../logic/roleFormHelpers';
+import { roleEditorFormToMutationWithOptions } from '../logic/roleFormHelpers';
 import type { RoleEditorFormState } from '../types/group.types';
 
-export function useRoleManagement(groupId: string) {
+export function useRoleManagement(
+  groupId: string,
+  options?: { guestOnlyMembershipFlow?: boolean }
+) {
   const [isLoading, setIsLoading] = useState(false);
   const {
     createRole: createRoleAction,
@@ -27,7 +30,10 @@ export function useRoleManagement(groupId: string) {
     setIsLoading(true);
     try {
       const roleId = crypto.randomUUID();
-      const roleFields = roleEditorFormToMutation(form);
+      const roleFields = roleEditorFormToMutationWithOptions(form, {
+        allowGuestRequestDefault: Boolean(options?.guestOnlyMembershipFlow),
+        allowGuestInviteDefault: Boolean(options?.guestOnlyMembershipFlow),
+      });
 
       await createRoleAction({
         id: roleId,
@@ -74,7 +80,10 @@ export function useRoleManagement(groupId: string) {
 
     setIsLoading(true);
     try {
-      const roleFields = roleEditorFormToMutation(form);
+      const roleFields = roleEditorFormToMutationWithOptions(form, {
+        allowGuestRequestDefault: Boolean(options?.guestOnlyMembershipFlow),
+        allowGuestInviteDefault: Boolean(options?.guestOnlyMembershipFlow),
+      });
 
       await updateRoleAction({
         id: roleId,

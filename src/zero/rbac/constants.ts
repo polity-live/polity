@@ -299,7 +299,7 @@ export const DEFAULT_ASSEMBLY_EVENT_GUEST_ROLE = {
   name: 'Gast',
   description: 'Guest participant for assembly events',
   default_request_role: true,
-  default_invite_role: false,
+  default_invite_role: true,
   assignee_kind: 'guest' as const,
   permissions: [
     { resource: 'events' as ResourceType, action: 'view' as ActionType },

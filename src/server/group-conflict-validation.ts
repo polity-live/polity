@@ -13,11 +13,9 @@ import {
   throwGroupConflictResponse,
 } from '@/features/groups/logic/groupConflict';
 import type {
-  GroupConflictDraftRelationship,
   GroupConflictMembershipPreflight,
   GroupConflictPreflightInput,
-  GroupConflictRelationshipPreflight,
-  GroupConflictSiblingConfigurationPreflight,
+  GroupConflictNetworkLinkUpsertPreflight,
 } from '@/features/groups/logic/groupConflictPreflight';
 import {
   detectDuplicateHierarchyPaths,
@@ -26,6 +24,12 @@ import {
   resolveHierarchicalAncestors,
 } from '@/features/groups/logic/hierarchy';
 import { getHierarchyRelationshipPair } from '@/features/network/logic/groupRelationshipOrientation';
+import {
+  buildDerivedGroupNetworkMetaMap,
+  explodeNetworkLinksToRelationships,
+  type DerivedNetworkRelationshipRow,
+} from '@/zero/network/derived';
+import { normalizeMembershipRules } from '@/zero/network/membershipRules';
 
 type ZeroTransactionLike = Pick<ZeroTransaction, 'run' | 'mutate'>;
 type PermissionTx = Parameters<typeof can>[0];
@@ -38,18 +42,10 @@ interface GroupRow {
   connected_group_id?: string | null;
   sibling_membership_mode?: string | null;
   sibling_role_id?: string | null;
+  parliament_source_group_ids?: string[];
 }
 
-interface RelationshipRow {
-  id: string;
-  group_id: string;
-  related_group_id: string;
-  relationship_type: string | null;
-  with_right: string | null;
-  status: string | null;
-  initiator_group_id: string | null;
-  created_at: number;
-}
+type RelationshipRow = DerivedNetworkRelationshipRow;
 
 interface MembershipRow {
   id: string;
@@ -90,22 +86,6 @@ function isActiveGroupRelationship(relationship: Pick<RelationshipRow, 'status'>
   );
 }
 
-function createRelationshipRow(
-  relationship: GroupConflictDraftRelationship | RelationshipRow,
-  overrideStatus?: string
-): RelationshipRow {
-  return {
-    id: relationship.id,
-    group_id: relationship.group_id,
-    related_group_id: relationship.related_group_id,
-    relationship_type: relationship.relationship_type ?? null,
-    with_right: relationship.with_right ?? null,
-    status: overrideStatus ?? relationship.status ?? null,
-    initiator_group_id: relationship.initiator_group_id ?? null,
-    created_at: 'created_at' in relationship ? (relationship.created_at ?? Date.now()) : Date.now(),
-  };
-}
-
 async function hasGroupPermission(
   tx: ZeroTransactionLike,
   ctx: ZeroContext,
@@ -141,22 +121,35 @@ async function buildConflictUser(tx: ZeroTransactionLike, userId: string) {
 }
 
 async function loadGroupGraphSnapshot(tx: ZeroTransactionLike) {
-  const [groups, relationships, memberships, siblingSources] = await Promise.all([
+  const [groups, memberships, links, rights, rules] = await Promise.all([
     tx.run(zql.group),
-    tx.run(zql.group_relationship),
     tx.run(zql.group_membership),
-    tx.run(zql.group_sibling_source),
+    tx.run(zql.network_link),
+    tx.run(zql.network_link_right),
+    tx.run(zql.network_link_membership_rule),
   ]);
 
-  const groupsById = new Map(groups.map(group => [group.id, group]));
+  const derivedGroupMetaById = buildDerivedGroupNetworkMetaMap({
+    groupIds: groups.map(group => group.id),
+    links,
+    rights,
+    rules,
+  });
+  const groupsWithDerivedNetworkMeta = groups.map(group => ({
+    ...group,
+    ...(derivedGroupMetaById.get(group.id) ?? {}),
+  })) as GroupRow[];
+  const groupsById = new Map(groupsWithDerivedNetworkMeta.map(group => [group.id, group]));
   return {
-    groups: groups as GroupRow[],
+    groups: groupsWithDerivedNetworkMeta,
     groupsById,
-    relationships: relationships.map(relationship =>
-      createRelationshipRow(relationship as RelationshipRow)
-    ),
+    relationships: explodeNetworkLinksToRelationships({
+      links,
+      rights,
+      rules,
+      includeInactive: true,
+    }),
     memberships: memberships as MembershipRow[],
-    siblingSources,
   };
 }
 
@@ -302,8 +295,7 @@ async function buildMembershipActivationConflicts(
 
   const activePvrRelationships = filterHierarchyRelationships(
     snapshot.relationships.filter(
-      relationship =>
-        relationship.with_right === 'passiveVotingRight' && relationship.status === 'active'
+      relationship => isHierarchyRelationship(relationship) && relationship.status === 'active'
     ),
     snapshot.groupsById
   );
@@ -416,9 +408,7 @@ async function buildMembershipActivationConflicts(
   );
 
   for (const siblingGroup of siblingGroups) {
-    const sourceGroupIds = snapshot.siblingSources
-      .filter(sourceLink => sourceLink.group_id === siblingGroup.id)
-      .map(sourceLink => sourceLink.source_group_id);
+    const sourceGroupIds = siblingGroup.parliament_source_group_ids ?? [];
     const matchingSourceGroupIds = sourceGroupIds.filter(sourceGroupId =>
       effectiveActiveGroupIds.has(sourceGroupId)
     );
@@ -495,201 +485,381 @@ async function buildMembershipActivationConflicts(
   return buildGroupConflictResponse(dedupedConflicts);
 }
 
-async function buildRelationshipActivationConflicts(
-  tx: ZeroTransactionLike,
-  ctx: ZeroContext,
-  args: GroupConflictRelationshipPreflight
-): Promise<GroupConflictResponse> {
-  const snapshot = await loadGroupGraphSnapshot(tx);
-  const inputRelationships =
-    args.relationship_ids && args.relationship_ids.length > 0
-      ? snapshot.relationships.filter(relationship =>
-          args.relationship_ids?.includes(relationship.id)
-        )
-      : (args.draft_relationships ?? []).map(relationship =>
-          createRelationshipRow(relationship, 'active')
-        );
+export function buildDraftNetworkLinkRelationships(args: GroupConflictNetworkLinkUpsertPreflight) {
+  const createdAt = Date.now();
+  const status = 'active';
+  const membershipRules = normalizeMembershipRules(args.membership_rules ?? args.membership_rule);
+  const rows = args.rights.flatMap(right => {
+    if (right.status === 'rejected') {
+      return [];
+    }
 
-  const hierarchyRelationships = inputRelationships.filter(isHierarchyRelationship);
-  if (hierarchyRelationships.length === 0) {
-    return buildGroupConflictResponse([]);
+    const rightRows: RelationshipRow[] = [];
+
+    if (right.direction === 'forward' || right.direction === 'bidirectional') {
+      rightRows.push({
+        id: `${args.link_id ?? 'draft'}:${right.id ?? right.right_key}:forward`,
+        network_link_id: args.link_id ?? 'draft',
+        network_link_right_id: right.id ?? `${args.link_id ?? 'draft'}:${right.right_key}`,
+        group_id: args.source_group_id,
+        related_group_id: args.target_group_id,
+        relationship_type: args.structural_relation === 'sibling' ? 'sibling' : 'child',
+        with_right: right.right_key,
+        status,
+        initiator_group_id: right.initiator_group_id ?? null,
+        created_at: createdAt,
+        structural_relation: args.structural_relation,
+        membership_mode: membershipRules.forward.membership_mode,
+        right_direction: right.direction,
+      });
+    }
+
+    if (right.direction === 'backward' || right.direction === 'bidirectional') {
+      rightRows.push({
+        id: `${args.link_id ?? 'draft'}:${right.id ?? right.right_key}:backward`,
+        network_link_id: args.link_id ?? 'draft',
+        network_link_right_id: right.id ?? `${args.link_id ?? 'draft'}:${right.right_key}`,
+        group_id: args.target_group_id,
+        related_group_id: args.source_group_id,
+        relationship_type: args.structural_relation === 'sibling' ? 'sibling' : 'parent',
+        with_right: right.right_key,
+        status,
+        initiator_group_id: right.initiator_group_id ?? null,
+        created_at: createdAt,
+        structural_relation: args.structural_relation,
+        membership_mode: membershipRules.backward.membership_mode,
+        right_direction: right.direction,
+      });
+    }
+
+    return rightRows;
+  });
+
+  if (
+    rows.length > 0 ||
+    (membershipRules.forward.membership_mode === 'none' &&
+      membershipRules.backward.membership_mode === 'none')
+  ) {
+    return rows;
   }
 
+  return [
+    {
+      id: `${args.link_id ?? 'draft'}:structural:forward`,
+      network_link_id: args.link_id ?? 'draft',
+      network_link_right_id: `${args.link_id ?? 'draft'}:structural`,
+      group_id: args.source_group_id,
+      related_group_id: args.target_group_id,
+      relationship_type: args.structural_relation === 'sibling' ? 'sibling' : 'child',
+      with_right: null,
+      status,
+      initiator_group_id: null,
+      created_at: createdAt,
+      structural_relation: args.structural_relation,
+      membership_mode: membershipRules.forward.membership_mode,
+      right_direction: 'forward',
+    },
+    {
+      id: `${args.link_id ?? 'draft'}:structural:backward`,
+      network_link_id: args.link_id ?? 'draft',
+      network_link_right_id: `${args.link_id ?? 'draft'}:structural`,
+      group_id: args.target_group_id,
+      related_group_id: args.source_group_id,
+      relationship_type: args.structural_relation === 'sibling' ? 'sibling' : 'parent',
+      with_right: null,
+      status,
+      initiator_group_id: null,
+      created_at: createdAt,
+      structural_relation: args.structural_relation,
+      membership_mode: membershipRules.backward.membership_mode,
+      right_direction: 'backward',
+    },
+  ];
+}
+
+async function buildNetworkLinkUpsertConflicts(
+  tx: ZeroTransactionLike,
+  ctx: ZeroContext,
+  args: GroupConflictNetworkLinkUpsertPreflight
+): Promise<GroupConflictResponse> {
+  const snapshot = await loadGroupGraphSnapshot(tx);
+  const inputRelationships = buildDraftNetworkLinkRelationships(args);
+
+  const hierarchyRelationships = inputRelationships.filter(isHierarchyRelationship);
   const activeGroupLinks = [
     ...snapshot.relationships.filter(
       relationship =>
         isHierarchyRelationship(relationship) &&
         isActiveGroupRelationship(relationship) &&
-        !hierarchyRelationships.some(candidate => candidate.id === relationship.id)
+        relationship.network_link_id !== (args.link_id ?? 'draft')
     ),
-    ...hierarchyRelationships.map(relationship => createRelationshipRow(relationship, 'active')),
+    ...hierarchyRelationships,
   ];
-
-  const activePvrRelationships = filterHierarchyRelationships(
-    activeGroupLinks.filter(
-      relationship =>
-        relationship.with_right === 'passiveVotingRight' && relationship.status === 'active'
-    ),
-    snapshot.groupsById
-  );
-
-  const activeDirectMemberships = snapshot.memberships.filter(isActiveDirectMembership);
-  const pairKeys = new Set<string>();
   const conflicts: GroupConflict[] = [];
 
-  for (const relationship of hierarchyRelationships) {
-    const pair = getHierarchyRelationshipPair(relationship);
-    if (!pair) {
-      continue;
-    }
-
-    const pairKey = `${pair.parentGroupId}:${pair.childGroupId}`;
-    if (pairKeys.has(pairKey)) {
-      continue;
-    }
-    pairKeys.add(pairKey);
-
-    const overlapUserIds = detectLinkConflicts(
-      pair.parentGroupId,
-      pair.childGroupId,
-      [...activePvrRelationships],
-      activeDirectMemberships,
-      activeGroupLinks,
+  if (hierarchyRelationships.length > 0) {
+    const activePvrRelationships = filterHierarchyRelationships(
+      activeGroupLinks.filter(
+        relationship => isHierarchyRelationship(relationship) && relationship.status === 'active'
+      ),
       snapshot.groupsById
     );
 
-    if (overlapUserIds.length > 0) {
-      const { newBaseGroupIds, existingBaseGroupIds } = buildHierarchySourceSets({
-        parentGroupId: pair.parentGroupId,
-        childGroupId: pair.childGroupId,
-        pvrRelationships: activePvrRelationships,
-        activeGroupLinks,
-        groupsById: snapshot.groupsById,
-      });
-      const users = await Promise.all(overlapUserIds.map(userId => buildConflictUser(tx, userId)));
-      const sourceGroupIds = new Set<string>();
+    const activeDirectMemberships = snapshot.memberships.filter(isActiveDirectMembership);
+    const pairKeys = new Set<string>();
 
-      for (const membership of activeDirectMemberships) {
-        if (!overlapUserIds.includes(membership.user_id)) {
-          continue;
-        }
-        if (
-          newBaseGroupIds.has(membership.group_id) ||
-          existingBaseGroupIds.has(membership.group_id)
-        ) {
-          sourceGroupIds.add(membership.group_id);
-        }
+    for (const relationship of hierarchyRelationships) {
+      const pair = getHierarchyRelationshipPair(relationship);
+      if (!pair) {
+        continue;
       }
 
-      conflicts.push({
-        kind: 'hierarchy_member_overlap',
-        blocking: true,
-        summary:
-          'Die Verknuepfung wuerde Mitglieder aus mehreren Untergruppen derselben Hierarchie zusammenfuehren.',
-        explanation:
-          'Mindestens eine Person waere danach gleichzeitig in mehreren speisenden Untergruppen derselben Ziel-Hierarchie aktiv.',
-        details: {
-          users,
-          groups: [
-            toConflictGroup(pair.parentGroupId, snapshot.groupsById),
-            toConflictGroup(pair.childGroupId, snapshot.groupsById),
+      const pairKey = `${pair.parentGroupId}:${pair.childGroupId}`;
+      if (pairKeys.has(pairKey)) {
+        continue;
+      }
+      pairKeys.add(pairKey);
+
+      const overlapUserIds = detectLinkConflicts(
+        pair.parentGroupId,
+        pair.childGroupId,
+        [...activePvrRelationships],
+        activeDirectMemberships,
+        activeGroupLinks,
+        snapshot.groupsById
+      );
+
+      if (overlapUserIds.length > 0) {
+        const { newBaseGroupIds, existingBaseGroupIds } = buildHierarchySourceSets({
+          parentGroupId: pair.parentGroupId,
+          childGroupId: pair.childGroupId,
+          pvrRelationships: activePvrRelationships,
+          activeGroupLinks,
+          groupsById: snapshot.groupsById,
+        });
+        const users = await Promise.all(
+          overlapUserIds.map(userId => buildConflictUser(tx, userId))
+        );
+        const sourceGroupIds = new Set<string>();
+
+        for (const membership of activeDirectMemberships) {
+          if (!overlapUserIds.includes(membership.user_id)) {
+            continue;
+          }
+          if (
+            newBaseGroupIds.has(membership.group_id) ||
+            existingBaseGroupIds.has(membership.group_id)
+          ) {
+            sourceGroupIds.add(membership.group_id);
+          }
+        }
+
+        conflicts.push({
+          kind: 'hierarchy_member_overlap',
+          blocking: true,
+          summary:
+            'Die Verknuepfung wuerde Mitglieder aus mehreren Untergruppen derselben Hierarchie zusammenfuehren.',
+          explanation:
+            'Mindestens eine Person waere danach gleichzeitig in mehreren speisenden Untergruppen derselben Ziel-Hierarchie aktiv.',
+          details: {
+            users,
+            groups: [
+              toConflictGroup(pair.parentGroupId, snapshot.groupsById),
+              toConflictGroup(pair.childGroupId, snapshot.groupsById),
+            ],
+            source_groups: [...sourceGroupIds].map(sourceGroupId =>
+              toConflictGroup(sourceGroupId, snapshot.groupsById)
+            ),
+            paths: [],
+            target_group: toConflictGroup(pair.parentGroupId, snapshot.groupsById),
+          },
+          resolutions: [
+            {
+              label: 'Mitgliedschaften angleichen',
+              description:
+                'Entferne oder deaktiviere ueberlappende Mitgliedschaften in einer der konkurrierenden Untergruppen.',
+              self_service: await hasGroupPermission(
+                tx,
+                ctx,
+                'groupMemberships',
+                pair.parentGroupId
+              ),
+              group_id: pair.parentGroupId,
+            },
+            {
+              label: 'Andere Gruppe kontaktieren',
+              description:
+                'Falls du die konkurrierende Untergruppe nicht selbst verwalten kannst, braucht es die zustaendige Admin-Seite.',
+              self_service: false,
+              group_id: pair.childGroupId,
+              required_role: 'Admin',
+            },
           ],
-          source_groups: [...sourceGroupIds].map(sourceGroupId =>
-            toConflictGroup(sourceGroupId, snapshot.groupsById)
+        });
+      }
+
+      const duplicatePathConflicts = detectDuplicateHierarchyPaths(
+        [...activePvrRelationships],
+        snapshot.groupsById
+      ).filter(duplicateConflict => {
+        const affectedBaseGroupIds = resolveChildBaseGroups(
+          pair.childGroupId,
+          [...activePvrRelationships],
+          snapshot.groupsById
+        );
+        const relevantBaseGroupIds = new Set<string>(
+          affectedBaseGroupIds.length > 0 ? affectedBaseGroupIds : [pair.childGroupId]
+        );
+        const relevantTargetGroupIds = new Set<string>([
+          pair.parentGroupId,
+          ...resolveHierarchicalAncestors(
+            pair.parentGroupId,
+            [...activePvrRelationships],
+            snapshot.groupsById
           ),
-          paths: [],
-          target_group: toConflictGroup(pair.parentGroupId, snapshot.groupsById),
-        },
-        resolutions: [
-          {
-            label: 'Mitgliedschaften angleichen',
-            description:
-              'Entferne oder deaktiviere ueberlappende Mitgliedschaften in einer der konkurrierenden Untergruppen.',
-            self_service: await hasGroupPermission(tx, ctx, 'groupMemberships', pair.parentGroupId),
-            group_id: pair.parentGroupId,
+        ]);
+
+        return (
+          relevantBaseGroupIds.has(duplicateConflict.baseGroupId) &&
+          relevantTargetGroupIds.has(duplicateConflict.targetGroupId)
+        );
+      });
+
+      for (const duplicatePathConflict of duplicatePathConflicts) {
+        conflicts.push({
+          kind: 'hierarchy_duplicate_path',
+          blocking: true,
+          summary: 'Verknuepfung wuerde denselben Unterbau doppelt anbinden.',
+          explanation:
+            'Dieselbe Leaf-Basisgruppe wuerde die Ziel-Hierarchie nach der Aktivierung ueber zwei aktive Pfade erreichen.',
+          details: {
+            users: [],
+            groups: [
+              toConflictGroup(duplicatePathConflict.baseGroupId, snapshot.groupsById),
+              toConflictGroup(duplicatePathConflict.targetGroupId, snapshot.groupsById),
+            ],
+            source_groups: [
+              toConflictGroup(duplicatePathConflict.baseGroupId, snapshot.groupsById),
+            ],
+            paths: duplicatePathConflict.paths.map(pathGroupIds => ({
+              base_group_id: duplicatePathConflict.baseGroupId,
+              target_group_id: duplicatePathConflict.targetGroupId,
+              group_ids: pathGroupIds,
+              group_names: pathGroupIds.map(
+                groupId => snapshot.groupsById.get(groupId)?.name ?? 'Group'
+              ),
+            })),
+            target_group: toConflictGroup(duplicatePathConflict.targetGroupId, snapshot.groupsById),
           },
-          {
-            label: 'Andere Gruppe kontaktieren',
-            description:
-              'Falls du die konkurrierende Untergruppe nicht selbst verwalten kannst, braucht es die zustaendige Admin-Seite.',
-            self_service: false,
-            group_id: pair.childGroupId,
-            required_role: 'Admin',
-          },
+          resolutions: [
+            {
+              label: 'Einen Pfad entfernen oder deaktivieren',
+              description:
+                'Die Verknuepfung ist erst moeglich, wenn nur noch ein aktiver Pfad zwischen Basisgruppe und Ziel-Hierarchie uebrig bleibt.',
+              self_service: await hasGroupPermission(
+                tx,
+                ctx,
+                'groupRelationships',
+                duplicatePathConflict.targetGroupId
+              ),
+              group_id: duplicatePathConflict.targetGroupId,
+            },
+            {
+              label: 'Zustaendige Gruppe kontaktieren',
+              description:
+                'Wenn du den konkurrierenden Pfad nicht selbst verwalten kannst, braucht es die Admin-Seite der betroffenen Hierarchie.',
+              self_service: false,
+              group_id: duplicatePathConflict.targetGroupId,
+              required_role: 'Admin',
+            },
+          ],
+        });
+      }
+    }
+  }
+
+  if (args.structural_relation === 'sibling') {
+    const membershipRules = normalizeMembershipRules(args.membership_rules ?? args.membership_rule);
+    const directionalRecipients: {
+      recipientGroupId: string;
+      sourceGroupIds: string[];
+    }[] = [];
+
+    if (membershipRules.forward.membership_mode === 'selected_source_groups') {
+      directionalRecipients.push({
+        recipientGroupId: args.target_group_id,
+        sourceGroupIds: [
+          ...new Set((membershipRules.forward.source_group_ids ?? []).filter(Boolean)),
         ],
       });
     }
 
-    const duplicatePathConflicts = detectDuplicateHierarchyPaths(
-      [...activePvrRelationships],
-      snapshot.groupsById
-    ).filter(duplicateConflict => {
-      const affectedBaseGroupIds = resolveChildBaseGroups(
-        pair.childGroupId,
-        [...activePvrRelationships],
-        snapshot.groupsById
-      );
-      const relevantBaseGroupIds = new Set<string>(
-        affectedBaseGroupIds.length > 0 ? affectedBaseGroupIds : [pair.childGroupId]
-      );
-      const relevantTargetGroupIds = new Set<string>([
-        pair.parentGroupId,
-        ...resolveHierarchicalAncestors(
-          pair.parentGroupId,
-          [...activePvrRelationships],
-          snapshot.groupsById
-        ),
-      ]);
+    if (membershipRules.backward.membership_mode === 'selected_source_groups') {
+      directionalRecipients.push({
+        recipientGroupId: args.source_group_id,
+        sourceGroupIds: [
+          ...new Set((membershipRules.backward.source_group_ids ?? []).filter(Boolean)),
+        ],
+      });
+    }
 
-      return (
-        relevantBaseGroupIds.has(duplicateConflict.baseGroupId) &&
-        relevantTargetGroupIds.has(duplicateConflict.targetGroupId)
-      );
-    });
+    for (const { recipientGroupId, sourceGroupIds } of directionalRecipients) {
+      if (sourceGroupIds.length <= 1) {
+        continue;
+      }
 
-    for (const duplicatePathConflict of duplicatePathConflicts) {
+      const membershipsByUserId = new Map<string, string[]>();
+
+      for (const sourceGroupId of sourceGroupIds) {
+        const activeMemberships = snapshot.memberships.filter(
+          membership =>
+            membership.group_id === sourceGroupId && isActiveGroupStatus(membership.status)
+        );
+
+        for (const membership of activeMemberships) {
+          const currentSourceGroupIds = membershipsByUserId.get(membership.user_id) ?? [];
+          currentSourceGroupIds.push(sourceGroupId);
+          membershipsByUserId.set(membership.user_id, currentSourceGroupIds);
+        }
+      }
+
+      const overlappingUserIds = [...membershipsByUserId.entries()]
+        .filter(([, memberSourceGroupIds]) => new Set(memberSourceGroupIds).size > 1)
+        .map(([userId]) => userId);
+
+      if (overlappingUserIds.length === 0) {
+        continue;
+      }
+
+      const involvedSourceGroupIds = new Set<string>();
+      for (const userId of overlappingUserIds) {
+        for (const sourceGroupId of membershipsByUserId.get(userId) ?? []) {
+          involvedSourceGroupIds.add(sourceGroupId);
+        }
+      }
+
       conflicts.push({
-        kind: 'hierarchy_duplicate_path',
+        kind: 'sibling_source_overlap',
         blocking: true,
-        summary: 'Verknuepfung wuerde denselben Unterbau doppelt anbinden.',
+        summary: 'Die Parlaments-Konfiguration enthaelt ueberschneidende Source-Gruppen.',
         explanation:
-          'Dieselbe Leaf-Basisgruppe wuerde die Ziel-Hierarchie nach der Aktivierung ueber zwei aktive Pfade erreichen.',
+          'Mindestens eine Person ist in mehr als einer speisenden Source-Gruppe dieser Parlamentsgruppe aktiv.',
         details: {
-          users: [],
-          groups: [
-            toConflictGroup(duplicatePathConflict.baseGroupId, snapshot.groupsById),
-            toConflictGroup(duplicatePathConflict.targetGroupId, snapshot.groupsById),
-          ],
-          source_groups: [toConflictGroup(duplicatePathConflict.baseGroupId, snapshot.groupsById)],
-          paths: duplicatePathConflict.paths.map(pathGroupIds => ({
-            base_group_id: duplicatePathConflict.baseGroupId,
-            target_group_id: duplicatePathConflict.targetGroupId,
-            group_ids: pathGroupIds,
-            group_names: pathGroupIds.map(
-              groupId => snapshot.groupsById.get(groupId)?.name ?? 'Group'
-            ),
-          })),
-          target_group: toConflictGroup(duplicatePathConflict.targetGroupId, snapshot.groupsById),
+          users: await Promise.all(overlappingUserIds.map(userId => buildConflictUser(tx, userId))),
+          groups: [toConflictGroup(recipientGroupId, snapshot.groupsById)],
+          source_groups: [...involvedSourceGroupIds].map(sourceGroupId =>
+            toConflictGroup(sourceGroupId, snapshot.groupsById)
+          ),
+          paths: [],
+          target_group: toConflictGroup(recipientGroupId, snapshot.groupsById),
         },
         resolutions: [
           {
-            label: 'Einen Pfad entfernen oder deaktivieren',
+            label: 'Source-Gruppen bereinigen',
             description:
-              'Die Verknuepfung ist erst moeglich, wenn nur noch ein aktiver Pfad zwischen Basisgruppe und Ziel-Hierarchie uebrig bleibt.',
-            self_service: await hasGroupPermission(
-              tx,
-              ctx,
-              'groupRelationships',
-              duplicatePathConflict.targetGroupId
-            ),
-            group_id: duplicatePathConflict.targetGroupId,
-          },
-          {
-            label: 'Zustaendige Gruppe kontaktieren',
-            description:
-              'Wenn du den konkurrierenden Pfad nicht selbst verwalten kannst, braucht es die Admin-Seite der betroffenen Hierarchie.',
+              'Entferne ueberschneidende Source-Gruppen oder klaere die Mitgliedschaften, bis jede Person nur noch in einer speisenden Gruppe landet.',
             self_service: false,
-            group_id: duplicatePathConflict.targetGroupId,
+            group_id: recipientGroupId,
             required_role: 'Admin',
           },
         ],
@@ -718,80 +888,6 @@ async function buildRelationshipActivationConflicts(
   return buildGroupConflictResponse(dedupedConflicts);
 }
 
-async function buildSiblingConfigurationConflicts(
-  tx: ZeroTransactionLike,
-  _ctx: ZeroContext,
-  args: GroupConflictSiblingConfigurationPreflight
-): Promise<GroupConflictResponse> {
-  if (args.group_type !== 'sibling' || args.sibling_membership_mode !== 'parliament') {
-    return buildGroupConflictResponse([]);
-  }
-
-  const sourceGroupIds = [...new Set((args.parliament_source_group_ids ?? []).filter(Boolean))];
-  if (sourceGroupIds.length < 2) {
-    return buildGroupConflictResponse([]);
-  }
-
-  const snapshot = await loadGroupGraphSnapshot(tx);
-  const membershipsByUserId = new Map<string, string[]>();
-
-  for (const sourceGroupId of sourceGroupIds) {
-    const activeMemberships = snapshot.memberships.filter(
-      membership => membership.group_id === sourceGroupId && isActiveGroupStatus(membership.status)
-    );
-
-    for (const membership of activeMemberships) {
-      const currentSourceGroupIds = membershipsByUserId.get(membership.user_id) ?? [];
-      currentSourceGroupIds.push(sourceGroupId);
-      membershipsByUserId.set(membership.user_id, currentSourceGroupIds);
-    }
-  }
-
-  const overlappingUserIds = [...membershipsByUserId.entries()]
-    .filter(([, memberSourceGroupIds]) => new Set(memberSourceGroupIds).size > 1)
-    .map(([userId]) => userId);
-
-  if (overlappingUserIds.length === 0) {
-    return buildGroupConflictResponse([]);
-  }
-
-  const involvedSourceGroupIds = new Set<string>();
-  for (const userId of overlappingUserIds) {
-    for (const sourceGroupId of membershipsByUserId.get(userId) ?? []) {
-      involvedSourceGroupIds.add(sourceGroupId);
-    }
-  }
-
-  return buildGroupConflictResponse([
-    {
-      kind: 'sibling_source_overlap',
-      blocking: true,
-      summary: 'Die Parlaments-Konfiguration enthaelt ueberschneidende Source-Gruppen.',
-      explanation:
-        'Mindestens eine Person ist in mehr als einer speisenden Source-Gruppe dieser Parlamentsgruppe aktiv.',
-      details: {
-        users: await Promise.all(overlappingUserIds.map(userId => buildConflictUser(tx, userId))),
-        groups: [toConflictGroup(args.group_id, snapshot.groupsById)],
-        source_groups: [...involvedSourceGroupIds].map(sourceGroupId =>
-          toConflictGroup(sourceGroupId, snapshot.groupsById)
-        ),
-        paths: [],
-        target_group: toConflictGroup(args.group_id, snapshot.groupsById),
-      },
-      resolutions: [
-        {
-          label: 'Source-Gruppen bereinigen',
-          description:
-            'Entferne ueberschneidende Source-Gruppen oder klaere die Mitgliedschaften, bis jede Person nur noch in einer speisenden Gruppe landet.',
-          self_service: false,
-          group_id: args.group_id,
-          required_role: 'Admin',
-        },
-      ],
-    },
-  ]);
-}
-
 export async function resolveGroupConflictPreflight(
   tx: ZeroTransactionLike,
   ctx: ZeroContext,
@@ -800,10 +896,8 @@ export async function resolveGroupConflictPreflight(
   switch (input.kind) {
     case 'membership_activation':
       return buildMembershipActivationConflicts(tx, ctx, input);
-    case 'relationship_activation':
-      return buildRelationshipActivationConflicts(tx, ctx, input);
-    case 'sibling_configuration':
-      return buildSiblingConfigurationConflicts(tx, ctx, input);
+    case 'network_link_upsert':
+      return buildNetworkLinkUpsertConflicts(tx, ctx, input);
   }
 }
 
@@ -827,14 +921,6 @@ export async function assertNoBlockingConflictResponse(response: Promise<GroupCo
   return resolvedResponse;
 }
 
-export async function getSiblingConfigurationConflictResponse(
-  tx: ZeroTransactionLike,
-  ctx: ZeroContext,
-  args: GroupConflictSiblingConfigurationPreflight
-) {
-  return buildSiblingConfigurationConflicts(tx, ctx, args);
-}
-
 export async function getMembershipActivationConflictResponse(
   tx: ZeroTransactionLike,
   ctx: ZeroContext,
@@ -843,10 +929,10 @@ export async function getMembershipActivationConflictResponse(
   return buildMembershipActivationConflicts(tx, ctx, args);
 }
 
-export async function getRelationshipActivationConflictResponse(
+export async function getNetworkLinkUpsertConflictResponse(
   tx: ZeroTransactionLike,
   ctx: ZeroContext,
-  args: GroupConflictRelationshipPreflight
+  args: GroupConflictNetworkLinkUpsertPreflight
 ) {
-  return buildRelationshipActivationConflicts(tx, ctx, args);
+  return buildNetworkLinkUpsertConflicts(tx, ctx, args);
 }

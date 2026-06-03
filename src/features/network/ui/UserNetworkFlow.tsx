@@ -28,7 +28,7 @@ import {
   getGroupNodeVisualVariant,
 } from '@/features/network/ui/networkVisualHelpers';
 import { useUserState } from '@/zero/users/useUserState';
-import { useGroupState } from '@/zero/groups/useGroupState';
+import { useNetworkLinkState } from '@/zero/network';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import {
   addUniqueValue,
@@ -49,6 +49,7 @@ import {
   type NetworkUserConnectionDirection,
 } from '../types/networkEdge.types';
 import { type NetworkGroupEntity } from '../types/network.types';
+import { explodeNetworkLinksToRelationships } from '../logic/networkLinkDerived';
 
 interface NetworkNode extends Node {
   data: {
@@ -66,6 +67,10 @@ interface UserNetworkFlowProps {
   filterRight?: string; // Optional filter by specific right type
   title?: string;
   description?: string;
+}
+
+function toDisplayText(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined;
 }
 
 export function UserNetworkFlow({
@@ -104,14 +109,12 @@ export function UserNetworkFlow({
 
   const { userWithGroupMemberships } = useUserState({ userId, includeGroupMemberships: true });
 
-  // Fetch all group relationships
-  const { allRelationshipsWithGroups: allRelationships } = useGroupState({
-    includeAllRelationshipsWithGroups: true,
-  });
+  const { allLinks } = useNetworkLinkState();
+  const allRelationships = useMemo(() => explodeNetworkLinksToRelationships(allLinks), [allLinks]);
 
   const user = userWithGroupMemberships?.[0];
   const memberships = user?.group_memberships || [];
-  const relationships = allRelationships || [];
+  const relationships = allRelationships;
   const userProfile = useMemo(() => {
     if (!user) {
       return null;
@@ -267,6 +270,7 @@ export function UserNetworkFlow({
         relationshipDepth,
         sourceName: groupNameMap.get(sourceId) ?? null,
         targetName: groupNameMap.get(targetId) ?? null,
+        anchorStrategy: relationshipType === 'membership' ? undefined : 'inner-auto',
       });
 
     // Add center node (user)
@@ -312,7 +316,7 @@ export function UserNetworkFlow({
         position: { x: 400 + xOffset, y: 300 + yOffset },
         data: {
           label: getGroupNodeDisplayLabel(group.name, 'current'),
-          description: group.description ?? '',
+          description: toDisplayText(group.description) ?? '',
           level: 1,
           type: 'group',
           groupData: group,
@@ -387,6 +391,8 @@ export function UserNetworkFlow({
           allRelatedGroups.set(parent.group.id, {
             group: parent.group,
             rights: parent.rights,
+            relationshipKinds: parent.relationshipKinds,
+            rightRelationshipKinds: parent.rightRelationshipKinds,
             level: parent.level,
             childId: parent.childId,
             isParent: true,
@@ -447,6 +453,8 @@ export function UserNetworkFlow({
           allRelatedGroups.set(child.group.id, {
             group: child.group,
             rights: child.rights,
+            relationshipKinds: child.relationshipKinds,
+            rightRelationshipKinds: child.rightRelationshipKinds,
             level: child.level,
             parentId: child.parentId,
             isParent: false,
@@ -516,7 +524,7 @@ export function UserNetworkFlow({
         position: { x: 400 + xOffset, y: 300 + yOffset },
         data: {
           label: getGroupNodeDisplayLabel(parent.group.name, 'parent'),
-          description: parent.group.description ?? '',
+          description: toDisplayText(parent.group.description) ?? '',
           level,
           type: 'group',
           groupData: parent.group,
@@ -542,7 +550,7 @@ export function UserNetworkFlow({
         position: { x: 400 + xOffset, y: 300 + yOffset },
         data: {
           label: getGroupNodeDisplayLabel(child.group.name, 'child'),
-          description: child.group.description ?? '',
+          description: toDisplayText(child.group.description) ?? '',
           level,
           type: 'group',
           groupData: child.group,
@@ -760,7 +768,7 @@ export function UserNetworkFlow({
             },
             data: {
               label: getGroupNodeDisplayLabel(siblingGroup.name, siblingVisualVariant),
-              description: siblingGroup.description ?? '',
+              description: toDisplayText(siblingGroup.description) ?? '',
               level: 1,
               type: 'group',
               groupData: siblingGroup,
@@ -878,7 +886,13 @@ export function UserNetworkFlow({
 
       // Open dialog with entity data
       if (nodeData.type === 'group' && nodeData.groupData) {
-        setSelectedEntity({ type: 'group', data: nodeData.groupData });
+        setSelectedEntity({
+          type: 'group',
+          data: {
+            ...nodeData.groupData,
+            description: toDisplayText(nodeData.groupData.description) ?? null,
+          },
+        });
         setDialogOpen(true);
 
         // Still call onGroupClick if provided

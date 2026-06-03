@@ -167,7 +167,7 @@ export function TargetGroupEventSelector({
 
   // Seed the computed path when user picks target group/event.
   useEffect(() => {
-    if (!selectedGroup || !selectedEvent) {
+    if (!selectedGroup) {
       setPathWithEvents([]);
       return;
     }
@@ -183,19 +183,26 @@ export function TargetGroupEventSelector({
       calculatedPath = calculatePathWithEvents(selectedGroup.id);
     }
 
-    if (!calculatedPath) {
+    if (!calculatedPath || calculatedPath.length === 0) {
       setPathWithEvents([]);
       return;
     }
 
     const seededPath = calculatedPath.map(segment =>
       segment.groupId === selectedGroup.id
-        ? {
-            ...segment,
-            eventId: selectedEvent.id,
-            eventTitle: String(selectedEvent.data.title ?? ''),
-            eventStartDate: selectedEvent.data.start_date ?? null,
-          }
+        ? selectedEvent
+          ? {
+              ...segment,
+              eventId: selectedEvent.id,
+              eventTitle: String(selectedEvent.data.title ?? ''),
+              eventStartDate: selectedEvent.data.start_date ?? null,
+            }
+          : {
+              ...segment,
+              eventId: null,
+              eventTitle: 'Pending event',
+              eventStartDate: null,
+            }
         : segment
     );
 
@@ -307,10 +314,6 @@ export function TargetGroupEventSelector({
   );
 
   const validatePathEventOrder = useCallback((segments: PathWithEventSegment[]): string | null => {
-    if (segments.some(segment => !segment.eventId)) {
-      return 'Please select an event for each group in the amendment path.';
-    }
-
     for (let index = 1; index < segments.length; index++) {
       const previous = segments[index - 1];
       const current = segments[index];
@@ -384,26 +387,25 @@ export function TargetGroupEventSelector({
       return;
     }
 
-    if (!selectedEvent) {
+    if (pathWithEvents.length === 0) {
       setPathValidationError(null);
-
-      if (!allowGroupWithoutEvent) {
+      if (!allowGroupWithoutEvent || selectedEvent) {
         clearEmittedSelection();
         return;
       }
 
-      const selectionSignature = JSON.stringify({
+      const emptySelectionSignature = JSON.stringify({
         groupId: selectedGroup.id,
         eventId: null,
         selectedUserId,
         pathWithEvents: [],
       });
 
-      if (lastEmittedSelectionRef.current === selectionSignature) {
+      if (lastEmittedSelectionRef.current === emptySelectionSignature) {
         return;
       }
 
-      lastEmittedSelectionRef.current = selectionSignature;
+      lastEmittedSelectionRef.current = emptySelectionSignature;
       onSelect({
         groupId: selectedGroup.id,
         groupData: selectedGroup.data,
@@ -417,24 +419,21 @@ export function TargetGroupEventSelector({
       return;
     }
 
-    if (pathWithEvents.length === 0) {
-      setPathValidationError(null);
-      clearEmittedSelection();
-      return;
-    }
-
-    const validationError = validatePathEventOrder(pathWithEvents);
+    const targetSegment = pathWithEvents.find(segment => segment.groupId === selectedGroup.id);
+    const targetEventId = targetSegment?.eventId ?? selectedEvent?.id ?? null;
+    const validationError =
+      targetEventId || allowGroupWithoutEvent ? validatePathEventOrder(pathWithEvents) : null;
     setPathValidationError(validationError);
     if (validationError) {
       clearEmittedSelection();
       return;
     }
 
-    const targetSegment = pathWithEvents.find(segment => segment.groupId === selectedGroup.id);
-    const targetEventId = targetSegment?.eventId ?? selectedEvent.id;
-    const targetEvent =
-      getUpcomingEventsForGroup(selectedGroup.id).find(event => event.id === targetEventId) ??
-      selectedEvent.data;
+    const targetEvent = targetEventId
+      ? (getUpcomingEventsForGroup(selectedGroup.id).find(event => event.id === targetEventId) ??
+        selectedEvent?.data ??
+        null)
+      : null;
 
     const selectionSignature = JSON.stringify({
       groupId: selectedGroup.id,

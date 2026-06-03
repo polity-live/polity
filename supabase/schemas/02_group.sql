@@ -35,19 +35,12 @@ CREATE TABLE IF NOT EXISTS public."group" (
   facebook TEXT,
   snapchat TEXT,
   tiktok TEXT,
-  group_type TEXT NOT NULL CHECK (group_type IN ('base', 'hierarchical', 'sibling')),
-  connected_group_id UUID REFERENCES public."group" (id) ON DELETE SET NULL,
-  sibling_membership_mode TEXT CHECK (sibling_membership_mode IN ('open', 'elected', 'parliament')),
   owner_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CONSTRAINT group_connected_group_not_self_check CHECK (
-    connected_group_id IS NULL OR connected_group_id <> id
-  )
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX idx_group_owner ON public."group" (owner_id);
-CREATE INDEX idx_group_connected_group ON public."group" (connected_group_id);
 
 ALTER TABLE public."group" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public."group" FOR ALL TO service_role USING (true);
@@ -83,30 +76,6 @@ CREATE INDEX idx_role_group ON public.role (group_id);
 CREATE INDEX idx_role_event ON public.role (event_id);
 CREATE INDEX idx_role_scope ON public.role (scope);
 CREATE INDEX idx_role_assignee_kind ON public.role (assignee_kind);
-
-ALTER TABLE public."group"
-  ADD COLUMN IF NOT EXISTS sibling_role_id UUID REFERENCES public.role (id) ON DELETE SET NULL;
-
-ALTER TABLE public."group"
-  ADD CONSTRAINT group_sibling_configuration_check CHECK (
-    (
-      group_type = 'sibling'
-      AND connected_group_id IS NOT NULL
-      AND sibling_membership_mode IS NOT NULL
-      AND (
-        (sibling_membership_mode = 'elected' AND sibling_role_id IS NOT NULL)
-        OR (sibling_membership_mode IN ('open', 'parliament') AND sibling_role_id IS NULL)
-      )
-    )
-    OR (
-      group_type <> 'sibling'
-      AND connected_group_id IS NULL
-      AND sibling_membership_mode IS NULL
-      AND sibling_role_id IS NULL
-    )
-  );
-
-CREATE INDEX idx_group_sibling_role ON public."group" (sibling_role_id);
 
 ALTER TABLE public.role ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.role FOR ALL TO service_role USING (true);
@@ -231,7 +200,7 @@ CREATE TABLE IF NOT EXISTS public.group_guest_access (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  status TEXT NOT NULL DEFAULT 'invited' CHECK (status IN ('invited', 'active', 'revoked')),
+  status TEXT NOT NULL DEFAULT 'invited' CHECK (status IN ('requested', 'invited', 'active', 'revoked')),
   invited_by_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),

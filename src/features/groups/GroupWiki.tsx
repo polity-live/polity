@@ -24,6 +24,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { useGroupWikiPage } from '@/features/groups/hooks/useGroupWikiPage';
 import { SiblingMembershipModeDescription } from '@/features/network/ui/GroupRelationshipFields';
+import { getCanonicalMembershipModeLabel } from '@/features/network/logic/networkLinkDerived';
 import { buildGroupWikiIncumbentSections } from '@/features/groups/logic/buildGroupWikiIncumbentSections';
 import {
   countAcceptedMemberships,
@@ -31,6 +32,7 @@ import {
 } from '@/features/groups/logic/groupWikiHelpers';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
 import { formatLocation } from '@/features/shared/logic/locationHelpers';
+import { richTextToPlainText } from '@/features/shared/logic/richText';
 import { WikiIncumbentPanel } from '@/features/shared/ui/wiki/WikiIncumbentPanel';
 
 interface GroupWikiProps {
@@ -39,6 +41,11 @@ interface GroupWikiProps {
 
 export function GroupWiki({ groupId }: GroupWikiProps) {
   const { t } = useTranslation();
+
+  const toPlainDescription = (value: unknown) => {
+    const text = richTextToPlainText(value);
+    return text || undefined;
+  };
 
   const {
     group,
@@ -85,10 +92,12 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
   }
 
   const groupLocation = formatLocation(group);
+  const groupDescription = toPlainDescription(group.description);
   const parentGroups = groupRelationshipsByGroup(group.relationships_as_target ?? [], 'parent');
   const childGroups = groupRelationshipsByGroup(group.relationships_as_source ?? [], 'child');
   const siblingGroups = group.sibling_groups ?? [];
   const connectedGroup = group.connected_group;
+  const primarySiblingMembershipMode = group.primary_sibling_membership_mode ?? null;
   const requestJoinActionDisabled = !isMember && !hasRequested && !isInvited && !canRequestJoin;
   const acceptInvitationDisabled = isInvited && !canAcceptInvitation;
   const parliamentSourceGroups = (group.sibling_sources ?? [])
@@ -187,12 +196,12 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
         <ShareButton
           url={`/group/${groupId}`}
           title={group.name ?? ''}
-          description={group.description || ''}
+          description={groupDescription ?? ''}
           shareContextItem={{
             id: groupId,
             type: 'group',
             title: group.name ?? '',
-            description: group.description,
+            description: groupDescription,
             createdAt: new Date(),
             memberCount,
             eventCount: eventsCount,
@@ -228,7 +237,7 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
 
       {/* About and Contact Tabs */}
       <InfoTabs
-        about={group.description ?? undefined}
+        about={groupDescription}
         contact={{
           email: group.email ?? undefined,
           website: group.website ?? undefined,
@@ -270,12 +279,17 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
                 ? 'Gewaehlte Geschwistergruppe'
                 : group.sibling_membership_mode === 'parliament'
                   ? 'Parlamentsgruppe'
-                  : group.sibling_membership_mode === 'open'
+                  : primarySiblingMembershipMode === 'none'
                     ? 'Offene Geschwistergruppe'
                     : 'Geschwistergruppe'}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {primarySiblingMembershipMode ? (
+              <Badge variant="outline" className="w-fit text-xs">
+                {getCanonicalMembershipModeLabel(primarySiblingMembershipMode)}
+              </Badge>
+            ) : null}
             {group.sibling_membership_mode ? (
               <div className="border-border/70 bg-background/80 rounded-lg border px-3 py-3 shadow-sm">
                 <SiblingMembershipModeDescription
@@ -291,7 +305,7 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
               group={{
                 id: String(connectedGroup.id),
                 name: connectedGroup.name || t('common.unspecified'),
-                description: connectedGroup.description ?? undefined,
+                description: toPlainDescription(connectedGroup.description),
                 memberCount: connectedGroup.member_count || 0,
                 amendmentCount: connectedGroup.amendment_count || 0,
                 eventCount: connectedGroup.event_count || 0,
@@ -317,7 +331,7 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
                   group={{
                     id: String(sourceGroup.id),
                     name: sourceGroup.name || t('common.unspecified'),
-                    description: sourceGroup.description ?? undefined,
+                    description: toPlainDescription(sourceGroup.description),
                     memberCount: sourceGroup.member_count || 0,
                     amendmentCount: sourceGroup.amendment_count || 0,
                     eventCount: sourceGroup.event_count || 0,
@@ -346,7 +360,7 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
                   group={{
                     id: String(siblingGroup.id),
                     name: siblingGroup.name || t('common.unspecified'),
-                    description: siblingGroup.description ?? undefined,
+                    description: toPlainDescription(siblingGroup.description),
                     memberCount: siblingGroup.member_count || 0,
                     amendmentCount: siblingGroup.amendment_count || 0,
                     eventCount: siblingGroup.event_count || 0,
@@ -376,7 +390,7 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
                   group={{
                     id: String(relatedGroup.id),
                     name: relatedGroup.name || t('common.unspecified'),
-                    description: relatedGroup.description ?? undefined,
+                    description: toPlainDescription(relatedGroup.description),
                     memberCount:
                       relatedGroup.member_count ??
                       countAcceptedMemberships(relatedGroup.memberships),
@@ -407,7 +421,7 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
                   group={{
                     id: String(relatedGroup.id),
                     name: relatedGroup.name || t('common.unspecified'),
-                    description: relatedGroup.description ?? undefined,
+                    description: toPlainDescription(relatedGroup.description),
                     memberCount:
                       relatedGroup.member_count ??
                       countAcceptedMemberships(relatedGroup.memberships),

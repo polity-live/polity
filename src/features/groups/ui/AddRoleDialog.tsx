@@ -37,6 +37,7 @@ interface AddRoleDialogProps {
   trigger?: React.ReactNode | null;
   scope?: 'group' | 'event';
   eventType?: string | null;
+  guestOnlyMembershipFlow?: boolean;
 }
 
 export function AddRoleDialog({
@@ -51,20 +52,29 @@ export function AddRoleDialog({
   trigger,
   scope = 'group',
   eventType = null,
+  guestOnlyMembershipFlow = false,
 }: AddRoleDialogProps) {
   const isEventScope = scope === 'event';
   const allowGuestRequestDefault =
-    isEventScope && (eventType === 'general_assembly' || eventType === 'delegate_assembly');
+    (isEventScope && (eventType === 'general_assembly' || eventType === 'delegate_assembly')) ||
+    (!isEventScope && guestOnlyMembershipFlow);
+  const allowGuestInviteDefault =
+    (isEventScope && (eventType === 'general_assembly' || eventType === 'delegate_assembly')) ||
+    (!isEventScope && guestOnlyMembershipFlow);
   const requestRoleDisabled = allowGuestRequestDefault
     ? form.assignee_kind !== 'guest'
     : form.assignee_kind === 'guest';
-  const inviteRoleDisabled = form.assignee_kind === 'guest';
+  const inviteRoleDisabled = allowGuestInviteDefault
+    ? form.assignee_kind !== 'guest'
+    : form.assignee_kind === 'guest';
   const assignmentSectionDescription = isEventScope
     ? 'Decide whether the role is filled directly or by election and who can see it.'
     : 'Decide whether the role is filled directly or by election, who can see it, and how term renewals should work.';
   const guestRoleHint = isEventScope
-    ? 'Guest roles are useful for visitors and observers. In assemblies, only guest roles can be used as request roles.'
-    : 'Guest roles can be used in the Guests tab, but they are excluded from official membership invitations and member counts.';
+    ? 'Guest roles are useful for visitors and observers. In assemblies, only guest roles can be used as invite and request defaults.'
+    : guestOnlyMembershipFlow
+      ? 'This sibling group uses guest-only invite and request defaults. Only guest roles can be marked as default roles here.'
+      : 'Guest roles can be used in the Guests tab, but they are excluded from official membership invitations and member counts.';
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       {trigger === undefined ? (

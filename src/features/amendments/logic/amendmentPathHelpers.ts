@@ -1,10 +1,16 @@
-import { findShortestPath, type GroupNode, type GroupRelationship, type PathSegment } from './path-finding';
+import {
+  findShortestPath,
+  type GroupNode,
+  type GroupRelationship,
+  type PathSegment,
+} from './path-finding';
 import type {
   NetworkGroupRow,
   NetworkGroupRelationshipRow,
   NetworkGroupMembershipRow,
   NetworkEventRow,
 } from '@/zero/amendments/queries';
+import { richTextToPlainText } from '@/features/shared/logic/richText';
 
 export type { NetworkGroupRow as AmendmentNetworkGroup };
 export type { NetworkGroupRelationshipRow as AmendmentNetworkRelationship };
@@ -32,14 +38,14 @@ export interface EnrichedPathSegment extends PathWithEventSegment {
 export function enrichPathSegments(
   pathWithEvents: PathWithEventSegment[],
   targetGroupId: string,
-  targetEventId: string,
+  targetEventId: string | null,
   targetEventTitle: string | null,
-  targetEventStartDate: number | null,
+  targetEventStartDate: number | null
 ): EnrichedPathSegment[] {
   // Override the last segment's event with the user-selected event
   const segments = pathWithEvents.map(seg => ({ ...seg }));
   const lastSegment = segments[segments.length - 1];
-  if (lastSegment && lastSegment.groupId === targetGroupId) {
+  if (lastSegment && lastSegment.groupId === targetGroupId && targetEventId) {
     lastSegment.eventId = targetEventId;
     lastSegment.eventTitle = targetEventTitle ?? 'No Event';
     lastSegment.eventStartDate = targetEventStartDate ?? null;
@@ -92,21 +98,19 @@ export function getActiveUserGroupIds(
   userId: string
 ): string[] {
   return memberships
-    .filter((membership) => {
+    .filter(membership => {
       const isActive = membership.status === 'active' || membership.status === 'admin';
       return isActive && membership.user?.id === userId;
     })
-    .map((membership) => membership.group?.id)
+    .map(membership => membership.group?.id)
     .filter((groupId): groupId is string => Boolean(groupId));
 }
 
-function toPathRelationships(
-  relationships: NetworkGroupRelationshipRow[]
-): GroupRelationship[] {
+function toPathRelationships(relationships: NetworkGroupRelationshipRow[]): GroupRelationship[] {
   return relationships
-    .filter((relationship) => relationship.with_right === AMENDMENT_RIGHT)
-    .filter((relationship) => relationship.group?.id && relationship.related_group?.id)
-    .map((relationship) => ({
+    .filter(relationship => relationship.with_right === AMENDMENT_RIGHT)
+    .filter(relationship => relationship.group?.id && relationship.related_group?.id)
+    .map(relationship => ({
       id: relationship.id,
       parentGroup: {
         id: relationship.group?.id ?? '',
@@ -122,12 +126,12 @@ function toPathRelationships(
 
 function toGroupsMap(groups: NetworkGroupRow[]): Map<string, GroupNode> {
   return new Map(
-    groups.map((group) => [
+    groups.map(group => [
       group.id,
       {
         id: group.id,
         name: group.name ?? '',
-        description: group.description ?? undefined,
+        description: richTextToPlainText(group.description),
       },
     ])
   );
@@ -143,7 +147,7 @@ function getClosestUpcomingEventForGroup(
 ): NetworkEventRow | undefined {
   const now = Date.now();
   return events
-    .filter((event) => event.group?.id === groupId && (event.start_date ?? 0) > now)
+    .filter(event => event.group?.id === groupId && (event.start_date ?? 0) > now)
     .sort((a, b) => (a.start_date ?? 0) - (b.start_date ?? 0))[0];
 }
 
@@ -165,7 +169,7 @@ export function calculateUpwardPathWithClosestEvents({
 
   if (!path || !isUpwardPath(path)) return null;
 
-  return path.map((segment) => {
+  return path.map(segment => {
     const closestEvent = getClosestUpcomingEventForGroup(segment.group.id, events);
 
     return {
@@ -185,14 +189,15 @@ export function getUpwardConnectedGroupsForUser(
 ): NetworkGroupRow[] {
   if (userGroupIds.length === 0) return [];
 
-  return groups.filter((group) =>
-    calculateUpwardPathWithClosestEvents({
-      userGroupIds,
-      targetGroupId: group.id,
-      groups,
-      relationships,
-      events: [],
-    }) !== null
+  return groups.filter(
+    group =>
+      calculateUpwardPathWithClosestEvents({
+        userGroupIds,
+        targetGroupId: group.id,
+        groups,
+        relationships,
+        events: [],
+      }) !== null
   );
 }
 
@@ -201,17 +206,20 @@ export function getUpwardConnectedGroupsForUser(
  * assigning the closest upcoming event for each step's group.
  */
 export function calculateWorkflowPathWithClosestEvents(
-  workflowSteps: readonly { group_id: string; group?: { id: string; name: string | null } | null }[],
-  events: NetworkEventRow[],
+  workflowSteps: readonly {
+    group_id: string;
+    group?: { id: string; name: string | null } | null;
+  }[],
+  events: NetworkEventRow[]
 ): PathWithEventSegment[] {
   const sorted = [...workflowSteps].sort((a, b) => {
-    const aIdx = (a as { order_index?: number }).order_index ?? 0
-    const bIdx = (b as { order_index?: number }).order_index ?? 0
-    return aIdx - bIdx
-  })
+    const aIdx = (a as { order_index?: number }).order_index ?? 0;
+    const bIdx = (b as { order_index?: number }).order_index ?? 0;
+    return aIdx - bIdx;
+  });
 
   return sorted.map(step => {
-    const closestEvent = getClosestUpcomingEventForGroup(step.group_id, events)
+    const closestEvent = getClosestUpcomingEventForGroup(step.group_id, events);
 
     return {
       groupId: step.group_id,
@@ -219,6 +227,6 @@ export function calculateWorkflowPathWithClosestEvents(
       eventId: closestEvent?.id ?? null,
       eventTitle: closestEvent?.title ?? 'No upcoming event',
       eventStartDate: closestEvent?.start_date ?? null,
-    }
-  })
+    };
+  });
 }

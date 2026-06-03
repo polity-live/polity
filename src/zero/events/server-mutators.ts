@@ -31,6 +31,7 @@ import {
 } from './schema';
 import { reconcileGeneralAssemblyParticipantsForEvent } from './assembly-reconcile';
 import { reconcileDelegateAllocationsForEvent } from './delegate-allocation-reconcile';
+import { loadGroupWithDerivedNetworkMeta } from '../groups/membership-helpers';
 
 async function addEventParticipantRoleLink(
   tx: Parameters<typeof mutators.events.create.fn>[0]['tx'],
@@ -126,6 +127,7 @@ async function assertEventParticipationEligibility(
     event_id: string;
     user_id: string;
     allowInviteOnlyEvent: boolean;
+    allowAssemblyGuestInvite?: boolean;
   }
 ) {
   const event = await tx.run(zql.event.where('id', args.event_id).one());
@@ -135,6 +137,10 @@ async function assertEventParticipationEligibility(
   }
 
   if (event.event_type === 'delegate_assembly') {
+    if (args.allowAssemblyGuestInvite) {
+      return event;
+    }
+
     const isConfirmedDelegate = await isConfirmedDelegateForEvent(tx, args.event_id, args.user_id);
     if (!isConfirmedDelegate) {
       throw new Error('Only confirmed delegates can participate in this delegate assembly.');
@@ -142,6 +148,10 @@ async function assertEventParticipationEligibility(
   }
 
   if (event.event_type === 'general_assembly') {
+    if (args.allowAssemblyGuestInvite) {
+      return event;
+    }
+
     if (!event.group_id) {
       throw new Error('This general assembly is missing its associated group.');
     }
@@ -159,6 +169,36 @@ async function assertEventParticipationEligibility(
   }
 
   return event;
+}
+
+async function isGuestInviteForEvent(
+  tx: Parameters<typeof mutators.events.create.fn>[0]['tx'],
+  args: {
+    event_id: string;
+    initial_role_id?: string | null;
+    initial_role_ids?: string[];
+  }
+) {
+  const explicitRoleIds = [...new Set((args.initial_role_ids ?? []).filter(Boolean))];
+
+  if (args.initial_role_id && explicitRoleIds.length === 0) {
+    explicitRoleIds.push(args.initial_role_id);
+  }
+
+  const roles = explicitRoleIds.length
+    ? await tx.run(zql.role.where('event_id', args.event_id).where('scope', 'event'))
+    : await tx.run(
+        zql.role
+          .where('event_id', args.event_id)
+          .where('scope', 'event')
+          .where('default_invite_role', true)
+      );
+
+  const candidateRoles = explicitRoleIds.length
+    ? roles.filter(role => explicitRoleIds.includes(role.id))
+    : roles;
+
+  return candidateRoles.length > 0 && candidateRoles.every(role => role.assignee_kind === 'guest');
 }
 
 function isAssemblyEventType(eventType: string | null | undefined) {
@@ -219,7 +259,7 @@ async function assertDelegateAssemblyGroupEligibility(
     throw new Error('Delegate assemblies must be linked to a group.');
   }
 
-  const group = await tx.run(zql.group.where('id', groupId).one());
+  const group = await loadGroupWithDerivedNetworkMeta(tx, groupId);
   if (!group) {
     throw new Error('Associated group not found.');
   }
@@ -273,9 +313,11 @@ export const eventServerMutators = {
 
     const eventRoleTemplates = isAssemblyEventType(args.event_type)
       ? [
-          ...DEFAULT_EVENT_ROLES.map(role =>
-            role.name === 'Participant' ? { ...role, default_request_role: false } : role
-          ),
+          ...DEFAULT_EVENT_ROLES.map(role => ({
+            ...role,
+            default_request_role: false,
+            default_invite_role: false,
+          })),
           DEFAULT_ASSEMBLY_EVENT_GUEST_ROLE,
         ]
       : DEFAULT_EVENT_ROLES;
@@ -570,10 +612,17 @@ export const eventServerMutators = {
 
   inviteParticipant: defineMutator(eventParticipantCreateSchema, async ({ tx, ctx, args }) => {
     if (args.user_id) {
+      const allowAssemblyGuestInvite = await isGuestInviteForEvent(tx, {
+        event_id: args.event_id,
+        initial_role_id: args.initial_role_id,
+        initial_role_ids: args.initial_role_ids,
+      });
+
       await assertEventParticipationEligibility(tx, {
         event_id: args.event_id,
         user_id: args.user_id,
         allowInviteOnlyEvent: true,
+        allowAssemblyGuestInvite,
       });
     }
 

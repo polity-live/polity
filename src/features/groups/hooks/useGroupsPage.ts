@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useGroupState } from '@/zero/groups/useGroupState';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { richTextToPlainText } from '@/features/shared/logic/richText';
 
 interface GroupDisplay {
   id: string;
@@ -19,19 +20,21 @@ export function useGroupsPage() {
 
   const { searchResults, isLoading } = useGroupState({ includeSearch: true });
 
-  const groups: GroupDisplay[] = useMemo(
-    () =>
-      (searchResults ?? []).map(g => ({
-        id: g.id,
-        name: g.name ?? '',
-        description: g.description ?? '',
-        memberCount: g.member_count ?? 0,
-        eventCount: g.event_count ?? 0,
-        amendmentCount: g.amendment_count ?? 0,
-        topics: [],
-      })),
-    [searchResults]
-  );
+  const groups: GroupDisplay[] = useMemo(() => {
+    const visibleGroups = (searchResults ?? []).filter(Boolean) as NonNullable<
+      (typeof searchResults)[number]
+    >[];
+
+    return visibleGroups.map(g => ({
+      id: g.id,
+      name: g.name ?? '',
+      description: richTextToPlainText(g.description),
+      memberCount: g.member_count ?? 0,
+      eventCount: g.event_count ?? 0,
+      amendmentCount: g.amendment_count ?? 0,
+      topics: [],
+    }));
+  }, [searchResults]);
 
   const allTags = useMemo(() => {
     const tags = groups.flatMap(g => g.topics ?? []);
@@ -49,9 +52,7 @@ export function useGroupsPage() {
       const matchesTags =
         selectedTags.length === 0 ||
         selectedTags.every(selectedTag =>
-          group.topics?.some(groupTag =>
-            groupTag.toLowerCase().includes(selectedTag.toLowerCase())
-          )
+          group.topics?.some(groupTag => groupTag.toLowerCase().includes(selectedTag.toLowerCase()))
         );
 
       return matchesSearch && matchesTags;
@@ -59,9 +60,7 @@ export function useGroupsPage() {
   }, [groups, searchTerm, selectedTags]);
 
   const toggleTag = (tag: string) => {
-    setSelectedTags(prev =>
-      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
-    );
+    setSelectedTags(prev => (prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]));
   };
 
   const clearAllFilters = () => {

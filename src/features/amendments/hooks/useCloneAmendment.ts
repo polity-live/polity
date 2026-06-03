@@ -28,7 +28,7 @@ interface CloneAmendmentData {
 
 interface CloneSelection {
   groupId: string | null;
-  groupData: { id: string; name?: string | null; description?: string | null } | null;
+  groupData: { id: string; name?: string | null; description?: unknown } | null;
   eventId: string | null;
   eventData: { id: string; title?: string | null } | null;
   collaboratorUserId: string;

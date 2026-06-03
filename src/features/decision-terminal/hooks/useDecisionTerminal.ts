@@ -252,7 +252,7 @@ export function useDecisionTerminal(
         id: generateDecisionId('election', index + 1),
         type: 'election',
         title: election.title || 'Election',
-        body: election.role?.title || election.agenda_item?.event?.title || 'Election',
+        body: election.role?.name || election.agenda_item?.event?.title || 'Election',
         endsAt,
         startsAt,
         status,

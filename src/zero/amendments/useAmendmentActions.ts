@@ -3,7 +3,7 @@ import { useZero } from '@rocicorp/zero/react';
 import { gatedToast as toast } from '@/features/notifications/utils/gated-toast';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { mutators } from '../mutators';
-import { onServerError } from '../mutate-with-server-check';
+import { onServerError, serverConfirmed } from '../mutate-with-server-check';
 
 /**
  * Action hook for amendment mutations.
@@ -29,6 +29,7 @@ export function useAmendmentActions() {
     (args: Parameters<typeof mutators.amendments.update>[0]) => {
       const result = zero.mutate(mutators.amendments.update(args));
       onServerError(result, () => toast.error(t('features.amendments.toasts.updateFailed')));
+      return serverConfirmed(result);
     },
     [zero]
   );
@@ -208,14 +209,17 @@ export function useAmendmentActions() {
     (args: Parameters<typeof mutators.amendments.updateSupportConfirmation>[0]) => {
       const result = zero.mutate(mutators.amendments.updateSupportConfirmation(args));
       const status = args.status;
-      toast.success(
-        status === 'confirmed'
-          ? t('features.amendments.toasts.supportConfirmed')
-          : t('features.amendments.toasts.supportDeclined')
-      );
+      if (status === 'confirmed' || status === 'declined') {
+        toast.success(
+          status === 'confirmed'
+            ? t('features.amendments.toasts.supportConfirmed')
+            : t('features.amendments.toasts.supportDeclined')
+        );
+      }
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.supportConfirmationUpdateFailed'))
       );
+      return serverConfirmed(result);
     },
     [zero]
   );
@@ -255,6 +259,7 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.pathCreateFailed', 'Failed to create path'))
       );
+      return serverConfirmed(result);
     },
     [zero]
   );
@@ -265,6 +270,7 @@ export function useAmendmentActions() {
       onServerError(result, () =>
         toast.error(t('features.amendments.toasts.pathDeleteFailed', 'Failed to delete path'))
       );
+      return serverConfirmed(result);
     },
     [zero]
   );
@@ -277,6 +283,7 @@ export function useAmendmentActions() {
           t('features.amendments.toasts.pathSegmentCreateFailed', 'Failed to create path segment')
         )
       );
+      return serverConfirmed(result);
     },
     [zero]
   );
@@ -289,6 +296,172 @@ export function useAmendmentActions() {
           t('features.amendments.toasts.pathSegmentDeleteFailed', 'Failed to delete path segment')
         )
       );
+      return serverConfirmed(result);
+    },
+    [zero]
+  );
+
+  const createProcessRun = useCallback(
+    (args: Parameters<typeof mutators.amendments.createProcessRun>[0]) => {
+      const result = zero.mutate(mutators.amendments.createProcessRun(args));
+      onServerError(result, () =>
+        toast.error(
+          t('features.amendments.toasts.processRunCreateFailed', 'Failed to create process run')
+        )
+      );
+      return serverConfirmed(result);
+    },
+    [zero]
+  );
+
+  const updateProcessRun = useCallback(
+    (args: Parameters<typeof mutators.amendments.updateProcessRun>[0]) => {
+      const result = zero.mutate(mutators.amendments.updateProcessRun(args));
+      onServerError(result, () =>
+        toast.error(
+          t('features.amendments.toasts.processRunUpdateFailed', 'Failed to update process run')
+        )
+      );
+      return serverConfirmed(result);
+    },
+    [zero]
+  );
+
+  const deleteProcessRun = useCallback(
+    (id: string) => {
+      const result = zero.mutate(mutators.amendments.deleteProcessRun({ id }));
+      onServerError(result, () =>
+        toast.error(
+          t('features.amendments.toasts.processRunDeleteFailed', 'Failed to delete process run')
+        )
+      );
+      return serverConfirmed(result);
+    },
+    [zero]
+  );
+
+  const createProcessBranch = useCallback(
+    (args: Parameters<typeof mutators.amendments.createProcessBranch>[0]) => {
+      const result = zero.mutate(mutators.amendments.createProcessBranch(args));
+      onServerError(result, () =>
+        toast.error(
+          t(
+            'features.amendments.toasts.processBranchCreateFailed',
+            'Failed to create process branch'
+          )
+        )
+      );
+      return serverConfirmed(result);
+    },
+    [zero]
+  );
+
+  const updateProcessBranch = useCallback(
+    (args: Parameters<typeof mutators.amendments.updateProcessBranch>[0]) => {
+      const result = zero.mutate(mutators.amendments.updateProcessBranch(args));
+      onServerError(result, () =>
+        toast.error(
+          t(
+            'features.amendments.toasts.processBranchUpdateFailed',
+            'Failed to update process branch'
+          )
+        )
+      );
+      return serverConfirmed(result);
+    },
+    [zero]
+  );
+
+  const deleteProcessBranch = useCallback(
+    (id: string) => {
+      const result = zero.mutate(mutators.amendments.deleteProcessBranch({ id }));
+      onServerError(result, () =>
+        toast.error(
+          t(
+            'features.amendments.toasts.processBranchDeleteFailed',
+            'Failed to delete process branch'
+          )
+        )
+      );
+      return serverConfirmed(result);
+    },
+    [zero]
+  );
+
+  const createProcessStepRun = useCallback(
+    (args: Parameters<typeof mutators.amendments.createProcessStepRun>[0]) => {
+      const result = zero.mutate(mutators.amendments.createProcessStepRun(args));
+      onServerError(result, () =>
+        toast.error(
+          t('features.amendments.toasts.processStepCreateFailed', 'Failed to create process step')
+        )
+      );
+      return serverConfirmed(result);
+    },
+    [zero]
+  );
+
+  const updateProcessStepRun = useCallback(
+    (args: Parameters<typeof mutators.amendments.updateProcessStepRun>[0]) => {
+      const result = zero.mutate(mutators.amendments.updateProcessStepRun(args));
+      onServerError(result, () =>
+        toast.error(
+          t('features.amendments.toasts.processStepUpdateFailed', 'Failed to update process step')
+        )
+      );
+      return serverConfirmed(result);
+    },
+    [zero]
+  );
+
+  const deleteProcessStepRun = useCallback(
+    (id: string) => {
+      const result = zero.mutate(mutators.amendments.deleteProcessStepRun({ id }));
+      onServerError(result, () =>
+        toast.error(
+          t('features.amendments.toasts.processStepDeleteFailed', 'Failed to delete process step')
+        )
+      );
+      return serverConfirmed(result);
+    },
+    [zero]
+  );
+
+  const createProcessTask = useCallback(
+    (args: Parameters<typeof mutators.amendments.createProcessTask>[0]) => {
+      const result = zero.mutate(mutators.amendments.createProcessTask(args));
+      onServerError(result, () =>
+        toast.error(
+          t('features.amendments.toasts.processTaskCreateFailed', 'Failed to create process task')
+        )
+      );
+      return serverConfirmed(result);
+    },
+    [zero]
+  );
+
+  const updateProcessTask = useCallback(
+    (args: Parameters<typeof mutators.amendments.updateProcessTask>[0]) => {
+      const result = zero.mutate(mutators.amendments.updateProcessTask(args));
+      onServerError(result, () =>
+        toast.error(
+          t('features.amendments.toasts.processTaskUpdateFailed', 'Failed to update process task')
+        )
+      );
+      return serverConfirmed(result);
+    },
+    [zero]
+  );
+
+  const deleteProcessTask = useCallback(
+    (id: string) => {
+      const result = zero.mutate(mutators.amendments.deleteProcessTask({ id }));
+      onServerError(result, () =>
+        toast.error(
+          t('features.amendments.toasts.processTaskDeleteFailed', 'Failed to delete process task')
+        )
+      );
+      return serverConfirmed(result);
     },
     [zero]
   );
@@ -315,6 +488,18 @@ export function useAmendmentActions() {
     deletePath,
     createPathSegment,
     deletePathSegment,
+    createProcessRun,
+    updateProcessRun,
+    deleteProcessRun,
+    createProcessBranch,
+    updateProcessBranch,
+    deleteProcessBranch,
+    createProcessStepRun,
+    updateProcessStepRun,
+    deleteProcessStepRun,
+    createProcessTask,
+    updateProcessTask,
+    deleteProcessTask,
 
     // Change requests
     createChangeRequest,

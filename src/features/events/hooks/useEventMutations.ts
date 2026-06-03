@@ -10,7 +10,6 @@ export function useEventMutations(eventId: string) {
   const {
     inviteParticipant,
     updateParticipant,
-    syncParticipantRoles,
     leaveEvent,
     updateEvent: doUpdateEvent,
   } = useEventActions();
@@ -46,15 +45,8 @@ export function useEventMutations(eventId: string) {
           event_id: eventId,
           group_id: null,
           visibility: 'public',
+          initial_role_ids: normalizedRoleIds,
         });
-
-        if (normalizedRoleIds.length > 0) {
-          await syncParticipantRoles({
-            event_participant_id: participantId,
-            role_ids: normalizedRoleIds,
-            assigned_by_id: senderId ?? null,
-          });
-        }
       }
 
       toast.success(`Successfully invited ${userIds.length} participant(s)`);

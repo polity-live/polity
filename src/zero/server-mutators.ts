@@ -5,22 +5,23 @@
  * This file imports them all and composes the final `serverMutators` registry
  * passed to PushProcessor in the /api/mutate endpoint.
  */
-import { defineMutators } from '@rocicorp/zero'
-import { mutators } from './mutators'
-import { groupServerMutators } from './groups/server-mutators'
-import { eventServerMutators } from './events/server-mutators'
-import { amendmentServerMutators } from './amendments/server-mutators'
-import { blogServerMutators } from './blogs/server-mutators'
-import { agendaServerMutators } from './agendas/server-mutators'
-import { electionServerMutators } from './elections/server-mutators'
-import { voteServerMutators } from './votes/server-mutators'
-import { todoServerMutators } from './todos/server-mutators'
-import { paymentServerMutators } from './payments/server-mutators'
-import { documentServerMutators } from './documents/server-mutators'
-import { commonServerMutators } from './common/server-mutators'
-import { votingPasswordServerMutators } from './voting-password/server-mutators'
-import { accreditationServerMutators } from './accreditation/server-mutators'
-import { messageServerMutators } from './messages/server-mutators'
+import { defineMutators } from '@rocicorp/zero';
+import { mutators } from './mutators';
+import { groupServerMutators } from './groups/server-mutators';
+import { eventServerMutators } from './events/server-mutators';
+import { amendmentServerMutators } from './amendments/server-mutators';
+import { blogServerMutators } from './blogs/server-mutators';
+import { agendaServerMutators } from './agendas/server-mutators';
+import { electionServerMutators } from './elections/server-mutators';
+import { voteServerMutators } from './votes/server-mutators';
+import { todoServerMutators } from './todos/server-mutators';
+import { paymentServerMutators } from './payments/server-mutators';
+import { documentServerMutators } from './documents/server-mutators';
+import { commonServerMutators } from './common/server-mutators';
+import { votingPasswordServerMutators } from './voting-password/server-mutators';
+import { accreditationServerMutators } from './accreditation/server-mutators';
+import { messageServerMutators } from './messages/server-mutators';
+import { networkServerMutators } from './network/server-mutators';
 
 export const serverMutators = defineMutators(mutators, {
   groups: groupServerMutators,
@@ -37,4 +38,5 @@ export const serverMutators = defineMutators(mutators, {
   messages: messageServerMutators,
   votingPassword: votingPasswordServerMutators,
   accreditation: accreditationServerMutators,
-})
+  network: networkServerMutators,
+});

@@ -29,7 +29,6 @@ export type {
   // Groups
   Group,
   GroupMembership,
-  GroupRelationship,
   Role,
   RoleHolderHistory,
   ActionRight,

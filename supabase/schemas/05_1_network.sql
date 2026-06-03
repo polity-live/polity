@@ -17,38 +17,117 @@ CREATE INDEX idx_follow_followee ON public.follow (followee_id);
 ALTER TABLE public.follow ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.follow FOR ALL TO service_role USING (true);
 
--- Group relationship table
-CREATE TABLE IF NOT EXISTS public.group_relationship (
+-- Canonical network link table
+CREATE TABLE IF NOT EXISTS public.network_link (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
-  related_group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
-  relationship_type TEXT,
-  with_right TEXT,
-  status TEXT,
-  initiator_group_id UUID,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX idx_group_relationship_group ON public.group_relationship (group_id);
-CREATE INDEX idx_group_relationship_related ON public.group_relationship (related_group_id);
-
-ALTER TABLE public.group_relationship ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.group_relationship FOR ALL TO service_role USING (true);
-
--- Sibling parliament source groups
-CREATE TABLE IF NOT EXISTS public.group_sibling_source (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
   source_group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
+  target_group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
+  structural_relation TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'active',
+  created_by_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (group_id, source_group_id)
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (source_group_id, target_group_id, structural_relation)
 );
 
-CREATE INDEX idx_group_sibling_source_group ON public.group_sibling_source (group_id);
-CREATE INDEX idx_group_sibling_source_source ON public.group_sibling_source (source_group_id);
+CREATE INDEX idx_network_link_source_group ON public.network_link (source_group_id);
+CREATE INDEX idx_network_link_target_group ON public.network_link (target_group_id);
+CREATE INDEX idx_network_link_relation ON public.network_link (structural_relation);
 
-ALTER TABLE public.group_sibling_source ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.group_sibling_source FOR ALL TO service_role USING (true);
+ALTER TABLE public.network_link ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.network_link FOR ALL TO service_role USING (true);
+
+-- Canonical network link rights
+CREATE TABLE IF NOT EXISTS public.network_link_right (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  network_link_id UUID NOT NULL REFERENCES public.network_link (id) ON DELETE CASCADE,
+  right_key TEXT NOT NULL,
+  direction TEXT NOT NULL DEFAULT 'forward',
+  status TEXT NOT NULL DEFAULT 'active',
+  initiator_group_id UUID REFERENCES public."group" (id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (network_link_id, right_key)
+);
+
+CREATE INDEX idx_network_link_right_link ON public.network_link_right (network_link_id);
+CREATE INDEX idx_network_link_right_status ON public.network_link_right (status);
+CREATE INDEX idx_network_link_right_initiator ON public.network_link_right (initiator_group_id);
+
+ALTER TABLE public.network_link_right ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.network_link_right FOR ALL TO service_role USING (true);
+
+-- Membership propagation rule for canonical links
+CREATE TABLE IF NOT EXISTS public.network_link_membership_rule (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  network_link_id UUID NOT NULL REFERENCES public.network_link (id) ON DELETE CASCADE,
+  membership_mode TEXT NOT NULL DEFAULT 'none',
+  role_id UUID REFERENCES public.role (id) ON DELETE SET NULL,
+  source_group_ids JSONB,
+  forward_membership_mode TEXT NOT NULL DEFAULT 'none',
+  forward_role_id UUID REFERENCES public.role (id) ON DELETE SET NULL,
+  forward_source_group_ids JSONB,
+  backward_membership_mode TEXT NOT NULL DEFAULT 'none',
+  backward_role_id UUID REFERENCES public.role (id) ON DELETE SET NULL,
+  backward_source_group_ids JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (network_link_id)
+);
+
+CREATE INDEX idx_network_link_membership_rule_link
+  ON public.network_link_membership_rule (network_link_id);
+CREATE INDEX idx_network_link_membership_rule_mode
+  ON public.network_link_membership_rule (membership_mode);
+CREATE INDEX idx_network_link_membership_rule_forward_mode
+  ON public.network_link_membership_rule (forward_membership_mode);
+CREATE INDEX idx_network_link_membership_rule_backward_mode
+  ON public.network_link_membership_rule (backward_membership_mode);
+
+ALTER TABLE public.network_link_membership_rule ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.network_link_membership_rule FOR ALL TO service_role USING (true);
+
+-- Pending change requests for canonical links
+CREATE TABLE IF NOT EXISTS public.network_link_change_request (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  active_network_link_id UUID REFERENCES public.network_link (id) ON DELETE SET NULL,
+  proposed_network_link_id UUID NOT NULL,
+  source_group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
+  target_group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
+  structural_relation TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'requested',
+  initiator_group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
+  desired_rights JSONB NOT NULL,
+  desired_membership_rules JSONB,
+  desired_membership_mode TEXT NOT NULL DEFAULT 'none',
+  desired_role_id UUID REFERENCES public.role (id) ON DELETE SET NULL,
+  desired_source_group_ids JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_network_link_change_request_membership_rules
+  ON public.network_link_change_request USING GIN (desired_membership_rules);
+
+
+CREATE INDEX idx_network_link_change_request_active_link
+  ON public.network_link_change_request (active_network_link_id);
+CREATE INDEX idx_network_link_change_request_source_group
+  ON public.network_link_change_request (source_group_id);
+CREATE INDEX idx_network_link_change_request_target_group
+  ON public.network_link_change_request (target_group_id);
+CREATE INDEX idx_network_link_change_request_status
+  ON public.network_link_change_request (status);
+
+CREATE UNIQUE INDEX idx_network_link_change_request_active_link_unique
+  ON public.network_link_change_request (active_network_link_id)
+  WHERE active_network_link_id IS NOT NULL;
+CREATE UNIQUE INDEX idx_network_link_change_request_pair_unique
+  ON public.network_link_change_request (source_group_id, target_group_id, structural_relation)
+  WHERE active_network_link_id IS NULL;
+
+ALTER TABLE public.network_link_change_request ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.network_link_change_request FOR ALL TO service_role USING (true);
 
 -- Subscriber table
 CREATE TABLE IF NOT EXISTS public.subscriber (
@@ -75,6 +154,7 @@ CREATE TABLE IF NOT EXISTS public.group_workflow (
   group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
   name TEXT,
   description TEXT,
+  is_default_entry BOOLEAN NOT NULL DEFAULT false,
   status TEXT,
   created_by_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -83,6 +163,9 @@ CREATE TABLE IF NOT EXISTS public.group_workflow (
 
 CREATE INDEX idx_group_workflow_group ON public.group_workflow (group_id);
 CREATE INDEX idx_group_workflow_created_by ON public.group_workflow (created_by_id);
+CREATE UNIQUE INDEX idx_group_workflow_default_entry
+  ON public.group_workflow (group_id)
+  WHERE is_default_entry = true;
 
 ALTER TABLE public.group_workflow ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.group_workflow FOR ALL TO service_role USING (true);
@@ -94,11 +177,18 @@ CREATE TABLE IF NOT EXISTS public.group_workflow_step (
   group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
   order_index INTEGER NOT NULL DEFAULT 0,
   label TEXT,
+  step_kind TEXT NOT NULL DEFAULT 'group_vote',
+  selection_mode TEXT NOT NULL DEFAULT 'default_target_workflow',
+  merge_strategy TEXT,
+  event_rule TEXT,
+  auto_task_on_missing_event BOOLEAN NOT NULL DEFAULT false,
+  target_workflow_id UUID REFERENCES public.group_workflow (id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX idx_group_workflow_step_workflow ON public.group_workflow_step (workflow_id);
 CREATE INDEX idx_group_workflow_step_group ON public.group_workflow_step (group_id);
+CREATE INDEX idx_group_workflow_step_target_workflow ON public.group_workflow_step (target_workflow_id);
 
 ALTER TABLE public.group_workflow_step ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.group_workflow_step FOR ALL TO service_role USING (true);

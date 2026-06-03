@@ -69,4 +69,27 @@ describe('networkRelationshipDialogHelpers', () => {
       })
     ).toBe('incoming');
   });
+
+  it('prefers explicit preview metadata when the edge was display-oriented', () => {
+    const preview = getRelationshipPreviewData(
+      buildRelationship({
+        relationshipType: 'child',
+        source: 'hierarchieSeiteGewählt',
+        target: 'parent-hierarchieOben',
+        currentGroupId: 'hierarchieSeiteGewählt',
+        currentGroupName: 'hierarchieSeiteGewählt',
+        selectedGroupId: 'hierarchieOben',
+        selectedGroupName: 'HierarchieOben',
+      })
+    );
+
+    expect(preview).toEqual({
+      relationshipType: 'child',
+      currentGroupName: 'hierarchieSeiteGewählt',
+      currentGroupId: 'hierarchieSeiteGewählt',
+      selectedGroupName: 'HierarchieOben',
+      selectedGroupId: 'hierarchieOben',
+      isIncomingPerspective: false,
+    });
+  });
 });

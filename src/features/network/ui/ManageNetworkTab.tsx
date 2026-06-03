@@ -14,6 +14,7 @@ import {
   TableRow,
 } from '@/features/shared/ui/ui/table';
 import { Button } from '@/features/shared/ui/ui/button';
+import { Badge } from '@/features/shared/ui/ui/badge';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,7 +43,12 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useHierarchyLinkConflicts } from '../hooks/useHierarchyLinkConflicts';
 import { HierarchyConflictDialog } from './HierarchyConflictDialog';
 import { NetworkLinkStatusCell } from './NetworkLinkStatusCell';
+import {
+  getCanonicalMembershipModeLabel,
+  getLegacySiblingMembershipMode,
+} from '../logic/networkLinkDerived';
 import type {
+  CanonicalMembershipMode,
   GroupRelationshipFilter,
   GroupedRelationshipRequest,
   GroupedRelationshipSummary,
@@ -217,8 +223,12 @@ export function ManageNetworkTab({
 
   const getDisplayedSiblingMembershipMode = (
     relationshipType: GroupedRelationshipRequest['type'] | GroupedRelationshipSummary['type'],
-    partnerGroup: NetworkGroupEntity
+    partnerGroup: NetworkGroupEntity,
+    membershipMode?: CanonicalMembershipMode | null
   ): SiblingMembershipMode | null => {
+    const canonicalSiblingMembershipMode = normalizeSiblingMembershipMode(
+      getLegacySiblingMembershipMode(membershipMode)
+    );
     const currentSiblingMembershipMode = normalizeSiblingMembershipMode(
       currentGroupSiblingMembershipMode
     );
@@ -228,6 +238,10 @@ export function ManageNetworkTab({
 
     if (relationshipType !== 'sibling') {
       return null;
+    }
+
+    if (canonicalSiblingMembershipMode) {
+      return canonicalSiblingMembershipMode;
     }
 
     if (currentGroupType === 'sibling' && currentSiblingMembershipMode) {
@@ -241,19 +255,37 @@ export function ManageNetworkTab({
     return currentSiblingMembershipMode ?? partnerSiblingMembershipMode ?? null;
   };
 
+  const renderMembershipBadge = (membershipMode?: CanonicalMembershipMode | null) => {
+    if (!membershipMode) {
+      return null;
+    }
+
+    return (
+      <Badge variant="outline" className="text-xs">
+        {getCanonicalMembershipModeLabel(membershipMode)}
+      </Badge>
+    );
+  };
+
   const renderRequestDescription = (
     partnerGroup: GroupedRelationshipRequest['group'],
-    type: GroupedRelationshipRequest['type']
+    type: GroupedRelationshipRequest['type'],
+    membershipMode?: CanonicalMembershipMode | null
   ) => (
     <div className="flex flex-wrap items-center gap-2 leading-tight">
       <GroupRelationshipTypePreview
         relationshipType={type}
         currentGroupName={currentGroupTagName}
         selectedGroupName={partnerGroup.name ?? t('common.unspecified')}
-        siblingMembershipMode={getDisplayedSiblingMembershipMode(type, partnerGroup)}
+        siblingMembershipMode={getDisplayedSiblingMembershipMode(
+          type,
+          partnerGroup,
+          membershipMode
+        )}
         currentGroupId={groupId}
         selectedGroupId={partnerGroup.id}
       />
+      {renderMembershipBadge(membershipMode)}
       <span>{t('common.network.withRights')}</span>
     </div>
   );
@@ -278,15 +310,13 @@ export function ManageNetworkTab({
       label: t('common.network.allDirectionOptions'),
     },
     {
-      // "child" rows mean the current group acts as parent of the displayed group.
-      value: 'child',
+      value: 'parent',
       label: t('common.network.thisGroupAsParent'),
       activeClassName:
         'border-0 bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:opacity-90',
     },
     {
-      // "parent" rows mean the current group acts as child of the displayed group.
-      value: 'parent',
+      value: 'child',
       label: t('common.network.thisGroupAsChild'),
       activeClassName:
         'border-0 bg-gradient-to-r from-sky-500 to-violet-500 text-white hover:opacity-90',
@@ -408,7 +438,9 @@ export function ManageNetworkTab({
               <Card key={req.group.id} className="border-primary/20 bg-primary/5">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">{req.group.name}</CardTitle>
-                  <CardDescription>{renderRequestDescription(req.group, req.type)}</CardDescription>
+                  <CardDescription>
+                    {renderRequestDescription(req.group, req.type, req.membershipMode)}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Table>
@@ -539,7 +571,9 @@ export function ManageNetworkTab({
               <Card key={req.group.id}>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">{req.group.name}</CardTitle>
-                  <CardDescription>{renderRequestDescription(req.group, req.type)}</CardDescription>
+                  <CardDescription>
+                    {renderRequestDescription(req.group, req.type, req.membershipMode)}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Table>
@@ -672,9 +706,11 @@ export function ManageNetworkTab({
                           relationshipType={rel.type}
                           siblingMembershipMode={getDisplayedSiblingMembershipMode(
                             rel.type,
-                            rel.group
+                            rel.group,
+                            rel.membershipMode
                           )}
                         />
+                        {renderMembershipBadge(rel.membershipMode)}
                       </TableCell>
                       <TableCell>
                         <div className="max-w-[14rem]">

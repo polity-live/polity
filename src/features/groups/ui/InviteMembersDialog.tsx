@@ -17,6 +17,8 @@ import { Loader2, UserPlus } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
 import type { ParticipationRoleLike } from '@/features/shared/types/participation';
 import { RoleTag } from './RoleTag';
+import { GroupConflictDialog } from './GroupConflictPanel';
+import type { GroupConflictResponse } from '../logic/groupConflict';
 
 interface InviteMembersDialogProps<TRole extends ParticipationRoleLike> {
   isOpen: boolean;
@@ -45,6 +47,10 @@ interface InviteMembersDialogProps<TRole extends ParticipationRoleLike> {
   emptyRolesLabel?: string;
   cancelLabel?: string;
   inviteLabel?: string;
+  submitDisabled?: boolean;
+  submitDisabledReason?: string;
+  submitConflictResponse?: GroupConflictResponse | null;
+  submitConflictLoading?: boolean;
 }
 
 export function InviteMembersDialog<TRole extends ParticipationRoleLike>({
@@ -74,6 +80,10 @@ export function InviteMembersDialog<TRole extends ParticipationRoleLike>({
   emptyRolesLabel = 'Create a role first before inviting members.',
   cancelLabel = 'Cancel',
   inviteLabel = 'Invite',
+  submitDisabled = false,
+  submitDisabledReason,
+  submitConflictResponse,
+  submitConflictLoading = false,
 }: InviteMembersDialogProps<TRole>) {
   const defaultRoleId = useMemo(
     () =>
@@ -104,6 +114,13 @@ export function InviteMembersDialog<TRole extends ParticipationRoleLike>({
 
     onSelectedRoleIdsChange(selectedRoleIds.filter(currentRoleId => currentRoleId !== roleId));
   };
+
+  const inviteDisabled =
+    selectedUsers.length === 0 ||
+    isInviting ||
+    selectedRoleIds.length === 0 ||
+    submitDisabled ||
+    submitConflictLoading;
 
   const triggerButton = (
     <Button disabled={disabled}>
@@ -207,22 +224,34 @@ export function InviteMembersDialog<TRole extends ParticipationRoleLike>({
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isInviting}>
             {cancelLabel}
           </Button>
-          <Button
-            onClick={onInvite}
-            disabled={selectedUsers.length === 0 || isInviting || selectedRoleIds.length === 0}
-          >
-            {isInviting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Inviting...
-              </>
-            ) : (
-              <>
-                <UserPlus className="mr-2 h-4 w-4" />
-                {inviteLabel} {selectedUsers.length > 0 ? `(${selectedUsers.length})` : ''}
-              </>
-            )}
-          </Button>
+          <div className="flex items-center gap-2">
+            {submitConflictResponse?.conflicts.length ? (
+              <GroupConflictDialog
+                response={submitConflictResponse}
+                triggerLabel="Warum?"
+                triggerVariant="ghost"
+                title="Warum ist diese Einladung blockiert?"
+              />
+            ) : null}
+            <Button onClick={onInvite} disabled={inviteDisabled} title={submitDisabledReason}>
+              {isInviting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Inviting...
+                </>
+              ) : submitConflictLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Checking...
+                </>
+              ) : (
+                <>
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  {inviteLabel} {selectedUsers.length > 0 ? `(${selectedUsers.length})` : ''}
+                </>
+              )}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

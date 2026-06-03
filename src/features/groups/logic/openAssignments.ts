@@ -59,11 +59,44 @@ export interface GroupRoleAssignmentLike {
     | null;
 }
 
+export interface ProcessTaskAssignmentLike {
+  id: string;
+  task_type?: string | null;
+  status?: string | null;
+  title?: string | null;
+  description?: string | null;
+  due_at?: number | null;
+  event?: AssignmentEventSummary | null;
+  agenda_item?: {
+    id?: string | null;
+  } | null;
+  step_run?: {
+    event?: AssignmentEventSummary | null;
+  } | null;
+  target_group?: {
+    id?: string | null;
+    name?: string | null;
+  } | null;
+  process_run?: {
+    amendment?: {
+      id?: string | null;
+      title?: string | null;
+    } | null;
+  } | null;
+  support_confirmation?: {
+    id?: string | null;
+    amendment?: {
+      id?: string | null;
+      title?: string | null;
+    } | null;
+  } | null;
+}
+
 export type OpenAssignmentStatus = 'open' | 'scheduled' | 'completed';
 
 export interface GroupOpenAssignment {
   id: string;
-  kind: 'delegate_election' | 'role_renewal';
+  kind: 'delegate_election' | 'role_renewal' | 'process_task';
   status: OpenAssignmentStatus;
   title: string;
   description: string;
@@ -74,6 +107,10 @@ export interface GroupOpenAssignment {
   roleId?: string;
   linkedEvent?: AssignmentEventSummary | null;
   targetEvent?: AssignmentEventSummary | null;
+  processTaskId?: string;
+  processTaskType?: string | null;
+  amendmentId?: string | null;
+  dueAt?: number | null;
 }
 
 function isFutureOrOngoingEvent(
@@ -247,13 +284,24 @@ export function buildOpenAssignments(args: {
   currentGroupId: string;
   allocations: readonly DelegateAllocationAssignmentLike[];
   roles: readonly GroupRoleAssignmentLike[];
+  processTasks?: readonly ProcessTaskAssignmentLike[];
   referenceTime?: number;
 }) {
-  return [...buildDelegateElectionAssignments(args), ...buildRoleRenewalAssignments(args)].sort(
+  return [
+    ...buildDelegateElectionAssignments(args),
+    ...buildRoleRenewalAssignments(args),
+    ...buildProcessTaskAssignments(args.processTasks ?? []),
+  ].sort(
     (left, right) =>
       statusSortOrder(left.status) - statusSortOrder(right.status) ||
-      (left.targetEvent?.start_date ?? left.linkedEvent?.start_date ?? Number.MAX_SAFE_INTEGER) -
-        (right.targetEvent?.start_date ?? right.linkedEvent?.start_date ?? Number.MAX_SAFE_INTEGER)
+      (left.dueAt ??
+        left.targetEvent?.start_date ??
+        left.linkedEvent?.start_date ??
+        Number.MAX_SAFE_INTEGER) -
+        (right.dueAt ??
+          right.targetEvent?.start_date ??
+          right.linkedEvent?.start_date ??
+          Number.MAX_SAFE_INTEGER)
   );
 }
 
@@ -268,4 +316,70 @@ function statusSortOrder(status: OpenAssignmentStatus) {
     default:
       return 3;
   }
+}
+
+function buildProcessTaskAssignments(processTasks: readonly ProcessTaskAssignmentLike[]) {
+  return processTasks
+    .map<GroupOpenAssignment>(task => {
+      const amendment = task.process_run?.amendment ?? task.support_confirmation?.amendment ?? null;
+      const amendmentTitle = amendment?.title || 'Aenderungsantrag';
+      const linkedEvent = task.event ?? task.step_run?.event ?? null;
+      const status: OpenAssignmentStatus =
+        task.status === 'completed'
+          ? 'completed'
+          : linkedEvent || task.agenda_item?.id
+            ? 'scheduled'
+            : 'open';
+
+      let title = task.title?.trim() || '';
+      let description = task.description?.trim() || '';
+
+      if (!title) {
+        switch (task.task_type) {
+          case 'implementation_evaluation':
+            title = `Umsetzung evaluieren: ${amendmentTitle}`;
+            break;
+          case 'support_confirmation':
+            title = `Unterstuetzung bestaetigen: ${amendmentTitle}`;
+            break;
+          default:
+            title = `Event planen: ${amendmentTitle}`;
+            break;
+        }
+      }
+
+      if (!description) {
+        const targetGroupName = task.target_group?.name || 'die zustandige Gruppe';
+        switch (task.task_type) {
+          case 'implementation_evaluation':
+            description = `Plane die Umsetzungspruefung fuer ${amendmentTitle} in ${targetGroupName}.`;
+            break;
+          case 'support_confirmation':
+            description = `Diese Gruppe muss ihre Unterstuetzung fuer ${amendmentTitle} erneut bestaetigen.`;
+            break;
+          default:
+            description = `Fuer ${amendmentTitle} fehlt noch ein passendes Event in ${targetGroupName}.`;
+            break;
+        }
+      }
+
+      return {
+        id: `process-task:${task.id}`,
+        kind: 'process_task',
+        status,
+        title,
+        description,
+        linkedEvent,
+        processTaskId: task.id,
+        processTaskType: task.task_type ?? null,
+        amendmentId: amendment?.id ?? null,
+        dueAt: task.due_at ?? null,
+      };
+    })
+    .sort(
+      (left, right) =>
+        statusSortOrder(left.status) - statusSortOrder(right.status) ||
+        (left.dueAt ?? left.linkedEvent?.start_date ?? Number.MAX_SAFE_INTEGER) -
+          (right.dueAt ?? right.linkedEvent?.start_date ?? Number.MAX_SAFE_INTEGER)
+    );
 }

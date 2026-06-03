@@ -8,9 +8,6 @@ import type { GroupRelationship as GroupRelationshipRow } from '@/zero/network/s
 import type { NormalizedGroupRelationship } from '../types/network.types';
 import { getHierarchyRelationshipPair } from './groupRelationshipOrientation';
 
-/** Passive voting right defines the formal hierarchy tree. */
-export const HIERARCHY_TREE_RIGHT = 'passiveVotingRight';
-
 /** All rights that can link two groups (parent → child). */
 export const GROUP_LINK_RIGHT_TYPES = [
   'informationRight',
@@ -33,10 +30,10 @@ export function isGroupLinkRelationship(
 export const isHierarchyLinkRelationship = isGroupLinkRelationship;
 
 function isActivePvrRelationship(
-  relationship: Pick<NormalizedGroupRelationship, 'status' | 'with_right'>
+  relationship: Pick<NormalizedGroupRelationship, 'status' | 'relationship_type'>
 ): boolean {
   return (
-    relationship.with_right === HIERARCHY_TREE_RIGHT &&
+    getHierarchyRelationshipPair(relationship) != null &&
     isActiveGroupRelationshipStatus(relationship.status)
   );
 }
@@ -55,20 +52,29 @@ function toRelationshipRow(rel: NormalizedGroupRelationship): GroupRelationshipR
 }
 
 /**
- * Build the passive-voting-right graph used by {@link detectLinkConflicts}, optionally
- * simulating that `simulateActiveRel` is already active (only for passive voting right).
+ * Build the structural hierarchy graph used by {@link detectLinkConflicts}, optionally
+ * simulating that `simulateActiveRel` is already active.
  */
 export function buildPvrRelationshipsForConflictCheck(
   allRelationships: NormalizedGroupRelationship[],
   simulateActiveRel?: NormalizedGroupRelationship
 ): GroupRelationshipRow[] {
-  const activeRows = allRelationships.filter(isActivePvrRelationship).map(toRelationshipRow);
+  const activeRows = dedupeHierarchyRows(
+    allRelationships.filter(isActivePvrRelationship).map(toRelationshipRow)
+  );
 
-  if (!simulateActiveRel || simulateActiveRel.with_right !== HIERARCHY_TREE_RIGHT) {
+  if (!simulateActiveRel || getHierarchyRelationshipPair(simulateActiveRel) == null) {
     return activeRows;
   }
 
-  const withoutSimulated = activeRows.filter(row => row.id !== simulateActiveRel.id);
+  const simulatedPair = getHierarchyRelationshipPair(simulateActiveRel);
+  const withoutSimulated = activeRows.filter(row => {
+    const pair = getHierarchyRelationshipPair(row);
+    return (
+      pair?.parentGroupId !== simulatedPair?.parentGroupId ||
+      pair?.childGroupId !== simulatedPair?.childGroupId
+    );
+  });
 
   return [
     ...withoutSimulated,
@@ -83,14 +89,34 @@ function buildActiveParentChildLinksForConflictCheck(
   allRelationships: NormalizedGroupRelationship[],
   excludeRelationshipId?: string
 ): GroupRelationshipRow[] {
-  return allRelationships
-    .filter(
-      rel =>
-        rel.id !== excludeRelationshipId &&
-        isGroupLinkRelationship(rel) &&
-        isActiveGroupRelationshipStatus(rel.status)
-    )
-    .map(toRelationshipRow);
+  return dedupeHierarchyRows(
+    allRelationships
+      .filter(
+        rel =>
+          rel.id !== excludeRelationshipId &&
+          getHierarchyRelationshipPair(rel) != null &&
+          isActiveGroupRelationshipStatus(rel.status)
+      )
+      .map(toRelationshipRow)
+  );
+}
+
+function dedupeHierarchyRows(rows: GroupRelationshipRow[]) {
+  const deduped = new Map<string, GroupRelationshipRow>();
+
+  for (const row of rows) {
+    const pair = getHierarchyRelationshipPair(row);
+    if (!pair) {
+      continue;
+    }
+
+    const key = `${pair.parentGroupId}:${pair.childGroupId}`;
+    if (!deduped.has(key)) {
+      deduped.set(key, row);
+    }
+  }
+
+  return [...deduped.values()];
 }
 
 export interface DirectMembershipShape {
@@ -113,7 +139,7 @@ export function getHierarchyLinkDuplicatePathConflicts(
   relationship: NormalizedGroupRelationship,
   allRelationships: NormalizedGroupRelationship[]
 ): HierarchyDuplicatePathConflict[] {
-  if (relationship.with_right !== HIERARCHY_TREE_RIGHT) {
+  if (getHierarchyRelationshipPair(relationship) == null) {
     return [];
   }
 
@@ -136,7 +162,7 @@ export function getHierarchyLinkConflictUserIds(
   allRelationships: NormalizedGroupRelationship[],
   directMemberships: DirectMembershipShape[]
 ): string[] {
-  if (!isGroupLinkRelationship(relationship)) {
+  if (getHierarchyRelationshipPair(relationship) == null) {
     return [];
   }
 
@@ -145,10 +171,7 @@ export function getHierarchyLinkConflictUserIds(
     return [];
   }
 
-  const pvrRelationships = buildPvrRelationshipsForConflictCheck(
-    allRelationships,
-    relationship.with_right === HIERARCHY_TREE_RIGHT ? relationship : undefined
-  );
+  const pvrRelationships = buildPvrRelationshipsForConflictCheck(allRelationships, relationship);
 
   const activeParentChildLinks = buildActiveParentChildLinksForConflictCheck(
     allRelationships,

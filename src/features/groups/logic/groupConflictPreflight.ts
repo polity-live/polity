@@ -17,27 +17,46 @@ export const groupConflictMembershipPreflightSchema = z.object({
   user_id: z.string().optional(),
 });
 
-export const groupConflictRelationshipPreflightSchema = z.object({
-  kind: z.literal('relationship_activation'),
-  relationship_ids: z.array(z.string()).optional(),
-  draft_relationships: z.array(groupConflictDraftRelationshipSchema).optional(),
+const networkLinkRightPreflightSchema = z.object({
+  id: z.string().optional(),
+  right_key: z.enum([
+    'informationRight',
+    'amendmentRight',
+    'rightToSpeak',
+    'activeVotingRight',
+    'passiveVotingRight',
+  ]),
+  direction: z.enum(['forward', 'backward', 'bidirectional']),
+  status: z.enum(['active', 'requested', 'pending', 'rejected']).optional(),
+  initiator_group_id: z.string().nullable().optional(),
 });
 
-export const groupConflictSiblingConfigurationPreflightSchema = z.object({
-  kind: z.literal('sibling_configuration'),
-  group_id: z.string(),
-  group_type: z.string(),
-  connected_group_id: z.string().nullable().optional(),
-  sibling_membership_mode: z.string().nullable().optional(),
-  sibling_role_id: z.string().nullable().optional(),
-  parliament_source_group_ids: z.array(z.string()).default([]),
+const networkLinkMembershipRulePreflightSchema = z.object({
+  membership_mode: z.enum(['none', 'all_members', 'role_members', 'selected_source_groups']),
+  role_id: z.string().nullable().optional(),
+  source_group_ids: z.array(z.string()).nullable().optional(),
+});
+
+const networkLinkMembershipRulesPreflightSchema = z.object({
+  forward: networkLinkMembershipRulePreflightSchema,
+  backward: networkLinkMembershipRulePreflightSchema,
+});
+
+export const groupConflictNetworkLinkUpsertPreflightSchema = z.object({
+  kind: z.literal('network_link_upsert'),
+  link_id: z.string().optional(),
+  source_group_id: z.string(),
+  target_group_id: z.string(),
+  structural_relation: z.enum(['parent_child', 'sibling']),
+  rights: z.array(networkLinkRightPreflightSchema),
+  membership_rules: networkLinkMembershipRulesPreflightSchema.optional(),
+  membership_rule: networkLinkMembershipRulePreflightSchema.optional(),
 });
 
 export const groupConflictPreflightSchema = z
   .discriminatedUnion('kind', [
     groupConflictMembershipPreflightSchema,
-    groupConflictRelationshipPreflightSchema,
-    groupConflictSiblingConfigurationPreflightSchema,
+    groupConflictNetworkLinkUpsertPreflightSchema,
   ])
   .superRefine((value, ctx) => {
     if (value.kind === 'membership_activation' && !value.group_id && !value.membership_id) {
@@ -48,15 +67,26 @@ export const groupConflictPreflightSchema = z
       });
     }
 
+    if (value.kind === 'network_link_upsert' && value.source_group_id === value.target_group_id) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'source_group_id and target_group_id must differ',
+        path: ['target_group_id'],
+      });
+    }
+
     if (
-      value.kind === 'relationship_activation' &&
-      (value.relationship_ids?.length ?? 0) === 0 &&
-      (value.draft_relationships?.length ?? 0) === 0
+      value.kind === 'network_link_upsert' &&
+      value.rights.length === 0 &&
+      (!value.membership_rule || value.membership_rule.membership_mode === 'none') &&
+      (!value.membership_rules ||
+        (value.membership_rules.forward.membership_mode === 'none' &&
+          value.membership_rules.backward.membership_mode === 'none'))
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'relationship_ids or draft_relationships is required',
-        path: ['relationship_ids'],
+        message: 'at least one right or a membership rule is required',
+        path: ['rights'],
       });
     }
   });
@@ -65,10 +95,7 @@ export type GroupConflictDraftRelationship = z.infer<typeof groupConflictDraftRe
 export type GroupConflictMembershipPreflight = z.infer<
   typeof groupConflictMembershipPreflightSchema
 >;
-export type GroupConflictRelationshipPreflight = z.infer<
-  typeof groupConflictRelationshipPreflightSchema
->;
-export type GroupConflictSiblingConfigurationPreflight = z.infer<
-  typeof groupConflictSiblingConfigurationPreflightSchema
+export type GroupConflictNetworkLinkUpsertPreflight = z.infer<
+  typeof groupConflictNetworkLinkUpsertPreflightSchema
 >;
 export type GroupConflictPreflightInput = z.infer<typeof groupConflictPreflightSchema>;

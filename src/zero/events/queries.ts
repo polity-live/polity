@@ -301,13 +301,22 @@ export const eventQueries = {
         .related('group')
   ),
 
-  /** Group relationships by group with related_group and group */
+  /** Canonical network links by optional group */
   groupRelationships: defineQuery(
     z.object({ groupId: z.string().optional() }),
     ({ args: { groupId } }) => {
-      let q = zql.group_relationship.related('related_group').related('group');
+      let q = zql.network_link
+        .related('source_group')
+        .related('target_group')
+        .related('created_by')
+        .related('rights', rightsQuery =>
+          rightsQuery.related('initiator_group').orderBy('right_key', 'asc')
+        )
+        .related('membership_rule', membershipRuleQuery => membershipRuleQuery.related('role'));
       if (groupId) {
-        q = q.where('group_id', groupId) as typeof q;
+        q = q.where(({ cmp, or }) =>
+          or(cmp('source_group_id', '=', groupId), cmp('target_group_id', '=', groupId))
+        ) as typeof q;
       }
       return q;
     }

@@ -8,11 +8,14 @@ import {
   getRemainingSeatCount,
   type GroupOpenAssignment,
 } from '@/features/groups/logic/openAssignments';
+import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
+import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import { queries } from '@/zero/queries';
 import { useGroupEventsForCalendar } from '@/zero/events/useEventState';
 import { useGroupById, useGroupRoles } from '@/zero/groups/useGroupState';
 import { mutators } from '@/zero/mutators';
+import { useVoteActions } from '@/zero/votes/useVoteActions';
 
 export type DelegateElectionMode = 'single' | 'list';
 
@@ -43,7 +46,14 @@ export function useGroupOpenAssignments(groupId: string) {
   const [allocations, allocationsResult] = useQuery(
     queries.events.delegateAllocationsBySourceGroup({ groupId })
   );
+  const [processTasks, processTasksResult] = useQuery(
+    queries.amendments.openProcessTasksByGroup({ group_id: groupId })
+  );
   const [isScheduling, setIsScheduling] = useState(false);
+  const { createAgendaItem } = useAgendaActions();
+  const { createVote } = useVoteActions();
+  const { updateProcessTask, updateProcessStepRun, updateProcessRun, updateSupportConfirmation } =
+    useAmendmentActions();
 
   const openAssignments = useMemo(
     () =>
@@ -51,17 +61,24 @@ export function useGroupOpenAssignments(groupId: string) {
         currentGroupId: groupId,
         allocations: allocations || [],
         roles,
+        processTasks: processTasks || [],
       }),
-    [allocations, groupId, roles]
+    [allocations, groupId, processTasks, roles]
   );
 
   const availableEvents = useMemo(() => {
     const now = Date.now();
 
-    return (groupEvents || []).filter(
-      (event): event is AvailableGroupEvent =>
-        Boolean(event.id) && isFutureOrOngoingEvent(event, now)
-    );
+    return (groupEvents || [])
+      .filter(event => Boolean(event.id) && isFutureOrOngoingEvent(event, now))
+      .map<AvailableGroupEvent>(event => ({
+        id: event.id,
+        title: event.title ?? null,
+        status: event.status ?? null,
+        start_date: event.start_date ?? null,
+        end_date: event.end_date ?? null,
+        group_id: event.group_id ?? null,
+      }));
   }, [groupEvents]);
 
   useEffect(() => {
@@ -208,13 +225,137 @@ export function useGroupOpenAssignments(groupId: string) {
     [availableEvents, groupId, navigate]
   );
 
+  const scheduleProcessTask = useCallback(
+    async (assignment: GroupOpenAssignment, eventId: string) => {
+      if (!assignment.processTaskId) {
+        throw new Error('Der Prozessauftrag konnte nicht gefunden werden.');
+      }
+
+      const task = (processTasks || []).find(
+        candidateTask => candidateTask.id === assignment.processTaskId
+      );
+      const event = availableEvents.find(candidateEvent => candidateEvent.id === eventId);
+
+      if (!task || !event) {
+        throw new Error('Bitte zuerst eine gueltige Veranstaltung auswaehlen.');
+      }
+
+      const amendmentTitle =
+        task.process_run?.amendment?.title ??
+        task.support_confirmation?.amendment?.title ??
+        assignment.title;
+      const agendaItemId = crypto.randomUUID();
+      const voteId = task.task_type === 'support_confirmation' ? null : crypto.randomUUID();
+      const agendaType =
+        task.task_type === 'implementation_evaluation'
+          ? 'implementation_review'
+          : task.task_type === 'support_confirmation'
+            ? 'support_confirmation'
+            : 'amendment';
+      const agendaTitle =
+        task.task_type === 'implementation_evaluation'
+          ? `Umsetzungspruefung: ${amendmentTitle}`
+          : task.task_type === 'support_confirmation'
+            ? `Unterstuetzung bestaetigen: ${amendmentTitle}`
+            : `Amendment: ${amendmentTitle}`;
+
+      setIsScheduling(true);
+      try {
+        await createAgendaItem({
+          id: agendaItemId,
+          title: agendaTitle,
+          description: assignment.description,
+          type: agendaType,
+          status: 'pending',
+          forwarding_status: '',
+          order_index: Date.now(),
+          duration: 0,
+          scheduled_time: '',
+          start_time: 0,
+          end_time: 0,
+          activated_at: 0,
+          completed_at: 0,
+          event_id: event.id,
+          amendment_id:
+            task.process_run?.amendment?.id ?? task.support_confirmation?.amendment?.id ?? null,
+          majority_type: null,
+          time_limit: null,
+          voting_phase: null,
+        });
+
+        if (voteId) {
+          await createVote({
+            id: voteId,
+            agenda_item_id: agendaItemId,
+            amendment_id:
+              task.process_run?.amendment?.id ?? task.support_confirmation?.amendment?.id ?? null,
+            title: agendaTitle,
+            description: assignment.description,
+            closing_duration_seconds: null,
+            closing_end_time: null,
+          });
+        }
+
+        await updateProcessTask({
+          id: task.id,
+          status: 'completed',
+          event_id: event.id,
+          agenda_item_id: agendaItemId,
+          resolved_at: Date.now(),
+        });
+
+        if (task.step_run_id) {
+          await updateProcessStepRun({
+            id: task.step_run_id,
+            event_id: event.id,
+            agenda_item_id: agendaItemId,
+            vote_id: voteId,
+            starts_at: event.start_date ?? null,
+            status: 'scheduled',
+          });
+        }
+
+        if (task.task_type === 'implementation_evaluation') {
+          await updateProcessRun({
+            id: task.process_run_id,
+            implementation_status: 'evaluation_scheduled',
+          });
+        }
+
+        if (task.support_confirmation_id) {
+          await updateSupportConfirmation({
+            id: task.support_confirmation_id,
+            event_id: event.id,
+            process_task_id: task.id,
+          });
+        }
+
+        toast.success('Der Prozessauftrag wurde an die Veranstaltung angehaengt.');
+      } finally {
+        setIsScheduling(false);
+      }
+    },
+    [
+      availableEvents,
+      createAgendaItem,
+      createVote,
+      processTasks,
+      updateProcessRun,
+      updateProcessStepRun,
+      updateProcessTask,
+      updateSupportConfirmation,
+    ]
+  );
+
   return {
     group,
     availableEvents,
     openAssignments,
-    isLoading: rolesLoading || allocationsResult.type === 'unknown',
+    isLoading:
+      rolesLoading || allocationsResult.type === 'unknown' || processTasksResult.type === 'unknown',
     isScheduling,
     scheduleRoleRenewal,
     scheduleDelegateElection,
+    scheduleProcessTask,
   };
 }

@@ -15,6 +15,7 @@ import {
 import { notifyAmendmentVoted } from '@/features/notifications/utils/notification-helpers.ts';
 import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
 import type { VoteValue } from '@/features/shared/ui/voting/VoteButtons';
+import type { SupporterMapItem } from '../ui/SupporterLocalityMap';
 
 export function useAmendmentWikiPage(amendmentId: string) {
   const navigate = useNavigate();
@@ -77,9 +78,17 @@ export function useAmendmentWikiPage(amendmentId: string) {
   const supportConfirmations = amendment?.support_confirmations || [];
   const clones = facadeResult.clones ?? [];
   const clonedFrom = amendment?.clone_source;
-  const totalSupportingMembers = supportingGroups.reduce((sum: number) => sum + 0, 0);
+  const totalSupportingMembers = supportingGroups.reduce(
+    (sum: number, confirmation) => sum + Math.max(0, confirmation.group?.member_count ?? 0),
+    0
+  );
   const targetCollaborator = undefined as { imageURL?: string; name?: string } | undefined;
   const targetGroup = amendment?.group;
+  const currentProcessRun = amendment?.current_process_run ?? null;
+  const implementationStatus = currentProcessRun?.implementation_status ?? null;
+  const evaluationTask =
+    currentProcessRun?.tasks?.find(task => task.task_type === 'implementation_evaluation') ?? null;
+  const evaluationDueDate = evaluationTask?.due_at ?? currentProcessRun?.evaluation_date ?? null;
 
   const isAdmin = collaborationData.status === 'admin';
 
@@ -152,6 +161,27 @@ export function useAmendmentWikiPage(amendmentId: string) {
       }))
     );
 
+  const supporterMapItems = useMemo<SupporterMapItem[]>(
+    () =>
+      supportingGroups
+        .filter(
+          confirmation =>
+            confirmation.group?.id &&
+            confirmation.group?.latitude != null &&
+            confirmation.group?.longitude != null &&
+            getSupportStatusForGroup(confirmation.group.id) !== 'declined'
+        )
+        .map(confirmation => ({
+          id: confirmation.group?.id ?? confirmation.id,
+          name: confirmation.group?.name ?? 'Unbenannte Gruppe',
+          latitude: confirmation.group?.latitude ?? 0,
+          longitude: confirmation.group?.longitude ?? 0,
+          groupHref: `/group/${confirmation.group?.id}`,
+          decisionHref: `/amendment/${amendmentId}`,
+        })),
+    [amendmentId, supportingGroups]
+  );
+
   // Visibility access check
   const canAccess = checkEntityAccess(
     amendment?.visibility,
@@ -185,6 +215,10 @@ export function useAmendmentWikiPage(amendmentId: string) {
     totalSupportingMembers,
     targetCollaborator,
     targetGroup,
+    currentProcessRun,
+    implementationStatus,
+    evaluationDueDate,
+    supporterMapItems,
 
     // Vote
     ...voteState,

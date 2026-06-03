@@ -62,14 +62,32 @@ describe('offline-membership-helpers', () => {
   it('does not derive elected sibling memberships for offline members without the elected role', async () => {
     const tx = createHelperTx();
     tx.run
-      .mockResolvedValueOnce({
-        id: 'sibling-1',
-        group_type: 'sibling',
-        connected_group_id: 'connected-1',
-        sibling_membership_mode: 'elected',
-        sibling_role_id: 'role-admin',
-      })
       .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          id: 'link-1',
+          source_group_id: 'connected-1',
+          target_group_id: 'sibling-1',
+          status: 'active',
+          created_at: 1,
+        },
+      ])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          id: 'rule-1',
+          network_link_id: 'link-1',
+          membership_mode: 'none',
+          role_id: null,
+          source_group_ids: null,
+          forward_membership_mode: 'role_members',
+          forward_role_id: 'role-admin',
+          forward_source_group_ids: null,
+          backward_membership_mode: 'none',
+          backward_role_id: null,
+          backward_source_group_ids: null,
+        },
+      ])
       .mockResolvedValueOnce([
         {
           id: 'connected-membership-1',
@@ -93,14 +111,32 @@ describe('offline-membership-helpers', () => {
   it('derives elected sibling memberships only for unconnected offline members with the elected role', async () => {
     const tx = createHelperTx();
     tx.run
-      .mockResolvedValueOnce({
-        id: 'sibling-1',
-        group_type: 'sibling',
-        connected_group_id: 'connected-1',
-        sibling_membership_mode: 'elected',
-        sibling_role_id: 'role-admin',
-      })
       .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          id: 'link-1',
+          source_group_id: 'connected-1',
+          target_group_id: 'sibling-1',
+          status: 'active',
+          created_at: 1,
+        },
+      ])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          id: 'rule-1',
+          network_link_id: 'link-1',
+          membership_mode: 'none',
+          role_id: null,
+          source_group_ids: null,
+          forward_membership_mode: 'role_members',
+          forward_role_id: 'role-admin',
+          forward_source_group_ids: null,
+          backward_membership_mode: 'none',
+          backward_role_id: null,
+          backward_source_group_ids: null,
+        },
+      ])
       .mockResolvedValueOnce([
         {
           id: 'connected-membership-1',

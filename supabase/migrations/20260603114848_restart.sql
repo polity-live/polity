@@ -72,6 +72,50 @@ alter table "public"."agenda_item" enable row level security;
 alter table "public"."agenda_item_change_request" enable row level security;
 
 
+  create table "public"."ai_provider_credential" (
+    "id" uuid not null default gen_random_uuid(),
+    "user_id" uuid not null,
+    "provider" text not null,
+    "encrypted_key" text not null,
+    "key_hint" text,
+    "created_at" timestamp with time zone not null default now(),
+    "updated_at" timestamp with time zone not null default now(),
+    "last_used_at" timestamp with time zone
+      );
+
+
+alter table "public"."ai_provider_credential" enable row level security;
+
+
+  create table "public"."ai_skill" (
+    "id" uuid not null default gen_random_uuid(),
+    "user_id" uuid not null,
+    "slug" text not null,
+    "name" text not null,
+    "aliases" text not null default ''::text,
+    "system_prompt" text not null,
+    "enabled" boolean not null default true,
+    "created_at" timestamp with time zone not null default now(),
+    "updated_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."ai_skill" enable row level security;
+
+
+  create table "public"."ai_tool" (
+    "id" uuid not null default gen_random_uuid(),
+    "user_id" uuid not null,
+    "tool_name" text not null,
+    "enabled" boolean not null default true,
+    "created_at" timestamp with time zone not null default now(),
+    "updated_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."ai_tool" enable row level security;
+
+
   create table "public"."amendment" (
     "id" uuid not null default gen_random_uuid(),
     "code" text,
@@ -103,6 +147,7 @@ alter table "public"."agenda_item_change_request" enable row level security;
     "youtube" text,
     "linkedin" text,
     "website" text,
+    "current_process_run_id" uuid,
     "created_at" timestamp with time zone not null default now(),
     "updated_at" timestamp with time zone not null default now()
       );
@@ -139,6 +184,7 @@ alter table "public"."amendment_hashtag" enable row level security;
   create table "public"."amendment_path" (
     "id" uuid not null default gen_random_uuid(),
     "amendment_id" uuid not null,
+    "process_run_id" uuid,
     "title" text,
     "workflow_id" uuid,
     "created_at" timestamp with time zone not null default now()
@@ -151,6 +197,8 @@ alter table "public"."amendment_path" enable row level security;
   create table "public"."amendment_path_segment" (
     "id" uuid not null default gen_random_uuid(),
     "path_id" uuid not null,
+    "process_branch_id" uuid,
+    "process_step_run_id" uuid,
     "group_id" uuid,
     "event_id" uuid,
     "order_index" integer,
@@ -160,6 +208,76 @@ alter table "public"."amendment_path" enable row level security;
 
 
 alter table "public"."amendment_path_segment" enable row level security;
+
+
+  create table "public"."amendment_process_branch" (
+    "id" uuid not null default gen_random_uuid(),
+    "process_run_id" uuid not null,
+    "parent_branch_id" uuid,
+    "merged_into_branch_id" uuid,
+    "source_step_run_id" uuid,
+    "document_version_id" uuid,
+    "title" text,
+    "status" text not null default 'pending_event'::text,
+    "resolution" text,
+    "created_at" timestamp with time zone not null default now(),
+    "updated_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."amendment_process_branch" enable row level security;
+
+
+  create table "public"."amendment_process_run" (
+    "id" uuid not null default gen_random_uuid(),
+    "amendment_id" uuid not null,
+    "root_workflow_id" uuid,
+    "selected_source_group_id" uuid,
+    "selected_target_group_id" uuid,
+    "selected_target_workflow_id" uuid,
+    "active_branch_id" uuid,
+    "terminal_step_run_id" uuid,
+    "status" text not null default 'pending_event'::text,
+    "evaluation_mode" text,
+    "evaluation_date" timestamp with time zone,
+    "evaluation_offset_months" integer,
+    "evaluation_offset_years" integer,
+    "implementation_status" text,
+    "created_by_id" uuid not null,
+    "created_at" timestamp with time zone not null default now(),
+    "updated_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."amendment_process_run" enable row level security;
+
+
+  create table "public"."amendment_process_step_run" (
+    "id" uuid not null default gen_random_uuid(),
+    "process_run_id" uuid not null,
+    "branch_id" uuid not null,
+    "workflow_id" uuid,
+    "workflow_step_id" uuid,
+    "step_kind" text not null default 'group_vote'::text,
+    "selection_mode" text,
+    "merge_strategy" text,
+    "status" text not null default 'pending_event'::text,
+    "source_group_id" uuid,
+    "target_group_id" uuid,
+    "event_id" uuid,
+    "agenda_item_id" uuid,
+    "vote_id" uuid,
+    "support_confirmation_id" uuid,
+    "decision_status" text,
+    "order_index" integer not null default 0,
+    "starts_at" timestamp with time zone,
+    "ends_at" timestamp with time zone,
+    "created_at" timestamp with time zone not null default now(),
+    "updated_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."amendment_process_step_run" enable row level security;
 
 
   create table "public"."amendment_support_vote" (
@@ -338,7 +456,9 @@ alter table "public"."comment_vote" enable row level security;
     "status" text,
     "pinned" boolean,
     "last_message_at" timestamp with time zone,
+    "assistant_for_user_id" uuid,
     "group_id" uuid,
+    "event_id" uuid,
     "requested_by_id" uuid,
     "created_at" timestamp with time zone not null default now()
       );
@@ -420,7 +540,7 @@ alter table "public"."document_version" enable row level security;
   create table "public"."election" (
     "id" uuid not null default gen_random_uuid(),
     "agenda_item_id" uuid,
-    "position_id" uuid,
+    "role_id" uuid,
     "title" text,
     "description" text,
     "status" text,
@@ -429,6 +549,8 @@ alter table "public"."document_version" enable row level security;
     "closing_duration_seconds" integer,
     "closing_end_time" timestamp with time zone,
     "visibility" character varying not null default 'public'::character varying,
+    "election_mode" text not null default 'single'::text,
+    "seat_count" integer not null default 1,
     "max_votes" integer not null default 1,
     "created_at" timestamp with time zone not null default now(),
     "updated_at" timestamp with time zone not null default now()
@@ -454,6 +576,21 @@ alter table "public"."election" enable row level security;
 alter table "public"."election_candidate" enable row level security;
 
 
+  create table "public"."election_offline_tally" (
+    "id" uuid not null default gen_random_uuid(),
+    "election_id" uuid not null,
+    "phase" text not null,
+    "candidate_id" uuid not null,
+    "count" integer not null default 0,
+    "updated_by_id" uuid,
+    "created_at" timestamp with time zone not null default now(),
+    "updated_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."election_offline_tally" enable row level security;
+
+
   create table "public"."elector" (
     "id" uuid not null default gen_random_uuid(),
     "election_id" uuid not null,
@@ -468,12 +605,20 @@ alter table "public"."elector" enable row level security;
   create table "public"."event" (
     "id" uuid not null default gen_random_uuid(),
     "title" text,
-    "description" text,
+    "description" jsonb,
     "status" text,
     "event_type" text,
+    "attendance_mode" text not null default 'offline'::text,
     "location_type" text,
     "location_name" text,
-    "location_address" text,
+    "country" text,
+    "region" text,
+    "post_code" text,
+    "city" text,
+    "street" text,
+    "house_number" text,
+    "latitude" double precision,
+    "longitude" double precision,
     "location_url" text,
     "location_coordinates" text,
     "visibility" text not null default 'public'::text,
@@ -520,6 +665,7 @@ alter table "public"."elector" enable row level security;
     "delegate_approval_type" text,
     "delegate_check_mode" text,
     "main_group_delegate_allocation_mode" text,
+    "delegate_election_mode" text not null default 'list'::text,
     "current_agenda_item_id" uuid,
     "amendment_deadline" timestamp with time zone,
     "registration_deadline" timestamp with time zone,
@@ -559,7 +705,12 @@ alter table "public"."event_delegate" enable row level security;
     "new_start_date" timestamp with time zone,
     "new_end_date" timestamp with time zone,
     "new_location_name" text,
-    "new_location_address" text,
+    "new_country" text,
+    "new_region" text,
+    "new_post_code" text,
+    "new_city" text,
+    "new_street" text,
+    "new_house_number" text,
     "created_at" timestamp with time zone not null default now(),
     "updated_at" timestamp with time zone not null default now()
       );
@@ -579,14 +730,32 @@ alter table "public"."event_exception" enable row level security;
 alter table "public"."event_hashtag" enable row level security;
 
 
+  create table "public"."event_offline_participant" (
+    "id" uuid not null default gen_random_uuid(),
+    "event_id" uuid not null,
+    "group_offline_member_id" uuid,
+    "source_type" text not null,
+    "first_name" text not null,
+    "last_name" text not null,
+    "reason_not_signed_up" text,
+    "connected_user_id" uuid,
+    "attendance_status" text not null default 'listed'::text,
+    "participation_channel" text not null default 'offline'::text,
+    "created_at" timestamp with time zone not null default now(),
+    "updated_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."event_offline_participant" enable row level security;
+
+
   create table "public"."event_participant" (
     "id" uuid not null default gen_random_uuid(),
     "event_id" uuid not null,
     "user_id" uuid not null,
     "group_id" uuid,
     "status" text,
-    "role_id" uuid,
-    "visibility" text,
+    "visibility" text not null default 'public'::text,
     "instance_date" timestamp with time zone,
     "created_at" timestamp with time zone not null default now()
       );
@@ -595,28 +764,17 @@ alter table "public"."event_hashtag" enable row level security;
 alter table "public"."event_participant" enable row level security;
 
 
-  create table "public"."event_position" (
+  create table "public"."event_participant_role" (
     "id" uuid not null default gen_random_uuid(),
-    "event_id" uuid not null,
-    "title" text,
-    "description" text,
+    "event_participant_id" uuid not null,
+    "role_id" uuid not null,
+    "assigned_at" timestamp with time zone not null default now(),
+    "assigned_by_id" uuid,
     "created_at" timestamp with time zone not null default now()
       );
 
 
-alter table "public"."event_position" enable row level security;
-
-
-  create table "public"."event_position_holder" (
-    "id" uuid not null default gen_random_uuid(),
-    "position_id" uuid not null,
-    "user_id" uuid not null,
-    "group_id" uuid,
-    "created_at" timestamp with time zone not null default now()
-      );
-
-
-alter table "public"."event_position_holder" enable row level security;
+alter table "public"."event_participant_role" enable row level security;
 
 
   create table "public"."file" (
@@ -690,8 +848,16 @@ alter table "public"."follow" enable row level security;
   create table "public"."group" (
     "id" uuid not null default gen_random_uuid(),
     "name" text,
-    "description" text,
-    "location" text,
+    "description" jsonb,
+    "email" text,
+    "country" text,
+    "region" text,
+    "post_code" text,
+    "city" text,
+    "street" text,
+    "house_number" text,
+    "latitude" double precision,
+    "longitude" double precision,
     "image_url" text,
     "visibility" text not null default 'public'::text,
     "member_count" integer not null default 0,
@@ -703,7 +869,12 @@ alter table "public"."follow" enable row level security;
     "youtube" text,
     "linkedin" text,
     "website" text,
-    "group_type" text not null,
+    "whatsapp" text,
+    "instagram" text,
+    "twitter" text,
+    "facebook" text,
+    "snapchat" text,
+    "tiktok" text,
     "owner_id" uuid,
     "created_at" timestamp with time zone not null default now(),
     "updated_at" timestamp with time zone not null default now()
@@ -725,6 +896,33 @@ alter table "public"."group" enable row level security;
 alter table "public"."group_delegate_allocation" enable row level security;
 
 
+  create table "public"."group_guest_access" (
+    "id" uuid not null default gen_random_uuid(),
+    "group_id" uuid not null,
+    "user_id" uuid not null,
+    "status" text not null default 'invited'::text,
+    "invited_by_id" uuid,
+    "created_at" timestamp with time zone not null default now(),
+    "updated_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."group_guest_access" enable row level security;
+
+
+  create table "public"."group_guest_role" (
+    "id" uuid not null default gen_random_uuid(),
+    "group_guest_access_id" uuid not null,
+    "role_id" uuid not null,
+    "assigned_at" timestamp with time zone not null default now(),
+    "assigned_by_id" uuid,
+    "created_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."group_guest_role" enable row level security;
+
+
   create table "public"."group_hashtag" (
     "id" uuid not null default gen_random_uuid(),
     "group_id" uuid not null,
@@ -742,7 +940,6 @@ alter table "public"."group_hashtag" enable row level security;
     "user_id" uuid not null,
     "status" text,
     "visibility" text not null default 'public'::text,
-    "role_id" uuid,
     "source" text not null default 'direct'::text,
     "source_group_id" uuid,
     "created_at" timestamp with time zone not null default now()
@@ -752,19 +949,61 @@ alter table "public"."group_hashtag" enable row level security;
 alter table "public"."group_membership" enable row level security;
 
 
-  create table "public"."group_relationship" (
+  create table "public"."group_membership_role" (
     "id" uuid not null default gen_random_uuid(),
-    "group_id" uuid not null,
-    "related_group_id" uuid not null,
-    "relationship_type" text,
-    "with_right" text,
-    "status" text,
-    "initiator_group_id" uuid,
+    "group_membership_id" uuid not null,
+    "role_id" uuid not null,
+    "assigned_at" timestamp with time zone not null default now(),
+    "assigned_by_id" uuid,
     "created_at" timestamp with time zone not null default now()
       );
 
 
-alter table "public"."group_relationship" enable row level security;
+alter table "public"."group_membership_role" enable row level security;
+
+
+  create table "public"."group_offline_member" (
+    "id" uuid not null default gen_random_uuid(),
+    "group_id" uuid not null,
+    "first_name" text not null,
+    "last_name" text not null,
+    "reason_not_signed_up" text,
+    "connected_user_id" uuid,
+    "created_by_id" uuid,
+    "created_at" timestamp with time zone not null default now(),
+    "updated_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."group_offline_member" enable row level security;
+
+
+  create table "public"."group_offline_membership" (
+    "id" uuid not null default gen_random_uuid(),
+    "group_offline_member_id" uuid not null,
+    "group_id" uuid not null,
+    "status" text,
+    "visibility" text not null default 'public'::text,
+    "source" text not null default 'direct'::text,
+    "source_group_id" uuid,
+    "created_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."group_offline_membership" enable row level security;
+
+
+  create table "public"."group_offline_membership_role" (
+    "id" uuid not null default gen_random_uuid(),
+    "group_offline_membership_id" uuid not null,
+    "role_id" uuid not null,
+    "assigned_at" timestamp with time zone not null default now(),
+    "assigned_by_id" uuid,
+    "created_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."group_offline_membership_role" enable row level security;
 
 
   create table "public"."group_workflow" (
@@ -772,6 +1011,7 @@ alter table "public"."group_relationship" enable row level security;
     "group_id" uuid not null,
     "name" text,
     "description" text,
+    "is_default_entry" boolean not null default false,
     "status" text,
     "created_by_id" uuid not null,
     "created_at" timestamp with time zone not null default now(),
@@ -788,6 +1028,12 @@ alter table "public"."group_workflow" enable row level security;
     "group_id" uuid not null,
     "order_index" integer not null default 0,
     "label" text,
+    "step_kind" text not null default 'group_vote'::text,
+    "selection_mode" text not null default 'default_target_workflow'::text,
+    "merge_strategy" text,
+    "event_rule" text,
+    "auto_task_on_missing_event" boolean not null default false,
+    "target_workflow_id" uuid,
     "created_at" timestamp with time zone not null default now()
       );
 
@@ -857,7 +1103,7 @@ alter table "public"."indicative_voter_participation" enable row level security;
     "url" text,
     "user_id" uuid,
     "group_id" uuid,
-    "meeting_slot_id" uuid,
+    "event_id" uuid,
     "created_at" timestamp with time zone not null default now()
       );
 
@@ -865,47 +1111,12 @@ alter table "public"."indicative_voter_participation" enable row level security;
 alter table "public"."link" enable row level security;
 
 
-  create table "public"."meeting_booking" (
-    "id" uuid not null default gen_random_uuid(),
-    "slot_id" uuid not null,
-    "user_id" uuid not null,
-    "status" text,
-    "message" text,
-    "created_at" timestamp with time zone not null default now(),
-    "updated_at" timestamp with time zone not null default now()
-      );
-
-
-alter table "public"."meeting_booking" enable row level security;
-
-
-  create table "public"."meeting_slot" (
-    "id" uuid not null default gen_random_uuid(),
-    "event_id" uuid not null,
-    "user_id" uuid not null,
-    "title" text,
-    "description" text,
-    "start_time" timestamp with time zone,
-    "end_time" timestamp with time zone,
-    "duration" integer,
-    "is_available" boolean not null default true,
-    "max_bookings" integer not null default 1,
-    "booking_count" integer not null default 0,
-    "meeting_type" text,
-    "video_call_url" text,
-    "location" text,
-    "created_at" timestamp with time zone not null default now()
-      );
-
-
-alter table "public"."meeting_slot" enable row level security;
-
-
   create table "public"."message" (
     "id" uuid not null default gen_random_uuid(),
     "conversation_id" uuid not null,
     "sender_id" uuid not null,
     "content" text,
+    "context_json" text not null default '[]'::text,
     "is_read" boolean not null default false,
     "deleted_at" timestamp with time zone,
     "created_at" timestamp with time zone not null default now(),
@@ -914,6 +1125,78 @@ alter table "public"."meeting_slot" enable row level security;
 
 
 alter table "public"."message" enable row level security;
+
+
+  create table "public"."network_link" (
+    "id" uuid not null default gen_random_uuid(),
+    "source_group_id" uuid not null,
+    "target_group_id" uuid not null,
+    "structural_relation" text not null,
+    "status" text not null default 'active'::text,
+    "created_by_id" uuid,
+    "created_at" timestamp with time zone not null default now(),
+    "updated_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."network_link" enable row level security;
+
+
+  create table "public"."network_link_change_request" (
+    "id" uuid not null default gen_random_uuid(),
+    "active_network_link_id" uuid,
+    "proposed_network_link_id" uuid not null,
+    "source_group_id" uuid not null,
+    "target_group_id" uuid not null,
+    "structural_relation" text not null,
+    "status" text not null default 'requested'::text,
+    "initiator_group_id" uuid not null,
+    "desired_rights" jsonb not null,
+    "desired_membership_rules" jsonb,
+    "desired_membership_mode" text not null default 'none'::text,
+    "desired_role_id" uuid,
+    "desired_source_group_ids" jsonb,
+    "created_at" timestamp with time zone not null default now(),
+    "updated_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."network_link_change_request" enable row level security;
+
+
+  create table "public"."network_link_membership_rule" (
+    "id" uuid not null default gen_random_uuid(),
+    "network_link_id" uuid not null,
+    "membership_mode" text not null default 'none'::text,
+    "role_id" uuid,
+    "source_group_ids" jsonb,
+    "forward_membership_mode" text not null default 'none'::text,
+    "forward_role_id" uuid,
+    "forward_source_group_ids" jsonb,
+    "backward_membership_mode" text not null default 'none'::text,
+    "backward_role_id" uuid,
+    "backward_source_group_ids" jsonb,
+    "created_at" timestamp with time zone not null default now(),
+    "updated_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."network_link_membership_rule" enable row level security;
+
+
+  create table "public"."network_link_right" (
+    "id" uuid not null default gen_random_uuid(),
+    "network_link_id" uuid not null,
+    "right_key" text not null,
+    "direction" text not null default 'forward'::text,
+    "status" text not null default 'active'::text,
+    "initiator_group_id" uuid,
+    "created_at" timestamp with time zone not null default now(),
+    "updated_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."network_link_right" enable row level security;
 
 
   create table "public"."notification" (
@@ -1014,34 +1297,45 @@ alter table "public"."participant" enable row level security;
 alter table "public"."payment" enable row level security;
 
 
-  create table "public"."position" (
+  create table "public"."pql_filter" (
     "id" uuid not null default gen_random_uuid(),
+    "user_id" uuid not null,
+    "group_id" uuid,
+    "storage_key" text not null,
+    "label" text not null,
+    "query" text not null,
+    "is_active" boolean not null default false,
+    "created_at" timestamp with time zone not null default now(),
+    "updated_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."pql_filter" enable row level security;
+
+
+  create table "public"."process_task" (
+    "id" uuid not null default gen_random_uuid(),
+    "process_run_id" uuid not null,
+    "branch_id" uuid,
+    "step_run_id" uuid,
+    "task_type" text not null,
+    "status" text not null default 'open'::text,
     "title" text,
     "description" text,
-    "term" text,
-    "first_term_start" timestamp with time zone,
-    "scheduled_revote_date" timestamp with time zone,
-    "group_id" uuid not null,
+    "group_id" uuid,
+    "target_group_id" uuid,
     "event_id" uuid,
-    "created_at" timestamp with time zone not null default now()
+    "agenda_item_id" uuid,
+    "support_confirmation_id" uuid,
+    "due_at" timestamp with time zone,
+    "resolved_at" timestamp with time zone,
+    "metadata" jsonb,
+    "created_at" timestamp with time zone not null default now(),
+    "updated_at" timestamp with time zone not null default now()
       );
 
 
-alter table "public"."position" enable row level security;
-
-
-  create table "public"."position_holder_history" (
-    "id" uuid not null default gen_random_uuid(),
-    "position_id" uuid not null,
-    "user_id" uuid not null,
-    "start_date" timestamp with time zone,
-    "end_date" timestamp with time zone,
-    "reason" text,
-    "created_at" timestamp with time zone not null default now()
-      );
-
-
-alter table "public"."position_holder_history" enable row level security;
+alter table "public"."process_task" enable row level security;
 
 
   create table "public"."push_subscription" (
@@ -1082,12 +1376,39 @@ alter table "public"."reaction" enable row level security;
     "event_id" uuid,
     "amendment_id" uuid,
     "blog_id" uuid,
+    "assignment_mode" text not null default 'assigned'::text,
+    "visibility" text not null default 'public'::text,
+    "term_start_date" timestamp with time zone,
+    "is_recurring" boolean not null default false,
+    "recurrence_pattern" text,
+    "recurrence_rule" text,
+    "recurrence_interval" integer,
+    "recurrence_days" integer[],
+    "recurrence_end_date" timestamp with time zone,
+    "scheduled_revote_date" timestamp with time zone,
+    "default_request_role" boolean not null default false,
+    "default_invite_role" boolean not null default false,
+    "assignee_kind" text not null default 'member'::text,
     "sort_order" integer not null default 0,
     "created_at" timestamp with time zone not null default now()
       );
 
 
 alter table "public"."role" enable row level security;
+
+
+  create table "public"."role_holder_history" (
+    "id" uuid not null default gen_random_uuid(),
+    "role_id" uuid not null,
+    "user_id" uuid not null,
+    "start_date" timestamp with time zone,
+    "end_date" timestamp with time zone,
+    "reason" text,
+    "created_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."role_holder_history" enable row level security;
 
 
   create table "public"."speaker_list" (
@@ -1254,6 +1575,9 @@ alter table "public"."subscriber" enable row level security;
   create table "public"."support_confirmation" (
     "id" uuid not null default gen_random_uuid(),
     "amendment_id" uuid not null,
+    "process_run_id" uuid,
+    "process_step_run_id" uuid,
+    "process_task_id" uuid,
     "group_id" uuid,
     "event_id" uuid,
     "confirmed_by_id" uuid not null,
@@ -1374,13 +1698,26 @@ alter table "public"."todo_assignment" enable row level security;
     "first_name" text,
     "last_name" text,
     "bio" text,
-    "about" text,
+    "about" jsonb,
     "avatar" text,
     "x" text,
     "youtube" text,
     "linkedin" text,
     "website" text,
-    "location" text,
+    "whatsapp" text,
+    "instagram" text,
+    "twitter" text,
+    "facebook" text,
+    "snapchat" text,
+    "tiktok" text,
+    "country" text,
+    "region" text,
+    "post_code" text,
+    "city" text,
+    "street" text,
+    "house_number" text,
+    "latitude" double precision,
+    "longitude" double precision,
     "visibility" text not null default 'public'::text,
     "subscriber_count" integer not null default 0,
     "amendment_count" integer not null default 0,
@@ -1413,6 +1750,7 @@ alter table "public"."user_hashtag" enable row level security;
     "theme" text not null default 'system'::text,
     "language" text not null default 'en'::text,
     "navigation_view" text not null default 'asButtonList'::text,
+    "group_network_layouts" jsonb not null default '{}'::jsonb,
     "created_at" timestamp with time zone not null default now(),
     "updated_at" timestamp with time zone not null default now()
       );
@@ -1453,6 +1791,21 @@ alter table "public"."vote" enable row level security;
 alter table "public"."vote_choice" enable row level security;
 
 
+  create table "public"."vote_offline_tally" (
+    "id" uuid not null default gen_random_uuid(),
+    "vote_id" uuid not null,
+    "phase" text not null,
+    "choice_id" uuid not null,
+    "count" integer not null default 0,
+    "updated_by_id" uuid,
+    "created_at" timestamp with time zone not null default now(),
+    "updated_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."vote_offline_tally" enable row level security;
+
+
   create table "public"."voter" (
     "id" uuid not null default gen_random_uuid(),
     "vote_id" uuid not null,
@@ -1468,6 +1821,7 @@ alter table "public"."voter" enable row level security;
     "id" uuid not null default gen_random_uuid(),
     "user_id" uuid not null,
     "password_hash" text not null,
+    "last_verified_at" timestamp with time zone,
     "created_at" timestamp with time zone not null default now(),
     "updated_at" timestamp with time zone not null default now()
       );
@@ -1485,6 +1839,12 @@ CREATE UNIQUE INDEX agenda_item_change_request_pkey ON public.agenda_item_change
 
 CREATE UNIQUE INDEX agenda_item_pkey ON public.agenda_item USING btree (id);
 
+CREATE UNIQUE INDEX ai_provider_credential_pkey ON public.ai_provider_credential USING btree (id);
+
+CREATE UNIQUE INDEX ai_skill_pkey ON public.ai_skill USING btree (id);
+
+CREATE UNIQUE INDEX ai_tool_pkey ON public.ai_tool USING btree (id);
+
 CREATE UNIQUE INDEX amendment_collaborator_pkey ON public.amendment_collaborator USING btree (id);
 
 CREATE UNIQUE INDEX amendment_hashtag_amendment_id_hashtag_id_key ON public.amendment_hashtag USING btree (amendment_id, hashtag_id);
@@ -1496,6 +1856,12 @@ CREATE UNIQUE INDEX amendment_path_pkey ON public.amendment_path USING btree (id
 CREATE UNIQUE INDEX amendment_path_segment_pkey ON public.amendment_path_segment USING btree (id);
 
 CREATE UNIQUE INDEX amendment_pkey ON public.amendment USING btree (id);
+
+CREATE UNIQUE INDEX amendment_process_branch_pkey ON public.amendment_process_branch USING btree (id);
+
+CREATE UNIQUE INDEX amendment_process_run_pkey ON public.amendment_process_run USING btree (id);
+
+CREATE UNIQUE INDEX amendment_process_step_run_pkey ON public.amendment_process_step_run USING btree (id);
 
 CREATE UNIQUE INDEX amendment_support_vote_pkey ON public.amendment_support_vote USING btree (id);
 
@@ -1535,6 +1901,10 @@ CREATE UNIQUE INDEX document_version_pkey ON public.document_version USING btree
 
 CREATE UNIQUE INDEX election_candidate_pkey ON public.election_candidate USING btree (id);
 
+CREATE UNIQUE INDEX election_offline_tally_election_id_phase_candidate_id_key ON public.election_offline_tally USING btree (election_id, phase, candidate_id);
+
+CREATE UNIQUE INDEX election_offline_tally_pkey ON public.election_offline_tally USING btree (id);
+
 CREATE UNIQUE INDEX election_pkey ON public.election USING btree (id);
 
 CREATE UNIQUE INDEX elector_election_id_user_id_key ON public.elector USING btree (election_id, user_id);
@@ -1549,13 +1919,15 @@ CREATE UNIQUE INDEX event_hashtag_event_id_hashtag_id_key ON public.event_hashta
 
 CREATE UNIQUE INDEX event_hashtag_pkey ON public.event_hashtag USING btree (id);
 
+CREATE UNIQUE INDEX event_offline_participant_pkey ON public.event_offline_participant USING btree (id);
+
 CREATE UNIQUE INDEX event_participant_pkey ON public.event_participant USING btree (id);
 
+CREATE UNIQUE INDEX event_participant_role_event_participant_id_role_id_key ON public.event_participant_role USING btree (event_participant_id, role_id);
+
+CREATE UNIQUE INDEX event_participant_role_pkey ON public.event_participant_role USING btree (id);
+
 CREATE UNIQUE INDEX event_pkey ON public.event USING btree (id);
-
-CREATE UNIQUE INDEX event_position_holder_pkey ON public.event_position_holder USING btree (id);
-
-CREATE UNIQUE INDEX event_position_pkey ON public.event_position USING btree (id);
 
 CREATE UNIQUE INDEX file_pkey ON public.file USING btree (id);
 
@@ -1575,17 +1947,37 @@ CREATE UNIQUE INDEX follow_pkey ON public.follow USING btree (id);
 
 CREATE UNIQUE INDEX group_delegate_allocation_pkey ON public.group_delegate_allocation USING btree (id);
 
+CREATE UNIQUE INDEX group_guest_access_group_id_user_id_key ON public.group_guest_access USING btree (group_id, user_id);
+
+CREATE UNIQUE INDEX group_guest_access_pkey ON public.group_guest_access USING btree (id);
+
+CREATE UNIQUE INDEX group_guest_role_group_guest_access_id_role_id_key ON public.group_guest_role USING btree (group_guest_access_id, role_id);
+
+CREATE UNIQUE INDEX group_guest_role_pkey ON public.group_guest_role USING btree (id);
+
 CREATE UNIQUE INDEX group_hashtag_group_id_hashtag_id_key ON public.group_hashtag USING btree (group_id, hashtag_id);
 
 CREATE UNIQUE INDEX group_hashtag_pkey ON public.group_hashtag USING btree (id);
 
 CREATE UNIQUE INDEX group_membership_pkey ON public.group_membership USING btree (id);
 
+CREATE UNIQUE INDEX group_membership_role_group_membership_id_role_id_key ON public.group_membership_role USING btree (group_membership_id, role_id);
+
+CREATE UNIQUE INDEX group_membership_role_pkey ON public.group_membership_role USING btree (id);
+
 CREATE UNIQUE INDEX group_membership_user_id_group_id_key ON public.group_membership USING btree (user_id, group_id);
 
-CREATE UNIQUE INDEX group_pkey ON public."group" USING btree (id);
+CREATE UNIQUE INDEX group_offline_member_pkey ON public.group_offline_member USING btree (id);
 
-CREATE UNIQUE INDEX group_relationship_pkey ON public.group_relationship USING btree (id);
+CREATE UNIQUE INDEX group_offline_membership_group_offline_member_id_group_id_key ON public.group_offline_membership USING btree (group_offline_member_id, group_id);
+
+CREATE UNIQUE INDEX group_offline_membership_pkey ON public.group_offline_membership USING btree (id);
+
+CREATE UNIQUE INDEX group_offline_membership_role_group_offline_membership_id_r_key ON public.group_offline_membership_role USING btree (group_offline_membership_id, role_id);
+
+CREATE UNIQUE INDEX group_offline_membership_role_pkey ON public.group_offline_membership_role USING btree (id);
+
+CREATE UNIQUE INDEX group_pkey ON public."group" USING btree (id);
 
 CREATE UNIQUE INDEX group_workflow_pkey ON public.group_workflow USING btree (id);
 
@@ -1604,6 +1996,18 @@ CREATE INDEX idx_action_right_role ON public.action_right USING btree (role_id);
 CREATE INDEX idx_agenda_item_creator ON public.agenda_item USING btree (creator_id);
 
 CREATE INDEX idx_agenda_item_event ON public.agenda_item USING btree (event_id);
+
+CREATE INDEX idx_ai_provider_credential_user ON public.ai_provider_credential USING btree (user_id);
+
+CREATE UNIQUE INDEX idx_ai_provider_credential_user_provider ON public.ai_provider_credential USING btree (user_id, provider);
+
+CREATE INDEX idx_ai_skill_user ON public.ai_skill USING btree (user_id);
+
+CREATE UNIQUE INDEX idx_ai_skill_user_slug ON public.ai_skill USING btree (user_id, slug);
+
+CREATE INDEX idx_ai_tool_user ON public.ai_tool USING btree (user_id);
+
+CREATE UNIQUE INDEX idx_ai_tool_user_name ON public.ai_tool USING btree (user_id, tool_name);
 
 CREATE INDEX idx_aicr_agenda_item ON public.agenda_item_change_request USING btree (agenda_item_id);
 
@@ -1632,6 +2036,24 @@ CREATE INDEX idx_amendment_hashtag_hashtag ON public.amendment_hashtag USING btr
 CREATE INDEX idx_amendment_path_amendment ON public.amendment_path USING btree (amendment_id);
 
 CREATE INDEX idx_amendment_path_segment_path ON public.amendment_path_segment USING btree (path_id);
+
+CREATE INDEX idx_amendment_process_branch_parent ON public.amendment_process_branch USING btree (parent_branch_id);
+
+CREATE INDEX idx_amendment_process_branch_run ON public.amendment_process_branch USING btree (process_run_id);
+
+CREATE INDEX idx_amendment_process_branch_status ON public.amendment_process_branch USING btree (status);
+
+CREATE INDEX idx_amendment_process_run_amendment ON public.amendment_process_run USING btree (amendment_id);
+
+CREATE INDEX idx_amendment_process_run_status ON public.amendment_process_run USING btree (status);
+
+CREATE INDEX idx_amendment_process_step_run_branch ON public.amendment_process_step_run USING btree (branch_id);
+
+CREATE INDEX idx_amendment_process_step_run_event ON public.amendment_process_step_run USING btree (event_id);
+
+CREATE INDEX idx_amendment_process_step_run_process ON public.amendment_process_step_run USING btree (process_run_id);
+
+CREATE INDEX idx_amendment_process_step_run_status ON public.amendment_process_step_run USING btree (status);
 
 CREATE INDEX idx_amendment_support_vote_amendment ON public.amendment_support_vote USING btree (amendment_id);
 
@@ -1679,9 +2101,15 @@ CREATE INDEX idx_comment_vote_comment ON public.comment_vote USING btree (commen
 
 CREATE INDEX idx_comment_vote_user ON public.comment_vote USING btree (user_id);
 
+CREATE INDEX idx_conversation_assistant_for_user ON public.conversation USING btree (assistant_for_user_id);
+
+CREATE INDEX idx_conversation_event ON public.conversation USING btree (event_id);
+
 CREATE INDEX idx_conversation_group ON public.conversation USING btree (group_id);
 
 CREATE INDEX idx_conversation_participant_conversation ON public.conversation_participant USING btree (conversation_id);
+
+CREATE UNIQUE INDEX idx_conversation_participant_unique_membership ON public.conversation_participant USING btree (conversation_id, user_id);
 
 CREATE INDEX idx_conversation_participant_user ON public.conversation_participant USING btree (user_id);
 
@@ -1705,6 +2133,12 @@ CREATE INDEX idx_election_candidate_election ON public.election_candidate USING 
 
 CREATE INDEX idx_election_candidate_user ON public.election_candidate USING btree (user_id);
 
+CREATE INDEX idx_election_offline_tally_candidate ON public.election_offline_tally USING btree (candidate_id);
+
+CREATE INDEX idx_election_offline_tally_election ON public.election_offline_tally USING btree (election_id);
+
+CREATE INDEX idx_election_role_id ON public.election USING btree (role_id);
+
 CREATE INDEX idx_elector_election ON public.elector USING btree (election_id);
 
 CREATE INDEX idx_elector_user ON public.elector USING btree (user_id);
@@ -1723,15 +2157,29 @@ CREATE INDEX idx_event_hashtag_event ON public.event_hashtag USING btree (event_
 
 CREATE INDEX idx_event_hashtag_hashtag ON public.event_hashtag USING btree (hashtag_id);
 
+CREATE INDEX idx_event_offline_participant_connected_user ON public.event_offline_participant USING btree (connected_user_id);
+
+CREATE INDEX idx_event_offline_participant_event ON public.event_offline_participant USING btree (event_id);
+
+CREATE INDEX idx_event_offline_participant_group_offline_member ON public.event_offline_participant USING btree (group_offline_member_id);
+
+CREATE UNIQUE INDEX idx_event_offline_participant_unique_connected_user ON public.event_offline_participant USING btree (event_id, connected_user_id) WHERE (connected_user_id IS NOT NULL);
+
 CREATE INDEX idx_event_participant_event ON public.event_participant USING btree (event_id);
 
 CREATE INDEX idx_event_participant_instance ON public.event_participant USING btree (event_id, instance_date);
 
+CREATE INDEX idx_event_participant_role_assigned_by ON public.event_participant_role USING btree (assigned_by_id);
+
+CREATE INDEX idx_event_participant_role_participant ON public.event_participant_role USING btree (event_participant_id);
+
+CREATE INDEX idx_event_participant_role_role ON public.event_participant_role USING btree (role_id);
+
+CREATE UNIQUE INDEX idx_event_participant_unique_event_user ON public.event_participant USING btree (event_id, user_id) WHERE (instance_date IS NULL);
+
+CREATE UNIQUE INDEX idx_event_participant_unique_event_user_instance ON public.event_participant USING btree (event_id, user_id, instance_date) WHERE (instance_date IS NOT NULL);
+
 CREATE INDEX idx_event_participant_user ON public.event_participant USING btree (user_id);
-
-CREATE INDEX idx_event_position_event ON public.event_position USING btree (event_id);
-
-CREATE INDEX idx_event_position_holder_position ON public.event_position_holder USING btree (position_id);
 
 CREATE INDEX idx_event_start_date ON public.event USING btree (start_date);
 
@@ -1763,27 +2211,63 @@ CREATE INDEX idx_follow_follower ON public.follow USING btree (follower_id);
 
 CREATE INDEX idx_group_delegate_allocation_event ON public.group_delegate_allocation USING btree (event_id);
 
+CREATE INDEX idx_group_guest_access_group ON public.group_guest_access USING btree (group_id);
+
+CREATE INDEX idx_group_guest_access_status ON public.group_guest_access USING btree (status);
+
+CREATE INDEX idx_group_guest_access_user ON public.group_guest_access USING btree (user_id);
+
+CREATE INDEX idx_group_guest_role_access ON public.group_guest_role USING btree (group_guest_access_id);
+
+CREATE INDEX idx_group_guest_role_assigned_by ON public.group_guest_role USING btree (assigned_by_id);
+
+CREATE INDEX idx_group_guest_role_role ON public.group_guest_role USING btree (role_id);
+
 CREATE INDEX idx_group_hashtag_group ON public.group_hashtag USING btree (group_id);
 
 CREATE INDEX idx_group_hashtag_hashtag ON public.group_hashtag USING btree (hashtag_id);
 
 CREATE INDEX idx_group_membership_group ON public.group_membership USING btree (group_id);
 
+CREATE INDEX idx_group_membership_role_assigned_by ON public.group_membership_role USING btree (assigned_by_id);
+
+CREATE INDEX idx_group_membership_role_membership ON public.group_membership_role USING btree (group_membership_id);
+
+CREATE INDEX idx_group_membership_role_role ON public.group_membership_role USING btree (role_id);
+
 CREATE INDEX idx_group_membership_source_group ON public.group_membership USING btree (source_group_id);
 
 CREATE INDEX idx_group_membership_user ON public.group_membership USING btree (user_id);
 
+CREATE INDEX idx_group_offline_member_connected_user ON public.group_offline_member USING btree (connected_user_id);
+
+CREATE INDEX idx_group_offline_member_group ON public.group_offline_member USING btree (group_id);
+
+CREATE UNIQUE INDEX idx_group_offline_member_unique_connected_user ON public.group_offline_member USING btree (group_id, connected_user_id) WHERE (connected_user_id IS NOT NULL);
+
+CREATE INDEX idx_group_offline_membership_group ON public.group_offline_membership USING btree (group_id);
+
+CREATE INDEX idx_group_offline_membership_member ON public.group_offline_membership USING btree (group_offline_member_id);
+
+CREATE INDEX idx_group_offline_membership_role_assigned_by ON public.group_offline_membership_role USING btree (assigned_by_id);
+
+CREATE INDEX idx_group_offline_membership_role_membership ON public.group_offline_membership_role USING btree (group_offline_membership_id);
+
+CREATE INDEX idx_group_offline_membership_role_role ON public.group_offline_membership_role USING btree (role_id);
+
+CREATE INDEX idx_group_offline_membership_source_group ON public.group_offline_membership USING btree (source_group_id);
+
 CREATE INDEX idx_group_owner ON public."group" USING btree (owner_id);
 
-CREATE INDEX idx_group_relationship_group ON public.group_relationship USING btree (group_id);
-
-CREATE INDEX idx_group_relationship_related ON public.group_relationship USING btree (related_group_id);
-
 CREATE INDEX idx_group_workflow_created_by ON public.group_workflow USING btree (created_by_id);
+
+CREATE UNIQUE INDEX idx_group_workflow_default_entry ON public.group_workflow USING btree (group_id) WHERE (is_default_entry = true);
 
 CREATE INDEX idx_group_workflow_group ON public.group_workflow USING btree (group_id);
 
 CREATE INDEX idx_group_workflow_step_group ON public.group_workflow_step USING btree (group_id);
+
+CREATE INDEX idx_group_workflow_step_target_workflow ON public.group_workflow_step USING btree (target_workflow_id);
 
 CREATE INDEX idx_group_workflow_step_workflow ON public.group_workflow_step USING btree (workflow_id);
 
@@ -1809,21 +2293,49 @@ CREATE INDEX idx_indicative_voter_participation_vote ON public.indicative_voter_
 
 CREATE INDEX idx_indicative_voter_participation_voter ON public.indicative_voter_participation USING btree (voter_id);
 
+CREATE INDEX idx_link_event ON public.link USING btree (event_id);
+
 CREATE INDEX idx_link_group ON public.link USING btree (group_id);
 
 CREATE INDEX idx_link_user ON public.link USING btree (user_id);
 
-CREATE INDEX idx_meeting_booking_slot ON public.meeting_booking USING btree (slot_id);
-
-CREATE INDEX idx_meeting_booking_user ON public.meeting_booking USING btree (user_id);
-
-CREATE INDEX idx_meeting_slot_event ON public.meeting_slot USING btree (event_id);
-
-CREATE INDEX idx_meeting_slot_user ON public.meeting_slot USING btree (user_id);
-
 CREATE INDEX idx_message_conversation ON public.message USING btree (conversation_id);
 
 CREATE INDEX idx_message_sender ON public.message USING btree (sender_id);
+
+CREATE INDEX idx_network_link_change_request_active_link ON public.network_link_change_request USING btree (active_network_link_id);
+
+CREATE UNIQUE INDEX idx_network_link_change_request_active_link_unique ON public.network_link_change_request USING btree (active_network_link_id) WHERE (active_network_link_id IS NOT NULL);
+
+CREATE INDEX idx_network_link_change_request_membership_rules ON public.network_link_change_request USING gin (desired_membership_rules);
+
+CREATE UNIQUE INDEX idx_network_link_change_request_pair_unique ON public.network_link_change_request USING btree (source_group_id, target_group_id, structural_relation) WHERE (active_network_link_id IS NULL);
+
+CREATE INDEX idx_network_link_change_request_source_group ON public.network_link_change_request USING btree (source_group_id);
+
+CREATE INDEX idx_network_link_change_request_status ON public.network_link_change_request USING btree (status);
+
+CREATE INDEX idx_network_link_change_request_target_group ON public.network_link_change_request USING btree (target_group_id);
+
+CREATE INDEX idx_network_link_membership_rule_backward_mode ON public.network_link_membership_rule USING btree (backward_membership_mode);
+
+CREATE INDEX idx_network_link_membership_rule_forward_mode ON public.network_link_membership_rule USING btree (forward_membership_mode);
+
+CREATE INDEX idx_network_link_membership_rule_link ON public.network_link_membership_rule USING btree (network_link_id);
+
+CREATE INDEX idx_network_link_membership_rule_mode ON public.network_link_membership_rule USING btree (membership_mode);
+
+CREATE INDEX idx_network_link_relation ON public.network_link USING btree (structural_relation);
+
+CREATE INDEX idx_network_link_right_initiator ON public.network_link_right USING btree (initiator_group_id);
+
+CREATE INDEX idx_network_link_right_link ON public.network_link_right USING btree (network_link_id);
+
+CREATE INDEX idx_network_link_right_status ON public.network_link_right USING btree (status);
+
+CREATE INDEX idx_network_link_source_group ON public.network_link USING btree (source_group_id);
+
+CREATE INDEX idx_network_link_target_group ON public.network_link USING btree (target_group_id);
 
 CREATE INDEX idx_notification_category ON public.notification USING btree (category);
 
@@ -1849,11 +2361,19 @@ CREATE INDEX idx_payment_payer_user ON public.payment USING btree (payer_user_id
 
 CREATE INDEX idx_payment_receiver_user ON public.payment USING btree (receiver_user_id);
 
-CREATE INDEX idx_position_group ON public."position" USING btree (group_id);
+CREATE INDEX idx_pql_filter_active_scope ON public.pql_filter USING btree (user_id, storage_key, group_id, is_active);
 
-CREATE INDEX idx_position_holder_history_position ON public.position_holder_history USING btree (position_id);
+CREATE INDEX idx_pql_filter_user_scope ON public.pql_filter USING btree (user_id, storage_key, group_id);
 
-CREATE INDEX idx_position_holder_history_user ON public.position_holder_history USING btree (user_id);
+CREATE INDEX idx_process_task_due_at ON public.process_task USING btree (due_at);
+
+CREATE INDEX idx_process_task_group ON public.process_task USING btree (group_id);
+
+CREATE INDEX idx_process_task_process_run ON public.process_task USING btree (process_run_id);
+
+CREATE INDEX idx_process_task_status ON public.process_task USING btree (status);
+
+CREATE INDEX idx_process_task_type ON public.process_task USING btree (task_type);
 
 CREATE INDEX idx_push_subscription_user ON public.push_subscription USING btree (user_id);
 
@@ -1863,7 +2383,17 @@ CREATE INDEX idx_reaction_timeline ON public.reaction USING btree (timeline_even
 
 CREATE INDEX idx_reaction_user ON public.reaction USING btree (user_id);
 
+CREATE INDEX idx_role_assignee_kind ON public.role USING btree (assignee_kind);
+
+CREATE INDEX idx_role_event ON public.role USING btree (event_id);
+
 CREATE INDEX idx_role_group ON public.role USING btree (group_id);
+
+CREATE INDEX idx_role_holder_history_role ON public.role_holder_history USING btree (role_id);
+
+CREATE INDEX idx_role_holder_history_user ON public.role_holder_history USING btree (user_id);
+
+CREATE INDEX idx_role_scope ON public.role USING btree (scope);
 
 CREATE INDEX idx_speaker_list_agenda_item ON public.speaker_list USING btree (agenda_item_id);
 
@@ -1947,6 +2477,10 @@ CREATE INDEX idx_vote_amendment ON public.vote USING btree (amendment_id);
 
 CREATE INDEX idx_vote_choice_vote ON public.vote_choice USING btree (vote_id);
 
+CREATE INDEX idx_vote_offline_tally_choice ON public.vote_offline_tally USING btree (choice_id);
+
+CREATE INDEX idx_vote_offline_tally_vote ON public.vote_offline_tally USING btree (vote_id);
+
 CREATE INDEX idx_voter_user ON public.voter USING btree (user_id);
 
 CREATE INDEX idx_voter_vote ON public.voter USING btree (vote_id);
@@ -1967,11 +2501,21 @@ CREATE UNIQUE INDEX indicative_voter_participation_vote_id_voter_id_key ON publi
 
 CREATE UNIQUE INDEX link_pkey ON public.link USING btree (id);
 
-CREATE UNIQUE INDEX meeting_booking_pkey ON public.meeting_booking USING btree (id);
-
-CREATE UNIQUE INDEX meeting_slot_pkey ON public.meeting_slot USING btree (id);
-
 CREATE UNIQUE INDEX message_pkey ON public.message USING btree (id);
+
+CREATE UNIQUE INDEX network_link_change_request_pkey ON public.network_link_change_request USING btree (id);
+
+CREATE UNIQUE INDEX network_link_membership_rule_network_link_id_key ON public.network_link_membership_rule USING btree (network_link_id);
+
+CREATE UNIQUE INDEX network_link_membership_rule_pkey ON public.network_link_membership_rule USING btree (id);
+
+CREATE UNIQUE INDEX network_link_pkey ON public.network_link USING btree (id);
+
+CREATE UNIQUE INDEX network_link_right_network_link_id_right_key_key ON public.network_link_right USING btree (network_link_id, right_key);
+
+CREATE UNIQUE INDEX network_link_right_pkey ON public.network_link_right USING btree (id);
+
+CREATE UNIQUE INDEX network_link_source_group_id_target_group_id_structural_rel_key ON public.network_link USING btree (source_group_id, target_group_id, structural_relation);
 
 CREATE UNIQUE INDEX notification_pkey ON public.notification USING btree (id);
 
@@ -1987,15 +2531,17 @@ CREATE UNIQUE INDEX participant_pkey ON public.participant USING btree (id);
 
 CREATE UNIQUE INDEX payment_pkey ON public.payment USING btree (id);
 
-CREATE UNIQUE INDEX position_holder_history_pkey ON public.position_holder_history USING btree (id);
+CREATE UNIQUE INDEX pql_filter_pkey ON public.pql_filter USING btree (id);
 
-CREATE UNIQUE INDEX position_pkey ON public."position" USING btree (id);
+CREATE UNIQUE INDEX process_task_pkey ON public.process_task USING btree (id);
 
 CREATE UNIQUE INDEX push_subscription_endpoint_key ON public.push_subscription USING btree (endpoint);
 
 CREATE UNIQUE INDEX push_subscription_pkey ON public.push_subscription USING btree (id);
 
 CREATE UNIQUE INDEX reaction_pkey ON public.reaction USING btree (id);
+
+CREATE UNIQUE INDEX role_holder_history_pkey ON public.role_holder_history USING btree (id);
 
 CREATE UNIQUE INDEX role_pkey ON public.role USING btree (id);
 
@@ -2061,6 +2607,10 @@ CREATE UNIQUE INDEX user_preference_user_id_key ON public.user_preference USING 
 
 CREATE UNIQUE INDEX vote_choice_pkey ON public.vote_choice USING btree (id);
 
+CREATE UNIQUE INDEX vote_offline_tally_pkey ON public.vote_offline_tally USING btree (id);
+
+CREATE UNIQUE INDEX vote_offline_tally_vote_id_phase_choice_id_key ON public.vote_offline_tally USING btree (vote_id, phase, choice_id);
+
 CREATE UNIQUE INDEX vote_pkey ON public.vote USING btree (id);
 
 CREATE UNIQUE INDEX voter_pkey ON public.voter USING btree (id);
@@ -2079,6 +2629,12 @@ alter table "public"."agenda_item" add constraint "agenda_item_pkey" PRIMARY KEY
 
 alter table "public"."agenda_item_change_request" add constraint "agenda_item_change_request_pkey" PRIMARY KEY using index "agenda_item_change_request_pkey";
 
+alter table "public"."ai_provider_credential" add constraint "ai_provider_credential_pkey" PRIMARY KEY using index "ai_provider_credential_pkey";
+
+alter table "public"."ai_skill" add constraint "ai_skill_pkey" PRIMARY KEY using index "ai_skill_pkey";
+
+alter table "public"."ai_tool" add constraint "ai_tool_pkey" PRIMARY KEY using index "ai_tool_pkey";
+
 alter table "public"."amendment" add constraint "amendment_pkey" PRIMARY KEY using index "amendment_pkey";
 
 alter table "public"."amendment_collaborator" add constraint "amendment_collaborator_pkey" PRIMARY KEY using index "amendment_collaborator_pkey";
@@ -2088,6 +2644,12 @@ alter table "public"."amendment_hashtag" add constraint "amendment_hashtag_pkey"
 alter table "public"."amendment_path" add constraint "amendment_path_pkey" PRIMARY KEY using index "amendment_path_pkey";
 
 alter table "public"."amendment_path_segment" add constraint "amendment_path_segment_pkey" PRIMARY KEY using index "amendment_path_segment_pkey";
+
+alter table "public"."amendment_process_branch" add constraint "amendment_process_branch_pkey" PRIMARY KEY using index "amendment_process_branch_pkey";
+
+alter table "public"."amendment_process_run" add constraint "amendment_process_run_pkey" PRIMARY KEY using index "amendment_process_run_pkey";
+
+alter table "public"."amendment_process_step_run" add constraint "amendment_process_step_run_pkey" PRIMARY KEY using index "amendment_process_step_run_pkey";
 
 alter table "public"."amendment_support_vote" add constraint "amendment_support_vote_pkey" PRIMARY KEY using index "amendment_support_vote_pkey";
 
@@ -2127,6 +2689,8 @@ alter table "public"."election" add constraint "election_pkey" PRIMARY KEY using
 
 alter table "public"."election_candidate" add constraint "election_candidate_pkey" PRIMARY KEY using index "election_candidate_pkey";
 
+alter table "public"."election_offline_tally" add constraint "election_offline_tally_pkey" PRIMARY KEY using index "election_offline_tally_pkey";
+
 alter table "public"."elector" add constraint "elector_pkey" PRIMARY KEY using index "elector_pkey";
 
 alter table "public"."event" add constraint "event_pkey" PRIMARY KEY using index "event_pkey";
@@ -2137,11 +2701,11 @@ alter table "public"."event_exception" add constraint "event_exception_pkey" PRI
 
 alter table "public"."event_hashtag" add constraint "event_hashtag_pkey" PRIMARY KEY using index "event_hashtag_pkey";
 
+alter table "public"."event_offline_participant" add constraint "event_offline_participant_pkey" PRIMARY KEY using index "event_offline_participant_pkey";
+
 alter table "public"."event_participant" add constraint "event_participant_pkey" PRIMARY KEY using index "event_participant_pkey";
 
-alter table "public"."event_position" add constraint "event_position_pkey" PRIMARY KEY using index "event_position_pkey";
-
-alter table "public"."event_position_holder" add constraint "event_position_holder_pkey" PRIMARY KEY using index "event_position_holder_pkey";
+alter table "public"."event_participant_role" add constraint "event_participant_role_pkey" PRIMARY KEY using index "event_participant_role_pkey";
 
 alter table "public"."file" add constraint "file_pkey" PRIMARY KEY using index "file_pkey";
 
@@ -2159,11 +2723,21 @@ alter table "public"."group" add constraint "group_pkey" PRIMARY KEY using index
 
 alter table "public"."group_delegate_allocation" add constraint "group_delegate_allocation_pkey" PRIMARY KEY using index "group_delegate_allocation_pkey";
 
+alter table "public"."group_guest_access" add constraint "group_guest_access_pkey" PRIMARY KEY using index "group_guest_access_pkey";
+
+alter table "public"."group_guest_role" add constraint "group_guest_role_pkey" PRIMARY KEY using index "group_guest_role_pkey";
+
 alter table "public"."group_hashtag" add constraint "group_hashtag_pkey" PRIMARY KEY using index "group_hashtag_pkey";
 
 alter table "public"."group_membership" add constraint "group_membership_pkey" PRIMARY KEY using index "group_membership_pkey";
 
-alter table "public"."group_relationship" add constraint "group_relationship_pkey" PRIMARY KEY using index "group_relationship_pkey";
+alter table "public"."group_membership_role" add constraint "group_membership_role_pkey" PRIMARY KEY using index "group_membership_role_pkey";
+
+alter table "public"."group_offline_member" add constraint "group_offline_member_pkey" PRIMARY KEY using index "group_offline_member_pkey";
+
+alter table "public"."group_offline_membership" add constraint "group_offline_membership_pkey" PRIMARY KEY using index "group_offline_membership_pkey";
+
+alter table "public"."group_offline_membership_role" add constraint "group_offline_membership_role_pkey" PRIMARY KEY using index "group_offline_membership_role_pkey";
 
 alter table "public"."group_workflow" add constraint "group_workflow_pkey" PRIMARY KEY using index "group_workflow_pkey";
 
@@ -2181,11 +2755,15 @@ alter table "public"."indicative_voter_participation" add constraint "indicative
 
 alter table "public"."link" add constraint "link_pkey" PRIMARY KEY using index "link_pkey";
 
-alter table "public"."meeting_booking" add constraint "meeting_booking_pkey" PRIMARY KEY using index "meeting_booking_pkey";
-
-alter table "public"."meeting_slot" add constraint "meeting_slot_pkey" PRIMARY KEY using index "meeting_slot_pkey";
-
 alter table "public"."message" add constraint "message_pkey" PRIMARY KEY using index "message_pkey";
+
+alter table "public"."network_link" add constraint "network_link_pkey" PRIMARY KEY using index "network_link_pkey";
+
+alter table "public"."network_link_change_request" add constraint "network_link_change_request_pkey" PRIMARY KEY using index "network_link_change_request_pkey";
+
+alter table "public"."network_link_membership_rule" add constraint "network_link_membership_rule_pkey" PRIMARY KEY using index "network_link_membership_rule_pkey";
+
+alter table "public"."network_link_right" add constraint "network_link_right_pkey" PRIMARY KEY using index "network_link_right_pkey";
 
 alter table "public"."notification" add constraint "notification_pkey" PRIMARY KEY using index "notification_pkey";
 
@@ -2197,15 +2775,17 @@ alter table "public"."participant" add constraint "participant_pkey" PRIMARY KEY
 
 alter table "public"."payment" add constraint "payment_pkey" PRIMARY KEY using index "payment_pkey";
 
-alter table "public"."position" add constraint "position_pkey" PRIMARY KEY using index "position_pkey";
+alter table "public"."pql_filter" add constraint "pql_filter_pkey" PRIMARY KEY using index "pql_filter_pkey";
 
-alter table "public"."position_holder_history" add constraint "position_holder_history_pkey" PRIMARY KEY using index "position_holder_history_pkey";
+alter table "public"."process_task" add constraint "process_task_pkey" PRIMARY KEY using index "process_task_pkey";
 
 alter table "public"."push_subscription" add constraint "push_subscription_pkey" PRIMARY KEY using index "push_subscription_pkey";
 
 alter table "public"."reaction" add constraint "reaction_pkey" PRIMARY KEY using index "reaction_pkey";
 
 alter table "public"."role" add constraint "role_pkey" PRIMARY KEY using index "role_pkey";
+
+alter table "public"."role_holder_history" add constraint "role_holder_history_pkey" PRIMARY KEY using index "role_holder_history_pkey";
 
 alter table "public"."speaker_list" add constraint "speaker_list_pkey" PRIMARY KEY using index "speaker_list_pkey";
 
@@ -2251,6 +2831,8 @@ alter table "public"."vote" add constraint "vote_pkey" PRIMARY KEY using index "
 
 alter table "public"."vote_choice" add constraint "vote_choice_pkey" PRIMARY KEY using index "vote_choice_pkey";
 
+alter table "public"."vote_offline_tally" add constraint "vote_offline_tally_pkey" PRIMARY KEY using index "vote_offline_tally_pkey";
+
 alter table "public"."voter" add constraint "voter_pkey" PRIMARY KEY using index "voter_pkey";
 
 alter table "public"."voting_password" add constraint "voting_password_pkey" PRIMARY KEY using index "voting_password_pkey";
@@ -2289,9 +2871,25 @@ alter table "public"."agenda_item_change_request" add constraint "agenda_item_ch
 
 alter table "public"."agenda_item_change_request" validate constraint "agenda_item_change_request_vote_id_fkey";
 
+alter table "public"."ai_provider_credential" add constraint "ai_provider_credential_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
+
+alter table "public"."ai_provider_credential" validate constraint "ai_provider_credential_user_id_fkey";
+
+alter table "public"."ai_skill" add constraint "ai_skill_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
+
+alter table "public"."ai_skill" validate constraint "ai_skill_user_id_fkey";
+
+alter table "public"."ai_tool" add constraint "ai_tool_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
+
+alter table "public"."ai_tool" validate constraint "ai_tool_user_id_fkey";
+
 alter table "public"."amendment" add constraint "amendment_created_by_id_fkey" FOREIGN KEY (created_by_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
 
 alter table "public"."amendment" validate constraint "amendment_created_by_id_fkey";
+
+alter table "public"."amendment" add constraint "amendment_current_process_run_fk" FOREIGN KEY (current_process_run_id) REFERENCES public.amendment_process_run(id) ON DELETE SET NULL not valid;
+
+alter table "public"."amendment" validate constraint "amendment_current_process_run_fk";
 
 alter table "public"."amendment" add constraint "amendment_document_id_fkey" FOREIGN KEY (document_id) REFERENCES public.document(id) ON DELETE SET NULL not valid;
 
@@ -2323,6 +2921,10 @@ alter table "public"."amendment_path" add constraint "amendment_path_amendment_i
 
 alter table "public"."amendment_path" validate constraint "amendment_path_amendment_id_fkey";
 
+alter table "public"."amendment_path" add constraint "amendment_path_process_run_fk" FOREIGN KEY (process_run_id) REFERENCES public.amendment_process_run(id) ON DELETE SET NULL not valid;
+
+alter table "public"."amendment_path" validate constraint "amendment_path_process_run_fk";
+
 alter table "public"."amendment_path" add constraint "amendment_path_workflow_id_fkey" FOREIGN KEY (workflow_id) REFERENCES public.group_workflow(id) ON DELETE SET NULL not valid;
 
 alter table "public"."amendment_path" validate constraint "amendment_path_workflow_id_fkey";
@@ -2330,6 +2932,106 @@ alter table "public"."amendment_path" validate constraint "amendment_path_workfl
 alter table "public"."amendment_path_segment" add constraint "amendment_path_segment_path_id_fkey" FOREIGN KEY (path_id) REFERENCES public.amendment_path(id) ON DELETE CASCADE not valid;
 
 alter table "public"."amendment_path_segment" validate constraint "amendment_path_segment_path_id_fkey";
+
+alter table "public"."amendment_path_segment" add constraint "amendment_path_segment_process_branch_fk" FOREIGN KEY (process_branch_id) REFERENCES public.amendment_process_branch(id) ON DELETE SET NULL not valid;
+
+alter table "public"."amendment_path_segment" validate constraint "amendment_path_segment_process_branch_fk";
+
+alter table "public"."amendment_path_segment" add constraint "amendment_path_segment_process_step_run_fk" FOREIGN KEY (process_step_run_id) REFERENCES public.amendment_process_step_run(id) ON DELETE SET NULL not valid;
+
+alter table "public"."amendment_path_segment" validate constraint "amendment_path_segment_process_step_run_fk";
+
+alter table "public"."amendment_process_branch" add constraint "amendment_process_branch_document_version_id_fkey" FOREIGN KEY (document_version_id) REFERENCES public.document_version(id) ON DELETE SET NULL not valid;
+
+alter table "public"."amendment_process_branch" validate constraint "amendment_process_branch_document_version_id_fkey";
+
+alter table "public"."amendment_process_branch" add constraint "amendment_process_branch_merged_into_branch_id_fkey" FOREIGN KEY (merged_into_branch_id) REFERENCES public.amendment_process_branch(id) ON DELETE SET NULL not valid;
+
+alter table "public"."amendment_process_branch" validate constraint "amendment_process_branch_merged_into_branch_id_fkey";
+
+alter table "public"."amendment_process_branch" add constraint "amendment_process_branch_parent_branch_id_fkey" FOREIGN KEY (parent_branch_id) REFERENCES public.amendment_process_branch(id) ON DELETE SET NULL not valid;
+
+alter table "public"."amendment_process_branch" validate constraint "amendment_process_branch_parent_branch_id_fkey";
+
+alter table "public"."amendment_process_branch" add constraint "amendment_process_branch_process_run_id_fkey" FOREIGN KEY (process_run_id) REFERENCES public.amendment_process_run(id) ON DELETE CASCADE not valid;
+
+alter table "public"."amendment_process_branch" validate constraint "amendment_process_branch_process_run_id_fkey";
+
+alter table "public"."amendment_process_branch" add constraint "amendment_process_branch_source_step_fk" FOREIGN KEY (source_step_run_id) REFERENCES public.amendment_process_step_run(id) ON DELETE SET NULL not valid;
+
+alter table "public"."amendment_process_branch" validate constraint "amendment_process_branch_source_step_fk";
+
+alter table "public"."amendment_process_run" add constraint "amendment_process_run_active_branch_fk" FOREIGN KEY (active_branch_id) REFERENCES public.amendment_process_branch(id) ON DELETE SET NULL not valid;
+
+alter table "public"."amendment_process_run" validate constraint "amendment_process_run_active_branch_fk";
+
+alter table "public"."amendment_process_run" add constraint "amendment_process_run_amendment_id_fkey" FOREIGN KEY (amendment_id) REFERENCES public.amendment(id) ON DELETE CASCADE not valid;
+
+alter table "public"."amendment_process_run" validate constraint "amendment_process_run_amendment_id_fkey";
+
+alter table "public"."amendment_process_run" add constraint "amendment_process_run_created_by_id_fkey" FOREIGN KEY (created_by_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
+
+alter table "public"."amendment_process_run" validate constraint "amendment_process_run_created_by_id_fkey";
+
+alter table "public"."amendment_process_run" add constraint "amendment_process_run_root_workflow_id_fkey" FOREIGN KEY (root_workflow_id) REFERENCES public.group_workflow(id) ON DELETE SET NULL not valid;
+
+alter table "public"."amendment_process_run" validate constraint "amendment_process_run_root_workflow_id_fkey";
+
+alter table "public"."amendment_process_run" add constraint "amendment_process_run_selected_source_group_id_fkey" FOREIGN KEY (selected_source_group_id) REFERENCES public."group"(id) ON DELETE SET NULL not valid;
+
+alter table "public"."amendment_process_run" validate constraint "amendment_process_run_selected_source_group_id_fkey";
+
+alter table "public"."amendment_process_run" add constraint "amendment_process_run_selected_target_group_id_fkey" FOREIGN KEY (selected_target_group_id) REFERENCES public."group"(id) ON DELETE SET NULL not valid;
+
+alter table "public"."amendment_process_run" validate constraint "amendment_process_run_selected_target_group_id_fkey";
+
+alter table "public"."amendment_process_run" add constraint "amendment_process_run_selected_target_workflow_id_fkey" FOREIGN KEY (selected_target_workflow_id) REFERENCES public.group_workflow(id) ON DELETE SET NULL not valid;
+
+alter table "public"."amendment_process_run" validate constraint "amendment_process_run_selected_target_workflow_id_fkey";
+
+alter table "public"."amendment_process_run" add constraint "amendment_process_run_terminal_step_fk" FOREIGN KEY (terminal_step_run_id) REFERENCES public.amendment_process_step_run(id) ON DELETE SET NULL not valid;
+
+alter table "public"."amendment_process_run" validate constraint "amendment_process_run_terminal_step_fk";
+
+alter table "public"."amendment_process_step_run" add constraint "amendment_process_step_run_agenda_item_fk" FOREIGN KEY (agenda_item_id) REFERENCES public.agenda_item(id) ON DELETE SET NULL not valid;
+
+alter table "public"."amendment_process_step_run" validate constraint "amendment_process_step_run_agenda_item_fk";
+
+alter table "public"."amendment_process_step_run" add constraint "amendment_process_step_run_branch_id_fkey" FOREIGN KEY (branch_id) REFERENCES public.amendment_process_branch(id) ON DELETE CASCADE not valid;
+
+alter table "public"."amendment_process_step_run" validate constraint "amendment_process_step_run_branch_id_fkey";
+
+alter table "public"."amendment_process_step_run" add constraint "amendment_process_step_run_event_id_fkey" FOREIGN KEY (event_id) REFERENCES public.event(id) ON DELETE SET NULL not valid;
+
+alter table "public"."amendment_process_step_run" validate constraint "amendment_process_step_run_event_id_fkey";
+
+alter table "public"."amendment_process_step_run" add constraint "amendment_process_step_run_process_run_id_fkey" FOREIGN KEY (process_run_id) REFERENCES public.amendment_process_run(id) ON DELETE CASCADE not valid;
+
+alter table "public"."amendment_process_step_run" validate constraint "amendment_process_step_run_process_run_id_fkey";
+
+alter table "public"."amendment_process_step_run" add constraint "amendment_process_step_run_source_group_id_fkey" FOREIGN KEY (source_group_id) REFERENCES public."group"(id) ON DELETE SET NULL not valid;
+
+alter table "public"."amendment_process_step_run" validate constraint "amendment_process_step_run_source_group_id_fkey";
+
+alter table "public"."amendment_process_step_run" add constraint "amendment_process_step_run_support_confirmation_id_fkey" FOREIGN KEY (support_confirmation_id) REFERENCES public.support_confirmation(id) ON DELETE SET NULL not valid;
+
+alter table "public"."amendment_process_step_run" validate constraint "amendment_process_step_run_support_confirmation_id_fkey";
+
+alter table "public"."amendment_process_step_run" add constraint "amendment_process_step_run_target_group_id_fkey" FOREIGN KEY (target_group_id) REFERENCES public."group"(id) ON DELETE SET NULL not valid;
+
+alter table "public"."amendment_process_step_run" validate constraint "amendment_process_step_run_target_group_id_fkey";
+
+alter table "public"."amendment_process_step_run" add constraint "amendment_process_step_run_vote_fk" FOREIGN KEY (vote_id) REFERENCES public.vote(id) ON DELETE SET NULL not valid;
+
+alter table "public"."amendment_process_step_run" validate constraint "amendment_process_step_run_vote_fk";
+
+alter table "public"."amendment_process_step_run" add constraint "amendment_process_step_run_workflow_id_fkey" FOREIGN KEY (workflow_id) REFERENCES public.group_workflow(id) ON DELETE SET NULL not valid;
+
+alter table "public"."amendment_process_step_run" validate constraint "amendment_process_step_run_workflow_id_fkey";
+
+alter table "public"."amendment_process_step_run" add constraint "amendment_process_step_run_workflow_step_id_fkey" FOREIGN KEY (workflow_step_id) REFERENCES public.group_workflow_step(id) ON DELETE SET NULL not valid;
+
+alter table "public"."amendment_process_step_run" validate constraint "amendment_process_step_run_workflow_step_id_fkey";
 
 alter table "public"."amendment_support_vote" add constraint "amendment_support_vote_amendment_id_fkey" FOREIGN KEY (amendment_id) REFERENCES public.amendment(id) ON DELETE CASCADE not valid;
 
@@ -2429,6 +3131,14 @@ alter table "public"."comment_vote" add constraint "comment_vote_user_id_fkey" F
 
 alter table "public"."comment_vote" validate constraint "comment_vote_user_id_fkey";
 
+alter table "public"."conversation" add constraint "conversation_assistant_for_user_id_fkey" FOREIGN KEY (assistant_for_user_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
+
+alter table "public"."conversation" validate constraint "conversation_assistant_for_user_id_fkey";
+
+alter table "public"."conversation" add constraint "conversation_event_id_fkey" FOREIGN KEY (event_id) REFERENCES public.event(id) ON DELETE CASCADE not valid;
+
+alter table "public"."conversation" validate constraint "conversation_event_id_fkey";
+
 alter table "public"."conversation" add constraint "conversation_requested_by_id_fkey" FOREIGN KEY (requested_by_id) REFERENCES public."user"(id) ON DELETE SET NULL not valid;
 
 alter table "public"."conversation" validate constraint "conversation_requested_by_id_fkey";
@@ -2465,6 +3175,10 @@ alter table "public"."document_version" add constraint "document_version_documen
 
 alter table "public"."document_version" validate constraint "document_version_document_id_fkey";
 
+alter table "public"."election" add constraint "election_role_id_fkey" FOREIGN KEY (role_id) REFERENCES public.role(id) ON DELETE SET NULL not valid;
+
+alter table "public"."election" validate constraint "election_role_id_fkey";
+
 alter table "public"."election_candidate" add constraint "election_candidate_election_id_fkey" FOREIGN KEY (election_id) REFERENCES public.election(id) ON DELETE CASCADE not valid;
 
 alter table "public"."election_candidate" validate constraint "election_candidate_election_id_fkey";
@@ -2472,6 +3186,28 @@ alter table "public"."election_candidate" validate constraint "election_candidat
 alter table "public"."election_candidate" add constraint "election_candidate_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
 
 alter table "public"."election_candidate" validate constraint "election_candidate_user_id_fkey";
+
+alter table "public"."election_offline_tally" add constraint "election_offline_tally_candidate_id_fkey" FOREIGN KEY (candidate_id) REFERENCES public.election_candidate(id) ON DELETE CASCADE not valid;
+
+alter table "public"."election_offline_tally" validate constraint "election_offline_tally_candidate_id_fkey";
+
+alter table "public"."election_offline_tally" add constraint "election_offline_tally_count_check" CHECK ((count >= 0)) not valid;
+
+alter table "public"."election_offline_tally" validate constraint "election_offline_tally_count_check";
+
+alter table "public"."election_offline_tally" add constraint "election_offline_tally_election_id_fkey" FOREIGN KEY (election_id) REFERENCES public.election(id) ON DELETE CASCADE not valid;
+
+alter table "public"."election_offline_tally" validate constraint "election_offline_tally_election_id_fkey";
+
+alter table "public"."election_offline_tally" add constraint "election_offline_tally_election_id_phase_candidate_id_key" UNIQUE using index "election_offline_tally_election_id_phase_candidate_id_key";
+
+alter table "public"."election_offline_tally" add constraint "election_offline_tally_phase_check" CHECK ((phase = ANY (ARRAY['indicative'::text, 'final'::text]))) not valid;
+
+alter table "public"."election_offline_tally" validate constraint "election_offline_tally_phase_check";
+
+alter table "public"."election_offline_tally" add constraint "election_offline_tally_updated_by_id_fkey" FOREIGN KEY (updated_by_id) REFERENCES public."user"(id) ON DELETE SET NULL not valid;
+
+alter table "public"."election_offline_tally" validate constraint "election_offline_tally_updated_by_id_fkey";
 
 alter table "public"."elector" add constraint "elector_election_id_fkey" FOREIGN KEY (election_id) REFERENCES public.election(id) ON DELETE CASCADE not valid;
 
@@ -2482,6 +3218,10 @@ alter table "public"."elector" add constraint "elector_election_id_user_id_key" 
 alter table "public"."elector" add constraint "elector_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
 
 alter table "public"."elector" validate constraint "elector_user_id_fkey";
+
+alter table "public"."event" add constraint "event_attendance_mode_check" CHECK ((attendance_mode = ANY (ARRAY['online'::text, 'hybrid'::text, 'offline'::text]))) not valid;
+
+alter table "public"."event" validate constraint "event_attendance_mode_check";
 
 alter table "public"."event" add constraint "event_creator_id_fkey" FOREIGN KEY (creator_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
 
@@ -2511,29 +3251,51 @@ alter table "public"."event_hashtag" add constraint "event_hashtag_hashtag_id_fk
 
 alter table "public"."event_hashtag" validate constraint "event_hashtag_hashtag_id_fkey";
 
+alter table "public"."event_offline_participant" add constraint "event_offline_participant_attendance_status_check" CHECK ((attendance_status = ANY (ARRAY['listed'::text, 'confirmed'::text]))) not valid;
+
+alter table "public"."event_offline_participant" validate constraint "event_offline_participant_attendance_status_check";
+
+alter table "public"."event_offline_participant" add constraint "event_offline_participant_connected_user_id_fkey" FOREIGN KEY (connected_user_id) REFERENCES public."user"(id) ON DELETE SET NULL not valid;
+
+alter table "public"."event_offline_participant" validate constraint "event_offline_participant_connected_user_id_fkey";
+
+alter table "public"."event_offline_participant" add constraint "event_offline_participant_event_id_fkey" FOREIGN KEY (event_id) REFERENCES public.event(id) ON DELETE CASCADE not valid;
+
+alter table "public"."event_offline_participant" validate constraint "event_offline_participant_event_id_fkey";
+
+alter table "public"."event_offline_participant" add constraint "event_offline_participant_group_offline_member_id_fkey" FOREIGN KEY (group_offline_member_id) REFERENCES public.group_offline_member(id) ON DELETE SET NULL not valid;
+
+alter table "public"."event_offline_participant" validate constraint "event_offline_participant_group_offline_member_id_fkey";
+
+alter table "public"."event_offline_participant" add constraint "event_offline_participant_participation_channel_check" CHECK ((participation_channel = ANY (ARRAY['online'::text, 'offline'::text]))) not valid;
+
+alter table "public"."event_offline_participant" validate constraint "event_offline_participant_participation_channel_check";
+
+alter table "public"."event_offline_participant" add constraint "event_offline_participant_source_type_check" CHECK ((source_type = ANY (ARRAY['group_member'::text, 'event_extra'::text]))) not valid;
+
+alter table "public"."event_offline_participant" validate constraint "event_offline_participant_source_type_check";
+
 alter table "public"."event_participant" add constraint "event_participant_event_id_fkey" FOREIGN KEY (event_id) REFERENCES public.event(id) ON DELETE CASCADE not valid;
 
 alter table "public"."event_participant" validate constraint "event_participant_event_id_fkey";
-
-alter table "public"."event_participant" add constraint "event_participant_role_id_fkey" FOREIGN KEY (role_id) REFERENCES public.role(id) ON DELETE SET NULL not valid;
-
-alter table "public"."event_participant" validate constraint "event_participant_role_id_fkey";
 
 alter table "public"."event_participant" add constraint "event_participant_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
 
 alter table "public"."event_participant" validate constraint "event_participant_user_id_fkey";
 
-alter table "public"."event_position" add constraint "event_position_event_id_fkey" FOREIGN KEY (event_id) REFERENCES public.event(id) ON DELETE CASCADE not valid;
+alter table "public"."event_participant_role" add constraint "event_participant_role_assigned_by_id_fkey" FOREIGN KEY (assigned_by_id) REFERENCES public."user"(id) ON DELETE SET NULL not valid;
 
-alter table "public"."event_position" validate constraint "event_position_event_id_fkey";
+alter table "public"."event_participant_role" validate constraint "event_participant_role_assigned_by_id_fkey";
 
-alter table "public"."event_position_holder" add constraint "event_position_holder_position_id_fkey" FOREIGN KEY (position_id) REFERENCES public.event_position(id) ON DELETE CASCADE not valid;
+alter table "public"."event_participant_role" add constraint "event_participant_role_event_participant_id_fkey" FOREIGN KEY (event_participant_id) REFERENCES public.event_participant(id) ON DELETE CASCADE not valid;
 
-alter table "public"."event_position_holder" validate constraint "event_position_holder_position_id_fkey";
+alter table "public"."event_participant_role" validate constraint "event_participant_role_event_participant_id_fkey";
 
-alter table "public"."event_position_holder" add constraint "event_position_holder_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
+alter table "public"."event_participant_role" add constraint "event_participant_role_event_participant_id_role_id_key" UNIQUE using index "event_participant_role_event_participant_id_role_id_key";
 
-alter table "public"."event_position_holder" validate constraint "event_position_holder_user_id_fkey";
+alter table "public"."event_participant_role" add constraint "event_participant_role_role_id_fkey" FOREIGN KEY (role_id) REFERENCES public.role(id) ON DELETE CASCADE not valid;
+
+alter table "public"."event_participant_role" validate constraint "event_participant_role_role_id_fkey";
 
 alter table "public"."final_candidate_selection" add constraint "final_candidate_selection_candidate_id_fkey" FOREIGN KEY (candidate_id) REFERENCES public.election_candidate(id) ON DELETE CASCADE not valid;
 
@@ -2587,10 +3349,6 @@ alter table "public"."follow" add constraint "follow_follower_id_fkey" FOREIGN K
 
 alter table "public"."follow" validate constraint "follow_follower_id_fkey";
 
-alter table "public"."group" add constraint "group_group_type_check" CHECK ((group_type = ANY (ARRAY['base'::text, 'hierarchical'::text]))) not valid;
-
-alter table "public"."group" validate constraint "group_group_type_check";
-
 alter table "public"."group" add constraint "group_owner_id_fkey" FOREIGN KEY (owner_id) REFERENCES public."user"(id) ON DELETE SET NULL not valid;
 
 alter table "public"."group" validate constraint "group_owner_id_fkey";
@@ -2598,6 +3356,38 @@ alter table "public"."group" validate constraint "group_owner_id_fkey";
 alter table "public"."group_delegate_allocation" add constraint "group_delegate_allocation_event_id_fkey" FOREIGN KEY (event_id) REFERENCES public.event(id) ON DELETE CASCADE not valid;
 
 alter table "public"."group_delegate_allocation" validate constraint "group_delegate_allocation_event_id_fkey";
+
+alter table "public"."group_guest_access" add constraint "group_guest_access_group_id_fkey" FOREIGN KEY (group_id) REFERENCES public."group"(id) ON DELETE CASCADE not valid;
+
+alter table "public"."group_guest_access" validate constraint "group_guest_access_group_id_fkey";
+
+alter table "public"."group_guest_access" add constraint "group_guest_access_group_id_user_id_key" UNIQUE using index "group_guest_access_group_id_user_id_key";
+
+alter table "public"."group_guest_access" add constraint "group_guest_access_invited_by_id_fkey" FOREIGN KEY (invited_by_id) REFERENCES public."user"(id) ON DELETE SET NULL not valid;
+
+alter table "public"."group_guest_access" validate constraint "group_guest_access_invited_by_id_fkey";
+
+alter table "public"."group_guest_access" add constraint "group_guest_access_status_check" CHECK ((status = ANY (ARRAY['requested'::text, 'invited'::text, 'active'::text, 'revoked'::text]))) not valid;
+
+alter table "public"."group_guest_access" validate constraint "group_guest_access_status_check";
+
+alter table "public"."group_guest_access" add constraint "group_guest_access_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
+
+alter table "public"."group_guest_access" validate constraint "group_guest_access_user_id_fkey";
+
+alter table "public"."group_guest_role" add constraint "group_guest_role_assigned_by_id_fkey" FOREIGN KEY (assigned_by_id) REFERENCES public."user"(id) ON DELETE SET NULL not valid;
+
+alter table "public"."group_guest_role" validate constraint "group_guest_role_assigned_by_id_fkey";
+
+alter table "public"."group_guest_role" add constraint "group_guest_role_group_guest_access_id_fkey" FOREIGN KEY (group_guest_access_id) REFERENCES public.group_guest_access(id) ON DELETE CASCADE not valid;
+
+alter table "public"."group_guest_role" validate constraint "group_guest_role_group_guest_access_id_fkey";
+
+alter table "public"."group_guest_role" add constraint "group_guest_role_group_guest_access_id_role_id_key" UNIQUE using index "group_guest_role_group_guest_access_id_role_id_key";
+
+alter table "public"."group_guest_role" add constraint "group_guest_role_role_id_fkey" FOREIGN KEY (role_id) REFERENCES public.role(id) ON DELETE CASCADE not valid;
+
+alter table "public"."group_guest_role" validate constraint "group_guest_role_role_id_fkey";
 
 alter table "public"."group_hashtag" add constraint "group_hashtag_group_id_fkey" FOREIGN KEY (group_id) REFERENCES public."group"(id) ON DELETE CASCADE not valid;
 
@@ -2613,10 +3403,6 @@ alter table "public"."group_membership" add constraint "group_membership_group_i
 
 alter table "public"."group_membership" validate constraint "group_membership_group_id_fkey";
 
-alter table "public"."group_membership" add constraint "group_membership_role_id_fkey" FOREIGN KEY (role_id) REFERENCES public.role(id) ON DELETE SET NULL not valid;
-
-alter table "public"."group_membership" validate constraint "group_membership_role_id_fkey";
-
 alter table "public"."group_membership" add constraint "group_membership_source_group_id_fkey" FOREIGN KEY (source_group_id) REFERENCES public."group"(id) ON DELETE CASCADE not valid;
 
 alter table "public"."group_membership" validate constraint "group_membership_source_group_id_fkey";
@@ -2627,13 +3413,59 @@ alter table "public"."group_membership" validate constraint "group_membership_us
 
 alter table "public"."group_membership" add constraint "group_membership_user_id_group_id_key" UNIQUE using index "group_membership_user_id_group_id_key";
 
-alter table "public"."group_relationship" add constraint "group_relationship_group_id_fkey" FOREIGN KEY (group_id) REFERENCES public."group"(id) ON DELETE CASCADE not valid;
+alter table "public"."group_membership_role" add constraint "group_membership_role_assigned_by_id_fkey" FOREIGN KEY (assigned_by_id) REFERENCES public."user"(id) ON DELETE SET NULL not valid;
 
-alter table "public"."group_relationship" validate constraint "group_relationship_group_id_fkey";
+alter table "public"."group_membership_role" validate constraint "group_membership_role_assigned_by_id_fkey";
 
-alter table "public"."group_relationship" add constraint "group_relationship_related_group_id_fkey" FOREIGN KEY (related_group_id) REFERENCES public."group"(id) ON DELETE CASCADE not valid;
+alter table "public"."group_membership_role" add constraint "group_membership_role_group_membership_id_fkey" FOREIGN KEY (group_membership_id) REFERENCES public.group_membership(id) ON DELETE CASCADE not valid;
 
-alter table "public"."group_relationship" validate constraint "group_relationship_related_group_id_fkey";
+alter table "public"."group_membership_role" validate constraint "group_membership_role_group_membership_id_fkey";
+
+alter table "public"."group_membership_role" add constraint "group_membership_role_group_membership_id_role_id_key" UNIQUE using index "group_membership_role_group_membership_id_role_id_key";
+
+alter table "public"."group_membership_role" add constraint "group_membership_role_role_id_fkey" FOREIGN KEY (role_id) REFERENCES public.role(id) ON DELETE CASCADE not valid;
+
+alter table "public"."group_membership_role" validate constraint "group_membership_role_role_id_fkey";
+
+alter table "public"."group_offline_member" add constraint "group_offline_member_connected_user_id_fkey" FOREIGN KEY (connected_user_id) REFERENCES public."user"(id) ON DELETE SET NULL not valid;
+
+alter table "public"."group_offline_member" validate constraint "group_offline_member_connected_user_id_fkey";
+
+alter table "public"."group_offline_member" add constraint "group_offline_member_created_by_id_fkey" FOREIGN KEY (created_by_id) REFERENCES public."user"(id) ON DELETE SET NULL not valid;
+
+alter table "public"."group_offline_member" validate constraint "group_offline_member_created_by_id_fkey";
+
+alter table "public"."group_offline_member" add constraint "group_offline_member_group_id_fkey" FOREIGN KEY (group_id) REFERENCES public."group"(id) ON DELETE CASCADE not valid;
+
+alter table "public"."group_offline_member" validate constraint "group_offline_member_group_id_fkey";
+
+alter table "public"."group_offline_membership" add constraint "group_offline_membership_group_id_fkey" FOREIGN KEY (group_id) REFERENCES public."group"(id) ON DELETE CASCADE not valid;
+
+alter table "public"."group_offline_membership" validate constraint "group_offline_membership_group_id_fkey";
+
+alter table "public"."group_offline_membership" add constraint "group_offline_membership_group_offline_member_id_fkey" FOREIGN KEY (group_offline_member_id) REFERENCES public.group_offline_member(id) ON DELETE CASCADE not valid;
+
+alter table "public"."group_offline_membership" validate constraint "group_offline_membership_group_offline_member_id_fkey";
+
+alter table "public"."group_offline_membership" add constraint "group_offline_membership_group_offline_member_id_group_id_key" UNIQUE using index "group_offline_membership_group_offline_member_id_group_id_key";
+
+alter table "public"."group_offline_membership" add constraint "group_offline_membership_source_group_id_fkey" FOREIGN KEY (source_group_id) REFERENCES public."group"(id) ON DELETE CASCADE not valid;
+
+alter table "public"."group_offline_membership" validate constraint "group_offline_membership_source_group_id_fkey";
+
+alter table "public"."group_offline_membership_role" add constraint "group_offline_membership_role_assigned_by_id_fkey" FOREIGN KEY (assigned_by_id) REFERENCES public."user"(id) ON DELETE SET NULL not valid;
+
+alter table "public"."group_offline_membership_role" validate constraint "group_offline_membership_role_assigned_by_id_fkey";
+
+alter table "public"."group_offline_membership_role" add constraint "group_offline_membership_role_group_offline_membership_id_fkey" FOREIGN KEY (group_offline_membership_id) REFERENCES public.group_offline_membership(id) ON DELETE CASCADE not valid;
+
+alter table "public"."group_offline_membership_role" validate constraint "group_offline_membership_role_group_offline_membership_id_fkey";
+
+alter table "public"."group_offline_membership_role" add constraint "group_offline_membership_role_group_offline_membership_id_r_key" UNIQUE using index "group_offline_membership_role_group_offline_membership_id_r_key";
+
+alter table "public"."group_offline_membership_role" add constraint "group_offline_membership_role_role_id_fkey" FOREIGN KEY (role_id) REFERENCES public.role(id) ON DELETE CASCADE not valid;
+
+alter table "public"."group_offline_membership_role" validate constraint "group_offline_membership_role_role_id_fkey";
 
 alter table "public"."group_workflow" add constraint "group_workflow_created_by_id_fkey" FOREIGN KEY (created_by_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
 
@@ -2646,6 +3478,10 @@ alter table "public"."group_workflow" validate constraint "group_workflow_group_
 alter table "public"."group_workflow_step" add constraint "group_workflow_step_group_id_fkey" FOREIGN KEY (group_id) REFERENCES public."group"(id) ON DELETE CASCADE not valid;
 
 alter table "public"."group_workflow_step" validate constraint "group_workflow_step_group_id_fkey";
+
+alter table "public"."group_workflow_step" add constraint "group_workflow_step_target_workflow_id_fkey" FOREIGN KEY (target_workflow_id) REFERENCES public.group_workflow(id) ON DELETE SET NULL not valid;
+
+alter table "public"."group_workflow_step" validate constraint "group_workflow_step_target_workflow_id_fkey";
 
 alter table "public"."group_workflow_step" add constraint "group_workflow_step_workflow_id_fkey" FOREIGN KEY (workflow_id) REFERENCES public.group_workflow(id) ON DELETE CASCADE not valid;
 
@@ -2695,21 +3531,9 @@ alter table "public"."indicative_voter_participation" add constraint "indicative
 
 alter table "public"."indicative_voter_participation" validate constraint "indicative_voter_participation_voter_id_fkey";
 
-alter table "public"."meeting_booking" add constraint "meeting_booking_slot_id_fkey" FOREIGN KEY (slot_id) REFERENCES public.meeting_slot(id) ON DELETE CASCADE not valid;
+alter table "public"."link" add constraint "link_event_id_fkey" FOREIGN KEY (event_id) REFERENCES public.event(id) ON DELETE CASCADE not valid;
 
-alter table "public"."meeting_booking" validate constraint "meeting_booking_slot_id_fkey";
-
-alter table "public"."meeting_booking" add constraint "meeting_booking_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
-
-alter table "public"."meeting_booking" validate constraint "meeting_booking_user_id_fkey";
-
-alter table "public"."meeting_slot" add constraint "meeting_slot_event_id_fkey" FOREIGN KEY (event_id) REFERENCES public.event(id) ON DELETE CASCADE not valid;
-
-alter table "public"."meeting_slot" validate constraint "meeting_slot_event_id_fkey";
-
-alter table "public"."meeting_slot" add constraint "meeting_slot_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
-
-alter table "public"."meeting_slot" validate constraint "meeting_slot_user_id_fkey";
+alter table "public"."link" validate constraint "link_event_id_fkey";
 
 alter table "public"."message" add constraint "message_conversation_id_fkey" FOREIGN KEY (conversation_id) REFERENCES public.conversation(id) ON DELETE CASCADE not valid;
 
@@ -2718,6 +3542,68 @@ alter table "public"."message" validate constraint "message_conversation_id_fkey
 alter table "public"."message" add constraint "message_sender_id_fkey" FOREIGN KEY (sender_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
 
 alter table "public"."message" validate constraint "message_sender_id_fkey";
+
+alter table "public"."network_link" add constraint "network_link_created_by_id_fkey" FOREIGN KEY (created_by_id) REFERENCES public."user"(id) ON DELETE SET NULL not valid;
+
+alter table "public"."network_link" validate constraint "network_link_created_by_id_fkey";
+
+alter table "public"."network_link" add constraint "network_link_source_group_id_fkey" FOREIGN KEY (source_group_id) REFERENCES public."group"(id) ON DELETE CASCADE not valid;
+
+alter table "public"."network_link" validate constraint "network_link_source_group_id_fkey";
+
+alter table "public"."network_link" add constraint "network_link_source_group_id_target_group_id_structural_rel_key" UNIQUE using index "network_link_source_group_id_target_group_id_structural_rel_key";
+
+alter table "public"."network_link" add constraint "network_link_target_group_id_fkey" FOREIGN KEY (target_group_id) REFERENCES public."group"(id) ON DELETE CASCADE not valid;
+
+alter table "public"."network_link" validate constraint "network_link_target_group_id_fkey";
+
+alter table "public"."network_link_change_request" add constraint "network_link_change_request_active_network_link_id_fkey" FOREIGN KEY (active_network_link_id) REFERENCES public.network_link(id) ON DELETE SET NULL not valid;
+
+alter table "public"."network_link_change_request" validate constraint "network_link_change_request_active_network_link_id_fkey";
+
+alter table "public"."network_link_change_request" add constraint "network_link_change_request_desired_role_id_fkey" FOREIGN KEY (desired_role_id) REFERENCES public.role(id) ON DELETE SET NULL not valid;
+
+alter table "public"."network_link_change_request" validate constraint "network_link_change_request_desired_role_id_fkey";
+
+alter table "public"."network_link_change_request" add constraint "network_link_change_request_initiator_group_id_fkey" FOREIGN KEY (initiator_group_id) REFERENCES public."group"(id) ON DELETE CASCADE not valid;
+
+alter table "public"."network_link_change_request" validate constraint "network_link_change_request_initiator_group_id_fkey";
+
+alter table "public"."network_link_change_request" add constraint "network_link_change_request_source_group_id_fkey" FOREIGN KEY (source_group_id) REFERENCES public."group"(id) ON DELETE CASCADE not valid;
+
+alter table "public"."network_link_change_request" validate constraint "network_link_change_request_source_group_id_fkey";
+
+alter table "public"."network_link_change_request" add constraint "network_link_change_request_target_group_id_fkey" FOREIGN KEY (target_group_id) REFERENCES public."group"(id) ON DELETE CASCADE not valid;
+
+alter table "public"."network_link_change_request" validate constraint "network_link_change_request_target_group_id_fkey";
+
+alter table "public"."network_link_membership_rule" add constraint "network_link_membership_rule_backward_role_id_fkey" FOREIGN KEY (backward_role_id) REFERENCES public.role(id) ON DELETE SET NULL not valid;
+
+alter table "public"."network_link_membership_rule" validate constraint "network_link_membership_rule_backward_role_id_fkey";
+
+alter table "public"."network_link_membership_rule" add constraint "network_link_membership_rule_forward_role_id_fkey" FOREIGN KEY (forward_role_id) REFERENCES public.role(id) ON DELETE SET NULL not valid;
+
+alter table "public"."network_link_membership_rule" validate constraint "network_link_membership_rule_forward_role_id_fkey";
+
+alter table "public"."network_link_membership_rule" add constraint "network_link_membership_rule_network_link_id_fkey" FOREIGN KEY (network_link_id) REFERENCES public.network_link(id) ON DELETE CASCADE not valid;
+
+alter table "public"."network_link_membership_rule" validate constraint "network_link_membership_rule_network_link_id_fkey";
+
+alter table "public"."network_link_membership_rule" add constraint "network_link_membership_rule_network_link_id_key" UNIQUE using index "network_link_membership_rule_network_link_id_key";
+
+alter table "public"."network_link_membership_rule" add constraint "network_link_membership_rule_role_id_fkey" FOREIGN KEY (role_id) REFERENCES public.role(id) ON DELETE SET NULL not valid;
+
+alter table "public"."network_link_membership_rule" validate constraint "network_link_membership_rule_role_id_fkey";
+
+alter table "public"."network_link_right" add constraint "network_link_right_initiator_group_id_fkey" FOREIGN KEY (initiator_group_id) REFERENCES public."group"(id) ON DELETE SET NULL not valid;
+
+alter table "public"."network_link_right" validate constraint "network_link_right_initiator_group_id_fkey";
+
+alter table "public"."network_link_right" add constraint "network_link_right_network_link_id_fkey" FOREIGN KEY (network_link_id) REFERENCES public.network_link(id) ON DELETE CASCADE not valid;
+
+alter table "public"."network_link_right" validate constraint "network_link_right_network_link_id_fkey";
+
+alter table "public"."network_link_right" add constraint "network_link_right_network_link_id_right_key_key" UNIQUE using index "network_link_right_network_link_id_right_key_key";
 
 alter table "public"."notification" add constraint "notification_recipient_id_fkey" FOREIGN KEY (recipient_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
 
@@ -2759,17 +3645,45 @@ alter table "public"."payment" add constraint "payment_receiver_user_id_fkey" FO
 
 alter table "public"."payment" validate constraint "payment_receiver_user_id_fkey";
 
-alter table "public"."position" add constraint "position_group_id_fkey" FOREIGN KEY (group_id) REFERENCES public."group"(id) ON DELETE CASCADE not valid;
+alter table "public"."pql_filter" add constraint "pql_filter_group_id_fkey" FOREIGN KEY (group_id) REFERENCES public."group"(id) ON DELETE CASCADE not valid;
 
-alter table "public"."position" validate constraint "position_group_id_fkey";
+alter table "public"."pql_filter" validate constraint "pql_filter_group_id_fkey";
 
-alter table "public"."position_holder_history" add constraint "position_holder_history_position_id_fkey" FOREIGN KEY (position_id) REFERENCES public."position"(id) ON DELETE CASCADE not valid;
+alter table "public"."pql_filter" add constraint "pql_filter_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
 
-alter table "public"."position_holder_history" validate constraint "position_holder_history_position_id_fkey";
+alter table "public"."pql_filter" validate constraint "pql_filter_user_id_fkey";
 
-alter table "public"."position_holder_history" add constraint "position_holder_history_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
+alter table "public"."process_task" add constraint "process_task_agenda_item_fk" FOREIGN KEY (agenda_item_id) REFERENCES public.agenda_item(id) ON DELETE SET NULL not valid;
 
-alter table "public"."position_holder_history" validate constraint "position_holder_history_user_id_fkey";
+alter table "public"."process_task" validate constraint "process_task_agenda_item_fk";
+
+alter table "public"."process_task" add constraint "process_task_branch_id_fkey" FOREIGN KEY (branch_id) REFERENCES public.amendment_process_branch(id) ON DELETE CASCADE not valid;
+
+alter table "public"."process_task" validate constraint "process_task_branch_id_fkey";
+
+alter table "public"."process_task" add constraint "process_task_event_id_fkey" FOREIGN KEY (event_id) REFERENCES public.event(id) ON DELETE SET NULL not valid;
+
+alter table "public"."process_task" validate constraint "process_task_event_id_fkey";
+
+alter table "public"."process_task" add constraint "process_task_group_id_fkey" FOREIGN KEY (group_id) REFERENCES public."group"(id) ON DELETE SET NULL not valid;
+
+alter table "public"."process_task" validate constraint "process_task_group_id_fkey";
+
+alter table "public"."process_task" add constraint "process_task_process_run_id_fkey" FOREIGN KEY (process_run_id) REFERENCES public.amendment_process_run(id) ON DELETE CASCADE not valid;
+
+alter table "public"."process_task" validate constraint "process_task_process_run_id_fkey";
+
+alter table "public"."process_task" add constraint "process_task_step_run_id_fkey" FOREIGN KEY (step_run_id) REFERENCES public.amendment_process_step_run(id) ON DELETE CASCADE not valid;
+
+alter table "public"."process_task" validate constraint "process_task_step_run_id_fkey";
+
+alter table "public"."process_task" add constraint "process_task_support_confirmation_id_fkey" FOREIGN KEY (support_confirmation_id) REFERENCES public.support_confirmation(id) ON DELETE SET NULL not valid;
+
+alter table "public"."process_task" validate constraint "process_task_support_confirmation_id_fkey";
+
+alter table "public"."process_task" add constraint "process_task_target_group_id_fkey" FOREIGN KEY (target_group_id) REFERENCES public."group"(id) ON DELETE SET NULL not valid;
+
+alter table "public"."process_task" validate constraint "process_task_target_group_id_fkey";
 
 alter table "public"."push_subscription" add constraint "push_subscription_endpoint_key" UNIQUE using index "push_subscription_endpoint_key";
 
@@ -2781,9 +3695,29 @@ alter table "public"."reaction" add constraint "reaction_user_id_fkey" FOREIGN K
 
 alter table "public"."reaction" validate constraint "reaction_user_id_fkey";
 
+alter table "public"."role" add constraint "role_assignee_kind_check" CHECK ((assignee_kind = ANY (ARRAY['member'::text, 'guest'::text]))) not valid;
+
+alter table "public"."role" validate constraint "role_assignee_kind_check";
+
+alter table "public"."role" add constraint "role_assignment_mode_check" CHECK ((assignment_mode = ANY (ARRAY['assigned'::text, 'elected'::text]))) not valid;
+
+alter table "public"."role" validate constraint "role_assignment_mode_check";
+
 alter table "public"."role" add constraint "role_group_id_fkey" FOREIGN KEY (group_id) REFERENCES public."group"(id) ON DELETE CASCADE not valid;
 
 alter table "public"."role" validate constraint "role_group_id_fkey";
+
+alter table "public"."role" add constraint "role_visibility_check" CHECK ((visibility = ANY (ARRAY['public'::text, 'authenticated'::text, 'private'::text]))) not valid;
+
+alter table "public"."role" validate constraint "role_visibility_check";
+
+alter table "public"."role_holder_history" add constraint "role_holder_history_role_id_fkey" FOREIGN KEY (role_id) REFERENCES public.role(id) ON DELETE CASCADE not valid;
+
+alter table "public"."role_holder_history" validate constraint "role_holder_history_role_id_fkey";
+
+alter table "public"."role_holder_history" add constraint "role_holder_history_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
+
+alter table "public"."role_holder_history" validate constraint "role_holder_history_user_id_fkey";
 
 alter table "public"."speaker_list" add constraint "speaker_list_agenda_item_id_fkey" FOREIGN KEY (agenda_item_id) REFERENCES public.agenda_item(id) ON DELETE CASCADE not valid;
 
@@ -2871,6 +3805,18 @@ alter table "public"."support_confirmation" add constraint "support_confirmation
 
 alter table "public"."support_confirmation" validate constraint "support_confirmation_confirmed_by_id_fkey";
 
+alter table "public"."support_confirmation" add constraint "support_confirmation_process_run_fk" FOREIGN KEY (process_run_id) REFERENCES public.amendment_process_run(id) ON DELETE SET NULL not valid;
+
+alter table "public"."support_confirmation" validate constraint "support_confirmation_process_run_fk";
+
+alter table "public"."support_confirmation" add constraint "support_confirmation_process_step_run_fk" FOREIGN KEY (process_step_run_id) REFERENCES public.amendment_process_step_run(id) ON DELETE SET NULL not valid;
+
+alter table "public"."support_confirmation" validate constraint "support_confirmation_process_step_run_fk";
+
+alter table "public"."support_confirmation" add constraint "support_confirmation_process_task_fk" FOREIGN KEY (process_task_id) REFERENCES public.process_task(id) ON DELETE SET NULL not valid;
+
+alter table "public"."support_confirmation" validate constraint "support_confirmation_process_task_fk";
+
 alter table "public"."thread" add constraint "thread_blog_id_fkey" FOREIGN KEY (blog_id) REFERENCES public.blog(id) ON DELETE CASCADE not valid;
 
 alter table "public"."thread" validate constraint "thread_blog_id_fkey";
@@ -2927,6 +3873,28 @@ alter table "public"."vote_choice" add constraint "vote_choice_vote_id_fkey" FOR
 
 alter table "public"."vote_choice" validate constraint "vote_choice_vote_id_fkey";
 
+alter table "public"."vote_offline_tally" add constraint "vote_offline_tally_choice_id_fkey" FOREIGN KEY (choice_id) REFERENCES public.vote_choice(id) ON DELETE CASCADE not valid;
+
+alter table "public"."vote_offline_tally" validate constraint "vote_offline_tally_choice_id_fkey";
+
+alter table "public"."vote_offline_tally" add constraint "vote_offline_tally_count_check" CHECK ((count >= 0)) not valid;
+
+alter table "public"."vote_offline_tally" validate constraint "vote_offline_tally_count_check";
+
+alter table "public"."vote_offline_tally" add constraint "vote_offline_tally_phase_check" CHECK ((phase = ANY (ARRAY['indicative'::text, 'final'::text]))) not valid;
+
+alter table "public"."vote_offline_tally" validate constraint "vote_offline_tally_phase_check";
+
+alter table "public"."vote_offline_tally" add constraint "vote_offline_tally_updated_by_id_fkey" FOREIGN KEY (updated_by_id) REFERENCES public."user"(id) ON DELETE SET NULL not valid;
+
+alter table "public"."vote_offline_tally" validate constraint "vote_offline_tally_updated_by_id_fkey";
+
+alter table "public"."vote_offline_tally" add constraint "vote_offline_tally_vote_id_fkey" FOREIGN KEY (vote_id) REFERENCES public.vote(id) ON DELETE CASCADE not valid;
+
+alter table "public"."vote_offline_tally" validate constraint "vote_offline_tally_vote_id_fkey";
+
+alter table "public"."vote_offline_tally" add constraint "vote_offline_tally_vote_id_phase_choice_id_key" UNIQUE using index "vote_offline_tally_vote_id_phase_choice_id_key";
+
 alter table "public"."voter" add constraint "voter_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE CASCADE not valid;
 
 alter table "public"."voter" validate constraint "voter_user_id_fkey";
@@ -2945,6 +3913,180 @@ alter table "public"."voting_password" add constraint "voting_password_user_id_k
 
 set check_function_bodies = off;
 
+CREATE OR REPLACE FUNCTION public.current_user_has_password()
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+  SELECT COALESCE(
+    (
+      SELECT NULLIF(u.encrypted_password, '') IS NOT NULL
+      FROM auth.users AS u
+      WHERE u.id = auth.uid()
+    ),
+    false
+  );
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.ensure_aria_kai_user()
+ RETURNS uuid
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+DECLARE
+  assistant_user_id CONSTANT UUID := 'a12a0000-0000-4000-a000-000000000001';
+BEGIN
+  INSERT INTO public."user" (
+    id,
+    email,
+    handle,
+    first_name,
+    last_name,
+    bio,
+    visibility
+  )
+  VALUES (
+    assistant_user_id,
+    'aria-kai-assistants@polity.com',
+    'aria-kai',
+    'Aria & Kai',
+    'Assistants',
+    'Your personal assistants — here to help you navigate Polity!',
+    'public'
+  )
+  ON CONFLICT (id) DO NOTHING;
+
+  INSERT INTO public.notification_setting (user_id)
+  VALUES (assistant_user_id)
+  ON CONFLICT (user_id) DO NOTHING;
+
+  INSERT INTO public.user_preference (user_id)
+  VALUES (assistant_user_id)
+  ON CONFLICT (user_id) DO NOTHING;
+
+  RETURN assistant_user_id;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.ensure_assistant_conversation(target_user_id uuid)
+ RETURNS uuid
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+DECLARE
+  assistant_user_id UUID;
+  assistant_conversation_id UUID;
+  welcome_message CONSTANT TEXT := 'Hey, we are Aria & Kai - your personal assistants! Welcome to Polity! We would love to show you around in the app. Shall we?';
+BEGIN
+  assistant_user_id := public.ensure_aria_kai_user();
+
+  SELECT id
+  INTO assistant_conversation_id
+  FROM public.conversation
+  WHERE assistant_for_user_id = target_user_id
+  LIMIT 1;
+
+  IF assistant_conversation_id IS NULL THEN
+    INSERT INTO public.conversation (
+      type,
+      name,
+      status,
+      last_message_at,
+      assistant_for_user_id,
+      requested_by_id
+    )
+    VALUES (
+      'direct',
+      'Aria & Kai',
+      'accepted',
+      now(),
+      target_user_id,
+      assistant_user_id
+    )
+    RETURNING id INTO assistant_conversation_id;
+  END IF;
+
+  INSERT INTO public.conversation_participant (
+    conversation_id,
+    user_id,
+    joined_at,
+    last_read_at,
+    left_at
+  )
+  VALUES (
+    assistant_conversation_id,
+    target_user_id,
+    now(),
+    NULL,
+    NULL
+  )
+  ON CONFLICT (conversation_id, user_id) DO NOTHING;
+
+  INSERT INTO public.conversation_participant (
+    conversation_id,
+    user_id,
+    joined_at,
+    last_read_at,
+    left_at
+  )
+  VALUES (
+    assistant_conversation_id,
+    assistant_user_id,
+    now(),
+    now(),
+    NULL
+  )
+  ON CONFLICT (conversation_id, user_id) DO NOTHING;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM public.message
+    WHERE conversation_id = assistant_conversation_id
+      AND sender_id = assistant_user_id
+      AND content = welcome_message
+  ) THEN
+    INSERT INTO public.message (
+      conversation_id,
+      sender_id,
+      content,
+      is_read,
+      created_at,
+      updated_at,
+      deleted_at
+    )
+    VALUES (
+      assistant_conversation_id,
+      assistant_user_id,
+      welcome_message,
+      false,
+      now(),
+      now(),
+      NULL
+    );
+  END IF;
+
+  UPDATE public.conversation
+  SET last_message_at = COALESCE(
+    (
+      SELECT MAX(created_at)
+      FROM public.message
+      WHERE conversation_id = assistant_conversation_id
+    ),
+    last_message_at,
+    now()
+  )
+  WHERE id = assistant_conversation_id;
+
+  RETURN assistant_conversation_id;
+END;
+$function$
+;
+
 CREATE OR REPLACE FUNCTION public.handle_new_user()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -2960,6 +4102,8 @@ BEGIN
 
   INSERT INTO public.user_preference (user_id)
   VALUES (NEW.id);
+
+  PERFORM public.ensure_assistant_conversation(NEW.id);
 
   RETURN NEW;
 END;
@@ -3133,6 +4277,132 @@ grant trigger on table "public"."agenda_item_change_request" to "service_role";
 grant truncate on table "public"."agenda_item_change_request" to "service_role";
 
 grant update on table "public"."agenda_item_change_request" to "service_role";
+
+grant delete on table "public"."ai_provider_credential" to "anon";
+
+grant insert on table "public"."ai_provider_credential" to "anon";
+
+grant references on table "public"."ai_provider_credential" to "anon";
+
+grant select on table "public"."ai_provider_credential" to "anon";
+
+grant trigger on table "public"."ai_provider_credential" to "anon";
+
+grant truncate on table "public"."ai_provider_credential" to "anon";
+
+grant update on table "public"."ai_provider_credential" to "anon";
+
+grant delete on table "public"."ai_provider_credential" to "authenticated";
+
+grant insert on table "public"."ai_provider_credential" to "authenticated";
+
+grant references on table "public"."ai_provider_credential" to "authenticated";
+
+grant select on table "public"."ai_provider_credential" to "authenticated";
+
+grant trigger on table "public"."ai_provider_credential" to "authenticated";
+
+grant truncate on table "public"."ai_provider_credential" to "authenticated";
+
+grant update on table "public"."ai_provider_credential" to "authenticated";
+
+grant delete on table "public"."ai_provider_credential" to "service_role";
+
+grant insert on table "public"."ai_provider_credential" to "service_role";
+
+grant references on table "public"."ai_provider_credential" to "service_role";
+
+grant select on table "public"."ai_provider_credential" to "service_role";
+
+grant trigger on table "public"."ai_provider_credential" to "service_role";
+
+grant truncate on table "public"."ai_provider_credential" to "service_role";
+
+grant update on table "public"."ai_provider_credential" to "service_role";
+
+grant delete on table "public"."ai_skill" to "anon";
+
+grant insert on table "public"."ai_skill" to "anon";
+
+grant references on table "public"."ai_skill" to "anon";
+
+grant select on table "public"."ai_skill" to "anon";
+
+grant trigger on table "public"."ai_skill" to "anon";
+
+grant truncate on table "public"."ai_skill" to "anon";
+
+grant update on table "public"."ai_skill" to "anon";
+
+grant delete on table "public"."ai_skill" to "authenticated";
+
+grant insert on table "public"."ai_skill" to "authenticated";
+
+grant references on table "public"."ai_skill" to "authenticated";
+
+grant select on table "public"."ai_skill" to "authenticated";
+
+grant trigger on table "public"."ai_skill" to "authenticated";
+
+grant truncate on table "public"."ai_skill" to "authenticated";
+
+grant update on table "public"."ai_skill" to "authenticated";
+
+grant delete on table "public"."ai_skill" to "service_role";
+
+grant insert on table "public"."ai_skill" to "service_role";
+
+grant references on table "public"."ai_skill" to "service_role";
+
+grant select on table "public"."ai_skill" to "service_role";
+
+grant trigger on table "public"."ai_skill" to "service_role";
+
+grant truncate on table "public"."ai_skill" to "service_role";
+
+grant update on table "public"."ai_skill" to "service_role";
+
+grant delete on table "public"."ai_tool" to "anon";
+
+grant insert on table "public"."ai_tool" to "anon";
+
+grant references on table "public"."ai_tool" to "anon";
+
+grant select on table "public"."ai_tool" to "anon";
+
+grant trigger on table "public"."ai_tool" to "anon";
+
+grant truncate on table "public"."ai_tool" to "anon";
+
+grant update on table "public"."ai_tool" to "anon";
+
+grant delete on table "public"."ai_tool" to "authenticated";
+
+grant insert on table "public"."ai_tool" to "authenticated";
+
+grant references on table "public"."ai_tool" to "authenticated";
+
+grant select on table "public"."ai_tool" to "authenticated";
+
+grant trigger on table "public"."ai_tool" to "authenticated";
+
+grant truncate on table "public"."ai_tool" to "authenticated";
+
+grant update on table "public"."ai_tool" to "authenticated";
+
+grant delete on table "public"."ai_tool" to "service_role";
+
+grant insert on table "public"."ai_tool" to "service_role";
+
+grant references on table "public"."ai_tool" to "service_role";
+
+grant select on table "public"."ai_tool" to "service_role";
+
+grant trigger on table "public"."ai_tool" to "service_role";
+
+grant truncate on table "public"."ai_tool" to "service_role";
+
+grant update on table "public"."ai_tool" to "service_role";
 
 grant delete on table "public"."amendment" to "anon";
 
@@ -3343,6 +4613,132 @@ grant trigger on table "public"."amendment_path_segment" to "service_role";
 grant truncate on table "public"."amendment_path_segment" to "service_role";
 
 grant update on table "public"."amendment_path_segment" to "service_role";
+
+grant delete on table "public"."amendment_process_branch" to "anon";
+
+grant insert on table "public"."amendment_process_branch" to "anon";
+
+grant references on table "public"."amendment_process_branch" to "anon";
+
+grant select on table "public"."amendment_process_branch" to "anon";
+
+grant trigger on table "public"."amendment_process_branch" to "anon";
+
+grant truncate on table "public"."amendment_process_branch" to "anon";
+
+grant update on table "public"."amendment_process_branch" to "anon";
+
+grant delete on table "public"."amendment_process_branch" to "authenticated";
+
+grant insert on table "public"."amendment_process_branch" to "authenticated";
+
+grant references on table "public"."amendment_process_branch" to "authenticated";
+
+grant select on table "public"."amendment_process_branch" to "authenticated";
+
+grant trigger on table "public"."amendment_process_branch" to "authenticated";
+
+grant truncate on table "public"."amendment_process_branch" to "authenticated";
+
+grant update on table "public"."amendment_process_branch" to "authenticated";
+
+grant delete on table "public"."amendment_process_branch" to "service_role";
+
+grant insert on table "public"."amendment_process_branch" to "service_role";
+
+grant references on table "public"."amendment_process_branch" to "service_role";
+
+grant select on table "public"."amendment_process_branch" to "service_role";
+
+grant trigger on table "public"."amendment_process_branch" to "service_role";
+
+grant truncate on table "public"."amendment_process_branch" to "service_role";
+
+grant update on table "public"."amendment_process_branch" to "service_role";
+
+grant delete on table "public"."amendment_process_run" to "anon";
+
+grant insert on table "public"."amendment_process_run" to "anon";
+
+grant references on table "public"."amendment_process_run" to "anon";
+
+grant select on table "public"."amendment_process_run" to "anon";
+
+grant trigger on table "public"."amendment_process_run" to "anon";
+
+grant truncate on table "public"."amendment_process_run" to "anon";
+
+grant update on table "public"."amendment_process_run" to "anon";
+
+grant delete on table "public"."amendment_process_run" to "authenticated";
+
+grant insert on table "public"."amendment_process_run" to "authenticated";
+
+grant references on table "public"."amendment_process_run" to "authenticated";
+
+grant select on table "public"."amendment_process_run" to "authenticated";
+
+grant trigger on table "public"."amendment_process_run" to "authenticated";
+
+grant truncate on table "public"."amendment_process_run" to "authenticated";
+
+grant update on table "public"."amendment_process_run" to "authenticated";
+
+grant delete on table "public"."amendment_process_run" to "service_role";
+
+grant insert on table "public"."amendment_process_run" to "service_role";
+
+grant references on table "public"."amendment_process_run" to "service_role";
+
+grant select on table "public"."amendment_process_run" to "service_role";
+
+grant trigger on table "public"."amendment_process_run" to "service_role";
+
+grant truncate on table "public"."amendment_process_run" to "service_role";
+
+grant update on table "public"."amendment_process_run" to "service_role";
+
+grant delete on table "public"."amendment_process_step_run" to "anon";
+
+grant insert on table "public"."amendment_process_step_run" to "anon";
+
+grant references on table "public"."amendment_process_step_run" to "anon";
+
+grant select on table "public"."amendment_process_step_run" to "anon";
+
+grant trigger on table "public"."amendment_process_step_run" to "anon";
+
+grant truncate on table "public"."amendment_process_step_run" to "anon";
+
+grant update on table "public"."amendment_process_step_run" to "anon";
+
+grant delete on table "public"."amendment_process_step_run" to "authenticated";
+
+grant insert on table "public"."amendment_process_step_run" to "authenticated";
+
+grant references on table "public"."amendment_process_step_run" to "authenticated";
+
+grant select on table "public"."amendment_process_step_run" to "authenticated";
+
+grant trigger on table "public"."amendment_process_step_run" to "authenticated";
+
+grant truncate on table "public"."amendment_process_step_run" to "authenticated";
+
+grant update on table "public"."amendment_process_step_run" to "authenticated";
+
+grant delete on table "public"."amendment_process_step_run" to "service_role";
+
+grant insert on table "public"."amendment_process_step_run" to "service_role";
+
+grant references on table "public"."amendment_process_step_run" to "service_role";
+
+grant select on table "public"."amendment_process_step_run" to "service_role";
+
+grant trigger on table "public"."amendment_process_step_run" to "service_role";
+
+grant truncate on table "public"."amendment_process_step_run" to "service_role";
+
+grant update on table "public"."amendment_process_step_run" to "service_role";
 
 grant delete on table "public"."amendment_support_vote" to "anon";
 
@@ -4142,6 +5538,48 @@ grant truncate on table "public"."election_candidate" to "service_role";
 
 grant update on table "public"."election_candidate" to "service_role";
 
+grant delete on table "public"."election_offline_tally" to "anon";
+
+grant insert on table "public"."election_offline_tally" to "anon";
+
+grant references on table "public"."election_offline_tally" to "anon";
+
+grant select on table "public"."election_offline_tally" to "anon";
+
+grant trigger on table "public"."election_offline_tally" to "anon";
+
+grant truncate on table "public"."election_offline_tally" to "anon";
+
+grant update on table "public"."election_offline_tally" to "anon";
+
+grant delete on table "public"."election_offline_tally" to "authenticated";
+
+grant insert on table "public"."election_offline_tally" to "authenticated";
+
+grant references on table "public"."election_offline_tally" to "authenticated";
+
+grant select on table "public"."election_offline_tally" to "authenticated";
+
+grant trigger on table "public"."election_offline_tally" to "authenticated";
+
+grant truncate on table "public"."election_offline_tally" to "authenticated";
+
+grant update on table "public"."election_offline_tally" to "authenticated";
+
+grant delete on table "public"."election_offline_tally" to "service_role";
+
+grant insert on table "public"."election_offline_tally" to "service_role";
+
+grant references on table "public"."election_offline_tally" to "service_role";
+
+grant select on table "public"."election_offline_tally" to "service_role";
+
+grant trigger on table "public"."election_offline_tally" to "service_role";
+
+grant truncate on table "public"."election_offline_tally" to "service_role";
+
+grant update on table "public"."election_offline_tally" to "service_role";
+
 grant delete on table "public"."elector" to "anon";
 
 grant insert on table "public"."elector" to "anon";
@@ -4352,6 +5790,48 @@ grant truncate on table "public"."event_hashtag" to "service_role";
 
 grant update on table "public"."event_hashtag" to "service_role";
 
+grant delete on table "public"."event_offline_participant" to "anon";
+
+grant insert on table "public"."event_offline_participant" to "anon";
+
+grant references on table "public"."event_offline_participant" to "anon";
+
+grant select on table "public"."event_offline_participant" to "anon";
+
+grant trigger on table "public"."event_offline_participant" to "anon";
+
+grant truncate on table "public"."event_offline_participant" to "anon";
+
+grant update on table "public"."event_offline_participant" to "anon";
+
+grant delete on table "public"."event_offline_participant" to "authenticated";
+
+grant insert on table "public"."event_offline_participant" to "authenticated";
+
+grant references on table "public"."event_offline_participant" to "authenticated";
+
+grant select on table "public"."event_offline_participant" to "authenticated";
+
+grant trigger on table "public"."event_offline_participant" to "authenticated";
+
+grant truncate on table "public"."event_offline_participant" to "authenticated";
+
+grant update on table "public"."event_offline_participant" to "authenticated";
+
+grant delete on table "public"."event_offline_participant" to "service_role";
+
+grant insert on table "public"."event_offline_participant" to "service_role";
+
+grant references on table "public"."event_offline_participant" to "service_role";
+
+grant select on table "public"."event_offline_participant" to "service_role";
+
+grant trigger on table "public"."event_offline_participant" to "service_role";
+
+grant truncate on table "public"."event_offline_participant" to "service_role";
+
+grant update on table "public"."event_offline_participant" to "service_role";
+
 grant delete on table "public"."event_participant" to "anon";
 
 grant insert on table "public"."event_participant" to "anon";
@@ -4394,89 +5874,47 @@ grant truncate on table "public"."event_participant" to "service_role";
 
 grant update on table "public"."event_participant" to "service_role";
 
-grant delete on table "public"."event_position" to "anon";
+grant delete on table "public"."event_participant_role" to "anon";
 
-grant insert on table "public"."event_position" to "anon";
+grant insert on table "public"."event_participant_role" to "anon";
 
-grant references on table "public"."event_position" to "anon";
+grant references on table "public"."event_participant_role" to "anon";
 
-grant select on table "public"."event_position" to "anon";
+grant select on table "public"."event_participant_role" to "anon";
 
-grant trigger on table "public"."event_position" to "anon";
+grant trigger on table "public"."event_participant_role" to "anon";
 
-grant truncate on table "public"."event_position" to "anon";
+grant truncate on table "public"."event_participant_role" to "anon";
 
-grant update on table "public"."event_position" to "anon";
+grant update on table "public"."event_participant_role" to "anon";
 
-grant delete on table "public"."event_position" to "authenticated";
+grant delete on table "public"."event_participant_role" to "authenticated";
 
-grant insert on table "public"."event_position" to "authenticated";
+grant insert on table "public"."event_participant_role" to "authenticated";
 
-grant references on table "public"."event_position" to "authenticated";
+grant references on table "public"."event_participant_role" to "authenticated";
 
-grant select on table "public"."event_position" to "authenticated";
+grant select on table "public"."event_participant_role" to "authenticated";
 
-grant trigger on table "public"."event_position" to "authenticated";
+grant trigger on table "public"."event_participant_role" to "authenticated";
 
-grant truncate on table "public"."event_position" to "authenticated";
+grant truncate on table "public"."event_participant_role" to "authenticated";
 
-grant update on table "public"."event_position" to "authenticated";
+grant update on table "public"."event_participant_role" to "authenticated";
 
-grant delete on table "public"."event_position" to "service_role";
+grant delete on table "public"."event_participant_role" to "service_role";
 
-grant insert on table "public"."event_position" to "service_role";
+grant insert on table "public"."event_participant_role" to "service_role";
 
-grant references on table "public"."event_position" to "service_role";
+grant references on table "public"."event_participant_role" to "service_role";
 
-grant select on table "public"."event_position" to "service_role";
+grant select on table "public"."event_participant_role" to "service_role";
 
-grant trigger on table "public"."event_position" to "service_role";
+grant trigger on table "public"."event_participant_role" to "service_role";
 
-grant truncate on table "public"."event_position" to "service_role";
+grant truncate on table "public"."event_participant_role" to "service_role";
 
-grant update on table "public"."event_position" to "service_role";
-
-grant delete on table "public"."event_position_holder" to "anon";
-
-grant insert on table "public"."event_position_holder" to "anon";
-
-grant references on table "public"."event_position_holder" to "anon";
-
-grant select on table "public"."event_position_holder" to "anon";
-
-grant trigger on table "public"."event_position_holder" to "anon";
-
-grant truncate on table "public"."event_position_holder" to "anon";
-
-grant update on table "public"."event_position_holder" to "anon";
-
-grant delete on table "public"."event_position_holder" to "authenticated";
-
-grant insert on table "public"."event_position_holder" to "authenticated";
-
-grant references on table "public"."event_position_holder" to "authenticated";
-
-grant select on table "public"."event_position_holder" to "authenticated";
-
-grant trigger on table "public"."event_position_holder" to "authenticated";
-
-grant truncate on table "public"."event_position_holder" to "authenticated";
-
-grant update on table "public"."event_position_holder" to "authenticated";
-
-grant delete on table "public"."event_position_holder" to "service_role";
-
-grant insert on table "public"."event_position_holder" to "service_role";
-
-grant references on table "public"."event_position_holder" to "service_role";
-
-grant select on table "public"."event_position_holder" to "service_role";
-
-grant trigger on table "public"."event_position_holder" to "service_role";
-
-grant truncate on table "public"."event_position_holder" to "service_role";
-
-grant update on table "public"."event_position_holder" to "service_role";
+grant update on table "public"."event_participant_role" to "service_role";
 
 grant delete on table "public"."file" to "anon";
 
@@ -4814,6 +6252,90 @@ grant truncate on table "public"."group_delegate_allocation" to "service_role";
 
 grant update on table "public"."group_delegate_allocation" to "service_role";
 
+grant delete on table "public"."group_guest_access" to "anon";
+
+grant insert on table "public"."group_guest_access" to "anon";
+
+grant references on table "public"."group_guest_access" to "anon";
+
+grant select on table "public"."group_guest_access" to "anon";
+
+grant trigger on table "public"."group_guest_access" to "anon";
+
+grant truncate on table "public"."group_guest_access" to "anon";
+
+grant update on table "public"."group_guest_access" to "anon";
+
+grant delete on table "public"."group_guest_access" to "authenticated";
+
+grant insert on table "public"."group_guest_access" to "authenticated";
+
+grant references on table "public"."group_guest_access" to "authenticated";
+
+grant select on table "public"."group_guest_access" to "authenticated";
+
+grant trigger on table "public"."group_guest_access" to "authenticated";
+
+grant truncate on table "public"."group_guest_access" to "authenticated";
+
+grant update on table "public"."group_guest_access" to "authenticated";
+
+grant delete on table "public"."group_guest_access" to "service_role";
+
+grant insert on table "public"."group_guest_access" to "service_role";
+
+grant references on table "public"."group_guest_access" to "service_role";
+
+grant select on table "public"."group_guest_access" to "service_role";
+
+grant trigger on table "public"."group_guest_access" to "service_role";
+
+grant truncate on table "public"."group_guest_access" to "service_role";
+
+grant update on table "public"."group_guest_access" to "service_role";
+
+grant delete on table "public"."group_guest_role" to "anon";
+
+grant insert on table "public"."group_guest_role" to "anon";
+
+grant references on table "public"."group_guest_role" to "anon";
+
+grant select on table "public"."group_guest_role" to "anon";
+
+grant trigger on table "public"."group_guest_role" to "anon";
+
+grant truncate on table "public"."group_guest_role" to "anon";
+
+grant update on table "public"."group_guest_role" to "anon";
+
+grant delete on table "public"."group_guest_role" to "authenticated";
+
+grant insert on table "public"."group_guest_role" to "authenticated";
+
+grant references on table "public"."group_guest_role" to "authenticated";
+
+grant select on table "public"."group_guest_role" to "authenticated";
+
+grant trigger on table "public"."group_guest_role" to "authenticated";
+
+grant truncate on table "public"."group_guest_role" to "authenticated";
+
+grant update on table "public"."group_guest_role" to "authenticated";
+
+grant delete on table "public"."group_guest_role" to "service_role";
+
+grant insert on table "public"."group_guest_role" to "service_role";
+
+grant references on table "public"."group_guest_role" to "service_role";
+
+grant select on table "public"."group_guest_role" to "service_role";
+
+grant trigger on table "public"."group_guest_role" to "service_role";
+
+grant truncate on table "public"."group_guest_role" to "service_role";
+
+grant update on table "public"."group_guest_role" to "service_role";
+
 grant delete on table "public"."group_hashtag" to "anon";
 
 grant insert on table "public"."group_hashtag" to "anon";
@@ -4898,47 +6420,173 @@ grant truncate on table "public"."group_membership" to "service_role";
 
 grant update on table "public"."group_membership" to "service_role";
 
-grant delete on table "public"."group_relationship" to "anon";
+grant delete on table "public"."group_membership_role" to "anon";
 
-grant insert on table "public"."group_relationship" to "anon";
+grant insert on table "public"."group_membership_role" to "anon";
 
-grant references on table "public"."group_relationship" to "anon";
+grant references on table "public"."group_membership_role" to "anon";
 
-grant select on table "public"."group_relationship" to "anon";
+grant select on table "public"."group_membership_role" to "anon";
 
-grant trigger on table "public"."group_relationship" to "anon";
+grant trigger on table "public"."group_membership_role" to "anon";
 
-grant truncate on table "public"."group_relationship" to "anon";
+grant truncate on table "public"."group_membership_role" to "anon";
 
-grant update on table "public"."group_relationship" to "anon";
+grant update on table "public"."group_membership_role" to "anon";
 
-grant delete on table "public"."group_relationship" to "authenticated";
+grant delete on table "public"."group_membership_role" to "authenticated";
 
-grant insert on table "public"."group_relationship" to "authenticated";
+grant insert on table "public"."group_membership_role" to "authenticated";
 
-grant references on table "public"."group_relationship" to "authenticated";
+grant references on table "public"."group_membership_role" to "authenticated";
 
-grant select on table "public"."group_relationship" to "authenticated";
+grant select on table "public"."group_membership_role" to "authenticated";
 
-grant trigger on table "public"."group_relationship" to "authenticated";
+grant trigger on table "public"."group_membership_role" to "authenticated";
 
-grant truncate on table "public"."group_relationship" to "authenticated";
+grant truncate on table "public"."group_membership_role" to "authenticated";
 
-grant update on table "public"."group_relationship" to "authenticated";
+grant update on table "public"."group_membership_role" to "authenticated";
 
-grant delete on table "public"."group_relationship" to "service_role";
+grant delete on table "public"."group_membership_role" to "service_role";
 
-grant insert on table "public"."group_relationship" to "service_role";
+grant insert on table "public"."group_membership_role" to "service_role";
 
-grant references on table "public"."group_relationship" to "service_role";
+grant references on table "public"."group_membership_role" to "service_role";
 
-grant select on table "public"."group_relationship" to "service_role";
+grant select on table "public"."group_membership_role" to "service_role";
 
-grant trigger on table "public"."group_relationship" to "service_role";
+grant trigger on table "public"."group_membership_role" to "service_role";
 
-grant truncate on table "public"."group_relationship" to "service_role";
+grant truncate on table "public"."group_membership_role" to "service_role";
 
-grant update on table "public"."group_relationship" to "service_role";
+grant update on table "public"."group_membership_role" to "service_role";
+
+grant delete on table "public"."group_offline_member" to "anon";
+
+grant insert on table "public"."group_offline_member" to "anon";
+
+grant references on table "public"."group_offline_member" to "anon";
+
+grant select on table "public"."group_offline_member" to "anon";
+
+grant trigger on table "public"."group_offline_member" to "anon";
+
+grant truncate on table "public"."group_offline_member" to "anon";
+
+grant update on table "public"."group_offline_member" to "anon";
+
+grant delete on table "public"."group_offline_member" to "authenticated";
+
+grant insert on table "public"."group_offline_member" to "authenticated";
+
+grant references on table "public"."group_offline_member" to "authenticated";
+
+grant select on table "public"."group_offline_member" to "authenticated";
+
+grant trigger on table "public"."group_offline_member" to "authenticated";
+
+grant truncate on table "public"."group_offline_member" to "authenticated";
+
+grant update on table "public"."group_offline_member" to "authenticated";
+
+grant delete on table "public"."group_offline_member" to "service_role";
+
+grant insert on table "public"."group_offline_member" to "service_role";
+
+grant references on table "public"."group_offline_member" to "service_role";
+
+grant select on table "public"."group_offline_member" to "service_role";
+
+grant trigger on table "public"."group_offline_member" to "service_role";
+
+grant truncate on table "public"."group_offline_member" to "service_role";
+
+grant update on table "public"."group_offline_member" to "service_role";
+
+grant delete on table "public"."group_offline_membership" to "anon";
+
+grant insert on table "public"."group_offline_membership" to "anon";
+
+grant references on table "public"."group_offline_membership" to "anon";
+
+grant select on table "public"."group_offline_membership" to "anon";
+
+grant trigger on table "public"."group_offline_membership" to "anon";
+
+grant truncate on table "public"."group_offline_membership" to "anon";
+
+grant update on table "public"."group_offline_membership" to "anon";
+
+grant delete on table "public"."group_offline_membership" to "authenticated";
+
+grant insert on table "public"."group_offline_membership" to "authenticated";
+
+grant references on table "public"."group_offline_membership" to "authenticated";
+
+grant select on table "public"."group_offline_membership" to "authenticated";
+
+grant trigger on table "public"."group_offline_membership" to "authenticated";
+
+grant truncate on table "public"."group_offline_membership" to "authenticated";
+
+grant update on table "public"."group_offline_membership" to "authenticated";
+
+grant delete on table "public"."group_offline_membership" to "service_role";
+
+grant insert on table "public"."group_offline_membership" to "service_role";
+
+grant references on table "public"."group_offline_membership" to "service_role";
+
+grant select on table "public"."group_offline_membership" to "service_role";
+
+grant trigger on table "public"."group_offline_membership" to "service_role";
+
+grant truncate on table "public"."group_offline_membership" to "service_role";
+
+grant update on table "public"."group_offline_membership" to "service_role";
+
+grant delete on table "public"."group_offline_membership_role" to "anon";
+
+grant insert on table "public"."group_offline_membership_role" to "anon";
+
+grant references on table "public"."group_offline_membership_role" to "anon";
+
+grant select on table "public"."group_offline_membership_role" to "anon";
+
+grant trigger on table "public"."group_offline_membership_role" to "anon";
+
+grant truncate on table "public"."group_offline_membership_role" to "anon";
+
+grant update on table "public"."group_offline_membership_role" to "anon";
+
+grant delete on table "public"."group_offline_membership_role" to "authenticated";
+
+grant insert on table "public"."group_offline_membership_role" to "authenticated";
+
+grant references on table "public"."group_offline_membership_role" to "authenticated";
+
+grant select on table "public"."group_offline_membership_role" to "authenticated";
+
+grant trigger on table "public"."group_offline_membership_role" to "authenticated";
+
+grant truncate on table "public"."group_offline_membership_role" to "authenticated";
+
+grant update on table "public"."group_offline_membership_role" to "authenticated";
+
+grant delete on table "public"."group_offline_membership_role" to "service_role";
+
+grant insert on table "public"."group_offline_membership_role" to "service_role";
+
+grant references on table "public"."group_offline_membership_role" to "service_role";
+
+grant select on table "public"."group_offline_membership_role" to "service_role";
+
+grant trigger on table "public"."group_offline_membership_role" to "service_role";
+
+grant truncate on table "public"."group_offline_membership_role" to "service_role";
+
+grant update on table "public"."group_offline_membership_role" to "service_role";
 
 grant delete on table "public"."group_workflow" to "anon";
 
@@ -5276,90 +6924,6 @@ grant truncate on table "public"."link" to "service_role";
 
 grant update on table "public"."link" to "service_role";
 
-grant delete on table "public"."meeting_booking" to "anon";
-
-grant insert on table "public"."meeting_booking" to "anon";
-
-grant references on table "public"."meeting_booking" to "anon";
-
-grant select on table "public"."meeting_booking" to "anon";
-
-grant trigger on table "public"."meeting_booking" to "anon";
-
-grant truncate on table "public"."meeting_booking" to "anon";
-
-grant update on table "public"."meeting_booking" to "anon";
-
-grant delete on table "public"."meeting_booking" to "authenticated";
-
-grant insert on table "public"."meeting_booking" to "authenticated";
-
-grant references on table "public"."meeting_booking" to "authenticated";
-
-grant select on table "public"."meeting_booking" to "authenticated";
-
-grant trigger on table "public"."meeting_booking" to "authenticated";
-
-grant truncate on table "public"."meeting_booking" to "authenticated";
-
-grant update on table "public"."meeting_booking" to "authenticated";
-
-grant delete on table "public"."meeting_booking" to "service_role";
-
-grant insert on table "public"."meeting_booking" to "service_role";
-
-grant references on table "public"."meeting_booking" to "service_role";
-
-grant select on table "public"."meeting_booking" to "service_role";
-
-grant trigger on table "public"."meeting_booking" to "service_role";
-
-grant truncate on table "public"."meeting_booking" to "service_role";
-
-grant update on table "public"."meeting_booking" to "service_role";
-
-grant delete on table "public"."meeting_slot" to "anon";
-
-grant insert on table "public"."meeting_slot" to "anon";
-
-grant references on table "public"."meeting_slot" to "anon";
-
-grant select on table "public"."meeting_slot" to "anon";
-
-grant trigger on table "public"."meeting_slot" to "anon";
-
-grant truncate on table "public"."meeting_slot" to "anon";
-
-grant update on table "public"."meeting_slot" to "anon";
-
-grant delete on table "public"."meeting_slot" to "authenticated";
-
-grant insert on table "public"."meeting_slot" to "authenticated";
-
-grant references on table "public"."meeting_slot" to "authenticated";
-
-grant select on table "public"."meeting_slot" to "authenticated";
-
-grant trigger on table "public"."meeting_slot" to "authenticated";
-
-grant truncate on table "public"."meeting_slot" to "authenticated";
-
-grant update on table "public"."meeting_slot" to "authenticated";
-
-grant delete on table "public"."meeting_slot" to "service_role";
-
-grant insert on table "public"."meeting_slot" to "service_role";
-
-grant references on table "public"."meeting_slot" to "service_role";
-
-grant select on table "public"."meeting_slot" to "service_role";
-
-grant trigger on table "public"."meeting_slot" to "service_role";
-
-grant truncate on table "public"."meeting_slot" to "service_role";
-
-grant update on table "public"."meeting_slot" to "service_role";
-
 grant delete on table "public"."message" to "anon";
 
 grant insert on table "public"."message" to "anon";
@@ -5401,6 +6965,174 @@ grant trigger on table "public"."message" to "service_role";
 grant truncate on table "public"."message" to "service_role";
 
 grant update on table "public"."message" to "service_role";
+
+grant delete on table "public"."network_link" to "anon";
+
+grant insert on table "public"."network_link" to "anon";
+
+grant references on table "public"."network_link" to "anon";
+
+grant select on table "public"."network_link" to "anon";
+
+grant trigger on table "public"."network_link" to "anon";
+
+grant truncate on table "public"."network_link" to "anon";
+
+grant update on table "public"."network_link" to "anon";
+
+grant delete on table "public"."network_link" to "authenticated";
+
+grant insert on table "public"."network_link" to "authenticated";
+
+grant references on table "public"."network_link" to "authenticated";
+
+grant select on table "public"."network_link" to "authenticated";
+
+grant trigger on table "public"."network_link" to "authenticated";
+
+grant truncate on table "public"."network_link" to "authenticated";
+
+grant update on table "public"."network_link" to "authenticated";
+
+grant delete on table "public"."network_link" to "service_role";
+
+grant insert on table "public"."network_link" to "service_role";
+
+grant references on table "public"."network_link" to "service_role";
+
+grant select on table "public"."network_link" to "service_role";
+
+grant trigger on table "public"."network_link" to "service_role";
+
+grant truncate on table "public"."network_link" to "service_role";
+
+grant update on table "public"."network_link" to "service_role";
+
+grant delete on table "public"."network_link_change_request" to "anon";
+
+grant insert on table "public"."network_link_change_request" to "anon";
+
+grant references on table "public"."network_link_change_request" to "anon";
+
+grant select on table "public"."network_link_change_request" to "anon";
+
+grant trigger on table "public"."network_link_change_request" to "anon";
+
+grant truncate on table "public"."network_link_change_request" to "anon";
+
+grant update on table "public"."network_link_change_request" to "anon";
+
+grant delete on table "public"."network_link_change_request" to "authenticated";
+
+grant insert on table "public"."network_link_change_request" to "authenticated";
+
+grant references on table "public"."network_link_change_request" to "authenticated";
+
+grant select on table "public"."network_link_change_request" to "authenticated";
+
+grant trigger on table "public"."network_link_change_request" to "authenticated";
+
+grant truncate on table "public"."network_link_change_request" to "authenticated";
+
+grant update on table "public"."network_link_change_request" to "authenticated";
+
+grant delete on table "public"."network_link_change_request" to "service_role";
+
+grant insert on table "public"."network_link_change_request" to "service_role";
+
+grant references on table "public"."network_link_change_request" to "service_role";
+
+grant select on table "public"."network_link_change_request" to "service_role";
+
+grant trigger on table "public"."network_link_change_request" to "service_role";
+
+grant truncate on table "public"."network_link_change_request" to "service_role";
+
+grant update on table "public"."network_link_change_request" to "service_role";
+
+grant delete on table "public"."network_link_membership_rule" to "anon";
+
+grant insert on table "public"."network_link_membership_rule" to "anon";
+
+grant references on table "public"."network_link_membership_rule" to "anon";
+
+grant select on table "public"."network_link_membership_rule" to "anon";
+
+grant trigger on table "public"."network_link_membership_rule" to "anon";
+
+grant truncate on table "public"."network_link_membership_rule" to "anon";
+
+grant update on table "public"."network_link_membership_rule" to "anon";
+
+grant delete on table "public"."network_link_membership_rule" to "authenticated";
+
+grant insert on table "public"."network_link_membership_rule" to "authenticated";
+
+grant references on table "public"."network_link_membership_rule" to "authenticated";
+
+grant select on table "public"."network_link_membership_rule" to "authenticated";
+
+grant trigger on table "public"."network_link_membership_rule" to "authenticated";
+
+grant truncate on table "public"."network_link_membership_rule" to "authenticated";
+
+grant update on table "public"."network_link_membership_rule" to "authenticated";
+
+grant delete on table "public"."network_link_membership_rule" to "service_role";
+
+grant insert on table "public"."network_link_membership_rule" to "service_role";
+
+grant references on table "public"."network_link_membership_rule" to "service_role";
+
+grant select on table "public"."network_link_membership_rule" to "service_role";
+
+grant trigger on table "public"."network_link_membership_rule" to "service_role";
+
+grant truncate on table "public"."network_link_membership_rule" to "service_role";
+
+grant update on table "public"."network_link_membership_rule" to "service_role";
+
+grant delete on table "public"."network_link_right" to "anon";
+
+grant insert on table "public"."network_link_right" to "anon";
+
+grant references on table "public"."network_link_right" to "anon";
+
+grant select on table "public"."network_link_right" to "anon";
+
+grant trigger on table "public"."network_link_right" to "anon";
+
+grant truncate on table "public"."network_link_right" to "anon";
+
+grant update on table "public"."network_link_right" to "anon";
+
+grant delete on table "public"."network_link_right" to "authenticated";
+
+grant insert on table "public"."network_link_right" to "authenticated";
+
+grant references on table "public"."network_link_right" to "authenticated";
+
+grant select on table "public"."network_link_right" to "authenticated";
+
+grant trigger on table "public"."network_link_right" to "authenticated";
+
+grant truncate on table "public"."network_link_right" to "authenticated";
+
+grant update on table "public"."network_link_right" to "authenticated";
+
+grant delete on table "public"."network_link_right" to "service_role";
+
+grant insert on table "public"."network_link_right" to "service_role";
+
+grant references on table "public"."network_link_right" to "service_role";
+
+grant select on table "public"."network_link_right" to "service_role";
+
+grant trigger on table "public"."network_link_right" to "service_role";
+
+grant truncate on table "public"."network_link_right" to "service_role";
+
+grant update on table "public"."network_link_right" to "service_role";
 
 grant delete on table "public"."notification" to "anon";
 
@@ -5612,89 +7344,89 @@ grant truncate on table "public"."payment" to "service_role";
 
 grant update on table "public"."payment" to "service_role";
 
-grant delete on table "public"."position" to "anon";
+grant delete on table "public"."pql_filter" to "anon";
 
-grant insert on table "public"."position" to "anon";
+grant insert on table "public"."pql_filter" to "anon";
 
-grant references on table "public"."position" to "anon";
+grant references on table "public"."pql_filter" to "anon";
 
-grant select on table "public"."position" to "anon";
+grant select on table "public"."pql_filter" to "anon";
 
-grant trigger on table "public"."position" to "anon";
+grant trigger on table "public"."pql_filter" to "anon";
 
-grant truncate on table "public"."position" to "anon";
+grant truncate on table "public"."pql_filter" to "anon";
 
-grant update on table "public"."position" to "anon";
+grant update on table "public"."pql_filter" to "anon";
 
-grant delete on table "public"."position" to "authenticated";
+grant delete on table "public"."pql_filter" to "authenticated";
 
-grant insert on table "public"."position" to "authenticated";
+grant insert on table "public"."pql_filter" to "authenticated";
 
-grant references on table "public"."position" to "authenticated";
+grant references on table "public"."pql_filter" to "authenticated";
 
-grant select on table "public"."position" to "authenticated";
+grant select on table "public"."pql_filter" to "authenticated";
 
-grant trigger on table "public"."position" to "authenticated";
+grant trigger on table "public"."pql_filter" to "authenticated";
 
-grant truncate on table "public"."position" to "authenticated";
+grant truncate on table "public"."pql_filter" to "authenticated";
 
-grant update on table "public"."position" to "authenticated";
+grant update on table "public"."pql_filter" to "authenticated";
 
-grant delete on table "public"."position" to "service_role";
+grant delete on table "public"."pql_filter" to "service_role";
 
-grant insert on table "public"."position" to "service_role";
+grant insert on table "public"."pql_filter" to "service_role";
 
-grant references on table "public"."position" to "service_role";
+grant references on table "public"."pql_filter" to "service_role";
 
-grant select on table "public"."position" to "service_role";
+grant select on table "public"."pql_filter" to "service_role";
 
-grant trigger on table "public"."position" to "service_role";
+grant trigger on table "public"."pql_filter" to "service_role";
 
-grant truncate on table "public"."position" to "service_role";
+grant truncate on table "public"."pql_filter" to "service_role";
 
-grant update on table "public"."position" to "service_role";
+grant update on table "public"."pql_filter" to "service_role";
 
-grant delete on table "public"."position_holder_history" to "anon";
+grant delete on table "public"."process_task" to "anon";
 
-grant insert on table "public"."position_holder_history" to "anon";
+grant insert on table "public"."process_task" to "anon";
 
-grant references on table "public"."position_holder_history" to "anon";
+grant references on table "public"."process_task" to "anon";
 
-grant select on table "public"."position_holder_history" to "anon";
+grant select on table "public"."process_task" to "anon";
 
-grant trigger on table "public"."position_holder_history" to "anon";
+grant trigger on table "public"."process_task" to "anon";
 
-grant truncate on table "public"."position_holder_history" to "anon";
+grant truncate on table "public"."process_task" to "anon";
 
-grant update on table "public"."position_holder_history" to "anon";
+grant update on table "public"."process_task" to "anon";
 
-grant delete on table "public"."position_holder_history" to "authenticated";
+grant delete on table "public"."process_task" to "authenticated";
 
-grant insert on table "public"."position_holder_history" to "authenticated";
+grant insert on table "public"."process_task" to "authenticated";
 
-grant references on table "public"."position_holder_history" to "authenticated";
+grant references on table "public"."process_task" to "authenticated";
 
-grant select on table "public"."position_holder_history" to "authenticated";
+grant select on table "public"."process_task" to "authenticated";
 
-grant trigger on table "public"."position_holder_history" to "authenticated";
+grant trigger on table "public"."process_task" to "authenticated";
 
-grant truncate on table "public"."position_holder_history" to "authenticated";
+grant truncate on table "public"."process_task" to "authenticated";
 
-grant update on table "public"."position_holder_history" to "authenticated";
+grant update on table "public"."process_task" to "authenticated";
 
-grant delete on table "public"."position_holder_history" to "service_role";
+grant delete on table "public"."process_task" to "service_role";
 
-grant insert on table "public"."position_holder_history" to "service_role";
+grant insert on table "public"."process_task" to "service_role";
 
-grant references on table "public"."position_holder_history" to "service_role";
+grant references on table "public"."process_task" to "service_role";
 
-grant select on table "public"."position_holder_history" to "service_role";
+grant select on table "public"."process_task" to "service_role";
 
-grant trigger on table "public"."position_holder_history" to "service_role";
+grant trigger on table "public"."process_task" to "service_role";
 
-grant truncate on table "public"."position_holder_history" to "service_role";
+grant truncate on table "public"."process_task" to "service_role";
 
-grant update on table "public"."position_holder_history" to "service_role";
+grant update on table "public"."process_task" to "service_role";
 
 grant delete on table "public"."push_subscription" to "anon";
 
@@ -5821,6 +7553,48 @@ grant trigger on table "public"."role" to "service_role";
 grant truncate on table "public"."role" to "service_role";
 
 grant update on table "public"."role" to "service_role";
+
+grant delete on table "public"."role_holder_history" to "anon";
+
+grant insert on table "public"."role_holder_history" to "anon";
+
+grant references on table "public"."role_holder_history" to "anon";
+
+grant select on table "public"."role_holder_history" to "anon";
+
+grant trigger on table "public"."role_holder_history" to "anon";
+
+grant truncate on table "public"."role_holder_history" to "anon";
+
+grant update on table "public"."role_holder_history" to "anon";
+
+grant delete on table "public"."role_holder_history" to "authenticated";
+
+grant insert on table "public"."role_holder_history" to "authenticated";
+
+grant references on table "public"."role_holder_history" to "authenticated";
+
+grant select on table "public"."role_holder_history" to "authenticated";
+
+grant trigger on table "public"."role_holder_history" to "authenticated";
+
+grant truncate on table "public"."role_holder_history" to "authenticated";
+
+grant update on table "public"."role_holder_history" to "authenticated";
+
+grant delete on table "public"."role_holder_history" to "service_role";
+
+grant insert on table "public"."role_holder_history" to "service_role";
+
+grant references on table "public"."role_holder_history" to "service_role";
+
+grant select on table "public"."role_holder_history" to "service_role";
+
+grant trigger on table "public"."role_holder_history" to "service_role";
+
+grant truncate on table "public"."role_holder_history" to "service_role";
+
+grant update on table "public"."role_holder_history" to "service_role";
 
 grant delete on table "public"."speaker_list" to "anon";
 
@@ -6746,6 +8520,48 @@ grant truncate on table "public"."vote_choice" to "service_role";
 
 grant update on table "public"."vote_choice" to "service_role";
 
+grant delete on table "public"."vote_offline_tally" to "anon";
+
+grant insert on table "public"."vote_offline_tally" to "anon";
+
+grant references on table "public"."vote_offline_tally" to "anon";
+
+grant select on table "public"."vote_offline_tally" to "anon";
+
+grant trigger on table "public"."vote_offline_tally" to "anon";
+
+grant truncate on table "public"."vote_offline_tally" to "anon";
+
+grant update on table "public"."vote_offline_tally" to "anon";
+
+grant delete on table "public"."vote_offline_tally" to "authenticated";
+
+grant insert on table "public"."vote_offline_tally" to "authenticated";
+
+grant references on table "public"."vote_offline_tally" to "authenticated";
+
+grant select on table "public"."vote_offline_tally" to "authenticated";
+
+grant trigger on table "public"."vote_offline_tally" to "authenticated";
+
+grant truncate on table "public"."vote_offline_tally" to "authenticated";
+
+grant update on table "public"."vote_offline_tally" to "authenticated";
+
+grant delete on table "public"."vote_offline_tally" to "service_role";
+
+grant insert on table "public"."vote_offline_tally" to "service_role";
+
+grant references on table "public"."vote_offline_tally" to "service_role";
+
+grant select on table "public"."vote_offline_tally" to "service_role";
+
+grant trigger on table "public"."vote_offline_tally" to "service_role";
+
+grant truncate on table "public"."vote_offline_tally" to "service_role";
+
+grant update on table "public"."vote_offline_tally" to "service_role";
+
 grant delete on table "public"."voter" to "anon";
 
 grant insert on table "public"."voter" to "anon";
@@ -6868,6 +8684,33 @@ using (true);
 
 
   create policy "service_role_all"
+  on "public"."ai_provider_credential"
+  as permissive
+  for all
+  to service_role
+using (true);
+
+
+
+  create policy "service_role_all"
+  on "public"."ai_skill"
+  as permissive
+  for all
+  to service_role
+using (true);
+
+
+
+  create policy "service_role_all"
+  on "public"."ai_tool"
+  as permissive
+  for all
+  to service_role
+using (true);
+
+
+
+  create policy "service_role_all"
   on "public"."amendment"
   as permissive
   for all
@@ -6905,6 +8748,33 @@ using (true);
 
   create policy "service_role_all"
   on "public"."amendment_path_segment"
+  as permissive
+  for all
+  to service_role
+using (true);
+
+
+
+  create policy "service_role_all"
+  on "public"."amendment_process_branch"
+  as permissive
+  for all
+  to service_role
+using (true);
+
+
+
+  create policy "service_role_all"
+  on "public"."amendment_process_run"
+  as permissive
+  for all
+  to service_role
+using (true);
+
+
+
+  create policy "service_role_all"
+  on "public"."amendment_process_step_run"
   as permissive
   for all
   to service_role
@@ -7084,6 +8954,15 @@ using (true);
 
 
   create policy "service_role_all"
+  on "public"."election_offline_tally"
+  as permissive
+  for all
+  to service_role
+using (true);
+
+
+
+  create policy "service_role_all"
   on "public"."elector"
   as permissive
   for all
@@ -7129,6 +9008,15 @@ using (true);
 
 
   create policy "service_role_all"
+  on "public"."event_offline_participant"
+  as permissive
+  for all
+  to service_role
+using (true);
+
+
+
+  create policy "service_role_all"
   on "public"."event_participant"
   as permissive
   for all
@@ -7138,16 +9026,7 @@ using (true);
 
 
   create policy "service_role_all"
-  on "public"."event_position"
-  as permissive
-  for all
-  to service_role
-using (true);
-
-
-
-  create policy "service_role_all"
-  on "public"."event_position_holder"
+  on "public"."event_participant_role"
   as permissive
   for all
   to service_role
@@ -7228,6 +9107,24 @@ using (true);
 
 
   create policy "service_role_all"
+  on "public"."group_guest_access"
+  as permissive
+  for all
+  to service_role
+using (true);
+
+
+
+  create policy "service_role_all"
+  on "public"."group_guest_role"
+  as permissive
+  for all
+  to service_role
+using (true);
+
+
+
+  create policy "service_role_all"
   on "public"."group_hashtag"
   as permissive
   for all
@@ -7246,7 +9143,34 @@ using (true);
 
 
   create policy "service_role_all"
-  on "public"."group_relationship"
+  on "public"."group_membership_role"
+  as permissive
+  for all
+  to service_role
+using (true);
+
+
+
+  create policy "service_role_all"
+  on "public"."group_offline_member"
+  as permissive
+  for all
+  to service_role
+using (true);
+
+
+
+  create policy "service_role_all"
+  on "public"."group_offline_membership"
+  as permissive
+  for all
+  to service_role
+using (true);
+
+
+
+  create policy "service_role_all"
+  on "public"."group_offline_membership_role"
   as permissive
   for all
   to service_role
@@ -7327,25 +9251,43 @@ using (true);
 
 
   create policy "service_role_all"
-  on "public"."meeting_booking"
-  as permissive
-  for all
-  to service_role
-using (true);
-
-
-
-  create policy "service_role_all"
-  on "public"."meeting_slot"
-  as permissive
-  for all
-  to service_role
-using (true);
-
-
-
-  create policy "service_role_all"
   on "public"."message"
+  as permissive
+  for all
+  to service_role
+using (true);
+
+
+
+  create policy "service_role_all"
+  on "public"."network_link"
+  as permissive
+  for all
+  to service_role
+using (true);
+
+
+
+  create policy "service_role_all"
+  on "public"."network_link_change_request"
+  as permissive
+  for all
+  to service_role
+using (true);
+
+
+
+  create policy "service_role_all"
+  on "public"."network_link_membership_rule"
+  as permissive
+  for all
+  to service_role
+using (true);
+
+
+
+  create policy "service_role_all"
+  on "public"."network_link_right"
   as permissive
   for all
   to service_role
@@ -7399,7 +9341,7 @@ using (true);
 
 
   create policy "service_role_all"
-  on "public"."position"
+  on "public"."pql_filter"
   as permissive
   for all
   to service_role
@@ -7408,7 +9350,7 @@ using (true);
 
 
   create policy "service_role_all"
-  on "public"."position_holder_history"
+  on "public"."process_task"
   as permissive
   for all
   to service_role
@@ -7436,6 +9378,15 @@ using (true);
 
   create policy "service_role_all"
   on "public"."role"
+  as permissive
+  for all
+  to service_role
+using (true);
+
+
+
+  create policy "service_role_all"
+  on "public"."role_holder_history"
   as permissive
   for all
   to service_role
@@ -7634,6 +9585,15 @@ using (true);
 
   create policy "service_role_all"
   on "public"."vote_choice"
+  as permissive
+  for all
+  to service_role
+using (true);
+
+
+
+  create policy "service_role_all"
+  on "public"."vote_offline_tally"
   as permissive
   for all
   to service_role

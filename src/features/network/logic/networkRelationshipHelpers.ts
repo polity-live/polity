@@ -1,4 +1,5 @@
 import type {
+  CanonicalMembershipMode,
   GroupRelationshipType,
   NormalizedGroupRelationship,
   NetworkGroupEntity,
@@ -177,9 +178,9 @@ function applyRelationshipToEntry(
   relationship: NormalizedGroupRelationship,
   currentGroupId: string
 ): void {
-  const rightValue = relationship.with_right ?? '';
+  const rightValue = relationship.with_right;
 
-  if (!entry.rights.includes(rightValue)) {
+  if (rightValue && !entry.rights.includes(rightValue)) {
     entry.rights.push(rightValue);
   }
 
@@ -190,12 +191,16 @@ function applyRelationshipToEntry(
   }
 
   const mergedRightKind = mergeRightRelationshipKind(
-    entry.rightRelationshipKinds[rightValue],
+    rightValue ? entry.rightRelationshipKinds[rightValue] : undefined,
     relationshipKind
   );
 
-  if (mergedRightKind) {
+  if (rightValue && mergedRightKind) {
     entry.rightRelationshipKinds[rightValue] = mergedRightKind;
+  }
+
+  if (!entry.membershipMode && relationship.membership_mode) {
+    entry.membershipMode = relationship.membership_mode;
   }
 }
 
@@ -204,6 +209,7 @@ export interface RelationshipEntry {
   rights: string[];
   relationshipKinds: NetworkRelationshipKind[];
   rightRelationshipKinds: Record<string, NetworkRelationshipKind>;
+  membershipMode?: CanonicalMembershipMode | null;
   level?: number;
   childId?: string;
   parentId?: string;
@@ -295,6 +301,7 @@ function createHierarchyEntry(
     rights: [],
     relationshipKinds: [],
     rightRelationshipKinds: {},
+    membershipMode: null,
     level: placement.level,
     childId: placement.branch === 'parent' ? placement.hierarchyConnectionId : undefined,
     parentId: placement.branch === 'child' ? placement.hierarchyConnectionId : undefined,
@@ -314,6 +321,7 @@ function createSiblingAttachmentEntry(
     rights: [],
     relationshipKinds: [],
     rightRelationshipKinds: {},
+    membershipMode: null,
     level: placement.level,
     anchorId: placement.anchorId,
     branch: placement.branch,
@@ -366,6 +374,7 @@ export function buildDirectRelationships(
           rights: [],
           relationshipKinds: [],
           rightRelationshipKinds: {},
+          membershipMode: null,
         });
       }
       const parentEntry = parentsMap.get(parentId);
@@ -386,6 +395,7 @@ export function buildDirectRelationships(
           rights: [],
           relationshipKinds: [],
           rightRelationshipKinds: {},
+          membershipMode: null,
         });
       }
       const childEntry = childrenMap.get(childId);
@@ -427,6 +437,7 @@ export function buildIndirectRelationships(
       rights: [...parent.rights],
       relationshipKinds: [...parent.relationshipKinds],
       rightRelationshipKinds: { ...parent.rightRelationshipKinds },
+      membershipMode: parent.membershipMode ?? null,
       level: 1,
       childId: targetGroupId,
     });
@@ -458,6 +469,7 @@ export function buildIndirectRelationships(
                 rights: [],
                 relationshipKinds: [],
                 rightRelationshipKinds: {},
+                membershipMode: null,
                 level,
                 childId: id,
               });
@@ -485,6 +497,7 @@ export function buildIndirectRelationships(
       rights: [...child.rights],
       relationshipKinds: [...child.relationshipKinds],
       rightRelationshipKinds: { ...child.rightRelationshipKinds },
+      membershipMode: child.membershipMode ?? null,
       level: 1,
       parentId: targetGroupId,
     });
@@ -516,6 +529,7 @@ export function buildIndirectRelationships(
                 rights: [],
                 relationshipKinds: [],
                 rightRelationshipKinds: {},
+                membershipMode: null,
                 level,
                 parentId: currentParentId,
               });

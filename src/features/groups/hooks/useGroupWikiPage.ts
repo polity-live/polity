@@ -66,7 +66,8 @@ export function useGroupWikiPage(groupId: string) {
     // Group type
     isHierarchical: group?.group_type === 'hierarchical',
     isSibling: group?.group_type === 'sibling',
-    isOpenSibling: group?.group_type === 'sibling' && group?.sibling_membership_mode === 'open',
+    isOpenSibling:
+      group?.group_type === 'sibling' && group?.primary_sibling_membership_mode === 'none',
 
     // Membership
     status,

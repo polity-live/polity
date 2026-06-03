@@ -4,6 +4,11 @@ import {
   buildOfflineMembershipPersonKey,
   loadEffectiveOfflineMembershipsForGroup,
 } from '../groups/offline-membership-helpers';
+import {
+  buildGroupsById,
+  loadActiveHierarchyRelationships,
+  loadGroupWithDerivedNetworkMeta,
+} from '../groups/membership-helpers';
 import { zql } from '../schema';
 import { fireNotification } from '../server-notify';
 import {
@@ -97,7 +102,7 @@ function resolveAttendanceMode(event: {
 }
 
 async function getEligibleGeneralAssemblyUserIds(tx: EventTx, groupId: string) {
-  const group = await tx.run(zql.group.where('id', groupId).one());
+  const group = await loadGroupWithDerivedNetworkMeta(tx, groupId);
   if (!group) {
     return {
       eligibleUserIds: new Set<string>(),
@@ -116,13 +121,8 @@ async function getEligibleGeneralAssemblyUserIds(tx: EventTx, groupId: string) {
   let descendantBaseGroupIds: string[] = [];
 
   if (group.group_type === 'hierarchical') {
-    const [groups, hierarchyRelationships] = await Promise.all([
-      tx.run(zql.group),
-      tx.run(
-        zql.group_relationship.where('with_right', 'passiveVotingRight').where('status', 'active')
-      ),
-    ]);
-    const groupsById = new Map(groups.map(currentGroup => [currentGroup.id, currentGroup]));
+    const groupsById = await buildGroupsById(tx);
+    const hierarchyRelationships = await loadActiveHierarchyRelationships(tx, groupsById);
 
     descendantBaseGroupIds = [
       ...new Set(resolveChildBaseGroups(groupId, hierarchyRelationships, groupsById)),

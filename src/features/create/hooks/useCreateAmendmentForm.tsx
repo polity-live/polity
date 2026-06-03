@@ -73,6 +73,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
       eventTitle: string;
       eventStartDate: number | null;
     }[];
+    pathMode: 'hierarchy' | 'workflow';
     workflowId: string | null;
   } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -140,6 +141,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
           }
         : null,
       pathWithEvents: selection.pathWithEvents,
+      pathMode: selection.pathMode,
       workflowId: selection.workflowId,
     });
   }, []);
@@ -209,17 +211,13 @@ export function useCreateAmendmentForm(): CreateFormConfig {
       }
 
       // Create amendment path with agenda items and votes if target was selected
-      if (
-        targetSelection?.eventId &&
-        targetSelection?.eventData &&
-        targetSelection.pathWithEvents.length > 0
-      ) {
+      if (targetSelection?.pathWithEvents.length) {
         const enrichedPath = enrichPathSegments(
           targetSelection.pathWithEvents,
           targetSelection.groupId,
-          targetSelection.eventId,
-          targetSelection.eventData.title ?? null,
-          targetSelection.eventData.start_date ?? null
+          targetSelection.eventId ?? '',
+          targetSelection.eventData?.title ?? null,
+          targetSelection.eventData?.start_date ?? null
         );
 
         await createAmendmentPath({
@@ -228,6 +226,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
           amendmentReason: null,
           enrichedPath,
           workflowId: targetSelection.workflowId,
+          pathMode: targetSelection.pathMode,
         });
       }
 

@@ -1,7 +1,8 @@
-import { MarkerType, type Edge } from '@xyflow/react';
+import { MarkerType, Position, type Edge } from '@xyflow/react';
 import { getHierarchyRelationshipPair } from './groupRelationshipOrientation';
 import type { NetworkRelationshipKind } from './networkRelationshipHelpers';
 import type {
+  NetworkEdgeAnchorStrategy,
   NetworkConnectionDirection,
   EditableRightsLabelEdgeData,
   NetworkRelationshipDepth,
@@ -9,7 +10,11 @@ import type {
   NetworkRelationshipDialogData,
   NetworkUserConnectionDirection,
 } from '../types/networkEdge.types';
-import type { GroupRelationshipType, NormalizedGroupRelationship } from '../types/network.types';
+import type {
+  CanonicalMembershipMode,
+  GroupRelationshipType,
+  NormalizedGroupRelationship,
+} from '../types/network.types';
 
 type TranslationFn = (key: string, defaultValue?: string) => string;
 type DirectionInput = Exclude<NetworkEdgeRelationshipDirection, 'bidirectional'>;
@@ -19,12 +24,36 @@ interface CreateNetworkRelationshipEdgeDataArgs {
   relationshipKinds?: NetworkRelationshipKind[];
   rightRelationshipKinds?: Record<string, NetworkRelationshipKind>;
   relationshipType?: GroupRelationshipType | 'membership';
+  membershipMode?: CanonicalMembershipMode | null;
   rightEdgeDirections?: Record<string, NetworkEdgeRelationshipDirection>;
   rightConnectionDirections?: Record<string, NetworkConnectionDirection>;
   userConnectionDirections?: NetworkUserConnectionDirection[];
   relationshipDepth?: NetworkRelationshipDepth;
   sourceName?: string | null;
   targetName?: string | null;
+  currentGroupId?: string;
+  currentGroupName?: string | null;
+  selectedGroupId?: string;
+  selectedGroupName?: string | null;
+  rightDisplayDirections?: Record<string, NetworkConnectionDirection>;
+  anchorStrategy?: NetworkEdgeAnchorStrategy;
+  useInnerVerticalAnchors?: boolean;
+}
+
+interface NetworkEdgeAnchorRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+interface ResolvedInnerAutoEdgeAnchors {
+  sourceX: number;
+  sourceY: number;
+  targetX: number;
+  targetY: number;
+  sourcePosition: Position;
+  targetPosition: Position;
 }
 
 export const NETWORK_CONNECTION_DIRECTION_COLORS: Record<NetworkConnectionDirection, string> = {
@@ -32,6 +61,45 @@ export const NETWORK_CONNECTION_DIRECTION_COLORS: Record<NetworkConnectionDirect
   incoming: '#2563eb',
   outgoing: '#d97706',
 };
+
+export function resolveInnerAutoEdgeAnchors({
+  sourceRect,
+  targetRect,
+}: {
+  sourceRect: NetworkEdgeAnchorRect;
+  targetRect: NetworkEdgeAnchorRect;
+}): ResolvedInnerAutoEdgeAnchors {
+  const sourceCenterX = sourceRect.x + sourceRect.width / 2;
+  const sourceCenterY = sourceRect.y + sourceRect.height / 2;
+  const targetCenterX = targetRect.x + targetRect.width / 2;
+  const targetCenterY = targetRect.y + targetRect.height / 2;
+  const deltaX = targetCenterX - sourceCenterX;
+  const deltaY = targetCenterY - sourceCenterY;
+
+  if (Math.abs(deltaX) >= Math.abs(deltaY)) {
+    const sourceIsLeftOfTarget = sourceCenterX <= targetCenterX;
+
+    return {
+      sourceX: sourceIsLeftOfTarget ? sourceRect.x + sourceRect.width : sourceRect.x,
+      sourceY: sourceCenterY,
+      targetX: sourceIsLeftOfTarget ? targetRect.x : targetRect.x + targetRect.width,
+      targetY: targetCenterY,
+      sourcePosition: sourceIsLeftOfTarget ? Position.Right : Position.Left,
+      targetPosition: sourceIsLeftOfTarget ? Position.Left : Position.Right,
+    };
+  }
+
+  const sourceIsAboveTarget = sourceCenterY <= targetCenterY;
+
+  return {
+    sourceX: sourceCenterX,
+    sourceY: sourceIsAboveTarget ? sourceRect.y + sourceRect.height : sourceRect.y,
+    targetX: targetCenterX,
+    targetY: sourceIsAboveTarget ? targetRect.y : targetRect.y + targetRect.height,
+    sourcePosition: sourceIsAboveTarget ? Position.Bottom : Position.Top,
+    targetPosition: sourceIsAboveTarget ? Position.Top : Position.Bottom,
+  };
+}
 
 function isForwardDirection(direction: NetworkEdgeRelationshipDirection | undefined) {
   return direction === 'forward' || direction === 'bidirectional';
@@ -200,6 +268,96 @@ export function buildSingleDirectionRightEdgeDirections(
   >;
 }
 
+export function buildCurrentPerspectiveRightDisplayDirections({
+  currentNodeId,
+  sourceId,
+  targetId,
+  rightEdgeDirections,
+}: {
+  currentNodeId: string;
+  sourceId: string;
+  targetId: string;
+  rightEdgeDirections?: Record<string, NetworkEdgeRelationshipDirection>;
+}): Record<string, NetworkConnectionDirection> | undefined {
+  if (!rightEdgeDirections) {
+    return undefined;
+  }
+
+  const currentIsSource = currentNodeId === sourceId;
+  const currentIsTarget = currentNodeId === targetId;
+
+  if (!currentIsSource && !currentIsTarget) {
+    return undefined;
+  }
+
+  return Object.fromEntries(
+    Object.entries(rightEdgeDirections).map(([right, direction]) => {
+      if (direction === 'bidirectional') {
+        return [right, 'bidirectional'];
+      }
+
+      if (currentIsSource) {
+        return [right, direction === 'forward' ? 'outgoing' : 'incoming'];
+      }
+
+      return [right, direction === 'forward' ? 'incoming' : 'outgoing'];
+    })
+  ) as Record<string, NetworkConnectionDirection>;
+}
+
+export function orientRelationshipEdgeForCurrentPerspective({
+  currentNodeId,
+  sourceId,
+  targetId,
+  rightEdgeDirections,
+}: {
+  currentNodeId: string;
+  sourceId: string;
+  targetId: string;
+  rightEdgeDirections?: Record<string, NetworkEdgeRelationshipDirection>;
+}) {
+  const rightDisplayDirections = buildCurrentPerspectiveRightDisplayDirections({
+    currentNodeId,
+    sourceId,
+    targetId,
+    rightEdgeDirections,
+  });
+
+  if (!rightDisplayDirections || !rightEdgeDirections) {
+    return {
+      sourceId,
+      targetId,
+      rightEdgeDirections,
+      rightDisplayDirections,
+    };
+  }
+
+  const uniqueDisplayDirections = [...new Set(Object.values(rightDisplayDirections))];
+
+  if (uniqueDisplayDirections.length !== 1 || uniqueDisplayDirections[0] === 'bidirectional') {
+    return {
+      sourceId,
+      targetId,
+      rightEdgeDirections,
+      rightDisplayDirections,
+    };
+  }
+
+  const otherNodeId = currentNodeId === sourceId ? targetId : sourceId;
+  const displaySourceId = uniqueDisplayDirections[0] === 'incoming' ? currentNodeId : otherNodeId;
+  const displayTargetId = uniqueDisplayDirections[0] === 'incoming' ? otherNodeId : currentNodeId;
+
+  return {
+    sourceId: displaySourceId,
+    targetId: displayTargetId,
+    rightEdgeDirections: buildSingleDirectionRightEdgeDirections(
+      Object.keys(rightEdgeDirections),
+      'forward'
+    ),
+    rightDisplayDirections,
+  };
+}
+
 export function buildHierarchyRightEdgeDirections(
   relationships: readonly NormalizedGroupRelationship[],
   parentGroupId: string,
@@ -269,24 +427,40 @@ export function createNetworkRelationshipEdgeData({
   relationshipKinds = [],
   rightRelationshipKinds = {},
   relationshipType,
+  membershipMode,
   rightEdgeDirections,
   rightConnectionDirections,
   userConnectionDirections,
   relationshipDepth,
   sourceName,
   targetName,
+  currentGroupId,
+  currentGroupName,
+  selectedGroupId,
+  selectedGroupName,
+  rightDisplayDirections,
+  anchorStrategy,
+  useInnerVerticalAnchors,
 }: CreateNetworkRelationshipEdgeDataArgs): EditableRightsLabelEdgeData {
   return {
     rights,
     relationshipKinds,
     rightRelationshipKinds,
     relationshipType,
+    membershipMode,
     rightEdgeDirections,
     rightConnectionDirections,
     userConnectionDirections,
     relationshipDepth,
     sourceName,
     targetName,
+    currentGroupId,
+    currentGroupName,
+    selectedGroupId,
+    selectedGroupName,
+    rightDisplayDirections,
+    anchorStrategy,
+    useInnerVerticalAnchors,
   };
 }
 
@@ -344,6 +518,13 @@ export function buildNetworkRelationshipDialogData(
       edgeData?.relationshipType === 'membership'
         ? edgeData.relationshipType
         : undefined,
+    membershipMode:
+      edgeData?.membershipMode === 'none' ||
+      edgeData?.membershipMode === 'all_members' ||
+      edgeData?.membershipMode === 'role_members' ||
+      edgeData?.membershipMode === 'selected_source_groups'
+        ? edgeData.membershipMode
+        : undefined,
     rightEdgeDirections: filterRecordToVisibleRights(
       edgeData?.rightEdgeDirections,
       visibleRights
@@ -357,6 +538,18 @@ export function buildNetworkRelationshipDialogData(
       getConnectionDirectionFromFilters(userConnectionDirections ?? []),
     userConnectionDirections,
     relationshipDepth: edgeData?.relationshipDepth,
+    currentGroupId:
+      typeof edgeData?.currentGroupId === 'string' ? edgeData.currentGroupId : undefined,
+    currentGroupName:
+      typeof edgeData?.currentGroupName === 'string' ? edgeData.currentGroupName : null,
+    selectedGroupId:
+      typeof edgeData?.selectedGroupId === 'string' ? edgeData.selectedGroupId : undefined,
+    selectedGroupName:
+      typeof edgeData?.selectedGroupName === 'string' ? edgeData.selectedGroupName : null,
+    rightDisplayDirections: filterRecordToVisibleRights(
+      edgeData?.rightDisplayDirections,
+      visibleRights
+    ) as Record<string, NetworkConnectionDirection> | undefined,
     label: buildRelationshipStatusLabel(
       relationshipKinds,
       typeof edge.label === 'string' ? edge.label : null,

@@ -8,7 +8,6 @@ export type {
   GroupOfflineMembershipRole,
   GroupGuestAccess,
   GroupGuestRole,
-  GroupSiblingSource,
   Role,
   RoleHolderHistory,
   ActionRight,

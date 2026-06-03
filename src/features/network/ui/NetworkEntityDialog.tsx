@@ -15,7 +15,6 @@ import { Badge } from '@/features/shared/ui/ui/badge';
 import {
   getGroupRelationshipDirectionOptions,
   getCurrentGroupRelationshipLabel,
-  type GroupRelationshipDirection,
   type GroupRelationshipRight,
   GroupRelationshipRightsSelector,
   GroupRelationshipTypeSelect,
@@ -24,12 +23,16 @@ import {
   getRelationshipDirectionForPreview,
   getRelationshipPreviewData,
 } from '../logic/networkRelationshipDialogHelpers';
+import {
+  getCanonicalMembershipModeLabel,
+  getLegacySiblingMembershipMode,
+} from '../logic/networkLinkDerived';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { EventByGroupRow } from '@/zero/events/useEventState';
 import type { NetworkRelationshipKind } from '@/features/network/logic/networkRelationshipHelpers';
 import type { NetworkRelationshipDialogData } from '@/features/network/types/networkEdge.types';
-import type { NetworkGroupEntity } from '../types/network.types';
+import type { GroupRelationshipDirection, NetworkGroupEntity } from '../types/network.types';
 
 interface NetworkEventData {
   id?: string;
@@ -130,10 +133,12 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
 
     return relationship.rights.map(right => ({
       right,
-      direction: getRelationshipDirectionForPreview({
-        edgeDirection: relationship.rightEdgeDirections?.[right] ?? 'forward',
-        isIncomingPerspective: previewData.isIncomingPerspective,
-      }),
+      direction:
+        relationship.rightDisplayDirections?.[right] ??
+        getRelationshipDirectionForPreview({
+          edgeDirection: relationship.rightEdgeDirections?.[right] ?? 'forward',
+          isIncomingPerspective: previewData.isIncomingPerspective,
+        }),
     }));
   };
 
@@ -142,6 +147,10 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
   const relationshipPreviewData =
     entity.type === 'relationship' ? getRelationshipPreviewData(entity.data) : null;
   const relationshipDirectionOptions = getGroupRelationshipDirectionOptions(t);
+  const siblingMembershipMode =
+    entity.type === 'relationship' && relationshipPreviewData?.relationshipType === 'sibling'
+      ? (getLegacySiblingMembershipMode(entity.data.membershipMode) ?? undefined)
+      : undefined;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -259,12 +268,14 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
                     value={relationshipPreviewData.relationshipType}
                     currentGroupName={relationshipPreviewData.currentGroupName}
                     selectedGroupName={relationshipPreviewData.selectedGroupName}
+                    siblingMembershipMode={siblingMembershipMode}
                     onValueChange={() => undefined}
                     disabled
                     helperText={getCurrentGroupRelationshipLabel({
                       relationshipType: relationshipPreviewData.relationshipType,
                       currentGroupName: relationshipPreviewData.currentGroupName,
                       selectedGroupName: relationshipPreviewData.selectedGroupName,
+                      siblingMembershipMode,
                       t,
                     })}
                   />
@@ -272,6 +283,19 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
               ) : getRelationshipSentence(entity.data) ? (
                 <div className="bg-muted/30 flex items-center gap-2 rounded-lg border p-3">
                   <p className="text-base font-semibold">{getRelationshipSentence(entity.data)}</p>
+                </div>
+              ) : null}
+
+              {entity.data.membershipMode ? (
+                <div className="rounded-lg border p-4">
+                  <div className="space-y-1">
+                    <p className="text-muted-foreground text-sm font-medium">
+                      {t('common.network.membershipModeLabel', 'Membership mode')}
+                    </p>
+                    <p className="text-lg font-semibold">
+                      {getCanonicalMembershipModeLabel(entity.data.membershipMode)}
+                    </p>
+                  </div>
                 </div>
               ) : null}
 

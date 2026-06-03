@@ -10,6 +10,8 @@ import {
   resolveElectionSeatCount,
 } from '@/features/elections/logic/electionMode';
 import { queries } from '../queries';
+import type { NetworkLinkListRow } from '../network/queries';
+import { explodeNetworkLinksToRelationships } from '@/features/network/logic/networkLinkDerived';
 
 /** A single event row from the byGroup query (flat, no relations) */
 export type EventByGroupRow = QueryRowType<typeof queries.events.byGroup>;
@@ -549,8 +551,15 @@ export function useAgendaItemDetail(agendaItemId: string) {
 export function useEventDelegates(eventId: string, groupId?: string) {
   const [eventData, eventResult] = useQuery(queries.events.delegatesFull({ id: eventId }));
 
-  const [relationships, relationshipsResult] = useQuery(
+  const [relationshipLinks, relationshipsResult] = useQuery(
     queries.events.groupRelationships({ groupId })
+  );
+  const relationships = useMemo(
+    () =>
+      explodeNetworkLinksToRelationships(
+        (relationshipLinks ?? []) as readonly NetworkLinkListRow[]
+      ),
+    [relationshipLinks]
   );
 
   return {
@@ -669,9 +678,13 @@ export function useEventWithGroup(eventId: string) {
 }
 
 export function useGroupRelationships(groupId?: string) {
-  const [relationships] = useQuery(queries.events.groupRelationships({ groupId }));
+  const [relationshipLinks] = useQuery(queries.events.groupRelationships({ groupId }));
 
-  return { relationships: relationships || [] };
+  return {
+    relationships: explodeNetworkLinksToRelationships(
+      (relationshipLinks ?? []) as readonly NetworkLinkListRow[]
+    ),
+  };
 }
 
 export function useElectionWithVotes(electionId: string) {

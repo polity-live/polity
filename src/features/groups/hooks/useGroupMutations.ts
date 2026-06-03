@@ -16,6 +16,7 @@ export function useGroupMutations(groupId: string) {
     revokeGuestAccess,
     updateMemberRole,
     syncMembershipRoles,
+    acceptGuestInvitation,
     leaveGroup: leaveGroupAction,
     createRole: createRoleAction,
     deleteRole: deleteRoleAction,
@@ -145,6 +146,21 @@ export function useGroupMutations(groupId: string) {
     } catch (error) {
       console.error('Failed to invite guests:', error);
       toast.error('Failed to invite guests');
+      return { success: false, error };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const approveGuestAccess = async (guestAccessId: string) => {
+    setIsLoading(true);
+    try {
+      await serverConfirmed(acceptGuestInvitation({ id: guestAccessId }));
+      toast.success('Guest request approved');
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to approve guest access:', error);
+      toast.error('Failed to approve guest access');
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -616,6 +632,7 @@ export function useGroupMutations(groupId: string) {
     changeMemberRoles,
     inviteGuests,
     revokeGuest,
+    approveGuestAccess,
     createRole,
     deleteRole,
     promoteToAdmin,

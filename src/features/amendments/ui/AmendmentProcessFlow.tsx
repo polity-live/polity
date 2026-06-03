@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from '@tanstack/react-router';
+import { richTextToPlainText } from '@/features/shared/logic/richText';
 import { UserNetworkFlow } from '@/features/network/ui/UserNetworkFlow';
 import { NetworkEntityDialog } from '@/features/network/ui/NetworkEntityDialog';
 import {
@@ -52,7 +53,7 @@ interface PendingTargetGroupData {
 }
 
 interface PendingTargetEventData {
-  id: string;
+  id: string | null;
   title: string | null;
   description?: string | null;
   start_date?: number | null;
@@ -78,8 +79,8 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
   const [pendingTarget, setPendingTarget] = useState<{
     groupId: string;
     groupData: PendingTargetGroupData;
-    eventId: string;
-    eventData: PendingTargetEventData;
+    eventId: string | null;
+    eventData: PendingTargetEventData | null;
     pathWithEvents?: PathWithEventSegment[];
     pathMode: 'hierarchy' | 'workflow';
     workflowId: string | null;
@@ -149,8 +150,10 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
   const amendmentPath = amendment?.paths?.[0];
   const displayUserId = selectedUserId || user?.id || '';
 
-  // Check if targetGroup/targetEvent exist (they should be objects with at least an id)
-  const hasTarget = Boolean(amendment?.group?.id && amendment?.event?.id);
+  // A pending-event runtime still counts as a selected target.
+  const hasTarget = Boolean(
+    amendmentPath?.id || amendment?.current_process_run?.id || amendment?.group?.id
+  );
 
   // Use path segments directly and sort them by order field
   const pathSegments = [...(amendmentPath?.segments || [])].sort(
@@ -191,6 +194,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
       type: 'group',
       data: {
         ...groupData,
+        description: richTextToPlainText(groupData.description),
         onEventSelect: (eventId: string, eventData: EventByGroupRow) => {
           // When an event is selected from the dialog, set it as pending target
           setPendingTarget({
@@ -198,7 +202,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
             groupData: {
               id: groupData.id,
               name: groupData.name ?? null,
-              description: groupData.description ?? null,
+              description: richTextToPlainText(groupData.description),
               member_count: groupData.member_count ?? null,
               event_count: groupData.event_count ?? null,
               amendment_count: groupData.amendment_count ?? null,
@@ -207,7 +211,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
             eventData: {
               id: eventId,
               title: eventData.title ?? null,
-              description: eventData.description ?? null,
+              description: richTextToPlainText(eventData.description),
               start_date: eventData.start_date ?? null,
               location_name: eventData.location_name ?? null,
               participant_count: eventData.participant_count ?? null,
@@ -290,8 +294,8 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
         pathWithEvents,
         groupId,
         eventId,
-        eventData.title ?? null,
-        eventData.start_date ?? null
+        eventData?.title ?? null,
+        eventData?.start_date ?? null
       );
 
       // Persist agenda items, votes, path and segments
@@ -301,13 +305,14 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
         amendmentReason: amendment.reason || null,
         enrichedPath,
         workflowId: pendingTarget.workflowId,
+        pathMode: pendingTarget.pathMode,
       });
 
       // Update amendment with target group and event
       await updateAmendment({
         id: amendmentId,
         group_id: groupId,
-        event_id: eventId,
+        event_id: eventId ?? null,
       });
 
       toast.success(
@@ -362,6 +367,9 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
       // Update amendment to remove target
       await updateAmendment({
         id: amendmentId,
+        group_id: null,
+        event_id: null,
+        current_process_run_id: null,
       });
 
       toast.success(t('features.amendments.process.targetRemovedSuccess'));
@@ -874,18 +882,24 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                 <h4 className="text-muted-foreground mb-2 text-sm font-semibold uppercase">
                   {t('features.amendments.process.targetEvent')}
                 </h4>
-                <EventTimelineCard
-                  event={{
-                    id: pendingTarget.eventData.id,
-                    title: pendingTarget.eventData.title ?? '',
-                    description: pendingTarget.eventData.description ?? undefined,
-                    startDate: pendingTarget.eventData.start_date
-                      ? new Date(pendingTarget.eventData.start_date)
-                      : new Date(),
-                    location: pendingTarget.eventData.location_name ?? undefined,
-                    attendeeCount: pendingTarget.eventData.participant_count ?? 0,
-                  }}
-                />
+                {pendingTarget.eventData ? (
+                  <EventTimelineCard
+                    event={{
+                      id: pendingTarget.eventData.id ?? crypto.randomUUID(),
+                      title: pendingTarget.eventData.title ?? '',
+                      description: pendingTarget.eventData.description ?? undefined,
+                      startDate: pendingTarget.eventData.start_date
+                        ? new Date(pendingTarget.eventData.start_date)
+                        : new Date(),
+                      location: pendingTarget.eventData.location_name ?? undefined,
+                      attendeeCount: pendingTarget.eventData.participant_count ?? 0,
+                    }}
+                  />
+                ) : (
+                  <div className="text-muted-foreground border-border bg-muted/40 rounded-md border border-dashed p-4 text-sm">
+                    {t('features.amendments.process.noUpcomingEvent')}
+                  </div>
+                )}
               </div>
 
               <div className="bg-muted text-muted-foreground rounded-md p-3 text-xs">
@@ -1014,7 +1028,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                           event={{
                             id: event.id,
                             title: event.title ?? '',
-                            description: event.description ?? undefined,
+                            description: richTextToPlainText(event.description) || undefined,
                             startDate: event.start_date ? new Date(event.start_date) : new Date(),
                             location: event.location_name ?? undefined,
                             attendeeCount: event.participant_count ?? 0,
@@ -1103,20 +1117,22 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                   groupData: {
                     id: groupData.id,
                     name: groupData.name ?? null,
-                    description: groupData.description ?? null,
+                    description: richTextToPlainText(groupData.description),
                     member_count: groupData.member_count ?? null,
                     event_count: groupData.event_count ?? null,
                     amendment_count: groupData.amendment_count ?? null,
                   },
                   eventId,
-                  eventData: {
-                    id: eventId,
-                    title: eventData.title ?? null,
-                    description: eventData.description ?? null,
-                    start_date: eventData.start_date ?? null,
-                    location_name: eventData.location_name ?? null,
-                    participant_count: eventData.participant_count ?? null,
-                  },
+                  eventData: eventData
+                    ? {
+                        id: eventId,
+                        title: eventData.title ?? null,
+                        description: richTextToPlainText(eventData.description),
+                        start_date: eventData.start_date ?? null,
+                        location_name: eventData.location_name ?? null,
+                        participant_count: eventData.participant_count ?? null,
+                      }
+                    : null,
                   pathWithEvents,
                   pathMode,
                   workflowId,

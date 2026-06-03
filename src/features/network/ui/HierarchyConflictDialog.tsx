@@ -20,6 +20,101 @@ import type { HierarchyConflictUser } from '../hooks/useHierarchyLinkConflicts';
 import { useGroupConflictPreflight } from '@/features/groups/hooks/useGroupConflictPreflight';
 import { GroupConflictPanel } from '@/features/groups/ui/GroupConflictPanel';
 import { UserSearchCard } from '@/features/search/ui/UserSearchCard';
+import type { GroupConflictPreflightInput } from '@/features/groups/logic/groupConflictPreflight';
+
+function buildNetworkLinkPreflightFromRelationships(
+  relationships: readonly NormalizedGroupRelationship[]
+): GroupConflictPreflightInput | null {
+  const firstRelationship = relationships[0];
+  if (!firstRelationship) {
+    return null;
+  }
+
+  const forwardRelationship = relationships.find(relationship =>
+    relationship.id.endsWith(':forward')
+  );
+  const backwardRelationship = relationships.find(relationship =>
+    relationship.id.endsWith(':backward')
+  );
+
+  const source_group_id = forwardRelationship
+    ? forwardRelationship.group_id
+    : backwardRelationship
+      ? backwardRelationship.related_group_id
+      : firstRelationship.relationship_type === 'child'
+        ? firstRelationship.group_id
+        : firstRelationship.related_group_id;
+  const target_group_id = forwardRelationship
+    ? forwardRelationship.related_group_id
+    : backwardRelationship
+      ? backwardRelationship.group_id
+      : firstRelationship.relationship_type === 'child'
+        ? firstRelationship.related_group_id
+        : firstRelationship.group_id;
+
+  const rightRowsById = new Map<string, NormalizedGroupRelationship[]>();
+  for (const relationship of relationships) {
+    const key =
+      relationship.network_link_right_id ??
+      `${relationship.network_link_id}:${relationship.with_right}`;
+    const rows = rightRowsById.get(key) ?? [];
+    rows.push(relationship);
+    rightRowsById.set(key, rows);
+  }
+
+  const rights = [...rightRowsById.entries()].flatMap(([rightId, rows]) => {
+    const representative = rows[0];
+    if (!representative?.with_right) {
+      return [];
+    }
+
+    const hasForward = rows.some(row => row.id.endsWith(':forward'));
+    const hasBackward = rows.some(row => row.id.endsWith(':backward'));
+    const direction =
+      representative.right_direction === 'bidirectional' || (hasForward && hasBackward)
+        ? 'bidirectional'
+        : hasForward
+          ? 'forward'
+          : 'backward';
+
+    return [
+      {
+        id: representative.network_link_right_id ?? rightId,
+        right_key: representative.with_right as
+          | 'informationRight'
+          | 'amendmentRight'
+          | 'rightToSpeak'
+          | 'activeVotingRight'
+          | 'passiveVotingRight',
+        direction: direction as 'forward' | 'backward' | 'bidirectional',
+        status:
+          (representative.status as 'active' | 'requested' | 'pending' | 'rejected' | null) ??
+          'requested',
+        initiator_group_id: representative.initiator_group_id ?? null,
+      },
+    ];
+  });
+
+  if (rights.length === 0) {
+    return null;
+  }
+
+  return {
+    kind: 'network_link_upsert' as const,
+    link_id: firstRelationship.network_link_id ?? undefined,
+    source_group_id,
+    target_group_id,
+    structural_relation: (firstRelationship.structural_relation === 'sibling'
+      ? 'sibling'
+      : 'parent_child') as 'sibling' | 'parent_child',
+    rights,
+    membership_rule: {
+      membership_mode: firstRelationship.membership_mode ?? 'none',
+      role_id: null,
+      source_group_ids: null,
+    },
+  };
+}
 
 interface HierarchyConflictDialogProps {
   open: boolean;
@@ -51,17 +146,13 @@ export function HierarchyConflictDialog({
   const { leaveGroup } = useGroupActions();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [removingUserId, setRemovingUserId] = useState<string | null>(null);
-  const relationshipPreflight = useGroupConflictPreflight(
-    open && relationships.length > 0
-      ? {
-          kind: 'relationship_activation',
-          relationship_ids: relationships.map(relationship => relationship.id),
-        }
-      : null,
-    {
-      enabled: open && relationships.length > 0,
-    }
+  const relationshipPreflightInput = useMemo(
+    () => (open ? buildNetworkLinkPreflightFromRelationships(relationships) : null),
+    [open, relationships]
   );
+  const relationshipPreflight = useGroupConflictPreflight(relationshipPreflightInput, {
+    enabled: open && relationshipPreflightInput != null,
+  });
 
   const rightsLabel = useMemo(
     () =>

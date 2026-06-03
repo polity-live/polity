@@ -5,12 +5,13 @@ export {
   amendmentPath,
   amendmentPathSegment,
   supportConfirmation,
-} from './table'
-export {
-  amendmentSupportVote,
-  changeRequestVote,
-} from '../votes/table'
-export { changeRequest } from '../change-requests/table'
+  amendmentProcessRun,
+  amendmentProcessBranch,
+  amendmentProcessStepRun,
+  processTask,
+} from './table';
+export { amendmentSupportVote, changeRequestVote } from '../votes/table';
+export { changeRequest } from '../change-requests/table';
 
 // Zod Schemas
 export {
@@ -18,22 +19,36 @@ export {
   createAmendmentSchema,
   updateAmendmentSchema,
   deleteAmendmentSchema,
+  selectAmendmentProcessRunSchema,
+  selectAmendmentProcessBranchSchema,
+  selectAmendmentProcessStepRunSchema,
+  selectProcessTaskSchema,
+  createAmendmentProcessRunSchema,
+  updateAmendmentProcessRunSchema,
+  createAmendmentProcessBranchSchema,
+  updateAmendmentProcessBranchSchema,
+  createAmendmentProcessStepRunSchema,
+  updateAmendmentProcessStepRunSchema,
+  createProcessTaskSchema,
+  updateProcessTaskSchema,
+  deleteProcessRuntimeRecordSchema,
   type Amendment,
   type AmendmentCollaborator,
   type AmendmentPath,
   type AmendmentPathSegment,
   type SupportConfirmation,
-} from './schema'
-export type {
-  AmendmentSupportVote,
-  ChangeRequestVote,
-} from '../votes/schema'
-export type { ChangeRequest } from '../change-requests/schema'
+  type AmendmentProcessRun,
+  type AmendmentProcessBranch,
+  type AmendmentProcessStepRun,
+  type ProcessTask,
+} from './schema';
+export type { AmendmentSupportVote, ChangeRequestVote } from '../votes/schema';
+export type { ChangeRequest } from '../change-requests/schema';
 
 // Queries & Mutators
-export { amendmentQueries } from './queries'
-export { amendmentSharedMutators } from './shared-mutators'
+export { amendmentQueries } from './queries';
+export { amendmentSharedMutators } from './shared-mutators';
 
 // Facade Hooks
-export { useAmendmentState } from './useAmendmentState'
-export { useAmendmentActions } from './useAmendmentActions'
+export { useAmendmentState } from './useAmendmentState';
+export { useAmendmentActions } from './useAmendmentActions';

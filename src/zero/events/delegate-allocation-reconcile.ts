@@ -7,17 +7,20 @@ import {
   resolveMembershipProvenance,
   supportsMembershipComposition,
   type MembershipCompositionGroupLike,
-  type MembershipCompositionRelationshipLike,
   type MembershipWithCompositionSource,
 } from '@/features/groups/logic/membershipComposition';
 import { getMembershipDisplayRoles } from '@/features/groups/logic/buildMembershipRightsSummary';
 import { getHierarchyRelationshipPair } from '@/features/network/logic/groupRelationshipOrientation';
-import type { GroupRelationship as GroupRelationshipRow } from '@/zero/network/schema';
 import {
   buildOfflineMembershipPersonKey,
   loadEffectiveOfflineMembershipsForGroup,
 } from '../groups/offline-membership-helpers';
 import { mutators } from '../mutators';
+import {
+  buildDerivedGroupNetworkMetaMap,
+  explodeNetworkLinksToRelationships,
+  type DerivedNetworkRelationshipRow,
+} from '../network/derived';
 import { zql } from '../schema';
 
 type EventServerTx = Parameters<typeof mutators.events.create.fn>[0]['tx'];
@@ -37,6 +40,11 @@ type NormalizedMembership = MembershipWithCompositionSource<{
   sort_order?: number | null;
   action_rights?: readonly { resource?: string | null; action?: string | null }[] | null;
 }>;
+
+type LoadedNetworkRelationship = DerivedNetworkRelationshipRow & {
+  group: MembershipCompositionGroupLike | null;
+  related_group: MembershipCompositionGroupLike | null;
+};
 
 function selectPrimaryRole(roles: readonly NonNullable<NormalizedMembership['roles']>[number][]) {
   return (
@@ -80,9 +88,33 @@ function isActiveMembership(membership: NormalizedMembership) {
 }
 
 async function loadNetworkRelationships(tx: EventServerTx) {
-  return (await tx.run(
-    zql.group_relationship.related('group').related('related_group')
-  )) as MembershipCompositionRelationshipLike[];
+  const [groups, links, rights, rules] = await Promise.all([
+    tx.run(zql.group),
+    tx.run(zql.network_link),
+    tx.run(zql.network_link_right),
+    tx.run(zql.network_link_membership_rule),
+  ]);
+
+  const derivedMetaByGroupId = buildDerivedGroupNetworkMetaMap({
+    groupIds: groups.map(group => group.id),
+    links,
+    rights,
+    rules,
+  });
+  const groupsById = new Map(
+    groups.map(group => [group.id, { ...group, ...(derivedMetaByGroupId.get(group.id) ?? {}) }])
+  );
+
+  return explodeNetworkLinksToRelationships({
+    links,
+    rights,
+    rules,
+    includeInactive: true,
+  }).map(relationship => ({
+    ...relationship,
+    group: groupsById.get(relationship.group_id) ?? null,
+    related_group: groupsById.get(relationship.related_group_id) ?? null,
+  })) as LoadedNetworkRelationship[];
 }
 
 async function loadGroupMemberships(tx: EventServerTx, groupIds: readonly string[]) {
@@ -114,7 +146,7 @@ function getMembersPerDelegate(event: { main_group_delegate_allocation_mode?: st
 function collectPathsFromBaseToRoot(args: {
   baseGroupId: string;
   rootGroupId: string;
-  relationships: readonly MembershipCompositionRelationshipLike[];
+  relationships: readonly DerivedNetworkRelationshipRow[];
 }) {
   const parentIdsByChildId = new Map<string, string[]>();
 
@@ -160,7 +192,7 @@ function collectPathsFromBaseToRoot(args: {
 function resolvePartGroupIdForBase(args: {
   rootGroupId: string;
   baseGroupId: string;
-  relationships: readonly MembershipCompositionRelationshipLike[];
+  relationships: readonly DerivedNetworkRelationshipRow[];
 }) {
   if (args.rootGroupId === args.baseGroupId) {
     return args.baseGroupId;
@@ -177,7 +209,7 @@ function resolvePartGroupIdForBase(args: {
 
 function buildOfflineBucketRootResolver(args: {
   targetGroup: MembershipCompositionGroupLike;
-  relationships: readonly MembershipCompositionRelationshipLike[];
+  relationships: readonly LoadedNetworkRelationship[];
   groupsById: ReadonlyMap<string, MembershipCompositionGroupLike>;
   parliamentSourceGroupIds: readonly string[];
 }) {
@@ -210,7 +242,7 @@ function buildOfflineBucketRootResolver(args: {
 
       const descendantBaseGroupIds = resolveChildBaseGroups(
         sourceGroupId,
-        [...args.relationships] as unknown as GroupRelationshipRow[],
+        [...args.relationships],
         args.groupsById
       );
       return descendantBaseGroupIds.includes(baseGroupId);
@@ -260,9 +292,17 @@ export async function reconcileDelegateAllocationsForEvent(tx: EventServerTx, ev
     return { affectedGroupIds: [] as string[] };
   }
 
-  const targetGroup = (await tx.run(
-    zql.group.where('id', event.group_id).one()
-  )) as MembershipCompositionGroupLike | null;
+  const relationships = await loadNetworkRelationships(tx);
+  const groupsByIdFromRelationships = new Map<string, MembershipCompositionGroupLike>();
+  for (const relationship of relationships) {
+    if (relationship.group?.id) {
+      groupsByIdFromRelationships.set(relationship.group.id, relationship.group);
+    }
+    if (relationship.related_group?.id) {
+      groupsByIdFromRelationships.set(relationship.related_group.id, relationship.related_group);
+    }
+  }
+  const targetGroup = groupsByIdFromRelationships.get(event.group_id) ?? null;
 
   if (!targetGroup || !supportsMembershipComposition(targetGroup)) {
     return { affectedGroupIds: [] as string[] };
@@ -271,16 +311,11 @@ export async function reconcileDelegateAllocationsForEvent(tx: EventServerTx, ev
   const targetMemberships = (await loadGroupMemberships(tx, [targetGroup.id])).filter(
     isActiveMembership
   );
-  const [siblingSourceLinks, relationships, existingRows, confirmedDelegates, offlineMemberships] =
-    await Promise.all([
-      targetGroup.group_type === 'sibling'
-        ? tx.run(zql.group_sibling_source.where('group_id', targetGroup.id))
-        : Promise.resolve([]),
-      loadNetworkRelationships(tx),
-      tx.run(zql.group_delegate_allocation.where('event_id', eventId)),
-      tx.run(zql.event_delegate.where('event_id', eventId).where('status', 'confirmed')),
-      loadEffectiveOfflineMembershipsForGroup(tx, targetGroup.id),
-    ]);
+  const [existingRows, confirmedDelegates, offlineMemberships] = await Promise.all([
+    tx.run(zql.group_delegate_allocation.where('event_id', eventId)),
+    tx.run(zql.event_delegate.where('event_id', eventId).where('status', 'confirmed')),
+    loadEffectiveOfflineMembershipsForGroup(tx, targetGroup.id),
+  ]);
   const configuredSourceGroupIds =
     targetGroup.group_type !== 'sibling'
       ? []
@@ -288,7 +323,11 @@ export async function reconcileDelegateAllocationsForEvent(tx: EventServerTx, ev
         ? targetGroup.connected_group_id
           ? [targetGroup.connected_group_id]
           : []
-        : siblingSourceLinks.map(sourceLink => sourceLink.source_group_id);
+        : (((
+            targetGroup as MembershipCompositionGroupLike & {
+              parliament_source_group_ids?: string[];
+            }
+          ).parliament_source_group_ids ?? []) as string[]);
   const sourceGroupIds =
     targetGroup.group_type === 'sibling'
       ? [

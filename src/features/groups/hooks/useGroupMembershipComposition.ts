@@ -14,6 +14,8 @@ import {
   type MembershipProvenanceFields,
   type MembershipWithCompositionSource,
 } from '../logic/membershipComposition';
+import type { NetworkLinkListRow } from '@/zero/network/queries';
+import { explodeNetworkLinksToRelationships } from '@/features/network/logic/networkLinkDerived';
 
 interface GroupMembershipRoleLinkLike {
   role?: GroupAccessRoleWithRightsRow | null;
@@ -68,8 +70,8 @@ export function useGroupMembershipComposition<TMembership extends MembershipWith
     ];
   }, [group?.group_type, memberships, showComposition]);
 
-  const [relationshipsData, relationshipsResult] = useQuery(
-    showComposition ? queries.groups.networkRelationships({}) : undefined
+  const [relationshipLinks, relationshipsResult] = useQuery(
+    showComposition ? queries.network.allNetworkLinks({}) : undefined
   );
   const [rootMembershipsData, rootMembershipsResult] = useQuery(
     showComposition && sourceGroupIds.length > 0
@@ -94,10 +96,12 @@ export function useGroupMembershipComposition<TMembership extends MembershipWith
     return resolveMembershipProvenance({
       group,
       memberships,
-      relationships: relationshipsData || [],
+      relationships: explodeNetworkLinksToRelationships(
+        (relationshipLinks ?? []) as readonly NetworkLinkListRow[]
+      ),
       rootMemberships,
     }) as (TMembership & MembershipProvenanceFields)[];
-  }, [group, isLoading, memberships, relationshipsData, rootMemberships, showComposition]);
+  }, [group, isLoading, memberships, relationshipLinks, rootMemberships, showComposition]);
 
   const compositionBuckets = useMemo<MembershipCompositionBucket[]>(() => {
     if (!showComposition || isLoading) {

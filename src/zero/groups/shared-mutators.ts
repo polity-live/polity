@@ -1,6 +1,5 @@
 import { defineMutator } from '@rocicorp/zero';
 import { can } from '../rbac/can';
-import { isPermissionError } from '../rbac/errors';
 import { zql } from '../schema';
 import {
   groupCreateSchema,
@@ -33,19 +32,62 @@ import {
   actionRightCreateSchema,
   actionRightDeleteSchema,
 } from './schema';
-import {
-  createGroupRelationshipSchema,
-  updateGroupRelationshipSchema,
-  deleteGroupRelationshipSchema,
-} from '../network/schema';
 import { z } from 'zod';
 import {
-  assertValidSiblingConfiguration,
   isManualGroupMembershipSource,
-  syncSiblingSourceGroups,
+  loadGroupWithDerivedNetworkMeta,
   userHasActiveMembershipInGroup,
 } from './membership-helpers';
 import { ensureOfflineDirectMembership } from './offline-membership-helpers';
+
+const GUEST_ONLY_SIBLING_MEMBERSHIP_MODES = new Set([
+  'all_members',
+  'role_members',
+  'selected_source_groups',
+]);
+
+function requiresGuestAccessFlow(group: {
+  group_type?: string | null;
+  primary_sibling_membership_mode?: string | null;
+}) {
+  return (
+    group.group_type === 'sibling' &&
+    Boolean(group.primary_sibling_membership_mode) &&
+    GUEST_ONLY_SIBLING_MEMBERSHIP_MODES.has(group.primary_sibling_membership_mode)
+  );
+}
+
+async function assertRoleDefaultCompatibility(
+  tx: Parameters<typeof can>[0],
+  args: {
+    groupId: string;
+    assigneeKind: 'member' | 'guest';
+    defaultRequestRole: boolean;
+    defaultInviteRole: boolean;
+  }
+) {
+  if (!args.defaultRequestRole && !args.defaultInviteRole) {
+    return;
+  }
+
+  const group = await loadGroupWithDerivedNetworkMeta(tx, args.groupId);
+  if (!group) {
+    throw new Error('Group not found');
+  }
+
+  if (requiresGuestAccessFlow(group)) {
+    if (args.assigneeKind !== 'guest') {
+      throw new Error(
+        'Only guest roles can be used as default membership request or invite roles for this group.'
+      );
+    }
+    return;
+  }
+
+  if (args.assigneeKind === 'guest') {
+    throw new Error('Guest roles cannot be used as default membership request or invite roles.');
+  }
+}
 
 async function authorizeScopedRoleMutation(
   tx: Parameters<typeof can>[0],
@@ -175,7 +217,7 @@ async function assertCanDirectlyMutateOfficialMembership(
   groupId: string,
   userId: string
 ) {
-  const group = await tx.run(zql.group.where('id', groupId).one());
+  const group = await loadGroupWithDerivedNetworkMeta(tx, groupId);
   if (!group) {
     throw new Error('Group not found');
   }
@@ -184,8 +226,12 @@ async function assertCanDirectlyMutateOfficialMembership(
     throw new Error('Cannot directly manage memberships in hierarchical groups.');
   }
 
+  if (requiresGuestAccessFlow(group)) {
+    throw new Error('This group only supports guest access requests and invitations.');
+  }
+
   if (group.group_type === 'sibling') {
-    if (group.sibling_membership_mode !== 'open' || !group.connected_group_id) {
+    if (group.primary_sibling_membership_mode !== 'none' || !group.connected_group_id) {
       throw new Error('Only open sibling groups allow direct memberships.');
     }
 
@@ -489,6 +535,42 @@ async function resolveDefaultMembershipRoleId(
   return memberRoles.find(role => role.name === 'Member')?.id ?? null;
 }
 
+async function resolveDefaultGuestRoleId(
+  tx: Parameters<typeof can>[0],
+  groupId: string,
+  status: string | null | undefined,
+  explicitRoleId?: string | null
+) {
+  if (explicitRoleId) {
+    return explicitRoleId;
+  }
+
+  if (status !== 'requested' && status !== 'invited') {
+    return null;
+  }
+
+  const roles = await tx.run(
+    zql.role.where('group_id', groupId).where('scope', 'group').orderBy('sort_order', 'asc')
+  );
+  const guestRoles = roles.filter(role => role.assignee_kind === 'guest');
+
+  if (status === 'requested') {
+    const configuredRole = guestRoles.find(role => role.default_request_role);
+    if (configuredRole?.id) {
+      return configuredRole.id;
+    }
+  }
+
+  if (status === 'invited') {
+    const configuredRole = guestRoles.find(role => role.default_invite_role);
+    if (configuredRole?.id) {
+      return configuredRole.id;
+    }
+  }
+
+  return guestRoles.find(role => role.name === 'Guest')?.id ?? guestRoles[0]?.id ?? null;
+}
+
 async function assignDefaultInviteRoleToOfflineMembership(
   tx: Parameters<typeof can>[0],
   args: {
@@ -550,41 +632,6 @@ async function clearGroupRoleDefaults(
   }
 }
 
-async function authorizeGroupRelationshipEndpointMutation(
-  tx: Parameters<typeof can>[0],
-  ctx: Parameters<typeof can>[1],
-  relationship: {
-    group_id: string;
-    related_group_id: string;
-  }
-) {
-  const endpointGroupIds = [...new Set([relationship.group_id, relationship.related_group_id])];
-  let lastPermissionError: unknown = null;
-
-  for (const endpointGroupId of endpointGroupIds) {
-    try {
-      await can(tx, ctx, {
-        action: 'manage',
-        resource: 'groupRelationships',
-        groupId: endpointGroupId,
-      });
-      return;
-    } catch (error) {
-      if (!isPermissionError(error)) {
-        throw error;
-      }
-
-      lastPermissionError = error;
-    }
-  }
-
-  if (lastPermissionError) {
-    throw lastPermissionError;
-  }
-
-  throw new Error('Relationship must reference at least one group.');
-}
-
 function normalizeOptionalReason(value: string | null | undefined) {
   const trimmedValue = value?.trim() ?? '';
   return trimmedValue.length > 0 ? trimmedValue : null;
@@ -610,7 +657,7 @@ async function assertCanManageGroupOfflineMembers(
     groupId,
   });
 
-  const group = await tx.run(zql.group.where('id', groupId).one());
+  const group = await loadGroupWithDerivedNetworkMeta(tx, groupId);
   if (!group) {
     throw new Error('Group not found');
   }
@@ -668,41 +715,11 @@ async function assertUniqueConnectedOfflineUserWithinGroup(
 export const groupSharedMutators = {
   create: defineMutator(groupCreateSchema, async ({ tx, ctx: { userID }, args }) => {
     const now = Date.now();
-    const { parliament_source_group_ids, ...groupArgs } = args;
-
-    await assertValidSiblingConfiguration(tx, {
-      groupId: args.id,
-      groupType: groupArgs.group_type,
-      connectedGroupId: groupArgs.connected_group_id,
-      siblingMembershipMode: groupArgs.sibling_membership_mode,
-      siblingRoleId: groupArgs.sibling_role_id,
-      parliamentSourceGroupIds: parliament_source_group_ids,
-    });
-
-    if (
-      groupArgs.group_type === 'sibling' &&
-      groupArgs.sibling_membership_mode === 'open' &&
-      groupArgs.connected_group_id
-    ) {
-      const creatorIsEligible = await userHasActiveMembershipInGroup(
-        tx,
-        userID,
-        groupArgs.connected_group_id
-      );
-      if (!creatorIsEligible) {
-        throw new Error(
-          'Only active members of the connected group can create open sibling groups with official memberships.'
-        );
-      }
-    }
-
-    const initialMemberCount =
-      groupArgs.group_type === 'sibling' && groupArgs.sibling_membership_mode !== 'open' ? 0 : 1;
 
     await tx.mutate.group.insert({
-      ...groupArgs,
+      ...args,
       owner_id: userID,
-      member_count: initialMemberCount,
+      member_count: 1,
       subscriber_count: 0,
       event_count: 0,
       amendment_count: 0,
@@ -710,14 +727,6 @@ export const groupSharedMutators = {
       created_at: now,
       updated_at: now,
     });
-
-    await syncSiblingSourceGroups(
-      tx,
-      args.id,
-      groupArgs.group_type === 'sibling' && groupArgs.sibling_membership_mode === 'parliament'
-        ? (parliament_source_group_ids ?? [])
-        : []
-    );
   }),
 
   update: defineMutator(groupUpdateSchema, async ({ tx, ctx, args }) => {
@@ -727,43 +736,7 @@ export const groupSharedMutators = {
       throw new Error('Group not found');
     }
 
-    const { parliament_source_group_ids, ...groupArgs } = args;
-    const nextGroupType = groupArgs.group_type ?? existingGroup.group_type;
-    const nextConnectedGroupId =
-      groupArgs.connected_group_id !== undefined
-        ? groupArgs.connected_group_id
-        : existingGroup.connected_group_id;
-    const nextSiblingMembershipMode =
-      groupArgs.sibling_membership_mode !== undefined
-        ? groupArgs.sibling_membership_mode
-        : existingGroup.sibling_membership_mode;
-    const nextSiblingRoleId =
-      groupArgs.sibling_role_id !== undefined
-        ? groupArgs.sibling_role_id
-        : existingGroup.sibling_role_id;
-    const nextSourceGroupIds =
-      parliament_source_group_ids ??
-      (await tx.run(zql.group_sibling_source.where('group_id', args.id))).map(
-        sourceLink => sourceLink.source_group_id
-      );
-
-    await assertValidSiblingConfiguration(tx, {
-      groupId: args.id,
-      groupType: nextGroupType,
-      connectedGroupId: nextConnectedGroupId,
-      siblingMembershipMode: nextSiblingMembershipMode,
-      siblingRoleId: nextSiblingRoleId,
-      parliamentSourceGroupIds: nextSourceGroupIds,
-    });
-
-    await tx.mutate.group.update({ ...groupArgs, updated_at: Date.now() });
-    await syncSiblingSourceGroups(
-      tx,
-      args.id,
-      nextGroupType === 'sibling' && nextSiblingMembershipMode === 'parliament'
-        ? nextSourceGroupIds
-        : []
-    );
+    await tx.mutate.group.update({ ...args, updated_at: Date.now() });
   }),
 
   delete: defineMutator(groupDeleteSchema, async ({ tx, ctx, args }) => {
@@ -927,6 +900,78 @@ export const groupSharedMutators = {
       });
     }
   }),
+
+  requestGuestAccess: defineMutator(
+    groupGuestAccessCreateSchema,
+    async ({ tx, ctx: { userID }, args }) => {
+      const group = await loadGroupWithDerivedNetworkMeta(tx, args.group_id);
+      if (!group) {
+        throw new Error('Group not found');
+      }
+      if (!requiresGuestAccessFlow(group)) {
+        throw new Error('This group uses official memberships for join requests.');
+      }
+
+      const existingMembership = await tx.run(
+        zql.group_membership.where('group_id', args.group_id).where('user_id', userID).one()
+      );
+      if (existingMembership) {
+        throw new Error('You already have a membership record for this group.');
+      }
+
+      const desiredRoleId = await resolveDefaultGuestRoleId(
+        tx,
+        args.group_id,
+        'requested',
+        args.role_ids?.[0] ?? null
+      );
+
+      const existingGuestAccess = await tx.run(
+        zql.group_guest_access.where('group_id', args.group_id).where('user_id', userID).one()
+      );
+
+      if (existingGuestAccess?.status === 'active') {
+        throw new Error('You already have guest access to this group.');
+      }
+
+      if (existingGuestAccess) {
+        await tx.mutate.group_guest_access.update({
+          id: existingGuestAccess.id,
+          status: 'requested',
+          invited_by_id: null,
+          updated_at: Date.now(),
+        });
+
+        if (desiredRoleId) {
+          await syncGroupGuestRoles(tx, {
+            group_guest_access_id: existingGuestAccess.id,
+            role_ids: [desiredRoleId],
+            assigned_by_id: null,
+          });
+        }
+        return;
+      }
+
+      const now = Date.now();
+      await tx.mutate.group_guest_access.insert({
+        id: args.id,
+        group_id: args.group_id,
+        user_id: userID,
+        status: 'requested',
+        invited_by_id: null,
+        created_at: now,
+        updated_at: now,
+      });
+
+      if (desiredRoleId) {
+        await syncGroupGuestRoles(tx, {
+          group_guest_access_id: args.id,
+          role_ids: [desiredRoleId],
+          assigned_by_id: null,
+        });
+      }
+    }
+  ),
 
   leaveGroup: defineMutator(groupMembershipDeleteSchema, async ({ tx, args }) => {
     const membership = await tx.run(zql.group_membership.where('id', args.id).one());
@@ -1106,7 +1151,20 @@ export const groupSharedMutators = {
     });
   }),
 
-  acceptGuestInvitation: defineMutator(groupGuestAccessAcceptSchema, async ({ tx, args }) => {
+  acceptGuestInvitation: defineMutator(groupGuestAccessAcceptSchema, async ({ tx, ctx, args }) => {
+    const guestAccess = await tx.run(zql.group_guest_access.where('id', args.id).one());
+    if (!guestAccess) {
+      throw new Error('Guest access not found');
+    }
+
+    if (ctx.userID !== guestAccess.user_id) {
+      await can(tx, ctx, {
+        action: 'manage',
+        resource: 'groupMemberships',
+        groupId: guestAccess.group_id,
+      });
+    }
+
     await tx.mutate.group_guest_access.update({
       id: args.id,
       status: 'active',
@@ -1115,7 +1173,19 @@ export const groupSharedMutators = {
   }),
 
   revokeGuestAccess: defineMutator(groupGuestAccessDeleteSchema, async ({ tx, ctx, args }) => {
-    const guestAccess = await loadGuestAccessForRoleMutation(tx, ctx, args.id);
+    const guestAccess = await tx.run(zql.group_guest_access.where('id', args.id).one());
+    if (!guestAccess) {
+      throw new Error('Guest access not found');
+    }
+
+    if (ctx.userID !== guestAccess.user_id) {
+      await can(tx, ctx, {
+        action: 'manage',
+        resource: 'groupMemberships',
+        groupId: guestAccess.group_id,
+      });
+    }
+
     await tx.mutate.group_guest_access.update({
       id: guestAccess.id,
       status: 'revoked',
@@ -1146,14 +1216,19 @@ export const groupSharedMutators = {
   createRole: defineMutator(roleCreateSchema, async ({ tx, ctx, args }) => {
     await authorizeScopedRoleMutation(tx, ctx, args);
     const assigneeKind = args.assignee_kind ?? 'member';
-    if (assigneeKind === 'guest' && (args.default_request_role || args.default_invite_role)) {
-      throw new Error('Guest roles cannot be used as default membership request or invite roles.');
+    if (args.group_id) {
+      await assertRoleDefaultCompatibility(tx, {
+        groupId: args.group_id,
+        assigneeKind,
+        defaultRequestRole: Boolean(args.default_request_role),
+        defaultInviteRole: Boolean(args.default_invite_role),
+      });
     }
     if (args.group_id) {
       await clearGroupRoleDefaults(tx, {
         groupId: args.group_id,
-        clearRequestDefault: assigneeKind !== 'guest' && Boolean(args.default_request_role),
-        clearInviteDefault: assigneeKind !== 'guest' && Boolean(args.default_invite_role),
+        clearRequestDefault: Boolean(args.default_request_role),
+        clearInviteDefault: Boolean(args.default_invite_role),
       });
     }
     const now = Date.now();
@@ -1184,17 +1259,18 @@ export const groupSharedMutators = {
       const nextAssigneeKind = args.assignee_kind ?? role.assignee_kind;
       const nextDefaultRequestRole = args.default_request_role ?? role.default_request_role;
       const nextDefaultInviteRole = args.default_invite_role ?? role.default_invite_role;
-      if (nextAssigneeKind === 'guest' && (nextDefaultRequestRole || nextDefaultInviteRole)) {
-        throw new Error(
-          'Guest roles cannot be used as default membership request or invite roles.'
-        );
-      }
       if (role.group_id) {
+        await assertRoleDefaultCompatibility(tx, {
+          groupId: role.group_id,
+          assigneeKind: nextAssigneeKind,
+          defaultRequestRole: nextDefaultRequestRole,
+          defaultInviteRole: nextDefaultInviteRole,
+        });
         await clearGroupRoleDefaults(tx, {
           groupId: role.group_id,
           keepRoleId: role.id,
-          clearRequestDefault: nextAssigneeKind !== 'guest' && args.default_request_role === true,
-          clearInviteDefault: nextAssigneeKind !== 'guest' && args.default_invite_role === true,
+          clearRequestDefault: args.default_request_role === true,
+          clearInviteDefault: args.default_invite_role === true,
         });
       }
     }
@@ -1230,57 +1306,6 @@ export const groupSharedMutators = {
       await authorizeScopedRoleMutation(tx, ctx, actionRight);
     }
     await tx.mutate.action_right.delete({ id: args.id });
-  }),
-
-  // Group Relationship mutators
-  createRelationship: defineMutator(createGroupRelationshipSchema, async ({ tx, ctx, args }) => {
-    if (!args.initiator_group_id) {
-      throw new Error('initiator_group_id is required');
-    }
-
-    if (
-      args.initiator_group_id !== args.group_id &&
-      args.initiator_group_id !== args.related_group_id
-    ) {
-      throw new Error('initiator_group_id must match group_id or related_group_id');
-    }
-
-    if (tx.location !== 'client') {
-      await can(tx, ctx, {
-        action: 'manage',
-        resource: 'groupRelationships',
-        groupId: args.initiator_group_id,
-      });
-    }
-
-    const now = Date.now();
-    await tx.mutate.group_relationship.insert({ ...args, created_at: now });
-  }),
-
-  updateRelationship: defineMutator(updateGroupRelationshipSchema, async ({ tx, ctx, args }) => {
-    if (tx.location !== 'client') {
-      const relationship = await tx.run(zql.group_relationship.where('id', args.id).one());
-      if (!relationship) {
-        throw new Error('Relationship not found');
-      }
-
-      await authorizeGroupRelationshipEndpointMutation(tx, ctx, relationship);
-    }
-
-    await tx.mutate.group_relationship.update(args);
-  }),
-
-  deleteRelationship: defineMutator(deleteGroupRelationshipSchema, async ({ tx, ctx, args }) => {
-    if (tx.location !== 'client') {
-      const relationship = await tx.run(zql.group_relationship.where('id', args.id).one());
-      if (!relationship) {
-        throw new Error('Relationship not found');
-      }
-
-      await authorizeGroupRelationshipEndpointMutation(tx, ctx, relationship);
-    }
-
-    await tx.mutate.group_relationship.delete({ id: args.id });
   }),
 
   // Role holder history mutators

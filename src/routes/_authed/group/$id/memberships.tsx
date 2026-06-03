@@ -30,6 +30,7 @@ import {
   useGroupAccessRoles,
   useGroupData,
 } from '@/features/groups/hooks/useGroupData';
+import { useMembershipActivationPreflight } from '@/features/groups/hooks/useMembershipActivationPreflight';
 import { useGroupMutations } from '@/features/groups/hooks/useGroupMutations';
 import { useGroupMembershipComposition } from '@/features/groups/hooks/useGroupMembershipComposition';
 import { useGroupOpenAssignments } from '@/features/groups/hooks/useGroupOpenAssignments';
@@ -44,6 +45,7 @@ import { EntitySearchBar } from '@/features/shared/ui/ui/entity-search-bar';
 import { emptyRoleEditorForm, roleToEditorForm } from '@/features/groups/logic/roleFormHelpers';
 import { getMembershipDisplayRoles } from '@/features/groups/logic/buildMembershipRightsSummary';
 import { resolveChildBaseGroups } from '@/features/groups/logic/hierarchy';
+import type { MembershipCompositionGroupLike } from '@/features/groups/logic/membershipComposition';
 import { queries } from '@/zero/queries';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useGroupOfflineMembershipsByGroupIds, useGroupState } from '@/zero/groups/useGroupState';
@@ -107,6 +109,45 @@ function toProvenanceGroup(
   };
 }
 
+type GroupReferenceWithType = OfflineRosterGroupReference & { group_type?: string | null };
+interface GroupReferenceLike {
+  id?: string | null;
+  name?: string | null;
+  group_type?: string | null;
+  connected_group_id?: string | null;
+  sibling_membership_mode?: string | null;
+}
+
+function toMembershipCompositionGroup(
+  groupRef: GroupReferenceLike | null | undefined
+): MembershipCompositionGroupLike | null {
+  if (!groupRef?.id) {
+    return null;
+  }
+
+  return {
+    id: groupRef.id,
+    name: groupRef.name ?? groupRef.id,
+    group_type: groupRef.group_type ?? null,
+    connected_group_id: groupRef.connected_group_id ?? null,
+    sibling_membership_mode: groupRef.sibling_membership_mode ?? null,
+  };
+}
+
+function toOfflineRosterGroupReference(
+  groupRef: GroupReferenceLike | null | undefined
+): GroupReferenceWithType | null {
+  if (!groupRef?.id) {
+    return null;
+  }
+
+  return {
+    id: groupRef.id,
+    name: groupRef.name ?? groupRef.id,
+    group_type: groupRef.group_type ?? null,
+  };
+}
+
 function GroupMembershipsPage() {
   const { id: groupId } = Route.useParams();
   const { can, isMember, isLoading } = usePermissions({ groupId });
@@ -145,6 +186,11 @@ function GroupMembershipsContent({
   const { user: authUser } = useAuth();
   const { group } = useGroupData(groupId);
   const { allRelationshipsWithGroups } = useGroupState({ includeAllRelationshipsWithGroups: true });
+  const compositionGroup = useMemo(() => toMembershipCompositionGroup(group), [group]);
+  const hierarchyRelationships = useMemo(
+    () => allRelationshipsWithGroups as Parameters<typeof resolveChildBaseGroups>[1],
+    [allRelationshipsWithGroups]
+  );
   const groupName = group?.name || 'Group';
 
   const [activeTab, setActiveTab] = useState<MembershipTab>(
@@ -157,13 +203,17 @@ function GroupMembershipsContent({
 
   const { activeMemberships, invitedMemberships, requestedMemberships } =
     useGroupMemberships(groupId);
-  const { activeGuestAccesses, invitedGuestAccesses } = useGroupGuestAccesses(groupId);
+  const { activeGuestAccesses, requestedGuestAccesses, invitedGuestAccesses } =
+    useGroupGuestAccesses(groupId);
   const {
     showComposition,
     membershipsWithProvenance,
     compositionBuckets,
     isLoading: compositionIsLoading,
-  } = useGroupMembershipComposition(group, activeMemberships as GroupMembershipWithUser[]);
+  } = useGroupMembershipComposition(
+    compositionGroup,
+    activeMemberships as GroupMembershipWithUser[]
+  );
   const {
     openAssignments,
     availableEvents,
@@ -171,6 +221,7 @@ function GroupMembershipsContent({
     isScheduling: assignmentsAreScheduling,
     scheduleDelegateElection,
     scheduleRoleRenewal,
+    scheduleProcessTask,
   } = useGroupOpenAssignments(groupId);
   const [memberSearchQuery, setMemberSearchQuery] = useState('');
   const searchableMemberships = [
@@ -203,6 +254,7 @@ function GroupMembershipsContent({
   const {
     inviteUsers,
     inviteGuests,
+    approveGuestAccess,
     revokeGuest,
     approveMembership,
     rejectMembership,
@@ -279,7 +331,7 @@ function GroupMembershipsContent({
   };
 
   const handleInvite = async () => {
-    if (selectedUserIds.length === 0) return;
+    if (selectedUserIds.length === 0 || inviteMembershipPreflight.blocking) return;
 
     setIsInviting(true);
     try {
@@ -309,7 +361,21 @@ function GroupMembershipsContent({
   const { roles: accessRoles } = useGroupAccessRoles(groupId);
   const guestRoles = accessRoles.filter(role => role.assignee_kind === 'guest');
   const memberRoles = accessRoles.filter(role => role.assignee_kind !== 'guest');
-  const { addRole, updateRole, reorderRoles, toggleActionRight } = useRoleManagement(groupId);
+  const guestOnlyMembershipFlow =
+    group?.group_type === 'sibling' &&
+    ['all_members', 'role_members', 'selected_source_groups'].includes(
+      group.primary_sibling_membership_mode ?? ''
+    );
+  const { addRole, updateRole, reorderRoles, toggleActionRight } = useRoleManagement(groupId, {
+    guestOnlyMembershipFlow,
+  });
+  const inviteMembershipPreflight = useMembershipActivationPreflight(groupId, selectedUserIds, {
+    enabled:
+      inviteOpen &&
+      !guestOnlyMembershipFlow &&
+      activeTab !== 'guests' &&
+      selectedUserIds.length > 0,
+  });
   const [addRoleOpen, setAddRoleOpen] = useState(false);
   const [newRoleForm, setNewRoleForm] = useState(emptyRoleEditorForm());
   const [editRoleOpen, setEditRoleOpen] = useState(false);
@@ -390,11 +456,14 @@ function GroupMembershipsContent({
   const groupRoleHook = useGroupRoles(groupId);
 
   const compositionGroupIds = useMemo(() => {
-    if (!group) {
+    if (!compositionGroup) {
       return [groupId];
     }
 
-    if (group.group_type !== 'hierarchical' && group.group_type !== 'sibling') {
+    if (
+      compositionGroup.group_type !== 'hierarchical' &&
+      compositionGroup.group_type !== 'sibling'
+    ) {
       return [groupId];
     }
 
@@ -410,24 +479,24 @@ function GroupMembershipsContent({
         groupsById.set(relationship.related_group.id, relationship.related_group);
       }
     }
-    groupsById.set(group.id, group);
+    groupsById.set(compositionGroup.id, compositionGroup);
 
-    if (group.group_type === 'hierarchical') {
+    if (compositionGroup.group_type === 'hierarchical') {
       return [
-        group.id,
-        ...resolveChildBaseGroups(group.id, [...allRelationshipsWithGroups], groupsById),
+        compositionGroup.id,
+        ...resolveChildBaseGroups(compositionGroup.id, hierarchyRelationships, groupsById),
       ];
     }
 
     const sourceGroupIds =
-      group.sibling_membership_mode === 'elected'
-        ? group.connected_group_id
-          ? [group.connected_group_id]
+      compositionGroup.sibling_membership_mode === 'elected'
+        ? compositionGroup.connected_group_id
+          ? [compositionGroup.connected_group_id]
           : []
-        : (group.sibling_sources || [])
+        : (group?.sibling_sources || [])
             .map(source => source.source_group?.id || source.source_group_id)
             .filter((candidate): candidate is string => Boolean(candidate));
-    const expandedGroupIds = new Set<string>([group.id]);
+    const expandedGroupIds = new Set<string>([compositionGroup.id]);
 
     for (const sourceGroupId of sourceGroupIds) {
       expandedGroupIds.add(sourceGroupId);
@@ -435,7 +504,7 @@ function GroupMembershipsContent({
       if (sourceGroup?.group_type === 'hierarchical') {
         for (const baseGroupId of resolveChildBaseGroups(
           sourceGroupId,
-          [...allRelationshipsWithGroups],
+          hierarchyRelationships,
           groupsById
         )) {
           expandedGroupIds.add(baseGroupId);
@@ -444,7 +513,7 @@ function GroupMembershipsContent({
     }
 
     return [...expandedGroupIds];
-  }, [allRelationshipsWithGroups, group, groupId]);
+  }, [compositionGroup, group, groupId, hierarchyRelationships]);
 
   const [offlineMembersData] = useQuery(
     compositionGroupIds.length > 0
@@ -456,34 +525,40 @@ function GroupMembershipsContent({
 
   const groupsById = useMemo(() => {
     const nextMap = new Map<string, OfflineRosterGroupReference & { group_type?: string | null }>();
-    if (group?.id) {
-      nextMap.set(group.id, group);
+    const currentGroupRef = toOfflineRosterGroupReference(group);
+    if (currentGroupRef) {
+      nextMap.set(currentGroupRef.id, currentGroupRef);
     }
     for (const relationship of allRelationshipsWithGroups) {
-      if (relationship.group?.id) {
-        nextMap.set(relationship.group.id, relationship.group);
+      const sourceGroupRef = toOfflineRosterGroupReference(relationship.group);
+      if (sourceGroupRef) {
+        nextMap.set(sourceGroupRef.id, sourceGroupRef);
       }
-      if (relationship.related_group?.id) {
-        nextMap.set(relationship.related_group.id, relationship.related_group);
+      const relatedGroupRef = toOfflineRosterGroupReference(relationship.related_group);
+      if (relatedGroupRef) {
+        nextMap.set(relatedGroupRef.id, relatedGroupRef);
       }
     }
     for (const offlineMember of offlineMembersData || []) {
-      if (offlineMember.group?.id) {
-        nextMap.set(offlineMember.group.id, offlineMember.group);
+      const offlineMemberGroupRef = toOfflineRosterGroupReference(offlineMember.group);
+      if (offlineMemberGroupRef) {
+        nextMap.set(offlineMemberGroupRef.id, offlineMemberGroupRef);
       }
     }
     for (const offlineMembership of offlineMembershipsData || []) {
-      if (offlineMembership.group?.id) {
-        nextMap.set(offlineMembership.group.id, offlineMembership.group);
+      const membershipGroupRef = toOfflineRosterGroupReference(offlineMembership.group);
+      if (membershipGroupRef) {
+        nextMap.set(membershipGroupRef.id, membershipGroupRef);
       }
-      if (offlineMembership.source_group?.id) {
-        nextMap.set(offlineMembership.source_group.id, offlineMembership.source_group);
+      const sourceGroupRef = toOfflineRosterGroupReference(offlineMembership.source_group);
+      if (sourceGroupRef) {
+        nextMap.set(sourceGroupRef.id, sourceGroupRef);
       }
-      if (offlineMembership.group_offline_member?.group?.id) {
-        nextMap.set(
-          offlineMembership.group_offline_member.group.id,
-          offlineMembership.group_offline_member.group
-        );
+      const offlineMemberGroupRef = toOfflineRosterGroupReference(
+        offlineMembership.group_offline_member?.group
+      );
+      if (offlineMemberGroupRef) {
+        nextMap.set(offlineMemberGroupRef.id, offlineMemberGroupRef);
       }
     }
     return nextMap;
@@ -536,9 +611,9 @@ function GroupMembershipsContent({
         let partGroupRef: (OfflineRosterGroupReference & { group_type?: string | null }) | null =
           null;
         if (showComposition) {
-          if (group?.group_type === 'hierarchical') {
-            partGroupRef = group;
-          } else if (group?.group_type === 'sibling') {
+          if (compositionGroup?.group_type === 'hierarchical') {
+            partGroupRef = toOfflineRosterGroupReference(compositionGroup);
+          } else if (compositionGroup?.group_type === 'sibling') {
             const baseGroupId = offlineMember?.group_id || '';
             const matchedRootGroupId =
               siblingRootGroupIds.find(rootGroupId => {
@@ -553,7 +628,7 @@ function GroupMembershipsContent({
 
                 return resolveChildBaseGroups(
                   rootGroupId,
-                  [...allRelationshipsWithGroups],
+                  hierarchyRelationships,
                   groupsById
                 ).includes(baseGroupId);
               }) ||
@@ -584,10 +659,11 @@ function GroupMembershipsContent({
         };
       });
   }, [
-    allRelationshipsWithGroups,
+    compositionGroup,
     group,
     groupId,
     groupsById,
+    hierarchyRelationships,
     memberSearchQuery,
     offlineMembershipsData,
     showComposition,
@@ -723,11 +799,14 @@ function GroupMembershipsContent({
 
   const connectedUserCandidates = useMemo<OfflineRosterCandidateUser[]>(
     () =>
-      activeMemberships
-        .map(membership => membership.user)
-        .filter((user): user is OfflineRosterCandidateUser =>
-          Boolean(user && user.id && !offlineConnectedUserIds.has(user.id))
-        ),
+      activeMemberships.flatMap(membership => {
+        const user = membership.user;
+        if (!user?.id || offlineConnectedUserIds.has(user.id)) {
+          return [];
+        }
+
+        return [user as OfflineRosterCandidateUser];
+      }),
     [activeMemberships, offlineConnectedUserIds]
   );
 
@@ -779,17 +858,71 @@ function GroupMembershipsContent({
             <InviteMembersDialog
               isOpen={inviteOpen}
               onOpenChange={setInviteOpen}
-              selectedUsers={selectedUserIds}
-              onSelectedUsersChange={setSelectedUserIds}
-              excludeUserIds={existingMemberIds}
+              selectedUsers={guestOnlyMembershipFlow ? selectedGuestUserIds : selectedUserIds}
+              onSelectedUsersChange={
+                guestOnlyMembershipFlow ? setSelectedGuestUserIds : setSelectedUserIds
+              }
+              excludeUserIds={
+                guestOnlyMembershipFlow
+                  ? [
+                      ...existingMemberIds,
+                      ...activeGuestAccesses
+                        .map(guestAccess => guestAccess.user?.id)
+                        .filter((userId): userId is string => Boolean(userId)),
+                      ...requestedGuestAccesses
+                        .map(guestAccess => guestAccess.user?.id)
+                        .filter((userId): userId is string => Boolean(userId)),
+                      ...invitedGuestAccesses
+                        .map(guestAccess => guestAccess.user?.id)
+                        .filter((userId): userId is string => Boolean(userId)),
+                    ]
+                  : existingMemberIds
+              }
               excludeUserId={authUser?.id}
-              roles={[...memberRoles]}
-              selectedRoleIds={selectedInviteRoleIds}
-              onSelectedRoleIdsChange={setSelectedInviteRoleIds}
-              onInvite={handleInvite}
-              isInviting={isInviting}
+              roles={guestOnlyMembershipFlow ? [...guestRoles] : [...memberRoles]}
+              selectedRoleIds={
+                guestOnlyMembershipFlow ? selectedGuestRoleIds : selectedInviteRoleIds
+              }
+              onSelectedRoleIdsChange={
+                guestOnlyMembershipFlow ? setSelectedGuestRoleIds : setSelectedInviteRoleIds
+              }
+              onInvite={guestOnlyMembershipFlow ? handleInviteGuests : handleInvite}
+              isInviting={guestOnlyMembershipFlow ? isInvitingGuests : isInviting}
+              submitDisabled={!guestOnlyMembershipFlow && inviteMembershipPreflight.blocking}
+              submitDisabledReason={
+                !guestOnlyMembershipFlow && inviteMembershipPreflight.blocking
+                  ? (inviteMembershipPreflight.response.summary ??
+                    inviteMembershipPreflight.response.conflicts[0]?.summary ??
+                    'Diese Einladung ist aktuell blockiert.')
+                  : undefined
+              }
+              submitConflictResponse={
+                !guestOnlyMembershipFlow && inviteMembershipPreflight.blocking
+                  ? inviteMembershipPreflight.response
+                  : null
+              }
+              submitConflictLoading={
+                !guestOnlyMembershipFlow && inviteMembershipPreflight.isLoading
+              }
               disabled={group?.group_type === 'hierarchical'}
               disabledReason="Members join through subgroups"
+              triggerLabel={guestOnlyMembershipFlow ? 'Invite Guest' : undefined}
+              dialogTitle={guestOnlyMembershipFlow ? 'Invite Guests' : undefined}
+              dialogDescription={
+                guestOnlyMembershipFlow
+                  ? 'This sibling group only allows guest access invitations. Official member roles are not available here.'
+                  : undefined
+              }
+              roleSectionDescription={
+                guestOnlyMembershipFlow
+                  ? 'Only guest roles can be used as invite defaults for this group.'
+                  : undefined
+              }
+              emptyRolesLabel={
+                guestOnlyMembershipFlow
+                  ? 'Create a guest role first before inviting people to this group.'
+                  : undefined
+              }
             />
           ) : null
         }
@@ -1000,12 +1133,14 @@ function GroupMembershipsContent({
             isScheduling={assignmentsAreScheduling}
             onScheduleRoleRenewal={scheduleRoleRenewal}
             onScheduleDelegateElection={scheduleDelegateElection}
+            onScheduleProcessTask={scheduleProcessTask}
           />
         }
         guestsContent={
           <div className="space-y-4">
             <GuestsTable
-              guests={[...activeGuestAccesses, ...invitedGuestAccesses]}
+              guests={[...requestedGuestAccesses, ...activeGuestAccesses, ...invitedGuestAccesses]}
+              onApprove={guestAccessId => void approveGuestAccess(guestAccessId)}
               onRevoke={guestAccessId => void revokeGuest(guestAccessId)}
             />
           </div>
@@ -1032,6 +1167,7 @@ function GroupMembershipsContent({
                   form={newRoleForm}
                   onFormChange={patch => setNewRoleForm(current => ({ ...current, ...patch }))}
                   onSubmit={handleAddRole}
+                  guestOnlyMembershipFlow={guestOnlyMembershipFlow}
                 />
               }
             />
@@ -1084,6 +1220,7 @@ function GroupMembershipsContent({
         description="Adjust how this role is assigned, who can see it, and when it should come up for a revote."
         submitLabel="Save Role"
         trigger={null}
+        guestOnlyMembershipFlow={guestOnlyMembershipFlow}
       />
 
       {groupRoleHook.selectedRole ? (

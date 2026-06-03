@@ -15,10 +15,11 @@ function rel(
     group_id: overrides.group_id ?? 'parent',
     related_group_id: overrides.related_group_id ?? 'child',
     relationship_type: overrides.relationship_type ?? null,
-    with_right: overrides.with_right ?? 'passiveVotingRight',
+    with_right: 'with_right' in overrides ? (overrides.with_right ?? null) : 'passiveVotingRight',
     status: overrides.status ?? 'requested',
     initiator_group_id: overrides.initiator_group_id ?? null,
     created_at: overrides.created_at ?? 0,
+    membership_mode: overrides.membership_mode ?? 'none',
     group: overrides.group ?? undefined,
     related_group: overrides.related_group ?? undefined,
   };
@@ -187,5 +188,22 @@ describe('hierarchyLinkHelpers', () => {
       },
     ]);
     expect(canActivateHierarchyLink(relationships[3], relationships, [])).toBe(false);
+  });
+
+  it('detects conflicts for structural hierarchy links without any right', () => {
+    const relationships = [
+      rel({ id: 'existing', status: 'active', group_id: 'parent', related_group_id: 'base-a' }),
+      rel({
+        id: 'pending',
+        status: 'requested',
+        with_right: null,
+        group_id: 'parent',
+        related_group_id: 'base-b',
+      }),
+    ];
+
+    expect(
+      getHierarchyLinkConflictUserIds(relationships[1], relationships, overlappingMemberships)
+    ).toEqual(['u1']);
   });
 });

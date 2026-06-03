@@ -12,7 +12,6 @@ import {
   groupOfflineMembershipRole,
   groupGuestAccess,
   groupGuestRole,
-  groupSiblingSource,
   role,
   roleHolderHistory,
   actionRight,
@@ -33,6 +32,10 @@ import {
   amendmentPath,
   amendmentPathSegment,
   supportConfirmation,
+  amendmentProcessRun,
+  amendmentProcessBranch,
+  amendmentProcessStepRun,
+  processTask,
 } from './amendments/table';
 // Documents
 import { document, documentVersion, documentCollaborator, documentCursor } from './documents/table';
@@ -75,7 +78,10 @@ import { eventDelegate, groupDelegateAllocation } from './delegates/table';
 // Network
 import {
   follow,
-  groupRelationship,
+  networkLink,
+  networkLinkRight,
+  networkLinkMembershipRule,
+  networkLinkChangeRequest,
   subscriber,
   groupWorkflow,
   groupWorkflowStep,
@@ -382,11 +388,6 @@ export const followRelationships = relationships(follow, ({ one }) => ({
 // ============================================
 export const groupRelationships = relationships(group, ({ one, many }) => ({
   owner: one({ sourceField: ['owner_id'], destSchema: user, destField: ['id'] }),
-  connected_group: one({
-    sourceField: ['connected_group_id'],
-    destSchema: group,
-    destField: ['id'],
-  }),
   memberships: many({ sourceField: ['id'], destSchema: groupMembership, destField: ['group_id'] }),
   offline_members: many({
     sourceField: ['id'],
@@ -403,30 +404,15 @@ export const groupRelationships = relationships(group, ({ one, many }) => ({
     destSchema: groupGuestAccess,
     destField: ['group_id'],
   }),
-  sibling_groups: many({
+  network_links_as_source: many({
     sourceField: ['id'],
-    destSchema: group,
-    destField: ['connected_group_id'],
-  }),
-  sibling_sources: many({
-    sourceField: ['id'],
-    destSchema: groupSiblingSource,
-    destField: ['group_id'],
-  }),
-  source_for_sibling_groups: many({
-    sourceField: ['id'],
-    destSchema: groupSiblingSource,
+    destSchema: networkLink,
     destField: ['source_group_id'],
   }),
-  relationships_as_source: many({
+  network_links_as_target: many({
     sourceField: ['id'],
-    destSchema: groupRelationship,
-    destField: ['group_id'],
-  }),
-  relationships_as_target: many({
-    sourceField: ['id'],
-    destSchema: groupRelationship,
-    destField: ['related_group_id'],
+    destSchema: networkLink,
+    destField: ['target_group_id'],
   }),
   roles: many({ sourceField: ['id'], destSchema: role, destField: ['group_id'] }),
   events: many({ sourceField: ['id'], destSchema: event, destField: ['group_id'] }),
@@ -547,15 +533,82 @@ export const groupGuestRoleRelationships = relationships(groupGuestRole, ({ one 
   assigned_by: one({ sourceField: ['assigned_by_id'], destSchema: user, destField: ['id'] }),
 }));
 
-export const groupSiblingSourceRelationships = relationships(groupSiblingSource, ({ one }) => ({
-  group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
+export const networkLinkRelationships = relationships(networkLink, ({ one, many }) => ({
   source_group: one({ sourceField: ['source_group_id'], destSchema: group, destField: ['id'] }),
+  target_group: one({ sourceField: ['target_group_id'], destSchema: group, destField: ['id'] }),
+  created_by: one({ sourceField: ['created_by_id'], destSchema: user, destField: ['id'] }),
+  rights: many({
+    sourceField: ['id'],
+    destSchema: networkLinkRight,
+    destField: ['network_link_id'],
+  }),
+  membership_rule: one({
+    sourceField: ['id'],
+    destSchema: networkLinkMembershipRule,
+    destField: ['network_link_id'],
+  }),
+  change_requests: many({
+    sourceField: ['id'],
+    destSchema: networkLinkChangeRequest,
+    destField: ['active_network_link_id'],
+  }),
 }));
 
-export const groupRelationshipRelationships = relationships(groupRelationship, ({ one }) => ({
-  group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
-  related_group: one({ sourceField: ['related_group_id'], destSchema: group, destField: ['id'] }),
+export const networkLinkRightRelationships = relationships(networkLinkRight, ({ one }) => ({
+  network_link: one({
+    sourceField: ['network_link_id'],
+    destSchema: networkLink,
+    destField: ['id'],
+  }),
+  initiator_group: one({
+    sourceField: ['initiator_group_id'],
+    destSchema: group,
+    destField: ['id'],
+  }),
 }));
+
+export const networkLinkMembershipRuleRelationships = relationships(
+  networkLinkMembershipRule,
+  ({ one }) => ({
+    network_link: one({
+      sourceField: ['network_link_id'],
+      destSchema: networkLink,
+      destField: ['id'],
+    }),
+    role: one({ sourceField: ['role_id'], destSchema: role, destField: ['id'] }),
+  })
+);
+
+export const networkLinkChangeRequestRelationships = relationships(
+  networkLinkChangeRequest,
+  ({ one }) => ({
+    active_network_link: one({
+      sourceField: ['active_network_link_id'],
+      destSchema: networkLink,
+      destField: ['id'],
+    }),
+    source_group: one({
+      sourceField: ['source_group_id'],
+      destSchema: group,
+      destField: ['id'],
+    }),
+    target_group: one({
+      sourceField: ['target_group_id'],
+      destSchema: group,
+      destField: ['id'],
+    }),
+    initiator_group: one({
+      sourceField: ['initiator_group_id'],
+      destSchema: group,
+      destField: ['id'],
+    }),
+    desired_role: one({
+      sourceField: ['desired_role_id'],
+      destSchema: role,
+      destField: ['id'],
+    }),
+  })
+);
 
 export const roleRelationships = relationships(role, helpers => ({
   group: helpers.one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
@@ -574,11 +627,6 @@ export const roleRelationships = relationships(role, helpers => ({
     sourceField: ['id'],
     destSchema: groupGuestRole,
     destField: ['role_id'],
-  }),
-  sibling_groups: helpers.many({
-    sourceField: ['id'],
-    destSchema: group,
-    destField: ['sibling_role_id'],
   }),
   event_participant_roles: helpers.many({
     sourceField: ['id'],
@@ -738,6 +786,11 @@ export const amendmentRelationships = relationships(amendment, ({ one, many }) =
   event: one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
   clone_source: one({ sourceField: ['clone_source_id'], destSchema: amendment, destField: ['id'] }),
   document: one({ sourceField: ['document_id'], destSchema: document, destField: ['id'] }),
+  current_process_run: one({
+    sourceField: ['current_process_run_id'],
+    destSchema: amendmentProcessRun,
+    destField: ['id'],
+  }),
   vote_entries: many({ sourceField: ['id'], destSchema: vote, destField: ['amendment_id'] }),
   support_votes: many({
     sourceField: ['id'],
@@ -755,6 +808,11 @@ export const amendmentRelationships = relationships(amendment, ({ one, many }) =
     destField: ['amendment_id'],
   }),
   paths: many({ sourceField: ['id'], destSchema: amendmentPath, destField: ['amendment_id'] }),
+  process_runs: many({
+    sourceField: ['id'],
+    destSchema: amendmentProcessRun,
+    destField: ['amendment_id'],
+  }),
   support_confirmations: many({
     sourceField: ['id'],
     destSchema: supportConfirmation,
@@ -817,18 +875,250 @@ export const amendmentCollaboratorRelationships = relationships(
 
 export const amendmentPathRelationships = relationships(amendmentPath, ({ one, many }) => ({
   amendment: one({ sourceField: ['amendment_id'], destSchema: amendment, destField: ['id'] }),
+  process_run: one({
+    sourceField: ['process_run_id'],
+    destSchema: amendmentProcessRun,
+    destField: ['id'],
+  }),
   segments: many({ sourceField: ['id'], destSchema: amendmentPathSegment, destField: ['path_id'] }),
 }));
 
 export const amendmentPathSegmentRelationships = relationships(amendmentPathSegment, ({ one }) => ({
   path: one({ sourceField: ['path_id'], destSchema: amendmentPath, destField: ['id'] }),
+  process_branch: one({
+    sourceField: ['process_branch_id'],
+    destSchema: amendmentProcessBranch,
+    destField: ['id'],
+  }),
+  process_step_run: one({
+    sourceField: ['process_step_run_id'],
+    destSchema: amendmentProcessStepRun,
+    destField: ['id'],
+  }),
   group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
   event: one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
 }));
 
 export const supportConfirmationRelationships = relationships(supportConfirmation, ({ one }) => ({
   amendment: one({ sourceField: ['amendment_id'], destSchema: amendment, destField: ['id'] }),
+  process_run: one({
+    sourceField: ['process_run_id'],
+    destSchema: amendmentProcessRun,
+    destField: ['id'],
+  }),
+  process_step_run: one({
+    sourceField: ['process_step_run_id'],
+    destSchema: amendmentProcessStepRun,
+    destField: ['id'],
+  }),
+  process_task: one({
+    sourceField: ['process_task_id'],
+    destSchema: processTask,
+    destField: ['id'],
+  }),
+  group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
+  event: one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
   confirmed_by: one({ sourceField: ['confirmed_by_id'], destSchema: user, destField: ['id'] }),
+}));
+
+export const amendmentProcessRunRelationships = relationships(
+  amendmentProcessRun,
+  ({ one, many }) => ({
+    amendment: one({ sourceField: ['amendment_id'], destSchema: amendment, destField: ['id'] }),
+    root_workflow: one({
+      sourceField: ['root_workflow_id'],
+      destSchema: groupWorkflow,
+      destField: ['id'],
+    }),
+    selected_source_group: one({
+      sourceField: ['selected_source_group_id'],
+      destSchema: group,
+      destField: ['id'],
+    }),
+    selected_target_group: one({
+      sourceField: ['selected_target_group_id'],
+      destSchema: group,
+      destField: ['id'],
+    }),
+    selected_target_workflow: one({
+      sourceField: ['selected_target_workflow_id'],
+      destSchema: groupWorkflow,
+      destField: ['id'],
+    }),
+    active_branch: one({
+      sourceField: ['active_branch_id'],
+      destSchema: amendmentProcessBranch,
+      destField: ['id'],
+    }),
+    terminal_step_run: one({
+      sourceField: ['terminal_step_run_id'],
+      destSchema: amendmentProcessStepRun,
+      destField: ['id'],
+    }),
+    created_by: one({ sourceField: ['created_by_id'], destSchema: user, destField: ['id'] }),
+    branches: many({
+      sourceField: ['id'],
+      destSchema: amendmentProcessBranch,
+      destField: ['process_run_id'],
+    }),
+    step_runs: many({
+      sourceField: ['id'],
+      destSchema: amendmentProcessStepRun,
+      destField: ['process_run_id'],
+    }),
+    tasks: many({
+      sourceField: ['id'],
+      destSchema: processTask,
+      destField: ['process_run_id'],
+    }),
+    compatibility_paths: many({
+      sourceField: ['id'],
+      destSchema: amendmentPath,
+      destField: ['process_run_id'],
+    }),
+  })
+);
+
+export const amendmentProcessBranchRelationships = relationships(
+  amendmentProcessBranch,
+  ({ one, many }) => ({
+    process_run: one({
+      sourceField: ['process_run_id'],
+      destSchema: amendmentProcessRun,
+      destField: ['id'],
+    }),
+    parent_branch: one({
+      sourceField: ['parent_branch_id'],
+      destSchema: amendmentProcessBranch,
+      destField: ['id'],
+    }),
+    merged_into_branch: one({
+      sourceField: ['merged_into_branch_id'],
+      destSchema: amendmentProcessBranch,
+      destField: ['id'],
+    }),
+    source_step_run: one({
+      sourceField: ['source_step_run_id'],
+      destSchema: amendmentProcessStepRun,
+      destField: ['id'],
+    }),
+    document_version: one({
+      sourceField: ['document_version_id'],
+      destSchema: documentVersion,
+      destField: ['id'],
+    }),
+    child_branches: many({
+      sourceField: ['id'],
+      destSchema: amendmentProcessBranch,
+      destField: ['parent_branch_id'],
+    }),
+    merged_branches: many({
+      sourceField: ['id'],
+      destSchema: amendmentProcessBranch,
+      destField: ['merged_into_branch_id'],
+    }),
+    step_runs: many({
+      sourceField: ['id'],
+      destSchema: amendmentProcessStepRun,
+      destField: ['branch_id'],
+    }),
+    tasks: many({
+      sourceField: ['id'],
+      destSchema: processTask,
+      destField: ['branch_id'],
+    }),
+    compatibility_segments: many({
+      sourceField: ['id'],
+      destSchema: amendmentPathSegment,
+      destField: ['process_branch_id'],
+    }),
+  })
+);
+
+export const amendmentProcessStepRunRelationships = relationships(
+  amendmentProcessStepRun,
+  ({ one, many }) => ({
+    process_run: one({
+      sourceField: ['process_run_id'],
+      destSchema: amendmentProcessRun,
+      destField: ['id'],
+    }),
+    branch: one({
+      sourceField: ['branch_id'],
+      destSchema: amendmentProcessBranch,
+      destField: ['id'],
+    }),
+    workflow: one({ sourceField: ['workflow_id'], destSchema: groupWorkflow, destField: ['id'] }),
+    workflow_step: one({
+      sourceField: ['workflow_step_id'],
+      destSchema: groupWorkflowStep,
+      destField: ['id'],
+    }),
+    source_group: one({ sourceField: ['source_group_id'], destSchema: group, destField: ['id'] }),
+    target_group: one({ sourceField: ['target_group_id'], destSchema: group, destField: ['id'] }),
+    event: one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
+    agenda_item: one({
+      sourceField: ['agenda_item_id'],
+      destSchema: agendaItem,
+      destField: ['id'],
+    }),
+    vote: one({ sourceField: ['vote_id'], destSchema: vote, destField: ['id'] }),
+    support_confirmation: one({
+      sourceField: ['support_confirmation_id'],
+      destSchema: supportConfirmation,
+      destField: ['id'],
+    }),
+    generated_branches: many({
+      sourceField: ['id'],
+      destSchema: amendmentProcessBranch,
+      destField: ['source_step_run_id'],
+    }),
+    tasks: many({
+      sourceField: ['id'],
+      destSchema: processTask,
+      destField: ['step_run_id'],
+    }),
+    compatibility_segments: many({
+      sourceField: ['id'],
+      destSchema: amendmentPathSegment,
+      destField: ['process_step_run_id'],
+    }),
+  })
+);
+
+export const processTaskRelationships = relationships(processTask, ({ one }) => ({
+  process_run: one({
+    sourceField: ['process_run_id'],
+    destSchema: amendmentProcessRun,
+    destField: ['id'],
+  }),
+  branch: one({
+    sourceField: ['branch_id'],
+    destSchema: amendmentProcessBranch,
+    destField: ['id'],
+  }),
+  step_run: one({
+    sourceField: ['step_run_id'],
+    destSchema: amendmentProcessStepRun,
+    destField: ['id'],
+  }),
+  group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
+  target_group: one({
+    sourceField: ['target_group_id'],
+    destSchema: group,
+    destField: ['id'],
+  }),
+  event: one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
+  agenda_item: one({
+    sourceField: ['agenda_item_id'],
+    destSchema: agendaItem,
+    destField: ['id'],
+  }),
+  support_confirmation: one({
+    sourceField: ['support_confirmation_id'],
+    destSchema: supportConfirmation,
+    destField: ['id'],
+  }),
 }));
 
 // ============================================
@@ -1334,11 +1624,31 @@ export const groupWorkflowRelationships = relationships(groupWorkflow, ({ one, m
   group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
   created_by: one({ sourceField: ['created_by_id'], destSchema: user, destField: ['id'] }),
   steps: many({ sourceField: ['id'], destSchema: groupWorkflowStep, destField: ['workflow_id'] }),
+  default_entry_from_steps: many({
+    sourceField: ['id'],
+    destSchema: groupWorkflowStep,
+    destField: ['target_workflow_id'],
+  }),
+  incoming_process_runs: many({
+    sourceField: ['id'],
+    destSchema: amendmentProcessRun,
+    destField: ['selected_target_workflow_id'],
+  }),
+  root_process_runs: many({
+    sourceField: ['id'],
+    destSchema: amendmentProcessRun,
+    destField: ['root_workflow_id'],
+  }),
 }));
 
 export const groupWorkflowStepRelationships = relationships(groupWorkflowStep, ({ one }) => ({
   workflow: one({ sourceField: ['workflow_id'], destSchema: groupWorkflow, destField: ['id'] }),
   group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
+  target_workflow: one({
+    sourceField: ['target_workflow_id'],
+    destSchema: groupWorkflow,
+    destField: ['id'],
+  }),
 }));
 
 export const hashtagRelationships = relationships(hashtag, ({ many }) => ({
@@ -1573,8 +1883,10 @@ export const allRelationships = [
   groupOfflineMembershipRoleRelationships,
   groupGuestAccessRelationships,
   groupGuestRoleRelationships,
-  groupSiblingSourceRelationships,
-  groupRelationshipRelationships,
+  networkLinkRelationships,
+  networkLinkRightRelationships,
+  networkLinkMembershipRuleRelationships,
+  networkLinkChangeRequestRelationships,
   roleRelationships,
   actionRightRelationships,
   roleHolderHistoryRelationships,
@@ -1595,6 +1907,10 @@ export const allRelationships = [
   amendmentPathRelationships,
   amendmentPathSegmentRelationships,
   supportConfirmationRelationships,
+  amendmentProcessRunRelationships,
+  amendmentProcessBranchRelationships,
+  amendmentProcessStepRunRelationships,
+  processTaskRelationships,
   // Documents
   documentRelationships,
   documentVersionRelationships,

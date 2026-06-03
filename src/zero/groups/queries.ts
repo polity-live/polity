@@ -28,31 +28,6 @@ export const groupQueries = {
       .orderBy('created_at', 'desc')
   ),
 
-  hierarchy: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
-    zql.group_relationship
-      .where('group_id', groupId)
-      .related('group')
-      .related('related_group')
-      .orderBy('created_at', 'desc')
-  ),
-
-  /** Reverse direction: relationships where this group is the target */
-  hierarchyAsTarget: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
-    zql.group_relationship
-      .where('related_group_id', groupId)
-      .related('group')
-      .related('related_group')
-      .orderBy('created_at', 'desc')
-  ),
-
-  allRelationships: defineQuery(z.object({}), () =>
-    zql.group_relationship.orderBy('created_at', 'desc')
-  ),
-
-  allRelationshipsWithGroups: defineQuery(z.object({}), () =>
-    zql.group_relationship.related('group').related('related_group').orderBy('created_at', 'desc')
-  ),
-
   roles: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
     zql.role.where('group_id', groupId).orderBy('sort_order', 'asc')
   ),
@@ -147,10 +122,21 @@ export const groupQueries = {
     zql.group
       .where('id', id)
       .related('owner')
-      .related('connected_group')
-      .related('sibling_sources', q => q.related('source_group'))
-      .related('sibling_groups', q =>
-        q.related('sibling_sources', sq => sq.related('source_group'))
+      .related('network_links_as_source', q =>
+        q
+          .related('target_group', tq =>
+            tq.related('memberships').related('events').related('amendments')
+          )
+          .related('rights', rq => rq.related('initiator_group'))
+          .related('membership_rule', mq => mq.related('role'))
+      )
+      .related('network_links_as_target', q =>
+        q
+          .related('source_group', sq =>
+            sq.related('memberships').related('events').related('amendments')
+          )
+          .related('rights', rq => rq.related('initiator_group'))
+          .related('membership_rule', mq => mq.related('role'))
       )
       .related('events')
       .related('amendments')
@@ -163,14 +149,6 @@ export const groupQueries = {
       )
       .related('guest_accesses', q =>
         q.related('user').related('guest_roles', gq => gq.related('role'))
-      )
-      .related('relationships_as_source', q =>
-        q.related('related_group', q =>
-          q.related('memberships').related('events').related('amendments')
-        )
-      )
-      .related('relationships_as_target', q =>
-        q.related('group', q => q.related('memberships').related('events').related('amendments'))
       )
       .related('group_hashtags', q => q.related('hashtag'))
       .related('roles', q => q.related('holder_history', q => q.related('user')))
@@ -219,8 +197,18 @@ export const groupQueries = {
     zql.group
       .where('id', id)
       .related('owner')
-      .related('connected_group')
-      .related('sibling_sources', q => q.related('source_group'))
+      .related('network_links_as_source', q =>
+        q
+          .related('target_group')
+          .related('rights', rq => rq.related('initiator_group'))
+          .related('membership_rule', mq => mq.related('role'))
+      )
+      .related('network_links_as_target', q =>
+        q
+          .related('source_group')
+          .related('rights', rq => rq.related('initiator_group'))
+          .related('membership_rule', mq => mq.related('role'))
+      )
       .related('conversations', q => q.related('participants', q => q.related('user')))
       .related('offline_members', q => q.related('connected_user').related('created_by'))
       .related('memberships', q =>
@@ -229,8 +217,6 @@ export const groupQueries = {
           .related('source_group')
           .related('membership_roles', mq => mq.related('role'))
       )
-      .related('relationships_as_source', q => q.related('related_group'))
-      .related('relationships_as_target', q => q.related('group'))
       .related('guest_accesses', q =>
         q
           .related('user')
@@ -290,11 +276,6 @@ export const groupQueries = {
       .where('scope', 'group')
       .related('action_rights')
       .orderBy('sort_order', 'asc')
-  ),
-
-  /** All group_relationship rows with both group and related_group (for network views) */
-  networkRelationships: defineQuery(z.object({}), () =>
-    zql.group_relationship.related('group').related('related_group')
   ),
 
   /** Direct memberships across all groups (hierarchy exclusivity checks) */
@@ -404,8 +385,18 @@ export const groupQueries = {
   byIdForNetwork: defineQuery(z.object({ id: z.string() }), ({ args: { id } }) =>
     zql.group
       .where('id', id)
-      .related('sibling_groups')
-      .related('connected_group', q => q.related('sibling_groups'))
+      .related('network_links_as_source', q =>
+        q
+          .related('target_group')
+          .related('rights', rq => rq.related('initiator_group'))
+          .related('membership_rule', mq => mq.related('role'))
+      )
+      .related('network_links_as_target', q =>
+        q
+          .related('source_group')
+          .related('rights', rq => rq.related('initiator_group'))
+          .related('membership_rule', mq => mq.related('role'))
+      )
   ),
 };
 
@@ -444,7 +435,6 @@ export type GroupRoleFullRow = QueryRowType<typeof groupQueries.rolesFull>;
 export type GroupTodoRow = QueryRowType<typeof groupQueries.todosByGroup>;
 export type GroupAmendmentRow = QueryRowType<typeof groupQueries.amendmentsByGroup>;
 export type GroupAmendmentWithDocsRow = QueryRowType<typeof groupQueries.amendmentsWithDocuments>;
-export type GroupNetworkRelationshipRow = QueryRowType<typeof groupQueries.networkRelationships>;
 export type GroupDirectMembershipRow = QueryRowType<typeof groupQueries.directMemberships>;
 export type GroupSubscriberRow = QueryRowType<typeof groupQueries.subscribersByGroup>;
 export type GroupPaymentRow = QueryRowType<typeof groupQueries.paymentsReceivedByGroup>;

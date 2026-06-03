@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useGroupNetwork } from './useGroupNetwork';
 import { useGroupData } from '@/features/groups/hooks/useGroupData';
-import { useGroupActions } from '@/zero/groups/useGroupActions';
+import { useNetworkLinkActions } from '@/zero/network';
 import { useAllGroups } from '@/zero/groups/useGroupState';
 import { useAuth } from '@/providers/auth-provider';
 import { RIGHT_TYPES } from '@/features/network/ui/RightFilters';
@@ -10,11 +10,11 @@ import { useHierarchyLinkConflicts } from './useHierarchyLinkConflicts';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { toast } from 'sonner';
 import { getRelationshipTypeForGroup } from '../logic/groupRelationshipOrientation';
+import { buildActiveRelationshipSummaries } from '../logic/relationshipSummaryHelpers';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import type {
   GroupRelationshipFilter,
   GroupedRelationshipRequest,
-  GroupedRelationshipSummary,
   NetworkTab,
   NormalizedGroupRelationship,
 } from '../types/network.types';
@@ -23,7 +23,8 @@ export function useNetworkPage(groupId: string) {
   const { t } = useTranslation();
   const { user: authUser } = useAuth();
   const { group } = useGroupData(groupId);
-  const { updateRelationship, deleteRelationship } = useGroupActions();
+  const { approveNetworkLinkChangeRequest, rejectNetworkLinkChangeRequest, deleteNetworkLink } =
+    useNetworkLinkActions();
 
   const {
     networkData,
@@ -31,10 +32,10 @@ export function useNetworkPage(groupId: string) {
     setShowIndirect,
     selectedRights,
     toggleRight,
-    activeRelationships,
     incomingRequests,
     outgoingRequests,
     allRelationships,
+    groupLinks,
     isLoading,
   } = useGroupNetwork(groupId);
 
@@ -75,6 +76,7 @@ export function useNetworkPage(groupId: string) {
           group: otherGroup,
           rels: [],
           type: relationshipType,
+          membershipMode: rel.membership_mode ?? null,
         };
         groups.set(otherGroup.id, entry);
       }
@@ -98,6 +100,7 @@ export function useNetworkPage(groupId: string) {
           group: otherGroup,
           rels: [],
           type: relationshipType,
+          membershipMode: rel.membership_mode ?? null,
         };
         groups.set(otherGroup.id, entry);
       }
@@ -106,40 +109,13 @@ export function useNetworkPage(groupId: string) {
     return Array.from(groups.values());
   }, [outgoingRequests, groupId]);
 
+  const activeRelationshipSummaries = useMemo(() => {
+    return buildActiveRelationshipSummaries(networkData);
+  }, [networkData]);
+
   // Filtered active relationships for manage tab
   const filteredRelationships = useMemo(() => {
-    let items: GroupedRelationshipSummary[] = [];
-
-    if (directionFilter !== 'child') {
-      items = [
-        ...items,
-        ...networkData.parents.map(item => ({
-          group: item.group,
-          rights: item.rights,
-          type: 'parent' as const,
-        })),
-      ];
-    }
-    if (directionFilter !== 'parent') {
-      items = [
-        ...items,
-        ...networkData.children.map(item => ({
-          group: item.group,
-          rights: item.rights,
-          type: 'child' as const,
-        })),
-      ];
-    }
-    if (directionFilter !== 'sibling') {
-      items = [
-        ...items,
-        ...networkData.siblings.map(item => ({
-          group: item.group,
-          rights: item.rights,
-          type: 'sibling' as const,
-        })),
-      ];
-    }
+    let items = activeRelationshipSummaries;
 
     if (directionFilter !== 'all') {
       items = items.filter(item => item.type === directionFilter);
@@ -165,7 +141,7 @@ export function useNetworkPage(groupId: string) {
     }
 
     return items;
-  }, [networkData, directionFilter, manageRightFilter, searchQuery]);
+  }, [activeRelationshipSummaries, directionFilter, manageRightFilter, searchQuery]);
 
   // Filtered incoming/outgoing by search and right filters
   const filteredIncoming = useMemo(() => {
@@ -209,41 +185,66 @@ export function useNetworkPage(groupId: string) {
         throw new Error('Hierarchy member conflict');
       }
 
+      const rightIdsByRequestId = new Map<string, Set<string>>();
       for (const rel of rels) {
-        const result = updateRelationship({ id: rel.id, status: 'active' });
+        if (!rel.network_link_request_id) {
+          continue;
+        }
+
+        const rightIds = rightIdsByRequestId.get(rel.network_link_request_id) ?? new Set<string>();
+        rightIds.add(rel.network_link_right_id);
+        rightIdsByRequestId.set(rel.network_link_request_id, rightIds);
+      }
+
+      for (const [requestId, rightIds] of rightIdsByRequestId.entries()) {
+        const result = approveNetworkLinkChangeRequest({
+          id: requestId,
+          right_ids: [...rightIds],
+        });
         await serverConfirmed(result);
       }
     },
-    [canActivateLink, updateRelationship, t]
+    [approveNetworkLinkChangeRequest, canActivateLink, t]
   );
 
   const handleRejectRequest = useCallback(
     async (rels: NormalizedGroupRelationship[]) => {
+      const rightIdsByRequestId = new Map<string, Set<string>>();
       for (const rel of rels) {
-        const result = deleteRelationship({ id: rel.id });
-        if (result) {
-          await serverConfirmed(result);
+        if (!rel.network_link_request_id) {
+          continue;
         }
+
+        const rightIds = rightIdsByRequestId.get(rel.network_link_request_id) ?? new Set<string>();
+        rightIds.add(rel.network_link_right_id);
+        rightIdsByRequestId.set(rel.network_link_request_id, rightIds);
+      }
+
+      for (const [requestId, rightIds] of rightIdsByRequestId.entries()) {
+        const result = rejectNetworkLinkChangeRequest({
+          id: requestId,
+          right_ids: [...rightIds],
+        });
+        await serverConfirmed(result);
       }
     },
-    [deleteRelationship]
+    [rejectNetworkLinkChangeRequest]
   );
 
   const handleDeleteRelationship = useCallback(
     async (targetGroupId: string) => {
-      const rels = activeRelationships.filter(
-        rel =>
-          (rel.group?.id === groupId && rel.related_group?.id === targetGroupId) ||
-          (rel.related_group?.id === groupId && rel.group?.id === targetGroupId)
+      const linksToDelete = groupLinks.filter(
+        link =>
+          (link.source_group_id === groupId && link.target_group_id === targetGroupId) ||
+          (link.source_group_id === targetGroupId && link.target_group_id === groupId)
       );
-      for (const rel of rels) {
-        const result = deleteRelationship({ id: rel.id });
-        if (result) {
-          await serverConfirmed(result);
-        }
+
+      for (const link of linksToDelete) {
+        const result = deleteNetworkLink({ id: link.id });
+        await serverConfirmed(result);
       }
     },
-    [activeRelationships, groupId, deleteRelationship]
+    [deleteNetworkLink, groupId, groupLinks]
   );
 
   // Workflow editor

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { NetworkRelationshipKind } from '../logic/networkRelationshipHelpers';
-import type { GroupRelationshipType } from './network.types';
+import type { CanonicalMembershipMode, GroupRelationshipType } from './network.types';
 
 export type NetworkEdgeRelationshipDirection = 'forward' | 'backward' | 'bidirectional';
 
@@ -12,6 +12,8 @@ export type NetworkRelationshipDepth = 'direct' | 'indirect';
 
 export type NetworkDepthFilter = 'all' | NetworkRelationshipDepth;
 
+export type NetworkEdgeAnchorStrategy = 'default' | 'inner-auto';
+
 export type NetworkConnectionDirectionFilter = 'all' | NetworkUserConnectionDirection;
 
 export interface NetworkEdgeBendPoint {
@@ -19,13 +21,14 @@ export interface NetworkEdgeBendPoint {
   y: number;
 }
 
-export interface EditableRightsLabelEdgeData {
+export interface EditableRightsLabelEdgeData extends Record<string, unknown> {
   rights?: string[];
   visibleRights?: string[];
   relationshipKinds?: NetworkRelationshipKind[];
   rightRelationshipKinds?: Record<string, NetworkRelationshipKind>;
   visibleRightRelationshipKinds?: Record<string, NetworkRelationshipKind>;
   relationshipType?: GroupRelationshipType | 'membership';
+  membershipMode?: CanonicalMembershipMode | null;
   rightEdgeDirections?: Record<string, NetworkEdgeRelationshipDirection>;
   rightConnectionDirections?: Record<string, NetworkConnectionDirection>;
   visibleRightConnectionDirections?: Record<string, NetworkConnectionDirection>;
@@ -34,6 +37,13 @@ export interface EditableRightsLabelEdgeData {
   relationshipDepth?: NetworkRelationshipDepth;
   sourceName?: string | null;
   targetName?: string | null;
+  currentGroupId?: string;
+  currentGroupName?: string | null;
+  selectedGroupId?: string;
+  selectedGroupName?: string | null;
+  rightDisplayDirections?: Record<string, NetworkConnectionDirection>;
+  anchorStrategy?: NetworkEdgeAnchorStrategy;
+  useInnerVerticalAnchors?: boolean;
   bendPoints?: NetworkEdgeBendPoint[];
   edgeEditingEnabled?: boolean;
   onBendPointsChange?: (edgeId: string, bendPoints: NetworkEdgeBendPoint[]) => void;
@@ -49,10 +59,16 @@ export interface NetworkRelationshipDialogData {
   relationshipKinds?: NetworkRelationshipKind[];
   rightRelationshipKinds?: Record<string, NetworkRelationshipKind>;
   relationshipType?: GroupRelationshipType | 'membership';
+  membershipMode?: CanonicalMembershipMode | null;
   rightEdgeDirections?: Record<string, NetworkEdgeRelationshipDirection>;
   rightConnectionDirections?: Record<string, NetworkConnectionDirection>;
   connectionDirection?: NetworkConnectionDirection;
   userConnectionDirections?: NetworkUserConnectionDirection[];
   relationshipDepth?: NetworkRelationshipDepth;
+  currentGroupId?: string;
+  currentGroupName?: string | null;
+  selectedGroupId?: string;
+  selectedGroupName?: string | null;
+  rightDisplayDirections?: Record<string, NetworkConnectionDirection>;
   label?: string | null | ReactNode;
 }

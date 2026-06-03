@@ -29,7 +29,7 @@ export function formatRight(right: string): string {
 interface RelatedGroupLike {
   id: string;
   name?: string | null;
-  description?: string | null;
+  description?: unknown;
   group_type?: string | null;
   member_count?: number;
   memberships?: readonly { id: string; status?: string | null }[];
@@ -38,12 +38,13 @@ interface RelatedGroupLike {
 }
 
 interface MembershipStatusLike {
+  id?: string;
   status?: string | null;
 }
 
 interface RelationshipRow {
-  group?: RelatedGroupLike;
-  related_group?: RelatedGroupLike;
+  group?: RelatedGroupLike | null;
+  related_group?: RelatedGroupLike | null;
   with_right?: string | null;
   status?: string | null;
 }

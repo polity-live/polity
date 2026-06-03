@@ -44,10 +44,12 @@ export function useEventRoleManagement(eventId: string) {
     null;
 
   const allowGuestRequestDefault = isAssemblyEventType(event?.event_type);
+  const allowGuestInviteDefault = allowGuestRequestDefault;
 
   const buildRoleMutation = (form: RoleEditorFormState) =>
     roleEditorFormToMutationWithOptions(form, {
       allowGuestRequestDefault,
+      allowGuestInviteDefault,
       includeRecurringFields: false,
     });
 

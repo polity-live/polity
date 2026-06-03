@@ -84,9 +84,15 @@ export function roleEditorFormToMutationWithOptions(
     default_request_role:
       form.assignee_kind === 'guest' && !allowGuestRequestDefault
         ? false
-        : form.default_request_role,
+        : form.assignee_kind === 'member' && allowGuestRequestDefault
+          ? false
+          : form.default_request_role,
     default_invite_role:
-      form.assignee_kind === 'guest' && !allowGuestInviteDefault ? false : form.default_invite_role,
+      form.assignee_kind === 'guest' && !allowGuestInviteDefault
+        ? false
+        : form.assignee_kind === 'member' && allowGuestInviteDefault
+          ? false
+          : form.default_invite_role,
     ...buildRecurringEventFields({
       isRecurring: includeRecurringFields && form.term_pattern !== 'none',
       recurrence,

@@ -9,9 +9,16 @@ import {
 import { resolveHierarchicalAncestors } from '@/features/groups/logic/hierarchy';
 import {
   HIERARCHY_DERIVED_MEMBERSHIP_SOURCE,
+  SIBLING_ALL_MEMBERSHIP_SOURCE,
   SIBLING_ELECTED_MEMBERSHIP_SOURCE,
   SIBLING_PARLIAMENT_MEMBERSHIP_SOURCE,
 } from './membership-source-constants';
+import {
+  buildDerivedGroupNetworkMetaMap,
+  explodeNetworkLinksToRelationships,
+  getDefaultDerivedGroupNetworkMeta,
+} from '../network/derived';
+import { getMembershipRuleConfig, hasActiveMembershipRules } from '../network/membershipRules';
 
 type ZeroTransactionLike = Pick<ZeroTransaction, 'run' | 'mutate'>;
 type ServerHelperTx = Parameters<typeof recomputeGroupCounters>[0];
@@ -21,6 +28,7 @@ function asServerHelperTx(tx: ZeroTransactionLike) {
 }
 
 const SIBLING_AUTOMATIC_SOURCES = new Set([
+  SIBLING_ALL_MEMBERSHIP_SOURCE,
   SIBLING_ELECTED_MEMBERSHIP_SOURCE,
   SIBLING_PARLIAMENT_MEMBERSHIP_SOURCE,
 ]);
@@ -56,16 +64,136 @@ export function filterHierarchyRelationships<
   });
 }
 
+function getDirectionalMembershipContexts(
+  link: { source_group_id: string; target_group_id: string },
+  membershipRule:
+    | {
+        membership_mode?: string | null;
+        role_id?: string | null;
+        source_group_ids?: string[] | null;
+        forward_membership_mode?: string | null;
+        forward_role_id?: string | null;
+        forward_source_group_ids?: string[] | null;
+        backward_membership_mode?: string | null;
+        backward_role_id?: string | null;
+        backward_source_group_ids?: string[] | null;
+      }
+    | null
+    | undefined
+) {
+  if (!hasActiveMembershipRules(membershipRule)) {
+    return [];
+  }
+
+  const forward = getMembershipRuleConfig(membershipRule, 'forward');
+  const backward = getMembershipRuleConfig(membershipRule, 'backward');
+
+  return [
+    ...(forward.membership_mode !== 'none'
+      ? [
+          {
+            recipientGroupId: link.target_group_id,
+            connectedGroupId: link.source_group_id,
+            membershipRule: forward,
+          },
+        ]
+      : []),
+    ...(backward.membership_mode !== 'none'
+      ? [
+          {
+            recipientGroupId: link.source_group_id,
+            connectedGroupId: link.target_group_id,
+            membershipRule: backward,
+          },
+        ]
+      : []),
+  ];
+}
+
+async function loadNetworkLinkContextForGroups(
+  tx: ZeroTransactionLike,
+  groupIds?: readonly string[]
+) {
+  const normalizedGroupIds = [...new Set((groupIds ?? []).filter(Boolean))];
+  const groups =
+    normalizedGroupIds.length > 0
+      ? await tx.run(zql.group.where('id', 'IN', normalizedGroupIds))
+      : await tx.run(zql.group);
+  const links =
+    normalizedGroupIds.length > 0
+      ? await tx.run(
+          zql.network_link.where(({ cmp, or }) =>
+            or(
+              cmp('source_group_id', 'IN', normalizedGroupIds),
+              cmp('target_group_id', 'IN', normalizedGroupIds)
+            )
+          )
+        )
+      : await tx.run(zql.network_link);
+  const linkIds = links.map(link => link.id);
+  const [rights, rules] = await Promise.all([
+    linkIds.length > 0
+      ? tx.run(zql.network_link_right.where('network_link_id', 'IN', linkIds))
+      : [],
+    linkIds.length > 0
+      ? tx.run(zql.network_link_membership_rule.where('network_link_id', 'IN', linkIds))
+      : [],
+  ]);
+
+  return { groups, links, rights, rules };
+}
+
+export async function loadGroupsWithDerivedNetworkMeta(
+  tx: ZeroTransactionLike,
+  groupIds?: readonly string[]
+) {
+  const { groups, links, rights, rules } = await loadNetworkLinkContextForGroups(tx, groupIds);
+  const derivedMetaByGroupId = buildDerivedGroupNetworkMetaMap({
+    groupIds: groups.map(group => group.id),
+    links,
+    rights,
+    rules,
+  });
+
+  return groups.map(group => ({
+    ...group,
+    ...(derivedMetaByGroupId.get(group.id) ?? getDefaultDerivedGroupNetworkMeta()),
+  }));
+}
+
+export async function loadGroupWithDerivedNetworkMeta(tx: ZeroTransactionLike, groupId: string) {
+  const groups = await loadGroupsWithDerivedNetworkMeta(tx, [groupId]);
+  return groups[0] ?? null;
+}
+
 export async function buildGroupsById(
   tx: ZeroTransactionLike,
   groupIds?: readonly string[]
 ): Promise<Map<string, { id: string; group_type?: string | null }>> {
-  const groups =
-    groupIds && groupIds.length > 0
-      ? await tx.run(zql.group.where('id', 'IN', [...new Set(groupIds)]))
-      : await tx.run(zql.group);
+  const groups = await loadGroupsWithDerivedNetworkMeta(tx, groupIds);
 
   return new Map(groups.map(group => [group.id, group]));
+}
+
+export async function loadActiveHierarchyRelationships(
+  tx: ZeroTransactionLike,
+  groupsById: ReadonlyMap<string, { group_type?: string | null | undefined }>
+) {
+  const [links, rights, rules] = await Promise.all([
+    tx.run(zql.network_link),
+    tx.run(zql.network_link_right),
+    tx.run(zql.network_link_membership_rule),
+  ]);
+
+  return filterHierarchyRelationships(
+    explodeNetworkLinksToRelationships({
+      links,
+      rights,
+      rules,
+      includeInactive: false,
+    }).filter(relationship => relationship.relationship_type !== 'sibling'),
+    groupsById
+  );
 }
 
 async function addGroupMembershipRoleLink(
@@ -159,59 +287,147 @@ async function getActiveUsersForGroupRole(
   );
 }
 
-async function getDesiredSiblingMembershipSources(
-  tx: ZeroTransactionLike,
-  group: {
-    id: string;
-    connected_group_id?: string | null;
-    sibling_membership_mode?: string | null;
-    sibling_role_id?: string | null;
+function isActiveNetworkLinkStatus(status: string | null | undefined) {
+  return status == null || status === 'active' || status === 'accepted';
+}
+
+function getNetworkMembershipSourceForMode(mode: string | null | undefined) {
+  switch (mode) {
+    case 'all_members':
+      return SIBLING_ALL_MEMBERSHIP_SOURCE;
+    case 'role_members':
+      return SIBLING_ELECTED_MEMBERSHIP_SOURCE;
+    case 'selected_source_groups':
+      return SIBLING_PARLIAMENT_MEMBERSHIP_SOURCE;
+    default:
+      return null;
   }
-) {
-  if (!group.connected_group_id || !group.sibling_membership_mode) {
-    return new Map<string, string | null>();
+}
+
+async function getDesiredNetworkLinkMembershipSources(tx: ZeroTransactionLike, groupId: string) {
+  const [links, rights, rules] = await Promise.all([
+    tx.run(
+      zql.network_link.where(({ cmp, or }) =>
+        or(cmp('source_group_id', '=', groupId), cmp('target_group_id', '=', groupId))
+      )
+    ),
+    tx.run(zql.network_link_right),
+    tx.run(zql.network_link_membership_rule),
+  ]);
+
+  const rightsByLinkId = new Map<string, (typeof rights)[number][]>();
+  for (const right of rights) {
+    const linkRights = rightsByLinkId.get(right.network_link_id) ?? [];
+    linkRights.push(right);
+    rightsByLinkId.set(right.network_link_id, linkRights);
   }
 
-  const connectedMemberIds = await getActiveUserIdsForGroup(tx, group.connected_group_id);
-
-  if (group.sibling_membership_mode === 'open') {
-    return new Map([...connectedMemberIds].map(userId => [userId, group.connected_group_id]));
+  const rulesByLinkId = new Map<string, (typeof rules)[number]>();
+  for (const rule of rules) {
+    rulesByLinkId.set(rule.network_link_id, rule);
   }
 
-  if (group.sibling_membership_mode === 'elected') {
-    if (!group.sibling_role_id) {
-      return new Map<string, string | null>();
+  const desiredMembershipSources = new Map<
+    string,
+    {
+      source: string;
+      sourceGroupId: string | null;
     }
-    const userIds = await getActiveUsersForGroupRole(
-      tx,
-      group.connected_group_id,
-      group.sibling_role_id
+  >();
+
+  const sortedLinks = [...links].sort((left, right) => left.created_at - right.created_at);
+
+  for (const link of sortedLinks) {
+    const membershipRule = rulesByLinkId.get(link.id);
+    const directionalContexts = getDirectionalMembershipContexts(link, membershipRule).filter(
+      context => context.recipientGroupId === groupId
     );
-    return new Map([...userIds].map(userId => [userId, group.connected_group_id]));
-  }
-
-  const siblingSources = await tx.run(zql.group_sibling_source.where('group_id', group.id));
-  if (siblingSources.length === 0) {
-    return new Map<string, string | null>();
-  }
-
-  const sourceGroupsByUserId = new Map<string, Set<string>>();
-  for (const siblingSource of siblingSources) {
-    const sourceMemberIds = await getActiveUserIdsForGroup(tx, siblingSource.source_group_id);
-    for (const userId of sourceMemberIds) {
-      const sourceGroupIds = sourceGroupsByUserId.get(userId) ?? new Set<string>();
-      sourceGroupIds.add(siblingSource.source_group_id);
-      sourceGroupsByUserId.set(userId, sourceGroupIds);
-    }
-  }
-
-  const desiredMembershipSources = new Map<string, string | null>();
-  for (const [userId, sourceGroupIds] of sourceGroupsByUserId.entries()) {
-    if (!connectedMemberIds.has(userId) || sourceGroupIds.size !== 1) {
+    if (directionalContexts.length === 0) {
       continue;
     }
 
-    desiredMembershipSources.set(userId, [...sourceGroupIds][0] ?? null);
+    const linkRights = rightsByLinkId.get(link.id) ?? [];
+    const hasActiveRights =
+      isActiveNetworkLinkStatus(link.status) ||
+      linkRights.some(right => isActiveNetworkLinkStatus(right.status));
+    if (!hasActiveRights) {
+      continue;
+    }
+
+    for (const directionalContext of directionalContexts) {
+      const membershipSource = getNetworkMembershipSourceForMode(
+        directionalContext.membershipRule.membership_mode
+      );
+      if (!membershipSource) {
+        continue;
+      }
+
+      const connectedGroupId = directionalContext.connectedGroupId;
+      const connectedActiveUserIds = await getActiveUserIdsForGroup(tx, connectedGroupId);
+
+      if (directionalContext.membershipRule.membership_mode === 'all_members') {
+        for (const userId of connectedActiveUserIds) {
+          if (!desiredMembershipSources.has(userId)) {
+            desiredMembershipSources.set(userId, {
+              source: membershipSource,
+              sourceGroupId: connectedGroupId,
+            });
+          }
+        }
+        continue;
+      }
+
+      if (directionalContext.membershipRule.membership_mode === 'role_members') {
+        if (!directionalContext.membershipRule.role_id) {
+          continue;
+        }
+
+        const userIds = await getActiveUsersForGroupRole(
+          tx,
+          connectedGroupId,
+          directionalContext.membershipRule.role_id
+        );
+        for (const userId of userIds) {
+          if (!desiredMembershipSources.has(userId)) {
+            desiredMembershipSources.set(userId, {
+              source: membershipSource,
+              sourceGroupId: connectedGroupId,
+            });
+          }
+        }
+        continue;
+      }
+
+      const selectedSourceGroupIds = [
+        ...new Set(directionalContext.membershipRule.source_group_ids ?? []),
+      ].filter(Boolean);
+      if (selectedSourceGroupIds.length === 0) {
+        continue;
+      }
+
+      const sourceGroupsByUserId = new Map<string, Set<string>>();
+      for (const sourceGroupId of selectedSourceGroupIds) {
+        const sourceMemberIds = await getActiveUserIdsForGroup(tx, sourceGroupId);
+        for (const userId of sourceMemberIds) {
+          const userSourceGroupIds = sourceGroupsByUserId.get(userId) ?? new Set<string>();
+          userSourceGroupIds.add(sourceGroupId);
+          sourceGroupsByUserId.set(userId, userSourceGroupIds);
+        }
+      }
+
+      for (const [userId, userSourceGroupIds] of sourceGroupsByUserId.entries()) {
+        if (!connectedActiveUserIds.has(userId) || userSourceGroupIds.size !== 1) {
+          continue;
+        }
+
+        if (!desiredMembershipSources.has(userId)) {
+          desiredMembershipSources.set(userId, {
+            source: membershipSource,
+            sourceGroupId: [...userSourceGroupIds][0] ?? null,
+          });
+        }
+      }
+    }
   }
 
   return desiredMembershipSources;
@@ -222,7 +438,10 @@ async function upsertAutomaticSiblingMembership(
   args: {
     groupId: string;
     userId: string;
-    source: typeof SIBLING_ELECTED_MEMBERSHIP_SOURCE | typeof SIBLING_PARLIAMENT_MEMBERSHIP_SOURCE;
+    source:
+      | typeof SIBLING_ALL_MEMBERSHIP_SOURCE
+      | typeof SIBLING_ELECTED_MEMBERSHIP_SOURCE
+      | typeof SIBLING_PARLIAMENT_MEMBERSHIP_SOURCE;
     sourceGroupId?: string | null;
     assignedById?: string | null;
   }
@@ -345,74 +564,43 @@ async function upsertHierarchyDerivedMembership(
   return membershipId;
 }
 
-function getSiblingAutomaticSourceForMode(mode: string | null | undefined) {
-  return mode === 'elected'
-    ? SIBLING_ELECTED_MEMBERSHIP_SOURCE
-    : mode === 'parliament'
-      ? SIBLING_PARLIAMENT_MEMBERSHIP_SOURCE
-      : null;
-}
-
 export async function recomputeSiblingGroupMemberships(
   tx: ZeroTransactionLike,
   groupId: string,
   assignedById?: string | null
 ) {
-  const group = await tx.run(zql.group.where('id', groupId).one());
-  if (!group || group.group_type !== 'sibling' || !group.connected_group_id) {
-    return;
-  }
-
   const existingMemberships = await tx.run(zql.group_membership.where('group_id', groupId));
   const affectedUserIds = new Set(existingMemberships.map(membership => membership.user_id));
-  const connectedActiveUserIds = await getActiveUserIdsForGroup(tx, group.connected_group_id);
-
-  if (group.sibling_membership_mode === 'open') {
-    for (const membership of existingMemberships) {
-      const shouldKeepManualMembership =
-        isManualGroupMembershipSource(membership.source) &&
-        connectedActiveUserIds.has(membership.user_id);
-
-      if (!shouldKeepManualMembership) {
-        await tx.mutate.group_membership.delete({ id: membership.id });
-      }
-    }
-
-    await recomputeGroupCounters(asServerHelperTx(tx), groupId);
-    for (const userId of affectedUserIds) {
-      await recomputeUserCounters(asServerHelperTx(tx), userId);
-      await syncUserWithGroupConversation(asServerHelperTx(tx), { groupId, userId });
-    }
-    return;
-  }
-
-  const desiredMembershipSources = await getDesiredSiblingMembershipSources(tx, group);
-  const automaticSource = getSiblingAutomaticSourceForMode(group.sibling_membership_mode);
-  if (!automaticSource) {
-    return;
-  }
+  const desiredMembershipSources = await getDesiredNetworkLinkMembershipSources(tx, groupId);
 
   for (const membership of existingMemberships) {
-    const expectedSourceGroupId = desiredMembershipSources.get(membership.user_id) ?? null;
-    const shouldExist = desiredMembershipSources.has(membership.user_id);
+    if (!isSiblingAutomaticMembershipSource(membership.source)) {
+      continue;
+    }
+
+    const expectedMembershipSource = desiredMembershipSources.get(membership.user_id) ?? null;
+    const shouldExist = expectedMembershipSource != null;
     const canKeep =
       shouldExist &&
-      membership.source === automaticSource &&
+      membership.source === expectedMembershipSource.source &&
       membership.status === 'active' &&
-      membership.source_group_id === expectedSourceGroupId;
+      membership.source_group_id === expectedMembershipSource.sourceGroupId;
 
     if (!canKeep) {
       await tx.mutate.group_membership.delete({ id: membership.id });
     }
   }
 
-  for (const [userId, sourceGroupId] of desiredMembershipSources.entries()) {
+  for (const [userId, membershipSource] of desiredMembershipSources.entries()) {
     affectedUserIds.add(userId);
     await upsertAutomaticSiblingMembership(tx, {
       groupId,
       userId,
-      source: automaticSource,
-      sourceGroupId,
+      source: membershipSource.source as
+        | typeof SIBLING_ALL_MEMBERSHIP_SOURCE
+        | typeof SIBLING_ELECTED_MEMBERSHIP_SOURCE
+        | typeof SIBLING_PARLIAMENT_MEMBERSHIP_SOURCE,
+      sourceGroupId: membershipSource.sourceGroupId,
       assignedById,
     });
   }
@@ -429,6 +617,15 @@ export async function recomputeSiblingMembershipsForGroup(
   groupId: string,
   assignedById?: string | null
 ) {
+  const [links, rules] = await Promise.all([
+    tx.run(zql.network_link),
+    tx.run(zql.network_link_membership_rule),
+  ]);
+  const rulesByLinkId = new Map<string, (typeof rules)[number]>();
+  for (const rule of rules) {
+    rulesByLinkId.set(rule.network_link_id, rule);
+  }
+
   const queue = [groupId];
   const visitedGroups = new Set<string>();
   const recomputedSiblingGroups = new Set<string>();
@@ -441,22 +638,27 @@ export async function recomputeSiblingMembershipsForGroup(
 
     visitedGroups.add(currentGroupId);
 
-    const [directlyConnectedSiblingGroups, sourceLinks] = await Promise.all([
-      tx.run(zql.group.where('connected_group_id', currentGroupId).where('group_type', 'sibling')),
-      tx.run(zql.group_sibling_source.where('source_group_id', currentGroupId)),
-    ]);
+    const recipientGroupIds = new Set<string>();
 
-    const siblingGroupIds = new Set<string>(directlyConnectedSiblingGroups.map(group => group.id));
-    for (const sourceLink of sourceLinks) {
-      siblingGroupIds.add(sourceLink.group_id);
+    for (const link of links) {
+      const membershipRule = rulesByLinkId.get(link.id);
+      for (const directionalContext of getDirectionalMembershipContexts(link, membershipRule)) {
+        if (
+          directionalContext.recipientGroupId === currentGroupId ||
+          directionalContext.connectedGroupId === currentGroupId ||
+          (directionalContext.membershipRule.source_group_ids ?? []).includes(currentGroupId)
+        ) {
+          recipientGroupIds.add(directionalContext.recipientGroupId);
+        }
+      }
     }
 
-    for (const siblingGroupId of siblingGroupIds) {
-      if (!recomputedSiblingGroups.has(siblingGroupId)) {
-        await recomputeSiblingGroupMemberships(tx, siblingGroupId, assignedById);
-        recomputedSiblingGroups.add(siblingGroupId);
+    for (const recipientGroupId of recipientGroupIds) {
+      if (!recomputedSiblingGroups.has(recipientGroupId)) {
+        await recomputeSiblingGroupMemberships(tx, recipientGroupId, assignedById);
+        recomputedSiblingGroups.add(recipientGroupId);
       }
-      queue.push(siblingGroupId);
+      queue.push(recipientGroupId);
     }
   }
 
@@ -493,10 +695,7 @@ export async function reconcileHierarchyForBaseGroup(
   assignedById?: string | null
 ) {
   const groupsById = await buildGroupsById(tx);
-  const rawRelationships = await tx.run(
-    zql.group_relationship.where('with_right', 'passiveVotingRight').where('status', 'active')
-  );
-  const hierarchyRelationships = filterHierarchyRelationships(rawRelationships, groupsById);
+  const hierarchyRelationships = await loadActiveHierarchyRelationships(tx, groupsById);
   const ancestorGroupIds = resolveHierarchicalAncestors(
     baseGroupId,
     hierarchyRelationships,
@@ -611,6 +810,7 @@ export async function assertValidSiblingConfiguration(
     parliamentSourceGroupIds?: readonly string[] | null;
   }
 ) {
+  void tx;
   const sourceGroupIds = [...new Set((args.parliamentSourceGroupIds ?? []).filter(Boolean))];
 
   if (args.groupType !== 'sibling') {
@@ -669,39 +869,6 @@ export async function assertValidSiblingConfiguration(
     if (sourceGroupIds.includes(args.groupId)) {
       throw new Error('A parliament group cannot reference itself as a source.');
     }
-
-    const existingLinks = await tx.run(zql.group_sibling_source);
-    const edges = new Map<string, string[]>();
-
-    for (const link of existingLinks) {
-      if (link.group_id === args.groupId) {
-        continue;
-      }
-
-      const nextEdges = edges.get(link.group_id) ?? [];
-      nextEdges.push(link.source_group_id);
-      edges.set(link.group_id, nextEdges);
-    }
-
-    edges.set(args.groupId, sourceGroupIds);
-
-    const queue = [...sourceGroupIds];
-    const visited = new Set<string>();
-
-    while (queue.length > 0) {
-      const currentGroupId = queue.shift();
-      if (!currentGroupId || visited.has(currentGroupId)) {
-        continue;
-      }
-
-      if (currentGroupId === args.groupId) {
-        throw new Error('Parliament source groups may not form cycles.');
-      }
-
-      visited.add(currentGroupId);
-      const nextSourceGroupIds = edges.get(currentGroupId) ?? [];
-      queue.push(...nextSourceGroupIds);
-    }
   } else if (sourceGroupIds.length > 0) {
     throw new Error('Only parliament sibling groups may define source groups.');
   }
@@ -712,25 +879,7 @@ export async function syncSiblingSourceGroups(
   groupId: string,
   sourceGroupIds: readonly string[]
 ) {
-  const desiredIds = [...new Set(sourceGroupIds)];
-  const existingLinks = await tx.run(zql.group_sibling_source.where('group_id', groupId));
-  const desiredIdSet = new Set(desiredIds);
-  const existingIds = new Set(existingLinks.map(link => link.source_group_id));
-
-  for (const existingLink of existingLinks) {
-    if (!desiredIdSet.has(existingLink.source_group_id)) {
-      await tx.mutate.group_sibling_source.delete({ id: existingLink.id });
-    }
-  }
-
-  for (const desiredId of desiredIds) {
-    if (!existingIds.has(desiredId)) {
-      await tx.mutate.group_sibling_source.insert({
-        id: crypto.randomUUID(),
-        group_id: groupId,
-        source_group_id: desiredId,
-        created_at: Date.now(),
-      });
-    }
-  }
+  void tx;
+  void groupId;
+  void sourceGroupIds;
 }

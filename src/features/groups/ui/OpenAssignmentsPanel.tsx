@@ -66,6 +66,7 @@ interface OpenAssignmentsPanelProps {
     eventId: string,
     mode: DelegateElectionMode
   ) => Promise<void>;
+  onScheduleProcessTask: (assignment: GroupOpenAssignment, eventId: string) => Promise<void>;
 }
 
 function getStatusBadge(assignment: GroupOpenAssignment) {
@@ -135,6 +136,7 @@ export function OpenAssignmentsPanel({
   isScheduling = false,
   onScheduleRoleRenewal,
   onScheduleDelegateElection,
+  onScheduleProcessTask,
 }: OpenAssignmentsPanelProps) {
   const [selectedEventIds, setSelectedEventIds] = useState<Record<string, string>>({});
   const [delegateDialogAssignmentId, setDelegateDialogAssignmentId] = useState<string | null>(null);
@@ -339,6 +341,47 @@ export function OpenAssignmentsPanel({
                           >
                             <Search className="mr-2 h-4 w-4" />
                             Suche Event fuer die Wahl der Delegierten
+                          </Button>
+                        </div>
+                      </div>
+                    ) : assignment.kind === 'process_task' ? (
+                      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto]">
+                        <div className="space-y-2">
+                          <Label>An welche Veranstaltung soll der Auftrag gehaengt werden?</Label>
+                          <Select
+                            value={selectedEventId}
+                            onValueChange={value =>
+                              setSelectedEventIds(current => ({
+                                ...current,
+                                [assignment.id]: value,
+                              }))
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Veranstaltung auswaehlen" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableEvents.map(event => (
+                                <SelectItem key={event.id} value={event.id}>
+                                  {event.title || 'Veranstaltung'}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="flex items-end">
+                          <Button
+                            className="w-full"
+                            disabled={!selectedEventId || isScheduling}
+                            onClick={() => void onScheduleProcessTask(assignment, selectedEventId)}
+                          >
+                            <CalendarPlus2 className="mr-2 h-4 w-4" />
+                            {assignment.processTaskType === 'implementation_evaluation'
+                              ? 'Review planen'
+                              : assignment.processTaskType === 'support_confirmation'
+                                ? 'Bestaetigung planen'
+                                : 'An Event anhaengen'}
                           </Button>
                         </div>
                       </div>

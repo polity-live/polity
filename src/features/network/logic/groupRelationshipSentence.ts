@@ -126,9 +126,9 @@ export function getGroupRelationshipNameText({
   const fallback =
     kind === 'current'
       ? caseStyle === 'embedded'
-        ? t('common.network.thisGroupEmbedded')
-        : t('common.network.thisGroup')
-      : t('common.unspecified');
+        ? t('common.network.thisGroupEmbedded', 'diese Gruppe')
+        : t('common.network.thisGroup', 'Diese Gruppe')
+      : t('common.unspecified', 'andere Gruppe');
   const safeName = getSafeGroupName(name, fallback);
 
   if (kind !== 'current') {
@@ -140,8 +140,16 @@ export function getGroupRelationshipNameText({
   }
 
   return caseStyle === 'embedded'
-    ? t('common.network.thisGroupWithNameEmbedded', { groupName: safeName })
-    : t('common.network.thisGroupWithName', { groupName: safeName });
+    ? t(
+        'common.network.thisGroupWithNameEmbedded',
+        { groupName: safeName },
+        'diese Gruppe ({{groupName}})'
+      )
+    : t(
+        'common.network.thisGroupWithName',
+        { groupName: safeName },
+        'Diese Gruppe ({{groupName}})'
+      );
 }
 
 export function getGroupRelationshipRightSentenceText({

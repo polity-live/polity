@@ -1,4 +1,5 @@
-import { table, string, number } from '@rocicorp/zero'
+import { table, string, number, boolean, json } from '@rocicorp/zero';
+import type { NetworkLinkMembershipRuleSnapshot, NetworkLinkRightSnapshot } from './request-types';
 
 export const follow = table('follow')
   .columns({
@@ -7,20 +8,71 @@ export const follow = table('follow')
     followee_id: string(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
-export const groupRelationship = table('group_relationship')
+export const networkLink = table('network_link')
   .columns({
     id: string(),
-    group_id: string(),
-    related_group_id: string(),
-    relationship_type: string().optional(),
-    with_right: string().optional(),
-    status: string().optional(),
+    source_group_id: string(),
+    target_group_id: string(),
+    structural_relation: string(),
+    status: string(),
+    created_by_id: string().optional(),
+    created_at: number(),
+    updated_at: number(),
+  })
+  .primaryKey('id');
+
+export const networkLinkRight = table('network_link_right')
+  .columns({
+    id: string(),
+    network_link_id: string(),
+    right_key: string(),
+    direction: string(),
+    status: string(),
     initiator_group_id: string().optional(),
     created_at: number(),
+    updated_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
+
+export const networkLinkMembershipRule = table('network_link_membership_rule')
+  .columns({
+    id: string(),
+    network_link_id: string(),
+    membership_mode: string(),
+    role_id: string().optional(),
+    source_group_ids: json<string[]>().optional(),
+    forward_membership_mode: string(),
+    forward_role_id: string().optional(),
+    forward_source_group_ids: json<string[]>().optional(),
+    backward_membership_mode: string(),
+    backward_role_id: string().optional(),
+    backward_source_group_ids: json<string[]>().optional(),
+    created_at: number(),
+    updated_at: number(),
+  })
+  .primaryKey('id');
+
+export const networkLinkChangeRequest = table('network_link_change_request')
+  .columns({
+    id: string(),
+    active_network_link_id: string().optional(),
+    proposed_network_link_id: string(),
+    source_group_id: string(),
+    target_group_id: string(),
+    structural_relation: string(),
+    status: string(),
+    initiator_group_id: string(),
+    desired_rights: json<NetworkLinkRightSnapshot[]>(),
+    desired_membership_rules: json<NetworkLinkMembershipRuleSnapshot>().optional(),
+    desired_membership_mode: string(),
+    desired_role_id: string().optional(),
+    desired_source_group_ids: json<string[]>().optional(),
+    created_at: number(),
+    updated_at: number(),
+  })
+  .primaryKey('id');
 
 export const subscriber = table('subscriber')
   .columns({
@@ -33,7 +85,7 @@ export const subscriber = table('subscriber')
     blog_id: string().optional(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const groupWorkflow = table('group_workflow')
   .columns({
@@ -41,12 +93,13 @@ export const groupWorkflow = table('group_workflow')
     group_id: string(),
     name: string().optional(),
     description: string().optional(),
+    is_default_entry: boolean(),
     status: string().optional(),
     created_by_id: string(),
     created_at: number(),
     updated_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');
 
 export const groupWorkflowStep = table('group_workflow_step')
   .columns({
@@ -55,6 +108,12 @@ export const groupWorkflowStep = table('group_workflow_step')
     group_id: string(),
     order_index: number(),
     label: string().optional(),
+    step_kind: string(),
+    selection_mode: string(),
+    merge_strategy: string().optional(),
+    event_rule: string().optional(),
+    auto_task_on_missing_event: boolean(),
+    target_workflow_id: string().optional(),
     created_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');

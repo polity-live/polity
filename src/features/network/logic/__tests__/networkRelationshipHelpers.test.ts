@@ -39,10 +39,11 @@ function rel(
     group_id: overrides.group_id ?? 'anchor',
     related_group_id: overrides.related_group_id ?? 'sibling-a',
     relationship_type: overrides.relationship_type ?? 'sibling',
-    with_right: overrides.with_right ?? 'informationRight',
+    with_right: 'with_right' in overrides ? (overrides.with_right ?? null) : 'informationRight',
     status: overrides.status ?? 'active',
     initiator_group_id: overrides.initiator_group_id ?? 'anchor',
     created_at: overrides.created_at ?? 0,
+    membership_mode: overrides.membership_mode ?? 'none',
     group: overrides.group
       ? groupStub(overrides.group.id, overrides.group.name ?? 'Anchor')
       : groupStub(overrides.group_id ?? 'anchor', 'Anchor'),
@@ -182,6 +183,29 @@ describe('networkRelationshipHelpers', () => {
     expect(relationshipTree.children.map(child => child.group.id)).toEqual(['group-c']);
     expect(relationshipTree.children.some(child => child.group.id === 'group-d')).toBe(false);
     expect(relationshipTree.parents).toEqual([]);
+  });
+
+  it('keeps structural relationships without rights visible without adding empty right entries', () => {
+    const relationshipTree = buildDirectRelationships(
+      [
+        rel({
+          id: 'structural-a-b',
+          group_id: 'group-a',
+          related_group_id: 'group-b',
+          relationship_type: 'child',
+          with_right: null,
+          membership_mode: 'all_members',
+          group: { id: 'group-a', name: 'Group A' },
+          related_group: { id: 'group-b', name: 'Group B' },
+        }),
+      ],
+      'group-a'
+    );
+
+    expect(relationshipTree.children).toHaveLength(1);
+    expect(relationshipTree.children[0]?.group.id).toBe('group-b');
+    expect(relationshipTree.children[0]?.rights).toEqual([]);
+    expect(relationshipTree.children[0]?.membershipMode).toBe('all_members');
   });
 
   it('keeps indirect sibling groups attached to the reachable child branch', () => {

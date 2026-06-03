@@ -5,11 +5,8 @@ import {
   nullableTimestampSchema,
   timestampSchema,
 } from '../shared/helpers';
-
-const groupTypeSchema = z.enum(['base', 'hierarchical', 'sibling']);
-const groupSiblingMembershipModeSchema = z.enum(['open', 'elected', 'parliament']);
 const roleAssigneeKindSchema = z.enum(['member', 'guest']);
-const groupGuestStatusSchema = z.enum(['invited', 'active', 'revoked']);
+const groupGuestStatusSchema = z.enum(['requested', 'invited', 'active', 'revoked']);
 
 // ── group ─────────────────────────────────────────────────────────────
 const groupBaseSchema = z.object({
@@ -42,10 +39,6 @@ const groupBaseSchema = z.object({
   snapchat: z.string().nullable(),
   tiktok: z.string().nullable(),
   visibility: z.string(),
-  group_type: groupTypeSchema,
-  connected_group_id: z.string().nullable(),
-  sibling_membership_mode: groupSiblingMembershipModeSchema.nullable(),
-  sibling_role_id: z.string().nullable(),
   owner_id: z.string().nullable(),
   created_at: timestampSchema,
   updated_at: timestampSchema,
@@ -65,10 +58,6 @@ export const groupCreateSchema = groupBaseSchema
   })
   .extend({
     id: z.string(),
-    connected_group_id: z.string().nullable().optional(),
-    sibling_membership_mode: groupSiblingMembershipModeSchema.nullable().optional(),
-    sibling_role_id: z.string().nullable().optional(),
-    parliament_source_group_ids: z.array(z.string()).optional(),
   });
 export const groupUpdateSchema = groupBaseSchema
   .pick({
@@ -95,16 +84,9 @@ export const groupUpdateSchema = groupBaseSchema
     linkedin: true,
     website: true,
     visibility: true,
-    group_type: true,
-    connected_group_id: true,
-    sibling_membership_mode: true,
-    sibling_role_id: true,
   })
   .partial()
-  .extend({
-    id: z.string(),
-    parliament_source_group_ids: z.array(z.string()).optional(),
-  });
+  .extend({ id: z.string() });
 export const groupDeleteSchema = z.object({ id: z.string() });
 export type Group = z.infer<typeof groupSelectSchema>;
 
@@ -343,25 +325,6 @@ export const groupGuestRolesSyncSchema = z.object({
 });
 export const groupGuestRoleDeleteSchema = z.object({ id: z.string() });
 export type GroupGuestRole = z.infer<typeof groupGuestRoleSelectSchema>;
-
-// ── group_sibling_source ───────────────────────────────────────────
-const groupSiblingSourceBaseSchema = z.object({
-  id: z.string(),
-  group_id: z.string(),
-  source_group_id: z.string(),
-  created_at: timestampSchema,
-});
-
-export const groupSiblingSourceSelectSchema = groupSiblingSourceBaseSchema;
-export const groupSiblingSourceCreateSchema = groupSiblingSourceBaseSchema
-  .omit({ id: true, created_at: true })
-  .extend({ id: z.string() });
-export const groupSiblingSourceDeleteSchema = z.object({ id: z.string() });
-export const groupSiblingSourceSyncSchema = z.object({
-  group_id: z.string(),
-  source_group_ids: z.array(z.string()),
-});
-export type GroupSiblingSource = z.infer<typeof groupSiblingSourceSelectSchema>;
 
 // ── role ──────────────────────────────────────────────────────────────
 const roleBaseSchema = z.object({

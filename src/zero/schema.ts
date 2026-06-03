@@ -11,7 +11,6 @@ import {
   groupOfflineMembershipRole,
   groupGuestAccess,
   groupGuestRole,
-  groupSiblingSource,
   role,
   roleHolderHistory,
   actionRight,
@@ -30,6 +29,10 @@ import {
   amendmentPath,
   amendmentPathSegment,
   supportConfirmation,
+  amendmentProcessRun,
+  amendmentProcessBranch,
+  amendmentProcessStepRun,
+  processTask,
 } from './amendments/table';
 import { document, documentVersion, documentCollaborator, documentCursor } from './documents/table';
 import { agendaItem, speakerList, agendaItemChangeRequest } from './agendas/table';
@@ -93,7 +96,10 @@ import { thread, comment } from './discussions/table';
 import { eventDelegate, groupDelegateAllocation } from './delegates/table';
 import {
   follow,
-  groupRelationship,
+  networkLink,
+  networkLinkRight,
+  networkLinkMembershipRule,
+  networkLinkChangeRequest,
   subscriber,
   groupWorkflow,
   groupWorkflowStep,
@@ -127,7 +133,6 @@ export const schema = createSchema({
     groupOfflineMembershipRole,
     groupGuestAccess,
     groupGuestRole,
-    groupSiblingSource,
     role,
     roleHolderHistory,
     actionRight,
@@ -144,6 +149,10 @@ export const schema = createSchema({
     amendmentPath,
     amendmentPathSegment,
     supportConfirmation,
+    amendmentProcessRun,
+    amendmentProcessBranch,
+    amendmentProcessStepRun,
+    processTask,
     // Documents
     document,
     documentVersion,
@@ -187,7 +196,10 @@ export const schema = createSchema({
     groupDelegateAllocation,
     // Network
     follow,
-    groupRelationship,
+    networkLink,
+    networkLinkRight,
+    networkLinkMembershipRule,
+    networkLinkChangeRequest,
     subscriber,
     groupWorkflow,
     groupWorkflowStep,
@@ -265,8 +277,9 @@ export type GroupMembershipRole = Row<Schema['tables']['group_membership_role']>
 export type GroupOfflineMembershipRole = Row<Schema['tables']['group_offline_membership_role']>;
 export type GroupGuestAccess = Row<Schema['tables']['group_guest_access']>;
 export type GroupGuestRole = Row<Schema['tables']['group_guest_role']>;
-export type GroupSiblingSource = Row<Schema['tables']['group_sibling_source']>;
-export type GroupRelationship = Row<Schema['tables']['group_relationship']>;
+export type NetworkLink = Row<Schema['tables']['network_link']>;
+export type NetworkLinkRight = Row<Schema['tables']['network_link_right']>;
+export type NetworkLinkMembershipRule = Row<Schema['tables']['network_link_membership_rule']>;
 export type Role = Row<Schema['tables']['role']>;
 export type RoleHolderHistory = Row<Schema['tables']['role_holder_history']>;
 export type ActionRight = Row<Schema['tables']['action_right']>;
@@ -291,6 +304,10 @@ export type AmendmentCollaborator = Row<Schema['tables']['amendment_collaborator
 export type AmendmentPath = Row<Schema['tables']['amendment_path']>;
 export type AmendmentPathSegment = Row<Schema['tables']['amendment_path_segment']>;
 export type SupportConfirmation = Row<Schema['tables']['support_confirmation']>;
+export type AmendmentProcessRun = Row<Schema['tables']['amendment_process_run']>;
+export type AmendmentProcessBranch = Row<Schema['tables']['amendment_process_branch']>;
+export type AmendmentProcessStepRun = Row<Schema['tables']['amendment_process_step_run']>;
+export type ProcessTask = Row<Schema['tables']['process_task']>;
 
 // Documents
 export type Document = Row<Schema['tables']['document']>;

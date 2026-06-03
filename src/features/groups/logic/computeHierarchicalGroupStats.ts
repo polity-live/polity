@@ -15,28 +15,27 @@ export interface HierarchicalGroupStats {
  * Compute aggregate stats for a hierarchical group from its child relationships.
  *
  * @param groupId - The hierarchical group to compute stats for
- * @param relationships - All group_relationship rows (need group_id, related_group_id, direction, rights)
+ * @param relationships - All derived network relationship rows (need group_id, related_group_id, direction, rights)
  * @param groups - Lookup of group info (id → name, member_count)
  */
 export function computeHierarchicalGroupStats(
   groupId: string,
-  relationships: Array<{
+  relationships: {
     group_id: string;
     related_group_id: string;
     direction: string;
     rights: string[] | string | null;
-  }>,
-  groups: Array<{ id: string; name: string | null; member_count: number | null }>
+  }[],
+  groups: { id: string; name: string | null; member_count: number | null }[]
 ): HierarchicalGroupStats {
   const groupMap = new Map(groups.map(g => [g.id, g]));
 
   // Find all PVR child group IDs (direct children)
   const directChildIds = new Set<string>();
   for (const rel of relationships) {
-    const isPvr =
-      Array.isArray(rel.rights)
-        ? rel.rights.includes('passive_voting_right')
-        : typeof rel.rights === 'string' && rel.rights.includes('passive_voting_right');
+    const isPvr = Array.isArray(rel.rights)
+      ? rel.rights.includes('passive_voting_right')
+      : typeof rel.rights === 'string' && rel.rights.includes('passive_voting_right');
     if (!isPvr) continue;
 
     if (rel.group_id === groupId && rel.direction === 'parent_to_child') {
@@ -50,15 +49,18 @@ export function computeHierarchicalGroupStats(
   const allDescendantIds = new Set<string>();
   const queue = [...directChildIds];
   while (queue.length > 0) {
-    const current = queue.shift()!;
+    const current = queue.shift();
+    if (current == null) {
+      continue;
+    }
+
     if (allDescendantIds.has(current)) continue;
     allDescendantIds.add(current);
 
     for (const rel of relationships) {
-      const isPvr =
-        Array.isArray(rel.rights)
-          ? rel.rights.includes('passive_voting_right')
-          : typeof rel.rights === 'string' && rel.rights.includes('passive_voting_right');
+      const isPvr = Array.isArray(rel.rights)
+        ? rel.rights.includes('passive_voting_right')
+        : typeof rel.rights === 'string' && rel.rights.includes('passive_voting_right');
       if (!isPvr) continue;
 
       if (rel.group_id === current && rel.direction === 'parent_to_child') {

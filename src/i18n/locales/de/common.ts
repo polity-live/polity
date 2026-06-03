@@ -304,6 +304,7 @@ export const commonTranslations = {
     thisGroupEmbedded: 'diese Gruppe',
     thisGroupWithName: 'Diese Gruppe ({{groupName}})',
     thisGroupWithNameEmbedded: 'diese Gruppe ({{groupName}})',
+    membershipModeLabel: 'Membership-Modus',
     relationshipTypeLabel: 'Beziehungstyp',
     selectRights: 'Rechte auswählen (mehrere möglich)',
     existingRightsStatusHint: 'Bestehende Rechte sind mit ihrem Status markiert.',

@@ -37,6 +37,7 @@ import {
   mergeNetworkConnectionDirection,
   mergeNetworkEdgeRelationshipDirection,
   mergeNetworkRightRelationshipKind,
+  orientRelationshipEdgeForCurrentPerspective,
 } from '@/features/network/logic/networkEdgeHelpers';
 import {
   buildDirectRelationships,
@@ -66,7 +67,11 @@ import type {
   NetworkEdgeRelationshipDirection,
   NetworkUserConnectionDirection,
 } from '@/features/network/types/networkEdge.types';
-import type { NetworkGroupEntity } from '@/features/network/types/network.types';
+import type {
+  CanonicalMembershipMode,
+  GroupRelationshipType,
+  NetworkGroupEntity,
+} from '@/features/network/types/network.types';
 import type { GroupNetworkLayout } from '@/zero/preferences';
 import {
   Select,
@@ -156,6 +161,7 @@ function mergeRelationshipEntryMaps(
         rights: [...entry.rights],
         relationshipKinds: [...entry.relationshipKinds],
         rightRelationshipKinds: { ...entry.rightRelationshipKinds },
+        membershipMode: entry.membershipMode ?? null,
         level: entry.level,
         childId: entry.childId,
         parentId: entry.parentId,
@@ -172,6 +178,10 @@ function mergeRelationshipEntryMaps(
         kind
       ) as NetworkRelationshipKind;
     });
+
+    if (!existing.membershipMode && entry.membershipMode) {
+      existing.membershipMode = entry.membershipMode;
+    }
 
     const existingLevel = existing.level ?? Number.POSITIVE_INFINITY;
     const nextLevel = entry.level ?? Number.POSITIVE_INFINITY;
@@ -270,7 +280,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
 
     if (relationshipStatusFilter === 'active') {
       return sortGroupsByCreatedAt(
-        getAcceptedSiblingGroups(allRelationships, graphRootGroup.id)
+        getAcceptedSiblingGroups(visibleSiblingRelationships, graphRootGroup.id)
       ).filter(siblingGroup => siblingGroup.id !== graphRootGroup.id);
     }
 
@@ -294,13 +304,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
     });
 
     return sortGroupsByCreatedAt(Array.from(requestSiblingGroups.values()));
-  }, [
-    allRelationships,
-    graphRootGroup,
-    graphRootGroupId,
-    relationshipStatusFilter,
-    visibleSiblingRelationships,
-  ]);
+  }, [graphRootGroup, graphRootGroupId, relationshipStatusFilter, visibleSiblingRelationships]);
 
   const traversalRelationships = useMemo(() => {
     const hierarchyRelationships = stableRelationships.filter(
@@ -665,15 +669,21 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
       sourceId: string,
       targetId: string,
       rights: string[],
-      relationshipType: 'parent' | 'sibling',
+      relationshipType: GroupRelationshipType,
       relationshipKinds: NetworkRelationshipKind[],
       rightRelationshipKinds: Record<string, NetworkRelationshipKind>,
+      membershipMode: CanonicalMembershipMode | null | undefined,
       rightEdgeDirections: Record<string, NetworkEdgeRelationshipDirection>,
       rightConnectionDirections: Record<string, NetworkConnectionDirection>,
       userConnectionDirections: NetworkUserConnectionDirection[],
       relationshipDepth: 'direct' | 'indirect',
       strokeColor: string,
-      strokeDasharray?: string
+      strokeDasharray?: string,
+      previewData?: {
+        selectedGroupId: string;
+        selectedGroupName: string | null;
+        rightDisplayDirections?: Record<string, NetworkConnectionDirection>;
+      }
     ) => {
       const resolvedStrokeColor = getRelationshipStrokeColor(strokeColor, rightEdgeDirections);
       const edgeMarkers = buildRelationshipEdgeMarkers(resolvedStrokeColor, rightEdgeDirections);
@@ -696,12 +706,19 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
             relationshipKinds,
             rightRelationshipKinds,
             relationshipType,
+            membershipMode,
             rightEdgeDirections,
             rightConnectionDirections,
             userConnectionDirections,
             relationshipDepth,
             sourceName: groupNameMap.get(sourceId) ?? null,
             targetName: groupNameMap.get(targetId) ?? null,
+            currentGroupId: previewData ? graphRootGroupId : undefined,
+            currentGroupName: previewData ? (graphRootGroup.name ?? null) : undefined,
+            selectedGroupId: previewData?.selectedGroupId,
+            selectedGroupName: previewData?.selectedGroupName,
+            rightDisplayDirections: previewData?.rightDisplayDirections,
+            anchorStrategy: 'inner-auto',
           }),
           bendPoints: edgeBendPointsRef.current[edgeId] ?? [],
           edgeEditingEnabled: isInteractiveRef.current,
@@ -718,6 +735,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
         rights: string[];
         relationshipKinds: NetworkRelationshipKind[];
         rightRelationshipKinds: Record<string, NetworkRelationshipKind>;
+        membershipMode?: CanonicalMembershipMode | null;
         rightEdgeDirections: Record<string, NetworkEdgeRelationshipDirection>;
         rightConnectionDirections: Record<string, NetworkConnectionDirection>;
         userConnectionDirections: NetworkUserConnectionDirection[];
@@ -919,6 +937,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
             rights: [],
             relationshipKinds: [],
             rightRelationshipKinds: {},
+            membershipMode: null,
             rightEdgeDirections: {},
             rightConnectionDirections: {},
             userConnectionDirections: [],
@@ -939,6 +958,10 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
             entry.rightRelationshipKinds[right],
             relationshipKind
           ) as NetworkRelationshipKind;
+        }
+
+        if (!entry.membershipMode && rel.membership_mode) {
+          entry.membershipMode = rel.membership_mode;
         }
 
         const rightDirection =
@@ -996,16 +1019,31 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
         parent.group.id,
         edgeTargetGroupId
       );
+      const orientedEdge = orientRelationshipEdgeForCurrentPerspective({
+        currentNodeId: graphRootGroupId,
+        sourceId: parentNodeId,
+        targetId: edgeTargetId,
+        rightEdgeDirections,
+      });
+      const previewData =
+        edgeTargetGroupId === graphRootGroupId
+          ? {
+              selectedGroupId: parent.group.id,
+              selectedGroupName: parent.group.name ?? null,
+              rightDisplayDirections: orientedEdge.rightDisplayDirections,
+            }
+          : undefined;
 
       pushRelationshipEdge(
         `edge-parent-${parent.group.id}-to-${edgeTargetId}`,
-        parentNodeId,
-        edgeTargetId,
+        orientedEdge.sourceId,
+        orientedEdge.targetId,
         parent.rights,
-        'parent',
+        previewData ? 'child' : 'parent',
         parent.relationshipKinds,
         parent.rightRelationshipKinds,
-        rightEdgeDirections,
+        parent.membershipMode,
+        orientedEdge.rightEdgeDirections,
         Object.fromEntries(
           parent.rights.map(right => [
             right,
@@ -1018,7 +1056,8 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
         ['incoming'],
         (parent.level ?? 1) === 1 ? 'direct' : 'indirect',
         '#66bb6a',
-        '5 5'
+        '5 5',
+        previewData
       );
     });
 
@@ -1038,16 +1077,31 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
         edgeSourceGroupId,
         child.group.id
       );
+      const orientedEdge = orientRelationshipEdgeForCurrentPerspective({
+        currentNodeId: graphRootGroupId,
+        sourceId: edgeSourceId,
+        targetId: childNodeId,
+        rightEdgeDirections,
+      });
+      const previewData =
+        edgeSourceGroupId === graphRootGroupId
+          ? {
+              selectedGroupId: child.group.id,
+              selectedGroupName: child.group.name ?? null,
+              rightDisplayDirections: orientedEdge.rightDisplayDirections,
+            }
+          : undefined;
 
       pushRelationshipEdge(
         `edge-${edgeSourceId}-to-child-${child.group.id}`,
-        edgeSourceId,
-        childNodeId,
+        orientedEdge.sourceId,
+        orientedEdge.targetId,
         child.rights,
         'parent',
         child.relationshipKinds,
         child.rightRelationshipKinds,
-        rightEdgeDirections,
+        child.membershipMode,
+        orientedEdge.rightEdgeDirections,
         Object.fromEntries(
           child.rights.map(right => [
             right,
@@ -1060,7 +1114,8 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
         ['outgoing'],
         (child.level ?? 1) === 1 ? 'direct' : 'indirect',
         '#ffb74d',
-        '5 5'
+        '5 5',
+        previewData
       );
     });
 
@@ -1087,6 +1142,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
         'sibling',
         entry.relationshipKinds,
         entry.rightRelationshipKinds,
+        entry.membershipMode,
         entry.rightEdgeDirections,
         entry.rightConnectionDirections,
         entry.userConnectionDirections,

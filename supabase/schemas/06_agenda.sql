@@ -35,6 +35,16 @@ CREATE INDEX idx_agenda_item_creator ON public.agenda_item (creator_id);
 ALTER TABLE public.agenda_item ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.agenda_item FOR ALL TO service_role USING (true);
 
+ALTER TABLE public.amendment_process_step_run
+  ADD CONSTRAINT amendment_process_step_run_agenda_item_fk
+  FOREIGN KEY (agenda_item_id) REFERENCES public.agenda_item (id)
+  ON DELETE SET NULL;
+
+ALTER TABLE public.process_task
+  ADD CONSTRAINT process_task_agenda_item_fk
+  FOREIGN KEY (agenda_item_id) REFERENCES public.agenda_item (id)
+  ON DELETE SET NULL;
+
 -- Speaker list table
 CREATE TABLE IF NOT EXISTS public.speaker_list (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

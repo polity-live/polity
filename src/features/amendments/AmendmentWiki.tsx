@@ -29,10 +29,18 @@ import { useAmendmentWikiPage } from './hooks/useAmendmentWikiPage';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
 import { WikiIncumbentPanel } from '@/features/shared/ui/wiki/WikiIncumbentPanel';
 import { buildAmendmentWikiCollaboratorSections } from '@/features/amendments/logic/buildAmendmentWikiCollaboratorSections';
+import { SupporterLocalityMap } from './ui/SupporterLocalityMap';
 
 interface AmendmentWikiProps {
   amendmentId: string;
 }
+
+const GRADIENTS = [
+  'bg-gradient-to-br from-slate-50 via-white to-slate-100',
+  'bg-gradient-to-br from-emerald-50 via-white to-teal-100',
+  'bg-gradient-to-br from-amber-50 via-white to-orange-100',
+  'bg-gradient-to-br from-sky-50 via-white to-cyan-100',
+] as const;
 
 export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
   const { t } = useTranslation();
@@ -53,6 +61,9 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
     totalSupportingMembers,
     targetCollaborator,
     targetGroup,
+    implementationStatus,
+    evaluationDueDate,
+    supporterMapItems,
     upvotes,
     downvotes,
     supporterCount,
@@ -285,16 +296,20 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
           <CardContent>
             <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
               {supportingGroups
-                .filter(group => getSupportStatus(group.id) !== 'declined')
+                .filter(group => {
+                  const groupId = group.group?.id ?? group.group_id ?? group.id;
+                  return getSupportStatus(groupId) !== 'declined';
+                })
                 .map(group => {
-                  const supportStatus = getSupportStatus(group.id);
+                  const groupId = group.group?.id ?? group.group_id ?? group.id;
+                  const supportStatus = getSupportStatus(groupId);
                   return (
                     <div key={group.id} className="relative">
                       <GroupTimelineCard
                         group={{
-                          id: String(group.group_id ?? group.id),
-                          name: t('common.unspecified'),
-                          memberCount: 0,
+                          id: String(groupId),
+                          name: group.group?.name ?? t('common.unspecified'),
+                          memberCount: group.group?.member_count ?? 0,
                           hashtags: [],
                         }}
                       />
@@ -305,6 +320,36 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
                   );
                 })}
             </div>
+            {supporterMapItems.length > 0 && (
+              <div className="mt-6 space-y-3">
+                <div>
+                  <h3 className="text-base font-semibold">Unterstützerkarte</h3>
+                  <p className="text-muted-foreground text-sm">
+                    Positive Unterstützungsentscheidungen mit vorhandenen Ortsdaten.
+                  </p>
+                </div>
+                <SupporterLocalityMap items={supporterMapItems} />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {(implementationStatus || evaluationDueDate) && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Implementation Evaluation</CardTitle>
+            <CardDescription>Aktueller Stand der Umsetzungsprüfung dieses Antrags.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap items-center gap-3">
+            {implementationStatus ? (
+              <Badge variant="secondary">{implementationStatus}</Badge>
+            ) : null}
+            {evaluationDueDate ? (
+              <span className="text-muted-foreground text-sm">
+                Fällig bis {new Date(evaluationDueDate).toLocaleDateString('de-DE')}
+              </span>
+            ) : null}
           </CardContent>
         </Card>
       )}

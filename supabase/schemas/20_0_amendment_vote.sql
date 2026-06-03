@@ -26,6 +26,11 @@ CREATE INDEX idx_vote_amendment ON public.vote (amendment_id);
 ALTER TABLE public.vote ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.vote FOR ALL TO service_role USING (true);
 
+ALTER TABLE public.amendment_process_step_run
+  ADD CONSTRAINT amendment_process_step_run_vote_fk
+  FOREIGN KEY (vote_id) REFERENCES public.vote (id)
+  ON DELETE SET NULL;
+
 -- Vote choice table (e.g. Yes, No, Abstain — or custom choices)
 CREATE TABLE IF NOT EXISTS public.vote_choice (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

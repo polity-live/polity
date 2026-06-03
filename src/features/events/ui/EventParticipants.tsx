@@ -17,6 +17,7 @@ import { MembershipCompositionPanel } from '@/features/groups/ui/MembershipCompo
 import { PendingRequestsTable } from '@/features/groups/ui/PendingRequestsTable';
 import { PendingInvitationsTable } from '@/features/groups/ui/PendingInvitationsTable';
 import { InviteMembersDialog } from '@/features/groups/ui/InviteMembersDialog';
+import { GuestsTable } from '@/features/groups/ui/GuestsTable';
 import { ChangeRoleDialog } from '@/features/groups/ui/ChangeRoleDialog';
 import { MemberRightsDialog } from '@/features/groups/ui/MemberRightsDialog';
 import { EventRoles } from '@/features/roles/ui/EventRoles';
@@ -48,6 +49,10 @@ function resolveAttendanceMode(event: {
   }
 
   return event.location_type === 'online' ? 'online' : 'offline';
+}
+
+function isAssemblyEventType(eventType: string | null | undefined) {
+  return eventType === 'general_assembly' || eventType === 'delegate_assembly';
 }
 
 export function EventParticipants({
@@ -87,6 +92,9 @@ export function EventParticipants({
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [selectedInviteRoleIds, setSelectedInviteRoleIds] = useState<string[]>([]);
   const [isInviting, setIsInviting] = useState(false);
+  const [selectedGuestUserIds, setSelectedGuestUserIds] = useState<string[]>([]);
+  const [selectedGuestRoleIds, setSelectedGuestRoleIds] = useState<string[]>([]);
+  const [isInvitingGuests, setIsInvitingGuests] = useState(false);
   const [changeRoleOpen, setChangeRoleOpen] = useState(false);
   const [changeRoleMembership, setChangeRoleMembership] = useState<EventParticipantRow | null>(
     null
@@ -129,8 +137,34 @@ export function EventParticipants({
   );
 
   const eventTitle = event?.title || 'Event';
+  const assemblyEvent = isAssemblyEventType(event?.event_type);
   const attendanceMode = resolveAttendanceMode(event || {});
   const showOfflineRoster = attendanceMode !== 'online';
+  const guestRoles = useMemo(
+    () => accessRoles.filter(role => role.assignee_kind === 'guest'),
+    [accessRoles]
+  );
+  const inviteRoles = useMemo(
+    () =>
+      assemblyEvent ? accessRoles.filter(role => role.assignee_kind === 'guest') : [...accessRoles],
+    [accessRoles, assemblyEvent]
+  );
+  const guestParticipants = useMemo(
+    () =>
+      participants
+        .filter(participant =>
+          getMembershipDisplayRoles(participant).some(role => role.assignee_kind === 'guest')
+        )
+        .map(participant => ({
+          id: participant.id,
+          status: participant.status,
+          user: participant.user,
+          roles: getMembershipDisplayRoles(participant).filter(
+            role => role.assignee_kind === 'guest'
+          ),
+        })),
+    [participants]
+  );
   const activePlatformParticipants = useMemo(
     () =>
       participants.filter(
@@ -142,6 +176,18 @@ export function EventParticipants({
       ),
     [participants]
   );
+
+  useEffect(() => {
+    setSelectedInviteRoleIds(currentRoleIds =>
+      currentRoleIds.filter(roleId => inviteRoles.some(role => role.id === roleId))
+    );
+  }, [inviteRoles]);
+
+  useEffect(() => {
+    setSelectedGuestRoleIds(currentRoleIds =>
+      currentRoleIds.filter(roleId => guestRoles.some(role => role.id === roleId))
+    );
+  }, [guestRoles]);
 
   const handleParticipantSortChange = (field: MembershipSortField) => {
     setMembershipSort(currentSort => {
@@ -175,6 +221,25 @@ export function EventParticipants({
       setInviteOpen(false);
     } finally {
       setIsInviting(false);
+    }
+  };
+
+  const handleInviteGuests = async () => {
+    if (selectedGuestUserIds.length === 0) return;
+
+    setIsInvitingGuests(true);
+    try {
+      await inviteParticipants(
+        selectedGuestUserIds,
+        selectedGuestRoleIds,
+        authUser?.id ?? undefined,
+        eventTitle
+      );
+      setSelectedGuestUserIds([]);
+      setSelectedGuestRoleIds([]);
+      setInviteOpen(false);
+    } finally {
+      setIsInvitingGuests(false);
     }
   };
 
@@ -380,7 +445,28 @@ export function EventParticipants({
         membershipsByUserLabel="Participants by user"
         membershipsByRoleLabel="Participants by role"
         tabBarAction={
-          activeTab !== 'roles' ? (
+          activeTab === 'guests' ? (
+            <InviteMembersDialog
+              isOpen={inviteOpen}
+              onOpenChange={setInviteOpen}
+              selectedUsers={selectedGuestUserIds}
+              onSelectedUsersChange={setSelectedGuestUserIds}
+              excludeUserIds={existingParticipantIds}
+              excludeUserId={authUser?.id}
+              roles={[...guestRoles]}
+              selectedRoleIds={selectedGuestRoleIds}
+              onSelectedRoleIdsChange={setSelectedGuestRoleIds}
+              onInvite={handleInviteGuests}
+              isInviting={isInvitingGuests}
+              triggerLabel="Invite Guest"
+              dialogTitle="Invite Guests"
+              dialogDescription="Invite users as guests with guest roles for this event."
+              roleSectionTitle="Guest roles"
+              roleSectionDescription="Guest invitations must always include at least one guest role. The default guest invite role is preselected when available."
+              defaultRoleFallbackName="Gast"
+              emptyRolesLabel="Create a guest role first before inviting guests."
+            />
+          ) : activeTab !== 'roles' ? (
             <InviteMembersDialog
               isOpen={inviteOpen}
               onOpenChange={setInviteOpen}
@@ -388,17 +474,23 @@ export function EventParticipants({
               onSelectedUsersChange={setSelectedUserIds}
               excludeUserIds={existingParticipantIds}
               excludeUserId={authUser?.id}
-              roles={[...accessRoles]}
+              roles={inviteRoles}
               selectedRoleIds={selectedInviteRoleIds}
               onSelectedRoleIdsChange={setSelectedInviteRoleIds}
               onInvite={handleInvite}
               isInviting={isInviting}
+              disabled={assemblyEvent}
+              disabledReason="For assembly events, official member invites are disabled here. Use the Guests tab to invite guests."
               triggerLabel="Invite Participant"
               dialogTitle="Invite Participants"
               dialogDescription="Search and select users to invite to this event, then choose which roles they should start with."
               roleSectionTitle="Participant roles"
-              roleSectionDescription="Tick one or more roles for invited participants. The default invite role is preselected."
-              defaultRoleFallbackName="Participant"
+              roleSectionDescription={
+                assemblyEvent
+                  ? 'Assembly events only allow guest roles for invited participants. The default guest invite role is preselected.'
+                  : 'Tick one or more roles for invited participants. The default invite role is preselected.'
+              }
+              defaultRoleFallbackName={assemblyEvent ? 'Gast' : 'Participant'}
               emptyRolesLabel="Create an event role first before inviting participants."
             />
           ) : null
@@ -557,9 +649,58 @@ export function EventParticipants({
             isLoading={compositionIsLoading}
           />
         }
+        guestsContent={
+          <div className="space-y-4">
+            <GuestsTable
+              guests={guestParticipants}
+              onApprove={guestAccessId => {
+                const guest = guestParticipants.find(
+                  participant => participant.id === guestAccessId
+                );
+                if (!guest) {
+                  return;
+                }
+
+                void approveParticipation(
+                  guest.id,
+                  guest.user?.id ?? undefined,
+                  authUser?.id ?? undefined,
+                  eventTitle
+                );
+              }}
+              onRevoke={guestAccessId => {
+                const guest = guestParticipants.find(
+                  participant => participant.id === guestAccessId
+                );
+                if (!guest) {
+                  return;
+                }
+
+                if (guest.status === 'requested') {
+                  void rejectParticipation(
+                    guest.id,
+                    guest.user?.id ?? undefined,
+                    authUser?.id ?? undefined,
+                    eventTitle
+                  );
+                  return;
+                }
+
+                void removeParticipant(
+                  guest.id,
+                  guest.user?.id ?? undefined,
+                  authUser?.id ?? undefined,
+                  eventTitle
+                );
+              }}
+              title="Guest Participants"
+              description="Users with guest roles in this event, including guest requests and invitations."
+            />
+          </div>
+        }
         rolesContent={<EventRoles eventId={eventId} />}
         showComposition={showComposition}
-        showGuests={false}
+        showGuests
       />
 
       <MemberRightsDialog

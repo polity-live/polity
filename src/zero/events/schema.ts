@@ -189,6 +189,7 @@ export const eventParticipantCreateSchema = eventParticipantBaseSchema
     instance_date: nullableTimestampSchema.optional(),
     visibility: z.string().optional(),
     initial_role_id: z.string().nullable().optional(),
+    initial_role_ids: z.array(z.string()).optional(),
   });
 export const eventParticipantUpdateSchema = eventParticipantBaseSchema
   .pick({ status: true, visibility: true })

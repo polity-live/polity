@@ -10,6 +10,7 @@ interface CreateAmendmentPathArgs {
   amendmentReason: string | null;
   enrichedPath: EnrichedPathSegment[];
   workflowId?: string | null;
+  pathMode?: 'hierarchy' | 'workflow';
 }
 
 /**
@@ -20,7 +21,16 @@ interface CreateAmendmentPathArgs {
  * process flow (AmendmentProcessFlow) to ensure identical path creation.
  */
 export function useCreateAmendmentPath() {
-  const { createPath, createPathSegment } = useAmendmentActions();
+  const {
+    createPath,
+    createPathSegment,
+    createProcessRun,
+    createProcessBranch,
+    createProcessStepRun,
+    createProcessTask,
+    updateProcessRun,
+    updateAmendment,
+  } = useAmendmentActions();
   const { createVote } = useVoteActions();
   const { createAgendaItem } = useAgendaActions();
 
@@ -31,12 +41,58 @@ export function useCreateAmendmentPath() {
       amendmentReason,
       enrichedPath,
       workflowId,
+      pathMode = 'hierarchy',
     }: CreateAmendmentPathArgs) => {
+      if (enrichedPath.length === 0) {
+        return null;
+      }
+
+      const processRunId = crypto.randomUUID();
+      const branchId = crypto.randomUUID();
+      const pathId = crypto.randomUUID();
+      const sourceGroupId = enrichedPath[0]?.groupId ?? null;
+      const targetGroupId = enrichedPath[enrichedPath.length - 1]?.groupId ?? null;
+      const processStatus = enrichedPath.some(segment => !segment.eventId)
+        ? 'pending_event'
+        : 'scheduled';
+
+      await createProcessRun({
+        id: processRunId,
+        amendment_id: amendmentId,
+        root_workflow_id: workflowId ?? null,
+        selected_source_group_id: sourceGroupId,
+        selected_target_group_id: targetGroupId,
+        selected_target_workflow_id: workflowId ?? null,
+        active_branch_id: null,
+        terminal_step_run_id: null,
+        status: processStatus,
+        evaluation_mode: null,
+        evaluation_date: null,
+        evaluation_offset_months: null,
+        evaluation_offset_years: null,
+        implementation_status: null,
+      });
+
+      await createProcessBranch({
+        id: branchId,
+        process_run_id: processRunId,
+        parent_branch_id: null,
+        merged_into_branch_id: null,
+        source_step_run_id: null,
+        document_version_id: null,
+        title: amendmentTitle,
+        status: processStatus,
+        resolution: null,
+      });
+
       // Create agenda items and votes for each segment with an event
       for (const segment of enrichedPath) {
-        if (segment.eventId && segment.agendaItemId && segment.amendmentVoteId) {
+        if (segment.eventId) {
+          const agendaItemId = segment.agendaItemId ?? crypto.randomUUID();
+          const voteId = segment.amendmentVoteId ?? crypto.randomUUID();
+
           await createAgendaItem({
-            id: segment.agendaItemId,
+            id: agendaItemId,
             title: `Amendment: ${amendmentTitle}`,
             description: amendmentReason || '',
             type: 'amendment',
@@ -57,8 +113,8 @@ export function useCreateAmendmentPath() {
           });
 
           await createVote({
-            id: segment.amendmentVoteId,
-            agenda_item_id: segment.agendaItemId,
+            id: voteId,
+            agenda_item_id: agendaItemId,
             amendment_id: amendmentId,
             title: `Amendment: ${amendmentTitle}`,
             description: amendmentReason || null,
@@ -68,28 +124,117 @@ export function useCreateAmendmentPath() {
         }
       }
 
-      // Create path record
-      const pathId = crypto.randomUUID();
       await createPath({
         id: pathId,
         amendment_id: amendmentId,
+        process_run_id: processRunId,
         title: '',
         workflow_id: workflowId ?? null,
       });
 
-      // Create path segments
+      const stepRunIds: string[] = [];
+
       for (const [index, segment] of enrichedPath.entries()) {
+        const stepRunId = crypto.randomUUID();
+        const segmentStatus = segment.eventId ? 'scheduled' : 'pending_event';
+        const agendaItemId = segment.eventId ? (segment.agendaItemId ?? crypto.randomUUID()) : null;
+        const voteId = segment.eventId ? (segment.amendmentVoteId ?? crypto.randomUUID()) : null;
+
+        stepRunIds.push(stepRunId);
+
+        await createProcessStepRun({
+          id: stepRunId,
+          process_run_id: processRunId,
+          branch_id: branchId,
+          workflow_id: workflowId ?? null,
+          workflow_step_id: null,
+          step_kind: 'group_vote',
+          selection_mode: workflowId ? 'explicit_workflow' : 'default_target_workflow',
+          merge_strategy: null,
+          status: segmentStatus,
+          source_group_id: index === 0 ? sourceGroupId : (enrichedPath[index - 1]?.groupId ?? null),
+          target_group_id: segment.groupId,
+          event_id: segment.eventId ?? null,
+          agenda_item_id: agendaItemId,
+          vote_id: voteId,
+          support_confirmation_id: null,
+          decision_status: segment.forwardingStatus,
+          order_index: index,
+          starts_at: segment.eventStartDate ?? null,
+          ends_at: null,
+        });
+
         await createPathSegment({
           id: crypto.randomUUID(),
           path_id: pathId,
+          process_branch_id: branchId,
+          process_step_run_id: stepRunId,
           group_id: segment.groupId,
-          event_id: segment.eventId || '',
+          event_id: segment.eventId ?? null,
           order_index: index,
           status: segment.forwardingStatus,
         });
+
+        if (!segment.eventId) {
+          await createProcessTask({
+            id: crypto.randomUUID(),
+            process_run_id: processRunId,
+            branch_id: branchId,
+            step_run_id: stepRunId,
+            task_type: 'schedule_event',
+            status: 'open',
+            title: `Schedule amendment vote for ${segment.groupName}`,
+            description: `No eligible event is selected yet for ${segment.groupName}.`,
+            group_id: segment.groupId,
+            target_group_id: targetGroupId,
+            event_id: null,
+            agenda_item_id: null,
+            support_confirmation_id: null,
+            due_at: null,
+            resolved_at: null,
+            metadata: {
+              amendmentId,
+              amendmentTitle,
+              groupName: segment.groupName,
+              orderIndex: index,
+              pathMode,
+              workflowId,
+              forwardingStatus: segment.forwardingStatus,
+            },
+          });
+        }
       }
+
+      await updateProcessRun({
+        id: processRunId,
+        active_branch_id: branchId,
+        status: processStatus,
+      });
+
+      await updateAmendment({
+        id: amendmentId,
+        current_process_run_id: processRunId,
+      });
+
+      return {
+        processRunId,
+        branchId,
+        pathId,
+        stepRunIds,
+      };
     },
-    [createPath, createPathSegment, createVote, createAgendaItem]
+    [
+      createAgendaItem,
+      createPath,
+      createPathSegment,
+      createProcessBranch,
+      createProcessRun,
+      createProcessStepRun,
+      createProcessTask,
+      createVote,
+      updateAmendment,
+      updateProcessRun,
+    ]
   );
 
   return { createAmendmentPath };

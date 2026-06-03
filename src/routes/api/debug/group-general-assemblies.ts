@@ -3,6 +3,11 @@ import { getSession } from '@/lib/supabase/server';
 import { executeZeroRead } from '@/server/zero-mutate';
 import { resolveHierarchicalAncestors } from '@/features/groups/logic/hierarchy';
 import { zql } from '@/zero/schema';
+import {
+  buildGroupsById,
+  loadActiveHierarchyRelationships,
+  loadGroupWithDerivedNetworkMeta,
+} from '@/zero/groups/membership-helpers';
 
 function isEventOngoingOrUpcomingByEndDate(event: {
   end_date?: number | null;
@@ -38,15 +43,12 @@ export const APIRoute = createAPIFileRoute('/api/debug/group-general-assemblies'
         };
       }
 
-      const group = await tx.run(zql.group.where('id', membership.group_id).one());
+      const group = await loadGroupWithDerivedNetworkMeta(tx, membership.group_id);
       const affectedGroupIds = new Set<string>([membership.group_id]);
 
       if (group?.group_type === 'base') {
-        const groups = await tx.run(zql.group);
-        const groupsById = new Map(groups.map(currentGroup => [currentGroup.id, currentGroup]));
-        const hierarchyRelationships = await tx.run(
-          zql.group_relationship.where('with_right', 'passiveVotingRight').where('status', 'active')
-        );
+        const groupsById = await buildGroupsById(tx);
+        const hierarchyRelationships = await loadActiveHierarchyRelationships(tx, groupsById);
 
         for (const groupId of resolveHierarchicalAncestors(
           membership.group_id,

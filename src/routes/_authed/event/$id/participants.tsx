@@ -6,7 +6,7 @@ import { GlobalLoadingAnimation } from '@/features/shared/ui/ui/global-loading-a
 import { usePermissions } from '@/zero/rbac';
 
 const participantsSearchSchema = z.object({
-  tab: z.enum(['membershipsByUser', 'membershipsByRole', 'roles']).optional(),
+  tab: z.enum(['membershipsByUser', 'membershipsByRole', 'guests', 'roles']).optional(),
 });
 
 export const Route = createFileRoute('/_authed/event/$id/participants')({

@@ -21,6 +21,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { CreateReviewCard, SummaryField } from '@/features/shared/ui/ui/create-review-card';
 import { formatLocation } from '@/features/shared/logic/locationHelpers';
 import { useAllGroups, useGroupState } from '@/zero/groups/useGroupState';
+import { useNetworkLinkState } from '@/zero/network';
 import { getGroupRelationshipRightLabel } from '@/features/network/ui/GroupRelationshipFields';
 import { RIGHT_TYPES, type RightType } from '@/features/network/ui/RightFilters';
 import {
@@ -34,6 +35,7 @@ import { Label } from '@/features/shared/ui/ui/label';
 import { Checkbox } from '@/features/shared/ui/ui/checkbox';
 import { useGroupConflictPreflight } from '../hooks/useGroupConflictPreflight';
 import { GroupConflictDialog, GroupConflictPanel } from './GroupConflictPanel';
+import { getCanonicalMembershipModeLabel } from '@/features/network/logic/networkLinkDerived';
 
 interface GroupEditFormProps {
   groupId: string;
@@ -66,10 +68,14 @@ export function GroupEditForm({
     isSubmitting,
   } = useGroupUpdate(groupId, initialData, { actorId, visibility, groupType });
   const { groups: allGroups } = useAllGroups();
+  const availableGroups = allGroups.filter(
+    (group): group is NonNullable<(typeof allGroups)[number]> => Boolean(group?.id)
+  );
   const { roles: connectedGroupRoles } = useGroupState({
     groupId: formData.connected_group_id ?? undefined,
   });
-  const selectableConnectedGroups = allGroups.filter(group => group.id !== groupId);
+  const { groupLinks } = useNetworkLinkState({ groupId });
+  const selectableConnectedGroups = availableGroups.filter(group => group.id !== groupId);
   const selectableConnectedRoles = (connectedGroupRoles ?? []).filter(
     role => role.scope === 'group' && role.assignee_kind !== 'guest'
   );
@@ -82,19 +88,104 @@ export function GroupEditForm({
     { value: 'incoming', label: 'Andere -> aktuelle Gruppe' },
     { value: 'bidirectional', label: 'Beidseitig' },
   ];
+  const existingSiblingLink =
+    formData.connected_group_id == null
+      ? null
+      : (groupLinks.find(
+          link =>
+            link.structural_relation === 'sibling' &&
+            ((link.source_group_id === groupId &&
+              link.target_group_id === formData.connected_group_id) ||
+              (link.source_group_id === formData.connected_group_id &&
+                link.target_group_id === groupId))
+        ) ?? null);
+  const siblingRights = RIGHT_TYPES.flatMap(right => {
+    const direction = formData.connected_relationship_directions[right];
+    if (direction === 'none') {
+      return [];
+    }
+
+    return [
+      {
+        id: existingSiblingLink?.rights?.find(existingRight => existingRight.right_key === right)
+          ?.id,
+        right_key: right,
+        direction:
+          direction === 'bidirectional'
+            ? ('bidirectional' as const)
+            : direction === 'outgoing'
+              ? ('forward' as const)
+              : ('backward' as const),
+        status:
+          (existingSiblingLink?.rights?.find(existingRight => existingRight.right_key === right)
+            ?.status as 'active' | 'requested' | 'pending' | 'rejected' | undefined) ?? 'requested',
+        initiator_group_id:
+          existingSiblingLink?.rights?.find(existingRight => existingRight.right_key === right)
+            ?.initiator_group_id ?? groupId,
+      },
+    ];
+  });
+  const backwardMembershipRule = {
+    membership_mode: formData.sibling_membership_mode ?? 'none',
+    role_id:
+      formData.sibling_membership_mode === 'role_members'
+        ? (formData.sibling_role_id ?? null)
+        : null,
+    source_group_ids:
+      formData.sibling_membership_mode === 'selected_source_groups'
+        ? (formData.parliament_source_group_ids ?? [])
+        : null,
+  };
+  const forwardMembershipRule = {
+    membership_mode:
+      existingSiblingLink == null
+        ? 'none'
+        : existingSiblingLink.source_group_id === groupId
+          ? (existingSiblingLink.membership_rule?.forward_membership_mode ?? 'none')
+          : (existingSiblingLink.membership_rule?.backward_membership_mode ??
+            existingSiblingLink.membership_rule?.membership_mode ??
+            'none'),
+    role_id:
+      existingSiblingLink == null
+        ? null
+        : existingSiblingLink.source_group_id === groupId
+          ? (existingSiblingLink.membership_rule?.forward_role_id ?? null)
+          : (existingSiblingLink.membership_rule?.backward_role_id ??
+            existingSiblingLink.membership_rule?.role_id ??
+            null),
+    source_group_ids:
+      existingSiblingLink == null
+        ? null
+        : existingSiblingLink.source_group_id === groupId
+          ? (existingSiblingLink.membership_rule?.forward_source_group_ids ?? null)
+          : (existingSiblingLink.membership_rule?.backward_source_group_ids ??
+            existingSiblingLink.membership_rule?.source_group_ids ??
+            null),
+  };
   const siblingConfigurationPreflight = useGroupConflictPreflight(
-    groupType === 'sibling'
+    groupType === 'sibling' && formData.connected_group_id && siblingRights.length > 0
       ? {
-          kind: 'sibling_configuration',
-          group_id: groupId,
-          group_type: 'sibling',
-          connected_group_id: formData.connected_group_id ?? null,
-          sibling_membership_mode: formData.sibling_membership_mode ?? null,
-          sibling_role_id: formData.sibling_role_id ?? null,
-          parliament_source_group_ids: formData.parliament_source_group_ids ?? [],
+          kind: 'network_link_upsert',
+          link_id: existingSiblingLink?.id,
+          source_group_id: groupId,
+          target_group_id: formData.connected_group_id,
+          structural_relation: 'sibling',
+          rights: siblingRights,
+          membership_rules: {
+            forward: forwardMembershipRule,
+            backward: backwardMembershipRule,
+          },
+          membership_rule: {
+            membership_mode: backwardMembershipRule.membership_mode,
+            role_id: backwardMembershipRule.role_id,
+            source_group_ids: backwardMembershipRule.source_group_ids,
+          },
         }
       : null,
-    { enabled: groupType === 'sibling' }
+    {
+      enabled:
+        groupType === 'sibling' && Boolean(formData.connected_group_id) && siblingRights.length > 0,
+    }
   );
 
   const onFormSubmit = (e: React.FormEvent) => {
@@ -221,7 +312,7 @@ export function GroupEditForm({
           <div className="space-y-2">
             <Label>Mitgliedschaftsmodus</Label>
             <Select
-              value={formData.sibling_membership_mode ?? 'open'}
+              value={formData.sibling_membership_mode ?? 'none'}
               onValueChange={value =>
                 updateField(
                   'sibling_membership_mode',
@@ -233,14 +324,18 @@ export function GroupEditForm({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="open">Offen</SelectItem>
-                <SelectItem value="elected">Gewaehlt</SelectItem>
-                <SelectItem value="parliament">Parlament</SelectItem>
+                {(['none', 'all_members', 'role_members', 'selected_source_groups'] as const).map(
+                  mode => (
+                    <SelectItem key={mode} value={mode}>
+                      {getCanonicalMembershipModeLabel(mode)}
+                    </SelectItem>
+                  )
+                )}
               </SelectContent>
             </Select>
           </div>
 
-          {formData.sibling_membership_mode === 'elected' ? (
+          {formData.sibling_membership_mode === 'role_members' ? (
             <div className="space-y-2">
               <Label>Verbundene Rolle</Label>
               <Select
@@ -261,11 +356,11 @@ export function GroupEditForm({
             </div>
           ) : null}
 
-          {formData.sibling_membership_mode === 'parliament' ? (
+          {formData.sibling_membership_mode === 'selected_source_groups' ? (
             <div className="space-y-2">
-              <Label>Parlamentsquellen</Label>
+              <Label>Source groups</Label>
               <div className="grid gap-2 rounded-lg border p-3">
-                {allGroups
+                {availableGroups
                   .filter(group => group.id !== groupId)
                   .map(group => {
                     const checked =
@@ -277,7 +372,7 @@ export function GroupEditForm({
                       >
                         <Checkbox
                           checked={checked}
-                          onCheckedChange={nextChecked =>
+                          onCheckedChange={(nextChecked: boolean | 'indeterminate') =>
                             updateField(
                               'parliament_source_group_ids',
                               nextChecked === true

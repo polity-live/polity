@@ -63,6 +63,21 @@ export function getRelationshipPreviewData(
   const sourceGroupId = getGroupIdFromEdgeNodeId(relationship.source);
   const targetGroupId = getGroupIdFromEdgeNodeId(relationship.target);
 
+  if (
+    relationship.currentGroupName &&
+    relationship.selectedGroupName &&
+    relationship.relationshipType !== 'membership'
+  ) {
+    return {
+      relationshipType: relationship.relationshipType,
+      currentGroupName: relationship.currentGroupName,
+      currentGroupId: relationship.currentGroupId,
+      selectedGroupName: relationship.selectedGroupName,
+      selectedGroupId: relationship.selectedGroupId,
+      isIncomingPerspective: relationship.currentGroupId === targetGroupId,
+    };
+  }
+
   if (shouldSwapRelationshipPerspective(relationship)) {
     return {
       relationshipType: invertRelationshipType(relationship.relationshipType),

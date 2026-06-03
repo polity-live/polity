@@ -1,15 +1,20 @@
 import { useState } from 'react';
-import { useQuery, useZero } from '@rocicorp/zero/react';
-import { useUserMembershipInGroup } from '@/zero/groups/useGroupState';
-import { queries } from '@/zero/queries';
+import { useZero } from '@rocicorp/zero/react';
+import { useQuery } from '@rocicorp/zero/react';
+import { useGroupState, useUserMembershipInGroup } from '@/zero/groups/useGroupState';
 import { mutators } from '@/zero/mutators';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import { useAuth } from '@/providers/auth-provider';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useGroupConflictPreflight } from './useGroupConflictPreflight';
 import { toast } from 'sonner';
+import { queries } from '@/zero/queries';
 
 export type MembershipStatus = 'invited' | 'requested' | 'member' | 'admin';
+
+function isGuestOnlySiblingMembershipMode(mode: string | null | undefined) {
+  return mode === 'all_members' || mode === 'role_members' || mode === 'selected_source_groups';
+}
 
 function isAdminRole(roleName: string | null | undefined) {
   return roleName === 'Admin' || roleName === 'Board Member';
@@ -46,7 +51,10 @@ export function useGroupMembership(groupId: string) {
   const zero = useZero();
   const { t } = useTranslation();
   const { user } = useAuth();
-  const [group, groupResult] = useQuery(groupId ? queries.groups.byId({ id: groupId }) : undefined);
+  const { group, isLoading: groupLoading } = useGroupState({ groupId });
+  const [guestAccessesData] = useQuery(
+    user?.id ? queries.groups.currentUserGuestAccessesWithGroups({}) : undefined
+  );
   const {
     memberships: membershipsData,
     allMemberships: allMembershipsData,
@@ -61,6 +69,8 @@ export function useGroupMembership(groupId: string) {
   // Handle multiple memberships - prioritize admin, then member, then invited, then requested
   const memberships = data.groupMemberships || [];
   let membership = memberships[0];
+  const guestAccess =
+    (guestAccessesData || []).find(access => access.group?.id === groupId) ?? null;
 
   if (memberships.length > 1) {
     const adminMembership = memberships.find(
@@ -100,20 +110,32 @@ export function useGroupMembership(groupId: string) {
         isMemberRole(candidate.role?.name)
     ).length || 0;
   const status = normalizeMembershipStatus(membership?.status, membership?.role?.name);
-  const isMember = status === 'member' || status === 'admin';
-  const isAdmin = status === 'admin';
-  const hasRequested = status === 'requested';
-  const isInvited = status === 'invited';
+  const requiresGuestAccessFlow =
+    group?.group_type === 'sibling' &&
+    isGuestOnlySiblingMembershipMode(group?.primary_sibling_membership_mode ?? null);
+  const effectiveStatus: MembershipStatus | null =
+    status ??
+    (guestAccess?.status === 'requested'
+      ? 'requested'
+      : guestAccess?.status === 'invited'
+        ? 'invited'
+        : guestAccess?.status === 'active'
+          ? 'member'
+          : null);
+  const isMember = effectiveStatus === 'member' || effectiveStatus === 'admin';
+  const isAdmin = effectiveStatus === 'admin';
+  const hasRequested = effectiveStatus === 'requested';
+  const isInvited = effectiveStatus === 'invited';
   const isConnectedGroupMember = (connectedGroupMemberships || []).some(candidate =>
     isActiveMembershipStatus(candidate.status)
   );
+  const primarySiblingMembershipMode = group?.primary_sibling_membership_mode ?? null;
   const siblingJoinRequiresConnectedMembership =
     group?.group_type === 'sibling' &&
-    group?.sibling_membership_mode === 'open' &&
+    primarySiblingMembershipMode === 'none' &&
     Boolean(group?.connected_group_id);
   const joinEligibilityLoading =
-    groupResult.type === 'unknown' ||
-    (siblingJoinRequiresConnectedMembership && connectedMembershipLoading);
+    groupLoading || (siblingJoinRequiresConnectedMembership && connectedMembershipLoading);
   const joinConflictPreflight = useGroupConflictPreflight(
     user?.id && !membership && !joinEligibilityLoading && groupId
       ? {
@@ -136,7 +158,7 @@ export function useGroupMembership(groupId: string) {
   if (group?.group_type === 'hierarchical') {
     requestJoinDisabledReason = t('features.groups.hierarchicalMembershipDisabled');
   } else if (group?.group_type === 'sibling') {
-    if (group.sibling_membership_mode !== 'open') {
+    if (primarySiblingMembershipMode !== 'none' && !requiresGuestAccessFlow) {
       requestJoinDisabledReason = t('features.groups.automaticSiblingMembershipDisabled');
     } else if (group.connected_group_id && !joinEligibilityLoading && !isConnectedGroupMember) {
       requestJoinDisabledReason = t(
@@ -145,7 +167,7 @@ export function useGroupMembership(groupId: string) {
     }
   }
 
-  if (!requestJoinDisabledReason && joinConflictPreflight.blocking) {
+  if (!requestJoinDisabledReason && !requiresGuestAccessFlow && joinConflictPreflight.blocking) {
     requestJoinDisabledReason =
       joinConflictPreflight.response.summary ??
       joinConflictPreflight.response.conflicts[0]?.summary ??
@@ -153,24 +175,39 @@ export function useGroupMembership(groupId: string) {
   }
 
   const canRequestJoin =
-    Boolean(user?.id) && !membership && !joinEligibilityLoading && !requestJoinDisabledReason;
+    Boolean(user?.id) &&
+    !membership &&
+    !guestAccess &&
+    !joinEligibilityLoading &&
+    !requestJoinDisabledReason;
   const canAcceptInvitation =
-    status === 'invited' && Boolean(user?.id) && !acceptConflictPreflight.blocking;
+    effectiveStatus === 'invited' &&
+    Boolean(user?.id) &&
+    (requiresGuestAccessFlow || !acceptConflictPreflight.blocking);
 
   const requestJoin = async () => {
-    if (!user?.id || membership || !canRequestJoin) return;
+    if (!user?.id || membership || guestAccess || !canRequestJoin) return;
 
     setIsLoading(true);
     try {
-      const result = zero.mutate(
-        mutators.groups.joinGroup({
-          id: crypto.randomUUID(),
-          status: 'requested',
-          user_id: user.id,
-          group_id: groupId,
-          visibility: '',
-        })
-      );
+      const result = requiresGuestAccessFlow
+        ? zero.mutate(
+            mutators.groups.requestGuestAccess({
+              id: crypto.randomUUID(),
+              status: 'requested',
+              user_id: user.id,
+              group_id: groupId,
+            })
+          )
+        : zero.mutate(
+            mutators.groups.joinGroup({
+              id: crypto.randomUUID(),
+              status: 'requested',
+              user_id: user.id,
+              group_id: groupId,
+              visibility: '',
+            })
+          );
 
       await serverConfirmed(result);
       toast.success(t('features.auth.success.membershipRequestSent'));
@@ -184,19 +221,32 @@ export function useGroupMembership(groupId: string) {
   };
 
   const leaveGroup = async () => {
-    if (!membership?.id) return;
+    if (!membership?.id && !guestAccess?.id) return;
+    const guestAccessId = guestAccess?.id;
 
     setIsLoading(true);
     try {
-      const result = zero.mutate(
-        mutators.groups.leaveGroup({
-          id: membership.id,
-        })
-      );
+      const result = membership?.id
+        ? zero.mutate(
+            mutators.groups.leaveGroup({
+              id: membership.id,
+            })
+          )
+        : !guestAccessId
+          ? null
+          : zero.mutate(
+              mutators.groups.revokeGuestAccess({
+                id: guestAccessId,
+              })
+            );
+
+      if (!result) {
+        return;
+      }
 
       await serverConfirmed(result);
 
-      if (status === 'requested') {
+      if (effectiveStatus === 'requested') {
         toast.success('Request successfully withdrawn.');
       } else {
         toast.success(t('features.groups.toasts.left'));
@@ -211,34 +261,47 @@ export function useGroupMembership(groupId: string) {
   };
 
   const acceptInvitation = async () => {
-    if (!membership?.id || !canAcceptInvitation || !user?.id) return;
+    if ((!membership?.id && !guestAccess?.id) || !canAcceptInvitation || !user?.id) return;
+    const guestAccessId = guestAccess?.id;
 
     console.info('Accept button clicked in useGroupMembership', {
       flow: 'group-membership-invitation-accept',
-      membershipId: membership.id,
+      membershipId: membership?.id ?? guestAccess?.id,
       groupId,
       actorUserId: user.id,
-      membershipStatus: membership.status,
+      membershipStatus: membership?.status ?? guestAccess?.status,
     });
 
     setIsLoading(true);
     try {
       console.info('Client mutation started', {
         flow: 'group-membership-invitation-accept',
-        membershipId: membership.id,
+        membershipId: membership?.id ?? guestAccess?.id,
         groupId,
         actorUserId: user.id,
       });
 
-      const result = zero.mutate(
-        mutators.groups.acceptInvitation({
-          id: membership.id,
-        })
-      );
+      const result = membership?.id
+        ? zero.mutate(
+            mutators.groups.acceptInvitation({
+              id: membership.id,
+            })
+          )
+        : !guestAccessId
+          ? null
+          : zero.mutate(
+              mutators.groups.acceptGuestInvitation({
+                id: guestAccessId,
+              })
+            );
+
+      if (!result) {
+        return;
+      }
 
       console.info('Server validation started', {
         flow: 'group-membership-invitation-accept',
-        membershipId: membership.id,
+        membershipId: membership?.id ?? guestAccess?.id,
         groupId,
         actorUserId: user.id,
       });
@@ -247,14 +310,14 @@ export function useGroupMembership(groupId: string) {
 
       console.info('Server successful', {
         flow: 'group-membership-invitation-accept',
-        membershipId: membership.id,
+        membershipId: membership?.id ?? guestAccess?.id,
         groupId,
         actorUserId: user.id,
       });
 
       console.info('Client successful', {
         flow: 'group-membership-invitation-accept',
-        membershipId: membership.id,
+        membershipId: membership?.id ?? guestAccess?.id,
         groupId,
         actorUserId: user.id,
       });
@@ -262,7 +325,7 @@ export function useGroupMembership(groupId: string) {
     } catch (error) {
       console.error('Client error', {
         flow: 'group-membership-invitation-accept',
-        membershipId: membership.id,
+        membershipId: membership?.id ?? guestAccess?.id,
         groupId,
         actorUserId: user.id,
         error,
@@ -276,8 +339,8 @@ export function useGroupMembership(groupId: string) {
   };
 
   return {
-    membership,
-    status,
+    membership: membership ?? guestAccess,
+    status: effectiveStatus,
     isMember,
     isAdmin,
     hasRequested,
@@ -295,8 +358,8 @@ export function useGroupMembership(groupId: string) {
     isLoading:
       queryLoading ||
       joinEligibilityLoading ||
-      joinConflictPreflight.isLoading ||
-      acceptConflictPreflight.isLoading ||
+      (!requiresGuestAccessFlow && joinConflictPreflight.isLoading) ||
+      (!requiresGuestAccessFlow && acceptConflictPreflight.isLoading) ||
       isLoading,
     requestJoin,
     leaveGroup,
