@@ -37,6 +37,10 @@ describe('networkFilterHelpers', () => {
     );
 
     expect(edge?.style?.stroke).toBe('#7c3aed');
+    expect(edge?.animated).toBe(false);
+    expect((edge?.data as EditableRightsLabelEdgeData | undefined)?.visibleFlowDirection).toBe(
+      'bidirectional'
+    );
     expect((edge?.data as EditableRightsLabelEdgeData | undefined)?.visibleRights).toEqual([
       'amendmentRight',
       'rightToSpeak',
@@ -53,6 +57,8 @@ describe('networkFilterHelpers', () => {
       'amendmentRight',
     ]);
     expect(edge?.style?.stroke).toBe('#2563eb');
+    expect(edge?.animated).toBe(true);
+    expect(edge?.style?.animationDirection).toBeUndefined();
   });
 
   it('keeps only outgoing rights and recolors the edge orange', () => {
@@ -65,6 +71,8 @@ describe('networkFilterHelpers', () => {
       'rightToSpeak',
     ]);
     expect(edge?.style?.stroke).toBe('#d97706');
+    expect(edge?.animated).toBe(true);
+    expect(edge?.style?.animationDirection).toBe('reverse');
   });
 
   it('does not fall back to the edge-level direction when per-right directions exist', () => {

@@ -6,6 +6,7 @@ import {
   getElectionModeLabel,
   normalizeDelegateElectionMode,
 } from '@/features/elections/logic/electionMode';
+import { buildCreateEventSearchFromProcessTask } from '@/features/amendments/logic/processTaskEventScheduling';
 import {
   createElectionFlowCorrelationId,
   logElectionFlowClient,
@@ -429,7 +430,25 @@ export function OpenAssignmentsPanel({
                       laufendes Event, an das der Auftrag gehaengt werden kann.
                       <div className="mt-3">
                         <Button asChild variant="outline">
-                          <Link to="/create/event" search={{ groupId }}>
+                          <Link
+                            to="/create/event"
+                            search={
+                              assignment.kind === 'process_task' && assignment.processTaskId
+                                ? buildCreateEventSearchFromProcessTask({
+                                    task: {
+                                      id: assignment.processTaskId,
+                                      group_id: groupId,
+                                      process_run_id: assignment.processRunId ?? null,
+                                      step_run_id: assignment.stepRunId ?? null,
+                                      due_at: assignment.dueAt ?? null,
+                                      metadata: assignment.processTaskMetadata,
+                                    },
+                                    groupId,
+                                    returnTo: `/group/${groupId}?tab=assignments`,
+                                  })
+                                : { groupId }
+                            }
+                          >
                             <CalendarPlus2 className="mr-2 h-4 w-4" />
                             Veranstaltung erstellen
                           </Link>

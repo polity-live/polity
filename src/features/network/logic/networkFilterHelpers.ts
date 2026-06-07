@@ -9,7 +9,11 @@ import type {
   NetworkUserConnectionDirection,
 } from '@/features/network/types/networkEdge.types';
 import type { NetworkRelationshipKind } from '@/features/network/logic/networkRelationshipHelpers';
-import { getVisibleRelationshipStrokeColor } from '@/features/network/logic/networkEdgeHelpers';
+import {
+  getAnimatedFlowDirection,
+  getVisibleFlowDirection,
+  getVisibleRelationshipStrokeColor,
+} from '@/features/network/logic/networkEdgeHelpers';
 
 function hasForwardEdgeDirection(direction: NetworkEdgeRelationshipDirection | undefined) {
   return direction === 'forward' || direction === 'bidirectional';
@@ -133,6 +137,7 @@ function applyVisibleRights(edge: Edge, visibleRights: string[]): Edge | null {
     edgeData.visibleRightConnectionDirections ?? edgeData.rightConnectionDirections,
     visibleRights
   );
+  const visibleFlowDirection = getVisibleFlowDirection(visibleRightEdgeDirections);
   const visibleConnectionDirection =
     mergeConnectionDirections(
       visibleRights.map(right => visibleRightConnectionDirections?.[right])
@@ -140,9 +145,11 @@ function applyVisibleRights(edge: Edge, visibleRights: string[]): Edge | null {
   const hasForwardDirection =
     visibleDirectionValues.length === 0 || visibleDirectionValues.some(hasForwardEdgeDirection);
   const hasBackwardDirection = visibleDirectionValues.some(hasBackwardEdgeDirection);
+  const animatedFlowDirection = getAnimatedFlowDirection(visibleFlowDirection);
 
   return {
     ...edge,
+    animated: animatedFlowDirection !== null,
     markerStart: hasBackwardDirection ? (edge.markerStart ?? edge.markerEnd) : undefined,
     markerEnd: hasForwardDirection ? (edge.markerEnd ?? edge.markerStart) : undefined,
     style: {
@@ -152,6 +159,7 @@ function applyVisibleRights(edge: Edge, visibleRights: string[]): Edge | null {
         connectionDirection: visibleConnectionDirection,
         rightEdgeDirections: visibleRightEdgeDirections,
       }),
+      animationDirection: animatedFlowDirection === 'backward' ? 'reverse' : undefined,
     },
     data: {
       ...edgeData,
@@ -159,6 +167,7 @@ function applyVisibleRights(edge: Edge, visibleRights: string[]): Edge | null {
       visibleRightRelationshipKinds,
       visibleRightConnectionDirections,
       visibleConnectionDirection,
+      visibleFlowDirection,
     },
   };
 }

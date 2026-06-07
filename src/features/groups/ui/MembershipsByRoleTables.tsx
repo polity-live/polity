@@ -8,7 +8,6 @@ import {
   CardTitle,
 } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import {
   Table,
   TableBody,
@@ -27,6 +26,7 @@ import type {
   ParticipationLike,
   ParticipationRoleLike,
 } from '@/features/shared/types/participation';
+import { UserTableCell } from '@/features/shared/ui/ui/user-table-cell';
 import { getMembershipDisplayRoles } from '@/features/groups/logic/buildMembershipRightsSummary';
 import { getMembershipProvenanceDisplayLabel } from '@/features/groups/logic/membershipComposition';
 import { RoleTag } from './RoleTag';
@@ -77,6 +77,33 @@ export function MembershipsByRoleTables<
   showProvenanceColumns = false,
 }: MembershipsByRoleTablesProps<TRole, TParticipation>) {
   const { t } = useTranslation();
+  const membersWithoutRoles = members.filter(
+    membership => getMembershipDisplayRoles(membership).length === 0
+  );
+  const sections = [
+    ...roles.map(role => ({
+      kind: 'role' as const,
+      id: role.id,
+      title: role.name || 'Role',
+      description: role.description || memberDescriptionFallback,
+      role,
+      members: members.filter(membership =>
+        getMembershipDisplayRoles(membership).some(membershipRole => membershipRole.id === role.id)
+      ),
+    })),
+    ...(membersWithoutRoles.length > 0
+      ? [
+          {
+            kind: 'no-role' as const,
+            id: 'no-user-role',
+            title: 'No user role',
+            description: 'Members currently without any assigned group role.',
+            role: null,
+            members: membersWithoutRoles,
+          },
+        ]
+      : []),
+  ];
 
   const renderProvenanceGroupTag = (
     membership: TParticipation,
@@ -106,37 +133,39 @@ export function MembershipsByRoleTables<
 
   return (
     <div className="space-y-4">
-      {roles.map(role => {
-        const roleMembers = members.filter(membership =>
-          getMembershipDisplayRoles(membership).some(
-            membershipRole => membershipRole.id === role.id
-          )
-        );
+      {sections.map(section => {
+        const roleMembers = section.members;
 
         return (
           <Card
-            key={role.id}
+            key={section.id}
             className="border-border/70 from-background to-muted/20 bg-gradient-to-b"
           >
             <CardHeader>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <CardTitle className="flex items-center gap-2">
-                    <RoleTag roleId={role.id} roleName={role.name || 'Role'} />
+                    {section.kind === 'role' && section.role ? (
+                      <RoleTag roleId={section.role.id} roleName={section.title} />
+                    ) : (
+                      <span className="font-semibold">{section.title}</span>
+                    )}
                     <TableTag entityType={entityType}>
                       {roleMembers.length} {countLabel}
                     </TableTag>
                   </CardTitle>
-                  <CardDescription>{role.description || memberDescriptionFallback}</CardDescription>
+                  <CardDescription>{section.description}</CardDescription>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {role.default_request_role ? (
-                    <TableTag entityType={entityType}>{defaultRequestLabel}</TableTag>
-                  ) : null}
-                  {role.default_invite_role ? (
-                    <TableTag entityType={entityType}>{defaultInviteLabel}</TableTag>
-                  ) : null}
-                </div>
+                {section.kind === 'role' && section.role ? (
+                  <div className="flex flex-wrap gap-2">
+                    {section.role.default_request_role ? (
+                      <TableTag entityType={entityType}>{defaultRequestLabel}</TableTag>
+                    ) : null}
+                    {section.role.default_invite_role ? (
+                      <TableTag entityType={entityType}>{defaultInviteLabel}</TableTag>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
             </CardHeader>
             <CardContent>
@@ -145,7 +174,9 @@ export function MembershipsByRoleTables<
                   <TableHeader>
                     <TableRow>
                       <TableHead>User</TableHead>
-                      <TableHead>Other Roles</TableHead>
+                      <TableHead>
+                        {section.kind === 'role' ? 'Other Roles' : 'Assigned Roles'}
+                      </TableHead>
                       {showProvenanceColumns ? (
                         <TableHead>{t('components.tableColumns.partGroup')}</TableHead>
                       ) : null}
@@ -159,66 +190,18 @@ export function MembershipsByRoleTables<
                   <TableBody>
                     {roleMembers.length > 0 ? (
                       roleMembers.map(membership => {
-                        const user = membership.user;
-                        const userName =
-                          [user?.first_name, user?.last_name].filter(Boolean).join(' ') ||
-                          'Unknown User';
-                        const otherRoles = getMembershipDisplayRoles(membership).filter(
-                          membershipRole => membershipRole.id !== role.id
-                        );
+                        const displayRoles = getMembershipDisplayRoles(membership);
+                        const otherRoles =
+                          section.kind === 'role' && section.role
+                            ? displayRoles.filter(
+                                membershipRole => membershipRole.id !== section.role?.id
+                              )
+                            : displayRoles;
 
                         return (
-                          <TableRow key={`${role.id}-${membership.id}`}>
+                          <TableRow key={`${section.id}-${membership.id}`}>
                             <TableCell>
-                              {user?.id ? (
-                                <Link
-                                  to="/user/$id"
-                                  params={{ id: user.id }}
-                                  className="group flex items-center gap-3 text-left"
-                                >
-                                  <Avatar className="h-9 w-9">
-                                    <AvatarImage src={user?.avatar || undefined} alt={userName} />
-                                    <AvatarFallback>
-                                      {userName
-                                        .split(' ')
-                                        .map(part => part[0])
-                                        .join('')
-                                        .slice(0, 2)
-                                        .toUpperCase()}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  <div className="group-hover:underline">
-                                    <div className="font-medium">{userName}</div>
-                                    {user?.handle ? (
-                                      <div className="text-muted-foreground text-sm">
-                                        @{user.handle}
-                                      </div>
-                                    ) : null}
-                                  </div>
-                                </Link>
-                              ) : (
-                                <div className="flex items-center gap-3 text-left">
-                                  <Avatar className="h-9 w-9">
-                                    <AvatarImage src={user?.avatar || undefined} alt={userName} />
-                                    <AvatarFallback>
-                                      {userName
-                                        .split(' ')
-                                        .map(part => part[0])
-                                        .join('')
-                                        .slice(0, 2)
-                                        .toUpperCase()}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  <div>
-                                    <div className="font-medium">{userName}</div>
-                                    {user?.handle ? (
-                                      <div className="text-muted-foreground text-sm">
-                                        @{user.handle}
-                                      </div>
-                                    ) : null}
-                                  </div>
-                                </div>
-                              )}
+                              <UserTableCell user={membership.user} />
                             </TableCell>
                             <TableCell>
                               <div className="flex flex-wrap gap-2">
@@ -230,6 +213,10 @@ export function MembershipsByRoleTables<
                                       roleName={otherRole.name || 'Role'}
                                     />
                                   ))
+                                ) : section.kind === 'no-role' ? (
+                                  <RoleTag fallbackKey={`no-role-${membership.id}`}>
+                                    No user role
+                                  </RoleTag>
                                 ) : (
                                   <span className="text-muted-foreground text-sm">
                                     {noOtherRolesLabel}
@@ -272,19 +259,21 @@ export function MembershipsByRoleTables<
                                     {secondaryActionLabel || 'Manage'}
                                   </Button>
                                 ) : null}
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  disabled={membership.source === 'derived'}
-                                  onClick={() => onRemoveRole(membership, role.id)}
-                                  title={
-                                    membership.source === 'derived'
-                                      ? derivedRemoveTooltip
-                                      : 'Remove this role from the member.'
-                                  }
-                                >
-                                  {removeActionLabel}
-                                </Button>
+                                {section.kind === 'role' && section.role ? (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    disabled={membership.source === 'derived'}
+                                    onClick={() => onRemoveRole(membership, section.role.id)}
+                                    title={
+                                      membership.source === 'derived'
+                                        ? derivedRemoveTooltip
+                                        : 'Remove this role from the member.'
+                                    }
+                                  >
+                                    {removeActionLabel}
+                                  </Button>
+                                ) : null}
                               </div>
                             </TableCell>
                           </TableRow>

@@ -6,11 +6,7 @@ import type {
   GroupRelationshipType,
   NormalizedGroupRelationship,
 } from '../types/network.types';
-import {
-  getMembershipRuleConfig,
-  hasActiveMembershipRules,
-  normalizeMembershipRules,
-} from '@/zero/network/membershipRules';
+import { getMembershipRuleConfig, normalizeMembershipRules } from '@/zero/network/membershipRules';
 
 export interface DerivedGroupNetworkMeta {
   group_type: 'base' | 'hierarchical' | 'sibling';
@@ -49,6 +45,12 @@ function isDirectionActive(direction: CanonicalNetworkLinkDirection, side: 'forw
 
 function isAcceptedNetworkStatus(status: string | null | undefined) {
   return status == null || status === 'active' || status === 'accepted';
+}
+
+function hasDirectionalMembershipRules(
+  membershipRules: ReturnType<typeof normalizeMembershipRules>
+) {
+  return membershipRules.membership_mode !== 'none';
 }
 
 function getDefaultDerivedGroupNetworkMeta(): DerivedGroupNetworkMeta {
@@ -184,7 +186,11 @@ export function explodeNetworkLinkToRelationships(
       rows.push({
         ...baseRow,
         id: `${right.id}:forward`,
-        membership_mode: membershipRules.forward.membership_mode as CanonicalMembershipMode,
+        membership_mode: membershipRules.membership_mode as CanonicalMembershipMode,
+        membership_direction: membershipRules.membership_direction ?? null,
+        membership_role_id: membershipRules.role_id ?? null,
+        membership_source_group_ids: membershipRules.source_group_ids ?? null,
+        relationship_direction: 'forward',
         group_id: link.source_group_id,
         related_group_id: link.target_group_id,
         relationship_type:
@@ -198,7 +204,11 @@ export function explodeNetworkLinkToRelationships(
       rows.push({
         ...baseRow,
         id: `${right.id}:backward`,
-        membership_mode: membershipRules.backward.membership_mode as CanonicalMembershipMode,
+        membership_mode: membershipRules.membership_mode as CanonicalMembershipMode,
+        membership_direction: membershipRules.membership_direction ?? null,
+        membership_role_id: membershipRules.role_id ?? null,
+        membership_source_group_ids: membershipRules.source_group_ids ?? null,
+        relationship_direction: 'backward',
         group_id: link.target_group_id,
         related_group_id: link.source_group_id,
         relationship_type:
@@ -209,7 +219,7 @@ export function explodeNetworkLinkToRelationships(
     }
   }
 
-  if (rows.length === 0 && hasActiveMembershipRules(membershipRules)) {
+  if (rows.length === 0 && hasDirectionalMembershipRules(membershipRules)) {
     rows.push({
       id: `${link.id}:structural:forward`,
       network_link_id: link.id,
@@ -219,7 +229,11 @@ export function explodeNetworkLinkToRelationships(
       status: link.status ?? null,
       initiator_group_id: null,
       created_at: link.created_at,
-      membership_mode: membershipRules.forward.membership_mode as CanonicalMembershipMode,
+      membership_mode: membershipRules.membership_mode as CanonicalMembershipMode,
+      membership_direction: membershipRules.membership_direction ?? null,
+      membership_role_id: membershipRules.role_id ?? null,
+      membership_source_group_ids: membershipRules.source_group_ids ?? null,
+      relationship_direction: 'forward',
       right_direction: 'forward',
       group_id: link.source_group_id,
       related_group_id: link.target_group_id,
@@ -237,7 +251,11 @@ export function explodeNetworkLinkToRelationships(
       status: link.status ?? null,
       initiator_group_id: null,
       created_at: link.created_at,
-      membership_mode: membershipRules.backward.membership_mode as CanonicalMembershipMode,
+      membership_mode: membershipRules.membership_mode as CanonicalMembershipMode,
+      membership_direction: membershipRules.membership_direction ?? null,
+      membership_role_id: membershipRules.role_id ?? null,
+      membership_source_group_ids: membershipRules.source_group_ids ?? null,
+      relationship_direction: 'backward',
       right_direction: 'backward',
       group_id: link.target_group_id,
       related_group_id: link.source_group_id,
@@ -258,13 +276,12 @@ export function explodeNetworkLinksToRelationships(links: readonly NetworkLinkLi
 export function explodeNetworkLinkChangeRequestToRelationships(
   request: NetworkLinkChangeRequestListRow
 ): NormalizedGroupRelationship[] {
-  const membershipRules = normalizeMembershipRules(
-    request.desired_membership_rules ?? {
-      membership_mode: request.desired_membership_mode,
-      role_id: request.desired_role_id ?? null,
-      source_group_ids: request.desired_source_group_ids ?? null,
-    }
-  );
+  const membershipRules = normalizeMembershipRules({
+    membership_direction: request.desired_membership_direction ?? null,
+    membership_mode: request.desired_membership_mode as CanonicalMembershipMode,
+    role_id: request.desired_role_id ?? null,
+    source_group_ids: request.desired_source_group_ids ?? null,
+  });
   const rows: NormalizedGroupRelationship[] = [];
 
   for (const right of request.desired_rights ?? []) {
@@ -284,7 +301,11 @@ export function explodeNetworkLinkChangeRequestToRelationships(
       rows.push({
         ...baseRow,
         id: `${request.id}:${right.id}:forward`,
-        membership_mode: membershipRules.forward.membership_mode as CanonicalMembershipMode,
+        membership_mode: membershipRules.membership_mode as CanonicalMembershipMode,
+        membership_direction: membershipRules.membership_direction ?? null,
+        membership_role_id: membershipRules.role_id ?? null,
+        membership_source_group_ids: membershipRules.source_group_ids ?? null,
+        relationship_direction: 'forward',
         group_id: request.source_group_id,
         related_group_id: request.target_group_id,
         relationship_type:
@@ -300,7 +321,11 @@ export function explodeNetworkLinkChangeRequestToRelationships(
       rows.push({
         ...baseRow,
         id: `${request.id}:${right.id}:backward`,
-        membership_mode: membershipRules.backward.membership_mode as CanonicalMembershipMode,
+        membership_mode: membershipRules.membership_mode as CanonicalMembershipMode,
+        membership_direction: membershipRules.membership_direction ?? null,
+        membership_role_id: membershipRules.role_id ?? null,
+        membership_source_group_ids: membershipRules.source_group_ids ?? null,
+        relationship_direction: 'backward',
         group_id: request.target_group_id,
         related_group_id: request.source_group_id,
         relationship_type:
@@ -313,7 +338,7 @@ export function explodeNetworkLinkChangeRequestToRelationships(
     }
   }
 
-  if (rows.length === 0 && hasActiveMembershipRules(membershipRules)) {
+  if (rows.length === 0 && hasDirectionalMembershipRules(membershipRules)) {
     rows.push({
       id: `${request.id}:structural:forward`,
       network_link_id: request.proposed_network_link_id,
@@ -324,7 +349,11 @@ export function explodeNetworkLinkChangeRequestToRelationships(
       status: request.status ?? 'requested',
       initiator_group_id: request.initiator_group_id ?? null,
       created_at: request.created_at ?? Date.now(),
-      membership_mode: membershipRules.forward.membership_mode as CanonicalMembershipMode,
+      membership_mode: membershipRules.membership_mode as CanonicalMembershipMode,
+      membership_direction: membershipRules.membership_direction ?? null,
+      membership_role_id: membershipRules.role_id ?? null,
+      membership_source_group_ids: membershipRules.source_group_ids ?? null,
+      relationship_direction: 'forward',
       right_direction: 'forward',
       group_id: request.source_group_id,
       related_group_id: request.target_group_id,
@@ -343,7 +372,11 @@ export function explodeNetworkLinkChangeRequestToRelationships(
       status: request.status ?? 'requested',
       initiator_group_id: request.initiator_group_id ?? null,
       created_at: request.created_at ?? Date.now(),
-      membership_mode: membershipRules.backward.membership_mode as CanonicalMembershipMode,
+      membership_mode: membershipRules.membership_mode as CanonicalMembershipMode,
+      membership_direction: membershipRules.membership_direction ?? null,
+      membership_role_id: membershipRules.role_id ?? null,
+      membership_source_group_ids: membershipRules.source_group_ids ?? null,
+      relationship_direction: 'backward',
       right_direction: 'backward',
       group_id: request.target_group_id,
       related_group_id: request.source_group_id,
@@ -386,7 +419,9 @@ export function buildDerivedGroupNetworkMetaMap(
       const activeRights = (link.rights ?? []).filter(right =>
         isAcceptedNetworkStatus(right.status)
       );
-      const hasActiveMembership = hasActiveMembershipRules(link.membership_rule);
+      const hasActiveMembership = hasDirectionalMembershipRules(
+        normalizeMembershipRules(link.membership_rule)
+      );
       return (
         isAcceptedNetworkStatus(link.status) && (activeRights.length > 0 || hasActiveMembership)
       );

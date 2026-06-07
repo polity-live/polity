@@ -12,6 +12,7 @@ export type CanonicalMembershipMode =
   | 'role_members'
   | 'selected_source_groups';
 export type CanonicalNetworkLinkDirection = 'forward' | 'backward' | 'bidirectional';
+export type CanonicalNetworkMembershipDirection = 'forward' | 'backward';
 export type RelativeMembershipDirection = 'incoming' | 'outgoing';
 
 export interface NetworkLinkComposerMembershipRuleValue {
@@ -39,7 +40,8 @@ export interface NetworkGroupDerivedMetaFields {
 export interface NetworkLinkComposerValue {
   selectedGroupId: string;
   relationshipType: GroupRelationshipType;
-  membershipRules: Record<RelativeMembershipDirection, NetworkLinkComposerMembershipRuleValue>;
+  membershipDirection: RelativeMembershipDirection | null;
+  membershipRule: NetworkLinkComposerMembershipRuleValue;
   rightDirections: Record<
     | 'informationRight'
     | 'amendmentRight'
@@ -68,6 +70,10 @@ export interface NormalizedGroupRelationship {
   initiator_group_id: string | null;
   created_at: number;
   membership_mode: CanonicalMembershipMode;
+  membership_direction?: CanonicalNetworkMembershipDirection | null;
+  membership_role_id?: string | null;
+  membership_source_group_ids?: string[] | null;
+  relationship_direction?: 'forward' | 'backward';
   group: NetworkGroupEntity | null;
   related_group: NetworkGroupEntity | null;
   right_direction: CanonicalNetworkLinkDirection;

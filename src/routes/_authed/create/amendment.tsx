@@ -1,11 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { z } from 'zod';
 import { CreateFormShell } from '@/features/create/ui/CreateFormShell';
 import { useCreateAmendmentForm } from '@/features/create/hooks/useCreateAmendmentForm';
-
-const createAmendmentSearchSchema = z.object({
-  groupId: z.string().optional(),
-});
+import { createAmendmentSearchSchema } from '@/features/create/logic/createAmendmentSearch';
 
 export const Route = createFileRoute('/_authed/create/amendment')({
   validateSearch: createAmendmentSearchSchema,

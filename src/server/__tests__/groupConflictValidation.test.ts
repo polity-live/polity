@@ -11,19 +11,8 @@ describe('group conflict network link preflight', () => {
       target_group_id: 'group-b',
       structural_relation: 'parent_child',
       rights: [],
-      membership_rules: {
-        forward: {
-          membership_mode: 'all_members',
-          role_id: null,
-          source_group_ids: null,
-        },
-        backward: {
-          membership_mode: 'none',
-          role_id: null,
-          source_group_ids: null,
-        },
-      },
       membership_rule: {
+        membership_direction: 'forward',
         membership_mode: 'all_members',
         role_id: null,
         source_group_ids: null,
@@ -40,18 +29,6 @@ describe('group conflict network link preflight', () => {
       target_group_id: 'group-b',
       structural_relation: 'parent_child',
       rights: [],
-      membership_rules: {
-        forward: {
-          membership_mode: 'none',
-          role_id: null,
-          source_group_ids: null,
-        },
-        backward: {
-          membership_mode: 'none',
-          role_id: null,
-          source_group_ids: null,
-        },
-      },
       membership_rule: {
         membership_mode: 'none',
         role_id: null,
@@ -70,19 +47,8 @@ describe('group conflict network link preflight', () => {
       target_group_id: 'group-b',
       structural_relation: 'parent_child',
       rights: [],
-      membership_rules: {
-        forward: {
-          membership_mode: 'all_members',
-          role_id: null,
-          source_group_ids: null,
-        },
-        backward: {
-          membership_mode: 'none',
-          role_id: null,
-          source_group_ids: null,
-        },
-      },
       membership_rule: {
+        membership_direction: 'forward',
         membership_mode: 'all_members',
         role_id: null,
         source_group_ids: null,
@@ -113,7 +79,7 @@ describe('group conflict network link preflight', () => {
         group_id: 'group-b',
         related_group_id: 'group-a',
         with_right: null,
-        membership_mode: 'none',
+        membership_mode: 'all_members',
       },
     ]);
   });

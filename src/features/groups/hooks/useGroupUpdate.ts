@@ -23,7 +23,10 @@ import {
   toRichTextValue,
   toZeroRichTextValue,
 } from '@/features/shared/logic/richText';
-import type { CanonicalMembershipMode } from '@/features/network/types/network.types';
+import type {
+  CanonicalMembershipMode,
+  RelativeMembershipDirection,
+} from '@/features/network/types/network.types';
 
 export type GroupType = 'base' | 'hierarchical' | 'sibling';
 export type RelationshipDirection = 'none' | 'outgoing' | 'incoming' | 'bidirectional';
@@ -62,6 +65,7 @@ export interface GroupFormData {
   tiktok: string;
   hashtags: string[];
   connected_group_id?: string | null;
+  sibling_membership_direction?: RelativeMembershipDirection | null;
   sibling_membership_mode?: CanonicalMembershipMode | null;
   sibling_role_id?: string | null;
   parliament_source_group_ids?: string[];
@@ -120,6 +124,7 @@ const initialFormState: GroupFormData = {
   tiktok: '',
   hashtags: [],
   connected_group_id: null,
+  sibling_membership_direction: null,
   sibling_membership_mode: null,
   sibling_role_id: null,
   parliament_source_group_ids: [],
@@ -212,6 +217,7 @@ export function useGroupUpdate(
         tiktok: initialData.tiktok || '',
         hashtags: initialData.hashtags || existingTags,
         connected_group_id: initialData.connected_group_id ?? null,
+        sibling_membership_direction: initialData.sibling_membership_direction ?? null,
         sibling_membership_mode: initialData.sibling_membership_mode ?? null,
         sibling_role_id: initialData.sibling_role_id ?? null,
         parliament_source_group_ids: initialData.parliament_source_group_ids ?? [],
@@ -284,6 +290,7 @@ export function useGroupUpdate(
         tiktok: initialData.tiktok || '',
         hashtags: existingTags,
         connected_group_id: initialData.connected_group_id ?? null,
+        sibling_membership_direction: initialData.sibling_membership_direction ?? null,
         sibling_membership_mode: initialData.sibling_membership_mode ?? null,
         sibling_role_id: initialData.sibling_role_id ?? null,
         parliament_source_group_ids: initialData.parliament_source_group_ids ?? [],
@@ -342,41 +349,6 @@ export function useGroupUpdate(
       ];
     });
 
-    const existingLinkConnectedGroupId = existingLink
-      ? existingLink.source_group_id === groupId
-        ? existingLink.target_group_id
-        : existingLink.source_group_id
-      : null;
-    const preservedOutgoingMembershipRule =
-      existingLink != null && existingLinkConnectedGroupId === nextConnectedGroupId
-        ? existingLink.source_group_id === groupId
-          ? {
-              membership_mode:
-                existingLink.membership_rule?.forward_membership_mode ??
-                ('none' as CanonicalMembershipMode),
-              role_id: existingLink.membership_rule?.forward_role_id ?? null,
-              source_group_ids: existingLink.membership_rule?.forward_source_group_ids ?? null,
-            }
-          : {
-              membership_mode:
-                existingLink.membership_rule?.backward_membership_mode ??
-                existingLink.membership_rule?.membership_mode ??
-                ('none' as CanonicalMembershipMode),
-              role_id:
-                existingLink.membership_rule?.backward_role_id ??
-                existingLink.membership_rule?.role_id ??
-                null,
-              source_group_ids:
-                existingLink.membership_rule?.backward_source_group_ids ??
-                existingLink.membership_rule?.source_group_ids ??
-                null,
-            }
-        : {
-            membership_mode: 'none' as CanonicalMembershipMode,
-            role_id: null,
-            source_group_ids: null,
-          };
-
     if (!nextConnectedGroupId || rights.length === 0) {
       if (existingLink) {
         await serverConfirmed(deleteNetworkLink({ id: existingLink.id }));
@@ -386,6 +358,14 @@ export function useGroupUpdate(
 
     const backwardMembershipRule = {
       membership_mode: (formData.sibling_membership_mode ?? 'none') as CanonicalMembershipMode,
+      membership_direction:
+        formData.sibling_membership_mode == null || formData.sibling_membership_mode === 'none'
+          ? null
+          : formData.sibling_membership_direction === 'outgoing'
+            ? ('forward' as const)
+            : formData.sibling_membership_direction === 'incoming'
+              ? ('backward' as const)
+              : null,
       role_id:
         formData.sibling_membership_mode === 'role_members'
           ? (formData.sibling_role_id ?? null)
@@ -398,10 +378,9 @@ export function useGroupUpdate(
     const membershipRule = {
       id: existingLink?.membership_rule?.id,
       membership_mode: backwardMembershipRule.membership_mode,
+      membership_direction: backwardMembershipRule.membership_direction,
       role_id: backwardMembershipRule.role_id,
       source_group_ids: backwardMembershipRule.source_group_ids,
-      forward: preservedOutgoingMembershipRule,
-      backward: backwardMembershipRule,
     };
 
     const result = existingLink

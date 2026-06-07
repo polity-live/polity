@@ -3,14 +3,20 @@ import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useVoteActions } from '@/zero/votes/useVoteActions';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import type { EnrichedPathSegment } from '@/features/amendments/logic/amendmentPathHelpers';
+import { createDefaultDecisionVoteChoices } from '@/features/votes/logic/createDefaultVoteChoices';
 
 interface CreateAmendmentPathArgs {
   amendmentId: string;
   amendmentTitle: string;
   amendmentReason: string | null;
   enrichedPath: EnrichedPathSegment[];
+  sourceGroupId?: string | null;
   workflowId?: string | null;
   pathMode?: 'hierarchy' | 'workflow';
+  evaluationMode?: 'none' | 'fixed_date' | 'relative_to_vote';
+  evaluationDate?: number | null;
+  evaluationOffsetMonths?: number | null;
+  evaluationOffsetYears?: number | null;
 }
 
 /**
@@ -31,7 +37,7 @@ export function useCreateAmendmentPath() {
     updateProcessRun,
     updateAmendment,
   } = useAmendmentActions();
-  const { createVote } = useVoteActions();
+  const { createVote, createVoteChoice } = useVoteActions();
   const { createAgendaItem } = useAgendaActions();
 
   const createAmendmentPath = useCallback(
@@ -40,8 +46,13 @@ export function useCreateAmendmentPath() {
       amendmentTitle,
       amendmentReason,
       enrichedPath,
+      sourceGroupId,
       workflowId,
       pathMode = 'hierarchy',
+      evaluationMode = 'none',
+      evaluationDate = null,
+      evaluationOffsetMonths = null,
+      evaluationOffsetYears = null,
     }: CreateAmendmentPathArgs) => {
       if (enrichedPath.length === 0) {
         return null;
@@ -50,7 +61,7 @@ export function useCreateAmendmentPath() {
       const processRunId = crypto.randomUUID();
       const branchId = crypto.randomUUID();
       const pathId = crypto.randomUUID();
-      const sourceGroupId = enrichedPath[0]?.groupId ?? null;
+      const resolvedSourceGroupId = sourceGroupId ?? enrichedPath[0]?.groupId ?? null;
       const targetGroupId = enrichedPath[enrichedPath.length - 1]?.groupId ?? null;
       const processStatus = enrichedPath.some(segment => !segment.eventId)
         ? 'pending_event'
@@ -60,16 +71,16 @@ export function useCreateAmendmentPath() {
         id: processRunId,
         amendment_id: amendmentId,
         root_workflow_id: workflowId ?? null,
-        selected_source_group_id: sourceGroupId,
+        selected_source_group_id: resolvedSourceGroupId,
         selected_target_group_id: targetGroupId,
         selected_target_workflow_id: workflowId ?? null,
         active_branch_id: null,
         terminal_step_run_id: null,
         status: processStatus,
-        evaluation_mode: null,
-        evaluation_date: null,
-        evaluation_offset_months: null,
-        evaluation_offset_years: null,
+        evaluation_mode: evaluationMode === 'none' ? null : evaluationMode,
+        evaluation_date: evaluationDate,
+        evaluation_offset_months: evaluationOffsetMonths,
+        evaluation_offset_years: evaluationOffsetYears,
         implementation_status: null,
       });
 
@@ -121,6 +132,8 @@ export function useCreateAmendmentPath() {
             closing_duration_seconds: null,
             closing_end_time: null,
           });
+
+          await createDefaultDecisionVoteChoices(createVoteChoice, voteId);
         }
       }
 
@@ -147,12 +160,14 @@ export function useCreateAmendmentPath() {
           process_run_id: processRunId,
           branch_id: branchId,
           workflow_id: workflowId ?? null,
-          workflow_step_id: null,
-          step_kind: 'group_vote',
-          selection_mode: workflowId ? 'explicit_workflow' : 'default_target_workflow',
-          merge_strategy: null,
+          workflow_step_id: segment.workflowStepId ?? null,
+          step_kind: segment.stepKind ?? 'group_vote',
+          selection_mode:
+            segment.selectionMode ?? (workflowId ? 'explicit_workflow' : 'default_target_workflow'),
+          merge_strategy: segment.mergeStrategy ?? null,
           status: segmentStatus,
-          source_group_id: index === 0 ? sourceGroupId : (enrichedPath[index - 1]?.groupId ?? null),
+          source_group_id:
+            index === 0 ? resolvedSourceGroupId : (enrichedPath[index - 1]?.groupId ?? null),
           target_group_id: segment.groupId,
           event_id: segment.eventId ?? null,
           agenda_item_id: agendaItemId,
@@ -197,8 +212,23 @@ export function useCreateAmendmentPath() {
               amendmentTitle,
               groupName: segment.groupName,
               orderIndex: index,
+              requiredAfter: segment.requiredAfter ?? null,
+              requiredBefore: segment.requiredBefore ?? null,
+              sourceGroupId: resolvedSourceGroupId,
+              targetGroupId,
               pathMode,
               workflowId,
+              workflowStepId: segment.workflowStepId ?? null,
+              stepKind: segment.stepKind ?? 'group_vote',
+              selectionMode:
+                segment.selectionMode ??
+                (workflowId ? 'explicit_workflow' : 'default_target_workflow'),
+              mergeStrategy: segment.mergeStrategy ?? null,
+              eventRule: segment.eventRule ?? null,
+              autoTaskOnMissingEvent: segment.autoTaskOnMissingEvent ?? true,
+              targetWorkflowId: segment.targetWorkflowId ?? null,
+              evaluationMode: evaluationMode === 'none' ? null : evaluationMode,
+              evaluationDueAt: evaluationDate,
               forwardingStatus: segment.forwardingStatus,
             },
           });
@@ -232,6 +262,7 @@ export function useCreateAmendmentPath() {
       createProcessStepRun,
       createProcessTask,
       createVote,
+      createVoteChoice,
       updateAmendment,
       updateProcessRun,
     ]

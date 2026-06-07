@@ -1152,7 +1152,7 @@ alter table "public"."network_link" enable row level security;
     "status" text not null default 'requested'::text,
     "initiator_group_id" uuid not null,
     "desired_rights" jsonb not null,
-    "desired_membership_rules" jsonb,
+    "desired_membership_direction" text,
     "desired_membership_mode" text not null default 'none'::text,
     "desired_role_id" uuid,
     "desired_source_group_ids" jsonb,
@@ -1167,15 +1167,10 @@ alter table "public"."network_link_change_request" enable row level security;
   create table "public"."network_link_membership_rule" (
     "id" uuid not null default gen_random_uuid(),
     "network_link_id" uuid not null,
+    "membership_direction" text,
     "membership_mode" text not null default 'none'::text,
     "role_id" uuid,
     "source_group_ids" jsonb,
-    "forward_membership_mode" text not null default 'none'::text,
-    "forward_role_id" uuid,
-    "forward_source_group_ids" jsonb,
-    "backward_membership_mode" text not null default 'none'::text,
-    "backward_role_id" uuid,
-    "backward_source_group_ids" jsonb,
     "created_at" timestamp with time zone not null default now(),
     "updated_at" timestamp with time zone not null default now()
       );
@@ -2307,7 +2302,7 @@ CREATE INDEX idx_network_link_change_request_active_link ON public.network_link_
 
 CREATE UNIQUE INDEX idx_network_link_change_request_active_link_unique ON public.network_link_change_request USING btree (active_network_link_id) WHERE (active_network_link_id IS NOT NULL);
 
-CREATE INDEX idx_network_link_change_request_membership_rules ON public.network_link_change_request USING gin (desired_membership_rules);
+CREATE INDEX idx_network_link_change_request_membership_direction ON public.network_link_change_request USING btree (desired_membership_direction);
 
 CREATE UNIQUE INDEX idx_network_link_change_request_pair_unique ON public.network_link_change_request USING btree (source_group_id, target_group_id, structural_relation) WHERE (active_network_link_id IS NULL);
 
@@ -2317,9 +2312,7 @@ CREATE INDEX idx_network_link_change_request_status ON public.network_link_chang
 
 CREATE INDEX idx_network_link_change_request_target_group ON public.network_link_change_request USING btree (target_group_id);
 
-CREATE INDEX idx_network_link_membership_rule_backward_mode ON public.network_link_membership_rule USING btree (backward_membership_mode);
-
-CREATE INDEX idx_network_link_membership_rule_forward_mode ON public.network_link_membership_rule USING btree (forward_membership_mode);
+CREATE INDEX idx_network_link_membership_rule_direction ON public.network_link_membership_rule USING btree (membership_direction);
 
 CREATE INDEX idx_network_link_membership_rule_link ON public.network_link_membership_rule USING btree (network_link_id);
 
@@ -3569,6 +3562,14 @@ alter table "public"."network_link_change_request" add constraint "network_link_
 
 alter table "public"."network_link_change_request" validate constraint "network_link_change_request_initiator_group_id_fkey";
 
+alter table "public"."network_link_change_request" add constraint "network_link_change_request_membership_direction_check" CHECK (((desired_membership_direction IS NULL) OR (desired_membership_direction = ANY (ARRAY['forward'::text, 'backward'::text])))) not valid;
+
+alter table "public"."network_link_change_request" validate constraint "network_link_change_request_membership_direction_check";
+
+alter table "public"."network_link_change_request" add constraint "network_link_change_request_membership_mode_fields_check" CHECK ((((desired_membership_mode = 'none'::text) AND (desired_membership_direction IS NULL) AND (desired_role_id IS NULL) AND (desired_source_group_ids IS NULL)) OR ((desired_membership_mode = 'all_members'::text) AND (desired_membership_direction IS NOT NULL) AND (desired_role_id IS NULL) AND (desired_source_group_ids IS NULL)) OR ((desired_membership_mode = 'role_members'::text) AND (desired_membership_direction IS NOT NULL) AND (desired_role_id IS NOT NULL) AND (desired_source_group_ids IS NULL)) OR ((desired_membership_mode = 'selected_source_groups'::text) AND (desired_membership_direction IS NOT NULL) AND (desired_role_id IS NULL) AND (desired_source_group_ids IS NOT NULL) AND (jsonb_typeof(desired_source_group_ids) = 'array'::text) AND (jsonb_array_length(desired_source_group_ids) > 0)))) not valid;
+
+alter table "public"."network_link_change_request" validate constraint "network_link_change_request_membership_mode_fields_check";
+
 alter table "public"."network_link_change_request" add constraint "network_link_change_request_source_group_id_fkey" FOREIGN KEY (source_group_id) REFERENCES public."group"(id) ON DELETE CASCADE not valid;
 
 alter table "public"."network_link_change_request" validate constraint "network_link_change_request_source_group_id_fkey";
@@ -3577,13 +3578,13 @@ alter table "public"."network_link_change_request" add constraint "network_link_
 
 alter table "public"."network_link_change_request" validate constraint "network_link_change_request_target_group_id_fkey";
 
-alter table "public"."network_link_membership_rule" add constraint "network_link_membership_rule_backward_role_id_fkey" FOREIGN KEY (backward_role_id) REFERENCES public.role(id) ON DELETE SET NULL not valid;
+alter table "public"."network_link_membership_rule" add constraint "network_link_membership_rule_direction_check" CHECK (((membership_direction IS NULL) OR (membership_direction = ANY (ARRAY['forward'::text, 'backward'::text])))) not valid;
 
-alter table "public"."network_link_membership_rule" validate constraint "network_link_membership_rule_backward_role_id_fkey";
+alter table "public"."network_link_membership_rule" validate constraint "network_link_membership_rule_direction_check";
 
-alter table "public"."network_link_membership_rule" add constraint "network_link_membership_rule_forward_role_id_fkey" FOREIGN KEY (forward_role_id) REFERENCES public.role(id) ON DELETE SET NULL not valid;
+alter table "public"."network_link_membership_rule" add constraint "network_link_membership_rule_mode_fields_check" CHECK ((((membership_mode = 'none'::text) AND (membership_direction IS NULL) AND (role_id IS NULL) AND (source_group_ids IS NULL)) OR ((membership_mode = 'all_members'::text) AND (membership_direction IS NOT NULL) AND (role_id IS NULL) AND (source_group_ids IS NULL)) OR ((membership_mode = 'role_members'::text) AND (membership_direction IS NOT NULL) AND (role_id IS NOT NULL) AND (source_group_ids IS NULL)) OR ((membership_mode = 'selected_source_groups'::text) AND (membership_direction IS NOT NULL) AND (role_id IS NULL) AND (source_group_ids IS NOT NULL) AND (jsonb_typeof(source_group_ids) = 'array'::text) AND (jsonb_array_length(source_group_ids) > 0)))) not valid;
 
-alter table "public"."network_link_membership_rule" validate constraint "network_link_membership_rule_forward_role_id_fkey";
+alter table "public"."network_link_membership_rule" validate constraint "network_link_membership_rule_mode_fields_check";
 
 alter table "public"."network_link_membership_rule" add constraint "network_link_membership_rule_network_link_id_fkey" FOREIGN KEY (network_link_id) REFERENCES public.network_link(id) ON DELETE CASCADE not valid;
 

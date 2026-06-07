@@ -13,8 +13,14 @@ import {
   type SiblingMembershipMode,
   type TranslateFn,
 } from '../logic/groupRelationshipSentence';
+import { getCanonicalMembershipModeLabel } from '../logic/networkLinkDerived';
 import type { GroupRelationshipRightDisplayStatus } from '../logic/networkRelationshipHelpers';
-import type { GroupRelationshipDirection, GroupRelationshipType } from '../types/network.types';
+import type {
+  CanonicalMembershipMode,
+  GroupRelationshipDirection,
+  GroupRelationshipType,
+  RelativeMembershipDirection,
+} from '../types/network.types';
 import { RIGHT_GRADIENTS, type RightType } from './RightFilters';
 
 export type GroupRelationshipRight = RightType;
@@ -260,12 +266,14 @@ export function GroupRelationshipNameTag({
   caseStyle = 'sentence-start',
   groupId,
   displayMode = 'contextual',
+  linkGroups = true,
 }: {
   name: string;
   kind: 'current' | 'selected';
   caseStyle?: GroupRelationshipTagCase;
   groupId?: string;
   displayMode?: GroupRelationshipTagDisplayMode;
+  linkGroups?: boolean;
 }) {
   const { t } = useTranslation();
   const fallback =
@@ -294,7 +302,7 @@ export function GroupRelationshipNameTag({
     </Badge>
   );
 
-  if (!groupId) {
+  if (!groupId || !linkGroups) {
     return badge;
   }
 
@@ -342,6 +350,7 @@ export function GroupRelationshipTypePreview({
   siblingMembershipMode,
   currentGroupId,
   selectedGroupId,
+  linkGroups = true,
 }: {
   relationshipType: GroupRelationshipType;
   currentGroupName: string;
@@ -349,6 +358,7 @@ export function GroupRelationshipTypePreview({
   siblingMembershipMode?: SiblingMembershipMode | null;
   currentGroupId?: string;
   selectedGroupId?: string;
+  linkGroups?: boolean;
 }) {
   const { t } = useTranslation();
   const safeCurrentGroupName = getSafeGroupName(currentGroupName, t('common.network.thisGroup'));
@@ -361,6 +371,7 @@ export function GroupRelationshipTypePreview({
         kind="current"
         groupId={currentGroupId}
         displayMode="name-only"
+        linkGroups={linkGroups}
       />
       <GroupRelationshipConnector
         relationshipType={relationshipType}
@@ -372,6 +383,7 @@ export function GroupRelationshipTypePreview({
         kind="selected"
         groupId={selectedGroupId}
         displayMode="name-only"
+        linkGroups={linkGroups}
       />
     </div>
   );
@@ -391,6 +403,103 @@ function getSafeRelationshipGroupNames(args: {
   };
 }
 
+export function GroupRelationshipMembershipModeDescription({
+  membershipMode,
+  direction,
+  currentGroupName,
+  selectedGroupName,
+  currentGroupId,
+  selectedGroupId,
+  className,
+  linkGroups = true,
+}: {
+  membershipMode: CanonicalMembershipMode;
+  direction: RelativeMembershipDirection;
+  currentGroupName: string;
+  selectedGroupName: string;
+  currentGroupId?: string;
+  selectedGroupId?: string;
+  className?: string;
+  linkGroups?: boolean;
+}) {
+  const { t } = useTranslation();
+  const { safeCurrentGroupName, safeSelectedGroupName } = getSafeRelationshipGroupNames({
+    currentGroupName,
+    selectedGroupName,
+    t,
+  });
+
+  const currentTag = (
+    <GroupRelationshipNameTag
+      name={safeCurrentGroupName}
+      kind="current"
+      caseStyle="embedded"
+      groupId={currentGroupId}
+      displayMode="name-only"
+      linkGroups={linkGroups}
+    />
+  );
+  const selectedTag = (
+    <GroupRelationshipNameTag
+      name={safeSelectedGroupName}
+      kind="selected"
+      caseStyle="embedded"
+      groupId={selectedGroupId}
+      displayMode="name-only"
+      linkGroups={linkGroups}
+    />
+  );
+
+  const sourceTag = direction === 'incoming' ? selectedTag : currentTag;
+  const targetTag = direction === 'incoming' ? currentTag : selectedTag;
+
+  if (membershipMode === 'all_members') {
+    return (
+      <div className={cn('flex flex-wrap items-center gap-1.5 leading-relaxed', className)}>
+        <span>Alle aktiven Mitglieder von</span>
+        {sourceTag}
+        <span>werden in</span>
+        {targetTag}
+        <span>übernommen.</span>
+      </div>
+    );
+  }
+
+  if (membershipMode === 'role_members') {
+    return (
+      <div className={cn('flex flex-wrap items-center gap-1.5 leading-relaxed', className)}>
+        <span>Nur Mitglieder mit der gewählten Rolle in</span>
+        {sourceTag}
+        <span>werden in</span>
+        {targetTag}
+        <span>übernommen.</span>
+      </div>
+    );
+  }
+
+  if (membershipMode === 'selected_source_groups') {
+    return (
+      <div className={cn('flex flex-wrap items-center gap-1.5 leading-relaxed', className)}>
+        <span>Nur Mitglieder aus den gewählten Source-Gruppen für</span>
+        {sourceTag}
+        <span>werden in</span>
+        {targetTag}
+        <span>übernommen.</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn('flex flex-wrap items-center gap-1.5 leading-relaxed', className)}>
+      <span>Mitglieder von</span>
+      {sourceTag}
+      <span>werden nicht automatisch in</span>
+      {targetTag}
+      <span>übernommen.</span>
+    </div>
+  );
+}
+
 export function SiblingMembershipModeDescription({
   siblingMembershipMode,
   currentGroupName,
@@ -398,6 +507,7 @@ export function SiblingMembershipModeDescription({
   currentGroupId,
   selectedGroupId,
   className,
+  linkGroups = true,
 }: {
   siblingMembershipMode: SiblingMembershipMode;
   currentGroupName: string;
@@ -405,6 +515,7 @@ export function SiblingMembershipModeDescription({
   currentGroupId?: string;
   selectedGroupId?: string;
   className?: string;
+  linkGroups?: boolean;
 }) {
   const { t } = useTranslation();
   const { safeCurrentGroupName, safeSelectedGroupName } = getSafeRelationshipGroupNames({
@@ -424,6 +535,7 @@ export function SiblingMembershipModeDescription({
       caseStyle="embedded"
       groupId={currentGroupId}
       displayMode="name-only"
+      linkGroups={linkGroups}
     />
   );
   const selectedTag = (
@@ -433,6 +545,7 @@ export function SiblingMembershipModeDescription({
       caseStyle="embedded"
       groupId={selectedGroupId}
       displayMode="name-only"
+      linkGroups={linkGroups}
     />
   );
 
@@ -508,6 +621,7 @@ function RelationshipTypeOptionContent({
   siblingMembershipMode,
   currentGroupId,
   selectedGroupId,
+  linkGroups = true,
 }: {
   relationshipType: GroupRelationshipType;
   currentGroupName: string;
@@ -515,6 +629,7 @@ function RelationshipTypeOptionContent({
   siblingMembershipMode?: SiblingMembershipMode | null;
   currentGroupId?: string;
   selectedGroupId?: string;
+  linkGroups?: boolean;
 }) {
   const { t } = useTranslation();
   const safeCurrentGroupName = getSafeGroupName(currentGroupName, 'diese Gruppe');
@@ -527,6 +642,7 @@ function RelationshipTypeOptionContent({
       caseStyle="embedded"
       groupId={currentGroupId}
       displayMode="name-only"
+      linkGroups={linkGroups}
     />
   );
 
@@ -537,6 +653,7 @@ function RelationshipTypeOptionContent({
       caseStyle="embedded"
       groupId={selectedGroupId}
       displayMode="name-only"
+      linkGroups={linkGroups}
     />
   );
 
@@ -634,6 +751,7 @@ export function GroupRelationshipTypeSelect({
               siblingMembershipMode={siblingMembershipMode}
               currentGroupId={currentGroupId}
               selectedGroupId={selectedGroupId}
+              linkGroups={false}
             />
             <span className="sr-only">{selectedLabel}</span>
           </div>
@@ -646,6 +764,7 @@ export function GroupRelationshipTypeSelect({
               selectedGroupName={selectedGroupName}
               currentGroupId={currentGroupId}
               selectedGroupId={selectedGroupId}
+              linkGroups={false}
             />
           </SelectItem>
           <SelectItem value="child" disabled={disabledOptions?.child} className="py-2">
@@ -655,6 +774,7 @@ export function GroupRelationshipTypeSelect({
               selectedGroupName={selectedGroupName}
               currentGroupId={currentGroupId}
               selectedGroupId={selectedGroupId}
+              linkGroups={false}
             />
           </SelectItem>
           <SelectItem value="sibling" disabled={disabledOptions?.sibling} className="py-2">
@@ -665,11 +785,46 @@ export function GroupRelationshipTypeSelect({
               siblingMembershipMode={siblingMembershipMode}
               currentGroupId={currentGroupId}
               selectedGroupId={selectedGroupId}
+              linkGroups={false}
             />
           </SelectItem>
         </SelectContent>
       </Select>
       {helperText ? <p className="text-muted-foreground text-sm">{helperText}</p> : null}
+    </div>
+  );
+}
+
+export function GroupRelationshipTypeSummary({
+  label,
+  relationshipType,
+  currentGroupName,
+  selectedGroupName,
+  siblingMembershipMode,
+  currentGroupId,
+  selectedGroupId,
+}: {
+  label: string;
+  relationshipType: GroupRelationshipType;
+  currentGroupName: string;
+  selectedGroupName: string;
+  siblingMembershipMode?: SiblingMembershipMode | null;
+  currentGroupId?: string;
+  selectedGroupId?: string;
+}) {
+  return (
+    <div className="grid gap-2">
+      <p className="text-sm font-medium">{label}</p>
+      <div className="rounded-lg border p-4">
+        <RelationshipTypeOptionContent
+          relationshipType={relationshipType}
+          currentGroupName={currentGroupName}
+          selectedGroupName={selectedGroupName}
+          siblingMembershipMode={siblingMembershipMode}
+          currentGroupId={currentGroupId}
+          selectedGroupId={selectedGroupId}
+        />
+      </div>
     </div>
   );
 }
@@ -733,6 +888,7 @@ export function GroupRelationshipDirectionSentence({
   selectedGroupName,
   currentGroupId,
   selectedGroupId,
+  linkGroups = true,
 }: {
   direction: SelectableGroupRelationshipDirection;
   right: GroupRelationshipRight;
@@ -740,6 +896,7 @@ export function GroupRelationshipDirectionSentence({
   selectedGroupName: string;
   currentGroupId?: string;
   selectedGroupId?: string;
+  linkGroups?: boolean;
 }) {
   const { t } = useTranslation();
   const safeCurrentGroupName = getSafeGroupName(currentGroupName, t('common.network.thisGroup'));
@@ -761,6 +918,7 @@ export function GroupRelationshipDirectionSentence({
           caseStyle="sentence-start"
           groupId={currentGroupId}
           displayMode="name-only"
+          linkGroups={linkGroups}
         />
         <span className="text-xs">{t('common.network.directionHas')}</span>
         <RightSentenceEmphasis right={right} />
@@ -771,6 +929,7 @@ export function GroupRelationshipDirectionSentence({
           caseStyle="embedded"
           groupId={selectedGroupId}
           displayMode="name-only"
+          linkGroups={linkGroups}
         />
         <span className="sr-only">{srText}</span>
       </div>
@@ -786,6 +945,7 @@ export function GroupRelationshipDirectionSentence({
           caseStyle="sentence-start"
           groupId={currentGroupId}
           displayMode="name-only"
+          linkGroups={linkGroups}
         />
         <span className="text-xs">{t('common.network.directionAnd')}</span>
         <GroupRelationshipNameTag
@@ -794,6 +954,7 @@ export function GroupRelationshipDirectionSentence({
           caseStyle="embedded"
           groupId={selectedGroupId}
           displayMode="name-only"
+          linkGroups={linkGroups}
         />
         <span className="text-xs">{t('common.network.directionHaveMutually')}</span>
         <RightSentenceEmphasis right={right} />
@@ -810,6 +971,7 @@ export function GroupRelationshipDirectionSentence({
         caseStyle="sentence-start"
         groupId={currentGroupId}
         displayMode="name-only"
+        linkGroups={linkGroups}
       />
       <span className="text-xs">{t('common.network.directionGrants')}</span>
       <RightSentenceEmphasis right={right} />
@@ -820,6 +982,7 @@ export function GroupRelationshipDirectionSentence({
         caseStyle="embedded"
         groupId={selectedGroupId}
         displayMode="name-only"
+        linkGroups={linkGroups}
       />
       <span className="sr-only">{srText}</span>
     </div>
@@ -835,6 +998,7 @@ export function GroupRelationshipRightSentenceList({
   selectedGroupId,
   className,
   itemClassName,
+  linkGroups = true,
 }: {
   rights?: GroupRelationshipRight[];
   rightDirections?: Partial<Record<GroupRelationshipRight, GroupRelationshipDirection>>;
@@ -844,6 +1008,7 @@ export function GroupRelationshipRightSentenceList({
   selectedGroupId?: string;
   className?: string;
   itemClassName?: string;
+  linkGroups?: boolean;
 }) {
   const safeRights = rights ?? [];
   const safeRightDirections = rightDirections ?? {};
@@ -879,9 +1044,131 @@ export function GroupRelationshipRightSentenceList({
             selectedGroupName={selectedGroupName}
             currentGroupId={currentGroupId}
             selectedGroupId={selectedGroupId}
+            linkGroups={linkGroups}
           />
         </div>
       ))}
+    </div>
+  );
+}
+
+export function GroupRelationshipMembershipModeSummary({
+  label,
+  membershipMode,
+  membershipDirection,
+  currentGroupName,
+  selectedGroupName,
+  currentGroupId,
+  selectedGroupId,
+}: {
+  label: string;
+  membershipMode: 'none' | 'all_members' | 'role_members' | 'selected_source_groups';
+  membershipDirection?: RelativeMembershipDirection | null;
+  currentGroupName: string;
+  selectedGroupName: string;
+  currentGroupId?: string;
+  selectedGroupId?: string;
+}) {
+  return (
+    <div className="rounded-lg border p-4">
+      <div className="space-y-2">
+        <p className="text-muted-foreground text-sm font-medium">{label}</p>
+        <p className="text-lg font-semibold">{getCanonicalMembershipModeLabel(membershipMode)}</p>
+        {membershipDirection ? (
+          <div className="text-muted-foreground text-sm">
+            <GroupRelationshipMembershipModeDescription
+              membershipMode={membershipMode}
+              direction={membershipDirection}
+              currentGroupName={currentGroupName}
+              selectedGroupName={selectedGroupName}
+              currentGroupId={currentGroupId}
+              selectedGroupId={selectedGroupId}
+              className="text-sm"
+            />
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+export function GroupRelationshipRightsSummary({
+  label,
+  selectedRights,
+  helperText,
+  existingRightStatuses,
+  rightDirections,
+  currentGroupName,
+  selectedGroupName,
+  currentGroupId,
+  selectedGroupId,
+  optionsContainerClassName,
+}: {
+  label: string;
+  selectedRights: readonly GroupRelationshipRight[];
+  helperText?: string;
+  existingRightStatuses?: ReadonlyMap<string, GroupRelationshipRightDisplayStatus>;
+  rightDirections?: Partial<Record<GroupRelationshipRight, GroupRelationshipDirection>>;
+  currentGroupName: string;
+  selectedGroupName: string;
+  currentGroupId?: string;
+  selectedGroupId?: string;
+  optionsContainerClassName?: string;
+}) {
+  const { t } = useTranslation();
+  const visibleOptions = GROUP_RELATIONSHIP_RIGHT_OPTIONS.filter(option =>
+    selectedRights.includes(option.value)
+  );
+
+  if (visibleOptions.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="grid gap-3">
+      <div className="space-y-1">
+        <p className="text-sm font-medium">{label}</p>
+        {helperText ? <p className="text-muted-foreground text-sm">{helperText}</p> : null}
+      </div>
+      <div className={cn('grid gap-2', optionsContainerClassName)}>
+        {visibleOptions.map(option => {
+          const status = existingRightStatuses?.get(option.value);
+          const configuredDirection = rightDirections?.[option.value];
+          const direction: SelectableGroupRelationshipDirection =
+            configuredDirection && configuredDirection !== 'none'
+              ? configuredDirection
+              : 'outgoing';
+
+          return (
+            <div key={option.value} className="rounded-lg border p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="font-medium">{t(option.labelKey)}</div>
+                  <div className="text-muted-foreground text-sm">{t(option.descKey)}</div>
+                </div>
+                {status ? (
+                  <Badge
+                    variant={isRequestDisplayStatus(status) ? 'secondary' : 'default'}
+                    className="shrink-0"
+                  >
+                    {getStatusBadgeLabel(status, t)}
+                  </Badge>
+                ) : null}
+              </div>
+              <div className="mt-3 rounded-md border px-3 py-2">
+                <GroupRelationshipDirectionSentence
+                  direction={direction}
+                  right={option.value}
+                  currentGroupName={currentGroupName}
+                  selectedGroupName={selectedGroupName}
+                  currentGroupId={currentGroupId}
+                  selectedGroupId={selectedGroupId}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -1000,6 +1287,7 @@ export function GroupRelationshipRightsSelector({
                           selectedGroupName={sentenceSelectedGroupName}
                           currentGroupId={currentGroupId}
                           selectedGroupId={selectedGroupId}
+                          linkGroups={false}
                         />
                         <span className="sr-only">
                           {getGroupRelationshipRightSentenceText({
@@ -1022,6 +1310,7 @@ export function GroupRelationshipRightsSelector({
                             selectedGroupName={sentenceSelectedGroupName}
                             currentGroupId={currentGroupId}
                             selectedGroupId={selectedGroupId}
+                            linkGroups={false}
                           />
                         </SelectItem>
                       ))}

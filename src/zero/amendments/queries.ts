@@ -410,12 +410,19 @@ export const amendmentQueries = {
 
   // Cross-domain: All group memberships with user and group
   allGroupMemberships: defineQuery(z.object({}), () =>
-    zql.group_membership.related('group').related('user')
+    zql.group_membership
+      .related('group')
+      .related('user')
+      .related('membership_roles', q => q.related('role'))
   ),
 
   // Cross-domain: User group memberships
   userGroupMemberships: defineQuery(z.object({ user_id: z.string() }), ({ args: { user_id } }) =>
-    zql.group_membership.where('user_id', user_id).related('user').related('group')
+    zql.group_membership
+      .where('user_id', user_id)
+      .related('user')
+      .related('group')
+      .related('membership_roles', q => q.related('role'))
   ),
 
   // Cross-domain: All events with group

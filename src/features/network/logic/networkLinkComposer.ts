@@ -7,10 +7,7 @@ import type {
   RelativeMembershipDirection,
 } from '../types/network.types';
 import type { GroupRelationshipRight } from '../ui/GroupRelationshipFields';
-import {
-  normalizeMembershipRules,
-  toLegacyMembershipRuleFields,
-} from '@/zero/network/membershipRules';
+import { normalizeMembershipRules } from '@/zero/network/membershipRules';
 
 export const RELATIONSHIP_RIGHTS: GroupRelationshipRight[] = [
   'informationRight',
@@ -68,10 +65,26 @@ export function hasSelectedRights(
   return getSelectedRights(directions).length > 0;
 }
 
-export function hasConfiguredMembership(args: {
+export function createEmptyMembershipRule(): NetworkLinkComposerMembershipRuleValue {
+  return {
+    membershipMode: 'none',
+    roleId: '',
+    sourceGroupIds: [],
+  };
+}
+
+export function hasSelectedMembership(args: {
+  membershipDirection: RelativeMembershipDirection | null;
   membershipRule: NetworkLinkComposerMembershipRuleValue;
 }) {
-  if (args.membershipRule.membershipMode === 'none') {
+  return args.membershipDirection != null && args.membershipRule.membershipMode !== 'none';
+}
+
+export function hasConfiguredMembership(args: {
+  membershipDirection: RelativeMembershipDirection | null;
+  membershipRule: NetworkLinkComposerMembershipRuleValue;
+}) {
+  if (!hasSelectedMembership(args)) {
     return false;
   }
 
@@ -86,71 +99,25 @@ export function hasConfiguredMembership(args: {
   return true;
 }
 
-export function hasSelectedMembership(args: {
+export function getSelectedMembershipDirection(args: {
+  membershipDirection: RelativeMembershipDirection | null;
   membershipRule: NetworkLinkComposerMembershipRuleValue;
 }) {
-  return args.membershipRule.membershipMode !== 'none';
-}
-
-export function getSelectedMembershipDirection(args: {
-  membershipRules: Record<RelativeMembershipDirection, NetworkLinkComposerMembershipRuleValue>;
-}): RelativeMembershipDirection | null {
-  if (hasSelectedMembership({ membershipRule: args.membershipRules.incoming })) {
-    return 'incoming';
-  }
-
-  if (hasSelectedMembership({ membershipRule: args.membershipRules.outgoing })) {
-    return 'outgoing';
-  }
-
-  return null;
-}
-
-export function normalizeExclusiveMembershipRules(args: {
-  membershipRules: Record<RelativeMembershipDirection, NetworkLinkComposerMembershipRuleValue>;
-}) {
-  const selectedDirection = getSelectedMembershipDirection(args);
-
-  return {
-    incoming:
-      selectedDirection === 'incoming'
-        ? args.membershipRules.incoming
-        : createEmptyMembershipRule(),
-    outgoing:
-      selectedDirection === 'outgoing'
-        ? args.membershipRules.outgoing
-        : createEmptyMembershipRule(),
-  } satisfies Record<RelativeMembershipDirection, NetworkLinkComposerMembershipRuleValue>;
+  return hasSelectedMembership(args) ? args.membershipDirection : null;
 }
 
 export function hasConfiguredNetworkLink(args: {
   rightDirections: Record<GroupRelationshipRight, GroupRelationshipDirection>;
-  membershipRules: Record<RelativeMembershipDirection, NetworkLinkComposerMembershipRuleValue>;
+  membershipDirection: RelativeMembershipDirection | null;
+  membershipRule: NetworkLinkComposerMembershipRuleValue;
 }) {
   return (
     hasSelectedRights(args.rightDirections) ||
-    RELATIVE_MEMBERSHIP_DIRECTIONS.some(direction =>
-      hasConfiguredMembership({ membershipRule: args.membershipRules[direction] })
-    )
+    hasConfiguredMembership({
+      membershipDirection: args.membershipDirection,
+      membershipRule: args.membershipRule,
+    })
   );
-}
-
-export function createEmptyMembershipRule(): NetworkLinkComposerMembershipRuleValue {
-  return {
-    membershipMode: 'none',
-    roleId: '',
-    sourceGroupIds: [],
-  };
-}
-
-export function createInitialMembershipRules(): Record<
-  RelativeMembershipDirection,
-  NetworkLinkComposerMembershipRuleValue
-> {
-  return {
-    incoming: createEmptyMembershipRule(),
-    outgoing: createEmptyMembershipRule(),
-  };
 }
 
 export function buildNetworkLinkComposerDefaults(): NetworkLinkComposerValue {
@@ -159,7 +126,8 @@ export function buildNetworkLinkComposerDefaults(): NetworkLinkComposerValue {
   return applyNetworkLinkPreset(preset, {
     selectedGroupId: '',
     relationshipType: getRelationshipTypeForPreset(preset),
-    membershipRules: createInitialMembershipRules(),
+    membershipDirection: null,
+    membershipRule: createEmptyMembershipRule(),
     rightDirections: createInitialRelationshipDirections(),
     preset,
   });
@@ -179,18 +147,13 @@ export function getRelationshipTypeForPreset(preset: NetworkLinkPreset): GroupRe
 
 export function getPresetForRelationshipType(args: {
   relationshipType: GroupRelationshipType;
-  membershipRules: Record<RelativeMembershipDirection, NetworkLinkComposerMembershipRuleValue>;
+  membershipDirection: RelativeMembershipDirection | null;
+  membershipRule: NetworkLinkComposerMembershipRuleValue;
 }): NetworkLinkPreset {
   if (args.relationshipType === 'sibling') {
-    const normalizedMembershipRules = normalizeExclusiveMembershipRules({
-      membershipRules: args.membershipRules,
-    });
-    const preferredRule = hasSelectedMembership({
-      membershipRule: normalizedMembershipRules.incoming,
-    })
-      ? normalizedMembershipRules.incoming
-      : normalizedMembershipRules.outgoing;
-    return preferredRule.membershipMode === 'selected_source_groups' ? 'parliament' : 'elected';
+    return args.membershipRule.membershipMode === 'selected_source_groups'
+      ? 'parliament'
+      : 'elected';
   }
 
   return args.relationshipType === 'parent' ? 'child' : 'parent';
@@ -215,65 +178,48 @@ export function applyNetworkLinkPreset(
   current: NetworkLinkComposerValue
 ): NetworkLinkComposerValue {
   const direction = getPresetMembershipDirection(preset);
-  const membershipRules = createInitialMembershipRules();
-  const currentDirectionRule = current.membershipRules[direction] ?? createEmptyMembershipRule();
+  const currentRule = current.membershipRule ?? createEmptyMembershipRule();
 
-  if (preset === 'parent') {
-    membershipRules[direction] = {
-      membershipMode: 'all_members',
-      roleId: '',
-      sourceGroupIds: [],
-    };
+  if (preset === 'parent' || preset === 'child') {
     return {
       ...current,
       preset,
       relationshipType: getRelationshipTypeForPreset(preset),
-      membershipRules,
-      rightDirections: getPresetRightDirections(preset),
-    };
-  }
-
-  if (preset === 'child') {
-    membershipRules[direction] = {
-      membershipMode: 'all_members',
-      roleId: '',
-      sourceGroupIds: [],
-    };
-    return {
-      ...current,
-      preset,
-      relationshipType: getRelationshipTypeForPreset(preset),
-      membershipRules,
+      membershipDirection: direction,
+      membershipRule: {
+        membershipMode: 'all_members',
+        roleId: '',
+        sourceGroupIds: [],
+      },
       rightDirections: getPresetRightDirections(preset),
     };
   }
 
   if (preset === 'elected') {
-    membershipRules[direction] = {
-      membershipMode: 'role_members',
-      roleId: currentDirectionRule.roleId,
-      sourceGroupIds: [],
-    };
     return {
       ...current,
       preset,
       relationshipType: getRelationshipTypeForPreset(preset),
-      membershipRules,
+      membershipDirection: direction,
+      membershipRule: {
+        membershipMode: 'role_members',
+        roleId: currentRule.roleId,
+        sourceGroupIds: [],
+      },
       rightDirections: getPresetRightDirections(preset),
     };
   }
-
-  membershipRules[direction] = {
-    membershipMode: 'selected_source_groups',
-    roleId: '',
-    sourceGroupIds: currentDirectionRule.sourceGroupIds,
-  };
 
   return {
     ...current,
     preset,
     relationshipType: getRelationshipTypeForPreset(preset),
-    membershipRules,
+    membershipDirection: direction,
+    membershipRule: {
+      membershipMode: 'selected_source_groups',
+      roleId: '',
+      sourceGroupIds: currentRule.sourceGroupIds,
+    },
     rightDirections: getPresetRightDirections(preset),
   };
 }
@@ -309,21 +255,35 @@ function getCanonicalSourceTarget(args: {
   };
 }
 
+function toCanonicalMembershipDirection(args: {
+  sourceIsCurrentGroup: boolean;
+  membershipDirection: RelativeMembershipDirection | null;
+  membershipMode: NetworkLinkComposerMembershipRuleValue['membershipMode'];
+}) {
+  if (args.membershipDirection == null || args.membershipMode === 'none') {
+    return null;
+  }
+
+  if (args.sourceIsCurrentGroup) {
+    return args.membershipDirection === 'outgoing' ? 'forward' : 'backward';
+  }
+
+  return args.membershipDirection === 'outgoing' ? 'backward' : 'forward';
+}
+
 export function buildCanonicalNetworkLinkPayload(args: {
   currentGroupId: string;
   otherGroupId: string;
   relationshipType: GroupRelationshipType;
   rightDirections: Record<GroupRelationshipRight, GroupRelationshipDirection>;
-  membershipRules: Record<RelativeMembershipDirection, NetworkLinkComposerMembershipRuleValue>;
+  membershipDirection: RelativeMembershipDirection | null;
+  membershipRule: NetworkLinkComposerMembershipRuleValue;
   linkId?: string | null;
   existingRightIdsByKey?: Partial<Record<GroupRelationshipRight, string | undefined>>;
   membershipRuleId?: string | null;
   initiatorGroupId: string;
   status?: 'active' | 'requested' | 'pending' | 'rejected';
 }) {
-  const membershipRules = normalizeExclusiveMembershipRules({
-    membershipRules: args.membershipRules,
-  });
   const { source_group_id, target_group_id, structural_relation, sourceIsCurrentGroup } =
     getCanonicalSourceTarget({
       currentGroupId: args.currentGroupId,
@@ -331,28 +291,22 @@ export function buildCanonicalNetworkLinkPayload(args: {
       relationshipType: args.relationshipType,
     });
 
-  const toCanonicalMembershipRule = (direction: RelativeMembershipDirection) => {
-    const membershipRule = membershipRules[direction];
-    return {
-      membership_mode: membershipRule.membershipMode,
-      role_id:
-        membershipRule.membershipMode === 'role_members' ? (membershipRule.roleId ?? null) : null,
-      source_group_ids:
-        membershipRule.membershipMode === 'selected_source_groups'
-          ? [...new Set(membershipRule.sourceGroupIds ?? [])]
-          : null,
-    };
-  };
-
-  const forwardRule = sourceIsCurrentGroup
-    ? toCanonicalMembershipRule('outgoing')
-    : toCanonicalMembershipRule('incoming');
-  const backwardRule = sourceIsCurrentGroup
-    ? toCanonicalMembershipRule('incoming')
-    : toCanonicalMembershipRule('outgoing');
-  const legacyRule = toLegacyMembershipRuleFields({
-    forward: forwardRule,
-    backward: backwardRule,
+  const membershipDirection = toCanonicalMembershipDirection({
+    sourceIsCurrentGroup,
+    membershipDirection: args.membershipDirection,
+    membershipMode: args.membershipRule.membershipMode,
+  });
+  const normalizedMembershipRule = normalizeMembershipRules({
+    membership_direction: membershipDirection,
+    membership_mode: args.membershipRule.membershipMode,
+    role_id:
+      args.membershipRule.membershipMode === 'role_members'
+        ? (args.membershipRule.roleId ?? null)
+        : null,
+    source_group_ids:
+      args.membershipRule.membershipMode === 'selected_source_groups'
+        ? [...new Set(args.membershipRule.sourceGroupIds ?? [])]
+        : null,
   });
 
   return {
@@ -390,31 +344,21 @@ export function buildCanonicalNetworkLinkPayload(args: {
     }),
     membership_rule: {
       id: args.membershipRuleId ?? crypto.randomUUID(),
-      forward: forwardRule,
-      backward: backwardRule,
-      membership_mode: legacyRule.membership_mode,
-      role_id: legacyRule.role_id,
-      source_group_ids: legacyRule.source_group_ids,
+      membership_direction: normalizedMembershipRule.membership_direction,
+      membership_mode: normalizedMembershipRule.membership_mode,
+      role_id: normalizedMembershipRule.role_id,
+      source_group_ids: normalizedMembershipRule.source_group_ids,
     },
   };
 }
 
-export function buildRelativeMembershipRulesFromCanonical(args: {
+export function buildRelativeMembershipRuleFromCanonical(args: {
   currentGroupId: string;
   source_group_id: string;
   target_group_id: string;
   membershipRule:
     | {
-        forward?: {
-          membership_mode?: string | null;
-          role_id?: string | null;
-          source_group_ids?: string[] | null;
-        } | null;
-        backward?: {
-          membership_mode?: string | null;
-          role_id?: string | null;
-          source_group_ids?: string[] | null;
-        } | null;
+        membership_direction?: string | null;
         membership_mode?: string | null;
         role_id?: string | null;
         source_group_ids?: string[] | null;
@@ -424,25 +368,24 @@ export function buildRelativeMembershipRulesFromCanonical(args: {
 }) {
   const normalized = normalizeMembershipRules(args.membershipRule);
   const sourceIsCurrentGroup = args.source_group_id === args.currentGroupId;
-  const incoming = sourceIsCurrentGroup ? normalized.backward : normalized.forward;
-  const outgoing = sourceIsCurrentGroup ? normalized.forward : normalized.backward;
-  const membershipRules = normalizeExclusiveMembershipRules({
-    membershipRules: {
-      incoming: {
-        membershipMode: incoming.membership_mode,
-        roleId: incoming.role_id ?? '',
-        sourceGroupIds: incoming.source_group_ids ?? [],
-      },
-      outgoing: {
-        membershipMode: outgoing.membership_mode,
-        roleId: outgoing.role_id ?? '',
-        sourceGroupIds: outgoing.source_group_ids ?? [],
-      },
-    },
-  });
+
+  const membershipDirection =
+    normalized.membership_direction == null
+      ? null
+      : sourceIsCurrentGroup
+        ? normalized.membership_direction === 'forward'
+          ? 'outgoing'
+          : 'incoming'
+        : normalized.membership_direction === 'forward'
+          ? 'incoming'
+          : 'outgoing';
 
   return {
-    incoming: membershipRules.incoming,
-    outgoing: membershipRules.outgoing,
-  } satisfies Record<RelativeMembershipDirection, NetworkLinkComposerMembershipRuleValue>;
+    membershipDirection,
+    membershipRule: {
+      membershipMode: normalized.membership_mode,
+      roleId: normalized.role_id ?? '',
+      sourceGroupIds: normalized.source_group_ids ?? [],
+    },
+  } satisfies Pick<NetworkLinkComposerValue, 'membershipDirection' | 'membershipRule'>;
 }

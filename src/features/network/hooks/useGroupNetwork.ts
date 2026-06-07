@@ -188,7 +188,10 @@ export function useGroupNetwork(groupId: string) {
         if (rel.with_right && !existingEntry.rights.includes(rel.with_right)) {
           existingEntry.rights.push(rel.with_right);
         }
-        if (!existingEntry.membershipMode && rel.membership_mode) {
+        if (
+          (!existingEntry.membershipMode && rel.membership_mode) ||
+          (existingEntry.membershipMode === 'none' && rel.membership_mode !== 'none')
+        ) {
           existingEntry.membershipMode = rel.membership_mode;
         }
       });

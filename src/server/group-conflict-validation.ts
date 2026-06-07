@@ -487,14 +487,16 @@ async function buildMembershipActivationConflicts(
 
 export function buildDraftNetworkLinkRelationships(args: GroupConflictNetworkLinkUpsertPreflight) {
   const createdAt = Date.now();
-  const status = 'active';
-  const membershipRules = normalizeMembershipRules(args.membership_rules ?? args.membership_rule);
-  const rows = args.rights.flatMap(right => {
+  const status: RelationshipRow['status'] = 'active';
+  const membershipRules = normalizeMembershipRules(args.membership_rule);
+  const structuralRelation = args.structural_relation as RelationshipRow['structural_relation'];
+  const rows = args.rights.flatMap<RelationshipRow>(right => {
     if (right.status === 'rejected') {
       return [];
     }
 
     const rightRows: RelationshipRow[] = [];
+    const rightDirection = right.direction as RelationshipRow['right_direction'];
 
     if (right.direction === 'forward' || right.direction === 'bidirectional') {
       rightRows.push({
@@ -508,9 +510,13 @@ export function buildDraftNetworkLinkRelationships(args: GroupConflictNetworkLin
         status,
         initiator_group_id: right.initiator_group_id ?? null,
         created_at: createdAt,
-        structural_relation: args.structural_relation,
-        membership_mode: membershipRules.forward.membership_mode,
-        right_direction: right.direction,
+        structural_relation: structuralRelation,
+        membership_mode: membershipRules.membership_mode,
+        membership_direction: membershipRules.membership_direction,
+        membership_role_id: membershipRules.role_id ?? null,
+        membership_source_group_ids: membershipRules.source_group_ids ?? null,
+        relationship_direction: 'forward',
+        right_direction: rightDirection,
       });
     }
 
@@ -526,20 +532,20 @@ export function buildDraftNetworkLinkRelationships(args: GroupConflictNetworkLin
         status,
         initiator_group_id: right.initiator_group_id ?? null,
         created_at: createdAt,
-        structural_relation: args.structural_relation,
-        membership_mode: membershipRules.backward.membership_mode,
-        right_direction: right.direction,
+        structural_relation: structuralRelation,
+        membership_mode: membershipRules.membership_mode,
+        membership_direction: membershipRules.membership_direction,
+        membership_role_id: membershipRules.role_id ?? null,
+        membership_source_group_ids: membershipRules.source_group_ids ?? null,
+        relationship_direction: 'backward',
+        right_direction: rightDirection,
       });
     }
 
     return rightRows;
   });
 
-  if (
-    rows.length > 0 ||
-    (membershipRules.forward.membership_mode === 'none' &&
-      membershipRules.backward.membership_mode === 'none')
-  ) {
+  if (rows.length > 0 || membershipRules.membership_mode === 'none') {
     return rows;
   }
 
@@ -555,10 +561,14 @@ export function buildDraftNetworkLinkRelationships(args: GroupConflictNetworkLin
       status,
       initiator_group_id: null,
       created_at: createdAt,
-      structural_relation: args.structural_relation,
-      membership_mode: membershipRules.forward.membership_mode,
+      structural_relation: structuralRelation,
+      membership_mode: membershipRules.membership_mode,
+      membership_direction: membershipRules.membership_direction,
+      membership_role_id: membershipRules.role_id ?? null,
+      membership_source_group_ids: membershipRules.source_group_ids ?? null,
+      relationship_direction: 'forward',
       right_direction: 'forward',
-    },
+    } satisfies RelationshipRow,
     {
       id: `${args.link_id ?? 'draft'}:structural:backward`,
       network_link_id: args.link_id ?? 'draft',
@@ -570,10 +580,14 @@ export function buildDraftNetworkLinkRelationships(args: GroupConflictNetworkLin
       status,
       initiator_group_id: null,
       created_at: createdAt,
-      structural_relation: args.structural_relation,
-      membership_mode: membershipRules.backward.membership_mode,
+      structural_relation: structuralRelation,
+      membership_mode: membershipRules.membership_mode,
+      membership_direction: membershipRules.membership_direction,
+      membership_role_id: membershipRules.role_id ?? null,
+      membership_source_group_ids: membershipRules.source_group_ids ?? null,
+      relationship_direction: 'backward',
       right_direction: 'backward',
-    },
+    } satisfies RelationshipRow,
   ];
 }
 
@@ -779,27 +793,22 @@ async function buildNetworkLinkUpsertConflicts(
   }
 
   if (args.structural_relation === 'sibling') {
-    const membershipRules = normalizeMembershipRules(args.membership_rules ?? args.membership_rule);
+    const membershipRules = normalizeMembershipRules(args.membership_rule);
     const directionalRecipients: {
       recipientGroupId: string;
       sourceGroupIds: string[];
     }[] = [];
 
-    if (membershipRules.forward.membership_mode === 'selected_source_groups') {
+    if (
+      membershipRules.membership_mode === 'selected_source_groups' &&
+      membershipRules.membership_direction
+    ) {
       directionalRecipients.push({
-        recipientGroupId: args.target_group_id,
-        sourceGroupIds: [
-          ...new Set((membershipRules.forward.source_group_ids ?? []).filter(Boolean)),
-        ],
-      });
-    }
-
-    if (membershipRules.backward.membership_mode === 'selected_source_groups') {
-      directionalRecipients.push({
-        recipientGroupId: args.source_group_id,
-        sourceGroupIds: [
-          ...new Set((membershipRules.backward.source_group_ids ?? []).filter(Boolean)),
-        ],
+        recipientGroupId:
+          membershipRules.membership_direction === 'forward'
+            ? args.target_group_id
+            : args.source_group_id,
+        sourceGroupIds: [...new Set((membershipRules.source_group_ids ?? []).filter(Boolean))],
       });
     }
 

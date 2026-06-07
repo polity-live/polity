@@ -19,9 +19,13 @@ export function useNetworkLinkComposerPreflight(args: {
     () => JSON.stringify(args.value.rightDirections),
     [args.value.rightDirections]
   );
-  const membershipRulesKey = useMemo(
-    () => JSON.stringify(args.value.membershipRules),
-    [args.value.membershipRules]
+  const membershipRuleKey = useMemo(
+    () =>
+      JSON.stringify({
+        membershipDirection: args.value.membershipDirection,
+        membershipRule: args.value.membershipRule,
+      }),
+    [args.value.membershipDirection, args.value.membershipRule]
   );
   const existingRightIdsKey = useMemo(
     () => JSON.stringify(args.existingRightIdsByKey ?? {}),
@@ -33,7 +37,8 @@ export function useNetworkLinkComposerPreflight(args: {
       !args.value.selectedGroupId ||
       !hasConfiguredNetworkLink({
         rightDirections: args.value.rightDirections,
-        membershipRules: args.value.membershipRules,
+        membershipDirection: args.value.membershipDirection,
+        membershipRule: args.value.membershipRule,
       })
     ) {
       return null;
@@ -44,7 +49,8 @@ export function useNetworkLinkComposerPreflight(args: {
       otherGroupId: args.value.selectedGroupId,
       relationshipType: args.value.relationshipType,
       rightDirections: args.value.rightDirections,
-      membershipRules: args.value.membershipRules,
+      membershipDirection: args.value.membershipDirection,
+      membershipRule: args.value.membershipRule,
       linkId: args.existingLinkId ?? undefined,
       existingRightIdsByKey: args.existingRightIdsByKey,
       membershipRuleId: args.membershipRuleId ?? undefined,
@@ -65,11 +71,8 @@ export function useNetworkLinkComposerPreflight(args: {
         status: 'active' as const,
         initiator_group_id: args.initiatorGroupId,
       })),
-      membership_rules: {
-        forward: payload.membership_rule.forward,
-        backward: payload.membership_rule.backward,
-      },
       membership_rule: {
+        membership_direction: payload.membership_rule.membership_direction,
         membership_mode: payload.membership_rule.membership_mode,
         role_id: payload.membership_rule.role_id ?? null,
         source_group_ids: payload.membership_rule.source_group_ids ?? null,
@@ -83,7 +86,7 @@ export function useNetworkLinkComposerPreflight(args: {
     args.value.relationshipType,
     args.value.selectedGroupId,
     existingRightIdsKey,
-    membershipRulesKey,
+    membershipRuleKey,
     rightDirectionsKey,
   ]);
 

@@ -32,14 +32,10 @@ const networkLinkRightPreflightSchema = z.object({
 });
 
 const networkLinkMembershipRulePreflightSchema = z.object({
+  membership_direction: z.enum(['forward', 'backward']).nullable().optional(),
   membership_mode: z.enum(['none', 'all_members', 'role_members', 'selected_source_groups']),
   role_id: z.string().nullable().optional(),
   source_group_ids: z.array(z.string()).nullable().optional(),
-});
-
-const networkLinkMembershipRulesPreflightSchema = z.object({
-  forward: networkLinkMembershipRulePreflightSchema,
-  backward: networkLinkMembershipRulePreflightSchema,
 });
 
 export const groupConflictNetworkLinkUpsertPreflightSchema = z.object({
@@ -49,7 +45,6 @@ export const groupConflictNetworkLinkUpsertPreflightSchema = z.object({
   target_group_id: z.string(),
   structural_relation: z.enum(['parent_child', 'sibling']),
   rights: z.array(networkLinkRightPreflightSchema),
-  membership_rules: networkLinkMembershipRulesPreflightSchema.optional(),
   membership_rule: networkLinkMembershipRulePreflightSchema.optional(),
 });
 
@@ -78,10 +73,7 @@ export const groupConflictPreflightSchema = z
     if (
       value.kind === 'network_link_upsert' &&
       value.rights.length === 0 &&
-      (!value.membership_rule || value.membership_rule.membership_mode === 'none') &&
-      (!value.membership_rules ||
-        (value.membership_rules.forward.membership_mode === 'none' &&
-          value.membership_rules.backward.membership_mode === 'none'))
+      (!value.membership_rule || value.membership_rule.membership_mode === 'none')
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

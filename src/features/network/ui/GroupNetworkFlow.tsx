@@ -28,23 +28,28 @@ import { useGroupNetworkLayout } from '@/features/network/hooks/useGroupNetworkL
 import { useGroupNetwork } from '@/features/network/hooks/useGroupNetwork';
 import {
   addUniqueValue,
+  buildCurrentPerspectiveRightDisplayDirections,
   buildHierarchyRightEdgeDirections,
   buildNetworkRelationshipDialogData,
   buildRelationshipEdgeMarkers,
   createNetworkRelationshipEdgeData,
-  getAnchorUsageConnectionDirection,
+  getAnimatedFlowDirection,
+  getVisibleFlowDirection,
   getRelationshipStrokeColor,
-  mergeNetworkConnectionDirection,
   mergeNetworkEdgeRelationshipDirection,
   mergeNetworkRightRelationshipKind,
-  orientRelationshipEdgeForCurrentPerspective,
 } from '@/features/network/logic/networkEdgeHelpers';
+import {
+  areGroupNetworkLayoutsEqual,
+  normalizeGroupNetworkLayout,
+} from '@/features/network/logic/networkLayoutHelpers';
 import {
   buildDirectRelationships,
   buildIndirectRelationships,
   buildMixedRelationshipGraph,
   getAcceptedSiblingGroups,
   getGroupRelationshipKind,
+  getRelativeMembershipDirectionForRelationship,
   isActiveGroupRelationshipStatus,
   isAcceptedSiblingRelationship,
   type RelationshipEntry,
@@ -69,6 +74,7 @@ import type {
 } from '@/features/network/types/networkEdge.types';
 import type {
   CanonicalMembershipMode,
+  CanonicalNetworkMembershipDirection,
   GroupRelationshipType,
   NetworkGroupEntity,
 } from '@/features/network/types/network.types';
@@ -103,6 +109,21 @@ const NODE_WIDTH = 180;
 const HORIZONTAL_SPACING = 210;
 const VERTICAL_SPACING = 180;
 const SIBLING_RADIUS = 250;
+
+function shouldReplaceMembershipMode(
+  existingMode: CanonicalMembershipMode | null | undefined,
+  nextMode: CanonicalMembershipMode | null | undefined
+) {
+  if (!nextMode) {
+    return false;
+  }
+
+  if (!existingMode) {
+    return true;
+  }
+
+  return existingMode === 'none' && nextMode !== 'none';
+}
 
 function sortGroupsByCreatedAt<
   TGroup extends {
@@ -162,6 +183,8 @@ function mergeRelationshipEntryMaps(
         relationshipKinds: [...entry.relationshipKinds],
         rightRelationshipKinds: { ...entry.rightRelationshipKinds },
         membershipMode: entry.membershipMode ?? null,
+        membershipCanonicalDirection: entry.membershipCanonicalDirection ?? null,
+        membershipDirection: entry.membershipDirection ?? null,
         level: entry.level,
         childId: entry.childId,
         parentId: entry.parentId,
@@ -179,8 +202,12 @@ function mergeRelationshipEntryMaps(
       ) as NetworkRelationshipKind;
     });
 
-    if (!existing.membershipMode && entry.membershipMode) {
+    if (shouldReplaceMembershipMode(existing.membershipMode, entry.membershipMode)) {
       existing.membershipMode = entry.membershipMode;
+      existing.membershipCanonicalDirection = entry.membershipCanonicalDirection ?? null;
+      if (entry.membershipDirection) {
+        existing.membershipDirection = entry.membershipDirection;
+      }
     }
 
     const existingLevel = existing.level ?? Number.POSITIVE_INFINITY;
@@ -199,6 +226,108 @@ function mergeRelationshipEntryMaps(
         existing.parentId = entry.parentId;
       }
     }
+  });
+}
+
+function getUserConnectionDirections(
+  rightConnectionDirections?: Record<string, NetworkConnectionDirection>
+): NetworkUserConnectionDirection[] {
+  const values = Object.values(rightConnectionDirections ?? {});
+  const directions: NetworkUserConnectionDirection[] = [];
+
+  if (values.some(value => value === 'incoming' || value === 'bidirectional')) {
+    directions.push('incoming');
+  }
+
+  if (values.some(value => value === 'outgoing' || value === 'bidirectional')) {
+    directions.push('outgoing');
+  }
+
+  return directions;
+}
+
+function getPreviewRelationshipType(args: {
+  structuralType: GroupRelationshipType;
+  currentGroupId: string;
+  sourceGroupId: string;
+}) {
+  if (args.structuralType === 'sibling') {
+    return 'sibling';
+  }
+
+  return args.currentGroupId === args.sourceGroupId ? 'parent' : 'child';
+}
+
+function resolvePreviewContext(args: {
+  graphRootGroupId: string;
+  structuralType: GroupRelationshipType;
+  sourceGroupId: string;
+  targetGroupId: string;
+  sourceGroupName: string | null;
+  targetGroupName: string | null;
+  rightEdgeDirections?: Record<string, NetworkEdgeRelationshipDirection>;
+  membershipCanonicalDirection?: CanonicalNetworkMembershipDirection | null;
+}) {
+  const touchesGraphRoot =
+    args.graphRootGroupId === args.sourceGroupId || args.graphRootGroupId === args.targetGroupId;
+  const visibleFlowDirection = getVisibleFlowDirection(args.rightEdgeDirections);
+
+  let currentGroupId = args.sourceGroupId;
+
+  if (touchesGraphRoot) {
+    currentGroupId = args.graphRootGroupId;
+  } else if (visibleFlowDirection === 'forward') {
+    currentGroupId = args.sourceGroupId;
+  } else if (visibleFlowDirection === 'backward') {
+    currentGroupId = args.targetGroupId;
+  } else if (args.membershipCanonicalDirection === 'forward') {
+    currentGroupId = args.sourceGroupId;
+  } else if (args.membershipCanonicalDirection === 'backward') {
+    currentGroupId = args.targetGroupId;
+  }
+
+  const selectedGroupId =
+    currentGroupId === args.sourceGroupId ? args.targetGroupId : args.sourceGroupId;
+
+  return {
+    relationshipType: getPreviewRelationshipType({
+      structuralType: args.structuralType,
+      currentGroupId,
+      sourceGroupId: args.sourceGroupId,
+    }),
+    currentGroupId,
+    currentGroupName:
+      currentGroupId === args.sourceGroupId ? args.sourceGroupName : args.targetGroupName,
+    selectedGroupId,
+    selectedGroupName:
+      selectedGroupId === args.sourceGroupId ? args.sourceGroupName : args.targetGroupName,
+  } satisfies {
+    relationshipType: GroupRelationshipType;
+    currentGroupId: string;
+    currentGroupName: string | null;
+    selectedGroupId: string;
+    selectedGroupName: string | null;
+  };
+}
+
+function getPreviewMembershipDirection(args: {
+  currentGroupId: string;
+  sourceGroupId: string;
+  targetGroupId: string;
+  membershipCanonicalDirection?: CanonicalNetworkMembershipDirection | null;
+}) {
+  if (!args.membershipCanonicalDirection) {
+    return null;
+  }
+
+  return getRelativeMembershipDirectionForRelationship({
+    relationship: {
+      group_id: args.sourceGroupId,
+      related_group_id: args.targetGroupId,
+      membership_direction: args.membershipCanonicalDirection,
+      relationship_direction: 'forward',
+    },
+    currentGroupId: args.currentGroupId,
   });
 }
 
@@ -397,33 +526,33 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
   );
 
   const currentLayout = useMemo<GroupNetworkLayout>(
-    () => ({
-      node_positions: Object.fromEntries(
-        nodes.map(node => [node.id, { x: node.position.x, y: node.position.y }])
-      ),
-      edge_bend_points: Object.fromEntries(
-        edges
-          .map(edge => {
-            const bendPoints = Array.isArray(
-              (edge.data as EditableRightsLabelEdgeData | undefined)?.bendPoints
-            )
-              ? ((edge.data as EditableRightsLabelEdgeData).bendPoints as NetworkEdgeBendPoint[])
-              : [];
+    () =>
+      normalizeGroupNetworkLayout({
+        node_positions: Object.fromEntries(
+          nodes.map(node => [node.id, { x: node.position.x, y: node.position.y }])
+        ),
+        edge_bend_points: Object.fromEntries(
+          edges
+            .map(edge => {
+              const bendPoints = Array.isArray(
+                (edge.data as EditableRightsLabelEdgeData | undefined)?.bendPoints
+              )
+                ? ((edge.data as EditableRightsLabelEdgeData).bendPoints as NetworkEdgeBendPoint[])
+                : [];
 
-            return [
-              edge.id,
-              bendPoints.map(bendPoint => ({ x: bendPoint.x, y: bendPoint.y })),
-            ] as const;
-          })
-          .filter(([, bendPoints]) => bendPoints.length > 0)
-      ),
-    }),
+              return [
+                edge.id,
+                bendPoints.map(bendPoint => ({ x: bendPoint.x, y: bendPoint.y })),
+              ] as const;
+            })
+            .filter(([, bendPoints]) => bendPoints.length > 0)
+        ),
+      }),
     [edges, nodes]
   );
 
   const hasLayoutChanges = useMemo(() => {
-    const defaultLayout = { node_positions: {}, edge_bend_points: {} };
-    return JSON.stringify(currentLayout) !== JSON.stringify(savedLayout ?? defaultLayout);
+    return !areGroupNetworkLayoutsEqual(currentLayout, savedLayout);
   }, [currentLayout, savedLayout]);
 
   useEffect(() => {
@@ -564,21 +693,6 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
     const resolveRenderedNodeId = (groupId: string) =>
       renderedNodeIdsByGroupId.get(groupId) ?? null;
 
-    const addEdgeLevelDirection = (
-      directions: NetworkUserConnectionDirection[],
-      direction: NetworkConnectionDirection | undefined
-    ) => {
-      if (direction === 'bidirectional') {
-        addUniqueValue(directions, 'incoming');
-        addUniqueValue(directions, 'outgoing');
-        return;
-      }
-
-      if (direction) {
-        addUniqueValue(directions, direction);
-      }
-    };
-
     // Add center node (current graph root)
     const rootPosition = nodePositionsRef.current[graphRootGroupId] ?? NETWORK_CENTER;
     newNodes.push({
@@ -664,40 +778,79 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
         ? Math.max(...siblingNodePositions.map(position => position.y))
         : NETWORK_CENTER.y;
 
-    const pushRelationshipEdge = (
-      edgeId: RelationshipDirectionKey,
-      sourceId: string,
-      targetId: string,
-      rights: string[],
-      relationshipType: GroupRelationshipType,
-      relationshipKinds: NetworkRelationshipKind[],
-      rightRelationshipKinds: Record<string, NetworkRelationshipKind>,
-      membershipMode: CanonicalMembershipMode | null | undefined,
-      rightEdgeDirections: Record<string, NetworkEdgeRelationshipDirection>,
-      rightConnectionDirections: Record<string, NetworkConnectionDirection>,
-      userConnectionDirections: NetworkUserConnectionDirection[],
-      relationshipDepth: 'direct' | 'indirect',
-      strokeColor: string,
-      strokeDasharray?: string,
-      previewData?: {
-        selectedGroupId: string;
-        selectedGroupName: string | null;
-        rightDisplayDirections?: Record<string, NetworkConnectionDirection>;
-      }
-    ) => {
+    const pushRelationshipEdge = ({
+      edgeId,
+      sourceId,
+      targetId,
+      sourceGroupId,
+      targetGroupId,
+      rights,
+      structuralType,
+      relationshipKinds,
+      rightRelationshipKinds,
+      membershipMode,
+      membershipCanonicalDirection,
+      rightEdgeDirections,
+      relationshipDepth,
+      strokeColor,
+      strokeDasharray,
+    }: {
+      edgeId: RelationshipDirectionKey;
+      sourceId: string;
+      targetId: string;
+      sourceGroupId: string;
+      targetGroupId: string;
+      rights: string[];
+      structuralType: GroupRelationshipType;
+      relationshipKinds: NetworkRelationshipKind[];
+      rightRelationshipKinds: Record<string, NetworkRelationshipKind>;
+      membershipMode: CanonicalMembershipMode | null | undefined;
+      membershipCanonicalDirection?: CanonicalNetworkMembershipDirection | null;
+      rightEdgeDirections: Record<string, NetworkEdgeRelationshipDirection> | undefined;
+      relationshipDepth: 'direct' | 'indirect';
+      strokeColor: string;
+      strokeDasharray?: string;
+    }) => {
       const resolvedStrokeColor = getRelationshipStrokeColor(strokeColor, rightEdgeDirections);
       const edgeMarkers = buildRelationshipEdgeMarkers(resolvedStrokeColor, rightEdgeDirections);
+      const visibleFlowDirection = getVisibleFlowDirection(rightEdgeDirections);
+      const animatedFlowDirection = getAnimatedFlowDirection(visibleFlowDirection);
+      const pageRightConnectionDirections =
+        buildCurrentPerspectiveRightDisplayDirections({
+          currentNodeId: graphRootGroupId,
+          sourceId: sourceGroupId,
+          targetId: targetGroupId,
+          rightEdgeDirections,
+        }) ?? {};
+      const userConnectionDirections = getUserConnectionDirections(pageRightConnectionDirections);
+      const previewContext = resolvePreviewContext({
+        graphRootGroupId,
+        structuralType,
+        sourceGroupId,
+        targetGroupId,
+        sourceGroupName: groupNameMap.get(sourceGroupId) ?? null,
+        targetGroupName: groupNameMap.get(targetGroupId) ?? null,
+        rightEdgeDirections,
+        membershipCanonicalDirection,
+      });
+      const rightDisplayDirections = buildCurrentPerspectiveRightDisplayDirections({
+        currentNodeId: previewContext.currentGroupId,
+        sourceId: sourceGroupId,
+        targetId: targetGroupId,
+        rightEdgeDirections,
+      });
 
       newEdges.push({
         id: edgeId,
         source: sourceId,
         target: targetId,
         type: 'rightsLabel',
-        animated: true,
+        animated: animatedFlowDirection !== null,
         style: {
           stroke: resolvedStrokeColor,
           strokeWidth: 2,
           strokeDasharray,
+          animationDirection: animatedFlowDirection === 'backward' ? 'reverse' : undefined,
         },
         ...edgeMarkers,
         data: {
@@ -705,19 +858,26 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
             rights,
             relationshipKinds,
             rightRelationshipKinds,
-            relationshipType,
+            relationshipType: previewContext.relationshipType,
             membershipMode,
+            membershipDirection: getPreviewMembershipDirection({
+              currentGroupId: previewContext.currentGroupId,
+              sourceGroupId,
+              targetGroupId,
+              membershipCanonicalDirection,
+            }),
             rightEdgeDirections,
-            rightConnectionDirections,
+            visibleFlowDirection,
+            rightConnectionDirections: pageRightConnectionDirections,
             userConnectionDirections,
             relationshipDepth,
-            sourceName: groupNameMap.get(sourceId) ?? null,
-            targetName: groupNameMap.get(targetId) ?? null,
-            currentGroupId: previewData ? graphRootGroupId : undefined,
-            currentGroupName: previewData ? (graphRootGroup.name ?? null) : undefined,
-            selectedGroupId: previewData?.selectedGroupId,
-            selectedGroupName: previewData?.selectedGroupName,
-            rightDisplayDirections: previewData?.rightDisplayDirections,
+            sourceName: groupNameMap.get(sourceGroupId) ?? null,
+            targetName: groupNameMap.get(targetGroupId) ?? null,
+            currentGroupId: previewContext.currentGroupId,
+            currentGroupName: previewContext.currentGroupName,
+            selectedGroupId: previewContext.selectedGroupId,
+            selectedGroupName: previewContext.selectedGroupName,
+            rightDisplayDirections,
             anchorStrategy: 'inner-auto',
           }),
           bendPoints: edgeBendPointsRef.current[edgeId] ?? [],
@@ -732,13 +892,14 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
       {
         sourceId: string;
         targetId: string;
+        sourceGroupId: string;
+        targetGroupId: string;
         rights: string[];
         relationshipKinds: NetworkRelationshipKind[];
         rightRelationshipKinds: Record<string, NetworkRelationshipKind>;
         membershipMode?: CanonicalMembershipMode | null;
+        membershipCanonicalDirection?: CanonicalNetworkMembershipDirection | null;
         rightEdgeDirections: Record<string, NetworkEdgeRelationshipDirection>;
-        rightConnectionDirections: Record<string, NetworkConnectionDirection>;
-        userConnectionDirections: NetworkUserConnectionDirection[];
       }
     >();
 
@@ -901,12 +1062,6 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
 
         const sourceAnchorsTarget = siblingAnchorByGroupId.get(targetGroupId) === sourceGroupId;
         const targetAnchorsSource = siblingAnchorByGroupId.get(sourceGroupId) === targetGroupId;
-        const isHorizontalSiblingLink =
-          !sourceAnchorsTarget &&
-          !targetAnchorsSource &&
-          sourceGroupId !== graphRootGroupId &&
-          targetGroupId !== graphRootGroupId;
-
         const [edgeSourceGroupId, edgeTargetGroupId] = sourceAnchorsTarget
           ? [sourceGroupId, targetGroupId]
           : targetAnchorsSource
@@ -934,13 +1089,14 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
           entry = {
             sourceId: edgeSourceId,
             targetId: edgeTargetId,
+            sourceGroupId: edgeSourceGroupId,
+            targetGroupId: edgeTargetGroupId,
             rights: [],
             relationshipKinds: [],
             rightRelationshipKinds: {},
             membershipMode: null,
+            membershipCanonicalDirection: null,
             rightEdgeDirections: {},
-            rightConnectionDirections: {},
-            userConnectionDirections: [],
           };
           siblingRelationshipEntries.set(edgeKey, entry);
         }
@@ -960,8 +1116,9 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
           ) as NetworkRelationshipKind;
         }
 
-        if (!entry.membershipMode && rel.membership_mode) {
+        if (shouldReplaceMembershipMode(entry.membershipMode, rel.membership_mode)) {
           entry.membershipMode = rel.membership_mode;
+          entry.membershipCanonicalDirection = rel.membership_direction ?? null;
         }
 
         const rightDirection =
@@ -977,29 +1134,6 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
             rightDirection
           );
         }
-
-        const nextRightConnectionDirection = right
-          ? isHorizontalSiblingLink
-            ? 'bidirectional'
-            : rightDirection
-              ? getAnchorUsageConnectionDirection({
-                  edgeDirection: rightDirection,
-                  anchorSide: 'source',
-                })
-              : undefined
-          : undefined;
-
-        if (right && nextRightConnectionDirection) {
-          entry.rightConnectionDirections[right] =
-            nextRightConnectionDirection === 'bidirectional'
-              ? 'bidirectional'
-              : mergeNetworkConnectionDirection(
-                  entry.rightConnectionDirections[right],
-                  nextRightConnectionDirection
-                );
-        }
-
-        addEdgeLevelDirection(entry.userConnectionDirections, nextRightConnectionDirection);
       });
     }
 
@@ -1019,46 +1153,24 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
         parent.group.id,
         edgeTargetGroupId
       );
-      const orientedEdge = orientRelationshipEdgeForCurrentPerspective({
-        currentNodeId: graphRootGroupId,
+
+      pushRelationshipEdge({
+        edgeId: `edge-parent-${parent.group.id}-to-${edgeTargetId}`,
         sourceId: parentNodeId,
         targetId: edgeTargetId,
+        sourceGroupId: parent.group.id,
+        targetGroupId: edgeTargetGroupId,
+        rights: parent.rights,
+        structuralType: 'parent',
+        relationshipKinds: parent.relationshipKinds,
+        rightRelationshipKinds: parent.rightRelationshipKinds,
+        membershipMode: parent.membershipMode,
+        membershipCanonicalDirection: parent.membershipCanonicalDirection,
         rightEdgeDirections,
+        relationshipDepth: (parent.level ?? 1) === 1 ? 'direct' : 'indirect',
+        strokeColor: '#66bb6a',
+        strokeDasharray: '5 5',
       });
-      const previewData =
-        edgeTargetGroupId === graphRootGroupId
-          ? {
-              selectedGroupId: parent.group.id,
-              selectedGroupName: parent.group.name ?? null,
-              rightDisplayDirections: orientedEdge.rightDisplayDirections,
-            }
-          : undefined;
-
-      pushRelationshipEdge(
-        `edge-parent-${parent.group.id}-to-${edgeTargetId}`,
-        orientedEdge.sourceId,
-        orientedEdge.targetId,
-        parent.rights,
-        previewData ? 'child' : 'parent',
-        parent.relationshipKinds,
-        parent.rightRelationshipKinds,
-        parent.membershipMode,
-        orientedEdge.rightEdgeDirections,
-        Object.fromEntries(
-          parent.rights.map(right => [
-            right,
-            getAnchorUsageConnectionDirection({
-              edgeDirection: rightEdgeDirections[right] ?? 'forward',
-              anchorSide: 'target',
-            }),
-          ])
-        ) as Record<string, NetworkConnectionDirection>,
-        ['incoming'],
-        (parent.level ?? 1) === 1 ? 'direct' : 'indirect',
-        '#66bb6a',
-        '5 5',
-        previewData
-      );
     });
 
     children.forEach(child => {
@@ -1077,79 +1189,50 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
         edgeSourceGroupId,
         child.group.id
       );
-      const orientedEdge = orientRelationshipEdgeForCurrentPerspective({
-        currentNodeId: graphRootGroupId,
+
+      pushRelationshipEdge({
+        edgeId: `edge-${edgeSourceId}-to-child-${child.group.id}`,
         sourceId: edgeSourceId,
         targetId: childNodeId,
+        sourceGroupId: edgeSourceGroupId,
+        targetGroupId: child.group.id,
+        rights: child.rights,
+        structuralType: 'parent',
+        relationshipKinds: child.relationshipKinds,
+        rightRelationshipKinds: child.rightRelationshipKinds,
+        membershipMode: child.membershipMode,
+        membershipCanonicalDirection: child.membershipCanonicalDirection,
         rightEdgeDirections,
+        relationshipDepth: (child.level ?? 1) === 1 ? 'direct' : 'indirect',
+        strokeColor: '#ffb74d',
+        strokeDasharray: '5 5',
       });
-      const previewData =
-        edgeSourceGroupId === graphRootGroupId
-          ? {
-              selectedGroupId: child.group.id,
-              selectedGroupName: child.group.name ?? null,
-              rightDisplayDirections: orientedEdge.rightDisplayDirections,
-            }
-          : undefined;
-
-      pushRelationshipEdge(
-        `edge-${edgeSourceId}-to-child-${child.group.id}`,
-        orientedEdge.sourceId,
-        orientedEdge.targetId,
-        child.rights,
-        'parent',
-        child.relationshipKinds,
-        child.rightRelationshipKinds,
-        child.membershipMode,
-        orientedEdge.rightEdgeDirections,
-        Object.fromEntries(
-          child.rights.map(right => [
-            right,
-            getAnchorUsageConnectionDirection({
-              edgeDirection: rightEdgeDirections[right] ?? 'forward',
-              anchorSide: 'source',
-            }),
-          ])
-        ) as Record<string, NetworkConnectionDirection>,
-        ['outgoing'],
-        (child.level ?? 1) === 1 ? 'direct' : 'indirect',
-        '#ffb74d',
-        '5 5',
-        previewData
-      );
     });
 
     siblingRelationshipEntries.forEach(entry => {
-      const sourceGroupId = Array.from(renderedNodeIdsByGroupId.entries()).find(
-        ([, nodeId]) => nodeId === entry.sourceId
-      )?.[0];
-      const targetGroupId = Array.from(renderedNodeIdsByGroupId.entries()).find(
-        ([, nodeId]) => nodeId === entry.targetId
-      )?.[0];
       const isHorizontalSiblingLink =
-        !!sourceGroupId &&
-        !!targetGroupId &&
-        sourceGroupId !== graphRootGroupId &&
-        targetGroupId !== graphRootGroupId &&
-        siblingAnchorByGroupId.get(sourceGroupId) !== targetGroupId &&
-        siblingAnchorByGroupId.get(targetGroupId) !== sourceGroupId;
+        entry.sourceGroupId !== graphRootGroupId &&
+        entry.targetGroupId !== graphRootGroupId &&
+        siblingAnchorByGroupId.get(entry.sourceGroupId) !== entry.targetGroupId &&
+        siblingAnchorByGroupId.get(entry.targetGroupId) !== entry.sourceGroupId;
 
-      pushRelationshipEdge(
-        `edge-sibling-${entry.sourceId}-to-${entry.targetId}`,
-        entry.sourceId,
-        entry.targetId,
-        entry.rights,
-        'sibling',
-        entry.relationshipKinds,
-        entry.rightRelationshipKinds,
-        entry.membershipMode,
-        entry.rightEdgeDirections,
-        entry.rightConnectionDirections,
-        entry.userConnectionDirections,
-        'direct',
-        isHorizontalSiblingLink ? '#f59e0b' : '#a855f7',
-        isHorizontalSiblingLink ? undefined : '6 4'
-      );
+      pushRelationshipEdge({
+        edgeId: `edge-sibling-${entry.sourceId}-to-${entry.targetId}`,
+        sourceId: entry.sourceId,
+        targetId: entry.targetId,
+        sourceGroupId: entry.sourceGroupId,
+        targetGroupId: entry.targetGroupId,
+        rights: entry.rights,
+        structuralType: 'sibling',
+        relationshipKinds: entry.relationshipKinds,
+        rightRelationshipKinds: entry.rightRelationshipKinds,
+        membershipMode: entry.membershipMode,
+        membershipCanonicalDirection: entry.membershipCanonicalDirection,
+        rightEdgeDirections: entry.rightEdgeDirections,
+        relationshipDepth: 'direct',
+        strokeColor: isHorizontalSiblingLink ? '#f59e0b' : '#a855f7',
+        strokeDasharray: isHorizontalSiblingLink ? undefined : '6 4',
+      });
     });
 
     nodePositionsRef.current = Object.fromEntries(

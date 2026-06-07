@@ -24,7 +24,7 @@ import type {
 } from '../types/network.types';
 import {
   applyNetworkLinkPreset,
-  buildRelativeMembershipRulesFromCanonical,
+  buildRelativeMembershipRuleFromCanonical,
   buildCanonicalNetworkLinkPayload,
   buildNetworkLinkComposerDefaults,
   createInitialRelationshipDirections,
@@ -286,7 +286,8 @@ export function LinkGroupDialog({
     const relationshipType = initialRelationshipType ?? 'child';
     const preset = getPresetForRelationshipType({
       relationshipType,
-      membershipRules: baseValue.membershipRules,
+      membershipDirection: baseValue.membershipDirection,
+      membershipRule: baseValue.membershipRule,
     });
     const nextValue: NetworkLinkComposerValue = applyNetworkLinkPreset(preset, {
       ...baseValue,
@@ -358,11 +359,12 @@ export function LinkGroupDialog({
                 : 'outgoing';
       }
 
-      const membershipRules = buildRelativeMembershipRulesFromCanonical({
+      const membershipConfig = buildRelativeMembershipRuleFromCanonical({
         currentGroupId,
         source_group_id: source.source_group_id,
         target_group_id: source.target_group_id,
-        membershipRule: source.desired_membership_rules ?? {
+        membershipRule: {
+          membership_direction: source.desired_membership_direction ?? null,
           membership_mode: source.desired_membership_mode,
           role_id: source.desired_role_id ?? null,
           source_group_ids: source.desired_source_group_ids ?? null,
@@ -374,12 +376,13 @@ export function LinkGroupDialog({
         selectedGroupId: value.selectedGroupId,
         relationshipType:
           getRequestRelationshipType(source, currentGroupId) ?? value.relationshipType,
-        membershipRules,
+        ...membershipConfig,
         rightDirections: nextDirections,
         preset: getPresetForRelationshipType({
           relationshipType:
             getRequestRelationshipType(source, currentGroupId) ?? value.relationshipType,
-          membershipRules,
+          membershipDirection: membershipConfig.membershipDirection,
+          membershipRule: membershipConfig.membershipRule,
         }),
       });
       lastHydratedStateRef.current = hydrationKey;
@@ -400,7 +403,7 @@ export function LinkGroupDialog({
               : 'outgoing';
     }
 
-    const membershipRules = buildRelativeMembershipRulesFromCanonical({
+    const membershipConfig = buildRelativeMembershipRuleFromCanonical({
       currentGroupId,
       source_group_id: source.source_group_id,
       target_group_id: source.target_group_id,
@@ -412,12 +415,13 @@ export function LinkGroupDialog({
       selectedGroupId: value.selectedGroupId,
       relationshipType:
         getRequestRelationshipType(source, currentGroupId) ?? value.relationshipType,
-      membershipRules,
+      ...membershipConfig,
       rightDirections: nextDirections,
       preset: getPresetForRelationshipType({
         relationshipType:
           getRequestRelationshipType(source, currentGroupId) ?? value.relationshipType,
-        membershipRules,
+        membershipDirection: membershipConfig.membershipDirection,
+        membershipRule: membershipConfig.membershipRule,
       }),
     });
     lastHydratedStateRef.current = hydrationKey;
@@ -437,11 +441,10 @@ export function LinkGroupDialog({
     }
 
     const selectedMembershipDirection = getSelectedMembershipDirection({
-      membershipRules: value.membershipRules,
+      membershipDirection: value.membershipDirection,
+      membershipRule: value.membershipRule,
     });
-    const selectedMembershipRule = selectedMembershipDirection
-      ? value.membershipRules[selectedMembershipDirection]
-      : null;
+    const selectedMembershipRule = selectedMembershipDirection ? value.membershipRule : null;
 
     if (
       selectedMembershipRule?.membershipMode === 'role_members' &&
@@ -470,7 +473,8 @@ export function LinkGroupDialog({
     if (
       !hasConfiguredNetworkLink({
         rightDirections: value.rightDirections,
-        membershipRules: value.membershipRules,
+        membershipDirection: value.membershipDirection,
+        membershipRule: value.membershipRule,
       })
     ) {
       toast.error(
@@ -493,7 +497,8 @@ export function LinkGroupDialog({
         otherGroupId: value.selectedGroupId,
         relationshipType: value.relationshipType,
         rightDirections: value.rightDirections,
-        membershipRules: value.membershipRules,
+        membershipDirection: value.membershipDirection,
+        membershipRule: value.membershipRule,
         linkId:
           currentPrimaryLink?.id ?? currentPrimaryRequest?.proposed_network_link_id ?? undefined,
         existingRightIdsByKey,
@@ -515,10 +520,7 @@ export function LinkGroupDialog({
           right_key: right.right_key,
           direction: right.direction,
         })),
-        desired_membership_rules: {
-          forward: payload.membership_rule.forward,
-          backward: payload.membership_rule.backward,
-        },
+        desired_membership_direction: payload.membership_rule.membership_direction ?? null,
         desired_membership_mode: payload.membership_rule.membership_mode,
         desired_role_id: payload.membership_rule.role_id ?? null,
         desired_source_group_ids: payload.membership_rule.source_group_ids ?? null,
@@ -601,14 +603,15 @@ export function LinkGroupDialog({
               preflight.blocking ||
               (() => {
                 const selectedMembershipDirection = getSelectedMembershipDirection({
-                  membershipRules: value.membershipRules,
+                  membershipDirection: value.membershipDirection,
+                  membershipRule: value.membershipRule,
                 });
 
                 if (!selectedMembershipDirection) {
                   return false;
                 }
 
-                const selectedMembershipRule = value.membershipRules[selectedMembershipDirection];
+                const selectedMembershipRule = value.membershipRule;
                 return (
                   (selectedMembershipRule.membershipMode === 'role_members' &&
                     !selectedMembershipRule.roleId) ||

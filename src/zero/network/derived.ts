@@ -1,5 +1,9 @@
 import { getHierarchyRelationshipPair } from '@/features/network/logic/groupRelationshipOrientation';
-import { getMembershipRuleConfig, hasActiveMembershipRules } from './membershipRules';
+import {
+  getMembershipRuleConfig,
+  hasActiveMembershipRules,
+  normalizeMembershipRules,
+} from './membershipRules';
 
 export type NetworkLinkStatusLike = string | null | undefined;
 
@@ -26,6 +30,7 @@ export interface NetworkLinkRightRowLike {
 export interface NetworkLinkMembershipRuleRowLike {
   id: string;
   network_link_id: string;
+  membership_direction?: 'forward' | 'backward' | string | null;
   membership_mode?:
     | 'none'
     | 'all_members'
@@ -35,24 +40,6 @@ export interface NetworkLinkMembershipRuleRowLike {
     | null;
   role_id?: string | null;
   source_group_ids?: string[] | null;
-  forward_membership_mode?:
-    | 'none'
-    | 'all_members'
-    | 'role_members'
-    | 'selected_source_groups'
-    | string
-    | null;
-  forward_role_id?: string | null;
-  forward_source_group_ids?: string[] | null;
-  backward_membership_mode?:
-    | 'none'
-    | 'all_members'
-    | 'role_members'
-    | 'selected_source_groups'
-    | string
-    | null;
-  backward_role_id?: string | null;
-  backward_source_group_ids?: string[] | null;
 }
 
 export interface DerivedNetworkRelationshipRow {
@@ -68,6 +55,10 @@ export interface DerivedNetworkRelationshipRow {
   created_at: number;
   structural_relation: 'parent_child' | 'sibling';
   membership_mode: 'none' | 'all_members' | 'role_members' | 'selected_source_groups';
+  membership_direction?: 'forward' | 'backward' | null;
+  membership_role_id?: string | null;
+  membership_source_group_ids?: string[] | null;
+  relationship_direction?: 'forward' | 'backward';
   right_direction: 'forward' | 'backward' | 'bidirectional';
 }
 
@@ -203,6 +194,7 @@ export function explodeNetworkLinksToRelationships(args: {
 
   for (const link of args.links) {
     const rule = rulesByLinkId.get(link.id);
+    const normalizedMembershipRule = normalizeMembershipRules(rule);
     const linkRows: DerivedNetworkRelationshipRow[] = [];
 
     for (const right of rightsByLinkId.get(link.id) ?? []) {
@@ -232,7 +224,11 @@ export function explodeNetworkLinksToRelationships(args: {
           initiator_group_id: right.initiator_group_id ?? null,
           created_at: createdAt,
           structural_relation: link.structural_relation === 'sibling' ? 'sibling' : 'parent_child',
-          membership_mode: getMembershipRuleConfig(rule, 'forward').membership_mode,
+          membership_mode: normalizedMembershipRule.membership_mode,
+          membership_direction: normalizedMembershipRule.membership_direction,
+          membership_role_id: normalizedMembershipRule.role_id ?? null,
+          membership_source_group_ids: normalizedMembershipRule.source_group_ids ?? null,
+          relationship_direction: 'forward',
           right_direction: right.direction,
         });
       }
@@ -253,7 +249,11 @@ export function explodeNetworkLinksToRelationships(args: {
           initiator_group_id: right.initiator_group_id ?? null,
           created_at: createdAt,
           structural_relation: link.structural_relation === 'sibling' ? 'sibling' : 'parent_child',
-          membership_mode: getMembershipRuleConfig(rule, 'backward').membership_mode,
+          membership_mode: normalizedMembershipRule.membership_mode,
+          membership_direction: normalizedMembershipRule.membership_direction,
+          membership_role_id: normalizedMembershipRule.role_id ?? null,
+          membership_source_group_ids: normalizedMembershipRule.source_group_ids ?? null,
+          relationship_direction: 'backward',
           right_direction: right.direction,
         });
       }
@@ -277,7 +277,11 @@ export function explodeNetworkLinksToRelationships(args: {
         initiator_group_id: null,
         created_at: createdAt,
         structural_relation: link.structural_relation === 'sibling' ? 'sibling' : 'parent_child',
-        membership_mode: getMembershipRuleConfig(rule, 'forward').membership_mode,
+        membership_mode: normalizedMembershipRule.membership_mode,
+        membership_direction: normalizedMembershipRule.membership_direction,
+        membership_role_id: normalizedMembershipRule.role_id ?? null,
+        membership_source_group_ids: normalizedMembershipRule.source_group_ids ?? null,
+        relationship_direction: 'forward',
         right_direction: 'forward',
       });
 
@@ -296,7 +300,11 @@ export function explodeNetworkLinksToRelationships(args: {
         initiator_group_id: null,
         created_at: createdAt,
         structural_relation: link.structural_relation === 'sibling' ? 'sibling' : 'parent_child',
-        membership_mode: getMembershipRuleConfig(rule, 'backward').membership_mode,
+        membership_mode: normalizedMembershipRule.membership_mode,
+        membership_direction: normalizedMembershipRule.membership_direction,
+        membership_role_id: normalizedMembershipRule.role_id ?? null,
+        membership_source_group_ids: normalizedMembershipRule.source_group_ids ?? null,
+        relationship_direction: 'backward',
         right_direction: 'backward',
       });
     }

@@ -45,6 +45,7 @@ import { EntitySearchBar } from '@/features/shared/ui/ui/entity-search-bar';
 import { emptyRoleEditorForm, roleToEditorForm } from '@/features/groups/logic/roleFormHelpers';
 import { getMembershipDisplayRoles } from '@/features/groups/logic/buildMembershipRightsSummary';
 import { resolveChildBaseGroups } from '@/features/groups/logic/hierarchy';
+import { resolveOfflineRosterProvenance } from '@/features/groups/logic/offlineRosterProvenance';
 import type { MembershipCompositionGroupLike } from '@/features/groups/logic/membershipComposition';
 import { queries } from '@/zero/queries';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
@@ -86,27 +87,6 @@ function isOfflineMembershipParticipant(
   return Boolean(
     membership && 'membershipKind' in membership && membership.membershipKind === 'offline'
   );
-}
-
-function toProvenanceGroup(
-  groupRef:
-    | {
-        id: string;
-        name?: string | null;
-        group_type?: string | null;
-      }
-    | null
-    | undefined
-) {
-  if (!groupRef?.id) {
-    return null;
-  }
-
-  return {
-    id: groupRef.id,
-    name: groupRef.name || groupRef.id,
-    group_type: groupRef.group_type ?? null,
-  };
 }
 
 type GroupReferenceWithType = OfflineRosterGroupReference & { group_type?: string | null };
@@ -578,6 +558,18 @@ function GroupMembershipsContent({
       .filter((candidate): candidate is string => Boolean(candidate));
   }, [group]);
 
+  const offlineProvenanceByMemberId = useMemo(
+    () =>
+      resolveOfflineRosterProvenance({
+        group: compositionGroup,
+        offlineMembers: offlineMembersData || [],
+        relationships: hierarchyRelationships,
+        groupsById,
+        siblingRootGroupIds,
+      }),
+    [compositionGroup, groupsById, hierarchyRelationships, offlineMembersData, siblingRootGroupIds]
+  );
+
   const effectiveOfflineMemberships = useMemo<EffectiveOfflineMembership[]>(() => {
     const searchValue = memberSearchQuery.trim().toLowerCase();
 
@@ -596,6 +588,7 @@ function GroupMembershipsContent({
           offlineMember?.connected_user?.first_name,
           offlineMember?.connected_user?.last_name,
           offlineMember?.connected_user?.handle,
+          ...(membership.roles ?? []).map(role => role.name),
         ]
           .filter(Boolean)
           .join(' ')
@@ -605,40 +598,9 @@ function GroupMembershipsContent({
       })
       .map(membership => {
         const offlineMember = membership.group_offline_member;
-        const baseGroupRef =
-          groupsById.get(offlineMember?.group_id || '') || offlineMember?.group || null;
-
-        let partGroupRef: (OfflineRosterGroupReference & { group_type?: string | null }) | null =
-          null;
-        if (showComposition) {
-          if (compositionGroup?.group_type === 'hierarchical') {
-            partGroupRef = toOfflineRosterGroupReference(compositionGroup);
-          } else if (compositionGroup?.group_type === 'sibling') {
-            const baseGroupId = offlineMember?.group_id || '';
-            const matchedRootGroupId =
-              siblingRootGroupIds.find(rootGroupId => {
-                if (rootGroupId === baseGroupId) {
-                  return true;
-                }
-
-                const rootGroup = groupsById.get(rootGroupId);
-                if (rootGroup?.group_type !== 'hierarchical') {
-                  return false;
-                }
-
-                return resolveChildBaseGroups(
-                  rootGroupId,
-                  hierarchyRelationships,
-                  groupsById
-                ).includes(baseGroupId);
-              }) ||
-              membership.source_group_id ||
-              baseGroupId;
-
-            partGroupRef =
-              groupsById.get(matchedRootGroupId) || membership.source_group || baseGroupRef;
-          }
-        }
+        const provenance = offlineMember?.id
+          ? offlineProvenanceByMemberId.get(offlineMember.id)
+          : undefined;
 
         return {
           ...membership,
@@ -654,56 +616,76 @@ function GroupMembershipsContent({
           },
           roles: membership.roles ?? [],
           role: membership.role ?? null,
-          partGroup: showComposition ? toProvenanceGroup(partGroupRef) : null,
-          baseGroup: showComposition ? toProvenanceGroup(baseGroupRef) : null,
+          partGroup: showComposition ? (provenance?.partGroup ?? null) : null,
+          baseGroup: showComposition ? (provenance?.baseGroup ?? null) : null,
         };
       });
   }, [
-    compositionGroup,
-    group,
     groupId,
-    groupsById,
-    hierarchyRelationships,
     memberSearchQuery,
     offlineMembershipsData,
+    offlineProvenanceByMemberId,
     showComposition,
-    siblingRootGroupIds,
   ]);
 
   const offlineRows = useMemo(() => {
     const searchValue = memberSearchQuery.trim().toLowerCase();
-
-    if (showComposition) {
-      return effectiveOfflineMemberships.map<OfflineRosterRow>(membership => {
-        const offlineMember = membership.group_offline_member;
-        return {
-          id: offlineMember?.id || membership.id,
-          kind: 'offline',
-          effectiveMembershipId: membership.id,
-          firstName: offlineMember?.first_name || '',
-          lastName: offlineMember?.last_name || '',
-          isActiveUser: false,
-          reasonNotSignedUp: offlineMember?.reason_not_signed_up,
-          connectedUser: offlineMember?.connected_user ?? null,
-          partGroup: membership.partGroup || null,
-          baseGroup: membership.baseGroup || null,
-          roles: membership.roles,
-          canViewRights: true,
-          canManageRoles: canManageMembers,
-          readOnlyIdentity: true,
-          canConnect: false,
-          canEdit: false,
-          canDelete: false,
-        };
-      });
-    }
-
     const effectiveMembershipByOfflineMemberId = new Map(
       effectiveOfflineMemberships.map(membership => [
         membership.group_offline_member_id,
         membership,
       ])
     );
+
+    if (showComposition) {
+      return (offlineMembersData || [])
+        .filter(offlineMember => {
+          if (!searchValue) {
+            return true;
+          }
+
+          const effectiveMembership = effectiveMembershipByOfflineMemberId.get(offlineMember.id);
+          const haystack = [
+            offlineMember.first_name,
+            offlineMember.last_name,
+            offlineMember.reason_not_signed_up,
+            offlineMember.connected_user?.first_name,
+            offlineMember.connected_user?.last_name,
+            offlineMember.connected_user?.handle,
+            ...(effectiveMembership?.roles ?? []).map(role => role.name),
+          ]
+            .filter(Boolean)
+            .join(' ')
+            .toLowerCase();
+
+          return haystack.includes(searchValue);
+        })
+        .map<OfflineRosterRow>(offlineMember => {
+          const effectiveMembership = effectiveMembershipByOfflineMemberId.get(offlineMember.id);
+          const provenance = offlineProvenanceByMemberId.get(offlineMember.id);
+
+          return {
+            id: offlineMember.id,
+            kind: 'offline',
+            effectiveMembershipId: effectiveMembership?.id ?? null,
+            user: null,
+            firstName: offlineMember.first_name,
+            lastName: offlineMember.last_name,
+            isActiveUser: false,
+            reasonNotSignedUp: offlineMember.reason_not_signed_up,
+            connectedUser: offlineMember.connected_user ?? null,
+            partGroup: provenance?.partGroup ?? null,
+            baseGroup: provenance?.baseGroup ?? null,
+            roles: effectiveMembership?.roles ?? [],
+            canViewRights: Boolean(effectiveMembership),
+            canManageRoles: canManageMembers && Boolean(effectiveMembership),
+            readOnlyIdentity: true,
+            canConnect: false,
+            canEdit: false,
+            canDelete: false,
+          };
+        });
+    }
 
     return (offlineMembersData || [])
       .filter(offlineMember => offlineMember.group_id === groupId)
@@ -735,6 +717,7 @@ function GroupMembershipsContent({
           id: offlineMember.id,
           kind: 'offline',
           effectiveMembershipId: effectiveMembership?.id ?? null,
+          user: null,
           firstName: offlineMember.first_name,
           lastName: offlineMember.last_name,
           isActiveUser: false,
@@ -757,6 +740,7 @@ function GroupMembershipsContent({
     groupId,
     memberSearchQuery,
     offlineMembersData,
+    offlineProvenanceByMemberId,
     showComposition,
   ]);
 
@@ -764,6 +748,7 @@ function GroupMembershipsContent({
     const activeRows = activeMembers.map(membership => ({
       id: `active:${membership.id}`,
       kind: 'active' as const,
+      user: membership.user ?? null,
       firstName: membership.user?.first_name || '',
       lastName: membership.user?.last_name || '',
       isActiveUser: true,
@@ -1023,6 +1008,8 @@ function GroupMembershipsContent({
               description="Some real group members may never sign up on the platform. Use this roster to include those offline users, map them to active platform users when needed, and keep counts and delegate calculations grounded in the full real-world membership."
               rows={allUserRows}
               connectedUserCandidates={connectedUserCandidates}
+              tableVariant="membership"
+              fallbackRoleLabel="No user role"
               showManageButton={canManageMembers && !showComposition}
               showProvenanceColumns={showComposition}
               onOpenRightsDialog={row => {

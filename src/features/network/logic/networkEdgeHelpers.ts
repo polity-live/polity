@@ -14,6 +14,7 @@ import type {
   CanonicalMembershipMode,
   GroupRelationshipType,
   NormalizedGroupRelationship,
+  RelativeMembershipDirection,
 } from '../types/network.types';
 
 type TranslationFn = (key: string, defaultValue?: string) => string;
@@ -25,7 +26,9 @@ interface CreateNetworkRelationshipEdgeDataArgs {
   rightRelationshipKinds?: Record<string, NetworkRelationshipKind>;
   relationshipType?: GroupRelationshipType | 'membership';
   membershipMode?: CanonicalMembershipMode | null;
+  membershipDirection?: RelativeMembershipDirection | null;
   rightEdgeDirections?: Record<string, NetworkEdgeRelationshipDirection>;
+  visibleFlowDirection?: NetworkEdgeRelationshipDirection | null;
   rightConnectionDirections?: Record<string, NetworkConnectionDirection>;
   userConnectionDirections?: NetworkUserConnectionDirection[];
   relationshipDepth?: NetworkRelationshipDepth;
@@ -222,6 +225,45 @@ export function getAnchorUsageConnectionDirection({
   return edgeDirection === 'forward' ? 'outgoing' : 'incoming';
 }
 
+export function getVisibleFlowDirection(
+  rightEdgeDirections?: Record<string, NetworkEdgeRelationshipDirection>
+): NetworkEdgeRelationshipDirection | null {
+  const directionValues = Object.values(rightEdgeDirections ?? {});
+
+  if (directionValues.length === 0) {
+    return null;
+  }
+
+  if (directionValues.includes('bidirectional')) {
+    return 'bidirectional';
+  }
+
+  const hasForward = directionValues.some(direction => direction === 'forward');
+  const hasBackward = directionValues.some(direction => direction === 'backward');
+
+  if (hasForward && hasBackward) {
+    return 'bidirectional';
+  }
+
+  if (hasForward) {
+    return 'forward';
+  }
+
+  if (hasBackward) {
+    return 'backward';
+  }
+
+  return null;
+}
+
+export function getAnimatedFlowDirection(
+  visibleFlowDirection: NetworkEdgeRelationshipDirection | null | undefined
+) {
+  return visibleFlowDirection === 'forward' || visibleFlowDirection === 'backward'
+    ? visibleFlowDirection
+    : null;
+}
+
 function getConnectionDirectionFromFilters(
   connectionDirections: readonly NetworkUserConnectionDirection[]
 ): NetworkConnectionDirection | undefined {
@@ -297,10 +339,10 @@ export function buildCurrentPerspectiveRightDisplayDirections({
       }
 
       if (currentIsSource) {
-        return [right, direction === 'forward' ? 'outgoing' : 'incoming'];
+        return [right, direction === 'forward' ? 'incoming' : 'outgoing'];
       }
 
-      return [right, direction === 'forward' ? 'incoming' : 'outgoing'];
+      return [right, direction === 'forward' ? 'outgoing' : 'incoming'];
     })
   ) as Record<string, NetworkConnectionDirection>;
 }
@@ -332,28 +374,10 @@ export function orientRelationshipEdgeForCurrentPerspective({
     };
   }
 
-  const uniqueDisplayDirections = [...new Set(Object.values(rightDisplayDirections))];
-
-  if (uniqueDisplayDirections.length !== 1 || uniqueDisplayDirections[0] === 'bidirectional') {
-    return {
-      sourceId,
-      targetId,
-      rightEdgeDirections,
-      rightDisplayDirections,
-    };
-  }
-
-  const otherNodeId = currentNodeId === sourceId ? targetId : sourceId;
-  const displaySourceId = uniqueDisplayDirections[0] === 'incoming' ? currentNodeId : otherNodeId;
-  const displayTargetId = uniqueDisplayDirections[0] === 'incoming' ? otherNodeId : currentNodeId;
-
   return {
-    sourceId: displaySourceId,
-    targetId: displayTargetId,
-    rightEdgeDirections: buildSingleDirectionRightEdgeDirections(
-      Object.keys(rightEdgeDirections),
-      'forward'
-    ),
+    sourceId,
+    targetId,
+    rightEdgeDirections,
     rightDisplayDirections,
   };
 }
@@ -382,9 +406,9 @@ export function buildHierarchyRightEdgeDirections(
 
     const nextDirection =
       relationship.group_id === parentGroupId && relationship.related_group_id === childGroupId
-        ? 'forward'
+        ? 'backward'
         : relationship.group_id === childGroupId && relationship.related_group_id === parentGroupId
-          ? 'backward'
+          ? 'forward'
           : null;
 
     if (!nextDirection) {
@@ -402,9 +426,16 @@ export function buildRelationshipEdgeMarkers(
   rightEdgeDirections?: Record<string, NetworkEdgeRelationshipDirection>
 ) {
   const directionValues = Object.values(rightEdgeDirections ?? {});
+
+  if (directionValues.length === 0) {
+    return {
+      markerStart: undefined,
+      markerEnd: undefined,
+    };
+  }
+
   const hasBackwardDirection = directionValues.some(isBackwardDirection);
-  const hasForwardDirection =
-    directionValues.length === 0 || directionValues.some(isForwardDirection);
+  const hasForwardDirection = directionValues.some(isForwardDirection);
 
   return {
     markerStart: hasBackwardDirection
@@ -428,7 +459,9 @@ export function createNetworkRelationshipEdgeData({
   rightRelationshipKinds = {},
   relationshipType,
   membershipMode,
+  membershipDirection,
   rightEdgeDirections,
+  visibleFlowDirection,
   rightConnectionDirections,
   userConnectionDirections,
   relationshipDepth,
@@ -448,7 +481,9 @@ export function createNetworkRelationshipEdgeData({
     rightRelationshipKinds,
     relationshipType,
     membershipMode,
+    membershipDirection,
     rightEdgeDirections,
+    visibleFlowDirection,
     rightConnectionDirections,
     userConnectionDirections,
     relationshipDepth,
@@ -524,6 +559,10 @@ export function buildNetworkRelationshipDialogData(
       edgeData?.membershipMode === 'role_members' ||
       edgeData?.membershipMode === 'selected_source_groups'
         ? edgeData.membershipMode
+        : undefined,
+    membershipDirection:
+      edgeData?.membershipDirection === 'incoming' || edgeData?.membershipDirection === 'outgoing'
+        ? edgeData.membershipDirection
         : undefined,
     rightEdgeDirections: filterRecordToVisibleRights(
       edgeData?.rightEdgeDirections,

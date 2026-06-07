@@ -64,6 +64,23 @@ export function GroupEdit({ groupId }: GroupEditProps) {
     }
   };
 
+  const getRelativeSiblingMembershipDirection = () => {
+    if (!primarySiblingLink?.membership_rule?.membership_direction || !group) {
+      return null;
+    }
+
+    const currentIsSource = primarySiblingLink.source_group_id === group.id;
+    if (currentIsSource) {
+      return primarySiblingLink.membership_rule.membership_direction === 'forward'
+        ? 'outgoing'
+        : 'incoming';
+    }
+
+    return primarySiblingLink.membership_rule.membership_direction === 'forward'
+      ? 'incoming'
+      : 'outgoing';
+  };
+
   if (primarySiblingLink) {
     const derivedDirections = buildRightDirectionsForLink({
       currentGroupId: groupId,
@@ -122,26 +139,16 @@ export function GroupEdit({ groupId }: GroupEditProps) {
         longitude: group.longitude ?? null,
         imageURL: group.image_url ?? '',
         connected_group_id: group.connected_group_id ?? null,
+        sibling_membership_direction: getRelativeSiblingMembershipDirection(),
         sibling_membership_mode:
-          ((primarySiblingLink?.source_group_id === group.id
-            ? (primarySiblingLink?.membership_rule?.backward_membership_mode ??
-              primarySiblingLink?.membership_rule?.membership_mode)
-            : primarySiblingLink?.membership_rule
-                ?.forward_membership_mode) as GroupFormData['sibling_membership_mode']) ??
+          (primarySiblingLink?.membership_rule
+            ?.membership_mode as GroupFormData['sibling_membership_mode']) ??
           fallbackCanonicalMembershipMode(group.sibling_membership_mode) ??
           null,
         sibling_role_id:
-          (primarySiblingLink?.source_group_id === group.id
-            ? (primarySiblingLink?.membership_rule?.backward_role_id ??
-              primarySiblingLink?.membership_rule?.role_id)
-            : primarySiblingLink?.membership_rule?.forward_role_id) ??
-          group.sibling_role_id ??
-          null,
+          primarySiblingLink?.membership_rule?.role_id ?? group.sibling_role_id ?? null,
         parliament_source_group_ids:
-          (primarySiblingLink?.source_group_id === group.id
-            ? (primarySiblingLink?.membership_rule?.backward_source_group_ids ??
-              primarySiblingLink?.membership_rule?.source_group_ids)
-            : primarySiblingLink?.membership_rule?.forward_source_group_ids) ??
+          primarySiblingLink?.membership_rule?.source_group_ids ??
           (group.sibling_sources ?? []).map(sourceLink => sourceLink.source_group_id) ??
           [],
         connected_relationship_directions: connectedRelationshipDirections,

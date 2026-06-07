@@ -9,44 +9,35 @@ export type CanonicalNetworkMembershipMode =
 export type NetworkLinkMembershipDirection = 'forward' | 'backward';
 
 export interface NetworkLinkMembershipRuleConfig {
+  membership_direction: NetworkLinkMembershipDirection | null;
   membership_mode: CanonicalNetworkMembershipMode;
   role_id: string | null;
   source_group_ids: string[] | null;
 }
 
-export interface NormalizedNetworkLinkMembershipRules {
-  forward: NetworkLinkMembershipRuleConfig;
-  backward: NetworkLinkMembershipRuleConfig;
+export interface DirectionalMembershipRuleConfig {
+  membership_mode: CanonicalNetworkMembershipMode;
+  role_id: string | null;
+  source_group_ids: string[] | null;
 }
 
-export type MembershipRuleConfigLike =
-  | {
-      membership_mode?: string | null;
-      role_id?: string | null;
-      source_group_ids?: readonly string[] | null;
-    }
-  | null
-  | undefined;
+export interface MembershipRuleConfigLike {
+  membership_direction?: string | null;
+  membership_mode?: string | null;
+  role_id?: string | null;
+  source_group_ids?: readonly string[] | null;
+}
 
-export type MembershipRuleLike =
-  | ({
-      id?: string;
-      forward?: MembershipRuleConfigLike;
-      backward?: MembershipRuleConfigLike;
-      forward_membership_mode?: string | null;
-      forward_role_id?: string | null;
-      forward_source_group_ids?: readonly string[] | null;
-      backward_membership_mode?: string | null;
-      backward_role_id?: string | null;
-      backward_source_group_ids?: readonly string[] | null;
-      membership_mode?: string | null;
-      role_id?: string | null;
-      source_group_ids?: readonly string[] | null;
-    } & Record<string, unknown>)
-  | null
-  | undefined;
+export type MembershipRuleLike = MembershipRuleConfigLike | null | undefined;
+
+export const EMPTY_DIRECTIONAL_MEMBERSHIP_RULE_CONFIG: DirectionalMembershipRuleConfig = {
+  membership_mode: 'none',
+  role_id: null,
+  source_group_ids: null,
+};
 
 export const EMPTY_MEMBERSHIP_RULE_CONFIG: NetworkLinkMembershipRuleConfig = {
+  membership_direction: null,
   membership_mode: 'none',
   role_id: null,
   source_group_ids: null,
@@ -56,17 +47,43 @@ function dedupeStrings(values?: readonly string[] | null) {
   return values ? [...new Set(values.filter(Boolean))] : null;
 }
 
+function normalizeMembershipMode(value?: string | null): CanonicalNetworkMembershipMode {
+  switch (value) {
+    case 'all_members':
+    case 'role_members':
+    case 'selected_source_groups':
+      return value;
+    default:
+      return 'none';
+  }
+}
+
+function normalizeMembershipDirection(
+  value: string | null | undefined,
+  membershipMode: CanonicalNetworkMembershipMode
+): NetworkLinkMembershipDirection | null {
+  if (membershipMode === 'none') {
+    return null;
+  }
+
+  return value === 'forward' || value === 'backward' ? value : null;
+}
+
 export function normalizeMembershipRuleConfig(
-  membershipRule: MembershipRuleConfigLike
+  membershipRule: MembershipRuleConfigLike | null | undefined
 ): NetworkLinkMembershipRuleConfig {
-  const membershipMode =
-    membershipRule?.membership_mode === 'all_members' ||
-    membershipRule?.membership_mode === 'role_members' ||
-    membershipRule?.membership_mode === 'selected_source_groups'
-      ? membershipRule.membership_mode
-      : 'none';
+  const membershipMode = normalizeMembershipMode(membershipRule?.membership_mode);
+  const membershipDirection = normalizeMembershipDirection(
+    membershipRule?.membership_direction,
+    membershipMode
+  );
+
+  if (membershipMode === 'none' || !membershipDirection) {
+    return EMPTY_MEMBERSHIP_RULE_CONFIG;
+  }
 
   return {
+    membership_direction: membershipDirection,
     membership_mode: membershipMode,
     role_id: membershipMode === 'role_members' ? (membershipRule?.role_id ?? null) : null,
     source_group_ids:
@@ -76,64 +93,18 @@ export function normalizeMembershipRuleConfig(
   };
 }
 
-function hasNestedDirections(
-  rule: MembershipRuleLike
-): rule is Extract<MembershipRuleLike, object> {
-  return Boolean(rule) && ('forward' in rule || 'backward' in rule);
-}
-
-function hasFlatDirections(rule: MembershipRuleLike): rule is Extract<MembershipRuleLike, object> {
-  return (
-    Boolean(rule) &&
-    ('forward_membership_mode' in rule ||
-      'forward_role_id' in rule ||
-      'forward_source_group_ids' in rule ||
-      'backward_membership_mode' in rule ||
-      'backward_role_id' in rule ||
-      'backward_source_group_ids' in rule)
-  );
-}
-
 export function normalizeMembershipRules(
   membershipRule: MembershipRuleLike
-): NormalizedNetworkLinkMembershipRules {
-  if (hasNestedDirections(membershipRule)) {
-    return {
-      forward: normalizeMembershipRuleConfig(membershipRule.forward),
-      backward: normalizeMembershipRuleConfig(membershipRule.backward),
-    };
-  }
-
-  if (hasFlatDirections(membershipRule)) {
-    return {
-      forward: normalizeMembershipRuleConfig({
-        membership_mode: membershipRule.forward_membership_mode,
-        role_id: membershipRule.forward_role_id,
-        source_group_ids: membershipRule.forward_source_group_ids,
-      }),
-      backward: normalizeMembershipRuleConfig({
-        membership_mode: membershipRule.backward_membership_mode,
-        role_id: membershipRule.backward_role_id,
-        source_group_ids: membershipRule.backward_source_group_ids,
-      }),
-    };
-  }
-
-  return {
-    forward: EMPTY_MEMBERSHIP_RULE_CONFIG,
-    backward: normalizeMembershipRuleConfig(membershipRule),
-  };
+): NetworkLinkMembershipRuleConfig {
+  return normalizeMembershipRuleConfig(membershipRule);
 }
 
-export function hasActiveMembershipRuleConfig(config: MembershipRuleConfigLike) {
+export function hasActiveMembershipRuleConfig(config: MembershipRuleConfigLike | null | undefined) {
   return normalizeMembershipRuleConfig(config).membership_mode !== 'none';
 }
 
 export function hasActiveMembershipRules(membershipRule: MembershipRuleLike) {
-  const normalized = normalizeMembershipRules(membershipRule);
-  return (
-    normalized.forward.membership_mode !== 'none' || normalized.backward.membership_mode !== 'none'
-  );
+  return normalizeMembershipRules(membershipRule).membership_mode !== 'none';
 }
 
 export function sameMembershipRules(left: MembershipRuleLike, right: MembershipRuleLike) {
@@ -141,54 +112,54 @@ export function sameMembershipRules(left: MembershipRuleLike, right: MembershipR
   const normalizedRight = normalizeMembershipRules(right);
 
   return (
-    normalizedLeft.forward.membership_mode === normalizedRight.forward.membership_mode &&
-    normalizedLeft.forward.role_id === normalizedRight.forward.role_id &&
-    JSON.stringify(normalizedLeft.forward.source_group_ids ?? null) ===
-      JSON.stringify(normalizedRight.forward.source_group_ids ?? null) &&
-    normalizedLeft.backward.membership_mode === normalizedRight.backward.membership_mode &&
-    normalizedLeft.backward.role_id === normalizedRight.backward.role_id &&
-    JSON.stringify(normalizedLeft.backward.source_group_ids ?? null) ===
-      JSON.stringify(normalizedRight.backward.source_group_ids ?? null)
+    normalizedLeft.membership_direction === normalizedRight.membership_direction &&
+    normalizedLeft.membership_mode === normalizedRight.membership_mode &&
+    normalizedLeft.role_id === normalizedRight.role_id &&
+    JSON.stringify(normalizedLeft.source_group_ids ?? null) ===
+      JSON.stringify(normalizedRight.source_group_ids ?? null)
   );
+}
+
+export function getMembershipRuleDirection(membershipRule: MembershipRuleLike) {
+  return normalizeMembershipRules(membershipRule).membership_direction;
 }
 
 export function getMembershipRuleConfig(
   membershipRule: MembershipRuleLike,
   direction: NetworkLinkMembershipDirection
-) {
-  return normalizeMembershipRules(membershipRule)[direction];
-}
-
-export function toLegacyMembershipRuleFields(membershipRule: MembershipRuleLike) {
-  return normalizeMembershipRules(membershipRule).backward;
-}
-
-export function toMembershipRuleSnapshot(
-  membershipRule: MembershipRuleLike
-): NetworkLinkMembershipRuleSnapshot {
+): DirectionalMembershipRuleConfig {
   const normalized = normalizeMembershipRules(membershipRule);
 
+  if (normalized.membership_direction !== direction) {
+    return EMPTY_DIRECTIONAL_MEMBERSHIP_RULE_CONFIG;
+  }
+
   return {
-    forward: normalized.forward,
-    backward: normalized.backward,
+    membership_mode: normalized.membership_mode,
+    role_id: normalized.role_id,
+    source_group_ids: normalized.source_group_ids,
   };
 }
 
 export function flattenMembershipRulesForStorage(membershipRule: MembershipRuleLike) {
   const normalized = normalizeMembershipRules(membershipRule);
-  const legacy = normalized.backward;
 
   return {
-    membership_mode: legacy.membership_mode,
-    role_id: legacy.role_id,
-    source_group_ids: legacy.source_group_ids,
-    forward_membership_mode: normalized.forward.membership_mode,
-    forward_role_id: normalized.forward.role_id,
-    forward_source_group_ids: normalized.forward.source_group_ids,
-    backward_membership_mode: normalized.backward.membership_mode,
-    backward_role_id: normalized.backward.role_id,
-    backward_source_group_ids: normalized.backward.source_group_ids,
+    membership_direction: normalized.membership_direction,
+    membership_mode: normalized.membership_mode,
+    role_id: normalized.role_id,
+    source_group_ids: normalized.source_group_ids,
   };
+}
+
+export function toLegacyMembershipRuleFields(membershipRule: MembershipRuleLike) {
+  return normalizeMembershipRules(membershipRule);
+}
+
+export function toMembershipRuleSnapshot(
+  membershipRule: MembershipRuleLike
+): NetworkLinkMembershipRuleSnapshot {
+  return normalizeMembershipRules(membershipRule);
 }
 
 export function toDirectionalMembershipRuleInput(
@@ -199,8 +170,6 @@ export function toDirectionalMembershipRuleInput(
 
   return {
     id: id ?? undefined,
-    forward: normalized.forward,
-    backward: normalized.backward,
     ...flattenMembershipRulesForStorage(normalized),
   };
 }

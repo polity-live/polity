@@ -77,15 +77,10 @@ describe('offline-membership-helpers', () => {
         {
           id: 'rule-1',
           network_link_id: 'link-1',
-          membership_mode: 'none',
-          role_id: null,
+          membership_direction: 'forward',
+          membership_mode: 'role_members',
+          role_id: 'role-admin',
           source_group_ids: null,
-          forward_membership_mode: 'role_members',
-          forward_role_id: 'role-admin',
-          forward_source_group_ids: null,
-          backward_membership_mode: 'none',
-          backward_role_id: null,
-          backward_source_group_ids: null,
         },
       ])
       .mockResolvedValueOnce([
@@ -126,15 +121,10 @@ describe('offline-membership-helpers', () => {
         {
           id: 'rule-1',
           network_link_id: 'link-1',
-          membership_mode: 'none',
-          role_id: null,
+          membership_direction: 'forward',
+          membership_mode: 'role_members',
+          role_id: 'role-admin',
           source_group_ids: null,
-          forward_membership_mode: 'role_members',
-          forward_role_id: 'role-admin',
-          forward_source_group_ids: null,
-          backward_membership_mode: 'none',
-          backward_role_id: null,
-          backward_source_group_ids: null,
         },
       ])
       .mockResolvedValueOnce([

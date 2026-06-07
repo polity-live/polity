@@ -14,7 +14,6 @@ import {
   CardTitle,
 } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import {
   Table,
   TableBody,
@@ -30,6 +29,7 @@ import { getTableTagSurfaceClassName } from '@/features/shared/ui/ui/table-tag';
 import { badgeVariants } from '@/features/shared/ui/ui/badge';
 import { cn } from '@/features/shared/utils/utils.ts';
 import type { ParticipationLike } from '@/features/shared/types/participation';
+import { UserTableCell } from '@/features/shared/ui/ui/user-table-cell';
 import type { MembershipSort, MembershipSortField } from '../types/group.types';
 import { RoleTag } from './RoleTag';
 
@@ -123,10 +123,6 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
               <TableBody>
                 {members.map(membership => {
                   const user = membership.user;
-                  const userName =
-                    [user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'Unknown User';
-                  const userAvatar = user?.avatar || '';
-                  const userHandle = user?.handle || '';
                   const userId = user?.id || null;
                   const displayRoles = getMembershipDisplayRoles(membership);
                   const createdAt = membership.created_at
@@ -136,49 +132,7 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
                   return (
                     <TableRow key={membership.id}>
                       <TableCell>
-                        {user?.id ? (
-                          <Link
-                            to="/user/$id"
-                            params={{ id: user.id }}
-                            className="group flex items-center gap-3 text-left"
-                          >
-                            <Avatar className="h-10 w-10">
-                              <AvatarImage src={userAvatar} alt={userName} />
-                              <AvatarFallback>
-                                {userName
-                                  .split(' ')
-                                  .map((n: string) => n[0])
-                                  .join('')
-                                  .toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="group-hover:underline">
-                              <div className="font-medium">{userName}</div>
-                              {userHandle && (
-                                <div className="text-muted-foreground text-sm">@{userHandle}</div>
-                              )}
-                            </div>
-                          </Link>
-                        ) : (
-                          <div className="flex items-center gap-3 text-left">
-                            <Avatar className="h-10 w-10">
-                              <AvatarImage src={userAvatar} alt={userName} />
-                              <AvatarFallback>
-                                {userName
-                                  .split(' ')
-                                  .map((n: string) => n[0])
-                                  .join('')
-                                  .toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <div className="font-medium">{userName}</div>
-                              {userHandle && (
-                                <div className="text-muted-foreground text-sm">@{userHandle}</div>
-                              )}
-                            </div>
-                          </div>
-                        )}
+                        <UserTableCell user={user} />
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-2">

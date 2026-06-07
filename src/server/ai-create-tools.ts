@@ -954,6 +954,10 @@ export function buildAiCreateTools(userId: string) {
                   status: 'requested',
                   rights,
                   membership_rule: {
+                    membership_direction:
+                      siblingMembershipMode === 'elected' || siblingMembershipMode === 'parliament'
+                        ? 'backward'
+                        : null,
                     membership_mode:
                       siblingMembershipMode === 'elected'
                         ? 'role_members'
@@ -965,24 +969,6 @@ export function buildAiCreateTools(userId: string) {
                       siblingMembershipMode === 'parliament'
                         ? resolvedParliamentSourceGroupIds
                         : null,
-                    forward: {
-                      membership_mode: 'none',
-                      role_id: null,
-                      source_group_ids: null,
-                    },
-                    backward: {
-                      membership_mode:
-                        siblingMembershipMode === 'elected'
-                          ? 'role_members'
-                          : siblingMembershipMode === 'parliament'
-                            ? 'selected_source_groups'
-                            : 'none',
-                      role_id: siblingMembershipMode === 'elected' ? resolvedConnectedRoleId : null,
-                      source_group_ids:
-                        siblingMembershipMode === 'parliament'
-                          ? resolvedParliamentSourceGroupIds
-                          : null,
-                    },
                   },
                 }),
                 ctx

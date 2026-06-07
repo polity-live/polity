@@ -13,7 +13,6 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { GroupConflictDialog, GroupConflictPanel } from '@/features/groups/ui/GroupConflictPanel';
 import {
   applyNetworkLinkPreset,
-  createEmptyMembershipRule,
   getPresetMembershipDirection,
   getRelationshipTypeForPreset,
   getSelectedMembershipDirection,
@@ -34,6 +33,7 @@ import type {
 } from '../types/network.types';
 import {
   getGroupRelationshipDirectionOptions,
+  GroupRelationshipMembershipModeDescription,
   GroupRelationshipNameTag,
   GroupRelationshipRightsSelector,
   GroupRelationshipTypeSelect,
@@ -92,93 +92,6 @@ const PRESET_OPTIONS: {
   },
 ];
 
-function MembershipModeDescription({
-  membershipMode,
-  direction,
-  currentGroupId,
-  currentGroupName,
-  selectedGroupId,
-  selectedGroupName,
-}: {
-  membershipMode: CanonicalMembershipMode;
-  direction: RelativeMembershipDirection;
-  currentGroupId: string;
-  currentGroupName: string;
-  selectedGroupId: string;
-  selectedGroupName: string;
-}) {
-  const safeCurrentGroupName = getSafeGroupDisplayName(currentGroupName, 'diese Gruppe');
-  const safeSelectedGroupName = getSafeGroupDisplayName(selectedGroupName, 'Partnergruppe');
-
-  const currentTag = (
-    <GroupRelationshipNameTag
-      name={safeCurrentGroupName}
-      kind="current"
-      caseStyle="embedded"
-      groupId={currentGroupId}
-      displayMode="name-only"
-    />
-  );
-  const selectedTag = (
-    <GroupRelationshipNameTag
-      name={safeSelectedGroupName}
-      kind="selected"
-      caseStyle="embedded"
-      groupId={selectedGroupId}
-      displayMode="name-only"
-    />
-  );
-
-  const sourceTag = direction === 'incoming' ? selectedTag : currentTag;
-  const targetTag = direction === 'incoming' ? currentTag : selectedTag;
-
-  if (membershipMode === 'all_members') {
-    return (
-      <div className="flex flex-wrap items-center gap-1.5 leading-relaxed">
-        <span>Alle aktiven Mitglieder von</span>
-        {sourceTag}
-        <span>werden in</span>
-        {targetTag}
-        <span>übernommen.</span>
-      </div>
-    );
-  }
-
-  if (membershipMode === 'role_members') {
-    return (
-      <div className="flex flex-wrap items-center gap-1.5 leading-relaxed">
-        <span>Nur Mitglieder mit der gewählten Rolle in</span>
-        {sourceTag}
-        <span>werden in</span>
-        {targetTag}
-        <span>übernommen.</span>
-      </div>
-    );
-  }
-
-  if (membershipMode === 'selected_source_groups') {
-    return (
-      <div className="flex flex-wrap items-center gap-1.5 leading-relaxed">
-        <span>Nur Mitglieder aus den gewählten Source-Gruppen für</span>
-        {sourceTag}
-        <span>werden in</span>
-        {targetTag}
-        <span>übernommen.</span>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-wrap items-center gap-1.5 leading-relaxed">
-      <span>Mitglieder von</span>
-      {sourceTag}
-      <span>werden nicht automatisch in</span>
-      {targetTag}
-      <span>übernommen.</span>
-    </div>
-  );
-}
-
 function getMembershipDirectionLabel(direction: RelativeMembershipDirection) {
   return direction === 'incoming'
     ? 'Partnergruppe -> aktuelle Gruppe'
@@ -219,6 +132,7 @@ function PresetDescription({
       caseStyle="embedded"
       groupId={currentGroupId}
       displayMode="name-only"
+      linkGroups={false}
     />
   );
   const selectedTag = (
@@ -228,6 +142,7 @@ function PresetDescription({
       caseStyle="embedded"
       groupId={selectedGroupId}
       displayMode="name-only"
+      linkGroups={false}
     />
   );
 
@@ -339,17 +254,18 @@ export function NetworkLinkComposer({
   const selectedPreset =
     PRESET_OPTIONS.find(option => option.value === value.preset) ?? PRESET_OPTIONS[1];
   const selectedPresetMembershipDirection = getPresetMembershipDirection(selectedPreset.value);
-  const presetMembershipRule = value.membershipRules[selectedPresetMembershipDirection];
+  const presetMembershipRule = value.membershipRule;
   const hydratedMembershipDirection =
-    getSelectedMembershipDirection({ membershipRules: value.membershipRules }) ??
-    getPresetMembershipDirection(value.preset);
+    getSelectedMembershipDirection({
+      membershipDirection: value.membershipDirection,
+      membershipRule: value.membershipRule,
+    }) ?? getPresetMembershipDirection(value.preset);
   const presetDisabled = (preset: NetworkLinkPreset) =>
     Boolean(disabledRelationshipOptions?.[getRelationshipTypeForPreset(preset)]);
   const [membershipDirection, setMembershipDirection] = useState<RelativeMembershipDirection>(
     hydratedMembershipDirection
   );
-  const activeMembershipRule =
-    value.membershipRules[membershipDirection] ?? createEmptyMembershipRule();
+  const activeMembershipRule = value.membershipRule;
   const selectableRoles = selectableRolesByDirection[membershipDirection] ?? [];
   const presetMembershipSourceGroupId =
     selectedPresetMembershipDirection === 'incoming' ? value.selectedGroupId : currentGroupId;
@@ -365,30 +281,22 @@ export function NetworkLinkComposer({
     patch: Partial<NetworkLinkComposerMembershipRuleValue>
   ) => {
     const nextMembershipRule = {
-      ...value.membershipRules[direction],
+      ...value.membershipRule,
       ...patch,
     };
 
     onValueChange({
       ...value,
-      membershipRules: {
-        incoming: direction === 'incoming' ? nextMembershipRule : createEmptyMembershipRule(),
-        outgoing: direction === 'outgoing' ? nextMembershipRule : createEmptyMembershipRule(),
-      },
+      membershipDirection: direction,
+      membershipRule: nextMembershipRule,
     });
     setMembershipDirection(direction);
   };
 
   const setActiveMembershipDirection = (direction: RelativeMembershipDirection) => {
-    const nextMembershipRule =
-      value.membershipRules[membershipDirection] ?? createEmptyMembershipRule();
-
     onValueChange({
       ...value,
-      membershipRules: {
-        incoming: direction === 'incoming' ? nextMembershipRule : createEmptyMembershipRule(),
-        outgoing: direction === 'outgoing' ? nextMembershipRule : createEmptyMembershipRule(),
-      },
+      membershipDirection: direction,
     });
     setMembershipDirection(direction);
   };
@@ -671,13 +579,14 @@ export function NetworkLinkComposer({
                                 {getCanonicalMembershipModeLabel(option)}
                               </div>
                               <div className="text-muted-foreground text-xs">
-                                <MembershipModeDescription
+                                <GroupRelationshipMembershipModeDescription
                                   membershipMode={option}
                                   direction={membershipDirection}
                                   currentGroupId={currentGroupId}
                                   currentGroupName={currentGroupName}
                                   selectedGroupId={value.selectedGroupId}
                                   selectedGroupName={selectedGroupName}
+                                  linkGroups={false}
                                 />
                               </div>
                             </div>

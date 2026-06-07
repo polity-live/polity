@@ -3,6 +3,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useQuery, useZero } from '@rocicorp/zero/react';
 import { toast } from 'sonner';
 import { normalizeDelegateElectionMode } from '@/features/elections/logic/electionMode';
+import { attachProcessTaskToEvent } from '@/features/amendments/logic/attachProcessTaskToEvent';
 import {
   buildOpenAssignments,
   getRemainingSeatCount,
@@ -51,7 +52,7 @@ export function useGroupOpenAssignments(groupId: string) {
   );
   const [isScheduling, setIsScheduling] = useState(false);
   const { createAgendaItem } = useAgendaActions();
-  const { createVote } = useVoteActions();
+  const { createVote, createVoteChoice } = useVoteActions();
   const { updateProcessTask, updateProcessStepRun, updateProcessRun, updateSupportConfirmation } =
     useAmendmentActions();
 
@@ -244,91 +245,21 @@ export function useGroupOpenAssignments(groupId: string) {
         task.process_run?.amendment?.title ??
         task.support_confirmation?.amendment?.title ??
         assignment.title;
-      const agendaItemId = crypto.randomUUID();
-      const voteId = task.task_type === 'support_confirmation' ? null : crypto.randomUUID();
-      const agendaType =
-        task.task_type === 'implementation_evaluation'
-          ? 'implementation_review'
-          : task.task_type === 'support_confirmation'
-            ? 'support_confirmation'
-            : 'amendment';
-      const agendaTitle =
-        task.task_type === 'implementation_evaluation'
-          ? `Umsetzungspruefung: ${amendmentTitle}`
-          : task.task_type === 'support_confirmation'
-            ? `Unterstuetzung bestaetigen: ${amendmentTitle}`
-            : `Amendment: ${amendmentTitle}`;
 
       setIsScheduling(true);
       try {
-        await createAgendaItem({
-          id: agendaItemId,
-          title: agendaTitle,
-          description: assignment.description,
-          type: agendaType,
-          status: 'pending',
-          forwarding_status: '',
-          order_index: Date.now(),
-          duration: 0,
-          scheduled_time: '',
-          start_time: 0,
-          end_time: 0,
-          activated_at: 0,
-          completed_at: 0,
-          event_id: event.id,
-          amendment_id:
-            task.process_run?.amendment?.id ?? task.support_confirmation?.amendment?.id ?? null,
-          majority_type: null,
-          time_limit: null,
-          voting_phase: null,
+        await attachProcessTaskToEvent({
+          task,
+          event,
+          description: assignment.description || `Event-Anfrage fuer ${amendmentTitle}`,
+          createAgendaItem,
+          createVote,
+          createVoteChoice,
+          updateProcessTask,
+          updateProcessStepRun,
+          updateProcessRun,
+          updateSupportConfirmation,
         });
-
-        if (voteId) {
-          await createVote({
-            id: voteId,
-            agenda_item_id: agendaItemId,
-            amendment_id:
-              task.process_run?.amendment?.id ?? task.support_confirmation?.amendment?.id ?? null,
-            title: agendaTitle,
-            description: assignment.description,
-            closing_duration_seconds: null,
-            closing_end_time: null,
-          });
-        }
-
-        await updateProcessTask({
-          id: task.id,
-          status: 'completed',
-          event_id: event.id,
-          agenda_item_id: agendaItemId,
-          resolved_at: Date.now(),
-        });
-
-        if (task.step_run_id) {
-          await updateProcessStepRun({
-            id: task.step_run_id,
-            event_id: event.id,
-            agenda_item_id: agendaItemId,
-            vote_id: voteId,
-            starts_at: event.start_date ?? null,
-            status: 'scheduled',
-          });
-        }
-
-        if (task.task_type === 'implementation_evaluation') {
-          await updateProcessRun({
-            id: task.process_run_id,
-            implementation_status: 'evaluation_scheduled',
-          });
-        }
-
-        if (task.support_confirmation_id) {
-          await updateSupportConfirmation({
-            id: task.support_confirmation_id,
-            event_id: event.id,
-            process_task_id: task.id,
-          });
-        }
 
         toast.success('Der Prozessauftrag wurde an die Veranstaltung angehaengt.');
       } finally {
@@ -339,6 +270,7 @@ export function useGroupOpenAssignments(groupId: string) {
       availableEvents,
       createAgendaItem,
       createVote,
+      createVoteChoice,
       processTasks,
       updateProcessRun,
       updateProcessStepRun,

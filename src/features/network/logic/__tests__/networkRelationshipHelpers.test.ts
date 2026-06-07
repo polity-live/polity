@@ -36,14 +36,31 @@ function rel(
 ): NormalizedGroupRelationship {
   return {
     id: overrides.id,
+    network_link_id: overrides.network_link_id ?? `link:${overrides.id}`,
+    network_link_right_id: overrides.network_link_right_id ?? `right:${overrides.id}`,
     group_id: overrides.group_id ?? 'anchor',
     related_group_id: overrides.related_group_id ?? 'sibling-a',
     relationship_type: overrides.relationship_type ?? 'sibling',
+    structural_relation:
+      overrides.structural_relation ??
+      ((overrides.relationship_type ?? 'sibling') === 'sibling' ? 'sibling' : 'parent_child'),
     with_right: 'with_right' in overrides ? (overrides.with_right ?? null) : 'informationRight',
     status: overrides.status ?? 'active',
     initiator_group_id: overrides.initiator_group_id ?? 'anchor',
     created_at: overrides.created_at ?? 0,
     membership_mode: overrides.membership_mode ?? 'none',
+    membership_direction:
+      overrides.membership_direction ??
+      ((overrides.membership_mode ?? 'none') !== 'none' ? 'forward' : null),
+    relationship_direction:
+      overrides.relationship_direction ??
+      ((overrides.relationship_type ?? 'sibling') === 'parent' ? 'backward' : 'forward'),
+    right_direction:
+      overrides.right_direction ??
+      (((overrides.relationship_type ?? 'sibling') === 'parent' ? 'backward' : 'forward') as
+        | 'forward'
+        | 'backward'
+        | 'bidirectional'),
     group: overrides.group
       ? groupStub(overrides.group.id, overrides.group.name ?? 'Anchor')
       : groupStub(overrides.group_id ?? 'anchor', 'Anchor'),
@@ -206,6 +223,40 @@ describe('networkRelationshipHelpers', () => {
     expect(relationshipTree.children[0]?.group.id).toBe('group-b');
     expect(relationshipTree.children[0]?.rights).toEqual([]);
     expect(relationshipTree.children[0]?.membershipMode).toBe('all_members');
+    expect(relationshipTree.children[0]?.membershipDirection).toBe('outgoing');
+  });
+
+  it('prefers the active non-none membership rule over a placeholder none row', () => {
+    const relationshipTree = buildDirectRelationships(
+      [
+        rel({
+          id: 'forward-none',
+          group_id: 'group-a',
+          related_group_id: 'group-b',
+          relationship_type: 'child',
+          with_right: null,
+          membership_mode: 'none',
+          group: { id: 'group-a', name: 'Group A' },
+          related_group: { id: 'group-b', name: 'Group B' },
+        }),
+        rel({
+          id: 'backward-all-members',
+          group_id: 'group-b',
+          related_group_id: 'group-a',
+          relationship_type: 'parent',
+          with_right: null,
+          membership_mode: 'all_members',
+          membership_direction: 'backward',
+          group: { id: 'group-b', name: 'Group B' },
+          related_group: { id: 'group-a', name: 'Group A' },
+        }),
+      ],
+      'group-a'
+    );
+
+    expect(relationshipTree.children).toHaveLength(1);
+    expect(relationshipTree.children[0]?.membershipMode).toBe('all_members');
+    expect(relationshipTree.children[0]?.membershipDirection).toBe('incoming');
   });
 
   it('keeps indirect sibling groups attached to the reachable child branch', () => {

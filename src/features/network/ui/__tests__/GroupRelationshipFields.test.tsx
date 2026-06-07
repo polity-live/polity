@@ -4,7 +4,10 @@ import { cleanup, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { SiblingMembershipModeDescription } from '../GroupRelationshipFields';
+import {
+  GroupRelationshipNameTag,
+  SiblingMembershipModeDescription,
+} from '../GroupRelationshipFields';
 
 vi.mock('@tanstack/react-router', () => ({
   Link: ({ children, ...props }: { children: ReactNode; [key: string]: unknown }) => (
@@ -53,7 +56,7 @@ describe('SiblingMembershipModeDescription', () => {
     expect(screen.getByText('Eine Gruppenrolle in')).toBeTruthy();
     expect(screen.getByText('Fraktion H1')).toBeTruthy();
     expect(screen.getByText('erzeugt die Mitgliedschaft in')).toBeTruthy();
-    expect(screen.getByText('diese Gruppe (Parlament Rosbach)')).toBeTruthy();
+    expect(screen.getByText('Parlament Rosbach')).toBeTruthy();
     expect(screen.getByText('automatisch.')).toBeTruthy();
   });
 
@@ -70,5 +73,21 @@ describe('SiblingMembershipModeDescription', () => {
     expect(screen.getByText('wird aus Gruppen abgeleitet, die passives Wahlrecht in')).toBeTruthy();
     expect(screen.getByText('Stadtrat Rosbach')).toBeTruthy();
     expect(screen.getByText('haben.')).toBeTruthy();
+  });
+});
+
+describe('GroupRelationshipNameTag', () => {
+  it('renders a non-clickable badge when links are disabled for interactive containers', () => {
+    const { container } = render(
+      <GroupRelationshipNameTag
+        name="Parlament Rosbach"
+        kind="current"
+        groupId="group-1"
+        linkGroups={false}
+      />
+    );
+
+    expect(screen.getByText('Diese Gruppe (Parlament Rosbach)')).toBeTruthy();
+    expect(container.querySelector('a')).toBeNull();
   });
 });

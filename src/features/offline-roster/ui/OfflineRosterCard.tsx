@@ -38,6 +38,9 @@ import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItem
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import { cn } from '@/features/shared/utils/utils';
 import { getTableTagSurfaceClassName } from '@/features/shared/ui/ui/table-tag';
+import { UserTableCell } from '@/features/shared/ui/ui/user-table-cell';
+import { RoleTag } from '@/features/groups/ui/RoleTag';
+import type { ParticipationUserLike } from '@/features/shared/types/participation';
 import {
   ArrowUpDown,
   Check,
@@ -70,6 +73,7 @@ export interface OfflineRosterRow {
   id: string;
   kind: 'active' | 'offline';
   effectiveMembershipId?: string | null;
+  user?: ParticipationUserLike | null;
   firstName: string;
   lastName: string;
   isActiveUser: boolean;
@@ -113,6 +117,8 @@ interface OfflineRosterCardProps {
   showManageButton?: boolean;
   showProvenanceColumns?: boolean;
   manageButtonLabel?: string;
+  tableVariant?: 'default' | 'membership';
+  fallbackRoleLabel?: string;
   manageDialogTitle: string;
   manageDialogDescription: string;
   emptyStateLabel?: string;
@@ -312,6 +318,8 @@ export function OfflineRosterCard({
   showManageButton = false,
   showProvenanceColumns = false,
   manageButtonLabel = 'Manage non signed up users',
+  tableVariant = 'default',
+  fallbackRoleLabel = '-',
   manageDialogTitle,
   manageDialogDescription,
   emptyStateLabel = 'No offline or hybrid users have been added yet.',
@@ -406,6 +414,10 @@ export function OfflineRosterCard({
       rows.some(
         row => (row.roles && row.roles.length > 0) || row.canViewRights || row.canManageRoles
       ),
+    [rows]
+  );
+  const showConnectedUserColumn = useMemo(
+    () => rows.some(row => Boolean(row.connectedUser)),
     [rows]
   );
 
@@ -606,6 +618,111 @@ export function OfflineRosterCard({
     });
   };
 
+  const renderReasonCell = (row: OfflineRosterRow) => (
+    <div className="space-y-2">
+      <span>{row.reasonNotSignedUp || '-'}</span>
+      {row.attendanceStatus ? (
+        <div className="flex flex-wrap gap-2">
+          <Badge variant="secondary">
+            {row.attendanceStatus === 'confirmed'
+              ? 'Participation confirmed'
+              : 'Participation listed'}
+          </Badge>
+          {row.participationChannel ? (
+            <Badge variant="outline">
+              {row.participationChannel === 'offline' ? 'Offline channel' : 'Online channel'}
+            </Badge>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+
+  const renderRowActions = (row: OfflineRosterRow) => {
+    const nextChannel = row.participationChannel === 'offline' ? 'online' : 'offline';
+
+    return (
+      <div className="flex flex-wrap justify-end gap-2">
+        {row.canViewRights ? (
+          <Button type="button" size="sm" variant="ghost" onClick={() => onOpenRightsDialog?.(row)}>
+            <Eye className="mr-2 h-4 w-4" />
+            Rights
+          </Button>
+        ) : null}
+        {row.canManageRoles ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => onOpenChangeRoleDialog?.(row)}
+          >
+            <ArrowUpDown className="mr-2 h-4 w-4" />
+            Manage Roles
+          </Button>
+        ) : null}
+        {row.canConfirmParticipation ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => void handleSetParticipationStatus(row, 'confirmed')}
+          >
+            <Check className="mr-2 h-4 w-4" />
+            Confirm
+          </Button>
+        ) : null}
+        {row.canWithdrawParticipation ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => void handleSetParticipationStatus(row, 'listed')}
+          >
+            Withdraw confirmation
+          </Button>
+        ) : null}
+        {row.canToggleChannel ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => void handleToggleChannel(row, nextChannel)}
+          >
+            {nextChannel === 'offline' ? 'Set Offline' : 'Set Online'}
+          </Button>
+        ) : null}
+        {row.canConnect ? (
+          <Button type="button" size="sm" variant="outline" onClick={() => setConnectRow(row)}>
+            <Link2 className="mr-2 h-4 w-4" />
+            Connect
+          </Button>
+        ) : null}
+        {row.canEdit ? (
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            onClick={() => {
+              setEditRow(row);
+              setEditDraft({
+                firstName: row.firstName,
+                lastName: row.lastName,
+                reasonNotSignedUp: row.reasonNotSignedUp || '',
+              });
+            }}
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+        ) : null}
+        {row.canDelete ? (
+          <Button type="button" size="icon" variant="ghost" onClick={() => void handleDelete(row)}>
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        ) : null}
+      </div>
+    );
+  };
+
   return (
     <>
       <Card className="border-border/70 from-background to-muted/20 bg-gradient-to-b">
@@ -629,26 +746,97 @@ export function OfflineRosterCard({
             <p className="text-muted-foreground py-8 text-center">{emptyStateLabel}</p>
           ) : (
             <div className="border-border/70 overflow-x-auto rounded-2xl border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Active user</TableHead>
-                    <TableHead>Firstname</TableHead>
-                    <TableHead>Lastname</TableHead>
-                    <TableHead>Connected Active User</TableHead>
-                    {showRolesColumn ? <TableHead>Roles</TableHead> : null}
-                    <TableHead>Reason why not signed up</TableHead>
-                    {showProvenanceColumns ? <TableHead>Part group</TableHead> : null}
-                    {showProvenanceColumns ? <TableHead>Base group</TableHead> : null}
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sortedRows.map(row => {
-                    const nextChannel =
-                      row.participationChannel === 'offline' ? 'online' : 'offline';
-
-                    return (
+              {tableVariant === 'membership' ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>User</TableHead>
+                      {showRolesColumn ? <TableHead>Role</TableHead> : null}
+                      {showConnectedUserColumn ? (
+                        <TableHead>Connected Active User</TableHead>
+                      ) : null}
+                      <TableHead>Reason why not signed up</TableHead>
+                      {showProvenanceColumns ? <TableHead>Part group</TableHead> : null}
+                      {showProvenanceColumns ? <TableHead>Base group</TableHead> : null}
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sortedRows.map(row => (
+                      <TableRow key={row.id}>
+                        <TableCell>
+                          <UserTableCell
+                            user={row.user}
+                            displayName={[row.firstName, row.lastName].filter(Boolean).join(' ')}
+                          />
+                        </TableCell>
+                        {showRolesColumn ? (
+                          <TableCell>
+                            <div className="flex flex-wrap gap-2">
+                              {row.roles && row.roles.length > 0 ? (
+                                row.roles.map(role => (
+                                  <RoleTag
+                                    key={`${row.id}-${role.id}`}
+                                    roleId={role.id}
+                                    roleName={role.name || 'Role'}
+                                  />
+                                ))
+                              ) : (
+                                <RoleTag fallbackKey={`offline-roster-${row.id}`}>
+                                  {fallbackRoleLabel}
+                                </RoleTag>
+                              )}
+                            </div>
+                          </TableCell>
+                        ) : null}
+                        {showConnectedUserColumn ? (
+                          <TableCell>
+                            {row.connectedUser ? (
+                              <ConnectedUserChip user={row.connectedUser} />
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </TableCell>
+                        ) : null}
+                        <TableCell>{renderReasonCell(row)}</TableCell>
+                        {showProvenanceColumns ? (
+                          <TableCell>
+                            <ProvenanceTag
+                              group={row.partGroup}
+                              fallbackLabel={row.partGroup?.name ?? undefined}
+                            />
+                          </TableCell>
+                        ) : null}
+                        {showProvenanceColumns ? (
+                          <TableCell>
+                            <ProvenanceTag
+                              group={row.baseGroup}
+                              fallbackLabel={row.baseGroup?.name ?? undefined}
+                            />
+                          </TableCell>
+                        ) : null}
+                        <TableCell className="text-right">{renderRowActions(row)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Active user</TableHead>
+                      <TableHead>Firstname</TableHead>
+                      <TableHead>Lastname</TableHead>
+                      <TableHead>Connected Active User</TableHead>
+                      {showRolesColumn ? <TableHead>Roles</TableHead> : null}
+                      <TableHead>Reason why not signed up</TableHead>
+                      {showProvenanceColumns ? <TableHead>Part group</TableHead> : null}
+                      {showProvenanceColumns ? <TableHead>Base group</TableHead> : null}
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sortedRows.map(row => (
                       <TableRow key={row.id}>
                         <TableCell>
                           {row.isActiveUser ? (
@@ -687,27 +875,7 @@ export function OfflineRosterCard({
                             </div>
                           </TableCell>
                         ) : null}
-                        <TableCell>
-                          <div className="space-y-2">
-                            <span>{row.reasonNotSignedUp || '-'}</span>
-                            {row.attendanceStatus ? (
-                              <div className="flex flex-wrap gap-2">
-                                <Badge variant="secondary">
-                                  {row.attendanceStatus === 'confirmed'
-                                    ? 'Participation confirmed'
-                                    : 'Participation listed'}
-                                </Badge>
-                                {row.participationChannel ? (
-                                  <Badge variant="outline">
-                                    {row.participationChannel === 'offline'
-                                      ? 'Offline channel'
-                                      : 'Online channel'}
-                                  </Badge>
-                                ) : null}
-                              </div>
-                            ) : null}
-                          </div>
-                        </TableCell>
+                        <TableCell>{renderReasonCell(row)}</TableCell>
                         {showProvenanceColumns ? (
                           <TableCell>
                             <ProvenanceTag
@@ -724,106 +892,12 @@ export function OfflineRosterCard({
                             />
                           </TableCell>
                         ) : null}
-                        <TableCell className="text-right">
-                          <div className="flex flex-wrap justify-end gap-2">
-                            {row.canViewRights ? (
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => onOpenRightsDialog?.(row)}
-                              >
-                                <Eye className="mr-2 h-4 w-4" />
-                                Rights
-                              </Button>
-                            ) : null}
-                            {row.canManageRoles ? (
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                onClick={() => onOpenChangeRoleDialog?.(row)}
-                              >
-                                <ArrowUpDown className="mr-2 h-4 w-4" />
-                                Manage Roles
-                              </Button>
-                            ) : null}
-                            {row.canConfirmParticipation ? (
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                onClick={() => void handleSetParticipationStatus(row, 'confirmed')}
-                              >
-                                <Check className="mr-2 h-4 w-4" />
-                                Confirm
-                              </Button>
-                            ) : null}
-                            {row.canWithdrawParticipation ? (
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                onClick={() => void handleSetParticipationStatus(row, 'listed')}
-                              >
-                                Withdraw confirmation
-                              </Button>
-                            ) : null}
-                            {row.canToggleChannel ? (
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                onClick={() => void handleToggleChannel(row, nextChannel)}
-                              >
-                                {nextChannel === 'offline' ? 'Set Offline' : 'Set Online'}
-                              </Button>
-                            ) : null}
-                            {row.canConnect ? (
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                onClick={() => setConnectRow(row)}
-                              >
-                                <Link2 className="mr-2 h-4 w-4" />
-                                Connect
-                              </Button>
-                            ) : null}
-                            {row.canEdit ? (
-                              <Button
-                                type="button"
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => {
-                                  setEditRow(row);
-                                  setEditDraft({
-                                    firstName: row.firstName,
-                                    lastName: row.lastName,
-                                    reasonNotSignedUp: row.reasonNotSignedUp || '',
-                                  });
-                                }}
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                            ) : null}
-                            {row.canDelete ? (
-                              <Button
-                                type="button"
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => void handleDelete(row)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            ) : null}
-                          </div>
-                        </TableCell>
+                        <TableCell className="text-right">{renderRowActions(row)}</TableCell>
                       </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </div>
           )}
         </CardContent>

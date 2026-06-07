@@ -4,7 +4,7 @@ import {
   applyNetworkLinkPreset,
   buildCanonicalNetworkLinkPayload,
   buildNetworkLinkComposerDefaults,
-  buildRelativeMembershipRulesFromCanonical,
+  buildRelativeMembershipRuleFromCanonical,
   hasConfiguredMembership,
   hasConfiguredNetworkLink,
   getPresetForRelationshipType,
@@ -18,20 +18,26 @@ describe('networkLinkComposer presets', () => {
       otherGroupId: 'partner-group',
       relationshipType: value.relationshipType,
       rightDirections: value.rightDirections,
-      membershipRules: value.membershipRules,
+      membershipDirection: value.membershipDirection,
+      membershipRule: value.membershipRule,
       initiatorGroupId: 'current-group',
     });
 
     expect(value.relationshipType).toBe('child');
-    expect(value.membershipRules.outgoing.membershipMode).toBe('all_members');
+    expect(value.membershipDirection).toBe('outgoing');
+    expect(value.membershipRule.membershipMode).toBe('all_members');
     expect(value.rightDirections.passiveVotingRight).toBe('incoming');
     expect(payload.rights).toHaveLength(1);
     expect(payload.rights[0]).toMatchObject({
       right_key: 'passiveVotingRight',
       direction: 'forward',
     });
-    expect(payload.membership_rule.backward.membership_mode).toBe('all_members');
-    expect(payload.membership_rule.forward.membership_mode).toBe('none');
+    expect(payload.membership_rule).toMatchObject({
+      membership_direction: 'backward',
+      membership_mode: 'all_members',
+      role_id: null,
+      source_group_ids: null,
+    });
   });
 
   it('maps the Childgroup preset to a current-group parent relationship', () => {
@@ -41,34 +47,42 @@ describe('networkLinkComposer presets', () => {
       otherGroupId: 'partner-group',
       relationshipType: value.relationshipType,
       rightDirections: value.rightDirections,
-      membershipRules: value.membershipRules,
+      membershipDirection: value.membershipDirection,
+      membershipRule: value.membershipRule,
       initiatorGroupId: 'current-group',
     });
 
     expect(value.relationshipType).toBe('parent');
-    expect(value.membershipRules.incoming.membershipMode).toBe('all_members');
+    expect(value.membershipDirection).toBe('incoming');
+    expect(value.membershipRule.membershipMode).toBe('all_members');
     expect(value.rightDirections.passiveVotingRight).toBe('outgoing');
     expect(payload.rights).toHaveLength(1);
     expect(payload.rights[0]).toMatchObject({
       right_key: 'passiveVotingRight',
       direction: 'forward',
     });
-    expect(payload.membership_rule.backward.membership_mode).toBe('all_members');
-    expect(payload.membership_rule.forward.membership_mode).toBe('none');
+    expect(payload.membership_rule).toMatchObject({
+      membership_direction: 'backward',
+      membership_mode: 'all_members',
+      role_id: null,
+      source_group_ids: null,
+    });
   });
 
   it('derives the partner-role preset from the current-group relationship type', () => {
     expect(
       getPresetForRelationshipType({
         relationshipType: 'parent',
-        membershipRules: buildNetworkLinkComposerDefaults().membershipRules,
+        membershipDirection: buildNetworkLinkComposerDefaults().membershipDirection,
+        membershipRule: buildNetworkLinkComposerDefaults().membershipRule,
       })
     ).toBe('child');
 
     expect(
       getPresetForRelationshipType({
         relationshipType: 'child',
-        membershipRules: buildNetworkLinkComposerDefaults().membershipRules,
+        membershipDirection: buildNetworkLinkComposerDefaults().membershipDirection,
+        membershipRule: buildNetworkLinkComposerDefaults().membershipRule,
       })
     ).toBe('parent');
   });
@@ -83,10 +97,8 @@ describe('networkLinkComposer presets', () => {
           activeVotingRight: 'none',
           passiveVotingRight: 'none',
         },
-        membershipRules: {
-          incoming: { membershipMode: 'all_members', roleId: '', sourceGroupIds: [] },
-          outgoing: { membershipMode: 'none', roleId: '', sourceGroupIds: [] },
-        },
+        membershipDirection: 'incoming',
+        membershipRule: { membershipMode: 'all_members', roleId: '', sourceGroupIds: [] },
       })
     ).toBe(true);
     expect(
@@ -98,10 +110,8 @@ describe('networkLinkComposer presets', () => {
           activeVotingRight: 'none',
           passiveVotingRight: 'none',
         },
-        membershipRules: {
-          incoming: { membershipMode: 'none', roleId: '', sourceGroupIds: [] },
-          outgoing: { membershipMode: 'none', roleId: '', sourceGroupIds: [] },
-        },
+        membershipDirection: null,
+        membershipRule: { membershipMode: 'none', roleId: '', sourceGroupIds: [] },
       })
     ).toBe(false);
   });
@@ -109,11 +119,13 @@ describe('networkLinkComposer presets', () => {
   it('requires the dependent membership details for role and source-group modes', () => {
     expect(
       hasConfiguredMembership({
+        membershipDirection: 'incoming',
         membershipRule: { membershipMode: 'role_members', roleId: '', sourceGroupIds: [] },
       })
     ).toBe(false);
     expect(
       hasConfiguredMembership({
+        membershipDirection: 'incoming',
         membershipRule: {
           membershipMode: 'role_members',
           roleId: 'role-1',
@@ -123,6 +135,7 @@ describe('networkLinkComposer presets', () => {
     ).toBe(true);
     expect(
       hasConfiguredMembership({
+        membershipDirection: 'incoming',
         membershipRule: {
           membershipMode: 'selected_source_groups',
           roleId: '',
@@ -132,6 +145,7 @@ describe('networkLinkComposer presets', () => {
     ).toBe(false);
     expect(
       hasConfiguredMembership({
+        membershipDirection: 'incoming',
         membershipRule: {
           membershipMode: 'selected_source_groups',
           roleId: '',
@@ -141,7 +155,7 @@ describe('networkLinkComposer presets', () => {
     ).toBe(true);
   });
 
-  it('normalizes bidirectional membership selections to a single active direction', () => {
+  it('maps the selected edit direction to one canonical membership direction', () => {
     const payload = buildCanonicalNetworkLinkPayload({
       currentGroupId: 'current-group',
       otherGroupId: 'partner-group',
@@ -153,57 +167,44 @@ describe('networkLinkComposer presets', () => {
         activeVotingRight: 'none',
         passiveVotingRight: 'none',
       },
-      membershipRules: {
-        incoming: { membershipMode: 'role_members', roleId: 'role-in', sourceGroupIds: [] },
-        outgoing: {
-          membershipMode: 'selected_source_groups',
-          roleId: '',
-          sourceGroupIds: ['group-1'],
-        },
+      membershipDirection: 'outgoing',
+      membershipRule: {
+        membershipMode: 'selected_source_groups',
+        roleId: '',
+        sourceGroupIds: ['group-1'],
       },
       initiatorGroupId: 'current-group',
     });
 
-    expect(payload.membership_rule.backward).toEqual({
-      membership_mode: 'role_members',
-      role_id: 'role-in',
-      source_group_ids: null,
-    });
-    expect(payload.membership_rule.forward).toEqual({
-      membership_mode: 'none',
+    expect(payload.membership_rule).toEqual({
+      id: payload.membership_rule.id,
+      membership_direction: 'forward',
+      membership_mode: 'selected_source_groups',
       role_id: null,
-      source_group_ids: null,
+      source_group_ids: ['group-1'],
     });
   });
 
-  it('collapses legacy bidirectional membership data to one edit direction when hydrating', () => {
-    const membershipRules = buildRelativeMembershipRulesFromCanonical({
+  it('hydrates a canonical membership rule back into the relative edit direction', () => {
+    const membershipConfig = buildRelativeMembershipRuleFromCanonical({
       currentGroupId: 'current-group',
       source_group_id: 'current-group',
       target_group_id: 'partner-group',
       membershipRule: {
-        forward: {
-          membership_mode: 'all_members',
-          role_id: null,
-          source_group_ids: null,
-        },
-        backward: {
-          membership_mode: 'role_members',
-          role_id: 'role-1',
-          source_group_ids: null,
-        },
+        membership_direction: 'backward',
+        membership_mode: 'role_members',
+        role_id: 'role-1',
+        source_group_ids: null,
       },
     });
 
-    expect(membershipRules.incoming).toEqual({
-      membershipMode: 'role_members',
-      roleId: 'role-1',
-      sourceGroupIds: [],
-    });
-    expect(membershipRules.outgoing).toEqual({
-      membershipMode: 'none',
-      roleId: '',
-      sourceGroupIds: [],
+    expect(membershipConfig).toEqual({
+      membershipDirection: 'incoming',
+      membershipRule: {
+        membershipMode: 'role_members',
+        roleId: 'role-1',
+        sourceGroupIds: [],
+      },
     });
   });
 });

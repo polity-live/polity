@@ -1,6 +1,10 @@
 import type { ReactNode } from 'react';
 import type { NetworkRelationshipKind } from '../logic/networkRelationshipHelpers';
-import type { CanonicalMembershipMode, GroupRelationshipType } from './network.types';
+import type {
+  CanonicalMembershipMode,
+  GroupRelationshipType,
+  RelativeMembershipDirection,
+} from './network.types';
 
 export type NetworkEdgeRelationshipDirection = 'forward' | 'backward' | 'bidirectional';
 
@@ -29,7 +33,9 @@ export interface EditableRightsLabelEdgeData extends Record<string, unknown> {
   visibleRightRelationshipKinds?: Record<string, NetworkRelationshipKind>;
   relationshipType?: GroupRelationshipType | 'membership';
   membershipMode?: CanonicalMembershipMode | null;
+  membershipDirection?: RelativeMembershipDirection | null;
   rightEdgeDirections?: Record<string, NetworkEdgeRelationshipDirection>;
+  visibleFlowDirection?: NetworkEdgeRelationshipDirection | null;
   rightConnectionDirections?: Record<string, NetworkConnectionDirection>;
   visibleRightConnectionDirections?: Record<string, NetworkConnectionDirection>;
   visibleConnectionDirection?: NetworkConnectionDirection;
@@ -60,6 +66,7 @@ export interface NetworkRelationshipDialogData {
   rightRelationshipKinds?: Record<string, NetworkRelationshipKind>;
   relationshipType?: GroupRelationshipType | 'membership';
   membershipMode?: CanonicalMembershipMode | null;
+  membershipDirection?: RelativeMembershipDirection | null;
   rightEdgeDirections?: Record<string, NetworkEdgeRelationshipDirection>;
   rightConnectionDirections?: Record<string, NetworkConnectionDirection>;
   connectionDirection?: NetworkConnectionDirection;

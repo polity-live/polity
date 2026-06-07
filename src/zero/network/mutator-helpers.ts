@@ -1,6 +1,5 @@
 import { zql } from '../schema';
 import type { NetworkLinkRightSnapshot } from './request-types';
-import type { NetworkLinkMembershipRuleSnapshot } from './request-types';
 import {
   flattenMembershipRulesForStorage,
   hasActiveMembershipRules,
@@ -8,7 +7,6 @@ import {
   sameMembershipRules,
   toDirectionalMembershipRuleInput,
   toLegacyMembershipRuleFields,
-  toMembershipRuleSnapshot,
 } from './membershipRules';
 
 type MutatorTx = any;
@@ -23,19 +21,10 @@ interface NetworkLinkRightInput {
 
 interface NetworkLinkMembershipRuleInput {
   id?: string;
+  membership_direction?: string | null;
   membership_mode?: string;
   role_id?: string | null;
   source_group_ids?: string[] | null;
-  forward?: {
-    membership_mode?: string | null;
-    role_id?: string | null;
-    source_group_ids?: string[] | null;
-  } | null;
-  backward?: {
-    membership_mode?: string | null;
-    role_id?: string | null;
-    source_group_ids?: string[] | null;
-  } | null;
 }
 
 interface ProposeNetworkLinkChangeInput {
@@ -48,7 +37,7 @@ interface ProposeNetworkLinkChangeInput {
   status?: string;
   initiator_group_id: string;
   desired_rights: NetworkLinkRightSnapshot[];
-  desired_membership_rules?: NetworkLinkMembershipRuleSnapshot | null;
+  desired_membership_direction?: 'forward' | 'backward' | null;
   desired_membership_mode: 'none' | 'all_members' | 'role_members' | 'selected_source_groups';
   desired_role_id?: string | null;
   desired_source_group_ids?: string[] | null;
@@ -76,15 +65,10 @@ interface NetworkLinkRightRow {
 interface NetworkLinkMembershipRuleRow {
   id: string;
   network_link_id: string;
+  membership_direction?: 'forward' | 'backward' | null;
   membership_mode: string;
   role_id?: string | null;
   source_group_ids?: string[] | null;
-  forward_membership_mode?: string | null;
-  forward_role_id?: string | null;
-  forward_source_group_ids?: string[] | null;
-  backward_membership_mode?: string | null;
-  backward_role_id?: string | null;
-  backward_source_group_ids?: string[] | null;
   updated_at?: number | null;
   created_at?: number | null;
 }
@@ -99,7 +83,7 @@ interface NetworkLinkChangeRequestRow {
   status?: string | null;
   initiator_group_id: string;
   desired_rights: NetworkLinkRightSnapshot[];
-  desired_membership_rules?: NetworkLinkMembershipRuleSnapshot | null;
+  desired_membership_direction?: 'forward' | 'backward' | null;
   desired_membership_mode: 'none' | 'all_members' | 'role_members' | 'selected_source_groups';
   desired_role_id?: string | null;
   desired_source_group_ids?: string[] | null;
@@ -373,13 +357,29 @@ export async function deleteNetworkLinkAndRequests(tx: MutatorTx, linkId: string
 }
 
 function getDesiredMembershipRules(args: ProposeNetworkLinkChangeInput) {
-  return normalizeMembershipRules(
-    args.desired_membership_rules ?? {
-      membership_mode: args.desired_membership_mode,
-      role_id: args.desired_role_id ?? null,
-      source_group_ids: args.desired_source_group_ids ?? null,
-    }
-  );
+  return normalizeMembershipRules({
+    membership_direction: args.desired_membership_direction ?? null,
+    membership_mode: args.desired_membership_mode,
+    role_id: args.desired_role_id ?? null,
+    source_group_ids: args.desired_source_group_ids ?? null,
+  });
+}
+
+function getRequestedMembershipRule(
+  request: Pick<
+    NetworkLinkChangeRequestRow,
+    | 'desired_membership_direction'
+    | 'desired_membership_mode'
+    | 'desired_role_id'
+    | 'desired_source_group_ids'
+  >
+) {
+  return {
+    membership_direction: request.desired_membership_direction ?? null,
+    membership_mode: request.desired_membership_mode,
+    role_id: request.desired_role_id ?? null,
+    source_group_ids: request.desired_source_group_ids ?? null,
+  };
 }
 
 function buildActiveComparableState(args: {
@@ -394,15 +394,10 @@ function buildActiveComparableState(args: {
   rights: readonly { right_key: string; direction: string }[];
   membershipRule:
     | {
+        membership_direction?: string | null;
         membership_mode?: string | null;
         role_id?: string | null;
         source_group_ids?: string[] | null;
-        forward_membership_mode?: string | null;
-        forward_role_id?: string | null;
-        forward_source_group_ids?: string[] | null;
-        backward_membership_mode?: string | null;
-        backward_role_id?: string | null;
-        backward_source_group_ids?: string[] | null;
       }
     | null
     | undefined;
@@ -415,7 +410,7 @@ function buildActiveComparableState(args: {
       right_key: right.right_key,
       direction: right.direction,
     })),
-    membership_rules: normalizeMembershipRules(args.membershipRule),
+    membership_rule: normalizeMembershipRules(args.membershipRule),
   };
 }
 
@@ -425,7 +420,7 @@ function desiredStateMatchesActive(args: {
     target_group_id: string | null;
     structural_relation: string | null;
     rights: readonly { right_key: string; direction: string }[];
-    membership_rules: NetworkLinkMembershipRuleSnapshot;
+    membership_rule: NetworkLinkMembershipRuleInput;
   } | null;
   desired: ProposeNetworkLinkChangeInput;
 }) {
@@ -438,7 +433,7 @@ function desiredStateMatchesActive(args: {
     args.active.target_group_id === args.desired.target_group_id &&
     args.active.structural_relation === args.desired.structural_relation &&
     sameRights(args.active.rights, args.desired.desired_rights) &&
-    sameMembershipRules(args.active.membership_rules, getDesiredMembershipRules(args.desired))
+    sameMembershipRules(args.active.membership_rule, getDesiredMembershipRules(args.desired))
   );
 }
 
@@ -558,7 +553,8 @@ async function upsertChangeRequest(tx: MutatorTx, args: ProposeNetworkLinkChange
     status: args.status ?? 'requested',
     initiator_group_id: args.initiator_group_id,
     desired_rights: toRightSnapshots(args.desired_rights, args.proposed_network_link_id),
-    desired_membership_rules: toMembershipRuleSnapshot(getDesiredMembershipRules(args)),
+    desired_membership_direction: toLegacyMembershipRuleFields(getDesiredMembershipRules(args))
+      .membership_direction,
     desired_membership_mode: toLegacyMembershipRuleFields(getDesiredMembershipRules(args))
       .membership_mode,
     desired_role_id: toLegacyMembershipRuleFields(getDesiredMembershipRules(args)).role_id,
@@ -660,7 +656,6 @@ export async function proposeNetworkLinkChange(tx: MutatorTx, args: ProposeNetwo
       desired: {
         ...args,
         desired_rights: desiredRightSnapshots,
-        desired_membership_rules: toMembershipRuleSnapshot(desiredMembershipRules),
       },
     })
   ) {
@@ -680,7 +675,7 @@ export async function proposeNetworkLinkChange(tx: MutatorTx, args: ProposeNetwo
     ...args,
     active_network_link_id: refreshedActive?.link?.id ?? null,
     desired_rights: desiredRightSnapshots,
-    desired_membership_rules: toMembershipRuleSnapshot(desiredMembershipRules),
+    desired_membership_direction: desiredMembershipRules.membership_direction,
   });
 }
 
@@ -723,8 +718,8 @@ export async function approveNetworkLinkChangeRequest(
         desiredRights: selectedDesiredRights,
         initiatorGroupId: request.initiator_group_id,
       }),
-      membership_rule: hasActiveMembershipRules(request.desired_membership_rules)
-        ? toDirectionalMembershipRuleInput(request.desired_membership_rules)
+      membership_rule: hasActiveMembershipRules(getRequestedMembershipRule(request))
+        ? toDirectionalMembershipRuleInput(getRequestedMembershipRule(request))
         : null,
     });
 
@@ -756,8 +751,8 @@ export async function approveNetworkLinkChangeRequest(
       desiredRights: request.desired_rights ?? [],
       initiatorGroupId: request.initiator_group_id,
     }),
-    membership_rule: hasActiveMembershipRules(request.desired_membership_rules)
-      ? toDirectionalMembershipRuleInput(request.desired_membership_rules)
+    membership_rule: hasActiveMembershipRules(getRequestedMembershipRule(request))
+      ? toDirectionalMembershipRuleInput(getRequestedMembershipRule(request))
       : null,
   });
 

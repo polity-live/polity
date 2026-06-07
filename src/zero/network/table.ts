@@ -1,5 +1,5 @@
 import { table, string, number, boolean, json } from '@rocicorp/zero';
-import type { NetworkLinkMembershipRuleSnapshot, NetworkLinkRightSnapshot } from './request-types';
+import type { NetworkLinkRightSnapshot } from './request-types';
 
 export const follow = table('follow')
   .columns({
@@ -40,15 +40,10 @@ export const networkLinkMembershipRule = table('network_link_membership_rule')
   .columns({
     id: string(),
     network_link_id: string(),
+    membership_direction: string().optional(),
     membership_mode: string(),
     role_id: string().optional(),
     source_group_ids: json<string[]>().optional(),
-    forward_membership_mode: string(),
-    forward_role_id: string().optional(),
-    forward_source_group_ids: json<string[]>().optional(),
-    backward_membership_mode: string(),
-    backward_role_id: string().optional(),
-    backward_source_group_ids: json<string[]>().optional(),
     created_at: number(),
     updated_at: number(),
   })
@@ -64,8 +59,8 @@ export const networkLinkChangeRequest = table('network_link_change_request')
     structural_relation: string(),
     status: string(),
     initiator_group_id: string(),
-    desired_rights: json<NetworkLinkRightSnapshot[]>(),
-    desired_membership_rules: json<NetworkLinkMembershipRuleSnapshot>().optional(),
+    desired_rights: json<readonly NetworkLinkRightSnapshot[]>(),
+    desired_membership_direction: string().optional(),
     desired_membership_mode: string(),
     desired_role_id: string().optional(),
     desired_source_group_ids: json<string[]>().optional(),

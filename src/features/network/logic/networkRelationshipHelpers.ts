@@ -1,7 +1,9 @@
 import type {
   CanonicalMembershipMode,
+  CanonicalNetworkMembershipDirection,
   GroupRelationshipType,
   NormalizedGroupRelationship,
+  RelativeMembershipDirection,
   NetworkGroupEntity,
 } from '../types/network.types';
 import {
@@ -10,6 +12,21 @@ import {
 } from './groupRelationshipOrientation';
 
 export type NetworkRelationshipKind = 'active' | 'incoming' | 'outgoing';
+
+function shouldReplaceMembershipMode(
+  existingMode: CanonicalMembershipMode | null | undefined,
+  nextMode: CanonicalMembershipMode | null | undefined
+) {
+  if (!nextMode) {
+    return false;
+  }
+
+  if (!existingMode) {
+    return true;
+  }
+
+  return existingMode === 'none' && nextMode !== 'none';
+}
 
 export function isActiveGroupRelationshipStatus(status: string | null | undefined): boolean {
   return status == null || status === 'active' || status === 'accepted';
@@ -173,6 +190,44 @@ function mergeRightRelationshipKind(
   return existingKind;
 }
 
+export function getRelativeMembershipDirectionForRelationship(args: {
+  relationship: Pick<
+    NormalizedGroupRelationship,
+    'group_id' | 'related_group_id' | 'membership_direction' | 'relationship_direction'
+  >;
+  currentGroupId: string;
+}): RelativeMembershipDirection | null {
+  const canonicalDirection = args.relationship.membership_direction;
+  const relationshipDirection = args.relationship.relationship_direction;
+
+  if (
+    canonicalDirection == null ||
+    (canonicalDirection !== 'forward' && canonicalDirection !== 'backward') ||
+    (relationshipDirection !== 'forward' && relationshipDirection !== 'backward')
+  ) {
+    return null;
+  }
+
+  const sourceGroupId =
+    relationshipDirection === 'forward'
+      ? args.relationship.group_id
+      : args.relationship.related_group_id;
+  const targetGroupId =
+    relationshipDirection === 'forward'
+      ? args.relationship.related_group_id
+      : args.relationship.group_id;
+
+  if (args.currentGroupId !== sourceGroupId && args.currentGroupId !== targetGroupId) {
+    return null;
+  }
+
+  if (args.currentGroupId === sourceGroupId) {
+    return canonicalDirection === 'forward' ? 'outgoing' : 'incoming';
+  }
+
+  return canonicalDirection === 'forward' ? 'incoming' : 'outgoing';
+}
+
 function applyRelationshipToEntry(
   entry: RelationshipEntry,
   relationship: NormalizedGroupRelationship,
@@ -199,8 +254,13 @@ function applyRelationshipToEntry(
     entry.rightRelationshipKinds[rightValue] = mergedRightKind;
   }
 
-  if (!entry.membershipMode && relationship.membership_mode) {
+  if (shouldReplaceMembershipMode(entry.membershipMode, relationship.membership_mode)) {
     entry.membershipMode = relationship.membership_mode;
+    entry.membershipCanonicalDirection = relationship.membership_direction ?? null;
+    entry.membershipDirection = getRelativeMembershipDirectionForRelationship({
+      relationship,
+      currentGroupId,
+    });
   }
 }
 
@@ -210,6 +270,8 @@ export interface RelationshipEntry {
   relationshipKinds: NetworkRelationshipKind[];
   rightRelationshipKinds: Record<string, NetworkRelationshipKind>;
   membershipMode?: CanonicalMembershipMode | null;
+  membershipCanonicalDirection?: CanonicalNetworkMembershipDirection | null;
+  membershipDirection?: RelativeMembershipDirection | null;
   level?: number;
   childId?: string;
   parentId?: string;
@@ -302,6 +364,8 @@ function createHierarchyEntry(
     relationshipKinds: [],
     rightRelationshipKinds: {},
     membershipMode: null,
+    membershipCanonicalDirection: null,
+    membershipDirection: null,
     level: placement.level,
     childId: placement.branch === 'parent' ? placement.hierarchyConnectionId : undefined,
     parentId: placement.branch === 'child' ? placement.hierarchyConnectionId : undefined,
@@ -322,6 +386,8 @@ function createSiblingAttachmentEntry(
     relationshipKinds: [],
     rightRelationshipKinds: {},
     membershipMode: null,
+    membershipCanonicalDirection: null,
+    membershipDirection: null,
     level: placement.level,
     anchorId: placement.anchorId,
     branch: placement.branch,
@@ -375,6 +441,8 @@ export function buildDirectRelationships(
           relationshipKinds: [],
           rightRelationshipKinds: {},
           membershipMode: null,
+          membershipCanonicalDirection: null,
+          membershipDirection: null,
         });
       }
       const parentEntry = parentsMap.get(parentId);
@@ -396,6 +464,8 @@ export function buildDirectRelationships(
           relationshipKinds: [],
           rightRelationshipKinds: {},
           membershipMode: null,
+          membershipCanonicalDirection: null,
+          membershipDirection: null,
         });
       }
       const childEntry = childrenMap.get(childId);
@@ -438,6 +508,8 @@ export function buildIndirectRelationships(
       relationshipKinds: [...parent.relationshipKinds],
       rightRelationshipKinds: { ...parent.rightRelationshipKinds },
       membershipMode: parent.membershipMode ?? null,
+      membershipCanonicalDirection: parent.membershipCanonicalDirection ?? null,
+      membershipDirection: parent.membershipDirection ?? null,
       level: 1,
       childId: targetGroupId,
     });
@@ -470,6 +542,8 @@ export function buildIndirectRelationships(
                 relationshipKinds: [],
                 rightRelationshipKinds: {},
                 membershipMode: null,
+                membershipCanonicalDirection: null,
+                membershipDirection: null,
                 level,
                 childId: id,
               });
@@ -498,6 +572,8 @@ export function buildIndirectRelationships(
       relationshipKinds: [...child.relationshipKinds],
       rightRelationshipKinds: { ...child.rightRelationshipKinds },
       membershipMode: child.membershipMode ?? null,
+      membershipCanonicalDirection: child.membershipCanonicalDirection ?? null,
+      membershipDirection: child.membershipDirection ?? null,
       level: 1,
       parentId: targetGroupId,
     });
@@ -530,6 +606,8 @@ export function buildIndirectRelationships(
                 relationshipKinds: [],
                 rightRelationshipKinds: {},
                 membershipMode: null,
+                membershipCanonicalDirection: null,
+                membershipDirection: null,
                 level,
                 parentId: currentParentId,
               });

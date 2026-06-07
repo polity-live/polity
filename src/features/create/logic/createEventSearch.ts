@@ -19,6 +19,15 @@ export const createEventSearchSchema = z.object({
   startTime: z.string().regex(timeInputPattern).optional(),
   endDate: z.string().regex(dateInputPattern).optional(),
   endTime: z.string().regex(timeInputPattern).optional(),
+  processTaskId: z.string().optional(),
+  processRunId: z.string().optional(),
+  stepRunId: z.string().optional(),
+  amendmentId: z.string().optional(),
+  minStartDate: z.string().regex(dateInputPattern).optional(),
+  minStartTime: z.string().regex(timeInputPattern).optional(),
+  maxStartDate: z.string().regex(dateInputPattern).optional(),
+  maxStartTime: z.string().regex(timeInputPattern).optional(),
+  returnTo: z.string().optional(),
 });
 
 export type CreateEventSearch = z.infer<typeof createEventSearchSchema>;

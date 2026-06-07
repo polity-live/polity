@@ -2,6 +2,8 @@ import { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useAuth } from '@/providers/auth-provider';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Label } from '@/features/shared/ui/ui/label';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
 import { SummaryPillList } from '@/features/shared/ui/ui/create-review-card';
@@ -20,6 +22,11 @@ import { enrichPathSegments } from '@/features/amendments/logic/amendmentPathHel
 import { useCreateAmendmentPath } from '@/features/amendments/hooks/useCreateAmendmentPath';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import { mergeCreateSearchParams } from '../logic/createSearchParams';
+import {
+  type CreateAmendmentEvaluationMode,
+  type CreateAmendmentSearch,
+  normalizeCreateAmendmentSearch,
+} from '../logic/createAmendmentSearch';
 import type { CreateFormConfig } from '../types/create-form.types';
 
 interface CreateTargetGroupData {
@@ -40,15 +47,13 @@ interface CreateTargetEventData {
   participant_count?: number | null;
 }
 
-interface CreateAmendmentSearch {
-  groupId?: string;
-}
-
 export function useCreateAmendmentForm(): CreateFormConfig {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const searchParams = useSearch({ strict: false }) as CreateAmendmentSearch;
-  const groupIdParam = searchParams.groupId ?? '';
+  const rawSearchParams = useSearch({ strict: false }) as CreateAmendmentSearch;
+  const searchParams = normalizeCreateAmendmentSearch(rawSearchParams);
+  const sourceGroupIdParam = searchParams.sourceGroupId ?? '';
+  const targetGroupIdParam = searchParams.targetGroupId ?? '';
   const { user } = useAuth();
   const { createAmendment } = useAmendmentActions();
   const { createDocument, addCollaborator } = useDocumentActions();
@@ -62,6 +67,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
   const [visibility, setVisibility] = useState<'public' | 'authenticated' | 'private'>('public');
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [targetSelection, setTargetSelection] = useState<{
+    sourceGroupId: string;
     groupId: string;
     groupData: CreateTargetGroupData;
     eventId: string | null;
@@ -72,10 +78,28 @@ export function useCreateAmendmentForm(): CreateFormConfig {
       eventId: string | null;
       eventTitle: string;
       eventStartDate: number | null;
+      requiredAfter?: number | null;
+      requiredBefore?: number | null;
+    }[];
+    missingEventSteps: {
+      groupId: string;
+      groupName: string;
     }[];
     pathMode: 'hierarchy' | 'workflow';
     workflowId: string | null;
   } | null>(null);
+  const [pathMode, setPathMode] = useState<'hierarchy' | 'workflow'>(searchParams.pathMode);
+  const [workflowId, setWorkflowId] = useState(searchParams.workflowId ?? '');
+  const [evaluationMode, setEvaluationMode] = useState<CreateAmendmentEvaluationMode>(
+    searchParams.evaluationMode
+  );
+  const [evaluationDate, setEvaluationDate] = useState(searchParams.evaluationDate ?? '');
+  const [evaluationOffsetMonths, setEvaluationOffsetMonths] = useState(
+    String(searchParams.evaluationOffsetMonths)
+  );
+  const [evaluationOffsetYears, setEvaluationOffsetYears] = useState(
+    String(searchParams.evaluationOffsetYears)
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const visibilityLabel =
     visibility === 'public'
@@ -86,26 +110,66 @@ export function useCreateAmendmentForm(): CreateFormConfig {
 
   const { allHashtags } = useCommonState({ loadAllHashtags: true });
 
-  const syncGroupSearch = useCallback(
-    (nextGroupId: string) => {
+  const syncSearch = useCallback(
+    (updates: Partial<CreateAmendmentSearch>) => {
       navigate({
         to: '/create/amendment',
-        search: mergeCreateSearchParams(searchParams, {
-          groupId: nextGroupId || undefined,
-        }),
+        search: mergeCreateSearchParams(rawSearchParams, updates),
         replace: true,
         resetScroll: false,
       });
     },
-    [navigate, searchParams]
+    [navigate, rawSearchParams]
+  );
+
+  const handleSourceGroupSelectionChange = useCallback(
+    (nextSourceGroupId: string | null) => {
+      syncSearch({ sourceGroupId: nextSourceGroupId ?? undefined });
+    },
+    [syncSearch]
   );
 
   const handleGroupSelectionChange = useCallback(
     (groupId: string | null) => {
-      syncGroupSearch(groupId ?? '');
+      syncSearch({
+        groupId: groupId ?? undefined,
+        targetGroupId: groupId ?? undefined,
+      });
     },
-    [syncGroupSearch]
+    [syncSearch]
   );
+
+  const handlePathModeChange = useCallback(
+    (nextPathMode: 'hierarchy' | 'workflow') => {
+      setPathMode(nextPathMode);
+      if (nextPathMode === 'hierarchy') {
+        setWorkflowId('');
+      }
+      syncSearch({
+        pathMode: nextPathMode,
+        workflowId: nextPathMode === 'workflow' ? workflowId || undefined : undefined,
+      });
+    },
+    [syncSearch, workflowId]
+  );
+
+  const handleWorkflowSelectionChange = useCallback(
+    (nextWorkflowId: string | null) => {
+      const normalizedWorkflowId = nextWorkflowId ?? '';
+      setWorkflowId(normalizedWorkflowId);
+      syncSearch({
+        workflowId: normalizedWorkflowId || undefined,
+      });
+    },
+    [syncSearch]
+  );
+
+  const evaluationSummary =
+    evaluationMode === 'fixed_date'
+      ? evaluationDate || 'Kein Datum'
+      : evaluationMode === 'relative_to_vote'
+        ? `${evaluationOffsetYears || '0'} Jahre, ${evaluationOffsetMonths || '0'} Monate nach Annahme`
+        : 'Keine Evaluierung geplant';
 
   const handleTargetSelection = useCallback((selection: TargetGroupEventSelection | null) => {
     if (!selection) {
@@ -114,6 +178,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
     }
 
     setTargetSelection({
+      sourceGroupId: selection.sourceGroupId,
       groupId: selection.groupId,
       groupData: {
         id: selection.groupData.id,
@@ -141,9 +206,15 @@ export function useCreateAmendmentForm(): CreateFormConfig {
           }
         : null,
       pathWithEvents: selection.pathWithEvents,
+      missingEventSteps: selection.missingEventSteps.map(segment => ({
+        groupId: segment.groupId,
+        groupName: segment.groupName,
+      })),
       pathMode: selection.pathMode,
       workflowId: selection.workflowId,
     });
+    setPathMode(selection.pathMode);
+    setWorkflowId(selection.workflowId ?? '');
   }, []);
 
   const handleSubmit = async () => {
@@ -225,8 +296,22 @@ export function useCreateAmendmentForm(): CreateFormConfig {
           amendmentTitle: title.trim(),
           amendmentReason: null,
           enrichedPath,
+          sourceGroupId: targetSelection.sourceGroupId,
           workflowId: targetSelection.workflowId,
           pathMode: targetSelection.pathMode,
+          evaluationMode,
+          evaluationDate:
+            evaluationMode === 'fixed_date' && evaluationDate
+              ? new Date(`${evaluationDate}T00:00:00`).getTime()
+              : null,
+          evaluationOffsetMonths:
+            evaluationMode === 'relative_to_vote'
+              ? Number.parseInt(evaluationOffsetMonths, 10) || 0
+              : null,
+          evaluationOffsetYears:
+            evaluationMode === 'relative_to_vote'
+              ? Number.parseInt(evaluationOffsetYears, 10) || 0
+              : null,
         });
       }
 
@@ -288,21 +373,116 @@ export function useCreateAmendmentForm(): CreateFormConfig {
                 <TargetGroupEventSelector
                   userId={user.id}
                   allowGroupWithoutEvent
+                  onSourceGroupSelectionChange={handleSourceGroupSelectionChange}
                   onGroupSelectionChange={handleGroupSelectionChange}
+                  onPathModeChange={handlePathModeChange}
+                  onWorkflowSelectionChange={handleWorkflowSelectionChange}
                   onSelect={handleTargetSelection}
-                  selectedGroupId={targetSelection?.groupId ?? groupIdParam}
+                  selectedSourceGroupId={targetSelection?.sourceGroupId ?? sourceGroupIdParam}
+                  selectedGroupId={targetSelection?.groupId ?? targetGroupIdParam}
                   selectedEventId={targetSelection?.eventId ?? undefined}
+                  selectedPathMode={pathMode}
+                  selectedWorkflowId={workflowId || undefined}
                 />
               ) : (
                 <p className="text-muted-foreground text-sm">{t('pages.create.common.loading')}</p>
               )}
 
               {targetSelection && (
-                <TargetGroupEventDisplay
-                  groupData={targetSelection.groupData}
-                  eventData={targetSelection.eventData}
-                  pathWithEvents={targetSelection.pathWithEvents}
+                <div className="space-y-3">
+                  <TargetGroupEventDisplay
+                    groupData={targetSelection.groupData}
+                    eventData={targetSelection.eventData}
+                    pathWithEvents={targetSelection.pathWithEvents}
+                  />
+                  {targetSelection.missingEventSteps.length > 0 && (
+                    <div className="rounded-md border border-dashed p-3 text-sm">
+                      <p className="font-medium">Offene Event-Schritte</p>
+                      <p className="text-muted-foreground mt-1">
+                        Fuer diese Gruppen wird beim Erstellen automatisch ein `schedule_event`-Task
+                        erzeugt:
+                      </p>
+                      <SummaryPillList
+                        items={targetSelection.missingEventSteps.map(step => step.groupName)}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ),
+        },
+        {
+          label: 'Evaluierung',
+          isValid: () => evaluationMode !== 'fixed_date' || Boolean(evaluationDate),
+          optional: true,
+          content: (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Evaluierungsmodus</Label>
+                <div className="flex flex-wrap gap-2">
+                  {(
+                    [
+                      ['none', 'Keine Evaluierung'],
+                      ['fixed_date', 'Fixes Datum'],
+                      ['relative_to_vote', 'Relativ zur Annahme'],
+                    ] as const
+                  ).map(([mode, label]) => (
+                    <Button
+                      key={mode}
+                      type="button"
+                      variant={evaluationMode === mode ? 'default' : 'outline'}
+                      onClick={() => {
+                        setEvaluationMode(mode);
+                        syncSearch({ evaluationMode: mode });
+                      }}
+                    >
+                      {label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {evaluationMode === 'fixed_date' && (
+                <CreateInputField
+                  label="Evaluierungsdatum"
+                  type="date"
+                  required
+                  value={evaluationDate}
+                  onValueChange={value => {
+                    setEvaluationDate(value);
+                    syncSearch({ evaluationDate: value || undefined });
+                  }}
                 />
+              )}
+
+              {evaluationMode === 'relative_to_vote' && (
+                <div className="grid gap-4 md:grid-cols-2">
+                  <CreateInputField
+                    label="Monate nach Annahme"
+                    type="number"
+                    min={0}
+                    value={evaluationOffsetMonths}
+                    onValueChange={value => {
+                      setEvaluationOffsetMonths(value);
+                      syncSearch({
+                        evaluationOffsetMonths: value ? Number.parseInt(value, 10) : undefined,
+                      });
+                    }}
+                  />
+                  <CreateInputField
+                    label="Jahre nach Annahme"
+                    type="number"
+                    min={0}
+                    value={evaluationOffsetYears}
+                    onValueChange={value => {
+                      setEvaluationOffsetYears(value);
+                      syncSearch({
+                        evaluationOffsetYears: value ? Number.parseInt(value, 10) : undefined,
+                      });
+                    }}
+                  />
+                </div>
               )}
             </div>
           ),
@@ -347,6 +527,13 @@ export function useCreateAmendmentForm(): CreateFormConfig {
                               ? `${String(targetSelection.groupData.name ?? '')} -> ${String(targetSelection.eventData.title ?? '')}`
                               : String(targetSelection.groupData.name ?? ''),
                           },
+                          {
+                            label: 'Startgruppe',
+                            value:
+                              targetSelection.pathWithEvents[0]?.groupName ??
+                              targetSelection.groupData.name ??
+                              '',
+                          },
                           ...(targetSelection.eventData && targetSelection.pathWithEvents.length > 0
                             ? [
                                 {
@@ -362,8 +549,31 @@ export function useCreateAmendmentForm(): CreateFormConfig {
                                 },
                               ]
                             : []),
+                          ...(targetSelection.missingEventSteps.length > 0
+                            ? [
+                                {
+                                  label: 'Offene Event-Schritte',
+                                  value: (
+                                    <SummaryPillList
+                                      items={targetSelection.missingEventSteps.map(
+                                        step => step.groupName
+                                      )}
+                                    />
+                                  ),
+                                },
+                              ]
+                            : []),
                         ]
                       : []),
+                  ],
+                },
+                {
+                  title: 'Evaluierung',
+                  fields: [
+                    {
+                      label: 'Modus',
+                      value: evaluationSummary,
+                    },
                   ],
                 },
                 {
@@ -392,12 +602,22 @@ export function useCreateAmendmentForm(): CreateFormConfig {
       visibilityLabel,
       hashtags,
       targetSelection,
-      groupIdParam,
+      sourceGroupIdParam,
+      targetGroupIdParam,
+      pathMode,
+      workflowId,
+      evaluationMode,
+      evaluationDate,
+      evaluationOffsetMonths,
+      evaluationOffsetYears,
+      evaluationSummary,
       isSubmitting,
       amendmentId,
+      handleSourceGroupSelectionChange,
       handleGroupSelectionChange,
+      handlePathModeChange,
+      handleWorkflowSelectionChange,
       handleTargetSelection,
-      syncGroupSearch,
       t,
       user?.id,
     ]

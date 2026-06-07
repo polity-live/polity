@@ -66,6 +66,10 @@ export interface ProcessTaskAssignmentLike {
   title?: string | null;
   description?: string | null;
   due_at?: number | null;
+  process_run_id?: string | null;
+  step_run_id?: string | null;
+  group_id?: string | null;
+  metadata?: unknown;
   event?: AssignmentEventSummary | null;
   agenda_item?: {
     id?: string | null;
@@ -109,6 +113,9 @@ export interface GroupOpenAssignment {
   targetEvent?: AssignmentEventSummary | null;
   processTaskId?: string;
   processTaskType?: string | null;
+  processRunId?: string | null;
+  stepRunId?: string | null;
+  processTaskMetadata?: unknown;
   amendmentId?: string | null;
   dueAt?: number | null;
 }
@@ -372,6 +379,9 @@ function buildProcessTaskAssignments(processTasks: readonly ProcessTaskAssignmen
         linkedEvent,
         processTaskId: task.id,
         processTaskType: task.task_type ?? null,
+        processRunId: task.process_run_id ?? null,
+        stepRunId: task.step_run_id ?? null,
+        processTaskMetadata: task.metadata,
         amendmentId: amendment?.id ?? null,
         dueAt: task.due_at ?? null,
       };

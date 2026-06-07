@@ -88,6 +88,22 @@ export function GroupEditForm({
     { value: 'incoming', label: 'Andere -> aktuelle Gruppe' },
     { value: 'bidirectional', label: 'Beidseitig' },
   ];
+  const membershipDirectionOptions: {
+    value: NonNullable<GroupFormData['sibling_membership_direction']>;
+    label: string;
+    description: string;
+  }[] = [
+    {
+      value: 'incoming',
+      label: 'Partnergruppe -> aktuelle Gruppe',
+      description: 'Mitglieder fliessen aus der Partnergruppe in die aktuelle Gruppe.',
+    },
+    {
+      value: 'outgoing',
+      label: 'Aktuelle Gruppe -> Partnergruppe',
+      description: 'Mitglieder fliessen aus der aktuellen Gruppe in die Partnergruppe.',
+    },
+  ];
   const existingSiblingLink =
     formData.connected_group_id == null
       ? null
@@ -125,7 +141,15 @@ export function GroupEditForm({
       },
     ];
   });
-  const backwardMembershipRule = {
+  const siblingMembershipRule = {
+    membership_direction:
+      formData.sibling_membership_mode == null || formData.sibling_membership_mode === 'none'
+        ? null
+        : formData.sibling_membership_direction === 'outgoing'
+          ? ('forward' as const)
+          : formData.sibling_membership_direction === 'incoming'
+            ? ('backward' as const)
+            : null,
     membership_mode: formData.sibling_membership_mode ?? 'none',
     role_id:
       formData.sibling_membership_mode === 'role_members'
@@ -136,32 +160,6 @@ export function GroupEditForm({
         ? (formData.parliament_source_group_ids ?? [])
         : null,
   };
-  const forwardMembershipRule = {
-    membership_mode:
-      existingSiblingLink == null
-        ? 'none'
-        : existingSiblingLink.source_group_id === groupId
-          ? (existingSiblingLink.membership_rule?.forward_membership_mode ?? 'none')
-          : (existingSiblingLink.membership_rule?.backward_membership_mode ??
-            existingSiblingLink.membership_rule?.membership_mode ??
-            'none'),
-    role_id:
-      existingSiblingLink == null
-        ? null
-        : existingSiblingLink.source_group_id === groupId
-          ? (existingSiblingLink.membership_rule?.forward_role_id ?? null)
-          : (existingSiblingLink.membership_rule?.backward_role_id ??
-            existingSiblingLink.membership_rule?.role_id ??
-            null),
-    source_group_ids:
-      existingSiblingLink == null
-        ? null
-        : existingSiblingLink.source_group_id === groupId
-          ? (existingSiblingLink.membership_rule?.forward_source_group_ids ?? null)
-          : (existingSiblingLink.membership_rule?.backward_source_group_ids ??
-            existingSiblingLink.membership_rule?.source_group_ids ??
-            null),
-  };
   const siblingConfigurationPreflight = useGroupConflictPreflight(
     groupType === 'sibling' && formData.connected_group_id && siblingRights.length > 0
       ? {
@@ -171,14 +169,11 @@ export function GroupEditForm({
           target_group_id: formData.connected_group_id,
           structural_relation: 'sibling',
           rights: siblingRights,
-          membership_rules: {
-            forward: forwardMembershipRule,
-            backward: backwardMembershipRule,
-          },
           membership_rule: {
-            membership_mode: backwardMembershipRule.membership_mode,
-            role_id: backwardMembershipRule.role_id,
-            source_group_ids: backwardMembershipRule.source_group_ids,
+            membership_direction: siblingMembershipRule.membership_direction,
+            membership_mode: siblingMembershipRule.membership_mode,
+            role_id: siblingMembershipRule.role_id,
+            source_group_ids: siblingMembershipRule.source_group_ids,
           },
         }
       : null,
@@ -303,6 +298,33 @@ export function GroupEditForm({
                 {selectableConnectedGroups.map(group => (
                   <SelectItem key={group.id} value={group.id}>
                     {group.name || 'Group'}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Membership-Richtung</Label>
+            <Select
+              value={formData.sibling_membership_direction ?? ''}
+              onValueChange={value =>
+                updateField(
+                  'sibling_membership_direction',
+                  value as GroupFormData['sibling_membership_direction']
+                )
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Richtung waehlen" />
+              </SelectTrigger>
+              <SelectContent>
+                {membershipDirectionOptions.map(option => (
+                  <SelectItem key={option.value} value={option.value}>
+                    <div className="space-y-1">
+                      <div>{option.label}</div>
+                      <div className="text-muted-foreground text-xs">{option.description}</div>
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>

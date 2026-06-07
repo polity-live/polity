@@ -13,11 +13,10 @@ import { GroupSearchCard } from '@/features/search/ui/GroupSearchCard';
 import { GroupEventsList } from './GroupEventsList';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import {
-  getGroupRelationshipDirectionOptions,
-  getCurrentGroupRelationshipLabel,
   type GroupRelationshipRight,
-  GroupRelationshipRightsSelector,
-  GroupRelationshipTypeSelect,
+  GroupRelationshipMembershipModeSummary,
+  GroupRelationshipRightsSummary,
+  GroupRelationshipTypeSummary,
 } from './GroupRelationshipFields';
 import {
   getRelationshipDirectionForPreview,
@@ -146,7 +145,6 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
 
   const relationshipPreviewData =
     entity.type === 'relationship' ? getRelationshipPreviewData(entity.data) : null;
-  const relationshipDirectionOptions = getGroupRelationshipDirectionOptions(t);
   const siblingMembershipMode =
     entity.type === 'relationship' && relationshipPreviewData?.relationshipType === 'sibling'
       ? (getLegacySiblingMembershipMode(entity.data.membershipMode) ?? undefined)
@@ -262,31 +260,32 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
           {entity.type === 'relationship' && entity.data && (
             <div className="space-y-4">
               {relationshipPreviewData ? (
-                <div className="space-y-2 rounded-lg border p-4">
-                  <GroupRelationshipTypeSelect
-                    label={t('common.network.relationshipTypeLabel')}
-                    value={relationshipPreviewData.relationshipType}
-                    currentGroupName={relationshipPreviewData.currentGroupName}
-                    selectedGroupName={relationshipPreviewData.selectedGroupName}
-                    siblingMembershipMode={siblingMembershipMode}
-                    onValueChange={() => undefined}
-                    disabled
-                    helperText={getCurrentGroupRelationshipLabel({
-                      relationshipType: relationshipPreviewData.relationshipType,
-                      currentGroupName: relationshipPreviewData.currentGroupName,
-                      selectedGroupName: relationshipPreviewData.selectedGroupName,
-                      siblingMembershipMode,
-                      t,
-                    })}
-                  />
-                </div>
+                <GroupRelationshipTypeSummary
+                  label={t('common.network.relationshipTypeLabel')}
+                  relationshipType={relationshipPreviewData.relationshipType}
+                  currentGroupName={relationshipPreviewData.currentGroupName}
+                  selectedGroupName={relationshipPreviewData.selectedGroupName}
+                  siblingMembershipMode={siblingMembershipMode}
+                  currentGroupId={relationshipPreviewData.currentGroupId}
+                  selectedGroupId={relationshipPreviewData.selectedGroupId}
+                />
               ) : getRelationshipSentence(entity.data) ? (
                 <div className="bg-muted/30 flex items-center gap-2 rounded-lg border p-3">
                   <p className="text-base font-semibold">{getRelationshipSentence(entity.data)}</p>
                 </div>
               ) : null}
 
-              {entity.data.membershipMode ? (
+              {entity.data.membershipMode && relationshipPreviewData ? (
+                <GroupRelationshipMembershipModeSummary
+                  label={t('common.network.membershipModeLabel', 'Membership mode')}
+                  membershipMode={entity.data.membershipMode}
+                  membershipDirection={entity.data.membershipDirection}
+                  currentGroupName={relationshipPreviewData.currentGroupName}
+                  selectedGroupName={relationshipPreviewData.selectedGroupName}
+                  currentGroupId={relationshipPreviewData.currentGroupId}
+                  selectedGroupId={relationshipPreviewData.selectedGroupId}
+                />
+              ) : entity.data.membershipMode ? (
                 <div className="rounded-lg border p-4">
                   <div className="space-y-1">
                     <p className="text-muted-foreground text-sm font-medium">
@@ -335,14 +334,13 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
               {entity.data.rights && (entity.data.rights as string[]).length > 0 ? (
                 <div className="space-y-3">
                   {relationshipPreviewData ? (
-                    <GroupRelationshipRightsSelector
+                    <GroupRelationshipRightsSummary
                       label={t('common.network.selectRights')}
+                      selectedRights={entity.data.rights as GroupRelationshipRight[]}
                       helperText={t(
                         'common.network.directionDetails',
                         'Richtung der einzelnen Rechte'
                       )}
-                      selectedRights={new Set(entity.data.rights as GroupRelationshipRight[])}
-                      onToggleRight={() => undefined}
                       existingRightStatuses={getExistingRightStatuses(entity.data)}
                       rightDirections={
                         Object.fromEntries(
@@ -352,13 +350,10 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
                           ])
                         ) as Partial<Record<GroupRelationshipRight, GroupRelationshipDirection>>
                       }
-                      onDirectionChange={() => undefined}
-                      directionOptions={relationshipDirectionOptions}
                       currentGroupName={relationshipPreviewData.currentGroupName}
                       selectedGroupName={relationshipPreviewData.selectedGroupName}
                       currentGroupId={relationshipPreviewData.currentGroupId}
                       selectedGroupId={relationshipPreviewData.selectedGroupId}
-                      disabled
                       optionsContainerClassName="max-h-[min(42dvh,22rem)] overflow-y-auto pr-1"
                     />
                   ) : (

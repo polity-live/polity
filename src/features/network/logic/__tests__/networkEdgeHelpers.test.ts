@@ -2,10 +2,12 @@ import { Position } from '@xyflow/react';
 import { describe, expect, it } from 'vitest';
 
 import {
+  buildHierarchyRightEdgeDirections,
   buildCurrentPerspectiveRightDisplayDirections,
   buildNetworkRelationshipDialogData,
   getAnchorUsageConnectionDirection,
   getRelationshipStrokeColor,
+  getVisibleFlowDirection,
   getVisibleRelationshipStrokeColor,
   orientRelationshipEdgeForCurrentPerspective,
   resolveInnerAutoEdgeAnchors,
@@ -136,12 +138,12 @@ describe('networkEdgeHelpers', () => {
         },
       })
     ).toEqual({
-      informationRight: 'incoming',
-      amendmentRight: 'outgoing',
+      informationRight: 'outgoing',
+      amendmentRight: 'incoming',
     });
   });
 
-  it('reorients incoming-only edges from the right holder to the context group', () => {
+  it('keeps incoming-only edges on their canonical topology and exposes the current-group view', () => {
     expect(
       orientRelationshipEdgeForCurrentPerspective({
         currentNodeId: 'group-b',
@@ -152,10 +154,32 @@ describe('networkEdgeHelpers', () => {
         },
       })
     ).toEqual({
-      sourceId: 'group-b',
-      targetId: 'group-a',
+      sourceId: 'group-a',
+      targetId: 'group-b',
       rightEdgeDirections: {
         informationRight: 'forward',
+      },
+      rightDisplayDirections: {
+        informationRight: 'outgoing',
+      },
+    });
+  });
+
+  it('keeps outgoing-only edges on their canonical topology and exposes the current-group view', () => {
+    expect(
+      orientRelationshipEdgeForCurrentPerspective({
+        currentNodeId: 'group-b',
+        sourceId: 'group-a',
+        targetId: 'group-b',
+        rightEdgeDirections: {
+          informationRight: 'backward',
+        },
+      })
+    ).toEqual({
+      sourceId: 'group-a',
+      targetId: 'group-b',
+      rightEdgeDirections: {
+        informationRight: 'backward',
       },
       rightDisplayDirections: {
         informationRight: 'incoming',
@@ -182,13 +206,96 @@ describe('networkEdgeHelpers', () => {
         amendmentRight: 'backward',
       },
       rightDisplayDirections: {
-        informationRight: 'outgoing',
-        amendmentRight: 'incoming',
+        informationRight: 'incoming',
+        amendmentRight: 'outgoing',
       },
     });
   });
 
-  it('preserves the membership mode when building relationship dialog data', () => {
+  it('derives a stable visible flow direction from the visible rights', () => {
+    expect(
+      getVisibleFlowDirection({
+        informationRight: 'forward',
+      })
+    ).toBe('forward');
+
+    expect(
+      getVisibleFlowDirection({
+        informationRight: 'backward',
+      })
+    ).toBe('backward');
+
+    expect(
+      getVisibleFlowDirection({
+        informationRight: 'forward',
+        amendmentRight: 'backward',
+      })
+    ).toBe('bidirectional');
+  });
+
+  it('maps hierarchy rights to the rights-holder flow instead of the grantor flow', () => {
+    expect(
+      buildHierarchyRightEdgeDirections(
+        [
+          {
+            id: 'rel-1',
+            network_link_id: 'link-1',
+            network_link_right_id: 'link-right-1',
+            group_id: 'group-parent',
+            related_group_id: 'group-child',
+            relationship_type: 'child',
+            structural_relation: 'parent_child',
+            with_right: 'amendmentRight',
+            status: 'active',
+            initiator_group_id: 'group-parent',
+            created_at: 0,
+            membership_mode: 'all_members',
+            membership_direction: 'forward',
+            relationship_direction: 'forward',
+            group: null,
+            related_group: null,
+            right_direction: 'forward',
+          },
+        ],
+        'group-parent',
+        'group-child'
+      )
+    ).toEqual({
+      amendmentRight: 'backward',
+    });
+
+    expect(
+      buildHierarchyRightEdgeDirections(
+        [
+          {
+            id: 'rel-2',
+            network_link_id: 'link-2',
+            network_link_right_id: 'link-right-2',
+            group_id: 'group-child',
+            related_group_id: 'group-parent',
+            relationship_type: 'parent',
+            structural_relation: 'parent_child',
+            with_right: 'informationRight',
+            status: 'active',
+            initiator_group_id: 'group-child',
+            created_at: 0,
+            membership_mode: 'all_members',
+            membership_direction: 'forward',
+            relationship_direction: 'backward',
+            group: null,
+            related_group: null,
+            right_direction: 'backward',
+          },
+        ],
+        'group-parent',
+        'group-child'
+      )
+    ).toEqual({
+      informationRight: 'forward',
+    });
+  });
+
+  it('preserves the membership metadata when building relationship dialog data', () => {
     const dialogData = buildNetworkRelationshipDialogData(
       {
         id: 'edge-1',
@@ -198,11 +305,13 @@ describe('networkEdgeHelpers', () => {
           rights: ['informationRight'],
           relationshipType: 'sibling',
           membershipMode: 'role_members',
+          membershipDirection: 'incoming',
         },
       } as never,
       key => key
     );
 
     expect(dialogData.membershipMode).toBe('role_members');
+    expect(dialogData.membershipDirection).toBe('incoming');
   });
 });

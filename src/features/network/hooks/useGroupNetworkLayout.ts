@@ -4,19 +4,20 @@ import {
   usePreferenceState,
   type GroupNetworkLayout,
 } from '@/zero/preferences';
+import { normalizeGroupNetworkLayout } from '@/features/network/logic/networkLayoutHelpers';
 
 export function useGroupNetworkLayout(groupId: string) {
   const { groupNetworkLayouts, isLoading } = usePreferenceState();
   const { saveGroupNetworkLayout, resetGroupNetworkLayout } = usePreferenceActions();
 
-  const savedLayout = useMemo(
-    () => groupNetworkLayouts[groupId] ?? null,
-    [groupId, groupNetworkLayouts]
-  );
+  const savedLayout = useMemo(() => {
+    const layout = groupNetworkLayouts[groupId];
+    return layout ? normalizeGroupNetworkLayout(layout) : null;
+  }, [groupId, groupNetworkLayouts]);
 
   const persistLayout = useCallback(
     (layout: GroupNetworkLayout) => {
-      saveGroupNetworkLayout(groupId, layout);
+      saveGroupNetworkLayout(groupId, normalizeGroupNetworkLayout(layout));
     },
     [groupId, saveGroupNetworkLayout]
   );

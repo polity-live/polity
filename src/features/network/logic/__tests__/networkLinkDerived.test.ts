@@ -20,15 +20,10 @@ function createLink(overrides?: Partial<NetworkLinkListRow>): NetworkLinkListRow
     membership_rule: {
       id: 'rule-1',
       network_link_id: 'link-1',
-      membership_mode: 'all_members',
-      role_id: null,
+      membership_direction: 'forward',
+      membership_mode: 'role_members',
+      role_id: 'role-forward',
       source_group_ids: null,
-      forward_membership_mode: 'role_members',
-      forward_role_id: 'role-forward',
-      forward_source_group_ids: null,
-      backward_membership_mode: 'all_members',
-      backward_role_id: null,
-      backward_source_group_ids: null,
       created_at: 1,
       updated_at: 1,
     },
@@ -58,18 +53,7 @@ function createRequest(
     status: 'requested',
     initiator_group_id: 'group-a',
     desired_rights: [],
-    desired_membership_rules: {
-      forward: {
-        membership_mode: 'role_members',
-        role_id: 'role-1',
-        source_group_ids: null,
-      },
-      backward: {
-        membership_mode: 'none',
-        role_id: null,
-        source_group_ids: null,
-      },
-    },
+    desired_membership_direction: 'forward',
     desired_membership_mode: 'role_members',
     desired_role_id: 'role-1',
     desired_source_group_ids: null,
@@ -121,7 +105,7 @@ describe('networkLinkDerived', () => {
         related_group_id: 'group-parent',
         relationship_type: 'parent',
         with_right: null,
-        membership_mode: 'all_members',
+        membership_mode: 'role_members',
       },
     ]);
   });
@@ -138,6 +122,6 @@ describe('networkLinkDerived', () => {
 
     expect(rows).toHaveLength(2);
     expect(rows.every(row => row.with_right === null)).toBe(true);
-    expect(rows.map(row => row.membership_mode)).toEqual(['role_members', 'none']);
+    expect(rows.map(row => row.membership_mode)).toEqual(['role_members', 'role_members']);
   });
 });

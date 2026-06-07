@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useQuery } from '@rocicorp/zero/react';
 import type { Value } from 'platejs';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { toast } from 'sonner';
@@ -17,7 +18,11 @@ import { GeoAddressPicker } from '@/features/shared/ui/form/GeoAddressPicker';
 import { useEventActions } from '@/zero/events/useEventActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
 import { useCurrentUserActiveGroupIds, useGroupById } from '@/zero/groups/useGroupState';
+import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
+import { useVoteActions } from '@/zero/votes/useVoteActions';
+import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
+import { queries } from '@/zero/queries';
 import type { CreateFormConfig } from '../types/create-form.types';
 import { type RecurrencePattern } from '@/features/events/logic/rruleHelpers';
 import { formatNamedLocation } from '@/features/shared/logic/locationHelpers';
@@ -45,6 +50,12 @@ import { buildRRule, getRecurrenceDescription } from '@/features/events/logic/rr
 import { EventTimeSeriesSection } from '@/features/events/ui/EventTimeSeriesSection';
 import { ElectionModeInput } from '@/features/elections/ui/ElectionModeInput';
 import { type ElectionMode } from '@/features/elections/logic/electionMode';
+import { attachProcessTaskToEvent } from '@/features/amendments/logic/attachProcessTaskToEvent';
+import {
+  getSchedulingWindowValidationMessage,
+  getProcessTaskSchedulingWindow,
+  isEventWithinSchedulingWindow,
+} from '@/features/amendments/logic/processTaskEventScheduling';
 
 type EventType = CreateEventType;
 type MeetingType = 'one-on-one' | 'public-meeting';
@@ -55,9 +66,14 @@ export function useCreateEventForm(): CreateFormConfig {
   const navigate = useNavigate();
   const searchParams = useSearch({ strict: false }) as CreateEventSearch;
   const { createEvent } = useEventActions();
+  const { createAgendaItem } = useAgendaActions();
+  const { createVote, createVoteChoice } = useVoteActions();
+  const { updateProcessTask, updateProcessStepRun, updateProcessRun, updateSupportConfirmation } =
+    useAmendmentActions();
   const commonActions = useCommonActions();
   const prefilledSearch = useMemo(() => getCreateEventSearchDefaults(searchParams), [searchParams]);
   const groupIdParam = searchParams.groupId ?? '';
+  const directProcessTaskId = searchParams.processTaskId ?? null;
 
   const [eventId] = useState(() => crypto.randomUUID());
   const [eventType, setEventType] = useState<EventType>(() => prefilledSearch.eventType);
@@ -115,6 +131,9 @@ export function useCreateEventForm(): CreateFormConfig {
 
   const { allHashtags } = useCommonState({ loadAllHashtags: true });
   const { activeGroupIds } = useCurrentUserActiveGroupIds();
+  const [openProcessTasks] = useQuery(
+    groupId ? queries.amendments.openProcessTasksByGroup({ group_id: groupId }) : undefined
+  );
   const isMeetingEvent = eventType === 'meeting';
   const groupRequired = eventType === 'general_assembly' || eventType === 'delegate_assembly';
   const normalizedMeetingBookings =
@@ -180,6 +199,16 @@ export function useCreateEventForm(): CreateFormConfig {
         : timeSeriesValidationError === 'missing-weekdays'
           ? t('pages.create.event.timeSeries.validation.weekdaysRequired')
           : null;
+  const processSchedulingValidationMessage = getSchedulingWindowValidationMessage({
+    startDate,
+    startTime,
+    minStartDate: searchParams.minStartDate,
+    minStartTime: searchParams.minStartTime,
+    maxStartDate: searchParams.maxStartDate,
+    maxStartTime: searchParams.maxStartTime,
+  });
+  const combinedTimeSeriesValidationMessage =
+    timeSeriesValidationMessage ?? processSchedulingValidationMessage;
 
   const handleDescriptionContentChange = useCallback((value: Value) => {
     setDescriptionContent(value);
@@ -247,6 +276,11 @@ export function useCreateEventForm(): CreateFormConfig {
 
     if (timeSeriesValidationError === 'missing-weekdays') {
       toast.error(t('pages.create.event.timeSeries.validation.weekdaysRequired'));
+      return;
+    }
+
+    if (processSchedulingValidationMessage) {
+      toast.error(processSchedulingValidationMessage);
       return;
     }
 
@@ -324,6 +358,61 @@ export function useCreateEventForm(): CreateFormConfig {
 
       if (hashtags.length > 0) {
         await commonActions.syncEntityHashtags('event', eventId, hashtags, [], allHashtags ?? []);
+      }
+
+      const createdEvent = {
+        id: eventId,
+        title: title.trim(),
+        start_date,
+      };
+      const matchingProcessTasks = (openProcessTasks ?? []).filter(task => {
+        if (task.status !== 'open') {
+          return false;
+        }
+
+        if (task.id === directProcessTaskId) {
+          return true;
+        }
+
+        if (task.task_type !== 'schedule_event') {
+          return false;
+        }
+
+        return isEventWithinSchedulingWindow(
+          createdEvent,
+          getProcessTaskSchedulingWindow({
+            due_at: task.due_at ?? null,
+            metadata: task.metadata,
+          })
+        );
+      });
+
+      const attachedTaskIds = new Set<string>();
+      for (const task of matchingProcessTasks) {
+        if (attachedTaskIds.has(task.id)) {
+          continue;
+        }
+
+        attachedTaskIds.add(task.id);
+        await attachProcessTaskToEvent({
+          task,
+          event: createdEvent,
+          description:
+            task.description?.trim() ||
+            `Automatisch mit dem neuen Event "${title.trim()}" verknuepft.`,
+          createAgendaItem,
+          createVote,
+          createVoteChoice,
+          updateProcessTask,
+          updateProcessStepRun,
+          updateProcessRun,
+          updateSupportConfirmation,
+        });
+      }
+
+      if (searchParams.returnTo) {
+        window.location.assign(searchParams.returnTo);
+        return;
       }
 
       navigate({ to: `/event/${eventId}` });
@@ -485,7 +574,8 @@ export function useCreateEventForm(): CreateFormConfig {
         // 5. Date, time, recurrence, and time-based deadlines
         {
           label: t('pages.create.event.timeSeries.tabLabel'),
-          isValid: () => timeSeriesValidationError === null,
+          isValid: () =>
+            timeSeriesValidationError === null && processSchedulingValidationMessage === null,
           content: (
             <EventTimeSeriesSection
               startDate={startDate}
@@ -506,7 +596,7 @@ export function useCreateEventForm(): CreateFormConfig {
               onRecurrenceIntervalChange={setRecurrenceInterval}
               recurrenceWeekdays={recurrenceWeekdays}
               onRecurrenceWeekdaysChange={setRecurrenceWeekdays}
-              validationMessage={timeSeriesValidationMessage}
+              validationMessage={combinedTimeSeriesValidationMessage}
               deadlines={[
                 ...(eventType === 'delegate_assembly'
                   ? [
@@ -668,7 +758,10 @@ export function useCreateEventForm(): CreateFormConfig {
         {
           label: t('pages.create.common.review'),
           isValid: () =>
-            !!title.trim() && hasRequiredDateTimeRange && timeSeriesValidationError === null,
+            !!title.trim() &&
+            hasRequiredDateTimeRange &&
+            timeSeriesValidationError === null &&
+            processSchedulingValidationMessage === null,
           content: (
             <CreateSummaryStep
               entityType="event"
@@ -841,6 +934,8 @@ export function useCreateEventForm(): CreateFormConfig {
       hasRequiredDateTimeRange,
       timeSeriesValidationError,
       timeSeriesValidationMessage,
+      processSchedulingValidationMessage,
+      combinedTimeSeriesValidationMessage,
       isMeetingEvent,
       groupId,
       groupName,
@@ -856,6 +951,7 @@ export function useCreateEventForm(): CreateFormConfig {
       delegatesNominationDeadline,
       amendmentDeadline,
       eventId,
+      openProcessTasks,
       groupRequired,
       handleDescriptionContentChange,
       activeGroupIds,

@@ -169,7 +169,7 @@ export function useAmendmentWikiPage(amendmentId: string) {
             confirmation.group?.id &&
             confirmation.group?.latitude != null &&
             confirmation.group?.longitude != null &&
-            getSupportStatusForGroup(confirmation.group.id) !== 'declined'
+            !['declined', 'withdrawn'].includes(getSupportStatusForGroup(confirmation.group.id))
         )
         .map(confirmation => ({
           id: confirmation.group?.id ?? confirmation.id,

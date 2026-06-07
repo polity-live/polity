@@ -13,21 +13,23 @@ import {
   type AmendmentNetworkEvent,
   type AmendmentNetworkGroup,
   type PathWithEventSegment,
-  calculateUpwardPathWithClosestEvents,
+  calculateProcessPathWithClosestEvents,
   calculateWorkflowPathWithClosestEvents,
   getActiveUserGroupIds,
-  getUpwardConnectedGroupsForUser,
+  getReachableTargetGroupsFromSource,
 } from '@/features/amendments/logic/amendmentPathHelpers';
-import { Target, User, ChevronRight } from 'lucide-react';
+import { CalendarClock, ChevronRight, GitBranch, Target, User, Workflow } from 'lucide-react';
 import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCard';
 import { EventTimelineCard } from '@/features/timeline/ui/cards/EventTimelineCard';
 
 export interface TargetGroupEventSelection {
+  sourceGroupId: string;
   groupId: string;
   groupData: AmendmentNetworkGroup;
   eventId: string | null;
   eventData: AmendmentNetworkEvent | null;
   pathWithEvents: PathWithEventSegment[];
+  missingEventSteps: PathWithEventSegment[];
   selectedUserId: string;
   pathMode: 'hierarchy' | 'workflow';
   workflowId: string | null;
@@ -37,29 +39,76 @@ interface TargetGroupEventSelectorProps {
   userId: string;
   collaborators?: { id: string; name?: string; email?: string; avatar?: string }[];
   onSelect: (data: TargetGroupEventSelection | null) => void;
+  onSourceGroupSelectionChange?: (groupId: string | null) => void;
   onGroupSelectionChange?: (groupId: string | null) => void;
+  onPathModeChange?: (mode: 'hierarchy' | 'workflow') => void;
+  onWorkflowSelectionChange?: (workflowId: string | null) => void;
+  selectedSourceGroupId?: string;
   selectedGroupId?: string;
   selectedEventId?: string;
-  /** Pass true when rendered inside a Dialog to avoid portal/focus-trap conflicts */
+  selectedPathMode?: 'hierarchy' | 'workflow';
+  selectedWorkflowId?: string;
   disablePortal?: boolean;
   allowGroupWithoutEvent?: boolean;
+}
+
+function formatEventWindowLabel(timestamp?: number | null) {
+  if (!timestamp) {
+    return null;
+  }
+
+  return new Date(timestamp).toLocaleString('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function dedupeGroupsById(groups: AmendmentNetworkGroup[]) {
+  const seen = new Set<string>();
+  return groups.filter(group => {
+    if (seen.has(group.id)) {
+      return false;
+    }
+    seen.add(group.id);
+    return true;
+  });
 }
 
 export function TargetGroupEventSelector({
   userId,
   collaborators = [],
   onSelect,
+  onSourceGroupSelectionChange,
   onGroupSelectionChange,
+  onPathModeChange,
+  onWorkflowSelectionChange,
+  selectedSourceGroupId,
   selectedGroupId,
   selectedEventId,
+  selectedPathMode,
+  selectedWorkflowId,
   disablePortal = false,
   allowGroupWithoutEvent = false,
 }: TargetGroupEventSelectorProps) {
   const hasInitializedUserSelection = useRef(false);
-  const lastAppliedPrefillRef = useRef<string | null>(null);
-  const ignoredControlledGroupIdRef = useRef<string | null>(null);
-  const onGroupSelectionChangeRef = useRef(onGroupSelectionChange);
+  const sourcePrefillRef = useRef<string | null>(null);
+  const targetPrefillRef = useRef<string | null>(null);
+  const lastEmittedSelectionRef = useRef<string | null>(null);
+
   const [selectedUserId, setSelectedUserId] = useState<string>(userId);
+  const [pathMode, setPathMode] = useState<'hierarchy' | 'workflow'>(
+    selectedPathMode ?? 'hierarchy'
+  );
+  const [selectedWorkflowIdState, setSelectedWorkflowIdState] = useState<string>(
+    selectedWorkflowId ?? ''
+  );
+  const [selectedSourceGroup, setSelectedSourceGroup] = useState<{
+    id: string;
+    data: AmendmentNetworkGroup;
+  } | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<{
     id: string;
     data: AmendmentNetworkGroup;
@@ -70,21 +119,13 @@ export function TargetGroupEventSelector({
   } | null>(null);
   const [pathWithEvents, setPathWithEvents] = useState<PathWithEventSegment[]>([]);
   const [pathValidationError, setPathValidationError] = useState<string | null>(null);
-  const lastEmittedSelectionRef = useRef<string | null>(null);
 
-  // Path mode: hierarchy (BFS path) or workflow (predefined workflow sequence)
-  const [pathMode, setPathMode] = useState<'hierarchy' | 'workflow'>('hierarchy');
-  const [selectedWorkflowId, setSelectedWorkflowId] = useState<string>('');
-
-  // Fetch workflows (all workflows the user might reference)
   const { allWorkflows } = useWorkflowState({});
-
-  // Fetch network data via facade
   const {
     allGroups: groups,
-    allGroupRelationships: groupRelationshipsData,
-    allGroupMemberships: groupMembershipsData,
-    allEvents: eventsData,
+    allGroupRelationships,
+    allGroupMemberships,
+    allEvents,
     eventsByGroup: groupEventsResult,
   } = useAmendmentState({
     includeNetworkData: true,
@@ -92,243 +133,261 @@ export function TargetGroupEventSelector({
     eventGroupId: selectedGroup?.id,
   });
 
-  useEffect(() => {
-    onGroupSelectionChangeRef.current = onGroupSelectionChange;
-  }, [onGroupSelectionChange]);
+  const networkGroups = groups ?? [];
+  const networkRelationships = allGroupRelationships ?? [];
+  const networkMemberships = allGroupMemberships ?? [];
+  const networkEvents = allEvents ?? [];
+  const currentUserId = selectedUserId || userId;
 
-  const networkData = {
-    groups: groups ?? [],
-    groupRelationships: groupRelationshipsData ?? [],
-    groupMemberships: groupMembershipsData ?? [],
-    events: eventsData ?? [],
-  };
+  const activeSourceGroups = useMemo(() => {
+    const sourceGroupIds = getActiveUserGroupIds(networkMemberships, currentUserId);
+    return dedupeGroupsById(networkGroups.filter(group => sourceGroupIds.includes(group.id)));
+  }, [currentUserId, networkGroups, networkMemberships]);
 
-  const clearEmittedSelection = useCallback(() => {
-    if (lastEmittedSelectionRef.current === null) {
-      return;
+  const reachableHierarchyGroups = useMemo(() => {
+    if (!selectedSourceGroup?.id) {
+      return [];
     }
 
-    lastEmittedSelectionRef.current = null;
-    onSelect(null);
-  }, [onSelect]);
+    return getReachableTargetGroupsFromSource({
+      sourceGroupId: selectedSourceGroup.id,
+      groups: networkGroups,
+      relationships: networkRelationships,
+      memberships: networkMemberships,
+      userId: currentUserId,
+    });
+  }, [
+    currentUserId,
+    networkGroups,
+    networkMemberships,
+    networkRelationships,
+    selectedSourceGroup?.id,
+  ]);
 
-  // Initialize selection from controlled props when network data becomes available.
-  useEffect(() => {
-    if (!selectedGroupId) {
-      lastAppliedPrefillRef.current = null;
-      ignoredControlledGroupIdRef.current = null;
-      return;
+  const selectedWorkflow = useMemo(
+    () => allWorkflows.find(workflow => workflow.id === selectedWorkflowIdState) ?? null,
+    [allWorkflows, selectedWorkflowIdState]
+  );
+
+  const workflowTargetGroups = useMemo(() => {
+    if (!selectedWorkflow) {
+      return [];
     }
 
-    if (ignoredControlledGroupIdRef.current === selectedGroupId) {
-      return;
-    }
-
-    const prefillSignature = `${selectedGroupId}:${selectedEventId ?? ''}`;
-    if (lastAppliedPrefillRef.current === prefillSignature) {
-      return;
-    }
-
-    const initialGroup = networkData.groups.find(group => group.id === selectedGroupId);
-    if (!initialGroup) return;
-
-    setSelectedGroup({ id: initialGroup.id, data: initialGroup });
-
-    if (!selectedEventId) {
-      setSelectedEvent(null);
-      lastAppliedPrefillRef.current = prefillSignature;
-      return;
-    }
-
-    const initialEvent = networkData.events.find(
-      event => event.id === selectedEventId && event.group_id === selectedGroupId
+    const sortedSteps = [...(selectedWorkflow.steps ?? [])].sort(
+      (left, right) => (left.order_index ?? 0) - (right.order_index ?? 0)
     );
+    const sourceIndex = selectedSourceGroup?.id
+      ? sortedSteps.findIndex(step => step.group_id === selectedSourceGroup.id)
+      : 0;
+    const relevantSteps = sortedSteps.slice(sourceIndex >= 0 ? sourceIndex : 0);
+    return dedupeGroupsById(
+      relevantSteps
+        .map(step => step.group)
+        .filter((group): group is AmendmentNetworkGroup => Boolean(group?.id))
+    );
+  }, [selectedSourceGroup?.id, selectedWorkflow]);
 
-    if (initialEvent) {
-      setSelectedEvent({ id: initialEvent.id, data: initialEvent });
-      lastAppliedPrefillRef.current = prefillSignature;
+  const connectedGroups = pathMode === 'workflow' ? workflowTargetGroups : reachableHierarchyGroups;
+
+  const upcomingEvents = useMemo(
+    () =>
+      selectedGroup?.id
+        ? [...(groupEventsResult ?? [])].sort((left, right) => {
+            const now = Date.now();
+            const leftFuture = (left.start_date ?? 0) > now;
+            const rightFuture = (right.start_date ?? 0) > now;
+            if (leftFuture && !rightFuture) return -1;
+            if (!leftFuture && rightFuture) return 1;
+            return (left.start_date ?? 0) - (right.start_date ?? 0);
+          })
+        : [],
+    [groupEventsResult, selectedGroup?.id]
+  );
+
+  useEffect(() => {
+    if (selectedPathMode) {
+      setPathMode(selectedPathMode);
     }
-  }, [networkData.events, networkData.groups, selectedEventId, selectedGroupId]);
+  }, [selectedPathMode]);
 
-  // Reset selection only when the selected user actually changes after initial mount.
-  // This avoids clearing a preselected group passed via selectedGroupId on first render.
+  useEffect(() => {
+    if (selectedWorkflowId !== undefined) {
+      setSelectedWorkflowIdState(selectedWorkflowId ?? '');
+    }
+  }, [selectedWorkflowId]);
+
+  useEffect(() => {
+    if (selectedSourceGroupId && selectedSourceGroupId !== sourcePrefillRef.current) {
+      const nextSourceGroup = activeSourceGroups.find(group => group.id === selectedSourceGroupId);
+      if (nextSourceGroup) {
+        setSelectedSourceGroup({ id: nextSourceGroup.id, data: nextSourceGroup });
+        sourcePrefillRef.current = selectedSourceGroupId;
+      }
+      return;
+    }
+
+    if (!selectedSourceGroupId && !selectedSourceGroup && activeSourceGroups.length === 1) {
+      const defaultSourceGroup = activeSourceGroups[0];
+      setSelectedSourceGroup({ id: defaultSourceGroup.id, data: defaultSourceGroup });
+      onSourceGroupSelectionChange?.(defaultSourceGroup.id);
+    }
+  }, [
+    activeSourceGroups,
+    onSourceGroupSelectionChange,
+    selectedSourceGroup,
+    selectedSourceGroupId,
+  ]);
+
+  useEffect(() => {
+    if (
+      !selectedGroupId ||
+      selectedGroupId === targetPrefillRef.current ||
+      connectedGroups.length === 0
+    ) {
+      return;
+    }
+
+    const nextTargetGroup = connectedGroups.find(group => group.id === selectedGroupId);
+    if (!nextTargetGroup) {
+      return;
+    }
+
+    setSelectedGroup({ id: nextTargetGroup.id, data: nextTargetGroup });
+    targetPrefillRef.current = selectedGroupId;
+  }, [connectedGroups, selectedGroupId]);
+
+  useEffect(() => {
+    if (!selectedEventId || !selectedGroup?.id) {
+      return;
+    }
+
+    const nextEvent = networkEvents.find(
+      event =>
+        event.id === selectedEventId && (event.group?.id ?? event.group_id) === selectedGroup.id
+    );
+    if (nextEvent) {
+      setSelectedEvent({ id: nextEvent.id, data: nextEvent });
+    }
+  }, [networkEvents, selectedEventId, selectedGroup?.id]);
+
   useEffect(() => {
     if (!hasInitializedUserSelection.current) {
       hasInitializedUserSelection.current = true;
       return;
     }
 
+    setSelectedSourceGroup(null);
     setSelectedGroup(null);
     setSelectedEvent(null);
     setPathWithEvents([]);
     setPathValidationError(null);
-    onGroupSelectionChangeRef.current?.(null);
-  }, [selectedUserId]);
+    onSourceGroupSelectionChange?.(null);
+    onGroupSelectionChange?.(null);
+    onSelect(null);
+  }, [onGroupSelectionChange, onSelect, onSourceGroupSelectionChange, selectedUserId]);
 
-  // Seed the computed path when user picks target group/event.
   useEffect(() => {
-    if (!selectedGroup) {
+    if (!selectedSourceGroup || !selectedGroup) {
       setPathWithEvents([]);
+      setPathValidationError(null);
+      lastEmittedSelectionRef.current = null;
+      onSelect(null);
       return;
     }
 
     let calculatedPath: PathWithEventSegment[] | null = null;
 
-    if (pathMode === 'workflow' && selectedWorkflowId) {
-      const workflow = allWorkflows.find(w => w.id === selectedWorkflowId);
-      if (workflow) {
-        calculatedPath = calculateWorkflowPathWithClosestEvents(workflow.steps, networkData.events);
-      }
+    if (pathMode === 'workflow' && selectedWorkflowIdState) {
+      calculatedPath = calculateWorkflowPathWithClosestEvents(
+        selectedWorkflow?.steps ?? [],
+        networkEvents,
+        {
+          sourceGroupId: selectedSourceGroup.id,
+          targetGroupId: selectedGroup.id,
+        }
+      );
     } else {
-      calculatedPath = calculatePathWithEvents(selectedGroup.id);
+      calculatedPath = calculateProcessPathWithClosestEvents({
+        sourceGroupId: selectedSourceGroup.id,
+        targetGroupId: selectedGroup.id,
+        groups: networkGroups,
+        relationships: networkRelationships,
+        events: networkEvents,
+        memberships: networkMemberships,
+        userId: currentUserId,
+      });
     }
 
     if (!calculatedPath || calculatedPath.length === 0) {
       setPathWithEvents([]);
+      setPathValidationError(
+        'Kein zulaessiger Prozesspfad zwischen Start- und Zielgruppe gefunden.'
+      );
+      lastEmittedSelectionRef.current = null;
+      onSelect(null);
       return;
     }
 
     const seededPath = calculatedPath.map(segment =>
-      segment.groupId === selectedGroup.id
-        ? selectedEvent
-          ? {
-              ...segment,
-              eventId: selectedEvent.id,
-              eventTitle: String(selectedEvent.data.title ?? ''),
-              eventStartDate: selectedEvent.data.start_date ?? null,
-            }
-          : {
-              ...segment,
-              eventId: null,
-              eventTitle: 'Pending event',
-              eventStartDate: null,
-            }
+      segment.groupId === selectedGroup.id && selectedEvent
+        ? {
+            ...segment,
+            eventId: selectedEvent.id,
+            eventTitle: String(selectedEvent.data.title ?? ''),
+            eventStartDate: selectedEvent.data.start_date ?? null,
+            missingEvent: false,
+          }
         : segment
     );
 
     setPathWithEvents(seededPath);
   }, [
-    selectedGroup,
-    selectedEvent,
-    selectedUserId,
-    eventsData,
+    currentUserId,
+    networkEvents,
+    networkGroups,
+    networkMemberships,
+    networkRelationships,
+    onSelect,
     pathMode,
-    selectedWorkflowId,
-    allWorkflows,
+    selectedEvent,
+    selectedGroup,
+    selectedSourceGroup,
+    selectedWorkflow?.steps,
+    selectedWorkflowIdState,
   ]);
-
-  // Calculate path from user to target group with events for each step
-  const calculatePathWithEvents = (targetGroupId: string) => {
-    if (!networkData) return null;
-
-    const currentUserId = selectedUserId || userId;
-    const userGroupIds = getActiveUserGroupIds(networkData.groupMemberships, currentUserId);
-
-    return calculateUpwardPathWithClosestEvents({
-      userGroupIds,
-      targetGroupId,
-      groups: networkData.groups,
-      relationships: networkData.groupRelationships,
-      events: networkData.events,
-    });
-  };
-
-  const connectedGroups = useMemo(() => {
-    const currentUserId = selectedUserId || userId;
-    const userGroupIds = getActiveUserGroupIds(networkData.groupMemberships, currentUserId);
-
-    const derivedConnectedGroups = getUpwardConnectedGroupsForUser(
-      userGroupIds,
-      networkData.groups,
-      networkData.groupRelationships
-    );
-
-    if (!selectedGroupId) {
-      return derivedConnectedGroups;
-    }
-
-    const alreadyIncluded = derivedConnectedGroups.some(group => group.id === selectedGroupId);
-    if (alreadyIncluded) {
-      return derivedConnectedGroups;
-    }
-
-    const preselectedGroup = networkData.groups.find(group => group.id === selectedGroupId);
-    return preselectedGroup
-      ? [preselectedGroup, ...derivedConnectedGroups]
-      : derivedConnectedGroups;
-  }, [
-    selectedUserId,
-    userId,
-    networkData.groupMemberships,
-    networkData.groups,
-    networkData.groupRelationships,
-    selectedGroupId,
-  ]);
-
-  const getUpcomingEventsForGroup = useCallback(
-    (groupId: string): AmendmentNetworkEvent[] => {
-      const now = Date.now();
-      return [...(networkData.events ?? [])]
-        .filter(event => event.group_id === groupId && (event.start_date ?? 0) > now)
-        .sort((a, b) => (a.start_date ?? 0) - (b.start_date ?? 0));
-    },
-    [networkData.events]
-  );
-
-  // Get events for selected group from the dedicated eventsByGroup query
-  // Shows all events (upcoming first, then past) so users can always see available events
-  const upcomingEvents = selectedGroup?.id
-    ? [...(groupEventsResult ?? [])].sort((a, b) => {
-        const now = Date.now();
-        const aFuture = (a.start_date ?? 0) > now;
-        const bFuture = (b.start_date ?? 0) > now;
-        if (aFuture && !bFuture) return -1;
-        if (!aFuture && bFuture) return 1;
-        return (a.start_date ?? 0) - (b.start_date ?? 0);
-      })
-    : [];
-
-  const targetEventItems = useMemo(
-    () =>
-      toTypeaheadItems(
-        upcomingEvents,
-        'event',
-        event => event.title || 'Event',
-        event => {
-          const dateLabel = event.start_date
-            ? new Date(event.start_date).toLocaleString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-                hour: 'numeric',
-                minute: '2-digit',
-              })
-            : 'No date';
-
-          return event.location_name ? `${dateLabel} - ${event.location_name}` : dateLabel;
-        },
-        undefined,
-        event => `/event/${event.id}`
-      ),
-    [upcomingEvents]
-  );
 
   const validatePathEventOrder = useCallback((segments: PathWithEventSegment[]): string | null => {
-    for (let index = 1; index < segments.length; index++) {
-      const previous = segments[index - 1];
-      const current = segments[index];
-
+    for (const current of segments) {
       if (
-        previous?.eventStartDate &&
-        current?.eventStartDate &&
-        previous.eventStartDate > current.eventStartDate
+        current.eventStartDate != null &&
+        current.requiredAfter != null &&
+        current.eventStartDate < current.requiredAfter
       ) {
-        return 'Events of lower groups must be before events of higher groups.';
+        return 'Ein Event liegt vor dem vorherigen Prozessschritt.';
+      }
+      if (
+        current.eventStartDate != null &&
+        current.requiredBefore != null &&
+        current.eventStartDate > current.requiredBefore
+      ) {
+        return 'Ein Event liegt nach dem naechsten bereits geplanten Prozessschritt.';
       }
     }
 
     return null;
   }, []);
+
+  const getUpcomingEventsForGroup = useCallback(
+    (groupId: string) =>
+      [...networkEvents]
+        .filter(
+          event =>
+            (event.group?.id ?? event.group_id) === groupId && (event.start_date ?? 0) > Date.now()
+        )
+        .sort((left, right) => (left.start_date ?? 0) - (right.start_date ?? 0)),
+    [networkEvents]
+  );
 
   const updatePathSegmentEvent = useCallback(
     (groupId: string, item: TypeaheadItem | null) => {
@@ -339,8 +398,9 @@ export function TargetGroupEventSelector({
               ? {
                   ...segment,
                   eventId: null,
-                  eventTitle: '',
+                  eventTitle: 'Pending event',
                   eventStartDate: null,
+                  missingEvent: true,
                 }
               : segment
           )
@@ -349,16 +409,18 @@ export function TargetGroupEventSelector({
         if (selectedGroup?.id === groupId) {
           setSelectedEvent(null);
         }
-
         return;
       }
 
-      // For the target group, search upcomingEvents (from groupEventsResult) first
       const event =
         (groupId === selectedGroup?.id
-          ? upcomingEvents.find(entry => entry.id === item.id)
-          : undefined) ?? getUpcomingEventsForGroup(groupId).find(entry => entry.id === item.id);
-      if (!event) return;
+          ? upcomingEvents.find(candidateEvent => candidateEvent.id === item.id)
+          : undefined) ??
+        getUpcomingEventsForGroup(groupId).find(candidateEvent => candidateEvent.id === item.id);
+
+      if (!event) {
+        return;
+      }
 
       setPathWithEvents(previous =>
         previous.map(segment =>
@@ -368,6 +430,7 @@ export function TargetGroupEventSelector({
                 eventId: event.id,
                 eventTitle: String(event.title ?? ''),
                 eventStartDate: event.start_date ?? null,
+                missingEvent: false,
               }
             : segment
         )
@@ -381,68 +444,47 @@ export function TargetGroupEventSelector({
   );
 
   useEffect(() => {
-    if (!selectedGroup) {
-      setPathValidationError(null);
-      clearEmittedSelection();
+    if (!selectedSourceGroup || !selectedGroup) {
       return;
     }
 
     if (pathWithEvents.length === 0) {
-      setPathValidationError(null);
-      if (!allowGroupWithoutEvent || selectedEvent) {
-        clearEmittedSelection();
-        return;
-      }
-
-      const emptySelectionSignature = JSON.stringify({
-        groupId: selectedGroup.id,
-        eventId: null,
-        selectedUserId,
-        pathWithEvents: [],
-      });
-
-      if (lastEmittedSelectionRef.current === emptySelectionSignature) {
-        return;
-      }
-
-      lastEmittedSelectionRef.current = emptySelectionSignature;
-      onSelect({
-        groupId: selectedGroup.id,
-        groupData: selectedGroup.data,
-        eventId: null,
-        eventData: null,
-        pathWithEvents: [],
-        selectedUserId,
-        pathMode,
-        workflowId: selectedWorkflowId || null,
-      });
       return;
     }
 
-    const targetSegment = pathWithEvents.find(segment => segment.groupId === selectedGroup.id);
-    const targetEventId = targetSegment?.eventId ?? selectedEvent?.id ?? null;
-    const validationError =
-      targetEventId || allowGroupWithoutEvent ? validatePathEventOrder(pathWithEvents) : null;
+    const validationError = validatePathEventOrder(pathWithEvents);
     setPathValidationError(validationError);
     if (validationError) {
-      clearEmittedSelection();
+      lastEmittedSelectionRef.current = null;
+      onSelect(null);
+      return;
+    }
+
+    const targetEventId =
+      pathWithEvents.find(segment => segment.groupId === selectedGroup.id)?.eventId ??
+      selectedEvent?.id ??
+      null;
+    if (!targetEventId && !allowGroupWithoutEvent) {
+      lastEmittedSelectionRef.current = null;
+      onSelect(null);
       return;
     }
 
     const targetEvent = targetEventId
-      ? (getUpcomingEventsForGroup(selectedGroup.id).find(event => event.id === targetEventId) ??
-        selectedEvent?.data ??
-        null)
+      ? (upcomingEvents.find(event => event.id === targetEventId) ?? selectedEvent?.data ?? null)
       : null;
-
+    const missingEventSteps = pathWithEvents.filter(segment => !segment.eventId);
     const selectionSignature = JSON.stringify({
+      sourceGroupId: selectedSourceGroup.id,
       groupId: selectedGroup.id,
       eventId: targetEventId,
-      selectedUserId,
-      pathWithEvents: pathWithEvents.map(segment => ({
+      pathMode,
+      workflowId: selectedWorkflowIdState || null,
+      path: pathWithEvents.map(segment => ({
         groupId: segment.groupId,
         eventId: segment.eventId,
-        eventStartDate: segment.eventStartDate,
+        requiredAfter: segment.requiredAfter,
+        requiredBefore: segment.requiredBefore,
       })),
     });
 
@@ -451,40 +493,72 @@ export function TargetGroupEventSelector({
     }
 
     lastEmittedSelectionRef.current = selectionSignature;
-
     onSelect({
+      sourceGroupId: selectedSourceGroup.id,
       groupId: selectedGroup.id,
       groupData: selectedGroup.data,
       eventId: targetEventId,
       eventData: targetEvent,
       pathWithEvents,
+      missingEventSteps,
       selectedUserId,
       pathMode,
-      workflowId: selectedWorkflowId || null,
+      workflowId: selectedWorkflowIdState || null,
     });
   }, [
-    getUpcomingEventsForGroup,
-    onSelect,
-    pathWithEvents,
-    selectedEvent,
-    selectedGroup,
-    selectedUserId,
-    validatePathEventOrder,
-    clearEmittedSelection,
     allowGroupWithoutEvent,
+    onSelect,
     pathMode,
-    selectedWorkflowId,
+    pathWithEvents,
+    selectedEvent?.data,
+    selectedEvent?.id,
+    selectedGroup,
+    selectedSourceGroup,
+    selectedUserId,
+    selectedWorkflowIdState,
+    upcomingEvents,
+    validatePathEventOrder,
   ]);
+
+  const handleSourceGroupSelection = useCallback(
+    (item: TypeaheadItem | null) => {
+      if (!item) {
+        setSelectedSourceGroup(null);
+        setSelectedGroup(null);
+        setSelectedEvent(null);
+        setPathWithEvents([]);
+        setPathValidationError(null);
+        onSourceGroupSelectionChange?.(null);
+        onGroupSelectionChange?.(null);
+        onSelect(null);
+        return;
+      }
+
+      const nextSourceGroup = activeSourceGroups.find(group => group.id === item.id);
+      if (!nextSourceGroup) {
+        return;
+      }
+
+      setSelectedSourceGroup({ id: nextSourceGroup.id, data: nextSourceGroup });
+      setSelectedGroup(null);
+      setSelectedEvent(null);
+      setPathWithEvents([]);
+      setPathValidationError(null);
+      onSourceGroupSelectionChange?.(nextSourceGroup.id);
+      onGroupSelectionChange?.(null);
+    },
+    [activeSourceGroups, onGroupSelectionChange, onSelect, onSourceGroupSelectionChange]
+  );
 
   const handleGroupSelection = useCallback(
     (availableGroups: readonly AmendmentNetworkGroup[], item: TypeaheadItem | null) => {
       if (!item) {
-        ignoredControlledGroupIdRef.current = selectedGroup?.id ?? selectedGroupId ?? null;
         setSelectedGroup(null);
         setSelectedEvent(null);
         setPathWithEvents([]);
         setPathValidationError(null);
         onGroupSelectionChange?.(null);
+        onSelect(null);
         return;
       }
 
@@ -493,34 +567,33 @@ export function TargetGroupEventSelector({
         return;
       }
 
-      ignoredControlledGroupIdRef.current = null;
       setSelectedGroup({ id: group.id, data: group });
       setSelectedEvent(null);
       setPathWithEvents([]);
       setPathValidationError(null);
       onGroupSelectionChange?.(group.id);
     },
-    [onGroupSelectionChange, selectedGroup?.id, selectedGroupId]
+    [onGroupSelectionChange, onSelect]
   );
 
-  const handleEventSelection = useCallback(
-    (availableEvents: readonly AmendmentNetworkEvent[], item: TypeaheadItem | null) => {
-      if (!item) {
-        setSelectedEvent(null);
-        return;
-      }
-
-      const event = availableEvents.find(currentEvent => currentEvent.id === item.id);
-      if (event) {
-        setSelectedEvent({ id: event.id, data: event });
-      }
-    },
-    []
+  const targetEventItems = useMemo(
+    () =>
+      toTypeaheadItems(
+        upcomingEvents,
+        'event',
+        event => event.title || 'Event',
+        event => {
+          const dateLabel = formatEventWindowLabel(event.start_date) ?? 'Kein Datum';
+          return event.location_name ? `${dateLabel} - ${event.location_name}` : dateLabel;
+        },
+        undefined,
+        event => `/event/${event.id}`
+      ),
+    [upcomingEvents]
   );
 
   return (
     <div className="space-y-4">
-      {/* User Selection (if collaborators are provided) */}
       {collaborators.length > 0 && (
         <div className="flex items-center gap-3">
           <User className="text-muted-foreground h-4 w-4" />
@@ -529,251 +602,234 @@ export function TargetGroupEventSelector({
               items={toTypeaheadItems(
                 collaborators,
                 'user',
-                u => u.name || 'User',
-                u => u.email,
-                u => u.avatar,
-                u => `/user/${u.id}`
+                collaborator => collaborator.name || 'User',
+                collaborator => collaborator.email,
+                collaborator => collaborator.avatar,
+                collaborator => `/user/${collaborator.id}`
               )}
               value={selectedUserId}
               onChange={(item: TypeaheadItem | null) => setSelectedUserId(item?.id ?? '')}
-              placeholder="Select collaborator to view their network..."
-              label="Select Network For:"
+              placeholder="Netzwerk einer Person auswaehlen..."
+              label="Netzwerk:"
               disablePortal={disablePortal}
             />
           </div>
         </div>
       )}
 
-      {/* Path Mode Selection + Group/Event Selection */}
+      <div className="space-y-2">
+        <Label>Startgruppe</Label>
+        {activeSourceGroups.length === 0 ? (
+          <p className="text-muted-foreground text-sm">
+            Keine aktive Mitgliedschaft mit moeglichem Amendment-Start gefunden.
+          </p>
+        ) : (
+          <TypeaheadSearch
+            items={toTypeaheadItems(
+              activeSourceGroups,
+              'group',
+              group => group.name || 'Group',
+              group =>
+                typeof group.description === 'string'
+                  ? group.description.substring(0, 60)
+                  : undefined,
+              undefined,
+              group => `/group/${group.id}`
+            )}
+            value={selectedSourceGroup?.id || ''}
+            onChange={handleSourceGroupSelection}
+            placeholder="Startgruppe auswaehlen..."
+            disablePortal={disablePortal}
+          />
+        )}
+      </div>
+
       {allWorkflows.length > 0 ? (
         <Tabs
           value={pathMode}
           onValueChange={value => {
-            const mode = value as 'hierarchy' | 'workflow';
-            setPathMode(mode);
+            const nextMode = value as 'hierarchy' | 'workflow';
+            setPathMode(nextMode);
+            onPathModeChange?.(nextMode);
             setSelectedGroup(null);
             setSelectedEvent(null);
             setPathWithEvents([]);
             setPathValidationError(null);
-            if (mode === 'hierarchy') setSelectedWorkflowId('');
+            if (nextMode === 'hierarchy') {
+              setSelectedWorkflowIdState('');
+              onWorkflowSelectionChange?.(null);
+            }
           }}
         >
           <TabsList className="w-full">
             <TabsTrigger value="hierarchy" className="flex-1">
-              Hierarchy Path
+              <GitBranch className="mr-2 h-4 w-4" />
+              Hierarchie
             </TabsTrigger>
             <TabsTrigger value="workflow" className="flex-1">
-              Workflow Path
+              <Workflow className="mr-2 h-4 w-4" />
+              Workflow
             </TabsTrigger>
           </TabsList>
 
-          {/* Hierarchy Tab */}
           <TabsContent value="hierarchy" className="space-y-4">
             <div className="space-y-2">
-              <Label>Select Target Group</Label>
+              <Label>Zielgruppe</Label>
               {connectedGroups.length === 0 ? (
                 <p className="text-muted-foreground text-sm">
-                  No connected groups found. You need to be a member of groups with amendment
-                  rights.
+                  Fuer diese Startgruppe gibt es keine rekursiv erreichbaren Zielgruppen.
                 </p>
               ) : (
                 <TypeaheadSearch
                   items={toTypeaheadItems(
                     connectedGroups,
                     'group',
-                    g => g.name || 'Group',
-                    g =>
-                      typeof g.description === 'string'
-                        ? g.description.substring(0, 60)
+                    group => group.name || 'Group',
+                    group =>
+                      typeof group.description === 'string'
+                        ? group.description.substring(0, 60)
                         : undefined,
                     undefined,
-                    g => `/group/${g.id}`
+                    group => `/group/${group.id}`
                   )}
                   value={selectedGroup?.id || ''}
                   onChange={(item: TypeaheadItem | null) =>
                     handleGroupSelection(connectedGroups, item)
                   }
-                  placeholder="Search for a group..."
+                  placeholder="Zielgruppe suchen..."
                   disablePortal={disablePortal}
                 />
               )}
             </div>
+          </TabsContent>
 
-            {selectedGroup && (
+          <TabsContent value="workflow" className="space-y-4">
+            <div className="space-y-2">
+              <Label>Ziel-Workflow</Label>
+              <TypeaheadSearch
+                items={toTypeaheadItems(
+                  allWorkflows,
+                  'group',
+                  workflow => workflow.name || 'Workflow',
+                  workflow => (workflow.group?.name ? `Gruppe: ${workflow.group.name}` : undefined),
+                  undefined,
+                  workflow => (workflow.group_id ? `/group/${workflow.group_id}` : undefined)
+                )}
+                value={selectedWorkflowIdState}
+                onChange={(item: TypeaheadItem | null) => {
+                  const nextWorkflowId = item?.id ?? '';
+                  setSelectedWorkflowIdState(nextWorkflowId);
+                  onWorkflowSelectionChange?.(nextWorkflowId || null);
+                  setSelectedGroup(null);
+                  setSelectedEvent(null);
+                  setPathWithEvents([]);
+                  setPathValidationError(null);
+                }}
+                placeholder="Workflow auswaehlen..."
+                disablePortal={disablePortal}
+              />
+            </div>
+
+            {selectedWorkflowIdState && (
               <div className="space-y-2">
-                <Label>Select Target Event</Label>
-                {upcomingEvents.length === 0 ? (
-                  <p className="text-muted-foreground text-sm">No events found for this group</p>
+                <Label>Zielgruppe</Label>
+                {connectedGroups.length === 0 ? (
+                  <p className="text-muted-foreground text-sm">
+                    Dieser Workflow bietet ab der gewaehlten Startgruppe keine Zielgruppen an.
+                  </p>
                 ) : (
                   <TypeaheadSearch
-                    items={targetEventItems}
-                    value={selectedEvent?.id || ''}
+                    items={toTypeaheadItems(
+                      connectedGroups,
+                      'group',
+                      group => group.name || 'Group',
+                      group =>
+                        typeof group.description === 'string'
+                          ? group.description.substring(0, 60)
+                          : undefined,
+                      undefined,
+                      group => `/group/${group.id}`
+                    )}
+                    value={selectedGroup?.id || ''}
                     onChange={(item: TypeaheadItem | null) =>
-                      handleEventSelection(upcomingEvents, item)
+                      handleGroupSelection(connectedGroups, item)
                     }
-                    placeholder="Search for an event..."
+                    placeholder="Zielgruppe suchen..."
                     disablePortal={disablePortal}
                   />
                 )}
               </div>
             )}
           </TabsContent>
-
-          {/* Workflow Tab */}
-          <TabsContent value="workflow" className="space-y-4">
-            <div className="space-y-2">
-              <Label>Select Workflow</Label>
-              <TypeaheadSearch
-                items={toTypeaheadItems(
-                  allWorkflows,
-                  'group',
-                  w => w.name || 'Untitled Workflow',
-                  w => (w.group?.name ? `Group: ${w.group.name}` : undefined),
-                  undefined,
-                  w => (w.group_id ? `/group/${w.group_id}` : undefined)
-                )}
-                value={selectedWorkflowId}
-                onChange={(item: TypeaheadItem | null) => {
-                  setSelectedWorkflowId(item?.id ?? '');
-                  setSelectedGroup(null);
-                  setSelectedEvent(null);
-                  setPathWithEvents([]);
-                  setPathValidationError(null);
-                }}
-                placeholder="Select a workflow..."
-                disablePortal={disablePortal}
-              />
-            </div>
-
-            {selectedWorkflowId &&
-              (() => {
-                const selectedWorkflow = allWorkflows.find(w => w.id === selectedWorkflowId);
-                const workflowGroups = (selectedWorkflow?.steps ?? [])
-                  .map(s => s.group)
-                  .filter((g): g is NonNullable<typeof g> => !!g);
-                return (
-                  <>
-                    <div className="space-y-2">
-                      <Label>Select Target Group</Label>
-                      {workflowGroups.length === 0 ? (
-                        <p className="text-muted-foreground text-sm">
-                          No groups defined in this workflow.
-                        </p>
-                      ) : (
-                        <TypeaheadSearch
-                          items={toTypeaheadItems(
-                            workflowGroups,
-                            'group',
-                            g => g.name || 'Group',
-                            g =>
-                              typeof g.description === 'string'
-                                ? g.description.substring(0, 60)
-                                : undefined,
-                            undefined,
-                            g => `/group/${g.id}`
-                          )}
-                          value={selectedGroup?.id || ''}
-                          onChange={(item: TypeaheadItem | null) =>
-                            handleGroupSelection(workflowGroups, item)
-                          }
-                          placeholder="Search for a group..."
-                          disablePortal={disablePortal}
-                        />
-                      )}
-                    </div>
-
-                    {selectedGroup && (
-                      <div className="space-y-2">
-                        <Label>Select Target Event</Label>
-                        {upcomingEvents.length === 0 ? (
-                          <p className="text-muted-foreground text-sm">
-                            No events found for this group
-                          </p>
-                        ) : (
-                          <TypeaheadSearch
-                            items={targetEventItems}
-                            value={selectedEvent?.id || ''}
-                            onChange={(item: TypeaheadItem | null) =>
-                              handleEventSelection(upcomingEvents, item)
-                            }
-                            placeholder="Search for an event..."
-                            disablePortal={disablePortal}
-                          />
-                        )}
-                      </div>
-                    )}
-                  </>
-                );
-              })()}
-          </TabsContent>
         </Tabs>
       ) : (
-        /* No workflows available — hierarchy-only (no tabs) */
-        <>
-          <div className="space-y-2">
-            <Label>Select Target Group</Label>
-            {connectedGroups.length === 0 ? (
-              <p className="text-muted-foreground text-sm">
-                No connected groups found. You need to be a member of groups with amendment rights.
-              </p>
-            ) : (
-              <TypeaheadSearch
-                items={toTypeaheadItems(
-                  connectedGroups,
-                  'group',
-                  g => g.name || 'Group',
-                  g =>
-                    typeof g.description === 'string' ? g.description.substring(0, 60) : undefined,
-                  undefined,
-                  g => `/group/${g.id}`
-                )}
-                value={selectedGroup?.id || ''}
-                onChange={(item: TypeaheadItem | null) =>
-                  handleGroupSelection(connectedGroups, item)
-                }
-                placeholder="Search for a group..."
-                disablePortal={disablePortal}
-              />
-            )}
-          </div>
-
-          {selectedGroup && (
-            <div className="space-y-2">
-              <Label>Select Target Event</Label>
-              {upcomingEvents.length === 0 ? (
-                <p className="text-muted-foreground text-sm">No events found for this group</p>
-              ) : (
-                <TypeaheadSearch
-                  items={targetEventItems}
-                  value={selectedEvent?.id || ''}
-                  onChange={(item: TypeaheadItem | null) =>
-                    handleEventSelection(upcomingEvents, item)
-                  }
-                  placeholder="Search for an event..."
-                  disablePortal={disablePortal}
-                />
+        <div className="space-y-2">
+          <Label>Zielgruppe</Label>
+          {connectedGroups.length === 0 ? (
+            <p className="text-muted-foreground text-sm">
+              Fuer diese Startgruppe gibt es keine rekursiv erreichbaren Zielgruppen.
+            </p>
+          ) : (
+            <TypeaheadSearch
+              items={toTypeaheadItems(
+                connectedGroups,
+                'group',
+                group => group.name || 'Group',
+                group =>
+                  typeof group.description === 'string'
+                    ? group.description.substring(0, 60)
+                    : undefined,
+                undefined,
+                group => `/group/${group.id}`
               )}
-            </div>
+              value={selectedGroup?.id || ''}
+              onChange={(item: TypeaheadItem | null) => handleGroupSelection(connectedGroups, item)}
+              placeholder="Zielgruppe suchen..."
+              disablePortal={disablePortal}
+            />
           )}
-        </>
+        </div>
+      )}
+
+      {selectedGroup && (
+        <div className="space-y-2">
+          <Label>Ziel-Event</Label>
+          {upcomingEvents.length === 0 ? (
+            <p className="text-muted-foreground text-sm">
+              Fuer die Zielgruppe gibt es noch kein passendes Event. Der Schritt kann trotzdem als
+              Event-Anfrage angelegt werden.
+            </p>
+          ) : (
+            <TypeaheadSearch
+              items={targetEventItems}
+              value={selectedEvent?.id || ''}
+              onChange={(item: TypeaheadItem | null) => {
+                if (!item) {
+                  setSelectedEvent(null);
+                  return;
+                }
+
+                const nextEvent = upcomingEvents.find(event => event.id === item.id);
+                if (nextEvent) {
+                  setSelectedEvent({ id: nextEvent.id, data: nextEvent });
+                }
+              }}
+              placeholder="Event suchen..."
+              disablePortal={disablePortal}
+            />
+          )}
+        </div>
       )}
 
       {pathWithEvents.length > 0 && (
         <div className="border-border bg-muted/30 space-y-3 rounded-md border p-3">
           <div className="flex items-center gap-2">
             <Target className="text-muted-foreground h-4 w-4" />
-            <Label className="text-sm">Amendment path events</Label>
+            <Label className="text-sm">Prozesspfad</Label>
           </div>
-
-          <p className="text-muted-foreground text-xs">
-            Select one event per group. Events of lower groups must happen before events of higher
-            groups.
-          </p>
 
           <div className="space-y-3">
             {pathWithEvents.map((segment, index) => {
-              // For the target group, use the same event list as the main typeahead
-              // (groupEventsResult includes past events), avoiding the "no upcoming events" mismatch
               const segmentEvents =
                 segment.groupId === selectedGroup?.id
                   ? upcomingEvents
@@ -781,13 +837,29 @@ export function TargetGroupEventSelector({
 
               return (
                 <div
-                  key={segment.groupId}
+                  key={`${segment.groupId}:${index}`}
                   className="border-border bg-background rounded-md border p-3"
                 >
                   <div className="mb-2 flex items-center justify-between gap-2">
-                    <p className="text-sm font-medium">{segment.groupName}</p>
-                    <Badge variant="secondary" className="text-xs">
-                      Step {index + 1}
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">{segment.groupName}</p>
+                      <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
+                        {segment.requiredAfter ? (
+                          <span className="inline-flex items-center gap-1">
+                            <CalendarClock className="h-3 w-3" />
+                            nicht vor {formatEventWindowLabel(segment.requiredAfter)}
+                          </span>
+                        ) : null}
+                        {segment.requiredBefore ? (
+                          <span className="inline-flex items-center gap-1">
+                            <CalendarClock className="h-3 w-3" />
+                            nicht nach {formatEventWindowLabel(segment.requiredBefore)}
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
+                    <Badge variant={segment.eventId ? 'secondary' : 'outline'} className="text-xs">
+                      Schritt {index + 1}
                     </Badge>
                   </div>
 
@@ -797,16 +869,7 @@ export function TargetGroupEventSelector({
                         segmentEvents,
                         'event',
                         event => event.title || 'Event',
-                        event =>
-                          event.start_date
-                            ? new Date(event.start_date).toLocaleString('en-US', {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric',
-                                hour: 'numeric',
-                                minute: '2-digit',
-                              })
-                            : 'No date',
+                        event => formatEventWindowLabel(event.start_date) ?? 'Kein Datum',
                         undefined,
                         event => `/event/${event.id}`
                       )}
@@ -814,13 +877,14 @@ export function TargetGroupEventSelector({
                       onChange={(item: TypeaheadItem | null) =>
                         updatePathSegmentEvent(segment.groupId, item)
                       }
-                      placeholder="Select an event for this group..."
+                      placeholder="Event fuer diesen Schritt auswaehlen..."
                       disablePortal={disablePortal}
                     />
                   ) : (
-                    <p className="text-muted-foreground text-xs">
-                      No upcoming events available for this group.
-                    </p>
+                    <div className="text-muted-foreground rounded-md border border-dashed p-3 text-xs">
+                      Kein passendes Event gefunden. Fuer diesen Schritt wird bei der Erstellung ein
+                      `schedule_event`-Auftrag angelegt.
+                    </div>
                   )}
                 </div>
               );
@@ -865,7 +929,6 @@ export function TargetGroupEventDisplay({
 }: TargetGroupEventDisplayProps) {
   return (
     <div className="space-y-4">
-      {/* Group Card */}
       <div>
         <h4 className="text-muted-foreground mb-2 text-sm font-semibold uppercase">Target Group</h4>
         <GroupTimelineCard
@@ -880,7 +943,6 @@ export function TargetGroupEventDisplay({
         />
       </div>
 
-      {/* Event Card */}
       <div>
         <h4 className="text-muted-foreground mb-2 text-sm font-semibold uppercase">Target Event</h4>
         {eventData ? (
@@ -896,19 +958,18 @@ export function TargetGroupEventDisplay({
           />
         ) : (
           <div className="text-muted-foreground border-border bg-muted/40 rounded-md border border-dashed p-4 text-sm">
-            No event linked yet.
+            Noch kein Ziel-Event ausgewaehlt.
           </div>
         )}
       </div>
 
-      {/* Path Preview */}
       {pathWithEvents.length > 0 && (
         <div className="bg-muted text-muted-foreground rounded-md p-3 text-xs">
           <p className="font-semibold">Amendment Path ({pathWithEvents.length} groups):</p>
           <div className="mt-2 flex flex-wrap items-center gap-1">
             {pathWithEvents.map((segment, index) => (
-              <div key={segment.groupId} className="flex items-center gap-1">
-                <Badge variant="secondary" className="text-xs">
+              <div key={`${segment.groupId}:${index}`} className="flex items-center gap-1">
+                <Badge variant={segment.eventId ? 'secondary' : 'outline'} className="text-xs">
                   {segment.groupName}
                 </Badge>
                 {index < pathWithEvents.length - 1 && (

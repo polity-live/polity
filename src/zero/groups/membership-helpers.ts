@@ -68,15 +68,10 @@ function getDirectionalMembershipContexts(
   link: { source_group_id: string; target_group_id: string },
   membershipRule:
     | {
+        membership_direction?: string | null;
         membership_mode?: string | null;
         role_id?: string | null;
         source_group_ids?: string[] | null;
-        forward_membership_mode?: string | null;
-        forward_role_id?: string | null;
-        forward_source_group_ids?: string[] | null;
-        backward_membership_mode?: string | null;
-        backward_role_id?: string | null;
-        backward_source_group_ids?: string[] | null;
       }
     | null
     | undefined

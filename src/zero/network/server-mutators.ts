@@ -35,42 +35,16 @@ const GUEST_ONLY_SIBLING_MEMBERSHIP_MODES = new Set([
 function buildConflictMembershipPayload(
   membershipRule:
     | {
+        membership_direction?: 'forward' | 'backward' | null;
         membership_mode?: 'none' | 'all_members' | 'role_members' | 'selected_source_groups';
         role_id?: string | null;
         source_group_ids?: string[] | null;
-        forward_membership_mode?:
-          | 'none'
-          | 'all_members'
-          | 'role_members'
-          | 'selected_source_groups';
-        forward_role_id?: string | null;
-        forward_source_group_ids?: string[] | null;
-        backward_membership_mode?:
-          | 'none'
-          | 'all_members'
-          | 'role_members'
-          | 'selected_source_groups';
-        backward_role_id?: string | null;
-        backward_source_group_ids?: string[] | null;
-        forward?: {
-          membership_mode: 'none' | 'all_members' | 'role_members' | 'selected_source_groups';
-          role_id: string | null;
-          source_group_ids: string[] | null;
-        };
-        backward?: {
-          membership_mode: 'none' | 'all_members' | 'role_members' | 'selected_source_groups';
-          role_id: string | null;
-          source_group_ids: string[] | null;
-        };
       }
     | null
     | undefined
 ) {
-  const membershipRules = normalizeMembershipRules(membershipRule);
-
   return {
-    membership_rules: membershipRules,
-    membership_rule: toLegacyMembershipRuleFields(membershipRules),
+    membership_rule: toLegacyMembershipRuleFields(normalizeMembershipRules(membershipRule)),
   };
 }
 
@@ -78,10 +52,11 @@ function requiresGuestAccessFlow(group: {
   group_type?: string | null;
   primary_sibling_membership_mode?: string | null;
 }) {
+  const primarySiblingMembershipMode = group.primary_sibling_membership_mode;
   return (
     group.group_type === 'sibling' &&
-    Boolean(group.primary_sibling_membership_mode) &&
-    GUEST_ONLY_SIBLING_MEMBERSHIP_MODES.has(group.primary_sibling_membership_mode)
+    primarySiblingMembershipMode != null &&
+    GUEST_ONLY_SIBLING_MEMBERSHIP_MODES.has(primarySiblingMembershipMode)
   );
 }
 
@@ -300,33 +275,10 @@ export const networkServerMutators = {
             zql.network_link_membership_rule.where('network_link_id', args.id).one()
           ))) as
           | {
+              membership_direction?: 'forward' | 'backward' | null;
               membership_mode?: 'none' | 'all_members' | 'role_members' | 'selected_source_groups';
               role_id?: string | null;
               source_group_ids?: string[] | null;
-              forward_membership_mode?:
-                | 'none'
-                | 'all_members'
-                | 'role_members'
-                | 'selected_source_groups';
-              forward_role_id?: string | null;
-              forward_source_group_ids?: string[] | null;
-              backward_membership_mode?:
-                | 'none'
-                | 'all_members'
-                | 'role_members'
-                | 'selected_source_groups';
-              backward_role_id?: string | null;
-              backward_source_group_ids?: string[] | null;
-              forward?: {
-                membership_mode: 'none' | 'all_members' | 'role_members' | 'selected_source_groups';
-                role_id: string | null;
-                source_group_ids: string[] | null;
-              };
-              backward?: {
-                membership_mode: 'none' | 'all_members' | 'role_members' | 'selected_source_groups';
-                role_id: string | null;
-                source_group_ids: string[] | null;
-              };
             }
           | undefined
       ),
@@ -371,13 +323,12 @@ export const networkServerMutators = {
           status: 'active',
           initiator_group_id: args.initiator_group_id,
         })),
-        ...buildConflictMembershipPayload(
-          args.desired_membership_rules ?? {
-            membership_mode: args.desired_membership_mode,
-            role_id: args.desired_role_id ?? null,
-            source_group_ids: args.desired_source_group_ids ?? null,
-          }
-        ),
+        ...buildConflictMembershipPayload({
+          membership_direction: args.desired_membership_direction ?? null,
+          membership_mode: args.desired_membership_mode,
+          role_id: args.desired_role_id ?? null,
+          source_group_ids: args.desired_source_group_ids ?? null,
+        }),
       });
 
       const existingLink = args.active_network_link_id
@@ -419,7 +370,7 @@ export const networkServerMutators = {
         link_id: request.active_network_link_id ?? request.proposed_network_link_id,
         source_group_id: request.source_group_id,
         target_group_id: request.target_group_id,
-        structural_relation: request.structural_relation,
+        structural_relation: request.structural_relation as 'parent_child' | 'sibling',
         rights: approvedRights.map(right => ({
           id: right.id,
           right_key: right.right_key,
@@ -427,13 +378,19 @@ export const networkServerMutators = {
           status: 'active',
           initiator_group_id: request.initiator_group_id,
         })),
-        ...buildConflictMembershipPayload(
-          request.desired_membership_rules ?? {
-            membership_mode: request.desired_membership_mode,
-            role_id: request.desired_role_id ?? null,
-            source_group_ids: request.desired_source_group_ids ?? null,
-          }
-        ),
+        ...buildConflictMembershipPayload({
+          membership_direction: (request.desired_membership_direction ?? null) as
+            | 'forward'
+            | 'backward'
+            | null,
+          membership_mode: request.desired_membership_mode as
+            | 'none'
+            | 'all_members'
+            | 'role_members'
+            | 'selected_source_groups',
+          role_id: request.desired_role_id ?? null,
+          source_group_ids: request.desired_source_group_ids ?? null,
+        }),
       });
 
       const approvedRequest = await approveNetworkLinkChangeRequestInternal(

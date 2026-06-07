@@ -61,17 +61,40 @@ CREATE POLICY "service_role_all" ON public.network_link_right FOR ALL TO service
 CREATE TABLE IF NOT EXISTS public.network_link_membership_rule (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   network_link_id UUID NOT NULL REFERENCES public.network_link (id) ON DELETE CASCADE,
+  membership_direction TEXT,
   membership_mode TEXT NOT NULL DEFAULT 'none',
   role_id UUID REFERENCES public.role (id) ON DELETE SET NULL,
   source_group_ids JSONB,
-  forward_membership_mode TEXT NOT NULL DEFAULT 'none',
-  forward_role_id UUID REFERENCES public.role (id) ON DELETE SET NULL,
-  forward_source_group_ids JSONB,
-  backward_membership_mode TEXT NOT NULL DEFAULT 'none',
-  backward_role_id UUID REFERENCES public.role (id) ON DELETE SET NULL,
-  backward_source_group_ids JSONB,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT network_link_membership_rule_direction_check
+    CHECK (membership_direction IS NULL OR membership_direction IN ('forward', 'backward')),
+  CONSTRAINT network_link_membership_rule_mode_fields_check
+    CHECK (
+      (
+        membership_mode = 'none'
+        AND membership_direction IS NULL
+        AND role_id IS NULL
+        AND source_group_ids IS NULL
+      ) OR (
+        membership_mode = 'all_members'
+        AND membership_direction IS NOT NULL
+        AND role_id IS NULL
+        AND source_group_ids IS NULL
+      ) OR (
+        membership_mode = 'role_members'
+        AND membership_direction IS NOT NULL
+        AND role_id IS NOT NULL
+        AND source_group_ids IS NULL
+      ) OR (
+        membership_mode = 'selected_source_groups'
+        AND membership_direction IS NOT NULL
+        AND role_id IS NULL
+        AND source_group_ids IS NOT NULL
+        AND jsonb_typeof(source_group_ids) = 'array'
+        AND jsonb_array_length(source_group_ids) > 0
+      )
+    ),
   UNIQUE (network_link_id)
 );
 
@@ -79,10 +102,8 @@ CREATE INDEX idx_network_link_membership_rule_link
   ON public.network_link_membership_rule (network_link_id);
 CREATE INDEX idx_network_link_membership_rule_mode
   ON public.network_link_membership_rule (membership_mode);
-CREATE INDEX idx_network_link_membership_rule_forward_mode
-  ON public.network_link_membership_rule (forward_membership_mode);
-CREATE INDEX idx_network_link_membership_rule_backward_mode
-  ON public.network_link_membership_rule (backward_membership_mode);
+CREATE INDEX idx_network_link_membership_rule_direction
+  ON public.network_link_membership_rule (membership_direction);
 
 ALTER TABLE public.network_link_membership_rule ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.network_link_membership_rule FOR ALL TO service_role USING (true);
@@ -98,16 +119,47 @@ CREATE TABLE IF NOT EXISTS public.network_link_change_request (
   status TEXT NOT NULL DEFAULT 'requested',
   initiator_group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
   desired_rights JSONB NOT NULL,
-  desired_membership_rules JSONB,
+  desired_membership_direction TEXT,
   desired_membership_mode TEXT NOT NULL DEFAULT 'none',
   desired_role_id UUID REFERENCES public.role (id) ON DELETE SET NULL,
   desired_source_group_ids JSONB,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT network_link_change_request_membership_direction_check
+    CHECK (
+      desired_membership_direction IS NULL
+      OR desired_membership_direction IN ('forward', 'backward')
+    ),
+  CONSTRAINT network_link_change_request_membership_mode_fields_check
+    CHECK (
+      (
+        desired_membership_mode = 'none'
+        AND desired_membership_direction IS NULL
+        AND desired_role_id IS NULL
+        AND desired_source_group_ids IS NULL
+      ) OR (
+        desired_membership_mode = 'all_members'
+        AND desired_membership_direction IS NOT NULL
+        AND desired_role_id IS NULL
+        AND desired_source_group_ids IS NULL
+      ) OR (
+        desired_membership_mode = 'role_members'
+        AND desired_membership_direction IS NOT NULL
+        AND desired_role_id IS NOT NULL
+        AND desired_source_group_ids IS NULL
+      ) OR (
+        desired_membership_mode = 'selected_source_groups'
+        AND desired_membership_direction IS NOT NULL
+        AND desired_role_id IS NULL
+        AND desired_source_group_ids IS NOT NULL
+        AND jsonb_typeof(desired_source_group_ids) = 'array'
+        AND jsonb_array_length(desired_source_group_ids) > 0
+      )
+    )
 );
 
-CREATE INDEX idx_network_link_change_request_membership_rules
-  ON public.network_link_change_request USING GIN (desired_membership_rules);
+CREATE INDEX idx_network_link_change_request_membership_direction
+  ON public.network_link_change_request (desired_membership_direction);
 
 
 CREATE INDEX idx_network_link_change_request_active_link

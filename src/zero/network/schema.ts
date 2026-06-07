@@ -3,6 +3,7 @@ import { timestampSchema, jsonStringArraySchema } from '../shared/helpers';
 import type { DerivedNetworkRelationshipRow } from './derived';
 
 const networkLinkMembershipRuleDirectionConfigSchema = z.object({
+  membership_direction: z.enum(['forward', 'backward']).nullable(),
   membership_mode: z.enum(['none', 'all_members', 'role_members', 'selected_source_groups']),
   role_id: z.string().nullable(),
   source_group_ids: jsonStringArraySchema.nullable(),
@@ -45,11 +46,10 @@ export const networkLinkMembershipModeSchema = z.enum([
   'role_members',
   'selected_source_groups',
 ]);
+export const networkLinkMembershipDirectionSchema = z.enum(['forward', 'backward']);
 export const networkLinkStatusSchema = z.enum(['active', 'requested', 'pending', 'rejected']);
-export const networkLinkMembershipRuleSnapshotSchema = z.object({
-  forward: networkLinkMembershipRuleDirectionConfigSchema,
-  backward: networkLinkMembershipRuleDirectionConfigSchema,
-});
+export const networkLinkMembershipRuleSnapshotSchema =
+  networkLinkMembershipRuleDirectionConfigSchema;
 
 const networkLinkBaseSchema = z.object({
   id: z.string(),
@@ -76,26 +76,20 @@ const networkLinkRightBaseSchema = z.object({
 const networkLinkMembershipRuleBaseSchema = z.object({
   id: z.string(),
   network_link_id: z.string(),
+  membership_direction: networkLinkMembershipDirectionSchema.nullable(),
   membership_mode: networkLinkMembershipModeSchema,
   role_id: z.string().nullable(),
   source_group_ids: jsonStringArraySchema.nullable(),
-  forward_membership_mode: networkLinkMembershipModeSchema,
-  forward_role_id: z.string().nullable(),
-  forward_source_group_ids: jsonStringArraySchema.nullable(),
-  backward_membership_mode: networkLinkMembershipModeSchema,
-  backward_role_id: z.string().nullable(),
-  backward_source_group_ids: jsonStringArraySchema.nullable(),
   created_at: timestampSchema,
   updated_at: timestampSchema,
 });
 
 const networkLinkMembershipRuleMutationSchema = z.object({
   id: z.string().optional(),
+  membership_direction: networkLinkMembershipDirectionSchema.nullable().optional(),
   membership_mode: networkLinkMembershipModeSchema.optional(),
   role_id: z.string().nullable().optional(),
   source_group_ids: jsonStringArraySchema.nullable().optional(),
-  forward: networkLinkMembershipRuleDirectionConfigSchema.optional(),
-  backward: networkLinkMembershipRuleDirectionConfigSchema.optional(),
 });
 
 const networkLinkChangeRequestRightSnapshotSchema = z.object({
@@ -114,7 +108,7 @@ const networkLinkChangeRequestBaseSchema = z.object({
   status: networkLinkStatusSchema,
   initiator_group_id: z.string(),
   desired_rights: z.array(networkLinkChangeRequestRightSnapshotSchema),
-  desired_membership_rules: networkLinkMembershipRuleSnapshotSchema.nullable().optional(),
+  desired_membership_direction: networkLinkMembershipDirectionSchema.nullable(),
   desired_membership_mode: networkLinkMembershipModeSchema,
   desired_role_id: z.string().nullable(),
   desired_source_group_ids: jsonStringArraySchema.nullable(),

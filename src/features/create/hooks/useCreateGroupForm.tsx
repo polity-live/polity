@@ -83,8 +83,6 @@ import {
   buildNetworkLinkComposerDefaults,
   createEmptyMembershipRule,
   hasConfiguredNetworkLink,
-  getPresetMembershipDirection,
-  getSelectedMembershipDirection,
   hasConfiguredMembership,
 } from '@/features/network/logic/networkLinkComposer';
 
@@ -96,10 +94,11 @@ interface LinkedGroup {
   groupId: string;
   groupName: string;
   type: LinkedGroupType;
+  membershipDirection: RelativeMembershipDirection | null;
+  membershipRule: NetworkLinkComposerMembershipRuleValue;
   membershipMode: CanonicalMembershipMode;
   roleId: string;
   sourceGroupIds: string[];
-  membershipRules: Record<RelativeMembershipDirection, NetworkLinkComposerMembershipRuleValue>;
   rightDirections: Record<GroupRelationshipRight, RelationshipDirection>;
 }
 
@@ -143,77 +142,60 @@ function cloneMembershipRule(
   };
 }
 
-function cloneMembershipRules(
-  membershipRules:
-    | Record<RelativeMembershipDirection, NetworkLinkComposerMembershipRuleValue>
-    | null
-    | undefined
-) {
-  return {
-    incoming: cloneMembershipRule(membershipRules?.incoming),
-    outgoing: cloneMembershipRule(membershipRules?.outgoing),
-  };
-}
-
-function getDisplayMembershipRule(
-  membershipRules: Record<RelativeMembershipDirection, NetworkLinkComposerMembershipRuleValue>
-) {
-  if (hasConfiguredMembership({ membershipRule: membershipRules.incoming })) {
-    return cloneMembershipRule(membershipRules.incoming);
-  }
-
-  if (hasConfiguredMembership({ membershipRule: membershipRules.outgoing })) {
-    return cloneMembershipRule(membershipRules.outgoing);
-  }
-
-  return cloneMembershipRule(membershipRules.incoming);
-}
-
-function hasIncompleteMembershipRules(
-  membershipRules: Record<RelativeMembershipDirection, NetworkLinkComposerMembershipRuleValue>
-) {
-  return [membershipRules.incoming, membershipRules.outgoing].some(membershipRule => {
-    if (membershipRule.membershipMode === 'role_members') {
-      return !membershipRule.roleId;
-    }
-
-    if (membershipRule.membershipMode === 'selected_source_groups') {
-      return membershipRule.sourceGroupIds.length === 0;
-    }
-
+function hasIncompleteMembershipRule(args: {
+  membershipDirection: RelativeMembershipDirection | null;
+  membershipRule: NetworkLinkComposerMembershipRuleValue;
+}) {
+  if (
+    !hasConfiguredMembership({
+      membershipDirection: args.membershipDirection,
+      membershipRule: args.membershipRule,
+    })
+  ) {
     return false;
-  });
+  }
+
+  if (args.membershipRule.membershipMode === 'role_members') {
+    return !args.membershipRule.roleId;
+  }
+
+  if (args.membershipRule.membershipMode === 'selected_source_groups') {
+    return args.membershipRule.sourceGroupIds.length === 0;
+  }
+
+  return false;
 }
 
 function toLinkedGroup(args: {
   groupId: string;
   groupName: string;
   type: LinkedGroupType;
-  membershipRules: Record<RelativeMembershipDirection, NetworkLinkComposerMembershipRuleValue>;
+  membershipDirection: RelativeMembershipDirection | null;
+  membershipRule: NetworkLinkComposerMembershipRuleValue;
   rightDirections: Record<GroupRelationshipRight, RelationshipDirection>;
 }): LinkedGroup {
-  const nextMembershipRules = cloneMembershipRules(args.membershipRules);
-  const displayMembershipRule = getDisplayMembershipRule(nextMembershipRules);
+  const displayMembershipRule = cloneMembershipRule(args.membershipRule);
 
   return {
     groupId: args.groupId,
     groupName: args.groupName,
     type: args.type,
+    membershipDirection: args.membershipDirection,
+    membershipRule: displayMembershipRule,
     membershipMode: displayMembershipRule.membershipMode,
     roleId: displayMembershipRule.roleId,
     sourceGroupIds: [...displayMembershipRule.sourceGroupIds],
-    membershipRules: nextMembershipRules,
     rightDirections: { ...args.rightDirections },
   };
 }
 
 function buildCreateLinkPresetDefaults(preset: NetworkLinkPreset = CREATE_LINK_DEFAULT_PRESET) {
   const presetValue = applyNetworkLinkPreset(preset, buildNetworkLinkComposerDefaults());
-  const membershipRules = cloneMembershipRules(presetValue.membershipRules);
 
   return {
     type: presetValue.relationshipType as LinkedGroupType,
-    membershipRules,
+    membershipDirection: presetValue.membershipDirection,
+    membershipRule: cloneMembershipRule(presetValue.membershipRule),
     rightDirections: { ...presetValue.rightDirections } as Record<
       GroupRelationshipRight,
       RelationshipDirection
@@ -237,14 +219,16 @@ function buildCanonicalNetworkLink(args: {
   otherGroupId: string;
   linkType: LinkedGroupType;
   rightDirections: Record<GroupRelationshipRight, RelationshipDirection>;
-  membershipRules: Record<RelativeMembershipDirection, NetworkLinkComposerMembershipRuleValue>;
+  membershipDirection: RelativeMembershipDirection | null;
+  membershipRule: NetworkLinkComposerMembershipRuleValue;
 }) {
   return buildCanonicalNetworkLinkPayload({
     currentGroupId: args.currentGroupId,
     otherGroupId: args.otherGroupId,
     relationshipType: args.linkType,
     rightDirections: args.rightDirections,
-    membershipRules: cloneMembershipRules(args.membershipRules),
+    membershipDirection: args.membershipDirection,
+    membershipRule: cloneMembershipRule(args.membershipRule),
     initiatorGroupId: args.currentGroupId,
     status: 'requested',
   });
@@ -296,8 +280,10 @@ export function useCreateGroupForm(): CreateFormConfig {
   const [linkedGroups, setLinkedGroups] = useState<LinkedGroup[]>([]);
   const [linkGroupId, setLinkGroupId] = useState('');
   const [linkType, setLinkType] = useState<LinkedGroupType>(initialLinkPresetState.type);
-  const [linkMembershipRules, setLinkMembershipRules] = useState(() =>
-    cloneMembershipRules(initialLinkPresetState.membershipRules)
+  const [linkMembershipDirection, setLinkMembershipDirection] =
+    useState<RelativeMembershipDirection | null>(initialLinkPresetState.membershipDirection);
+  const [linkMembershipRule, setLinkMembershipRule] = useState(() =>
+    cloneMembershipRule(initialLinkPresetState.membershipRule)
   );
   const [linkRightDirections, setLinkRightDirections] = useState<
     Record<GroupRelationshipRight, RelationshipDirection>
@@ -320,23 +306,19 @@ export function useCreateGroupForm(): CreateFormConfig {
   const emailIsValid = isValidOptionalEmailAddress(email);
   const radioGroupType = groupType === 'sibling' ? 'hierarchical' : groupType;
   const siblingLinks = linkedGroups.filter(link => link.type === 'sibling');
-  const siblingMembershipModes = siblingLinks.flatMap(link => [
-    link.membershipRules.incoming.membershipMode,
-    link.membershipRules.outgoing.membershipMode,
-  ]);
-  const activeLinkMembershipDirection =
-    getSelectedMembershipDirection({ membershipRules: linkMembershipRules }) ??
-    getPresetMembershipDirection(linkPreset);
-  const activeLinkMembershipRule = cloneMembershipRule(
-    linkMembershipRules[activeLinkMembershipDirection]
-  );
+  const siblingMembershipModes = siblingLinks.map(link => link.membershipMode);
+  const activeLinkMembershipRule = cloneMembershipRule(linkMembershipRule);
   const siblingMembershipMode = activeLinkMembershipRule.membershipMode;
   const connectedRoleId = activeLinkMembershipRule.roleId;
   const hasConfiguredLink = hasConfiguredNetworkLink({
     rightDirections: linkRightDirections,
-    membershipRules: linkMembershipRules,
+    membershipDirection: linkMembershipDirection,
+    membershipRule: linkMembershipRule,
   });
-  const hasIncompleteLinkMembershipRules = hasIncompleteMembershipRules(linkMembershipRules);
+  const hasIncompleteLinkMembershipRules = hasIncompleteMembershipRule({
+    membershipDirection: linkMembershipDirection,
+    membershipRule: linkMembershipRule,
+  });
   const resolvedGroupType: GroupType = siblingLinks.length > 0 ? 'sibling' : groupType;
   const allowOfficialMemberInvites =
     resolvedGroupType === 'base' ||
@@ -351,23 +333,25 @@ export function useCreateGroupForm(): CreateFormConfig {
     () => ({
       selectedGroupId: linkGroupId,
       relationshipType: linkType,
-      membershipRules: linkMembershipRules,
+      membershipDirection: linkMembershipDirection,
+      membershipRule: linkMembershipRule,
       rightDirections: linkRightDirections,
       preset: linkPreset,
     }),
-    [linkGroupId, linkMembershipRules, linkPreset, linkRightDirections, linkType]
+    [
+      linkGroupId,
+      linkMembershipDirection,
+      linkMembershipRule,
+      linkPreset,
+      linkRightDirections,
+      linkType,
+    ]
   );
 
   useEffect(() => {
-    setLinkMembershipRules(current => ({
-      incoming: {
-        ...current.incoming,
-        roleId: '',
-      },
-      outgoing: {
-        ...current.outgoing,
-        roleId: '',
-      },
+    setLinkMembershipRule(current => ({
+      ...current,
+      roleId: '',
     }));
   }, [linkGroupId]);
 
@@ -480,7 +464,8 @@ export function useCreateGroupForm(): CreateFormConfig {
                 groupId: g.groupId,
                 groupName: g.groupName,
                 type: linkType,
-                membershipRules: linkMembershipRules,
+                membershipDirection: linkMembershipDirection,
+                membershipRule: linkMembershipRule,
                 rightDirections: linkRightDirections,
               })
             : g
@@ -494,7 +479,8 @@ export function useCreateGroupForm(): CreateFormConfig {
           groupId: linkGroupId,
           groupName: group?.name ?? linkGroupId,
           type: linkType,
-          membershipRules: linkMembershipRules,
+          membershipDirection: linkMembershipDirection,
+          membershipRule: linkMembershipRule,
           rightDirections: linkRightDirections,
         }),
       ]);
@@ -503,7 +489,8 @@ export function useCreateGroupForm(): CreateFormConfig {
     setLinkGroupId('');
     setLinkType(resetState.type);
     setLinkRightDirections(resetState.rightDirections);
-    setLinkMembershipRules(resetState.membershipRules);
+    setLinkMembershipDirection(resetState.membershipDirection);
+    setLinkMembershipRule(resetState.membershipRule);
     setLinkComposerTab('preset');
     setLinkPreset(resetState.preset);
   }, [
@@ -512,7 +499,8 @@ export function useCreateGroupForm(): CreateFormConfig {
     hasConfiguredLink,
     hasIncompleteLinkMembershipRules,
     linkGroupId,
-    linkMembershipRules,
+    linkMembershipDirection,
+    linkMembershipRule,
     linkType,
     linkedGroups,
     availableGroups,
@@ -620,7 +608,8 @@ export function useCreateGroupForm(): CreateFormConfig {
                 otherGroupId: link.groupId,
                 linkType: link.type,
                 rightDirections: link.rightDirections,
-                membershipRules: link.membershipRules,
+                membershipDirection: link.membershipDirection,
+                membershipRule: link.membershipRule,
               });
               return {
                 proposed_network_link_id: payload.id,
@@ -633,10 +622,7 @@ export function useCreateGroupForm(): CreateFormConfig {
                   right_key: right.right_key,
                   direction: right.direction,
                 })),
-                desired_membership_rules: {
-                  forward: payload.membership_rule.forward,
-                  backward: payload.membership_rule.backward,
-                },
+                desired_membership_direction: payload.membership_rule.membership_direction ?? null,
                 desired_membership_mode: payload.membership_rule.membership_mode,
                 desired_role_id: payload.membership_rule.role_id ?? null,
                 desired_source_group_ids: payload.membership_rule.source_group_ids ?? null,
@@ -876,7 +862,8 @@ export function useCreateGroupForm(): CreateFormConfig {
                   onValueChange={nextValue => {
                     setLinkGroupId(nextValue.selectedGroupId);
                     setLinkType(nextValue.relationshipType);
-                    setLinkMembershipRules(nextValue.membershipRules);
+                    setLinkMembershipDirection(nextValue.membershipDirection);
+                    setLinkMembershipRule(nextValue.membershipRule);
                     setLinkRightDirections(nextValue.rightDirections);
                     setLinkPreset(nextValue.preset);
                   }}
@@ -915,7 +902,8 @@ export function useCreateGroupForm(): CreateFormConfig {
                       setLinkGroupId('');
                       setLinkType(resetState.type);
                       setLinkRightDirections(resetState.rightDirections);
-                      setLinkMembershipRules(resetState.membershipRules);
+                      setLinkMembershipDirection(resetState.membershipDirection);
+                      setLinkMembershipRule(resetState.membershipRule);
                       setLinkComposerTab('preset');
                       setLinkPreset(resetState.preset);
                     }}
