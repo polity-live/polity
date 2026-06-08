@@ -32,6 +32,7 @@ import {
   amendmentPath,
   amendmentPathSegment,
   supportConfirmation,
+  amendmentGroupDecision,
   amendmentProcessRun,
   amendmentProcessBranch,
   amendmentProcessStepRun,
@@ -417,6 +418,11 @@ export const groupRelationships = relationships(group, ({ one, many }) => ({
   roles: many({ sourceField: ['id'], destSchema: role, destField: ['group_id'] }),
   events: many({ sourceField: ['id'], destSchema: event, destField: ['group_id'] }),
   amendments: many({ sourceField: ['id'], destSchema: amendment, destField: ['group_id'] }),
+  amendment_group_decisions: many({
+    sourceField: ['id'],
+    destSchema: amendmentGroupDecision,
+    destField: ['group_id'],
+  }),
   todos: many({ sourceField: ['id'], destSchema: todo, destField: ['group_id'] }),
   blogs: many({ sourceField: ['id'], destSchema: blog, destField: ['group_id'] }),
   statements: many({ sourceField: ['id'], destSchema: statement, destField: ['group_id'] }),
@@ -818,6 +824,11 @@ export const amendmentRelationships = relationships(amendment, ({ one, many }) =
     destSchema: supportConfirmation,
     destField: ['amendment_id'],
   }),
+  group_decisions: many({
+    sourceField: ['id'],
+    destSchema: amendmentGroupDecision,
+    destField: ['amendment_id'],
+  }),
   documents: many({ sourceField: ['id'], destSchema: document, destField: ['amendment_id'] }),
   agenda_items: many({ sourceField: ['id'], destSchema: agendaItem, destField: ['amendment_id'] }),
   todos: many({ sourceField: ['id'], destSchema: todo, destField: ['amendment_id'] }),
@@ -921,6 +932,29 @@ export const supportConfirmationRelationships = relationships(supportConfirmatio
   confirmed_by: one({ sourceField: ['confirmed_by_id'], destSchema: user, destField: ['id'] }),
 }));
 
+export const amendmentGroupDecisionRelationships = relationships(
+  amendmentGroupDecision,
+  ({ one }) => ({
+    amendment: one({ sourceField: ['amendment_id'], destSchema: amendment, destField: ['id'] }),
+    group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
+    process_run: one({
+      sourceField: ['process_run_id'],
+      destSchema: amendmentProcessRun,
+      destField: ['id'],
+    }),
+    process_branch: one({
+      sourceField: ['process_branch_id'],
+      destSchema: amendmentProcessBranch,
+      destField: ['id'],
+    }),
+    process_step_run: one({
+      sourceField: ['process_step_run_id'],
+      destSchema: amendmentProcessStepRun,
+      destField: ['id'],
+    }),
+  })
+);
+
 export const amendmentProcessRunRelationships = relationships(
   amendmentProcessRun,
   ({ one, many }) => ({
@@ -969,6 +1003,11 @@ export const amendmentProcessRunRelationships = relationships(
     tasks: many({
       sourceField: ['id'],
       destSchema: processTask,
+      destField: ['process_run_id'],
+    }),
+    group_decisions: many({
+      sourceField: ['id'],
+      destSchema: amendmentGroupDecision,
       destField: ['process_run_id'],
     }),
     compatibility_paths: many({
@@ -1027,6 +1066,11 @@ export const amendmentProcessBranchRelationships = relationships(
       destSchema: processTask,
       destField: ['branch_id'],
     }),
+    group_decisions: many({
+      sourceField: ['id'],
+      destSchema: amendmentGroupDecision,
+      destField: ['process_branch_id'],
+    }),
     compatibility_segments: many({
       sourceField: ['id'],
       destSchema: amendmentPathSegment,
@@ -1077,6 +1121,11 @@ export const amendmentProcessStepRunRelationships = relationships(
       sourceField: ['id'],
       destSchema: processTask,
       destField: ['step_run_id'],
+    }),
+    group_decisions: many({
+      sourceField: ['id'],
+      destSchema: amendmentGroupDecision,
+      destField: ['process_step_run_id'],
     }),
     compatibility_segments: many({
       sourceField: ['id'],
@@ -1907,6 +1956,7 @@ export const allRelationships = [
   amendmentPathRelationships,
   amendmentPathSegmentRelationships,
   supportConfirmationRelationships,
+  amendmentGroupDecisionRelationships,
   amendmentProcessRunRelationships,
   amendmentProcessBranchRelationships,
   amendmentProcessStepRunRelationships,

@@ -109,6 +109,7 @@ export function TargetSelectionDialog({
             onSelect={setPendingTarget}
             disablePortal
             allowGroupWithoutEvent
+            layoutScope="target-selection-dialog"
           />
         </div>
 

@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildHierarchyRightEdgeDirections,
   buildCurrentPerspectiveRightDisplayDirections,
+  buildNetworkRelationshipEdge,
   buildNetworkRelationshipDialogData,
   getAnchorUsageConnectionDirection,
   getRelationshipStrokeColor,
@@ -313,5 +314,39 @@ describe('networkEdgeHelpers', () => {
 
     expect(dialogData.membershipMode).toBe('role_members');
     expect(dialogData.membershipDirection).toBe('incoming');
+  });
+
+  it('builds shared relationship edges with the same preview metadata used by the group network', () => {
+    const edge = buildNetworkRelationshipEdge({
+      edgeId: 'edge-parent-h1-to-b1',
+      sourceId: 'group-h1',
+      targetId: 'group-b1',
+      sourceGroupId: 'group-h1',
+      targetGroupId: 'group-b1',
+      structuralType: 'parent',
+      rights: ['amendmentRight'],
+      relationshipKinds: ['active'],
+      rightRelationshipKinds: { amendmentRight: 'active' },
+      membershipMode: 'all_members',
+      membershipCanonicalDirection: 'forward',
+      rightEdgeDirections: { amendmentRight: 'backward' },
+      sourceName: 'H1',
+      targetName: 'B1',
+      previewCurrentGroupId: 'group-b1',
+      currentGroupId: 'group-b1',
+    });
+
+    const dialogData = buildNetworkRelationshipDialogData(edge, key => key);
+
+    expect(dialogData.relationshipType).toBe('child');
+    expect(dialogData.currentGroupId).toBe('group-b1');
+    expect(dialogData.currentGroupName).toBe('B1');
+    expect(dialogData.selectedGroupId).toBe('group-h1');
+    expect(dialogData.selectedGroupName).toBe('H1');
+    expect(dialogData.membershipMode).toBe('all_members');
+    expect(dialogData.membershipDirection).toBe('incoming');
+    expect(dialogData.rightDisplayDirections).toEqual({
+      amendmentRight: 'incoming',
+    });
   });
 });

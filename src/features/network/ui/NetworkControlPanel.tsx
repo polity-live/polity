@@ -8,10 +8,11 @@ import {
   RightFilters,
   RIGHT_TYPES,
   RIGHT_GRADIENTS,
-  RIGHT_LABELS,
+  getRightLabel,
 } from '@/features/network/ui/RightFilters';
 import { NETWORK_CONNECTION_DIRECTION_COLORS } from '@/features/network/logic/networkEdgeHelpers';
 import { cn } from '@/features/shared/utils/utils';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 export interface NetworkLegendItem {
   id: string;
@@ -125,6 +126,7 @@ export function NetworkControlPanel({
   controlsExtraContent,
   legendExtraContent,
 }: NetworkControlPanelProps) {
+  const { t } = useTranslation();
   const canRenderRightFilter = showRightsFilter && !filterRight && selectedRights && onToggleRight;
   const resolvedDepthFilters =
     depthFilters ??
@@ -231,7 +233,7 @@ export function NetworkControlPanel({
             <div className="mt-3 shrink-0 rounded-md bg-blue-50 p-2 text-sm dark:bg-blue-950/20">
               <span className="font-medium">{filteredByPrefix}:</span>{' '}
               <span className="text-blue-700 dark:text-blue-300">
-                {filterRight.replace('Right', '')}
+                {getRightLabel(filterRight, (key, fallback) => t(key) || fallback || key)}
               </span>
             </div>
           ) : null}
@@ -334,7 +336,9 @@ export function NetworkControlPanel({
                     {RIGHT_TYPES.map(right => (
                       <div key={right} className="flex items-center gap-2">
                         <div className={`h-3 w-6 rounded-sm ${RIGHT_GRADIENTS[right]}`}></div>
-                        <span>{RIGHT_LABELS[right]}</span>
+                        <span>
+                          {getRightLabel(right, (key, fallback) => t(key) || fallback || key)}
+                        </span>
                       </div>
                     ))}
                   </>

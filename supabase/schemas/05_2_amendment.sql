@@ -234,6 +234,31 @@ CREATE INDEX idx_process_task_due_at ON public.process_task (due_at);
 ALTER TABLE public.process_task ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.process_task FOR ALL TO service_role USING (true);
 
+CREATE TABLE IF NOT EXISTS public.amendment_group_decision (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  amendment_id UUID NOT NULL REFERENCES public.amendment (id) ON DELETE CASCADE,
+  group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
+  process_run_id UUID REFERENCES public.amendment_process_run (id) ON DELETE SET NULL,
+  process_branch_id UUID REFERENCES public.amendment_process_branch (id) ON DELETE SET NULL,
+  process_step_run_id UUID REFERENCES public.amendment_process_step_run (id) ON DELETE SET NULL,
+  status TEXT NOT NULL,
+  decided_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX idx_amendment_group_decision_unique
+  ON public.amendment_group_decision (amendment_id, group_id);
+CREATE INDEX idx_amendment_group_decision_group
+  ON public.amendment_group_decision (group_id);
+CREATE INDEX idx_amendment_group_decision_process_run
+  ON public.amendment_group_decision (process_run_id);
+CREATE INDEX idx_amendment_group_decision_status
+  ON public.amendment_group_decision (status);
+
+ALTER TABLE public.amendment_group_decision ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.amendment_group_decision FOR ALL TO service_role USING (true);
+
 ALTER TABLE public.amendment
   ADD CONSTRAINT amendment_current_process_run_fk
   FOREIGN KEY (current_process_run_id) REFERENCES public.amendment_process_run (id)

@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
+import { toast } from 'sonner';
+import { useAuth } from '@/providers/auth-provider';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
-import { UserNetworkFlow } from '@/features/network/ui/UserNetworkFlow';
-import { NetworkEntityDialog } from '@/features/network/ui/NetworkEntityDialog';
 import {
   Dialog,
   DialogContent,
@@ -14,463 +15,240 @@ import {
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
-import { Badge } from '@/features/shared/ui/ui/badge';
-import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
-import { useVoteActions } from '@/zero/votes/useVoteActions';
-import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
-import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
-import { useAuth } from '@/providers/auth-provider';
-import { toast } from 'sonner';
 import {
-  calculateUpwardPathWithClosestEvents,
-  enrichPathSegments,
-  getActiveUserGroupIds,
-} from '@/features/amendments/logic/amendmentPathHelpers';
-import { useCreateAmendmentPath } from '@/features/amendments/hooks/useCreateAmendmentPath';
-import { CalendarIcon, Target, X, RefreshCw, User, Users, ArrowDown } from 'lucide-react';
-import { Tabs, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
-import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
-import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
-import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
-import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
-import type { NetworkGroupEntity } from '@/features/network/types/network.types';
-import type { EventByGroupRow } from '@/zero/events/useEventState';
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
+import { Badge } from '@/features/shared/ui/ui/badge';
 import { AmendmentPathVisualization } from '@/features/network/ui/AmendmentPathVisualization';
-import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCard';
-import { EventTimelineCard } from '@/features/timeline/ui/cards/EventTimelineCard';
-import { TargetGroupEventSelector } from '@/features/amendments/ui/TargetGroupEventSelector';
-import type { PathWithEventSegment } from '@/features/amendments/logic/amendmentPathHelpers';
-
-interface PendingTargetGroupData {
-  id: string;
-  name: string | null;
-  description?: string | null;
-  member_count?: number | null;
-  event_count?: number | null;
-  amendment_count?: number | null;
-}
-
-interface PendingTargetEventData {
-  id: string | null;
-  title: string | null;
-  description?: string | null;
-  start_date?: number | null;
-  location_name?: string | null;
-  participant_count?: number | null;
-}
-
-import type { EnrichedPathSegment } from '@/features/network/types/network.types';
+import {
+  TargetGroupEventDisplay,
+  TargetGroupEventSelector,
+  type TargetGroupEventSelection,
+} from '@/features/amendments/ui/TargetGroupEventSelector';
+import { enrichPathSegments } from '@/features/amendments/logic/amendmentPathHelpers';
+import { useCreateAmendmentPath } from '@/features/amendments/hooks/useCreateAmendmentPath';
+import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
+import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
+import {
+  ArrowRight,
+  CalendarClock,
+  CheckCircle2,
+  Clock3,
+  GitBranch,
+  Target,
+  Workflow,
+} from 'lucide-react';
 
 interface AmendmentProcessFlowProps {
   amendmentId: string;
 }
 
+function formatDateTime(timestamp?: number | null) {
+  if (!timestamp) {
+    return 'Not scheduled';
+  }
+
+  return new Date(timestamp).toLocaleString('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function getBadgeVariant(
+  status?: string | null
+): 'default' | 'secondary' | 'destructive' | 'outline' {
+  switch (status) {
+    case 'approved':
+    case 'accepted':
+    case 'completed':
+    case 'merged':
+      return 'default';
+    case 'rejected':
+      return 'destructive';
+    case 'pending_event':
+    case 'scheduled':
+    case 'in_vote':
+    case 'supported':
+      return 'secondary';
+    default:
+      return 'outline';
+  }
+}
+
+function getFirstUnresolvedStepId(
+  stepRuns: readonly { id: string; status: string | null; order_index: number }[]
+) {
+  return (
+    [...stepRuns]
+      .sort((left, right) => left.order_index - right.order_index)
+      .find(
+        step =>
+          !['approved', 'rejected', 'merged', 'withdrawn', 'completed'].includes(step.status ?? '')
+      )?.id ?? null
+  );
+}
+
 export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps) {
   const { t } = useTranslation();
-  const { user } = useAuth();
   const navigate = useNavigate();
-  const [entityDialogOpen, setEntityDialogOpen] = useState(false);
-  const [selectedEntity, setSelectedEntity] =
-    useState<React.ComponentProps<typeof NetworkEntityDialog>['entity']>(null);
-  const [targetDialogOpen, setTargetDialogOpen] = useState(false);
-  const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
-  const [pendingTarget, setPendingTarget] = useState<{
-    groupId: string;
-    groupData: PendingTargetGroupData;
-    eventId: string | null;
-    eventData: PendingTargetEventData | null;
-    pathWithEvents?: PathWithEventSegment[];
-    pathMode: 'hierarchy' | 'workflow';
-    workflowId: string | null;
-  } | null>(null);
+  const { user } = useAuth();
+  const [selectorOpen, setSelectorOpen] = useState(false);
+  const [pendingSelection, setPendingSelection] = useState<TargetGroupEventSelection | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'path' | 'network'>('network');
 
-  const [eventChangeDialog, setEventChangeDialog] = useState<{
-    open: boolean;
-    groupId: string;
-    groupName: string;
-    currentEventId: string | null;
-  } | null>(null);
-  const [selectedUserId, setSelectedUserId] = useState<string>('');
-  const [targetSelectionDialog, setTargetSelectionDialog] = useState(false);
-  const [targetCollaboratorUserId, setTargetCollaboratorUserId] = useState<string>('');
-
-  const { updateAmendment, deletePathSegment, deletePath } = useAmendmentActions();
-  const { createVote, deleteVote } = useVoteActions();
-  const { createAgendaItem: createAgendaItemAction, deleteAgendaItem: deleteAgendaItemAction } =
-    useAgendaActions();
   const { createAmendmentPath } = useCreateAmendmentPath();
+  const { updateAmendment } = useAmendmentActions();
 
-  // All query data via facade
   const {
-    amendmentProcess: amendmentResults,
-    collaborators: collaboratorsResult,
-    allGroups,
-    allGroupRelationships,
-    allGroupMemberships,
-    allEvents,
-    eventsByGroup: groupEventsResult,
-    isLoading: facadeLoading,
+    amendmentProcess: amendment,
+    collaborators,
+    isLoading,
   } = useAmendmentState({
     amendmentId,
     includeProcessData: true,
-    includeNetworkData: true,
-    includeEventsByGroup: !!eventChangeDialog?.groupId,
-    eventGroupId: eventChangeDialog?.groupId,
   });
 
-  const amendment = amendmentResults;
-  const isLoading = facadeLoading;
-
-  const networkData = {
-    groups: allGroups ?? [],
-    groupRelationships: allGroupRelationships ?? [],
-    groupMemberships: allGroupMemberships ?? [],
-    events: allEvents ?? [],
-  };
-
-  const groupTypeById = new Map(
-    (networkData.groups as { id: string; group_type?: string | null }[]).map(group => [
-      group.id,
-      group.group_type ?? null,
-    ])
+  const currentRun = amendment?.current_process_run ?? null;
+  const allRuns = useMemo(
+    () =>
+      [...(amendment?.process_runs ?? [])].sort(
+        (left, right) => right.created_at - left.created_at
+      ),
+    [amendment?.process_runs]
+  );
+  const historicalRuns = useMemo(
+    () => allRuns.filter(run => run.id !== currentRun?.id),
+    [allRuns, currentRun?.id]
+  );
+  const branches = useMemo(
+    () =>
+      [...(currentRun?.branches ?? [])].sort((left, right) => left.created_at - right.created_at),
+    [currentRun?.branches]
+  );
+  const activeBranch = useMemo(
+    () =>
+      branches.find(branch => branch.id === currentRun?.active_branch_id) ?? branches[0] ?? null,
+    [branches, currentRun?.active_branch_id]
+  );
+  const activeBranchStepRuns = useMemo(
+    () =>
+      [...(activeBranch?.step_runs ?? [])].sort(
+        (left, right) => left.order_index - right.order_index
+      ),
+    [activeBranch?.step_runs]
+  );
+  const firstUnresolvedStepId = useMemo(
+    () => getFirstUnresolvedStepId(activeBranchStepRuns),
+    [activeBranchStepRuns]
+  );
+  const openTasks = useMemo(
+    () =>
+      (currentRun?.tasks ?? []).filter(
+        task => task.status === 'open' || task.status === 'scheduled'
+      ),
+    [currentRun?.tasks]
+  );
+  const groupDecisions = useMemo(
+    () =>
+      [...(amendment?.group_decisions ?? [])].sort(
+        (left, right) =>
+          (right.decided_at ?? right.updated_at ?? 0) - (left.decided_at ?? left.updated_at ?? 0)
+      ),
+    [amendment?.group_decisions]
+  );
+  const groupTypeById = useMemo(
+    () =>
+      new Map(
+        activeBranchStepRuns
+          .filter(step => step.target_group_id)
+          .map(step => [step.target_group_id ?? '', null])
+      ),
+    [activeBranchStepRuns]
+  );
+  const pathVisualizationData = useMemo(
+    () =>
+      activeBranchStepRuns.map(step => ({
+        groupId: step.target_group_id ?? null,
+        groupName: step.target_group?.name ?? step.workflow_step?.label ?? 'Unknown group',
+        eventId: step.event_id ?? null,
+        eventTitle: step.event?.title ?? 'Pending event',
+        eventStartDate: step.event?.start_date ?? step.starts_at ?? null,
+        agendaItemId: step.agenda_item_id ?? null,
+        amendmentVoteId: step.vote_id ?? null,
+        forwardingStatus: step.decision_status ?? step.status ?? 'previous_decision_outstanding',
+        order: step.order_index,
+      })),
+    [activeBranchStepRuns]
   );
 
-  // Use the same events query for the change event dialog
-  const groupEventsData = { events: groupEventsResult ?? [] };
-
-  const allUsers = (collaboratorsResult ?? [])
-    .map(collab => collab.user)
-    .filter((u): u is NonNullable<typeof u> => !!u?.id);
-
-  // Default to the user stored on the path, or fallback to current user
-  const amendmentPath = amendment?.paths?.[0];
-  const displayUserId = selectedUserId || user?.id || '';
-
-  // A pending-event runtime still counts as a selected target.
-  const hasTarget = Boolean(
-    amendmentPath?.id || amendment?.current_process_run?.id || amendment?.group?.id
+  const selectorCollaborators = useMemo(
+    () =>
+      (collaborators ?? [])
+        .map(collaborator => collaborator.user)
+        .filter((currentUser): currentUser is NonNullable<typeof currentUser> =>
+          Boolean(currentUser?.id)
+        )
+        .map(currentUser => ({
+          id: currentUser.id,
+          name: `${currentUser.first_name ?? ''} ${currentUser.last_name ?? ''}`.trim() || 'User',
+          email: currentUser.email ?? undefined,
+          avatar: currentUser.avatar ?? undefined,
+        })),
+    [collaborators]
   );
 
-  // Use path segments directly and sort them by order field
-  const pathSegments = [...(amendmentPath?.segments || [])].sort(
-    (a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)
-  );
-
-  // Create enrichedPathData from segments for backward compatibility
-  const enrichedPathData: EnrichedPathSegment[] = pathSegments.map(segment => {
-    // Look up agenda item and amendment vote by event_id
-    const agendaItem = amendment?.agenda_items?.find(ai => ai.event_id === segment.event_id);
-    const amendmentVote = amendment?.vote_entries?.find(v => v.agenda_item_id === agendaItem?.id);
-    return {
-      groupId: segment.group_id ?? null,
-      groupName: segment.group?.name || 'Unknown Group',
-      eventId: segment.event_id || null,
-      eventTitle: segment.event?.title || 'No Event',
-      eventStartDate: segment.event?.start_date || null,
-      agendaItemId: agendaItem?.id || null,
-      amendmentVoteId: amendmentVote?.id || null,
-      forwardingStatus: segment.status,
-      order: segment.order_index,
-    };
-  });
-
-  // Set default tab based on whether target exists
-  useEffect(() => {
-    if (hasTarget) {
-      setActiveTab('path');
-    } else {
-      setActiveTab('network');
+  const handleConfirmSelection = async () => {
+    if (!pendingSelection || !amendment || !user) {
+      return;
     }
-  }, [hasTarget]);
-
-  // Handle group click from network
-  const handleGroupClick = useCallback((groupId: string, groupData: NetworkGroupEntity) => {
-    // Set entity with custom event selection handler
-    setSelectedEntity({
-      type: 'group',
-      data: {
-        ...groupData,
-        description: richTextToPlainText(groupData.description),
-        onEventSelect: (eventId: string, eventData: EventByGroupRow) => {
-          // When an event is selected from the dialog, set it as pending target
-          setPendingTarget({
-            groupId,
-            groupData: {
-              id: groupData.id,
-              name: groupData.name ?? null,
-              description: richTextToPlainText(groupData.description),
-              member_count: groupData.member_count ?? null,
-              event_count: groupData.event_count ?? null,
-              amendment_count: groupData.amendment_count ?? null,
-            },
-            eventId,
-            eventData: {
-              id: eventId,
-              title: eventData.title ?? null,
-              description: richTextToPlainText(eventData.description),
-              start_date: eventData.start_date ?? null,
-              location_name: eventData.location_name ?? null,
-              participant_count: eventData.participant_count ?? null,
-            },
-            pathMode: 'hierarchy',
-            workflowId: null,
-          });
-          setEntityDialogOpen(false);
-          setTargetDialogOpen(true);
-        },
-      },
-    });
-    setEntityDialogOpen(true);
-  }, []);
-
-  // Calculate path from user to target group with events for each step
-  const calculatePathWithEvents = (targetGroupId: string) => {
-    if (!user || !networkData) return null;
-
-    const selectedUserId = targetCollaboratorUserId || user.id;
-    const userGroupIds = getActiveUserGroupIds(networkData.groupMemberships, selectedUserId);
-
-    return calculateUpwardPathWithClosestEvents({
-      userGroupIds,
-      targetGroupId,
-      groups: networkData.groups,
-      relationships: networkData.groupRelationships,
-      events: networkData.events,
-    });
-  };
-
-  // Handle target confirmation (new or update)
-  const handleConfirmTarget = async () => {
-    if (!pendingTarget || !user || !amendment) return;
-
-    const { groupId, groupData, eventId, eventData } = pendingTarget;
 
     setIsSaving(true);
     try {
-      // If there's an existing target, remove old agenda items, votes, path segments, and path
-      if (hasTarget && amendmentPath?.id) {
-        // Delete amendment votes first
-        if (amendment.vote_entries && amendment.vote_entries.length > 0) {
-          for (const vote of amendment.vote_entries) {
-            await deleteVote(vote.id);
-          }
-        }
-        // Delete agenda items
-        if (amendment.agenda_items && amendment.agenda_items.length > 0) {
-          for (const ai of amendment.agenda_items) {
-            await deleteAgendaItemAction(ai.id);
-          }
-        }
-        // Delete all path segments
-        if (pathSegments && pathSegments.length > 0) {
-          for (const segment of pathSegments) {
-            if (segment.id) {
-              await deletePathSegment({ id: segment.id });
-            }
-          }
-        }
-        // Delete the path itself
-        await deletePath({ id: amendmentPath.id });
-      }
-
-      // Use the pre-calculated path from the selector (supports both hierarchy and workflow)
-      const pathWithEvents =
-        pendingTarget.pathWithEvents && pendingTarget.pathWithEvents.length > 0
-          ? pendingTarget.pathWithEvents
-          : calculatePathWithEvents(groupId);
-
-      if (!pathWithEvents || pathWithEvents.length === 0) {
-        toast.error(t('features.amendments.process.noValidPath'));
-        setIsSaving(false);
-        return;
-      }
-
-      // Enrich path with agenda item/vote IDs and forwarding status
       const enrichedPath = enrichPathSegments(
-        pathWithEvents,
-        groupId,
-        eventId,
-        eventData?.title ?? null,
-        eventData?.start_date ?? null
+        pendingSelection.pathWithEvents,
+        pendingSelection.groupId,
+        pendingSelection.eventId,
+        pendingSelection.eventData?.title ?? null,
+        pendingSelection.eventData?.start_date ?? null,
+        pendingSelection.eventData?.end_date ?? null
       );
 
-      // Persist agenda items, votes, path and segments
       await createAmendmentPath({
         amendmentId,
         amendmentTitle: amendment.title ?? '',
-        amendmentReason: amendment.reason || null,
+        amendmentReason: amendment.reason ?? null,
         enrichedPath,
-        workflowId: pendingTarget.workflowId,
-        pathMode: pendingTarget.pathMode,
+        sourceGroupId: pendingSelection.sourceGroupId,
+        workflowId: pendingSelection.workflowId,
+        pathMode: pendingSelection.pathMode,
       });
 
-      // Update amendment with target group and event
       await updateAmendment({
         id: amendmentId,
-        group_id: groupId,
-        event_id: eventId ?? null,
+        group_id: pendingSelection.groupId,
+        event_id: pendingSelection.eventId ?? null,
       });
 
       toast.success(
-        hasTarget
-          ? t('features.amendments.process.targetUpdatedSuccess')
-          : t('features.amendments.process.targetSetSuccess'),
-        {
-          description: t('features.amendments.process.pathDescription', {
-            groupName: groupData.name ?? '',
-            count: enrichedPath.length,
-          }),
-        }
+        currentRun
+          ? t('features.amendments.process.retargetSuccess', 'Amendment process target updated')
+          : t('features.amendments.process.targetSetSuccess', 'Amendment process target created')
       );
 
-      setTargetDialogOpen(false);
-      setPendingTarget(null);
+      setSelectorOpen(false);
+      setPendingSelection(null);
     } catch (error) {
-      console.error('Error setting target:', error);
-      toast.error(t('features.amendments.process.setTargetFailed'), {
-        description: t('features.amendments.process.tryAgain'),
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // Handle target removal
-  const handleRemoveTarget = async () => {
-    if (!amendment || !hasTarget) return;
-
-    setIsSaving(true);
-    try {
-      // Remove all agenda items and votes from the path
-      if (enrichedPathData && enrichedPathData.length > 0) {
-        for (const segment of enrichedPathData) {
-          if (segment.agendaItemId) {
-            // First delete the vote if it exists
-            if (segment.amendmentVoteId) {
-              await deleteVote(segment.amendmentVoteId);
-            }
-            // Then delete the agenda item
-            await deleteAgendaItemAction(segment.agendaItemId);
-          }
-        }
-      }
-
-      // Remove path
-      if (amendmentPath) {
-        await deletePath({ id: amendmentPath.id });
-      }
-
-      // Update amendment to remove target
-      await updateAmendment({
-        id: amendmentId,
-        group_id: null,
-        event_id: null,
-        current_process_run_id: null,
-      });
-
-      toast.success(t('features.amendments.process.targetRemovedSuccess'));
-      setRemoveDialogOpen(false);
-    } catch (error) {
-      console.error('Error removing target:', error);
-      toast.error(t('features.amendments.process.removeTargetFailed'), {
-        description: t('features.amendments.process.tryAgain'),
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // Handle changing event for a specific group in the path
-  const handleChangeEvent = async (groupId: string, newEventId: string) => {
-    if (!amendment || !amendmentPath || !enrichedPathData || enrichedPathData.length === 0 || !user)
-      return;
-
-    try {
-      setIsSaving(true);
-
-      const pathData = enrichedPathData;
-      const segmentIndex = pathData.findIndex(s => s.groupId === groupId);
-
-      if (segmentIndex === -1) {
-        toast.error(t('features.amendments.process.groupNotFound'));
-      }
-
-      const segment = pathData[segmentIndex];
-
-      // Remove old agenda item and vote if they exist
-      if (segment.agendaItemId) {
-        await deleteAgendaItemAction(segment.agendaItemId);
-      }
-      if (segment.amendmentVoteId) {
-        await deleteVote(segment.amendmentVoteId);
-      }
-
-      // Fetch the new event to get its details - we'll get it from the existing query data
-      // For now, create the agenda item without event title/date and rely on the query to refresh
-      const newAgendaItemId = crypto.randomUUID();
-      const newAmendmentVoteId = crypto.randomUUID();
-
-      // Determine forwarding status
-      const isTarget = groupId === amendment.group?.id;
-      const forwardingStatus = isTarget
-        ? 'forward_confirmed'
-        : segmentIndex === 0
-          ? 'forward_confirmed'
-          : 'previous_decision_outstanding';
-
-      await createAgendaItemAction({
-        id: newAgendaItemId,
-        title: `Amendment: ${amendment.title ?? ''}`,
-        description: amendment.reason || '',
-        type: 'vote',
-        status: 'pending',
-        order_index: 999,
-        forwarding_status: forwardingStatus,
-        duration: 0,
-        scheduled_time: '',
-        start_time: 0,
-        end_time: 0,
-        activated_at: 0,
-        completed_at: 0,
-        event_id: newEventId,
-        amendment_id: amendmentId,
-        majority_type: null,
-        time_limit: null,
-        voting_phase: null,
-      });
-
-      // Create vote record for the new agenda item (voting infrastructure)
-      await createVote({
-        id: newAmendmentVoteId,
-        agenda_item_id: newAgendaItemId,
-        amendment_id: amendmentId,
-        title: `Amendment: ${amendment.title ?? ''}`,
-        description: amendment.reason || null,
-        closing_duration_seconds: null,
-        closing_end_time: null,
-      });
-
-      // Note: Segment is updated through the entity system, no need to update pathData
-
-      // If this is the target group, also update the amendment's targetEvent
-      if (isTarget) {
-        await updateAmendment({
-          id: amendmentId,
-          event_id: newEventId,
-        });
-      }
-
-      toast.success(t('features.amendments.process.eventUpdatedSuccess'));
-      setEventChangeDialog(null);
-    } catch (error) {
-      console.error('Error changing event:', error);
-      toast.error(t('features.amendments.process.eventUpdateFailed'), {
-        description: t('features.amendments.process.tryAgain'),
-      });
+      console.error('Error starting amendment process:', error);
+      toast.error(
+        t('features.amendments.process.startFailed', 'Failed to start the amendment process')
+      );
     } finally {
       setIsSaving(false);
     }
@@ -478,690 +256,510 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
 
   if (!user) {
     return (
-      <div className="flex h-[600px] items-center justify-center">
-        <p className="text-muted-foreground">{t('features.amendments.process.pleaseLogin')}</p>
+      <div className="flex h-[480px] items-center justify-center">
+        <p className="text-muted-foreground">
+          {t('features.amendments.process.pleaseLogin', 'Please sign in to view the process.')}
+        </p>
       </div>
     );
   }
 
   if (isLoading) {
     return (
-      <div className="flex h-[600px] items-center justify-center">
-        <p className="text-muted-foreground">{t('features.amendments.process.loading')}</p>
+      <div className="flex h-[480px] items-center justify-center">
+        <p className="text-muted-foreground">
+          {t('features.amendments.process.loading', 'Loading amendment process...')}
+        </p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Show current target if set, otherwise show prompt */}
-      {hasTarget ? (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Target className="h-4 w-4" />
-                {t('features.amendments.process.currentTarget')}
-              </CardTitle>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={async () => {
-                    // Remove currently associated agenda item if it exists
-                    if (amendment?.agenda_items && amendment.agenda_items.length > 0) {
-                      try {
-                        // Delete amendment votes first
-                        if (amendment.vote_entries && amendment.vote_entries.length > 0) {
-                          for (const vote of amendment.vote_entries) {
-                            await deleteVote(vote.id);
-                          }
-                        }
-                        // Delete agenda items
-                        for (const agendaItem of amendment.agenda_items) {
-                          await deleteAgendaItemAction(agendaItem.id);
-                        }
-                      } catch (error) {
-                        console.error('Error removing agenda items:', error);
-                      }
-                    }
-
-                    // Pre-select the user from the existing path
-                    setTargetCollaboratorUserId(user?.id || '');
-                    setTargetSelectionDialog(true);
-                  }}
-                >
-                  <RefreshCw className="mr-2 h-3 w-3" />
-                  {t('features.amendments.process.update')}
-                </Button>
-                <Button size="sm" variant="destructive" onClick={() => setRemoveDialogOpen(true)}>
-                  <X className="mr-2 h-3 w-3" />
-                  {t('features.amendments.process.remove')}
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {/* Path Overview - Timeline Style */}
-            {amendmentPath && enrichedPathData && enrichedPathData.length > 0 && (
-              <div className="space-y-4">
-                <div className="text-muted-foreground text-xs font-semibold uppercase">
-                  {t('features.amendments.process.amendmentPath')} ({enrichedPathData.length}{' '}
-                  {t('common.groups')})
-                </div>
-
-                {/* Timeline */}
-                <div className="relative pl-10">
-                  {/* Vertical connector line */}
-                  <div className="bg-border absolute top-0 bottom-0 left-[18px] w-px"></div>
-
-                  {/* Timeline items */}
-                  <div className="space-y-1">
-                    {enrichedPathData.map((segment, index: number) => {
-                      const isTarget = segment.groupId === amendment.group?.id;
-                      const isNextEvent = segment.forwardingStatus === 'forward_confirmed';
-                      const isPending =
-                        segment.forwardingStatus === 'previous_decision_outstanding';
-                      const isLast = index === enrichedPathData.length - 1;
-
-                      return (
-                        <div key={segment.groupId}>
-                          {/* Group node */}
-                          <div className="relative flex items-start gap-3 py-3">
-                            {/* Timeline dot */}
-                            <div
-                              className={`ring-background absolute top-3.5 -left-10 z-10 flex h-[18px] w-[18px] items-center justify-center rounded-full ring-2 ${
-                                isNextEvent
-                                  ? 'bg-primary shadow-primary/30 shadow-sm'
-                                  : isTarget
-                                    ? 'bg-destructive shadow-destructive/30 shadow-sm'
-                                    : isPending
-                                      ? 'bg-muted-foreground/40'
-                                      : 'bg-primary/70'
-                              }`}
-                            >
-                              <span className="text-primary-foreground text-[9px] font-bold">
-                                {index + 1}
-                              </span>
-                            </div>
-
-                            {/* Group card */}
-                            <div
-                              className={`flex min-w-0 flex-1 items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors ${
-                                isNextEvent
-                                  ? 'border-primary/40 bg-primary/5'
-                                  : isTarget
-                                    ? 'border-destructive/40 bg-destructive/5'
-                                    : isPending
-                                      ? 'border-border bg-muted/30 opacity-60'
-                                      : 'border-border bg-card'
-                              }`}
-                            >
-                              <div
-                                className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md ${
-                                  isTarget
-                                    ? 'bg-destructive/10 text-destructive'
-                                    : 'bg-primary/10 text-primary'
-                                }`}
-                              >
-                                <Users className="h-4 w-4" />
-                              </div>
-
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-2">
-                                  <span className="truncate text-sm font-semibold">
-                                    {segment.groupName}
-                                  </span>
-                                  {isNextEvent && (
-                                    <Badge variant="default" className="h-5 px-1.5 text-[10px]">
-                                      {t('features.amendments.process.nextEvent')}
-                                    </Badge>
-                                  )}
-                                  {isTarget && (
-                                    <Badge variant="destructive" className="h-5 px-1.5 text-[10px]">
-                                      {t('features.amendments.process.target')}
-                                    </Badge>
-                                  )}
-                                  {isPending && (
-                                    <Badge
-                                      variant="outline"
-                                      className="text-muted-foreground h-5 px-1.5 text-[10px]"
-                                    >
-                                      {t('features.amendments.process.awaitingPrevious')}
-                                    </Badge>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Event sub-node (indented, connected to group) */}
-                          <div className="relative ml-6 flex items-start gap-3 pb-2">
-                            {/* Small connector dot */}
-                            <div className="bg-muted-foreground/30 ring-background absolute top-3 -left-[33px] z-10 h-2 w-2 rounded-full ring-2"></div>
-
-                            {segment.eventId && segment.eventTitle ? (
-                              <div className="border-border bg-card flex min-w-0 flex-1 items-center gap-3 rounded-lg border px-3 py-2.5">
-                                {/* Date badge */}
-                                {segment.eventStartDate ? (
-                                  <div className="flex h-10 w-10 flex-shrink-0 flex-col items-center justify-center rounded-md bg-orange-500/10 text-orange-600 dark:text-orange-400">
-                                    <span className="text-[10px] leading-none font-medium uppercase">
-                                      {new Date(segment.eventStartDate).toLocaleDateString(
-                                        'en-US',
-                                        { month: 'short' }
-                                      )}
-                                    </span>
-                                    <span className="text-sm leading-tight font-bold">
-                                      {new Date(segment.eventStartDate).getDate()}
-                                    </span>
-                                  </div>
-                                ) : (
-                                  <div className="bg-muted flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md">
-                                    <CalendarIcon className="text-muted-foreground h-4 w-4" />
-                                  </div>
-                                )}
-
-                                <div className="min-w-0 flex-1">
-                                  <span className="block truncate text-sm font-medium">
-                                    {segment.eventTitle}
-                                  </span>
-                                  {segment.eventStartDate && (
-                                    <span className="text-muted-foreground text-xs">
-                                      {new Date(segment.eventStartDate).toLocaleDateString(
-                                        'en-US',
-                                        {
-                                          weekday: 'short',
-                                          month: 'short',
-                                          day: 'numeric',
-                                          hour: 'numeric',
-                                          minute: '2-digit',
-                                        }
-                                      )}
-                                    </span>
-                                  )}
-                                </div>
-
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="text-muted-foreground hover:text-foreground h-7 w-7 flex-shrink-0"
-                                  onClick={() =>
-                                    setEventChangeDialog({
-                                      open: true,
-                                      groupId: segment.groupId ?? '',
-                                      groupName: segment.groupName,
-                                      currentEventId: segment.eventId,
-                                    })
-                                  }
-                                >
-                                  <RefreshCw className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            ) : (
-                              <div className="border-border bg-muted/20 flex min-w-0 flex-1 items-center gap-3 rounded-lg border border-dashed px-3 py-2.5">
-                                <div className="bg-muted flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md">
-                                  <CalendarIcon className="text-muted-foreground/50 h-4 w-4" />
-                                </div>
-                                <span className="text-muted-foreground flex-1 text-sm italic">
-                                  {t('features.amendments.process.noUpcomingEvent')}
-                                </span>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="text-muted-foreground hover:text-foreground h-7 w-7 flex-shrink-0"
-                                  onClick={() =>
-                                    setEventChangeDialog({
-                                      open: true,
-                                      groupId: segment.groupId ?? '',
-                                      groupName: segment.groupName,
-                                      currentEventId: null,
-                                    })
-                                  }
-                                >
-                                  <RefreshCw className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Arrow connector between nodes */}
-                          {!isLast && (
-                            <div className="relative flex justify-start py-0.5">
-                              <div className="absolute top-0 -left-10 flex h-5 w-[18px] items-center justify-center">
-                                <ArrowDown className="text-muted-foreground/40 h-3.5 w-3.5" />
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Summary */}
-                <div className="mt-4 flex items-center gap-2 border-t pt-4">
-                  <Badge variant="secondary">
-                    {enrichedPathData.filter(s => s.agendaItemId).length} {t('common.agendaItems')}
-                  </Badge>
-                  {enrichedPathData.filter(s => s.amendmentVoteId).length > 0 && (
-                    <Badge variant="secondary">
-                      {enrichedPathData.filter(s => s.amendmentVoteId).length} {t('common.votes')}
-                    </Badge>
-                  )}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      ) : (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-8 text-center">
-            <Target className="text-muted-foreground/50 mb-4 h-12 w-12" />
-            <h3 className="mb-2 text-lg font-semibold">
-              {t('features.amendments.process.noTargetSelected')}
-            </h3>
-            <p className="text-muted-foreground mb-4 text-sm">
-              {t('features.amendments.process.chooseTargetPrompt')}
-            </p>
-            <p className="text-muted-foreground text-xs">
-              {t('features.amendments.process.clickGroupPrompt')}
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
       <Card>
-        <CardHeader className="pb-3">
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <CardTitle>{t('features.amendments.process.amendmentNetwork')}</CardTitle>
-              <Tabs value={activeTab} onValueChange={v => setActiveTab(v as 'path' | 'network')}>
-                <TabsList>
-                  <TabsTrigger value="network">
-                    {t('features.amendments.process.availableTargets')}
-                  </TabsTrigger>
-                  <TabsTrigger value="path" disabled={!hasTarget}>
-                    {t('features.amendments.process.targetPath')}
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
+        <CardHeader className="pb-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="space-y-2">
+              <CardTitle className="flex items-center gap-2">
+                <Target className="h-4 w-4" />
+                {t('features.amendments.process.title', 'Amendment process')}
+              </CardTitle>
+              <CardDescription>
+                {currentRun
+                  ? t(
+                      'features.amendments.process.activeRunDescription',
+                      'The forwarding lifecycle now follows the canonical process run, branch, and step records.'
+                    )
+                  : t(
+                      'features.amendments.process.noRunDescription',
+                      'Choose a start group and reachable target to create the first canonical process run.'
+                    )}
+              </CardDescription>
             </div>
 
-            {/* User Selection for Network View */}
-            {activeTab === 'network' && (
-              <div className="flex items-center gap-3">
-                <User className="text-muted-foreground h-4 w-4" />
-                <div className="flex-1">
-                  <TypeaheadSearch
-                    items={toTypeaheadItems(
-                      allUsers,
-                      'user',
-                      u => `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() || 'User',
-                      u => u.email ?? undefined,
-                      u => u.avatar,
-                      u => `/user/${u.id}`
-                    )}
-                    value={selectedUserId}
-                    onChange={(item: TypeaheadItem | null) => setSelectedUserId(item?.id ?? '')}
-                    placeholder="Search users to view their network..."
-                    label="View Network For:"
-                  />
-                </div>
-                {selectedUserId && (
-                  <Button variant="outline" size="sm" onClick={() => setSelectedUserId('')}>
-                    {'View My Network'}
-                  </Button>
-                )}
-              </div>
-            )}
+            <Button
+              onClick={() => {
+                setPendingSelection(null);
+                setSelectorOpen(true);
+              }}
+            >
+              {currentRun
+                ? t('features.amendments.process.retarget', 'Retarget / start new run')
+                : t('features.amendments.process.start', 'Start process')}
+            </Button>
           </div>
         </CardHeader>
-        <CardContent className="p-0">
-          <div className="h-[600px]">
-            {activeTab === 'network' ? (
-              <UserNetworkFlow
-                userId={displayUserId}
-                filterRight="amendmentRight"
-                onGroupClick={handleGroupClick}
-              />
-            ) : (
-              <AmendmentPathVisualization
-                enrichedPathData={enrichedPathData}
-                groupTypeById={groupTypeById}
-                onNodeClick={eventId => navigate({ to: `/event/${eventId}` })}
-              />
-            )}
-          </div>
+        <CardContent className="space-y-4">
+          {currentRun ? (
+            <>
+              <div className="flex flex-wrap gap-2">
+                <Badge variant={getBadgeVariant(currentRun.status)}>{currentRun.status}</Badge>
+                {currentRun.selected_source_group?.name ? (
+                  <Badge variant="outline">
+                    {t('features.amendments.process.sourceGroup', 'Source')}:{' '}
+                    {currentRun.selected_source_group.name}
+                  </Badge>
+                ) : null}
+                {currentRun.selected_target_group?.name ? (
+                  <Badge variant="outline">
+                    {t('features.amendments.process.targetGroup', 'Target')}:{' '}
+                    {currentRun.selected_target_group.name}
+                  </Badge>
+                ) : null}
+                {currentRun.selected_target_workflow?.name ? (
+                  <Badge variant="secondary">
+                    <Workflow className="mr-1 h-3 w-3" />
+                    {currentRun.selected_target_workflow.name}
+                  </Badge>
+                ) : null}
+                <Badge variant="secondary">
+                  <GitBranch className="mr-1 h-3 w-3" />
+                  {branches.length} {t('features.amendments.process.branchCount', 'branch(es)')}
+                </Badge>
+                <Badge variant={openTasks.length > 0 ? 'secondary' : 'outline'}>
+                  <Clock3 className="mr-1 h-3 w-3" />
+                  {openTasks.length} {t('features.amendments.process.openTasks', 'open task(s)')}
+                </Badge>
+              </div>
+
+              {currentRun.implementation_status ? (
+                <div className="rounded-lg border px-4 py-3 text-sm">
+                  <p className="font-medium">
+                    {t('features.amendments.process.implementationStatus', 'Implementation status')}
+                  </p>
+                  <p className="text-muted-foreground mt-1">{currentRun.implementation_status}</p>
+                </div>
+              ) : null}
+            </>
+          ) : (
+            <div className="border-border bg-muted/30 rounded-lg border border-dashed p-4 text-sm">
+              {t(
+                'features.amendments.process.noCurrentRun',
+                'No active process run exists yet for this amendment.'
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Entity Dialog (Groups, Events, and Relationships) */}
-      <NetworkEntityDialog
-        open={entityDialogOpen}
-        onOpenChange={setEntityDialogOpen}
-        entity={selectedEntity}
-      />
-
-      {/* Target Selection Dialog */}
-      <Dialog open={targetDialogOpen} onOpenChange={setTargetDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {hasTarget
-                ? t('features.amendments.process.updateAmendmentTarget')
-                : t('features.amendments.process.setAmendmentTarget')}
-            </DialogTitle>
-            <DialogDescription>
-              {hasTarget
-                ? t('features.amendments.process.updateTargetDescription')
-                : t('features.amendments.process.setTargetDescription')}
-            </DialogDescription>
-          </DialogHeader>
-
-          {pendingTarget && (
-            <div className="space-y-4 py-4">
-              {/* Group Card */}
-              <div>
-                <h4 className="text-muted-foreground mb-2 text-sm font-semibold uppercase">
-                  {t('features.amendments.process.targetGroup')}
-                </h4>
-                <GroupTimelineCard
-                  group={{
-                    id: pendingTarget.groupData.id,
-                    name: pendingTarget.groupData.name ?? '',
-                    description: pendingTarget.groupData.description ?? undefined,
-                    memberCount: pendingTarget.groupData.member_count ?? 0,
-                    eventCount: pendingTarget.groupData.event_count ?? 0,
-                    amendmentCount: pendingTarget.groupData.amendment_count ?? 0,
-                  }}
-                />
-              </div>
-
-              {/* Event Card */}
-              <div>
-                <h4 className="text-muted-foreground mb-2 text-sm font-semibold uppercase">
-                  {t('features.amendments.process.targetEvent')}
-                </h4>
-                {pendingTarget.eventData ? (
-                  <EventTimelineCard
-                    event={{
-                      id: pendingTarget.eventData.id ?? crypto.randomUUID(),
-                      title: pendingTarget.eventData.title ?? '',
-                      description: pendingTarget.eventData.description ?? undefined,
-                      startDate: pendingTarget.eventData.start_date
-                        ? new Date(pendingTarget.eventData.start_date)
-                        : new Date(),
-                      location: pendingTarget.eventData.location_name ?? undefined,
-                      attendeeCount: pendingTarget.eventData.participant_count ?? 0,
-                    }}
-                  />
-                ) : (
-                  <div className="text-muted-foreground border-border bg-muted/40 rounded-md border border-dashed p-4 text-sm">
-                    {t('features.amendments.process.noUpcomingEvent')}
-                  </div>
-                )}
-              </div>
-
-              <div className="bg-muted text-muted-foreground rounded-md p-3 text-xs">
-                <p className="font-semibold">{t('features.amendments.process.whatWillHappen')}</p>
-                <ul className="mt-1 ml-4 list-disc space-y-1">
-                  <li>{t('features.amendments.process.agendaItemWillBeCreated')}</li>
-                  <li>{t('features.amendments.process.voteWillBeCreated')}</li>
-                  <li>{t('features.amendments.process.pathWillBeCalculated')}</li>
-                  {hasTarget && (
-                    <>
-                      <li>{t('features.amendments.process.previousAgendaItemRemoved')}</li>
-                      <li>{t('features.amendments.process.previousPathDeleted')}</li>
-                    </>
+      {currentRun && activeBranch ? (
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">
+                {t('features.amendments.process.activeBranch', 'Active branch path')}
+              </CardTitle>
+              <CardDescription>
+                {activeBranch.title ??
+                  t(
+                    'features.amendments.process.activeBranchDescription',
+                    'This branch shows the full current forwarding path, including completed and pending steps.'
                   )}
-                </ul>
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {pathVisualizationData.length > 0 ? (
+                <div className="h-[340px] rounded-lg border">
+                  <AmendmentPathVisualization
+                    enrichedPathData={pathVisualizationData}
+                    groupTypeById={groupTypeById}
+                    onNodeClick={eventId => navigate({ to: `/event/${eventId}` })}
+                  />
+                </div>
+              ) : null}
+
+              <div className="space-y-3">
+                {activeBranchStepRuns.map(step => {
+                  const isCurrentStep = step.id === firstUnresolvedStepId;
+                  const relatedTasks = openTasks.filter(task => task.step_run_id === step.id);
+
+                  return (
+                    <div key={step.id} className="rounded-lg border p-4">
+                      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="space-y-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Badge variant="outline">
+                              {t('features.amendments.process.step', 'Step')} {step.order_index + 1}
+                            </Badge>
+                            <Badge variant={getBadgeVariant(step.status)}>{step.status}</Badge>
+                            {step.decision_status ? (
+                              <Badge variant={getBadgeVariant(step.decision_status)}>
+                                {step.decision_status}
+                              </Badge>
+                            ) : null}
+                            {isCurrentStep ? (
+                              <Badge variant="secondary">
+                                <CheckCircle2 className="mr-1 h-3 w-3" />
+                                {t('features.amendments.process.currentStep', 'Current step')}
+                              </Badge>
+                            ) : null}
+                          </div>
+
+                          <div>
+                            <p className="font-medium">
+                              {step.target_group?.name ??
+                                step.workflow_step?.label ??
+                                t('features.amendments.process.unknownGroup', 'Unknown group')}
+                            </p>
+                            <p className="text-muted-foreground text-sm">
+                              {step.step_kind}
+                              {step.workflow?.name ? ` - ${step.workflow.name}` : ''}
+                            </p>
+                          </div>
+
+                          <div className="text-muted-foreground flex flex-wrap items-center gap-4 text-xs">
+                            <span className="inline-flex items-center gap-1">
+                              <CalendarClock className="h-3 w-3" />
+                              {formatDateTime(step.starts_at)}
+                            </span>
+                            {step.event?.title ? (
+                              <button
+                                type="button"
+                                className="text-primary hover:underline"
+                                onClick={() => navigate({ to: `/event/${step.event?.id}` })}
+                              >
+                                {step.event.title}
+                              </button>
+                            ) : (
+                              <span>
+                                {t(
+                                  'features.amendments.process.pendingEvent',
+                                  'Waiting for an event to be attached'
+                                )}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {relatedTasks.length > 0 ? (
+                          <div className="min-w-[16rem] space-y-2 rounded-lg border border-dashed p-3">
+                            <p className="text-sm font-medium">
+                              {t('features.amendments.process.relatedTasks', 'Related tasks')}
+                            </p>
+                            {relatedTasks.map(task => (
+                              <div key={task.id} className="space-y-1 text-xs">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <Badge variant={getBadgeVariant(task.status)}>
+                                    {task.status}
+                                  </Badge>
+                                  <Badge variant="outline">{task.task_type}</Badge>
+                                </div>
+                                <p className="text-muted-foreground">
+                                  {task.title ?? task.description}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">
+                {t('features.amendments.process.branches', 'Branches')}
+              </CardTitle>
+              <CardDescription>
+                {t(
+                  'features.amendments.process.branchesDescription',
+                  'Each branch keeps its own ordered step runs and resolution state.'
+                )}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {branches.map(branch => {
+                const branchStepRuns = [...(branch.step_runs ?? [])].sort(
+                  (left, right) => left.order_index - right.order_index
+                );
+                const branchTasks = [...(branch.tasks ?? [])].filter(
+                  task => task.status === 'open' || task.status === 'scheduled'
+                );
+
+                return (
+                  <div key={branch.id} className="rounded-lg border p-4">
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge
+                            variant={
+                              branch.id === currentRun.active_branch_id ? 'default' : 'outline'
+                            }
+                          >
+                            {branch.id === currentRun.active_branch_id
+                              ? t('features.amendments.process.activeBranchBadge', 'Active')
+                              : t('features.amendments.process.branchBadge', 'Branch')}
+                          </Badge>
+                          <Badge variant={getBadgeVariant(branch.status)}>{branch.status}</Badge>
+                          {branch.resolution ? (
+                            <Badge variant={getBadgeVariant(branch.resolution)}>
+                              {branch.resolution}
+                            </Badge>
+                          ) : null}
+                        </div>
+                        <p className="font-medium">
+                          {branch.title ??
+                            t('features.amendments.process.untitledBranch', 'Untitled branch')}
+                        </p>
+                        <div className="flex flex-wrap items-center gap-2 text-xs">
+                          {branchStepRuns.map((step, index) => (
+                            <div key={step.id} className="flex items-center gap-2">
+                              <Badge variant={getBadgeVariant(step.status)}>
+                                {step.target_group?.name ??
+                                  step.workflow_step?.label ??
+                                  `Step ${step.order_index + 1}`}
+                              </Badge>
+                              {index < branchStepRuns.length - 1 ? (
+                                <ArrowRight className="text-muted-foreground h-3 w-3" />
+                              ) : null}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {branchTasks.length > 0 ? (
+                        <div className="min-w-[12rem] rounded-lg border border-dashed p-3 text-xs">
+                          <p className="font-medium">
+                            {t('features.amendments.process.openTasks', 'Open tasks')}
+                          </p>
+                          <p className="text-muted-foreground mt-1">
+                            {branchTasks.length}{' '}
+                            {t(
+                              'features.amendments.process.tasksNeedAttention',
+                              'task(s) need attention'
+                            )}
+                          </p>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        </>
+      ) : null}
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">
+            {t('features.amendments.process.groupDecisions', 'Group decisions')}
+          </CardTitle>
+          <CardDescription>
+            {t(
+              'features.amendments.process.groupDecisionsDescription',
+              'Persisted per-group decisions let us trace supported, accepted, rejected, and withdrawn outcomes independently from run history.'
+            )}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {groupDecisions.length === 0 ? (
+            <p className="text-muted-foreground text-sm">
+              {t(
+                'features.amendments.process.noGroupDecisions',
+                'No per-group decisions have been recorded yet.'
+              )}
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {groupDecisions.map(decision => (
+                <div key={decision.id} className="rounded-lg border p-4">
+                  <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                      <p className="font-medium">
+                        {decision.group?.name ??
+                          t('features.amendments.process.unknownGroup', 'Unknown group')}
+                      </p>
+                      <p className="text-muted-foreground text-xs">
+                        {formatDateTime(decision.decided_at ?? decision.updated_at)}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant={getBadgeVariant(decision.status)}>{decision.status}</Badge>
+                      {decision.process_run_id ? (
+                        <Badge variant="outline">run {decision.process_run_id.slice(0, 8)}</Badge>
+                      ) : null}
+                      {decision.process_branch_id ? (
+                        <Badge variant="outline">
+                          branch {decision.process_branch_id.slice(0, 8)}
+                        </Badge>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
+        </CardContent>
+      </Card>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setTargetDialogOpen(false)}>
-              {t('features.amendments.process.cancel')}
-            </Button>
-            <Button onClick={handleConfirmTarget} disabled={isSaving}>
-              {isSaving
-                ? t('features.amendments.process.processing')
-                : hasTarget
-                  ? t('features.amendments.process.updateTarget')
-                  : t('features.amendments.process.confirmTarget')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {historicalRuns.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">
+              {t('features.amendments.process.runHistory', 'Run history')}
+            </CardTitle>
+            <CardDescription>
+              {t(
+                'features.amendments.process.runHistoryDescription',
+                'Earlier destinations remain as process history when the amendment is retargeted.'
+              )}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {historicalRuns.map(run => (
+              <div key={run.id} className="rounded-lg border p-4">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant={getBadgeVariant(run.status)}>{run.status}</Badge>
+                      {run.selected_target_workflow?.name ? (
+                        <Badge variant="secondary">{run.selected_target_workflow.name}</Badge>
+                      ) : null}
+                    </div>
+                    <p className="font-medium">
+                      {run.selected_target_group?.name ??
+                        t('features.amendments.process.unknownTarget', 'Unknown target')}
+                    </p>
+                    <p className="text-muted-foreground text-xs">
+                      {formatDateTime(run.created_at)}
+                    </p>
+                  </div>
 
-      {/* Remove Target Dialog */}
-      <Dialog open={removeDialogOpen} onOpenChange={setRemoveDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('features.amendments.process.removeAmendmentTarget')}</DialogTitle>
-            <DialogDescription>
-              {t('features.amendments.process.removeTargetConfirmation')}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="bg-destructive/10 rounded-md p-3 text-sm">
-            <p className="text-destructive font-semibold">
-              {t('features.amendments.process.thisActionWill')}
-            </p>
-            <ul className="text-destructive/80 mt-1 ml-4 list-disc space-y-1">
-              <li>{t('features.amendments.process.removeTargetGroupAndEvent')}</li>
-              <li>{t('features.amendments.process.deleteAgendaItem')}</li>
-              <li>{t('features.amendments.process.deleteVote')}</li>
-              <li>{t('features.amendments.process.deletePath')}</li>
-            </ul>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setRemoveDialogOpen(false)}>
-              {t('features.amendments.process.cancel')}
-            </Button>
-            <Button variant="destructive" onClick={handleRemoveTarget} disabled={isSaving}>
-              {isSaving
-                ? t('features.amendments.process.removing')
-                : t('features.amendments.process.removeTarget')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Change Event Dialog */}
-      {eventChangeDialog && (
-        <Dialog
-          open={eventChangeDialog.open}
-          onOpenChange={open => !open && setEventChangeDialog(null)}
-        >
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>
-                {t('features.amendments.process.changeEventFor', {
-                  groupName: eventChangeDialog.groupName,
-                })}
-              </DialogTitle>
-              <DialogDescription>
-                {t('features.amendments.process.selectNewEvent')}
-              </DialogDescription>
-            </DialogHeader>
-
-            <ScrollArea className="max-h-[400px]">
-              <div className="space-y-2 pr-4">
-                {(() => {
-                  const events = groupEventsData.events;
-                  const upcomingEvents = events
-                    .filter(e => new Date(e.start_date ?? 0) > new Date())
-                    .sort(
-                      (a, b) =>
-                        new Date(a.start_date ?? 0).getTime() -
-                        new Date(b.start_date ?? 0).getTime()
-                    );
-
-                  if (upcomingEvents.length === 0) {
-                    return (
-                      <p className="text-muted-foreground text-sm">
-                        {t('features.amendments.process.noUpcomingEvents')}
-                      </p>
-                    );
-                  }
-
-                  return upcomingEvents.map(event => {
-                    const isCurrentEvent = event.id === eventChangeDialog?.currentEventId;
-
-                    return (
-                      <div
-                        key={event.id}
-                        className={`rounded-lg border-2 transition-all ${
-                          isCurrentEvent
-                            ? 'border-primary ring-primary/20 ring-2'
-                            : 'hover:border-primary cursor-pointer hover:shadow-md'
-                        }`}
-                        onClick={() => {
-                          if (!isCurrentEvent && !isSaving && eventChangeDialog) {
-                            handleChangeEvent(eventChangeDialog.groupId, event.id);
-                          }
-                        }}
-                      >
-                        <EventTimelineCard
-                          event={{
-                            id: event.id,
-                            title: event.title ?? '',
-                            description: richTextToPlainText(event.description) || undefined,
-                            startDate: event.start_date ? new Date(event.start_date) : new Date(),
-                            location: event.location_name ?? undefined,
-                            attendeeCount: event.participant_count ?? 0,
-                          }}
-                        />
-                        {isCurrentEvent && (
-                          <div className="px-4 pb-3">
-                            <Badge variant="secondary">
-                              {t('features.amendments.process.current')}
-                            </Badge>
-                          </div>
-                        )}
-                        {!isCurrentEvent && (
-                          <div className="px-4 pb-3">
-                            <Button
-                              size="sm"
-                              disabled={isSaving}
-                              onClick={e => {
-                                e.stopPropagation();
-                                if (eventChangeDialog) {
-                                  handleChangeEvent(eventChangeDialog.groupId, event.id);
-                                }
-                              }}
-                            >
-                              {isSaving
-                                ? t('features.amendments.process.updating')
-                                : t('features.amendments.process.select')}
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  });
-                })()}
-              </div>
-            </ScrollArea>
-
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setEventChangeDialog(null)}>
-                {t('features.amendments.process.cancel')}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {/* Target Selection Dialog - Connected Groups & Events */}
-      <Dialog open={targetSelectionDialog} onOpenChange={setTargetSelectionDialog}>
-        <DialogContent className="flex h-[85vh] max-w-4xl flex-col">
-          <DialogHeader>
-            <DialogTitle>{t('features.amendments.process.selectTargetGroupAndEvent')}</DialogTitle>
-            <DialogDescription>
-              {t('features.amendments.process.selectCollaboratorDescription')}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
-            <TargetGroupEventSelector
-              userId={user?.id ?? ''}
-              disablePortal
-              collaborators={allUsers.map(u => ({
-                id: u.id,
-                name: `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() || 'User',
-                email: u.email ?? undefined,
-                avatar: u.avatar ?? undefined,
-              }))}
-              onSelect={selection => {
-                if (!selection) {
-                  setPendingTarget(null);
-                  return;
-                }
-
-                const {
-                  groupId,
-                  groupData,
-                  eventId,
-                  eventData,
-                  pathWithEvents,
-                  selectedUserId: selUserId,
-                  pathMode,
-                  workflowId,
-                } = selection;
-
-                setPendingTarget({
-                  groupId,
-                  groupData: {
-                    id: groupData.id,
-                    name: groupData.name ?? null,
-                    description: richTextToPlainText(groupData.description),
-                    member_count: groupData.member_count ?? null,
-                    event_count: groupData.event_count ?? null,
-                    amendment_count: groupData.amendment_count ?? null,
-                  },
-                  eventId,
-                  eventData: eventData
-                    ? {
-                        id: eventId,
-                        title: eventData.title ?? null,
-                        description: richTextToPlainText(eventData.description),
-                        start_date: eventData.start_date ?? null,
-                        location_name: eventData.location_name ?? null,
-                        participant_count: eventData.participant_count ?? null,
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="outline">
+                      {run.branches?.length ?? 0}{' '}
+                      {t('features.amendments.process.branchCount', 'branch(es)')}
+                    </Badge>
+                    <Badge
+                      variant={
+                        run.tasks?.some(task => task.status !== 'completed')
+                          ? 'secondary'
+                          : 'outline'
                       }
-                    : null,
-                  pathWithEvents,
-                  pathMode,
-                  workflowId,
-                });
-                setTargetCollaboratorUserId(selUserId);
-              }}
-            />
+                    >
+                      {run.tasks?.filter(task => task.status !== 'completed').length ?? 0}{' '}
+                      {t('features.amendments.process.openTasks', 'open task(s)')}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      ) : null}
+
+      <Dialog
+        open={selectorOpen}
+        onOpenChange={open => {
+          setSelectorOpen(open);
+          if (!open) {
+            setPendingSelection(null);
+          }
+        }}
+      >
+        <DialogContent className="flex h-screen w-screen max-w-none flex-col rounded-none border-0 p-0 sm:h-screen sm:max-w-none">
+          <DialogHeader>
+            <DialogTitle className="px-6 pt-6">
+              {currentRun
+                ? t('features.amendments.process.retargetDialogTitle', 'Retarget amendment process')
+                : t('features.amendments.process.startDialogTitle', 'Start amendment process')}
+            </DialogTitle>
+            <DialogDescription className="px-6">
+              {t(
+                'features.amendments.process.selectorDescription',
+                'Choose a collaborator, start group, reachable destination, and the event sequence for each step.'
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6">
+            <div className="space-y-6">
+              <TargetGroupEventSelector
+                userId={user.id}
+                collaborators={selectorCollaborators}
+                disablePortal
+                allowGroupWithoutEvent
+                layoutScope={currentRun ? 'amendment-process-retarget' : 'amendment-process-start'}
+                onSelect={setPendingSelection}
+              />
+
+              {pendingSelection ? (
+                <TargetGroupEventDisplay
+                  groupData={{
+                    id: pendingSelection.groupData.id,
+                    name: pendingSelection.groupData.name ?? null,
+                    description: richTextToPlainText(pendingSelection.groupData.description),
+                    member_count: pendingSelection.groupData.member_count ?? null,
+                    event_count: pendingSelection.groupData.event_count ?? null,
+                    amendment_count: pendingSelection.groupData.amendment_count ?? null,
+                  }}
+                  eventData={
+                    pendingSelection.eventData
+                      ? {
+                          id: pendingSelection.eventData.id,
+                          title: pendingSelection.eventData.title ?? null,
+                          start_date: pendingSelection.eventData.start_date ?? null,
+                          location_name: pendingSelection.eventData.location_name ?? null,
+                          description: richTextToPlainText(pendingSelection.eventData.description),
+                          participant_count: pendingSelection.eventData.participant_count ?? null,
+                        }
+                      : null
+                  }
+                  pathWithEvents={pendingSelection.pathWithEvents}
+                />
+              ) : (
+                <div className="border-border bg-muted/30 rounded-lg border border-dashed p-4 text-sm">
+                  {t(
+                    'features.amendments.process.selectorHint',
+                    'A preview of the selected destination and full process path will appear here.'
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
-          <DialogFooter className="border-t pt-4">
+          <DialogFooter className="border-t px-6 py-4">
             <Button
               variant="outline"
               onClick={() => {
-                setTargetSelectionDialog(false);
-                setPendingTarget(null);
+                setSelectorOpen(false);
+                setPendingSelection(null);
               }}
             >
-              {t('features.amendments.process.cancel')}
+              {t('common.cancel', 'Cancel')}
             </Button>
-            {pendingTarget && (
-              <Button
-                onClick={() => {
-                  setTargetSelectionDialog(false);
-                  setTargetDialogOpen(true);
-                }}
-              >
-                {t('features.amendments.process.confirmSelection')}
-              </Button>
-            )}
+            <Button onClick={handleConfirmSelection} disabled={!pendingSelection || isSaving}>
+              {isSaving
+                ? t('features.amendments.process.processing', 'Saving...')
+                : currentRun
+                  ? t('features.amendments.process.confirmRetarget', 'Confirm retargeting')
+                  : t('features.amendments.process.confirmStart', 'Confirm process')}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

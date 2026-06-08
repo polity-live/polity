@@ -9,14 +9,12 @@ import {
   getRemainingSeatCount,
   type GroupOpenAssignment,
 } from '@/features/groups/logic/openAssignments';
-import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import { queries } from '@/zero/queries';
 import { useGroupEventsForCalendar } from '@/zero/events/useEventState';
 import { useGroupById, useGroupRoles } from '@/zero/groups/useGroupState';
 import { mutators } from '@/zero/mutators';
-import { useVoteActions } from '@/zero/votes/useVoteActions';
 
 export type DelegateElectionMode = 'single' | 'list';
 
@@ -51,10 +49,7 @@ export function useGroupOpenAssignments(groupId: string) {
     queries.amendments.openProcessTasksByGroup({ group_id: groupId })
   );
   const [isScheduling, setIsScheduling] = useState(false);
-  const { createAgendaItem } = useAgendaActions();
-  const { createVote, createVoteChoice } = useVoteActions();
-  const { updateProcessTask, updateProcessStepRun, updateProcessRun, updateSupportConfirmation } =
-    useAmendmentActions();
+  const { completeProcessTaskWithEvent } = useAmendmentActions();
 
   const openAssignments = useMemo(
     () =>
@@ -252,13 +247,7 @@ export function useGroupOpenAssignments(groupId: string) {
           task,
           event,
           description: assignment.description || `Event-Anfrage fuer ${amendmentTitle}`,
-          createAgendaItem,
-          createVote,
-          createVoteChoice,
-          updateProcessTask,
-          updateProcessStepRun,
-          updateProcessRun,
-          updateSupportConfirmation,
+          completeProcessTaskWithEvent,
         });
 
         toast.success('Der Prozessauftrag wurde an die Veranstaltung angehaengt.');
@@ -266,17 +255,7 @@ export function useGroupOpenAssignments(groupId: string) {
         setIsScheduling(false);
       }
     },
-    [
-      availableEvents,
-      createAgendaItem,
-      createVote,
-      createVoteChoice,
-      processTasks,
-      updateProcessRun,
-      updateProcessStepRun,
-      updateProcessTask,
-      updateSupportConfirmation,
-    ]
+    [availableEvents, completeProcessTaskWithEvent, processTasks]
   );
 
   return {

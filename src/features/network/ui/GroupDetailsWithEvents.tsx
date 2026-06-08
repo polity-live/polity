@@ -45,7 +45,11 @@ export function GroupDetailsWithEvents({
           <CardTitle className="text-base">{t('common.labels.upcomingEvents')}</CardTitle>
         </CardHeader>
         <div className="px-6 pb-6">
-          <GroupEventsList groupId={groupId} onEventClick={onEventClick} />
+          <GroupEventsList
+            groupId={groupId}
+            groupName={groupData.name ?? undefined}
+            onEventClick={onEventClick}
+          />
         </div>
       </Card>
     </div>

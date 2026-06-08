@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pie, PieChart, ResponsiveContainer, Cell, Tooltip } from 'recharts';
+import { DIRECT_WITHOUT_PATH_LABEL } from '@/features/groups/logic/membershipComposition';
 import {
   Card,
   CardContent,
@@ -33,7 +35,12 @@ export function MembershipCompositionPanel({
   buckets,
   isLoading = false,
 }: MembershipCompositionPanelProps) {
+  const { t } = useTranslation();
   const [displayMode, setDisplayMode] = useState<CompositionDisplayMode>('percent');
+  const directWithoutPathLabel = t(
+    'features.groups.memberships.composition.directWithoutPath',
+    'Direct / no path'
+  );
 
   const memberRows = useMemo(
     () =>
@@ -41,11 +48,12 @@ export function MembershipCompositionPanel({
         .filter(bucket => bucket.memberCount > 0)
         .map((bucket, index) => ({
           ...bucket,
+          label: bucket.label === DIRECT_WITHOUT_PATH_LABEL ? directWithoutPathLabel : bucket.label,
           value: bucket.memberCount,
           percentage: bucket.memberPercentage,
           fill: CHART_COLORS[index % CHART_COLORS.length],
         })),
-    [buckets]
+    [buckets, directWithoutPathLabel]
   );
   const leadershipRows = useMemo(
     () =>
@@ -53,20 +61,26 @@ export function MembershipCompositionPanel({
         .filter(bucket => bucket.leadershipAssignmentCount > 0)
         .map((bucket, index) => ({
           ...bucket,
+          label: bucket.label === DIRECT_WITHOUT_PATH_LABEL ? directWithoutPathLabel : bucket.label,
           value: bucket.leadershipAssignmentCount,
           percentage: bucket.leadershipPercentage,
           fill: CHART_COLORS[index % CHART_COLORS.length],
         })),
-    [buckets]
+    [buckets, directWithoutPathLabel]
   );
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-xl font-semibold">Zusammensetzung</h2>
+          <h2 className="text-xl font-semibold">
+            {t('features.groups.memberships.composition.title', 'Composition')}
+          </h2>
           <p className="text-muted-foreground text-sm">
-            Herkunft nach Teilgruppen. Führungskräfte zählen Nicht-Member-Rollen-Zuweisungen.
+            {t(
+              'features.groups.memberships.composition.description',
+              'Breakdown by subgroups. Leadership counts non-member role assignments.'
+            )}
           </p>
         </div>
         <ToggleGroup
@@ -80,25 +94,41 @@ export function MembershipCompositionPanel({
           variant="outline"
           size="sm"
         >
-          <ToggleGroupItem value="percent">%</ToggleGroupItem>
-          <ToggleGroupItem value="absolute">Absolut</ToggleGroupItem>
+          <ToggleGroupItem value="percent">
+            {t('features.groups.memberships.composition.modePercent', '%')}
+          </ToggleGroupItem>
+          <ToggleGroupItem value="absolute">
+            {t('features.groups.memberships.composition.modeAbsolute', 'Absolute')}
+          </ToggleGroupItem>
         </ToggleGroup>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
         <CompositionPieCard
-          title="Mitglieder"
-          description="Anteil der Teilgruppen an allen aktiven Mitgliedschaften."
-          emptyLabel="Keine aktiven Mitglieder vorhanden."
+          title={t('features.groups.memberships.composition.membersTitle', 'Members')}
+          description={t(
+            'features.groups.memberships.composition.membersDescription',
+            'Share of subgroups across all active memberships.'
+          )}
+          emptyLabel={t(
+            'features.groups.memberships.composition.membersEmpty',
+            'No active members found.'
+          )}
           rows={memberRows}
           displayMode={displayMode}
           isLoading={isLoading}
           metric="members"
         />
         <CompositionPieCard
-          title="Führungskräfte"
-          description="Anteil der Teilgruppen an allen Nicht-Member-Rollen-Zuweisungen."
-          emptyLabel="Keine Nicht-Member-Rollen-Zuweisungen vorhanden."
+          title={t('features.groups.memberships.composition.leadershipTitle', 'Leadership')}
+          description={t(
+            'features.groups.memberships.composition.leadershipDescription',
+            'Share of subgroups across all non-member role assignments.'
+          )}
+          emptyLabel={t(
+            'features.groups.memberships.composition.leadershipEmpty',
+            'No non-member role assignments found.'
+          )}
           rows={leadershipRows}
           displayMode={displayMode}
           isLoading={isLoading}
@@ -128,6 +158,7 @@ function CompositionPieCard({
   isLoading,
   metric,
 }: CompositionPieCardProps) {
+  const { t } = useTranslation();
   const total = rows.reduce((sum, row) => sum + row.value, 0);
 
   return (
@@ -139,7 +170,7 @@ function CompositionPieCard({
       <CardContent>
         {isLoading ? (
           <p className="text-muted-foreground py-12 text-center text-sm">
-            Zusammensetzung wird geladen...
+            {t('features.groups.memberships.composition.loading', 'Loading composition...')}
           </p>
         ) : rows.length === 0 ? (
           <p className="text-muted-foreground py-12 text-center text-sm">{emptyLabel}</p>
@@ -188,8 +219,10 @@ function CompositionPieCard({
 
             <div className="space-y-3">
               <p className="text-muted-foreground text-sm">
-                Gesamt:{' '}
-                <span className="text-foreground font-medium">{total.toLocaleString()}</span>
+                {t('features.groups.memberships.composition.total', {
+                  defaultValue: 'Total: {{count}}',
+                  count: total,
+                })}
               </p>
               <ul className="space-y-2">
                 {rows.map(row => (
@@ -211,7 +244,10 @@ function CompositionPieCard({
               </ul>
               {metric === 'leadership' ? (
                 <p className="text-muted-foreground text-xs">
-                  Jede Nicht-Member-Rolle wird einzeln gezählt.
+                  {t(
+                    'features.groups.memberships.composition.leadershipFootnote',
+                    'Each non-member role is counted separately.'
+                  )}
                 </p>
               ) : null}
             </div>

@@ -58,12 +58,16 @@ export function GroupNetworkPage() {
               onWorkflowDraftNameChange={np.setWorkflowDraftName}
               workflowDraftDescription={np.workflowDraftDescription}
               onWorkflowDraftDescriptionChange={np.setWorkflowDraftDescription}
+              workflowDraftIsDefaultEntry={np.workflowDraftIsDefaultEntry}
+              onWorkflowDraftIsDefaultEntryChange={np.setWorkflowDraftIsDefaultEntry}
               workflowDraftSteps={np.workflowDraftSteps}
               availableGroups={np.availableGroups}
+              availableWorkflows={np.availableWorkflows}
               onOpenNewWorkflow={np.openNewWorkflow}
               onOpenEditWorkflow={np.openEditWorkflow}
               onCloseWorkflowEditor={np.closeWorkflowEditor}
               onAddWorkflowStep={np.addWorkflowStep}
+              onUpdateWorkflowStep={np.updateWorkflowStepDraft}
               onRemoveWorkflowStep={np.removeWorkflowStep}
               onMoveWorkflowStep={np.moveWorkflowStep}
               onSaveWorkflow={np.handleSaveWorkflow}

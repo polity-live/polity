@@ -22,6 +22,9 @@ import {
   deleteAmendmentSchema,
   createSupportConfirmationSchema,
   updateSupportConfirmationSchema,
+  initializeAmendmentProcessPathSchema,
+  resolveAmendmentProcessVoteSchema,
+  completeProcessTaskWithEventSchema,
 } from './schema';
 import { createChangeRequestSchema, updateChangeRequestSchema } from '../change-requests/schema';
 import {
@@ -30,6 +33,12 @@ import {
   deleteAmendmentSupportVoteSchema,
   createChangeRequestVoteSchema,
 } from '../votes/schema';
+import {
+  completeProcessTaskWithEvent,
+  initializeAmendmentProcessPath,
+  resolveAmendmentProcessVote,
+} from './process-engine';
+import { notifyProcessVoteResolution } from './process-notifications';
 
 /** Server-only mutators — override the shared mutators with additional server-side logic (e.g. notifications). */
 export const amendmentServerMutators = {
@@ -525,6 +534,28 @@ export const amendmentServerMutators = {
           groupName: gName,
         });
       }
+    }
+  ),
+
+  initializeProcessPath: defineMutator(
+    initializeAmendmentProcessPathSchema,
+    async ({ tx, ctx, args }) => {
+      await initializeAmendmentProcessPath(tx, ctx.userID, args);
+    }
+  ),
+
+  resolveProcessVote: defineMutator(
+    resolveAmendmentProcessVoteSchema,
+    async ({ tx, ctx, args }) => {
+      const resolution = await resolveAmendmentProcessVote(tx, args);
+      await notifyProcessVoteResolution(tx, ctx.userID, args.agenda_item_id, resolution);
+    }
+  ),
+
+  completeProcessTaskWithEvent: defineMutator(
+    completeProcessTaskWithEventSchema,
+    async ({ tx, ctx, args }) => {
+      await completeProcessTaskWithEvent(tx, ctx.userID, args);
     }
   ),
 

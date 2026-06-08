@@ -224,6 +224,59 @@ export function useAmendmentActions() {
     [zero]
   );
 
+  const upsertGroupDecision = useCallback(
+    (args: Parameters<typeof mutators.amendments.upsertGroupDecision>[0]) => {
+      const result = zero.mutate(mutators.amendments.upsertGroupDecision(args));
+      onServerError(result, () =>
+        toast.error(t('features.amendments.toasts.supportConfirmationUpdateFailed'))
+      );
+      return serverConfirmed(result);
+    },
+    [zero]
+  );
+
+  const initializeProcessPath = useCallback(
+    (args: Parameters<typeof mutators.amendments.initializeProcessPath>[0]) => {
+      const result = zero.mutate(mutators.amendments.initializeProcessPath(args));
+      onServerError(result, () =>
+        toast.error(
+          t('features.amendments.toasts.processRunCreateFailed', 'Failed to initialize process')
+        )
+      );
+      return serverConfirmed(result);
+    },
+    [zero]
+  );
+
+  const resolveProcessVote = useCallback(
+    (args: Parameters<typeof mutators.amendments.resolveProcessVote>[0]) => {
+      const result = zero.mutate(mutators.amendments.resolveProcessVote(args));
+      onServerError(result, () =>
+        toast.error(
+          t('features.amendments.toasts.processStepUpdateFailed', 'Failed to resolve process vote')
+        )
+      );
+      return serverConfirmed(result);
+    },
+    [zero]
+  );
+
+  const completeProcessTaskWithEvent = useCallback(
+    (args: Parameters<typeof mutators.amendments.completeProcessTaskWithEvent>[0]) => {
+      const result = zero.mutate(mutators.amendments.completeProcessTaskWithEvent(args));
+      onServerError(result, () =>
+        toast.error(
+          t(
+            'features.amendments.toasts.processTaskUpdateFailed',
+            'Failed to attach process task to event'
+          )
+        )
+      );
+      return serverConfirmed(result);
+    },
+    [zero]
+  );
+
   // ── Subscription (delegates to common mutators) ────────────────────
   const subscribe = useCallback(
     (args: { id: string; amendment_id: string }) => {
@@ -512,6 +565,10 @@ export function useAmendmentActions() {
     deleteSupportVote,
     createSupportConfirmation,
     updateSupportConfirmation,
+    upsertGroupDecision,
+    initializeProcessPath,
+    resolveProcessVote,
+    completeProcessTaskWithEvent,
 
     // Subscription
     subscribe,

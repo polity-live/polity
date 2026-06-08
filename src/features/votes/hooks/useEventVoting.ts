@@ -8,14 +8,9 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useEventWithVoting } from '@/zero/events/useEventState';
 import { useAgendaActions } from '@/zero/agendas';
-import { useAmendmentActions } from '@/zero/amendments';
 import { useVoteActions } from '@/zero/votes/useVoteActions';
 import { useAuth } from '@/providers/auth-provider';
 import { usePermissions } from '@/zero/rbac';
-import {
-  notifyAmendmentForwarded,
-  notifyAmendmentRejected,
-} from '@/features/notifications/utils/notification-helpers.ts';
 import { toast } from 'sonner';
 import { computeVoteResult, type MajorityType, type VoteResult } from '../logic/computeVoteResult';
 import { computeEligibleVoters, type EligibleVoter } from '../logic/computeEligibleVoters';
@@ -73,9 +68,8 @@ interface StartVotingParams {
 
 export function useEventVoting(eventId: string, agendaItemId?: string): UseEventVotingResult {
   const { user } = useAuth();
-  const { updateAgendaItem, createAgendaItem } = useAgendaActions();
-  const { updateAmendment } = useAmendmentActions();
-  const { createVote, castFinalVote: doCastFinalVote } = useVoteActions();
+  const { updateAgendaItem } = useAgendaActions();
+  const { createVote, updateVote, castFinalVote: doCastFinalVote } = useVoteActions();
   const { can } = usePermissions({ eventId });
   const [isLoading, setIsLoading] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
@@ -288,7 +282,14 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
 
         const session = event?.agenda_items?.find(ai => ai.id === sessionId);
         const agendaItem = session;
-        const agendaItemTitle = agendaItem?.title || 'Current Item';
+        const voteRecord = agendaItem?.votes?.[0];
+
+        if (voteRecord) {
+          await updateVote({
+            id: voteRecord.id,
+            status: 'closed',
+          });
+        }
 
         await updateAgendaItem({
           id: sessionId,
@@ -296,84 +297,6 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
           end_time: Date.now(),
           completed_at: Date.now(),
         });
-
-        // Handle voting type-specific result processing
-        if (currentSession?.votingType === 'amendment' && agendaItem?.amendment) {
-          const amendment = agendaItem.amendment;
-          const amendmentId = currentSession.targetEntityId;
-          const amendmentTitle = amendment.title || agendaItemTitle;
-
-          if (result === 'passed') {
-            await updateAgendaItem({
-              id: agendaItem.id,
-              forwarding_status: 'approved',
-              completed_at: Date.now(),
-            });
-
-            const targetEventId = amendment.event?.id;
-            const targetGroupId = amendment.group?.id;
-
-            if (targetEventId) {
-              // Forward to target event — create agenda item there
-              const newAgendaItemId = crypto.randomUUID();
-              await createAgendaItem({
-                id: newAgendaItemId,
-                title: amendmentTitle,
-                description: null,
-                type: 'amendment',
-                status: 'scheduled',
-                forwarding_status: null,
-                order_index: null,
-                duration: null,
-                scheduled_time: null,
-                start_time: null,
-                end_time: null,
-                activated_at: null,
-                completed_at: null,
-                majority_type: null,
-                time_limit: null,
-                voting_phase: null,
-                event_id: targetEventId,
-                amendment_id: amendmentId,
-              });
-              await updateAmendment({ id: amendmentId, editing_mode: 'suggest_event' });
-
-              await notifyAmendmentForwarded({
-                senderId: user.id,
-                amendmentId,
-                amendmentTitle,
-                sourceEventTitle: event?.title || 'Previous Event',
-                targetEventId,
-                targetEventTitle: 'Event',
-              });
-            } else if (targetGroupId) {
-              await updateAmendment({ id: amendmentId, editing_mode: 'suggest_event' });
-            } else {
-              await updateAmendment({ id: amendmentId, editing_mode: 'passed' });
-            }
-          } else if (result === 'rejected') {
-            await updateAgendaItem({
-              id: agendaItem.id,
-              forwarding_status: 'rejected',
-              completed_at: Date.now(),
-            });
-            await updateAmendment({ id: amendmentId, editing_mode: 'rejected' });
-
-            await notifyAmendmentRejected({
-              senderId: user.id,
-              amendmentId,
-              amendmentTitle,
-              eventId,
-              eventTitle: event?.title || 'Event',
-            });
-          } else {
-            // Tie
-            await updateAgendaItem({
-              id: agendaItem.id,
-              forwarding_status: 'tie',
-            });
-          }
-        }
 
         toast.success(`Voting completed: ${result}`);
       } catch (error) {
@@ -393,8 +316,7 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
       voteResults,
       totalVoters,
       updateAgendaItem,
-      createAgendaItem,
-      updateAmendment,
+      updateVote,
     ]
   );
 

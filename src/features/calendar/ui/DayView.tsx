@@ -1,11 +1,15 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
 import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
 import { CalendarIcon } from 'lucide-react';
-import { Link } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { CalendarEvent } from '../types/calendar.types';
 import { formatDate } from '../logic/dateUtils';
-import { EventCard } from './EventCard';
 import { MiniCalendar } from './MiniCalendar';
 import { CalendarStats } from './CalendarStats';
 import { TimelineItem } from '@/features/agendas/ui/TimelineItem';
@@ -55,7 +59,7 @@ export const DayView = ({ selectedDate, events, allEvents, onDateSelect }: DayVi
           </CardHeader>
           <CardContent>
             {events.length === 0 ? (
-              <div className="py-12 text-center text-muted-foreground">
+              <div className="text-muted-foreground py-12 text-center">
                 <CalendarIcon className="mx-auto mb-4 h-12 w-12 opacity-50" />
                 <p>{t('features.calendar.dayView.noEvents')}</p>
               </div>

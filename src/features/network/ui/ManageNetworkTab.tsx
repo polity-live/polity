@@ -56,6 +56,7 @@ import type {
   NormalizedGroupRelationship,
 } from '../types/network.types';
 import type { WorkflowWithStepsRow } from '@/zero/network/queries';
+import type { DraftWorkflowStep } from '../hooks/useWorkflowEditor';
 import { getCurrentGroupRelationshipDisplay } from '../logic/groupRelationshipDisplay';
 import type { SiblingMembershipMode } from '../logic/groupRelationshipSentence';
 
@@ -92,7 +93,9 @@ interface ManageNetworkTabProps {
   onWorkflowDraftNameChange: (name: string) => void;
   workflowDraftDescription: string;
   onWorkflowDraftDescriptionChange: (description: string) => void;
-  workflowDraftSteps: { group_id: string; label: string | null }[];
+  workflowDraftIsDefaultEntry: boolean;
+  onWorkflowDraftIsDefaultEntryChange: (value: boolean) => void;
+  workflowDraftSteps: DraftWorkflowStep[];
   availableGroups: {
     id: string;
     name: string | null;
@@ -101,10 +104,16 @@ interface ManageNetworkTabProps {
     event_count?: number | null;
     amendment_count?: number | null;
   }[];
+  availableWorkflows: {
+    id: string;
+    group_id: string;
+    name: string | null;
+  }[];
   onOpenNewWorkflow: () => void;
   onOpenEditWorkflow: (workflow: WorkflowWithStepsRow) => void;
   onCloseWorkflowEditor: () => void;
   onAddWorkflowStep: (groupId: string, label: string | null) => void;
+  onUpdateWorkflowStep: (index: number, patch: Partial<DraftWorkflowStep>) => void;
   onRemoveWorkflowStep: (index: number) => void;
   onMoveWorkflowStep: (fromIndex: number, toIndex: number) => void;
   onSaveWorkflow: () => void;
@@ -139,12 +148,16 @@ export function ManageNetworkTab({
   onWorkflowDraftNameChange,
   workflowDraftDescription,
   onWorkflowDraftDescriptionChange,
+  workflowDraftIsDefaultEntry,
+  onWorkflowDraftIsDefaultEntryChange,
   workflowDraftSteps,
   availableGroups,
+  availableWorkflows,
   onOpenNewWorkflow,
   onOpenEditWorkflow,
   onCloseWorkflowEditor,
   onAddWorkflowStep,
+  onUpdateWorkflowStep,
   onRemoveWorkflowStep,
   onMoveWorkflowStep,
   onSaveWorkflow,
@@ -799,12 +812,16 @@ export function ManageNetworkTab({
           setDraftName={onWorkflowDraftNameChange}
           draftDescription={workflowDraftDescription}
           setDraftDescription={onWorkflowDraftDescriptionChange}
+          draftIsDefaultEntry={workflowDraftIsDefaultEntry}
+          setDraftIsDefaultEntry={onWorkflowDraftIsDefaultEntryChange}
           draftSteps={workflowDraftSteps}
           availableGroups={availableGroups}
+          availableWorkflows={availableWorkflows}
           onOpenNew={onOpenNewWorkflow}
           onOpenEdit={onOpenEditWorkflow}
           onClose={onCloseWorkflowEditor}
           onAddStep={onAddWorkflowStep}
+          onUpdateStep={onUpdateWorkflowStep}
           onRemoveStep={onRemoveWorkflowStep}
           onMoveStep={onMoveWorkflowStep}
           onSave={onSaveWorkflow}

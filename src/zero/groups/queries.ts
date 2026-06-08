@@ -285,10 +285,16 @@ export const groupQueries = {
 
   /** Amendments for a group with hashtags and creator */
   amendmentsByGroup: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
-    zql.amendment
+    zql.amendment_group_decision
       .where('group_id', groupId)
-      .related('amendment_hashtags', q => q.related('hashtag'))
-      .related('created_by')
+      .related('group')
+      .related('process_run')
+      .related('process_branch')
+      .related('process_step_run')
+      .related('amendment', q =>
+        q.related('amendment_hashtags', hq => hq.related('hashtag')).related('created_by')
+      )
+      .orderBy('updated_at', 'desc')
   ),
 
   /** Amendments for a group with nested documents→collaborators→user (for group document lists) */

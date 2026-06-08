@@ -9,6 +9,8 @@ import {
 } from '@/features/network/ui/NetworkControlPanel';
 import { NetworkEntityDialog } from '@/features/network/ui/NetworkEntityDialog';
 import { useNetworkFlowControls } from '@/features/network/hooks/useNetworkFlowControls';
+import { usePersistedNetworkLayout } from '@/features/network/hooks/usePersistedNetworkLayout';
+import { useEditableNetworkLayout } from '@/features/network/hooks/useEditableNetworkLayout';
 import {
   buildDirectRelationships,
   buildIndirectRelationships,
@@ -32,24 +34,24 @@ import { useNetworkLinkState } from '@/zero/network';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import {
   addUniqueValue,
-  getAnchorUsageConnectionDirection,
   buildHierarchyRightEdgeDirections,
   buildNetworkRelationshipDialogData,
-  buildRelationshipEdgeMarkers,
+  buildNetworkRelationshipEdge,
   createNetworkRelationshipEdgeData,
-  getRelationshipStrokeColor,
-  mergeNetworkConnectionDirection,
   mergeNetworkEdgeRelationshipDirection,
   mergeNetworkRightRelationshipKind,
 } from '../logic/networkEdgeHelpers';
 import {
-  type NetworkConnectionDirection,
   type EditableRightsLabelEdgeData,
   type NetworkEdgeRelationshipDirection,
-  type NetworkUserConnectionDirection,
 } from '../types/networkEdge.types';
-import { type NetworkGroupEntity } from '../types/network.types';
+import type {
+  CanonicalMembershipMode,
+  CanonicalNetworkMembershipDirection,
+  NetworkGroupEntity,
+} from '../types/network.types';
 import { explodeNetworkLinksToRelationships } from '../logic/networkLinkDerived';
+import { Button } from '@/features/shared/ui/ui/button';
 
 interface NetworkNode extends Node {
   data: {
@@ -67,6 +69,8 @@ interface UserNetworkFlowProps {
   filterRight?: string; // Optional filter by specific right type
   title?: string;
   description?: string;
+  showGroupDialogOnClick?: boolean;
+  layoutScopeKey?: string;
 }
 
 function toDisplayText(value: unknown): string | undefined {
@@ -79,8 +83,19 @@ export function UserNetworkFlow({
   filterRight,
   title,
   description,
+  showGroupDialogOnClick = true,
+  layoutScopeKey,
 }: UserNetworkFlowProps) {
   const { t } = useTranslation();
+  const {
+    savedLayout,
+    hasSavedLayout,
+    isLoading: isLayoutLoading,
+    persistLayout,
+    resetLayout,
+  } = usePersistedNetworkLayout({
+    scopeKey: layoutScopeKey ?? `user:${userId}`,
+  });
   const controls = useNetworkFlowControls();
   const {
     relationshipDepthFilter,
@@ -104,8 +119,26 @@ export function UserNetworkFlow({
     toggleRight,
     handleInteractiveChange,
   } = controls;
-  const [nodes, setNodes, onNodesChange] = useNodesState<NetworkNode>([]);
+  const [nodes, setNodes] = useNodesState<NetworkNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<EditableRightsLabelEdgeData>>([]);
+  const {
+    currentLayout,
+    hasLayoutChanges,
+    nodePositionsRef,
+    edgeBendPointsRef,
+    isInteractiveRef,
+    handleNodesChange,
+    handleEdgeBendPointsChange,
+    syncGeneratedLayoutState,
+    clearPersistedLayoutState,
+  } = useEditableNetworkLayout({
+    nodes,
+    edges,
+    setNodes,
+    setEdges,
+    savedLayout,
+    isInteractive,
+  });
 
   const { userWithGroupMemberships } = useUserState({ userId, includeGroupMemberships: true });
 
@@ -247,37 +280,11 @@ export function UserNetworkFlow({
         groupNameMap.set(r.related_group_id, r.related_group.name ?? r.related_group_id);
     });
 
-    const buildEdgeData = (
-      sourceId: string,
-      targetId: string,
-      rights: string[],
-      relationshipKinds: ('active' | 'incoming' | 'outgoing')[],
-      rightRelationshipKinds: Record<string, 'active' | 'incoming' | 'outgoing'>,
-      relationshipType: 'parent' | 'child' | 'sibling' | 'membership',
-      userConnectionDirections: NetworkUserConnectionDirection[],
-      rightEdgeDirections?: Record<string, NetworkEdgeRelationshipDirection>,
-      rightConnectionDirections?: Record<string, NetworkConnectionDirection>,
-      relationshipDepth: 'direct' | 'indirect' = 'direct'
-    ): EditableRightsLabelEdgeData =>
-      createNetworkRelationshipEdgeData({
-        rights,
-        relationshipKinds,
-        rightRelationshipKinds,
-        relationshipType,
-        rightEdgeDirections,
-        rightConnectionDirections,
-        userConnectionDirections,
-        relationshipDepth,
-        sourceName: groupNameMap.get(sourceId) ?? null,
-        targetName: groupNameMap.get(targetId) ?? null,
-        anchorStrategy: relationshipType === 'membership' ? undefined : 'inner-auto',
-      });
-
     // Add center node (user)
     addNode({
       id: userId,
       type: 'default',
-      position: { x: 400, y: 300 },
+      position: nodePositionsRef.current[userId] ?? { x: 400, y: 300 },
       data: {
         label: userProfile.name,
         description: userProfile.bio,
@@ -313,7 +320,7 @@ export function UserNetworkFlow({
       addNode({
         id: group.id,
         type: 'default',
-        position: { x: 400 + xOffset, y: 300 + yOffset },
+        position: nodePositionsRef.current[group.id] ?? { x: 400 + xOffset, y: 300 + yOffset },
         data: {
           label: getGroupNodeDisplayLabel(group.name, 'current'),
           description: toDisplayText(group.description) ?? '',
@@ -354,10 +361,14 @@ export function UserNetworkFlow({
             type: MarkerType.ArrowClosed,
             color: '#2196f3',
           },
-          data: buildEdgeData(userId, group.id, [], ['active'], {}, 'membership', [
-            'incoming',
-            'outgoing',
-          ]),
+          data: createNetworkRelationshipEdgeData({
+            rights: [],
+            relationshipKinds: ['active'],
+            relationshipType: 'membership',
+            userConnectionDirections: ['incoming', 'outgoing'],
+            sourceName: groupNameMap.get(userId) ?? null,
+            targetName: groupNameMap.get(group.id) ?? null,
+          }),
         });
       }
     });
@@ -393,6 +404,8 @@ export function UserNetworkFlow({
             rights: parent.rights,
             relationshipKinds: parent.relationshipKinds,
             rightRelationshipKinds: parent.rightRelationshipKinds,
+            membershipMode: parent.membershipMode ?? null,
+            membershipCanonicalDirection: parent.membershipCanonicalDirection ?? null,
             level: parent.level,
             childId: parent.childId,
             isParent: true,
@@ -410,36 +423,31 @@ export function UserNetworkFlow({
             parent.group.id,
             edgeTarget
           );
-          const strokeColor = getRelationshipStrokeColor('#66bb6a', rightEdgeDirections);
-          const edgeMarkers = buildRelationshipEdgeMarkers(strokeColor, rightEdgeDirections);
           allEdgesMap.set(edgeId, {
-            id: edgeId,
-            source: parent.group.id,
-            target: edgeTarget,
-            type: 'rightsLabel',
-            animated: true,
-            style: { stroke: strokeColor, strokeWidth: 2, strokeDasharray: '5 5' },
-            ...edgeMarkers,
-            data: buildEdgeData(
-              parent.group.id,
-              edgeTarget,
-              parent.rights,
-              parent.relationshipKinds,
-              parent.rightRelationshipKinds,
-              'parent',
-              ['incoming'],
+            ...buildNetworkRelationshipEdge({
+              edgeId,
+              sourceId: parent.group.id,
+              targetId: edgeTarget,
+              sourceGroupId: parent.group.id,
+              targetGroupId: edgeTarget,
+              structuralType: 'parent',
+              rights: parent.rights,
+              relationshipKinds: parent.relationshipKinds,
+              rightRelationshipKinds: parent.rightRelationshipKinds,
+              membershipMode: parent.membershipMode ?? null,
+              membershipCanonicalDirection: parent.membershipCanonicalDirection ?? null,
               rightEdgeDirections,
-              Object.fromEntries(
-                parent.rights.map(right => [
-                  right,
-                  getAnchorUsageConnectionDirection({
-                    edgeDirection: rightEdgeDirections[right] ?? 'forward',
-                    anchorSide: 'target',
-                  }),
-                ])
-              ) as Record<string, NetworkConnectionDirection>,
-              (parent.level ?? 1) === 1 ? 'direct' : 'indirect'
-            ),
+              relationshipDepth: (parent.level ?? 1) === 1 ? 'direct' : 'indirect',
+              fallbackStrokeColor: '#66bb6a',
+              strokeDasharray: '5 5',
+              sourceName: groupNameMap.get(parent.group.id) ?? null,
+              targetName: groupNameMap.get(edgeTarget) ?? null,
+              currentGroupId: edgeTarget,
+              previewCurrentGroupId: edgeTarget,
+              bendPoints: edgeBendPointsRef.current[edgeId] ?? [],
+              edgeEditingEnabled: isInteractiveRef.current,
+              onBendPointsChange: handleEdgeBendPointsChange,
+            }),
           });
         }
       });
@@ -455,6 +463,8 @@ export function UserNetworkFlow({
             rights: child.rights,
             relationshipKinds: child.relationshipKinds,
             rightRelationshipKinds: child.rightRelationshipKinds,
+            membershipMode: child.membershipMode ?? null,
+            membershipCanonicalDirection: child.membershipCanonicalDirection ?? null,
             level: child.level,
             parentId: child.parentId,
             isParent: false,
@@ -472,36 +482,31 @@ export function UserNetworkFlow({
             edgeSource,
             child.group.id
           );
-          const strokeColor = getRelationshipStrokeColor('#ffb74d', rightEdgeDirections);
-          const edgeMarkers = buildRelationshipEdgeMarkers(strokeColor, rightEdgeDirections);
           allEdgesMap.set(edgeId, {
-            id: edgeId,
-            source: edgeSource,
-            target: child.group.id,
-            type: 'rightsLabel',
-            animated: true,
-            style: { stroke: strokeColor, strokeWidth: 2, strokeDasharray: '5 5' },
-            ...edgeMarkers,
-            data: buildEdgeData(
-              edgeSource,
-              child.group.id,
-              child.rights,
-              child.relationshipKinds,
-              child.rightRelationshipKinds,
-              'parent',
-              ['outgoing'],
+            ...buildNetworkRelationshipEdge({
+              edgeId,
+              sourceId: edgeSource,
+              targetId: child.group.id,
+              sourceGroupId: edgeSource,
+              targetGroupId: child.group.id,
+              structuralType: 'parent',
+              rights: child.rights,
+              relationshipKinds: child.relationshipKinds,
+              rightRelationshipKinds: child.rightRelationshipKinds,
+              membershipMode: child.membershipMode ?? null,
+              membershipCanonicalDirection: child.membershipCanonicalDirection ?? null,
               rightEdgeDirections,
-              Object.fromEntries(
-                child.rights.map(right => [
-                  right,
-                  getAnchorUsageConnectionDirection({
-                    edgeDirection: rightEdgeDirections[right] ?? 'forward',
-                    anchorSide: 'source',
-                  }),
-                ])
-              ) as Record<string, NetworkConnectionDirection>,
-              (child.level ?? 1) === 1 ? 'direct' : 'indirect'
-            ),
+              relationshipDepth: (child.level ?? 1) === 1 ? 'direct' : 'indirect',
+              fallbackStrokeColor: '#ffb74d',
+              strokeDasharray: '5 5',
+              sourceName: groupNameMap.get(edgeSource) ?? null,
+              targetName: groupNameMap.get(child.group.id) ?? null,
+              currentGroupId: edgeSource,
+              previewCurrentGroupId: edgeSource,
+              bendPoints: edgeBendPointsRef.current[edgeId] ?? [],
+              edgeEditingEnabled: isInteractiveRef.current,
+              onBendPointsChange: handleEdgeBendPointsChange,
+            }),
           });
         }
       });
@@ -521,7 +526,10 @@ export function UserNetworkFlow({
       addNode({
         id: parent.group.id,
         type: 'default',
-        position: { x: 400 + xOffset, y: 300 + yOffset },
+        position: nodePositionsRef.current[parent.group.id] ?? {
+          x: 400 + xOffset,
+          y: 300 + yOffset,
+        },
         data: {
           label: getGroupNodeDisplayLabel(parent.group.name, 'parent'),
           description: toDisplayText(parent.group.description) ?? '',
@@ -547,7 +555,10 @@ export function UserNetworkFlow({
       addNode({
         id: child.group.id,
         type: 'default',
-        position: { x: 400 + xOffset, y: 300 + yOffset },
+        position: nodePositionsRef.current[child.group.id] ?? {
+          x: 400 + xOffset,
+          y: 300 + yOffset,
+        },
         data: {
           label: getGroupNodeDisplayLabel(child.group.name, 'child'),
           description: toDisplayText(child.group.description) ?? '',
@@ -590,8 +601,9 @@ export function UserNetworkFlow({
         relationshipKinds: ('active' | 'incoming' | 'outgoing')[];
         rightRelationshipKinds: Record<string, 'active' | 'incoming' | 'outgoing'>;
         rightEdgeDirections: Record<string, NetworkEdgeRelationshipDirection>;
-        rightConnectionDirections: Record<string, NetworkConnectionDirection>;
-        userConnectionDirections: NetworkUserConnectionDirection[];
+        membershipMode?: CanonicalMembershipMode | null;
+        membershipCanonicalDirection?: CanonicalNetworkMembershipDirection | null;
+        currentGroupId: string;
         sourceGroupType?: string | null;
         targetGroupType?: string | null;
       }
@@ -639,6 +651,11 @@ export function UserNetworkFlow({
               ? [sourceId, targetId]
               : [targetId, sourceId];
       const edgeKey = `${edgeSourceId}<->${edgeTargetId}`;
+      const relationshipContextGroupId = userGroupIds.has(edgeSourceId)
+        ? edgeSourceId
+        : userGroupIds.has(edgeTargetId)
+          ? edgeTargetId
+          : edgeSourceId;
       let siblingEdgeEntry = siblingEdgeEntries.get(edgeKey);
       if (!siblingEdgeEntry) {
         siblingEdgeEntry = {
@@ -648,8 +665,9 @@ export function UserNetworkFlow({
           relationshipKinds: [],
           rightRelationshipKinds: {},
           rightEdgeDirections: {},
-          rightConnectionDirections: {},
-          userConnectionDirections: [],
+          membershipMode: relationship.membership_mode ?? null,
+          membershipCanonicalDirection: relationship.membership_direction ?? null,
+          currentGroupId: relationshipContextGroupId,
           sourceGroupType: relationship.group.group_type ?? null,
           targetGroupType: relationship.related_group.group_type ?? null,
         };
@@ -661,11 +679,6 @@ export function UserNetworkFlow({
         siblingEdgeEntry.rights.push(right);
       }
 
-      const relationshipContextGroupId = userGroupIds.has(edgeSourceId)
-        ? edgeSourceId
-        : userGroupIds.has(edgeTargetId)
-          ? edgeTargetId
-          : edgeSourceId;
       const relationshipKind =
         relationship.status == null ||
         relationship.status === 'active' ||
@@ -703,38 +716,13 @@ export function UserNetworkFlow({
         );
       }
 
-      if (right) {
-        const nextRightConnectionDirection =
-          userGroupIds.has(relationship.group_id) && userGroupIds.has(relationship.related_group_id)
-            ? 'bidirectional'
-            : rightDirection && userGroupIds.has(edgeSourceId)
-              ? getAnchorUsageConnectionDirection({
-                  edgeDirection: rightDirection,
-                  anchorSide: 'source',
-                })
-              : rightDirection && userGroupIds.has(edgeTargetId)
-                ? getAnchorUsageConnectionDirection({
-                    edgeDirection: rightDirection,
-                    anchorSide: 'target',
-                  })
-                : undefined;
-
-        if (nextRightConnectionDirection === 'bidirectional') {
-          siblingEdgeEntry.rightConnectionDirections[right] = 'bidirectional';
-        } else if (nextRightConnectionDirection) {
-          siblingEdgeEntry.rightConnectionDirections[right] = mergeNetworkConnectionDirection(
-            siblingEdgeEntry.rightConnectionDirections[right],
-            nextRightConnectionDirection
-          );
-        }
-      }
-
-      if (userGroupIds.has(relationship.group_id)) {
-        addUniqueValue(siblingEdgeEntry.userConnectionDirections, 'outgoing');
-      }
-
-      if (userGroupIds.has(relationship.related_group_id)) {
-        addUniqueValue(siblingEdgeEntry.userConnectionDirections, 'incoming');
+      if (
+        siblingEdgeEntry.membershipMode === 'none' &&
+        relationship.membership_mode &&
+        relationship.membership_mode !== 'none'
+      ) {
+        siblingEdgeEntry.membershipMode = relationship.membership_mode;
+        siblingEdgeEntry.membershipCanonicalDirection = relationship.membership_direction ?? null;
       }
     });
 
@@ -763,8 +751,10 @@ export function UserNetworkFlow({
             id: siblingGroup.id,
             type: 'default',
             position: {
-              x: anchorPosition.x + direction * (220 + tier * 40),
-              y: anchorPosition.y + verticalOffset,
+              ...(nodePositionsRef.current[siblingGroup.id] ?? {
+                x: anchorPosition.x + direction * (220 + tier * 40),
+                y: anchorPosition.y + verticalOffset,
+              }),
             },
             data: {
               label: getGroupNodeDisplayLabel(siblingGroup.name, siblingVisualVariant),
@@ -791,8 +781,9 @@ export function UserNetworkFlow({
           relationshipKinds,
           rightRelationshipKinds,
           rightEdgeDirections,
-          rightConnectionDirections,
-          userConnectionDirections,
+          membershipMode,
+          membershipCanonicalDirection,
+          currentGroupId,
           sourceGroupType,
           targetGroupType,
         }) => {
@@ -806,51 +797,53 @@ export function UserNetworkFlow({
           }
 
           const isSiblingToSibling = sourceGroupType === 'sibling' && targetGroupType === 'sibling';
-          const strokeColor = getRelationshipStrokeColor(
-            isSiblingToSibling ? '#f59e0b' : '#a855f7',
-            rightEdgeDirections
-          );
-          const edgeMarkers = buildRelationshipEdgeMarkers(strokeColor, rightEdgeDirections);
-
           allEdgesMap.set(edgeId, {
-            id: edgeId,
-            source: sourceId,
-            target: targetId,
-            type: 'rightsLabel',
-            animated: true,
-            style: {
-              stroke: strokeColor,
-              strokeWidth: 2,
-              strokeDasharray: isSiblingToSibling ? undefined : '6 4',
-            },
-            ...edgeMarkers,
-            data: buildEdgeData(
+            ...buildNetworkRelationshipEdge({
+              edgeId,
               sourceId,
               targetId,
+              sourceGroupId: sourceId,
+              targetGroupId: targetId,
+              structuralType: 'sibling',
               rights,
               relationshipKinds,
               rightRelationshipKinds,
-              'sibling',
-              userConnectionDirections,
+              membershipMode,
+              membershipCanonicalDirection,
               rightEdgeDirections,
-              rightConnectionDirections,
-              'direct'
-            ),
+              relationshipDepth: 'direct',
+              fallbackStrokeColor: isSiblingToSibling ? '#f59e0b' : '#a855f7',
+              strokeDasharray: isSiblingToSibling ? undefined : '6 4',
+              sourceName: groupNameMap.get(sourceId) ?? null,
+              targetName: groupNameMap.get(targetId) ?? null,
+              currentGroupId,
+              previewCurrentGroupId: currentGroupId,
+              bendPoints: edgeBendPointsRef.current[edgeId] ?? [],
+              edgeEditingEnabled: isInteractiveRef.current,
+              onBendPointsChange: handleEdgeBendPointsChange,
+            }),
           });
         }
       );
     }
 
+    const nextEdges = Array.from(allEdgesMap.values());
+    syncGeneratedLayoutState(newNodes, nextEdges);
     setNodes(newNodes);
-    setEdges(Array.from(allEdgesMap.values()));
+    setEdges(nextEdges);
   }, [
+    edgeBendPointsRef,
+    filterRight,
+    handleEdgeBendPointsChange,
+    isInteractiveRef,
+    nodePositionsRef,
+    syncGeneratedLayoutState,
     userProfile,
     userId,
     userGroups,
     userGroupIds,
     relationshipDepthFilter,
     stableRelationships,
-    filterRight,
     onGroupClick,
   ]);
 
@@ -874,8 +867,22 @@ export function UserNetworkFlow({
 
   // Generate flow chart when data or showIndirect changes
   useEffect(() => {
+    if (isLayoutLoading) {
+      return;
+    }
+
     generateFlowChart();
-  }, [generateFlowChart]);
+  }, [generateFlowChart, isLayoutLoading]);
+
+  const handleSaveLayout = useCallback(() => {
+    persistLayout(currentLayout);
+  }, [currentLayout, persistLayout]);
+
+  const handleResetLayout = useCallback(() => {
+    clearPersistedLayoutState();
+    resetLayout();
+    generateFlowChart();
+  }, [clearPersistedLayoutState, generateFlowChart, resetLayout]);
 
   // Handle node selection
   const onNodeClick = useCallback(
@@ -886,18 +893,19 @@ export function UserNetworkFlow({
 
       // Open dialog with entity data
       if (nodeData.type === 'group' && nodeData.groupData) {
-        setSelectedEntity({
-          type: 'group',
-          data: {
-            ...nodeData.groupData,
-            description: toDisplayText(nodeData.groupData.description) ?? null,
-          },
-        });
-        setDialogOpen(true);
-
-        // Still call onGroupClick if provided
         if (onGroupClick) {
           onGroupClick(node.id, nodeData.groupData as NetworkGroupEntity);
+        }
+
+        if (showGroupDialogOnClick) {
+          setSelectedEntity({
+            type: 'group',
+            data: {
+              ...nodeData.groupData,
+              description: toDisplayText(nodeData.groupData.description) ?? null,
+            },
+          });
+          setDialogOpen(true);
         }
       } else if (nodeData.type === 'user') {
         setSelectedEntity({
@@ -907,7 +915,15 @@ export function UserNetworkFlow({
         setDialogOpen(true);
       }
     },
-    [isInteractive, onGroupClick, setDialogOpen, setSelectedEntity, userId, userProfile]
+    [
+      isInteractive,
+      onGroupClick,
+      setDialogOpen,
+      setSelectedEntity,
+      showGroupDialogOnClick,
+      userId,
+      userProfile,
+    ]
   );
 
   // Handle edge click
@@ -946,7 +962,7 @@ export function UserNetworkFlow({
       nodesFocusable={isInteractive}
       nodesConnectable={isInteractive}
       edgesFocusable={isInteractive}
-      onNodesChange={isInteractive ? onNodesChange : undefined}
+      onNodesChange={isInteractive ? handleNodesChange : undefined}
       onEdgesChange={isInteractive ? onEdgesChange : undefined}
       onNodeClick={onNodeClick}
       onEdgeClick={onEdgeClick}
@@ -1010,6 +1026,26 @@ export function UserNetworkFlow({
           indirectLabel={t('common.network.indirect')}
           lockLabel={t('common.network.lockEditor')}
           unlockLabel={t('common.network.unlockEditor')}
+          controlsExtraContent={
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleSaveLayout}
+                disabled={isLayoutLoading || !hasLayoutChanges}
+              >
+                {t('common.network.saveLayout')}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleResetLayout}
+                disabled={isLayoutLoading || (!hasSavedLayout && !hasLayoutChanges)}
+              >
+                {t('common.network.resetLayout')}
+              </Button>
+            </>
+          }
           showRightsFilter={!filterRight}
           selectedRights={selectedRights}
           onToggleRight={toggleRight}

@@ -21,7 +21,7 @@ export function RightBadge({
   requestKind,
 }: RightBadgeProps) {
   const { t } = useTranslation();
-  const label = getRightLabel(right);
+  const label = getRightLabel(right, (key, fallback) => t(key) || fallback || key);
   const requestStatusLabel =
     requestKind === 'incoming'
       ? t('common.network.incomingRequest')

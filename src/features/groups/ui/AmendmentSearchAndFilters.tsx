@@ -124,20 +124,17 @@ export function AmendmentSearchAndFilters({
                   <SelectItem value="all">
                     {t('features.groups.common.filters.allStatuses', 'All Statuses')}
                   </SelectItem>
-                  <SelectItem value="draft">
-                    {t('features.groups.common.status.draft', 'Draft')}
+                  <SelectItem value="supported">
+                    {t('features.groups.common.status.supported', 'Supported')}
                   </SelectItem>
-                  <SelectItem value="pending">
-                    {t('features.groups.common.status.pending', 'Pending')}
-                  </SelectItem>
-                  <SelectItem value="approved">
-                    {t('features.groups.common.status.approved', 'Approved')}
+                  <SelectItem value="accepted">
+                    {t('features.groups.common.status.accepted', 'Accepted')}
                   </SelectItem>
                   <SelectItem value="rejected">
                     {t('features.groups.common.status.rejected', 'Rejected')}
                   </SelectItem>
-                  <SelectItem value="active">
-                    {t('features.groups.common.status.active', 'Active')}
+                  <SelectItem value="withdrawn">
+                    {t('features.groups.common.status.withdrawn', 'Withdrawn')}
                   </SelectItem>
                 </SelectContent>
               </Select>

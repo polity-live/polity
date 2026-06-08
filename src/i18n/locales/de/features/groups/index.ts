@@ -85,6 +85,23 @@ export const groupsTranslations = {
       composition: 'Zusammensetzung',
       openAssignments: 'Offene Auftraege',
     },
+    composition: {
+      title: 'Zusammensetzung',
+      description:
+        'Herkunft nach Teilgruppen. Fuehrungskraefte zaehlen Nicht-Member-Rollen-Zuweisungen.',
+      modePercent: '%',
+      modeAbsolute: 'Absolut',
+      membersTitle: 'Mitglieder',
+      membersDescription: 'Anteil der Teilgruppen an allen aktiven Mitgliedschaften.',
+      membersEmpty: 'Keine aktiven Mitglieder vorhanden.',
+      leadershipTitle: 'Fuehrungskraefte',
+      leadershipDescription: 'Anteil der Teilgruppen an allen Nicht-Member-Rollen-Zuweisungen.',
+      leadershipEmpty: 'Keine Nicht-Member-Rollen-Zuweisungen vorhanden.',
+      leadershipFootnote: 'Jede Nicht-Member-Rolle wird einzeln gezaehlt.',
+      loading: 'Zusammensetzung wird geladen...',
+      total: 'Gesamt: {{count}}',
+      directWithoutPath: 'Direkt / ohne Pfad',
+    },
     roles: {
       admin: 'Admin',
       member: 'Mitglied',

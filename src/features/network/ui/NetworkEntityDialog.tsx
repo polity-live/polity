@@ -185,6 +185,7 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
                 <h4 className="mb-3 text-sm font-semibold">{t('common.labels.upcomingEvents')}</h4>
                 <GroupEventsList
                   groupId={entity.data.id}
+                  groupName={entity.data.name ?? undefined}
                   onEventClick={(eventId, eventData) => {
                     // If custom onEventSelect handler provided, use it
                     if (entity.data.onEventSelect) {

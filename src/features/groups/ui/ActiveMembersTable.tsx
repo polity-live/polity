@@ -55,18 +55,40 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
   onOpenRightsDialog,
   onOpenChangeRoleDialog,
   onRemove,
-  title = 'Active Members',
-  description = 'Current group members and administrators',
-  fallbackRoleLabel = 'Member',
-  manageRolesLabel = 'Manage Roles',
-  removeLabel = 'Remove',
+  title,
+  description,
+  fallbackRoleLabel,
+  manageRolesLabel,
+  removeLabel,
   showProvenanceColumns = false,
 }: ActiveMembersTableProps<TMembership>) {
   const { t } = useTranslation();
+  const directWithoutPathLabel = t(
+    'features.groups.memberships.composition.directWithoutPath',
+    'Direct / no path'
+  );
+  const resolvedTitle =
+    title ?? t('components.membershipTables.activeMembersTitle', 'Active Members');
+  const resolvedDescription =
+    description ??
+    t('components.membershipTables.activeMembersDescription', 'Current members and administrators');
+  const resolvedFallbackRoleLabel =
+    fallbackRoleLabel ?? t('components.membershipTables.memberFallback', 'Member');
+  const resolvedManageRolesLabel =
+    manageRolesLabel ?? t('components.membershipTables.manageRoles', 'Manage Roles');
+  const resolvedRemoveLabel = removeLabel ?? t('components.membershipTables.remove', 'Remove');
+  const userColumnLabel = t('components.membershipTables.user', 'User');
+  const roleColumnLabel = t('components.membershipTables.role', 'Role');
+  const joinedColumnLabel = t('components.membershipTables.joined', 'Joined');
+  const actionsColumnLabel = t('components.membershipTables.actions', 'Actions');
+  const rightsLabel = t('components.membershipTables.rights', 'Rights');
+  const notAvailableLabel = t('components.membershipTables.notAvailable', 'N/A');
 
   const renderProvenanceGroupTag = (membership: TMembership, column: 'partGroup' | 'baseGroup') => {
     const group = column === 'partGroup' ? membership.partGroup : membership.baseGroup;
-    const label = getMembershipProvenanceDisplayLabel(membership, column);
+    const label = getMembershipProvenanceDisplayLabel(membership, column, {
+      directWithoutPathLabel,
+    });
 
     if (!group?.id) {
       return <span>{label}</span>;
@@ -92,23 +114,35 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Users className="h-5 w-5" />
-          {title} ({members.length})
+          {resolvedTitle} ({members.length})
         </CardTitle>
-        <CardDescription>{description}</CardDescription>
+        <CardDescription>{resolvedDescription}</CardDescription>
       </CardHeader>
       <CardContent>
         {members.length === 0 ? (
-          <p className="text-muted-foreground py-8 text-center">No active members found</p>
+          <p className="text-muted-foreground py-8 text-center">
+            {t('components.membershipTables.noActiveMembers', 'No active members found')}
+          </p>
         ) : (
           <div className="border-border/70 overflow-x-auto rounded-2xl border">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>
-                    <SortButton label="User" field="user" sort={sort} onSortChange={onSortChange} />
+                    <SortButton
+                      label={userColumnLabel}
+                      field="user"
+                      sort={sort}
+                      onSortChange={onSortChange}
+                    />
                   </TableHead>
                   <TableHead>
-                    <SortButton label="Role" field="role" sort={sort} onSortChange={onSortChange} />
+                    <SortButton
+                      label={roleColumnLabel}
+                      field="role"
+                      sort={sort}
+                      onSortChange={onSortChange}
+                    />
                   </TableHead>
                   {showProvenanceColumns ? (
                     <TableHead>{t('components.tableColumns.partGroup')}</TableHead>
@@ -116,8 +150,8 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
                   {showProvenanceColumns ? (
                     <TableHead>{t('components.tableColumns.baseGroup')}</TableHead>
                   ) : null}
-                  <TableHead>Joined</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{joinedColumnLabel}</TableHead>
+                  <TableHead className="text-right">{actionsColumnLabel}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -127,7 +161,7 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
                   const displayRoles = getMembershipDisplayRoles(membership);
                   const createdAt = membership.created_at
                     ? new Date(membership.created_at).toLocaleDateString()
-                    : 'N/A';
+                    : notAvailableLabel;
 
                   return (
                     <TableRow key={membership.id}>
@@ -146,7 +180,7 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
                             ))
                           ) : (
                             <RoleTag fallbackKey={`member-${membership.id}`}>
-                              {fallbackRoleLabel}
+                              {resolvedFallbackRoleLabel}
                             </RoleTag>
                           )}
                         </div>
@@ -170,7 +204,7 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
                             onClick={() => onOpenRightsDialog(membership)}
                           >
                             <Eye className="mr-1 h-4 w-4" />
-                            Rights
+                            {rightsLabel}
                           </Button>
                           <Button
                             variant="outline"
@@ -178,7 +212,7 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
                             onClick={() => onOpenChangeRoleDialog(membership)}
                           >
                             <ArrowUpDown className="mr-1 h-4 w-4" />
-                            {manageRolesLabel}
+                            {resolvedManageRolesLabel}
                           </Button>
                           {membership.source !== 'derived' && userId && (
                             <Button
@@ -187,7 +221,7 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
                               onClick={() => onRemove(membership.id, userId)}
                             >
                               <Trash2 className="h-4 w-4" />
-                              <span className="ml-2">{removeLabel}</span>
+                              <span className="ml-2">{resolvedRemoveLabel}</span>
                             </Button>
                           )}
                         </div>

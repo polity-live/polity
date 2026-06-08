@@ -1,6 +1,7 @@
 import { MarkerType, Position, type Edge } from '@xyflow/react';
 import { getHierarchyRelationshipPair } from './groupRelationshipOrientation';
 import type { NetworkRelationshipKind } from './networkRelationshipHelpers';
+import { getRelativeMembershipDirectionForRelationship } from './networkRelationshipHelpers';
 import type {
   NetworkEdgeAnchorStrategy,
   NetworkConnectionDirection,
@@ -12,6 +13,7 @@ import type {
 } from '../types/networkEdge.types';
 import type {
   CanonicalMembershipMode,
+  CanonicalNetworkMembershipDirection,
   GroupRelationshipType,
   NormalizedGroupRelationship,
   RelativeMembershipDirection,
@@ -41,6 +43,54 @@ interface CreateNetworkRelationshipEdgeDataArgs {
   rightDisplayDirections?: Record<string, NetworkConnectionDirection>;
   anchorStrategy?: NetworkEdgeAnchorStrategy;
   useInnerVerticalAnchors?: boolean;
+  bendPoints?: import('../types/networkEdge.types').NetworkEdgeBendPoint[];
+  edgeEditingEnabled?: boolean;
+  onBendPointsChange?: (
+    edgeId: string,
+    bendPoints: import('../types/networkEdge.types').NetworkEdgeBendPoint[]
+  ) => void;
+}
+
+interface ResolveNetworkRelationshipPreviewContextArgs {
+  graphRootGroupId?: string;
+  currentGroupId?: string;
+  structuralType: GroupRelationshipType;
+  sourceGroupId: string;
+  targetGroupId: string;
+  sourceGroupName: string | null;
+  targetGroupName: string | null;
+  rightEdgeDirections?: Record<string, NetworkEdgeRelationshipDirection>;
+  membershipCanonicalDirection?: CanonicalNetworkMembershipDirection | null;
+}
+
+interface BuildNetworkRelationshipEdgeArgs {
+  edgeId: string;
+  sourceId: string;
+  targetId: string;
+  sourceGroupId: string;
+  targetGroupId: string;
+  structuralType: GroupRelationshipType;
+  rights: string[];
+  relationshipKinds?: NetworkRelationshipKind[];
+  rightRelationshipKinds?: Record<string, NetworkRelationshipKind>;
+  membershipMode?: CanonicalMembershipMode | null;
+  membershipCanonicalDirection?: CanonicalNetworkMembershipDirection | null;
+  rightEdgeDirections?: Record<string, NetworkEdgeRelationshipDirection>;
+  relationshipDepth?: NetworkRelationshipDepth;
+  fallbackStrokeColor: string;
+  strokeDasharray?: string;
+  sourceName?: string | null;
+  targetName?: string | null;
+  graphRootGroupId?: string;
+  currentGroupId?: string;
+  previewCurrentGroupId?: string;
+  anchorStrategy?: NetworkEdgeAnchorStrategy;
+  bendPoints?: import('../types/networkEdge.types').NetworkEdgeBendPoint[];
+  edgeEditingEnabled?: boolean;
+  onBendPointsChange?: (
+    edgeId: string,
+    bendPoints: import('../types/networkEdge.types').NetworkEdgeBendPoint[]
+  ) => void;
 }
 
 interface NetworkEdgeAnchorRect {
@@ -347,6 +397,104 @@ export function buildCurrentPerspectiveRightDisplayDirections({
   ) as Record<string, NetworkConnectionDirection>;
 }
 
+export function getNetworkUserConnectionDirections(
+  rightConnectionDirections?: Record<string, NetworkConnectionDirection>
+): NetworkUserConnectionDirection[] {
+  const values = Object.values(rightConnectionDirections ?? {});
+  const directions: NetworkUserConnectionDirection[] = [];
+
+  if (values.some(value => value === 'incoming' || value === 'bidirectional')) {
+    directions.push('incoming');
+  }
+
+  if (values.some(value => value === 'outgoing' || value === 'bidirectional')) {
+    directions.push('outgoing');
+  }
+
+  return directions;
+}
+
+function getPreviewRelationshipType(args: {
+  structuralType: GroupRelationshipType;
+  currentGroupId: string;
+  sourceGroupId: string;
+}) {
+  if (args.structuralType === 'sibling') {
+    return 'sibling';
+  }
+
+  return args.currentGroupId === args.sourceGroupId ? 'parent' : 'child';
+}
+
+export function resolveNetworkRelationshipPreviewContext(
+  args: ResolveNetworkRelationshipPreviewContextArgs
+) {
+  const visibleFlowDirection = getVisibleFlowDirection(args.rightEdgeDirections);
+
+  let resolvedCurrentGroupId =
+    args.currentGroupId ??
+    (args.graphRootGroupId === args.sourceGroupId || args.graphRootGroupId === args.targetGroupId
+      ? args.graphRootGroupId
+      : undefined) ??
+    args.sourceGroupId;
+
+  if (!args.currentGroupId) {
+    if (visibleFlowDirection === 'forward') {
+      resolvedCurrentGroupId = args.sourceGroupId;
+    } else if (visibleFlowDirection === 'backward') {
+      resolvedCurrentGroupId = args.targetGroupId;
+    } else if (args.membershipCanonicalDirection === 'forward') {
+      resolvedCurrentGroupId = args.sourceGroupId;
+    } else if (args.membershipCanonicalDirection === 'backward') {
+      resolvedCurrentGroupId = args.targetGroupId;
+    }
+  }
+
+  const selectedGroupId =
+    resolvedCurrentGroupId === args.sourceGroupId ? args.targetGroupId : args.sourceGroupId;
+
+  return {
+    relationshipType: getPreviewRelationshipType({
+      structuralType: args.structuralType,
+      currentGroupId: resolvedCurrentGroupId,
+      sourceGroupId: args.sourceGroupId,
+    }),
+    currentGroupId: resolvedCurrentGroupId,
+    currentGroupName:
+      resolvedCurrentGroupId === args.sourceGroupId ? args.sourceGroupName : args.targetGroupName,
+    selectedGroupId,
+    selectedGroupName:
+      selectedGroupId === args.sourceGroupId ? args.sourceGroupName : args.targetGroupName,
+  } satisfies {
+    relationshipType: GroupRelationshipType;
+    currentGroupId: string;
+    currentGroupName: string | null;
+    selectedGroupId: string;
+    selectedGroupName: string | null;
+  };
+}
+
+export function getNetworkPreviewMembershipDirection(args: {
+  currentGroupId: string;
+  sourceGroupId: string;
+  targetGroupId: string;
+  membershipCanonicalDirection?: CanonicalNetworkMembershipDirection | null;
+}) {
+  if (!args.membershipCanonicalDirection) {
+    return null;
+  }
+
+  return getRelativeMembershipDirectionForRelationship({
+    relationship: {
+      group_id: args.sourceGroupId,
+      related_group_id: args.targetGroupId,
+      membership_direction: args.membershipCanonicalDirection,
+      relationship_direction: 'forward',
+    },
+    currentGroupId: args.currentGroupId,
+  });
+}
+
 export function orientRelationshipEdgeForCurrentPerspective({
   currentNodeId,
   sourceId,
@@ -450,6 +598,107 @@ export function buildRelationshipEdgeMarkers(
           color: strokeColor,
         }
       : undefined,
+  };
+}
+
+export function buildNetworkRelationshipEdge({
+  edgeId,
+  sourceId,
+  targetId,
+  sourceGroupId,
+  targetGroupId,
+  structuralType,
+  rights,
+  relationshipKinds = [],
+  rightRelationshipKinds = {},
+  membershipMode,
+  membershipCanonicalDirection,
+  rightEdgeDirections,
+  relationshipDepth = 'direct',
+  fallbackStrokeColor,
+  strokeDasharray,
+  sourceName = null,
+  targetName = null,
+  graphRootGroupId,
+  currentGroupId,
+  previewCurrentGroupId,
+  anchorStrategy = 'inner-auto',
+  bendPoints = [],
+  edgeEditingEnabled = false,
+  onBendPointsChange,
+}: BuildNetworkRelationshipEdgeArgs): Edge<EditableRightsLabelEdgeData> {
+  const resolvedStrokeColor = getRelationshipStrokeColor(fallbackStrokeColor, rightEdgeDirections);
+  const edgeMarkers = buildRelationshipEdgeMarkers(resolvedStrokeColor, rightEdgeDirections);
+  const previewContext = resolveNetworkRelationshipPreviewContext({
+    graphRootGroupId,
+    currentGroupId: previewCurrentGroupId,
+    structuralType,
+    sourceGroupId,
+    targetGroupId,
+    sourceGroupName: sourceName,
+    targetGroupName: targetName,
+    rightEdgeDirections,
+    membershipCanonicalDirection,
+  });
+  const pageCurrentGroupId = currentGroupId ?? graphRootGroupId ?? previewContext.currentGroupId;
+  const visibleFlowDirection = getVisibleFlowDirection(rightEdgeDirections);
+  const animatedFlowDirection = getAnimatedFlowDirection(visibleFlowDirection);
+  const pageRightConnectionDirections =
+    buildCurrentPerspectiveRightDisplayDirections({
+      currentNodeId: pageCurrentGroupId,
+      sourceId: sourceGroupId,
+      targetId: targetGroupId,
+      rightEdgeDirections,
+    }) ?? {};
+  const rightDisplayDirections = buildCurrentPerspectiveRightDisplayDirections({
+    currentNodeId: previewContext.currentGroupId,
+    sourceId: sourceGroupId,
+    targetId: targetGroupId,
+    rightEdgeDirections,
+  });
+
+  return {
+    id: edgeId,
+    source: sourceId,
+    target: targetId,
+    type: 'rightsLabel',
+    animated: animatedFlowDirection !== null,
+    style: {
+      stroke: resolvedStrokeColor,
+      strokeWidth: 2,
+      strokeDasharray,
+      animationDirection: animatedFlowDirection === 'backward' ? 'reverse' : undefined,
+    },
+    ...edgeMarkers,
+    data: createNetworkRelationshipEdgeData({
+      rights,
+      relationshipKinds,
+      rightRelationshipKinds,
+      relationshipType: previewContext.relationshipType,
+      membershipMode,
+      membershipDirection: getNetworkPreviewMembershipDirection({
+        currentGroupId: previewContext.currentGroupId,
+        sourceGroupId,
+        targetGroupId,
+        membershipCanonicalDirection,
+      }),
+      rightEdgeDirections,
+      visibleFlowDirection,
+      rightConnectionDirections: pageRightConnectionDirections,
+      userConnectionDirections: getNetworkUserConnectionDirections(pageRightConnectionDirections),
+      relationshipDepth,
+      sourceName,
+      targetName,
+      currentGroupId: previewContext.currentGroupId,
+      currentGroupName: previewContext.currentGroupName,
+      selectedGroupId: previewContext.selectedGroupId,
+      selectedGroupName: previewContext.selectedGroupName,
+      rightDisplayDirections,
+      anchorStrategy,
+      bendPoints,
+      edgeEditingEnabled,
+      onBendPointsChange,
+    }),
   };
 }
 

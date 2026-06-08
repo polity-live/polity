@@ -6,10 +6,10 @@ import type {
 } from '@/zero/amendments/queries';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
 
-export type { NetworkGroupRow as AmendmentNetworkGroup };
-export type { NetworkGroupRelationshipRow as AmendmentNetworkRelationship };
-export type { NetworkGroupMembershipRow as AmendmentNetworkMembership };
-export type { NetworkEventRow as AmendmentNetworkEvent };
+export type AmendmentNetworkGroup = NetworkGroupRow;
+export type AmendmentNetworkRelationship = NetworkGroupRelationshipRow;
+export type AmendmentNetworkMembership = NetworkGroupMembershipRow;
+export type AmendmentNetworkEvent = NetworkEventRow;
 
 export interface PathWithEventSegment {
   groupId: string;
@@ -17,6 +17,7 @@ export interface PathWithEventSegment {
   eventId: string | null;
   eventTitle: string;
   eventStartDate: number | null;
+  eventEndDate?: number | null;
   workflowStepId?: string | null;
   stepKind?: 'group_vote' | 'merge_vote' | 'workflow_handoff';
   selectionMode?: 'default_target_workflow' | 'explicit_workflow' | null;
@@ -45,10 +46,33 @@ interface BuildPathInput {
   userId?: string;
 }
 
+interface WorkflowPathStep {
+  id?: string;
+  group_id: string;
+  group?: { id: string; name: string | null } | null;
+  order_index?: number | null;
+  step_kind?: string | null;
+  selection_mode?: string | null;
+  merge_strategy?: string | null;
+  event_rule?: string | null;
+  auto_task_on_missing_event?: boolean | null;
+  target_workflow_id?: string | null;
+}
+
 const AMENDMENT_RIGHT = 'amendmentRight';
+
+interface UserMembershipTraversalContext {
+  activeGroupIds: Set<string>;
+  roleIdsByGroupId: Map<string, Set<string>>;
+  hasUserContext: boolean;
+}
 
 function isActiveMembershipStatus(status?: string | null) {
   return status === 'active' || status === 'admin' || status === 'member';
+}
+
+function isAcceptedRelationshipStatus(status?: string | null) {
+  return status == null || status === 'active' || status === 'accepted';
 }
 
 function getGroupName(group?: Pick<NetworkGroupRow, 'name' | 'description'> | null) {
@@ -84,7 +108,11 @@ function buildUpcomingEventsByGroupId(events: NetworkEventRow[]) {
   return eventsByGroupId;
 }
 
-function buildUserRoleIdsByGroupId(memberships: NetworkGroupMembershipRow[], userId?: string) {
+function buildUserMembershipTraversalContext(
+  memberships: NetworkGroupMembershipRow[],
+  userId?: string
+): UserMembershipTraversalContext {
+  const activeGroupIds = new Set<string>();
   const roleIdsByGroupId = new Map<string, Set<string>>();
 
   for (const membership of memberships) {
@@ -97,6 +125,7 @@ function buildUserRoleIdsByGroupId(memberships: NetworkGroupMembershipRow[], use
       continue;
     }
 
+    activeGroupIds.add(groupId);
     const roleIds = roleIdsByGroupId.get(groupId) ?? new Set<string>();
     for (const roleLink of membership.membership_roles ?? []) {
       if (roleLink.role?.id) {
@@ -106,25 +135,59 @@ function buildUserRoleIdsByGroupId(memberships: NetworkGroupMembershipRow[], use
     roleIdsByGroupId.set(groupId, roleIds);
   }
 
-  return roleIdsByGroupId;
+  return {
+    activeGroupIds,
+    roleIdsByGroupId,
+    hasUserContext: Boolean(userId),
+  };
+}
+
+function getMembershipGateGroupId(relationship: NetworkGroupRelationshipRow) {
+  if (
+    relationship.membership_direction !== 'forward' &&
+    relationship.membership_direction !== 'backward'
+  ) {
+    return relationship.group_id;
+  }
+
+  if (
+    relationship.relationship_direction !== 'forward' &&
+    relationship.relationship_direction !== 'backward'
+  ) {
+    return relationship.group_id;
+  }
+
+  return relationship.membership_direction === relationship.relationship_direction
+    ? relationship.group_id
+    : relationship.related_group_id;
 }
 
 function canTraverseRelationship(args: {
   relationship: NetworkGroupRelationshipRow;
   sourceGroupId: string;
-  userRoleIdsByGroupId: Map<string, Set<string>>;
+  membershipContext: UserMembershipTraversalContext;
 }) {
-  const { relationship, sourceGroupId, userRoleIdsByGroupId } = args;
+  const { relationship, sourceGroupId, membershipContext } = args;
 
-  if (relationship.with_right !== AMENDMENT_RIGHT) {
+  if (
+    relationship.with_right !== AMENDMENT_RIGHT ||
+    !isAcceptedRelationshipStatus(relationship.status)
+  ) {
     return false;
+  }
+
+  const gateGroupId = getMembershipGateGroupId(relationship);
+
+  if (!membershipContext.hasUserContext) {
+    return true;
   }
 
   switch (relationship.membership_mode) {
     case 'role_members':
       return relationship.membership_role_id
-        ? (userRoleIdsByGroupId.get(relationship.group_id)?.has(relationship.membership_role_id) ??
-            false)
+        ? (membershipContext.roleIdsByGroupId
+            .get(gateGroupId)
+            ?.has(relationship.membership_role_id) ?? false)
         : false;
     case 'selected_source_groups':
       return (
@@ -132,15 +195,47 @@ function canTraverseRelationship(args: {
         relationship.membership_source_group_ids.includes(sourceGroupId)
       );
     case 'all_members':
+      return true;
     case 'none':
     default:
       return true;
   }
 }
 
+function buildTraversalAdjacency(args: {
+  relationships: NetworkGroupRelationshipRow[];
+  sourceGroupId: string;
+  membershipContext: UserMembershipTraversalContext;
+}) {
+  const adjacency = new Map<string, NetworkGroupRelationshipRow[]>();
+
+  for (const relationship of args.relationships) {
+    if (
+      !canTraverseRelationship({
+        relationship,
+        sourceGroupId: args.sourceGroupId,
+        membershipContext: args.membershipContext,
+      })
+    ) {
+      continue;
+    }
+
+    const traversableRelationships = adjacency.get(relationship.related_group_id) ?? [];
+    traversableRelationships.push(relationship);
+    adjacency.set(relationship.related_group_id, traversableRelationships);
+  }
+
+  return adjacency;
+}
+
 function findShortestProcessPath(args: BuildPathInput) {
   const { sourceGroupId, targetGroupId, relationships, memberships = [], userId } = args;
-  const userRoleIdsByGroupId = buildUserRoleIdsByGroupId(memberships, userId);
+  const membershipContext = buildUserMembershipTraversalContext(memberships, userId);
+  const adjacency = buildTraversalAdjacency({
+    relationships,
+    sourceGroupId,
+    membershipContext,
+  });
   const queue: string[][] = [[sourceGroupId]];
   const visited = new Set<string>([sourceGroupId]);
 
@@ -155,18 +250,10 @@ function findShortestProcessPath(args: BuildPathInput) {
       return currentPath;
     }
 
-    const nextRelationships = relationships.filter(
-      relationship =>
-        relationship.group_id === currentGroupId &&
-        canTraverseRelationship({
-          relationship,
-          sourceGroupId,
-          userRoleIdsByGroupId,
-        })
-    );
+    const nextRelationships = adjacency.get(currentGroupId) ?? [];
 
     for (const relationship of nextRelationships) {
-      const nextGroupId = relationship.related_group_id;
+      const nextGroupId = relationship.group_id;
       if (visited.has(nextGroupId)) {
         continue;
       }
@@ -179,6 +266,49 @@ function findShortestProcessPath(args: BuildPathInput) {
   return null;
 }
 
+function collectReachableGroupIds(args: {
+  sourceGroupId: string;
+  relationships: NetworkGroupRelationshipRow[];
+  memberships?: NetworkGroupMembershipRow[];
+  userId?: string;
+}) {
+  const membershipContext = buildUserMembershipTraversalContext(
+    args.memberships ?? [],
+    args.userId
+  );
+  const adjacency = buildTraversalAdjacency({
+    relationships: args.relationships,
+    sourceGroupId: args.sourceGroupId,
+    membershipContext,
+  });
+  const visited = new Set<string>([args.sourceGroupId]);
+  const queue = [args.sourceGroupId];
+
+  while (queue.length > 0) {
+    const currentGroupId = queue.shift();
+    if (!currentGroupId) {
+      continue;
+    }
+
+    for (const relationship of adjacency.get(currentGroupId) ?? []) {
+      if (visited.has(relationship.group_id)) {
+        continue;
+      }
+
+      visited.add(relationship.group_id);
+      queue.push(relationship.group_id);
+    }
+  }
+
+  return visited;
+}
+
+function getEventOrderingAnchor(
+  segment: Pick<PathWithEventSegment, 'eventStartDate' | 'eventEndDate'>
+) {
+  return segment.eventEndDate ?? segment.eventStartDate ?? null;
+}
+
 function findClosestEligibleEvent(args: {
   eventsByGroupId: Map<string, NetworkEventRow[]>;
   groupId: string;
@@ -189,13 +319,14 @@ function findClosestEligibleEvent(args: {
   return (
     groupEvents.find(event => {
       const startDate = event.start_date ?? null;
+      const endDate = event.end_date ?? event.start_date ?? null;
       if (startDate == null) {
         return false;
       }
       if (args.requiredAfter != null && startDate < args.requiredAfter) {
         return false;
       }
-      if (args.requiredBefore != null && startDate > args.requiredBefore) {
+      if (args.requiredBefore != null && endDate != null && endDate > args.requiredBefore) {
         return false;
       }
       return true;
@@ -220,6 +351,61 @@ function finalizeSegmentWindows(segments: PathWithEventSegment[]) {
   }));
 }
 
+function recomputeSegmentWindows(segments: PathWithEventSegment[]) {
+  let requiredAfter: number | null = null;
+
+  const forwardPass = segments.map(segment => {
+    const nextSegment = {
+      ...segment,
+      requiredAfter,
+      requiredBefore: null,
+    };
+
+    const orderingAnchor = getEventOrderingAnchor(segment);
+    if (orderingAnchor != null) {
+      requiredAfter = orderingAnchor;
+    }
+
+    return nextSegment;
+  });
+
+  return finalizeSegmentWindows(forwardPass);
+}
+
+export function rehydratePathSegmentsWithWindows(
+  segments: readonly PathWithEventSegment[]
+): PathWithEventSegment[] {
+  return recomputeSegmentWindows(segments.map(segment => ({ ...segment })));
+}
+
+export function getEligibleEventsForPathSegment(args: {
+  segment: Pick<PathWithEventSegment, 'groupId' | 'requiredAfter' | 'requiredBefore'>;
+  events: readonly AmendmentNetworkEvent[];
+}) {
+  return [...args.events]
+    .filter(event => (event.group?.id ?? event.group_id) === args.segment.groupId)
+    .filter(event => {
+      const startDate = event.start_date ?? null;
+      const endDate = event.end_date ?? event.start_date ?? null;
+
+      if (startDate == null || startDate <= Date.now()) {
+        return false;
+      }
+      if (args.segment.requiredAfter != null && startDate < args.segment.requiredAfter) {
+        return false;
+      }
+      if (
+        args.segment.requiredBefore != null &&
+        endDate != null &&
+        endDate > args.segment.requiredBefore
+      ) {
+        return false;
+      }
+      return true;
+    })
+    .sort((left, right) => (left.start_date ?? 0) - (right.start_date ?? 0));
+}
+
 function buildSegmentsFromGroupIds(args: {
   groupIds: string[];
   groupsById: Map<string, NetworkGroupRow>;
@@ -242,8 +428,9 @@ function buildSegmentsFromGroupIds(args: {
 
     const previousRequiredAfter = requiredAfter;
     const eventStartDate = event?.start_date ?? null;
-    if (eventStartDate != null) {
-      requiredAfter = eventStartDate;
+    const eventEndDate = event?.end_date ?? event?.start_date ?? null;
+    if (eventEndDate != null) {
+      requiredAfter = eventEndDate;
     }
 
     segments.push({
@@ -252,6 +439,7 @@ function buildSegmentsFromGroupIds(args: {
       eventId: event?.id ?? null,
       eventTitle: event?.title ?? 'Pending event',
       eventStartDate,
+      eventEndDate,
       stepKind: 'group_vote',
       selectionMode: null,
       mergeStrategy: null,
@@ -263,7 +451,7 @@ function buildSegmentsFromGroupIds(args: {
     });
   }
 
-  return finalizeSegmentWindows(segments);
+  return recomputeSegmentWindows(segments);
 }
 
 /**
@@ -275,7 +463,8 @@ export function enrichPathSegments(
   targetGroupId: string,
   targetEventId: string | null,
   targetEventTitle: string | null,
-  targetEventStartDate: number | null
+  targetEventStartDate: number | null,
+  targetEventEndDate?: number | null
 ): EnrichedPathSegment[] {
   const segments = pathWithEvents.map(segment => ({ ...segment }));
   const lastSegment = segments[segments.length - 1];
@@ -283,6 +472,7 @@ export function enrichPathSegments(
     lastSegment.eventId = targetEventId;
     lastSegment.eventTitle = targetEventTitle ?? 'Pending event';
     lastSegment.eventStartDate = targetEventStartDate ?? null;
+    lastSegment.eventEndDate = targetEventEndDate ?? targetEventStartDate ?? null;
     lastSegment.missingEvent = false;
   }
 
@@ -389,18 +579,13 @@ export function getReachableTargetGroupsFromSource(args: {
   relationships: NetworkGroupRelationshipRow[];
   memberships?: NetworkGroupMembershipRow[];
   userId?: string;
+  includeSourceGroup?: boolean;
 }) {
+  const reachableGroupIds = collectReachableGroupIds(args);
   return args.groups.filter(
     group =>
-      calculateProcessPathWithClosestEvents({
-        sourceGroupId: args.sourceGroupId,
-        targetGroupId: group.id,
-        groups: args.groups,
-        relationships: args.relationships,
-        events: [],
-        memberships: args.memberships,
-        userId: args.userId,
-      }) !== null
+      reachableGroupIds.has(group.id) &&
+      (args.includeSourceGroup || group.id !== args.sourceGroupId)
   );
 }
 
@@ -419,6 +604,7 @@ export function getUpwardConnectedGroupsForUser(
       sourceGroupId,
       groups,
       relationships,
+      includeSourceGroup: true,
     })) {
       connectedGroupIds.add(group.id);
     }
@@ -432,18 +618,7 @@ export function getUpwardConnectedGroupsForUser(
  * assigning the closest upcoming event for each step's group.
  */
 export function calculateWorkflowPathWithClosestEvents(
-  workflowSteps: readonly {
-    id?: string;
-    group_id: string;
-    group?: { id: string; name: string | null } | null;
-    order_index?: number | null;
-    step_kind?: string | null;
-    selection_mode?: string | null;
-    merge_strategy?: string | null;
-    event_rule?: string | null;
-    auto_task_on_missing_event?: boolean | null;
-    target_workflow_id?: string | null;
-  }[],
+  workflowSteps: readonly WorkflowPathStep[],
   events: NetworkEventRow[],
   options?: {
     sourceGroupId?: string | null;
@@ -482,8 +657,9 @@ export function calculateWorkflowPathWithClosestEvents(
     });
     const previousRequiredAfter = requiredAfter;
     const eventStartDate = event?.start_date ?? null;
-    if (eventStartDate != null) {
-      requiredAfter = eventStartDate;
+    const eventEndDate = event?.end_date ?? event?.start_date ?? null;
+    if (eventEndDate != null) {
+      requiredAfter = eventEndDate;
     }
 
     const stepKind =
@@ -503,6 +679,7 @@ export function calculateWorkflowPathWithClosestEvents(
       eventId: event?.id ?? null,
       eventTitle: event?.title ?? 'Pending event',
       eventStartDate,
+      eventEndDate,
       workflowStepId: step.id ?? null,
       stepKind,
       selectionMode,
@@ -515,5 +692,131 @@ export function calculateWorkflowPathWithClosestEvents(
     });
   }
 
-  return finalizeSegmentWindows(segments);
+  return recomputeSegmentWindows(segments);
+}
+
+export function getWorkflowEntryGroupId(workflow: {
+  group_id?: string | null;
+  steps?: readonly WorkflowPathStep[] | null;
+}) {
+  if (workflow.group_id) {
+    return workflow.group_id;
+  }
+
+  const sortedSteps = [...(workflow.steps ?? [])].sort(
+    (left, right) => (left.order_index ?? 0) - (right.order_index ?? 0)
+  );
+  return sortedSteps[0]?.group_id ?? null;
+}
+
+export function getReachableWorkflowsFromSource<
+  TWorkflow extends {
+    id: string;
+    group_id?: string | null;
+    steps?: readonly WorkflowPathStep[] | null;
+  },
+>(args: {
+  sourceGroupId: string;
+  workflows: readonly TWorkflow[];
+  groups: NetworkGroupRow[];
+  relationships: NetworkGroupRelationshipRow[];
+  memberships?: NetworkGroupMembershipRow[];
+  userId?: string;
+}) {
+  return args.workflows.filter(workflow => {
+    const sortedSteps = [...(workflow.steps ?? [])].sort(
+      (left, right) => (left.order_index ?? 0) - (right.order_index ?? 0)
+    );
+
+    if (sortedSteps.some(step => step.group_id === args.sourceGroupId)) {
+      return true;
+    }
+
+    const entryGroupId = getWorkflowEntryGroupId(workflow);
+    if (!entryGroupId) {
+      return false;
+    }
+
+    return (
+      calculateProcessPathWithClosestEvents({
+        sourceGroupId: args.sourceGroupId,
+        targetGroupId: entryGroupId,
+        groups: args.groups,
+        relationships: args.relationships,
+        events: [],
+        memberships: args.memberships,
+        userId: args.userId,
+      }) !== null
+    );
+  });
+}
+
+export function calculateWorkflowProcessPathWithClosestEvents(args: {
+  sourceGroupId: string;
+  targetGroupId: string;
+  workflow: {
+    group_id?: string | null;
+    steps?: readonly WorkflowPathStep[] | null;
+  };
+  groups: NetworkGroupRow[];
+  relationships: NetworkGroupRelationshipRow[];
+  events: NetworkEventRow[];
+  memberships?: NetworkGroupMembershipRow[];
+  userId?: string;
+}): PathWithEventSegment[] | null {
+  const sortedSteps = [...(args.workflow.steps ?? [])].sort(
+    (left, right) => (left.order_index ?? 0) - (right.order_index ?? 0)
+  );
+  if (sortedSteps.length === 0) {
+    return null;
+  }
+
+  const sourceStepIndex = sortedSteps.findIndex(step => step.group_id === args.sourceGroupId);
+  const targetStepIndex = sortedSteps.findIndex(step => step.group_id === args.targetGroupId);
+
+  if (targetStepIndex < 0) {
+    return null;
+  }
+
+  if (sourceStepIndex >= 0 && sourceStepIndex <= targetStepIndex) {
+    return calculateWorkflowPathWithClosestEvents(sortedSteps, args.events, {
+      sourceGroupId: args.sourceGroupId,
+      targetGroupId: args.targetGroupId,
+    });
+  }
+
+  const entryGroupId = getWorkflowEntryGroupId(args.workflow);
+  if (!entryGroupId) {
+    return null;
+  }
+
+  const prefixPath = calculateProcessPathWithClosestEvents({
+    sourceGroupId: args.sourceGroupId,
+    targetGroupId: entryGroupId,
+    groups: args.groups,
+    relationships: args.relationships,
+    events: args.events,
+    memberships: args.memberships,
+    userId: args.userId,
+  });
+
+  if (!prefixPath || prefixPath.length === 0) {
+    return null;
+  }
+
+  const workflowPath = calculateWorkflowPathWithClosestEvents(sortedSteps, args.events, {
+    sourceGroupId: entryGroupId,
+    targetGroupId: args.targetGroupId,
+  });
+
+  if (workflowPath.length === 0) {
+    return null;
+  }
+
+  const dedupedPrefix =
+    prefixPath[prefixPath.length - 1]?.groupId === workflowPath[0]?.groupId
+      ? prefixPath.slice(0, -1)
+      : prefixPath;
+
+  return recomputeSegmentWindows([...dedupedPrefix, ...workflowPath]);
 }

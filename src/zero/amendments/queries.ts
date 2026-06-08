@@ -32,6 +32,7 @@ export const amendmentQueries = {
       .related('support_confirmations', q =>
         q.related('group').related('event').related('process_task')
       )
+      .related('group_decisions', q => q.related('group').orderBy('updated_at', 'desc'))
       .related('group')
       .related('paths', q => q.related('segments'))
       .related('current_process_run', q =>
@@ -74,7 +75,7 @@ export const amendmentQueries = {
           .related('terminal_step_run', sq =>
             sq
               .related('workflow')
-              .related('workflow_step')
+              .related('workflow_step', wq => wq.related('target_workflow'))
               .related('source_group')
               .related('target_group')
               .related('event')
@@ -89,7 +90,7 @@ export const amendmentQueries = {
               .related('step_runs', sq =>
                 sq
                   .related('workflow')
-                  .related('workflow_step')
+                  .related('workflow_step', wq => wq.related('target_workflow'))
                   .related('source_group')
                   .related('target_group')
                   .related('event')
@@ -113,7 +114,7 @@ export const amendmentQueries = {
             sq
               .related('branch')
               .related('workflow')
-              .related('workflow_step')
+              .related('workflow_step', wq => wq.related('target_workflow'))
               .related('source_group')
               .related('target_group')
               .related('event')
@@ -156,6 +157,14 @@ export const amendmentQueries = {
       )
       .related('support_confirmations', q =>
         q.related('group').related('event').related('process_task')
+      )
+      .related('group_decisions', q =>
+        q
+          .related('group')
+          .related('process_run')
+          .related('process_branch')
+          .related('process_step_run')
+          .orderBy('updated_at', 'desc')
       )
       .related('paths', q => q.related('segments', sq => sq.related('group').related('event')))
       .one()
@@ -247,6 +256,18 @@ export const amendmentQueries = {
         .related('process_task')
   ),
 
+  groupDecisionsByAmendment: defineQuery(
+    z.object({ amendment_id: z.string() }),
+    ({ args: { amendment_id } }) =>
+      zql.amendment_group_decision
+        .where('amendment_id', amendment_id)
+        .related('group')
+        .related('process_run')
+        .related('process_branch')
+        .related('process_step_run')
+        .orderBy('updated_at', 'desc')
+  ),
+
   processRunsByAmendment: defineQuery(
     z.object({ amendment_id: z.string() }),
     ({ args: { amendment_id } }) =>
@@ -263,7 +284,7 @@ export const amendmentQueries = {
             .related('step_runs', sq =>
               sq
                 .related('workflow')
-                .related('workflow_step')
+                .related('workflow_step', wq => wq.related('target_workflow'))
                 .related('source_group')
                 .related('target_group')
                 .related('event')
@@ -295,7 +316,7 @@ export const amendmentQueries = {
           .related('step_runs', sq =>
             sq
               .related('workflow')
-              .related('workflow_step')
+              .related('workflow_step', wq => wq.related('target_workflow'))
               .related('source_group')
               .related('target_group')
               .related('event')
@@ -470,6 +491,9 @@ export type ChangeRequestWithVotesRow = QueryRowType<
 >;
 export type DocumentVersionRow = QueryRowType<typeof amendmentQueries.documentVersionsByDocument>;
 export type SupportConfirmationRow = QueryRowType<typeof amendmentQueries.supportConfirmations>;
+export type AmendmentGroupDecisionRow = QueryRowType<
+  typeof amendmentQueries.groupDecisionsByAmendment
+>;
 export type AmendmentCollaboratorsByUserRow = QueryRowType<
   typeof amendmentQueries.collaboratorsByUser
 >;

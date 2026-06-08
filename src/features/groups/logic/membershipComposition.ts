@@ -10,7 +10,12 @@ import type {
   MembershipProvenanceGroup,
 } from '@/features/groups/types/group.types';
 
-export const DIRECT_WITHOUT_PATH_LABEL = 'Direkt / ohne Pfad';
+export const DIRECT_WITHOUT_PATH_LABEL = '__direct_without_path__';
+
+interface MembershipProvenanceDisplayOptions {
+  directWithoutPathLabel?: string;
+  emptyLabel?: string;
+}
 
 export interface MembershipCompositionGroupLike extends ParticipationGroupLike {
   id: string;
@@ -79,13 +84,21 @@ export function supportsMembershipComposition(
 
 export function getMembershipProvenanceDisplayLabel(
   membership: Pick<ParticipationLike, 'partGroup' | 'baseGroup' | 'provenanceBucketLabel'>,
-  column: 'partGroup' | 'baseGroup'
+  column: 'partGroup' | 'baseGroup',
+  options?: MembershipProvenanceDisplayOptions
 ) {
+  const directWithoutPathLabel = options?.directWithoutPathLabel ?? DIRECT_WITHOUT_PATH_LABEL;
+  const emptyLabel = options?.emptyLabel ?? '—';
+  const bucketLabel =
+    membership.provenanceBucketLabel === DIRECT_WITHOUT_PATH_LABEL
+      ? directWithoutPathLabel
+      : membership.provenanceBucketLabel;
+
   if (column === 'partGroup') {
-    return membership.partGroup?.name || membership.provenanceBucketLabel || '—';
+    return membership.partGroup?.name || bucketLabel || emptyLabel;
   }
 
-  return membership.baseGroup?.name || membership.provenanceBucketLabel || '—';
+  return membership.baseGroup?.name || bucketLabel || emptyLabel;
 }
 
 export function resolveMembershipProvenance<

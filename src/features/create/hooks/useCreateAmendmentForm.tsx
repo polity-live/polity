@@ -42,6 +42,7 @@ interface CreateTargetEventData {
   id: string;
   title?: string | null;
   start_date?: number | null;
+  end_date?: number | null;
   location_name?: string | null;
   description?: string | null;
   participant_count?: number | null;
@@ -78,6 +79,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
       eventId: string | null;
       eventTitle: string;
       eventStartDate: number | null;
+      eventEndDate?: number | null;
       requiredAfter?: number | null;
       requiredBefore?: number | null;
     }[];
@@ -114,12 +116,13 @@ export function useCreateAmendmentForm(): CreateFormConfig {
     (updates: Partial<CreateAmendmentSearch>) => {
       navigate({
         to: '/create/amendment',
-        search: mergeCreateSearchParams(rawSearchParams, updates),
+        search: previousSearch =>
+          mergeCreateSearchParams(previousSearch as CreateAmendmentSearch, updates),
         replace: true,
         resetScroll: false,
       });
     },
-    [navigate, rawSearchParams]
+    [navigate]
   );
 
   const handleSourceGroupSelectionChange = useCallback(
@@ -197,6 +200,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
             id: selection.eventData.id,
             title: selection.eventData.title ?? null,
             start_date: selection.eventData.start_date ?? null,
+            end_date: selection.eventData.end_date ?? null,
             location_name: selection.eventData.location_name ?? null,
             description:
               typeof selection.eventData.description === 'string'
@@ -288,7 +292,8 @@ export function useCreateAmendmentForm(): CreateFormConfig {
           targetSelection.groupId,
           targetSelection.eventId ?? '',
           targetSelection.eventData?.title ?? null,
-          targetSelection.eventData?.start_date ?? null
+          targetSelection.eventData?.start_date ?? null,
+          targetSelection.eventData?.end_date ?? null
         );
 
         await createAmendmentPath({
@@ -373,6 +378,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
                 <TargetGroupEventSelector
                   userId={user.id}
                   allowGroupWithoutEvent
+                  layoutScope="create-amendment"
                   onSourceGroupSelectionChange={handleSourceGroupSelectionChange}
                   onGroupSelectionChange={handleGroupSelectionChange}
                   onPathModeChange={handlePathModeChange}

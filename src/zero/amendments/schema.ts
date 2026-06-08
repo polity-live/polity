@@ -200,7 +200,28 @@ const baseSupportConfirmationSchema = z.object({
   created_at: timestampSchema,
 });
 
+const amendmentGroupDecisionStatusSchema = z.enum([
+  'supported',
+  'accepted',
+  'rejected',
+  'withdrawn',
+]);
+
+const baseAmendmentGroupDecisionSchema = z.object({
+  id: z.string(),
+  amendment_id: z.string(),
+  group_id: z.string(),
+  process_run_id: z.string().nullable(),
+  process_branch_id: z.string().nullable(),
+  process_step_run_id: z.string().nullable(),
+  status: amendmentGroupDecisionStatusSchema,
+  decided_at: nullableTimestampSchema,
+  created_at: timestampSchema,
+  updated_at: timestampSchema,
+});
+
 export const selectSupportConfirmationSchema = baseSupportConfirmationSchema;
+export const selectAmendmentGroupDecisionSchema = baseAmendmentGroupDecisionSchema;
 
 export const createSupportConfirmationSchema = baseSupportConfirmationSchema
   .omit({
@@ -229,6 +250,26 @@ export const updateSupportConfirmationSchema = baseSupportConfirmationSchema
   })
   .partial()
   .extend({ id: z.string() });
+
+export const upsertAmendmentGroupDecisionSchema = baseAmendmentGroupDecisionSchema
+  .omit({
+    id: true,
+    created_at: true,
+    updated_at: true,
+    process_run_id: true,
+    process_branch_id: true,
+    process_step_run_id: true,
+    decided_at: true,
+  })
+  .extend({
+    id: z.string().optional(),
+    process_run_id: z.string().nullable().optional(),
+    process_branch_id: z.string().nullable().optional(),
+    process_step_run_id: z.string().nullable().optional(),
+    decided_at: nullableTimestampSchema.optional(),
+  });
+
+export const deleteAmendmentGroupDecisionSchema = z.object({ id: z.string() });
 
 // ============================================
 // Workflow Runtime Schemas
@@ -440,6 +481,52 @@ export const updateProcessTaskSchema = baseProcessTaskSchema
 
 export const deleteProcessRuntimeRecordSchema = z.object({ id: z.string() });
 
+export const initializeAmendmentProcessPathSchema = z.object({
+  amendment_id: z.string(),
+  amendment_title: z.string(),
+  amendment_reason: z.string().nullable(),
+  enriched_path: z.array(
+    z.object({
+      groupId: z.string(),
+      groupName: z.string(),
+      eventId: z.string().nullable(),
+      eventTitle: z.string(),
+      eventStartDate: z.number().nullable(),
+      eventEndDate: z.number().nullable().optional(),
+      workflowStepId: z.string().nullable().optional(),
+      stepKind: workflowStepKindSchema.optional(),
+      selectionMode: workflowSelectionModeSchema.nullable().optional(),
+      mergeStrategy: workflowMergeStrategySchema.nullable().optional(),
+      eventRule: z.string().nullable().optional(),
+      autoTaskOnMissingEvent: z.boolean().optional(),
+      targetWorkflowId: z.string().nullable().optional(),
+      requiredAfter: z.number().nullable().optional(),
+      requiredBefore: z.number().nullable().optional(),
+      missingEvent: z.boolean().optional(),
+      agendaItemId: z.string().nullable(),
+      amendmentVoteId: z.string().nullable(),
+      forwardingStatus: z.string(),
+    })
+  ),
+  source_group_id: z.string().nullable().optional(),
+  workflow_id: z.string().nullable().optional(),
+  path_mode: z.enum(['hierarchy', 'workflow']).optional(),
+  evaluation_mode: z.enum(['none', 'fixed_date', 'relative_to_vote']).optional(),
+  evaluation_date: z.number().nullable().optional(),
+  evaluation_offset_months: z.number().nullable().optional(),
+  evaluation_offset_years: z.number().nullable().optional(),
+});
+
+export const resolveAmendmentProcessVoteSchema = z.object({
+  agenda_item_id: z.string(),
+});
+
+export const completeProcessTaskWithEventSchema = z.object({
+  process_task_id: z.string(),
+  event_id: z.string(),
+  description: z.string().nullable().optional(),
+});
+
 // ============================================
 // Inferred Types
 // ============================================
@@ -449,6 +536,7 @@ export type AmendmentCollaborator = z.infer<typeof selectAmendmentCollaboratorSc
 export type AmendmentPath = z.infer<typeof selectAmendmentPathSchema>;
 export type AmendmentPathSegment = z.infer<typeof selectAmendmentPathSegmentSchema>;
 export type SupportConfirmation = z.infer<typeof selectSupportConfirmationSchema>;
+export type AmendmentGroupDecision = z.infer<typeof selectAmendmentGroupDecisionSchema>;
 export type AmendmentProcessRun = z.infer<typeof selectAmendmentProcessRunSchema>;
 export type AmendmentProcessBranch = z.infer<typeof selectAmendmentProcessBranchSchema>;
 export type AmendmentProcessStepRun = z.infer<typeof selectAmendmentProcessStepRunSchema>;

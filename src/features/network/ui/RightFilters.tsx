@@ -36,12 +36,23 @@ export function isRightType(right: string): right is RightType {
   return RIGHT_TYPES.includes(right as RightType);
 }
 
-export function formatRights(rights: string[]): string {
-  return rights.map(r => RIGHT_LABELS[r as RightType] || r).join(', ');
+type RightLabelTranslateFn = (key: string, fallback?: string) => string;
+
+export function getRightLabel(right: string, t?: RightLabelTranslateFn): string {
+  if (!isRightType(right)) {
+    return right;
+  }
+
+  const fallback = RIGHT_LABELS[right];
+  if (!t) {
+    return fallback;
+  }
+
+  return t(RIGHT_TRANSLATION_KEYS[right], fallback) || fallback;
 }
 
-export function getRightLabel(right: string): string {
-  return RIGHT_LABELS[right as RightType] || right;
+export function formatRights(rights: string[], t?: RightLabelTranslateFn): string {
+  return rights.map(right => getRightLabel(right, t)).join(', ');
 }
 
 export function isEdgeVisible(edgeRights: string[], selectedRights: Set<string>): boolean {
@@ -70,9 +81,8 @@ interface RightFiltersProps {
 export function RightFilters({ selectedRights, onToggleRight }: RightFiltersProps) {
   const { t } = useTranslation();
 
-  const getTranslatedRightLabel = (right: RightType): string => {
-    return t(RIGHT_TRANSLATION_KEYS[right]) || RIGHT_LABELS[right];
-  };
+  const getTranslatedRightLabel = (right: RightType): string =>
+    getRightLabel(right, (key, fallback) => t(key) || fallback || key);
 
   return (
     <div className="border-border/70 bg-background/95 dark:bg-card/95 mt-4 rounded-lg border p-3 shadow-sm">

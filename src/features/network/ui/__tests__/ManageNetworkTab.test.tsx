@@ -128,12 +128,16 @@ function renderManageNetworkTab(canManageRelationships: boolean) {
       onWorkflowDraftNameChange={() => undefined}
       workflowDraftDescription=""
       onWorkflowDraftDescriptionChange={() => undefined}
+      workflowDraftIsDefaultEntry={false}
+      onWorkflowDraftIsDefaultEntryChange={() => undefined}
       workflowDraftSteps={[]}
       availableGroups={[]}
+      availableWorkflows={[]}
       onOpenNewWorkflow={() => undefined}
       onOpenEditWorkflow={() => undefined}
       onCloseWorkflowEditor={() => undefined}
       onAddWorkflowStep={() => undefined}
+      onUpdateWorkflowStep={() => undefined}
       onRemoveWorkflowStep={() => undefined}
       onMoveWorkflowStep={() => undefined}
       onSaveWorkflow={() => undefined}

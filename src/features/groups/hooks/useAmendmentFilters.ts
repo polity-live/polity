@@ -44,9 +44,12 @@ export function useAmendmentFilters() {
 }
 
 interface FilterableAmendment {
+  id: string;
+  amendment_id?: string | null;
   title?: string | null;
   subtitle?: string | null;
   code?: string | null;
+  decision_status?: string | null;
   editing_mode?: string | null;
   date?: string | number | null;
   amendment_hashtags?: readonly { hashtag?: { tag?: string | null } | null }[];
@@ -64,7 +67,9 @@ function matchesHashtag(amendment: FilterableAmendment, hashtagFilter: string) {
     ? hashtagFilter.substring(1).toLowerCase()
     : hashtagFilter.toLowerCase();
 
-  return tags.some(tag => tag.toLowerCase() === cleanFilter || tag.toLowerCase().includes(cleanFilter));
+  return tags.some(
+    tag => tag.toLowerCase() === cleanFilter || tag.toLowerCase().includes(cleanFilter)
+  );
 }
 
 /**
@@ -95,11 +100,15 @@ function matchesSearchQuery(amendment: FilterableAmendment, searchQuery: string)
 /**
  * Filter and sort amendments based on filters
  */
-export function useFilteredAmendments(amendments: FilterableAmendment[], filters: AmendmentFilters) {
+export function useFilteredAmendments(
+  amendments: FilterableAmendment[],
+  filters: AmendmentFilters
+) {
   // Apply all filters
   const filteredAmendments = amendments.filter(amendment => {
     if (!matchesSearchQuery(amendment, filters.searchQuery)) return false;
-    if (filters.statusFilter !== 'all' && amendment.editing_mode !== filters.statusFilter) return false;
+    if (filters.statusFilter !== 'all' && amendment.decision_status !== filters.statusFilter)
+      return false;
     if (!matchesHashtag(amendment, filters.hashtagFilter)) return false;
     return true;
   });
@@ -111,24 +120,12 @@ export function useFilteredAmendments(amendments: FilterableAmendment[], filters
     return dateB - dateA;
   });
 
-  // Group amendments by editing_mode
+  // Group amendments by persisted group decision status.
   const groupedAmendments = {
-    passed: sortedAmendments.filter(a => {
-      const mode = a.editing_mode?.toLowerCase();
-      return mode === 'passed';
-    }),
-    underReview: sortedAmendments.filter(a => {
-      const mode = a.editing_mode?.toLowerCase();
-      return mode === 'vote_internal' || mode === 'vote_event' || mode === 'suggest_internal' || mode === 'suggest_event';
-    }),
-    drafting: sortedAmendments.filter(a => {
-      const mode = a.editing_mode?.toLowerCase();
-      return mode === 'edit' || mode === 'view' || !mode;
-    }),
-    rejected: sortedAmendments.filter(a => {
-      const mode = a.editing_mode?.toLowerCase();
-      return mode === 'rejected';
-    }),
+    supported: sortedAmendments.filter(a => a.decision_status === 'supported'),
+    accepted: sortedAmendments.filter(a => a.decision_status === 'accepted'),
+    rejected: sortedAmendments.filter(a => a.decision_status === 'rejected'),
+    withdrawn: sortedAmendments.filter(a => a.decision_status === 'withdrawn'),
   };
 
   return {

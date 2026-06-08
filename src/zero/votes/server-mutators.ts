@@ -7,6 +7,8 @@ import {
 } from '../offline-roster-helpers';
 import { zql } from '../schema';
 import { recomputeEventCounters, requireRecentVotingPasswordVerification } from '../server-helpers';
+import { resolveAmendmentProcessVote } from '../amendments/process-engine';
+import { notifyProcessVoteResolution } from '../amendments/process-notifications';
 import {
   createVoteSchema,
   updateVoteSchema,
@@ -99,6 +101,13 @@ export const voteServerMutators = {
     const oldVote = await tx.run(zql.vote.where('id', args.id).one());
 
     await mutators.votes.updateVote.fn({ tx, ctx, args });
+
+    if (oldVote?.status !== 'closed' && args.status === 'closed' && oldVote?.agenda_item_id) {
+      const resolution = await resolveAmendmentProcessVote(tx, {
+        agenda_item_id: oldVote.agenda_item_id,
+      });
+      await notifyProcessVoteResolution(tx, ctx.userID, oldVote.agenda_item_id, resolution);
+    }
 
     if (oldVote?.agenda_item_id) {
       const agendaItem = await tx.run(zql.agenda_item.where('id', oldVote.agenda_item_id).one());

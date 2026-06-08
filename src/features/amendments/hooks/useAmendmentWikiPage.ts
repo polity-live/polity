@@ -83,8 +83,8 @@ export function useAmendmentWikiPage(amendmentId: string) {
     0
   );
   const targetCollaborator = undefined as { imageURL?: string; name?: string } | undefined;
-  const targetGroup = amendment?.group;
   const currentProcessRun = amendment?.current_process_run ?? null;
+  const targetGroup = currentProcessRun?.selected_target_group ?? amendment?.group;
   const implementationStatus = currentProcessRun?.implementation_status ?? null;
   const evaluationTask =
     currentProcessRun?.tasks?.find(task => task.task_type === 'implementation_evaluation') ?? null;

@@ -18,8 +18,6 @@ import { GeoAddressPicker } from '@/features/shared/ui/form/GeoAddressPicker';
 import { useEventActions } from '@/zero/events/useEventActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
 import { useCurrentUserActiveGroupIds, useGroupById } from '@/zero/groups/useGroupState';
-import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
-import { useVoteActions } from '@/zero/votes/useVoteActions';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import { queries } from '@/zero/queries';
@@ -66,10 +64,7 @@ export function useCreateEventForm(): CreateFormConfig {
   const navigate = useNavigate();
   const searchParams = useSearch({ strict: false }) as CreateEventSearch;
   const { createEvent } = useEventActions();
-  const { createAgendaItem } = useAgendaActions();
-  const { createVote, createVoteChoice } = useVoteActions();
-  const { updateProcessTask, updateProcessStepRun, updateProcessRun, updateSupportConfirmation } =
-    useAmendmentActions();
+  const { completeProcessTaskWithEvent } = useAmendmentActions();
   const commonActions = useCommonActions();
   const prefilledSearch = useMemo(() => getCreateEventSearchDefaults(searchParams), [searchParams]);
   const groupIdParam = searchParams.groupId ?? '';
@@ -400,13 +395,7 @@ export function useCreateEventForm(): CreateFormConfig {
           description:
             task.description?.trim() ||
             `Automatisch mit dem neuen Event "${title.trim()}" verknuepft.`,
-          createAgendaItem,
-          createVote,
-          createVoteChoice,
-          updateProcessTask,
-          updateProcessStepRun,
-          updateProcessRun,
-          updateSupportConfirmation,
+          completeProcessTaskWithEvent,
         });
       }
 

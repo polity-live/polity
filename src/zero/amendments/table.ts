@@ -91,6 +91,21 @@ export const supportConfirmation = table('support_confirmation')
   })
   .primaryKey('id');
 
+export const amendmentGroupDecision = table('amendment_group_decision')
+  .columns({
+    id: string(),
+    amendment_id: string(),
+    group_id: string(),
+    process_run_id: string().optional(),
+    process_branch_id: string().optional(),
+    process_step_run_id: string().optional(),
+    status: string(),
+    decided_at: number().optional(),
+    created_at: number(),
+    updated_at: number(),
+  })
+  .primaryKey('id');
+
 export const amendmentProcessRun = table('amendment_process_run')
   .columns({
     id: string(),

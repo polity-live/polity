@@ -12,6 +12,8 @@ import {
   deleteAmendmentPathSegmentSchema,
   createSupportConfirmationSchema,
   updateSupportConfirmationSchema,
+  upsertAmendmentGroupDecisionSchema,
+  deleteAmendmentGroupDecisionSchema,
   createAmendmentProcessRunSchema,
   updateAmendmentProcessRunSchema,
   createAmendmentProcessBranchSchema,
@@ -21,6 +23,9 @@ import {
   createProcessTaskSchema,
   updateProcessTaskSchema,
   deleteProcessRuntimeRecordSchema,
+  initializeAmendmentProcessPathSchema,
+  resolveAmendmentProcessVoteSchema,
+  completeProcessTaskWithEventSchema,
 } from './schema';
 import { createChangeRequestSchema, updateChangeRequestSchema } from '../change-requests/schema';
 import {
@@ -29,6 +34,7 @@ import {
   updateAmendmentSupportVoteSchema,
   deleteAmendmentSupportVoteSchema,
 } from '../votes/schema';
+import { zql } from '../schema';
 
 /** Shared mutators — run on both client and server. Server mutators may override these. */
 export const amendmentSharedMutators = {
@@ -175,6 +181,47 @@ export const amendmentSharedMutators = {
     }
   ),
 
+  upsertGroupDecision: defineMutator(upsertAmendmentGroupDecisionSchema, async ({ tx, args }) => {
+    const now = Date.now();
+    const existing = await tx.run(
+      zql.amendment_group_decision
+        .where('amendment_id', args.amendment_id)
+        .where('group_id', args.group_id)
+        .one()
+    );
+
+    if (existing) {
+      await tx.mutate.amendment_group_decision.update({
+        id: existing.id,
+        process_run_id: args.process_run_id ?? null,
+        process_branch_id: args.process_branch_id ?? null,
+        process_step_run_id: args.process_step_run_id ?? null,
+        status: args.status,
+        decided_at: args.decided_at ?? now,
+        updated_at: now,
+      });
+      return;
+    }
+
+    const id = args.id ?? crypto.randomUUID();
+    await tx.mutate.amendment_group_decision.insert({
+      id,
+      amendment_id: args.amendment_id,
+      group_id: args.group_id,
+      process_run_id: args.process_run_id ?? null,
+      process_branch_id: args.process_branch_id ?? null,
+      process_step_run_id: args.process_step_run_id ?? null,
+      status: args.status,
+      decided_at: args.decided_at ?? now,
+      created_at: now,
+      updated_at: now,
+    });
+  }),
+
+  deleteGroupDecision: defineMutator(deleteAmendmentGroupDecisionSchema, async ({ tx, args }) => {
+    await tx.mutate.amendment_group_decision.delete({ id: args.id });
+  }),
+
   // Workflow runtime mutators
   createProcessRun: defineMutator(createAmendmentProcessRunSchema, async ({ tx, ctx, args }) => {
     const now = Date.now();
@@ -297,6 +344,18 @@ export const amendmentSharedMutators = {
 
   deleteProcessTask: defineMutator(deleteProcessRuntimeRecordSchema, async ({ tx, args }) => {
     await tx.mutate.process_task.delete({ id: args.id });
+  }),
+
+  initializeProcessPath: defineMutator(initializeAmendmentProcessPathSchema, async () => {
+    return;
+  }),
+
+  resolveProcessVote: defineMutator(resolveAmendmentProcessVoteSchema, async () => {
+    return;
+  }),
+
+  completeProcessTaskWithEvent: defineMutator(completeProcessTaskWithEventSchema, async () => {
+    return;
   }),
 
   // Amendment Collaborator update

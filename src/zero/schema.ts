@@ -29,6 +29,7 @@ import {
   amendmentPath,
   amendmentPathSegment,
   supportConfirmation,
+  amendmentGroupDecision,
   amendmentProcessRun,
   amendmentProcessBranch,
   amendmentProcessStepRun,
@@ -149,6 +150,7 @@ export const schema = createSchema({
     amendmentPath,
     amendmentPathSegment,
     supportConfirmation,
+    amendmentGroupDecision,
     amendmentProcessRun,
     amendmentProcessBranch,
     amendmentProcessStepRun,
@@ -304,6 +306,7 @@ export type AmendmentCollaborator = Row<Schema['tables']['amendment_collaborator
 export type AmendmentPath = Row<Schema['tables']['amendment_path']>;
 export type AmendmentPathSegment = Row<Schema['tables']['amendment_path_segment']>;
 export type SupportConfirmation = Row<Schema['tables']['support_confirmation']>;
+export type AmendmentGroupDecision = Row<Schema['tables']['amendment_group_decision']>;
 export type AmendmentProcessRun = Row<Schema['tables']['amendment_process_run']>;
 export type AmendmentProcessBranch = Row<Schema['tables']['amendment_process_branch']>;
 export type AmendmentProcessStepRun = Row<Schema['tables']['amendment_process_step_run']>;

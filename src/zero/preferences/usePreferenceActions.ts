@@ -12,6 +12,10 @@ import type {
   PreferenceNavigationView,
   GroupNetworkLayout,
 } from './schema';
+import {
+  resetPersistedNetworkLayouts,
+  savePersistedNetworkLayouts,
+} from '@/features/network/logic/networkLayoutScopeHelpers';
 
 /**
  * Action hook for user preference mutations.
@@ -90,28 +94,46 @@ export function usePreferenceActions() {
     [upsertPreference]
   );
 
-  const saveGroupNetworkLayout = useCallback(
-    (groupId: string, layout: GroupNetworkLayout) => {
+  const saveNetworkLayout = useCallback(
+    (scopeKey: string, layout: GroupNetworkLayout, legacyScopeKeys: readonly string[] = []) => {
       upsertPreference({
-        group_network_layouts: {
-          ...groupNetworkLayouts,
-          [groupId]: layout,
-        },
+        group_network_layouts: savePersistedNetworkLayouts({
+          layouts: groupNetworkLayouts,
+          scopeKey,
+          layout,
+          legacyScopeKeys,
+        }),
       });
       toast.success(t('common.network.layoutSaved'));
     },
     [groupNetworkLayouts, t, upsertPreference]
   );
 
-  const resetGroupNetworkLayout = useCallback(
-    (groupId: string) => {
-      const nextLayouts = Object.fromEntries(
-        Object.entries(groupNetworkLayouts).filter(([currentGroupId]) => currentGroupId !== groupId)
-      );
+  const resetNetworkLayout = useCallback(
+    (scopeKey: string, legacyScopeKeys: readonly string[] = []) => {
+      const nextLayouts = resetPersistedNetworkLayouts({
+        layouts: groupNetworkLayouts,
+        scopeKey,
+        legacyScopeKeys,
+      });
       upsertPreference({ group_network_layouts: nextLayouts });
       toast.success(t('common.network.layoutReset'));
     },
     [groupNetworkLayouts, t, upsertPreference]
+  );
+
+  const saveGroupNetworkLayout = useCallback(
+    (groupId: string, layout: GroupNetworkLayout) => {
+      saveNetworkLayout(`group:${groupId}`, layout, [groupId]);
+    },
+    [saveNetworkLayout]
+  );
+
+  const resetGroupNetworkLayout = useCallback(
+    (groupId: string) => {
+      resetNetworkLayout(`group:${groupId}`, [groupId]);
+    },
+    [resetNetworkLayout]
   );
 
   return {
@@ -119,6 +141,8 @@ export function usePreferenceActions() {
     updateTheme,
     updateLanguage,
     updateNavigationView,
+    saveNetworkLayout,
+    resetNetworkLayout,
     saveGroupNetworkLayout,
     resetGroupNetworkLayout,
   };

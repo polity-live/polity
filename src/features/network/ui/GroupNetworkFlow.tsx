@@ -1,15 +1,8 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowDownLeft, ArrowUpRight } from 'lucide-react';
-import {
-  Node,
-  Edge,
-  useNodesState,
-  useEdgesState,
-  applyNodeChanges,
-  type NodeChange,
-} from '@xyflow/react';
+import { Node, Edge, useNodesState, useEdgesState } from '@xyflow/react';
 import { NetworkFlowBase } from '@/features/network/ui/NetworkFlowBase';
 import {
   createGroupNodeLegendItem,
@@ -24,32 +17,23 @@ import {
 import { NetworkEntityDialog } from '@/features/network/ui/NetworkEntityDialog';
 import { WorkflowFlowVisualization } from '@/features/network/ui/WorkflowFlowVisualization';
 import { useNetworkFlowControls } from '@/features/network/hooks/useNetworkFlowControls';
-import { useGroupNetworkLayout } from '@/features/network/hooks/useGroupNetworkLayout';
+import { usePersistedNetworkLayout } from '@/features/network/hooks/usePersistedNetworkLayout';
+import { useEditableNetworkLayout } from '@/features/network/hooks/useEditableNetworkLayout';
 import { useGroupNetwork } from '@/features/network/hooks/useGroupNetwork';
 import {
   addUniqueValue,
-  buildCurrentPerspectiveRightDisplayDirections,
   buildHierarchyRightEdgeDirections,
   buildNetworkRelationshipDialogData,
-  buildRelationshipEdgeMarkers,
-  createNetworkRelationshipEdgeData,
-  getAnimatedFlowDirection,
-  getVisibleFlowDirection,
-  getRelationshipStrokeColor,
+  buildNetworkRelationshipEdge,
   mergeNetworkEdgeRelationshipDirection,
   mergeNetworkRightRelationshipKind,
 } from '@/features/network/logic/networkEdgeHelpers';
-import {
-  areGroupNetworkLayoutsEqual,
-  normalizeGroupNetworkLayout,
-} from '@/features/network/logic/networkLayoutHelpers';
 import {
   buildDirectRelationships,
   buildIndirectRelationships,
   buildMixedRelationshipGraph,
   getAcceptedSiblingGroups,
   getGroupRelationshipKind,
-  getRelativeMembershipDirectionForRelationship,
   isActiveGroupRelationshipStatus,
   isAcceptedSiblingRelationship,
   type RelationshipEntry,
@@ -66,11 +50,8 @@ import { useWorkflowState } from '@/zero/network/useWorkflowState';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { Button } from '@/features/shared/ui/ui/button';
 import type {
-  NetworkConnectionDirection,
   EditableRightsLabelEdgeData,
-  NetworkEdgeBendPoint,
   NetworkEdgeRelationshipDirection,
-  NetworkUserConnectionDirection,
 } from '@/features/network/types/networkEdge.types';
 import type {
   CanonicalMembershipMode,
@@ -78,7 +59,6 @@ import type {
   GroupRelationshipType,
   NetworkGroupEntity,
 } from '@/features/network/types/network.types';
-import type { GroupNetworkLayout } from '@/zero/preferences';
 import {
   Select,
   SelectContent,
@@ -100,6 +80,13 @@ interface GroupNode extends Node {
 
 interface GroupNetworkFlowProps {
   groupId: string;
+  onGroupClick?: (groupId: string, groupData: NetworkGroupEntity) => void;
+  filterRight?: string;
+  title?: string;
+  description?: string;
+  showGroupDialogOnClick?: boolean;
+  showWorkflowView?: boolean;
+  layoutScopeKey?: string;
 }
 
 type RelationshipDirectionKey = string;
@@ -229,109 +216,16 @@ function mergeRelationshipEntryMaps(
   });
 }
 
-function getUserConnectionDirections(
-  rightConnectionDirections?: Record<string, NetworkConnectionDirection>
-): NetworkUserConnectionDirection[] {
-  const values = Object.values(rightConnectionDirections ?? {});
-  const directions: NetworkUserConnectionDirection[] = [];
-
-  if (values.some(value => value === 'incoming' || value === 'bidirectional')) {
-    directions.push('incoming');
-  }
-
-  if (values.some(value => value === 'outgoing' || value === 'bidirectional')) {
-    directions.push('outgoing');
-  }
-
-  return directions;
-}
-
-function getPreviewRelationshipType(args: {
-  structuralType: GroupRelationshipType;
-  currentGroupId: string;
-  sourceGroupId: string;
-}) {
-  if (args.structuralType === 'sibling') {
-    return 'sibling';
-  }
-
-  return args.currentGroupId === args.sourceGroupId ? 'parent' : 'child';
-}
-
-function resolvePreviewContext(args: {
-  graphRootGroupId: string;
-  structuralType: GroupRelationshipType;
-  sourceGroupId: string;
-  targetGroupId: string;
-  sourceGroupName: string | null;
-  targetGroupName: string | null;
-  rightEdgeDirections?: Record<string, NetworkEdgeRelationshipDirection>;
-  membershipCanonicalDirection?: CanonicalNetworkMembershipDirection | null;
-}) {
-  const touchesGraphRoot =
-    args.graphRootGroupId === args.sourceGroupId || args.graphRootGroupId === args.targetGroupId;
-  const visibleFlowDirection = getVisibleFlowDirection(args.rightEdgeDirections);
-
-  let currentGroupId = args.sourceGroupId;
-
-  if (touchesGraphRoot) {
-    currentGroupId = args.graphRootGroupId;
-  } else if (visibleFlowDirection === 'forward') {
-    currentGroupId = args.sourceGroupId;
-  } else if (visibleFlowDirection === 'backward') {
-    currentGroupId = args.targetGroupId;
-  } else if (args.membershipCanonicalDirection === 'forward') {
-    currentGroupId = args.sourceGroupId;
-  } else if (args.membershipCanonicalDirection === 'backward') {
-    currentGroupId = args.targetGroupId;
-  }
-
-  const selectedGroupId =
-    currentGroupId === args.sourceGroupId ? args.targetGroupId : args.sourceGroupId;
-
-  return {
-    relationshipType: getPreviewRelationshipType({
-      structuralType: args.structuralType,
-      currentGroupId,
-      sourceGroupId: args.sourceGroupId,
-    }),
-    currentGroupId,
-    currentGroupName:
-      currentGroupId === args.sourceGroupId ? args.sourceGroupName : args.targetGroupName,
-    selectedGroupId,
-    selectedGroupName:
-      selectedGroupId === args.sourceGroupId ? args.sourceGroupName : args.targetGroupName,
-  } satisfies {
-    relationshipType: GroupRelationshipType;
-    currentGroupId: string;
-    currentGroupName: string | null;
-    selectedGroupId: string;
-    selectedGroupName: string | null;
-  };
-}
-
-function getPreviewMembershipDirection(args: {
-  currentGroupId: string;
-  sourceGroupId: string;
-  targetGroupId: string;
-  membershipCanonicalDirection?: CanonicalNetworkMembershipDirection | null;
-}) {
-  if (!args.membershipCanonicalDirection) {
-    return null;
-  }
-
-  return getRelativeMembershipDirectionForRelationship({
-    relationship: {
-      group_id: args.sourceGroupId,
-      related_group_id: args.targetGroupId,
-      membership_direction: args.membershipCanonicalDirection,
-      relationship_direction: 'forward',
-    },
-    currentGroupId: args.currentGroupId,
-  });
-}
-
-export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
+export function GroupNetworkFlow({
+  groupId,
+  onGroupClick,
+  filterRight,
+  title,
+  description,
+  showGroupDialogOnClick = true,
+  showWorkflowView = true,
+  layoutScopeKey,
+}: GroupNetworkFlowProps) {
   const { t } = useTranslation();
   const {
     savedLayout,
@@ -339,7 +233,10 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
     isLoading: isLayoutLoading,
     persistLayout,
     resetLayout,
-  } = useGroupNetworkLayout(groupId);
+  } = usePersistedNetworkLayout({
+    scopeKey: layoutScopeKey ?? `group:${groupId}`,
+    legacyScopeKeys: layoutScopeKey ? [] : [groupId],
+  });
   const controls = useNetworkFlowControls();
   const {
     relationshipDepthFilter,
@@ -364,10 +261,25 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
     handleInteractiveChange,
   } = controls;
   const [nodes, setNodes] = useNodesState<GroupNode>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
-  const edgeBendPointsRef = useRef<Record<string, NetworkEdgeBendPoint[]>>({});
-  const nodePositionsRef = useRef<Record<string, { x: number; y: number }>>({});
-  const isInteractiveRef = useRef(isInteractive);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<EditableRightsLabelEdgeData>>([]);
+  const {
+    currentLayout,
+    hasLayoutChanges,
+    nodePositionsRef,
+    edgeBendPointsRef,
+    isInteractiveRef,
+    handleNodesChange,
+    handleEdgeBendPointsChange,
+    syncGeneratedLayoutState,
+    clearPersistedLayoutState,
+  } = useEditableNetworkLayout({
+    nodes,
+    edges,
+    setNodes,
+    setEdges,
+    savedLayout,
+    isInteractive,
+  });
 
   // View mode: 'hierarchy' | 'workflow'
   const [viewMode, setViewMode] = useState<'hierarchy' | 'workflow'>('hierarchy');
@@ -385,8 +297,10 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
   const graphRootGroupId = graphRootGroup?.id ?? groupId;
 
   const stableRelationships = useMemo(() => {
-    return allRelationships.filter(rel => getGroupRelationshipKind(rel, graphRootGroupId) !== null);
-  }, [allRelationships, graphRootGroupId]);
+    return allRelationships
+      .filter(rel => getGroupRelationshipKind(rel, graphRootGroupId) !== null)
+      .filter(rel => !filterRight || (rel.with_right ?? '') === filterRight);
+  }, [allRelationships, filterRight, graphRootGroupId]);
 
   const visibleSiblingRelationships = useMemo(() => {
     const siblingRelationships = stableRelationships.filter(
@@ -525,89 +439,6 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
     [allLabel, connectionDirectionFilter, setConnectionDirectionFilter, t]
   );
 
-  const currentLayout = useMemo<GroupNetworkLayout>(
-    () =>
-      normalizeGroupNetworkLayout({
-        node_positions: Object.fromEntries(
-          nodes.map(node => [node.id, { x: node.position.x, y: node.position.y }])
-        ),
-        edge_bend_points: Object.fromEntries(
-          edges
-            .map(edge => {
-              const bendPoints = Array.isArray(
-                (edge.data as EditableRightsLabelEdgeData | undefined)?.bendPoints
-              )
-                ? ((edge.data as EditableRightsLabelEdgeData).bendPoints as NetworkEdgeBendPoint[])
-                : [];
-
-              return [
-                edge.id,
-                bendPoints.map(bendPoint => ({ x: bendPoint.x, y: bendPoint.y })),
-              ] as const;
-            })
-            .filter(([, bendPoints]) => bendPoints.length > 0)
-        ),
-      }),
-    [edges, nodes]
-  );
-
-  const hasLayoutChanges = useMemo(() => {
-    return !areGroupNetworkLayoutsEqual(currentLayout, savedLayout);
-  }, [currentLayout, savedLayout]);
-
-  useEffect(() => {
-    isInteractiveRef.current = isInteractive;
-  }, [isInteractive]);
-
-  useEffect(() => {
-    nodePositionsRef.current = savedLayout?.node_positions ?? {};
-    edgeBendPointsRef.current = savedLayout?.edge_bend_points ?? {};
-  }, [savedLayout]);
-
-  const handleNodesChange = useCallback(
-    (changes: NodeChange<GroupNode>[]) => {
-      setNodes(currentNodes => {
-        const nextNodes = applyNodeChanges(changes, currentNodes);
-        nodePositionsRef.current = Object.fromEntries(
-          nextNodes.map(node => [node.id, { x: node.position.x, y: node.position.y }])
-        );
-        return nextNodes;
-      });
-    },
-    [setNodes]
-  );
-
-  const handleEdgeBendPointsChange = useCallback(
-    (edgeId: string, bendPoints: NetworkEdgeBendPoint[]) => {
-      if (bendPoints.length === 0) {
-        edgeBendPointsRef.current = Object.fromEntries(
-          Object.entries(edgeBendPointsRef.current).filter(
-            ([currentEdgeId]) => currentEdgeId !== edgeId
-          )
-        );
-      } else {
-        edgeBendPointsRef.current[edgeId] = bendPoints;
-      }
-
-      setEdges(currentEdges =>
-        currentEdges.map(edge => {
-          if (edge.id !== edgeId) {
-            return edge;
-          }
-
-          return {
-            ...edge,
-            data: {
-              ...(edge.data ?? {}),
-              bendPoints,
-            },
-          };
-        })
-      );
-    },
-    [setEdges]
-  );
-
   // Generate flow chart
   const generateFlowChart = useCallback(() => {
     if (!group || !graphRootGroup) {
@@ -625,7 +456,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
         ? buildMixedRelationshipGraph(
             stableRelationships,
             graphRootGroupId,
-            undefined,
+            filterRight,
             graphRootGroupId
           )
         : null;
@@ -636,8 +467,8 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
     } else {
       const baseRelationshipTree =
         relationshipDepthFilter === 'direct'
-          ? buildDirectRelationships(traversalRelationships, graphRootGroupId)
-          : buildIndirectRelationships(traversalRelationships, graphRootGroupId);
+          ? buildDirectRelationships(traversalRelationships, graphRootGroupId, filterRight)
+          : buildIndirectRelationships(traversalRelationships, graphRootGroupId, filterRight);
 
       mergeRelationshipEntryMaps(baseRelationshipTree.parents, parentEntriesMap);
       mergeRelationshipEntryMaps(baseRelationshipTree.children, childEntriesMap);
@@ -811,80 +642,31 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
       strokeColor: string;
       strokeDasharray?: string;
     }) => {
-      const resolvedStrokeColor = getRelationshipStrokeColor(strokeColor, rightEdgeDirections);
-      const edgeMarkers = buildRelationshipEdgeMarkers(resolvedStrokeColor, rightEdgeDirections);
-      const visibleFlowDirection = getVisibleFlowDirection(rightEdgeDirections);
-      const animatedFlowDirection = getAnimatedFlowDirection(visibleFlowDirection);
-      const pageRightConnectionDirections =
-        buildCurrentPerspectiveRightDisplayDirections({
-          currentNodeId: graphRootGroupId,
-          sourceId: sourceGroupId,
-          targetId: targetGroupId,
+      newEdges.push(
+        buildNetworkRelationshipEdge({
+          edgeId,
+          sourceId,
+          targetId,
+          sourceGroupId,
+          targetGroupId,
+          structuralType,
+          rights,
+          relationshipKinds,
+          rightRelationshipKinds,
+          membershipMode,
+          membershipCanonicalDirection,
           rightEdgeDirections,
-        }) ?? {};
-      const userConnectionDirections = getUserConnectionDirections(pageRightConnectionDirections);
-      const previewContext = resolvePreviewContext({
-        graphRootGroupId,
-        structuralType,
-        sourceGroupId,
-        targetGroupId,
-        sourceGroupName: groupNameMap.get(sourceGroupId) ?? null,
-        targetGroupName: groupNameMap.get(targetGroupId) ?? null,
-        rightEdgeDirections,
-        membershipCanonicalDirection,
-      });
-      const rightDisplayDirections = buildCurrentPerspectiveRightDisplayDirections({
-        currentNodeId: previewContext.currentGroupId,
-        sourceId: sourceGroupId,
-        targetId: targetGroupId,
-        rightEdgeDirections,
-      });
-
-      newEdges.push({
-        id: edgeId,
-        source: sourceId,
-        target: targetId,
-        type: 'rightsLabel',
-        animated: animatedFlowDirection !== null,
-        style: {
-          stroke: resolvedStrokeColor,
-          strokeWidth: 2,
+          relationshipDepth,
+          fallbackStrokeColor: strokeColor,
           strokeDasharray,
-          animationDirection: animatedFlowDirection === 'backward' ? 'reverse' : undefined,
-        },
-        ...edgeMarkers,
-        data: {
-          ...createNetworkRelationshipEdgeData({
-            rights,
-            relationshipKinds,
-            rightRelationshipKinds,
-            relationshipType: previewContext.relationshipType,
-            membershipMode,
-            membershipDirection: getPreviewMembershipDirection({
-              currentGroupId: previewContext.currentGroupId,
-              sourceGroupId,
-              targetGroupId,
-              membershipCanonicalDirection,
-            }),
-            rightEdgeDirections,
-            visibleFlowDirection,
-            rightConnectionDirections: pageRightConnectionDirections,
-            userConnectionDirections,
-            relationshipDepth,
-            sourceName: groupNameMap.get(sourceGroupId) ?? null,
-            targetName: groupNameMap.get(targetGroupId) ?? null,
-            currentGroupId: previewContext.currentGroupId,
-            currentGroupName: previewContext.currentGroupName,
-            selectedGroupId: previewContext.selectedGroupId,
-            selectedGroupName: previewContext.selectedGroupName,
-            rightDisplayDirections,
-            anchorStrategy: 'inner-auto',
-          }),
+          sourceName: groupNameMap.get(sourceGroupId) ?? null,
+          targetName: groupNameMap.get(targetGroupId) ?? null,
+          graphRootGroupId,
           bendPoints: edgeBendPointsRef.current[edgeId] ?? [],
           edgeEditingEnabled: isInteractiveRef.current,
           onBendPointsChange: handleEdgeBendPointsChange,
-        },
-      } satisfies Edge);
+        })
+      );
     };
 
     const siblingRelationshipEntries = new Map<
@@ -1235,26 +1017,11 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
       });
     });
 
-    nodePositionsRef.current = Object.fromEntries(
-      newNodes.map(node => [node.id, { x: node.position.x, y: node.position.y }])
-    );
-    edgeBendPointsRef.current = Object.fromEntries(
-      newEdges
-        .map(edge => {
-          const bendPoints = Array.isArray(
-            (edge.data as EditableRightsLabelEdgeData | undefined)?.bendPoints
-          )
-            ? ((edge.data as EditableRightsLabelEdgeData).bendPoints as NetworkEdgeBendPoint[])
-            : [];
-
-          return [edge.id, bendPoints] as const;
-        })
-        .filter(([, bendPoints]) => bendPoints.length > 0)
-    );
-
+    syncGeneratedLayoutState(newNodes, newEdges);
     setNodes(newNodes);
     setEdges(newEdges);
   }, [
+    filterRight,
     graphRootGroup,
     graphRootGroupId,
     group,
@@ -1265,27 +1032,10 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
     setEdges,
     siblingGroups,
     stableRelationships,
+    syncGeneratedLayoutState,
     traversalRelationships,
     visibleSiblingRelationships,
   ]);
-
-  useEffect(() => {
-    setEdges(currentEdges =>
-      currentEdges.map(edge => ({
-        ...edge,
-        data: {
-          ...(edge.data ?? {}),
-          edgeEditingEnabled: isInteractive,
-          onBendPointsChange: handleEdgeBendPointsChange,
-          bendPoints: Array.isArray(
-            (edge.data as EditableRightsLabelEdgeData | undefined)?.bendPoints
-          )
-            ? (edge.data as EditableRightsLabelEdgeData).bendPoints
-            : (edgeBendPointsRef.current[edge.id] ?? []),
-        },
-      }))
-    );
-  }, [handleEdgeBendPointsChange, isInteractive, setEdges]);
 
   // Filter edges based on selected rights
   const rightsFilteredEdges = useMemo(() => {
@@ -1324,11 +1074,10 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
   }, [currentLayout, persistLayout]);
 
   const handleResetLayout = useCallback(() => {
-    nodePositionsRef.current = {};
-    edgeBendPointsRef.current = {};
+    clearPersistedLayoutState();
     resetLayout();
     generateFlowChart();
-  }, [generateFlowChart, resetLayout]);
+  }, [clearPersistedLayoutState, generateFlowChart, resetLayout]);
 
   // Handle node selection
   const onNodeClick = useCallback(
@@ -1347,7 +1096,11 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
             ? group
             : null;
 
-      if (groupData) {
+      if (groupData && onGroupClick) {
+        onGroupClick(groupData.id, groupData);
+      }
+
+      if (groupData && showGroupDialogOnClick) {
         const dialogGroupData = {
           id: groupData.id,
           name: groupData.name ?? null,
@@ -1364,7 +1117,15 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
         setDialogOpen(true);
       }
     },
-    [graphRootGroup, graphRootGroupId, group, groupId, isInteractive]
+    [
+      graphRootGroup,
+      graphRootGroupId,
+      group,
+      groupId,
+      isInteractive,
+      onGroupClick,
+      showGroupDialogOnClick,
+    ]
   );
 
   // Handle edge click
@@ -1390,7 +1151,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
   }
 
   // View mode toggle + workflow visualization
-  if (viewMode === 'workflow') {
+  if (showWorkflowView && viewMode === 'workflow') {
     return (
       <div className="flex h-full min-h-0 flex-col gap-4">
         <div className="flex items-center gap-2">
@@ -1446,7 +1207,7 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
         >
           {t('common.network.hierarchyView', 'Hierarchy')}
         </Button>
-        {groupWorkflows.length > 0 && (
+        {showWorkflowView && groupWorkflows.length > 0 && (
           <Button variant="outline" size="sm" onClick={() => setViewMode('workflow')}>
             {t('common.network.workflowView', 'Workflows')}
           </Button>
@@ -1473,8 +1234,10 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
         containerClassName="min-h-[24rem] flex-1"
         panel={
           <NetworkControlPanel
-            title={t('common.network.groupNetwork')}
-            description={t('common.network.groupNetworkDescription', { groupName: group.name })}
+            title={title ?? t('common.network.groupNetwork')}
+            description={
+              description ?? t('common.network.groupNetworkDescription', { groupName: group.name })
+            }
             panelCollapsed={panelCollapsed}
             onPanelCollapsedChange={setPanelCollapsed}
             legendCollapsed={legendCollapsed}
@@ -1554,6 +1317,8 @@ export function GroupNetworkFlow({ groupId }: GroupNetworkFlowProps) {
             outgoingConnectionLabel={t('common.network.outgoingConnections', 'Ausgehend')}
             relationshipStatusFilters={relationshipStatusFilters}
             relationshipStatusFiltersLabel={t('common.network.relationshipStatuses')}
+            filterRight={filterRight}
+            filteredByPrefix={t('common.network.filteredBy')}
             legendExtraContent={
               <>
                 <hr className="my-1 border-gray-200 dark:border-gray-700" />

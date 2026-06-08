@@ -13,13 +13,12 @@ import {
   NETWORK_FILTER_ACTIVE_CLASS_NAMES,
 } from '@/features/network/ui/NetworkControlPanel';
 import { useNetworkFlowControls } from '@/features/network/hooks/useNetworkFlowControls';
+import { usePersistedNetworkLayout } from '@/features/network/hooks/usePersistedNetworkLayout';
+import { useEditableNetworkLayout } from '@/features/network/hooks/useEditableNetworkLayout';
 import {
-  getAnchorUsageConnectionDirection,
   buildHierarchyRightEdgeDirections,
   buildNetworkRelationshipDialogData,
-  buildRelationshipEdgeMarkers,
-  createNetworkRelationshipEdgeData,
-  getRelationshipStrokeColor,
+  buildNetworkRelationshipEdge,
 } from '@/features/network/logic/networkEdgeHelpers';
 import {
   buildDirectRelationships,
@@ -46,10 +45,7 @@ import {
 import { Button } from '@/features/shared/ui/ui/button';
 import { usePermissions } from '@/zero/rbac';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import type {
-  EditableRightsLabelEdgeData,
-  NetworkConnectionDirection,
-} from '../types/networkEdge.types';
+import type { EditableRightsLabelEdgeData } from '../types/networkEdge.types';
 import { explodeNetworkLinksToRelationships } from '../logic/networkLinkDerived';
 
 interface EventNode extends Node {
@@ -73,6 +69,15 @@ function toDisplayText(value: unknown): string | undefined {
 export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const {
+    savedLayout,
+    hasSavedLayout,
+    isLoading: isLayoutLoading,
+    persistLayout,
+    resetLayout,
+  } = usePersistedNetworkLayout({
+    scopeKey: `event:${eventId}`,
+  });
   const controls = useNetworkFlowControls();
   const {
     relationshipDepthFilter,
@@ -96,8 +101,26 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
     toggleRight,
     handleInteractiveChange,
   } = controls;
-  const [nodes, setNodes, onNodesChange] = useNodesState<EventNode>([]);
+  const [nodes, setNodes] = useNodesState<EventNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge<EditableRightsLabelEdgeData>>([]);
+  const {
+    currentLayout,
+    hasLayoutChanges,
+    nodePositionsRef,
+    edgeBendPointsRef,
+    isInteractiveRef,
+    handleNodesChange,
+    handleEdgeBendPointsChange,
+    syncGeneratedLayoutState,
+    clearPersistedLayoutState,
+  } = useEditableNetworkLayout({
+    nodes,
+    edges,
+    setNodes,
+    setEdges,
+    savedLayout,
+    isInteractive,
+  });
 
   const allLabel = t('common.labels.all', 'All');
 
@@ -252,7 +275,7 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
     newNodes.push({
       id: eventId,
       type: 'default',
-      position: { x: 400, y: 300 },
+      position: nodePositionsRef.current[eventId] ?? { x: 400, y: 300 },
       data: {
         label: event.title ?? '',
         description: toDisplayText(event.description) ?? '',
@@ -276,7 +299,7 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
     newNodes.push({
       id: group.id,
       type: 'default',
-      position: { x: 400, y: 450 },
+      position: nodePositionsRef.current[group.id] ?? { x: 400, y: 450 },
       data: {
         label: getGroupNodeDisplayLabel(group.name, 'current'),
         description: toDisplayText(group.description) ?? '',
@@ -312,7 +335,6 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
         parent.group.id,
         edgeTarget
       );
-      const strokeColor = getRelationshipStrokeColor('#fbc02d', rightEdgeDirections);
 
       const level = parent.level || 1;
       const yOffset = -150 * level;
@@ -325,7 +347,10 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
       newNodes.push({
         id: parent.group.id,
         type: 'default',
-        position: { x: 400 + xOffset, y: 450 + yOffset },
+        position: nodePositionsRef.current[parent.group.id] ?? {
+          x: 400 + xOffset,
+          y: 450 + yOffset,
+        },
         data: {
           label: getGroupNodeDisplayLabel(parent.group.name, 'parent'),
           description: toDisplayText(parent.group.description),
@@ -339,36 +364,32 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
         }),
       });
 
-      newEdges.push({
-        id: `${parent.group.id}-${edgeTarget}`,
-        source: parent.group.id,
-        target: edgeTarget,
-        type: 'rightsLabel',
-        animated: true,
-        ...buildRelationshipEdgeMarkers(strokeColor, rightEdgeDirections),
-        data: createNetworkRelationshipEdgeData({
+      const edgeId = `${parent.group.id}-${edgeTarget}`;
+      newEdges.push(
+        buildNetworkRelationshipEdge({
+          edgeId,
+          sourceId: parent.group.id,
+          targetId: edgeTarget,
+          sourceGroupId: parent.group.id,
+          targetGroupId: edgeTarget,
+          structuralType: 'parent',
           rights: parent.rights,
           relationshipKinds: parent.relationshipKinds,
           rightRelationshipKinds: parent.rightRelationshipKinds,
-          relationshipType: 'parent',
+          membershipMode: parent.membershipMode ?? null,
+          membershipCanonicalDirection: parent.membershipCanonicalDirection ?? null,
           rightEdgeDirections,
-          rightConnectionDirections: Object.fromEntries(
-            parent.rights.map(right => [
-              right,
-              getAnchorUsageConnectionDirection({
-                edgeDirection: rightEdgeDirections[right] ?? 'forward',
-                anchorSide: 'target',
-              }),
-            ])
-          ) as Record<string, NetworkConnectionDirection>,
-          userConnectionDirections: ['incoming'],
+          relationshipDepth: (parent.level ?? 1) === 1 ? 'direct' : 'indirect',
+          fallbackStrokeColor: '#fbc02d',
           sourceName: groupNameMap.get(parent.group.id) ?? null,
           targetName: groupNameMap.get(edgeTarget) ?? null,
-          relationshipDepth: (parent.level ?? 1) === 1 ? 'direct' : 'indirect',
-          anchorStrategy: 'inner-auto',
-        }),
-        style: { stroke: strokeColor, strokeWidth: 2 },
-      });
+          currentGroupId: edgeTarget,
+          previewCurrentGroupId: edgeTarget,
+          bendPoints: edgeBendPointsRef.current[edgeId] ?? [],
+          edgeEditingEnabled: isInteractiveRef.current,
+          onBendPointsChange: handleEdgeBendPointsChange,
+        })
+      );
     });
 
     // Add child nodes
@@ -379,7 +400,6 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
         edgeSource,
         child.group.id
       );
-      const strokeColor = getRelationshipStrokeColor('#4caf50', rightEdgeDirections);
 
       const level = child.level || 1;
       const yOffset = 150 * level;
@@ -392,7 +412,10 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
       newNodes.push({
         id: child.group.id,
         type: 'default',
-        position: { x: 400 + xOffset, y: 450 + yOffset },
+        position: nodePositionsRef.current[child.group.id] ?? {
+          x: 400 + xOffset,
+          y: 450 + yOffset,
+        },
         data: {
           label: getGroupNodeDisplayLabel(child.group.name, 'child'),
           description: toDisplayText(child.group.description),
@@ -406,41 +429,49 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
         }),
       });
 
-      newEdges.push({
-        id: `${edgeSource}-${child.group.id}`,
-        source: edgeSource,
-        target: child.group.id,
-        type: 'rightsLabel',
-        animated: true,
-        ...buildRelationshipEdgeMarkers(strokeColor, rightEdgeDirections),
-        data: createNetworkRelationshipEdgeData({
+      const edgeId = `${edgeSource}-${child.group.id}`;
+      newEdges.push(
+        buildNetworkRelationshipEdge({
+          edgeId,
+          sourceId: edgeSource,
+          targetId: child.group.id,
+          sourceGroupId: edgeSource,
+          targetGroupId: child.group.id,
+          structuralType: 'parent',
           rights: child.rights,
           relationshipKinds: child.relationshipKinds,
           rightRelationshipKinds: child.rightRelationshipKinds,
-          relationshipType: 'parent',
+          membershipMode: child.membershipMode ?? null,
+          membershipCanonicalDirection: child.membershipCanonicalDirection ?? null,
           rightEdgeDirections,
-          rightConnectionDirections: Object.fromEntries(
-            child.rights.map(right => [
-              right,
-              getAnchorUsageConnectionDirection({
-                edgeDirection: rightEdgeDirections[right] ?? 'forward',
-                anchorSide: 'source',
-              }),
-            ])
-          ) as Record<string, NetworkConnectionDirection>,
-          userConnectionDirections: ['outgoing'],
+          relationshipDepth: (child.level ?? 1) === 1 ? 'direct' : 'indirect',
+          fallbackStrokeColor: '#4caf50',
           sourceName: groupNameMap.get(edgeSource) ?? null,
           targetName: groupNameMap.get(child.group.id) ?? null,
-          relationshipDepth: (child.level ?? 1) === 1 ? 'direct' : 'indirect',
-          anchorStrategy: 'inner-auto',
-        }),
-        style: { stroke: strokeColor, strokeWidth: 2 },
-      });
+          currentGroupId: edgeSource,
+          previewCurrentGroupId: edgeSource,
+          bendPoints: edgeBendPointsRef.current[edgeId] ?? [],
+          edgeEditingEnabled: isInteractiveRef.current,
+          onBendPointsChange: handleEdgeBendPointsChange,
+        })
+      );
     });
 
+    syncGeneratedLayoutState(newNodes, newEdges);
     setNodes(newNodes);
     setEdges(newEdges);
-  }, [event, group, eventId, relationshipDepthFilter, stableRelationships]);
+  }, [
+    edgeBendPointsRef,
+    event,
+    eventId,
+    group,
+    handleEdgeBendPointsChange,
+    isInteractiveRef,
+    nodePositionsRef,
+    relationshipDepthFilter,
+    stableRelationships,
+    syncGeneratedLayoutState,
+  ]);
 
   // Filter edges based on selected rights (always show event-to-group edge)
   const eventToGroupEdgeIds = useMemo(() => {
@@ -480,8 +511,22 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
 
   // Generate flow chart when event or showIndirect changes
   useEffect(() => {
+    if (isLayoutLoading) {
+      return;
+    }
+
     generateFlowChart();
-  }, [generateFlowChart]);
+  }, [generateFlowChart, isLayoutLoading]);
+
+  const handleSaveLayout = useCallback(() => {
+    persistLayout(currentLayout);
+  }, [currentLayout, persistLayout]);
+
+  const handleResetLayout = useCallback(() => {
+    clearPersistedLayoutState();
+    resetLayout();
+    generateFlowChart();
+  }, [clearPersistedLayoutState, generateFlowChart, resetLayout]);
 
   // Handle node selection
   const onNodeClick = useCallback(
@@ -575,7 +620,7 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
       nodesFocusable={isInteractive}
       nodesConnectable={isInteractive}
       edgesFocusable={isInteractive}
-      onNodesChange={isInteractive ? onNodesChange : undefined}
+      onNodesChange={isInteractive ? handleNodesChange : undefined}
       onEdgesChange={isInteractive ? onEdgesChange : undefined}
       onNodeClick={onNodeClick}
       onEdgeClick={onEdgeClick}
@@ -622,6 +667,26 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
           indirectLabel={t('common.network.indirect')}
           lockLabel={t('common.network.lockEditor')}
           unlockLabel={t('common.network.unlockEditor')}
+          controlsExtraContent={
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleSaveLayout}
+                disabled={isLayoutLoading || !hasLayoutChanges}
+              >
+                {t('common.network.saveLayout')}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleResetLayout}
+                disabled={isLayoutLoading || (!hasSavedLayout && !hasLayoutChanges)}
+              >
+                {t('common.network.resetLayout')}
+              </Button>
+            </>
+          }
           showRightsFilter
           selectedRights={selectedRights}
           onToggleRight={toggleRight}

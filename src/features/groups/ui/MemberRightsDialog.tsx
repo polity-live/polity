@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -47,13 +48,28 @@ export function MemberRightsDialog<TParticipation extends ParticipationLike>({
   membership,
   onNavigateToUser,
   entityType = 'group',
-  contextLabel = 'group',
-  fallbackRoleLabel = 'Member',
-  profileButtonLabel = 'Open Profile',
-  closeButtonLabel = 'Close',
-  emptyRightsLabel = "No explicit action rights are currently assigned through this member's roles.",
+  contextLabel,
+  fallbackRoleLabel,
+  profileButtonLabel,
+  closeButtonLabel,
+  emptyRightsLabel,
   actionRightsCatalog,
 }: MemberRightsDialogProps<TParticipation>) {
+  const { t } = useTranslation();
+  const resolvedContextLabel =
+    contextLabel ?? t('components.memberRightsDialog.context.group', 'group');
+  const resolvedFallbackRoleLabel =
+    fallbackRoleLabel ?? t('components.memberRightsDialog.memberFallback', 'Member');
+  const resolvedProfileButtonLabel =
+    profileButtonLabel ?? t('components.memberRightsDialog.openProfile', 'Open Profile');
+  const resolvedCloseButtonLabel =
+    closeButtonLabel ?? t('components.memberRightsDialog.close', 'Close');
+  const resolvedEmptyRightsLabel =
+    emptyRightsLabel ??
+    t(
+      'components.memberRightsDialog.emptyRights',
+      "No explicit action rights are currently assigned through this member's roles."
+    );
   const rightsSummary = useMemo(
     () => (membership ? buildMembershipRightsSummary(membership, actionRightsCatalog) : []),
     [actionRightsCatalog, membership]
@@ -65,9 +81,9 @@ export function MemberRightsDialog<TParticipation extends ParticipationLike>({
 
   const memberName = membership
     ? [membership.user?.first_name, membership.user?.last_name].filter(Boolean).join(' ') ||
-      'Unknown User'
-    : 'Unknown User';
-  const roleSummary = membership ? getMembershipRoleSummary(membership) : 'Member';
+      t('components.memberRightsDialog.unknownUser', 'Unknown User')
+    : t('components.memberRightsDialog.unknownUser', 'Unknown User');
+  const roleSummary = membership ? getMembershipRoleSummary(membership) : resolvedFallbackRoleLabel;
   const profileUserId = membership?.user?.id ?? null;
 
   return (
@@ -76,28 +92,36 @@ export function MemberRightsDialog<TParticipation extends ParticipationLike>({
         <DialogHeader>
           <DialogTitle>{memberName}</DialogTitle>
           <DialogDescription>
-            Effective {contextLabel} rights are unioned across all assigned roles. This view shows
-            both the final right set and which role grants each right.
+            {t('components.memberRightsDialog.description', {
+              contextLabel: resolvedContextLabel,
+              defaultValue:
+                'Effective {{contextLabel}} rights are unioned across all assigned roles. This view shows both the final right set and which role grants each right.',
+            })}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="border-border/70 from-background via-background to-muted/30 rounded-2xl border bg-gradient-to-br p-4">
-            <div className="text-sm font-medium">Assigned roles</div>
+            <div className="text-sm font-medium">
+              {t('components.memberRightsDialog.assignedRoles', 'Assigned roles')}
+            </div>
             <div className="mt-3 flex flex-wrap gap-2">
               {displayRoles.length > 0 ? (
                 displayRoles.map(role => (
                   <TableTag key={role.id} entityType={entityType}>
-                    {role.name || 'Role'}
+                    {role.name || t('components.memberRightsDialog.roleFallback', 'Role')}
                   </TableTag>
                 ))
               ) : (
-                <TableTag entityType={entityType}>{fallbackRoleLabel}</TableTag>
+                <TableTag entityType={entityType}>{resolvedFallbackRoleLabel}</TableTag>
               )}
             </div>
             <p className="text-muted-foreground mt-3 text-sm">
-              {rightsSummary.length} effective rights from{' '}
-              {membership ? roleSummary : fallbackRoleLabel}.
+              {t('components.memberRightsDialog.effectiveRightsSummary', {
+                count: rightsSummary.length,
+                role: membership ? roleSummary : resolvedFallbackRoleLabel,
+                defaultValue: '{{count}} effective rights from {{role}}.',
+              })}
             </p>
           </div>
 
@@ -105,8 +129,12 @@ export function MemberRightsDialog<TParticipation extends ParticipationLike>({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="min-w-[220px]">Effective Right</TableHead>
-                  <TableHead>Granted By</TableHead>
+                  <TableHead className="min-w-[220px]">
+                    {t('components.memberRightsDialog.effectiveRight', 'Effective Right')}
+                  </TableHead>
+                  <TableHead>
+                    {t('components.memberRightsDialog.grantedBy', 'Granted By')}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -132,7 +160,10 @@ export function MemberRightsDialog<TParticipation extends ParticipationLike>({
                               {!source.isDirect ? (
                                 <span className="text-muted-foreground">
                                   {' '}
-                                  via {source.viaLabel}
+                                  {t('components.memberRightsDialog.via', {
+                                    label: source.viaLabel,
+                                    defaultValue: 'via {{label}}',
+                                  })}
                                 </span>
                               ) : null}
                               {source.isDirect ? (
@@ -140,14 +171,14 @@ export function MemberRightsDialog<TParticipation extends ParticipationLike>({
                                   variant="outline"
                                   className="ml-2 border-emerald-500/50 text-emerald-700 dark:text-emerald-300"
                                 >
-                                  direct
+                                  {t('components.memberRightsDialog.direct', 'direct')}
                                 </Badge>
                               ) : (
                                 <Badge
                                   variant="outline"
                                   className="ml-2 border-sky-500/50 text-sky-700 dark:text-sky-300"
                                 >
-                                  implied
+                                  {t('components.memberRightsDialog.implied', 'implied')}
                                 </Badge>
                               )}
                             </div>
@@ -159,7 +190,7 @@ export function MemberRightsDialog<TParticipation extends ParticipationLike>({
                 ) : (
                   <TableRow>
                     <TableCell colSpan={2} className="text-muted-foreground py-8 text-center">
-                      {emptyRightsLabel}
+                      {resolvedEmptyRightsLabel}
                     </TableCell>
                   </TableRow>
                 )}
@@ -171,10 +202,10 @@ export function MemberRightsDialog<TParticipation extends ParticipationLike>({
         <DialogFooter>
           {profileUserId ? (
             <Button variant="outline" onClick={() => onNavigateToUser(profileUserId)}>
-              {profileButtonLabel}
+              {resolvedProfileButtonLabel}
             </Button>
           ) : null}
-          <Button onClick={() => onOpenChange(false)}>{closeButtonLabel}</Button>
+          <Button onClick={() => onOpenChange(false)}>{resolvedCloseButtonLabel}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
