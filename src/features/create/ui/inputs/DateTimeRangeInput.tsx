@@ -12,6 +12,8 @@ interface DateTimeRangeInputProps {
   endTime?: string;
   onChange: (field: 'startDate' | 'startTime' | 'endDate' | 'endTime', value: string) => void;
   showEnd?: boolean;
+  minDate?: string;
+  maxDate?: string;
 }
 
 export function DateTimeRangeInput({
@@ -21,10 +23,24 @@ export function DateTimeRangeInput({
   endTime = '',
   onChange,
   showEnd = true,
+  minDate = '',
+  maxDate = '',
 }: DateTimeRangeInputProps) {
   const { t } = useTranslation();
   const selectedStartDate = parseLocalDateInput(startDate);
   const selectedEndDate = showEnd ? parseLocalDateInput(endDate) : undefined;
+  const minSelectableDate = parseLocalDateInput(minDate);
+  const maxSelectableDate = parseLocalDateInput(maxDate);
+
+  const isOutsideSchedulingWindow = (date: Date) => {
+    if (minSelectableDate && date.getTime() < minSelectableDate.getTime()) {
+      return true;
+    }
+    if (maxSelectableDate && date.getTime() > maxSelectableDate.getTime()) {
+      return true;
+    }
+    return false;
+  };
 
   return (
     <div className="space-y-5">
@@ -53,6 +69,7 @@ export function DateTimeRangeInput({
               selected={selectedStartDate}
               onSelect={value => onChange('startDate', formatLocalDateInput(value))}
               className="rounded-lg border"
+              disabled={date => isOutsideSchedulingWindow(date)}
             />
           </div>
           <CreateInputField
@@ -85,7 +102,8 @@ export function DateTimeRangeInput({
                 onSelect={value => onChange('endDate', formatLocalDateInput(value))}
                 className="rounded-lg border"
                 disabled={date =>
-                  selectedStartDate ? date.getTime() < selectedStartDate.getTime() : false
+                  isOutsideSchedulingWindow(date) ||
+                  (selectedStartDate ? date.getTime() < selectedStartDate.getTime() : false)
                 }
               />
             </div>

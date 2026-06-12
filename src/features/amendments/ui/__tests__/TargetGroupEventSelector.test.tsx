@@ -249,6 +249,42 @@ describe('TargetGroupEventSelector', () => {
     await waitFor(() => expect(hasButtonText('Budget Circle')).toBe(false));
   });
 
+  it('can include the selected start group as a target when enabled', async () => {
+    const onSelect = vi.fn();
+
+    render(
+      <TargetGroupEventSelector
+        userId="user-1"
+        onSelect={onSelect}
+        allowGroupWithoutEvent
+        allowSourceGroupAsTarget
+        disablePortal
+      />
+    );
+
+    const targetSearchInput = await screen.findByPlaceholderText('Zielgruppe suchen...');
+
+    fireEvent.focus(targetSearchInput);
+    fireEvent.change(targetSearchInput, { target: { value: 'Budget' } });
+
+    await waitFor(() => expect(hasButtonText('Budget Circle')).toBe(true));
+    fireEvent.keyDown(targetSearchInput, { key: 'Enter' });
+
+    await waitFor(() =>
+      expect(onSelect).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sourceGroupId: 'group-start',
+          groupId: 'group-start',
+          pathWithEvents: [
+            expect.objectContaining({
+              groupId: 'group-start',
+            }),
+          ],
+        })
+      )
+    );
+  });
+
   it('selects the start group from the graph, reroots, and keeps the target typeahead in sync', async () => {
     const onSelect = vi.fn();
     amendmentMemberships.push({

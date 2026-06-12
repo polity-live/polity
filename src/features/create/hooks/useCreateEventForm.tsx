@@ -51,6 +51,7 @@ import { type ElectionMode } from '@/features/elections/logic/electionMode';
 import { attachProcessTaskToEvent } from '@/features/amendments/logic/attachProcessTaskToEvent';
 import {
   getSchedulingWindowValidationMessage,
+  getSchedulingWindowDisplayLabel,
   getProcessTaskSchedulingWindow,
   isEventWithinSchedulingWindow,
 } from '@/features/amendments/logic/processTaskEventScheduling';
@@ -202,6 +203,12 @@ export function useCreateEventForm(): CreateFormConfig {
     maxStartDate: searchParams.maxStartDate,
     maxStartTime: searchParams.maxStartTime,
   });
+  const processSchedulingWindowMessage = getSchedulingWindowDisplayLabel({
+    minStartDate: searchParams.minStartDate,
+    minStartTime: searchParams.minStartTime,
+    maxStartDate: searchParams.maxStartDate,
+    maxStartTime: searchParams.maxStartTime,
+  });
   const combinedTimeSeriesValidationMessage =
     timeSeriesValidationMessage ?? processSchedulingValidationMessage;
 
@@ -227,6 +234,20 @@ export function useCreateEventForm(): CreateFormConfig {
       setGroupName(nextGroupName);
     }
   }, [group?.name, groupId, groupName]);
+
+  useEffect(() => {
+    if (!searchParams.minStartDate && !searchParams.maxStartDate) {
+      return;
+    }
+
+    if (!startDate && searchParams.minStartDate) {
+      setStartDate(searchParams.minStartDate);
+    }
+
+    if (!endDate && searchParams.maxStartDate) {
+      setEndDate(searchParams.maxStartDate);
+    }
+  }, [endDate, searchParams.maxStartDate, searchParams.minStartDate, startDate]);
 
   const syncGroupSearch = useCallback(
     (nextGroupId: string) => {
@@ -585,7 +606,10 @@ export function useCreateEventForm(): CreateFormConfig {
               onRecurrenceIntervalChange={setRecurrenceInterval}
               recurrenceWeekdays={recurrenceWeekdays}
               onRecurrenceWeekdaysChange={setRecurrenceWeekdays}
+              schedulingWindowMessage={processSchedulingWindowMessage}
               validationMessage={combinedTimeSeriesValidationMessage}
+              minDate={searchParams.minStartDate}
+              maxDate={searchParams.maxStartDate}
               deadlines={[
                 ...(eventType === 'delegate_assembly'
                   ? [

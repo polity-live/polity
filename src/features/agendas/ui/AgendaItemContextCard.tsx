@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import {
@@ -9,7 +9,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/features/shared/ui/ui/collapsible';
-import { EditingModeBadge } from '@/features/shared/ui/ui/editing-mode.tsx';
 import {
   Clock,
   Calendar,
@@ -23,7 +22,6 @@ import {
   Timer,
   ChevronDown,
   ChevronRight,
-  ScrollText,
   Building2,
   ExternalLink,
 } from 'lucide-react';
@@ -40,6 +38,8 @@ import {
   AgendaElectionModeBadge,
 } from './AgendaBadges';
 import type { ElectionMode } from '@/features/elections/logic/electionMode';
+import type { AmendmentPathVisualizationSegment } from '@/features/network/ui/AmendmentPathVisualization';
+import { AmendmentProcessDetailsPanel } from '@/features/amendments/ui/AmendmentProcessDetailsPanel';
 
 interface AgendaItemContextCardProps {
   agendaItem: {
@@ -66,6 +66,17 @@ interface AgendaItemContextCardProps {
     collaborator_count?: number;
     group?: { id: string; name?: string | null } | null;
   } | null;
+  amendmentForwardingPreview?: {
+    nextGroupId?: string | null;
+    nextGroupName?: string | null;
+    nextEventId?: string | null;
+    nextEventTitle: string;
+    nextEventStartDate?: number | null;
+  } | null;
+  amendmentPathVisualizationData?: AmendmentPathVisualizationSegment[];
+  amendmentGroupTypeById?: Map<string, string | null>;
+  onAmendmentGroupClick?: (groupId: string) => void;
+  onAmendmentEventClick?: (eventId: string) => void;
   /** Election data for election-type agenda items */
   election?: {
     id: string;
@@ -85,6 +96,11 @@ interface AgendaItemContextCardProps {
   votingStartTime?: Date;
   /** Voting/election closing time (when voting ends) */
   votingEndTime?: Date;
+  showHeaderStatusBadge?: boolean;
+  agendaDetailLink?: {
+    eventId: string;
+    agendaItemId: string;
+  } | null;
   className?: string;
 }
 
@@ -145,12 +161,20 @@ function getGradientClass(type: string) {
 export function AgendaItemContextCard({
   agendaItem,
   amendment,
+  amendmentForwardingPreview,
+  amendmentPathVisualizationData,
+  amendmentGroupTypeById,
+  onAmendmentGroupClick,
+  onAmendmentEventClick,
   election,
   votingStartTime,
   votingEndTime,
+  showHeaderStatusBadge = true,
+  agendaDetailLink,
   className,
 }: AgendaItemContextCardProps) {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const locale = i18n.language === 'de' ? de : enUS;
   const TypeIcon = getTypeIcon(agendaItem.type);
   const gradientClass = getGradientClass(agendaItem.type);
@@ -171,15 +195,39 @@ export function AgendaItemContextCard({
   const isOngoing =
     !isCompleted && (agendaItem.status === 'in-progress' || agendaItem.status === 'active');
   const now = Date.now();
+  const hasAgendaDetailLink = Boolean(agendaDetailLink?.eventId && agendaDetailLink?.agendaItemId);
 
   const formatRelativeTime = (value: Date) => {
     return formatDistanceToNow(value, { addSuffix: true, locale });
   };
 
+  const navigateToAgendaDetail = () => {
+    if (!agendaDetailLink) return;
+    navigate({
+      to: '/event/$id/agenda/$agendaItemId',
+      params: { id: agendaDetailLink.eventId, agendaItemId: agendaDetailLink.agendaItemId },
+    });
+  };
+
   return (
     <Card className={cn('overflow-hidden', className)}>
       {/* Gradient Header */}
-      <div className={cn('p-4', gradientClass)}>
+      <div
+        className={cn('p-4', gradientClass, hasAgendaDetailLink ? 'cursor-pointer' : undefined)}
+        onClick={hasAgendaDetailLink ? navigateToAgendaDetail : undefined}
+        onKeyDown={
+          hasAgendaDetailLink
+            ? event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  navigateToAgendaDetail();
+                }
+              }
+            : undefined
+        }
+        role={hasAgendaDetailLink ? 'button' : undefined}
+        tabIndex={hasAgendaDetailLink ? 0 : undefined}
+      >
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white/80 text-gray-700 dark:bg-gray-800/80 dark:text-gray-200">
@@ -187,7 +235,28 @@ export function AgendaItemContextCard({
             </div>
             <div>
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                {agendaItem.title}
+                {hasAgendaDetailLink && agendaDetailLink ? (
+                  <Link
+                    to="/event/$id/agenda/$agendaItemId"
+                    params={{
+                      id: agendaDetailLink.eventId,
+                      agendaItemId: agendaDetailLink.agendaItemId,
+                    }}
+                    className="hover:underline"
+                  >
+                    {agendaItem.title}
+                  </Link>
+                ) : amendment?.id ? (
+                  <Link
+                    to="/amendment/$id"
+                    params={{ id: amendment.id }}
+                    className="hover:underline"
+                  >
+                    {agendaItem.title}
+                  </Link>
+                ) : (
+                  agendaItem.title
+                )}
               </h2>
               <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                 <AgendaTypeBadge
@@ -200,16 +269,18 @@ export function AgendaItemContextCard({
                       | 'accreditation'
                   }
                 />
-                <AgendaStatusBadge
-                  status={
-                    agendaItem.status as
-                      | 'completed'
-                      | 'in-progress'
-                      | 'pending'
-                      | 'planned'
-                      | 'active'
-                  }
-                />
+                {showHeaderStatusBadge ? (
+                  <AgendaStatusBadge
+                    status={
+                      agendaItem.status as
+                        | 'completed'
+                        | 'in-progress'
+                        | 'pending'
+                        | 'planned'
+                        | 'active'
+                    }
+                  />
+                ) : null}
                 {durationMinutes && (
                   <div className="inline-flex items-center gap-1 rounded-full border border-white/50 bg-white/70 px-3 py-1 text-xs font-medium text-gray-700 shadow-sm dark:border-gray-700 dark:bg-gray-900/60 dark:text-gray-200">
                     <Timer className="h-3 w-3" />
@@ -401,102 +472,21 @@ export function AgendaItemContextCard({
         )}
 
         {/* Amendment details (collapsible) */}
-        {amendment && <AmendmentDetailsSection amendment={amendment} />}
+        {amendment && (
+          <AmendmentProcessDetailsPanel
+            amendment={amendment}
+            forwardingPreview={amendmentForwardingPreview}
+            pathVisualizationData={amendmentPathVisualizationData}
+            groupTypeById={amendmentGroupTypeById}
+            onGroupClick={onAmendmentGroupClick}
+            onEventClick={onAmendmentEventClick}
+          />
+        )}
 
         {/* Election / Role details (collapsible) */}
         {election?.role && <ElectionDetailsSection election={election} />}
       </CardContent>
     </Card>
-  );
-}
-
-// ── Amendment collapsible details ───────────────────────────────────
-
-function AmendmentDetailsSection({
-  amendment,
-}: {
-  amendment: NonNullable<AgendaItemContextCardProps['amendment']>;
-}) {
-  const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
-
-  return (
-    <Collapsible open={open} onOpenChange={setOpen}>
-      <div className="bg-muted/30 rounded-lg border">
-        <CollapsibleTrigger className="hover:bg-muted/50 flex w-full items-center gap-2 px-4 py-3 text-sm font-medium transition-colors">
-          {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-          <ScrollText className="text-muted-foreground h-4 w-4" />
-          <span>{t('features.events.agenda.amendmentDetails', 'Amendment Details')}</span>
-          {amendment.editing_mode && (
-            <EditingModeBadge mode={amendment.editing_mode} variant="secondary" />
-          )}
-          <Link
-            to="/amendment/$id"
-            params={{ id: amendment.id }}
-            className="text-primary ml-auto flex items-center gap-1 text-xs hover:underline"
-            onClick={e => e.stopPropagation()}
-          >
-            {t('features.events.agenda.viewAmendment', 'View Amendment')}
-            <ExternalLink className="h-3 w-3" />
-          </Link>
-        </CollapsibleTrigger>
-
-        <CollapsibleContent>
-          <div className="space-y-3 border-t px-4 py-3">
-            {amendment.title && (
-              <div>
-                <p className="text-muted-foreground text-xs font-medium">
-                  {t('common.title', 'Title')}
-                </p>
-                <p className="text-sm">{amendment.title}</p>
-              </div>
-            )}
-
-            {amendment.reason && (
-              <div>
-                <p className="text-muted-foreground text-xs font-medium">
-                  {t('features.amendments.reason', 'Reason')}
-                </p>
-                <p className="text-sm whitespace-pre-wrap">{amendment.reason}</p>
-              </div>
-            )}
-
-            {amendment.preamble && (
-              <div>
-                <p className="text-muted-foreground text-xs font-medium">
-                  {t('features.amendments.preamble', 'Preamble')}
-                </p>
-                <p className="text-sm whitespace-pre-wrap">{amendment.preamble}</p>
-              </div>
-            )}
-
-            <div className="flex flex-wrap gap-2">
-              {amendment.group?.name && (
-                <Badge variant="outline" className="text-xs">
-                  <Building2 className="mr-1 h-3 w-3" />
-                  {amendment.group.name}
-                </Badge>
-              )}
-              {typeof amendment.change_request_count === 'number' &&
-                amendment.change_request_count > 0 && (
-                  <Badge variant="secondary" className="text-xs">
-                    {amendment.change_request_count}{' '}
-                    {t('features.amendments.changeRequests', 'Change Requests')}
-                  </Badge>
-                )}
-              {typeof amendment.collaborator_count === 'number' &&
-                amendment.collaborator_count > 0 && (
-                  <Badge variant="secondary" className="text-xs">
-                    <Users className="mr-1 h-3 w-3" />
-                    {amendment.collaborator_count}{' '}
-                    {t('features.amendments.collaborators', 'Collaborators')}
-                  </Badge>
-                )}
-            </div>
-          </div>
-        </CollapsibleContent>
-      </div>
-    </Collapsible>
   );
 }
 

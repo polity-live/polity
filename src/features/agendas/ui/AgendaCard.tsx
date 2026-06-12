@@ -1,7 +1,7 @@
 'use client';
 
-import { ReactNode } from 'react';
-import { Link } from '@tanstack/react-router';
+import { ReactNode, useCallback } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import {
   Card,
@@ -78,106 +78,117 @@ export function AgendaCard({
   election,
 }: AgendaCardProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const visualStatus = isActive ? 'active' : status;
+  const openDetails = useCallback(() => {
+    void navigate({ to: detailsLink as never });
+  }, [detailsLink, navigate]);
 
   return (
-    <Link to={detailsLink} className="block">
-      <Card
-        className={cn(
-          'cursor-pointer transition-all hover:shadow-md',
-          isActive &&
-            'before:animate-spin-slow relative overflow-hidden before:absolute before:inset-0 before:-z-10 before:rounded-lg before:bg-gradient-to-r before:from-green-500 before:via-emerald-500 before:to-green-500 before:p-[3px]',
-          className
-        )}
-      >
-        <div className={cn(isActive && 'bg-background relative z-10 rounded-lg')}>
-          <CardHeader className="pb-3">
-            <div className="flex items-start justify-between">
-              <div className="flex-1 space-y-1">
-                <CardTitle className="text-lg">{title}</CardTitle>
-                {subtitle && <p className="text-muted-foreground text-sm">{subtitle}</p>}
-                <div className="flex flex-wrap items-center gap-2">
-                  <AgendaTypeBadge type={type} />
-                  <AgendaStatusBadge status={visualStatus} />
-                  {amendment?.title && (
-                    <AgendaEntityBadge
-                      label={amendment.title}
-                      href={`/amendment/${amendment.id}`}
-                      variant="amendment"
-                    />
-                  )}
-                  {election?.role?.group && (
-                    <AgendaEntityBadge
-                      label={election.role.title ?? election.role.group.name ?? 'Role'}
-                      href={`/group/${election.role.group.id}`}
-                      variant="role"
-                    />
-                  )}
-                  {election?.election_mode ? (
-                    <AgendaElectionModeBadge
-                      electionMode={election.election_mode}
-                      seatCount={election.seat_count}
-                    />
-                  ) : null}
-                </div>
-              </div>
-              <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
-                {dragHandle}
-                {showMoveButton && onMoveClick && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={e => {
-                      e.preventDefault();
-                      onMoveClick();
-                    }}
-                    title={t('features.events.agenda.moveToEvent')}
-                  >
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
+    <Card
+      role="link"
+      tabIndex={0}
+      onClick={openDetails}
+      onKeyDown={event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openDetails();
+        }
+      }}
+      className={cn(
+        'cursor-pointer transition-all hover:shadow-md',
+        isActive &&
+          'before:animate-spin-slow relative overflow-hidden before:absolute before:inset-0 before:-z-10 before:rounded-lg before:bg-gradient-to-r before:from-green-500 before:via-emerald-500 before:to-green-500 before:p-[3px]',
+        className
+      )}
+    >
+      <div className={cn(isActive && 'bg-background relative z-10 rounded-lg')}>
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between">
+            <div className="flex-1 space-y-1">
+              <CardTitle className="text-lg">{title}</CardTitle>
+              {subtitle && <p className="text-muted-foreground text-sm">{subtitle}</p>}
+              <div className="flex flex-wrap items-center gap-2">
+                <AgendaTypeBadge type={type} />
+                <AgendaStatusBadge status={visualStatus} />
+                {amendment?.title && (
+                  <AgendaEntityBadge
+                    label={amendment.title}
+                    href={`/amendment/${amendment.id}`}
+                    variant="amendment"
+                  />
                 )}
-                {actionButton}
+                {election?.role?.group && (
+                  <AgendaEntityBadge
+                    label={election.role.title ?? election.role.group.name ?? 'Role'}
+                    href={`/group/${election.role.group.id}`}
+                    variant="role"
+                  />
+                )}
+                {election?.election_mode ? (
+                  <AgendaElectionModeBadge
+                    electionMode={election.election_mode}
+                    seatCount={election.seat_count}
+                  />
+                ) : null}
               </div>
             </div>
-          </CardHeader>
-
-          {description && (
-            <CardContent className="pt-0">
-              <p className="text-muted-foreground">{description}</p>
-            </CardContent>
-          )}
-
-          {(creatorName || footer || footerRight) && (
-            <CardFooter className="pt-3">
-              {footer || (
-                <div
-                  className={cn(
-                    'flex w-full items-center gap-3',
-                    creatorName ? 'justify-between' : 'justify-end'
-                  )}
+            <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+              {dragHandle}
+              {showMoveButton && onMoveClick && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={e => {
+                    e.preventDefault();
+                    onMoveClick();
+                  }}
+                  title={t('features.events.agenda.moveToEvent')}
                 >
-                  {creatorName ? (
-                    <div className="text-muted-foreground flex items-center gap-2 text-sm">
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={creatorAvatar} />
-                        <AvatarFallback className="text-xs">
-                          {creatorName?.[0]?.toUpperCase() || '?'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span>
-                        {t('features.events.agenda.by', {
-                          name: creatorName || t('features.events.agenda.unspecified'),
-                        })}
-                      </span>
-                    </div>
-                  ) : null}
-                  {footerRight ? <div className="flex items-center">{footerRight}</div> : null}
-                </div>
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
               )}
-            </CardFooter>
-          )}
-        </div>
-      </Card>
-    </Link>
+              {actionButton}
+            </div>
+          </div>
+        </CardHeader>
+
+        {description && (
+          <CardContent className="pt-0">
+            <p className="text-muted-foreground">{description}</p>
+          </CardContent>
+        )}
+
+        {(creatorName || footer || footerRight) && (
+          <CardFooter className="pt-3">
+            {footer || (
+              <div
+                className={cn(
+                  'flex w-full items-center gap-3',
+                  creatorName ? 'justify-between' : 'justify-end'
+                )}
+              >
+                {creatorName ? (
+                  <div className="text-muted-foreground flex items-center gap-2 text-sm">
+                    <Avatar className="h-6 w-6">
+                      <AvatarImage src={creatorAvatar} />
+                      <AvatarFallback className="text-xs">
+                        {creatorName?.[0]?.toUpperCase() || '?'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span>
+                      {t('features.events.agenda.by', {
+                        name: creatorName || t('features.events.agenda.unspecified'),
+                      })}
+                    </span>
+                  </div>
+                ) : null}
+                {footerRight ? <div className="flex items-center">{footerRight}</div> : null}
+              </div>
+            )}
+          </CardFooter>
+        )}
+      </div>
+    </Card>
   );
 }

@@ -50,5 +50,5 @@ export { amendmentQueries } from './queries';
 export { amendmentSharedMutators } from './shared-mutators';
 
 // Facade Hooks
-export { useAmendmentState } from './useAmendmentState';
+export { useAmendmentState, useAgendaItemForwardingContext } from './useAmendmentState';
 export { useAmendmentActions } from './useAmendmentActions';

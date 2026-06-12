@@ -1,10 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Badge } from '@/features/shared/ui/ui/badge';
-import { Button } from '@/features/shared/ui/ui/button';
-import { Input } from '@/features/shared/ui/ui/input';
 import { Vote, CheckCircle2, Crown } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
@@ -13,22 +11,18 @@ import { VoteResultSentence } from '@/features/vote-cast/ui/VoteResultSentence';
 import { VotePhaseBadge } from '@/features/vote-cast/ui/VotePhaseBadge';
 import {
   computeVoteResultSummary,
+  type ChoiceOfflineTally,
   type MajorityType,
   type VoteResult,
 } from '@/features/vote-cast/logic/computeVoteResults';
 import { calculateVoteStats, getVotingPhase } from '@/features/agendas/hooks/useAgendaItemVoting';
 import type { ChoicesByVoteRow } from '@/zero/votes/queries';
-import { useVoteActions } from '@/zero/votes/useVoteActions';
 
 interface ChoiceDecision {
   choice_id: string;
 }
 
-interface VoteOfflineTallyLike {
-  choice_id?: string | null;
-  phase?: string | null;
-  count?: number | null;
-}
+type VoteOfflineTallyLike = ChoiceOfflineTally;
 
 function normalizeMajorityType(value?: string | null): MajorityType {
   if (value === 'absolute' || value === 'two_thirds') {
@@ -86,33 +80,15 @@ export function AgendaVoteSection({
   voteSharePercent,
   majorityType,
   totalEligibleVoters,
-  voteId,
   attendanceMode = 'online',
   offlineTallies = [],
-  canManageOfflineResults = false,
-  offlineEligibleCount,
   className,
 }: AgendaVoteSectionProps) {
   const { t } = useTranslation();
-  const { upsertOfflineTally } = useVoteActions();
-  const [offlineDraft, setOfflineDraft] = useState<Record<string, string>>({});
 
   const phase = getVotingPhase(voteStatus);
   const isIndicationPhase = phase === 'indicative';
   const isClosed = phase === 'closed';
-  const allowsOfflineResults = attendanceMode === 'hybrid' || attendanceMode === 'offline';
-
-  useEffect(() => {
-    const nextDraft: Record<string, string> = {};
-    for (const tally of offlineTallies) {
-      if (!tally.choice_id || (tally.phase !== 'indicative' && tally.phase !== 'final')) {
-        continue;
-      }
-
-      nextDraft[`${tally.phase}:${tally.choice_id}`] = String(tally.count ?? 0);
-    }
-    setOfflineDraft(nextDraft);
-  }, [offlineTallies, voteId]);
 
   const {
     choices: choiceStats,
@@ -135,7 +111,8 @@ export function AgendaVoteSection({
       })),
       finalDecisions,
       totalEligibleVoters ?? totalFinal,
-      normalizeMajorityType(majorityType)
+      normalizeMajorityType(majorityType),
+      offlineTallies
     );
   }, [
     choiceStats.length,
@@ -143,6 +120,7 @@ export function AgendaVoteSection({
     finalDecisions,
     isClosed,
     majorityType,
+    offlineTallies,
     totalEligibleVoters,
     totalFinal,
   ]);
@@ -188,13 +166,23 @@ export function AgendaVoteSection({
       return undefined;
     }
 
+    if (isClosed) {
+      return computedVoteSummary?.winningPercent ?? undefined;
+    }
+
     const winningStats = choiceStats.find(choice => choice.choice.id === winningChoiceId);
     if (!winningStats) {
       return undefined;
     }
 
     return Math.round(winningStats.finalPercentage);
-  }, [choiceStats, voteSharePercent, winningChoiceId]);
+  }, [
+    choiceStats,
+    computedVoteSummary?.winningPercent,
+    isClosed,
+    voteSharePercent,
+    winningChoiceId,
+  ]);
 
   return (
     <Card className={cn(className)}>
@@ -306,87 +294,7 @@ export function AgendaVoteSection({
             </span>
           </div>
         )}
-
-        {allowsOfflineResults && canManageOfflineResults && voteId ? (
-          <div className="space-y-4 rounded-xl border border-dashed p-4">
-            <div className="space-y-1">
-              <h4 className="font-medium">Offline vote tallies</h4>
-              <p className="text-muted-foreground text-sm">
-                Enter aggregated offline or hybrid results for this vote.
-                {offlineEligibleCount != null
-                  ? ` Maximum offline votes per phase: ${offlineEligibleCount}.`
-                  : ''}
-              </p>
-            </div>
-            {(['indicative', 'final'] as const).map(currentPhase => (
-              <div key={currentPhase} className="space-y-3 rounded-lg border p-3">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium capitalize">{currentPhase}</span>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={async () => {
-                      const correlationId = `vote-offline-tally:${crypto.randomUUID()}`;
-                      console.info('[offline-roster]', {
-                        flow: 'vote-offline-tally',
-                        stage: 'submit-started',
-                        correlationId,
-                        voteId,
-                        phase: currentPhase,
-                      });
-                      for (const choice of choices) {
-                        const draftValue = offlineDraft[`${currentPhase}:${choice.id}`] ?? '0';
-                        await upsertOfflineTally({
-                          vote_id: voteId,
-                          phase: currentPhase,
-                          choice_id: choice.id,
-                          count: Math.max(0, Number.parseInt(draftValue, 10) || 0),
-                          debug_correlation_id: correlationId,
-                        });
-                      }
-                      console.info('[offline-roster]', {
-                        flow: 'vote-offline-tally',
-                        stage: 'submit-confirmed',
-                        correlationId,
-                        voteId,
-                        phase: currentPhase,
-                      });
-                    }}
-                  >
-                    Save {currentPhase}
-                  </Button>
-                </div>
-                <div className="grid gap-3">
-                  {choices.map(choice => (
-                    <div
-                      key={`${currentPhase}-${choice.id}`}
-                      className="grid gap-2 md:grid-cols-[1fr_120px] md:items-center"
-                    >
-                      <LabelText>{choice.label || 'Choice'}</LabelText>
-                      <Input
-                        type="number"
-                        min="0"
-                        value={offlineDraft[`${currentPhase}:${choice.id}`] ?? '0'}
-                        onChange={event =>
-                          setOfflineDraft(current => ({
-                            ...current,
-                            [`${currentPhase}:${choice.id}`]: event.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : null}
       </CardContent>
     </Card>
   );
-}
-
-function LabelText({ children }: { children: string }) {
-  return <span className="text-sm font-medium">{children}</span>;
 }

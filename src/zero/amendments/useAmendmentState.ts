@@ -337,3 +337,45 @@ export function useAmendmentState(options: AmendmentStateOptions = {}) {
     isLoading,
   };
 }
+
+export function useAgendaItemForwardingContext(agendaItemId?: string) {
+  const [stepRuns, result] = useQuery(
+    agendaItemId
+      ? queries.amendments.agendaItemForwardingContext({ agenda_item_id: agendaItemId })
+      : undefined
+  );
+
+  const currentStepRun = stepRuns?.[0] ?? null;
+  const processRunStepRuns = useMemo(
+    () =>
+      [...(currentStepRun?.process_run?.step_runs ?? [])].sort((left, right) => {
+        if ((left.branch_id ?? '') !== (right.branch_id ?? '')) {
+          return (left.branch_id ?? '').localeCompare(right.branch_id ?? '');
+        }
+
+        return left.order_index - right.order_index;
+      }),
+    [currentStepRun?.process_run?.step_runs]
+  );
+  const branchStepRuns = useMemo(
+    () =>
+      [...(currentStepRun?.branch?.step_runs ?? [])].sort(
+        (left, right) => left.order_index - right.order_index
+      ),
+    [currentStepRun?.branch?.step_runs]
+  );
+  const nextStepRun = useMemo(
+    () =>
+      branchStepRuns.find(step => step.order_index > (currentStepRun?.order_index ?? -1)) ?? null,
+    [branchStepRuns, currentStepRun?.order_index]
+  );
+
+  return {
+    currentStepRun,
+    nextStepRun,
+    branchStepRuns,
+    processRunStepRuns,
+    processRun: currentStepRun?.process_run ?? null,
+    isLoading: agendaItemId != null && result.type === 'unknown',
+  };
+}

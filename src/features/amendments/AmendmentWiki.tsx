@@ -66,7 +66,6 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
     supporterMapItems,
     upvotes,
     downvotes,
-    supporterCount,
     currentVoteValue,
     handleVote,
     cloneDialogOpen,
@@ -190,10 +189,6 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
             labelKey: 'components.labels.collaborators',
           },
           { value: subscriberCount, labelKey: 'components.labels.subscribers' },
-          {
-            value: amendment.supporters ?? supporterCount,
-            labelKey: 'components.labels.supporters',
-          },
           { value: amendment.clone_count ?? clones.length, labelKey: 'components.labels.clones' },
           { value: supportingGroups.length, labelKey: 'components.labels.supportingGroups' },
           { value: totalSupportingMembers, labelKey: 'components.labels.supportingMembers' },

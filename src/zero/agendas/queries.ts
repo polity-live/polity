@@ -58,6 +58,7 @@ export const agendaQueries = {
               ip.related('decisions', dq => dq.related('choice'))
             )
             .related('indicative_decisions', dq => dq.related('choice'))
+            .related('offline_tallies', oq => oq.related('choice'))
             .related('final_participations', fp =>
               fp.related('decisions', dq => dq.related('choice'))
             )

@@ -50,7 +50,7 @@ export function MembershipTabs({
   membershipsByUserLabel = 'Memberships by user',
   membershipsByRoleLabel = 'Memberships by role',
   compositionLabel = 'Zusammensetzung',
-  openAssignmentsLabel = 'Offene Auftraege',
+  openAssignmentsLabel = 'Offene Aufträge',
   guestsLabel = 'Guests',
   rolesLabel = 'Roles',
 }: MembershipTabsProps) {

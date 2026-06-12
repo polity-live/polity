@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useQuery, useZero } from '@rocicorp/zero/react';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { normalizeDelegateElectionMode } from '@/features/elections/logic/electionMode';
 import { attachProcessTaskToEvent } from '@/features/amendments/logic/attachProcessTaskToEvent';
@@ -27,6 +29,173 @@ interface AvailableGroupEvent {
   group_id?: string | null;
 }
 
+interface ProcessTaskMetadataLike {
+  amendmentTitle?: string;
+  groupName?: string;
+}
+
+function asProcessTaskMetadata(metadata: unknown): ProcessTaskMetadataLike | null {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    return null;
+  }
+
+  return metadata as ProcessTaskMetadataLike;
+}
+
+function matchesGeneratedProcessTaskTitle(
+  title: string,
+  type: GroupOpenAssignment['processTaskType'],
+  groupName: string,
+  amendmentTitle: string
+) {
+  const normalizedTitle = title.trim();
+
+  switch (type) {
+    case 'implementation_evaluation':
+      return [
+        `Umsetzung evaluieren: ${amendmentTitle}`,
+        `Review implementation: ${amendmentTitle}`,
+      ].includes(normalizedTitle);
+    case 'support_confirmation':
+      return [
+        `Unterstuetzung bestaetigen: ${amendmentTitle}`,
+        `Confirm support: ${amendmentTitle}`,
+      ].includes(normalizedTitle);
+    default:
+      return [
+        `Event planen: ${amendmentTitle}`,
+        `Schedule amendment vote for ${groupName}`,
+      ].includes(normalizedTitle);
+  }
+}
+
+function matchesGeneratedProcessTaskDescription(
+  description: string,
+  type: GroupOpenAssignment['processTaskType'],
+  groupName: string,
+  amendmentTitle: string
+) {
+  const normalizedDescription = description.trim();
+
+  switch (type) {
+    case 'implementation_evaluation':
+      return [
+        `Plane die Umsetzungspruefung fuer ${amendmentTitle} in ${groupName}.`,
+        `Plan the implementation review for ${amendmentTitle} in ${groupName}.`,
+      ].includes(normalizedDescription);
+    case 'support_confirmation':
+      return [
+        `Diese Gruppe muss ihre Unterstuetzung fuer ${amendmentTitle} erneut bestaetigen.`,
+        `This group needs to confirm its support for ${amendmentTitle} again.`,
+      ].includes(normalizedDescription);
+    default:
+      return [
+        `Fuer ${amendmentTitle} fehlt noch ein passendes Event in ${groupName}.`,
+        `No eligible event is selected yet for ${groupName}.`,
+      ].includes(normalizedDescription);
+  }
+}
+
+function localizeOpenAssignment(
+  assignment: GroupOpenAssignment,
+  t: TFunction
+): GroupOpenAssignment {
+  if (assignment.kind !== 'process_task') {
+    return assignment;
+  }
+
+  const metadata = asProcessTaskMetadata(assignment.processTaskMetadata);
+  const amendmentTitle =
+    assignment.amendment?.title ||
+    metadata?.amendmentTitle ||
+    t('features.groups.memberships.openAssignments.generated.amendmentFallback', 'Amendment');
+  const groupName =
+    metadata?.groupName || t('features.groups.memberships.openAssignments.thisGroup', 'this group');
+
+  const shouldReplaceTitle =
+    !assignment.title ||
+    matchesGeneratedProcessTaskTitle(
+      assignment.title,
+      assignment.processTaskType,
+      groupName,
+      amendmentTitle
+    );
+  const shouldReplaceDescription =
+    !assignment.description ||
+    matchesGeneratedProcessTaskDescription(
+      assignment.description,
+      assignment.processTaskType,
+      groupName,
+      amendmentTitle
+    );
+
+  const localizedTitle = (() => {
+    switch (assignment.processTaskType) {
+      case 'implementation_evaluation':
+        return t(
+          'features.groups.memberships.openAssignments.generated.implementationEvaluationTitle',
+          {
+            amendmentTitle,
+            defaultValue: 'Review implementation: {{amendmentTitle}}',
+          }
+        );
+      case 'support_confirmation':
+        return t('features.groups.memberships.openAssignments.generated.supportConfirmationTitle', {
+          amendmentTitle,
+          defaultValue: 'Confirm support: {{amendmentTitle}}',
+        });
+      default:
+        return t(
+          'features.groups.memberships.openAssignments.generated.scheduleAmendmentVoteTitle',
+          {
+            groupName,
+            defaultValue: 'Schedule amendment vote for {{groupName}}',
+          }
+        );
+    }
+  })();
+
+  const localizedDescription = (() => {
+    switch (assignment.processTaskType) {
+      case 'implementation_evaluation':
+        return t(
+          'features.groups.memberships.openAssignments.generated.implementationEvaluationDescription',
+          {
+            amendmentTitle,
+            groupName,
+            defaultValue: 'Plan the implementation review for {{amendmentTitle}} in {{groupName}}.',
+          }
+        );
+      case 'support_confirmation':
+        return t(
+          'features.groups.memberships.openAssignments.generated.supportConfirmationDescription',
+          {
+            amendmentTitle,
+            defaultValue: 'This group needs to confirm its support for {{amendmentTitle}} again.',
+          }
+        );
+      default:
+        return t(
+          'features.groups.memberships.openAssignments.generated.scheduleAmendmentVoteDescription',
+          {
+            groupName,
+            defaultValue: 'No eligible event is selected yet for {{groupName}}.',
+          }
+        );
+    }
+  })();
+
+  return {
+    ...assignment,
+    title: shouldReplaceTitle ? localizedTitle : assignment.title,
+    description: shouldReplaceDescription ? localizedDescription : assignment.description,
+    dueAt:
+      assignment.dueAt && Number.isFinite(assignment.dueAt)
+        ? new Date(assignment.dueAt).valueOf()
+        : assignment.dueAt,
+  };
+}
+
 function isFutureOrOngoingEvent(event: AvailableGroupEvent, referenceTime: number) {
   if (event.status === 'cancelled') {
     return false;
@@ -37,6 +206,7 @@ function isFutureOrOngoingEvent(event: AvailableGroupEvent, referenceTime: numbe
 }
 
 export function useGroupOpenAssignments(groupId: string) {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const zero = useZero();
   const { group } = useGroupById(groupId);
@@ -58,8 +228,8 @@ export function useGroupOpenAssignments(groupId: string) {
         allocations: allocations || [],
         roles,
         processTasks: processTasks || [],
-      }),
-    [allocations, groupId, processTasks, roles]
+      }).map(assignment => localizeOpenAssignment(assignment, t)),
+    [allocations, groupId, i18n.language, processTasks, roles, t]
   );
 
   const availableEvents = useMemo(() => {

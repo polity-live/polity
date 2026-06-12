@@ -38,21 +38,27 @@ import {
   TimelineCardBadge,
 } from './TimelineCardBase';
 
+type AmendmentTimelineStatus =
+  | 'edit'
+  | 'suggest_internal'
+  | 'vote_internal'
+  | 'view'
+  | 'suggest_event'
+  | 'vote_event'
+  | 'passed'
+  | 'rejected'
+  | 'accepted'
+  | 'approved'
+  | 'pending'
+  | 'withdrawn';
+
 export interface AmendmentTimelineCardProps {
   amendment: {
     id: string;
     title: string;
     subtitle?: string;
     description?: string;
-    status:
-      | 'edit'
-      | 'suggest_internal'
-      | 'vote_internal'
-      | 'view'
-      | 'suggest_event'
-      | 'vote_event'
-      | 'passed'
-      | 'rejected';
+    status: AmendmentTimelineStatus;
     supportPercentage?: number;
     supportCount?: number;
     opposeCount?: number;
@@ -96,7 +102,7 @@ export interface AmendmentTimelineCardProps {
  * Status badge configuration
  */
 const STATUS_CONFIG: Record<
-  string,
+  AmendmentTimelineStatus,
   { variant: 'default' | 'secondary' | 'destructive' | 'outline' }
 > = {
   edit: { variant: 'secondary' },
@@ -107,6 +113,31 @@ const STATUS_CONFIG: Record<
   vote_event: { variant: 'destructive' },
   passed: { variant: 'default' },
   rejected: { variant: 'destructive' },
+  accepted: { variant: 'default' },
+  approved: { variant: 'default' },
+  pending: { variant: 'secondary' },
+  withdrawn: { variant: 'outline' },
+};
+
+const STATUS_LABEL_KEYS: Partial<
+  Record<AmendmentTimelineStatus, { fallback: string; key: string }>
+> = {
+  accepted: {
+    key: 'features.groups.common.status.accepted',
+    fallback: 'Accepted',
+  },
+  approved: {
+    key: 'features.groups.common.status.approved',
+    fallback: 'Approved',
+  },
+  pending: {
+    key: 'features.groups.common.status.pending',
+    fallback: 'Pending',
+  },
+  withdrawn: {
+    key: 'features.groups.common.status.withdrawn',
+    fallback: 'Withdrawn',
+  },
 };
 
 /**
@@ -145,9 +176,17 @@ export function AmendmentTimelineCard({
   const amendmentDescription = normalizeTimelineText(amendment.description);
 
   const statusConfig = STATUS_CONFIG[amendment.status] || STATUS_CONFIG.view;
-  const statusOption = getEditingModeOption(amendment.status, t);
+  const statusLabelConfig = STATUS_LABEL_KEYS[amendment.status];
+  const statusLabel = statusLabelConfig
+    ? t(statusLabelConfig.key, statusLabelConfig.fallback)
+    : getEditingModeOption(amendment.status, t).label;
   const isVoting = amendment.status === 'vote_internal' || amendment.status === 'vote_event';
-  const isCompleted = amendment.status === 'passed' || amendment.status === 'rejected';
+  const isCompleted =
+    amendment.status === 'passed' ||
+    amendment.status === 'accepted' ||
+    amendment.status === 'approved' ||
+    amendment.status === 'rejected' ||
+    amendment.status === 'withdrawn';
 
   const resolvedCollaborationStatus = amendment.collaborationStatus ?? collaboration.status;
   const isCollaborator =
@@ -247,7 +286,7 @@ export function AmendmentTimelineCard({
             variant={statusConfig.variant}
             className={cn('px-3 py-1 text-xs', isVoting && 'animate-pulse')}
           >
-            {statusOption.label}
+            {statusLabel}
           </Badge>
         </div>
       </TimelineCardHeader>
@@ -286,7 +325,10 @@ export function AmendmentTimelineCard({
               value={amendment.supportPercentage}
               className={cn(
                 'h-2',
-                amendment.status === 'passed' && '[&>div]:bg-green-500',
+                (amendment.status === 'passed' ||
+                  amendment.status === 'accepted' ||
+                  amendment.status === 'approved') &&
+                  '[&>div]:bg-green-500',
                 amendment.status === 'rejected' && '[&>div]:bg-red-500'
               )}
             />

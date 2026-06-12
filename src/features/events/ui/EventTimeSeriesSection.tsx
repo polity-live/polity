@@ -33,7 +33,10 @@ interface EventTimeSeriesSectionProps {
   recurrenceWeekdays: number[];
   onRecurrenceWeekdaysChange: (weekdays: number[]) => void;
   deadlines?: EventTimeSeriesDeadlineField[];
+  schedulingWindowMessage?: string | null;
   validationMessage?: string | null;
+  minDate?: string;
+  maxDate?: string;
 }
 
 function buildDateTimeLabel(date: string, time: string, fallback: string) {
@@ -59,7 +62,10 @@ export function EventTimeSeriesSection({
   recurrenceWeekdays,
   onRecurrenceWeekdaysChange,
   deadlines = [],
+  schedulingWindowMessage,
   validationMessage,
+  minDate,
+  maxDate,
 }: EventTimeSeriesSectionProps) {
   const { t } = useTranslation();
   const recurrenceRule =
@@ -121,6 +127,12 @@ export function EventTimeSeriesSection({
         </div>
       </div>
 
+      {schedulingWindowMessage ? (
+        <div className="rounded-xl border border-sky-500/30 bg-sky-500/10 px-4 py-3 text-sm">
+          {schedulingWindowMessage}
+        </div>
+      ) : null}
+
       {validationMessage ? (
         <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm">
           {validationMessage}
@@ -134,6 +146,8 @@ export function EventTimeSeriesSection({
           endDate={endDate}
           endTime={endTime}
           onChange={onDateTimeChange}
+          minDate={minDate}
+          maxDate={maxDate}
         />
       </div>
 

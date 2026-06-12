@@ -1,75 +1,101 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildCreateEventSearchFromProcessTask,
+  getProcessTaskSchedulingWindow,
+  getSchedulingWindowDisplayLabel,
   getSchedulingWindowValidationMessage,
   isEventWithinSchedulingWindow,
-  parseProcessTaskScheduleMetadata,
-} from '@/features/amendments/logic/processTaskEventScheduling';
+} from '../processTaskEventScheduling';
 
 describe('processTaskEventScheduling', () => {
-  it('builds task-aware event create search params without empty window values', () => {
-    const search = buildCreateEventSearchFromProcessTask({
-      task: {
-        id: 'task-1',
-        process_run_id: 'run-1',
-        step_run_id: 'step-1',
-        due_at: null,
-        metadata: {
-          amendmentId: 'amendment-1',
-          requiredAfter: new Date('2026-06-10T18:30:00').getTime(),
-          requiredBefore: new Date('2026-06-12T20:00:00').getTime(),
-        },
+  it('builds a readable scheduling window label', () => {
+    expect(
+      getSchedulingWindowDisplayLabel({
+        minStartDate: '2026-06-10',
+        minStartTime: '09:00',
+        maxStartDate: '2026-06-12',
+        maxStartTime: '18:00',
+      })
+    ).toBe('Erlaubter Zeitraum fuer diesen Auftrag: 2026-06-10 09:00 bis 2026-06-12 18:00.');
+  });
+
+  it('returns the concrete window label as validation feedback when the event is outside the allowed range', () => {
+    expect(
+      getSchedulingWindowValidationMessage({
+        startDate: '2026-06-09',
+        startTime: '12:00',
+        minStartDate: '2026-06-10',
+        minStartTime: '09:00',
+        maxStartDate: '2026-06-12',
+        maxStartTime: '18:00',
+      })
+    ).toBe('Erlaubter Zeitraum fuer diesen Auftrag: 2026-06-10 09:00 bis 2026-06-12 18:00.');
+
+    expect(
+      getSchedulingWindowValidationMessage({
+        startDate: '2026-06-13',
+        startTime: '12:00',
+        minStartDate: '2026-06-10',
+        minStartTime: '09:00',
+        maxStartDate: '2026-06-12',
+        maxStartTime: '18:00',
+      })
+    ).toBe('Erlaubter Zeitraum fuer diesen Auftrag: 2026-06-10 09:00 bis 2026-06-12 18:00.');
+  });
+
+  it('derives the event scheduling window and create-event search defaults from a process task', () => {
+    const task = {
+      id: 'task-1',
+      process_run_id: 'run-1',
+      step_run_id: 'step-1',
+      due_at: null,
+      metadata: {
+        amendmentId: 'amendment-1',
+        requiredAfter: new Date(2026, 5, 10, 9, 0, 0, 0).getTime(),
+        requiredBefore: new Date(2026, 5, 12, 18, 0, 0, 0).getTime(),
       },
-      groupId: 'group-1',
-      returnTo: '/group/group-1?tab=assignments',
+    };
+
+    expect(getProcessTaskSchedulingWindow(task)).toEqual({
+      minStartAt: new Date(2026, 5, 10, 9, 0, 0, 0).getTime(),
+      maxStartAt: new Date(2026, 5, 12, 18, 0, 0, 0).getTime(),
     });
 
-    expect(search).toMatchObject({
+    expect(
+      buildCreateEventSearchFromProcessTask({
+        task,
+        groupId: 'group-1',
+        returnTo: '/group/group-1?tab=assignments',
+      })
+    ).toEqual({
       groupId: 'group-1',
       processTaskId: 'task-1',
       processRunId: 'run-1',
       stepRunId: 'step-1',
       amendmentId: 'amendment-1',
       minStartDate: '2026-06-10',
-      minStartTime: '18:30',
+      minStartTime: '09:00',
       maxStartDate: '2026-06-12',
-      maxStartTime: '20:00',
+      maxStartTime: '18:00',
       returnTo: '/group/group-1?tab=assignments',
     });
   });
 
-  it('parses structured metadata and validates event start windows', () => {
-    const metadata = parseProcessTaskScheduleMetadata({
-      requiredAfter: new Date('2026-06-10T18:30:00').getTime(),
-      requiredBefore: new Date('2026-06-12T20:00:00').getTime(),
-      sourceGroupId: 'source-1',
-      targetGroupId: 'target-1',
-      pathMode: 'workflow',
-    });
-
-    expect(metadata).toMatchObject({
-      sourceGroupId: 'source-1',
-      targetGroupId: 'target-1',
-      pathMode: 'workflow',
-    });
-
-    expect(
-      getSchedulingWindowValidationMessage({
-        startDate: '2026-06-10',
-        startTime: '17:00',
-        minStartDate: '2026-06-10',
-        minStartTime: '18:30',
-      })
-    ).toContain('nach dem vorherigen Prozessschritt');
+  it('checks event start dates against the computed scheduling window', () => {
+    const minStartAt = new Date(2026, 5, 10, 9, 0, 0, 0).getTime();
+    const maxStartAt = new Date(2026, 5, 12, 18, 0, 0, 0).getTime();
 
     expect(
       isEventWithinSchedulingWindow(
-        { start_date: new Date('2026-06-11T19:00:00').getTime() },
-        {
-          minStartAt: new Date('2026-06-10T18:30:00').getTime(),
-          maxStartAt: new Date('2026-06-12T20:00:00').getTime(),
-        }
+        { start_date: new Date(2026, 5, 11, 12, 0, 0, 0).getTime() },
+        { minStartAt, maxStartAt }
       )
     ).toBe(true);
+    expect(
+      isEventWithinSchedulingWindow(
+        { start_date: new Date(2026, 5, 9, 12, 0, 0, 0).getTime() },
+        { minStartAt, maxStartAt }
+      )
+    ).toBe(false);
   });
 });

@@ -797,6 +797,17 @@ export function useGroupAmendments(groupId: string) {
   };
 }
 
+export function useGroupAmendmentEventStepRuns(eventIds: string[]) {
+  const [stepRuns, stepRunsResult] = useQuery(
+    eventIds.length > 0 ? queries.groups.amendmentEventStepRunsByEventIds({ eventIds }) : undefined
+  );
+
+  return {
+    stepRuns: stepRuns || [],
+    isLoading: eventIds.length > 0 && stepRunsResult.type === 'unknown',
+  };
+}
+
 // ── Group Documents ─────────────────────────────────────────────────
 
 export function useGroupDocuments(groupId: string) {

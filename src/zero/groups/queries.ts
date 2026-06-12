@@ -297,6 +297,22 @@ export const groupQueries = {
       .orderBy('updated_at', 'desc')
   ),
 
+  /** Amendment process steps attached to a group's events */
+  amendmentEventStepRunsByEventIds: defineQuery(
+    z.object({ eventIds: z.array(z.string()) }),
+    ({ args: { eventIds } }) =>
+      zql.amendment_process_step_run
+        .where('event_id', 'IN', eventIds)
+        .related('event')
+        .related('target_group')
+        .related('process_run', q =>
+          q.related('amendment', aq =>
+            aq.related('amendment_hashtags', hq => hq.related('hashtag')).related('created_by')
+          )
+        )
+        .orderBy('updated_at', 'desc')
+  ),
+
   /** Amendments for a group with nested documents→collaborators→user (for group document lists) */
   amendmentsWithDocuments: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
     zql.amendment
@@ -440,6 +456,9 @@ export type GroupGuestAccessWithRolesAndRightsRow = QueryRowType<
 export type GroupRoleFullRow = QueryRowType<typeof groupQueries.rolesFull>;
 export type GroupTodoRow = QueryRowType<typeof groupQueries.todosByGroup>;
 export type GroupAmendmentRow = QueryRowType<typeof groupQueries.amendmentsByGroup>;
+export type GroupAmendmentEventStepRunRow = QueryRowType<
+  typeof groupQueries.amendmentEventStepRunsByEventIds
+>;
 export type GroupAmendmentWithDocsRow = QueryRowType<typeof groupQueries.amendmentsWithDocuments>;
 export type GroupDirectMembershipRow = QueryRowType<typeof groupQueries.directMemberships>;
 export type GroupSubscriberRow = QueryRowType<typeof groupQueries.subscribersByGroup>;

@@ -11,13 +11,7 @@ import {
 } from '@/features/shared/ui/ui/card';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Label } from '@/features/shared/ui/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/features/shared/ui/ui/select';
+import { ToggleGroup, ToggleGroupItem } from '@/features/shared/ui/ui/toggle-group';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { Filter, Hash, Search as SearchIcon } from 'lucide-react';
 import type { AmendmentFilters } from '../hooks/useAmendmentFilters';
@@ -46,6 +40,12 @@ export function AmendmentSearchAndFilters({
   onClearHashtagFilter,
 }: AmendmentSearchAndFiltersProps) {
   const { t } = useTranslation();
+  const statusLabels: Record<string, string> = {
+    accepted: t('features.groups.common.status.acceptedApproved', 'Accepted / Approved'),
+    pending: t('features.groups.common.status.pending', 'Pending'),
+    rejected: t('features.groups.common.status.rejected', 'Rejected'),
+    withdrawn: t('features.groups.common.status.withdrawn', 'Withdrawn'),
+  };
 
   return (
     <div className="space-y-4">
@@ -72,7 +72,7 @@ export function AmendmentSearchAndFilters({
           </span>
           {filters.statusFilter !== 'all' && (
             <Badge variant="secondary" className="cursor-pointer" onClick={onClearStatusFilter}>
-              Status: {filters.statusFilter}
+              Status: {statusLabels[filters.statusFilter] ?? filters.statusFilter}
               <button
                 className="hover:text-destructive ml-2"
                 onClick={e => {
@@ -116,28 +116,52 @@ export function AmendmentSearchAndFilters({
               <Label htmlFor="status-filter">
                 {t('features.groups.common.filters.status', 'Filter by Status')}
               </Label>
-              <Select value={filters.statusFilter} onValueChange={onStatusChange}>
-                <SelectTrigger id="status-filter">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">
-                    {t('features.groups.common.filters.allStatuses', 'All Statuses')}
-                  </SelectItem>
-                  <SelectItem value="supported">
-                    {t('features.groups.common.status.supported', 'Supported')}
-                  </SelectItem>
-                  <SelectItem value="accepted">
-                    {t('features.groups.common.status.accepted', 'Accepted')}
-                  </SelectItem>
-                  <SelectItem value="rejected">
-                    {t('features.groups.common.status.rejected', 'Rejected')}
-                  </SelectItem>
-                  <SelectItem value="withdrawn">
-                    {t('features.groups.common.status.withdrawn', 'Withdrawn')}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              <ToggleGroup
+                id="status-filter"
+                type="single"
+                variant="outline"
+                className="flex flex-wrap justify-start"
+                value={filters.statusFilter}
+                onValueChange={value => {
+                  if (value) {
+                    onStatusChange(value);
+                  }
+                }}
+              >
+                <ToggleGroupItem
+                  value="all"
+                  aria-label={t('features.groups.common.filters.allStatuses', 'All Statuses')}
+                >
+                  {t('features.groups.common.filters.allStatuses', 'All Statuses')}
+                </ToggleGroupItem>
+                <ToggleGroupItem
+                  value="accepted"
+                  aria-label={t(
+                    'features.groups.common.status.acceptedApproved',
+                    'Accepted / Approved'
+                  )}
+                >
+                  {t('features.groups.common.status.acceptedApproved', 'Accepted / Approved')}
+                </ToggleGroupItem>
+                <ToggleGroupItem
+                  value="pending"
+                  aria-label={t('features.groups.common.status.pending', 'Pending')}
+                >
+                  {t('features.groups.common.status.pending', 'Pending')}
+                </ToggleGroupItem>
+                <ToggleGroupItem
+                  value="rejected"
+                  aria-label={t('features.groups.common.status.rejected', 'Rejected')}
+                >
+                  {t('features.groups.common.status.rejected', 'Rejected')}
+                </ToggleGroupItem>
+                <ToggleGroupItem
+                  value="withdrawn"
+                  aria-label={t('features.groups.common.status.withdrawn', 'Withdrawn')}
+                >
+                  {t('features.groups.common.status.withdrawn', 'Withdrawn')}
+                </ToggleGroupItem>
+              </ToggleGroup>
             </div>
 
             <div className="space-y-2">

@@ -80,10 +80,120 @@ export const groupsTranslations = {
     noMembers: 'Keine Mitglieder gefunden',
     searchPlaceholder: 'Mitglieder nach Name, Rolle oder Status suchen...',
     invite: 'Mitglied einladen',
+    inviteMembers: 'Mitglieder einladen',
+    inviteMember: 'Mitglied einladen',
+    inviteGuest: 'Gast einladen',
+    inviteGuests: 'Gaeste einladen',
+    inviteMembersDescription:
+      'Suche und waehle Nutzer aus, die eingeladen werden sollen, und lege fest, mit welchen Rollen sie starten.',
+    inviteRoleDescription:
+      'Waehle eine oder mehrere Rollen fuer eingeladene Personen. Die Standard-Einladungsrolle ist vorausgewaehlt.',
+    inviteMembersEmptyRoles: 'Erstelle zuerst eine Rolle, bevor du Mitglieder einlaedst.',
+    inviteGuestsDescription:
+      'Lade Nutzer als Gaeste mit Gastrollen ein. Gaeste erhalten Zugriffsrechte, sind aber keine offiziellen Mitglieder.',
+    inviteGuestsRoleDescription:
+      'Gast-Einladungen muessen immer mindestens eine Gastrolle enthalten.',
+    inviteGuestsEmptyRoles: 'Erstelle zuerst eine Gastrolle, bevor du Gaeste einlaedst.',
+    guestOnlyInviteDescription:
+      'Diese Geschwistergruppe erlaubt nur Gast-Einladungen. Offizielle Mitgliedsrollen sind hier nicht verfuegbar.',
+    guestOnlyRoleDescription:
+      'Fuer diese Gruppe koennen nur Gastrollen als Einladungs-Standard verwendet werden.',
+    guestOnlyEmptyRoles:
+      'Erstelle zuerst eine Gastrolle, bevor du Personen in diese Gruppe einlaedst.',
     manage: 'Mitgliedschaften verwalten',
     tabs: {
+      membershipsByUser: 'Mitgliedschaften nach Benutzer',
+      membershipsByRole: 'Mitgliedschaften nach Rolle',
       composition: 'Zusammensetzung',
-      openAssignments: 'Offene Auftraege',
+      openAssignments: 'Offene Aufträge',
+      guests: 'Gaeste',
+      roles: 'Rollen',
+    },
+    offlineRoster: {
+      title: 'Alle Nutzer (inkl. Offline-Nutzer ohne Registrierung)',
+      description:
+        'Einige reale Gruppenmitglieder melden sich nie auf der Plattform an. Mit dieser Liste kannst du diese Offline-Nutzer erfassen, bei Bedarf aktiven Plattformnutzern zuordnen und Zaehler sowie Delegiertenberechnungen an der realen Gesamtmitgliedschaft ausrichten.',
+      manageDialogTitle: 'Offline-Nutzer verwalten',
+      manageDialogDescription:
+        'Fuege einzelne Offline-Nutzer hinzu oder importiere sie per CSV, damit die vollstaendige Gruppenliste erhalten bleibt.',
+    },
+    openAssignments: {
+      title: 'Offene Aufträge',
+      titleWithCount: 'Offene Aufträge ({{count}})',
+      description:
+        'Wahl-, Rollen- und Antragsaufträge dieser Gruppe im gleichen Tabellenformat wie die anderen Mitgliedschaftsbereiche.',
+      loadingDescription: 'Die Aufträge dieser Gruppe werden geladen.',
+      emptyDescription: 'Aktuell gibt es keine offenen Wahl-, Rollen- oder Antragsaufträge.',
+      columns: {
+        assignment: 'Auftrag',
+        type: 'Typ',
+        status: 'Status',
+        amendment: 'Antrag',
+        events: 'Veranstaltungen',
+        action: 'Aktion',
+      },
+      status: {
+        completed: 'Erledigt',
+        scheduled: 'Geplant',
+        open: 'Offen',
+      },
+      type: {
+        delegateElection: 'Delegiertenwahl',
+        roleRenewal: 'Rollenneuwahl',
+        implementationEvaluation: 'Umsetzungspruefung',
+        supportConfirmation: 'Unterstützung',
+        processTask: 'Antragsprozess',
+        assignment: 'Auftrag',
+      },
+      seatCount: 'Sitze',
+      completedSeatCount: 'gewaehlt',
+      scheduledSeatCount: 'geplant',
+      openSeatCount: 'offen',
+      dueAt: 'Faellig',
+      noAmendment: 'Kein Antrag',
+      targetEventLabel: 'Ziel',
+      linkedEventLabel: 'Angehängt',
+      noEventLinked: 'Noch keine Veranstaltung verknüpft',
+      completedBanner: 'Vollständig geplant oder abgeschlossen',
+      showAgendaItems: 'Neue Agenda items anzeigen',
+      thisGroup: 'diese Gruppe',
+      noEligibleEventsForGroup:
+        'Für {{groupName}} gibt es gerade kein anstehendes oder laufendes Event.',
+      createEvent: 'Veranstaltung erstellen',
+      delegateElectionHelp:
+        'Die Delegierten müssen auf einem anstehenden oder laufenden Event von {{groupName}} gewählt werden.',
+      searchDelegateElectionEvent: 'Event für Delegiertenwahl suchen',
+      selectEventLabel: 'An welche Veranstaltung soll der Auftrag gehängt werden?',
+      selectEventPlaceholder: 'Veranstaltung auswählen',
+      eventFallback: 'Veranstaltung',
+      scheduleImplementationReview: 'Review planen',
+      scheduleConfirmation: 'Bestätigung planen',
+      attachToEvent: 'An Event anhängen',
+      generated: {
+        amendmentFallback: 'Änderungsantrag',
+        implementationEvaluationTitle: 'Umsetzung evaluieren: {{amendmentTitle}}',
+        implementationEvaluationDescription:
+          'Plane die Umsetzungsprüfung für {{amendmentTitle}} in {{groupName}}.',
+        supportConfirmationTitle: 'Unterstützung bestätigen: {{amendmentTitle}}',
+        supportConfirmationDescription:
+          'Diese Gruppe muss ihre Unterstützung für {{amendmentTitle}} erneut bestätigen.',
+        scheduleAmendmentVoteTitle: 'Abstimmung über Änderungsantrag für {{groupName}} planen',
+        scheduleAmendmentVoteDescription:
+          'Für {{groupName}} ist noch kein geeignetes Event ausgewählt.',
+      },
+      delegateDialog: {
+        title: 'Wahl-Event für Delegiertenauftrag suchen',
+        description:
+          'Wähle ein anstehendes oder laufendes Event von {{groupName}} aus, auf dem die Delegiertenwahl angelegt werden soll.',
+        remainingSeats: '{{count}} Delegierte zu wählen',
+        targetEvent: 'Ziel-Event der Delegiertenwahl:',
+        searchLabel: 'Suche anstehende oder laufende Events',
+        searchPlaceholder: 'Suche nach Titel',
+        emptySearch:
+          'Für die aktuelle Suche wurden keine anstehenden oder laufenden Events gefunden.',
+        cancel: 'Abbrechen',
+        create: 'Wahl erstellen',
+      },
     },
     composition: {
       title: 'Zusammensetzung',
@@ -192,6 +302,23 @@ export const groupsTranslations = {
     noAmendments: 'Keine Anträge gefunden',
     searchPlaceholder: 'Anträge suchen...',
     createAmendment: 'Antrag erstellen',
+  },
+  common: {
+    filters: {
+      title: 'Filter',
+      refine: 'Suchergebnisse verfeinern',
+      status: 'Nach Status filtern',
+      allStatuses: 'Alle Status',
+      hashtag: 'Nach Hashtag filtern',
+      filteringBy: 'Gefiltert nach:',
+      active: 'Aktive Filter:',
+    },
+    status: {
+      acceptedApproved: 'Angenommen / Genehmigt',
+      pending: 'Ausstehend',
+      rejected: 'Abgelehnt',
+      withdrawn: 'Zurückgezogen',
+    },
   },
   network: {
     title: 'Netzwerk',

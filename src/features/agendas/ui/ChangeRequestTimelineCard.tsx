@@ -28,6 +28,7 @@ import { VoteResultsDisplay, type VoteBarOption } from '@/features/vote-cast/ui/
 import { VoteResultSentence } from '@/features/vote-cast/ui/VoteResultSentence';
 import {
   computeVoteResultSummary,
+  type ChoiceOfflineTally,
   type MajorityType,
   type VoteResult,
 } from '@/features/vote-cast/logic/computeVoteResults';
@@ -231,14 +232,18 @@ export function ChangeRequestTimelineCard({
     [vote?.indicative_decisions]
   );
   const finalDecisions = useMemo(() => vote?.final_decisions ?? [], [vote?.final_decisions]);
+  const offlineTallies = useMemo<readonly ChoiceOfflineTally[]>(
+    () => vote?.offline_tallies ?? [],
+    [vote?.offline_tallies]
+  );
 
   const {
     choices: choiceStats,
     totalIndicative,
     totalFinal,
   } = useMemo(
-    () => calculateVoteStats(choices, indicativeDecisions, finalDecisions),
-    [choices, indicativeDecisions, finalDecisions]
+    () => calculateVoteStats(choices, indicativeDecisions, finalDecisions, offlineTallies),
+    [choices, finalDecisions, indicativeDecisions, offlineTallies]
   );
 
   const totalVoters = vote?.voters?.length ?? 0;
@@ -256,13 +261,15 @@ export function ChangeRequestTimelineCard({
       })),
       finalDecisions,
       totalVoters || totalFinal,
-      normalizeMajorityType(vote?.majority_type)
+      normalizeMajorityType(vote?.majority_type),
+      offlineTallies
     );
   }, [
     choiceStats.length,
     choices,
     finalDecisions,
     isClosed,
+    offlineTallies,
     totalFinal,
     totalVoters,
     vote?.majority_type,
@@ -304,13 +311,17 @@ export function ChangeRequestTimelineCard({
       return undefined;
     }
 
+    if (isClosed) {
+      return computedVoteSummary?.winningPercent ?? undefined;
+    }
+
     const winningStats = choiceStats.find(choice => choice.choice.id === winningChoiceId);
     if (!winningStats) {
       return undefined;
     }
 
     return Math.round(winningStats.finalPercentage);
-  }, [choiceStats, winningChoiceId]);
+  }, [choiceStats, computedVoteSummary?.winningPercent, isClosed, winningChoiceId]);
   const currentPhaseVoteCount = isFinal || isClosed ? totalFinal : totalIndicative;
 
   const handleCastVote = async (choiceId: string) => {

@@ -5,14 +5,12 @@ import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { useEventAgendaItem } from '../hooks/useEventAgendaItem';
 import type { CandidatesByElectionRow } from '@/zero/elections/queries';
 import type { ChoicesByVoteRow } from '@/zero/votes/queries';
-import { TransferAgendaItemDialog } from './TransferAgendaItemDialog';
 import { AgendaItemContextCard } from './AgendaItemContextCard';
 import { EventSearchCard } from '@/features/search/ui/EventSearchCard';
-import { AgendaRelatedAmendmentCard } from './AgendaRelatedEntityCard';
 import { AgendaSpeakerListSection } from './AgendaSpeakerListSection';
 import { AgendaVoteSection } from './AgendaVoteSection';
 import { AgendaElectionSection } from './AgendaElectionSection';
-import { OfflineElectionTallyDialog } from './OfflineElectionTallyDialog';
+import { OfflineTallyDialog } from './OfflineTallyDialog';
 import { AgendaActionBar } from './AgendaActionBar';
 import { EditElectionVoteDialog } from './EditElectionVoteDialog';
 import { useAgendaActionBar } from '../hooks/useAgendaActionBar';
@@ -24,6 +22,7 @@ import { usePermissions } from '@/zero/rbac';
 import { useVotingPasswordActions } from '@/zero/voting-password/useVotingPasswordActions';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useElectionActions } from '@/zero/elections/useElectionActions';
+import { useVoteActions } from '@/zero/votes/useVoteActions';
 import { useEventById } from '@/zero/events';
 import { gatedToast as toast } from '@/features/notifications/utils/gated-toast';
 import type { Value } from 'platejs';
@@ -39,12 +38,37 @@ import { extractSuggestionContent } from '@/features/change-requests/utils/sugge
 import type { ChangeRequestDiffData } from './ChangeRequestTimelineCard';
 import { getAgendaRuntimeStatus } from '../logic/getAgendaRuntimeStatus';
 import { normalizeElectionMode } from '@/features/elections/logic/electionMode';
+import {
+  buildAmendmentPathGroupTypeById,
+  buildAmendmentPathVisualizationData,
+  findLikelyActiveAmendmentStep,
+  getFirstUnresolvedAmendmentStepId,
+  isLikelyActiveAmendmentStep,
+} from '@/features/amendments/logic/buildAmendmentPathVisualizationData';
+import {
+  getOfflineTallyDialogTitle,
+  getOfflineTallySuccessMessage,
+  getOfflineTallyTooltip,
+  resolveOfflineTallyMode,
+  resolveOfflineTallyPhase,
+  shouldShowOfflineTallyToolbarButton,
+} from '../logic/offlineTallyToolbar';
 
 function getEffectiveVotingPhase(status?: string | null, fallback?: string | null): string | null {
-  if (status === 'final' || status === 'final_vote') return 'final_vote';
-  if (status === 'closed') return 'closed';
-  if (status === 'indicative') return 'indication';
-  return fallback ?? null;
+  const normalizePhase = (value?: string | null) => {
+    if (value === 'final' || value === 'final_vote') return 'final_vote';
+    if (value === 'closed') return 'closed';
+    if (value === 'indicative' || value === 'indication') return 'indication';
+    return null;
+  };
+
+  const resolvedStatus = normalizePhase(status);
+  const resolvedFallback = normalizePhase(fallback);
+
+  if (resolvedStatus === 'closed' || resolvedFallback === 'closed') return 'closed';
+  if (resolvedStatus === 'final_vote' || resolvedFallback === 'final_vote') return 'final_vote';
+
+  return 'indication';
 }
 
 function getEffectiveCRVotingPhase(
@@ -99,6 +123,7 @@ export function EventAgendaItemDetail({
     userElector,
     userVoter,
     estimatedStartTime,
+    forwardingContext,
     handleDelete,
     handleAddToSpeakerList,
   } = useEventAgendaItem(eventId, agendaItemId);
@@ -109,12 +134,14 @@ export function EventAgendaItemDetail({
 
   const { can, canVote, canBeCandidate } = usePermissions({ eventId });
   const canManageAgenda = can('manage', 'agendaItems');
+  const canManageVotes = can('manage_votes', 'events');
   const canManageOfflineTallies = can('manage_votes', 'events') || canManageAgenda;
   const hasVotingRight = canVote();
   const hasCandidateRight = canBeCandidate();
   const { event: rosterEvent } = useEventById(eventId);
   const attendanceMode = resolveAttendanceMode(rosterEvent);
-  const allowsOfflineElectionTallies = attendanceMode === 'hybrid' || attendanceMode === 'offline';
+  const disableVoteButton = attendanceMode === 'offline';
+  const allowsOfflineTallies = attendanceMode === 'hybrid' || attendanceMode === 'offline';
   const confirmedOfflineParticipantCount =
     rosterEvent?.offline_participants?.filter(
       participant =>
@@ -126,7 +153,8 @@ export function EventAgendaItemDetail({
   const agendaNav = useAgendaNavigation(eventId);
 
   const { verifyVotingPassword } = useVotingPasswordActions();
-  const { upsertOfflineTally } = useElectionActions();
+  const { upsertOfflineTally: upsertElectionOfflineTally } = useElectionActions();
+  const { upsertOfflineTally: upsertVoteOfflineTally } = useVoteActions();
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [isPasswordVerifying, setIsPasswordVerifying] = useState(false);
   const [offlineTallyDialogOpen, setOfflineTallyDialogOpen] = useState(false);
@@ -172,7 +200,6 @@ export function EventAgendaItemDetail({
     voterId: userVoter?.id,
   });
 
-  const [transferDialogOpen, setTransferDialogOpen] = useState(false);
   const [, setMarkingSpeakerComplete] = useState<string | null>(null);
   const [selectedCRToolbarItemId, setSelectedCRToolbarItemId] = useState<string | null>(null);
 
@@ -438,6 +465,157 @@ export function EventAgendaItemDetail({
     if (selectedCRPhase === 'closed') return 'closed' as const;
     return 'indication' as const;
   }, [selectedCRPhase]);
+  const agendaForwardingPreview = useMemo(() => {
+    const nextStepRun = forwardingContext.nextStepRun;
+    if (!nextStepRun?.event) {
+      return null;
+    }
+
+    if (!agendaItem?.amendment_id) {
+      return null;
+    }
+
+    return {
+      nextGroupId: nextStepRun.target_group?.id ?? null,
+      nextGroupName: nextStepRun.target_group?.name ?? null,
+      nextEventId: nextStepRun.event.id ?? null,
+      nextEventTitle: nextStepRun.event.title ?? 'Next event',
+      nextEventStartDate: nextStepRun.event.start_date ?? null,
+    };
+  }, [agendaItem?.amendment_id, forwardingContext.nextStepRun]);
+  const voteDialogForwardingPreview = useMemo(() => {
+    if (!agendaForwardingPreview) {
+      return null;
+    }
+
+    const shouldShowPreview = isCRToolbarActive
+      ? isSelectedCRFinalVote
+      : Boolean(agendaItem?.amendment_id && vote);
+
+    return shouldShowPreview ? agendaForwardingPreview : null;
+  }, [
+    agendaForwardingPreview,
+    agendaItem?.amendment_id,
+    isCRToolbarActive,
+    isSelectedCRFinalVote,
+    vote,
+  ]);
+  const detailGroupTypeById = useMemo(
+    () => buildAmendmentPathGroupTypeById(forwardingContext.branchStepRuns),
+    [forwardingContext.branchStepRuns]
+  );
+  const detailDerivedActiveStepRun = useMemo(
+    () => findLikelyActiveAmendmentStep(forwardingContext.processRunStepRuns),
+    [forwardingContext.processRunStepRuns]
+  );
+  const detailResolvedActiveBranchId =
+    detailDerivedActiveStepRun?.branch_id ??
+    forwardingContext.processRun?.active_branch_id ??
+    forwardingContext.currentStepRun?.branch_id ??
+    forwardingContext.currentStepRun?.branch?.id ??
+    null;
+  const detailFirstUnresolvedStepId = useMemo(
+    () =>
+      (detailDerivedActiveStepRun?.branch_id === detailResolvedActiveBranchId
+        ? detailDerivedActiveStepRun.id
+        : null) ?? getFirstUnresolvedAmendmentStepId(forwardingContext.branchStepRuns),
+    [
+      detailDerivedActiveStepRun?.branch_id,
+      detailDerivedActiveStepRun?.id,
+      detailResolvedActiveBranchId,
+      forwardingContext.branchStepRuns,
+    ]
+  );
+  const detailPathVisualizationData = useMemo(
+    () =>
+      buildAmendmentPathVisualizationData(forwardingContext.branchStepRuns, {
+        activeStepId: detailFirstUnresolvedStepId,
+        isEventRequestPending: step =>
+          Boolean(
+            step.tasks?.some(
+              task => task.task_type === 'schedule_event' && task.status === 'open'
+            ) && !step.event_id
+          ),
+      }),
+    [detailFirstUnresolvedStepId, forwardingContext.branchStepRuns]
+  );
+
+  useEffect(() => {
+    console.log('PROCESS LOG [event-agenda-item-detail][amendment-flow]', {
+      eventId,
+      agendaItemId,
+      amendmentId: agendaItem?.amendment_id ?? null,
+      processRunId: forwardingContext.processRun?.id ?? null,
+      storedActiveBranchId: forwardingContext.processRun?.active_branch_id ?? null,
+      resolvedActiveBranchId: detailResolvedActiveBranchId,
+      activeBranchId: forwardingContext.currentStepRun?.branch?.id ?? null,
+      firstUnresolvedStepId: detailFirstUnresolvedStepId,
+      derivedActiveStepRun: detailDerivedActiveStepRun
+        ? {
+            id: detailDerivedActiveStepRun.id,
+            branchId: detailDerivedActiveStepRun.branch_id ?? null,
+            order: detailDerivedActiveStepRun.order_index,
+            status: detailDerivedActiveStepRun.status ?? null,
+            decisionStatus: detailDerivedActiveStepRun.decision_status ?? null,
+          }
+        : null,
+      currentRunStepRuns: forwardingContext.processRunStepRuns.map(step => ({
+        id: step.id,
+        branchId: step.branch_id ?? null,
+        order: step.order_index,
+        groupName: step.target_group?.name ?? step.workflow_step?.label ?? null,
+        status: step.status ?? null,
+        decisionStatus: step.decision_status ?? null,
+        eventId: step.event_id ?? null,
+        isLikelyActive: isLikelyActiveAmendmentStep(step),
+      })),
+      branchStepRuns: forwardingContext.branchStepRuns.map(step => ({
+        id: step.id,
+        branchId: step.branch_id ?? null,
+        order: step.order_index,
+        groupName: step.target_group?.name ?? step.workflow_step?.label ?? null,
+        status: step.status ?? null,
+        decisionStatus: step.decision_status ?? null,
+        eventId: step.event_id ?? null,
+        hasOpenScheduleTask: Boolean(
+          step.tasks?.some(task => task.task_type === 'schedule_event' && task.status === 'open')
+        ),
+        isLikelyActive: isLikelyActiveAmendmentStep(step),
+      })),
+      stepRuns: forwardingContext.branchStepRuns.map(step => ({
+        id: step.id,
+        branchId: step.branch_id ?? null,
+        order: step.order_index,
+        groupName: step.target_group?.name ?? step.workflow_step?.label ?? null,
+        status: step.status ?? null,
+        decisionStatus: step.decision_status ?? null,
+        eventId: step.event_id ?? null,
+        isLikelyActive: isLikelyActiveAmendmentStep(step),
+      })),
+      visualization: detailPathVisualizationData.map(segment => ({
+        order: segment.order,
+        groupName: segment.groupName,
+        forwardingStatus: segment.forwardingStatus,
+        rawStatus: segment.rawStatus ?? null,
+        rawDecisionStatus: segment.rawDecisionStatus ?? null,
+        isActiveStep: segment.isActiveStep ?? false,
+      })),
+    });
+  }, [
+    agendaItem?.amendment_id,
+    agendaItemId,
+    detailDerivedActiveStepRun,
+    detailFirstUnresolvedStepId,
+    detailPathVisualizationData,
+    detailResolvedActiveBranchId,
+    eventId,
+    forwardingContext.branchStepRuns,
+    forwardingContext.currentStepRun?.branch?.id,
+    forwardingContext.currentStepRun?.branch_id,
+    forwardingContext.processRun?.active_branch_id,
+    forwardingContext.processRun?.id,
+    forwardingContext.processRunStepRuns,
+  ]);
 
   const toolbarVotingPhase = isCRToolbarActive ? selectedCRPhase : effectiveVotingPhase;
   const toolbarAgendaItem = agendaNav.currentAgendaItem ?? agendaItem;
@@ -598,47 +776,16 @@ export function EventAgendaItemDetail({
       .filter(Boolean);
   }, [userElector, election]);
 
-  const offlineTallyPhase = useMemo(() => {
-    if (!election || !allowsOfflineElectionTallies || !canManageOfflineTallies) {
-      return null;
-    }
-
-    if (effectiveVotingPhase === 'indication') {
-      return 'indicative' as const;
-    }
-
-    if (effectiveVotingPhase === 'final_vote') {
-      return 'final' as const;
-    }
-
-    return null;
-  }, [allowsOfflineElectionTallies, canManageOfflineTallies, effectiveVotingPhase, election]);
-
-  const offlineTallyCandidates = useMemo(
+  const offlineTallyPhaseSource = toolbarVotingPhase;
+  const offlineTallyPhase = useMemo(
     () =>
-      candidates
-        .filter(candidate => candidate.status !== 'withdrawn')
-        .map(candidate => ({
-          id: candidate.id,
-          label: candidate.user
-            ? `${candidate.user.first_name ?? ''} ${candidate.user.last_name ?? ''}`.trim() ||
-              candidate.user.email ||
-              candidate.name ||
-              'Candidate'
-            : candidate.name || 'Candidate',
-        })),
-    [candidates]
+      resolveOfflineTallyPhase({
+        allowsOfflineTallies,
+        canManageOfflineTallies,
+        votingPhase: offlineTallyPhaseSource,
+      }),
+    [allowsOfflineTallies, canManageOfflineTallies, offlineTallyPhaseSource]
   );
-
-  const currentOfflineTallies = useMemo(
-    () =>
-      offlineTallyPhase
-        ? (election?.offline_tallies ?? []).filter(tally => tally.phase === offlineTallyPhase)
-        : [],
-    [election?.offline_tallies, offlineTallyPhase]
-  );
-
-  const offlineTallyActionMode = currentOfflineTallies.length > 0 ? 'edit' : 'create';
 
   const indicativeDecisions = useMemo(
     () => vote?.indicative_decisions ?? [],
@@ -677,7 +824,72 @@ export function EventAgendaItemDetail({
       .filter(Boolean);
   }, [userVoter, vote]);
 
-  const voteAmendment = vote?.amendment ?? agendaItem?.amendment ?? null;
+  const offlineTallyEntity = useMemo(() => {
+    if (!offlineTallyPhase) {
+      return null;
+    }
+
+    if (election) {
+      return {
+        kind: 'election' as const,
+        itemId: election.id,
+        title: election.title ?? agendaItem?.title ?? 'this election',
+        choices: candidates
+          .filter(candidate => candidate.status !== 'withdrawn')
+          .map(candidate => ({
+            id: candidate.id,
+            label: candidate.user
+              ? `${candidate.user.first_name ?? ''} ${candidate.user.last_name ?? ''}`.trim() ||
+                candidate.user.email ||
+                candidate.name ||
+                'Candidate'
+              : candidate.name || 'Candidate',
+          })),
+        tallies: (election.offline_tallies ?? [])
+          .filter(tally => tally.phase === offlineTallyPhase && tally.candidate_id)
+          .map(tally => ({
+            id: tally.candidate_id ?? '',
+            count: tally.count ?? 0,
+          })),
+        maxTotalVotes: confirmedOfflineParticipantCount * Math.max(1, election.max_votes ?? 1),
+      };
+    }
+
+    if (vote) {
+      return {
+        kind: 'vote' as const,
+        itemId: vote.id,
+        title: vote.title ?? agendaItem?.title ?? 'this vote',
+        choices: choices.map((choice, index) => ({
+          id: choice.id,
+          label: choice.label || `Choice ${index + 1}`,
+        })),
+        tallies: (vote.offline_tallies ?? [])
+          .filter(tally => tally.phase === offlineTallyPhase && tally.choice_id)
+          .map(tally => ({
+            id: tally.choice_id ?? '',
+            count: tally.count ?? 0,
+          })),
+        maxTotalVotes: confirmedOfflineParticipantCount,
+      };
+    }
+
+    return null;
+  }, [
+    agendaItem?.title,
+    candidates,
+    choices,
+    confirmedOfflineParticipantCount,
+    election,
+    offlineTallyPhase,
+    vote,
+  ]);
+  const offlineTallyActionMode = resolveOfflineTallyMode(offlineTallyEntity?.tallies ?? []);
+  const showOfflineTallyButton = shouldShowOfflineTallyToolbarButton({
+    attendanceMode,
+    canManageVotes,
+    phase: offlineTallyPhase,
+  });
 
   const handleOfflineTallyDialogOpenChange = useCallback((open: boolean) => {
     setOfflineTallyDialogOpen(open);
@@ -695,7 +907,7 @@ export function EventAgendaItemDetail({
 
   const handleSubmitOfflineTally = useCallback(
     async ({ password, counts }: { password: string; counts: Record<string, number> }) => {
-      if (!election || !offlineTallyPhase) {
+      if (!offlineTallyEntity || !offlineTallyPhase) {
         return;
       }
 
@@ -706,16 +918,16 @@ export function EventAgendaItemDetail({
       try {
         await verifyVotingPassword(password);
 
-        const correlationId = `election-offline-tally:${crypto.randomUUID()}`;
-        const existingCountByCandidateId = new Map(
-          currentOfflineTallies.map(tally => [tally.candidate_id ?? '', tally.count ?? 0])
+        const correlationId = `${offlineTallyEntity.kind}-offline-tally:${crypto.randomUUID()}`;
+        const existingCountByChoiceId = new Map(
+          offlineTallyEntity.tallies.map(tally => [tally.id, tally.count ?? 0])
         );
-        const updates = offlineTallyCandidates
-          .map(candidate => {
-            const previousCount = existingCountByCandidateId.get(candidate.id) ?? 0;
-            const nextCount = counts[candidate.id] ?? 0;
+        const updates = offlineTallyEntity.choices
+          .map(choice => {
+            const previousCount = existingCountByChoiceId.get(choice.id) ?? 0;
+            const nextCount = counts[choice.id] ?? 0;
             return {
-              candidateId: candidate.id,
+              choiceId: choice.id,
               count: nextCount,
               delta: nextCount - previousCount,
             };
@@ -726,24 +938,30 @@ export function EventAgendaItemDetail({
               return deltaDiff;
             }
 
-            return left.candidateId.localeCompare(right.candidateId);
+            return left.choiceId.localeCompare(right.choiceId);
           });
 
         for (const update of updates) {
-          await upsertOfflineTally({
-            election_id: election.id,
-            phase: offlineTallyPhase,
-            candidate_id: update.candidateId,
-            count: update.count,
-            debug_correlation_id: correlationId,
-          });
+          if (offlineTallyEntity.kind === 'election') {
+            await upsertElectionOfflineTally({
+              election_id: offlineTallyEntity.itemId,
+              phase: offlineTallyPhase,
+              candidate_id: update.choiceId,
+              count: update.count,
+              debug_correlation_id: correlationId,
+            });
+          } else {
+            await upsertVoteOfflineTally({
+              vote_id: offlineTallyEntity.itemId,
+              phase: offlineTallyPhase,
+              choice_id: update.choiceId,
+              count: update.count,
+              debug_correlation_id: correlationId,
+            });
+          }
         }
 
-        toast.success(
-          offlineTallyPhase === 'indicative'
-            ? 'Offline indicative tally saved'
-            : 'Offline final tally saved'
-        );
+        toast.success(getOfflineTallySuccessMessage(offlineTallyPhase));
         handleOfflineTallyDialogOpenChange(false);
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to save offline tally';
@@ -759,30 +977,31 @@ export function EventAgendaItemDetail({
 
         toast.error('Failed to save offline tally', {
           description: message,
-          action: message.includes('Offline election totals exceed the current cap')
-            ? {
-                label: 'Open participants',
-                onClick: () =>
-                  navigate({
-                    to: '/event/$id/participants',
-                    params: { id: eventId },
-                  }),
-              }
-            : undefined,
+          action:
+            message.includes('Offline election totals exceed the current cap') ||
+            message.includes('Offline vote totals cannot exceed')
+              ? {
+                  label: 'Open participants',
+                  onClick: () =>
+                    navigate({
+                      to: '/event/$id/participants',
+                      params: { id: eventId },
+                    }),
+                }
+              : undefined,
         });
       } finally {
         setIsOfflineTallySubmitting(false);
       }
     },
     [
-      currentOfflineTallies,
-      election,
       eventId,
       handleOfflineTallyDialogOpenChange,
       navigate,
-      offlineTallyCandidates,
+      offlineTallyEntity,
       offlineTallyPhase,
-      upsertOfflineTally,
+      upsertElectionOfflineTally,
+      upsertVoteOfflineTally,
       verifyVotingPassword,
     ]
   );
@@ -871,7 +1090,6 @@ export function EventAgendaItemDetail({
         speakerLoading={actionBarHook.speakerLoading}
         candidateLoading={actionBarHook.candidateLoading}
         onBackToAgenda={() => navigate({ to: '/event/$id/agenda', params: { id: eventId } })}
-        onMoveToEvent={() => setTransferDialogOpen(true)}
         onEditItem={actionBarHook.handleEditClick}
         onDeleteItem={handleDelete}
         onJoinSpeakerList={actionBarHook.handleJoinSpeakerList}
@@ -910,21 +1128,17 @@ export function EventAgendaItemDetail({
               : undefined
             : actionBarHook.handleVoteClick
         }
+        disableVoteButton={!isCRToolbarActive && disableVoteButton}
+        disabledVoteTooltip="Offline votes are entered via tallies."
+        showOfflineTallyButton={!isCRToolbarActive && showOfflineTallyButton}
         onOfflineTallyClick={
-          !isCRToolbarActive && offlineTallyPhase ? handleOpenOfflineTallyDialog : undefined
+          !isCRToolbarActive && showOfflineTallyButton ? handleOpenOfflineTallyDialog : undefined
         }
         offlineTallyMode={offlineTallyActionMode}
-        offlineTallyTooltip={
-          offlineTallyPhase === 'indicative'
-            ? offlineTallyActionMode === 'edit'
-              ? 'Edit indicative offline tally'
-              : 'Save indicative offline tally'
-            : offlineTallyPhase === 'final'
-              ? offlineTallyActionMode === 'edit'
-                ? 'Edit final offline tally'
-                : 'Save final offline tally'
-              : undefined
-        }
+        offlineTallyTooltip={getOfflineTallyTooltip({
+          phase: offlineTallyPhase,
+          mode: offlineTallyActionMode,
+        })}
         startVoteTooltip={startVoteTooltip}
         startFinalVoteTooltip={startFinalVoteTooltip}
         closeVoteTooltip={closeVoteTooltip}
@@ -934,19 +1148,15 @@ export function EventAgendaItemDetail({
       {/* Spacer for fixed toolbar */}
       <div className="h-10" />
 
-      <OfflineElectionTallyDialog
+      <OfflineTallyDialog
         open={offlineTallyDialogOpen}
         onOpenChange={handleOfflineTallyDialogOpenChange}
-        title={
-          offlineTallyPhase === 'final'
-            ? 'Save final offline tally'
-            : 'Save indicative offline tally'
-        }
-        description={`Enter aggregated offline or hybrid selections for ${election?.title ?? 'this election'} and confirm with your voting PIN.`}
+        title={getOfflineTallyDialogTitle(offlineTallyPhase ?? 'indicative')}
+        description={`Enter aggregated offline or hybrid selections for ${offlineTallyEntity?.title ?? 'this item'} and confirm with your voting PIN.`}
         phase={offlineTallyPhase ?? 'indicative'}
-        candidates={offlineTallyCandidates}
-        tallies={currentOfflineTallies}
-        maxTotalVotes={confirmedOfflineParticipantCount * Math.max(1, election?.max_votes ?? 1)}
+        choices={offlineTallyEntity?.choices ?? []}
+        tallies={offlineTallyEntity?.tallies ?? []}
+        maxTotalVotes={offlineTallyEntity?.maxTotalVotes ?? null}
         isSubmitting={isOfflineTallySubmitting}
         passwordError={offlineTallyPasswordError}
         submitError={offlineTallySubmitError}
@@ -959,6 +1169,7 @@ export function EventAgendaItemDetail({
         onOpenChange={actionBarHook.setVoteDialogOpen}
         phase={isCRToolbarActive ? selectedCRDialogPhase : actionBarHook.voteCasting.phase}
         title={isCRToolbarActive ? selectedCRTitle : (agendaItem.title ?? undefined)}
+        forwardingPreview={voteDialogForwardingPreview}
         candidates={
           isCRToolbarActive
             ? undefined
@@ -1039,7 +1250,7 @@ export function EventAgendaItemDetail({
           id: agendaItem.id,
           title: agendaItem.title || '',
           description: agendaItem.description ?? undefined,
-          type: agendaItem.type || '',
+          type: agendaItem.type === 'amendment' ? 'vote' : agendaItem.type || '',
           status: detailRuntimeStatus,
           duration: agendaItem.duration ?? undefined,
           scheduledTime:
@@ -1050,6 +1261,13 @@ export function EventAgendaItemDetail({
           completedAt: agendaItem.completed_at ? new Date(agendaItem.completed_at) : undefined,
         }}
         amendment={agendaItem.amendment ?? undefined}
+        amendmentForwardingPreview={agendaForwardingPreview}
+        amendmentPathVisualizationData={detailPathVisualizationData}
+        amendmentGroupTypeById={detailGroupTypeById}
+        onAmendmentGroupClick={groupId => navigate({ to: '/group/$id', params: { id: groupId } })}
+        onAmendmentEventClick={targetEventId =>
+          navigate({ to: '/event/$id/agenda', params: { id: targetEventId } })
+        }
         election={election ?? undefined}
         votingStartTime={agendaItem.start_time ? new Date(agendaItem.start_time) : undefined}
         votingEndTime={
@@ -1155,22 +1373,8 @@ export function EventAgendaItemDetail({
             canManageOfflineResults={canManageAgenda}
             offlineEligibleCount={confirmedOfflineParticipantCount}
           />
-          {voteAmendment && <AgendaRelatedAmendmentCard amendment={voteAmendment} />}
         </div>
       )}
-
-      {/* Transfer Dialog */}
-      <TransferAgendaItemDialog
-        agendaItemId={agendaItemId}
-        agendaItemTitle={agendaItem.title || ''}
-        currentEventId={eventId}
-        currentEventTitle={event?.title || 'Event'}
-        open={transferDialogOpen}
-        onOpenChange={setTransferDialogOpen}
-        onTransferComplete={() => {
-          setTransferDialogOpen(false);
-        }}
-      />
     </div>
   );
 }

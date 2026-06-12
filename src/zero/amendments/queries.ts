@@ -359,6 +359,48 @@ export const amendmentQueries = {
         .orderBy('due_at', 'asc')
   ),
 
+  agendaItemForwardingContext: defineQuery(
+    z.object({ agenda_item_id: z.string() }),
+    ({ args: { agenda_item_id } }) =>
+      zql.amendment_process_step_run
+        .where('agenda_item_id', agenda_item_id)
+        .orderBy('branch_id', 'asc')
+        .orderBy('order_index', 'asc')
+        .related('process_run', q =>
+          q
+            .related('amendment')
+            .related('active_branch')
+            .related('step_runs', sq =>
+              sq
+                .related('workflow_step')
+                .related('target_group')
+                .related('event')
+                .related('agenda_item')
+                .related('vote')
+                .related('tasks')
+                .orderBy('order_index', 'asc')
+            )
+        )
+        .related('branch', bq =>
+          bq.related('step_runs', sq =>
+            sq
+              .related('workflow_step')
+              .related('target_group')
+              .related('event')
+              .related('agenda_item')
+              .related('vote')
+              .related('tasks')
+              .orderBy('order_index', 'asc')
+          )
+        )
+        .related('target_group')
+        .related('workflow_step')
+        .related('event')
+        .related('agenda_item')
+        .related('vote')
+        .related('tasks')
+  ),
+
   // Subscribers for an amendment
   subscribers: defineQuery(z.object({ amendment_id: z.string() }), ({ args: { amendment_id } }) =>
     zql.subscriber
@@ -499,6 +541,9 @@ export type AmendmentCollaboratorsByUserRow = QueryRowType<
 >;
 export type AmendmentProcessRunRow = QueryRowType<typeof amendmentQueries.processRunsByAmendment>;
 export type ProcessTaskByGroupRow = QueryRowType<typeof amendmentQueries.openProcessTasksByGroup>;
+export type AgendaItemForwardingContextRow = QueryRowType<
+  typeof amendmentQueries.agendaItemForwardingContext
+>;
 
 // Cross-domain network Row types (used by amendmentPathHelpers)
 export type NetworkGroupRow = QueryRowType<typeof amendmentQueries.allGroups>;

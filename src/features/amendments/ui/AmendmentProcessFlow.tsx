@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { useAuth } from '@/providers/auth-provider';
@@ -23,7 +23,6 @@ import {
   CardTitle,
 } from '@/features/shared/ui/ui/card';
 import { Badge } from '@/features/shared/ui/ui/badge';
-import { AmendmentPathVisualization } from '@/features/network/ui/AmendmentPathVisualization';
 import {
   TargetGroupEventDisplay,
   TargetGroupEventSelector,
@@ -42,6 +41,15 @@ import {
   Target,
   Workflow,
 } from 'lucide-react';
+import { AmendmentProcessDetailsPanel } from '@/features/amendments/ui/AmendmentProcessDetailsPanel';
+import {
+  buildAmendmentPathGroupTypeById,
+  buildAmendmentPathVisualizationData,
+  findLikelyActiveAmendmentStep,
+  getFirstUnresolvedAmendmentStepId,
+  isLikelyActiveAmendmentStep,
+} from '@/features/amendments/logic/buildAmendmentPathVisualizationData';
+import { normalizeGroupAmendmentDisplayStatus } from '@/features/groups/logic/groupAmendmentStatus';
 
 interface AmendmentProcessFlowProps {
   amendmentId: string;
@@ -82,18 +90,15 @@ function getBadgeVariant(
   }
 }
 
-function getFirstUnresolvedStepId(
-  stepRuns: readonly { id: string; status: string | null; order_index: number }[]
-) {
-  return (
-    [...stepRuns]
-      .sort((left, right) => left.order_index - right.order_index)
-      .find(
-        step =>
-          !['approved', 'rejected', 'merged', 'withdrawn', 'completed'].includes(step.status ?? '')
-      )?.id ?? null
-  );
-}
+const TERMINAL_PATH_DISPLAY_STATUSES = new Set([
+  'approved',
+  'accepted',
+  'supported',
+  'merged',
+  'completed',
+  'rejected',
+  'withdrawn',
+]);
 
 export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps) {
   const { t } = useTranslation();
@@ -132,21 +137,157 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
       [...(currentRun?.branches ?? [])].sort((left, right) => left.created_at - right.created_at),
     [currentRun?.branches]
   );
-  const activeBranch = useMemo(
+  const currentRunStepRuns = useMemo(
     () =>
-      branches.find(branch => branch.id === currentRun?.active_branch_id) ?? branches[0] ?? null,
-    [branches, currentRun?.active_branch_id]
+      [...(currentRun?.step_runs ?? [])].sort((left, right) => {
+        if ((left.branch_id ?? '') !== (right.branch_id ?? '')) {
+          return (left.branch_id ?? '').localeCompare(right.branch_id ?? '');
+        }
+
+        return left.order_index - right.order_index;
+      }),
+    [currentRun?.step_runs]
   );
-  const activeBranchStepRuns = useMemo(
+  const displayPath = useMemo(() => {
+    const paths = [...(amendment?.paths ?? [])];
+    if (paths.length === 0) {
+      return null;
+    }
+
+    const currentRunStepRunIds = new Set(currentRunStepRuns.map(step => step.id));
+
+    return (
+      paths
+        .map(path => {
+          const segments = path.segments ?? [];
+          return {
+            path,
+            isCurrentRunPath: path.process_run_id === currentRun?.id,
+            overlapCount: segments.filter(
+              segment =>
+                segment.process_step_run_id && currentRunStepRunIds.has(segment.process_step_run_id)
+            ).length,
+            terminalCount: segments.filter(segment =>
+              TERMINAL_PATH_DISPLAY_STATUSES.has(segment.status ?? '')
+            ).length,
+            createdAt: path.created_at ?? 0,
+          };
+        })
+        .sort((left, right) => {
+          if (left.isCurrentRunPath !== right.isCurrentRunPath) {
+            return left.isCurrentRunPath ? -1 : 1;
+          }
+
+          if (left.overlapCount !== right.overlapCount) {
+            return right.overlapCount - left.overlapCount;
+          }
+
+          if (left.terminalCount !== right.terminalCount) {
+            return right.terminalCount - left.terminalCount;
+          }
+
+          return right.createdAt - left.createdAt;
+        })[0]?.path ?? null
+    );
+  }, [amendment?.paths, currentRun?.id, currentRunStepRuns]);
+  const displayPathSegments = useMemo(
     () =>
-      [...(activeBranch?.step_runs ?? [])].sort(
+      [...(displayPath?.segments ?? [])].sort(
         (left, right) => left.order_index - right.order_index
       ),
-    [activeBranch?.step_runs]
+    [displayPath?.segments]
   );
+  const displayPathSegmentByStepRunId = useMemo(
+    () =>
+      new Map(
+        displayPathSegments
+          .filter(segment => segment.process_step_run_id)
+          .map(segment => [segment.process_step_run_id ?? '', segment])
+      ),
+    [displayPathSegments]
+  );
+  const displayPathSegmentByOrder = useMemo(
+    () => new Map(displayPathSegments.map(segment => [segment.order_index, segment])),
+    [displayPathSegments]
+  );
+  const currentRunDisplayStepRuns = useMemo(
+    () =>
+      currentRunStepRuns.map(step => {
+        const matchingSegment =
+          displayPathSegmentByStepRunId.get(step.id) ??
+          displayPathSegmentByOrder.get(step.order_index);
+
+        if (!matchingSegment?.status) {
+          return step;
+        }
+
+        return {
+          ...step,
+          status: matchingSegment.status,
+          decision_status: matchingSegment.status,
+        };
+      }),
+    [currentRunStepRuns, displayPathSegmentByOrder, displayPathSegmentByStepRunId]
+  );
+  const derivedActiveStepRun = useMemo(
+    () => findLikelyActiveAmendmentStep(currentRunDisplayStepRuns),
+    [currentRunDisplayStepRuns]
+  );
+  const resolvedActiveBranchId =
+    derivedActiveStepRun?.branch_id ??
+    currentRun?.active_branch_id ??
+    currentRun?.terminal_step_run?.branch_id ??
+    displayPathSegments[0]?.process_branch_id ??
+    branches[0]?.id ??
+    null;
+  const activeBranch = useMemo(
+    () => branches.find(branch => branch.id === resolvedActiveBranchId) ?? branches[0] ?? null,
+    [branches, resolvedActiveBranchId]
+  );
+  const activeBranchStepRuns = useMemo(() => {
+    const directStepRuns = currentRunDisplayStepRuns.filter(
+      step => step.branch_id === resolvedActiveBranchId
+    );
+
+    if (directStepRuns.length > 0) {
+      return directStepRuns;
+    }
+
+    return [...(activeBranch?.step_runs ?? [])]
+      .sort((left, right) => left.order_index - right.order_index)
+      .map(step => {
+        const matchingSegment =
+          displayPathSegmentByStepRunId.get(step.id) ??
+          displayPathSegmentByOrder.get(step.order_index);
+
+        if (!matchingSegment?.status) {
+          return step;
+        }
+
+        return {
+          ...step,
+          status: matchingSegment.status,
+          decision_status: matchingSegment.status,
+        };
+      });
+  }, [
+    activeBranch?.step_runs,
+    currentRunDisplayStepRuns,
+    displayPathSegmentByOrder,
+    displayPathSegmentByStepRunId,
+    resolvedActiveBranchId,
+  ]);
   const firstUnresolvedStepId = useMemo(
-    () => getFirstUnresolvedStepId(activeBranchStepRuns),
-    [activeBranchStepRuns]
+    () =>
+      (derivedActiveStepRun?.branch_id === resolvedActiveBranchId
+        ? derivedActiveStepRun.id
+        : null) ?? getFirstUnresolvedAmendmentStepId(activeBranchStepRuns),
+    [
+      activeBranchStepRuns,
+      derivedActiveStepRun?.branch_id,
+      derivedActiveStepRun?.id,
+      resolvedActiveBranchId,
+    ]
   );
   const openTasks = useMemo(
     () =>
@@ -164,29 +305,108 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
     [amendment?.group_decisions]
   );
   const groupTypeById = useMemo(
-    () =>
-      new Map(
-        activeBranchStepRuns
-          .filter(step => step.target_group_id)
-          .map(step => [step.target_group_id ?? '', null])
-      ),
+    () => buildAmendmentPathGroupTypeById(activeBranchStepRuns),
     [activeBranchStepRuns]
   );
   const pathVisualizationData = useMemo(
     () =>
-      activeBranchStepRuns.map(step => ({
-        groupId: step.target_group_id ?? null,
-        groupName: step.target_group?.name ?? step.workflow_step?.label ?? 'Unknown group',
-        eventId: step.event_id ?? null,
-        eventTitle: step.event?.title ?? 'Pending event',
-        eventStartDate: step.event?.start_date ?? step.starts_at ?? null,
-        agendaItemId: step.agenda_item_id ?? null,
-        amendmentVoteId: step.vote_id ?? null,
-        forwardingStatus: step.decision_status ?? step.status ?? 'previous_decision_outstanding',
-        order: step.order_index,
-      })),
-    [activeBranchStepRuns]
+      buildAmendmentPathVisualizationData(activeBranchStepRuns, {
+        activeStepId: firstUnresolvedStepId,
+        isEventRequestPending: step =>
+          openTasks.some(
+            task =>
+              task.step_run_id === step.id &&
+              task.task_type === 'schedule_event' &&
+              task.status === 'open'
+          ) && !step.event_id,
+      }),
+    [activeBranchStepRuns, firstUnresolvedStepId, openTasks]
   );
+
+  useEffect(() => {
+    console.log('PROCESS LOG [amendment-process-flow][path-debug]', {
+      amendmentId,
+      processRunId: currentRun?.id ?? null,
+      displayPathId: displayPath?.id ?? null,
+      displayPathProcessRunId: displayPath?.process_run_id ?? null,
+      storedActiveBranchId: currentRun?.active_branch_id ?? null,
+      resolvedActiveBranchId,
+      activeBranchId: activeBranch?.id ?? null,
+      firstUnresolvedStepId,
+      derivedActiveStepRun: derivedActiveStepRun
+        ? {
+            id: derivedActiveStepRun.id,
+            branchId: derivedActiveStepRun.branch_id ?? null,
+            order: derivedActiveStepRun.order_index,
+            status: derivedActiveStepRun.status ?? null,
+            decisionStatus: derivedActiveStepRun.decision_status ?? null,
+          }
+        : null,
+      currentRunStepRuns: currentRunStepRuns.map(step => ({
+        id: step.id,
+        branchId: step.branch_id ?? null,
+        order: step.order_index,
+        groupName: step.target_group?.name ?? step.workflow_step?.label ?? null,
+        status: step.status ?? null,
+        decisionStatus: step.decision_status ?? null,
+        eventId: step.event_id ?? null,
+        isLikelyActive: isLikelyActiveAmendmentStep(step),
+      })),
+      currentRunDisplayStepRuns: currentRunDisplayStepRuns.map(step => ({
+        id: step.id,
+        branchId: step.branch_id ?? null,
+        order: step.order_index,
+        groupName: step.target_group?.name ?? step.workflow_step?.label ?? null,
+        status: step.status ?? null,
+        decisionStatus: step.decision_status ?? null,
+        eventId: step.event_id ?? null,
+        isLikelyActive: isLikelyActiveAmendmentStep(step),
+      })),
+      displayPathSegments: displayPathSegments.map(segment => ({
+        id: segment.id,
+        processStepRunId: segment.process_step_run_id ?? null,
+        processBranchId: segment.process_branch_id ?? null,
+        order: segment.order_index,
+        status: segment.status ?? null,
+        groupName: segment.group?.name ?? null,
+        eventTitle: segment.event?.title ?? null,
+      })),
+      stepRuns: activeBranchStepRuns.map(step => ({
+        id: step.id,
+        branchId: step.branch_id ?? null,
+        order: step.order_index,
+        groupName: step.target_group?.name ?? step.workflow_step?.label ?? null,
+        status: step.status ?? null,
+        decisionStatus: step.decision_status ?? null,
+        eventId: step.event_id ?? null,
+        isLikelyActive: isLikelyActiveAmendmentStep(step),
+      })),
+      visualization: pathVisualizationData.map(segment => ({
+        order: segment.order,
+        groupName: segment.groupName,
+        forwardingStatus: segment.forwardingStatus,
+        rawStatus: segment.rawStatus ?? null,
+        rawDecisionStatus: segment.rawDecisionStatus ?? null,
+        isActiveStep: segment.isActiveStep ?? false,
+      })),
+    });
+  }, [
+    activeBranch?.id,
+    activeBranchStepRuns,
+    amendmentId,
+    currentRun?.id,
+    currentRun?.active_branch_id,
+    currentRun?.terminal_step_run?.branch_id,
+    currentRunDisplayStepRuns,
+    currentRunStepRuns,
+    displayPath?.id,
+    displayPath?.process_run_id,
+    displayPathSegments,
+    derivedActiveStepRun,
+    firstUnresolvedStepId,
+    pathVisualizationData,
+    resolvedActiveBranchId,
+  ]);
 
   const selectorCollaborators = useMemo(
     () =>
@@ -364,10 +584,25 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
 
       {currentRun && activeBranch ? (
         <>
+          <AmendmentProcessDetailsPanel
+            amendment={{
+              id: amendment.id,
+              title: amendment.title,
+              reason: amendment.reason,
+              preamble: amendment.preamble,
+              editing_mode: amendment.editing_mode,
+              group: amendment.group ?? null,
+            }}
+            pathVisualizationData={pathVisualizationData}
+            groupTypeById={groupTypeById}
+            onGroupClick={groupId => navigate({ to: '/group/$id', params: { id: groupId } })}
+            onEventClick={eventId => navigate({ to: '/event/$id/agenda', params: { id: eventId } })}
+          />
+
           <Card>
             <CardHeader>
               <CardTitle className="text-base">
-                {t('features.amendments.process.activeBranch', 'Active branch path')}
+                {t('features.amendments.process.activeBranch', 'Active branch steps')}
               </CardTitle>
               <CardDescription>
                 {activeBranch.title ??
@@ -377,21 +612,14 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                   )}
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              {pathVisualizationData.length > 0 ? (
-                <div className="h-[340px] rounded-lg border">
-                  <AmendmentPathVisualization
-                    enrichedPathData={pathVisualizationData}
-                    groupTypeById={groupTypeById}
-                    onNodeClick={eventId => navigate({ to: `/event/${eventId}` })}
-                  />
-                </div>
-              ) : null}
-
+            <CardContent className="space-y-3">
               <div className="space-y-3">
                 {activeBranchStepRuns.map(step => {
                   const isCurrentStep = step.id === firstUnresolvedStepId;
                   const relatedTasks = openTasks.filter(task => task.step_run_id === step.id);
+                  const hasPendingScheduleEventTask = relatedTasks.some(
+                    task => task.task_type === 'schedule_event' && task.status === 'open'
+                  );
 
                   return (
                     <div key={step.id} className="rounded-lg border p-4">
@@ -411,6 +639,15 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                               <Badge variant="secondary">
                                 <CheckCircle2 className="mr-1 h-3 w-3" />
                                 {t('features.amendments.process.currentStep', 'Current step')}
+                              </Badge>
+                            ) : null}
+                            {!step.event?.title && hasPendingScheduleEventTask ? (
+                              <Badge variant="secondary">
+                                <Clock3 className="mr-1 h-3 w-3" />
+                                {t(
+                                  'features.amendments.process.eventRequestedPending',
+                                  'Event requested, pending'
+                                )}
                               </Badge>
                             ) : null}
                           </div>
@@ -442,10 +679,15 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                               </button>
                             ) : (
                               <span>
-                                {t(
-                                  'features.amendments.process.pendingEvent',
-                                  'Waiting for an event to be attached'
-                                )}
+                                {hasPendingScheduleEventTask
+                                  ? t(
+                                      'features.amendments.process.eventRequestedPending',
+                                      'Event requested, pending'
+                                    )
+                                  : t(
+                                      'features.amendments.process.pendingEvent',
+                                      'Waiting for an event to be attached'
+                                    )}
                               </span>
                             )}
                           </div>
@@ -572,7 +814,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
           <CardDescription>
             {t(
               'features.amendments.process.groupDecisionsDescription',
-              'Persisted per-group decisions let us trace supported, accepted, rejected, and withdrawn outcomes independently from run history.'
+              'Persisted per-group decisions let us trace accepted, rejected, and withdrawn outcomes independently from run history.'
             )}
           </CardDescription>
         </CardHeader>
@@ -588,28 +830,37 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
             <div className="space-y-3">
               {groupDecisions.map(decision => (
                 <div key={decision.id} className="rounded-lg border p-4">
-                  <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
-                    <div>
-                      <p className="font-medium">
-                        {decision.group?.name ??
-                          t('features.amendments.process.unknownGroup', 'Unknown group')}
-                      </p>
-                      <p className="text-muted-foreground text-xs">
-                        {formatDateTime(decision.decided_at ?? decision.updated_at)}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Badge variant={getBadgeVariant(decision.status)}>{decision.status}</Badge>
-                      {decision.process_run_id ? (
-                        <Badge variant="outline">run {decision.process_run_id.slice(0, 8)}</Badge>
-                      ) : null}
-                      {decision.process_branch_id ? (
-                        <Badge variant="outline">
-                          branch {decision.process_branch_id.slice(0, 8)}
-                        </Badge>
-                      ) : null}
-                    </div>
-                  </div>
+                  {(() => {
+                    const visibleStatus =
+                      normalizeGroupAmendmentDisplayStatus(decision.status) ?? decision.status;
+
+                    return (
+                      <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                        <div>
+                          <p className="font-medium">
+                            {decision.group?.name ??
+                              t('features.amendments.process.unknownGroup', 'Unknown group')}
+                          </p>
+                          <p className="text-muted-foreground text-xs">
+                            {formatDateTime(decision.decided_at ?? decision.updated_at)}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <Badge variant={getBadgeVariant(visibleStatus)}>{visibleStatus}</Badge>
+                          {decision.process_run_id ? (
+                            <Badge variant="outline">
+                              run {decision.process_run_id.slice(0, 8)}
+                            </Badge>
+                          ) : null}
+                          {decision.process_branch_id ? (
+                            <Badge variant="outline">
+                              branch {decision.process_branch_id.slice(0, 8)}
+                            </Badge>
+                          ) : null}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               ))}
             </div>
@@ -704,6 +955,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                 collaborators={selectorCollaborators}
                 disablePortal
                 allowGroupWithoutEvent
+                allowSourceGroupAsTarget
                 layoutScope={currentRun ? 'amendment-process-retarget' : 'amendment-process-start'}
                 onSelect={setPendingSelection}
               />

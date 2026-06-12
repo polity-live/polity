@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
+import { groupAmendmentsByDisplayStatus } from '@/features/groups/logic/groupAmendmentStatus';
 
 export interface AmendmentFilters {
   searchQuery: string;
@@ -120,13 +121,7 @@ export function useFilteredAmendments(
     return dateB - dateA;
   });
 
-  // Group amendments by persisted group decision status.
-  const groupedAmendments = {
-    supported: sortedAmendments.filter(a => a.decision_status === 'supported'),
-    accepted: sortedAmendments.filter(a => a.decision_status === 'accepted'),
-    rejected: sortedAmendments.filter(a => a.decision_status === 'rejected'),
-    withdrawn: sortedAmendments.filter(a => a.decision_status === 'withdrawn'),
-  };
+  const groupedAmendments = groupAmendmentsByDisplayStatus(sortedAmendments);
 
   return {
     sortedAmendments,

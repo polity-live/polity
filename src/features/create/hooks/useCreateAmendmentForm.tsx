@@ -378,6 +378,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
                 <TargetGroupEventSelector
                   userId={user.id}
                   allowGroupWithoutEvent
+                  allowSourceGroupAsTarget
                   layoutScope="create-amendment"
                   onSourceGroupSelectionChange={handleSourceGroupSelectionChange}
                   onGroupSelectionChange={handleGroupSelectionChange}

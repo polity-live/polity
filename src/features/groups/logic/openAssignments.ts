@@ -116,6 +116,10 @@ export interface GroupOpenAssignment {
   processRunId?: string | null;
   stepRunId?: string | null;
   processTaskMetadata?: unknown;
+  amendment?: {
+    id: string;
+    title: string;
+  } | null;
   amendmentId?: string | null;
   dueAt?: number | null;
 }
@@ -382,6 +386,12 @@ function buildProcessTaskAssignments(processTasks: readonly ProcessTaskAssignmen
         processRunId: task.process_run_id ?? null,
         stepRunId: task.step_run_id ?? null,
         processTaskMetadata: task.metadata,
+        amendment: amendment?.id
+          ? {
+              id: amendment.id,
+              title: amendment.title || amendmentTitle,
+            }
+          : null,
         amendmentId: amendment?.id ?? null,
         dueAt: task.due_at ?? null,
       };

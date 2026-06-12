@@ -37,6 +37,7 @@ interface AgendaVoteInput {
   }[];
   indicative_participations?: readonly unknown[];
   indicative_decisions?: readonly unknown[];
+  offline_tallies?: readonly unknown[];
   final_participations?: readonly unknown[];
   final_decisions?: readonly unknown[];
 }
@@ -83,6 +84,7 @@ export function buildFinalVoteFromAgendaVote(
       voters: vote.voters ?? [],
       indicative_participations: vote.indicative_participations ?? [],
       indicative_decisions: vote.indicative_decisions ?? [],
+      offline_tallies: vote.offline_tallies ?? [],
       final_participations: vote.final_participations ?? [],
       final_decisions: vote.final_decisions ?? [],
     },

@@ -4,9 +4,21 @@ import { useAgendaItemCRTimeline } from '@/zero/agendas/useAgendaState';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useVoteActions } from '@/zero/votes/useVoteActions';
 import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
-import type { VoteResult } from '@/features/votes/logic/computeVoteResult';
+import {
+  computeVoteResultSummary,
+  type MajorityType,
+  type VoteResult,
+} from '@/features/vote-cast/logic/computeVoteResults';
 
 export type CRVotePhase = 'indicative' | 'final_vote' | 'closed';
+
+function normalizeMajorityType(value?: string | null): MajorityType {
+  if (value === 'absolute' || value === 'two_thirds') {
+    return value;
+  }
+
+  return 'simple';
+}
 
 export function useAgendaItemCRVoting(agendaItemId: string, userId?: string) {
   const {
@@ -61,9 +73,10 @@ export function useAgendaItemCRVoting(agendaItemId: string, userId?: string) {
       if (!voter) return [];
 
       const phase = getVotePhase(item);
-      const participations = phase === 'final_vote' || phase === 'closed'
-        ? item.vote.final_participations ?? []
-        : item.vote.indicative_participations ?? [];
+      const participations =
+        phase === 'final_vote' || phase === 'closed'
+          ? (item.vote.final_participations ?? [])
+          : (item.vote.indicative_participations ?? []);
 
       const userParticipation = participations.find(
         (p: { voter_id?: string | null }) => p.voter_id === voter.id
@@ -72,8 +85,9 @@ export function useAgendaItemCRVoting(agendaItemId: string, userId?: string) {
       if (!userParticipation) return [];
 
       return (userParticipation.decisions ?? [])
-        .map((d: { choice_id?: string | null; choice?: { id: string } | null }) =>
-          d.choice?.id ?? d.choice_id ?? ''
+        .map(
+          (d: { choice_id?: string | null; choice?: { id: string } | null }) =>
+            d.choice?.id ?? d.choice_id ?? ''
         )
         .filter(Boolean);
     },
@@ -128,7 +142,10 @@ export function useAgendaItemCRVoting(agendaItemId: string, userId?: string) {
   const castCRVote = useCallback(
     async (item: ChangeRequestTimelineRow, choiceId: string) => {
       if (!userId || !item.vote) {
-        console.warn('[castCRVote] Missing userId or vote on item', { userId, voteId: item.vote?.id });
+        console.warn('[castCRVote] Missing userId or vote on item', {
+          userId,
+          voteId: item.vote?.id,
+        });
         toast.error('Cannot cast vote: missing user or vote data');
         return;
       }
@@ -149,12 +166,14 @@ export function useAgendaItemCRVoting(agendaItemId: string, userId?: string) {
         vote_id: item.vote.id,
         voter_id: voterId,
       };
-      const decisions = [{
-        id: crypto.randomUUID(),
-        vote_id: item.vote.id,
-        choice_id: choiceId,
-        voter_participation_id: item.vote.visibility === 'public' ? participationId : null,
-      }];
+      const decisions = [
+        {
+          id: crypto.randomUUID(),
+          vote_id: item.vote.id,
+          choice_id: choiceId,
+          voter_participation_id: item.vote.visibility === 'public' ? participationId : null,
+        },
+      ];
 
       if (phase === 'final_vote') {
         await castFinalVote(participationArgs, decisions);
@@ -205,25 +224,37 @@ export function getVotePhase(item: ChangeRequestTimelineRow): CRVotePhase {
   return 'indicative';
 }
 
-/** Compute the vote result for a CR item using simple majority on final decisions. */
+/** Compute the vote result for a CR item from final decisions and configured majority rules. */
 export function getVoteResult(item: ChangeRequestTimelineRow): VoteResult {
   if (!item.vote) return 'tie';
 
   const choices = item.vote.choices ?? [];
   const finalDecisions = item.vote.final_decisions ?? [];
+  const offlineTallies = item.vote.offline_tallies ?? [];
+  if (choices.length === 0) return 'tie';
 
-  const yesChoice = choices.find((c: { label: string | null }) => c.label === 'yes');
-  const noChoice = choices.find((c: { label: string | null }) => c.label === 'no');
+  const offlineFinalCount = offlineTallies.reduce(
+    (sum, tally) => (tally.phase === 'final' ? sum + (tally.count ?? 0) : sum),
+    0
+  );
+  const totalEligible = Math.max(
+    item.vote.voters?.length ?? 0,
+    finalDecisions.length + offlineFinalCount
+  );
 
-  const yesCount = yesChoice
-    ? finalDecisions.filter((d: { choice_id: string }) => d.choice_id === yesChoice.id).length
-    : 0;
-  const noCount = noChoice
-    ? finalDecisions.filter((d: { choice_id: string }) => d.choice_id === noChoice.id).length
-    : 0;
-
-  // Simple majority: yes > no (abstentions ignored)
-  if (yesCount > noCount) return 'passed';
-  if (noCount > yesCount) return 'rejected';
-  return 'tie';
+  return computeVoteResultSummary(
+    choices.map((choice, idx) => ({
+      id: choice.id,
+      label: choice.label || `Choice ${idx + 1}`,
+      order_index: choice.order_index ?? idx,
+    })),
+    finalDecisions
+      .map(decision => ({
+        choice_id: decision.choice_id ?? decision.choice?.id ?? '',
+      }))
+      .filter(decision => Boolean(decision.choice_id)),
+    totalEligible,
+    normalizeMajorityType(item.vote.majority_type),
+    offlineTallies
+  ).result;
 }

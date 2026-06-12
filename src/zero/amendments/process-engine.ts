@@ -127,6 +127,20 @@ function normalizeMajorityType(value?: string | null): MajorityType {
   return 'simple';
 }
 
+function normalizeDecisionChoiceLabel(label?: string | null) {
+  return label?.trim().toLowerCase() ?? null;
+}
+
+function isAcceptDecisionChoice(label?: string | null) {
+  const normalized = normalizeDecisionChoiceLabel(label);
+  return normalized === 'accept' || normalized === 'yes';
+}
+
+function isRejectDecisionChoice(label?: string | null) {
+  const normalized = normalizeDecisionChoiceLabel(label);
+  return normalized === 'reject' || normalized === 'no';
+}
+
 function getEventOrderingAnchor(args: {
   eventStartDate?: number | null;
   eventEndDate?: number | null;
@@ -402,6 +416,169 @@ async function closeOpenScheduleTasksForStepRun(tx: ZeroTransaction, stepRunId: 
   }
 }
 
+async function cancelOpenTasksForStepRun(tx: ZeroTransaction, stepRunId: string) {
+  const tasks = await tx.run(zql.process_task.where('step_run_id', stepRunId));
+  const now = Date.now();
+
+  for (const task of tasks) {
+    if (task.status === 'completed' || task.status === 'cancelled') {
+      continue;
+    }
+
+    await tx.mutate.process_task.update({
+      id: task.id,
+      status: 'cancelled',
+      resolved_at: now,
+      updated_at: now,
+    });
+  }
+}
+
+async function getConfirmedAgendaTailOrderIndex(tx: ZeroTransaction, eventId: string) {
+  const agendaItems = await tx.run(zql.agenda_item.where('event_id', eventId));
+
+  return agendaItems.reduce((maxOrderIndex, agendaItem) => {
+    if (agendaItem.forwarding_status === 'previous_decision_outstanding') {
+      return maxOrderIndex;
+    }
+
+    return Math.max(maxOrderIndex, agendaItem.order_index ?? 0);
+  }, 0);
+}
+
+async function appendAgendaItemToConfirmedAgenda(
+  tx: ZeroTransaction,
+  args: { agendaItemId: string; eventId: string }
+) {
+  const nextOrderIndex = (await getConfirmedAgendaTailOrderIndex(tx, args.eventId)) + 1;
+
+  await tx.mutate.agenda_item.update({
+    id: args.agendaItemId,
+    order_index: nextOrderIndex,
+    updated_at: Date.now(),
+  });
+}
+
+async function deleteVoteRuntime(tx: ZeroTransaction, voteId: string | null | undefined) {
+  if (!voteId) {
+    return;
+  }
+
+  const [
+    agendaItemChangeRequests,
+    choices,
+    voters,
+    indicativeParticipations,
+    indicativeDecisions,
+    finalParticipations,
+    finalDecisions,
+    offlineTallies,
+  ] = await Promise.all([
+    tx.run(zql.agenda_item_change_request.where('vote_id', voteId)),
+    tx.run(zql.vote_choice.where('vote_id', voteId)),
+    tx.run(zql.voter.where('vote_id', voteId)),
+    tx.run(zql.indicative_voter_participation.where('vote_id', voteId)),
+    tx.run(zql.indicative_choice_decision.where('vote_id', voteId)),
+    tx.run(zql.final_voter_participation.where('vote_id', voteId)),
+    tx.run(zql.final_choice_decision.where('vote_id', voteId)),
+    tx.run(zql.vote_offline_tally.where('vote_id', voteId)),
+  ]);
+
+  for (const row of agendaItemChangeRequests) {
+    await tx.mutate.agenda_item_change_request.delete({ id: row.id });
+  }
+  for (const row of indicativeDecisions) {
+    await tx.mutate.indicative_choice_decision.delete({ id: row.id });
+  }
+  for (const row of finalDecisions) {
+    await tx.mutate.final_choice_decision.delete({ id: row.id });
+  }
+  for (const row of indicativeParticipations) {
+    await tx.mutate.indicative_voter_participation.delete({ id: row.id });
+  }
+  for (const row of finalParticipations) {
+    await tx.mutate.final_voter_participation.delete({ id: row.id });
+  }
+  for (const row of offlineTallies) {
+    await tx.mutate.vote_offline_tally.delete({ id: row.id });
+  }
+  for (const row of voters) {
+    await tx.mutate.voter.delete({ id: row.id });
+  }
+  for (const row of choices) {
+    await tx.mutate.vote_choice.delete({ id: row.id });
+  }
+
+  await tx.mutate.vote.delete({ id: voteId });
+}
+
+async function deleteScheduledAgendaItemForFutureStep(
+  tx: ZeroTransaction,
+  stepRun: {
+    id: string;
+    agenda_item_id?: string | null;
+    vote_id?: string | null;
+  }
+) {
+  if (stepRun.agenda_item_id) {
+    const [speakerRows, accreditations] = await Promise.all([
+      tx.run(zql.speaker_list.where('agenda_item_id', stepRun.agenda_item_id)),
+      tx.run(zql.accreditation.where('agenda_item_id', stepRun.agenda_item_id)),
+    ]);
+
+    for (const row of speakerRows) {
+      await tx.mutate.speaker_list.delete({ id: row.id });
+    }
+    for (const row of accreditations) {
+      await tx.mutate.accreditation.delete({ id: row.id });
+    }
+  }
+
+  await deleteVoteRuntime(tx, stepRun.vote_id ?? null);
+
+  if (stepRun.agenda_item_id) {
+    await tx.mutate.agenda_item.delete({ id: stepRun.agenda_item_id });
+  }
+}
+
+async function rejectFutureStepsOnBranch(
+  tx: ZeroTransaction,
+  args: {
+    branchId: string;
+    fromOrderIndex: number;
+    now: number;
+  }
+) {
+  const futureSteps = await tx.run(
+    zql.amendment_process_step_run
+      .where('branch_id', args.branchId)
+      .where('order_index', '>', args.fromOrderIndex)
+      .orderBy('order_index', 'asc')
+  );
+
+  for (const futureStep of futureSteps) {
+    if (futureStep.decision_status === 'previous_decision_outstanding') {
+      await deleteScheduledAgendaItemForFutureStep(tx, futureStep);
+    }
+
+    await cancelOpenTasksForStepRun(tx, futureStep.id);
+    await tx.mutate.amendment_process_step_run.update({
+      id: futureStep.id,
+      agenda_item_id:
+        futureStep.decision_status === 'previous_decision_outstanding'
+          ? null
+          : futureStep.agenda_item_id,
+      vote_id:
+        futureStep.decision_status === 'previous_decision_outstanding' ? null : futureStep.vote_id,
+      status: 'rejected',
+      decision_status: 'rejected',
+      ends_at: args.now,
+      updated_at: args.now,
+    });
+    await updatePathSegmentStatus(tx, futureStep.id, 'rejected');
+  }
+}
+
 async function fetchVoteWithDetails(tx: ZeroTransaction, voteId: string) {
   return tx.run(
     zql.vote
@@ -444,13 +621,9 @@ function resolveDecisionVoteOutcome(
     (left, right) => (left.order_index ?? 0) - (right.order_index ?? 0)
   );
   const acceptChoice =
-    sortedChoices.find(choice => choice.label?.toLowerCase() === 'accept') ??
-    sortedChoices[0] ??
-    null;
+    sortedChoices.find(choice => isAcceptDecisionChoice(choice.label)) ?? sortedChoices[0] ?? null;
   const rejectChoice =
-    sortedChoices.find(choice => choice.label?.toLowerCase() === 'reject') ??
-    sortedChoices[1] ??
-    null;
+    sortedChoices.find(choice => isRejectDecisionChoice(choice.label)) ?? sortedChoices[1] ?? null;
   const tallyByChoiceId = buildTallyByChoiceId(vote);
   const acceptCount = acceptChoice ? (tallyByChoiceId.get(acceptChoice.id) ?? 0) : 0;
   const rejectCount = rejectChoice ? (tallyByChoiceId.get(rejectChoice.id) ?? 0) : 0;
@@ -1841,6 +2014,12 @@ export async function resolveAmendmentProcessVote(
       });
     }
 
+    await rejectFutureStepsOnBranch(tx, {
+      branchId: branch.id,
+      fromOrderIndex: stepRun.order_index,
+      now,
+    });
+
     await tx.mutate.amendment_process_branch.update({
       id: branch.id,
       status: 'rejected',
@@ -1974,6 +2153,23 @@ export async function resolveAmendmentProcessVote(
       updated_at: now,
     });
     await closeOpenScheduleTasksForStepRun(tx, nextStep.id);
+  }
+
+  if (nextStep.event_id && nextStep.agenda_item_id) {
+    await appendAgendaItemToConfirmedAgenda(tx, {
+      agendaItemId: nextStep.agenda_item_id,
+      eventId: nextStep.event_id,
+    });
+  } else if (nextStep.event_id) {
+    const refreshedNextStep = await tx.run(
+      zql.amendment_process_step_run.where('id', nextStep.id).one()
+    );
+    if (refreshedNextStep?.agenda_item_id) {
+      await appendAgendaItemToConfirmedAgenda(tx, {
+        agendaItemId: refreshedNextStep.agenda_item_id,
+        eventId: nextStep.event_id,
+      });
+    }
   }
 
   const branchSync = await syncBranchSchedulingState(tx, branch.id);

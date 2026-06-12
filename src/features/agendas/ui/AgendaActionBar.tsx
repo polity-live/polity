@@ -1,9 +1,11 @@
 'use client';
 
 import { useNavigate } from '@tanstack/react-router';
+import { useEffect } from 'react';
 import {
   Plus,
   Vote,
+  CircleHelp,
   Gavel,
   Play,
   ChevronLeft,
@@ -82,6 +84,9 @@ interface AgendaActionBarProps {
   onBecomeCandidate?: () => void;
   onWithdrawCandidacy?: () => void;
   onVoteClick?: () => void;
+  disableVoteButton?: boolean;
+  disabledVoteTooltip?: string;
+  showOfflineTallyButton?: boolean;
   onOfflineTallyClick?: () => void;
   offlineTallyMode?: 'create' | 'edit';
   offlineTallyTooltip?: string;
@@ -132,6 +137,9 @@ export function AgendaActionBar({
   onBecomeCandidate,
   onWithdrawCandidacy,
   onVoteClick,
+  disableVoteButton,
+  disabledVoteTooltip,
+  showOfflineTallyButton,
   onOfflineTallyClick,
   offlineTallyMode,
   offlineTallyTooltip,
@@ -170,10 +178,54 @@ export function AgendaActionBar({
     (!canStartCurrentItem && !hasStartableItem);
   const nextDisabled =
     !hasNextItem || !canMoveToNextItem || Boolean(navigationLoading) || !currentAgendaItem;
-  const voteTooltip = isFinalVotePhase
+  const defaultVoteTooltip = isFinalVotePhase
     ? castFinalVoteTooltip || t('features.events.agenda.actions.castFinalVote', 'Cast Final Vote')
     : castIndicativeVoteTooltip ||
       t('features.events.agenda.actions.castIndicativeVote', 'Cast Indication');
+  const voteTooltip = disableVoteButton
+    ? disabledVoteTooltip || defaultVoteTooltip
+    : defaultVoteTooltip;
+  const showStartFinalVoteButton =
+    canManageAgenda &&
+    isVotable &&
+    !isClosed &&
+    isIndicationPhase &&
+    isCurrentItemActive &&
+    Boolean(onStartFinalVote);
+
+  useEffect(() => {
+    console.debug('[agenda-action-bar][final-vote]', {
+      eventId,
+      currentAgendaItemId: currentAgendaItem?.id ?? null,
+      currentAgendaItemType: currentAgendaItem?.type ?? null,
+      currentAgendaItemStatus: currentAgendaItem?.status ?? null,
+      votingPhase,
+      canManageAgenda,
+      isVotable,
+      isElection,
+      isVote,
+      isClosed,
+      isIndicationPhase,
+      isCurrentItemActive,
+      hasOnStartFinalVote: Boolean(onStartFinalVote),
+      showStartFinalVoteButton,
+    });
+  }, [
+    canManageAgenda,
+    currentAgendaItem?.id,
+    currentAgendaItem?.status,
+    currentAgendaItem?.type,
+    eventId,
+    isClosed,
+    isCurrentItemActive,
+    isElection,
+    isIndicationPhase,
+    isVote,
+    isVotable,
+    onStartFinalVote,
+    showStartFinalVoteButton,
+    votingPhase,
+  ]);
 
   return (
     <FixedAgendaToolbar className="gap-3">
@@ -258,12 +310,7 @@ export function AgendaActionBar({
             <Play />
           </ToolbarButton>
         ) : null}
-        {canManageAgenda &&
-        isVotable &&
-        !isClosed &&
-        isIndicationPhase &&
-        isCurrentItemActive &&
-        onStartFinalVote ? (
+        {showStartFinalVoteButton ? (
           <ToolbarButton
             tooltip={
               startFinalVoteTooltip ||
@@ -324,25 +371,30 @@ export function AgendaActionBar({
         {isVotable && canVote && !isClosed && !isPendingVote && onVoteClick ? (
           <ToolbarButton
             tooltip={voteTooltip}
-            onClick={onVoteClick}
+            onClick={disableVoteButton ? undefined : onVoteClick}
             disabled={voteLoading}
+            aria-disabled={disableVoteButton || undefined}
             className={cn(
               'bg-background border px-3 font-semibold shadow-sm transition-all',
-              'border-fuchsia-300 text-fuchsia-700 hover:border-fuchsia-400 hover:bg-fuchsia-50 hover:text-fuchsia-800',
-              'animate-pulse'
+              disableVoteButton
+                ? 'border-muted-foreground/30 text-muted-foreground opacity-70'
+                : 'animate-pulse border-fuchsia-300 text-fuchsia-700 hover:border-fuchsia-400 hover:bg-fuchsia-50 hover:text-fuchsia-800'
             )}
           >
             {voteLoading ? <Loader2 className="animate-spin" /> : <Vote />}
             <span>Vote</span>
+            {disableVoteButton ? <CircleHelp className="h-4 w-4" /> : null}
           </ToolbarButton>
         ) : null}
-        {!isClosed && !isPendingVote && onOfflineTallyClick ? (
+        {!isClosed && !isPendingVote && (showOfflineTallyButton || onOfflineTallyClick) ? (
           <ToolbarButton
             tooltip={offlineTallyTooltip || 'Manage offline tally'}
             onClick={onOfflineTallyClick}
-            className="border border-sky-300 text-sky-700"
+            disabled={!onOfflineTallyClick}
+            className="border border-sky-300 px-3 text-sky-700"
           >
             {offlineTallyMode === 'edit' ? <PencilLine /> : <FileEdit />}
+            <span>Enter Tally</span>
           </ToolbarButton>
         ) : null}
       </div>

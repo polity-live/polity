@@ -35,6 +35,38 @@ export interface EventSchedulingWindow {
   maxStartAt: number | null;
 }
 
+function formatSchedulingBoundary(date?: string | null, time?: string | null) {
+  if (!date) {
+    return null;
+  }
+
+  return time ? `${date} ${time}` : date;
+}
+
+export function getSchedulingWindowDisplayLabel(args: {
+  minStartDate?: string | null;
+  minStartTime?: string | null;
+  maxStartDate?: string | null;
+  maxStartTime?: string | null;
+}) {
+  const minLabel = formatSchedulingBoundary(args.minStartDate, args.minStartTime);
+  const maxLabel = formatSchedulingBoundary(args.maxStartDate, args.maxStartTime);
+
+  if (minLabel && maxLabel) {
+    return `Erlaubter Zeitraum fuer diesen Auftrag: ${minLabel} bis ${maxLabel}.`;
+  }
+
+  if (minLabel) {
+    return `Dieses Event kann fruehestens am ${minLabel} beginnen.`;
+  }
+
+  if (maxLabel) {
+    return `Dieses Event muss spaetestens am ${maxLabel} beginnen.`;
+  }
+
+  return null;
+}
+
 export function parseProcessTaskScheduleMetadata(
   metadata: unknown
 ): ProcessTaskScheduleMetadata | null {
@@ -111,16 +143,20 @@ export function getSchedulingWindowValidationMessage(args: {
     return null;
   }
 
+  const windowLabel = getSchedulingWindowDisplayLabel(args);
+
   const minStartAt = toLocalTimestamp(args.minStartDate, args.minStartTime);
   if (minStartAt != null && eventStartAt < minStartAt) {
-    return 'Dieses Event muss nach dem vorherigen Prozessschritt beginnen.';
+    return windowLabel ?? 'Dieses Event muss nach dem vorherigen Prozessschritt beginnen.';
   }
 
   const maxStartAt =
     toLocalTimestamp(args.maxStartDate, args.maxStartTime) ??
     toLocalEndOfDayTimestamp(args.maxStartDate);
   if (maxStartAt != null && eventStartAt > maxStartAt) {
-    return 'Dieses Event liegt ausserhalb des erlaubten Zeitfensters fuer den Auftrag.';
+    return (
+      windowLabel ?? 'Dieses Event liegt ausserhalb des erlaubten Zeitfensters fuer den Auftrag.'
+    );
   }
 
   return null;

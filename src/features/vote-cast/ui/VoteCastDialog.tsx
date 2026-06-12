@@ -22,6 +22,7 @@ import {
   getSeatCountLabel,
   type ElectionMode,
 } from '@/features/elections/logic/electionMode';
+import { AmendmentForwardingPreview } from '@/features/amendments/ui/AmendmentForwardingPreview';
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -54,6 +55,12 @@ interface VoteCastDialogProps {
   choices?: VoteChoice[];
 
   title?: string;
+  forwardingPreview?: {
+    nextEventId?: string | null;
+    nextGroupName?: string | null;
+    nextEventTitle: string;
+    nextEventStartDate?: number | null;
+  } | null;
 
   /** Password confirmation */
   requirePassword?: boolean;
@@ -89,6 +96,7 @@ export function VoteCastDialog({
   seatCount,
   choices,
   title,
+  forwardingPreview,
   requirePassword,
   passwordError,
   isPasswordVerifying,
@@ -310,6 +318,16 @@ export function VoteCastDialog({
             ) : null}
           </div>
         )}
+
+        {step === 'choice' && forwardingPreview ? (
+          <AmendmentForwardingPreview
+            nextEventId={forwardingPreview.nextEventId}
+            nextGroupName={forwardingPreview.nextGroupName}
+            nextEventTitle={forwardingPreview.nextEventTitle}
+            nextEventStartDate={forwardingPreview.nextEventStartDate}
+            compact
+          />
+        ) : null}
 
         {/* Step 3: Password */}
         {step === 'password' && (

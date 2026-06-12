@@ -10,8 +10,11 @@ interface UseGroupAmendmentsPageOptions {
 }
 
 export function useGroupAmendmentsPage({ groupId }: UseGroupAmendmentsPageOptions) {
-  const { amendments } = useGroupAmendments(groupId);
-  const { group } = useGroupData(groupId);
+  const { group, events } = useGroupData(groupId);
+  const eventIds = (events ?? [])
+    .map(event => event.id)
+    .filter((eventId): eventId is string => Boolean(eventId));
+  const { amendments } = useGroupAmendments(groupId, eventIds);
   const { filters, showFilters, hasActiveFilters, updateFilter, clearFilter, setShowFilters } =
     useAmendmentFilters();
 
