@@ -115,6 +115,10 @@ export const networkQueries = {
       .related('steps', q =>
         q.related('group').related('target_workflow').orderBy('order_index', 'asc')
       )
+      .related('start_group')
+      .related('approvals', q =>
+        q.related('group').related('requested_by_group').orderBy('created_at', 'asc')
+      )
       .related('group')
       .related('created_by')
       .orderBy('created_at', 'desc')
@@ -126,6 +130,10 @@ export const networkQueries = {
       .related('steps', q =>
         q.related('group').related('target_workflow').orderBy('order_index', 'asc')
       )
+      .related('start_group')
+      .related('approvals', q =>
+        q.related('group').related('requested_by_group').orderBy('created_at', 'asc')
+      )
       .related('group')
       .related('created_by')
       .one()
@@ -136,8 +144,35 @@ export const networkQueries = {
       .related('steps', q =>
         q.related('group').related('target_workflow').orderBy('order_index', 'asc')
       )
+      .related('start_group')
+      .related('approvals', q =>
+        q.related('group').related('requested_by_group').orderBy('created_at', 'asc')
+      )
       .related('group')
+      .related('created_by')
       .orderBy('created_at', 'desc')
+  ),
+
+  workflowApprovalsByGroup: defineQuery(
+    z.object({ groupId: z.string() }),
+    ({ args: { groupId } }) =>
+      zql.group_workflow_approval
+        .where('group_id', groupId)
+        .related('group')
+        .related('requested_by_group')
+        .related('workflow', q =>
+          q
+            .related('group')
+            .related('start_group')
+            .related('created_by')
+            .related('approvals', aq =>
+              aq.related('group').related('requested_by_group').orderBy('created_at', 'asc')
+            )
+            .related('steps', sq =>
+              sq.related('group').related('target_workflow').orderBy('order_index', 'asc')
+            )
+        )
+        .orderBy('updated_at', 'desc')
   ),
 };
 
@@ -155,3 +190,6 @@ export type NetworkLinkChangeRequestPairRow = QueryRowType<
 >;
 export type WorkflowWithStepsRow = NonNullable<QueryRowType<typeof networkQueries.workflowById>>;
 export type WorkflowStepRow = WorkflowWithStepsRow['steps'][number];
+export type WorkflowApprovalByGroupRow = QueryRowType<
+  typeof networkQueries.workflowApprovalsByGroup
+>;

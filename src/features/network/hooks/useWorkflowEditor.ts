@@ -1,9 +1,13 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
+import { gatedToast as toast } from '@/features/notifications/utils/gated-toast';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useWorkflowState } from '@/zero/network/useWorkflowState';
 import { useWorkflowActions } from '@/zero/network/useWorkflowActions';
+import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import type { WorkflowWithStepsRow } from '@/zero/network/queries';
 
 export interface DraftWorkflowStep {
+  id?: string;
   group_id: string;
   label: string | null;
   step_kind: 'group_vote' | 'merge_vote' | 'workflow_handoff';
@@ -14,12 +18,21 @@ export interface DraftWorkflowStep {
   target_workflow_id: string | null;
 }
 
+function createDraftStep(step: DraftWorkflowStep): DraftWorkflowStep {
+  return {
+    ...step,
+    id: step.id ?? crypto.randomUUID(),
+  };
+}
+
 export function useWorkflowEditor(groupId: string) {
+  const { t } = useTranslation();
   const { groupWorkflows, groupWorkflowsLoading, allWorkflows } = useWorkflowState({ groupId });
   const actions = useWorkflowActions();
 
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingWorkflow, setEditingWorkflow] = useState<WorkflowWithStepsRow | null>(null);
+  const [draftStartGroupId, setDraftStartGroupId] = useState('');
   const [draftName, setDraftName] = useState('');
   const [draftDescription, setDraftDescription] = useState('');
   const [draftIsDefaultEntry, setDraftIsDefaultEntry] = useState(false);
@@ -27,6 +40,7 @@ export function useWorkflowEditor(groupId: string) {
 
   const openNewWorkflow = useCallback(() => {
     setEditingWorkflow(null);
+    setDraftStartGroupId('');
     setDraftName('');
     setDraftDescription('');
     setDraftIsDefaultEntry(false);
@@ -36,27 +50,29 @@ export function useWorkflowEditor(groupId: string) {
 
   const openEditWorkflow = useCallback((workflow: WorkflowWithStepsRow) => {
     setEditingWorkflow(workflow);
+    setDraftStartGroupId(workflow.start_group_id ?? '');
     setDraftName(workflow.name ?? '');
     setDraftDescription(workflow.description ?? '');
     setDraftIsDefaultEntry(workflow.is_default_entry ?? false);
     setDraftSteps(
       [...workflow.steps]
         .sort((a, b) => a.order_index - b.order_index)
-        .map(s => ({
-          group_id: s.group_id,
-          label: s.label,
+        .map(step => ({
+          id: step.id,
+          group_id: step.group_id,
+          label: step.label,
           step_kind:
-            s.step_kind === 'merge_vote' || s.step_kind === 'workflow_handoff'
-              ? s.step_kind
+            step.step_kind === 'merge_vote' || step.step_kind === 'workflow_handoff'
+              ? step.step_kind
               : 'group_vote',
           selection_mode:
-            s.selection_mode === 'explicit_workflow'
+            step.selection_mode === 'explicit_workflow'
               ? 'explicit_workflow'
               : 'default_target_workflow',
-          merge_strategy: s.merge_strategy === 'winner_continues' ? s.merge_strategy : null,
-          event_rule: s.event_rule ?? null,
-          auto_task_on_missing_event: s.auto_task_on_missing_event ?? false,
-          target_workflow_id: s.target_workflow_id ?? null,
+          merge_strategy: step.merge_strategy === 'winner_continues' ? step.merge_strategy : null,
+          event_rule: step.event_rule ?? null,
+          auto_task_on_missing_event: step.auto_task_on_missing_event ?? false,
+          target_workflow_id: step.target_workflow_id ?? null,
         }))
     );
     setIsEditorOpen(true);
@@ -67,41 +83,41 @@ export function useWorkflowEditor(groupId: string) {
     setEditingWorkflow(null);
   }, []);
 
-  const addDraftStep = useCallback((groupId: string, label: string | null = null) => {
-    setDraftSteps(prev => [
-      ...prev,
-      {
-        group_id: groupId,
-        label,
-        step_kind: 'group_vote',
-        selection_mode: 'default_target_workflow',
-        merge_strategy: null,
-        event_rule: null,
-        auto_task_on_missing_event: true,
-        target_workflow_id: null,
-      },
-    ]);
+  const addDraftStep = useCallback((step: DraftWorkflowStep) => {
+    setDraftSteps(prev => [...prev, createDraftStep(step)]);
   }, []);
 
   const updateDraftStep = useCallback((index: number, patch: Partial<DraftWorkflowStep>) => {
     setDraftSteps(prev =>
-      prev.map((step, currentIndex) =>
-        currentIndex === index
-          ? {
-              ...step,
-              ...patch,
-            }
-          : step
-      )
+      prev.map((step, currentIndex) => {
+        if (currentIndex !== index) {
+          return step;
+        }
+
+        return {
+          ...step,
+          ...patch,
+        };
+      })
     );
   }, []);
 
   const removeDraftStep = useCallback((index: number) => {
-    setDraftSteps(prev => prev.filter((_, i) => i !== index));
+    setDraftSteps(prev => prev.filter((_, currentIndex) => currentIndex !== index));
   }, []);
 
   const moveDraftStep = useCallback((fromIndex: number, toIndex: number) => {
     setDraftSteps(prev => {
+      if (
+        fromIndex < 0 ||
+        toIndex < 0 ||
+        fromIndex >= prev.length ||
+        toIndex >= prev.length ||
+        fromIndex === toIndex
+      ) {
+        return prev;
+      }
+
       const next = [...prev];
       const [moved] = next.splice(fromIndex, 1);
       next.splice(toIndex, 0, moved);
@@ -111,76 +127,55 @@ export function useWorkflowEditor(groupId: string) {
 
   const saveWorkflow = useCallback(
     async (createdById: string) => {
-      if (editingWorkflow) {
-        // Update existing workflow
-        await actions.updateWorkflow({
-          id: editingWorkflow.id,
-          name: draftName || null,
-          description: draftDescription || null,
-          is_default_entry: draftIsDefaultEntry,
-        });
-
-        // Delete old steps and recreate
-        for (const step of editingWorkflow.steps) {
-          await actions.deleteWorkflowStep(step.id);
-        }
-
-        for (let i = 0; i < draftSteps.length; i++) {
-          await actions.createWorkflowStep({
-            id: crypto.randomUUID(),
-            workflow_id: editingWorkflow.id,
-            group_id: draftSteps[i].group_id,
-            order_index: i,
-            label: draftSteps[i].label,
-            step_kind: draftSteps[i].step_kind,
-            selection_mode: draftSteps[i].selection_mode,
-            merge_strategy: draftSteps[i].merge_strategy,
-            event_rule: draftSteps[i].event_rule,
-            auto_task_on_missing_event: draftSteps[i].auto_task_on_missing_event,
-            target_workflow_id: draftSteps[i].target_workflow_id,
-          });
-        }
-      } else {
-        // Create new workflow
-        const workflowId = crypto.randomUUID();
-        await actions.createWorkflow({
-          id: workflowId,
-          group_id: groupId,
-          name: draftName || null,
-          description: draftDescription || null,
-          is_default_entry: draftIsDefaultEntry,
-          status: 'active',
-          created_by_id: createdById,
-        });
-
-        for (let i = 0; i < draftSteps.length; i++) {
-          await actions.createWorkflowStep({
-            id: crypto.randomUUID(),
-            workflow_id: workflowId,
-            group_id: draftSteps[i].group_id,
-            order_index: i,
-            label: draftSteps[i].label,
-            step_kind: draftSteps[i].step_kind,
-            selection_mode: draftSteps[i].selection_mode,
-            merge_strategy: draftSteps[i].merge_strategy,
-            event_rule: draftSteps[i].event_rule,
-            auto_task_on_missing_event: draftSteps[i].auto_task_on_missing_event,
-            target_workflow_id: draftSteps[i].target_workflow_id,
-          });
-        }
+      if (!draftStartGroupId || draftSteps.length === 0) {
+        return;
       }
 
-      closeEditor();
+      try {
+        const result = actions.saveWorkflowDefinition({
+          id: editingWorkflow?.id ?? crypto.randomUUID(),
+          editing_group_id: groupId,
+          start_group_id: draftStartGroupId,
+          name: draftName.trim(),
+          description: draftDescription.trim(),
+          is_default_entry: draftIsDefaultEntry,
+          created_by_id: createdById,
+          steps: draftSteps.map((step, index) => ({
+            id: step.id ?? crypto.randomUUID(),
+            group_id: step.group_id,
+            order_index: index,
+            label: step.label,
+            step_kind: step.step_kind,
+            selection_mode: step.selection_mode,
+            merge_strategy: step.merge_strategy,
+            event_rule: step.event_rule,
+            auto_task_on_missing_event: step.auto_task_on_missing_event,
+            target_workflow_id: step.target_workflow_id,
+          })),
+        });
+
+        await serverConfirmed(result);
+        toast.success(t('features.network.toasts.workflowSaved', 'Workflow saved'));
+        closeEditor();
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : t('features.network.toasts.workflowSaveFailed', 'Failed to save workflow')
+        );
+      }
     },
     [
-      editingWorkflow,
+      actions,
+      closeEditor,
       draftDescription,
       draftIsDefaultEntry,
       draftName,
+      draftStartGroupId,
       draftSteps,
+      editingWorkflow?.id,
       groupId,
-      actions,
-      closeEditor,
+      t,
     ]
   );
 
@@ -192,13 +187,13 @@ export function useWorkflowEditor(groupId: string) {
   );
 
   return {
-    // Data
     workflows: groupWorkflows,
     isLoading: groupWorkflowsLoading,
     allWorkflows,
-    // Editor state
     isEditorOpen,
     editingWorkflow,
+    draftStartGroupId,
+    setDraftStartGroupId,
     draftName,
     setDraftName,
     draftDescription,
@@ -206,7 +201,6 @@ export function useWorkflowEditor(groupId: string) {
     draftIsDefaultEntry,
     setDraftIsDefaultEntry,
     draftSteps,
-    // Editor actions
     openNewWorkflow,
     openEditWorkflow,
     closeEditor,

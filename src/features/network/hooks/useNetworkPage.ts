@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useGroupNetwork } from './useGroupNetwork';
 import { useGroupData } from '@/features/groups/hooks/useGroupData';
-import { useNetworkLinkActions } from '@/zero/network';
+import { useNetworkLinkActions, useWorkflowActions } from '@/zero/network';
 import { useAllGroups } from '@/zero/groups/useGroupState';
 import { useAuth } from '@/providers/auth-provider';
 import { RIGHT_TYPES } from '@/features/network/ui/RightFilters';
@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { getRelationshipTypeForGroup } from '../logic/groupRelationshipOrientation';
 import { buildActiveRelationshipSummaries } from '../logic/relationshipSummaryHelpers';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
+import type { WorkflowWithStepsRow } from '@/zero/network/queries';
 import type {
   GroupRelationshipFilter,
   GroupedRelationshipRequest,
@@ -249,11 +250,28 @@ export function useNetworkPage(groupId: string) {
 
   // Workflow editor
   const workflowEditor = useWorkflowEditor(groupId);
+  const workflowActions = useWorkflowActions();
 
   const handleSaveWorkflow = useCallback(async () => {
     if (!authUser?.id) return;
     await workflowEditor.saveWorkflow(authUser.id);
   }, [authUser?.id, workflowEditor]);
+
+  const handleApproveWorkflowApproval = useCallback(
+    async (approvalId: string) => {
+      const result = workflowActions.approveWorkflowApproval(approvalId);
+      await serverConfirmed(result);
+    },
+    [workflowActions]
+  );
+
+  const handleRejectWorkflowApproval = useCallback(
+    async (approvalId: string) => {
+      const result = workflowActions.rejectWorkflowApproval(approvalId);
+      await serverConfirmed(result);
+    },
+    [workflowActions]
+  );
 
   // Collect all groups for workflow step selection
   const { groups: allGroupsRaw } = useAllGroups();
@@ -263,12 +281,50 @@ export function useNetworkPage(groupId: string) {
         id: g.id,
         name: g.name,
         description: g.description,
+        group_type: g.group_type,
         member_count: g.member_count,
         event_count: g.event_count,
         amendment_count: g.amendment_count,
       }))
       .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
   }, [allGroupsRaw]);
+
+  const workflowIncomingRequests = useMemo(
+    () =>
+      workflowEditor.workflows.filter(workflow =>
+        (workflow.approvals ?? []).some(
+          (approval: WorkflowWithStepsRow['approvals'][number]) =>
+            approval.group_id === groupId && approval.status === 'pending'
+        )
+      ),
+    [groupId, workflowEditor.workflows]
+  );
+
+  const workflowOutgoingRequests = useMemo(
+    () =>
+      workflowEditor.workflows.filter(workflow =>
+        (workflow.approvals ?? []).some(
+          (approval: WorkflowWithStepsRow['approvals'][number]) =>
+            approval.requested_by_group_id === groupId &&
+            approval.group_id !== groupId &&
+            (approval.status === 'pending' || approval.status === 'rejected')
+        )
+      ),
+    [groupId, workflowEditor.workflows]
+  );
+
+  const workflowActiveRelevant = useMemo(
+    () =>
+      workflowEditor.workflows.filter(
+        workflow =>
+          workflow.status === 'active' &&
+          (workflow.approvals ?? []).some(
+            (approval: WorkflowWithStepsRow['approvals'][number]) =>
+              approval.group_id === groupId && approval.status === 'accepted'
+          )
+      ),
+    [groupId, workflowEditor.workflows]
+  );
 
   return {
     // Auth
@@ -311,9 +367,15 @@ export function useNetworkPage(groupId: string) {
 
     // Workflows
     workflows: workflowEditor.workflows,
+    allWorkflows: workflowEditor.allWorkflows,
     workflowsLoading: workflowEditor.isLoading,
+    workflowIncomingRequests,
+    workflowOutgoingRequests,
+    workflowActiveRelevant,
     isWorkflowEditorOpen: workflowEditor.isEditorOpen,
     editingWorkflow: workflowEditor.editingWorkflow,
+    workflowDraftStartGroupId: workflowEditor.draftStartGroupId,
+    setWorkflowDraftStartGroupId: workflowEditor.setDraftStartGroupId,
     workflowDraftName: workflowEditor.draftName,
     setWorkflowDraftName: workflowEditor.setDraftName,
     workflowDraftDescription: workflowEditor.draftDescription,
@@ -332,5 +394,7 @@ export function useNetworkPage(groupId: string) {
     moveWorkflowStep: workflowEditor.moveDraftStep,
     handleSaveWorkflow,
     handleDeleteWorkflow: workflowEditor.deleteWorkflow,
+    handleApproveWorkflowApproval,
+    handleRejectWorkflowApproval,
   };
 }

@@ -3,6 +3,7 @@ import { useNetworkPage } from '@/features/network/hooks/useNetworkPage';
 import { NetworkTabs } from '@/features/network/ui/NetworkTabs';
 import { CurrentNetworkTab } from '@/features/network/ui/CurrentNetworkTab';
 import { ManageNetworkTab } from '@/features/network/ui/ManageNetworkTab';
+import { ManageWorkflowsTab } from '@/features/network/ui/ManageWorkflowsTab';
 import { NetworkViewportPanel } from '@/features/network/ui/NetworkViewportPanel';
 import { usePermissions } from '@/zero/rbac';
 
@@ -24,6 +25,7 @@ export function GroupNetworkPage() {
         activeTab={activeTab}
         onTabChange={tab => np.setActiveTab(canAccessManageNetwork ? tab : 'current-network')}
         showManageNetworkTab={canAccessManageNetwork}
+        showManageWorkflowsTab={canAccessManageNetwork}
         currentNetworkContent={
           <NetworkViewportPanel className="flex min-h-0 flex-col">
             <CurrentNetworkTab groupId={groupId} />
@@ -50,10 +52,23 @@ export function GroupNetworkPage() {
               onAcceptRequest={np.handleAcceptRequest}
               onRejectRequest={np.handleRejectRequest}
               onDeleteRelationship={np.handleDeleteRelationship}
-              workflows={np.workflows}
-              workflowsLoading={np.workflowsLoading}
+            />
+          ) : null
+        }
+        manageWorkflowsContent={
+          canAccessManageNetwork ? (
+            <ManageWorkflowsTab
+              canManageWorkflows={canManageNetwork}
+              groupId={groupId}
+              groupName={np.groupName}
+              allRelationships={np.allRelationships}
+              incomingRequests={np.workflowIncomingRequests}
+              outgoingRequests={np.workflowOutgoingRequests}
+              activeRelevantWorkflows={np.workflowActiveRelevant}
               isWorkflowEditorOpen={np.isWorkflowEditorOpen}
               editingWorkflow={np.editingWorkflow}
+              workflowDraftStartGroupId={np.workflowDraftStartGroupId}
+              onWorkflowDraftStartGroupIdChange={np.setWorkflowDraftStartGroupId}
               workflowDraftName={np.workflowDraftName}
               onWorkflowDraftNameChange={np.setWorkflowDraftName}
               workflowDraftDescription={np.workflowDraftDescription}
@@ -72,6 +87,8 @@ export function GroupNetworkPage() {
               onMoveWorkflowStep={np.moveWorkflowStep}
               onSaveWorkflow={np.handleSaveWorkflow}
               onDeleteWorkflow={np.handleDeleteWorkflow}
+              onApproveWorkflowApproval={np.handleApproveWorkflowApproval}
+              onRejectWorkflowApproval={np.handleRejectWorkflowApproval}
             />
           ) : null
         }

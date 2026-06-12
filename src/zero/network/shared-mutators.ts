@@ -13,6 +13,9 @@ import {
   createGroupWorkflowStepSchema,
   updateGroupWorkflowStepSchema,
   deleteGroupWorkflowStepSchema,
+  saveWorkflowDefinitionSchema,
+  approveWorkflowApprovalSchema,
+  rejectWorkflowApprovalSchema,
 } from './schema';
 import {
   approveNetworkLinkChangeRequest,
@@ -21,6 +24,12 @@ import {
   rejectNetworkLinkChangeRequest,
   syncNetworkLinkChildren,
 } from './mutator-helpers';
+import {
+  approveWorkflowApproval,
+  deleteWorkflowDefinition,
+  rejectWorkflowApproval,
+  saveWorkflowDefinition,
+} from './workflow-mutator-helpers';
 
 export const networkSharedMutators = {
   createNetworkLink: defineMutator(createNetworkLinkSchema, async ({ tx, args }) => {
@@ -106,12 +115,19 @@ export const networkSharedMutators = {
   }),
 
   deleteWorkflow: defineMutator(deleteGroupWorkflowSchema, async ({ tx, args }) => {
-    // Delete all steps first
-    const steps = await tx.run(zql.group_workflow_step.where('workflow_id', args.id));
-    for (const step of steps) {
-      await tx.mutate.group_workflow_step.delete({ id: step.id });
-    }
-    await tx.mutate.group_workflow.delete({ id: args.id });
+    await deleteWorkflowDefinition(tx, args.id);
+  }),
+
+  saveWorkflowDefinition: defineMutator(saveWorkflowDefinitionSchema, async ({ tx, args }) => {
+    await saveWorkflowDefinition(tx, args);
+  }),
+
+  approveWorkflowApproval: defineMutator(approveWorkflowApprovalSchema, async ({ tx, args }) => {
+    await approveWorkflowApproval(tx, args.approval_id);
+  }),
+
+  rejectWorkflowApproval: defineMutator(rejectWorkflowApprovalSchema, async ({ tx, args }) => {
+    await rejectWorkflowApproval(tx, args.approval_id);
   }),
 
   // ── Workflow Step mutators ────────────────────────────────────────

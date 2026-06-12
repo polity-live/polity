@@ -34,6 +34,8 @@ interface CreateNetworkRelationshipEdgeDataArgs {
   rightConnectionDirections?: Record<string, NetworkConnectionDirection>;
   userConnectionDirections?: NetworkUserConnectionDirection[];
   relationshipDepth?: NetworkRelationshipDepth;
+  sourceGroupId?: string;
+  targetGroupId?: string;
   sourceName?: string | null;
   targetName?: string | null;
   currentGroupId?: string;
@@ -687,6 +689,8 @@ export function buildNetworkRelationshipEdge({
       rightConnectionDirections: pageRightConnectionDirections,
       userConnectionDirections: getNetworkUserConnectionDirections(pageRightConnectionDirections),
       relationshipDepth,
+      sourceGroupId,
+      targetGroupId,
       sourceName,
       targetName,
       currentGroupId: previewContext.currentGroupId,
@@ -714,6 +718,8 @@ export function createNetworkRelationshipEdgeData({
   rightConnectionDirections,
   userConnectionDirections,
   relationshipDepth,
+  sourceGroupId,
+  targetGroupId,
   sourceName,
   targetName,
   currentGroupId,
@@ -736,6 +742,8 @@ export function createNetworkRelationshipEdgeData({
     rightConnectionDirections,
     userConnectionDirections,
     relationshipDepth,
+    sourceGroupId,
+    targetGroupId,
     sourceName,
     targetName,
     currentGroupId,

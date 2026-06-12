@@ -104,6 +104,7 @@ import {
   subscriber,
   groupWorkflow,
   groupWorkflowStep,
+  groupWorkflowApproval,
 } from './network/table';
 import { userPreference } from './preferences/table';
 import { pqlFilter } from './pql/table';
@@ -205,6 +206,7 @@ export const schema = createSchema({
     subscriber,
     groupWorkflow,
     groupWorkflowStep,
+    groupWorkflowApproval,
     // Todos
     todo,
     todoAssignment,
@@ -393,6 +395,7 @@ export type AccreditationRow = Row<Schema['tables']['accreditation']>;
 // Workflows
 export type GroupWorkflowRow = Row<Schema['tables']['group_workflow']>;
 export type GroupWorkflowStepRow = Row<Schema['tables']['group_workflow_step']>;
+export type GroupWorkflowApprovalRow = Row<Schema['tables']['group_workflow_approval']>;
 
 // Common
 export type Subscriber = Row<Schema['tables']['subscriber']>;

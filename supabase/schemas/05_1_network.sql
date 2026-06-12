@@ -204,6 +204,7 @@ CREATE POLICY "service_role_all" ON public.subscriber FOR ALL TO service_role US
 CREATE TABLE IF NOT EXISTS public.group_workflow (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
+  start_group_id UUID REFERENCES public."group" (id) ON DELETE CASCADE,
   name TEXT,
   description TEXT,
   is_default_entry BOOLEAN NOT NULL DEFAULT false,
@@ -214,6 +215,7 @@ CREATE TABLE IF NOT EXISTS public.group_workflow (
 );
 
 CREATE INDEX idx_group_workflow_group ON public.group_workflow (group_id);
+CREATE INDEX idx_group_workflow_start_group ON public.group_workflow (start_group_id);
 CREATE INDEX idx_group_workflow_created_by ON public.group_workflow (created_by_id);
 CREATE UNIQUE INDEX idx_group_workflow_default_entry
   ON public.group_workflow (group_id)
@@ -221,6 +223,32 @@ CREATE UNIQUE INDEX idx_group_workflow_default_entry
 
 ALTER TABLE public.group_workflow ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.group_workflow FOR ALL TO service_role USING (true);
+
+-- Group workflow approval table (one approval record per participating group)
+CREATE TABLE IF NOT EXISTS public.group_workflow_approval (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  workflow_id UUID NOT NULL REFERENCES public.group_workflow (id) ON DELETE CASCADE,
+  group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
+  requested_by_group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
+  status TEXT NOT NULL DEFAULT 'pending',
+  responded_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX idx_group_workflow_approval_unique
+  ON public.group_workflow_approval (workflow_id, group_id);
+CREATE INDEX idx_group_workflow_approval_workflow
+  ON public.group_workflow_approval (workflow_id);
+CREATE INDEX idx_group_workflow_approval_group
+  ON public.group_workflow_approval (group_id);
+CREATE INDEX idx_group_workflow_approval_requested_by
+  ON public.group_workflow_approval (requested_by_group_id);
+CREATE INDEX idx_group_workflow_approval_status
+  ON public.group_workflow_approval (status);
+
+ALTER TABLE public.group_workflow_approval ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.group_workflow_approval FOR ALL TO service_role USING (true);
 
 -- Group workflow step table (ordered steps referencing groups)
 CREATE TABLE IF NOT EXISTS public.group_workflow_step (

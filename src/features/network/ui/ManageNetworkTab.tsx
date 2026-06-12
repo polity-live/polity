@@ -36,7 +36,6 @@ import {
   GroupRelationshipTypePreview,
 } from './GroupRelationshipFields';
 import { LinkGroupDialog } from './LinkGroupDialog';
-import { WorkflowEditor } from './WorkflowEditor';
 import { Pencil, Trash2, Clock } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -55,13 +54,10 @@ import type {
   NetworkGroupEntity,
   NormalizedGroupRelationship,
 } from '../types/network.types';
-import type { WorkflowWithStepsRow } from '@/zero/network/queries';
-import type { DraftWorkflowStep } from '../hooks/useWorkflowEditor';
 import { getCurrentGroupRelationshipDisplay } from '../logic/groupRelationshipDisplay';
 import type { SiblingMembershipMode } from '../logic/groupRelationshipSentence';
 
 interface ManageNetworkTabProps {
-  showWorkflows?: boolean;
   canManageRelationships: boolean;
   groupId: string;
   groupName: string;
@@ -84,44 +80,9 @@ interface ManageNetworkTabProps {
   onAcceptRequest: (rels: NormalizedGroupRelationship[]) => Promise<void>;
   onRejectRequest: (rels: NormalizedGroupRelationship[]) => Promise<void>;
   onDeleteRelationship: (targetGroupId: string) => void;
-  // Workflow props
-  workflows: WorkflowWithStepsRow[];
-  workflowsLoading: boolean;
-  isWorkflowEditorOpen: boolean;
-  editingWorkflow: WorkflowWithStepsRow | null;
-  workflowDraftName: string;
-  onWorkflowDraftNameChange: (name: string) => void;
-  workflowDraftDescription: string;
-  onWorkflowDraftDescriptionChange: (description: string) => void;
-  workflowDraftIsDefaultEntry: boolean;
-  onWorkflowDraftIsDefaultEntryChange: (value: boolean) => void;
-  workflowDraftSteps: DraftWorkflowStep[];
-  availableGroups: {
-    id: string;
-    name: string | null;
-    description?: unknown;
-    member_count?: number | null;
-    event_count?: number | null;
-    amendment_count?: number | null;
-  }[];
-  availableWorkflows: {
-    id: string;
-    group_id: string;
-    name: string | null;
-  }[];
-  onOpenNewWorkflow: () => void;
-  onOpenEditWorkflow: (workflow: WorkflowWithStepsRow) => void;
-  onCloseWorkflowEditor: () => void;
-  onAddWorkflowStep: (groupId: string, label: string | null) => void;
-  onUpdateWorkflowStep: (index: number, patch: Partial<DraftWorkflowStep>) => void;
-  onRemoveWorkflowStep: (index: number) => void;
-  onMoveWorkflowStep: (fromIndex: number, toIndex: number) => void;
-  onSaveWorkflow: () => void;
-  onDeleteWorkflow: (workflowId: string) => void;
 }
 
 export function ManageNetworkTab({
-  showWorkflows = true,
   canManageRelationships,
   groupId,
   groupName,
@@ -140,28 +101,6 @@ export function ManageNetworkTab({
   onAcceptRequest,
   onRejectRequest,
   onDeleteRelationship,
-  workflows,
-  workflowsLoading,
-  isWorkflowEditorOpen,
-  editingWorkflow,
-  workflowDraftName,
-  onWorkflowDraftNameChange,
-  workflowDraftDescription,
-  onWorkflowDraftDescriptionChange,
-  workflowDraftIsDefaultEntry,
-  onWorkflowDraftIsDefaultEntryChange,
-  workflowDraftSteps,
-  availableGroups,
-  availableWorkflows,
-  onOpenNewWorkflow,
-  onOpenEditWorkflow,
-  onCloseWorkflowEditor,
-  onAddWorkflowStep,
-  onUpdateWorkflowStep,
-  onRemoveWorkflowStep,
-  onMoveWorkflowStep,
-  onSaveWorkflow,
-  onDeleteWorkflow,
 }: ManageNetworkTabProps) {
   const { t } = useTranslation();
   const [manageDialog, setManageDialog] = useState<{
@@ -800,34 +739,6 @@ export function ManageNetworkTab({
           </div>
         </CardContent>
       </Card>
-
-      {/* Workflows Section */}
-      {showWorkflows && canManageRelationships ? (
-        <WorkflowEditor
-          workflows={workflows}
-          isLoading={workflowsLoading}
-          isEditorOpen={isWorkflowEditorOpen}
-          editingWorkflow={editingWorkflow}
-          draftName={workflowDraftName}
-          setDraftName={onWorkflowDraftNameChange}
-          draftDescription={workflowDraftDescription}
-          setDraftDescription={onWorkflowDraftDescriptionChange}
-          draftIsDefaultEntry={workflowDraftIsDefaultEntry}
-          setDraftIsDefaultEntry={onWorkflowDraftIsDefaultEntryChange}
-          draftSteps={workflowDraftSteps}
-          availableGroups={availableGroups}
-          availableWorkflows={availableWorkflows}
-          onOpenNew={onOpenNewWorkflow}
-          onOpenEdit={onOpenEditWorkflow}
-          onClose={onCloseWorkflowEditor}
-          onAddStep={onAddWorkflowStep}
-          onUpdateStep={onUpdateWorkflowStep}
-          onRemoveStep={onRemoveWorkflowStep}
-          onMoveStep={onMoveWorkflowStep}
-          onSave={onSaveWorkflow}
-          onDelete={onDeleteWorkflow}
-        />
-      ) : null}
 
       {canManageRelationships && manageDialog ? (
         <HierarchyConflictDialog

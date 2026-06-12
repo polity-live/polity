@@ -16,8 +16,19 @@ interface WorkflowNode extends Node {
   };
 }
 
+type WorkflowFlowVisualizationStep = Pick<
+  WorkflowWithStepsRow['steps'][number],
+  'id' | 'order_index' | 'label' | 'group_id' | 'group'
+>;
+
+export interface WorkflowFlowVisualizationWorkflow {
+  name: string | null;
+  description?: string | null;
+  steps: readonly WorkflowFlowVisualizationStep[];
+}
+
 interface WorkflowFlowVisualizationProps {
-  workflow: WorkflowWithStepsRow;
+  workflow: WorkflowFlowVisualizationWorkflow;
 }
 
 // Color palette matching the group network hierarchy style

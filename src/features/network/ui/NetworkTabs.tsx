@@ -7,7 +7,9 @@ interface NetworkTabsProps {
   onTabChange: (tab: NetworkTab) => void;
   currentNetworkContent: React.ReactNode;
   manageNetworkContent: React.ReactNode;
+  manageWorkflowsContent?: React.ReactNode;
   showManageNetworkTab?: boolean;
+  showManageWorkflowsTab?: boolean;
 }
 
 export function NetworkTabs({
@@ -15,7 +17,9 @@ export function NetworkTabs({
   onTabChange,
   currentNetworkContent,
   manageNetworkContent,
+  manageWorkflowsContent,
   showManageNetworkTab = true,
+  showManageWorkflowsTab = true,
 }: NetworkTabsProps) {
   const { t } = useTranslation();
 
@@ -34,6 +38,11 @@ export function NetworkTabs({
             {t('features.network.tabs.manageNetwork')}
           </TabsTrigger>
         ) : null}
+        {showManageWorkflowsTab ? (
+          <TabsTrigger value="manage-workflows">
+            {t('features.network.tabs.manageWorkflows', 'Manage Workflows')}
+          </TabsTrigger>
+        ) : null}
       </TabsList>
 
       <TabsContent value="current-network" className="space-y-6">
@@ -43,6 +52,12 @@ export function NetworkTabs({
       {showManageNetworkTab ? (
         <TabsContent value="manage-network" className="space-y-6">
           {manageNetworkContent}
+        </TabsContent>
+      ) : null}
+
+      {showManageWorkflowsTab ? (
+        <TabsContent value="manage-workflows" className="space-y-6">
+          {manageWorkflowsContent}
         </TabsContent>
       ) : null}
     </Tabs>

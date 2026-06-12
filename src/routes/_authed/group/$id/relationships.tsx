@@ -25,7 +25,6 @@ export function GroupRelationshipsPage() {
   return (
     <div className="space-y-4">
       <ManageNetworkTab
-        showWorkflows={false}
         canManageRelationships={canManage('groupRelationships')}
         groupId={groupId}
         groupName={np.groupName}
@@ -44,28 +43,6 @@ export function GroupRelationshipsPage() {
         onAcceptRequest={np.handleAcceptRequest}
         onRejectRequest={np.handleRejectRequest}
         onDeleteRelationship={np.handleDeleteRelationship}
-        workflows={np.workflows}
-        workflowsLoading={np.workflowsLoading}
-        isWorkflowEditorOpen={np.isWorkflowEditorOpen}
-        editingWorkflow={np.editingWorkflow}
-        workflowDraftName={np.workflowDraftName}
-        onWorkflowDraftNameChange={np.setWorkflowDraftName}
-        workflowDraftDescription={np.workflowDraftDescription}
-        onWorkflowDraftDescriptionChange={np.setWorkflowDraftDescription}
-        workflowDraftIsDefaultEntry={np.workflowDraftIsDefaultEntry}
-        onWorkflowDraftIsDefaultEntryChange={np.setWorkflowDraftIsDefaultEntry}
-        workflowDraftSteps={np.workflowDraftSteps}
-        availableGroups={np.availableGroups}
-        availableWorkflows={np.availableWorkflows}
-        onOpenNewWorkflow={np.openNewWorkflow}
-        onOpenEditWorkflow={np.openEditWorkflow}
-        onCloseWorkflowEditor={np.closeWorkflowEditor}
-        onAddWorkflowStep={np.addWorkflowStep}
-        onUpdateWorkflowStep={np.updateWorkflowStepDraft}
-        onRemoveWorkflowStep={np.removeWorkflowStep}
-        onMoveWorkflowStep={np.moveWorkflowStep}
-        onSaveWorkflow={np.handleSaveWorkflow}
-        onDeleteWorkflow={np.handleDeleteWorkflow}
       />
     </div>
   );

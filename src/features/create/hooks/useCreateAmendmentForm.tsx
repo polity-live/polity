@@ -18,7 +18,10 @@ import {
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
-import { enrichPathSegments } from '@/features/amendments/logic/amendmentPathHelpers';
+import {
+  enrichPathSegments,
+  type PathWithEventSegment,
+} from '@/features/amendments/logic/amendmentPathHelpers';
 import { useCreateAmendmentPath } from '@/features/amendments/hooks/useCreateAmendmentPath';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import { mergeCreateSearchParams } from '../logic/createSearchParams';
@@ -73,20 +76,8 @@ export function useCreateAmendmentForm(): CreateFormConfig {
     groupData: CreateTargetGroupData;
     eventId: string | null;
     eventData: CreateTargetEventData | null;
-    pathWithEvents: {
-      groupId: string;
-      groupName: string;
-      eventId: string | null;
-      eventTitle: string;
-      eventStartDate: number | null;
-      eventEndDate?: number | null;
-      requiredAfter?: number | null;
-      requiredBefore?: number | null;
-    }[];
-    missingEventSteps: {
-      groupId: string;
-      groupName: string;
-    }[];
+    pathWithEvents: PathWithEventSegment[];
+    missingEventSteps: PathWithEventSegment[];
     pathMode: 'hierarchy' | 'workflow';
     workflowId: string | null;
   } | null>(null);
@@ -210,10 +201,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
           }
         : null,
       pathWithEvents: selection.pathWithEvents,
-      missingEventSteps: selection.missingEventSteps.map(segment => ({
-        groupId: segment.groupId,
-        groupName: segment.groupName,
-      })),
+      missingEventSteps: selection.missingEventSteps,
       pathMode: selection.pathMode,
       workflowId: selection.workflowId,
     });

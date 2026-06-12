@@ -1,6 +1,6 @@
 import type { NetworkLinkListRow } from '@/zero/network/queries';
 
-export type NetworkTab = 'current-network' | 'manage-network';
+export type NetworkTab = 'current-network' | 'manage-network' | 'manage-workflows';
 export type GroupRelationshipType = 'parent' | 'child' | 'sibling';
 export type GroupRelationshipFilter = 'all' | GroupRelationshipType;
 export type GroupRelationshipDirection = 'none' | 'outgoing' | 'incoming' | 'bidirectional';

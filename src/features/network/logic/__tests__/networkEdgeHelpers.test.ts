@@ -330,6 +330,7 @@ describe('networkEdgeHelpers', () => {
       membershipMode: 'all_members',
       membershipCanonicalDirection: 'forward',
       rightEdgeDirections: { amendmentRight: 'backward' },
+      fallbackStrokeColor: '#66bb6a',
       sourceName: 'H1',
       targetName: 'B1',
       previewCurrentGroupId: 'group-b1',

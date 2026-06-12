@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const useGroupNetworkMock = vi.fn();
 const useGroupDataMock = vi.fn();
 const useNetworkLinkActionsMock = vi.fn();
+const useWorkflowActionsMock = vi.fn();
 const useAllGroupsMock = vi.fn();
 const useAuthMock = vi.fn();
 const useWorkflowEditorMock = vi.fn();
@@ -23,6 +24,7 @@ vi.mock('@/features/groups/hooks/useGroupData', () => ({
 
 vi.mock('@/zero/network', () => ({
   useNetworkLinkActions: (...args: unknown[]) => useNetworkLinkActionsMock(...args),
+  useWorkflowActions: (...args: unknown[]) => useWorkflowActionsMock(...args),
 }));
 
 vi.mock('@/zero/groups/useGroupState', () => ({
@@ -73,10 +75,24 @@ function createRelationship(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function createWorkflow(id: string, overrides: Record<string, unknown> = {}) {
+  return {
+    id,
+    name: `Workflow ${id}`,
+    group_id: 'final-group',
+    start_group_id: 'start-group',
+    status: 'active',
+    approvals: [],
+    steps: [],
+    ...overrides,
+  };
+}
+
 beforeEach(() => {
   useGroupNetworkMock.mockReset();
   useGroupDataMock.mockReset();
   useNetworkLinkActionsMock.mockReset();
+  useWorkflowActionsMock.mockReset();
   useAllGroupsMock.mockReset();
   useAuthMock.mockReset();
   useWorkflowEditorMock.mockReset();
@@ -100,22 +116,37 @@ beforeEach(() => {
   useGroupDataMock.mockReturnValue({
     group: { id: 'group-1', name: 'Current Group' },
   });
+  useNetworkLinkActionsMock.mockReturnValue({
+    approveNetworkLinkChangeRequest: vi.fn(),
+    rejectNetworkLinkChangeRequest: vi.fn(),
+    deleteNetworkLink: vi.fn(),
+  });
   useAllGroupsMock.mockReturnValue({ groups: [] });
   useAuthMock.mockReturnValue({ user: null });
+  useWorkflowActionsMock.mockReturnValue({
+    approveWorkflowApproval: vi.fn(),
+    rejectWorkflowApproval: vi.fn(),
+  });
   useWorkflowEditorMock.mockReturnValue({
     workflows: [],
+    allWorkflows: [],
     isLoading: false,
     isEditorOpen: false,
     editingWorkflow: null,
+    draftStartGroupId: '',
+    setDraftStartGroupId: vi.fn(),
     draftName: '',
     setDraftName: vi.fn(),
     draftDescription: '',
     setDraftDescription: vi.fn(),
+    draftIsDefaultEntry: false,
+    setDraftIsDefaultEntry: vi.fn(),
     draftSteps: [],
     openNewWorkflow: vi.fn(),
     openEditWorkflow: vi.fn(),
     closeEditor: vi.fn(),
     addDraftStep: vi.fn(),
+    updateDraftStep: vi.fn(),
     removeDraftStep: vi.fn(),
     moveDraftStep: vi.fn(),
     saveWorkflow: vi.fn(),
@@ -189,5 +220,82 @@ describe('useNetworkPage request actions', () => {
       right_ids: ['right-1'],
     });
     expect(serverConfirmedMock).toHaveBeenCalledWith('reject-result');
+  });
+
+  it('derives workflow buckets from participant approvals instead of final ownership only', () => {
+    const incomingWorkflow = createWorkflow('incoming', {
+      status: 'pending_approval',
+      approvals: [
+        {
+          id: 'approval-incoming',
+          group_id: 'group-1',
+          status: 'pending',
+          requested_by_group_id: 'group-2',
+        },
+      ],
+    });
+
+    const outgoingWorkflow = createWorkflow('outgoing', {
+      status: 'pending_approval',
+      approvals: [
+        {
+          id: 'approval-outgoing-self',
+          group_id: 'group-1',
+          status: 'accepted',
+          requested_by_group_id: 'group-1',
+        },
+        {
+          id: 'approval-outgoing-other',
+          group_id: 'group-3',
+          status: 'pending',
+          requested_by_group_id: 'group-1',
+        },
+      ],
+    });
+
+    const activeCoOwnedWorkflow = createWorkflow('active-co-owned', {
+      group_id: 'foreign-final-group',
+      status: 'active',
+      approvals: [
+        {
+          id: 'approval-active',
+          group_id: 'group-1',
+          status: 'accepted',
+          requested_by_group_id: 'group-4',
+        },
+      ],
+    });
+
+    useWorkflowEditorMock.mockReturnValue({
+      workflows: [incomingWorkflow, outgoingWorkflow, activeCoOwnedWorkflow],
+      allWorkflows: [],
+      isLoading: false,
+      isEditorOpen: false,
+      editingWorkflow: null,
+      draftStartGroupId: '',
+      setDraftStartGroupId: vi.fn(),
+      draftName: '',
+      setDraftName: vi.fn(),
+      draftDescription: '',
+      setDraftDescription: vi.fn(),
+      draftIsDefaultEntry: false,
+      setDraftIsDefaultEntry: vi.fn(),
+      draftSteps: [],
+      openNewWorkflow: vi.fn(),
+      openEditWorkflow: vi.fn(),
+      closeEditor: vi.fn(),
+      addDraftStep: vi.fn(),
+      updateDraftStep: vi.fn(),
+      removeDraftStep: vi.fn(),
+      moveDraftStep: vi.fn(),
+      saveWorkflow: vi.fn(),
+      deleteWorkflow: vi.fn(),
+    });
+
+    const { result } = renderHook(() => useNetworkPage('group-1'));
+
+    expect(result.current.workflowIncomingRequests).toEqual([incomingWorkflow]);
+    expect(result.current.workflowOutgoingRequests).toEqual([outgoingWorkflow]);
+    expect(result.current.workflowActiveRelevant).toEqual([activeCoOwnedWorkflow]);
   });
 });

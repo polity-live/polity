@@ -41,10 +41,6 @@ vi.mock('../LinkGroupDialog', () => ({
   ),
 }));
 
-vi.mock('../WorkflowEditor', () => ({
-  WorkflowEditor: () => <div data-testid="workflow-editor" />,
-}));
-
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
@@ -120,28 +116,6 @@ function renderManageNetworkTab(canManageRelationships: boolean) {
       onAcceptRequest={vi.fn().mockResolvedValue(undefined)}
       onRejectRequest={vi.fn().mockResolvedValue(undefined)}
       onDeleteRelationship={vi.fn()}
-      workflows={[{ id: 'workflow-1', name: 'Workflow' } as never]}
-      workflowsLoading={false}
-      isWorkflowEditorOpen={false}
-      editingWorkflow={null}
-      workflowDraftName=""
-      onWorkflowDraftNameChange={() => undefined}
-      workflowDraftDescription=""
-      onWorkflowDraftDescriptionChange={() => undefined}
-      workflowDraftIsDefaultEntry={false}
-      onWorkflowDraftIsDefaultEntryChange={() => undefined}
-      workflowDraftSteps={[]}
-      availableGroups={[]}
-      availableWorkflows={[]}
-      onOpenNewWorkflow={() => undefined}
-      onOpenEditWorkflow={() => undefined}
-      onCloseWorkflowEditor={() => undefined}
-      onAddWorkflowStep={() => undefined}
-      onUpdateWorkflowStep={() => undefined}
-      onRemoveWorkflowStep={() => undefined}
-      onMoveWorkflowStep={() => undefined}
-      onSaveWorkflow={() => undefined}
-      onDeleteWorkflow={() => undefined}
     />
   );
 }
@@ -154,7 +128,6 @@ describe('ManageNetworkTab', () => {
     expect(screen.queryAllByText('common.network.manage')).toHaveLength(0);
     expect(screen.queryAllByText('common.actions.confirm')).toHaveLength(0);
     expect(screen.queryByTestId('link-group-dialog-create')).toBeNull();
-    expect(screen.queryByTestId('workflow-editor')).toBeNull();
     expect(screen.queryAllByText('Partner Group').length).toBeGreaterThan(0);
   });
 
@@ -165,6 +138,5 @@ describe('ManageNetworkTab', () => {
     expect(screen.queryAllByText('common.network.manage').length).toBeGreaterThan(0);
     expect(screen.queryByTestId('link-group-dialog-create')).not.toBeNull();
     expect(screen.queryAllByTestId(/link-group-dialog-/).length).toBeGreaterThanOrEqual(3);
-    expect(screen.queryByTestId('workflow-editor')).not.toBeNull();
   });
 });

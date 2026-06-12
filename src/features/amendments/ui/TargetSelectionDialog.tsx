@@ -23,12 +23,14 @@ interface TargetSelectionDialogProps {
   currentUserId: string;
   allUsers: { id: string; name: string; email: string | null; avatar?: string | null }[];
   onConfirm: (selection: {
+    sourceGroupId: string | null;
     groupId: string | null;
     groupData: TargetGroupEventSelection['groupData'] | null;
     eventId: string | null;
     eventData: TargetGroupEventSelection['eventData'] | null;
     collaboratorUserId: string;
     pathWithEvents: PathWithEventSegment[];
+    pathMode: 'hierarchy' | 'workflow';
     workflowId: string | null;
   }) => void;
   isSaving?: boolean;
@@ -83,12 +85,14 @@ export function TargetSelectionDialog({
 
   const handleConfirm = () => {
     onConfirm({
+      sourceGroupId: pendingTarget?.sourceGroupId ?? null,
       groupId: pendingTarget?.groupId ?? null,
       groupData: pendingTarget?.groupData ?? null,
       eventId: pendingTarget?.eventId ?? null,
       eventData: pendingTarget?.eventData ?? null,
       collaboratorUserId: pendingTarget?.selectedUserId ?? currentUserId,
       pathWithEvents: pendingTarget?.pathWithEvents ?? [],
+      pathMode: pendingTarget?.pathMode ?? 'hierarchy',
       workflowId: pendingTarget?.workflowId ?? null,
     });
     handleCancel();

@@ -41,6 +41,8 @@ export interface EditableRightsLabelEdgeData extends Record<string, unknown> {
   visibleConnectionDirection?: NetworkConnectionDirection;
   userConnectionDirections?: NetworkUserConnectionDirection[];
   relationshipDepth?: NetworkRelationshipDepth;
+  sourceGroupId?: string;
+  targetGroupId?: string;
   sourceName?: string | null;
   targetName?: string | null;
   currentGroupId?: string;

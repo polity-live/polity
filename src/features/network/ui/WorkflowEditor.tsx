@@ -12,6 +12,8 @@ import {
 import { Button } from '@/features/shared/ui/ui/button';
 import { Label } from '@/features/shared/ui/ui/label';
 import { Input } from '@/features/shared/ui/ui/input';
+import { Textarea } from '@/features/shared/ui/ui/textarea';
+import { Badge } from '@/features/shared/ui/ui/badge';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { Switch } from '@/features/shared/ui/ui/switch';
 import {
@@ -21,49 +23,50 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/features/shared/ui/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import {
-  Plus,
-  Trash2,
-  ArrowRight,
-  Pencil,
-  ChevronRight,
-  GripVertical,
-  ChevronDown,
-  ChevronUp,
-} from 'lucide-react';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { isWorkflowCircular, sortWorkflowSteps } from '../logic/workflowHelpers';
-import type { DraftWorkflowStep } from '../hooks/useWorkflowEditor';
-import type { WorkflowWithStepsRow } from '@/zero/network/queries';
-import { Badge } from '@/features/shared/ui/ui/badge';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/features/shared/ui/ui/alert-dialog';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/features/shared/ui/ui/collapsible';
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/features/shared/ui/ui/accordion';
 import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
-import { GroupSearchCard } from '@/features/search/ui/GroupSearchCard';
-import { CreateInputField, CreateTextareaField } from '@/features/create/ui/CreateFields';
-import { cn } from '@/features/shared/utils/utils';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import type { DraftWorkflowStep } from '../hooks/useWorkflowEditor';
+import type { WorkflowWithStepsRow } from '@/zero/network/queries';
+import type { NormalizedGroupRelationship, NetworkGroupEntity } from '../types/network.types';
+import {
+  type AmendmentNetworkGroup,
+  type AmendmentNetworkRelationship,
+  getDirectReachableTargetGroupsFromSource,
+} from '@/features/amendments/logic/amendmentPathHelpers';
+import { isActiveGroupRelationshipStatus } from '../logic/networkRelationshipHelpers';
+import { GroupNetworkFlow } from './GroupNetworkFlow';
+import {
+  WorkflowFlowVisualization,
+  type WorkflowFlowVisualizationWorkflow,
+} from './WorkflowFlowVisualization';
+import {
+  ArrowRight,
+  GripVertical,
+  List,
+  MapPinned,
+  Network,
+  Plus,
+  Trash2,
+  ChevronDown,
+  ChevronUp,
+  Workflow,
+} from 'lucide-react';
 
 interface AvailableGroup {
   id: string;
   name: string | null;
   description?: unknown;
+  group_type?: NetworkGroupEntity['group_type'] | null;
   member_count?: number | null;
   event_count?: number | null;
   amendment_count?: number | null;
@@ -73,13 +76,17 @@ interface AvailableWorkflow {
   id: string;
   group_id: string;
   name: string | null;
+  status?: string | null;
 }
 
 interface WorkflowEditorProps {
-  workflows: WorkflowWithStepsRow[];
-  isLoading: boolean;
-  isEditorOpen: boolean;
+  currentGroupId: string;
+  currentGroupName: string;
+  allRelationships: NormalizedGroupRelationship[];
+  isOpen: boolean;
   editingWorkflow: WorkflowWithStepsRow | null;
+  draftStartGroupId: string;
+  setDraftStartGroupId: (groupId: string) => void;
   draftName: string;
   setDraftName: (name: string) => void;
   draftDescription: string;
@@ -89,45 +96,64 @@ interface WorkflowEditorProps {
   draftSteps: DraftWorkflowStep[];
   availableGroups: AvailableGroup[];
   availableWorkflows: AvailableWorkflow[];
-  onOpenNew: () => void;
-  onOpenEdit: (workflow: WorkflowWithStepsRow) => void;
   onClose: () => void;
-  onAddStep: (groupId: string, label: string | null) => void;
+  onAddStep: (step: DraftWorkflowStep) => void;
   onUpdateStep: (index: number, patch: Partial<DraftWorkflowStep>) => void;
   onRemoveStep: (index: number) => void;
   onMoveStep: (fromIndex: number, toIndex: number) => void;
   onSave: () => void;
-  onDelete: (workflowId: string) => void;
 }
 
-function getStepKindLabel(
-  stepKind: DraftWorkflowStep['step_kind'],
-  t: ReturnType<typeof useTranslation>['t']
-) {
-  switch (stepKind) {
-    case 'merge_vote':
-      return t('features.network.workflows.stepKind.mergeVote', 'Merge vote');
-    case 'workflow_handoff':
-      return t('features.network.workflows.stepKind.workflowHandoff', 'Workflow handoff');
-    default:
-      return t('features.network.workflows.stepKind.groupVote', 'Group vote');
-  }
+interface WorkflowTransition {
+  index: number;
+  sourceGroupId: string;
+  targetGroupId: string;
+  step: DraftWorkflowStep;
 }
 
-function getSelectionModeLabel(
-  selectionMode: DraftWorkflowStep['selection_mode'],
-  t: ReturnType<typeof useTranslation>['t']
-) {
-  return selectionMode === 'explicit_workflow'
-    ? t('features.network.workflows.selectionMode.explicitWorkflow', 'Specific workflow')
-    : t('features.network.workflows.selectionMode.defaultEntry', 'Default entry workflow');
+function createBlankStepDraft(): DraftWorkflowStep {
+  return {
+    group_id: '',
+    label: null,
+    step_kind: 'group_vote',
+    selection_mode: 'default_target_workflow',
+    merge_strategy: null,
+    event_rule: null,
+    auto_task_on_missing_event: true,
+    target_workflow_id: null,
+  };
+}
+
+function sortGroupsByName(groups: AvailableGroup[]) {
+  return [...groups].sort((left, right) => (left.name ?? '').localeCompare(right.name ?? ''));
+}
+
+function getGroupName(groupId: string, availableGroups: AvailableGroup[]) {
+  return availableGroups.find(group => group.id === groupId)?.name ?? groupId;
+}
+
+function getTypeaheadItems(groups: AvailableGroup[]) {
+  return toTypeaheadItems(
+    groups,
+    'group',
+    group => group.name ?? group.id,
+    group => {
+      const description = richTextToPlainText(group.description);
+      return description ? description.substring(0, 80) : undefined;
+    },
+    undefined,
+    group => `/group/${group.id}`
+  );
 }
 
 export function WorkflowEditor({
-  workflows,
-  isLoading,
-  isEditorOpen,
+  currentGroupId,
+  currentGroupName,
+  allRelationships,
+  isOpen,
   editingWorkflow,
+  draftStartGroupId,
+  setDraftStartGroupId,
   draftName,
   setDraftName,
   draftDescription,
@@ -136,374 +162,730 @@ export function WorkflowEditor({
   setDraftIsDefaultEntry,
   draftSteps,
   availableGroups,
-  availableWorkflows,
-  onOpenNew,
-  onOpenEdit,
   onClose,
   onAddStep,
   onUpdateStep,
   onRemoveStep,
   onMoveStep,
   onSave,
-  onDelete,
 }: WorkflowEditorProps) {
   const { t } = useTranslation();
-  const [selectedGroupId, setSelectedGroupId] = useState<string>('');
+  const [builderTab, setBuilderTab] = useState<'type' | 'graph'>('type');
+  const [visualizationTab, setVisualizationTab] = useState<'graph' | 'list'>('graph');
+  const [graphSelectionMode, setGraphSelectionMode] = useState<'start' | 'target'>('start');
+  const [pendingTargetGroupId, setPendingTargetGroupId] = useState('');
   const [draggedStepIndex, setDraggedStepIndex] = useState<number | null>(null);
-  const [dragOverStepIndex, setDragOverStepIndex] = useState<number | null>(null);
-  const [dragInsertPosition, setDragInsertPosition] = useState<'above' | 'below' | null>(null);
-  const [isDescriptionCollapsed, setIsDescriptionCollapsed] = useState(false);
 
-  const groupTypeaheadItems = useMemo(
+  const networkGroups = useMemo(
     () =>
-      toTypeaheadItems(
-        availableGroups,
-        'group',
-        group => group.name ?? group.id,
-        group => {
-          const description = richTextToPlainText(group.description);
-          return description ? description.substring(0, 60) : undefined;
-        },
-        undefined,
-        group => `/group/${group.id}`
-      ),
+      availableGroups.map(group => ({
+        ...group,
+        name: group.name ?? group.id,
+      })) as AmendmentNetworkGroup[],
     [availableGroups]
   );
+  const amendmentRelationships = useMemo(
+    () =>
+      allRelationships.filter(
+        relationship =>
+          relationship.with_right === 'amendmentRight' &&
+          isActiveGroupRelationshipStatus(relationship.status)
+      ) as AmendmentNetworkRelationship[],
+    [allRelationships]
+  );
+  const allGroupOptions = useMemo(() => sortGroupsByName(availableGroups), [availableGroups]);
+  const allGroupItems = useMemo(() => getTypeaheadItems(allGroupOptions), [allGroupOptions]);
 
-  const getGroupName = useCallback(
-    (groupId: string) => availableGroups.find(group => group.id === groupId)?.name ?? groupId,
-    [availableGroups]
+  const transitions = useMemo<WorkflowTransition[]>(
+    () =>
+      draftSteps.map((step, index) => ({
+        index,
+        sourceGroupId: index === 0 ? draftStartGroupId : (draftSteps[index - 1]?.group_id ?? ''),
+        targetGroupId: step.group_id,
+        step,
+      })),
+    [draftStartGroupId, draftSteps]
   );
 
-  const getWorkflowName = useCallback(
-    (workflowId: string | null | undefined) =>
-      workflowId
-        ? (availableWorkflows.find(workflow => workflow.id === workflowId)?.name ?? workflowId)
-        : null,
-    [availableWorkflows]
-  );
+  const pendingSourceGroupId = useMemo(() => {
+    if (draftSteps.length === 0) {
+      return draftStartGroupId;
+    }
 
-  const getGroupData = useCallback(
-    (step: DraftWorkflowStep): AvailableGroup =>
-      availableGroups.find(group => group.id === step.group_id) ?? {
-        id: step.group_id,
-        name: step.label ?? step.group_id,
-      },
-    [availableGroups]
-  );
+    return draftSteps[draftSteps.length - 1]?.group_id ?? '';
+  }, [draftStartGroupId, draftSteps]);
 
-  const isNameValid = draftName.trim().length > 0;
-  const isDescriptionValid = draftDescription.trim().length > 0;
+  const getDirectTargetGroups = useCallback(
+    (sourceGroupId: string) => {
+      if (!sourceGroupId) {
+        return [];
+      }
 
-  const resetDragState = useCallback(() => {
-    setDraggedStepIndex(null);
-    setDragOverStepIndex(null);
-    setDragInsertPosition(null);
-  }, []);
-
-  const handleStepDragStart = useCallback(
-    (event: React.DragEvent<HTMLButtonElement>, index: number) => {
-      event.dataTransfer.effectAllowed = 'move';
-      event.dataTransfer.setData('text/plain', String(index));
-      setDraggedStepIndex(index);
-      setDragOverStepIndex(index);
+      return sortGroupsByName(
+        getDirectReachableTargetGroupsFromSource({
+          sourceGroupId,
+          groups: networkGroups,
+          relationships: amendmentRelationships,
+        }) as AvailableGroup[]
+      );
     },
-    []
+    [amendmentRelationships, networkGroups]
   );
 
-  const handleStepDrop = useCallback(
-    (targetIndex: number, position: 'above' | 'below' = 'below') => {
-      if (draggedStepIndex === null || draggedStepIndex === targetIndex) {
-        resetDragState();
+  const pendingTargetOptions = useMemo(
+    () => getDirectTargetGroups(pendingSourceGroupId),
+    [getDirectTargetGroups, pendingSourceGroupId]
+  );
+  const pendingTargetItems = useMemo(
+    () => getTypeaheadItems(pendingTargetOptions),
+    [pendingTargetOptions]
+  );
+
+  const pendingHighlightGroupIds = useMemo(() => {
+    const highlights = pendingSourceGroupId ? [pendingSourceGroupId] : [];
+    if (pendingTargetGroupId) {
+      highlights.push(pendingTargetGroupId);
+    }
+
+    return highlights;
+  }, [pendingSourceGroupId, pendingTargetGroupId]);
+
+  const graphRootGroupId = useMemo(() => {
+    if (draftSteps.length > 0) {
+      return pendingSourceGroupId || currentGroupId;
+    }
+
+    if (graphSelectionMode === 'target' && draftStartGroupId) {
+      return draftStartGroupId;
+    }
+
+    return currentGroupId;
+  }, [
+    currentGroupId,
+    draftStartGroupId,
+    draftSteps.length,
+    graphSelectionMode,
+    pendingSourceGroupId,
+  ]);
+
+  const participantGroupIds = useMemo(
+    () =>
+      new Set(
+        [draftStartGroupId, ...draftSteps.map(step => step.group_id)].filter(
+          (groupId): groupId is string => Boolean(groupId)
+        )
+      ),
+    [draftStartGroupId, draftSteps]
+  );
+
+  const invalidTransitionIndexes = useMemo(() => {
+    const invalidIndexes: number[] = [];
+
+    for (const transition of transitions) {
+      if (!transition.sourceGroupId || !transition.targetGroupId) {
+        invalidIndexes.push(transition.index);
+        continue;
+      }
+
+      const directTargetIds = new Set(
+        getDirectTargetGroups(transition.sourceGroupId).map(group => group.id)
+      );
+      if (!directTargetIds.has(transition.targetGroupId)) {
+        invalidIndexes.push(transition.index);
+      }
+    }
+
+    return invalidIndexes;
+  }, [getDirectTargetGroups, transitions]);
+
+  const validationMessages = useMemo(() => {
+    const messages: string[] = [];
+
+    if (!draftName.trim()) {
+      messages.push(
+        t('features.network.workflows.validationMissingTitle', 'A workflow title is required.')
+      );
+    }
+
+    if (!draftStartGroupId) {
+      messages.push(
+        t(
+          'features.network.workflows.validationMissingStart',
+          'Choose the start group for the first transition.'
+        )
+      );
+    }
+
+    if (draftSteps.length === 0) {
+      messages.push(
+        t('features.network.workflows.validationMissingSteps', 'Add at least one workflow step.')
+      );
+    }
+
+    if (!participantGroupIds.has(currentGroupId)) {
+      messages.push(
+        t(
+          'features.network.workflows.validationCurrentGroupRequired',
+          'The current group page must participate somewhere in the workflow.'
+        )
+      );
+    }
+
+    if (invalidTransitionIndexes.length > 0) {
+      messages.push(
+        t(
+          'features.network.workflows.validationDirectTransitions',
+          'Every transition must be a direct one-hop amendment-right step.'
+        )
+      );
+    }
+
+    return messages;
+  }, [
+    currentGroupId,
+    draftName,
+    draftStartGroupId,
+    draftSteps.length,
+    invalidTransitionIndexes.length,
+    participantGroupIds,
+    t,
+  ]);
+
+  const isPendingStepValid = Boolean(pendingSourceGroupId) && Boolean(pendingTargetGroupId);
+  const canSave = validationMessages.length === 0;
+  const finalTargetGroupId = draftSteps[draftSteps.length - 1]?.group_id ?? '';
+
+  const previewWorkflow = useMemo<WorkflowFlowVisualizationWorkflow | null>(() => {
+    if (draftSteps.length === 0) {
+      return null;
+    }
+
+    return {
+      name:
+        draftName.trim() ||
+        editingWorkflow?.name ||
+        t('features.network.workflows.previewTitle', 'Draft workflow'),
+      description: draftDescription.trim() || null,
+      steps: draftSteps.map((step, index) => ({
+        id: step.id ?? `draft-step-${index}`,
+        group_id: step.group_id,
+        order_index: index,
+        label: step.label,
+        group: step.group_id
+          ? {
+              name: getGroupName(step.group_id, availableGroups),
+            }
+          : null,
+      })),
+    };
+  }, [availableGroups, draftDescription, draftName, draftSteps, editingWorkflow?.name, t]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    setBuilderTab('type');
+    setVisualizationTab('graph');
+    setGraphSelectionMode(draftSteps.length === 0 && !draftStartGroupId ? 'start' : 'target');
+    setPendingTargetGroupId('');
+    setDraggedStepIndex(null);
+  }, [draftStartGroupId, draftSteps.length, editingWorkflow?.id, isOpen]);
+
+  useEffect(() => {
+    if (draftSteps.length > 0) {
+      setGraphSelectionMode('target');
+    }
+  }, [draftSteps.length]);
+
+  const handleAddPendingStep = useCallback(() => {
+    if (!pendingTargetGroupId || !isPendingStepValid) {
+      return;
+    }
+
+    onAddStep({
+      ...createBlankStepDraft(),
+      group_id: pendingTargetGroupId,
+    });
+
+    setPendingTargetGroupId('');
+    setGraphSelectionMode('target');
+  }, [isPendingStepValid, onAddStep, pendingTargetGroupId]);
+
+  const handleGraphGroupClick = useCallback(
+    (groupId: string) => {
+      if (draftSteps.length === 0 && graphSelectionMode === 'start') {
+        setDraftStartGroupId(groupId);
+        setPendingTargetGroupId('');
+        setGraphSelectionMode('target');
         return;
       }
 
-      let insertionIndex = targetIndex;
-      if (position === 'below') {
-        insertionIndex += 1;
+      const nextTargetIds = new Set(pendingTargetOptions.map(group => group.id));
+      if (nextTargetIds.has(groupId)) {
+        setPendingTargetGroupId(groupId);
       }
-      if (draggedStepIndex < targetIndex) {
-        insertionIndex -= 1;
-      }
-
-      insertionIndex = Math.max(0, Math.min(insertionIndex, draftSteps.length - 1));
-      onMoveStep(draggedStepIndex, insertionIndex);
-      resetDragState();
     },
-    [draggedStepIndex, draftSteps.length, onMoveStep, resetDragState]
+    [draftSteps.length, graphSelectionMode, pendingTargetOptions, setDraftStartGroupId]
   );
 
-  const handleStepDragEnd = useCallback(() => {
-    resetDragState();
-  }, [resetDragState]);
+  const handleRowDrop = useCallback(
+    (targetIndex: number) => {
+      if (draggedStepIndex == null || draggedStepIndex === targetIndex) {
+        setDraggedStepIndex(null);
+        return;
+      }
 
-  const collapseDescriptionForSteps = useCallback(() => {
-    setIsDescriptionCollapsed(true);
-  }, []);
+      onMoveStep(draggedStepIndex, targetIndex);
+      setDraggedStepIndex(null);
+    },
+    [draggedStepIndex, onMoveStep]
+  );
 
-  useEffect(() => {
-    if (isEditorOpen) {
-      setIsDescriptionCollapsed(false);
-    }
-  }, [isEditorOpen, editingWorkflow?.id]);
+  const handleRowTargetChange = useCallback(
+    (index: number, value: string) => {
+      onUpdateStep(index, {
+        group_id: value,
+      });
+    },
+    [onUpdateStep]
+  );
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">
-          {t('features.network.workflows.title', 'Workflows')}
-        </h3>
-        <Button variant="outline" size="sm" onClick={onOpenNew}>
-          <Plus className="mr-2 h-4 w-4" />
-          {t('features.network.workflows.create', 'New Workflow')}
-        </Button>
-      </div>
+    <Dialog
+      open={isOpen}
+      onOpenChange={open => {
+        if (!open) {
+          onClose();
+        }
+      }}
+    >
+      <DialogContent className="flex h-screen w-screen max-w-none flex-col rounded-none border-0 p-0 sm:h-screen sm:max-w-none">
+        <DialogHeader className="border-b px-6 pt-6 pb-4">
+          <DialogTitle>
+            {editingWorkflow
+              ? t('features.network.workflows.edit', 'Edit Workflow')
+              : t('features.network.workflows.create', 'New Workflow')}
+          </DialogTitle>
+          <DialogDescription>
+            {t(
+              'features.network.workflows.editorDescription',
+              'Build the workflow as a chain of direct amendment-right transitions. The first source becomes the workflow start and the last target becomes the final goal.'
+            )}
+          </DialogDescription>
+        </DialogHeader>
 
-      {isLoading ? (
-        <p className="text-muted-foreground text-sm">{t('common.loading', 'Loading...')}</p>
-      ) : workflows.length === 0 ? (
-        <p className="text-muted-foreground text-sm">
-          {t('features.network.workflows.empty', 'No workflows defined yet.')}
-        </p>
-      ) : (
-        <div className="space-y-3">
-          {workflows.map(workflow => {
-            const sorted = sortWorkflowSteps(workflow.steps);
-            return (
-              <Card key={workflow.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-medium">{workflow.name ?? 'Untitled'}</span>
-                        {workflow.is_default_entry ? (
-                          <Badge variant="default">
-                            {t('features.network.workflows.defaultEntryBadge', 'Default entry')}
-                          </Badge>
-                        ) : null}
-                        {isWorkflowCircular(workflow) ? (
-                          <Badge variant="secondary">
-                            {t('features.network.workflows.circular', 'Circular')}
-                          </Badge>
-                        ) : null}
-                        <Badge variant="outline">{workflow.steps.length} steps</Badge>
-                      </div>
-                      {workflow.description ? (
-                        <p className="text-muted-foreground mt-2 text-sm">{workflow.description}</p>
-                      ) : null}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => onOpenEdit(workflow)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>
-                              {t('features.network.workflows.deleteConfirm', 'Delete workflow?')}
-                            </AlertDialogTitle>
-                            <AlertDialogDescription>
-                              {t(
-                                'features.network.workflows.deleteDescription',
-                                'This will permanently delete this workflow and all its steps.'
-                              )}
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>{t('common.cancel', 'Cancel')}</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => onDelete(workflow.id)}>
-                              {t('common.delete', 'Delete')}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </div>
-                  {sorted.length > 0 ? (
-                    <div className="mt-3 flex flex-wrap items-center gap-1">
-                      {sorted.map((step, index) => (
-                        <span key={step.id} className="flex items-center gap-1">
-                          <span className="bg-card inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium shadow-sm">
-                            <span className="text-muted-foreground mr-1.5 text-[10px]">
-                              {index + 1}
-                            </span>
-                            {step.group?.name ?? step.label ?? 'Unknown'}
-                          </span>
-                          {index < sorted.length - 1 ? (
-                            <ChevronRight className="text-muted-foreground h-3.5 w-3.5 flex-shrink-0" />
-                          ) : null}
-                        </span>
-                      ))}
-                    </div>
-                  ) : null}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
-
-      <Dialog
-        open={isEditorOpen}
-        onOpenChange={open => {
-          if (!open) onClose();
-        }}
-      >
-        <DialogContent className="grid h-[min(90dvh,60rem)] max-w-4xl grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden p-0">
-          <DialogHeader className="px-6 pt-6 pr-12 pb-4">
-            <DialogTitle>
-              {editingWorkflow
-                ? t('features.network.workflows.edit', 'Edit Workflow')
-                : t('features.network.workflows.create', 'New Workflow')}
-            </DialogTitle>
-            <DialogDescription>
-              {t(
-                'features.network.workflows.editorDescription',
-                'Define each workflow step, including vote steps, merge steps, and optional workflow handoffs.'
-              )}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="grid min-h-0 grid-rows-[auto_auto_auto_minmax(0,1fr)_auto] gap-4 overflow-hidden px-6 py-4">
-            <CreateInputField
-              label={t('common.name', 'Name')}
-              required
-              value={draftName}
-              onValueChange={setDraftName}
-              placeholder={t(
-                'features.network.workflows.namePlaceholder',
-                'e.g. Legislative Reading Process'
-              )}
-            />
-
-            <div className="flex items-center justify-between rounded-lg border px-4 py-3">
-              <div className="space-y-1">
-                <Label htmlFor="workflow-default-entry">
-                  {t('features.network.workflows.defaultEntryLabel', 'Default entry workflow')}
-                </Label>
-                <p className="text-muted-foreground text-xs">
-                  {t(
-                    'features.network.workflows.defaultEntryHint',
-                    'Use this workflow when a handoff targets the group without naming a specific workflow.'
-                  )}
-                </p>
-              </div>
-              <Switch
-                id="workflow-default-entry"
-                checked={draftIsDefaultEntry}
-                onCheckedChange={setDraftIsDefaultEntry}
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
+          <div className="space-y-5">
+            <div className="space-y-2">
+              <Label>{t('common.name', 'Name')}</Label>
+              <Input
+                value={draftName}
+                onChange={event => setDraftName(event.target.value)}
+                placeholder={t(
+                  'features.network.workflows.namePlaceholder',
+                  'e.g. Parliamentary Reading Process'
+                )}
               />
             </div>
 
-            <Collapsible
-              open={!isDescriptionCollapsed}
-              onOpenChange={open => setIsDescriptionCollapsed(!open)}
-              className="space-y-2"
+            <Accordion
+              type="single"
+              collapsible
+              defaultValue="step-config"
+              className="rounded-lg border"
             >
-              <div className="flex items-center justify-between gap-3">
-                <Label>{t('common.description', 'Description')}</Label>
-                <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="sm" type="button" className="h-8 px-2">
-                    {isDescriptionCollapsed ? (
-                      <>
-                        <ChevronDown className="mr-1 h-4 w-4" />
-                        {t('common.actions.expand', 'Expand')}
-                      </>
-                    ) : (
-                      <>
-                        <ChevronUp className="mr-1 h-4 w-4" />
-                        {t('common.actions.collapse', 'Collapse')}
-                      </>
-                    )}
-                  </Button>
-                </CollapsibleTrigger>
-              </div>
-              <CollapsibleContent>
-                <CreateTextareaField
-                  required
-                  value={draftDescription}
-                  onValueChange={setDraftDescription}
-                  placeholder={t(
-                    'features.network.workflows.descriptionPlaceholder',
-                    'Describe what this workflow is for...'
-                  )}
-                  className="min-h-[96px]"
-                />
-              </CollapsibleContent>
-            </Collapsible>
+              <AccordionItem value="step-config" className="border-b-0">
+                <AccordionTrigger className="px-4">
+                  {t('features.network.workflows.stepConfig', 'Configure next step')}
+                </AccordionTrigger>
+                <AccordionContent className="space-y-4 px-4 pb-4">
+                  <Tabs
+                    value={builderTab}
+                    onValueChange={value => setBuilderTab(value as 'type' | 'graph')}
+                  >
+                    <TabsList className="w-full">
+                      <TabsTrigger value="type" className="flex-1">
+                        {t('features.network.workflows.byType', 'By type')}
+                      </TabsTrigger>
+                      <TabsTrigger value="graph" className="flex-1">
+                        {t('features.network.workflows.byGraph', 'By graph')}
+                      </TabsTrigger>
+                    </TabsList>
 
-            <div className="flex min-h-0 flex-col space-y-2">
-              <Label>{t('features.network.workflows.steps', 'Steps')}</Label>
-              {draftSteps.length === 0 ? (
-                <p className="text-muted-foreground text-sm">
-                  {t(
-                    'features.network.workflows.noSteps',
-                    'Add groups to define the workflow sequence.'
-                  )}
-                </p>
-              ) : (
-                <div className="min-h-0 space-y-3 overflow-y-auto pr-1">
-                  {draftSteps.map((step, index) => {
-                    const availableTargetWorkflows = availableWorkflows.filter(
-                      workflow =>
-                        workflow.group_id === step.group_id && workflow.id !== editingWorkflow?.id
-                    );
+                    <TabsContent value="type" className="space-y-4">
+                      {draftSteps.length === 0 ? (
+                        <div className="space-y-2">
+                          <Label>{t('features.network.workflows.startGroup', 'Start group')}</Label>
+                          <TypeaheadSearch
+                            items={allGroupItems}
+                            value={draftStartGroupId}
+                            onChange={(item: TypeaheadItem | null) => {
+                              setDraftStartGroupId(item?.id ?? '');
+                              setPendingTargetGroupId('');
+                              if (item?.id) {
+                                setGraphSelectionMode('target');
+                              }
+                            }}
+                            placeholder={t(
+                              'features.network.workflows.selectStartGroup',
+                              'Select the first start group...'
+                            )}
+                            disablePortal
+                            showAllOnFocus
+                          />
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <Label>
+                            {t('features.network.workflows.currentStart', 'Current start')}
+                          </Label>
+                          <div className="bg-muted/40 rounded-md border px-3 py-2 text-sm font-medium">
+                            {getGroupName(pendingSourceGroupId, availableGroups)}
+                          </div>
+                          <p className="text-muted-foreground text-xs">
+                            {t(
+                              'features.network.workflows.currentStartHint',
+                              'The previous target automatically becomes the next start.'
+                            )}
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="space-y-2">
+                        <p className="text-muted-foreground text-xs font-medium">
+                          {t(
+                            'features.network.workflows.byTypeGroupPicker',
+                            'Choose the next connected group'
+                          )}
+                        </p>
+                        <TypeaheadSearch
+                          items={pendingTargetItems}
+                          value={pendingTargetGroupId}
+                          onChange={(item: TypeaheadItem | null) =>
+                            setPendingTargetGroupId(item?.id ?? '')
+                          }
+                          placeholder={t(
+                            'features.network.workflows.searchConnectedGroup',
+                            'Search connected group...'
+                          )}
+                          disablePortal
+                          showAllOnFocus
+                        />
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="graph" className="space-y-4">
+                      {draftSteps.length === 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={graphSelectionMode === 'start' ? 'default' : 'outline'}
+                            onClick={() => setGraphSelectionMode('start')}
+                          >
+                            <MapPinned className="mr-2 h-4 w-4" />
+                            {t('features.network.workflows.pickStart', 'Pick start')}
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={graphSelectionMode === 'target' ? 'default' : 'outline'}
+                            disabled={!draftStartGroupId}
+                            onClick={() => setGraphSelectionMode('target')}
+                          >
+                            <ArrowRight className="mr-2 h-4 w-4" />
+                            {t('features.network.workflows.pickTarget', 'Pick target')}
+                          </Button>
+                        </div>
+                      ) : null}
+
+                      <div className="space-y-2">
+                        <div className="grid gap-3 md:grid-cols-2">
+                          <div className="rounded-md border px-3 py-2">
+                            <p className="text-muted-foreground text-xs font-medium">
+                              {t('features.network.workflows.currentStart', 'Current start')}
+                            </p>
+                            <p className="text-sm font-medium">
+                              {draftSteps.length === 0 && graphSelectionMode === 'start'
+                                ? t(
+                                    'features.network.workflows.clickToChooseStart',
+                                    'Choose a start group from the graph'
+                                  )
+                                : pendingSourceGroupId
+                                  ? getGroupName(pendingSourceGroupId, availableGroups)
+                                  : t('features.network.workflows.notSelected', 'Not selected')}
+                            </p>
+                          </div>
+                          <div className="rounded-md border px-3 py-2">
+                            <p className="text-muted-foreground text-xs font-medium">
+                              {t('features.network.workflows.selectedTarget', 'Selected target')}
+                            </p>
+                            <p className="text-sm font-medium">
+                              {pendingTargetGroupId
+                                ? getGroupName(pendingTargetGroupId, availableGroups)
+                                : t(
+                                    'features.network.workflows.clickToChooseTarget',
+                                    'Click a connected group'
+                                  )}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="h-[20rem] min-h-[20rem] overflow-hidden rounded-md border">
+                          <GroupNetworkFlow
+                            groupId={graphRootGroupId}
+                            filterRight="amendmentRight"
+                            title={t(
+                              'features.network.workflows.graphPickerTitle',
+                              'Workflow graph picker'
+                            )}
+                            description={
+                              draftSteps.length === 0 && graphSelectionMode === 'start'
+                                ? t(
+                                    'features.network.workflows.graphPickerStartDescription',
+                                    'Pick the first start group from the visible amendment-right graph.'
+                                  )
+                                : t(
+                                    'features.network.workflows.graphPickerTargetDescription',
+                                    'Pick the next direct amendment-right neighbor from the current start.'
+                                  )
+                            }
+                            onGroupClick={groupId => handleGraphGroupClick(groupId)}
+                            showGroupDialogOnClick={false}
+                            showWorkflowView={false}
+                            highlightGroupIds={pendingHighlightGroupIds}
+                            highlightEdgePairs={
+                              pendingSourceGroupId && pendingTargetGroupId
+                                ? [
+                                    {
+                                      sourceGroupId: pendingSourceGroupId,
+                                      targetGroupId: pendingTargetGroupId,
+                                    },
+                                  ]
+                                : []
+                            }
+                            layoutScopeKey={`workflow-editor-picker:${graphRootGroupId}:${graphSelectionMode}`}
+                          />
+                        </div>
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+
+                  <div className="flex items-center justify-between gap-3 rounded-lg border border-dashed p-4">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">
+                        {pendingSourceGroupId
+                          ? `${getGroupName(pendingSourceGroupId, availableGroups)}`
+                          : t(
+                              'features.network.workflows.selectStartFirst',
+                              'Choose the start group first'
+                            )}
+                        {pendingTargetGroupId ? (
+                          <>
+                            <ArrowRight className="text-muted-foreground mx-2 inline h-3.5 w-3.5" />
+                            {getGroupName(pendingTargetGroupId, availableGroups)}
+                          </>
+                        ) : null}
+                      </p>
+                      <p className="text-muted-foreground text-xs">
+                        {t(
+                          'features.network.workflows.addStepHint',
+                          'After adding, the previous target becomes the next start automatically.'
+                        )}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={handleAddPendingStep}
+                      disabled={!isPendingStepValid}
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      {t('features.network.workflows.addStep', 'Schritt hinzufügen')}
+                    </Button>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+
+            <Accordion type="single" collapsible className="rounded-lg border">
+              <AccordionItem value="workflow-settings" className="border-b-0">
+                <AccordionTrigger className="px-4">
+                  {t('features.network.workflows.workflowSettings', 'Workflow settings')}
+                </AccordionTrigger>
+                <AccordionContent className="space-y-4 px-4 pb-4">
+                  <div className="space-y-2">
+                    <Label>{t('common.description', 'Description')}</Label>
+                    <Textarea
+                      value={draftDescription}
+                      onChange={event => setDraftDescription(event.target.value)}
+                      placeholder={t(
+                        'features.network.workflows.descriptionPlaceholder',
+                        'Describe the process this custom workflow should model...'
+                      )}
+                      className="min-h-[96px]"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-lg border px-4 py-3">
+                    <div className="space-y-1">
+                      <Label htmlFor="workflow-default-entry">
+                        {t(
+                          'features.network.workflows.defaultEntryLabel',
+                          'Default entry workflow'
+                        )}
+                      </Label>
+                      <p className="text-muted-foreground text-xs">
+                        {finalTargetGroupId
+                          ? t(
+                              'features.network.workflows.defaultEntryHintDynamic',
+                              `Applies when another workflow hands off into ${getGroupName(finalTargetGroupId, availableGroups)} without naming a specific workflow.`
+                            )
+                          : t(
+                              'features.network.workflows.defaultEntryHint',
+                              'Applies to the final target group once a final target exists.'
+                            )}
+                      </p>
+                    </div>
+                    <Switch
+                      id="workflow-default-entry"
+                      checked={draftIsDefaultEntry}
+                      onCheckedChange={setDraftIsDefaultEntry}
+                    />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+
+            <Tabs
+              value={visualizationTab}
+              onValueChange={value => setVisualizationTab(value as 'graph' | 'list')}
+            >
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0 flex-1 space-y-3">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">
+                      {t('features.network.workflows.currentFlow', 'Current workflow flow')}
+                    </p>
+                    <p className="text-muted-foreground text-xs">
+                      {finalTargetGroupId
+                        ? t(
+                            'features.network.workflows.currentFlowSummary',
+                            `Start ${draftStartGroupId ? getGroupName(draftStartGroupId, availableGroups) : ''}, final target ${getGroupName(finalTargetGroupId, availableGroups)}.`
+                          )
+                        : t(
+                            'features.network.workflows.currentFlowPending',
+                            'Add at least one step to define the final target.'
+                          )}
+                    </p>
+                  </div>
+
+                  <Card>
+                    <CardContent className="space-y-3 p-4">
+                      <div className="flex items-center gap-2 font-medium">
+                        <Workflow className="h-4 w-4" />
+                        {t('features.network.workflows.summary', 'Workflow summary')}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 text-sm">
+                        <Badge variant="secondary">
+                          {draftStartGroupId
+                            ? getGroupName(draftStartGroupId, availableGroups)
+                            : t('features.network.workflows.noStartSelected', 'No start selected')}
+                        </Badge>
+                        {draftSteps.map((step, index) => (
+                          <span
+                            key={`${step.id ?? step.group_id}-${index}`}
+                            className="flex items-center gap-2"
+                          >
+                            <ArrowRight className="text-muted-foreground h-3.5 w-3.5" />
+                            <Badge
+                              variant={index === draftSteps.length - 1 ? 'default' : 'outline'}
+                            >
+                              {step.label
+                                ? `${getGroupName(step.group_id, availableGroups)} (${step.label})`
+                                : getGroupName(step.group_id, availableGroups)}
+                            </Badge>
+                          </span>
+                        ))}
+                      </div>
+                      <p className="text-muted-foreground text-xs">
+                        {t(
+                          'features.network.workflows.summaryHint',
+                          `The current page group is ${currentGroupName || currentGroupId} and must stay part of this chain.`
+                        )}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <TabsList className="self-start">
+                  <TabsTrigger value="graph">
+                    <Network className="mr-2 h-4 w-4" />
+                    {t('features.network.workflows.networkGraph', 'Network graph')}
+                  </TabsTrigger>
+                  <TabsTrigger value="list">
+                    <List className="mr-2 h-4 w-4" />
+                    {t('features.network.workflows.list', 'List')}
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+
+              <TabsContent value="graph" className="mt-4">
+                {previewWorkflow === null ? (
+                  <div className="bg-muted/10 flex h-[32rem] min-h-[32rem] items-center justify-center rounded-xl border border-dashed p-6 text-center">
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">
+                        {t('features.network.workflows.emptyPreviewTitle', 'No drafted flow yet')}
+                      </p>
+                      <p className="text-muted-foreground text-sm">
+                        {t(
+                          'features.network.workflows.emptyPreviewDescription',
+                          'The graph starts empty and grows with each added step.'
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-[32rem] min-h-[32rem]">
+                    <WorkflowFlowVisualization workflow={previewWorkflow} />
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="list" className="mt-4 space-y-3">
+                {draftSteps.length === 0 ? (
+                  <div className="text-muted-foreground rounded-lg border border-dashed p-6 text-sm">
+                    {t(
+                      'features.network.workflows.emptyDraft',
+                      'No workflow steps have been added yet.'
+                    )}
+                  </div>
+                ) : (
+                  draftSteps.map((step, index) => {
+                    const sourceGroupId =
+                      index === 0 ? draftStartGroupId : (draftSteps[index - 1]?.group_id ?? '');
+                    const targetOptions = getDirectTargetGroups(sourceGroupId);
+                    const isInvalidTransition = invalidTransitionIndexes.includes(index);
 
                     return (
-                      <div
-                        key={`${step.group_id}-${index}`}
-                        className={cn(
-                          'relative rounded-lg transition-colors',
-                          draggedStepIndex === index ? 'opacity-50' : '',
-                          dragOverStepIndex === index && draggedStepIndex !== index
-                            ? 'bg-accent/40'
-                            : ''
-                        )}
-                        onDragOver={event => {
-                          collapseDescriptionForSteps();
-                          event.preventDefault();
-                          const rect = event.currentTarget.getBoundingClientRect();
-                          const isAbove = event.clientY < rect.top + rect.height / 2;
-                          setDragOverStepIndex(index);
-                          setDragInsertPosition(isAbove ? 'above' : 'below');
-                        }}
-                        onDragEnter={event => {
-                          collapseDescriptionForSteps();
-                          const rect = event.currentTarget.getBoundingClientRect();
-                          const isAbove = event.clientY < rect.top + rect.height / 2;
-                          setDragOverStepIndex(index);
-                          setDragInsertPosition(isAbove ? 'above' : 'below');
-                        }}
-                        onDragLeave={() => {
-                          if (dragOverStepIndex === index) {
-                            setDragOverStepIndex(null);
-                            setDragInsertPosition(null);
-                          }
-                        }}
-                        onDrop={event => {
-                          event.preventDefault();
-                          handleStepDrop(index, dragInsertPosition ?? 'below');
-                        }}
+                      <Card
+                        key={step.id ?? `${step.group_id}-${index}`}
+                        draggable
+                        onDragStart={() => setDraggedStepIndex(index)}
+                        onDragOver={event => event.preventDefault()}
+                        onDrop={() => handleRowDrop(index)}
                       >
-                        {dragOverStepIndex === index && dragInsertPosition === 'above' ? (
-                          <div className="bg-primary absolute -top-1 right-6 left-6 z-20 h-0.5 rounded-full shadow-[0_0_0_1px_rgba(255,255,255,0.9)]" />
-                        ) : null}
-
-                        <div className="bg-muted/40 mb-2 rounded-md border px-3 py-3">
-                          <div className="mb-3 flex items-start justify-between gap-3">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <Badge variant="secondary">
-                                {t('features.network.workflows.stepOrder', 'Step')} {index + 1}
+                        <CardContent className="space-y-4 p-4">
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div className="flex items-center gap-2">
+                              <GripVertical className="text-muted-foreground h-4 w-4 cursor-grab active:cursor-grabbing" />
+                              <Badge variant="outline">
+                                {t('features.network.workflows.stepNumber', `Step ${index + 1}`)}
                               </Badge>
-                              <Badge variant="outline">{getStepKindLabel(step.step_kind, t)}</Badge>
-                              <span className="text-muted-foreground text-sm">
-                                {getGroupName(step.group_id)}
-                              </span>
+                              {isInvalidTransition ? (
+                                <Badge variant="destructive">
+                                  {t('features.network.workflows.invalidStep', 'Invalid hop')}
+                                </Badge>
+                              ) : null}
                             </div>
 
                             <div className="flex items-center gap-1">
@@ -511,104 +893,77 @@ export function WorkflowEditor({
                                 type="button"
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 cursor-grab active:cursor-grabbing"
-                                draggable
-                                aria-label={t(
-                                  'features.network.workflows.dragToReorder',
-                                  'Drag to reorder'
-                                )}
-                                title={t(
-                                  'features.network.workflows.dragToReorder',
-                                  'Drag to reorder'
-                                )}
-                                onMouseDown={event => event.stopPropagation()}
-                                onClick={event => {
-                                  collapseDescriptionForSteps();
-                                  event.preventDefault();
-                                  event.stopPropagation();
-                                }}
-                                onDragStart={event => {
-                                  collapseDescriptionForSteps();
-                                  handleStepDragStart(event, index);
-                                }}
-                                onDragEnd={handleStepDragEnd}
+                                disabled={index === 0}
+                                onClick={() => onMoveStep(index, index - 1)}
                               >
-                                <GripVertical className="h-4 w-4" />
+                                <ChevronUp className="h-4 w-4" />
                               </Button>
-                              {index > 0 ? (
-                                <Button
-                                  variant="secondary"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                  onClick={() => {
-                                    collapseDescriptionForSteps();
-                                    onMoveStep(index, index - 1);
-                                  }}
-                                  aria-label={t(
-                                    'features.network.workflows.moveStepUp',
-                                    'Move step up'
-                                  )}
-                                >
-                                  ↑
-                                </Button>
-                              ) : null}
-                              {index < draftSteps.length - 1 ? (
-                                <Button
-                                  variant="secondary"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                  onClick={() => {
-                                    collapseDescriptionForSteps();
-                                    onMoveStep(index, index + 1);
-                                  }}
-                                  aria-label={t(
-                                    'features.network.workflows.moveStepDown',
-                                    'Move step down'
-                                  )}
-                                >
-                                  ↓
-                                </Button>
-                              ) : null}
                               <Button
-                                variant="destructive"
+                                type="button"
+                                variant="ghost"
                                 size="icon"
-                                className="h-8 w-8"
-                                onClick={() => {
-                                  collapseDescriptionForSteps();
-                                  onRemoveStep(index);
-                                }}
-                                aria-label={t(
-                                  'features.network.workflows.removeStep',
-                                  'Remove step'
-                                )}
+                                disabled={index === draftSteps.length - 1}
+                                onClick={() => onMoveStep(index, index + 1)}
                               >
-                                <Trash2 className="h-3.5 w-3.5" />
+                                <ChevronDown className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => onRemoveStep(index)}
+                              >
+                                <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
                           </div>
 
-                          <div className="grid gap-3 md:grid-cols-2">
+                          <div className="grid gap-4 md:grid-cols-2">
                             <div className="space-y-2">
-                              <Label>{t('common.group', 'Group')}</Label>
+                              <Label>
+                                {t('features.network.workflows.sourceGroup', 'Source group')}
+                              </Label>
+                              {index === 0 ? (
+                                <TypeaheadSearch
+                                  items={allGroupItems}
+                                  value={draftStartGroupId}
+                                  onChange={(item: TypeaheadItem | null) =>
+                                    setDraftStartGroupId(item?.id ?? '')
+                                  }
+                                  placeholder={t(
+                                    'features.network.workflows.selectStartGroup',
+                                    'Select the first start group...'
+                                  )}
+                                  disablePortal
+                                  showAllOnFocus
+                                />
+                              ) : (
+                                <div className="bg-muted/40 rounded-md border px-3 py-2 text-sm font-medium">
+                                  {sourceGroupId
+                                    ? getGroupName(sourceGroupId, availableGroups)
+                                    : t('features.network.workflows.notSelected', 'Not selected')}
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label>
+                                {t('features.network.workflows.targetGroup', 'Target group')}
+                              </Label>
                               <Select
                                 value={step.group_id}
-                                onValueChange={value => {
-                                  collapseDescriptionForSteps();
-                                  onUpdateStep(index, {
-                                    group_id: value,
-                                    target_workflow_id:
-                                      step.step_kind === 'workflow_handoff' &&
-                                      step.selection_mode === 'explicit_workflow'
-                                        ? null
-                                        : step.target_workflow_id,
-                                  });
-                                }}
+                                onValueChange={value => handleRowTargetChange(index, value)}
                               >
                                 <SelectTrigger>
-                                  <SelectValue placeholder={t('common.group', 'Group')} />
+                                  <SelectValue
+                                    placeholder={t(
+                                      'features.network.workflows.listTargetPlaceholder',
+                                      'Choose target group...'
+                                    )}
+                                  />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {availableGroups.map(group => (
+                                  {targetOptions.map(group => (
                                     <SelectItem key={group.id} value={group.id}>
                                       {group.name ?? group.id}
                                     </SelectItem>
@@ -616,366 +971,57 @@ export function WorkflowEditor({
                                 </SelectContent>
                               </Select>
                             </div>
-
-                            <div className="space-y-2">
-                              <Label>{t('common.label', 'Label')}</Label>
-                              <Input
-                                value={step.label ?? ''}
-                                placeholder={t(
-                                  'features.network.workflows.stepLabelPlaceholder',
-                                  'Optional step label'
-                                )}
-                                onChange={event =>
-                                  onUpdateStep(index, {
-                                    label: event.target.value.trim() ? event.target.value : null,
-                                  })
-                                }
-                              />
-                            </div>
-
-                            <div className="space-y-2">
-                              <Label>
-                                {t('features.network.workflows.stepKindLabel', 'Step kind')}
-                              </Label>
-                              <Select
-                                value={step.step_kind}
-                                onValueChange={value => {
-                                  const nextStepKind = value as DraftWorkflowStep['step_kind'];
-                                  collapseDescriptionForSteps();
-                                  onUpdateStep(index, {
-                                    step_kind: nextStepKind,
-                                    merge_strategy:
-                                      nextStepKind === 'merge_vote' ? 'winner_continues' : null,
-                                    selection_mode:
-                                      nextStepKind === 'workflow_handoff'
-                                        ? step.selection_mode
-                                        : 'default_target_workflow',
-                                    target_workflow_id:
-                                      nextStepKind === 'workflow_handoff'
-                                        ? step.target_workflow_id
-                                        : null,
-                                  });
-                                }}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="group_vote">
-                                    {t(
-                                      'features.network.workflows.stepKind.groupVote',
-                                      'Group vote'
-                                    )}
-                                  </SelectItem>
-                                  <SelectItem value="merge_vote">
-                                    {t(
-                                      'features.network.workflows.stepKind.mergeVote',
-                                      'Merge vote'
-                                    )}
-                                  </SelectItem>
-                                  <SelectItem value="workflow_handoff">
-                                    {t(
-                                      'features.network.workflows.stepKind.workflowHandoff',
-                                      'Workflow handoff'
-                                    )}
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-
-                            <div className="space-y-2">
-                              <Label>
-                                {t('features.network.workflows.eventRuleLabel', 'Event rule')}
-                              </Label>
-                              <Input
-                                value={step.event_rule ?? ''}
-                                placeholder={t(
-                                  'features.network.workflows.eventRulePlaceholder',
-                                  'Optional event selection rule'
-                                )}
-                                onChange={event =>
-                                  onUpdateStep(index, {
-                                    event_rule: event.target.value.trim()
-                                      ? event.target.value
-                                      : null,
-                                  })
-                                }
-                              />
-                            </div>
                           </div>
-
-                          <div className="mt-3 grid gap-3 md:grid-cols-2">
-                            {step.step_kind === 'workflow_handoff' ? (
-                              <div className="space-y-2">
-                                <Label>
-                                  {t(
-                                    'features.network.workflows.selectionModeLabel',
-                                    'Workflow selection'
-                                  )}
-                                </Label>
-                                <Select
-                                  value={step.selection_mode}
-                                  onValueChange={value => {
-                                    const nextSelectionMode =
-                                      value as DraftWorkflowStep['selection_mode'];
-                                    collapseDescriptionForSteps();
-                                    onUpdateStep(index, {
-                                      selection_mode: nextSelectionMode,
-                                      target_workflow_id:
-                                        nextSelectionMode === 'explicit_workflow'
-                                          ? step.target_workflow_id
-                                          : null,
-                                    });
-                                  }}
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="default_target_workflow">
-                                      {t(
-                                        'features.network.workflows.selectionMode.defaultEntry',
-                                        'Default entry workflow'
-                                      )}
-                                    </SelectItem>
-                                    <SelectItem value="explicit_workflow">
-                                      {t(
-                                        'features.network.workflows.selectionMode.explicitWorkflow',
-                                        'Specific workflow'
-                                      )}
-                                    </SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            ) : step.step_kind === 'merge_vote' ? (
-                              <div className="space-y-2">
-                                <Label>
-                                  {t(
-                                    'features.network.workflows.mergeStrategyLabel',
-                                    'Merge strategy'
-                                  )}
-                                </Label>
-                                <Select
-                                  value={step.merge_strategy ?? 'winner_continues'}
-                                  onValueChange={value => {
-                                    collapseDescriptionForSteps();
-                                    onUpdateStep(index, {
-                                      merge_strategy: value as DraftWorkflowStep['merge_strategy'],
-                                    });
-                                  }}
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="winner_continues">
-                                      {t(
-                                        'features.network.workflows.mergeStrategy.winnerContinues',
-                                        'Winner continues'
-                                      )}
-                                    </SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            ) : (
-                              <div className="rounded-lg border border-dashed px-3 py-3 text-sm">
-                                <p className="font-medium">
-                                  {t(
-                                    'features.network.workflows.groupVoteStepTitle',
-                                    'Group vote step'
-                                  )}
-                                </p>
-                                <p className="text-muted-foreground mt-1 text-xs">
-                                  {t(
-                                    'features.network.workflows.groupVoteStepHint',
-                                    'This step schedules or waits for an eligible event vote in the selected group.'
-                                  )}
-                                </p>
-                              </div>
-                            )}
-
-                            <div className="rounded-lg border px-4 py-3">
-                              <div className="flex items-center justify-between gap-4">
-                                <div className="space-y-1">
-                                  <Label>
-                                    {t(
-                                      'features.network.workflows.autoTaskLabel',
-                                      'Auto-create task on missing event'
-                                    )}
-                                  </Label>
-                                  <p className="text-muted-foreground text-xs">
-                                    {t(
-                                      'features.network.workflows.autoTaskHint',
-                                      'Open a process task when no matching event exists yet.'
-                                    )}
-                                  </p>
-                                </div>
-                                <Switch
-                                  checked={step.auto_task_on_missing_event}
-                                  onCheckedChange={checked =>
-                                    onUpdateStep(index, {
-                                      auto_task_on_missing_event: checked,
-                                    })
-                                  }
-                                />
-                              </div>
-                            </div>
+                          <div className="rounded-lg border border-dashed px-4 py-3 text-sm">
+                            <p className="font-medium">
+                              {sourceGroupId
+                                ? `${getGroupName(sourceGroupId, availableGroups)} -> ${getGroupName(step.group_id, availableGroups)}`
+                                : getGroupName(step.group_id, availableGroups)}
+                            </p>
+                            <p className="text-muted-foreground mt-1 text-xs">
+                              {t(
+                                'features.network.workflows.listStepHint',
+                                'Reorder or delete steps here. The graph preview updates immediately.'
+                              )}
+                            </p>
                           </div>
-
-                          {step.step_kind === 'workflow_handoff' &&
-                          step.selection_mode === 'explicit_workflow' ? (
-                            <div className="mt-3 space-y-2">
-                              <Label>
-                                {t(
-                                  'features.network.workflows.targetWorkflowLabel',
-                                  'Target workflow'
-                                )}
-                              </Label>
-                              <Select
-                                value={step.target_workflow_id ?? ''}
-                                onValueChange={value =>
-                                  onUpdateStep(index, {
-                                    target_workflow_id: value || null,
-                                  })
-                                }
-                              >
-                                <SelectTrigger>
-                                  <SelectValue
-                                    placeholder={t(
-                                      'features.network.workflows.targetWorkflowPlaceholder',
-                                      'Select a workflow on this group'
-                                    )}
-                                  />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {availableTargetWorkflows.length > 0 ? (
-                                    availableTargetWorkflows.map(workflow => (
-                                      <SelectItem key={workflow.id} value={workflow.id}>
-                                        {workflow.name ?? workflow.id}
-                                      </SelectItem>
-                                    ))
-                                  ) : (
-                                    <SelectItem value="__no-workflows__" disabled>
-                                      {t(
-                                        'features.network.workflows.noTargetWorkflows',
-                                        'No workflows available on this group'
-                                      )}
-                                    </SelectItem>
-                                  )}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          ) : null}
-                        </div>
-
-                        <div className="pointer-events-none">
-                          <GroupSearchCard group={getGroupData(step)} />
-                        </div>
-
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          <Badge variant="outline">{getStepKindLabel(step.step_kind, t)}</Badge>
-                          <Badge variant="outline">
-                            {step.auto_task_on_missing_event
-                              ? t(
-                                  'features.network.workflows.autoTaskEnabled',
-                                  'Creates task if missing'
-                                )
-                              : t(
-                                  'features.network.workflows.autoTaskDisabled',
-                                  'Waits for matching event'
-                                )}
-                          </Badge>
-                          {step.step_kind === 'workflow_handoff' ? (
-                            <Badge variant="secondary">
-                              {getSelectionModeLabel(step.selection_mode, t)}
-                            </Badge>
-                          ) : null}
-                          {step.step_kind === 'workflow_handoff' && step.target_workflow_id ? (
-                            <Badge variant="secondary">
-                              {getWorkflowName(step.target_workflow_id) ?? step.target_workflow_id}
-                            </Badge>
-                          ) : null}
-                          {step.event_rule ? (
-                            <Badge variant="outline">{step.event_rule}</Badge>
-                          ) : null}
-                        </div>
-
-                        {dragOverStepIndex === index && dragInsertPosition === 'below' ? (
-                          <div className="bg-primary absolute right-6 -bottom-1 left-6 z-20 h-0.5 rounded-full shadow-[0_0_0_1px_rgba(255,255,255,0.9)]" />
-                        ) : null}
-                      </div>
+                        </CardContent>
+                      </Card>
                     );
-                  })}
-                </div>
-              )}
+                  })
+                )}
+              </TabsContent>
+            </Tabs>
 
-              <div className="flex items-start gap-2 pt-2">
-                <TypeaheadSearch
-                  items={groupTypeaheadItems}
-                  value={selectedGroupId}
-                  onChange={(item: TypeaheadItem | null) => setSelectedGroupId(item?.id ?? '')}
-                  onInteract={collapseDescriptionForSteps}
-                  placeholder={t('features.network.workflows.selectGroup', 'Select group...')}
-                  disablePortal
-                  showAllOnFocus
-                  className="flex-1"
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-0.5"
-                  disabled={!selectedGroupId}
-                  onClick={() => {
-                    collapseDescriptionForSteps();
-                    if (selectedGroupId) {
-                      onAddStep(selectedGroupId, null);
-                      setSelectedGroupId('');
-                    }
-                  }}
-                >
-                  <Plus className="mr-1 h-4 w-4" />
-                  {t('common.add', 'Add')}
-                </Button>
-              </div>
-            </div>
-
-            {draftSteps.length > 0 ? (
-              <div className="bg-muted rounded-md p-3">
-                <p className="text-muted-foreground mb-1 text-xs font-medium">
-                  {t('features.network.workflows.preview', 'Preview')}
+            {validationMessages.length > 0 ? (
+              <div className="border-destructive/20 bg-destructive/5 space-y-2 rounded-lg border p-4">
+                <p className="text-destructive text-sm font-medium">
+                  {t(
+                    'features.network.workflows.validationTitle',
+                    'This workflow still needs attention before it can be saved:'
+                  )}
                 </p>
-                <div className="flex flex-wrap items-center gap-1">
-                  {draftSteps.map((step, index) => (
-                    <span key={`${step.group_id}-${index}`} className="flex items-center gap-1">
-                      <span className="text-sm font-medium">{getGroupName(step.group_id)}</span>
-                      <Badge variant="outline" className="text-[10px]">
-                        {getStepKindLabel(step.step_kind, t)}
-                      </Badge>
-                      {index < draftSteps.length - 1 ? (
-                        <ArrowRight className="text-muted-foreground h-3 w-3" />
-                      ) : null}
-                    </span>
+                <ul className="text-destructive list-disc space-y-1 pl-5 text-sm">
+                  {validationMessages.map(message => (
+                    <li key={message}>{message}</li>
                   ))}
-                </div>
+                </ul>
               </div>
             ) : null}
           </div>
+        </div>
 
-          <DialogFooter className="border-t px-6 py-4">
-            <Button variant="outline" onClick={onClose}>
-              {t('common.cancel', 'Cancel')}
-            </Button>
-            <Button
-              onClick={onSave}
-              disabled={draftSteps.length < 1 || !isNameValid || !isDescriptionValid}
-            >
-              {editingWorkflow
-                ? t('common.save', 'Save')
-                : t('features.network.workflows.create', 'New Workflow')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+        <DialogFooter className="border-t px-6 py-4">
+          <Button variant="outline" onClick={onClose}>
+            {t('common.cancel', 'Cancel')}
+          </Button>
+          <Button onClick={onSave} disabled={!canSave}>
+            {editingWorkflow
+              ? t('common.save', 'Save')
+              : t('features.network.workflows.create', 'New Workflow')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

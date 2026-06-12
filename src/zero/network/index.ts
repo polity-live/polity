@@ -8,6 +8,7 @@ export {
   subscriber,
   groupWorkflow,
   groupWorkflowStep,
+  groupWorkflowApproval,
 } from './table';
 
 // Zod Schemas
@@ -32,10 +33,14 @@ export {
   createGroupWorkflowSchema,
   updateGroupWorkflowSchema,
   deleteGroupWorkflowSchema,
+  groupWorkflowApprovalSelectSchema,
   groupWorkflowStepSelectSchema,
   createGroupWorkflowStepSchema,
   updateGroupWorkflowStepSchema,
   deleteGroupWorkflowStepSchema,
+  saveWorkflowDefinitionSchema,
+  approveWorkflowApprovalSchema,
+  rejectWorkflowApprovalSchema,
   type Follow,
   type GroupRelationship,
   type NetworkLink,
@@ -45,6 +50,7 @@ export {
   type Subscriber,
   type GroupWorkflow,
   type GroupWorkflowStep,
+  type GroupWorkflowApproval,
 } from './schema';
 
 // Queries
@@ -56,6 +62,7 @@ export {
   type NetworkLinkChangeRequestPairRow,
   type WorkflowWithStepsRow,
   type WorkflowStepRow,
+  type WorkflowApprovalByGroupRow,
 } from './queries';
 
 // Mutators

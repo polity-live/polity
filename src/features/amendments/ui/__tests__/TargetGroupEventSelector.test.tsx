@@ -47,28 +47,7 @@ const amendmentRelationships = [
     id: 'rel-start-mid',
     network_link_id: 'link-start-mid',
     network_link_right_id: 'right-start-mid',
-    group_id: 'group-mid',
-    related_group_id: 'group-start',
-    relationship_type: 'child',
-    structural_relation: 'parent_child',
-    with_right: 'amendmentRight',
-    status: 'accepted',
-    initiator_group_id: null,
-    created_at: Date.now(),
-    membership_mode: 'all_members',
-    membership_direction: null,
-    membership_role_id: null,
-    membership_source_group_ids: null,
-    relationship_direction: 'forward',
-    right_direction: 'forward',
-    group: { id: 'group-mid', name: 'Regional Council' },
-    related_group: { id: 'group-start', name: 'Budget Circle' },
-  },
-  {
-    id: 'rel-mid-target',
-    network_link_id: 'link-mid-target',
-    network_link_right_id: 'right-mid-target',
-    group_id: 'group-target',
+    group_id: 'group-start',
     related_group_id: 'group-mid',
     relationship_type: 'child',
     structural_relation: 'parent_child',
@@ -82,12 +61,33 @@ const amendmentRelationships = [
     membership_source_group_ids: null,
     relationship_direction: 'forward',
     right_direction: 'forward',
-    group: { id: 'group-target', name: 'Parliament' },
+    group: { id: 'group-start', name: 'Budget Circle' },
     related_group: { id: 'group-mid', name: 'Regional Council' },
+  },
+  {
+    id: 'rel-mid-target',
+    network_link_id: 'link-mid-target',
+    network_link_right_id: 'right-mid-target',
+    group_id: 'group-mid',
+    related_group_id: 'group-target',
+    relationship_type: 'child',
+    structural_relation: 'parent_child',
+    with_right: 'amendmentRight',
+    status: 'accepted',
+    initiator_group_id: null,
+    created_at: Date.now(),
+    membership_mode: 'all_members',
+    membership_direction: null,
+    membership_role_id: null,
+    membership_source_group_ids: null,
+    relationship_direction: 'forward',
+    right_direction: 'forward',
+    group: { id: 'group-mid', name: 'Regional Council' },
+    related_group: { id: 'group-target', name: 'Parliament' },
   },
 ] as never[];
 
-const amendmentWorkflows: never[] = [];
+const amendmentWorkflows: Record<string, unknown>[] = [];
 const amendmentEvents = [
   {
     id: 'event-start',
@@ -326,6 +326,61 @@ describe('TargetGroupEventSelector', () => {
       expect(screen.getByText('Rooted graph: group-start')).toBeTruthy();
     } finally {
       amendmentMemberships.pop();
+    }
+  });
+
+  it('derives the final target group from the selected workflow instead of asking for a manual target', async () => {
+    amendmentWorkflows.push({
+      id: 'workflow-reading',
+      group_id: 'group-target',
+      start_group_id: 'group-mid',
+      status: 'active',
+      name: 'Reading Workflow',
+      group: { id: 'group-target', name: 'Parliament' },
+      steps: [
+        {
+          id: 'workflow-step-final',
+          group_id: 'group-target',
+          label: '2. Lesung',
+          order_index: 0,
+          step_kind: 'group_vote',
+          selection_mode: 'default_target_workflow',
+          merge_strategy: null,
+          event_rule: null,
+          auto_task_on_missing_event: true,
+          target_workflow_id: null,
+          group: { id: 'group-target', name: 'Parliament' },
+        },
+      ],
+    });
+
+    try {
+      const onSelect = vi.fn();
+
+      render(
+        <TargetGroupEventSelector
+          userId="user-1"
+          onSelect={onSelect}
+          allowGroupWithoutEvent
+          disablePortal
+          selectedPathMode="workflow"
+          selectedWorkflowId="workflow-reading"
+        />
+      );
+
+      await waitFor(() => expect(screen.queryByPlaceholderText('Zielgruppe suchen...')).toBeNull());
+      await waitFor(() => expect(screen.getByText('Abgeleitete Zielgruppe')).toBeTruthy());
+      await waitFor(() =>
+        expect(onSelect).toHaveBeenCalledWith(
+          expect.objectContaining({
+            groupId: 'group-target',
+            pathMode: 'workflow',
+            workflowId: 'workflow-reading',
+          })
+        )
+      );
+    } finally {
+      amendmentWorkflows.length = 0;
     }
   });
 });

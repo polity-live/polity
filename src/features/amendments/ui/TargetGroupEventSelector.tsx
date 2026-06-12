@@ -4,6 +4,13 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Label } from '@/features/shared/ui/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/features/shared/ui/ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/features/shared/ui/ui/select';
 import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
@@ -12,13 +19,17 @@ import { useWorkflowState } from '@/zero/network/useWorkflowState';
 import {
   type AmendmentNetworkEvent,
   type AmendmentNetworkGroup,
+  calculateProcessPathWithClosestEventsForGroupIds,
   type PathWithEventSegment,
   calculateProcessPathWithClosestEvents,
   calculateWorkflowProcessPathWithClosestEvents,
   getActiveUserGroupIds,
   getEligibleEventsForPathSegment,
+  getProcessPathGroupOptions,
   getReachableTargetGroupsFromSource,
   getReachableWorkflowsFromSource,
+  getWorkflowFinalGroupId,
+  getWorkflowStartGroupId,
   rehydratePathSegmentsWithWindows,
 } from '@/features/amendments/logic/amendmentPathHelpers';
 import { CalendarClock, ChevronRight, GitBranch, Target, User, Workflow } from 'lucide-react';
@@ -84,6 +95,14 @@ function dedupeGroupsById(groups: AmendmentNetworkGroup[]) {
   });
 }
 
+function formatPathOptionLabel(
+  pathOption: { groupIds: string[] },
+  groups: AmendmentNetworkGroup[]
+) {
+  const groupsById = new Map(groups.map(group => [group.id, group]));
+  return pathOption.groupIds.map(groupId => groupsById.get(groupId)?.name ?? groupId).join(' -> ');
+}
+
 export function TargetGroupEventSelector({
   userId,
   collaborators = [],
@@ -127,6 +146,7 @@ export function TargetGroupEventSelector({
     data: AmendmentNetworkEvent;
   } | null>(null);
   const [pathWithEvents, setPathWithEvents] = useState<PathWithEventSegment[]>([]);
+  const [selectedHierarchyPathId, setSelectedHierarchyPathId] = useState<string>('');
   const [pathValidationError, setPathValidationError] = useState<string | null>(null);
 
   const { allWorkflows } = useWorkflowState({});
@@ -177,6 +197,24 @@ export function TargetGroupEventSelector({
     [allWorkflows, selectedWorkflowIdState]
   );
 
+  const selectedWorkflowStartGroup = useMemo(() => {
+    if (!selectedWorkflow) {
+      return null;
+    }
+
+    const startGroupId = getWorkflowStartGroupId(selectedWorkflow);
+    return networkGroups.find(group => group.id === startGroupId) ?? null;
+  }, [networkGroups, selectedWorkflow]);
+
+  const selectedWorkflowFinalGroup = useMemo(() => {
+    if (!selectedWorkflow) {
+      return null;
+    }
+
+    const finalGroupId = getWorkflowFinalGroupId(selectedWorkflow);
+    return networkGroups.find(group => group.id === finalGroupId) ?? null;
+  }, [networkGroups, selectedWorkflow]);
+
   const reachableWorkflows = useMemo(
     () =>
       selectedSourceGroup?.id
@@ -199,42 +237,58 @@ export function TargetGroupEventSelector({
     ]
   );
 
-  const workflowTargetGroups = useMemo(() => {
-    if (!selectedWorkflow) {
-      return [];
-    }
-
-    const sortedSteps = [...(selectedWorkflow.steps ?? [])].sort(
-      (left, right) => (left.order_index ?? 0) - (right.order_index ?? 0)
-    );
-    const sourceIndex = selectedSourceGroup?.id
-      ? sortedSteps.findIndex(step => step.group_id === selectedSourceGroup.id)
-      : 0;
-    const relevantSteps = sortedSteps.slice(sourceIndex >= 0 ? sourceIndex : 0);
-    return dedupeGroupsById(
-      relevantSteps
-        .map(step => step.group)
-        .filter((group): group is AmendmentNetworkGroup => Boolean(group?.id))
-    );
-  }, [selectedSourceGroup?.id, selectedWorkflow]);
-
-  const connectedGroups = pathMode === 'workflow' ? workflowTargetGroups : reachableHierarchyGroups;
   const availableTargetGroups = useMemo(() => {
     if (!selectedSourceGroup) {
       return [];
     }
 
-    const groups = [...connectedGroups];
+    if (pathMode === 'workflow') {
+      return selectedWorkflowFinalGroup ? [selectedWorkflowFinalGroup] : [];
+    }
+
+    const groups = [...reachableHierarchyGroups];
     if (allowSourceGroupAsTarget && !groups.some(group => group.id === selectedSourceGroup.id)) {
       groups.unshift(selectedSourceGroup.data);
     }
 
     return dedupeGroupsById(groups);
-  }, [allowSourceGroupAsTarget, connectedGroups, selectedSourceGroup]);
+  }, [
+    allowSourceGroupAsTarget,
+    pathMode,
+    reachableHierarchyGroups,
+    selectedSourceGroup,
+    selectedWorkflowFinalGroup,
+  ]);
+
+  const availableHierarchyPaths = useMemo(() => {
+    if (pathMode !== 'hierarchy' || !selectedSourceGroup?.id || !selectedGroup?.id) {
+      return [];
+    }
+
+    return getProcessPathGroupOptions({
+      sourceGroupId: selectedSourceGroup.id,
+      targetGroupId: selectedGroup.id,
+      groups: networkGroups,
+      relationships: networkRelationships,
+      memberships: networkMemberships,
+      userId: currentUserId,
+    });
+  }, [
+    currentUserId,
+    networkGroups,
+    networkMemberships,
+    networkRelationships,
+    pathMode,
+    selectedGroup?.id,
+    selectedSourceGroup?.id,
+  ]);
 
   const targetPathSegment = useMemo(
-    () => pathWithEvents.find(segment => segment.groupId === selectedGroup?.id) ?? null,
-    [pathWithEvents, selectedGroup?.id]
+    () =>
+      pathMode === 'workflow'
+        ? (pathWithEvents[pathWithEvents.length - 1] ?? null)
+        : (pathWithEvents.find(segment => segment.groupId === selectedGroup?.id) ?? null),
+    [pathMode, pathWithEvents, selectedGroup?.id]
   );
 
   const getUpcomingEventsForGroup = useCallback(
@@ -267,7 +321,7 @@ export function TargetGroupEventSelector({
   }, [selectedWorkflowId]);
 
   useEffect(() => {
-    if (!selectedWorkflowIdState) {
+    if (!selectedWorkflowIdState || !selectedSourceGroup?.id || allWorkflows.length === 0) {
       return;
     }
 
@@ -279,10 +333,65 @@ export function TargetGroupEventSelector({
     setSelectedGroup(null);
     setSelectedEvent(null);
     setPathWithEvents([]);
+    setSelectedHierarchyPathId('');
     setPathValidationError(null);
     onWorkflowSelectionChange?.(null);
     onSelect(null);
-  }, [onSelect, onWorkflowSelectionChange, reachableWorkflows, selectedWorkflowIdState]);
+  }, [
+    allWorkflows.length,
+    onSelect,
+    onWorkflowSelectionChange,
+    reachableWorkflows,
+    selectedSourceGroup?.id,
+    selectedWorkflowIdState,
+  ]);
+
+  useEffect(() => {
+    if (pathMode !== 'workflow') {
+      return;
+    }
+
+    if (!selectedWorkflowIdState || !selectedWorkflowFinalGroup) {
+      setSelectedGroup(null);
+      onGroupSelectionChange?.(null);
+      return;
+    }
+
+    if (selectedGroup?.id === selectedWorkflowFinalGroup.id) {
+      return;
+    }
+
+    setSelectedGroup({ id: selectedWorkflowFinalGroup.id, data: selectedWorkflowFinalGroup });
+    onGroupSelectionChange?.(selectedWorkflowFinalGroup.id);
+  }, [
+    onGroupSelectionChange,
+    pathMode,
+    selectedGroup?.id,
+    selectedWorkflowFinalGroup,
+    selectedWorkflowIdState,
+  ]);
+
+  useEffect(() => {
+    if (pathMode !== 'hierarchy') {
+      if (selectedHierarchyPathId) {
+        setSelectedHierarchyPathId('');
+      }
+      return;
+    }
+
+    if (availableHierarchyPaths.length === 0) {
+      if (selectedHierarchyPathId) {
+        setSelectedHierarchyPathId('');
+      }
+      return;
+    }
+
+    if (availableHierarchyPaths.some(path => path.id === selectedHierarchyPathId)) {
+      return;
+    }
+
+    setSelectedHierarchyPathId(availableHierarchyPaths[0].id);
+  }, [availableHierarchyPaths, pathMode, selectedHierarchyPathId]);
 
   useEffect(() => {
     if (!selectedGroup) {
@@ -370,6 +479,7 @@ export function TargetGroupEventSelector({
     setSelectedGroup(null);
     setSelectedEvent(null);
     setPathWithEvents([]);
+    setSelectedHierarchyPathId('');
     setPathValidationError(null);
     onSourceGroupSelectionChange?.(null);
     onGroupSelectionChange?.(null);
@@ -377,7 +487,7 @@ export function TargetGroupEventSelector({
   }, [onGroupSelectionChange, onSelect, onSourceGroupSelectionChange, selectedUserId]);
 
   useEffect(() => {
-    if (!selectedSourceGroup || !selectedGroup) {
+    if (!selectedSourceGroup || (pathMode === 'hierarchy' && !selectedGroup)) {
       setPathWithEvents([]);
       setPathValidationError(null);
       lastEmittedSelectionRef.current = null;
@@ -391,7 +501,6 @@ export function TargetGroupEventSelector({
       calculatedPath = selectedWorkflow
         ? calculateWorkflowProcessPathWithClosestEvents({
             sourceGroupId: selectedSourceGroup.id,
-            targetGroupId: selectedGroup.id,
             workflow: selectedWorkflow,
             groups: networkGroups,
             relationships: networkRelationships,
@@ -401,15 +510,26 @@ export function TargetGroupEventSelector({
           })
         : null;
     } else {
-      calculatedPath = calculateProcessPathWithClosestEvents({
-        sourceGroupId: selectedSourceGroup.id,
-        targetGroupId: selectedGroup.id,
-        groups: networkGroups,
-        relationships: networkRelationships,
-        events: networkEvents,
-        memberships: networkMemberships,
-        userId: currentUserId,
-      });
+      const selectedHierarchyPath =
+        availableHierarchyPaths.find(path => path.id === selectedHierarchyPathId) ??
+        availableHierarchyPaths[0] ??
+        null;
+
+      calculatedPath = selectedHierarchyPath
+        ? calculateProcessPathWithClosestEventsForGroupIds({
+            groupIds: selectedHierarchyPath.groupIds,
+            groups: networkGroups,
+            events: networkEvents,
+          })
+        : calculateProcessPathWithClosestEvents({
+            sourceGroupId: selectedSourceGroup.id,
+            targetGroupId: selectedGroup?.id ?? '',
+            groups: networkGroups,
+            relationships: networkRelationships,
+            events: networkEvents,
+            memberships: networkMemberships,
+            userId: currentUserId,
+          });
     }
 
     if (!calculatedPath || calculatedPath.length === 0) {
@@ -424,10 +544,12 @@ export function TargetGroupEventSelector({
 
     setPathWithEvents(previous => {
       let nextPath = rehydratePathSegmentsWithWindows(calculatedPath);
-      const previousByGroupId = new Map(previous.map(segment => [segment.groupId, segment]));
+      const previousBySegmentKey = new Map(
+        previous.map(segment => [segment.segmentKey, segment] as const)
+      );
 
       for (const segment of nextPath) {
-        const previousSegment = previousByGroupId.get(segment.groupId);
+        const previousSegment = previousBySegmentKey.get(segment.segmentKey);
         if (!previousSegment) {
           continue;
         }
@@ -457,33 +579,37 @@ export function TargetGroupEventSelector({
       return nextPath;
     });
   }, [
+    availableHierarchyPaths,
     currentUserId,
+    pathMode,
     networkEvents,
     networkGroups,
     networkMemberships,
     networkRelationships,
     getUpcomingEventsForGroup,
     onSelect,
-    pathMode,
-    selectedGroup,
     selectedSourceGroup,
-    selectedWorkflow?.steps,
+    selectedGroup?.id,
+    selectedHierarchyPathId,
+    selectedWorkflow,
     selectedWorkflowIdState,
   ]);
 
   useEffect(() => {
-    if (!selectedGroup?.id || !selectedEvent?.id || pathWithEvents.length === 0) {
+    if (!targetPathSegment?.segmentKey || !selectedEvent?.id || pathWithEvents.length === 0) {
       return;
     }
 
-    const selectedSegment = pathWithEvents.find(segment => segment.groupId === selectedGroup.id);
+    const selectedSegment = pathWithEvents.find(
+      segment => segment.segmentKey === targetPathSegment.segmentKey
+    );
     if (selectedSegment?.eventId === selectedEvent.id) {
       return;
     }
 
     const nextEvent = networkEvents.find(
       event =>
-        event.id === selectedEvent.id && (event.group?.id ?? event.group_id) === selectedGroup.id
+        event.id === selectedEvent.id && (event.group?.id ?? event.group_id) === selectedGroup?.id
     );
     if (!nextEvent) {
       return;
@@ -492,7 +618,7 @@ export function TargetGroupEventSelector({
     setPathWithEvents(previous =>
       rehydratePathSegmentsWithWindows(
         previous.map(segment =>
-          segment.groupId !== selectedGroup.id
+          segment.segmentKey !== targetPathSegment.segmentKey
             ? segment
             : {
                 ...segment,
@@ -505,7 +631,13 @@ export function TargetGroupEventSelector({
         )
       )
     );
-  }, [networkEvents, pathWithEvents, selectedEvent?.id, selectedGroup?.id]);
+  }, [
+    networkEvents,
+    pathWithEvents,
+    selectedEvent?.id,
+    selectedGroup?.id,
+    targetPathSegment?.segmentKey,
+  ]);
 
   useEffect(() => {
     if (!selectedGroup?.id) {
@@ -515,7 +647,10 @@ export function TargetGroupEventSelector({
       return;
     }
 
-    const selectedSegment = pathWithEvents.find(segment => segment.groupId === selectedGroup.id);
+    const selectedSegment =
+      targetPathSegment ??
+      pathWithEvents.find(segment => segment.groupId === selectedGroup.id) ??
+      null;
     if (!selectedSegment?.eventId) {
       if (selectedEvent) {
         setSelectedEvent(null);
@@ -533,7 +668,7 @@ export function TargetGroupEventSelector({
     }
 
     setSelectedEvent({ id: nextEvent.id, data: nextEvent });
-  }, [networkEvents, pathWithEvents, selectedEvent, selectedGroup?.id]);
+  }, [networkEvents, pathWithEvents, selectedEvent, selectedGroup?.id, targetPathSegment]);
 
   const validatePathEventOrder = useCallback((segments: PathWithEventSegment[]): string | null => {
     for (const current of segments) {
@@ -558,12 +693,17 @@ export function TargetGroupEventSelector({
   }, []);
 
   const updatePathSegmentEvent = useCallback(
-    (groupId: string, item: TypeaheadItem | null) => {
+    (segmentKey: string, item: TypeaheadItem | null) => {
+      const targetSegment = pathWithEvents.find(segment => segment.segmentKey === segmentKey);
+      if (!targetSegment) {
+        return;
+      }
+
       if (!item) {
         setPathWithEvents(previous =>
           rehydratePathSegmentsWithWindows(
             previous.map(segment =>
-              segment.groupId === groupId
+              segment.segmentKey === segmentKey
                 ? {
                     ...segment,
                     eventId: null,
@@ -577,20 +717,19 @@ export function TargetGroupEventSelector({
           )
         );
 
-        if (selectedGroup?.id === groupId) {
+        if (targetPathSegment?.segmentKey === segmentKey) {
           setSelectedEvent(null);
         }
         return;
       }
 
       const event =
-        (groupId === selectedGroup?.id
+        (targetPathSegment?.segmentKey === segmentKey
           ? upcomingEvents.find(candidateEvent => candidateEvent.id === item.id)
           : undefined) ??
-        getUpcomingEventsForGroup(
-          groupId,
-          pathWithEvents.find(segment => segment.groupId === groupId) ?? null
-        ).find(candidateEvent => candidateEvent.id === item.id);
+        getUpcomingEventsForGroup(targetSegment.groupId, targetSegment).find(
+          candidateEvent => candidateEvent.id === item.id
+        );
 
       if (!event) {
         return;
@@ -599,7 +738,7 @@ export function TargetGroupEventSelector({
       setPathWithEvents(previous =>
         rehydratePathSegmentsWithWindows(
           previous.map(segment =>
-            segment.groupId === groupId
+            segment.segmentKey === segmentKey
               ? {
                   ...segment,
                   eventId: event.id,
@@ -613,11 +752,11 @@ export function TargetGroupEventSelector({
         )
       );
 
-      if (selectedGroup?.id === groupId) {
+      if (targetPathSegment?.segmentKey === segmentKey) {
         setSelectedEvent({ id: event.id, data: event });
       }
     },
-    [getUpcomingEventsForGroup, pathWithEvents, selectedGroup?.id, upcomingEvents]
+    [getUpcomingEventsForGroup, pathWithEvents, targetPathSegment?.segmentKey, upcomingEvents]
   );
 
   useEffect(() => {
@@ -637,10 +776,8 @@ export function TargetGroupEventSelector({
       return;
     }
 
-    const targetEventId =
-      pathWithEvents.find(segment => segment.groupId === selectedGroup.id)?.eventId ??
-      selectedEvent?.id ??
-      null;
+    const finalSegment = targetPathSegment ?? pathWithEvents[pathWithEvents.length - 1] ?? null;
+    const targetEventId = finalSegment?.eventId ?? selectedEvent?.id ?? null;
     if (!targetEventId && !allowGroupWithoutEvent) {
       lastEmittedSelectionRef.current = null;
       onSelect(null);
@@ -648,7 +785,11 @@ export function TargetGroupEventSelector({
     }
 
     const targetEvent = targetEventId
-      ? (upcomingEvents.find(event => event.id === targetEventId) ?? selectedEvent?.data ?? null)
+      ? (getUpcomingEventsForGroup(finalSegment?.groupId ?? selectedGroup.id, finalSegment).find(
+          event => event.id === targetEventId
+        ) ??
+        selectedEvent?.data ??
+        null)
       : null;
     const missingEventSteps = pathWithEvents.filter(segment => !segment.eventId);
     const selectionSignature = JSON.stringify({
@@ -658,6 +799,7 @@ export function TargetGroupEventSelector({
       pathMode,
       workflowId: selectedWorkflowIdState || null,
       path: pathWithEvents.map(segment => ({
+        segmentKey: segment.segmentKey,
         groupId: segment.groupId,
         eventId: segment.eventId,
         requiredAfter: segment.requiredAfter,
@@ -684,15 +826,18 @@ export function TargetGroupEventSelector({
     });
   }, [
     allowGroupWithoutEvent,
+    getUpcomingEventsForGroup,
     onSelect,
     pathMode,
     pathWithEvents,
     selectedEvent?.data,
     selectedEvent?.id,
     selectedGroup,
+    selectedHierarchyPathId,
     selectedSourceGroup,
     selectedUserId,
     selectedWorkflowIdState,
+    targetPathSegment,
     upcomingEvents,
     validatePathEventOrder,
   ]);
@@ -704,6 +849,7 @@ export function TargetGroupEventSelector({
         setSelectedGroup(null);
         setSelectedEvent(null);
         setPathWithEvents([]);
+        setSelectedHierarchyPathId('');
         setPathValidationError(null);
         onSourceGroupSelectionChange?.(null);
         onGroupSelectionChange?.(null);
@@ -715,6 +861,7 @@ export function TargetGroupEventSelector({
       setSelectedGroup(null);
       setSelectedEvent(null);
       setPathWithEvents([]);
+      setSelectedHierarchyPathId('');
       setPathValidationError(null);
       onSourceGroupSelectionChange?.(group.id);
       onGroupSelectionChange?.(null);
@@ -728,6 +875,7 @@ export function TargetGroupEventSelector({
         setSelectedGroup(null);
         setSelectedEvent(null);
         setPathWithEvents([]);
+        setSelectedHierarchyPathId('');
         setPathValidationError(null);
         onGroupSelectionChange?.(null);
         onSelect(null);
@@ -737,6 +885,7 @@ export function TargetGroupEventSelector({
       setSelectedGroup({ id: group.id, data: group });
       setSelectedEvent(null);
       setPathWithEvents([]);
+      setSelectedHierarchyPathId('');
       setPathValidationError(null);
       onGroupSelectionChange?.(group.id);
     },
@@ -935,6 +1084,36 @@ export function TargetGroupEventSelector({
                 />
               )}
             </div>
+
+            {selectedSourceGroup && selectedGroup && availableHierarchyPaths.length > 1 ? (
+              <div className="space-y-2">
+                <Label>Route</Label>
+                <Select
+                  value={selectedHierarchyPathId}
+                  onValueChange={value => {
+                    setSelectedHierarchyPathId(value);
+                    setSelectedEvent(null);
+                    setPathWithEvents([]);
+                    setPathValidationError(null);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pfad auswaehlen..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableHierarchyPaths.map(pathOption => (
+                      <SelectItem key={pathOption.id} value={pathOption.id}>
+                        {formatPathOptionLabel(pathOption, networkGroups)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-muted-foreground text-xs">
+                  Mehrere gueltige Amendment-Pfade gefunden. Hier kannst du bewusst eine Sibling-
+                  oder Detour-Route waehlen.
+                </p>
+              </div>
+            ) : null}
           </TabsContent>
 
           <TabsContent value="workflow" className="space-y-4">
@@ -957,6 +1136,7 @@ export function TargetGroupEventSelector({
                   setSelectedGroup(null);
                   setSelectedEvent(null);
                   setPathWithEvents([]);
+                  setSelectedHierarchyPathId('');
                   setPathValidationError(null);
                 }}
                 placeholder="Workflow auswaehlen..."
@@ -965,33 +1145,28 @@ export function TargetGroupEventSelector({
             </div>
 
             {selectedWorkflowIdState && (
-              <div className="space-y-2">
-                <Label>Zielgruppe</Label>
-                {availableTargetGroups.length === 0 ? (
-                  <p className="text-muted-foreground text-sm">
-                    Dieser Workflow bietet ab der gewaehlten Startgruppe keine Zielgruppen an.
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Workflow-Start</Label>
+                  <div className="bg-muted/40 rounded-md border px-3 py-2 text-sm font-medium">
+                    {selectedWorkflowStartGroup?.name ?? 'Unbekannt'}
+                  </div>
+                  <p className="text-muted-foreground text-xs">
+                    Die Quellgruppe erreicht diesen Startpunkt zunaechst ueber den normalen
+                    Amendment-Pfad.
                   </p>
-                ) : (
-                  <TypeaheadSearch
-                    items={toTypeaheadItems(
-                      availableTargetGroups,
-                      'group',
-                      group => group.name || 'Group',
-                      group =>
-                        typeof group.description === 'string'
-                          ? group.description.substring(0, 60)
-                          : undefined,
-                      undefined,
-                      group => `/group/${group.id}`
-                    )}
-                    value={selectedGroup?.id || ''}
-                    onChange={(item: TypeaheadItem | null) =>
-                      handleGroupSelection(availableTargetGroups, item)
-                    }
-                    placeholder="Zielgruppe suchen..."
-                    disablePortal={disablePortal}
-                  />
-                )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Abgeleitete Zielgruppe</Label>
+                  <div className="bg-muted/40 rounded-md border px-3 py-2 text-sm font-medium">
+                    {selectedWorkflowFinalGroup?.name ?? 'Unbekannt'}
+                  </div>
+                  <p className="text-muted-foreground text-xs">
+                    Im Workflow-Modus wird die finale Zielgruppe aus dem letzten Workflow-Schritt
+                    abgeleitet.
+                  </p>
+                </div>
               </div>
             )}
           </TabsContent>
@@ -1068,7 +1243,9 @@ export function TargetGroupEventSelector({
               items={targetEventItems}
               value={selectedEvent?.id || ''}
               onChange={(item: TypeaheadItem | null) =>
-                selectedGroup ? updatePathSegmentEvent(selectedGroup.id, item) : undefined
+                targetPathSegment
+                  ? updatePathSegmentEvent(targetPathSegment.segmentKey, item)
+                  : undefined
               }
               placeholder="Event suchen..."
               disablePortal={disablePortal}
@@ -1087,18 +1264,21 @@ export function TargetGroupEventSelector({
           <div className="space-y-3">
             {pathWithEvents.map((segment, index) => {
               const segmentEvents =
-                segment.groupId === selectedGroup?.id
+                segment.segmentKey === targetPathSegment?.segmentKey
                   ? upcomingEvents
                   : getUpcomingEventsForGroup(segment.groupId, segment);
 
               return (
                 <div
-                  key={`${segment.groupId}:${index}`}
+                  key={segment.segmentKey}
                   className="border-border bg-background rounded-md border p-3"
                 >
                   <div className="mb-2 flex items-center justify-between gap-2">
                     <div className="space-y-1">
                       <p className="text-sm font-medium">{segment.groupName}</p>
+                      {segment.stepLabel ? (
+                        <p className="text-muted-foreground text-xs">{segment.stepLabel}</p>
+                      ) : null}
                       <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
                         {segment.requiredAfter ? (
                           <span className="inline-flex items-center gap-1">
@@ -1131,7 +1311,7 @@ export function TargetGroupEventSelector({
                       )}
                       value={segment.eventId ?? undefined}
                       onChange={(item: TypeaheadItem | null) =>
-                        updatePathSegmentEvent(segment.groupId, item)
+                        updatePathSegmentEvent(segment.segmentKey, item)
                       }
                       placeholder="Event fuer diesen Schritt auswaehlen..."
                       disablePortal={disablePortal}
@@ -1224,9 +1404,11 @@ export function TargetGroupEventDisplay({
           <p className="font-semibold">Amendment Path ({pathWithEvents.length} groups):</p>
           <div className="mt-2 flex flex-wrap items-center gap-1">
             {pathWithEvents.map((segment, index) => (
-              <div key={`${segment.groupId}:${index}`} className="flex items-center gap-1">
+              <div key={segment.segmentKey} className="flex items-center gap-1">
                 <Badge variant={segment.eventId ? 'secondary' : 'outline'} className="text-xs">
-                  {segment.groupName}
+                  {segment.stepLabel
+                    ? `${segment.groupName} (${segment.stepLabel})`
+                    : segment.groupName}
                 </Badge>
                 {index < pathWithEvents.length - 1 && (
                   <ChevronRight className="text-muted-foreground h-3 w-3" />

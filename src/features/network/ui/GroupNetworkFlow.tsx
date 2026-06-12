@@ -87,6 +87,11 @@ interface GroupNetworkFlowProps {
   showGroupDialogOnClick?: boolean;
   showWorkflowView?: boolean;
   layoutScopeKey?: string;
+  highlightGroupIds?: string[];
+  highlightEdgePairs?: {
+    sourceGroupId: string;
+    targetGroupId: string;
+  }[];
 }
 
 type RelationshipDirectionKey = string;
@@ -225,6 +230,8 @@ export function GroupNetworkFlow({
   showGroupDialogOnClick = true,
   showWorkflowView = true,
   layoutScopeKey,
+  highlightGroupIds = [],
+  highlightEdgePairs = [],
 }: GroupNetworkFlowProps) {
   const { t } = useTranslation();
   const {
@@ -295,6 +302,14 @@ export function GroupNetworkFlow({
   const { group, allRelationships } = useGroupNetwork(groupId);
   const graphRootGroup = group;
   const graphRootGroupId = graphRootGroup?.id ?? groupId;
+  const highlightedGroupIds = useMemo(() => new Set(highlightGroupIds), [highlightGroupIds]);
+  const highlightedEdgeKeys = useMemo(
+    () =>
+      new Set(
+        highlightEdgePairs.map(edgePair => `${edgePair.sourceGroupId}->${edgePair.targetGroupId}`)
+      ),
+    [highlightEdgePairs]
+  );
 
   const stableRelationships = useMemo(() => {
     return allRelationships
@@ -1060,6 +1075,62 @@ export function GroupNetworkFlow({
     return filterNodesByEdges(nodes, filteredEdges, alwaysVisibleNodeIds);
   }, [filteredEdges, graphRootGroupId, groupId, nodes, relationshipStatusFilter]);
 
+  const renderedEdges = useMemo(
+    () =>
+      filteredEdges.map(edge => {
+        const edgeData = edge.data as EditableRightsLabelEdgeData | undefined;
+        const sourceGroupId =
+          typeof edgeData?.sourceGroupId === 'string'
+            ? edgeData.sourceGroupId
+            : edge.source.replace(/^(parent-|child-)/, '');
+        const targetGroupId =
+          typeof edgeData?.targetGroupId === 'string'
+            ? edgeData.targetGroupId
+            : edge.target.replace(/^(parent-|child-)/, '');
+        const isHighlighted = highlightedEdgeKeys.has(`${sourceGroupId}->${targetGroupId}`);
+
+        if (!isHighlighted) {
+          return edge;
+        }
+
+        return {
+          ...edge,
+          animated: true,
+          style: {
+            ...edge.style,
+            stroke: '#10b981',
+            strokeWidth: 4,
+          },
+        };
+      }),
+    [filteredEdges, highlightedEdgeKeys]
+  );
+
+  const renderedNodes = useMemo(
+    () =>
+      filteredNodes.map(node => {
+        const rawId = node.id.replace(/^(parent-|child-)/, '');
+        const isSelected = selectedNodes.includes(node.id);
+        const isHighlighted = highlightedGroupIds.has(rawId);
+
+        return {
+          ...node,
+          style: {
+            ...node.style,
+            borderColor: isHighlighted ? '#10b981' : node.style?.borderColor,
+            boxShadow: isSelected
+              ? isHighlighted
+                ? '0 0 0 2px #ff0072, 0 0 0 5px rgba(16, 185, 129, 0.35)'
+                : '0 0 0 2px #ff0072'
+              : isHighlighted
+                ? '0 0 0 4px rgba(16, 185, 129, 0.35)'
+                : undefined,
+          },
+        };
+      }),
+    [filteredNodes, highlightedGroupIds, selectedNodes]
+  );
+
   // Generate flow chart when group or showIndirect changes
   useEffect(() => {
     if (isLayoutLoading) {
@@ -1214,14 +1285,8 @@ export function GroupNetworkFlow({
         )}
       </div>
       <NetworkFlowBase
-        nodes={filteredNodes.map(node => ({
-          ...node,
-          style: {
-            ...node.style,
-            boxShadow: selectedNodes.includes(node.id) ? '0 0 0 2px #ff0072' : undefined,
-          },
-        }))}
-        edges={filteredEdges}
+        nodes={renderedNodes}
+        edges={renderedEdges}
         nodesDraggable={isInteractive}
         nodesFocusable={isInteractive}
         nodesConnectable={isInteractive}

@@ -86,6 +86,7 @@ export const groupWorkflow = table('group_workflow')
   .columns({
     id: string(),
     group_id: string(),
+    start_group_id: string().optional(),
     name: string().optional(),
     description: string().optional(),
     is_default_entry: boolean(),
@@ -110,5 +111,18 @@ export const groupWorkflowStep = table('group_workflow_step')
     auto_task_on_missing_event: boolean(),
     target_workflow_id: string().optional(),
     created_at: number(),
+  })
+  .primaryKey('id');
+
+export const groupWorkflowApproval = table('group_workflow_approval')
+  .columns({
+    id: string(),
+    workflow_id: string(),
+    group_id: string(),
+    requested_by_group_id: string(),
+    status: string(),
+    responded_at: number().optional(),
+    created_at: number(),
+    updated_at: number(),
   })
   .primaryKey('id');

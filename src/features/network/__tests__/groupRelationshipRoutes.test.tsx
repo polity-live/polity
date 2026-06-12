@@ -29,21 +29,27 @@ vi.mock('@/features/network/ui/NetworkTabs', () => ({
   NetworkTabs: ({
     activeTab,
     showManageNetworkTab,
+    showManageWorkflowsTab,
     currentNetworkContent,
     manageNetworkContent,
+    manageWorkflowsContent,
   }: {
     activeTab: string;
     showManageNetworkTab: boolean;
+    showManageWorkflowsTab: boolean;
     currentNetworkContent: ReactNode;
     manageNetworkContent: ReactNode;
+    manageWorkflowsContent: ReactNode;
   }) => (
     <div
       data-testid="network-tabs"
       data-active-tab={activeTab}
       data-show-manage={String(showManageNetworkTab)}
+      data-show-manage-workflows={String(showManageWorkflowsTab)}
     >
       <div data-testid="current-network-content">{currentNetworkContent}</div>
       <div data-testid="manage-network-content">{manageNetworkContent}</div>
+      <div data-testid="manage-workflows-content">{manageWorkflowsContent}</div>
     </div>
   ),
 }));
@@ -51,6 +57,12 @@ vi.mock('@/features/network/ui/NetworkTabs', () => ({
 vi.mock('@/features/network/ui/ManageNetworkTab', () => ({
   ManageNetworkTab: ({ canManageRelationships }: { canManageRelationships: boolean }) => (
     <div data-testid="manage-network-tab" data-can-manage={String(canManageRelationships)} />
+  ),
+}));
+
+vi.mock('@/features/network/ui/ManageWorkflowsTab', () => ({
+  ManageWorkflowsTab: ({ canManageWorkflows }: { canManageWorkflows: boolean }) => (
+    <div data-testid="manage-workflows-tab" data-can-manage={String(canManageWorkflows)} />
   ),
 }));
 
@@ -94,24 +106,33 @@ function createBaseNetworkPageState() {
     handleAcceptRequest: vi.fn(),
     handleRejectRequest: vi.fn(),
     handleDeleteRelationship: vi.fn(),
-    workflows: [],
-    workflowsLoading: false,
     isWorkflowEditorOpen: false,
     editingWorkflow: null,
+    workflowIncomingRequests: [],
+    workflowOutgoingRequests: [],
+    workflowActiveRelevant: [],
+    workflowDraftStartGroupId: '',
+    setWorkflowDraftStartGroupId: vi.fn(),
     workflowDraftName: '',
     setWorkflowDraftName: vi.fn(),
     workflowDraftDescription: '',
     setWorkflowDraftDescription: vi.fn(),
+    workflowDraftIsDefaultEntry: false,
+    setWorkflowDraftIsDefaultEntry: vi.fn(),
     workflowDraftSteps: [],
+    availableWorkflows: [],
     availableGroups: [],
     openNewWorkflow: vi.fn(),
     openEditWorkflow: vi.fn(),
     closeWorkflowEditor: vi.fn(),
     addWorkflowStep: vi.fn(),
+    updateWorkflowStepDraft: vi.fn(),
     removeWorkflowStep: vi.fn(),
     moveWorkflowStep: vi.fn(),
     handleSaveWorkflow: vi.fn(),
     handleDeleteWorkflow: vi.fn(),
+    handleApproveWorkflowApproval: vi.fn(),
+    handleRejectWorkflowApproval: vi.fn(),
   };
 }
 
@@ -149,10 +170,16 @@ describe('group relationship routes', () => {
     render(<GroupNetworkPage />);
 
     expect(screen.getByTestId('network-tabs').getAttribute('data-show-manage')).toBe('true');
+    expect(screen.getByTestId('network-tabs').getAttribute('data-show-manage-workflows')).toBe(
+      'true'
+    );
     expect(screen.getByTestId('network-tabs').getAttribute('data-active-tab')).toBe(
       'manage-network'
     );
     expect(screen.getByTestId('manage-network-tab').getAttribute('data-can-manage')).toBe('false');
+    expect(screen.getByTestId('manage-workflows-tab').getAttribute('data-can-manage')).toBe(
+      'false'
+    );
   });
 
   it('keeps the network page on the current tab when relationship view rights are missing', () => {
@@ -169,10 +196,14 @@ describe('group relationship routes', () => {
     render(<GroupNetworkPage />);
 
     expect(screen.getByTestId('network-tabs').getAttribute('data-show-manage')).toBe('false');
+    expect(screen.getByTestId('network-tabs').getAttribute('data-show-manage-workflows')).toBe(
+      'false'
+    );
     expect(screen.getByTestId('network-tabs').getAttribute('data-active-tab')).toBe(
       'current-network'
     );
     expect(screen.queryByTestId('manage-network-tab')).toBeNull();
+    expect(screen.queryByTestId('manage-workflows-tab')).toBeNull();
   });
 
   it('hides the manage-network tab for non-members even when relationship view rights exist', () => {
@@ -189,10 +220,14 @@ describe('group relationship routes', () => {
     render(<GroupNetworkPage />);
 
     expect(screen.getByTestId('network-tabs').getAttribute('data-show-manage')).toBe('false');
+    expect(screen.getByTestId('network-tabs').getAttribute('data-show-manage-workflows')).toBe(
+      'false'
+    );
     expect(screen.getByTestId('network-tabs').getAttribute('data-active-tab')).toBe(
       'current-network'
     );
     expect(screen.queryByTestId('manage-network-tab')).toBeNull();
+    expect(screen.queryByTestId('manage-workflows-tab')).toBeNull();
   });
 
   it('blocks the direct relationships route when relationship view rights are missing', () => {

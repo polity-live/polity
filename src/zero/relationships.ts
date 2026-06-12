@@ -86,6 +86,7 @@ import {
   subscriber,
   groupWorkflow,
   groupWorkflowStep,
+  groupWorkflowApproval,
 } from './network/table';
 // Todos
 import { todo, todoAssignment } from './todos/table';
@@ -427,6 +428,31 @@ export const groupRelationships = relationships(group, ({ one, many }) => ({
   blogs: many({ sourceField: ['id'], destSchema: blog, destField: ['group_id'] }),
   statements: many({ sourceField: ['id'], destSchema: statement, destField: ['group_id'] }),
   subscribers: many({ sourceField: ['id'], destSchema: subscriber, destField: ['group_id'] }),
+  owned_workflows: many({
+    sourceField: ['id'],
+    destSchema: groupWorkflow,
+    destField: ['group_id'],
+  }),
+  workflow_starts: many({
+    sourceField: ['id'],
+    destSchema: groupWorkflow,
+    destField: ['start_group_id'],
+  }),
+  workflow_steps: many({
+    sourceField: ['id'],
+    destSchema: groupWorkflowStep,
+    destField: ['group_id'],
+  }),
+  workflow_approvals: many({
+    sourceField: ['id'],
+    destSchema: groupWorkflowApproval,
+    destField: ['group_id'],
+  }),
+  requested_workflow_approvals: many({
+    sourceField: ['id'],
+    destSchema: groupWorkflowApproval,
+    destField: ['requested_by_group_id'],
+  }),
   group_hashtags: many({ sourceField: ['id'], destSchema: groupHashtag, destField: ['group_id'] }),
   links: many({ sourceField: ['id'], destSchema: link, destField: ['group_id'] }),
   timeline_events: many({
@@ -1671,8 +1697,14 @@ export const subscriberRelationships = relationships(subscriber, ({ one }) => ({
 
 export const groupWorkflowRelationships = relationships(groupWorkflow, ({ one, many }) => ({
   group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
+  start_group: one({ sourceField: ['start_group_id'], destSchema: group, destField: ['id'] }),
   created_by: one({ sourceField: ['created_by_id'], destSchema: user, destField: ['id'] }),
   steps: many({ sourceField: ['id'], destSchema: groupWorkflowStep, destField: ['workflow_id'] }),
+  approvals: many({
+    sourceField: ['id'],
+    destSchema: groupWorkflowApproval,
+    destField: ['workflow_id'],
+  }),
   default_entry_from_steps: many({
     sourceField: ['id'],
     destSchema: groupWorkflowStep,
@@ -1699,6 +1731,19 @@ export const groupWorkflowStepRelationships = relationships(groupWorkflowStep, (
     destField: ['id'],
   }),
 }));
+
+export const groupWorkflowApprovalRelationships = relationships(
+  groupWorkflowApproval,
+  ({ one }) => ({
+    workflow: one({ sourceField: ['workflow_id'], destSchema: groupWorkflow, destField: ['id'] }),
+    group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
+    requested_by_group: one({
+      sourceField: ['requested_by_group_id'],
+      destSchema: group,
+      destField: ['id'],
+    }),
+  })
+);
 
 export const hashtagRelationships = relationships(hashtag, ({ many }) => ({
   user_hashtags: many({ sourceField: ['id'], destSchema: userHashtag, destField: ['hashtag_id'] }),
@@ -2040,4 +2085,5 @@ export const allRelationships = [
   // Workflows
   groupWorkflowRelationships,
   groupWorkflowStepRelationships,
+  groupWorkflowApprovalRelationships,
 ];

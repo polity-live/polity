@@ -50,6 +50,8 @@ export const networkLinkMembershipDirectionSchema = z.enum(['forward', 'backward
 export const networkLinkStatusSchema = z.enum(['active', 'requested', 'pending', 'rejected']);
 export const networkLinkMembershipRuleSnapshotSchema =
   networkLinkMembershipRuleDirectionConfigSchema;
+export const workflowStatusSchema = z.enum(['pending_approval', 'active', 'rejected', 'archived']);
+export const workflowApprovalStatusSchema = z.enum(['pending', 'accepted', 'rejected']);
 
 const networkLinkBaseSchema = z.object({
   id: z.string(),
@@ -200,10 +202,11 @@ export const deleteSubscriberSchema = z.object({ id: z.string() });
 const groupWorkflowBaseSchema = z.object({
   id: z.string(),
   group_id: z.string(),
+  start_group_id: z.string().nullable(),
   name: z.string().nullable(),
   description: z.string().nullable(),
   is_default_entry: z.boolean(),
-  status: z.string().nullable(),
+  status: workflowStatusSchema.nullable(),
   created_by_id: z.string(),
   created_at: timestampSchema,
   updated_at: timestampSchema,
@@ -212,18 +215,46 @@ const groupWorkflowBaseSchema = z.object({
 export const groupWorkflowSelectSchema = groupWorkflowBaseSchema;
 
 export const createGroupWorkflowSchema = groupWorkflowBaseSchema
-  .omit({ id: true, created_at: true, updated_at: true, is_default_entry: true })
+  .omit({
+    id: true,
+    created_at: true,
+    updated_at: true,
+    is_default_entry: true,
+    start_group_id: true,
+    status: true,
+  })
   .extend({
     id: z.string(),
+    start_group_id: z.string(),
     is_default_entry: z.boolean().optional(),
+    status: workflowStatusSchema.optional(),
   });
 
 export const updateGroupWorkflowSchema = groupWorkflowBaseSchema
-  .pick({ name: true, description: true, is_default_entry: true, status: true })
+  .pick({
+    start_group_id: true,
+    name: true,
+    description: true,
+    is_default_entry: true,
+    status: true,
+  })
   .partial()
   .extend({ id: z.string() });
 
 export const deleteGroupWorkflowSchema = z.object({ id: z.string() });
+
+const groupWorkflowApprovalBaseSchema = z.object({
+  id: z.string(),
+  workflow_id: z.string(),
+  group_id: z.string(),
+  requested_by_group_id: z.string(),
+  status: workflowApprovalStatusSchema,
+  responded_at: timestampSchema.nullable(),
+  created_at: timestampSchema,
+  updated_at: timestampSchema,
+});
+
+export const groupWorkflowApprovalSelectSchema = groupWorkflowApprovalBaseSchema;
 
 // ============================================
 // Group Workflow Step Schemas
@@ -284,6 +315,38 @@ export const updateGroupWorkflowStepSchema = groupWorkflowStepBaseSchema
 
 export const deleteGroupWorkflowStepSchema = z.object({ id: z.string() });
 
+const workflowDraftStepInputSchema = z.object({
+  id: z.string().optional(),
+  group_id: z.string(),
+  order_index: z.number().int().nonnegative(),
+  label: z.string().nullable(),
+  step_kind: z.enum(['group_vote', 'merge_vote', 'workflow_handoff']),
+  selection_mode: z.enum(['default_target_workflow', 'explicit_workflow']),
+  merge_strategy: z.enum(['winner_continues']).nullable(),
+  event_rule: z.string().nullable(),
+  auto_task_on_missing_event: z.boolean(),
+  target_workflow_id: z.string().nullable(),
+});
+
+export const saveWorkflowDefinitionSchema = z.object({
+  id: z.string(),
+  editing_group_id: z.string(),
+  start_group_id: z.string(),
+  name: z.string().trim().min(1),
+  description: z.string().trim(),
+  is_default_entry: z.boolean(),
+  created_by_id: z.string(),
+  steps: z.array(workflowDraftStepInputSchema).min(1),
+});
+
+export const approveWorkflowApprovalSchema = z.object({
+  approval_id: z.string(),
+});
+
+export const rejectWorkflowApprovalSchema = z.object({
+  approval_id: z.string(),
+});
+
 // ============================================
 // Inferred Types
 // ============================================
@@ -300,3 +363,4 @@ export type NetworkLinkChangeRequest = z.infer<typeof networkLinkChangeRequestSe
 export type Subscriber = z.infer<typeof selectSubscriberSchema>;
 export type GroupWorkflow = z.infer<typeof groupWorkflowSelectSchema>;
 export type GroupWorkflowStep = z.infer<typeof groupWorkflowStepSelectSchema>;
+export type GroupWorkflowApproval = z.infer<typeof groupWorkflowApprovalSelectSchema>;
