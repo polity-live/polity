@@ -58,7 +58,7 @@ describe('networkFilterHelpers', () => {
     ]);
     expect(edge?.style?.stroke).toBe('#2563eb');
     expect(edge?.animated).toBe(true);
-    expect(edge?.style?.animationDirection).toBeUndefined();
+    expect(edge?.style?.animationDirection).toBe('reverse');
   });
 
   it('keeps only outgoing rights and recolors the edge orange', () => {
@@ -72,7 +72,7 @@ describe('networkFilterHelpers', () => {
     ]);
     expect(edge?.style?.stroke).toBe('#d97706');
     expect(edge?.animated).toBe(true);
-    expect(edge?.style?.animationDirection).toBe('reverse');
+    expect(edge?.style?.animationDirection).toBeUndefined();
   });
 
   it('does not fall back to the edge-level direction when per-right directions exist', () => {

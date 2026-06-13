@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildHierarchyRightEdgeDirections,
+  buildRelationshipEdgeMarkers,
   buildCurrentPerspectiveRightDisplayDirections,
   buildNetworkRelationshipEdge,
   buildNetworkRelationshipDialogData,
@@ -139,8 +140,8 @@ describe('networkEdgeHelpers', () => {
         },
       })
     ).toEqual({
-      informationRight: 'outgoing',
-      amendmentRight: 'incoming',
+      informationRight: 'incoming',
+      amendmentRight: 'outgoing',
     });
   });
 
@@ -161,7 +162,7 @@ describe('networkEdgeHelpers', () => {
         informationRight: 'forward',
       },
       rightDisplayDirections: {
-        informationRight: 'outgoing',
+        informationRight: 'incoming',
       },
     });
   });
@@ -183,7 +184,7 @@ describe('networkEdgeHelpers', () => {
         informationRight: 'backward',
       },
       rightDisplayDirections: {
-        informationRight: 'incoming',
+        informationRight: 'outgoing',
       },
     });
   });
@@ -207,8 +208,8 @@ describe('networkEdgeHelpers', () => {
         amendmentRight: 'backward',
       },
       rightDisplayDirections: {
-        informationRight: 'incoming',
-        amendmentRight: 'outgoing',
+        informationRight: 'outgoing',
+        amendmentRight: 'incoming',
       },
     });
   });
@@ -296,6 +297,26 @@ describe('networkEdgeHelpers', () => {
     });
   });
 
+  it('places forward markers at the edge start and backward markers at the edge end', () => {
+    expect(
+      buildRelationshipEdgeMarkers('#66bb6a', {
+        amendmentRight: 'forward',
+      })
+    ).toMatchObject({
+      markerStart: { color: '#66bb6a' },
+      markerEnd: undefined,
+    });
+
+    expect(
+      buildRelationshipEdgeMarkers('#66bb6a', {
+        amendmentRight: 'backward',
+      })
+    ).toMatchObject({
+      markerStart: undefined,
+      markerEnd: { color: '#66bb6a' },
+    });
+  });
+
   it('preserves the membership metadata when building relationship dialog data', () => {
     const dialogData = buildNetworkRelationshipDialogData(
       {
@@ -346,6 +367,41 @@ describe('networkEdgeHelpers', () => {
     expect(dialogData.selectedGroupName).toBe('H1');
     expect(dialogData.membershipMode).toBe('all_members');
     expect(dialogData.membershipDirection).toBe('incoming');
+    expect(dialogData.rightDisplayDirections).toEqual({
+      amendmentRight: 'outgoing',
+    });
+  });
+
+  it('keeps the graph root as the current group for sibling preview metadata', () => {
+    const edge = buildNetworkRelationshipEdge({
+      edgeId: 'edge-h1-to-f1',
+      sourceId: 'group-h1',
+      targetId: 'group-f1',
+      sourceGroupId: 'group-h1',
+      targetGroupId: 'group-f1',
+      structuralType: 'sibling',
+      rights: ['amendmentRight'],
+      relationshipKinds: ['active'],
+      rightRelationshipKinds: { amendmentRight: 'active' },
+      membershipMode: 'role_members',
+      membershipCanonicalDirection: 'backward',
+      rightEdgeDirections: { amendmentRight: 'backward' },
+      fallbackStrokeColor: '#66bb6a',
+      sourceName: 'H1',
+      targetName: 'Fraktion H1',
+      graphRootGroupId: 'group-h1',
+    });
+
+    const dialogData = buildNetworkRelationshipDialogData(edge, key => key);
+
+    expect(dialogData.currentGroupId).toBe('group-h1');
+    expect(dialogData.currentGroupName).toBe('H1');
+    expect(dialogData.selectedGroupId).toBe('group-f1');
+    expect(dialogData.selectedGroupName).toBe('Fraktion H1');
+    expect(dialogData.membershipDirection).toBe('incoming');
+    expect(dialogData.rightConnectionDirections).toEqual({
+      amendmentRight: 'incoming',
+    });
     expect(dialogData.rightDisplayDirections).toEqual({
       amendmentRight: 'incoming',
     });

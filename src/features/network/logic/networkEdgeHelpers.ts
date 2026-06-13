@@ -391,10 +391,10 @@ export function buildCurrentPerspectiveRightDisplayDirections({
       }
 
       if (currentIsSource) {
-        return [right, direction === 'forward' ? 'incoming' : 'outgoing'];
+        return [right, direction === 'forward' ? 'outgoing' : 'incoming'];
       }
 
-      return [right, direction === 'forward' ? 'outgoing' : 'incoming'];
+      return [right, direction === 'forward' ? 'incoming' : 'outgoing'];
     })
   ) as Record<string, NetworkConnectionDirection>;
 }
@@ -432,15 +432,15 @@ export function resolveNetworkRelationshipPreviewContext(
   args: ResolveNetworkRelationshipPreviewContextArgs
 ) {
   const visibleFlowDirection = getVisibleFlowDirection(args.rightEdgeDirections);
-
-  let resolvedCurrentGroupId =
+  const explicitCurrentGroupId =
     args.currentGroupId ??
     (args.graphRootGroupId === args.sourceGroupId || args.graphRootGroupId === args.targetGroupId
       ? args.graphRootGroupId
-      : undefined) ??
-    args.sourceGroupId;
+      : undefined);
 
-  if (!args.currentGroupId) {
+  let resolvedCurrentGroupId = explicitCurrentGroupId ?? args.sourceGroupId;
+
+  if (!explicitCurrentGroupId) {
     if (visibleFlowDirection === 'forward') {
       resolvedCurrentGroupId = args.sourceGroupId;
     } else if (visibleFlowDirection === 'backward') {
@@ -588,13 +588,13 @@ export function buildRelationshipEdgeMarkers(
   const hasForwardDirection = directionValues.some(isForwardDirection);
 
   return {
-    markerStart: hasBackwardDirection
+    markerStart: hasForwardDirection
       ? {
           type: MarkerType.ArrowClosed,
           color: strokeColor,
         }
       : undefined,
-    markerEnd: hasForwardDirection
+    markerEnd: hasBackwardDirection
       ? {
           type: MarkerType.ArrowClosed,
           color: strokeColor,
@@ -669,7 +669,7 @@ export function buildNetworkRelationshipEdge({
       stroke: resolvedStrokeColor,
       strokeWidth: 2,
       strokeDasharray,
-      animationDirection: animatedFlowDirection === 'backward' ? 'reverse' : undefined,
+      animationDirection: animatedFlowDirection === 'forward' ? 'reverse' : undefined,
     },
     ...edgeMarkers,
     data: createNetworkRelationshipEdgeData({

@@ -174,12 +174,34 @@ function getMembershipGateGroupId(relationship: NetworkGroupRelationshipRow) {
     : relationship.related_group_id;
 }
 
+function getAmendmentTraversalEndpoints(relationship: NetworkGroupRelationshipRow) {
+  if (relationship.relationship_direction === 'forward') {
+    return {
+      sourceGroupId: relationship.related_group_id,
+      targetGroupId: relationship.group_id,
+      sourceGroup: relationship.related_group ?? null,
+      targetGroup: relationship.group ?? null,
+    };
+  }
+
+  if (relationship.relationship_direction === 'backward') {
+    return {
+      sourceGroupId: relationship.group_id,
+      targetGroupId: relationship.related_group_id,
+      sourceGroup: relationship.group ?? null,
+      targetGroup: relationship.related_group ?? null,
+    };
+  }
+
+  return null;
+}
+
 function canTraverseRelationship(args: {
   relationship: NetworkGroupRelationshipRow;
-  sourceGroupId: string;
+  pathGroupIds: readonly string[];
   membershipContext: UserMembershipTraversalContext;
 }) {
-  const { relationship, sourceGroupId, membershipContext } = args;
+  const { relationship, pathGroupIds, membershipContext } = args;
 
   if (
     relationship.with_right !== AMENDMENT_RIGHT ||
@@ -190,66 +212,78 @@ function canTraverseRelationship(args: {
 
   const gateGroupId = getMembershipGateGroupId(relationship);
 
+  if (relationship.membership_mode === 'selected_source_groups') {
+    return (
+      !relationship.membership_source_group_ids?.length ||
+      pathGroupIds.some(groupId => relationship.membership_source_group_ids?.includes(groupId))
+    );
+  }
+
   if (!membershipContext.hasUserContext) {
     return true;
   }
 
-  switch (relationship.membership_mode) {
-    case 'role_members':
-      return relationship.membership_role_id
-        ? (membershipContext.roleIdsByGroupId
-            .get(gateGroupId)
-            ?.has(relationship.membership_role_id) ?? false)
-        : false;
-    case 'selected_source_groups':
-      return (
-        !relationship.membership_source_group_ids?.length ||
-        relationship.membership_source_group_ids.includes(sourceGroupId)
-      );
-    case 'all_members':
-      return true;
-    case 'none':
-    default:
-      return true;
+  if (relationship.membership_mode === 'role_members') {
+    return relationship.membership_role_id
+      ? (membershipContext.roleIdsByGroupId
+          .get(gateGroupId)
+          ?.has(relationship.membership_role_id) ?? false)
+      : false;
   }
+
+  return true;
 }
 
-function buildTraversalAdjacency(args: {
+function getTraversableRelationshipsForPath(args: {
   relationships: NetworkGroupRelationshipRow[];
-  sourceGroupId: string;
+  currentPathGroupIds: readonly string[];
   membershipContext: UserMembershipTraversalContext;
 }) {
-  const adjacency = new Map<string, NetworkGroupRelationshipRow[]>();
+  const currentGroupId = args.currentPathGroupIds[args.currentPathGroupIds.length - 1];
 
-  for (const relationship of args.relationships) {
-    if (
-      !canTraverseRelationship({
-        relationship,
-        sourceGroupId: args.sourceGroupId,
-        membershipContext: args.membershipContext,
-      })
-    ) {
-      continue;
-    }
-
-    const traversableRelationships = adjacency.get(relationship.group_id) ?? [];
-    traversableRelationships.push(relationship);
-    adjacency.set(relationship.group_id, traversableRelationships);
+  if (!currentGroupId) {
+    return [];
   }
 
-  return adjacency;
+  return args.relationships
+    .flatMap(relationship => {
+      if (
+        !canTraverseRelationship({
+          relationship,
+          pathGroupIds: args.currentPathGroupIds,
+          membershipContext: args.membershipContext,
+        })
+      ) {
+        return [];
+      }
+
+      const endpoints = getAmendmentTraversalEndpoints(relationship);
+      if (!endpoints || endpoints.sourceGroupId !== currentGroupId) {
+        return [];
+      }
+
+      return [
+        {
+          ...relationship,
+          group_id: endpoints.sourceGroupId,
+          related_group_id: endpoints.targetGroupId,
+          group: endpoints.sourceGroup,
+          related_group: endpoints.targetGroup,
+        },
+      ];
+    })
+    .sort((left, right) => {
+      const leftName = left.related_group?.name ?? left.related_group_id;
+      const rightName = right.related_group?.name ?? right.related_group_id;
+      return leftName.localeCompare(rightName);
+    });
 }
 
 function findShortestProcessPath(args: BuildPathInput) {
   const { sourceGroupId, targetGroupId, relationships, memberships = [], userId } = args;
   const membershipContext = buildUserMembershipTraversalContext(memberships, userId);
-  const adjacency = buildTraversalAdjacency({
-    relationships,
-    sourceGroupId,
-    membershipContext,
-  });
   const queue: string[][] = [[sourceGroupId]];
-  const visited = new Set<string>([sourceGroupId]);
+  const visitedPathKeys = new Set<string>([buildProcessPathOptionId([sourceGroupId])]);
 
   while (queue.length > 0) {
     const currentPath = queue.shift();
@@ -262,16 +296,24 @@ function findShortestProcessPath(args: BuildPathInput) {
       return currentPath;
     }
 
-    const nextRelationships = adjacency.get(currentGroupId) ?? [];
-
-    for (const relationship of nextRelationships) {
+    for (const relationship of getTraversableRelationshipsForPath({
+      relationships,
+      currentPathGroupIds: currentPath,
+      membershipContext,
+    })) {
       const nextGroupId = relationship.related_group_id;
-      if (visited.has(nextGroupId)) {
+      if (currentPath.includes(nextGroupId)) {
         continue;
       }
 
-      visited.add(nextGroupId);
-      queue.push([...currentPath, nextGroupId]);
+      const nextPath = [...currentPath, nextGroupId];
+      const nextPathKey = buildProcessPathOptionId(nextPath);
+      if (visitedPathKeys.has(nextPathKey)) {
+        continue;
+      }
+
+      visitedPathKeys.add(nextPathKey);
+      queue.push(nextPath);
     }
   }
 
@@ -279,13 +321,14 @@ function findShortestProcessPath(args: BuildPathInput) {
 }
 
 function getSortedTraversalTargets(
-  adjacency: Map<string, NetworkGroupRelationshipRow[]>,
-  groupId: string
+  relationships: NetworkGroupRelationshipRow[],
+  currentPathGroupIds: readonly string[],
+  membershipContext: UserMembershipTraversalContext
 ) {
-  return [...(adjacency.get(groupId) ?? [])].sort((left, right) => {
-    const leftName = left.related_group?.name ?? left.related_group_id;
-    const rightName = right.related_group?.name ?? right.related_group_id;
-    return leftName.localeCompare(rightName);
+  return getTraversableRelationshipsForPath({
+    relationships,
+    currentPathGroupIds,
+    membershipContext,
   });
 }
 
@@ -307,11 +350,6 @@ export function getProcessPathGroupOptions(args: {
     args.memberships ?? [],
     args.userId
   );
-  const adjacency = buildTraversalAdjacency({
-    relationships: args.relationships,
-    sourceGroupId: args.sourceGroupId,
-    membershipContext,
-  });
   const maxPaths = args.maxPaths ?? 8;
   const maxExtraSteps = args.maxExtraSteps ?? 3;
   const maxDepth = Math.max(args.groups.length + 1, 6);
@@ -345,7 +383,11 @@ export function getProcessPathGroupOptions(args: {
       continue;
     }
 
-    for (const relationship of getSortedTraversalTargets(adjacency, currentGroupId)) {
+    for (const relationship of getSortedTraversalTargets(
+      args.relationships,
+      currentPath,
+      membershipContext
+    )) {
       const nextGroupId = relationship.related_group_id;
       if (currentPath.includes(nextGroupId)) {
         continue;
@@ -378,27 +420,46 @@ function collectReachableGroupIds(args: {
     args.memberships ?? [],
     args.userId
   );
-  const adjacency = buildTraversalAdjacency({
-    relationships: args.relationships,
-    sourceGroupId: args.sourceGroupId,
-    membershipContext,
-  });
   const visited = new Set<string>([args.sourceGroupId]);
-  const queue = [args.sourceGroupId];
+  const queue: string[][] = [[args.sourceGroupId]];
+  const queuedPathKeys = new Set<string>([buildProcessPathOptionId([args.sourceGroupId])]);
 
   while (queue.length > 0) {
-    const currentGroupId = queue.shift();
-    if (!currentGroupId) {
+    const currentPath = queue.shift();
+    if (!currentPath) {
       continue;
     }
 
-    for (const relationship of adjacency.get(currentGroupId) ?? []) {
+    for (const relationship of getTraversableRelationshipsForPath({
+      relationships: args.relationships,
+      currentPathGroupIds: currentPath,
+      membershipContext,
+    })) {
       if (visited.has(relationship.related_group_id)) {
+        if (!currentPath.includes(relationship.related_group_id)) {
+          const nextPath = [...currentPath, relationship.related_group_id];
+          const nextPathKey = buildProcessPathOptionId(nextPath);
+          if (!queuedPathKeys.has(nextPathKey)) {
+            queuedPathKeys.add(nextPathKey);
+            queue.push(nextPath);
+          }
+        }
+        continue;
+      }
+
+      if (currentPath.includes(relationship.related_group_id)) {
         continue;
       }
 
       visited.add(relationship.related_group_id);
-      queue.push(relationship.related_group_id);
+      const nextPath = [...currentPath, relationship.related_group_id];
+      const nextPathKey = buildProcessPathOptionId(nextPath);
+      if (queuedPathKeys.has(nextPathKey)) {
+        continue;
+      }
+
+      queuedPathKeys.add(nextPathKey);
+      queue.push(nextPath);
     }
   }
 
@@ -733,13 +794,12 @@ export function getDirectReachableTargetGroupsFromSource(args: {
     args.memberships ?? [],
     args.userId
   );
-  const adjacency = buildTraversalAdjacency({
-    relationships: args.relationships,
-    sourceGroupId: args.sourceGroupId,
-    membershipContext,
-  });
   const directGroupIds = new Set(
-    (adjacency.get(args.sourceGroupId) ?? []).map(relationship => relationship.related_group_id)
+    getTraversableRelationshipsForPath({
+      relationships: args.relationships,
+      currentPathGroupIds: [args.sourceGroupId],
+      membershipContext,
+    }).map(relationship => relationship.related_group_id)
   );
 
   if (args.includeSourceGroup) {

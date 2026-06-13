@@ -53,13 +53,18 @@ function createRelationship(
   } as AmendmentNetworkRelationship;
 }
 
-function createMembership(groupId: string): AmendmentNetworkMembership {
+function createMembership(
+  groupId: string,
+  roleIds: readonly string[] = []
+): AmendmentNetworkMembership {
   return {
     id: `membership:${groupId}`,
     status: 'active',
     user: { id: 'user-1' },
     group: { id: groupId },
-    membership_roles: [],
+    membership_roles: roleIds.map(roleId => ({
+      role: { id: roleId },
+    })),
   } as unknown as AmendmentNetworkMembership;
 }
 
@@ -131,7 +136,7 @@ function createWorkflow(overrides: Record<string, unknown> = {}) {
 }
 
 describe('amendmentPathHelpers', () => {
-  it('includes only the groups that are reachable in the amendment-right direction', () => {
+  it('includes only the groups where the current source group can exercise amendment rights', () => {
     const groups = [createGroup('group-parent', 'Parent'), createGroup('group-child', 'Child')];
     const relationships = [
       createRelationship('parent-child', 'group-parent', 'group-child', 'child', {
@@ -155,8 +160,8 @@ describe('amendmentPathHelpers', () => {
       userId: 'user-1',
     });
 
-    expect(reachableFromChild.map(group => group.id)).toEqual([]);
-    expect(reachableFromParent.map(group => group.id)).toEqual(['group-child']);
+    expect(reachableFromChild.map(group => group.id)).toEqual(['group-parent']);
+    expect(reachableFromParent.map(group => group.id)).toEqual([]);
   });
 
   it('can still include the source group explicitly when a caller opts in', () => {
@@ -181,9 +186,8 @@ describe('amendmentPathHelpers', () => {
       createGroup('group-b3', 'B3'),
     ];
     const relationships = [
-      createRelationship('b1-b2', 'group-b1', 'group-b2', 'child'),
-      createRelationship('b2-b1', 'group-b2', 'group-b1', 'child'),
-      createRelationship('b2-b3', 'group-b2', 'group-b3', 'child'),
+      createRelationship('b1-b2', 'group-b1', 'group-b2', 'parent'),
+      createRelationship('b2-b3', 'group-b2', 'group-b3', 'parent'),
     ];
 
     expect(
@@ -204,12 +208,12 @@ describe('amendmentPathHelpers', () => {
         memberships: [createMembership('group-b2')],
         userId: 'user-1',
       }).map(group => group.id)
-    ).toEqual(expect.arrayContaining(['group-b1', 'group-b3']));
+    ).toEqual(['group-b3']);
   });
 
   it('uses the previous event end time as the lower bound for the next path step', () => {
     const groups = [createGroup('group-a', 'A'), createGroup('group-b', 'B')];
-    const relationships = [createRelationship('a-b', 'group-a', 'group-b', 'child')];
+    const relationships = [createRelationship('a-b', 'group-a', 'group-b', 'parent')];
     const events = [
       createEvent('event-a', 'group-a', now + 1_000, now + 5_000),
       createEvent('event-b-too-early', 'group-b', now + 3_000, now + 4_000),
@@ -237,24 +241,24 @@ describe('amendmentPathHelpers', () => {
 
     expect(
       calculateProcessPathWithClosestEvents({
-        sourceGroupId: 'group-a',
-        targetGroupId: 'group-b',
-        groups,
-        relationships,
-        events: [],
-        memberships: [createMembership('group-a')],
-        userId: 'user-1',
-      })
-    ).not.toBeNull();
-
-    expect(
-      calculateProcessPathWithClosestEvents({
         sourceGroupId: 'group-b',
         targetGroupId: 'group-a',
         groups,
         relationships,
         events: [],
         memberships: [createMembership('group-b')],
+        userId: 'user-1',
+      })
+    ).not.toBeNull();
+
+    expect(
+      calculateProcessPathWithClosestEvents({
+        sourceGroupId: 'group-a',
+        targetGroupId: 'group-b',
+        groups,
+        relationships,
+        events: [],
+        memberships: [createMembership('group-a')],
         userId: 'user-1',
       })
     ).toBeNull();
@@ -268,10 +272,10 @@ describe('amendmentPathHelpers', () => {
       createGroup('group-board', 'Vorstand H1'),
     ];
     const relationships = [
-      createRelationship('b1-h1', 'group-b1', 'group-h1', 'child'),
-      createRelationship('h1-board', 'group-h1', 'group-board', 'child'),
-      createRelationship('h1-faction', 'group-h1', 'group-faction', 'sibling'),
-      createRelationship('faction-board', 'group-faction', 'group-board', 'child'),
+      createRelationship('b1-h1', 'group-b1', 'group-h1', 'parent'),
+      createRelationship('h1-board', 'group-h1', 'group-board', 'parent'),
+      createRelationship('h1-faction', 'group-faction', 'group-h1', 'sibling'),
+      createRelationship('faction-board', 'group-board', 'group-faction', 'child'),
     ];
 
     const options = getProcessPathGroupOptions({
@@ -291,6 +295,133 @@ describe('amendmentPathHelpers', () => {
     );
   });
 
+  it('keeps sibling and parliament source-group chains reachable in the amendment flow', () => {
+    const roleAdminH1 = 'role-admin-h1';
+    const roleAdminParliament = 'role-admin-parliament';
+    const groups = [
+      createGroup('group-b1', 'B1'),
+      createGroup('group-h1', 'H1'),
+      createGroup('group-faction', 'Fraktion H1'),
+      createGroup('group-parliament', 'Parlament Rosbach'),
+      createGroup('group-committee', 'Bauaussschuss'),
+    ];
+    const relationships = [
+      createRelationship('link-h1-b1-forward', 'group-h1', 'group-b1', 'child', {
+        relationship_direction: 'forward',
+        right_direction: 'bidirectional',
+        membership_mode: 'all_members',
+        membership_direction: 'backward',
+        group: createGroup('group-h1', 'H1'),
+        related_group: createGroup('group-b1', 'B1'),
+      }),
+      createRelationship('link-h1-b1-backward', 'group-b1', 'group-h1', 'parent', {
+        relationship_direction: 'backward',
+        right_direction: 'bidirectional',
+        membership_mode: 'all_members',
+        membership_direction: 'backward',
+        group: createGroup('group-b1', 'B1'),
+        related_group: createGroup('group-h1', 'H1'),
+      }),
+      createRelationship('link-faction-h1-forward', 'group-faction', 'group-h1', 'sibling', {
+        relationship_direction: 'forward',
+        right_direction: 'forward',
+        membership_mode: 'role_members',
+        membership_direction: 'backward',
+        membership_role_id: roleAdminH1,
+        group: createGroup('group-faction', 'Fraktion H1'),
+        related_group: createGroup('group-h1', 'H1'),
+      }),
+      createRelationship(
+        'link-parliament-faction-forward',
+        'group-parliament',
+        'group-faction',
+        'sibling',
+        {
+          relationship_direction: 'forward',
+          right_direction: 'bidirectional',
+          membership_mode: 'selected_source_groups',
+          membership_direction: 'backward',
+          membership_source_group_ids: ['group-h1'],
+          group: createGroup('group-parliament', 'Parlament Rosbach'),
+          related_group: createGroup('group-faction', 'Fraktion H1'),
+        }
+      ),
+      createRelationship(
+        'link-parliament-faction-backward',
+        'group-faction',
+        'group-parliament',
+        'sibling',
+        {
+          relationship_direction: 'backward',
+          right_direction: 'bidirectional',
+          membership_mode: 'selected_source_groups',
+          membership_direction: 'backward',
+          membership_source_group_ids: ['group-h1'],
+          group: createGroup('group-faction', 'Fraktion H1'),
+          related_group: createGroup('group-parliament', 'Parlament Rosbach'),
+        }
+      ),
+      createRelationship(
+        'link-committee-parliament-forward',
+        'group-committee',
+        'group-parliament',
+        'sibling',
+        {
+          relationship_direction: 'forward',
+          right_direction: 'bidirectional',
+          membership_mode: 'role_members',
+          membership_direction: 'backward',
+          membership_role_id: roleAdminParliament,
+          group: createGroup('group-committee', 'Bauaussschuss'),
+          related_group: createGroup('group-parliament', 'Parlament Rosbach'),
+        }
+      ),
+      createRelationship(
+        'link-committee-parliament-backward',
+        'group-parliament',
+        'group-committee',
+        'sibling',
+        {
+          relationship_direction: 'backward',
+          right_direction: 'bidirectional',
+          membership_mode: 'role_members',
+          membership_direction: 'backward',
+          membership_role_id: roleAdminParliament,
+          group: createGroup('group-parliament', 'Parlament Rosbach'),
+          related_group: createGroup('group-committee', 'Bauaussschuss'),
+        }
+      ),
+    ];
+    const memberships = [
+      createMembership('group-b1', ['role-admin-b1']),
+      createMembership('group-h1', [roleAdminH1]),
+      createMembership('group-parliament', [roleAdminParliament]),
+    ];
+
+    expect(
+      getReachableTargetGroupsFromSource({
+        sourceGroupId: 'group-b1',
+        groups,
+        relationships,
+        memberships,
+        userId: 'user-1',
+        includeSourceGroup: true,
+      }).map(group => group.id)
+    ).toEqual(['group-b1', 'group-h1', 'group-faction', 'group-parliament', 'group-committee']);
+
+    expect(
+      calculateProcessPathWithClosestEvents({
+        sourceGroupId: 'group-b1',
+        targetGroupId: 'group-committee',
+        groups,
+        relationships,
+        events: [],
+        memberships,
+        userId: 'user-1',
+      })?.map(segment => segment.groupId)
+    ).toEqual(['group-b1', 'group-h1', 'group-faction', 'group-parliament', 'group-committee']);
+  });
+
   it('builds workflow paths from the separate start group through the explicit workflow steps', () => {
     const groups = [
       createGroup('group-source', 'Source'),
@@ -300,10 +431,10 @@ describe('amendmentPathHelpers', () => {
       createGroup('group-owner', 'Owner'),
     ];
     const relationships = [
-      createRelationship('source-start', 'group-source', 'group-start', 'child'),
-      createRelationship('start-step-1', 'group-start', 'group-step-1', 'child'),
-      createRelationship('step-1-committee', 'group-step-1', 'group-committee', 'child'),
-      createRelationship('committee-owner', 'group-committee', 'group-owner', 'child'),
+      createRelationship('source-start', 'group-source', 'group-start', 'parent'),
+      createRelationship('start-step-1', 'group-start', 'group-step-1', 'parent'),
+      createRelationship('step-1-committee', 'group-step-1', 'group-committee', 'parent'),
+      createRelationship('committee-owner', 'group-committee', 'group-owner', 'parent'),
     ];
     const events = [
       createEvent('event-start', 'group-start', now + 1_000, now + 2_000),
@@ -340,8 +471,8 @@ describe('amendmentPathHelpers', () => {
       createGroup('group-owner', 'Owner'),
     ];
     const relationships = [
-      createRelationship('source-start', 'group-source', 'group-start', 'child'),
-      createRelationship('start-owner', 'group-start', 'group-owner', 'child'),
+      createRelationship('source-start', 'group-source', 'group-start', 'parent'),
+      createRelationship('start-owner', 'group-start', 'group-owner', 'parent'),
     ];
 
     const workflows = [
