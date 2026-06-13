@@ -162,6 +162,46 @@ beforeEach(() => {
 });
 
 describe('useNetworkPage request actions', () => {
+  it('includes the current page group in availableGroups when the global group list omits it', () => {
+    useGroupDataMock.mockReturnValue({
+      group: {
+        id: 'group-1',
+        name: 'Current Group',
+        description: 'Current group description',
+        group_type: 'policy',
+        member_count: 4,
+        event_count: 2,
+        amendment_count: 1,
+      },
+    });
+    useAllGroupsMock.mockReturnValue({
+      groups: [
+        {
+          id: 'group-2',
+          name: 'Another Group',
+          description: 'Another group description',
+          group_type: 'policy',
+          member_count: 8,
+          event_count: 5,
+          amendment_count: 3,
+        },
+      ],
+    });
+
+    const { result } = renderHook(() => useNetworkPage('group-1'));
+
+    expect(result.current.availableGroups).toEqual([
+      expect.objectContaining({
+        id: 'group-2',
+        name: 'Another Group',
+      }),
+      expect.objectContaining({
+        id: 'group-1',
+        name: 'Current Group',
+      }),
+    ]);
+  });
+
   it('approves only the selected right ids for each request', async () => {
     const approveNetworkLinkChangeRequest = vi.fn(() => 'approve-result');
     useNetworkLinkActionsMock.mockReturnValue({

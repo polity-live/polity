@@ -130,6 +130,7 @@ function TypeaheadSearchBase(props: TypeaheadSearchBaseComponentProps) {
   const inputWrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownPortalRef = useRef<HTMLDivElement>(null);
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
   const [dropdownStyle, setDropdownStyle] = useState<{ top: number; left: number; width: number }>({
     top: 0,
     left: 0,
@@ -215,6 +216,22 @@ function TypeaheadSearchBase(props: TypeaheadSearchBaseComponentProps) {
     }
   }, [isOpen]);
 
+  useLayoutEffect(() => {
+    if (disablePortal) {
+      setPortalTarget(null);
+      return;
+    }
+
+    const container = containerRef.current;
+    if (!container) {
+      setPortalTarget(document.body);
+      return;
+    }
+
+    const dialogContent = container.closest('[data-slot="dialog-content"]');
+    setPortalTarget(dialogContent instanceof HTMLElement ? dialogContent : document.body);
+  }, [disablePortal]);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
@@ -237,9 +254,21 @@ function TypeaheadSearchBase(props: TypeaheadSearchBaseComponentProps) {
       const element = inputWrapperRef.current ?? containerRef.current;
       if (!element) return;
       const rect = element.getBoundingClientRect();
+      const target = portalTarget ?? document.body;
+
+      if (target === document.body) {
+        setDropdownStyle({
+          top: rect.bottom + window.scrollY + 4,
+          left: rect.left + window.scrollX,
+          width: rect.width,
+        });
+        return;
+      }
+
+      const targetRect = target.getBoundingClientRect();
       setDropdownStyle({
-        top: rect.bottom + window.scrollY + 4,
-        left: rect.left + window.scrollX,
+        top: rect.bottom - targetRect.top + 4,
+        left: rect.left - targetRect.left,
         width: rect.width,
       });
     };
@@ -251,7 +280,7 @@ function TypeaheadSearchBase(props: TypeaheadSearchBaseComponentProps) {
       window.removeEventListener('scroll', update, true);
       window.removeEventListener('resize', update);
     };
-  }, [disablePortal, isOpen]);
+  }, [disablePortal, isOpen, portalTarget]);
 
   const handleSelect = useCallback(
     (item: TypeaheadItem) => {
@@ -390,7 +419,7 @@ function TypeaheadSearchBase(props: TypeaheadSearchBaseComponentProps) {
           <div ref={dropdownPortalRef} className="absolute top-full right-0 left-0 z-[9999] mt-1">
             {dropdownContent}
           </div>
-        ) : (
+        ) : portalTarget ? (
           createPortal(
             <div
               ref={dropdownPortalRef}
@@ -407,9 +436,9 @@ function TypeaheadSearchBase(props: TypeaheadSearchBaseComponentProps) {
             >
               {dropdownContent}
             </div>,
-            document.body
+            portalTarget
           )
-        ))}
+        ) : null)}
     </div>
   );
 }

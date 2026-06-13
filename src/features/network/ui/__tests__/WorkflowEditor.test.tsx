@@ -20,10 +20,15 @@ vi.mock('../WorkflowFlowVisualization', () => ({
   WorkflowFlowVisualization: ({
     workflow,
   }: {
-    workflow: { name: string | null; steps: unknown[] };
+    workflow: {
+      name: string | null;
+      startGroup?: { id: string; name: string | null } | null;
+      steps: unknown[];
+    };
   }) => (
     <div data-testid="workflow-flow-visualization">
-      {workflow.name ?? 'Untitled'}:{workflow.steps.length}
+      {workflow.name ?? 'Untitled'}:{workflow.startGroup?.name ?? 'No Start'}:
+      {workflow.steps.length}
     </div>
   ),
 }));
@@ -77,6 +82,8 @@ describe('WorkflowEditor', () => {
       />
     );
 
-    expect(screen.getByTestId('workflow-flow-visualization').textContent).toBe('Draft process:1');
+    expect(screen.getByTestId('workflow-flow-visualization').textContent).toBe(
+      'Draft process:Start Group:1'
+    );
   });
 });

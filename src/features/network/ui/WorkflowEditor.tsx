@@ -366,6 +366,13 @@ export function WorkflowEditor({
         editingWorkflow?.name ||
         t('features.network.workflows.previewTitle', 'Draft workflow'),
       description: draftDescription.trim() || null,
+      startGroup: draftStartGroupId
+        ? {
+            id: draftStartGroupId,
+            name: getGroupName(draftStartGroupId, availableGroups),
+          }
+        : null,
+      approvalState: editingWorkflow?.status === 'active' ? 'accepted' : 'pending',
       steps: draftSteps.map((step, index) => ({
         id: step.id ?? `draft-step-${index}`,
         group_id: step.group_id,
@@ -378,7 +385,15 @@ export function WorkflowEditor({
           : null,
       })),
     };
-  }, [availableGroups, draftDescription, draftName, draftSteps, editingWorkflow?.name, t]);
+  }, [
+    availableGroups,
+    draftDescription,
+    draftName,
+    draftStartGroupId,
+    draftSteps,
+    editingWorkflow?.name,
+    t,
+  ]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -531,7 +546,6 @@ export function WorkflowEditor({
                               'features.network.workflows.selectStartGroup',
                               'Select the first start group...'
                             )}
-                            disablePortal
                             showAllOnFocus
                           />
                         </div>
@@ -569,7 +583,6 @@ export function WorkflowEditor({
                             'features.network.workflows.searchConnectedGroup',
                             'Search connected group...'
                           )}
-                          disablePortal
                           showAllOnFocus
                         />
                       </div>
@@ -934,7 +947,6 @@ export function WorkflowEditor({
                                     'features.network.workflows.selectStartGroup',
                                     'Select the first start group...'
                                   )}
-                                  disablePortal
                                   showAllOnFocus
                                 />
                               ) : (

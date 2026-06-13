@@ -46,6 +46,11 @@ import {
   filterEdgesByRights,
   filterNodesByEdges,
 } from '@/features/network/logic/networkFilterHelpers';
+import {
+  getDefaultWorkflowId,
+  sortWorkflowsByName,
+  toWorkflowVisualizationWorkflow,
+} from '@/features/network/logic/workflowVisualizationHelpers';
 import { useWorkflowState } from '@/zero/network/useWorkflowState';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { Button } from '@/features/shared/ui/ui/button';
@@ -294,9 +299,22 @@ export function GroupNetworkFlow({
 
   // Fetch workflows for this group
   const { groupWorkflows } = useWorkflowState({ groupId });
+  const sortedGroupWorkflows = useMemo(() => sortWorkflowsByName(groupWorkflows), [groupWorkflows]);
+
+  useEffect(() => {
+    const defaultWorkflowId = getDefaultWorkflowId(sortedGroupWorkflows, selectedWorkflowId);
+    if (defaultWorkflowId !== selectedWorkflowId) {
+      setSelectedWorkflowId(defaultWorkflowId);
+    }
+  }, [selectedWorkflowId, sortedGroupWorkflows]);
+
   const selectedWorkflow = useMemo(
-    () => groupWorkflows.find(w => w.id === selectedWorkflowId),
-    [groupWorkflows, selectedWorkflowId]
+    () => sortedGroupWorkflows.find(w => w.id === selectedWorkflowId),
+    [selectedWorkflowId, sortedGroupWorkflows]
+  );
+  const selectedWorkflowVisualization = useMemo(
+    () => (selectedWorkflow ? toWorkflowVisualizationWorkflow(selectedWorkflow) : null),
+    [selectedWorkflow]
   );
 
   const { group, allRelationships } = useGroupNetwork(groupId);
@@ -1239,7 +1257,7 @@ export function GroupNetworkFlow({
               />
             </SelectTrigger>
             <SelectContent>
-              {groupWorkflows.map(w => (
+              {sortedGroupWorkflows.map(w => (
                 <SelectItem key={w.id} value={w.id}>
                   {w.name ?? 'Untitled'}
                 </SelectItem>
@@ -1247,15 +1265,15 @@ export function GroupNetworkFlow({
             </SelectContent>
           </Select>
         </div>
-        {groupWorkflows.length === 0 ? (
+        {sortedGroupWorkflows.length === 0 ? (
           <div className="bg-background flex min-h-[24rem] flex-1 items-center justify-center rounded-lg border">
             <p className="text-muted-foreground text-sm">
               {t('features.network.workflows.empty', 'No workflows defined yet.')}
             </p>
           </div>
-        ) : selectedWorkflow ? (
+        ) : selectedWorkflowVisualization ? (
           <div className="min-h-[24rem] flex-1">
-            <WorkflowFlowVisualization workflow={selectedWorkflow} />
+            <WorkflowFlowVisualization workflow={selectedWorkflowVisualization} />
           </div>
         ) : (
           <div className="bg-background flex min-h-[24rem] flex-1 items-center justify-center rounded-lg border">

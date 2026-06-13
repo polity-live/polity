@@ -1,14 +1,19 @@
 // @vitest-environment jsdom
 
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { useState } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   ALL_TYPEAHEAD_ENTITY_TYPES,
   TYPEAHEAD_ENTITY_GROUP_LABELS,
   type TypeaheadItem,
 } from '@/features/shared/logic/typeaheadHelpers';
 import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
+
+afterEach(() => {
+  cleanup();
+  vi.clearAllMocks();
+});
 
 function buildItem(
   id: string,
@@ -71,13 +76,21 @@ describe('TypeaheadSearch', () => {
 
     const input = screen.getByPlaceholderText('Search users');
     fireEvent.focus(input);
-    fireEvent.mouseDown(screen.getByText('Alice Example'));
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /Alice Example User Meta for Alice Example Description for Alice Example/,
+      })
+    );
 
     expect(screen.getByText('Alice Example')).toBeTruthy();
     expect(screen.getByText('Meta for Alice Example')).toBeTruthy();
 
     fireEvent.focus(input);
-    fireEvent.mouseDown(screen.getByText('Bob Example'));
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /Bob Example User Meta for Bob Example Description for Bob Example/,
+      })
+    );
 
     expect(screen.getByText('Bob Example')).toBeTruthy();
     expect(screen.getAllByRole('button', { name: /Remove .* Example/ })).toHaveLength(2);

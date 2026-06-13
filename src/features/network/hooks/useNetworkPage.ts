@@ -276,7 +276,35 @@ export function useNetworkPage(groupId: string) {
   // Collect all groups for workflow step selection
   const { groups: allGroupsRaw } = useAllGroups();
   const availableGroups = useMemo(() => {
-    return allGroupsRaw
+    const groupsById = new Map(
+      allGroupsRaw.map(g => [
+        g.id,
+        {
+          id: g.id,
+          name: g.name,
+          description: g.description,
+          group_type: g.group_type,
+          member_count: g.member_count,
+          event_count: g.event_count,
+          amendment_count: g.amendment_count,
+        },
+      ])
+    );
+
+    // The workflow editor must always be able to pick the current page group as a start node.
+    if (group?.id && !groupsById.has(group.id)) {
+      groupsById.set(group.id, {
+        id: group.id,
+        name: group.name ?? null,
+        description: group.description,
+        group_type: group.group_type,
+        member_count: group.member_count,
+        event_count: group.event_count,
+        amendment_count: group.amendment_count,
+      });
+    }
+
+    return Array.from(groupsById.values())
       .map(g => ({
         id: g.id,
         name: g.name,
@@ -287,7 +315,7 @@ export function useNetworkPage(groupId: string) {
         amendment_count: g.amendment_count,
       }))
       .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
-  }, [allGroupsRaw]);
+  }, [allGroupsRaw, group]);
 
   const workflowIncomingRequests = useMemo(
     () =>
