@@ -1,11 +1,23 @@
+import { Trash2 } from 'lucide-react';
+import { Button } from '@/features/shared/ui/ui/button';
+import { getStreetDesignObjectDefinition } from '../logic/streetDesignObjectRegistry';
+
 export interface StreetSceneCanvasViewViewProps {
   design: any;
   placementPreview: any;
+  placementMode: any;
+  placementPointCount: any;
+  canFinishPathPlacement: any;
   selectedObjectId: any;
+  selectedObject: any;
+  interactionMode: any;
   readOnly: any;
   onPointerDown: any;
   onPointerMove: any;
+  onFinishPathPlacement: any;
+  onCancelPlacement: any;
   onObjectSelect: any;
+  onDeleteObject: any;
   canvasRef: any;
   loadFailed: any;
   setLoadFailed: any;
@@ -13,6 +25,15 @@ export interface StreetSceneCanvasViewViewProps {
 
 export function StreetSceneCanvasViewView({
   design,
+  placementMode,
+  placementPointCount,
+  canFinishPathPlacement,
+  selectedObject,
+  interactionMode,
+  readOnly,
+  onFinishPathPlacement,
+  onCancelPlacement,
+  onDeleteObject,
   canvasRef,
   loadFailed,
 }: StreetSceneCanvasViewViewProps) {
@@ -26,7 +47,14 @@ export function StreetSceneCanvasViewView({
 
   return (
     <div className="border-border bg-muted/20 relative min-h-[560px] overflow-hidden rounded-md border">
-      <canvas ref={canvasRef} className="h-[560px] w-full cursor-crosshair" />
+      <canvas
+        ref={canvasRef}
+        className={
+          interactionMode === 'camera'
+            ? 'h-[560px] w-full cursor-grab'
+            : 'h-[560px] w-full cursor-crosshair'
+        }
+      />
       <div className="pointer-events-none absolute top-3 left-3 flex gap-2 text-xs font-medium">
         {design.comparisonMode === 'split' ? (
           <>
@@ -45,6 +73,54 @@ export function StreetSceneCanvasViewView({
           </span>
         )}
       </div>
+      {placementMode === 'path' ? (
+        <div className="border-border bg-background/95 absolute bottom-3 left-3 flex items-center gap-3 rounded-md border px-3 py-2 text-xs shadow-lg backdrop-blur">
+          <div>
+            <p className="font-semibold">Kurve zeichnen</p>
+            <p className="text-muted-foreground">{placementPointCount} Punkte gesetzt</p>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            className="h-8 px-2 text-xs"
+            disabled={readOnly || !canFinishPathPlacement}
+            onClick={onFinishPathPlacement}
+          >
+            Fertig
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-8 px-2 text-xs"
+            disabled={readOnly}
+            onClick={onCancelPlacement}
+          >
+            Abbrechen
+          </Button>
+        </div>
+      ) : null}
+      {selectedObject ? (
+        <div className="border-border bg-background/95 absolute right-3 bottom-3 flex items-center gap-3 rounded-md border px-3 py-2 text-xs shadow-lg backdrop-blur">
+          <div>
+            <p className="font-semibold">
+              {getStreetDesignObjectDefinition(selectedObject.type).label}
+            </p>
+            <p className="text-muted-foreground">{selectedObject.id.slice(0, 8)}</p>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            variant="destructive"
+            className="h-8 gap-2 px-2 text-xs"
+            disabled={readOnly}
+            onClick={() => onDeleteObject(selectedObject.id)}
+          >
+            <Trash2 className="size-3.5" />
+            Entfernen
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }

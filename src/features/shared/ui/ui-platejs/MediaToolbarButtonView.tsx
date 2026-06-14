@@ -29,12 +29,20 @@ import {
   ToolbarSplitButtonPrimary,
   ToolbarSplitButtonSecondary,
 } from '@/features/shared/ui/layout';
+
+interface MediaConfigItem {
+  accept: string[];
+  icon: React.ReactNode;
+  title: string;
+  tooltip: string;
+}
+
 function MediaUrlDialogContent({
   currentConfig,
   nodeType,
   setOpen,
 }: {
-  currentConfig: ReturnType<typeof getMediaConfig>[keyof ReturnType<typeof getMediaConfig>];
+  currentConfig: MediaConfigItem;
   nodeType: string;
   setOpen: (value: boolean) => void;
 }) {
@@ -104,7 +112,7 @@ export interface MediaToolbarButtonViewProps {
   setDialogOpen: any;
   t: any;
   MEDIA_CONFIG: any;
-  currentConfig: any;
+  currentConfig: MediaConfigItem;
   openFilePicker: any;
 }
 

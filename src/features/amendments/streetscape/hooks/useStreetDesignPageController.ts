@@ -7,6 +7,7 @@ import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import type {
   StreetDesignBoundingBox,
   StreetDesignGeoPoint,
+  StreetDesignMapSelection,
   StreetDesignOsmSnapshot,
   StreetDesignOrigin,
 } from '../types';
@@ -15,22 +16,15 @@ import {
   STREET_DESIGN_CURRENCY,
 } from '../logic/streetDesignObjectRegistry';
 import {
+  createStreetDesignMapSelectionFromBbox,
+  createStreetDesignMapSelectionFromCenterRadius,
+  getStreetDesignMapSelectionBoundingBox,
+} from '../logic/streetDesignBbox';
+import {
   createEmptyStreetDesignState,
   parseStoredStreetDesignState,
 } from '../state/streetDesignReducer';
 import { useStreetDesignEditorState } from './useStreetDesignEditorState';
-
-function bboxFromCenter(center: StreetDesignGeoPoint, radiusMeters = 140): StreetDesignBoundingBox {
-  const latDelta = radiusMeters / 111_320;
-  const lonDelta = radiusMeters / (111_320 * Math.cos((center.lat * Math.PI) / 180));
-
-  return {
-    south: center.lat - latDelta,
-    west: center.lon - lonDelta,
-    north: center.lat + latDelta,
-    east: center.lon + lonDelta,
-  };
-}
 
 function originFromCenter(center: StreetDesignGeoPoint): StreetDesignOrigin {
   return {
@@ -43,8 +37,10 @@ function asReadonlyJsonValue(value: unknown): ReadonlyJSONValue {
   return value as ReadonlyJSONValue;
 }
 
-function createSampleOsmSnapshot(center: StreetDesignGeoPoint): StreetDesignOsmSnapshot {
-  const bbox = bboxFromCenter(center);
+function createSampleOsmSnapshot(
+  center: StreetDesignGeoPoint,
+  bbox: StreetDesignBoundingBox
+): StreetDesignOsmSnapshot {
   const latStep = 0.00045;
   const lonStep = 0.00065;
 
@@ -127,8 +123,14 @@ export function useStreetDesignPageController(amendmentId: string) {
     [primaryStreetDesign?.design_state]
   );
   const editor = useStreetDesignEditorState(persistedDesign);
-  const [selectedCenter, setSelectedCenter] = useState<StreetDesignGeoPoint>(
-    persistedDesign.origin
+  const [selectedMapSelection, setSelectedMapSelection] = useState<StreetDesignMapSelection>(
+    persistedDesign.mapSelection ??
+      createStreetDesignMapSelectionFromBbox(
+        persistedDesign.osmSnapshot?.bbox ??
+          getStreetDesignMapSelectionBoundingBox(
+            createStreetDesignMapSelectionFromCenterRadius(persistedDesign.origin)
+          )
+      )
   );
   const [isLoadingOsm, setIsLoadingOsm] = useState(false);
   const [osmError, setOsmError] = useState<string | null>(null);
@@ -137,14 +139,26 @@ export function useStreetDesignPageController(amendmentId: string) {
 
   useEffect(() => {
     editor.replaceDesign(persistedDesign, false);
-    setSelectedCenter(persistedDesign.origin);
+    setSelectedMapSelection(
+      persistedDesign.mapSelection ??
+        createStreetDesignMapSelectionFromBbox(
+          persistedDesign.osmSnapshot?.bbox ??
+            getStreetDesignMapSelectionBoundingBox(
+              createStreetDesignMapSelectionFromCenterRadius(persistedDesign.origin)
+            )
+        )
+    );
   }, [editor.replaceDesign, persistedDesign]);
 
   const canEdit = Boolean(
     user && (isCollaborator || isAdmin || amendment?.created_by_id === user.id)
   );
 
-  const selectedBbox = useMemo(() => bboxFromCenter(selectedCenter), [selectedCenter]);
+  const selectedCenter = selectedMapSelection.center;
+  const selectedBbox = useMemo(
+    () => getStreetDesignMapSelectionBoundingBox(selectedMapSelection),
+    [selectedMapSelection]
+  );
 
   const handleLoadOsm = useCallback(async () => {
     setIsLoadingOsm(true);
@@ -156,7 +170,16 @@ export function useStreetDesignPageController(amendmentId: string) {
         {
           ...editor.design,
           origin: originFromCenter(selectedCenter),
+          mapSelection: selectedMapSelection,
+          osmLayerVisibility: editor.design.osmLayerVisibility ?? {
+            road: true,
+            building: true,
+            green: true,
+            water: true,
+          },
+          hiddenOsmWayIds: [],
           osmSnapshot: snapshot,
+          comparisonMode: 'overlay',
         },
         true
       );
@@ -167,20 +190,29 @@ export function useStreetDesignPageController(amendmentId: string) {
     } finally {
       setIsLoadingOsm(false);
     }
-  }, [editor, selectedBbox, selectedCenter]);
+  }, [editor, selectedBbox, selectedCenter, selectedMapSelection]);
 
   const handleLoadSample = useCallback(() => {
-    const snapshot = createSampleOsmSnapshot(selectedCenter);
+    const snapshot = createSampleOsmSnapshot(selectedCenter, selectedBbox);
     editor.replaceDesign(
       {
         ...editor.design,
         origin: originFromCenter(selectedCenter),
+        mapSelection: selectedMapSelection,
+        osmLayerVisibility: editor.design.osmLayerVisibility ?? {
+          road: true,
+          building: true,
+          green: true,
+          water: true,
+        },
+        hiddenOsmWayIds: [],
         osmSnapshot: snapshot,
+        comparisonMode: 'overlay',
       },
       true
     );
     setOsmError(null);
-  }, [editor, selectedCenter]);
+  }, [editor, selectedBbox, selectedCenter, selectedMapSelection]);
 
   const handleSave = useCallback(async () => {
     setIsSaving(true);
@@ -246,7 +278,8 @@ export function useStreetDesignPageController(amendmentId: string) {
     canEdit,
     selectedCenter,
     selectedBbox,
-    onSelectedCenterChange: setSelectedCenter,
+    selectedMapSelection,
+    onSelectedMapSelectionChange: setSelectedMapSelection,
     isLoadingOsm,
     osmError,
     onLoadOsm: handleLoadOsm,

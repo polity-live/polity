@@ -1,5 +1,7 @@
 export type StreetDesignComparisonMode = 'original' | 'new_design' | 'overlay' | 'split';
 
+export type StreetDesignInteractionMode = 'place' | 'camera';
+
 export type StreetDesignGeometryKind = 'point' | 'line' | 'polygon' | 'corridor';
 
 export type StreetDesignCostRule =
@@ -8,7 +10,7 @@ export type StreetDesignCostRule =
   | 'per_square_meter'
   | 'per_parking_space';
 
-export type StreetDesignToolMode = 'point' | 'drag-band' | 'polygon';
+export type StreetDesignToolMode = 'point' | 'drag-band' | 'path' | 'polygon';
 
 export type StreetDesignRenderKind =
   | 'tree'
@@ -17,7 +19,8 @@ export type StreetDesignRenderKind =
   | 'surface'
   | 'lane'
   | 'road'
-  | 'parking';
+  | 'parking'
+  | 'building';
 
 export type StreetDesignObjectType =
   | 'tree'
@@ -25,11 +28,13 @@ export type StreetDesignObjectType =
   | 'bank'
   | 'grass_strip'
   | 'flower_bed'
+  | 'water_area'
   | 'parking_area'
   | 'street'
   | 'car_lane'
   | 'bike_lane'
-  | 'sidewalk';
+  | 'sidewalk'
+  | 'building';
 
 export interface StreetDesignLocalPoint {
   x: number;
@@ -50,6 +55,24 @@ export interface StreetDesignBoundingBox {
   west: number;
   north: number;
   east: number;
+}
+
+export interface StreetDesignMapSelection {
+  center: StreetDesignGeoPoint;
+  widthMeters: number;
+  heightMeters: number;
+  rotationDeg: number;
+}
+
+export interface StreetDesignVector3 {
+  x: number;
+  y: number;
+  z: number;
+}
+
+export interface StreetDesignCameraPose {
+  position: StreetDesignVector3;
+  target: StreetDesignVector3;
 }
 
 export interface PointGeometry {
@@ -75,7 +98,22 @@ export interface CorridorGeometry {
   rotation: number;
 }
 
-export type StreetDesignGeometry = PointGeometry | PolygonGeometry | CorridorGeometry;
+export interface PathCorridorGeometry {
+  kind: 'path_corridor';
+  points: StreetDesignLocalPoint[];
+  roundedCenterline: StreetDesignLocalPoint[];
+  width: number;
+  polygon: StreetDesignLocalPoint[];
+  length: number;
+  area: number;
+  cornerRadius: number;
+}
+
+export type StreetDesignGeometry =
+  | PointGeometry
+  | PolygonGeometry
+  | CorridorGeometry
+  | PathCorridorGeometry;
 
 export type StreetDesignPropertyValue = string | number | boolean | null;
 
@@ -109,7 +147,7 @@ export interface StreetDesignObjectDefinition {
   type: StreetDesignObjectType;
   label: string;
   icon: string;
-  category: 'greenery' | 'mobility' | 'street' | 'furniture';
+  category: 'greenery' | 'mobility' | 'street' | 'furniture' | 'building' | 'water';
   geometryKind: StreetDesignGeometryKind;
   defaultProperties: Record<string, StreetDesignPropertyValue>;
   propertySchema: StreetDesignPropertySchemaField[];
@@ -159,10 +197,21 @@ export interface StreetDesignOsmSnapshot {
   ways: StreetDesignOsmWay[];
 }
 
+export interface StreetDesignOsmLayerVisibility {
+  road: boolean;
+  building: boolean;
+  green: boolean;
+  water: boolean;
+}
+
 export interface StreetDesignStateV1 {
   schemaVersion: 1;
   origin: StreetDesignOrigin;
+  mapSelection?: StreetDesignMapSelection;
   osmSnapshot: StreetDesignOsmSnapshot | null;
+  osmLayerVisibility?: StreetDesignOsmLayerVisibility;
+  hiddenOsmWayIds?: string[];
+  showStreetMarkings?: boolean;
   comparisonMode: StreetDesignComparisonMode;
   currency: string;
   costCatalogVersion: string;
@@ -171,6 +220,8 @@ export interface StreetDesignStateV1 {
 
 export interface StreetDesignPlacementDraft {
   type: StreetDesignObjectType;
+  mode: 'drag_band' | 'path';
   start: StreetDesignLocalPoint;
-  preview: CorridorGeometry | null;
+  points: StreetDesignLocalPoint[];
+  preview: CorridorGeometry | PathCorridorGeometry | null;
 }

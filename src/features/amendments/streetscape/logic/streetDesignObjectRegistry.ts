@@ -14,6 +14,7 @@ export const streetDesignObjectRegistry = {
       species: 'stadtbaum',
       height: 4,
       canopyDiameter: 3,
+      spacing: 6,
     },
     propertySchema: [
       { key: 'species', label: 'Art', fieldType: 'text' },
@@ -26,11 +27,20 @@ export const streetDesignObjectRegistry = {
         min: 0.5,
         step: 0.5,
       },
+      {
+        key: 'spacing',
+        label: 'Reihenabstand',
+        fieldType: 'number',
+        unit: 'm',
+        min: 2,
+        step: 0.5,
+      },
     ],
     costRule: 'per_item',
     suggestedUnitCostMinor: 45000,
     renderKind: 'tree',
-    toolMode: 'point',
+    toolMode: 'path',
+    defaultWidth: 1.8,
     color: '#3f7d3b',
   },
   bush: {
@@ -43,6 +53,7 @@ export const streetDesignObjectRegistry = {
       species: 'strauch',
       diameter: 1.4,
       height: 1.2,
+      spacing: 1.5,
     },
     propertySchema: [
       { key: 'species', label: 'Art', fieldType: 'text' },
@@ -55,11 +66,20 @@ export const streetDesignObjectRegistry = {
         step: 0.1,
       },
       { key: 'height', label: 'Hoehe', fieldType: 'number', unit: 'm', min: 0.2, step: 0.1 },
+      {
+        key: 'spacing',
+        label: 'Reihenabstand',
+        fieldType: 'number',
+        unit: 'm',
+        min: 0.4,
+        step: 0.1,
+      },
     ],
     costRule: 'per_item',
     suggestedUnitCostMinor: 8500,
     renderKind: 'bush',
-    toolMode: 'point',
+    toolMode: 'path',
+    defaultWidth: 1.2,
     color: '#5c8f46',
   },
   bank: {
@@ -99,7 +119,7 @@ export const streetDesignObjectRegistry = {
     costRule: 'per_square_meter',
     suggestedUnitCostMinor: 1200,
     renderKind: 'surface',
-    toolMode: 'drag-band',
+    toolMode: 'path',
     defaultWidth: 2,
     color: '#79a857',
   },
@@ -120,9 +140,48 @@ export const streetDesignObjectRegistry = {
     costRule: 'per_square_meter',
     suggestedUnitCostMinor: 8000,
     renderKind: 'surface',
-    toolMode: 'drag-band',
+    toolMode: 'path',
     defaultWidth: 1.6,
     color: '#c95f8a',
+  },
+  water_area: {
+    type: 'water_area',
+    label: 'Wasser',
+    icon: 'Waves',
+    category: 'water',
+    geometryKind: 'corridor',
+    defaultProperties: {
+      waterType: 'retention',
+      edge: 'naturnah',
+    },
+    propertySchema: [
+      {
+        key: 'waterType',
+        label: 'Wassertyp',
+        fieldType: 'select',
+        options: [
+          { label: 'Retention', value: 'retention' },
+          { label: 'Teich', value: 'pond' },
+          { label: 'Wasserlauf', value: 'stream' },
+        ],
+      },
+      {
+        key: 'edge',
+        label: 'Ufer',
+        fieldType: 'select',
+        options: [
+          { label: 'Naturnah', value: 'naturnah' },
+          { label: 'Gefasst', value: 'gefasst' },
+          { label: 'Sitzkante', value: 'sitzkante' },
+        ],
+      },
+    ],
+    costRule: 'per_square_meter',
+    suggestedUnitCostMinor: 6000,
+    renderKind: 'surface',
+    toolMode: 'path',
+    defaultWidth: 4,
+    color: '#4f9ed9',
   },
   parking_area: {
     type: 'parking_area',
@@ -171,7 +230,7 @@ export const streetDesignObjectRegistry = {
     costRule: 'per_square_meter',
     suggestedUnitCostMinor: 18000,
     renderKind: 'road',
-    toolMode: 'drag-band',
+    toolMode: 'path',
     defaultWidth: 6.5,
     color: '#4e565c',
   },
@@ -200,7 +259,7 @@ export const streetDesignObjectRegistry = {
     costRule: 'per_square_meter',
     suggestedUnitCostMinor: 13000,
     renderKind: 'lane',
-    toolMode: 'drag-band',
+    toolMode: 'path',
     defaultWidth: 3.25,
     color: '#586069',
   },
@@ -221,7 +280,7 @@ export const streetDesignObjectRegistry = {
     costRule: 'per_square_meter',
     suggestedUnitCostMinor: 9000,
     renderKind: 'lane',
-    toolMode: 'drag-band',
+    toolMode: 'path',
     defaultWidth: 2,
     color: '#2f8f87',
   },
@@ -242,9 +301,55 @@ export const streetDesignObjectRegistry = {
     costRule: 'per_square_meter',
     suggestedUnitCostMinor: 11000,
     renderKind: 'surface',
-    toolMode: 'drag-band',
+    toolMode: 'path',
     defaultWidth: 2.4,
     color: '#c8bda7',
+  },
+  building: {
+    type: 'building',
+    label: 'Gebaeude',
+    icon: 'Building2',
+    category: 'building',
+    geometryKind: 'corridor',
+    defaultProperties: {
+      height: 9,
+      floors: 3,
+      color: '#b6aa9b',
+      use: 'mixed',
+    },
+    propertySchema: [
+      { key: 'height', label: 'Hoehe', fieldType: 'number', unit: 'm', min: 1, step: 0.5 },
+      { key: 'floors', label: 'Geschosse', fieldType: 'number', min: 1, step: 1 },
+      {
+        key: 'color',
+        label: 'Farbe',
+        fieldType: 'select',
+        options: [
+          { label: 'Sand', value: '#b6aa9b' },
+          { label: 'Ziegel', value: '#b46b55' },
+          { label: 'Schiefer', value: '#6f7a82' },
+          { label: 'Blau', value: '#7aa0bd' },
+          { label: 'Gruen', value: '#8ba77f' },
+        ],
+      },
+      {
+        key: 'use',
+        label: 'Nutzung',
+        fieldType: 'select',
+        options: [
+          { label: 'Gemischt', value: 'mixed' },
+          { label: 'Wohnen', value: 'residential' },
+          { label: 'Gewerbe', value: 'commercial' },
+          { label: 'Oeffentlich', value: 'civic' },
+        ],
+      },
+    ],
+    costRule: 'per_square_meter',
+    suggestedUnitCostMinor: 250000,
+    renderKind: 'building',
+    toolMode: 'path',
+    defaultWidth: 10,
+    color: '#b6aa9b',
   },
 } satisfies Record<StreetDesignObjectType, StreetDesignObjectDefinition>;
 
@@ -252,6 +357,8 @@ export const streetDesignObjectTypes = Object.keys(
   streetDesignObjectRegistry
 ) as StreetDesignObjectType[];
 
-export function getStreetDesignObjectDefinition(type: StreetDesignObjectType) {
+export function getStreetDesignObjectDefinition(
+  type: StreetDesignObjectType
+): StreetDesignObjectDefinition {
   return streetDesignObjectRegistry[type];
 }

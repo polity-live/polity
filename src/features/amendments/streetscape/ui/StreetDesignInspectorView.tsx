@@ -9,18 +9,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/features/shared/ui/ui/select';
-import type { StreetDesignObject, StreetDesignPropertyValue } from '../types';
+import type {
+  StreetDesignCostLine,
+  StreetDesignObject,
+  StreetDesignOsmWay,
+  StreetDesignPropertyValue,
+} from '../types';
 import { formatMinorCurrency } from '../logic/streetDesignCostCatalog';
-import { getStreetDesignCostLine } from '../logic/streetDesignCosting';
 import { getStreetDesignObjectDefinition } from '../logic/streetDesignObjectRegistry';
 
 interface StreetDesignInspectorViewProps {
   selectedObject: StreetDesignObject | null;
+  selectedOsmWay: StreetDesignOsmWay | null;
+  selectedObjectCostLine: StreetDesignCostLine | null;
   readOnly: boolean;
   onPropertyChange: (objectId: string, key: string, value: StreetDesignPropertyValue) => void;
   onWidthChange: (objectId: string, width: number) => void;
   onUnitCostChange: (objectId: string, unitCostMinor: number | null) => void;
   onDeleteObject: (objectId: string) => void;
+  onHideOsmWay: (osmWayId: string) => void;
 }
 
 function asInputValue(value: StreetDesignPropertyValue | undefined) {
@@ -30,13 +37,47 @@ function asInputValue(value: StreetDesignPropertyValue | undefined) {
 
 export function StreetDesignInspectorView({
   selectedObject,
+  selectedOsmWay,
+  selectedObjectCostLine,
   readOnly,
   onPropertyChange,
   onWidthChange,
   onUnitCostChange,
   onDeleteObject,
+  onHideOsmWay,
 }: StreetDesignInspectorViewProps) {
   if (!selectedObject) {
+    if (selectedOsmWay) {
+      return (
+        <aside className="border-border bg-background rounded-md border p-4 shadow-sm">
+          <div className="mb-4 flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-semibold">
+                {selectedOsmWay.label ?? 'OSM-Bestandsobjekt'}
+              </h2>
+              <p className="text-muted-foreground text-xs">
+                {selectedOsmWay.kind} · {selectedOsmWay.id}
+              </p>
+            </div>
+            <Button
+              type="button"
+              size="icon"
+              variant="outline"
+              title="Aus Karte entfernen"
+              disabled={readOnly}
+              onClick={() => onHideOsmWay(selectedOsmWay.id)}
+            >
+              <Trash2 className="size-4" />
+            </Button>
+          </div>
+          <div className="text-muted-foreground space-y-2 text-sm">
+            <p>Punkte: {selectedOsmWay.points.length}</p>
+            {selectedOsmWay.height ? <p>Hoehe: {selectedOsmWay.height.toFixed(1)} m</p> : null}
+          </div>
+        </aside>
+      );
+    }
+
     return (
       <aside className="border-border bg-background rounded-md border p-4 shadow-sm">
         <h2 className="text-sm font-semibold">Inspector</h2>
@@ -46,7 +87,6 @@ export function StreetDesignInspectorView({
   }
 
   const definition = getStreetDesignObjectDefinition(selectedObject.type);
-  const costLine = getStreetDesignCostLine(selectedObject);
   const unitCostEuro =
     (selectedObject.cost.customUnitCostMinor ?? selectedObject.cost.suggestedUnitCostMinor) / 100;
 
@@ -70,7 +110,8 @@ export function StreetDesignInspectorView({
       </div>
 
       <div className="space-y-3">
-        {selectedObject.geometry.kind === 'corridor' ? (
+        {selectedObject.geometry.kind === 'corridor' ||
+        selectedObject.geometry.kind === 'path_corridor' ? (
           <div className="grid grid-cols-3 gap-2">
             <div>
               <Label className="text-xs">Breite</Label>
@@ -193,7 +234,10 @@ export function StreetDesignInspectorView({
             </div>
             <div>
               <Label className="text-xs">Summe</Label>
-              <Input value={formatMinorCurrency(costLine.totalCostMinor)} disabled />
+              <Input
+                value={formatMinorCurrency(selectedObjectCostLine?.totalCostMinor ?? 0)}
+                disabled
+              />
             </div>
           </div>
           <p className="text-muted-foreground mt-2 text-xs">

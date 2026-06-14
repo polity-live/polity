@@ -6,6 +6,7 @@ import {
 } from '../streetDesignCosting';
 import {
   createCorridorStreetDesignObject,
+  createPathCorridorStreetDesignObject,
   createPointStreetDesignObject,
 } from '../streetDesignPlacement';
 
@@ -22,6 +23,21 @@ describe('streetDesignCosting', () => {
     expect(line.totalCostMinor).toBe(45000);
   });
 
+  it('calculates planting row item counts from path length and spacing', () => {
+    const treeRow = createPathCorridorStreetDesignObject({
+      id: 'tree-row-1',
+      type: 'tree',
+      points: [
+        { x: 0, z: 0 },
+        { x: 12, z: 0 },
+      ],
+    });
+
+    const line = getStreetDesignCostLine(treeRow);
+    expect(line.quantity).toBe(3);
+    expect(line.totalCostMinor).toBe(135000);
+  });
+
   it('calculates square-meter costs for corridor elements', () => {
     const grass = createCorridorStreetDesignObject({
       id: 'grass-1',
@@ -36,6 +52,23 @@ describe('streetDesignCosting', () => {
     expect(line.totalCostMinor).toBe(24000);
   });
 
+  it('calculates square-meter costs for curved path corridors', () => {
+    const street = createPathCorridorStreetDesignObject({
+      id: 'street-1',
+      type: 'street',
+      points: [
+        { x: 0, z: 0 },
+        { x: 10, z: 0 },
+        { x: 10, z: 10 },
+      ],
+      width: 4,
+    });
+
+    const line = getStreetDesignCostLine(street);
+    expect(line.quantity).toBeGreaterThan(0);
+    expect(line.totalCostMinor).toBeGreaterThan(0);
+  });
+
   it('calculates parking costs from parking space count', () => {
     const parking = createCorridorStreetDesignObject({
       id: 'parking-1',
@@ -48,6 +81,20 @@ describe('streetDesignCosting', () => {
     const line = getStreetDesignCostLine(parking);
     expect(line.quantity).toBe(4);
     expect(line.totalCostMinor).toBe(1_400_000);
+  });
+
+  it('calculates building costs from footprint square meters', () => {
+    const building = createCorridorStreetDesignObject({
+      id: 'building-1',
+      type: 'building',
+      start: { x: 0, z: 0 },
+      end: { x: 10, z: 0 },
+      width: 10,
+    });
+
+    const line = getStreetDesignCostLine(building);
+    expect(line.quantity).toBe(100);
+    expect(line.totalCostMinor).toBe(25_000_000);
   });
 
   it('uses overridden unit prices and aggregates totals', () => {

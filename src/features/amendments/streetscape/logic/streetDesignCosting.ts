@@ -15,15 +15,28 @@ export function getStreetDesignObjectQuantity(
   rule: StreetDesignCostRule
 ) {
   if (rule === 'per_item') {
+    if (
+      object.geometry.kind === 'path_corridor' &&
+      (object.type === 'tree' || object.type === 'bush')
+    ) {
+      const definition = getStreetDesignObjectDefinition(object.type);
+      const defaultSpacing = numberProperty(definition.defaultProperties.spacing, 2);
+      const spacing = Math.max(numberProperty(object.properties.spacing, defaultSpacing), 0.1);
+      return Math.max(1, Math.floor(object.geometry.length / spacing) + 1);
+    }
+
     return 1;
   }
 
   if (rule === 'per_meter') {
-    return object.geometry.kind === 'corridor' ? object.geometry.length : 0;
+    return object.geometry.kind === 'corridor' || object.geometry.kind === 'path_corridor'
+      ? object.geometry.length
+      : 0;
   }
 
   if (rule === 'per_square_meter') {
     if (object.geometry.kind === 'corridor') return object.geometry.area;
+    if (object.geometry.kind === 'path_corridor') return object.geometry.area;
     if (object.geometry.kind === 'polygon') return object.geometry.area;
     return 0;
   }
@@ -33,7 +46,9 @@ export function getStreetDesignObjectQuantity(
     if (explicitSpaces > 0) return explicitSpaces;
 
     const area =
-      object.geometry.kind === 'corridor' || object.geometry.kind === 'polygon'
+      object.geometry.kind === 'corridor' ||
+      object.geometry.kind === 'path_corridor' ||
+      object.geometry.kind === 'polygon'
         ? object.geometry.area
         : 0;
     return Math.max(1, Math.round(area / 12.5));

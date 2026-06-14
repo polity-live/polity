@@ -13,11 +13,13 @@ describe('streetDesignObjectRegistry', () => {
       'bank',
       'grass_strip',
       'flower_bed',
+      'water_area',
       'parking_area',
       'street',
       'car_lane',
       'bike_lane',
       'sidewalk',
+      'building',
     ]);
 
     for (const type of streetDesignObjectTypes) {
@@ -43,10 +45,26 @@ describe('streetDesignObjectRegistry', () => {
 
     expect(streetDesignObjectRegistry.grass_strip.geometryKind).toBe('corridor');
     expect(streetDesignObjectRegistry.flower_bed.geometryKind).toBe('corridor');
+    expect(streetDesignObjectRegistry.water_area.geometryKind).toBe('corridor');
     expect(streetDesignObjectRegistry.parking_area.geometryKind).toBe('corridor');
     expect(streetDesignObjectRegistry.street.geometryKind).toBe('corridor');
     expect(streetDesignObjectRegistry.car_lane.geometryKind).toBe('corridor');
     expect(streetDesignObjectRegistry.bike_lane.geometryKind).toBe('corridor');
     expect(streetDesignObjectRegistry.sidewalk.geometryKind).toBe('corridor');
+    expect(streetDesignObjectRegistry.building.geometryKind).toBe('corridor');
+  });
+
+  it('uses path tools for curved greenery, water, buildings, and streets', () => {
+    expect(streetDesignObjectRegistry.tree.toolMode).toBe('path');
+    expect(streetDesignObjectRegistry.bush.toolMode).toBe('path');
+    expect(streetDesignObjectRegistry.grass_strip.toolMode).toBe('path');
+    expect(streetDesignObjectRegistry.flower_bed.toolMode).toBe('path');
+    expect(streetDesignObjectRegistry.water_area.toolMode).toBe('path');
+    expect(streetDesignObjectRegistry.street.toolMode).toBe('path');
+    expect(streetDesignObjectRegistry.car_lane.toolMode).toBe('path');
+    expect(streetDesignObjectRegistry.bike_lane.toolMode).toBe('path');
+    expect(streetDesignObjectRegistry.sidewalk.toolMode).toBe('path');
+    expect(streetDesignObjectRegistry.building.toolMode).toBe('path');
+    expect(streetDesignObjectRegistry.parking_area.toolMode).toBe('drag-band');
   });
 });
