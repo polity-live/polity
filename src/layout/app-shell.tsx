@@ -99,12 +99,14 @@ function UnauthenticatedShell({ children }: { children: ReactNode }) {
         )}
         <main
           style={mainStyle}
-          className={`transition-all duration-300 ${getMarginClasses({
-            isMobile,
-            navigationView,
-            navigationType,
-            secondaryNavItems,
-          })}`}
+          className={`transition-[margin,transform,opacity] duration-[var(--motion-duration-slow)] ease-[var(--motion-ease-soft)] ${getMarginClasses(
+            {
+              isMobile,
+              navigationView,
+              navigationType,
+              secondaryNavItems,
+            }
+          )}`}
         >
           {children}
         </main>
@@ -173,12 +175,14 @@ function AuthenticatedShell({ children }: { children: ReactNode }) {
         )}
         <main
           style={mainStyle}
-          className={`transition-all duration-300 ${getMarginClasses({
-            isMobile,
-            navigationView,
-            navigationType,
-            secondaryNavItems,
-          })}`}
+          className={`transition-[margin,transform,opacity] duration-[var(--motion-duration-slow)] ease-[var(--motion-ease-soft)] ${getMarginClasses(
+            {
+              isMobile,
+              navigationView,
+              navigationType,
+              secondaryNavItems,
+            }
+          )}`}
         >
           <div className={`mx-auto px-4 py-6 ${isFullWidth ? '' : 'max-w-7xl'}`}>{children}</div>
         </main>

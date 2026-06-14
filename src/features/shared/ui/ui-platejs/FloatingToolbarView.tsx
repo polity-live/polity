@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { cn } from '@/features/shared/utils/utils.ts';
+import { getPlateSurfaceClasses } from '@/features/shared/theme';
 
 import { Toolbar } from '@/features/shared/ui/layout';
 
@@ -39,7 +40,8 @@ export function FloatingToolbarView({
         {...rootProps}
         ref={ref}
         className={cn(
-          'scrollbar-hide bg-popover absolute z-50 overflow-x-auto rounded-md border p-1 whitespace-nowrap opacity-100 shadow-md print:hidden',
+          'scrollbar-hide absolute z-50 overflow-x-auto rounded-md border p-1 whitespace-nowrap opacity-100 print:hidden',
+          getPlateSurfaceClasses('floating'),
           'max-w-[80vw]',
           className
         )}

@@ -7,6 +7,11 @@ export {
   PanelTitle,
 } from './Panel';
 export { ActionBar } from './ActionBar';
+export {
+  EntityPageShell,
+  type EntityPageShellProps,
+  type EntityPageShellStat,
+} from './EntityPageShell';
 export { ActionToolbar, PageHeader, PageShell, PanelGrid, Section } from './PageShell';
 export {
   StatsBar,

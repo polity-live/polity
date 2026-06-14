@@ -8,6 +8,7 @@ import {
   type TypeaheadItem,
 } from '@/features/shared/logic/typeaheadHelpers';
 import { ENTITY_COLORS } from '@/features/shared/utils/entity-colors';
+import { getEntityToneClasses, type EntityTone } from '@/features/shared/theme';
 import { cn } from '@/features/shared/utils/utils';
 import { Hash, X } from 'lucide-react';
 import { getHashtagGradient } from '@/features/shared/logic/hashtagHelpers';
@@ -31,6 +32,7 @@ export function TypeaheadSelectedCard({
 }: TypeaheadSelectedCardProps) {
   const Icon = getEntityIcon(item.entityType);
   const colors = ENTITY_COLORS[item.entityType as keyof typeof ENTITY_COLORS];
+  const toneClasses = getEntityToneClasses(item.entityType as EntityTone);
   const isCompact = variant === 'compact';
   const detailMetadata = item.metadata?.filter(Boolean).slice(0, isCompact ? 1 : 3) ?? [];
   const detailHashtags = item.hashtags?.slice(0, isCompact ? 1 : 3) ?? [];
@@ -58,7 +60,7 @@ export function TypeaheadSelectedCard({
               <span className={cn('truncate font-medium', isCompact ? 'text-sm' : 'text-base')}>
                 {item.label}
               </span>
-              <Badge variant="outline" className={cn('text-[10px]', colors?.badgeBg)}>
+              <Badge variant="outline" className={cn('text-[10px]', toneClasses.badge)}>
                 {TYPEAHEAD_ENTITY_LABELS[item.entityType]}
               </Badge>
             </div>
@@ -108,8 +110,8 @@ export function TypeaheadSelectedCard({
   );
 
   const surfaceClassName = cn(
-    'relative block overflow-hidden rounded-xl border shadow-sm transition-all',
-    item.url && 'hover:border-foreground/20 hover:shadow-md active:scale-[0.98]',
+    'relative block overflow-hidden rounded-xl border shadow-sm transition-[color,background-color,border-color,box-shadow,transform] duration-[var(--motion-duration-base)]',
+    item.url && 'civic-motion-hover-lift civic-motion-press hover:border-foreground/20',
     getEntityGradient(item.entityType as keyof typeof ENTITY_COLORS),
     isCompact ? 'px-3 py-2' : 'px-4 py-3',
     className

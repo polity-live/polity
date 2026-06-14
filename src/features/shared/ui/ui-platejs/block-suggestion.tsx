@@ -28,6 +28,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/ava
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { Input } from '@/features/shared/ui/ui/input.tsx';
 import { cn } from '@/features/shared/utils/utils.ts';
+import { getBadgeToneClasses } from '@/features/shared/theme';
 import {
   type TDiscussion,
   discussionPlugin,
@@ -138,8 +139,8 @@ export function BlockSuggestion({ element }: { element: TSuggestionElement }) {
   return (
     <div
       className={cn(
-        'border-brand/[0.8] pointer-events-none absolute inset-0 z-1 border-2 transition-opacity',
-        isRemove && 'border-gray-300'
+        'border-ring pointer-events-none absolute inset-0 z-1 border-2 transition-opacity',
+        isRemove && 'border-[var(--badge-neutral-border)]'
       )}
       contentEditable={false}
     />
@@ -315,10 +316,15 @@ export function BlockSuggestionCard({
               </Button>
             </div>
           ) : (
-            <div className="bg-muted/30 flex flex-1 items-center gap-2 rounded-md px-3 py-2">
+            <div className="flex flex-1 items-center gap-2 rounded-md border bg-[var(--surface)] px-3 py-2">
               {/* Display suggestion ID if available */}
               {suggestion.crId && (
-                <span className="bg-primary/10 text-primary rounded px-2 py-1 font-mono text-xs">
+                <span
+                  className={cn(
+                    'rounded px-2 py-1 font-mono text-xs',
+                    getBadgeToneClasses('accent')
+                  )}
+                >
                   {suggestion.crId}
                 </span>
               )}
@@ -376,7 +382,7 @@ export function BlockSuggestionCard({
               <div className="flex flex-col gap-2">
                 {suggestionText2Array(suggestion.newText).map((text, index) => (
                   <React.Fragment key={index}>
-                    <div key={index} className="text-brand/80 flex items-start gap-2">
+                    <div key={index} className="flex items-start gap-2 text-[var(--badge-info-fg)]">
                       <span className="text-sm">{t('plateJs.blockSuggestion.with')}</span>
                       <span className="text-sm">
                         {text || t('plateJs.blockSuggestion.lineBreaks')}
@@ -457,8 +463,8 @@ export function BlockSuggestionCard({
         {(currentMode === 'vote_internal' || currentMode === 'vote_event') && (
           <div className="mt-4 space-y-2">
             {hasVoted ? (
-              <div className="rounded-md border border-blue-500/30 bg-blue-500/5 p-4">
-                <p className="mb-2 text-sm font-semibold text-blue-700 dark:text-blue-400">
+              <div className={cn('rounded-md border p-4', getBadgeToneClasses('info'))}>
+                <p className="mb-2 text-sm font-semibold">
                   {t('plateJs.blockSuggestion.voteRecorded')}
                 </p>
                 <div className="flex items-center gap-2">
@@ -468,10 +474,10 @@ export function BlockSuggestionCard({
                   <span
                     className={`inline-flex items-center rounded-md px-3 py-1 text-sm font-semibold ${
                       currentUserVote?.vote === 'accept'
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                        ? getBadgeToneClasses('success')
                         : currentUserVote?.vote === 'reject'
-                          ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                          : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+                          ? getBadgeToneClasses('danger')
+                          : getBadgeToneClasses('neutral')
                     }`}
                   >
                     {currentUserVote?.vote === 'accept' && (
@@ -492,8 +498,8 @@ export function BlockSuggestionCard({
               </div>
             ) : (
               <>
-                <div className="rounded-md border border-blue-500/30 bg-blue-500/5 p-3">
-                  <p className="mb-1 text-sm font-semibold text-blue-700 dark:text-blue-400">
+                <div className={cn('rounded-md border p-3', getBadgeToneClasses('info'))}>
+                  <p className="mb-1 text-sm font-semibold">
                     {t('plateJs.blockSuggestion.voteRequired')}
                   </p>
                   <p className="text-muted-foreground text-xs">
@@ -506,7 +512,8 @@ export function BlockSuggestionCard({
                   <Button
                     size="sm"
                     variant="default"
-                    className="flex-1 bg-green-600 hover:bg-green-700"
+                    presentation="success"
+                    className="flex-1"
                     onClick={() => {
                       if (onVoteAccept) {
                         onVoteAccept(suggestion);

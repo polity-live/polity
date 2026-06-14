@@ -1,4 +1,4 @@
-import Papa from 'papaparse/papaparse.min.js';
+import { parse } from 'csv-parse/browser/esm/sync';
 import {
   MAX_CHART_POINTS,
   MAX_MANUAL_CHART_COLUMNS,
@@ -13,22 +13,35 @@ export interface ParsedChartTable {
   rows: Record<string, string>[];
 }
 
+function normalizeHeaderRow(headerRow: readonly string[]): string[] {
+  const seen = new Map<string, number>();
+
+  return headerRow.map((header, index) => {
+    const baseName = header.trim() || `Column ${index + 1}`;
+    const previousCount = seen.get(baseName) ?? 0;
+    seen.set(baseName, previousCount + 1);
+
+    return previousCount === 0 ? baseName : `${baseName}_${previousCount}`;
+  });
+}
+
 export function parseChartCsv(text: string): ParsedChartTable {
   if (new TextEncoder().encode(text).byteLength > MAX_MANUAL_CSV_BYTES) {
     throw new Error('CSV_FILE_TOO_LARGE');
   }
 
-  const result = Papa.parse<Record<string, string>>(text, {
-    header: true,
-    skipEmptyLines: 'greedy',
-    transformHeader: (header, index) => header.trim() || `Column ${index + 1}`,
-  });
-
-  if (result.errors.length > 0) {
-    throw new Error(result.errors[0]?.message || 'CSV_PARSE_FAILED');
+  let parsedRows: string[][];
+  try {
+    parsedRows = parse(text, {
+      bom: true,
+      skip_empty_lines: true,
+    }) as string[][];
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : 'CSV_PARSE_FAILED');
   }
 
-  const columns = (result.meta.fields ?? []).map(column => column.trim()).filter(Boolean);
+  const [headerRow = [], ...dataRows] = parsedRows;
+  const columns = normalizeHeaderRow(headerRow);
   if (columns.length === 0) {
     throw new Error('CSV_HAS_NO_COLUMNS');
   }
@@ -36,10 +49,10 @@ export function parseChartCsv(text: string): ParsedChartTable {
     throw new Error('CSV_HAS_TOO_MANY_COLUMNS');
   }
 
-  const rows = result.data
+  const rows = dataRows
     .slice(0, MAX_MANUAL_CHART_ROWS + 1)
     .map(row =>
-      Object.fromEntries(columns.map(column => [column, String(row[column] ?? '').trim()]))
+      Object.fromEntries(columns.map((column, index) => [column, String(row[index] ?? '').trim()]))
     )
     .filter(row => columns.some(column => row[column] !== ''));
 

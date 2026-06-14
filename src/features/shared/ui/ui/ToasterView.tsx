@@ -12,7 +12,7 @@ export function ToasterView({ theme, toastOptions, ...props }: ToasterProps) {
         ...toastOptions,
         classNames: {
           toast:
-            'group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg',
+            'group toast group-[.toaster]:bg-card group-[.toaster]:text-card-foreground group-[.toaster]:border-border group-[.toaster]:shadow-[var(--shadow-floating)] group-[.toaster]:rounded-lg',
           description: 'group-[.toast]:text-muted-foreground',
           content: 'group-[.toast]:min-w-0 group-[.toast]:flex-1',
           actionButton: 'group-[.toast]:bg-primary group-[.toast]:text-primary-foreground',

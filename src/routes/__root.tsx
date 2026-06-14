@@ -15,7 +15,7 @@ export const Route = createRootRoute({
     meta: [
       { charSet: 'UTF-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1.0' },
-      { name: 'theme-color', content: '#ffffff' },
+      { name: 'theme-color', content: '#F7F5EF' },
       {
         name: 'google-site-verification',
         content: 'nIqXCPvlgZ-T0vUb9DimlNa8oLmNZbj5VLIYfN_s08g',
@@ -23,6 +23,12 @@ export const Route = createRootRoute({
       { title: translateText('generated.inline.0614_polity_f147ffe2') },
     ],
     links: [
+      { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+      { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
+      {
+        rel: 'stylesheet',
+        href: 'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,500;6..72,600;6..72,700&display=swap',
+      },
       { rel: 'stylesheet', href: stylesHref },
       { rel: 'manifest', href: '/manifest.json' },
       { rel: 'icon', href: '/favicon.ico', sizes: 'any' },

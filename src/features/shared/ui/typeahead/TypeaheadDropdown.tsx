@@ -37,7 +37,7 @@ export function TypeaheadDropdown({
     return (
       <div
         className={cn(
-          'bg-popover text-muted-foreground rounded-md border p-4 text-center text-sm shadow-lg',
+          'bg-popover text-muted-foreground civic-motion-popover rounded-md border p-4 text-center text-sm shadow-[var(--shadow-floating)]',
           className
         )}
       >
@@ -50,7 +50,7 @@ export function TypeaheadDropdown({
     return (
       <div
         className={cn(
-          'bg-popover text-muted-foreground rounded-md border p-4 text-center text-sm shadow-lg',
+          'bg-popover text-muted-foreground civic-motion-popover rounded-md border p-4 text-center text-sm shadow-[var(--shadow-floating)]',
           className
         )}
       >
@@ -63,7 +63,10 @@ export function TypeaheadDropdown({
 
   return (
     <div
-      className={cn('bg-popover max-h-80 overflow-y-auto rounded-md border shadow-lg', className)}
+      className={cn(
+        'bg-popover civic-motion-popover max-h-80 overflow-y-auto rounded-md border shadow-[var(--shadow-floating)]',
+        className
+      )}
     >
       {TYPEAHEAD_ENTITY_ORDER.map(entityType => {
         const items = grouped[entityType];
@@ -75,7 +78,7 @@ export function TypeaheadDropdown({
 
         return (
           <div key={entityType}>
-            <div className="bg-popover/95 sticky top-0 z-10 flex items-center gap-2 border-b px-3 py-1.5 backdrop-blur">
+            <div className="sticky top-0 z-10 flex items-center gap-2 border-b bg-[var(--surface-overlay)] px-3 py-1.5 backdrop-blur">
               <Icon className="text-muted-foreground h-3.5 w-3.5" />
               <span className="text-muted-foreground text-xs font-semibold uppercase">
                 {TYPEAHEAD_ENTITY_GROUP_LABELS[entityType]}

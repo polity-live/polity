@@ -10,6 +10,7 @@ import {
   EmptyTitle,
 } from '@/features/shared/ui/ui/empty';
 import { Spinner } from '@/features/shared/ui/ui/spinner';
+import { getBadgeToneClasses } from '@/features/shared/theme';
 import { cn } from '@/features/shared/utils/utils';
 
 interface EmptyStateProps {
@@ -68,7 +69,7 @@ export function ErrorState({
 }: ErrorStateProps) {
   return (
     <EmptyState
-      className={cn('border-destructive/30 bg-destructive/5', className)}
+      className={cn(getBadgeToneClasses('danger'), className)}
       icon={<AlertCircle className="size-5" />}
       title={title}
       description={description}
@@ -78,14 +79,11 @@ export function ErrorState({
 }
 
 const noticeVariantClasses = {
-  default: 'border-border bg-muted/40 text-foreground',
-  info: 'border-sky-200 bg-sky-50 text-sky-950 dark:border-sky-900/60 dark:bg-sky-950/30 dark:text-sky-100',
-  success:
-    'border-emerald-200 bg-emerald-50 text-emerald-950 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-100',
-  warning:
-    'border-amber-200 bg-amber-50 text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100',
-  destructive:
-    'border-destructive/30 bg-destructive/10 text-destructive dark:border-destructive/40',
+  default: 'border-border bg-[var(--surface)] text-foreground',
+  info: getBadgeToneClasses('info'),
+  success: getBadgeToneClasses('success'),
+  warning: getBadgeToneClasses('warning'),
+  destructive: getBadgeToneClasses('danger'),
 } as const;
 
 const noticeIcons = {

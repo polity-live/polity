@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Slot } from '@radix-ui/react-slot';
 
 import { cn } from '@/features/shared/utils/utils.ts';
+import { getMotionPreset } from '@/features/shared/theme';
 
 type CardProps = React.ComponentPropsWithoutRef<'div'> & {
   asChild?: boolean;
@@ -32,26 +33,31 @@ type CardProps = React.ComponentPropsWithoutRef<'div'> & {
 
 const cardSurfaceClasses: Record<NonNullable<CardProps['surface']>, string> = {
   default: '',
-  muted: 'bg-muted/50',
-  mutedSubtle: 'bg-muted/20',
+  muted: 'bg-[var(--surface-muted)]',
+  mutedSubtle: 'bg-[var(--surface)]',
   background: 'bg-background',
-  backgroundSoft: 'bg-background/90',
+  backgroundSoft: 'bg-[var(--surface-overlay)]',
   primarySoft: 'border-primary/20 bg-primary/5',
   primaryStrong: 'border-primary/50 border-2 bg-primary/5',
-  infoSoft: 'border-blue-500/50 bg-blue-500/5',
-  successSoft: 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/50',
-  blueSoft: 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/50',
-  graySoft: 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50',
-  purpleSoft: 'border-purple-200 bg-purple-50 dark:border-purple-800 dark:bg-purple-950/50',
+  infoSoft:
+    'border-[var(--badge-info-border)] bg-[var(--badge-info-bg)] text-[var(--badge-info-fg)]',
+  successSoft:
+    'border-[var(--badge-success-border)] bg-[var(--badge-success-bg)] text-[var(--badge-success-fg)]',
+  blueSoft:
+    'border-[var(--entity-user-border)] bg-[var(--entity-user-bg)] text-[var(--entity-user-fg)]',
+  graySoft:
+    'border-[var(--badge-neutral-border)] bg-[var(--badge-neutral-bg)] text-[var(--badge-neutral-fg)]',
+  purpleSoft:
+    'border-[var(--entity-amendment-border)] bg-[var(--entity-amendment-bg)] text-[var(--entity-amendment-fg)]',
   emeraldSelected:
-    'border-emerald-500 bg-emerald-50/50 ring-2 ring-emerald-500/20 ring-offset-2 dark:border-emerald-400 dark:bg-emerald-950/20 dark:ring-emerald-400/25 dark:ring-offset-gray-900',
+    'border-[var(--badge-success-border)] bg-[var(--badge-success-bg)] ring-2 ring-[var(--badge-success-border)] ring-offset-2',
   warmGradient:
-    'border-2 bg-gradient-to-br from-yellow-100 to-orange-100 dark:from-yellow-900/40 dark:to-orange-900/50',
+    'border-2 border-[var(--entity-event-border)] bg-[image:var(--entity-event-gradient)]',
   indigoGradient:
-    'border-2 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/50',
-  subtleGradient: 'border-border/70 from-background to-muted/20 bg-gradient-to-b',
-  skyPanel: 'bg-background/80 border-sky-500/20',
-  search: 'rounded-xl border-gray-100 shadow-sm dark:border-gray-800',
+    'border-2 border-[var(--entity-amendment-border)] bg-[image:var(--entity-amendment-gradient)]',
+  subtleGradient: 'border-border/70 from-background to-[var(--surface)] bg-gradient-to-b',
+  skyPanel: 'bg-background/80 border-[var(--badge-info-border)]',
+  search: 'rounded-lg border-border shadow-[var(--shadow-panel)]',
 };
 
 const cardBorderClasses: Record<NonNullable<CardProps['borderStyle']>, string> = {
@@ -64,15 +70,16 @@ const cardBorderClasses: Record<NonNullable<CardProps['borderStyle']>, string> =
 const cardElevationClasses: Record<NonNullable<CardProps['elevation']>, string> = {
   default: '',
   none: 'shadow-none',
-  lg: 'shadow-lg',
-  ringPrimary: 'border-primary ring-primary/20 border-2 shadow-lg ring-2',
-  ringSuccess: 'ring-2 ring-emerald-500/20 ring-offset-2',
+  lg: 'shadow-[var(--shadow-card)]',
+  ringPrimary: 'border-primary ring-primary/20 border-2 shadow-[var(--shadow-card)] ring-2',
+  ringSuccess: 'ring-2 ring-[var(--badge-success-border)] ring-offset-2',
 };
 
 const cardInteractiveClasses: Record<NonNullable<CardProps['interactive']>, string> = {
   default: '',
-  shadow: 'transition-shadow hover:shadow-lg',
-  lift: 'transition-all duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg',
+  shadow:
+    'transition-shadow duration-[var(--motion-duration-base)] hover:shadow-[var(--shadow-card)]',
+  lift: 'civic-motion-hover-lift hover:border-primary/40',
   accent: 'hover:bg-accent',
 };
 
@@ -96,7 +103,8 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
       <Comp
         ref={ref}
         className={cn(
-          'bg-card text-card-foreground rounded-lg border shadow-sm',
+          'bg-card text-card-foreground rounded-lg border shadow-[var(--shadow-panel)]',
+          getMotionPreset('colors'),
           cardSurfaceClasses[surface],
           cardBorderClasses[borderStyle],
           cardElevationClasses[elevation],

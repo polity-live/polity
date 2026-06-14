@@ -3,6 +3,7 @@ import type { ComponentType, ReactNode } from 'react';
 import { X } from 'lucide-react';
 
 import { Button } from '@/features/shared/ui/ui/button';
+import { getMotionPreset } from '@/features/shared/theme';
 import { cn } from '@/features/shared/utils/utils';
 
 type NavigationButtonSize = 'default' | 'small';
@@ -28,7 +29,7 @@ export function NavigationIconToggleButton<TValue extends string>({
     <Button
       variant={isActive ? 'default' : 'ghost'}
       size="icon"
-      className={cn('h-8 w-8', size === 'small' && 'h-6 w-6')}
+      className={cn('h-8 w-8', getMotionPreset('press'), size === 'small' && 'h-6 w-6')}
       onClick={onClick}
       title={title}
     >
@@ -55,7 +56,8 @@ export function FloatingNavigationButton({
       variant="default"
       size="icon"
       className={cn(
-        'fixed bottom-6 z-50 h-14 w-14 rounded-full shadow-lg transition-all duration-300 hover:scale-110',
+        'fixed bottom-6 z-50 h-14 w-14 rounded-full shadow-[var(--shadow-floating)]',
+        getMotionPreset('hoverLift'),
         side === 'left' ? 'left-6' : 'right-6'
       )}
       onMouseEnter={onExpand}
@@ -81,7 +83,8 @@ export function NavigationCloseButton({
       variant="outline"
       size="icon"
       className={cn(
-        'absolute top-6 z-50 h-10 w-10 rounded-full shadow-md',
+        'absolute top-6 z-50 h-10 w-10 rounded-full shadow-[var(--shadow-card)]',
+        getMotionPreset('press'),
         side === 'left' ? 'left-6' : 'right-6',
         className
       )}

@@ -53,14 +53,20 @@ export function StatsBar({
 
   return (
     <div className={cn('mb-6', className)}>
-      <div className="flex flex-wrap items-center justify-center gap-8 text-center">
+      <div className="flex flex-wrap items-center justify-center gap-3 text-center sm:gap-4">
         {visibleItems.map((item, index) => {
           const labelText = typeof item.label === 'string' ? item.label : undefined;
           const shouldAnimate = showAnimation && labelText === animationTargetLabel;
 
           return (
-            <div key={index} className={cn('relative min-w-20', itemClassName)}>
-              <div className={cn('text-2xl font-bold', shouldAnimate && 'animate-flash-green')}>
+            <div
+              key={index}
+              className={cn(
+                'bg-card relative min-w-24 rounded-md border px-4 py-3 shadow-sm',
+                itemClassName
+              )}
+            >
+              <div className={cn('text-2xl font-semibold', shouldAnimate && 'animate-flash-green')}>
                 {item.value}
                 {item.unit}
               </div>

@@ -7,7 +7,7 @@ function Empty({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot="empty"
       className={cn(
-        'flex min-h-40 flex-col items-center justify-center gap-3 rounded-md border border-dashed p-8 text-center',
+        'text-foreground border-border flex min-h-40 flex-col items-center justify-center gap-3 rounded-md border border-dashed bg-[var(--surface)] p-8 text-center shadow-sm',
         className
       )}
       {...props}
@@ -30,7 +30,7 @@ function EmptyIcon({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot="empty-icon"
       className={cn(
-        'bg-muted text-muted-foreground flex size-10 items-center justify-center rounded-md',
+        'bg-card text-muted-foreground flex size-10 items-center justify-center rounded-md border shadow-sm',
         className
       )}
       {...props}
@@ -39,7 +39,9 @@ function EmptyIcon({ className, ...props }: React.ComponentProps<'div'>) {
 }
 
 function EmptyTitle({ className, ...props }: React.ComponentProps<'h3'>) {
-  return <h3 data-slot="empty-title" className={cn('text-sm font-medium', className)} {...props} />;
+  return (
+    <h3 data-slot="empty-title" className={cn('text-sm font-semibold', className)} {...props} />
+  );
 }
 
 function EmptyDescription({ className, ...props }: React.ComponentProps<'p'>) {

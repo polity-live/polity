@@ -9,6 +9,7 @@ import {
   type TypeaheadItem,
 } from '@/features/shared/logic/typeaheadHelpers';
 import { ENTITY_COLORS } from '@/features/shared/utils/entity-colors';
+import { getEntityToneClasses, type EntityTone } from '@/features/shared/theme';
 import { cn } from '@/features/shared/utils/utils';
 import { getHashtagGradient } from '@/features/shared/logic/hashtagHelpers';
 import { Hash } from 'lucide-react';
@@ -53,6 +54,7 @@ export function TypeaheadResultCard({
 }: TypeaheadResultCardProps) {
   const Icon = getEntityIcon(item.entityType);
   const colors = ENTITY_COLORS[item.entityType as keyof typeof ENTITY_COLORS];
+  const toneClasses = getEntityToneClasses(item.entityType as EntityTone);
 
   const handleMouseDown = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -62,8 +64,8 @@ export function TypeaheadResultCard({
     <button
       type="button"
       className={cn(
-        'flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors',
-        isSelected ? 'bg-accent' : 'hover:bg-accent/50'
+        'flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-[color,background-color,box-shadow,transform] duration-[var(--motion-duration-fast)]',
+        isSelected ? cn('translate-x-0.5 shadow-sm', toneClasses.surface) : toneClasses.typeaheadRow
       )}
       onMouseDown={handleMouseDown}
       onClick={onClick}
@@ -81,7 +83,7 @@ export function TypeaheadResultCard({
           <span className="truncate text-sm font-medium">
             <HighlightedText text={item.label} query={query} />
           </span>
-          <Badge variant="outline" className={cn('shrink-0 text-[10px]', colors?.badgeBg)}>
+          <Badge variant="outline" className={cn('shrink-0 text-[10px]', toneClasses.badge)}>
             {TYPEAHEAD_ENTITY_LABELS[item.entityType]}
           </Badge>
         </div>

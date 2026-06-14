@@ -3,7 +3,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import { CountBadge, StatusBadge, VisibilityBadge } from '../StatusBadges';
+import { CountBadge, EntityBadge, StatusBadge, VisibilityBadge } from '../StatusBadges';
 
 describe('StatusBadges', () => {
   it('maps common statuses to badge text', () => {
@@ -23,5 +23,11 @@ describe('StatusBadges', () => {
     expect(screen.getByText('4')).toBeTruthy();
     expect(screen.getByText('members')).toBeTruthy();
     expect(screen.getByText('Private')).toBeTruthy();
+  });
+
+  it('renders token-backed entity badges without changing the public badge API', () => {
+    render(<EntityBadge entityType="blog">Blog</EntityBadge>);
+
+    expect(screen.getByText('Blog').className).toContain('--entity-blog-bg');
   });
 });

@@ -96,7 +96,7 @@ export function DataTableView<TData>({
         </div>
       ) : null}
 
-      <div className="bg-card overflow-hidden rounded-md border">
+      <div className="bg-card overflow-hidden rounded-md border shadow-[var(--shadow-panel)]">
         <Table className={tableClassName}>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup: any) => (

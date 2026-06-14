@@ -2,38 +2,28 @@ import type { ComponentProps, ComponentType, ReactNode } from 'react';
 
 import { AlertCircle, Flag } from 'lucide-react';
 import { Badge } from '@/features/shared/ui/ui/badge';
+import {
+  getBadgeToneClasses,
+  getEntityToneClasses,
+  getSemanticToneClasses,
+  type EntityTone,
+  type SemanticTone,
+} from '@/features/shared/theme';
 import { cn } from '@/features/shared/utils/utils';
 
-export type BadgeTone =
-  | 'neutral'
-  | 'info'
-  | 'success'
-  | 'warning'
-  | 'destructive'
-  | 'accent'
-  | 'outline';
+export type BadgeTone = SemanticTone;
 
-const toneClasses: Record<BadgeTone, string> = {
-  neutral: 'border-transparent bg-muted text-muted-foreground',
-  info: 'border-transparent bg-sky-100 text-sky-900 dark:bg-sky-900/40 dark:text-sky-100',
-  success:
-    'border-transparent bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-100',
-  warning:
-    'border-transparent bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100',
-  destructive: 'border-transparent bg-destructive/10 text-destructive dark:bg-destructive/20',
-  accent: 'border-transparent bg-primary/10 text-primary',
-  outline: 'bg-background text-foreground',
-};
+const toneClasses = Object.fromEntries(
+  (
+    ['neutral', 'info', 'success', 'warning', 'danger', 'destructive', 'accent', 'outline'] as const
+  ).map(tone => [tone, getSemanticToneClasses(tone).badge])
+) as Record<BadgeTone, string>;
 
-const dotToneClasses: Record<BadgeTone, string> = {
-  neutral: 'bg-muted-foreground',
-  info: 'bg-sky-500',
-  success: 'bg-emerald-500',
-  warning: 'bg-amber-500',
-  destructive: 'bg-destructive',
-  accent: 'bg-primary',
-  outline: 'bg-muted-foreground',
-};
+const dotToneClasses = Object.fromEntries(
+  (
+    ['neutral', 'info', 'success', 'warning', 'danger', 'destructive', 'accent', 'outline'] as const
+  ).map(tone => [tone, getSemanticToneClasses(tone).dot])
+) as Record<BadgeTone, string>;
 
 function statusTone(status: string | null | undefined): BadgeTone {
   const value = String(status ?? '').toLowerCase();
@@ -75,7 +65,11 @@ function BaseStatusBadge({
   return (
     <Badge
       variant={tone === 'outline' ? 'outline' : 'secondary'}
-      className={cn('gap-1 whitespace-nowrap', toneClasses[tone], className)}
+      className={cn(
+        'gap-1 whitespace-nowrap shadow-[0_1px_0_rgb(255_255_255/0.35)]',
+        toneClasses[tone],
+        className
+      )}
       {...props}
     >
       {children}
@@ -96,8 +90,18 @@ export function StatusBadge({ status, tone, children, ...props }: StatusBadgePro
   );
 }
 
-export function EntityBadge(props: StatusBadgeProps) {
-  return <StatusBadge tone={props.tone ?? 'info'} {...props} />;
+interface EntityBadgeProps extends StatusBadgeProps {
+  entityType?: EntityTone;
+}
+
+export function EntityBadge({ entityType, className, tone, ...props }: EntityBadgeProps) {
+  return (
+    <StatusBadge
+      tone={tone ?? 'info'}
+      className={cn(entityType && getEntityToneClasses(entityType).badge, className)}
+      {...props}
+    />
+  );
 }
 
 export function RoleBadge(props: StatusBadgeProps) {
@@ -391,22 +395,20 @@ export type BadgeControlTone =
 const badgeControlToneClasses: Record<BadgeControlTone, string> = {
   ...toneClasses,
   primary: 'border-transparent bg-primary text-primary-foreground',
-  infoStrong: 'border-transparent bg-blue-500 text-white',
-  successStrong: 'border-transparent bg-green-600 text-white',
-  successSoft: 'bg-green-50 text-green-800 dark:bg-green-950/40 dark:text-green-200',
-  successTint: 'border-transparent bg-green-500/15 text-green-700 dark:text-green-400',
+  infoStrong: getBadgeToneClasses('info'),
+  successStrong: 'border-transparent bg-success text-success-foreground',
+  successSoft: getBadgeToneClasses('success'),
+  successTint: getBadgeToneClasses('success'),
   mutedContrast: 'border-muted bg-muted/50 text-foreground hover:opacity-100',
-  successPale: 'border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-50',
-  dangerPale: 'border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-50',
-  warningPale: 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-50',
-  skyTint: 'border-0 bg-sky-500/15 text-sky-700 dark:text-sky-300',
-  emeraldTint: 'border-0 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
-  gradientSuccess:
-    'border-0 bg-gradient-to-r from-emerald-500/20 via-green-500/20 to-lime-500/20 text-emerald-800 dark:text-emerald-200',
+  successPale: getBadgeToneClasses('success'),
+  dangerPale: getBadgeToneClasses('danger'),
+  warningPale: getBadgeToneClasses('warning'),
+  skyTint: getBadgeToneClasses('info'),
+  emeraldTint: getBadgeToneClasses('success'),
+  gradientSuccess: getBadgeToneClasses('success'),
   gradientNeutral:
-    'border-0 bg-gradient-to-r from-slate-500/20 via-zinc-500/20 to-stone-500/20 text-slate-800 dark:text-slate-200',
-  gradientInfo:
-    'border-0 bg-gradient-to-r from-cyan-500/20 via-sky-500/20 to-blue-500/20 text-sky-800 dark:text-sky-200',
+    'border-[var(--badge-neutral-border)] bg-[var(--badge-neutral-bg)] text-[var(--badge-neutral-fg)]',
+  gradientInfo: getBadgeToneClasses('info'),
 };
 
 interface BadgeControlProps extends ComponentProps<typeof Badge> {
