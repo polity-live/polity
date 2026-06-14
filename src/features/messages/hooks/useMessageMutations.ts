@@ -42,7 +42,7 @@ export function useMessageMutations() {
         content,
         conversation_id: conversationId,
         context_json: options?.contextJson ?? '[]',
-        deleted_at: 0,
+        deleted_at: null,
       });
 
       // Notify all other participants — best-effort
@@ -86,7 +86,7 @@ export function useMessageMutations() {
         content,
         conversation_id: conversationId,
         context_json: options?.contextJson ?? '[]',
-        deleted_at: 0,
+        deleted_at: null,
       });
 
       return { success: true, messageId };
@@ -147,7 +147,7 @@ export function useMessageMutations() {
           conversation_id: conversationId,
           user_id: participantId,
           last_read_at: 0,
-          left_at: 0,
+          left_at: null,
         });
       }
 
@@ -202,7 +202,7 @@ export function useMessageMutations() {
         conversation_id: conversationId,
         user_id: currentUserId,
         last_read_at: 0,
-        left_at: 0,
+        left_at: null,
       });
 
       await actions.addParticipant({
@@ -211,7 +211,7 @@ export function useMessageMutations() {
         conversation_id: conversationId,
         user_id: ARIA_KAI_USER_ID,
         last_read_at: now,
-        left_at: 0,
+        left_at: null,
       });
 
       await actions.sendAssistantMessage({
@@ -219,7 +219,7 @@ export function useMessageMutations() {
         content: ARIA_KAI_WELCOME_MESSAGE,
         conversation_id: conversationId,
         context_json: '[]',
-        deleted_at: 0,
+        deleted_at: null,
       });
 
       toast.success(translateText('generated.inline.0739_ai_conversation_created_9ea58896'));

@@ -17,6 +17,10 @@ const messageStartSchema = z
   })
   .nullable();
 
+function isUnsetTimestamp({ or, cmp }: any, field: string) {
+  return or(cmp(field, 'IS', null), cmp(field, 0));
+}
+
 function conversationAccessFilter<T>(q: T, userID: string | undefined): T {
   const query = q as any;
 
@@ -29,7 +33,9 @@ function conversationAccessFilter<T>(q: T, userID: string | undefined): T {
       cmp('assistant_for_user_id', userID),
       cmp('requested_by_id', userID),
       exists('participants', (participant: any) =>
-        participant.where('user_id', userID).where('left_at', 'IS', null)
+        participant
+          .where('user_id', userID)
+          .where((operators: any) => isUnsetTimestamp(operators, 'left_at'))
       )
     )
   ) as T;
@@ -52,7 +58,8 @@ export const messageQueries = {
     ({ args: { conversation_id }, ctx: { userID } }) =>
       zql.message
         .where('conversation_id', conversation_id)
-        .whereExists('conversation', q => conversationAccessFilter(q, userID))
+        .where((operators: any) => isUnsetTimestamp(operators, 'deleted_at'))
+        .whereExists('conversation', (q: any) => conversationAccessFilter(q, userID))
         .related('sender')
         .orderBy('created_at', 'asc')
   ),
@@ -68,7 +75,7 @@ export const messageQueries = {
       const direction = dir === 'forward' ? 'asc' : 'desc';
       let q: any = zql.message
         .where('conversation_id', conversationId)
-        .where('deleted_at', 'IS', null)
+        .where((operators: any) => isUnsetTimestamp(operators, 'deleted_at'))
         .whereExists('conversation', (conversationQuery: any) =>
           conversationAccessFilter(conversationQuery, userID)
         )
@@ -97,8 +104,8 @@ export const messageQueries = {
     ({ args: { conversation_id, limit }, ctx: { userID } }) =>
       zql.message
         .where('conversation_id', conversation_id)
-        .where('deleted_at', 'IS', null)
-        .whereExists('conversation', q => conversationAccessFilter(q, userID))
+        .where((operators: any) => isUnsetTimestamp(operators, 'deleted_at'))
+        .whereExists('conversation', (q: any) => conversationAccessFilter(q, userID))
         .related('sender')
         .orderBy('created_at', 'desc')
         .orderBy('id', 'desc')
@@ -111,6 +118,7 @@ export const messageQueries = {
     ({ args: { conversation_id }, ctx: { userID } }) =>
       zql.message
         .where('conversation_id', conversation_id)
+        .where((operators: any) => isUnsetTimestamp(operators, 'deleted_at'))
         .where('is_read', false)
         .whereExists('conversation', q => conversationAccessFilter(q, userID))
   ),
@@ -180,7 +188,9 @@ export const messageQueries = {
               )
             ),
             exists('messages', (message: any) =>
-              message.where('content', 'ILIKE', `%${normalizedQuery}%`)
+              message
+                .where((operators: any) => isUnsetTimestamp(operators, 'deleted_at'))
+                .where('content', 'ILIKE', `%${normalizedQuery}%`)
             )
           )
         );
