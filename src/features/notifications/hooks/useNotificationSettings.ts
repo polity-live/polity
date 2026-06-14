@@ -19,11 +19,11 @@ import {
  * @param _userId — ignored; the facade derives user from Zero auth context.
  */
 export function useNotificationSettings(_userId?: string) {
+  void _userId;
+
   const { settings: rawSettings, isLoading } = useNotificationState();
-  const {
-    updateSettings: facadeUpdateSettings,
-    createSettings: facadeCreateSettings,
-  } = useNotificationActions();
+  const { updateSettings: facadeUpdateSettings, createSettings: facadeCreateSettings } =
+    useNotificationActions();
   const [isUpdating, setIsUpdating] = useState(false);
 
   // Get the settings or use defaults
@@ -91,14 +91,22 @@ export function useNotificationSettings(_userId?: string) {
         delivery_settings?: DeliverySettings;
         timeline_settings?: TimelineSettings;
       } = {};
-      if (updates.groupNotifications !== undefined) dbUpdates.group_notifications = updates.groupNotifications;
-      if (updates.eventNotifications !== undefined) dbUpdates.event_notifications = updates.eventNotifications;
-      if (updates.amendmentNotifications !== undefined) dbUpdates.amendment_notifications = updates.amendmentNotifications;
-      if (updates.blogNotifications !== undefined) dbUpdates.blog_notifications = updates.blogNotifications;
-      if (updates.todoNotifications !== undefined) dbUpdates.todo_notifications = updates.todoNotifications;
-      if (updates.socialNotifications !== undefined) dbUpdates.social_notifications = updates.socialNotifications;
-      if (updates.deliverySettings !== undefined) dbUpdates.delivery_settings = updates.deliverySettings;
-      if (updates.timelineSettings !== undefined) dbUpdates.timeline_settings = updates.timelineSettings;
+      if (updates.groupNotifications !== undefined)
+        dbUpdates.group_notifications = updates.groupNotifications;
+      if (updates.eventNotifications !== undefined)
+        dbUpdates.event_notifications = updates.eventNotifications;
+      if (updates.amendmentNotifications !== undefined)
+        dbUpdates.amendment_notifications = updates.amendmentNotifications;
+      if (updates.blogNotifications !== undefined)
+        dbUpdates.blog_notifications = updates.blogNotifications;
+      if (updates.todoNotifications !== undefined)
+        dbUpdates.todo_notifications = updates.todoNotifications;
+      if (updates.socialNotifications !== undefined)
+        dbUpdates.social_notifications = updates.socialNotifications;
+      if (updates.deliverySettings !== undefined)
+        dbUpdates.delivery_settings = updates.deliverySettings;
+      if (updates.timelineSettings !== undefined)
+        dbUpdates.timeline_settings = updates.timelineSettings;
 
       setIsUpdating(true);
       try {
@@ -248,7 +256,16 @@ export function useNotificationSettings(_userId?: string) {
    * Toggle a specific boolean setting
    */
   const toggleSetting = useCallback(
-    <T extends 'groupNotifications' | 'eventNotifications' | 'amendmentNotifications' | 'blogNotifications' | 'todoNotifications' | 'socialNotifications' | 'deliverySettings'>(
+    <
+      T extends
+        | 'groupNotifications'
+        | 'eventNotifications'
+        | 'amendmentNotifications'
+        | 'blogNotifications'
+        | 'todoNotifications'
+        | 'socialNotifications'
+        | 'deliverySettings',
+    >(
       category: T,
       key: keyof NotificationSettings[T]
     ) => {

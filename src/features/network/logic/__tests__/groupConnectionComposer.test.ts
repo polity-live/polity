@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -159,7 +160,7 @@ describe('groupConnectionComposer presets', () => {
     ).toBe(true);
   });
 
-  it('stores mutual rights as two holder-to-scope grants', () => {
+  it(featureThemeClassName('networkGroupConnectionComposerThemedGradientSurface'), () => {
     const payload = buildCanonicalGroupConnectionPayload({
       currentGroupId: 'B1',
       otherGroupId: 'H1',

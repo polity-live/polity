@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { useMemo, type ReactNode } from 'react';
 import { Link } from '@tanstack/react-router';
 import {
@@ -20,7 +21,7 @@ import type { DraftWorkflowStep } from './useWorkflowEditor';
 import type { NormalizedGroupRelationship, NetworkGroupEntity } from '../types/network.types';
 import type { WorkflowWithStepsRow } from '@/zero/network/queries';
 import { GroupRelationshipNameTag } from '../ui/GroupRelationshipFields';
-import { RightBadge } from '../ui/RightBadge';
+import { RightBadge } from '@/features/shared/ui/status';
 import { ArrowRight, Clock, Pencil, Plus, Send, Trash2, Workflow } from 'lucide-react';
 
 interface AvailableGroup {
@@ -78,9 +79,9 @@ function getSectionCardClasses(section: 'incoming' | 'outgoing' | 'active') {
     case 'incoming':
       return 'border-primary/20 bg-primary/5';
     case 'outgoing':
-      return 'border-amber-500/20 bg-amber-500/5';
+      return featureThemeClassName('networkUseManageWorkflowsTabWarningSurface');
     default:
-      return 'border-emerald-500/20 bg-emerald-500/5';
+      return featureThemeClassName('networkUseManageWorkflowsTabSuccessSurface');
   }
 }
 
@@ -502,8 +503,11 @@ export function useManageWorkflowsTabViewModel({
       </div>
 
       {!hasVisibleTables ? (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+        <Card borderStyle="dashed">
+          <CardContent
+            align="center"
+            className="flex flex-col items-center justify-center gap-3 py-12"
+          >
             <Workflow className="text-muted-foreground h-8 w-8" />
             <div className="space-y-1">
               <p className="font-medium">{t('features.network.workflows.emptyTitle')}</p>

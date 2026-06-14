@@ -25,7 +25,7 @@ interface UsePushSubscriptionReturn {
  * const { isSubscribed, subscribe, unsubscribe, permission } = usePushSubscription();
  *
  * if (permission === 'default') {
- *   <button onClick={subscribe}>Enable Notifications</button>
+ *   Use the shared Button primitive to call subscribe().
  * }
  * ```
  */
@@ -50,9 +50,7 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
   // Check if push notifications are supported
   useEffect(() => {
     const supported =
-      'serviceWorker' in navigator &&
-      'PushManager' in window &&
-      'Notification' in window;
+      'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 
     setIsSupported(supported);
 
@@ -148,9 +146,11 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
           });
 
           // Wait for it to become active
-          if (swRegistration.installing) {
-            await new Promise<void>((resolve) => {
-              swRegistration!.installing!.addEventListener('statechange', function (e) {
+          const installingWorker = swRegistration.installing;
+
+          if (installingWorker) {
+            await new Promise<void>(resolve => {
+              installingWorker.addEventListener('statechange', function (e) {
                 if ((e.target as ServiceWorker).state === 'activated') {
                   resolve();
                 }
@@ -209,7 +209,9 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
       setError(null);
     } catch (err: unknown) {
       const errorMsg =
-        err instanceof Error ? err.message : tRef.current('components.pushNotifications.errors.subscribeFailed');
+        err instanceof Error
+          ? err.message
+          : tRef.current('components.pushNotifications.errors.subscribeFailed');
       setError(errorMsg);
       setIsSubscribed(false);
       throw err;
@@ -247,9 +249,7 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
         await subscription.unsubscribe();
 
         // Remove matching subscription record(s) from Zero
-        const matchingSubs = (pushSubscriptionsData || []).filter(
-          (sub) => sub.endpoint === endpoint
-        );
+        const matchingSubs = (pushSubscriptionsData || []).filter(sub => sub.endpoint === endpoint);
 
         for (const sub of matchingSubs) {
           await unregisterPushSubscription({ id: sub.id });
@@ -260,7 +260,9 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
       setError(null);
     } catch (err: unknown) {
       setError(
-        err instanceof Error ? err.message : tRef.current('components.pushNotifications.errors.unsubscribeFailed')
+        err instanceof Error
+          ? err.message
+          : tRef.current('components.pushNotifications.errors.unsubscribeFailed')
       );
     } finally {
       setIsLoading(false);

@@ -220,13 +220,13 @@ export function CreateAgendaItemFormView({ controller }: CreateAgendaItemFormVie
 
               <CarouselItem>
                 <div className="p-4">
-                  <Card className="overflow-hidden border-2 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/50">
+                  <Card surface="indigoGradient" className="overflow-hidden">
                     <CardHeader>
                       <div className="mb-2 flex items-center justify-between">
-                        <BadgeControl variant="default" className="text-xs">
+                        <BadgeControl variant="default" size="xs">
                           {translateText('generated.inline.0040_agenda_item_0a13737b')}
                         </BadgeControl>
-                        <BadgeControl variant="secondary" className="text-xs">
+                        <BadgeControl variant="secondary" size="xs">
                           {formData.type}
                         </BadgeControl>
                       </div>

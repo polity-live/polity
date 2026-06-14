@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
@@ -17,7 +18,7 @@ import {
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import type { NormalizedGroupRelationship } from '../types/network.types';
 import type { HierarchyConflictUser } from '../hooks/useHierarchyLinkConflicts';
 import { useGroupConflictPreflight } from '@/features/groups/hooks/useGroupConflictPreflight';
@@ -215,8 +216,8 @@ export function HierarchyConflictDialog({
             <span>{translateText('generated.inline.0797_konflikte_werden_geprueft_d2e75312')}</span>
           </div>
         ) : !hasStructuredConflicts && !hasFallbackConflictUsers ? (
-          <div className="flex items-center gap-2 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm">
-            <Check className="h-4 w-4 shrink-0 text-emerald-600" />
+          <div className={featureThemeClassName('networkHierarchyConflictDialogSuccessBadge')}>
+            <Check className={featureThemeClassName('networkHierarchyConflictDialogSuccessIcon')} />
             <span>{t('common.network.linkPossibleDescription')}</span>
           </div>
         ) : (

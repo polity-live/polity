@@ -45,7 +45,7 @@ export default meta;
 type Story = StoryObj;
 
 export const BlogListTabDefault: Story = {
-  render: (args) => {
+  render: args => {
     const [searchValue, setSearchValue] = React.useState('');
     return (
       <BlogListTab

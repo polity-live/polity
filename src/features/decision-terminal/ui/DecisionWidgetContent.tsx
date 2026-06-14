@@ -1,15 +1,16 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import type { ReactNode } from 'react';
 import { Award, BarChart3, Clock3, Vote } from 'lucide-react';
 import { Skeleton } from '@/features/shared/ui/ui/skeleton';
+import { DecisionResultCompact as ResultCompact } from '@/features/shared/ui/voting';
 import { cn } from '@/features/shared/utils/utils';
 import type { DecisionTerminalWidgetConfig } from '@/zero/preferences';
 import { CandidateBarCompact, VoteBarCompact, type VoteData } from './VoteProgressBar';
 import { CountdownTimer, EndedAgo } from './CountdownTimer';
 import { DecisionTable } from './DecisionTable';
 import { DecisionVoteButton } from './DecisionVoteButton';
-import { ResultCompact } from './ResultBadge';
 import { TrendIndicator } from './TrendIndicator';
 import type { DecisionItem } from './types';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
@@ -99,7 +100,7 @@ function DecisionLink({
 
 function DecisionContextLinks({ decision }: { decision: DecisionItem }) {
   return (
-    <div className="text-muted-foreground mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 font-mono text-[11px]">
+    <div className={featureThemeClassName('decisionterminalDecisionWidgetContentThemedText')}>
       <DecisionLink href={decision.href} className="shrink-0 font-semibold">
         {decision.id}
       </DecisionLink>
@@ -147,7 +148,9 @@ function DecisionMetricsLine({ decision }: { decision: DecisionItem }) {
   if (!parts.length) return null;
 
   return (
-    <div className="text-muted-foreground mt-1 font-mono text-[11px]">{parts.join(' · ')}</div>
+    <div className={featureThemeClassName('decisionterminalDecisionWidgetContentThemedTextAlpha')}>
+      {parts.join(' · ')}
+    </div>
   );
 }
 
@@ -198,7 +201,9 @@ function CompactDecisionLine({
         <DecisionSummaryLine decision={decision} />
         <div className="mt-2 flex items-center gap-2">
           <div className="min-w-0 flex-1">{getDecisionBar(decision)}</div>
-          <span className="text-muted-foreground shrink-0 font-mono text-[11px]">
+          <span
+            className={featureThemeClassName('decisionterminalDecisionWidgetContentThemedTextBeta')}
+          >
             {formatInt(getDecisionTotal(decision))}
           </span>
         </div>
@@ -248,7 +253,11 @@ function TurnoutMonitor({ decisions }: { decisions: DecisionItem[] }) {
               <DecisionLink href={decision.href} className="block truncate text-sm font-medium">
                 {decision.title}
               </DecisionLink>
-              <div className="text-muted-foreground mt-0.5 font-mono text-[11px]">
+              <div
+                className={featureThemeClassName(
+                  'decisionterminalDecisionWidgetContentThemedTextGamma'
+                )}
+              >
                 <DecisionLink href={decision.href}>{decision.id}</DecisionLink> ·{' '}
                 {formatInt(decision.votedCount)} / {formatInt(decision.totalMembers)}
               </div>
@@ -257,7 +266,13 @@ function TurnoutMonitor({ decisions }: { decisions: DecisionItem[] }) {
                 <div
                   className={cn(
                     'h-full rounded-full',
-                    turnout >= 50 ? 'bg-emerald-500' : 'bg-amber-500'
+                    turnout >= 50
+                      ? featureThemeClassName(
+                          'decisionterminalDecisionWidgetContentSuccessBackground'
+                        )
+                      : featureThemeClassName(
+                          'decisionterminalDecisionWidgetContentWarningBackground'
+                        )
                   )}
                   style={{ width: `${Math.min(100, Math.max(0, turnout))}%` }}
                 />
@@ -301,7 +316,11 @@ function ElectionLeaderboard({ decisions }: { decisions: DecisionItem[] }) {
                 <DecisionLink href={decision.href} className="block truncate text-sm font-medium">
                   {decision.title}
                 </DecisionLink>
-                <div className="text-muted-foreground mt-0.5 flex items-center gap-2 font-mono text-[11px]">
+                <div
+                  className={featureThemeClassName(
+                    'decisionterminalDecisionWidgetContentThemedTextDelta'
+                  )}
+                >
                   <DecisionLink href={decision.href}>{decision.id}</DecisionLink>
                   {decision.isIndicationPhase ? (
                     <span className="text-primary font-semibold">
@@ -313,7 +332,11 @@ function ElectionLeaderboard({ decisions }: { decisions: DecisionItem[] }) {
               </div>
               <div className="text-right">
                 <div className="font-mono text-sm font-semibold">{formatInt(top?.value)}</div>
-                <div className="text-muted-foreground truncate text-[11px]">
+                <div
+                  className={featureThemeClassName(
+                    'decisionterminalDecisionWidgetContentThemedTextEpsilon'
+                  )}
+                >
                   {top?.label ?? translateText('generated.inline.0055_no_votes_e32c7ba3')}
                 </div>
               </div>

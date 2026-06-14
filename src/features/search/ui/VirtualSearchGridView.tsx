@@ -33,7 +33,7 @@ interface VirtualSearchGridViewProps {
 
 function SearchCardSkeleton() {
   return (
-    <Card className="h-full overflow-hidden rounded-xl border-gray-100 shadow-sm dark:border-gray-800">
+    <Card surface="search" shape="xl" className="h-full overflow-hidden">
       <div className="bg-muted/80 h-24 animate-pulse p-4">
         <div className="bg-background/70 h-5 w-2/3 rounded" />
         <div className="bg-background/60 mt-2 h-3 w-1/2 rounded" />
@@ -71,7 +71,12 @@ export function VirtualSearchGridView({
     <div className="relative">
       {showNewResults ? (
         <div className="pointer-events-none absolute inset-x-0 top-3 z-20 flex justify-center">
-          <Button className="pointer-events-auto shadow-md" size="sm" onClick={onJumpToTop}>
+          <Button
+            presentation="floatingShadow"
+            className="pointer-events-auto"
+            size="sm"
+            onClick={onJumpToTop}
+          >
             {newResultsLabel}
           </Button>
         </div>

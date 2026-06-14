@@ -18,7 +18,7 @@ interface CommentSortSelectProps {
 
 export function CommentSortSelect({ sortBy, onSortChange, className }: CommentSortSelectProps) {
   const { t } = useTranslation();
-  
+
   return (
     <Select value={sortBy} onValueChange={value => onSortChange(value as CommentSortBy)}>
       <SelectTrigger className={className}>

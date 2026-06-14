@@ -1,12 +1,13 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import type { FormEvent } from 'react';
 import { ArrowRight, LogIn, Mail } from 'lucide-react';
 
 import { FormButton, FormCard, PasswordField, TextField } from '@/features/shared/ui/form';
 import { InlineNotice, Spinner } from '@/features/shared/ui/feedback';
 import { cn } from '@/features/shared/utils/utils';
-import { GoogleIcon } from './GoogleIcon';
+import { GoogleIcon } from '@/features/shared/ui/icons';
 
 interface SignInFormCopy {
   title: string;
@@ -93,7 +94,7 @@ export function SignInFormView({
           descriptionClassName={cn(
             'text-xs',
             showEmailError && 'text-destructive',
-            showEmailSuccess && 'text-emerald-600 dark:text-emerald-400'
+            showEmailSuccess && featureThemeClassName('authNameStepSuccessText')
           )}
           invalid={showEmailError}
           required
@@ -148,7 +149,7 @@ export function SignInFormView({
 
       <FormButton
         type="button"
-        className="mt-4 w-full border border-[#dadce0] bg-white text-[#3c4043] hover:bg-[#f8f9fa] dark:border-[#5f6368] dark:bg-[#202124] dark:text-[#e8eaed] dark:hover:bg-[#303134]"
+        className={featureThemeClassName('authSignInFormContrastBadge')}
         onClick={onGoogleAuth}
         disabled={isLoading}
       >

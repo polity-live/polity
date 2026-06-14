@@ -58,7 +58,7 @@ export function MeetingDetails({
           <BadgeControl variant={status.variant} className={status.className}>
             {status.label}
           </BadgeControl>
-          <BadgeControl variant="outline" className="capitalize">
+          <BadgeControl variant="outline" textTransform="capitalize">
             {formatMeetingType(meetingType)}
           </BadgeControl>
         </div>

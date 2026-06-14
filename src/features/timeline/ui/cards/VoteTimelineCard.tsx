@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { ThumbsUp, ThumbsDown, Clock, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
@@ -77,13 +78,35 @@ function formatTimeRemaining(endTime: Date): string {
  * Status configuration for vote cards
  */
 const STATUS_CONFIG: Record<string, { color: string; bgColor: string; pulse?: boolean }> = {
-  open: { color: 'text-green-600', bgColor: 'bg-green-100 dark:bg-green-900/40' },
-  closing_soon: { color: 'text-yellow-600', bgColor: 'bg-yellow-100 dark:bg-yellow-900/40' },
-  last_hour: { color: 'text-orange-600', bgColor: 'bg-orange-100 dark:bg-orange-900/40' },
-  final_minutes: { color: 'text-red-600', bgColor: 'bg-red-100 dark:bg-red-900/40', pulse: true },
-  passed: { color: 'text-green-600', bgColor: 'bg-green-100 dark:bg-green-900/40' },
-  failed: { color: 'text-red-600', bgColor: 'bg-red-100 dark:bg-red-900/40' },
-  tied: { color: 'text-gray-600', bgColor: 'bg-gray-100 dark:bg-gray-900/40' },
+  open: {
+    color: featureThemeClassName('timelineUseTodoTimelineCardSuccessText'),
+    bgColor: featureThemeClassName('timelineUseTodoTimelineCardSuccessBackground'),
+  },
+  closing_soon: {
+    color: featureThemeClassName('editorEditorHeaderWarningText'),
+    bgColor: featureThemeClassName('timelineUseTodoTimelineCardWarningBackgroundAlpha'),
+  },
+  last_hour: {
+    color: featureThemeClassName('timelineUseTodoTimelineCardWarningText'),
+    bgColor: featureThemeClassName('timelineUseTodoTimelineCardWarningBackground'),
+  },
+  final_minutes: {
+    color: featureThemeClassName('timelineUseTodoTimelineCardDangerText'),
+    bgColor: featureThemeClassName('timelineUseTodoTimelineCardDangerBackground'),
+    pulse: true,
+  },
+  passed: {
+    color: featureThemeClassName('timelineUseTodoTimelineCardSuccessText'),
+    bgColor: featureThemeClassName('timelineUseTodoTimelineCardSuccessBackground'),
+  },
+  failed: {
+    color: featureThemeClassName('timelineUseTodoTimelineCardDangerText'),
+    bgColor: featureThemeClassName('timelineUseTodoTimelineCardDangerBackground'),
+  },
+  tied: {
+    color: featureThemeClassName('timelineVoteTimelineCardNeutralText'),
+    bgColor: featureThemeClassName('timelineElectionTimelineCardNeutralBackground'),
+  },
 };
 
 /**
@@ -124,7 +147,10 @@ export function VoteTimelineCard({ vote, className }: VoteTimelineCardProps) {
   return (
     <TimelineCardBase
       contentType="vote"
-      className={cn(statusConfig.pulse && 'ring-opacity-50 ring-2 ring-red-500', className)}
+      className={cn(
+        statusConfig.pulse && featureThemeClassName('timelineVoteTimelineCardDangerRing'),
+        className
+      )}
       href={agendaHref || fallbackHref}
     >
       <TimelineCardHeader
@@ -144,13 +170,20 @@ export function VoteTimelineCard({ vote, className }: VoteTimelineCardProps) {
             <span
               className={cn(
                 'h-2 w-2 rounded-full',
-                vote.status === 'open' && 'bg-green-500',
-                vote.status === 'closing_soon' && 'bg-yellow-500',
-                vote.status === 'last_hour' && 'bg-orange-500',
-                vote.status === 'final_minutes' && 'animate-pulse bg-red-500',
-                vote.status === 'passed' && 'bg-green-500',
-                vote.status === 'failed' && 'bg-red-500',
-                vote.status === 'tied' && 'bg-gray-500'
+                vote.status === 'open' &&
+                  featureThemeClassName('agendaAgendaVoteSectionSuccessBackground'),
+                vote.status === 'closing_soon' &&
+                  featureThemeClassName('decisionterminalFlashRowWarningBackgroundAlpha'),
+                vote.status === 'last_hour' &&
+                  featureThemeClassName('agendaAgendaVoteSectionWarningBackground'),
+                vote.status === 'final_minutes' &&
+                  featureThemeClassName('timelineVoteTimelineCardDangerBackground'),
+                vote.status === 'passed' &&
+                  featureThemeClassName('agendaAgendaVoteSectionSuccessBackground'),
+                vote.status === 'failed' &&
+                  featureThemeClassName('agendaAgendaVoteSectionDangerBackground'),
+                vote.status === 'tied' &&
+                  featureThemeClassName('timelineUseSwipeGesturesNeutralBackground')
               )}
             />
             {vote.status.replace('_', ' ').toUpperCase()}
@@ -198,7 +231,7 @@ export function VoteTimelineCard({ vote, className }: VoteTimelineCardProps) {
                 </div>
                 <Progress
                   value={vote.indicationSupportPercentage}
-                  className="h-2 opacity-60 [&>div]:bg-blue-400"
+                  className={featureThemeClassName('timelineVoteTimelineCardInfoProgressFill')}
                 />
               </div>
             )}
@@ -217,9 +250,12 @@ export function VoteTimelineCard({ vote, className }: VoteTimelineCardProps) {
                       <span
                         className={cn(
                           'flex items-center gap-0.5 text-xs font-medium',
-                          vote.trend === 'up' && 'text-green-600',
-                          vote.trend === 'down' && 'text-red-600',
-                          vote.trend === 'stable' && 'text-gray-500'
+                          vote.trend === 'up' &&
+                            featureThemeClassName('timelineUseTodoTimelineCardSuccessText'),
+                          vote.trend === 'down' &&
+                            featureThemeClassName('timelineUseTodoTimelineCardDangerText'),
+                          vote.trend === 'stable' &&
+                            featureThemeClassName('timelineReasonDisplayNeutralText')
                         )}
                       >
                         <TrendIcon className="h-3 w-3" />
@@ -230,7 +266,9 @@ export function VoteTimelineCard({ vote, className }: VoteTimelineCardProps) {
                   <span
                     className={cn(
                       'font-medium',
-                      vote.supportPercentage >= 50 ? 'text-green-600' : 'text-red-600'
+                      vote.supportPercentage >= 50
+                        ? featureThemeClassName('timelineUseTodoTimelineCardSuccessText')
+                        : featureThemeClassName('timelineUseTodoTimelineCardDangerText')
                     )}
                   >
                     {vote.supportPercentage}%
@@ -240,8 +278,10 @@ export function VoteTimelineCard({ vote, className }: VoteTimelineCardProps) {
                   value={vote.supportPercentage}
                   className={cn(
                     'h-2.5',
-                    vote.status === 'passed' && '[&>div]:bg-green-500',
-                    vote.status === 'failed' && '[&>div]:bg-red-500'
+                    vote.status === 'passed' &&
+                      featureThemeClassName('timelineTodoTimelineCardSuccessProgressFill'),
+                    vote.status === 'failed' &&
+                      featureThemeClassName('timelineVoteTimelineCardDangerProgressFill')
                   )}
                 />
               </div>
@@ -255,16 +295,22 @@ export function VoteTimelineCard({ vote, className }: VoteTimelineCardProps) {
               {vote.isIndicationPhase && hasIndication ? (
                 <>
                   <span className="flex items-center gap-1">
-                    <ThumbsUp className="h-3 w-3 text-blue-500" />
+                    <ThumbsUp
+                      className={featureThemeClassName('timelineVoteTimelineCardInfoIcon')}
+                    />
                     {vote.indicationSupportCount} *
                   </span>
                   <span className="flex items-center gap-1">
-                    <ThumbsDown className="h-3 w-3 text-blue-400" />
+                    <ThumbsDown
+                      className={featureThemeClassName('timelineVoteTimelineCardInfoIconAlpha')}
+                    />
                     {vote.indicationOpposeCount} *
                   </span>
                   {vote.indicationAbstainCount !== undefined && (
                     <span className="flex items-center gap-1">
-                      <Minus className="h-3 w-3 text-blue-300" />
+                      <Minus
+                        className={featureThemeClassName('timelineVoteTimelineCardInfoIconBeta')}
+                      />
                       {vote.indicationAbstainCount} *
                     </span>
                   )}
@@ -272,11 +318,15 @@ export function VoteTimelineCard({ vote, className }: VoteTimelineCardProps) {
               ) : (
                 <>
                   <span className="flex items-center gap-1">
-                    <ThumbsUp className="h-3 w-3 text-green-600" />
+                    <ThumbsUp
+                      className={featureThemeClassName('timelineVoteTimelineCardSuccessIcon')}
+                    />
                     {vote.supportCount}
                   </span>
                   <span className="flex items-center gap-1">
-                    <ThumbsDown className="h-3 w-3 text-red-600" />
+                    <ThumbsDown
+                      className={featureThemeClassName('timelineVoteTimelineCardDangerIcon')}
+                    />
                     {vote.opposeCount}
                   </span>
                   {vote.abstainCount !== undefined && (
@@ -299,7 +349,7 @@ export function VoteTimelineCard({ vote, className }: VoteTimelineCardProps) {
 
       <TimelineCardActions>
         {vote.hasVoted && (
-          <BadgeControl variant="secondary" className="text-xs">
+          <BadgeControl variant="secondary" size="xs">
             {t('features.timeline.cards.voted')}: {vote.userVote}
           </BadgeControl>
         )}

@@ -7,6 +7,7 @@ import type {
   SupporterMapItem,
 } from '@/features/amendments/logic/supporterDirectory';
 import { SupporterDirectorySection } from '@/features/amendments/ui/SupporterDirectorySection';
+import { Button } from '@/features/shared/ui/ui/button';
 
 const navigateMock = vi.fn();
 
@@ -29,7 +30,7 @@ vi.mock('@/features/amendments/ui/SupporterLocalityMap', () => ({
     <div data-testid="mock-supporter-map">
       <div data-testid="active-marker">{activeGroupId ?? 'none'}</div>
       {items.map(item => (
-        <button
+        <Button
           key={item.groupId}
           type="button"
           data-testid={`marker-${item.groupId}`}
@@ -38,7 +39,7 @@ vi.mock('@/features/amendments/ui/SupporterLocalityMap', () => ({
           onClick={() => onSelect?.(item.groupId)}
         >
           {item.name}
-        </button>
+        </Button>
       ))}
     </div>
   ),

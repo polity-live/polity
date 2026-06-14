@@ -1,5 +1,6 @@
+import { featureThemeRgba, featureThemeValue } from '@/features/shared/theme';
 import React, { type CSSProperties, type ReactNode } from 'react';
-import { RightBadge } from '@/features/network/ui/RightBadge';
+import { RightBadge } from '@/features/shared/ui/status';
 
 export type GroupNodeVisualVariant =
   | 'current'
@@ -22,39 +23,39 @@ const GROUP_NODE_VISUALS: Record<
 > = {
   current: {
     symbol: '◉',
-    backgroundColor: '#dbeafe',
-    borderColor: '#2563eb',
-    textColor: '#1d4ed8',
+    backgroundColor: featureThemeValue('networkNetworkVisualHelpersInfoColor'),
+    borderColor: featureThemeValue('chartChartRendererInfoColor'),
+    textColor: featureThemeValue('networkNetworkVisualHelpersInfoColorAlpha'),
   },
   parent: {
     symbol: '▲',
-    backgroundColor: '#d1fae5',
-    borderColor: '#059669',
-    textColor: '#065f46',
+    backgroundColor: featureThemeValue('networkNetworkVisualHelpersSuccessColor'),
+    borderColor: featureThemeValue('networkNetworkVisualHelpersSuccessColorAlpha'),
+    textColor: featureThemeValue('networkNetworkVisualHelpersSuccessColorBeta'),
   },
   child: {
     symbol: '▼',
-    backgroundColor: '#ffedd5',
-    borderColor: '#ea580c',
-    textColor: '#9a3412',
+    backgroundColor: featureThemeValue('networkNetworkVisualHelpersWarningColor'),
+    borderColor: featureThemeValue('chartChartRendererThemeValue'),
+    textColor: featureThemeValue('networkNetworkVisualHelpersWarningColorAlpha'),
   },
   'sibling-open': {
     symbol: '◎',
-    backgroundColor: '#fef3c7',
-    borderColor: '#d97706',
-    textColor: '#92400e',
+    backgroundColor: featureThemeValue('networkNetworkVisualHelpersWarningColorBeta'),
+    borderColor: featureThemeValue('networkNetworkEdgeHelpersWarningColor'),
+    textColor: featureThemeValue('networkNetworkVisualHelpersWarningColorGamma'),
   },
   'sibling-elected': {
     symbol: '◆',
-    backgroundColor: '#ffe4e6',
-    borderColor: '#e11d48',
-    textColor: '#9f1239',
+    backgroundColor: featureThemeValue('networkNetworkVisualHelpersDangerColor'),
+    borderColor: featureThemeValue('networkNetworkVisualHelpersDangerColorAlpha'),
+    textColor: featureThemeValue('networkNetworkVisualHelpersDangerColorBeta'),
   },
   'sibling-parliament': {
     symbol: '⬢',
-    backgroundColor: '#ede9fe',
-    borderColor: '#7c3aed',
-    textColor: '#5b21b6',
+    backgroundColor: featureThemeValue('networkNetworkVisualHelpersAccentColor'),
+    borderColor: featureThemeValue('chartChartRendererAccentColor'),
+    textColor: featureThemeValue('networkNetworkVisualHelpersAccentColorAlpha'),
   },
 };
 
@@ -72,7 +73,7 @@ function hexToRgba(hex: string, alpha: number): string {
   const green = Number.parseInt(expanded.slice(2, 4), 16);
   const blue = Number.parseInt(expanded.slice(4, 6), 16);
 
-  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+  return featureThemeRgba(red, green, blue, alpha);
 }
 
 export function getGroupNodeVisualVariant({
@@ -193,7 +194,7 @@ export function renderRightsEdgeLabel(rights: string[]) {
   return (
     <div className="border-border/60 bg-background/95 flex flex-wrap gap-0.5 rounded-md border px-1.5 py-1 shadow-sm backdrop-blur-sm">
       {rights.map(right => (
-        <RightBadge key={right} right={right} className="px-1.5 py-0.5 text-[10px] leading-tight" />
+        <RightBadge key={right} right={right} size="compact" />
       ))}
     </div>
   );

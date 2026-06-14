@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { Link } from '@tanstack/react-router';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Button } from '@/features/shared/ui/ui/button';
@@ -84,7 +85,7 @@ function ConnectedUserChip({ user }: { user: OfflineRosterConnectedUser }) {
       <Link to="/user/$id" params={{ id: user.id }}>
         <Avatar className="h-5 w-5">
           <AvatarImage src={user.avatar ?? undefined} alt={displayName} />
-          <AvatarFallback className="text-[10px]">
+          <AvatarFallback className={featureThemeClassName('agendaAccreditationSectionThemedText')}>
             {getInitials(user.first_name, user.last_name)}
           </AvatarFallback>
         </Avatar>
@@ -475,7 +476,7 @@ export function OfflineRosterCardView({
 
   return (
     <>
-      <Card className="border-border/70 from-background to-muted/20 bg-gradient-to-b">
+      <Card surface="subtleGradient">
         <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-2">
             <CardTitle className="flex items-center gap-2">

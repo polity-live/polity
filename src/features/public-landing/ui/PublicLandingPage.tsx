@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName, featureThemeValue } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { Link } from '@tanstack/react-router';
@@ -90,7 +91,9 @@ export function PublicLandingPage() {
         <div className="mx-auto flex max-w-7xl flex-col justify-center gap-8 px-4 py-12 sm:px-6 sm:py-16 lg:min-h-[62svh] lg:px-8">
           <div className="max-w-4xl space-y-6">
             <div className="bg-background inline-flex items-center gap-3 rounded-lg border px-4 py-3 shadow-sm">
-              <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-zinc-950 ring-1 ring-zinc-950/10">
+              <span
+                className={featureThemeClassName('publiclandingPublicLandingPageNeutralBackground')}
+              >
                 <img
                   src="/apple-touch-icon.png"
                   alt={translateText('generated.inline.1100_polity_logo_bd879dd4')}
@@ -126,7 +129,9 @@ export function PublicLandingPage() {
                 <Link to="/auth">{t('pages.home.publicLanding.hero.primaryCta')}</Link>
               </Button>
               <Button asChild variant="outline" size="lg">
-                <a href="#features">{t('pages.home.publicLanding.hero.secondaryCta')}</a>
+                <a href={featureThemeClassName('publiclandingPublicLandingPageThemedStyle')}>
+                  {t('pages.home.publicLanding.hero.secondaryCta')}
+                </a>
               </Button>
             </div>
           </div>
@@ -151,7 +156,7 @@ export function PublicLandingPage() {
                     <CardTitle className="text-base">
                       {t(`pages.features.features.${key}.title`)}
                     </CardTitle>
-                    <CardDescription className="mt-2 leading-6">
+                    <CardDescription leading="relaxed" className="mt-2">
                       {t(`pages.features.features.${key}.description`)}
                     </CardDescription>
                   </div>
@@ -253,7 +258,7 @@ export function PublicLandingPage() {
                   <p className="text-brand text-sm font-medium">
                     {t(`pages.solutions.solutions.${key}.tagline`)}
                   </p>
-                  <CardDescription className="leading-6">
+                  <CardDescription leading="relaxed">
                     {t(`pages.solutions.solutions.${key}.description`)}
                   </CardDescription>
                 </CardHeader>
@@ -440,12 +445,16 @@ export function LandingNetworkFlowPreview() {
           nodeBorderRadius: 8,
           nodeColor: node =>
             node.data?.kind === 'event'
-              ? '#ccfbf1'
+              ? featureThemeValue('publiclandingLandingNetworkPreviewTealColor')
               : String(
-                  (node.style as { background?: string } | undefined)?.background ?? '#e5e7eb'
+                  (node.style as { background?: string } | undefined)?.background ??
+                    featureThemeValue('publiclandingPublicLandingPageNeutralColor')
                 ),
-          nodeStrokeColor: node => (node.data?.kind === 'event' ? '#0f766e' : '#334155'),
-          maskColor: 'hsl(var(--background) / 0.62)',
+          nodeStrokeColor: node =>
+            node.data?.kind === 'event'
+              ? featureThemeValue('publiclandingPublicLandingPageTealColor')
+              : featureThemeValue('networkAmendmentPathVisualizationNeutralColorBeta'),
+          maskColor: featureThemeClassName('publiclandingPublicLandingPageThemedStyleAlpha'),
           style: {
             width: 170,
             height: 118,
@@ -489,7 +498,7 @@ export function LandingNetworkFlowPreview() {
               {
                 id: 'events',
                 label: t('common.labels.eventDetails'),
-                swatchClassName: 'h-4 w-4 rounded border-2 border-teal-700 bg-teal-100',
+                swatchClassName: featureThemeClassName('publiclandingPublicLandingPageTealSurface'),
               },
             ]}
             showDisplayControls={false}
@@ -584,7 +593,7 @@ export function LandingAgendaTimelinePreview() {
             <BadgeControl variant="outline">
               {t('pages.home.publicLanding.timeline.badge')}
             </BadgeControl>
-            <BadgeControl variant="secondary" className="font-mono text-[11px]">
+            <BadgeControl variant="secondary" size="tiny" textStyle="mono">
               {LANDING_AGENDA_ITEM_ID}
             </BadgeControl>
           </div>
@@ -892,7 +901,7 @@ export function LandingSocialAiPreview() {
   return (
     <div className="bg-card grid gap-5 rounded-lg border p-5 shadow-sm lg:grid-cols-[0.92fr_1.08fr]">
       <Card className="h-full overflow-hidden">
-        <CardHeader className="border-b p-4">
+        <CardHeader separator className="p-4">
           <div className="flex items-center gap-3">
             <div className="bg-brand/10 text-brand flex h-9 w-9 items-center justify-center rounded-md">
               <MessageSquare className="h-5 w-5" />
@@ -984,14 +993,14 @@ export function LandingActivityStripPreview() {
   return (
     <div className="bg-card space-y-4 rounded-lg border p-5 shadow-sm">
       <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
-        <BadgeControl variant="outline" className="rounded-md">
+        <BadgeControl variant="outline" shape="rounded">
           <MapPinned className="mr-1.5 h-3.5 w-3.5" />
           {t('features.timeline.around.mappedCount', {
             count: landingActivityTimelineItems.length,
             defaultValue: '{{count}} mapped',
           })}
         </BadgeControl>
-        <BadgeControl variant="outline" className="rounded-md">
+        <BadgeControl variant="outline" shape="rounded">
           {t('pages.home.publicLanding.timeline.badge')}
         </BadgeControl>
       </div>

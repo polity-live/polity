@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { KeyRound, Loader2, Pencil, ShieldCheck, Sparkles, Trash2, Wrench } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
@@ -101,11 +102,11 @@ function inputStateClass(value: string, error: string | null, hasBeenEvaluated: 
   }
 
   if (error) {
-    return 'border-red-500 focus-visible:ring-red-500';
+    return featureThemeClassName('userAiSettingsTabDangerBorder');
   }
 
   if (value.trim()) {
-    return 'border-emerald-500 focus-visible:ring-emerald-500';
+    return featureThemeClassName('userAiSettingsTabSuccessBorder');
   }
 
   return '';
@@ -447,7 +448,7 @@ export function AiSettingsTab() {
         </CardTitle>
         <CardDescription>{t('pages.user.ai.description')}</CardDescription>
       </CardHeader>
-      <CardContent className="text-muted-foreground text-sm">
+      <CardContent tone="muted" className="text-sm">
         <p>{t('pages.user.ai.freeModels')}</p>
       </CardContent>
     </Card>
@@ -461,7 +462,7 @@ export function AiSettingsTab() {
         </CardTitle>
         <CardDescription>{t('pages.user.ai.availableModelsDescription')}</CardDescription>
       </CardHeader>
-      <CardContent className="text-muted-foreground space-y-3 text-sm">
+      <CardContent tone="muted" className="space-y-3 text-sm">
         <DataTable
           columns={modelColumns}
           data={ai.models}

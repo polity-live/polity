@@ -1,9 +1,20 @@
+import { featureThemeValue } from '@/features/shared/theme';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 import type { FlowEditorEdge, FlowEditorNode } from '../types';
 
-const defaultNodeStyle = { background: '#bbdefb', padding: 10, borderRadius: 5, width: 180 };
-const voteNodeStyle = { background: '#ffe0b2', padding: 10, borderRadius: 5, width: 180 };
+const defaultNodeStyle = {
+  background: featureThemeValue('floweditorUseFlowEditorInfoColor'),
+  padding: 10,
+  borderRadius: 5,
+  width: 180,
+};
+const voteNodeStyle = {
+  background: featureThemeValue('floweditorFlowEditorDefaultsWarningColor'),
+  padding: 10,
+  borderRadius: 5,
+  width: 180,
+};
 
 export function createInitialFlowEditorNodes(): FlowEditorNode[] {
   return [
@@ -64,7 +75,12 @@ export function createInitialFlowEditorNodes(): FlowEditorNode[] {
     {
       id: '10',
       data: { label: translateText('generated.inline.0127_mayor_signature_c164c480') },
-      style: { background: '#c8e6c9', padding: 10, borderRadius: 5, width: 180 },
+      style: {
+        background: featureThemeValue('amendmentAmendmentPathVisualizationSuccessColor'),
+        padding: 10,
+        borderRadius: 5,
+        width: 180,
+      },
       position: { x: 250, y: 800 },
     },
     {

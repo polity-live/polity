@@ -16,7 +16,7 @@ import { HashtagEditor } from '@/features/shared/ui/hashtags';
 import { SummaryPillList } from '@/features/shared/ui/form';
 import { MediaUpload } from '@/features/file-upload/ui/MediaUpload';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';
-import { CreateInputField } from '../ui/CreateFields';
+import { CreateInputField } from '@/features/shared/ui/form';
 import { mergeCreateSearchParams } from '../logic/createSearchParams';
 import type { CreateFormConfig } from '../types/create-form.types';
 

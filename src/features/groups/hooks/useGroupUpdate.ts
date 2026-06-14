@@ -8,14 +8,14 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import type { Value } from 'platejs';
 import { useNavigate } from '@tanstack/react-router';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
 import { useMessageActions } from '@/zero/messages/useMessageActions';
 import { useMessageState } from '@/zero/messages/useMessageState';
 import { useGroupConnectionActions, useGroupConnectionState } from '@/zero/network';
 import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
-import { RIGHT_TYPES, type RightType } from '@/features/network/ui/RightFilters';
+import { RIGHT_TYPES, type RightType } from '@/features/shared/ui/status';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import {
   EMPTY_RICH_TEXT_VALUE,

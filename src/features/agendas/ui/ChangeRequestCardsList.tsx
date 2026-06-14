@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { FormControlInput } from '@/features/shared/ui/form';
 import { useState, useMemo } from 'react';
@@ -260,12 +261,12 @@ export function ChangeRequestCardsList({
           <div
             className={cn(
               'flex items-center gap-2 rounded-md border px-3 py-2 text-sm',
-              'border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400'
+              featureThemeClassName('agendaChangeRequestCardsListSuccessBadge')
             )}
           >
             <CheckCircle2 className="h-4 w-4" />
             <span className="font-medium">{t('features.agendas.crTimeline.votingActive')}</span>
-            <BadgeControl variant="outline" className="ml-auto text-xs">
+            <BadgeControl variant="outline" size="xs" className="ml-auto">
               vote_event
             </BadgeControl>
           </div>
@@ -273,7 +274,7 @@ export function ChangeRequestCardsList({
           <div
             className={cn(
               'flex items-center gap-2 rounded-md border px-3 py-2 text-sm',
-              'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400'
+              featureThemeClassName('agendaChangeRequestCardsListWarningBadge')
             )}
           >
             <AlertTriangle className="h-4 w-4" />
@@ -297,7 +298,7 @@ export function ChangeRequestCardsList({
               {crItems.length}
             </BadgeControl>
             {isTimelineComplete && (
-              <BadgeControl variant="default" className="bg-green-600">
+              <BadgeControl variant="default" tone="successStrong">
                 {t('features.agendas.crTimeline.allCompleted')}
               </BadgeControl>
             )}
@@ -336,13 +337,13 @@ export function ChangeRequestCardsList({
           <TabsList>
             <TabsTrigger value="all" className="gap-1.5">
               {t('features.agendas.crTimeline.tabAll')}
-              <BadgeControl variant="secondary" className="ml-0.5 text-xs">
+              <BadgeControl variant="secondary" size="xs" className="ml-0.5">
                 {searchedItems.length}
               </BadgeControl>
             </TabsTrigger>
             <TabsTrigger value="open" className="gap-1.5">
               {t('features.agendas.crTimeline.tabOpen')}
-              <BadgeControl variant="secondary" className="ml-0.5 text-xs">
+              <BadgeControl variant="secondary" size="xs" className="ml-0.5">
                 {categorized.open.length}
               </BadgeControl>
             </TabsTrigger>
@@ -350,14 +351,14 @@ export function ChangeRequestCardsList({
               {t('features.agendas.crTimeline.tabAccepted')}
               <BadgeControl
                 variant="outline"
-                className="ml-0.5 border-green-500/30 bg-green-500/10 text-xs text-green-700 dark:text-green-400"
+                className={featureThemeClassName('agendaChangeRequestCardsListSuccessBadgeAlpha')}
               >
                 {categorized.accepted.length}
               </BadgeControl>
             </TabsTrigger>
             <TabsTrigger value="rejected" className="gap-1.5">
               {t('features.agendas.crTimeline.tabRejected')}
-              <BadgeControl variant="secondary" className="ml-0.5 text-xs">
+              <BadgeControl variant="secondary" size="xs" className="ml-0.5">
                 {categorized.rejected.length}
               </BadgeControl>
             </TabsTrigger>

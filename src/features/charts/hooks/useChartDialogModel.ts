@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useQuery } from '@rocicorp/zero/react';
 import { useEditorRef } from 'platejs/react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 
 import { useAuth } from '@/providers/auth-provider';
 import { queries } from '@/zero/queries';

@@ -1,5 +1,10 @@
 // Constants
-export { ARIA_KAI_USER_ID, ARIA_KAI_EMAIL, ARIA_KAI_WELCOME_MESSAGE, ENTITY_DESCRIPTIONS } from './constants';
+export {
+  ARIA_KAI_USER_ID,
+  ARIA_KAI_EMAIL,
+  ARIA_KAI_WELCOME_MESSAGE,
+  ENTITY_DESCRIPTIONS,
+} from './constants';
 export type { EntityTopic } from './constants';
 
 // Logic

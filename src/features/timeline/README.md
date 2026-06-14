@@ -214,7 +214,7 @@ Cards use a gradient header system with 15+ gradient options:
 import { getGradientForContentType } from '@/features/timeline/utils/gradient-assignment';
 
 const gradient = getGradientForContentType('amendment', index);
-// Returns: 'bg-gradient-to-br from-purple-100 to-blue-100 dark:from-purple-900/40 dark:to-blue-900/50'
+// Returns a shared theme gradient class string for the content type.
 ```
 
 ### Mobile Responsiveness

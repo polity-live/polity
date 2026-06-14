@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { cn } from '@/features/shared/utils/utils';
 import { TrendingUp, TrendingDown, Minus, Activity } from 'lucide-react';
 
@@ -26,15 +27,15 @@ export function getTrendConfig(direction: TrendDirection) {
       return {
         symbol: '▲',
         Icon: TrendingUp,
-        colorClass: 'text-emerald-600 dark:text-emerald-400',
-        bgClass: 'bg-emerald-50 dark:bg-emerald-950/30',
+        colorClass: featureThemeClassName('authNameStepSuccessText'),
+        bgClass: featureThemeClassName('decisionterminalTrendIndicatorSuccessBackground'),
       };
     case 'down':
       return {
         symbol: '▼',
         Icon: TrendingDown,
-        colorClass: 'text-red-600 dark:text-red-400',
-        bgClass: 'bg-red-50 dark:bg-red-950/30',
+        colorClass: featureThemeClassName('decisionterminalDecisionStatusDangerTextAlpha'),
+        bgClass: featureThemeClassName('decisionterminalFlashRowDangerBackground'),
       };
     case 'stable':
       return {
@@ -47,8 +48,8 @@ export function getTrendConfig(direction: TrendDirection) {
       return {
         symbol: '◆',
         Icon: Activity,
-        colorClass: 'text-amber-600 dark:text-amber-400',
-        bgClass: 'bg-amber-50 dark:bg-amber-950/30',
+        colorClass: featureThemeClassName('decisionterminalCountdownTimerWarningText'),
+        bgClass: featureThemeClassName('decisionterminalTrendIndicatorWarningBackground'),
       };
     default:
       return {

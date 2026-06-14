@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import * as React from 'react';
 import {
   Heart,
@@ -150,7 +151,8 @@ export function ActionBar({
                   onClick={() => onReact?.('support')}
                   className={cn(
                     'gap-1.5',
-                    userReaction === 'support' && 'text-green-600 dark:text-green-400',
+                    userReaction === 'support' &&
+                      featureThemeClassName('decisionterminalDecisionStatusSuccessText'),
                     compact && 'px-2'
                   )}
                 >
@@ -171,7 +173,8 @@ export function ActionBar({
                   onClick={() => onReact?.('oppose')}
                   className={cn(
                     'gap-1.5',
-                    userReaction === 'oppose' && 'text-red-600 dark:text-red-400',
+                    userReaction === 'oppose' &&
+                      featureThemeClassName('decisionterminalDecisionStatusDangerTextAlpha'),
                     compact && 'px-2'
                   )}
                 >
@@ -196,11 +199,18 @@ export function ActionBar({
                 onClick={() => onReact?.('support')}
                 className={cn(
                   'gap-1.5',
-                  userReaction === 'support' && 'text-pink-600 dark:text-pink-400',
+                  userReaction === 'support' &&
+                    featureThemeClassName('timelineActionBarAccentText'),
                   compact && 'px-2'
                 )}
               >
-                <Heart className={cn('h-4 w-4', userReaction === 'support' && 'fill-current')} />
+                <Heart
+                  className={cn(
+                    'h-4 w-4',
+                    userReaction === 'support' &&
+                      featureThemeClassName('timelineActionBarThemedStyle')
+                  )}
+                />
                 {!compact && reactionCounts.support > 0 && (
                   <span className="text-xs">{reactionCounts.support}</span>
                 )}
@@ -238,7 +248,7 @@ export function ActionBar({
               onClick={onBookmark}
               className={cn(
                 'gap-1.5',
-                isBookmarked && 'text-amber-600 dark:text-amber-400',
+                isBookmarked && featureThemeClassName('decisionterminalCountdownTimerWarningText'),
                 compact && 'px-2'
               )}
             >
@@ -301,13 +311,13 @@ export function ActionBarCompact({
   className?: string;
 }) {
   return (
-    <div className={cn('flex items-center gap-3 text-gray-500 dark:text-gray-400', className)}>
+    <div className={cn(featureThemeClassName('timelineActionBarNeutralText'), className)}>
       <Button
         type="button"
         variant="ghost"
         size="sm"
         onClick={onReact}
-        className="h-auto gap-1 p-0 transition-colors hover:bg-transparent hover:text-pink-500"
+        className={featureThemeClassName('timelineActionBarAccentPanel')}
       >
         <Heart className="h-3.5 w-3.5" />
         {reactionCount > 0 && <span className="text-xs">{reactionCount}</span>}
@@ -317,7 +327,7 @@ export function ActionBarCompact({
         variant="ghost"
         size="sm"
         onClick={onDiscuss}
-        className="h-auto gap-1 p-0 transition-colors hover:bg-transparent hover:text-blue-500"
+        className={featureThemeClassName('timelineActionBarInfoPanel')}
       >
         <MessageCircle className="h-3.5 w-3.5" />
         {commentCount > 0 && <span className="text-xs">{commentCount}</span>}

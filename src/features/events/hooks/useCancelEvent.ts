@@ -7,7 +7,7 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { useAuth } from '@/providers/auth-provider';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { useEventActions } from '@/zero/events/useEventActions';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useGroupActions } from '@/zero/groups/useGroupActions';

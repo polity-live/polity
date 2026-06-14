@@ -8,8 +8,11 @@ import {
 } from 'platejs';
 import { toTPlatePlugin } from 'platejs/react';
 
-import { BlockSuggestion, FilteredBlockSuggestion } from '@/features/shared/ui/ui-platejs/block-suggestion.tsx';
-import { SuggestionLeaf, SuggestionLineBreak } from '@/features/shared/ui/ui-platejs/suggestion-node.tsx';
+import { FilteredBlockSuggestion } from '@/features/shared/ui/ui-platejs/block-suggestion.tsx';
+import {
+  SuggestionLeaf,
+  SuggestionLineBreak,
+} from '@/features/shared/ui/ui-platejs/suggestion-node.tsx';
 
 import { discussionPlugin } from './discussion-kit.tsx';
 

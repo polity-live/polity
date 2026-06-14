@@ -94,7 +94,7 @@ export function CalendarItemDetailsDialog({
                 : t('features.timeline.contentTypes.event')}
             </BadgeControl>
             {item.isMeeting && item.isBookedByMe && (
-              <BadgeControl className="bg-green-500/15 text-green-700 dark:text-green-400">
+              <BadgeControl tone="successTint">
                 {t('features.calendar.meeting.booked')}
               </BadgeControl>
             )}

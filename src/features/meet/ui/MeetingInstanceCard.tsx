@@ -1,13 +1,13 @@
-import { MeetupTimelineCard } from '@/features/timeline/ui/cards/MeetupTimelineCard'
-import type { MeetingInstance } from '../hooks/useMeetPage'
+import { MeetupTimelineCard } from '@/features/timeline/ui/cards/MeetupTimelineCard';
+import type { MeetingInstance } from '../hooks/useMeetPage';
 
 interface MeetingInstanceCardProps {
-  instance: MeetingInstance
-  isOwner: boolean
-  onBook: (instance: MeetingInstance) => void
-  onCancel: (instance: MeetingInstance) => void
-  onDelete: (eventId: string) => void
-  onSelect?: (instance: MeetingInstance) => void
+  instance: MeetingInstance;
+  isOwner: boolean;
+  onBook: (instance: MeetingInstance) => void;
+  onCancel: (instance: MeetingInstance) => void;
+  onDelete: (eventId: string) => void;
+  onSelect?: (instance: MeetingInstance) => void;
 }
 
 export function MeetingInstanceCard({
@@ -22,19 +22,19 @@ export function MeetingInstanceCard({
     .filter(p => p.user_id !== instance.creator?.id)
     .filter(p => {
       if (instance.instanceDate === null) {
-        return !p.instance_date || p.instance_date === 0
+        return !p.instance_date || p.instance_date === 0;
       }
 
-      return p.instance_date === instance.instanceDate
+      return p.instance_date === instance.instanceDate;
     })
     .map(p => ({
       id: p.id,
       name: [p.user?.first_name, p.user?.last_name].filter(Boolean).join(' ') || undefined,
       avatar: p.user?.avatar ?? undefined,
-    }))
+    }));
   const organizerName =
     [instance.creator?.first_name, instance.creator?.last_name].filter(Boolean).join(' ') ||
-    undefined
+    undefined;
 
   return (
     <MeetupTimelineCard
@@ -61,5 +61,5 @@ export function MeetingInstanceCard({
       onDelete={isOwner ? () => onDelete(instance.parentEventId) : undefined}
       onSelect={onSelect ? () => onSelect(instance) : undefined}
     />
-  )
+  );
 }

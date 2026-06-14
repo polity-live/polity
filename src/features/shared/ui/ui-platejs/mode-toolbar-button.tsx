@@ -1,24 +1,8 @@
-import * as React from 'react';
-
-import { SuggestionPlugin } from '@platejs/suggestion/react';
 import { type DropdownMenuProps } from '@radix-ui/react-dropdown-menu';
-import { useEditorRef, usePlateState, usePluginOption } from 'platejs/react';
 
 import type { EditorMode } from '@/features/editor/types';
-
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from '@/features/shared/ui/ui/dropdown-menu.tsx';
-import {
-  EditingModeMenuItems,
-  getEditingModeOption,
-  type SelectableEditingMode,
-} from '@/features/shared/ui/status';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
-
-import { ToolbarButton } from '@/features/shared/ui/layout';
+import { useModeToolbarButtonController } from '@/features/shared/hooks/useModeToolbarButtonController';
+import { ModeToolbarButtonView } from './ModeToolbarButtonView';
 
 interface ModeToolbarButtonProps extends DropdownMenuProps {
   currentMode?: EditorMode;
@@ -32,79 +16,11 @@ export function ModeToolbarButton({
   isOwnerOrCollaborator = true,
   ...props
 }: ModeToolbarButtonProps) {
-  const editor = useEditorRef();
-  const [readOnly, setReadOnly] = usePlateState('readOnly');
-  const [open, setOpen] = React.useState(false);
-
-  const isSuggesting = usePluginOption(SuggestionPlugin, 'isSuggesting');
-
-  const { t } = useTranslation();
-
-  const syncedMode = React.useMemo<SelectableEditingMode>(() => {
-    if (currentMode) {
-      return currentMode;
-    }
-
-    if (readOnly) return 'view';
-    if (isSuggesting) return 'suggest_internal';
-
-    return 'edit';
-  }, [currentMode, isSuggesting, readOnly]);
-
-  const [mode, setMode] = React.useState<SelectableEditingMode>(syncedMode);
-
-  React.useEffect(() => {
-    setMode(syncedMode);
-  }, [syncedMode]);
-
-  const currentOption = getEditingModeOption(mode, t);
-
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen} modal={false} {...props}>
-      <DropdownMenuTrigger asChild>
-        <ToolbarButton
-          key={mode}
-          pressed={open}
-          tooltip={t('plateJs.toolbar.editingMode')}
-          isDropdown
-        >
-          <currentOption.Icon />
-          <span className="hidden lg:inline">{currentOption.label}</span>
-        </ToolbarButton>
-      </DropdownMenuTrigger>
-
-      <DropdownMenuContent className="w-80" align="start">
-        {!isOwnerOrCollaborator && (
-          <div className="text-muted-foreground px-2 py-1.5 text-xs">
-            {t('plateJs.toolbar.mode.viewOnly')}
-          </div>
-        )}
-        <EditingModeMenuItems
-          value={mode}
-          disabled={!isOwnerOrCollaborator}
-          onValueChange={nextMode => {
-            setMode(nextMode);
-
-            if (onModeChange) {
-              onModeChange(nextMode);
-              return;
-            }
-
-            setReadOnly(
-              nextMode === 'view' || nextMode === 'vote_internal' || nextMode === 'vote_event'
-            );
-            editor.setOption(
-              SuggestionPlugin,
-              'isSuggesting',
-              nextMode === 'suggest_internal' || nextMode === 'suggest_event'
-            );
-
-            if (nextMode === 'edit') {
-              editor.tf.focus();
-            }
-          }}
-        />
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <ModeToolbarButtonView
+      dropdownProps={props}
+      isOwnerOrCollaborator={isOwnerOrCollaborator}
+      {...useModeToolbarButtonController({ currentMode, onModeChange })}
+    />
   );
 }

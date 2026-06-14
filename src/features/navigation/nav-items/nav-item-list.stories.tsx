@@ -22,8 +22,8 @@ function AuthenticatedNavItemWrapper(args: Record<string, unknown>) {
     <NavItemList
       {...args}
       navigationItems={primaryNavItems}
-      isMobile={args.isMobile as boolean ?? true}
-      isPrimary={args.isPrimary as boolean ?? true}
+      isMobile={(args.isMobile as boolean) ?? true}
+      isPrimary={(args.isPrimary as boolean) ?? true}
       navigationView={(args.navigationView as string as NavigationView) || 'asButtonList'}
     />
   );

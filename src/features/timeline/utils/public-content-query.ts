@@ -13,7 +13,7 @@ export interface PublicContentQueryOptions {
   /** Maximum number of items to return */
   limit?: number;
   /** Content types to include */
-  contentTypes?: Array<ContentItem['type']>;
+  contentTypes?: ContentItem['type'][];
   /** Minimum engagement score to include */
   minEngagement?: number;
   /** Maximum age in days */
@@ -45,7 +45,7 @@ export const DEFAULT_PUBLIC_QUERY_OPTIONS: Partial<PublicContentQueryOptions> = 
 export function buildPublicContentFilters(options: PublicContentQueryOptions) {
   const filters: {
     excludeGroupIds?: string[];
-    contentTypes?: Array<ContentItem['type']>;
+    contentTypes?: ContentItem['type'][];
     minEngagement?: number;
     createdAfter?: Date;
     topicIds?: string[];
@@ -86,7 +86,15 @@ export function buildPublicContentFilters(options: PublicContentQueryOptions) {
  * This is a utility for mapping query results
  */
 export function transformToContentItem(
-  rawItem: { id: string; authorId?: string; groupId?: string; topics?: string[]; engagementScore?: number; recentEngagementVelocity?: number; createdAt?: string },
+  rawItem: {
+    id: string;
+    authorId?: string;
+    groupId?: string;
+    topics?: string[];
+    engagementScore?: number;
+    recentEngagementVelocity?: number;
+    createdAt?: string;
+  },
   type: ContentItem['type']
 ): ContentItem {
   return {
@@ -144,10 +152,7 @@ export function calculateEngagementVelocity(
  * Check if content should be included in public feed
  * Based on visibility and quality criteria
  */
-export function isPublicContent(item: {
-  visibility?: string;
-  status?: string;
-}): boolean {
+export function isPublicContent(item: { visibility?: string; status?: string }): boolean {
   // Must have public visibility
   if (item.visibility === 'public') return true;
 

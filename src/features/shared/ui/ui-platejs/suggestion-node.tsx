@@ -104,8 +104,11 @@ function SuggestionLineBreakContent({ suggestionData }: { suggestionData: TSugge
   // CR filtering: hide line break indicators from other CRs
   const { selectedCrIds } = useModeContext();
   const discussions = usePluginOption(discussionPlugin, 'discussions');
-  const lineBreakCrId = discussions?.find((d: { id: string; crId?: string }) => d.id === suggestionData.id)?.crId;
-  const isFilteredOut = selectedCrIds != null && lineBreakCrId != null && !selectedCrIds.has(lineBreakCrId);
+  const lineBreakCrId = discussions?.find(
+    (d: { id: string; crId?: string }) => d.id === suggestionData.id
+  )?.crId;
+  const isFilteredOut =
+    selectedCrIds != null && lineBreakCrId != null && !selectedCrIds.has(lineBreakCrId);
 
   if (isFilteredOut) return null;
 

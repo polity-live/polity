@@ -10,7 +10,9 @@ export function useConversationData(
   });
 
   const filteredConversations = userId
-    ? (conversationsWithRelations || []).filter((c) => c.participants?.some((p) => p.user_id === userId))
+    ? (conversationsWithRelations || []).filter(c =>
+        c.participants?.some(p => p.user_id === userId)
+      )
     : [];
 
   return {

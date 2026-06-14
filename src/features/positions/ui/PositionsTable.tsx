@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 /**
  * Positions Table Component
  *
@@ -142,7 +143,9 @@ export function PositionsTable({
                       onClick={() => handleRemoveHolderClick(position)}
                       title={translateText('generated.inline.1076_remove_holder_af2745c3')}
                     >
-                      <UserPlus className="h-4 w-4 text-orange-500" />
+                      <UserPlus
+                        className={featureThemeClassName('positionPositionsTableWarningIcon')}
+                      />
                     </Button>
                   ) : null
                 ) : (
@@ -354,7 +357,7 @@ export function PositionsTable({
             {selectedPosition?.title}
             {translateText('generated.inline.1082_this_action_cannot_be_undone_66ac3236')}
             {selectedPosition?.currentHolder ? (
-              <span className="mt-2 block font-semibold text-orange-600">
+              <span className={featureThemeClassName('positionPositionsTableWarningText')}>
                 {translateText(
                   'generated.inline.1083_warning_this_position_currently_has_a_holder__e51c603a'
                 )}

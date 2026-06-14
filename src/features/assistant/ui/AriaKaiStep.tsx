@@ -1,4 +1,5 @@
-import { FormControlCheckbox } from '@/features/shared/ui/form';
+import { featureThemeClassName } from '@/features/shared/theme';
+import { FormControlCheckbox, FormControlLabel } from '@/features/shared/ui/form';
 import { MessageCircle, Sparkles } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/features/shared/ui/ui/avatar.tsx';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
@@ -25,10 +26,12 @@ export function AriaKaiStep({ onNext, dontShowAgain, onDontShowAgainChange }: Ar
 
   return (
     <Card className="w-full">
-      <CardHeader className="pb-4 text-center">
+      <CardHeader align="center" className="pb-4">
         <div className="mb-4 flex justify-center">
           <Avatar className="h-20 w-20">
-            <AvatarFallback className="bg-gradient-to-br from-purple-500 to-blue-500 text-2xl text-white">
+            <AvatarFallback
+              className={featureThemeClassName('assistantAriaKaiStepInfoAccentGradientSurface')}
+            >
               {translateText('generated.inline.0022_ak_059387a3')}
             </AvatarFallback>
           </Avatar>
@@ -41,7 +44,7 @@ export function AriaKaiStep({ onNext, dontShowAgain, onDontShowAgainChange }: Ar
       <CardContent className="space-y-6">
         <div className="space-y-4">
           <div className="flex gap-3">
-            <Sparkles className="mt-0.5 h-5 w-5 flex-shrink-0 text-purple-500" />
+            <Sparkles className={featureThemeClassName('assistantAriaKaiStepAccentIcon')} />
             <div>
               <p className="text-muted-foreground text-sm">
                 {translateText('generated.inline.0213_hey_we_re_4a4765ae')}
@@ -56,7 +59,7 @@ export function AriaKaiStep({ onNext, dontShowAgain, onDontShowAgainChange }: Ar
           </div>
 
           <div className="flex gap-3">
-            <MessageCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-500" />
+            <MessageCircle className={featureThemeClassName('assistantAriaKaiStepInfoIcon')} />
             <div>
               <p className="text-muted-foreground text-sm">
                 {translateText(
@@ -84,9 +87,9 @@ export function AriaKaiStep({ onNext, dontShowAgain, onDontShowAgainChange }: Ar
             checked={dontShowAgain}
             onCheckedChange={onDontShowAgainChange}
           />
-          <label htmlFor="dont-show-again" className="text-muted-foreground cursor-pointer text-sm">
+          <FormControlLabel htmlFor="dont-show-again">
             {t('onboarding.ariaKaiStep.dontShowAgain')}
-          </label>
+          </FormControlLabel>
         </div>
 
         <Button onClick={onNext} className="w-full" size="lg">

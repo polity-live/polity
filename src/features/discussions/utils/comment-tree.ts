@@ -12,7 +12,7 @@ export type CommentWithReplies = AmendmentCommentRow & { replies?: CommentWithRe
 /**
  * Build a tree structure from flat comments array
  */
-export function buildCommentTree(comments: ReadonlyArray<CommentWithReplies>): CommentWithReplies[] {
+export function buildCommentTree(comments: readonly CommentWithReplies[]): CommentWithReplies[] {
   const rootComments: CommentWithReplies[] = [];
   const commentMap = new Map<string, CommentWithReplies>();
 

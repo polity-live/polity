@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Check, AlertTriangle } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -44,7 +45,7 @@ export function GroupConnectionStatusCell({
         <Tooltip>
           <TooltipTrigger asChild>
             <span
-              className="inline-flex text-emerald-600"
+              className={featureThemeClassName('networkGroupConnectionStatusCellSuccessText')}
               aria-label={t('common.network.linkPossible')}
             >
               <Check className="h-5 w-5" />

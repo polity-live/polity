@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 /**
  * FlashRow - Wrapper component that applies flash effect to a row
  */
@@ -32,11 +33,11 @@ export function FlashRow({ flashState, children, className, showGlow = true }: F
 
     switch (flashState.type) {
       case 'up':
-        return 'shadow-green-500/30';
+        return featureThemeClassName('decisionterminalFlashRowSuccessShadow');
       case 'down':
-        return 'shadow-red-500/30';
+        return featureThemeClassName('decisionterminalFlashRowDangerShadow');
       default:
-        return 'shadow-yellow-500/30';
+        return featureThemeClassName('decisionterminalFlashRowWarningShadow');
     }
   }, [flashState, showGlow]);
 
@@ -46,11 +47,11 @@ export function FlashRow({ flashState, children, className, showGlow = true }: F
 
     switch (flashState.type) {
       case 'up':
-        return 'bg-green-50 dark:bg-green-950/30';
+        return featureThemeClassName('decisionterminalFlashRowSuccessBackground');
       case 'down':
-        return 'bg-red-50 dark:bg-red-950/30';
+        return featureThemeClassName('decisionterminalFlashRowDangerBackground');
       default:
-        return 'bg-yellow-50 dark:bg-yellow-950/30';
+        return featureThemeClassName('decisionterminalFlashRowWarningBackground');
     }
   }, [flashState]);
 
@@ -90,11 +91,11 @@ export function FlashCell({
 
     switch (flashState.type) {
       case 'up':
-        return 'text-green-600 dark:text-green-400';
+        return featureThemeClassName('decisionterminalDecisionStatusSuccessText');
       case 'down':
-        return 'text-red-600 dark:text-red-400';
+        return featureThemeClassName('decisionterminalDecisionStatusDangerTextAlpha');
       default:
-        return 'text-yellow-600 dark:text-yellow-400';
+        return featureThemeClassName('decisionterminalDecisionStatusWarningText');
     }
   }, [flashState]);
 
@@ -130,9 +131,9 @@ export function FlashIndicator({
   };
 
   const colorClasses: Record<FlashState['type'], string> = {
-    up: 'bg-green-500',
-    down: 'bg-red-500',
-    neutral: 'bg-yellow-500',
+    up: featureThemeClassName('agendaAgendaVoteSectionSuccessBackground'),
+    down: featureThemeClassName('agendaAgendaVoteSectionDangerBackground'),
+    neutral: featureThemeClassName('decisionterminalFlashRowWarningBackgroundAlpha'),
   };
 
   return (

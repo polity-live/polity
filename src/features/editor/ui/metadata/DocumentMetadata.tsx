@@ -141,7 +141,7 @@ export function DocumentMetadata({
                 {collab.user?.name || translateText('generated.inline.0031_unknown_bc7819b3')}
               </span>
               {collab.canEdit && (
-                <BadgeControl variant="outline" className="ml-1 h-4 px-1 text-[10px]">
+                <BadgeControl variant="outline" size="tiny" className="ml-1 h-4 px-1">
                   {t('features.editor.metadata.canEdit')}
                 </BadgeControl>
               )}

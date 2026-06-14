@@ -1,14 +1,9 @@
 'use client';
 
-import { BadgeControl } from '@/features/shared/ui/status';
-import { useState } from 'react';
+import { featureThemeClassName } from '@/features/shared/theme';
+import { useElectionDetailsSectionController } from '@/features/agendas/hooks/useElectionDetailsSectionController';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/features/shared/ui/ui/collapsible';
 import {
   Clock,
   Calendar,
@@ -20,10 +15,6 @@ import {
   Play,
   CheckCircle2,
   Timer,
-  ChevronDown,
-  ChevronRight,
-  Building2,
-  ExternalLink,
 } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
@@ -40,6 +31,7 @@ import {
 import type { ElectionMode } from '@/features/elections/logic/electionMode';
 import type { AmendmentPathVisualizationSegment } from '@/features/network/ui/AmendmentPathVisualization';
 import { AmendmentProcessDetailsPanel } from '@/features/amendments/ui/AmendmentProcessDetailsPanel';
+import { ElectionDetailsSectionView } from './ElectionDetailsSectionView';
 
 interface AgendaItemContextCardProps {
   agendaItem: {
@@ -141,15 +133,15 @@ function getTypeIcon(type: string) {
 function getGradientClass(type: string) {
   switch (type) {
     case 'election':
-      return 'bg-gradient-to-br from-rose-100 to-pink-100 dark:from-rose-900/40 dark:to-pink-900/50';
+      return featureThemeClassName('agendaAgendaItemContextCardDangerAccentGradientSurface');
     case 'vote':
-      return 'bg-gradient-to-br from-orange-100 to-red-100 dark:from-orange-900/40 dark:to-red-900/50';
+      return featureThemeClassName('agendaAgendaItemContextCardDangerWarningGradientSurface');
     case 'accreditation':
-      return 'bg-gradient-to-br from-teal-100 to-emerald-100 dark:from-teal-900/40 dark:to-emerald-900/50';
+      return featureThemeClassName('agendaAgendaItemContextCardSuccessTealGradientSurface');
     case 'speech':
-      return 'bg-gradient-to-br from-blue-100 to-cyan-100 dark:from-blue-900/40 dark:to-cyan-900/50';
+      return featureThemeClassName('agendaAgendaItemContextCardInfoGradientSurface');
     default:
-      return 'bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/40 dark:to-indigo-900/50';
+      return featureThemeClassName('agendaAgendaItemContextCardAccentGradientSurface');
   }
 }
 
@@ -230,11 +222,17 @@ export function AgendaItemContextCard({
       >
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white/80 text-gray-700 dark:bg-gray-800/80 dark:text-gray-200">
+            <div
+              className={featureThemeClassName(
+                'agendaAgendaItemContextCardNeutralContrastBackground'
+              )}
+            >
               <TypeIcon className="h-6 w-6" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              <h2
+                className={featureThemeClassName('agendaAgendaItemContextCardNeutralContrastText')}
+              >
                 {hasAgendaDetailLink && agendaDetailLink ? (
                   <Link
                     to="/event/$id/agenda/$agendaItemId"
@@ -258,7 +256,7 @@ export function AgendaItemContextCard({
                   agendaItem.title
                 )}
               </h2>
-              <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+              <div className={featureThemeClassName('agendaAgendaItemContextCardNeutralText')}>
                 <AgendaTypeBadge
                   type={
                     agendaItem.type as
@@ -282,7 +280,11 @@ export function AgendaItemContextCard({
                   />
                 ) : null}
                 {durationMinutes && (
-                  <div className="inline-flex items-center gap-1 rounded-full border border-white/50 bg-white/70 px-3 py-1 text-xs font-medium text-gray-700 shadow-sm dark:border-gray-700 dark:bg-gray-900/60 dark:text-gray-200">
+                  <div
+                    className={featureThemeClassName(
+                      'agendaAgendaItemContextCardNeutralContrastBadge'
+                    )}
+                  >
                     <Timer className="h-3 w-3" />
                     {durationMinutes} {t('common.minutes')}
                   </div>
@@ -291,7 +293,9 @@ export function AgendaItemContextCard({
                   <AgendaElectionModeBadge
                     electionMode={election.election_mode}
                     seatCount={election.seat_count}
-                    className="border-white/50 bg-white/70 text-gray-700 dark:border-gray-700 dark:bg-gray-900/60 dark:text-gray-200"
+                    className={featureThemeClassName(
+                      'agendaAgendaItemContextCardNeutralContrastBadgeAlpha'
+                    )}
                   />
                 ) : null}
               </div>
@@ -304,7 +308,7 @@ export function AgendaItemContextCard({
         {/* Timing Information */}
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {!isCompleted && !isOngoing && estimatedStartedAt && (
-            <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 p-3 shadow-sm">
+            <div className={featureThemeClassName('agendaAgendaItemContextCardWarningSurface')}>
               <div className="text-muted-foreground mb-1 flex items-center gap-1 text-xs">
                 <Calendar className="h-3 w-3" />
                 {t('features.events.agenda.estimatedStartAt')}
@@ -327,7 +331,7 @@ export function AgendaItemContextCard({
           )}
 
           {actualStartedAt && (isCompleted || isOngoing) && (
-            <div className="rounded-xl border border-green-500/25 bg-green-500/10 p-3 shadow-sm">
+            <div className={featureThemeClassName('agendaAgendaItemContextCardSuccessSurface')}>
               <div className="text-muted-foreground mb-1 flex items-center gap-1 text-xs">
                 <Play className="h-3 w-3" />
                 {t('features.events.agenda.startedAt')}
@@ -342,7 +346,7 @@ export function AgendaItemContextCard({
           )}
 
           {actualCompletedAt && isCompleted && (
-            <div className="rounded-xl border border-blue-500/25 bg-blue-500/10 p-3 shadow-sm">
+            <div className={featureThemeClassName('agendaAgendaItemContextCardInfoSurface')}>
               <div className="text-muted-foreground mb-1 flex items-center gap-1 text-xs">
                 <CheckCircle2 className="h-3 w-3" />
                 {t('features.events.agenda.completedAt')}
@@ -358,7 +362,7 @@ export function AgendaItemContextCard({
           )}
 
           {!isCompleted && estimatedCompletedAt && !isOngoing && (
-            <div className="rounded-xl border border-blue-500/25 bg-blue-500/10 p-3 shadow-sm">
+            <div className={featureThemeClassName('agendaAgendaItemContextCardInfoSurface')}>
               <div className="text-muted-foreground mb-1 flex items-center gap-1 text-xs">
                 <Clock className="h-3 w-3" />
                 {t('features.events.agenda.estimatedCompleteAt')}
@@ -381,7 +385,7 @@ export function AgendaItemContextCard({
           )}
 
           {!isCompleted && isOngoing && estimatedOngoingCompletedAt && (
-            <div className="rounded-xl border border-green-500/25 bg-green-500/10 p-3 shadow-sm">
+            <div className={featureThemeClassName('agendaAgendaItemContextCardSuccessSurface')}>
               <div className="text-muted-foreground mb-1 flex items-center gap-1 text-xs">
                 <Clock className="h-3 w-3" />
                 {t('features.events.agenda.estimatedCompleteAt')}
@@ -404,7 +408,7 @@ export function AgendaItemContextCard({
           )}
 
           {durationMinutes && (
-            <div className="rounded-xl border border-slate-500/20 bg-slate-500/5 p-3 shadow-sm">
+            <div className={featureThemeClassName('agendaAgendaItemContextCardNeutralSurface')}>
               <div className="text-muted-foreground mb-1 flex items-center gap-1 text-xs">
                 <Timer className="h-3 w-3" />
                 {t('features.events.agenda.duration')}
@@ -416,7 +420,7 @@ export function AgendaItemContextCard({
           )}
 
           {votingStartTime && (
-            <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 p-3 shadow-sm">
+            <div className={featureThemeClassName('agendaAgendaItemContextCardWarningSurface')}>
               <div className="text-muted-foreground mb-1 flex items-center gap-1 text-xs">
                 <Vote className="h-3 w-3" />
                 {t('features.events.agenda.votingStart')}
@@ -439,7 +443,7 @@ export function AgendaItemContextCard({
           )}
 
           {votingEndTime && (
-            <div className="rounded-xl border border-red-500/25 bg-red-500/10 p-3 shadow-sm">
+            <div className={featureThemeClassName('agendaAgendaItemContextCardDangerSurface')}>
               <div className="text-muted-foreground mb-1 flex items-center gap-1 text-xs">
                 <Clock className="h-3 w-3" />
                 {t('features.events.agenda.votingEnd')}
@@ -497,74 +501,7 @@ function ElectionDetailsSection({
 }: {
   election: NonNullable<AgendaItemContextCardProps['election']>;
 }) {
-  const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const role = election.role;
-  const group = role?.group;
+  const controller = useElectionDetailsSectionController();
 
-  return (
-    <Collapsible open={open} onOpenChange={setOpen}>
-      <div className="bg-muted/30 rounded-lg border">
-        <CollapsibleTrigger className="hover:bg-muted/50 flex w-full items-center gap-2 px-4 py-3 text-sm font-medium transition-colors">
-          {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-          <UserCheck className="text-muted-foreground h-4 w-4" />
-          <span>{t('features.events.agenda.roleDetails')}</span>
-          {group && (
-            <Link
-              to="/group/$id"
-              params={{ id: group.id }}
-              className="text-primary ml-auto flex items-center gap-1 text-xs hover:underline"
-              onClick={e => e.stopPropagation()}
-            >
-              {group.name ?? t('features.events.agenda.viewGroup')}
-              <ExternalLink className="h-3 w-3" />
-            </Link>
-          )}
-        </CollapsibleTrigger>
-
-        <CollapsibleContent>
-          <div className="space-y-3 border-t px-4 py-3">
-            {role?.title && (
-              <div>
-                <p className="text-muted-foreground text-xs font-medium">
-                  {t('features.events.agenda.role')}
-                </p>
-                <p className="text-sm">{role.title}</p>
-              </div>
-            )}
-
-            {role?.description && (
-              <div>
-                <p className="text-muted-foreground text-xs font-medium">
-                  {t('common.description')}
-                </p>
-                <p className="text-sm whitespace-pre-wrap">{role.description}</p>
-              </div>
-            )}
-
-            <div className="flex flex-wrap gap-2">
-              {election.election_mode ? (
-                <AgendaElectionModeBadge
-                  electionMode={election.election_mode}
-                  seatCount={election.seat_count}
-                />
-              ) : null}
-              {role?.term && (
-                <BadgeControl variant="secondary" className="text-xs">
-                  <Calendar className="mr-1 h-3 w-3" />
-                  {t('features.events.agenda.term')}: {role.term}
-                </BadgeControl>
-              )}
-              {group?.name && (
-                <BadgeControl variant="outline" className="text-xs">
-                  <Building2 className="mr-1 h-3 w-3" />
-                  {group.name}
-                </BadgeControl>
-              )}
-            </div>
-          </div>
-        </CollapsibleContent>
-      </div>
-    </Collapsible>
-  );
+  return <ElectionDetailsSectionView election={election} {...controller} />;
 }

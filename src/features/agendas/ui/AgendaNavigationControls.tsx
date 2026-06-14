@@ -35,7 +35,7 @@ export function AgendaNavigationControls({ eventId }: AgendaNavigationControlsPr
   const progressPercentage = totalItems > 0 ? ((currentIndex + 1) / totalItems) * 100 : 0;
 
   return (
-    <Card className="border-primary/20 bg-primary/5">
+    <Card surface="primarySoft">
       <CardContent className="p-4">
         <div className="flex flex-col gap-4">
           {/* Progress indicator */}

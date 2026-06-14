@@ -1,6 +1,7 @@
 'use client';
 
-import { BadgeControl } from '@/features/shared/ui/status';
+import { featureThemeClassName } from '@/features/shared/theme';
+import { BadgeControl, StatusBadge, type BadgeTone } from '@/features/shared/ui/status';
 import { useMemo, useState } from 'react';
 import type { Value } from 'platejs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
@@ -26,7 +27,7 @@ import {
   useTranslation,
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
-import { VotePhaseBadge } from '@/features/vote-cast/ui/VotePhaseBadge';
+import { VotingPhaseBadge as VotePhaseBadge } from '@/features/shared/ui/voting';
 import { VoteResultsDisplay, type VoteBarOption } from '@/features/vote-cast/ui/VoteResultsDisplay';
 import { VoteResultSentence } from '@/features/vote-cast/ui/VoteResultSentence';
 import {
@@ -45,12 +46,30 @@ import { EditingModeSelector } from '@/features/editor/ui/EditingModeSelector';
 import type { TDiscussion } from '@/features/editor/types';
 
 const CR_CHOICE_COLORS = [
-  { color: 'bg-green-500', light: 'bg-green-300/60' },
-  { color: 'bg-red-500', light: 'bg-red-300/60' },
-  { color: 'bg-gray-400', light: 'bg-gray-300/60' },
-  { color: 'bg-blue-500', light: 'bg-blue-300/60' },
-  { color: 'bg-purple-500', light: 'bg-purple-300/60' },
-  { color: 'bg-orange-500', light: 'bg-orange-300/60' },
+  {
+    color: featureThemeClassName('agendaAgendaVoteSectionSuccessBackground'),
+    light: featureThemeClassName('agendaAgendaVoteSectionSuccessBackgroundAlpha'),
+  },
+  {
+    color: featureThemeClassName('agendaAgendaVoteSectionDangerBackground'),
+    light: featureThemeClassName('agendaAgendaVoteSectionDangerBackgroundAlpha'),
+  },
+  {
+    color: featureThemeClassName('agendaAgendaVoteSectionNeutralBackground'),
+    light: featureThemeClassName('agendaAgendaVoteSectionNeutralBackgroundAlpha'),
+  },
+  {
+    color: featureThemeClassName('agendaAgendaVoteSectionInfoBackground'),
+    light: featureThemeClassName('agendaAgendaVoteSectionInfoBackgroundAlpha'),
+  },
+  {
+    color: featureThemeClassName('agendaAgendaVoteSectionAccentBackground'),
+    light: featureThemeClassName('agendaAgendaVoteSectionAccentBackgroundAlpha'),
+  },
+  {
+    color: featureThemeClassName('agendaAgendaVoteSectionWarningBackground'),
+    light: featureThemeClassName('agendaAgendaVoteSectionWarningBackgroundAlpha'),
+  },
 ];
 
 function normalizeMajorityType(value?: string | null): MajorityType {
@@ -104,8 +123,18 @@ interface ChangeRequestTimelineCardProps {
 }
 
 function getStatusIcon(status: string | null, isCurrent: boolean) {
-  if (status === 'completed') return <CheckCircle2 className="h-5 w-5 text-green-500" />;
-  if (isCurrent) return <Loader2 className="h-5 w-5 animate-spin text-blue-500" />;
+  if (status === 'completed')
+    return (
+      <CheckCircle2
+        className={featureThemeClassName('agendaChangeRequestTimelineCardSuccessIcon')}
+      />
+    );
+  if (isCurrent)
+    return (
+      <Loader2
+        className={featureThemeClassName('agendaChangeRequestTimelineCardInfoLoadingIcon')}
+      />
+    );
   return <Circle className="text-muted-foreground h-5 w-5" />;
 }
 
@@ -116,13 +145,18 @@ function getStatusBadge(
   voteResult?: string,
   originalStatus?: string
 ) {
+  let label = t('features.agendas.crTimeline.open');
+  let tone: BadgeTone = 'info';
+
   // Determine accepted/rejected from vote result or original mock status
   if (status === 'completed') {
     if (voteResult === 'passed' || originalStatus === 'approved' || originalStatus === 'accepted') {
+      label = t('features.agendas.crTimeline.accepted');
+      tone = 'success';
       return (
-        <BadgeControl variant="default" className="bg-green-600">
-          {t('features.agendas.crTimeline.accepted')}
-        </BadgeControl>
+        <StatusBadge status="accepted" tone={tone}>
+          {label}
+        </StatusBadge>
       );
     }
     if (
@@ -131,28 +165,32 @@ function getStatusBadge(
       originalStatus === 'declined' ||
       originalStatus === 'rejected'
     ) {
+      label = t('features.agendas.crTimeline.rejected');
+      tone = 'destructive';
       return (
-        <BadgeControl variant="default" className="bg-red-600">
-          {t('features.agendas.crTimeline.rejected')}
-        </BadgeControl>
+        <StatusBadge status="rejected" tone={tone}>
+          {label}
+        </StatusBadge>
       );
     }
+    label = t('features.agendas.crTimeline.completed');
+    tone = 'success';
     return (
-      <BadgeControl variant="default" className="bg-green-600">
-        {t('features.agendas.crTimeline.completed')}
-      </BadgeControl>
+      <StatusBadge status="completed" tone={tone}>
+        {label}
+      </StatusBadge>
     );
   }
   if (isCurrent)
     return (
-      <BadgeControl variant="default" className="bg-blue-600">
+      <StatusBadge status="voting" tone="info">
         {t('features.agendas.crTimeline.voting')}
-      </BadgeControl>
+      </StatusBadge>
     );
   return (
-    <BadgeControl variant="default" className="bg-blue-600">
-      {t('features.agendas.crTimeline.open')}
-    </BadgeControl>
+    <StatusBadge status="open" tone={tone}>
+      {label}
+    </StatusBadge>
   );
 }
 
@@ -344,7 +382,9 @@ export function ChangeRequestTimelineCard({
       <Card
         className={cn(
           'transition-all',
-          isCurrent && !isLocked && 'ring-2 ring-blue-500/50',
+          isCurrent &&
+            !isLocked &&
+            featureThemeClassName('agendaChangeRequestTimelineCardInfoRing'),
           item.status === 'completed' && 'opacity-75',
           isLocked && 'opacity-50'
         )}
@@ -357,14 +397,14 @@ export function ChangeRequestTimelineCard({
               ) : (
                 getStatusIcon(item.status, isCurrent)
               )}
-              <CardTitle className="text-sm font-medium">
+              <CardTitle size="sm" weight="medium">
                 {item.is_final_vote && <Vote className="mr-1 inline h-4 w-4" />}
                 {title}
               </CardTitle>
             </div>
             <div className="flex items-center gap-2">
               {hasUserVoted && (
-                <BadgeControl variant="outline" className="text-xs">
+                <BadgeControl variant="outline" size="xs">
                   {t('features.agendas.crTimeline.voted')}
                 </BadgeControl>
               )}
@@ -408,13 +448,19 @@ export function ChangeRequestTimelineCard({
                   {/* Formatting change */}
                   {diff.changeType === 'update' && diff.newText && (
                     <div>
-                      <h4 className="mb-2 text-sm font-semibold text-blue-600 dark:text-blue-400">
+                      <h4
+                        className={featureThemeClassName('agendaChangeRequestTimelineCardInfoText')}
+                      >
                         {isClosed
                           ? translateText('generated.inline.0001_formatting_changed_a569a947')
                           : translateText('generated.inline.0002_formatting_change_ca927cc5')}
                       </h4>
                       {diff.newProperties && Object.keys(diff.newProperties).length > 0 && (
-                        <div className="rounded-lg bg-blue-500/10 p-3">
+                        <div
+                          className={featureThemeClassName(
+                            'agendaChangeRequestTimelineCardInfoPanel'
+                          )}
+                        >
                           <div className="mb-1 flex flex-wrap gap-2">
                             {Object.entries(diff.newProperties).map(([key, value]) => (
                               <BadgeControl
@@ -459,14 +505,22 @@ export function ChangeRequestTimelineCard({
                   {diff.originalText &&
                     (diff.changeType === 'remove' || diff.changeType === 'replace') && (
                       <div>
-                        <h4 className="mb-1 text-sm font-semibold text-red-600 dark:text-red-400">
+                        <h4
+                          className={featureThemeClassName(
+                            'agendaChangeRequestTimelineCardDangerText'
+                          )}
+                        >
                           {diff.changeType === 'remove'
                             ? isClosed
                               ? translateText('generated.inline.0005_deleted_4e8bafed')
                               : translateText('generated.inline.0006_delete_ed576ebf')
                             : translateText('generated.inline.0007_original_text_da16d17d')}
                         </h4>
-                        <div className="rounded-lg bg-red-500/10 p-3 line-through">
+                        <div
+                          className={featureThemeClassName(
+                            'agendaChangeRequestTimelineCardDangerPanel'
+                          )}
+                        >
                           <p className="text-xs whitespace-pre-wrap">{diff.originalText}</p>
                         </div>
                       </div>
@@ -476,14 +530,22 @@ export function ChangeRequestTimelineCard({
                   {diff.newText &&
                     (diff.changeType === 'insert' || diff.changeType === 'replace') && (
                       <div>
-                        <h4 className="mb-1 text-sm font-semibold text-green-600 dark:text-green-400">
+                        <h4
+                          className={featureThemeClassName(
+                            'agendaChangeRequestTimelineCardSuccessText'
+                          )}
+                        >
                           {diff.changeType === 'insert'
                             ? isClosed
                               ? translateText('generated.inline.0008_added_0ae84aa1')
                               : translateText('generated.inline.0009_add_c37195fe')
                             : translateText('generated.inline.0010_replace_with_e0b9893c')}
                         </h4>
-                        <div className="rounded-lg bg-green-500/10 p-3">
+                        <div
+                          className={featureThemeClassName(
+                            'agendaChangeRequestTimelineCardSuccessPanel'
+                          )}
+                        >
                           <p className="text-xs whitespace-pre-wrap">{diff.newText}</p>
                         </div>
                       </div>
@@ -575,14 +637,20 @@ export function ChangeRequestTimelineCard({
                           isSelected && 'border-primary bg-primary/5',
                           isWinner &&
                             isClosed &&
-                            'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/30'
+                            featureThemeClassName('agendaAgendaElectionSectionWarningSurface')
                         )}
                       >
                         <div className="mb-2 flex items-center gap-2">
                           <span className="font-medium">
                             {cs.choice.label || `Choice ${idx + 1}`}
                           </span>
-                          {isWinner && isClosed && <Crown className="h-4 w-4 text-yellow-500" />}
+                          {isWinner && isClosed && (
+                            <Crown
+                              className={featureThemeClassName(
+                                'agendaAgendaElectionSectionWarningIcon'
+                              )}
+                            />
+                          )}
                           {isSelected && <CheckCircle2 className="text-primary h-4 w-4" />}
                         </div>
 
@@ -611,7 +679,9 @@ export function ChangeRequestTimelineCard({
 
             {hasUserVoted && !isLocked && (
               <div className="flex items-center justify-center gap-2 text-sm">
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                <CheckCircle2
+                  className={featureThemeClassName('agendaAgendaElectionSectionSuccessIcon')}
+                />
                 <span className="text-muted-foreground">
                   {isIndicative
                     ? t('features.events.agenda.yourIndication')
@@ -634,7 +704,10 @@ export function ChangeRequestTimelineCard({
                           ? 'destructive'
                           : 'secondary'
                     }
-                    className={cn(choice.label === 'yes' && 'bg-green-600 hover:bg-green-700')}
+                    className={cn(
+                      choice.label === 'yes' &&
+                        featureThemeClassName('agendaChangeRequestTimelineCardSuccessBackground')
+                    )}
                     disabled={votingLoading}
                     onClick={e => {
                       e.stopPropagation();

@@ -1,4 +1,4 @@
-import { FormControlTextarea } from '@/features/shared/ui/form';
+import { FormControlLabel, FormControlTextarea } from '@/features/shared/ui/form';
 /**
  * Blog Edit Component
  *
@@ -112,9 +112,9 @@ export function BlogEdit({ blogId }: BlogEditProps) {
               required
             />
             <div className="space-y-2">
-              <label htmlFor="description" className="text-sm leading-none font-medium">
+              <FormControlLabel htmlFor="description">
                 {t('features.blogs.editPage.descriptionLabel')}
-              </label>
+              </FormControlLabel>
               <FormControlTextarea
                 id="description"
                 value={formData.description}

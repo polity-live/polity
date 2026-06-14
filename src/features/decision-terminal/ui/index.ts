@@ -25,12 +25,12 @@ export { FlashRow, FlashCell, FlashIndicator, type FlashRowProps } from './Flash
 
 // Status & Indicators
 export {
-  StatusBadge,
-  StatusDot,
-  getStatusConfig,
-  type StatusBadgeProps,
+  DecisionStatusBadge as StatusBadge,
+  DecisionStatusDot as StatusDot,
+  getDecisionStatusConfig as getStatusConfig,
+  type DecisionStatusBadgeProps as StatusBadgeProps,
   type DecisionStatus,
-} from './StatusBadge';
+} from '@/features/shared/ui/status';
 export {
   TrendIndicator,
   TrendArrow,
@@ -42,12 +42,12 @@ export {
 } from './TrendIndicator';
 export { CountdownTimer, EndedAgo, type CountdownTimerProps } from './CountdownTimer';
 export {
-  ResultBadge,
-  ResultCompact,
-  getResultConfig,
-  type ResultBadgeProps,
-  type ResultType,
-} from './ResultBadge';
+  DecisionResultBadge as ResultBadge,
+  DecisionResultCompact as ResultCompact,
+  getDecisionResultConfig as getResultConfig,
+  type DecisionResultBadgeProps as ResultBadgeProps,
+  type DecisionResultType as ResultType,
+} from '@/features/shared/ui/voting';
 export {
   VoteProgressBar,
   VoteBarCompact,

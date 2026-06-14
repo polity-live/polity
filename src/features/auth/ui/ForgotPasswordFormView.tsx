@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import type { FormEventHandler } from 'react';
 import { ArrowLeft, CheckCircle2, KeyRound } from 'lucide-react';
 
@@ -51,9 +52,9 @@ export function ForgotPasswordFormView({
       }
       icon={
         sent ? (
-          <CheckCircle2 className="h-12 w-12 text-emerald-500" />
+          <CheckCircle2 className={featureThemeClassName('authForgotPasswordFormSuccessIcon')} />
         ) : (
-          <KeyRound className="h-12 w-12 text-blue-500" />
+          <KeyRound className={featureThemeClassName('authForgotPasswordFormInfoIcon')} />
         )
       }
     >

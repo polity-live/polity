@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';

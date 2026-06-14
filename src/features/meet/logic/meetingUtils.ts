@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 export function calculateDuration(startTime: string | number, endTime: string | number): string {
   const start = new Date(startTime);
@@ -34,7 +35,7 @@ export function getMeetingStatus(
     return {
       label: translateText('generated.inline.0175_available_7c62a142'),
       variant: 'default',
-      className: 'bg-green-500',
+      className: featureThemeClassName('agendaAgendaVoteSectionSuccessBackground'),
     };
   }
 

@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
@@ -11,7 +12,7 @@ import {
 import { cn } from '@/features/shared/utils/utils';
 import { VoteResultsDisplay } from '@/features/vote-cast/ui/VoteResultsDisplay';
 import { VoteResultSentence } from '@/features/vote-cast/ui/VoteResultSentence';
-import { VotePhaseBadge } from '@/features/vote-cast/ui/VotePhaseBadge';
+import { VotingPhaseBadge as VotePhaseBadge } from '@/features/shared/ui/voting';
 import {
   computeVoteResultSummary,
   type ChoiceOfflineTally,
@@ -37,12 +38,30 @@ function normalizeMajorityType(value?: string | null): MajorityType {
 
 // Color palette for choices
 const CHOICE_COLORS = [
-  { color: 'bg-green-500', light: 'bg-green-300/60' },
-  { color: 'bg-red-500', light: 'bg-red-300/60' },
-  { color: 'bg-gray-400', light: 'bg-gray-300/60' },
-  { color: 'bg-blue-500', light: 'bg-blue-300/60' },
-  { color: 'bg-purple-500', light: 'bg-purple-300/60' },
-  { color: 'bg-orange-500', light: 'bg-orange-300/60' },
+  {
+    color: featureThemeClassName('agendaAgendaVoteSectionSuccessBackground'),
+    light: featureThemeClassName('agendaAgendaVoteSectionSuccessBackgroundAlpha'),
+  },
+  {
+    color: featureThemeClassName('agendaAgendaVoteSectionDangerBackground'),
+    light: featureThemeClassName('agendaAgendaVoteSectionDangerBackgroundAlpha'),
+  },
+  {
+    color: featureThemeClassName('agendaAgendaVoteSectionNeutralBackground'),
+    light: featureThemeClassName('agendaAgendaVoteSectionNeutralBackgroundAlpha'),
+  },
+  {
+    color: featureThemeClassName('agendaAgendaVoteSectionInfoBackground'),
+    light: featureThemeClassName('agendaAgendaVoteSectionInfoBackgroundAlpha'),
+  },
+  {
+    color: featureThemeClassName('agendaAgendaVoteSectionAccentBackground'),
+    light: featureThemeClassName('agendaAgendaVoteSectionAccentBackgroundAlpha'),
+  },
+  {
+    color: featureThemeClassName('agendaAgendaVoteSectionWarningBackground'),
+    light: featureThemeClassName('agendaAgendaVoteSectionWarningBackgroundAlpha'),
+  },
 ];
 
 interface AgendaVoteSectionProps {
@@ -199,7 +218,7 @@ export function AgendaVoteSection({
           <Vote className="h-5 w-5" />
           {t('features.events.agenda.voteResults')}
           {attendanceMode ? (
-            <BadgeControl variant="outline" className="capitalize">
+            <BadgeControl variant="outline" textTransform="capitalize">
               {attendanceMode}
             </BadgeControl>
           ) : null}
@@ -247,12 +266,12 @@ export function AgendaVoteSection({
             </span>
             <div className="flex items-center gap-2">
               {isIndicationPhase ? (
-                <BadgeControl variant="secondary" className="text-xs">
+                <BadgeControl variant="secondary" size="xs">
                   * {t('features.events.agenda.indicationOnly')}
                 </BadgeControl>
               ) : null}
               {isInteractive ? (
-                <BadgeControl variant="outline" className="text-xs">
+                <BadgeControl variant="outline" size="xs">
                   {translateText('generated.inline.0015_klick_fuer_einzelansicht_9d7ff135')}
                 </BadgeControl>
               ) : null}
@@ -276,12 +295,20 @@ export function AgendaVoteSection({
                     className={cn(
                       'rounded-lg border p-3 transition-colors',
                       isSelected && 'border-primary bg-primary/5',
-                      isWinner && isClosed && 'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/30'
+                      isWinner &&
+                        isClosed &&
+                        featureThemeClassName('agendaAgendaElectionSectionWarningSurface')
                     )}
                   >
                     <div className="mb-2 flex items-center gap-2">
                       <span className="font-medium">{cs.choice.label || `Choice ${idx + 1}`}</span>
-                      {isWinner && isClosed && <Crown className="h-4 w-4 text-yellow-500" />}
+                      {isWinner && isClosed && (
+                        <Crown
+                          className={featureThemeClassName(
+                            'agendaAgendaElectionSectionWarningIcon'
+                          )}
+                        />
+                      )}
                       {isSelected && <CheckCircle2 className="text-primary h-4 w-4" />}
                     </div>
 
@@ -310,7 +337,9 @@ export function AgendaVoteSection({
 
           {userHasVoted ? (
             <div className="flex items-center justify-center gap-2 text-sm">
-              <CheckCircle2 className="h-4 w-4 text-green-500" />
+              <CheckCircle2
+                className={featureThemeClassName('agendaAgendaElectionSectionSuccessIcon')}
+              />
               <span className="text-muted-foreground">
                 {isIndicationPhase
                   ? t('features.events.agenda.yourIndication')

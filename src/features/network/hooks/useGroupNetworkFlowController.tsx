@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName, featureThemeValue } from '@/features/shared/theme';
 import {
   FormControlSelect,
   FormControlSelectContent,
@@ -1030,7 +1031,7 @@ export function useGroupNetworkFlowController({
         memberTargetGroupId: parent.memberTargetGroupId,
         rightEdgeDirections,
         relationshipDepth: (parent.level ?? 1) === 1 ? 'direct' : 'indirect',
-        strokeColor: '#66bb6a',
+        strokeColor: featureThemeValue('amendmentAmendmentPathVisualizationSuccessColorAlpha'),
         strokeDasharray: '5 5',
       });
     });
@@ -1073,7 +1074,7 @@ export function useGroupNetworkFlowController({
         memberTargetGroupId: child.memberTargetGroupId,
         rightEdgeDirections,
         relationshipDepth: (child.level ?? 1) === 1 ? 'direct' : 'indirect',
-        strokeColor: '#ffb74d',
+        strokeColor: featureThemeValue('networkUseGroupNetworkFlowWarningColor'),
         strokeDasharray: '5 5',
       });
     });
@@ -1100,7 +1101,9 @@ export function useGroupNetworkFlowController({
         memberTargetGroupId: entry.memberTargetGroupId,
         rightEdgeDirections: entry.rightEdgeDirections,
         relationshipDepth: 'direct',
-        strokeColor: isHorizontalSiblingLink ? '#f59e0b' : '#a855f7',
+        strokeColor: isHorizontalSiblingLink
+          ? featureThemeValue('networkUseGroupNetworkFlowWarningColorAlpha')
+          : featureThemeValue('networkUseGroupNetworkFlowAccentColor'),
         strokeDasharray: isHorizontalSiblingLink ? undefined : '6 4',
       });
     });
@@ -1172,7 +1175,7 @@ export function useGroupNetworkFlowController({
           animated: true,
           style: {
             ...edge.style,
-            stroke: '#10b981',
+            stroke: featureThemeValue('networkUseGroupNetworkFlowSuccessColor'),
             strokeWidth: 4,
           },
         };
@@ -1191,13 +1194,15 @@ export function useGroupNetworkFlowController({
           ...node,
           style: {
             ...node.style,
-            borderColor: isHighlighted ? '#10b981' : node.style?.borderColor,
+            borderColor: isHighlighted
+              ? featureThemeValue('networkUseGroupNetworkFlowSuccessColor')
+              : node.style?.borderColor,
             boxShadow: isSelected
               ? isHighlighted
-                ? '0 0 0 2px #ff0072, 0 0 0 5px rgba(16, 185, 129, 0.35)'
-                : '0 0 0 2px #ff0072'
+                ? featureThemeClassName('networkUseGroupNetworkFlowThemedStyle')
+                : featureThemeClassName('floweditorUseFlowEditorThemedStyle')
               : isHighlighted
-                ? '0 0 0 4px rgba(16, 185, 129, 0.35)'
+                ? featureThemeClassName('networkUseGroupNetworkFlowThemedStyleAlpha')
                 : undefined,
           },
         };
@@ -1459,26 +1464,40 @@ export function useGroupNetworkFlowController({
             filteredByPrefix={t('common.network.filteredBy')}
             legendExtraContent={
               <>
-                <hr className="my-1 border-gray-200 dark:border-gray-700" />
+                <hr className={featureThemeClassName('networkUseGroupNetworkFlowNeutralBorder')} />
                 <div className="space-y-2">
                   <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                     {t('common.network.requestBadgeLegend')}
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="relative h-3 w-6 rounded-sm border border-gray-300 bg-gray-100"></div>
+                    <div
+                      className={featureThemeClassName('networkUseGroupNetworkFlowNeutralSurface')}
+                    ></div>
                     <span>{t('common.network.activeNoBadge')}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="relative h-3 w-6 rounded-sm border border-gray-300 bg-gray-100">
-                      <span className="border-background absolute -top-1.5 -right-1.5 z-10 flex h-3.5 w-3.5 items-center justify-center rounded-full border bg-blue-500 text-white shadow-sm">
+                    <div
+                      className={featureThemeClassName('networkUseGroupNetworkFlowNeutralSurface')}
+                    >
+                      <span
+                        className={featureThemeClassName(
+                          'networkUseGroupNetworkFlowInfoContrastRoundIcon'
+                        )}
+                      >
                         <ArrowDownLeft className="h-2 w-2" />
                       </span>
                     </div>
                     <span>{t('common.network.incomingRequest')}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="relative h-3 w-6 rounded-sm border border-gray-300 bg-gray-100">
-                      <span className="border-background absolute -top-1.5 -right-1.5 z-10 flex h-3.5 w-3.5 items-center justify-center rounded-full border bg-amber-500 text-white shadow-sm">
+                    <div
+                      className={featureThemeClassName('networkUseGroupNetworkFlowNeutralSurface')}
+                    >
+                      <span
+                        className={featureThemeClassName(
+                          'networkUseGroupNetworkFlowWarningContrastRoundIcon'
+                        )}
+                      >
                         <ArrowUpRight className="h-2 w-2" />
                       </span>
                     </div>

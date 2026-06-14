@@ -1,5 +1,10 @@
 'use client';
 
+import {
+  featureThemeClassName,
+  featureThemeValue,
+  featureThemeMarkup,
+} from '@/features/shared/theme';
 import { useEffect, useMemo, useState } from 'react';
 import type { CivicTimelineItem } from '../logic/civicTimeline';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
@@ -35,20 +40,20 @@ function getMarkerColor(type: CivicTimelineItem['type']) {
   switch (type) {
     case 'vote':
     case 'election':
-      return '#dc2626';
+      return featureThemeValue('chartChartRendererDangerColor');
     case 'event':
     case 'agenda_item':
-      return '#d97706';
+      return featureThemeValue('networkNetworkEdgeHelpersWarningColor');
     case 'amendment':
     case 'workflow':
-      return '#7c3aed';
+      return featureThemeValue('chartChartRendererAccentColor');
     case 'group':
-      return '#059669';
+      return featureThemeValue('networkNetworkVisualHelpersSuccessColorAlpha');
     case 'statement':
     case 'blog':
-      return '#2563eb';
+      return featureThemeValue('chartChartRendererInfoColor');
     default:
-      return '#334155';
+      return featureThemeValue('networkAmendmentPathVisualizationNeutralColorBeta');
   }
 }
 
@@ -101,7 +106,7 @@ export function CivicTimelineMap({
         item.type,
         leafletModule.divIcon({
           className: '',
-          html: `<span style="display:block;width:18px;height:18px;border-radius:9999px;background:${color};border:3px solid #ffffff;box-shadow:0 10px 24px rgba(15,23,42,0.26);"></span>`,
+          html: `<span style="display:block;width:18px;height:18px;border-radius:9999px;background:${color};border:2px solid white;box-shadow:0 1px 6px rgba(15,23,42,.35);"></span>`,
           iconAnchor: [9, 9],
           iconSize: [18, 18],
         })
@@ -115,7 +120,7 @@ export function CivicTimelineMap({
 
     return leafletModule.divIcon({
       className: '',
-      html: '<span style="display:block;width:24px;height:24px;border-radius:9999px;background:#111827;border:4px solid #fef3c7;box-shadow:0 14px 30px rgba(17,24,39,0.42);"></span>',
+      html: featureThemeMarkup('timelineCivicTimelineMapMapMarkerMarkup'),
       iconAnchor: [12, 12],
       iconSize: [24, 24],
     });
@@ -200,7 +205,9 @@ export function CivicTimelineMap({
                 <div className="max-w-48">
                   <div className="text-xs font-semibold">{item.title}</div>
                   {item.locationLabel && (
-                    <div className="text-[11px] text-slate-500">{item.locationLabel}</div>
+                    <div className={featureThemeClassName('timelineCivicTimelineMapNeutralText')}>
+                      {item.locationLabel}
+                    </div>
                   )}
                 </div>
               </Tooltip>

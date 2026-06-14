@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { Suspense, lazy, type ComponentType } from 'react';
 import { cn } from '@/features/shared/utils/utils';
+import { Skeleton } from '@/features/shared/ui/ui/skeleton';
 import type { GroupTimelineCardProps } from './cards/GroupTimelineCard';
 import type { EventTimelineCardProps } from './cards/EventTimelineCard';
 import type { AmendmentTimelineCardProps } from './cards/AmendmentTimelineCard';
@@ -26,8 +27,8 @@ import type { AgendaItemTimelineCardProps } from './cards/AgendaItemTimelineCard
  */
 
 // Card loading fallback
-function CardSkeleton({ className }: { className?: string }) {
-  return <div className={cn('bg-muted h-48 w-full animate-pulse rounded-xl', className)} />;
+function TimelineCardFallback({ className }: { className?: string }) {
+  return <Skeleton className={cn('h-48 w-full rounded-xl', className)} />;
 }
 
 // Lazy load card components
@@ -172,7 +173,7 @@ export function DynamicTimelineCard({
   }
 
   return (
-    <Suspense fallback={fallback || <CardSkeleton className={className} />}>
+    <Suspense fallback={fallback || <TimelineCardFallback className={className} />}>
       {React.createElement(CardComponent as React.ElementType, cardProps)}
     </Suspense>
   );
@@ -197,7 +198,7 @@ export function withLazyLoading<P extends object>(
 
   return function LazyWrapper(props: P) {
     return (
-      <Suspense fallback={fallback || <CardSkeleton />}>
+      <Suspense fallback={fallback || <TimelineCardFallback />}>
         <LazyComponent {...props} />
       </Suspense>
     );

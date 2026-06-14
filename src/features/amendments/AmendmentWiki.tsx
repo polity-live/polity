@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import {
   Card,
@@ -38,10 +39,10 @@ interface AmendmentWikiProps {
 }
 
 const GRADIENTS = [
-  'bg-gradient-to-br from-slate-50 via-white to-slate-100',
-  'bg-gradient-to-br from-emerald-50 via-white to-teal-100',
-  'bg-gradient-to-br from-amber-50 via-white to-orange-100',
-  'bg-gradient-to-br from-sky-50 via-white to-cyan-100',
+  featureThemeClassName('amendmentAmendmentWikiNeutralContrastGradientSurface'),
+  featureThemeClassName('amendmentAmendmentWikiSuccessTealGradientSurface'),
+  featureThemeClassName('amendmentAmendmentWikiWarningContrastGradientSurface'),
+  featureThemeClassName('amendmentAmendmentWikiInfoContrastGradientSurface'),
 ] as const;
 
 export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
@@ -464,7 +465,7 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
                       <div className="flex flex-wrap gap-2">
                         <EditingModeBadge mode={clone.editing_mode} showIcon />
                         {clone.code && (
-                          <BadgeControl variant="outline" className="text-xs">
+                          <BadgeControl variant="outline" size="xs">
                             {clone.code}
                           </BadgeControl>
                         )}

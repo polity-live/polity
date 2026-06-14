@@ -128,11 +128,11 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
         <div className="mb-2 flex items-center justify-center gap-3">
           <h1 className="text-4xl font-bold">{group.name}</h1>
           {group.visibility === 'public' && (
-            <BadgeControl variant="secondary" className="text-sm">
+            <BadgeControl variant="secondary" size="sm">
               {t('components.badges.public')}
             </BadgeControl>
           )}
-          <BadgeControl variant="outline" className="text-sm">
+          <BadgeControl variant="outline" size="sm">
             {isSibling
               ? translateText('generated.inline.0080_geschwistergruppe_1053d99c')
               : isHierarchical
@@ -297,7 +297,7 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             {primarySiblingMembershipMode ? (
-              <BadgeControl variant="outline" className="w-fit text-xs">
+              <BadgeControl variant="outline" size="xs" className="w-fit">
                 {getCanonicalMembershipModeLabel(primarySiblingMembershipMode)}
               </BadgeControl>
             ) : null}

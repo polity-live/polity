@@ -22,8 +22,7 @@ const STORAGE_KEY = 'polity:timeline-mode';
  *
  * return (
  *   <div>
- *     <button onClick={() => setMode('timeline')}>Timeline</button>
- *     <button onClick={() => setMode('decisions')}>Decisions</button>
+ *     Use shared Button controls to call setMode('timeline') or setMode('decisions').
  *   </div>
  * );
  * ```

@@ -1,6 +1,6 @@
 // Base Components
 export * from './TimelineCardBase';
-export * from './TopicPill';
+export { TopicPill, TopicPillList, type TopicPillProps } from '@/features/shared/ui/status';
 
 // Content Type Cards
 export * from './GroupTimelineCard';

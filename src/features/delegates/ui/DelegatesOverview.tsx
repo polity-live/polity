@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import {
   Card,
@@ -77,9 +78,9 @@ export function DelegatesOverview({ eventId, groupId }: DelegatesOverviewProps) 
   return (
     <div className="space-y-4">
       {!isDelegatesFinalized && (
-        <div className="flex items-center gap-2 rounded-lg border border-yellow-500/50 bg-yellow-50 p-3 dark:bg-yellow-900/20">
-          <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
-          <p className="text-sm text-yellow-800 dark:text-yellow-200">
+        <div className={featureThemeClassName('delegateDelegatesOverviewWarningSurface')}>
+          <Clock className={featureThemeClassName('delegateDelegatesOverviewWarningIcon')} />
+          <p className={featureThemeClassName('delegateDelegatesOverviewWarningText')}>
             {translateText(
               'generated.inline.0367_delegates_will_be_finalized_when_the_event_st_4a680059'
             )}
@@ -136,7 +137,7 @@ export function DelegatesOverview({ eventId, groupId }: DelegatesOverviewProps) 
                     {confirmedDelegates.map(delegate => (
                       <div
                         key={delegate.id}
-                        className="flex items-center gap-3 rounded-lg border bg-green-50 p-3 dark:bg-green-900/20"
+                        className={featureThemeClassName('delegateDelegatesOverviewSuccessSurface')}
                       >
                         <Avatar className="h-10 w-10">
                           <AvatarImage
@@ -161,7 +162,7 @@ export function DelegatesOverview({ eventId, groupId }: DelegatesOverviewProps) 
                             <p className="text-muted-foreground text-sm">@{delegate.user.handle}</p>
                           )}
                         </div>
-                        <BadgeControl variant="default" className="bg-green-600">
+                        <BadgeControl variant="default" tone="successStrong">
                           <CheckCircle2 className="mr-1 h-3 w-3" />
                           {translateText('generated.inline.0372_confirmed_8cc7acb8')}
                         </BadgeControl>
@@ -182,7 +183,7 @@ export function DelegatesOverview({ eventId, groupId }: DelegatesOverviewProps) 
                     {nominatedDelegates.map((delegate, index) => (
                       <div
                         key={delegate.id}
-                        className="flex items-center gap-3 rounded-lg border bg-blue-50 p-3 dark:bg-blue-900/20"
+                        className={featureThemeClassName('delegateDelegatesOverviewInfoSurface')}
                       >
                         <Avatar className="h-10 w-10">
                           <AvatarImage

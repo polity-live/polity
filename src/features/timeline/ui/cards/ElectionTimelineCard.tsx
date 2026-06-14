@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { Award, Users, Calendar, Crown, Trophy } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -63,24 +64,24 @@ const STATUS_CONFIG: Record<
   { color: string; bgColor: string; icon: React.ReactNode; pulse?: boolean }
 > = {
   nominations_open: {
-    color: 'text-green-600 dark:text-green-400',
-    bgColor: 'bg-green-100 dark:bg-green-900/40',
+    color: featureThemeClassName('decisionterminalDecisionStatusSuccessText'),
+    bgColor: featureThemeClassName('timelineUseTodoTimelineCardSuccessBackground'),
     icon: <Users className="h-3 w-3" />,
   },
   voting_open: {
-    color: 'text-blue-600 dark:text-blue-400',
-    bgColor: 'bg-blue-100 dark:bg-blue-900/40',
+    color: featureThemeClassName('decisionterminalDecisionSummaryInfoText'),
+    bgColor: featureThemeClassName('timelineActionTimelineCardInfoBackground'),
     icon: <Award className="h-3 w-3" />,
     pulse: true,
   },
   closed: {
-    color: 'text-gray-600 dark:text-gray-400',
-    bgColor: 'bg-gray-100 dark:bg-gray-900/40',
+    color: featureThemeClassName('decisionterminalDecisionStatusNeutralText'),
+    bgColor: featureThemeClassName('timelineElectionTimelineCardNeutralBackground'),
     icon: <Calendar className="h-3 w-3" />,
   },
   winner_announced: {
-    color: 'text-amber-600 dark:text-amber-400',
-    bgColor: 'bg-amber-100 dark:bg-amber-900/40',
+    color: featureThemeClassName('decisionterminalCountdownTimerWarningText'),
+    bgColor: featureThemeClassName('timelineActionTimelineCardWarningBackground'),
     icon: <Trophy className="h-3 w-3" />,
   },
 };
@@ -140,10 +141,10 @@ function PhaseTimeline({ currentPhase }: { currentPhase: ElectionPhase }) {
             className={cn(
               'h-2 w-2 rounded-full transition-colors',
               index < currentIndex
-                ? 'bg-rose-400 dark:bg-rose-500'
+                ? featureThemeClassName('timelineElectionTimelineCardDangerBackground')
                 : index === currentIndex
-                  ? 'bg-rose-600 dark:bg-rose-400'
-                  : 'bg-gray-300 dark:bg-gray-600'
+                  ? featureThemeClassName('timelineElectionTimelineCardDangerBackgroundAlpha')
+                  : featureThemeClassName('timelineElectionTimelineCardNeutralBackgroundAlpha')
             )}
           />
           {index < phases.length - 1 && (
@@ -151,8 +152,8 @@ function PhaseTimeline({ currentPhase }: { currentPhase: ElectionPhase }) {
               className={cn(
                 'h-0.5 w-4',
                 index < currentIndex
-                  ? 'bg-rose-400 dark:bg-rose-500'
-                  : 'bg-gray-300 dark:bg-gray-600'
+                  ? featureThemeClassName('timelineElectionTimelineCardDangerBackground')
+                  : featureThemeClassName('timelineElectionTimelineCardNeutralBackgroundAlpha')
               )}
             />
           )}
@@ -191,21 +192,28 @@ function CandidateAvatars({
             <Avatar
               className={cn(
                 'border-background h-10 w-10 border-2',
-                candidate.id === winnerId && 'ring-2 ring-amber-400'
+                candidate.id === winnerId &&
+                  featureThemeClassName('timelineElectionTimelineCardWarningRing')
               )}
             >
               <AvatarImage src={candidate.avatarUrl} alt={candidate.name} />
-              <AvatarFallback className="bg-rose-100 text-xs dark:bg-rose-900/40">
+              <AvatarFallback
+                className={featureThemeClassName(
+                  'timelineElectionTimelineCardDangerBackgroundBeta'
+                )}
+              >
                 {getInitials(candidate.name)}
               </AvatarFallback>
             </Avatar>
             {candidate.id === winnerId && (
-              <Crown className="absolute -top-2 left-1/2 h-4 w-4 -translate-x-1/2 text-amber-500" />
+              <Crown
+                className={featureThemeClassName('timelineElectionTimelineCardWarningNeutralIcon')}
+              />
             )}
           </div>
         ))}
         {remaining > 0 && (
-          <div className="border-background flex h-10 w-10 items-center justify-center rounded-full border-2 bg-gray-100 text-xs font-medium dark:bg-gray-800">
+          <div className={featureThemeClassName('timelineElectionTimelineCardNeutralRoundIcon')}>
             +{remaining}
           </div>
         )}
@@ -217,10 +225,14 @@ function CandidateAvatars({
             <span className="text-muted-foreground">{candidate.name}</span>
             {/* Show indication or actual percentage */}
             {isIndicationPhase && candidate.indicationPercentage !== undefined ? (
-              <span className="text-blue-500">{candidate.indicationPercentage}% *</span>
+              <span className={featureThemeClassName('discussionsCommentTreeInfoText')}>
+                {candidate.indicationPercentage}% *
+              </span>
             ) : showBothResults && candidate.indicationPercentage !== undefined ? (
               <span className="text-muted-foreground">
-                <span className="text-blue-400">{candidate.indicationPercentage}%</span>
+                <span className={featureThemeClassName('notificationNotificationInfoTextAlpha')}>
+                  {candidate.indicationPercentage}%
+                </span>
                 {' → '}
                 <span className="text-foreground font-medium">{candidate.votePercentage}%</span>
               </span>
@@ -257,19 +269,23 @@ function WinnerDisplay({
         🎉 {t('features.timeline.cards.election.winnerAnnounced')}
       </div>
       <div className="relative">
-        <Avatar className="h-16 w-16 border-4 border-amber-400 ring-2 ring-amber-200 dark:ring-amber-800">
+        <Avatar className={featureThemeClassName('timelineElectionTimelineCardWarningBorder')}>
           <AvatarImage src={avatarUrl} alt={name} />
-          <AvatarFallback className="bg-rose-100 text-lg dark:bg-rose-900/40">
+          <AvatarFallback
+            className={featureThemeClassName('timelineElectionTimelineCardDangerBackgroundGamma')}
+          >
             {getInitials(name)}
           </AvatarFallback>
         </Avatar>
-        <Crown className="absolute -top-3 left-1/2 h-6 w-6 -translate-x-1/2 text-amber-500" />
+        <Crown
+          className={featureThemeClassName('timelineElectionTimelineCardWarningNeutralIconAlpha')}
+        />
       </div>
       <div className="text-center">
         <div className="font-semibold">{name}</div>
         <div className="text-muted-foreground text-sm">{roleName}</div>
         {votePercentage !== undefined && (
-          <div className="mt-1 text-sm font-medium text-amber-600 dark:text-amber-400">
+          <div className={featureThemeClassName('timelineElectionTimelineCardWarningText')}>
             {votePercentage}% {t('features.timeline.cards.election.ofVotes')}
           </div>
         )}

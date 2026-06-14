@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { useEventActions } from '@/zero/events/useEventActions';
 import type { EventUpdateInput } from '@/zero/events/schema';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';

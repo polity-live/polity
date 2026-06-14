@@ -176,7 +176,7 @@ export function AgendaSpeakerListSection({
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CollapsibleTrigger asChild>
-              <Button variant="ghost" className="h-auto p-0 hover:bg-transparent">
+              <Button variant="ghost" presentation="transparentGhost">
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Mic className="h-5 w-5" />
                   {t('features.events.agenda.speakerList')} ({speakers.length})

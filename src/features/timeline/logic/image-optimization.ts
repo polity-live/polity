@@ -1,3 +1,4 @@
+import { featureThemeValue } from '@/features/shared/theme';
 /**
  * Image optimization utilities for timeline cards
  * Handles responsive images, thumbnails, and lazy loading
@@ -56,6 +57,8 @@ export const CARD_IMAGE_SIZES = {
  * Generate srcset string for responsive images
  */
 export function generateSrcSet(baseUrl: string, widths: number[], quality = 80): string {
+  void quality;
+
   // For InstantDB/external URLs, we can't generate srcset dynamically
   // This function would work with an image CDN or Next.js Image optimization
 
@@ -115,7 +118,9 @@ export function shouldLazyLoad(index: number, visibleCount = 6): boolean {
  * Generate a blur placeholder data URL
  * This is a tiny base64 placeholder for instant loading
  */
-export function generateBlurPlaceholder(color: string = '#f3f4f6'): string {
+export function generateBlurPlaceholder(
+  color: string = featureThemeValue('timelineImageOptimizationNeutralColor')
+): string {
   // Simple SVG blur placeholder
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 5">
@@ -157,10 +162,11 @@ export async function getImageDimensions(url: string): Promise<ImageDimensions |
  */
 export function optimizeImage(url: string, options: ImageOptimizationOptions = {}): OptimizedImage {
   const opts = { ...DEFAULT_OPTIONS, ...options };
+  const widths = opts.widths ?? DEFAULT_OPTIONS.widths ?? [];
 
   return {
     src: url,
-    srcSet: generateSrcSet(url, opts.widths!, opts.quality),
+    srcSet: generateSrcSet(url, widths, opts.quality),
     sizes: generateSizes(),
     placeholder: opts.withPlaceholder ? generateBlurPlaceholder() : undefined,
   };

@@ -9,7 +9,7 @@ import {
   useTranslation,
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { HashtagEditor } from '@/features/shared/ui/hashtags';
 import { PriorityInput } from '../ui/inputs/PriorityInput';
 import { StatusInput } from '../ui/inputs/StatusInput';

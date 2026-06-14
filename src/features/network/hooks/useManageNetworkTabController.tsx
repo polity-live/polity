@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import {
   Card,
   CardContent,
@@ -9,9 +10,13 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { EntitySearchBar, type FilterOption } from '@/features/shared/ui/typeahead';
 import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
 import { DangerConfirmDialog } from '@/features/shared/ui/dialog';
-import { StatusBadge } from '@/features/shared/ui/status';
-import { RightBadge } from '../ui/RightBadge';
-import { isRightType, RIGHT_TYPES, RIGHT_GRADIENTS } from '../ui/RightFilters';
+import {
+  RIGHT_GRADIENTS,
+  RIGHT_TYPES,
+  RightBadge,
+  StatusBadge,
+  isRightType,
+} from '@/features/shared/ui/status';
 import {
   GroupRelationshipDirectionSentence,
   GroupRelationshipConnector,
@@ -247,20 +252,21 @@ export function useManageNetworkTabController({
     {
       value: 'parent',
       label: t('common.network.thisGroupAsParent'),
-      activeClassName:
-        'border-0 bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:opacity-90',
+      activeClassName: featureThemeClassName(
+        'networkUseManageNetworkTabSuccessTealGradientSurface'
+      ),
     },
     {
       value: 'child',
       label: t('common.network.thisGroupAsChild'),
-      activeClassName:
-        'border-0 bg-gradient-to-r from-sky-500 to-violet-500 text-white hover:opacity-90',
+      activeClassName: featureThemeClassName('networkUseManageNetworkTabInfoAccentGradientSurface'),
     },
     {
       value: 'sibling',
       label: t('common.network.thisGroupAsSibling'),
-      activeClassName:
-        'border-0 bg-gradient-to-r from-fuchsia-500 to-amber-500 text-white hover:opacity-90',
+      activeClassName: featureThemeClassName(
+        'networkUseManageNetworkTabWarningAccentGradientSurface'
+      ),
     },
   ];
 
@@ -685,7 +691,7 @@ export function useManageNetworkTabController({
           </h2>
           <div className="space-y-4">
             {incomingRequests.map(req => (
-              <Card key={req.group.id} className="border-primary/20 bg-primary/5">
+              <Card key={req.group.id} surface="primarySoft">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">{req.group.name}</CardTitle>
                   <CardDescription>

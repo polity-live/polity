@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { roleEditorFormToMutationWithOptions } from '../logic/roleFormHelpers';
 import type { RoleEditorFormState } from '../types/group.types';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';

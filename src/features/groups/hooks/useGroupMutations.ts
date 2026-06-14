@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { useAuth } from '@/providers/auth-provider';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 

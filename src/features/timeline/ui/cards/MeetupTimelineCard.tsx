@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { format, isToday, isTomorrow } from 'date-fns';
 import { Clock, ExternalLink, MapPin, Trash2, Users, Video } from 'lucide-react';
@@ -78,11 +79,11 @@ function getStateClassName(options: {
   isFull: boolean;
 }) {
   if (options.isBookedByMe) {
-    return 'border-green-300 dark:border-green-800';
+    return featureThemeClassName('meetMeetingCalendarViewsSuccessBorder');
   }
 
   if (options.isBookable && !options.isFull && !options.isPast) {
-    return 'border-dashed border-blue-300 dark:border-blue-800';
+    return featureThemeClassName('meetMeetingCalendarViewsInfoBorder');
   }
 
   if (options.isPast) {
@@ -149,8 +150,10 @@ export function MeetupTimelineCard({
         subtitle={meetup.organizerName}
         badge={
           state === 'live' ? (
-            <BadgeControl variant="destructive" className="animate-pulse">
-              <span className="mr-1.5 h-2 w-2 animate-pulse rounded-full bg-white" />
+            <BadgeControl variant="destructive" pulse>
+              <span
+                className={featureThemeClassName('timelineEventTimelineCardContrastPulseDot')}
+              />
               {t('features.timeline.cards.happeningNow')}
             </BadgeControl>
           ) : (
@@ -164,7 +167,7 @@ export function MeetupTimelineCard({
         <div className="mt-3 flex justify-center">
           <div
             className={cn(
-              'flex flex-col items-center rounded-xl bg-white/80 px-4 py-2 shadow-sm dark:bg-gray-900/80',
+              featureThemeClassName('timelineEventTimelineCardNeutralContrastPanel'),
               isPast && 'opacity-60'
             )}
           >
@@ -174,7 +177,7 @@ export function MeetupTimelineCard({
             <span className="text-2xl leading-none font-bold">{format(startDate, 'd')}</span>
             <span className="text-muted-foreground mt-0.5 text-xs">{format(startDate, 'p')}</span>
             {dateLabel && (
-              <BadgeControl variant="secondary" className="mt-1 text-xs">
+              <BadgeControl variant="secondary" size="xs" className="mt-1">
                 {dateLabel}
               </BadgeControl>
             )}
@@ -219,9 +222,7 @@ export function MeetupTimelineCard({
             </BadgeControl>
           )}
           {!isOwner && isBookedByMe && (
-            <BadgeControl className="bg-green-500/15 text-green-700 dark:text-green-400">
-              {t('features.calendar.meeting.booked')}
-            </BadgeControl>
+            <BadgeControl tone="successTint">{t('features.calendar.meeting.booked')}</BadgeControl>
           )}
           {!isBookedByMe && isFull && (
             <BadgeControl variant="outline">
@@ -229,7 +230,7 @@ export function MeetupTimelineCard({
             </BadgeControl>
           )}
           {!isBookedByMe && !isFull && !isPast && isBookable && (
-            <BadgeControl variant="outline" className="border-dashed">
+            <BadgeControl variant="outline" borderStyle="dashed">
               {t('features.calendar.meeting.available')}
             </BadgeControl>
           )}

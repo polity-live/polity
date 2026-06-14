@@ -1,6 +1,6 @@
 'use client';
 
-import { BadgeControl } from '@/features/shared/ui/status';
+import { BadgeControl, StatusBadge, type BadgeTone } from '@/features/shared/ui/status';
 import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { Link } from '@tanstack/react-router';
 import {
@@ -26,22 +26,22 @@ function getPhaseLabel(phase: NamedBallotResultsModel['phase']) {
   return phase === 'indicative' ? 'Indicative' : 'Final';
 }
 
-function getDecisionBadgeClassName(label: string) {
+function getDecisionBadgeTone(label: string): BadgeTone {
   const normalized = label.trim().toLowerCase();
 
   if (['accept', 'yes', 'ja', 'approve', 'approved'].includes(normalized)) {
-    return 'border-green-200 bg-green-100 text-green-800 dark:border-green-900 dark:bg-green-950/40 dark:text-green-200';
+    return 'success';
   }
 
   if (['reject', 'rejected', 'no', 'nein'].includes(normalized)) {
-    return 'border-red-200 bg-red-100 text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200';
+    return 'destructive';
   }
 
   if (['abstain', 'abstention', 'enthaltung'].includes(normalized)) {
-    return 'border-gray-200 bg-gray-100 text-gray-800 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200';
+    return 'neutral';
   }
 
-  return '';
+  return 'outline';
 }
 
 function getInitials(name: string) {
@@ -66,7 +66,7 @@ export function NamedBallotResultsDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <ScrollableDialogContent className="flex h-screen w-screen max-w-none flex-col rounded-none border-0 p-0 sm:h-screen sm:max-w-none">
-        <DialogHeader className="border-b px-6 py-5">
+        <DialogHeader separator className="px-6 py-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="space-y-2">
               <DialogTitle>{title}</DialogTitle>
@@ -116,13 +116,13 @@ export function NamedBallotResultsDialog({
                         </BadgeControl>
                       ) : null}
                       {group.optionSummaries.map(summary => (
-                        <BadgeControl
+                        <StatusBadge
                           key={summary.id}
-                          variant="outline"
-                          className={getDecisionBadgeClassName(summary.label)}
+                          status={summary.label}
+                          tone={getDecisionBadgeTone(summary.label)}
                         >
                           {summary.label}: {summary.count}
-                        </BadgeControl>
+                        </StatusBadge>
                       ))}
                     </div>
                   ) : null}
@@ -185,13 +185,13 @@ export function NamedBallotResultsDialog({
 
                         <div className="flex flex-wrap items-center justify-end gap-2">
                           {row.selections.map(selection => (
-                            <BadgeControl
+                            <StatusBadge
                               key={`${row.id}:${selection}`}
-                              variant="outline"
-                              className={getDecisionBadgeClassName(selection)}
+                              status={selection}
+                              tone={getDecisionBadgeTone(selection)}
                             >
                               {selection}
-                            </BadgeControl>
+                            </StatusBadge>
                           ))}
                           {row.selections.length === 0 ? (
                             <BadgeControl

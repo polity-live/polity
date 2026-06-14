@@ -7,7 +7,7 @@ import {
   useTranslation,
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { ElectionSearchInput } from '../ui/inputs/ElectionSearchInput';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';

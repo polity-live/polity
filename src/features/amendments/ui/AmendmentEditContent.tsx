@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import {
   FormControlTextarea,
   FormControlLabel,
@@ -15,7 +16,7 @@ import {
 } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { useNavigate } from '@tanstack/react-router';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { ChevronDown, Loader2 } from 'lucide-react';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { VideoUpload } from '@/features/file-upload/ui/VideoUpload.tsx';
@@ -592,7 +593,7 @@ export function AmendmentEditContent({
               </DropdownMenu>
               <p className="text-muted-foreground text-xs">{workflowStatusOption.description}</p>
               {isEventPhase(formData.workflowStatus) && (
-                <p className="text-xs text-amber-600">
+                <p className={featureThemeClassName('amendmentAmendmentEditContentWarningText')}>
                   {t('features.amendments.editContent.eventPhaseWarning')}
                 </p>
               )}
@@ -626,11 +627,11 @@ export function AmendmentEditContent({
             )}
 
             {amendment?.event_id && (
-              <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-950">
-                <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+              <div className={featureThemeClassName('amendmentAmendmentEditContentInfoPanel')}>
+                <p className={featureThemeClassName('amendmentAmendmentEditContentInfoText')}>
                   {t('features.amendments.editContent.eventPhase')}
                 </p>
-                <p className="mt-1 text-xs text-blue-700 dark:text-blue-300">
+                <p className={featureThemeClassName('amendmentAmendmentEditContentInfoTextAlpha')}>
                   {t('features.amendments.editContent.eventPhaseDescription', {
                     eventId: amendment.event_id,
                   })}

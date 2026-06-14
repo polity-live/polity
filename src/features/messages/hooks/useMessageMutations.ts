@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMessageActions } from '@/zero/messages/useMessageActions';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { Conversation } from '../types/message.types';
 import { hasUnreadConversationRequest } from '../logic/messageUtils';
 import { ARIA_KAI_USER_ID, ARIA_KAI_WELCOME_MESSAGE } from '@/features/assistant/constants';

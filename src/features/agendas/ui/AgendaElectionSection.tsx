@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
@@ -13,7 +14,7 @@ import {
 import { cn } from '@/features/shared/utils/utils';
 import { VoteResultsDisplay, type VoteBarOption } from '@/features/vote-cast/ui/VoteResultsDisplay';
 import { VoteResultSentence } from '@/features/vote-cast/ui/VoteResultSentence';
-import { VotePhaseBadge } from '@/features/vote-cast/ui/VotePhaseBadge';
+import { VotingPhaseBadge as VotePhaseBadge } from '@/features/shared/ui/voting';
 import {
   getElectionModeSummaryLabel,
   type ElectionMode,
@@ -74,7 +75,7 @@ function buildCandidateOption(
     key: candidateId,
     label: candidateName,
     color: 'bg-primary',
-    lightColor: 'bg-blue-400/50',
+    lightColor: featureThemeClassName('agendaAgendaElectionSectionInfoBackground'),
     finalCount,
     finalPercent,
     indicationCount: indicativeCount,
@@ -227,7 +228,7 @@ export function AgendaElectionSection({
           </CardTitle>
           <div className="flex flex-wrap items-center justify-end gap-2">
             {attendanceMode ? (
-              <BadgeControl variant="outline" className="capitalize">
+              <BadgeControl variant="outline" textTransform="capitalize">
                 {attendanceMode}
               </BadgeControl>
             ) : null}
@@ -249,7 +250,7 @@ export function AgendaElectionSection({
 
       <CardContent className="space-y-6">
         {electionStatus === 'runoff_required' ? (
-          <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-900 dark:text-amber-100">
+          <div className={featureThemeClassName('agendaAgendaElectionSectionWarningBadge')}>
             {translateText(
               'generated.inline.0014_gleichstand_am_letzten_sitz_fuer_diese_wahl_i_2e1eafc5'
             )}
@@ -285,12 +286,12 @@ export function AgendaElectionSection({
             </span>
             <div className="flex items-center gap-2">
               {isIndicationPhase ? (
-                <BadgeControl variant="secondary" className="text-xs">
+                <BadgeControl variant="secondary" size="xs">
                   * {t('features.events.agenda.indicationOnly')}
                 </BadgeControl>
               ) : null}
               {isInteractive ? (
-                <BadgeControl variant="outline" className="text-xs">
+                <BadgeControl variant="outline" size="xs">
                   {translateText('generated.inline.0015_klick_fuer_einzelansicht_9d7ff135')}
                 </BadgeControl>
               ) : null}
@@ -318,7 +319,7 @@ export function AgendaElectionSection({
                       isSelected && 'border-primary bg-primary/5',
                       isLeading &&
                         isClosed &&
-                        'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/30'
+                        featureThemeClassName('agendaAgendaElectionSectionWarningSurface')
                     )}
                   >
                     <div className="mb-3 flex items-center gap-3">
@@ -338,7 +339,11 @@ export function AgendaElectionSection({
                               : t('features.events.agenda.candidateNominated')}
                           </BadgeControl>
                           {isLeading && isClosed ? (
-                            <Crown className="h-4 w-4 text-yellow-500" />
+                            <Crown
+                              className={featureThemeClassName(
+                                'agendaAgendaElectionSectionWarningIcon'
+                              )}
+                            />
                           ) : null}
                           {isSelected ? <CheckCircle2 className="text-primary h-4 w-4" /> : null}
                         </div>
@@ -377,7 +382,9 @@ export function AgendaElectionSection({
 
           {userHasVoted ? (
             <div className="flex items-center justify-center gap-2 text-sm">
-              <CheckCircle2 className="h-4 w-4 text-green-500" />
+              <CheckCircle2
+                className={featureThemeClassName('agendaAgendaElectionSectionSuccessIcon')}
+              />
               <span className="text-muted-foreground">
                 {isIndicationPhase
                   ? t('features.events.agenda.yourIndication')

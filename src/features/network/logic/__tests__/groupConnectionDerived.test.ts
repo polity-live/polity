@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -119,7 +120,7 @@ function createRequest(
 }
 
 describe('groupConnectionDerived', () => {
-  it('creates one structure row and holder-to-scope grant rows for active connections', () => {
+  it(featureThemeClassName('networkGroupConnectionDerivedThemedGradientSurface'), () => {
     const rows = deriveNormalizedGroupConnectionRelationships(createConnection());
 
     expect(

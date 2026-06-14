@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName, featureThemeValue } from '@/features/shared/theme';
 import React, { useCallback, useMemo, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useNodesState, useEdgesState, type Node, type Edge } from '@xyflow/react';
@@ -294,9 +295,9 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
         type: 'event',
       },
       style: {
-        background: '#e8f5e9',
-        color: '#333',
-        border: '3px solid #66bb6a',
+        background: featureThemeValue('networkEventNetworkFlowSuccessColor'),
+        color: featureThemeValue('amendmentAmendmentPathVisualizationNeutralColor'),
+        border: featureThemeClassName('networkEventNetworkFlowThemedStyle'),
         borderRadius: '8px',
         padding: '15px',
         fontSize: '14px',
@@ -333,9 +334,12 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
       type: 'smoothstep',
       animated: false,
       label: translateText('generated.inline.0195_hosted_by_56531d01'),
-      style: { stroke: '#66bb6a', strokeWidth: 2 },
+      style: {
+        stroke: featureThemeValue('amendmentAmendmentPathVisualizationSuccessColorAlpha'),
+        strokeWidth: 2,
+      },
       labelStyle: { fontSize: '10px', fontWeight: 'bold' },
-      labelBgStyle: { fill: '#e8f5e9' },
+      labelBgStyle: { fill: featureThemeValue('networkEventNetworkFlowSuccessColor') },
     });
 
     // Add parent nodes
@@ -392,7 +396,7 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
           memberTargetGroupId: parent.memberTargetGroupId ?? null,
           rightEdgeDirections,
           relationshipDepth: (parent.level ?? 1) === 1 ? 'direct' : 'indirect',
-          fallbackStrokeColor: '#fbc02d',
+          fallbackStrokeColor: featureThemeValue('networkEventNetworkFlowWarningColor'),
           sourceName: groupNameMap.get(parent.group.id) ?? null,
           targetName: groupNameMap.get(edgeTarget) ?? null,
           currentGroupId: edgeTarget,
@@ -458,7 +462,7 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
           memberTargetGroupId: child.memberTargetGroupId ?? null,
           rightEdgeDirections,
           relationshipDepth: (child.level ?? 1) === 1 ? 'direct' : 'indirect',
-          fallbackStrokeColor: '#4caf50',
+          fallbackStrokeColor: featureThemeValue('networkEventNetworkFlowSuccessColorAlpha'),
           sourceName: groupNameMap.get(edgeSource) ?? null,
           targetName: groupNameMap.get(child.group.id) ?? null,
           currentGroupId: edgeSource,
@@ -632,7 +636,9 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
         ...node,
         style: {
           ...node.style,
-          boxShadow: selectedNodes.includes(node.id) ? '0 0 0 2px #ff0072' : undefined,
+          boxShadow: selectedNodes.includes(node.id)
+            ? featureThemeClassName('floweditorUseFlowEditorThemedStyle')
+            : undefined,
         },
       }))}
       edges={filteredEdges}
@@ -662,7 +668,7 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
             {
               id: 'event-center',
               label: t('common.network.eventCenter'),
-              swatchClassName: 'h-4 w-4 rounded border-2 border-[#66bb6a] bg-[#e8f5e9]',
+              swatchClassName: featureThemeClassName('networkEventNetworkFlowThemedSurface'),
             },
             createGroupNodeLegendItem({
               id: 'current-group',

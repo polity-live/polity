@@ -111,7 +111,7 @@ export function ModernTimelineView({
       ) : null}
 
       <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
-        <BadgeControl variant="outline" className="rounded-md">
+        <BadgeControl variant="outline" shape="rounded">
           <MapPinned className="mr-1.5 h-3.5 w-3.5" />
           {t('features.timeline.around.mappedCount', {
             count: civicTimeline.mapItems.length,
@@ -119,7 +119,7 @@ export function ModernTimelineView({
           })}
         </BadgeControl>
         {civicTimeline.discoverCount > 0 ? (
-          <BadgeControl variant="outline" className="rounded-md">
+          <BadgeControl variant="outline" shape="rounded">
             <Sparkles className="mr-1.5 h-3.5 w-3.5" />
             {t('features.timeline.around.discoverCount', {
               count: civicTimeline.discoverCount,

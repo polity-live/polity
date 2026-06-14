@@ -26,7 +26,7 @@ interface SavedChangeRequest {
  */
 export function extractAmendmentCRSummaries(
   discussions: readonly unknown[] | null | undefined,
-  savedChangeRequests: readonly SavedChangeRequest[] | null | undefined,
+  savedChangeRequests: readonly SavedChangeRequest[] | null | undefined
 ): CRSummary[] {
   const summaries: CRSummary[] = [];
   const processedCrIds = new Set<string>();

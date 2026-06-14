@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeValue } from '@/features/shared/theme';
 import { Link } from '@tanstack/react-router';
 import { ArrowLeft, FileText, Loader2 } from 'lucide-react';
 
@@ -89,7 +90,7 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
   if (!entity) {
     return (
       <Card>
-        <CardContent className="flex flex-col items-center justify-center py-20 text-center">
+        <CardContent align="center" className="flex flex-col items-center justify-center py-20">
           <p className="text-muted-foreground mb-4 text-lg">
             {t('features.editor.errors.notFound')}
           </p>
@@ -106,7 +107,7 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
   if (!hasAccess) {
     return (
       <Card>
-        <CardContent className="flex flex-col items-center justify-center py-20 text-center">
+        <CardContent align="center" className="flex flex-col items-center justify-center py-20">
           <p className="text-muted-foreground mb-4 text-lg">
             {t('features.editor.errors.noAccess')}
           </p>
@@ -178,7 +179,7 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
           )}
 
           {statusBadgeLabel ? (
-            <BadgeControl variant="outline" className="capitalize">
+            <BadgeControl variant="outline" textTransform="capitalize">
               {statusBadgeLabel}
             </BadgeControl>
           ) : null}
@@ -208,7 +209,7 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
           {/* Entity-specific metadata */}
           <div className="mt-4 flex flex-wrap items-center gap-4 text-sm">
             {entity.metadata?.amendmentCode && (
-              <BadgeControl variant="secondary" className="font-mono">
+              <BadgeControl variant="secondary" textStyle="mono">
                 {entity.metadata.amendmentCode}
               </BadgeControl>
             )}
@@ -260,7 +261,9 @@ export function EditorViewShell({ model }: EditorViewShellProps) {
                       {isOnline && (
                         <span
                           className="ring-background absolute -right-0.5 -bottom-0.5 block h-2 w-2 animate-pulse rounded-full ring-1"
-                          style={{ backgroundColor: '#22c55e' }}
+                          style={{
+                            backgroundColor: featureThemeValue('editorEditorViewShellSuccessColor'),
+                          }}
                         />
                       )}
                     </div>

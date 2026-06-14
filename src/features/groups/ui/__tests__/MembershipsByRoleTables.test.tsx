@@ -12,8 +12,19 @@ vi.mock('@tanstack/react-router', () => ({
 }));
 
 vi.mock('react-i18next', () => ({
+  initReactI18next: {
+    type: '3rdParty',
+    init: vi.fn(),
+  },
   useTranslation: () => ({
     t: (key: string) => key,
+  }),
+}));
+
+vi.mock('@/features/shared/hooks/use-translation', () => ({
+  translate: (key: string, fallback?: string) => fallback ?? key,
+  useTranslation: () => ({
+    t: (key: string, fallback?: string) => fallback ?? key,
   }),
 }));
 

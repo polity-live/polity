@@ -93,7 +93,14 @@ export function buildAdminGroupFilters(userId: string) {
  * Transform user amendment to ContentItem
  */
 export function transformAmendmentToContentItem(
-  amendment: { id: string; groupId?: string; topics?: string[]; commentCount?: number; voteCount?: number; createdAt?: string },
+  amendment: {
+    id: string;
+    groupId?: string;
+    topics?: string[];
+    commentCount?: number;
+    voteCount?: number;
+    createdAt?: string;
+  },
   userId: string
 ): ContentItem {
   const commentCount = amendment.commentCount || 0;
@@ -114,7 +121,13 @@ export function transformAmendmentToContentItem(
  * Transform user event to ContentItem
  */
 export function transformEventToContentItem(
-  event: { id: string; groupId?: string; topics?: string[]; participantCount?: number; createdAt?: string },
+  event: {
+    id: string;
+    groupId?: string;
+    topics?: string[];
+    participantCount?: number;
+    createdAt?: string;
+  },
   userId: string
 ): ContentItem {
   return {

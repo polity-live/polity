@@ -32,7 +32,7 @@ export function TimelineItem({
         <div className="mt-2 text-center">
           <div className="text-sm font-semibold">{startTime}</div>
           <div className="text-muted-foreground mt-1 text-xs">{endTime}</div>
-          <BadgeControl variant="outline" className="mt-2 text-xs">
+          <BadgeControl variant="outline" size="xs" className="mt-2">
             {duration}m
           </BadgeControl>
         </div>

@@ -20,10 +20,7 @@ export const GroupsPage: React.FC = () => {
         hasActiveFilters={gp.hasActiveFilters}
         clearAllFilters={gp.clearAllFilters}
       />
-      <GroupsList
-        groups={gp.filteredGroups}
-        isLoading={gp.isLoading}
-      />
+      <GroupsList groups={gp.filteredGroups} isLoading={gp.isLoading} />
     </div>
   );
 };

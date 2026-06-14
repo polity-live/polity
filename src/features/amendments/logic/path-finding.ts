@@ -216,8 +216,8 @@ export function pathToStorageFormat(
 }[] {
   return path.map(segment => {
     // Find the nearest future event for this group
-    const groupEvents = events.filter((e) => e.group?.id === segment.group.id);
-    const futureEvents = groupEvents.filter((e) => new Date(e.startDate) > new Date());
+    const groupEvents = events.filter(e => e.group?.id === segment.group.id);
+    const futureEvents = groupEvents.filter(e => new Date(e.startDate) > new Date());
     const nearestEvent = futureEvents.sort(
       (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
     )[0];

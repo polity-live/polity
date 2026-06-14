@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { CheckSquare, Square, Users, Clock, UserPlus, Activity, UserCheck } from 'lucide-react';
 
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
@@ -93,10 +94,12 @@ export function TodoTimelineCardView({
                 event.stopPropagation();
                 onToggle?.();
               }}
-              className="text-foreground h-auto gap-2 rounded-full border-white/70 bg-white/80 px-2.5 py-1 text-xs font-medium shadow-sm backdrop-blur transition-colors hover:bg-white dark:border-gray-700/70 dark:bg-gray-950/70 dark:text-gray-100 dark:hover:bg-gray-950"
+              className={featureThemeClassName('timelineTodoTimelineCardNeutralContrastBadge')}
             >
               {todo.isCompleted ? (
-                <CheckSquare className="h-4 w-4 text-green-600" />
+                <CheckSquare
+                  className={featureThemeClassName('timelineTodoTimelineCardSuccessIcon')}
+                />
               ) : (
                 <Square className="text-muted-foreground hover:text-primary h-4 w-4 transition-colors" />
               )}
@@ -141,7 +144,11 @@ export function TodoTimelineCardView({
               </div>
               <Progress
                 value={progress}
-                className={cn('h-2', progress >= 100 && '[&>div]:bg-green-500')}
+                className={cn(
+                  'h-2',
+                  progress >= 100 &&
+                    featureThemeClassName('timelineTodoTimelineCardSuccessProgressFill')
+                )}
               />
             </div>
           ) : null}

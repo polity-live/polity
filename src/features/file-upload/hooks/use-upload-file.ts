@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/client.ts';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';

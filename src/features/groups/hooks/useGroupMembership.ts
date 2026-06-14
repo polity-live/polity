@@ -10,7 +10,7 @@ import {
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
 import { useGroupConflictPreflight } from './useGroupConflictPreflight';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { queries } from '@/zero/queries';
 
 export type MembershipStatus = 'invited' | 'requested' | 'member' | 'admin';

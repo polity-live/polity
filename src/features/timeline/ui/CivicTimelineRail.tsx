@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { ArrowUpRight, Clock3, MapPin, Radio, Sparkles } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
@@ -148,10 +149,10 @@ export function CivicTimelineRail({
                     className={cn(
                       'border-background absolute top-6 -left-[18px] h-2.5 w-2.5 rounded-full border-2',
                       item.reason === 'urgent_decision'
-                        ? 'bg-red-600'
+                        ? featureThemeClassName('timelineCivicTimelineRailDangerBackground')
                         : item.isDiscover
-                          ? 'bg-blue-600'
-                          : 'bg-emerald-600'
+                          ? featureThemeClassName('timelineCivicTimelineRailInfoBackground')
+                          : featureThemeClassName('timelineCivicTimelineRailSuccessBackground')
                     )}
                   />
 
@@ -222,12 +223,12 @@ export function CivicTimelineRail({
 
                       <div className="mt-3 flex flex-wrap items-center gap-2">
                         {item.status && (
-                          <BadgeControl variant="outline" className="rounded-md">
+                          <BadgeControl variant="outline" shape="rounded">
                             {item.status.replace(/[_-]/g, ' ')}
                           </BadgeControl>
                         )}
                         {item.statsLabel && (
-                          <BadgeControl variant="outline" className="rounded-md">
+                          <BadgeControl variant="outline" shape="rounded">
                             {item.statsLabel}
                           </BadgeControl>
                         )}

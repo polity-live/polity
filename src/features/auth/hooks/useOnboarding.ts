@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react';
 import { useUserActions } from '@/zero/users/useUserActions';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useAuth } from '@/providers/auth-provider';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 export type OnboardingStep = 'name' | 'groupSearch' | 'confirm' | 'ariaKai' | 'summary';

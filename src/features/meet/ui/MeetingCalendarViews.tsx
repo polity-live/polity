@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -89,11 +90,11 @@ function getCompactCardClassName(instance: MeetingInstance): string {
   const isFull = instance.bookingCount >= instance.maxBookings;
 
   if (instance.isBookedByMe) {
-    return 'border-green-300 dark:border-green-800';
+    return featureThemeClassName('meetMeetingCalendarViewsSuccessBorder');
   }
 
   if (instance.isBookable && !isFull) {
-    return 'border-dashed border-blue-300 dark:border-blue-800';
+    return featureThemeClassName('meetMeetingCalendarViewsInfoBorder');
   }
 
   return '';
@@ -146,7 +147,7 @@ function CompactMeetingCard({
         'bg-card hover:bg-accent cursor-pointer rounded-md border p-1.5 text-xs shadow-sm transition-colors',
         getCompactCardClassName(instance),
         isPast && 'opacity-50',
-        !onClick && 'cursor-default hover:bg-transparent'
+        !onClick && featureThemeClassName('meetMeetingCalendarViewsThemedBackground')
       )}
       onClick={event => {
         event.stopPropagation();
@@ -256,7 +257,7 @@ export function MeetingWeekView({
                     style={{ top: `${hour * WEEK_VIEW_HOUR_HEIGHT}px` }}
                   >
                     {hour < 24 && (
-                      <span className="text-muted-foreground absolute top-0 right-2 -translate-y-1/2 text-[11px] font-medium">
+                      <span className={featureThemeClassName('eventSharedWeekViewNeutralText')}>
                         {formatWeekHourLabel(hour, locale)}
                       </span>
                     )}

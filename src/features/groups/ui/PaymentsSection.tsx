@@ -1,7 +1,15 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { Link } from '@tanstack/react-router';
 import { useMemo } from 'react';
 import { Plus } from 'lucide-react';
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  RechartsTooltip,
+  Legend,
+  ResponsiveContainer,
+} from '@/features/shared/ui/charting';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { StatusBadge } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button';
@@ -259,9 +267,9 @@ export function PaymentsSection({
 
   const balanceClass =
     summary.balance > 0
-      ? 'text-green-600 dark:text-green-400'
+      ? featureThemeClassName('decisionterminalDecisionStatusSuccessText')
       : summary.balance < 0
-        ? 'text-red-600 dark:text-red-400'
+        ? featureThemeClassName('decisionterminalDecisionStatusDangerTextAlpha')
         : 'text-muted-foreground';
 
   return (
@@ -308,7 +316,7 @@ export function PaymentsSection({
             <p className="text-muted-foreground text-sm">
               {translateText('generated.inline.0699_income_1c89b1f2')}
             </p>
-            <p className="text-xl font-semibold text-green-600 dark:text-green-400">
+            <p className={featureThemeClassName('groupPaymentsSectionSuccessText')}>
               ${summary.income.toFixed(2)}
             </p>
           </div>
@@ -316,7 +324,7 @@ export function PaymentsSection({
             <p className="text-muted-foreground text-sm">
               {translateText('generated.inline.0700_expenditure_e2cfc2e3')}
             </p>
-            <p className="text-xl font-semibold text-red-600 dark:text-red-400">
+            <p className={featureThemeClassName('groupPaymentsSectionDangerText')}>
               ${summary.expenditure.toFixed(2)}
             </p>
           </div>
@@ -346,7 +354,9 @@ export function PaymentsSection({
                       <Cell key={`income-cell-${index}`} fill={entry.fill} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: number) => [`$${value.toFixed(2)}`, 'Amount']} />
+                  <RechartsTooltip
+                    formatter={(value: number) => [`$${value.toFixed(2)}`, 'Amount']}
+                  />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
@@ -369,7 +379,9 @@ export function PaymentsSection({
                       <Cell key={`expense-cell-${index}`} fill={entry.fill} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: number) => [`$${value.toFixed(2)}`, 'Amount']} />
+                  <RechartsTooltip
+                    formatter={(value: number) => [`$${value.toFixed(2)}`, 'Amount']}
+                  />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
@@ -426,8 +438,8 @@ export function PaymentsSection({
                 const counterpartyLabel = getCounterpartyLabel(payment, groupId);
                 const amountClass =
                   direction === 'income'
-                    ? 'text-green-600 dark:text-green-400'
-                    : 'text-red-600 dark:text-red-400';
+                    ? featureThemeClassName('decisionterminalDecisionStatusSuccessText')
+                    : featureThemeClassName('decisionterminalDecisionStatusDangerTextAlpha');
 
                 return (
                   <div

@@ -3,7 +3,7 @@ import { Calendar } from '@/features/shared/ui/ui/calendar';
 import { Button } from '@/features/shared/ui/ui/button';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { formatLocalDateInput, parseLocalDateInput } from '@/features/shared/logic/localDateTime';
-import { CreateInputField } from '../CreateFields';
+import { CreateInputField } from '@/features/shared/ui/form';
 
 interface DateTimeRangeInputProps {
   startDate: string;

@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { FormControlLabel } from '@/features/shared/ui/form';
 /**
@@ -581,7 +582,7 @@ export function EventEdit({ eventId, mode = 'edit', defaultTab }: EventEditProps
                 ) : null}
 
                 {event?.event_type === 'general_assembly' ? (
-                  <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-sm">
+                  <div className={featureThemeClassName('eventEventEditSuccessBadge')}>
                     {translateText(
                       'generated.inline.0488_all_active_members_of_the_linked_group_are_in_768156c8'
                     )}

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useUserState } from '@/zero/users';
 import { useEventAccessRoles } from '@/zero/events/useEventState';

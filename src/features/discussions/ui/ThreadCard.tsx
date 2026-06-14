@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { FormControlTextarea } from '@/features/shared/ui/form';
 import { useState } from 'react';
@@ -5,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/u
 import { Button } from '@/features/shared/ui/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { ArrowUp, ArrowDown, Clock, MessageSquare } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { calculateScore } from '@/features/votes/utils/voting-utils';
 import { CommentTree } from './CommentTree';
 import type { Thread } from '../hooks/useDiscussions';
@@ -107,20 +108,20 @@ export function ThreadCard({
             <Button
               variant="ghost"
               size="sm"
-              className={`h-8 w-8 p-0 ${hasUpvoted ? 'text-orange-500' : ''}`}
+              className={`h-8 w-8 p-0 ${hasUpvoted ? featureThemeClassName('discussionsCommentTreeWarningText') : ''}`}
               onClick={() => handleVote(1)}
             >
               <ArrowUp className="h-4 w-4" />
             </Button>
             <span
-              className={`text-sm font-semibold ${score > 0 ? 'text-orange-500' : score < 0 ? 'text-blue-500' : ''}`}
+              className={`text-sm font-semibold ${score > 0 ? featureThemeClassName('discussionsCommentTreeWarningText') : score < 0 ? featureThemeClassName('discussionsCommentTreeInfoText') : ''}`}
             >
               {score}
             </span>
             <Button
               variant="ghost"
               size="sm"
-              className={`h-8 w-8 p-0 ${hasDownvoted ? 'text-blue-500' : ''}`}
+              className={`h-8 w-8 p-0 ${hasDownvoted ? featureThemeClassName('discussionsCommentTreeInfoText') : ''}`}
               onClick={() => handleVote(-1)}
             >
               <ArrowDown className="h-4 w-4" />

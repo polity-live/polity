@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import {
   Zap,
   UserPlus,
@@ -82,53 +83,53 @@ const ACTION_CONFIG: Record<
 > = {
   user_joined_group: {
     icon: <UserPlus className="h-4 w-4" />,
-    iconBg: 'bg-green-100 dark:bg-green-900/40',
-    iconColor: 'text-green-600 dark:text-green-400',
+    iconBg: featureThemeClassName('timelineUseTodoTimelineCardSuccessBackground'),
+    iconColor: featureThemeClassName('decisionterminalDecisionStatusSuccessText'),
   },
   vote_started: {
     icon: <Vote className="h-4 w-4" />,
-    iconBg: 'bg-red-100 dark:bg-red-900/40',
-    iconColor: 'text-red-600 dark:text-red-400',
+    iconBg: featureThemeClassName('timelineUseTodoTimelineCardDangerBackground'),
+    iconColor: featureThemeClassName('decisionterminalDecisionStatusDangerTextAlpha'),
   },
   event_going_live: {
     icon: <Play className="h-4 w-4" />,
-    iconBg: 'bg-orange-100 dark:bg-orange-900/40',
-    iconColor: 'text-orange-600 dark:text-orange-400',
+    iconBg: featureThemeClassName('timelineUseTodoTimelineCardWarningBackground'),
+    iconColor: featureThemeClassName('decisionterminalDecisionStatusWarningTextAlpha'),
   },
   collaborator_added: {
     icon: <UserCheck className="h-4 w-4" />,
-    iconBg: 'bg-purple-100 dark:bg-purple-900/40',
-    iconColor: 'text-purple-600 dark:text-purple-400',
+    iconBg: featureThemeClassName('timelineActionTimelineCardAccentBackground'),
+    iconColor: featureThemeClassName('timelineActionTimelineCardAccentText'),
   },
   amendment_forwarded: {
     icon: <ArrowRight className="h-4 w-4" />,
-    iconBg: 'bg-blue-100 dark:bg-blue-900/40',
-    iconColor: 'text-blue-600 dark:text-blue-400',
+    iconBg: featureThemeClassName('timelineActionTimelineCardInfoBackground'),
+    iconColor: featureThemeClassName('decisionterminalDecisionSummaryInfoText'),
   },
   group_created: {
     icon: <Users className="h-4 w-4" />,
-    iconBg: 'bg-emerald-100 dark:bg-emerald-900/40',
-    iconColor: 'text-emerald-600 dark:text-emerald-400',
+    iconBg: featureThemeClassName('timelineActionTimelineCardSuccessBackground'),
+    iconColor: featureThemeClassName('authNameStepSuccessText'),
   },
   election_started: {
     icon: <Calendar className="h-4 w-4" />,
-    iconBg: 'bg-rose-100 dark:bg-rose-900/40',
-    iconColor: 'text-rose-600 dark:text-rose-400',
+    iconBg: featureThemeClassName('timelineActionTimelineCardDangerBackground'),
+    iconColor: featureThemeClassName('timelineContentTypeConfigDangerText'),
   },
   member_promoted: {
     icon: <Zap className="h-4 w-4" />,
-    iconBg: 'bg-amber-100 dark:bg-amber-900/40',
-    iconColor: 'text-amber-600 dark:text-amber-400',
+    iconBg: featureThemeClassName('timelineActionTimelineCardWarningBackground'),
+    iconColor: featureThemeClassName('decisionterminalCountdownTimerWarningText'),
   },
   amendment_passed: {
     icon: <ScrollText className="h-4 w-4" />,
-    iconBg: 'bg-green-100 dark:bg-green-900/40',
-    iconColor: 'text-green-600 dark:text-green-400',
+    iconBg: featureThemeClassName('timelineUseTodoTimelineCardSuccessBackground'),
+    iconColor: featureThemeClassName('decisionterminalDecisionStatusSuccessText'),
   },
   amendment_rejected: {
     icon: <ScrollText className="h-4 w-4" />,
-    iconBg: 'bg-red-100 dark:bg-red-900/40',
-    iconColor: 'text-red-600 dark:text-red-400',
+    iconBg: featureThemeClassName('timelineUseTodoTimelineCardDangerBackground'),
+    iconColor: featureThemeClassName('decisionterminalDecisionStatusDangerTextAlpha'),
   },
 };
 
@@ -156,13 +157,15 @@ function ActorAvatars({ actors, maxDisplay = 3 }: { actors: ActionActor[]; maxDi
       {displayActors.map(actor => (
         <Avatar key={actor.id} className="border-background h-8 w-8 border-2">
           <AvatarImage src={actor.avatarUrl} alt={actor.name} />
-          <AvatarFallback className="bg-gray-100 text-xs dark:bg-gray-800">
+          <AvatarFallback
+            className={featureThemeClassName('timelineActionTimelineCardNeutralBackground')}
+          >
             {getInitials(actor.name)}
           </AvatarFallback>
         </Avatar>
       ))}
       {remaining > 0 && (
-        <div className="border-background flex h-8 w-8 items-center justify-center rounded-full border-2 bg-gray-100 text-xs font-medium dark:bg-gray-800">
+        <div className={featureThemeClassName('timelineActionTimelineCardNeutralRoundIcon')}>
           +{remaining}
         </div>
       )}
@@ -185,7 +188,7 @@ function EntityLink({ entity }: { entity: ActionEntity }) {
   return (
     <Link
       to={entity.url}
-      className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700"
+      className={featureThemeClassName('timelineActionTimelineCardNeutralPanel')}
       onClick={e => e.stopPropagation()}
     >
       {iconMap[entity.type]}

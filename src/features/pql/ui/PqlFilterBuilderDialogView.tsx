@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status/StatusBadges';
 import { FormControlInput, FormControlLabel } from '@/features/shared/ui/form';
 import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
@@ -76,13 +77,18 @@ export function PqlFilterBuilderDialogView<TItem, TFieldKey extends string>({
                 placeholder={translateText('generated.inline.1089_board_work_due_soon_34c8753d')}
                 className={
                   isLabelValid
-                    ? 'border-emerald-500 focus-visible:ring-emerald-500 dark:border-emerald-400'
+                    ? featureThemeClassName('pqlPqlFilterBuilderDialogSuccessBorder')
                     : undefined
                 }
               />
             </div>
 
-            <BadgeControl variant="outline" className="h-10 justify-center px-3 font-mono text-xs">
+            <BadgeControl
+              variant="outline"
+              size="xs"
+              textStyle="mono"
+              className="h-10 justify-center px-3"
+            >
               {translateText('generated.inline.0141_pql_4ef7dac2')}
             </BadgeControl>
           </div>
@@ -99,7 +105,7 @@ export function PqlFilterBuilderDialogView<TItem, TFieldKey extends string>({
               placeholder={queryPlaceholder}
               textareaClassName={
                 isQueryValid
-                  ? 'border-emerald-500 focus-visible:ring-emerald-500 dark:border-emerald-400'
+                  ? featureThemeClassName('pqlPqlFilterBuilderDialogSuccessBorder')
                   : undefined
               }
             />

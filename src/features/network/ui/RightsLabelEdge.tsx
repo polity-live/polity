@@ -1,6 +1,5 @@
 import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath, useReactFlow } from '@xyflow/react';
 import type { Edge, EdgeProps, XYPosition } from '@xyflow/react';
-import { X } from 'lucide-react';
 import {
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
@@ -10,11 +9,18 @@ import {
   useState,
 } from 'react';
 import { resolveInnerAutoEdgeAnchors } from '@/features/network/logic/networkEdgeHelpers';
-import { RightBadge } from '@/features/network/ui/RightBadge';
+import { RightBadge } from '@/features/shared/ui/status';
 import { useEdgeClickContext } from '@/features/network/ui/NetworkFlowBase';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  GraphBendPointButton,
+  GraphBendPointContainer,
+  GraphBendPointDeleteButton,
+  GraphEdgeLabelButton,
+  GraphEdgeLabelSurface,
+  getGraphEdgeDragPathClassName,
+} from '@/features/shared/ui/graph';
 import type { EditableRightsLabelEdgeData } from '@/features/network/types/networkEdge.types';
-import './RightsLabelEdge.css';
 
 type RightsLabelEdgeType = Edge<EditableRightsLabelEdgeData, 'rightsLabel'>;
 
@@ -398,26 +404,22 @@ export function RightsLabelEdge({
             fill="none"
             strokeOpacity={0}
             strokeWidth={20}
-            className={`react-flow__edge-interaction${edgeEditingEnabled ? ` networkEdgeDragPath${isDragging ? 'is-dragging' : ''}` : ''}`}
+            className={getGraphEdgeDragPathClassName(edgeEditingEnabled, isDragging)}
             onMouseDown={event => startSegmentDrag(event, segmentIndex, true)}
           />
         </g>
       ))}
       {displayRights.length > 0 && middleSegment && (
         <EdgeLabelRenderer>
-          <button
-            type="button"
+          <GraphEdgeLabelButton
             aria-label={openRelationshipDetailsLabel}
-            style={{
-              position: 'absolute',
-              transform: `translate(-50%, -50%) translate(${middleSegment.labelX}px,${middleSegment.labelY}px)`,
-              pointerEvents: 'all',
-            }}
-            className={`networkEdgeLabelButton ${edgeEditingEnabled ? 'nodrag nopan cursor-grab' : 'nodrag nopan cursor-pointer'}`}
+            x={middleSegment.labelX}
+            y={middleSegment.labelY}
+            interaction={edgeEditingEnabled ? 'drag' : 'click'}
             onMouseDown={event => startSegmentDrag(event, middleSegmentIndex)}
             onClick={handleLabelClick}
           >
-            <div className="border-border/60 bg-background/95 flex flex-wrap gap-0.5 rounded-md border px-1.5 py-1 shadow-sm backdrop-blur-sm">
+            <GraphEdgeLabelSurface>
               {displayRights.map(right => (
                 <RightBadge
                   key={right}
@@ -428,27 +430,25 @@ export function RightsLabelEdge({
                       ? rightRelationshipKinds[right]
                       : null
                   }
-                  className="px-1.5 py-0.5 text-[10px] leading-tight"
+                  size="compact"
                 />
               ))}
-            </div>
-          </button>
+            </GraphEdgeLabelSurface>
+          </GraphEdgeLabelButton>
         </EdgeLabelRenderer>
       )}
       {edgeEditingEnabled &&
         bendPoints.map((bendPoint, bendPointIndex) => (
           <EdgeLabelRenderer key={`${id}-bend-point-${bendPointIndex}`}>
-            <div
-              className="networkEdgeBendPointContainer nodrag nopan"
-              style={{
-                transform: `translate(-50%, -50%) translate(${bendPoint.x}px,${bendPoint.y}px)`,
-              }}
-            >
-              <button
-                type="button"
+            <GraphBendPointContainer x={bendPoint.x} y={bendPoint.y}>
+              <GraphBendPointButton
                 aria-label={moveBendPointLabel}
                 aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Delete Backspace"
-                className={`networkEdgeBendPointButton${dragState?.kind === 'bend-point' && dragState.bendPointIndex === bendPointIndex && dragState.isActive ? 'is-dragging' : ''}`}
+                dragging={
+                  dragState?.kind === 'bend-point' &&
+                  dragState.bendPointIndex === bendPointIndex &&
+                  dragState.isActive
+                }
                 onMouseDown={event => {
                   event.preventDefault();
                   event.stopPropagation();
@@ -466,10 +466,8 @@ export function RightsLabelEdge({
                 }}
                 onKeyDown={event => handleBendPointKeyDown(event, bendPointIndex)}
               />
-              <button
-                type="button"
+              <GraphBendPointDeleteButton
                 aria-label={removeBendPointLabel}
-                className="networkEdgeBendPointDeleteButton"
                 onMouseDown={event => {
                   event.preventDefault();
                   event.stopPropagation();
@@ -479,10 +477,8 @@ export function RightsLabelEdge({
                   event.stopPropagation();
                   removeBendPoint(bendPointIndex);
                 }}
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </div>
+              />
+            </GraphBendPointContainer>
           </EdgeLabelRenderer>
         ))}
     </>

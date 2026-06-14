@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { FormControlInput } from '@/features/shared/ui/form';
 import { useState, useMemo } from 'react';
@@ -86,8 +87,8 @@ export function GroupSearchStep({
     <div className="space-y-6">
       <div className="text-center">
         <div className="mb-4 flex justify-center">
-          <div className="rounded-full bg-gradient-to-br from-green-500 to-emerald-600 p-4">
-            <Users className="h-8 w-8 text-white" />
+          <div className={featureThemeClassName('authGroupSearchStepSuccessGradientSurface')}>
+            <Users className={featureThemeClassName('authGroupSearchStepContrastIcon')} />
           </div>
         </div>
         <h2 className="text-2xl font-bold">{t('onboarding.groupStep.title')}</h2>
@@ -123,7 +124,7 @@ export function GroupSearchStep({
               className={cn(
                 'cursor-pointer transition-all hover:shadow-md',
                 selectedGroup?.id === group.id &&
-                  'border-emerald-500 ring-2 ring-emerald-500/20 ring-offset-2 dark:border-emerald-400 dark:ring-emerald-400/25 dark:ring-offset-gray-900'
+                  featureThemeClassName('authGroupSearchStepSuccessNeutralBorder')
               )}
               onClick={() => handleSelectGroup(group)}
             >
@@ -138,8 +139,14 @@ export function GroupSearchStep({
                         <CardTitle className="text-base">{group.name}</CardTitle>
                         <div className="flex items-center gap-2">
                           {selectedGroup?.id === group.id && (
-                            <div className="rounded-full bg-emerald-500 p-1 dark:bg-emerald-400">
-                              <Check className="h-3 w-3 text-white dark:text-emerald-950" />
+                            <div
+                              className={featureThemeClassName('authGroupSearchStepSuccessPanel')}
+                            >
+                              <Check
+                                className={featureThemeClassName(
+                                  'authGroupSearchStepSuccessContrastIcon'
+                                )}
+                              />
                             </div>
                           )}
                           <BadgeControl variant="outline" className="flex-shrink-0">

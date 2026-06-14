@@ -52,7 +52,7 @@ export default meta;
 type Story = StoryObj;
 
 export const GroupsListTabDefault: Story = {
-  render: (args) => {
+  render: args => {
     const [searchValue, setSearchValue] = React.useState('');
     return (
       <GroupsListTab

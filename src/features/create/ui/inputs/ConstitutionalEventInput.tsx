@@ -76,7 +76,7 @@ export function ConstitutionalEventInput({ value, onChange }: ConstitutionalEven
             </div>
           </div>
 
-          <Card className="bg-muted/50 p-3">
+          <Card surface="muted" className="p-3">
             <div className="flex items-start gap-2">
               <Calendar className="text-muted-foreground mt-0.5 h-4 w-4" />
               <div className="text-muted-foreground flex-1 text-sm">

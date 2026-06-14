@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
@@ -51,9 +52,11 @@ export function AccreditationSectionView({ controller }: AccreditationSectionVie
       </CardHeader>
       <CardContent className="space-y-4">
         {isAccredited ? (
-          <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 p-3 dark:border-green-800 dark:bg-green-950">
-            <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
-            <span className="font-medium text-green-700 dark:text-green-300">
+          <div className={featureThemeClassName('agendaAccreditationSectionSuccessSurface')}>
+            <CheckCircle2
+              className={featureThemeClassName('agendaAccreditationSectionSuccessIcon')}
+            />
+            <span className={featureThemeClassName('agendaAccreditationSectionSuccessText')}>
               {t('features.events.agenda.accreditation.confirmed')}
             </span>
           </div>
@@ -91,11 +94,15 @@ export function AccreditationSectionView({ controller }: AccreditationSectionVie
                   className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-sm"
                 >
                   <Avatar className="h-5 w-5">
-                    <AvatarFallback className="text-[10px]">
+                    <AvatarFallback
+                      className={featureThemeClassName('agendaAccreditationSectionThemedText')}
+                    >
                       {acc.user_id?.charAt(0)?.toUpperCase() ?? '?'}
                     </AvatarFallback>
                   </Avatar>
-                  <CheckCircle2 className="h-3 w-3 text-green-500" />
+                  <CheckCircle2
+                    className={featureThemeClassName('agendaAccreditationSectionSuccessIconAlpha')}
+                  />
                 </div>
               ))}
             </div>

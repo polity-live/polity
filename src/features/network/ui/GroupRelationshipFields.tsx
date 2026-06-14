@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import {
   FormControlLabel,
@@ -30,7 +31,7 @@ import type {
   GroupRelationshipType,
   RelativeMembershipDirection,
 } from '../types/network.types';
-import { RIGHT_GRADIENTS, type RightType } from './RightFilters';
+import { RIGHT_GRADIENTS, type RightType } from '@/features/shared/ui/status';
 
 export type GroupRelationshipRight = RightType;
 export type GroupRelationshipPhraseMode = 'selection' | 'statement' | 'role';
@@ -243,29 +244,29 @@ function getRelationshipConnectorLabel(
 
 function getRelationshipConnectorClasses(relationshipType: GroupRelationshipType) {
   if (relationshipType === 'parent') {
-    return 'from-amber-600 via-orange-500 to-rose-500 decoration-orange-400/90';
+    return featureThemeClassName('networkGroupRelationshipFieldsDangerWarningGradientSurface');
   }
 
   if (relationshipType === 'child') {
-    return 'from-cyan-600 via-sky-500 to-violet-500 decoration-sky-400/90';
+    return featureThemeClassName('networkGroupRelationshipFieldsInfoAccentGradientSurface');
   }
 
-  return 'from-fuchsia-600 via-violet-500 to-amber-500 decoration-fuchsia-400/90';
+  return featureThemeClassName('networkGroupRelationshipFieldsWarningAccentGradientSurface');
 }
 
 function getGroupTagClasses(kind: 'current' | 'selected') {
   return kind === 'current'
     ? [
-        'border-0 bg-gradient-to-r from-emerald-100 via-teal-50 to-cyan-100 text-emerald-900',
-        'dark:from-emerald-950 dark:via-teal-950 dark:to-cyan-950 dark:text-emerald-200',
-        'hover:from-emerald-100 hover:via-teal-50 hover:to-cyan-100 hover:text-emerald-900',
-        'dark:hover:from-emerald-950 dark:hover:via-teal-950 dark:hover:to-cyan-950 dark:hover:text-emerald-200',
+        featureThemeClassName('networkGroupRelationshipFieldsSuccessInfoGradientSurface'),
+        featureThemeClassName('networkGroupRelationshipFieldsSuccessInfoGradientSurfaceAlpha'),
+        featureThemeClassName('networkGroupRelationshipFieldsSuccessInfoGradientSurfaceBeta'),
+        featureThemeClassName('networkGroupRelationshipFieldsSuccessInfoGradientSurfaceGamma'),
       ].join(' ')
     : [
-        'border-0 bg-gradient-to-r from-sky-100 via-blue-50 to-indigo-100 text-sky-900',
-        'dark:from-sky-950 dark:via-blue-950 dark:to-indigo-950 dark:text-sky-200',
-        'hover:from-sky-100 hover:via-blue-50 hover:to-indigo-100 hover:text-sky-900',
-        'dark:hover:from-sky-950 dark:hover:via-blue-950 dark:hover:to-indigo-950 dark:hover:text-sky-200',
+        featureThemeClassName('networkGroupRelationshipFieldsInfoAccentGradientSurfaceAlpha'),
+        featureThemeClassName('networkGroupRelationshipFieldsInfoAccentGradientSurfaceBeta'),
+        featureThemeClassName('networkGroupRelationshipFieldsInfoAccentGradientSurfaceGamma'),
+        featureThemeClassName('networkGroupRelationshipFieldsInfoAccentGradientSurfaceDelta'),
       ].join(' ');
 }
 
@@ -345,7 +346,7 @@ export function GroupRelationshipConnector({
   return (
     <span
       className={cn(
-        'inline-block bg-gradient-to-r bg-clip-text text-xs font-semibold text-transparent underline decoration-2 underline-offset-4',
+        featureThemeClassName('networkGroupRelationshipFieldsThemedGradientSurface'),
         getRelationshipConnectorClasses(relationshipType),
         className
       )}
@@ -883,15 +884,19 @@ interface GroupRelationshipRightsSelectorProps {
 function getRightUnderlineClasses(right: GroupRelationshipRight) {
   switch (right) {
     case 'informationRight':
-      return 'from-blue-700 via-sky-600 to-cyan-600 decoration-sky-500/90';
+      return featureThemeClassName('networkGroupRelationshipFieldsInfoGradientSurface');
     case 'amendmentRight':
-      return 'from-amber-700 via-orange-600 to-rose-600 decoration-orange-500/90';
+      return featureThemeClassName(
+        'networkGroupRelationshipFieldsDangerWarningGradientSurfaceAlpha'
+      );
     case 'rightToSpeak':
-      return 'from-fuchsia-700 via-pink-600 to-rose-600 decoration-fuchsia-500/90';
+      return featureThemeClassName('networkGroupRelationshipFieldsDangerAccentGradientSurface');
     case 'activeVotingRight':
-      return 'from-emerald-700 via-teal-600 to-cyan-600 decoration-emerald-500/90';
+      return featureThemeClassName('networkGroupRelationshipFieldsSuccessInfoGradientSurfaceDelta');
     case 'passiveVotingRight':
-      return 'from-violet-700 via-indigo-600 to-blue-600 decoration-violet-500/90';
+      return featureThemeClassName(
+        'networkGroupRelationshipFieldsInfoAccentGradientSurfaceEpsilon'
+      );
     default:
       return 'from-foreground to-foreground decoration-foreground/80';
   }
@@ -903,7 +908,7 @@ function RightSentenceEmphasis({ right }: { right: GroupRelationshipRight }) {
   return (
     <span
       className={cn(
-        'inline-block bg-gradient-to-r bg-clip-text text-xs font-semibold text-transparent underline decoration-2 underline-offset-4',
+        featureThemeClassName('networkGroupRelationshipFieldsThemedGradientSurface'),
         getRightUnderlineClasses(right)
       )}
     >
@@ -1246,7 +1251,10 @@ export function GroupRelationshipRightsSelector({
               className={cn(
                 'rounded-lg border p-3 transition-colors',
                 isSelected
-                  ? cn('border-0 text-white shadow-sm', RIGHT_GRADIENTS[option.value])
+                  ? cn(
+                      featureThemeClassName('networkGroupRelationshipFieldsContrastBorder'),
+                      RIGHT_GRADIENTS[option.value]
+                    )
                   : 'border-border bg-muted/20',
                 !disabled && (isSelected ? 'hover:opacity-90' : 'hover:bg-accent')
               )}
@@ -1255,14 +1263,14 @@ export function GroupRelationshipRightsSelector({
                 type="button"
                 variant="ghost"
                 onClick={() => onToggleRight(option.value)}
-                className="h-auto w-full items-start justify-start p-0 text-left whitespace-normal hover:bg-transparent disabled:opacity-100"
+                className={featureThemeClassName('networkGroupRelationshipFieldsContrastPanel')}
                 disabled={disabled}
               >
                 <div
                   className={cn(
                     'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border',
                     isSelected
-                      ? 'border-white/70 bg-white/15 text-white'
+                      ? featureThemeClassName('networkGroupRelationshipFieldsContrastBadge')
                       : 'border-muted-foreground'
                   )}
                 >
@@ -1283,7 +1291,9 @@ export function GroupRelationshipRightsSelector({
                   <div
                     className={cn(
                       'text-sm',
-                      isSelected ? 'text-white/90' : 'text-muted-foreground'
+                      isSelected
+                        ? featureThemeClassName('networkGroupRelationshipFieldsContrastText')
+                        : 'text-muted-foreground'
                     )}
                   >
                     {t(option.descKey)}
@@ -1294,7 +1304,9 @@ export function GroupRelationshipRightsSelector({
                 <div
                   className={cn(
                     'mt-3 ml-8 rounded-md border px-3 py-2',
-                    isSelected ? 'border-white/30 bg-white/10' : 'border-border bg-background'
+                    isSelected
+                      ? featureThemeClassName('networkGroupRelationshipFieldsContrastSurface')
+                      : 'border-border bg-background'
                   )}
                 >
                   <FormControlSelect
@@ -1306,9 +1318,9 @@ export function GroupRelationshipRightsSelector({
                   >
                     <FormControlSelectTrigger
                       className={cn(
-                        'h-auto min-h-10 border-white/25 bg-white/15 py-2 text-left shadow-none',
+                        featureThemeClassName('networkGroupRelationshipFieldsContrastBadgeAlpha'),
                         isSelected &&
-                          'text-white data-[placeholder]:text-white/70 [&>svg]:text-white/80'
+                          featureThemeClassName('networkGroupRelationshipFieldsContrastTextAlpha')
                       )}
                     >
                       <div className="min-w-0 flex-1 text-left">

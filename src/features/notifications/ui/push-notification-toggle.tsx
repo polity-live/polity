@@ -3,8 +3,14 @@
 import { Bell, BellOff, Loader2 } from 'lucide-react';
 import { usePushSubscription } from '@/features/pwa/hooks/usePushSubscription.ts';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
-import { toast } from 'sonner';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card.tsx';
+import { toast } from '@/features/shared/ui/ui/sonner';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card.tsx';
 import { Alert, AlertDescription } from '@/features/shared/ui/ui/alert.tsx';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 
@@ -90,9 +96,7 @@ export function PushNotificationToggle({
     return (
       <Alert variant="destructive">
         <BellOff className="h-4 w-4" />
-        <AlertDescription>
-          {t('components.pushNotifications.blockedLong')}
-        </AlertDescription>
+        <AlertDescription>{t('components.pushNotifications.blockedLong')}</AlertDescription>
       </Alert>
     );
   }
@@ -121,9 +125,7 @@ export function PushNotificationToggle({
             </>
           )}
         </Button>
-        {error && (
-          <span className="text-xs text-destructive">{error}</span>
-        )}
+        {error && <span className="text-destructive text-xs">{error}</span>}
       </div>
     );
   }
@@ -138,9 +140,7 @@ export function PushNotificationToggle({
             {t('components.pushNotifications.title')}
           </CardTitle>
           {showDescription && (
-            <CardDescription>
-              {t('components.pushNotifications.description')}
-            </CardDescription>
+            <CardDescription>{t('components.pushNotifications.description')}</CardDescription>
           )}
         </CardHeader>
         <CardContent className="space-y-4">
@@ -153,9 +153,11 @@ export function PushNotificationToggle({
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <div className="text-sm font-medium">
-                {isSubscribed ? t('components.pushNotifications.enabled') : t('components.pushNotifications.disabled')}
+                {isSubscribed
+                  ? t('components.pushNotifications.enabled')
+                  : t('components.pushNotifications.disabled')}
               </div>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-muted-foreground text-sm">
                 {isSubscribed
                   ? t('components.pushNotifications.enabledDescription')
                   : t('components.pushNotifications.disabledDescription')}
@@ -190,7 +192,7 @@ export function PushNotificationToggle({
             {t('components.pushNotifications.title')}
           </div>
           {showDescription && (
-            <div className="text-sm text-muted-foreground">
+            <div className="text-muted-foreground text-sm">
               {isSubscribed
                 ? t('components.pushNotifications.enabledDescriptionShort')
                 : t('components.pushNotifications.disabledDescriptionShort')}

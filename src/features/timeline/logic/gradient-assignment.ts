@@ -1,8 +1,5 @@
-import {
-  ContentType,
-  CONTENT_TYPE_CONFIG,
-  getContentTypeGradient,
-} from '../constants/content-type-config';
+import { featureThemeClassName } from '@/features/shared/theme';
+import { ContentType, getContentTypeGradient } from '../constants/content-type-config';
 
 /**
  * Extended gradients array with 15 total gradients for visual variety
@@ -10,27 +7,27 @@ import {
  */
 export const EXTENDED_GRADIENTS = [
   // Warm Spectrum
-  'bg-gradient-to-br from-pink-100 to-blue-100 dark:from-pink-900/40 dark:to-blue-900/50', // Soft Bloom
-  'bg-gradient-to-br from-coral-100 to-peach-100 dark:from-orange-900/40 dark:to-amber-900/50', // Sunrise (using orange/amber fallback)
-  'bg-gradient-to-br from-orange-100 to-yellow-100 dark:from-orange-900/40 dark:to-yellow-900/50', // Citrus
-  'bg-gradient-to-br from-red-100 to-pink-100 dark:from-red-900/40 dark:to-pink-900/50', // Rose
+  featureThemeClassName('timelineGradientAssignmentInfoAccentGradientSurface'), // Soft Bloom
+  featureThemeClassName('timelineGradientAssignmentWarningGradientSurface'), // Sunrise (using orange/amber fallback)
+  featureThemeClassName('timelineGradientAssignmentWarningGradientSurfaceAlpha'), // Citrus
+  featureThemeClassName('timelineGradientAssignmentDangerAccentGradientSurface'), // Rose
 
   // Cool Spectrum
-  'bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/40 dark:to-purple-900/50', // Twilight
-  'bg-gradient-to-br from-teal-100 to-cyan-100 dark:from-teal-900/40 dark:to-cyan-900/50', // Ocean
-  'bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900/40 dark:to-emerald-900/50', // Forest
-  'bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-900/40 dark:to-teal-900/50', // Sage
+  featureThemeClassName('timelineGradientAssignmentInfoAccentGradientSurfaceAlpha'), // Twilight
+  featureThemeClassName('timelineGradientAssignmentInfoTealGradientSurface'), // Ocean
+  featureThemeClassName('timelineGradientAssignmentSuccessGradientSurface'), // Forest
+  featureThemeClassName('timelineGradientAssignmentSuccessTealGradientSurface'), // Sage
 
   // Neutral/Earth Spectrum
-  'bg-gradient-to-br from-gray-100 to-slate-100 dark:from-gray-900/40 dark:to-slate-900/50', // Cloud
-  'bg-gradient-to-br from-amber-100 to-stone-100 dark:from-amber-900/40 dark:to-stone-900/50', // Sand
-  'bg-gradient-to-br from-indigo-100 to-slate-100 dark:from-indigo-900/40 dark:to-slate-900/50', // Night
+  featureThemeClassName('timelineGradientAssignmentNeutralGradientSurface'), // Cloud
+  featureThemeClassName('timelineGradientAssignmentWarningNeutralGradientSurface'), // Sand
+  featureThemeClassName('timelineGradientAssignmentAccentNeutralGradientSurface'), // Night
 
   // Additional variety
-  'bg-gradient-to-br from-violet-100 to-fuchsia-100 dark:from-violet-900/40 dark:to-fuchsia-900/50', // Lavender
-  'bg-gradient-to-br from-lime-100 to-green-100 dark:from-lime-900/40 dark:to-green-900/50', // Spring
-  'bg-gradient-to-br from-sky-100 to-indigo-100 dark:from-sky-900/40 dark:to-indigo-900/50', // Azure
-  'bg-gradient-to-br from-rose-100 to-amber-100 dark:from-rose-900/40 dark:to-amber-900/50', // Sunset
+  featureThemeClassName('timelineGradientAssignmentAccentGradientSurface'), // Lavender
+  featureThemeClassName('timelineGradientAssignmentSuccessGradientSurfaceAlpha'), // Spring
+  featureThemeClassName('timelineGradientAssignmentInfoAccentGradientSurfaceBeta'), // Azure
+  featureThemeClassName('timelineGradientAssignmentDangerWarningGradientSurface'), // Sunset
 ] as const;
 
 /**
@@ -73,7 +70,7 @@ export function getGradientByEntityId(entityId: string): string {
 export function getTimelineCardGradient(
   contentType: ContentType,
   entityId?: string,
-  useContentTypeDefault: boolean = true
+  useContentTypeDefault = true
 ): string {
   if (useContentTypeDefault) {
     return getGradientForContentType(contentType);
@@ -99,7 +96,7 @@ export const CARD_SHADOWS = {
 /**
  * Get combined shadow classes for timeline cards
  */
-export function getCardShadowClasses(elevated: boolean = false): string {
+export function getCardShadowClasses(elevated = false): string {
   if (elevated) {
     return `${CARD_SHADOWS.elevated} ${CARD_SHADOWS.transition}`;
   }
@@ -129,21 +126,21 @@ export const CARD_ASPECT_RATIOS = {
  * white text in light mode and light text in dark mode.
  */
 export const BADGE_GRADIENTS = [
-  'bg-gradient-to-r from-pink-500 to-rose-400 dark:from-pink-700 dark:to-rose-600',
-  'bg-gradient-to-r from-violet-500 to-purple-400 dark:from-violet-700 dark:to-purple-600',
-  'bg-gradient-to-r from-blue-500 to-cyan-400 dark:from-blue-700 dark:to-cyan-600',
-  'bg-gradient-to-r from-teal-500 to-emerald-400 dark:from-teal-700 dark:to-emerald-600',
-  'bg-gradient-to-r from-green-500 to-lime-400 dark:from-green-700 dark:to-lime-600',
-  'bg-gradient-to-r from-amber-500 to-yellow-400 dark:from-amber-700 dark:to-yellow-600',
-  'bg-gradient-to-r from-orange-500 to-red-400 dark:from-orange-700 dark:to-red-600',
-  'bg-gradient-to-r from-fuchsia-500 to-pink-400 dark:from-fuchsia-700 dark:to-pink-600',
-  'bg-gradient-to-r from-indigo-500 to-blue-400 dark:from-indigo-700 dark:to-blue-600',
-  'bg-gradient-to-r from-cyan-500 to-teal-400 dark:from-cyan-700 dark:to-teal-600',
-  'bg-gradient-to-r from-emerald-500 to-green-400 dark:from-emerald-700 dark:to-green-600',
-  'bg-gradient-to-r from-rose-500 to-orange-400 dark:from-rose-700 dark:to-orange-600',
-  'bg-gradient-to-r from-sky-500 to-indigo-400 dark:from-sky-700 dark:to-indigo-600',
-  'bg-gradient-to-r from-lime-500 to-emerald-400 dark:from-lime-700 dark:to-emerald-600',
-  'bg-gradient-to-r from-red-500 to-pink-400 dark:from-red-700 dark:to-pink-600',
+  featureThemeClassName('timelineGradientAssignmentDangerAccentGradientSurfaceAlpha'),
+  featureThemeClassName('timelineGradientAssignmentAccentGradientSurfaceAlpha'),
+  featureThemeClassName('timelineGradientAssignmentInfoGradientSurface'),
+  featureThemeClassName('timelineGradientAssignmentSuccessTealGradientSurfaceAlpha'),
+  featureThemeClassName('timelineGradientAssignmentSuccessGradientSurfaceBeta'),
+  featureThemeClassName('timelineGradientAssignmentWarningGradientSurfaceBeta'),
+  featureThemeClassName('timelineGradientAssignmentDangerWarningGradientSurfaceAlpha'),
+  featureThemeClassName('timelineGradientAssignmentAccentGradientSurfaceBeta'),
+  featureThemeClassName('timelineGradientAssignmentInfoAccentGradientSurfaceGamma'),
+  featureThemeClassName('timelineGradientAssignmentInfoTealGradientSurfaceAlpha'),
+  featureThemeClassName('timelineGradientAssignmentSuccessGradientSurfaceGamma'),
+  featureThemeClassName('timelineGradientAssignmentDangerWarningGradientSurfaceBeta'),
+  featureThemeClassName('timelineGradientAssignmentInfoAccentGradientSurfaceDelta'),
+  featureThemeClassName('timelineGradientAssignmentSuccessGradientSurfaceDelta'),
+  featureThemeClassName('timelineGradientAssignmentDangerAccentGradientSurfaceBeta'),
 ] as const;
 
 /**

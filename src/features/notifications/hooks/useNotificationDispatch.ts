@@ -20,7 +20,7 @@ export function useNotificationDispatch(): void {
     async (args: CreateNotificationInput) => {
       await zero.mutate(mutators.notifications.createNotification(args));
     },
-    [zero],
+    [zero]
   );
 
   useEffect(() => {

@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { Bell, Check, CheckCheck } from 'lucide-react';
 
 import { LoadingState } from '@/features/shared/ui/feedback';
@@ -93,7 +94,9 @@ function EntityNotificationItem({
                   <SmartLink href={`/user/${notification.sender.id}`} className="shrink-0">
                     <Avatar className="hover:ring-primary h-5 w-5 hover:ring-1">
                       <AvatarImage src={notification.sender?.avatar || undefined} />
-                      <AvatarFallback className="text-[10px]">
+                      <AvatarFallback
+                        className={featureThemeClassName('agendaAccreditationSectionThemedText')}
+                      >
                         {senderName?.[0]?.toUpperCase() || 'U'}
                       </AvatarFallback>
                     </Avatar>
@@ -101,7 +104,9 @@ function EntityNotificationItem({
                 ) : (
                   <Avatar className="h-5 w-5 shrink-0">
                     <AvatarImage src={notification.sender?.avatar || undefined} />
-                    <AvatarFallback className="text-[10px]">
+                    <AvatarFallback
+                      className={featureThemeClassName('agendaAccreditationSectionThemedText')}
+                    >
                       {senderName?.[0]?.toUpperCase() || 'U'}
                     </AvatarFallback>
                   </Avatar>
@@ -137,7 +142,9 @@ function EntityNotificationItem({
                   <SmartLink href={`/user/${notification.related_user.id}`} className="shrink-0">
                     <Avatar className="hover:ring-primary h-5 w-5 hover:ring-1">
                       <AvatarImage src={notification.related_user?.avatar || undefined} />
-                      <AvatarFallback className="text-[10px]">
+                      <AvatarFallback
+                        className={featureThemeClassName('agendaAccreditationSectionThemedText')}
+                      >
                         {receiverName?.[0]?.toUpperCase() || 'U'}
                       </AvatarFallback>
                     </Avatar>
@@ -145,7 +152,9 @@ function EntityNotificationItem({
                 ) : (
                   <Avatar className="h-5 w-5 shrink-0">
                     <AvatarImage src={notification.related_user?.avatar || undefined} />
-                    <AvatarFallback className="text-[10px]">
+                    <AvatarFallback
+                      className={featureThemeClassName('agendaAccreditationSectionThemedText')}
+                    >
                       {receiverName?.[0]?.toUpperCase() || 'U'}
                     </AvatarFallback>
                   </Avatar>
@@ -158,9 +167,7 @@ function EntityNotificationItem({
           <p className={cn('text-sm font-medium', !notification.is_read && 'font-semibold')}>
             {notification.title}
           </p>
-          {!notification.is_read ? (
-            <BadgeControl variant="default" className="h-2 w-2 rounded-full p-0" />
-          ) : null}
+          {!notification.is_read ? <BadgeControl variant="default" size="dot" /> : null}
         </div>
         <p className="text-muted-foreground text-sm">{notification.message}</p>
         <p className="text-muted-foreground text-xs">{formatTime(notification.created_at)}</p>

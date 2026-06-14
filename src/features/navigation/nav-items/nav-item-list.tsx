@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { cn } from '@/features/shared/utils/utils.ts';
@@ -48,7 +49,7 @@ export function NavItemList({
   if (navigationView === 'asButton') {
     return (
       <div className="scrollbar-hide max-h-[70vh] overflow-y-auto">
-        <div className="grid w-full auto-rows-max grid-cols-2 gap-8 p-4 sm:grid-cols-3 md:grid-cols-4">
+        <div className={featureThemeClassName('navigationNavItemListLayout')}>
           {/* Use different layout for fewer items */}
           {navigationItems.length <= 4 ? (
             <div className="col-span-full flex flex-wrap justify-center gap-8">

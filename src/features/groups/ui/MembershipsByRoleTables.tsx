@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { Link } from '@tanstack/react-router';
 import { Eye } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -275,7 +276,9 @@ export function MembershipsByRoleTables<
         return (
           <Panel
             key={section.id}
-            className="border-border/70 from-background to-muted/20 bg-gradient-to-b"
+            className={featureThemeClassName(
+              'groupMembershipRightsAlignmentPanelThemedGradientSurface'
+            )}
           >
             <PanelHeader>
               <div className="flex flex-wrap items-start justify-between gap-3">

@@ -5,6 +5,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { SupporterMapItem } from '@/features/amendments/logic/supporterDirectory';
 import { SupporterLocalityMap } from '@/features/amendments/ui/SupporterLocalityMap';
+import { Button } from '@/features/shared/ui/ui/button';
 
 vi.mock('leaflet', () => ({
   divIcon: vi.fn(() => ({ icon: true })),
@@ -28,7 +29,7 @@ vi.mock('react-leaflet', () => ({
       click?: () => void;
     };
   }) => (
-    <button
+    <Button
       type="button"
       data-testid={`marker-${position[0]}-${position[1]}`}
       onMouseEnter={() => eventHandlers?.mouseover?.()}
@@ -36,7 +37,7 @@ vi.mock('react-leaflet', () => ({
       onClick={() => eventHandlers?.click?.()}
     >
       {children}
-    </button>
+    </Button>
   ),
   Tooltip: ({ children }: { children: ReactNode }) => (
     <div data-testid="marker-tooltip">{children}</div>
@@ -68,7 +69,9 @@ describe('SupporterLocalityMap', () => {
 
     expect(screen.getByTestId('marker-tooltip').textContent).toContain('Alpha Circle');
     expect(screen.getByTestId('marker-tooltip').textContent).toContain('Berlin, Germany');
-    expect(screen.getByTestId('marker-tooltip').textContent).toContain('12 members');
+    expect(screen.getByTestId('marker-tooltip').textContent?.replace(/\s+/g, '')).toContain(
+      '12members'
+    );
   });
 
   it('emits hover and click callbacks for markers', async () => {

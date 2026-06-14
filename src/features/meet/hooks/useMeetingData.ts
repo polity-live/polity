@@ -11,9 +11,7 @@ import { getInstanceBookingCount, isBookedByUser } from '@/zero/events/useMeetin
 export function useMeetingData(eventId: string) {
   const { user } = useAuth();
 
-  const [events, result] = useQuery(
-    queries.events.byIdFull({ id: eventId })
-  );
+  const [events, result] = useQuery(queries.events.byIdFull({ id: eventId }));
   const event = events[0];
 
   const computed = useMemo(() => {
@@ -27,7 +25,10 @@ export function useMeetingData(eventId: string) {
       };
     }
 
-    const participants = [...(event.participants ?? [])] as Array<{ user_id: string; instance_date?: number | null }>;
+    const participants = [...(event.participants ?? [])] as {
+      user_id: string;
+      instance_date?: number | null;
+    }[];
     const isOwner = event.creator_id === user?.id;
     const hasBooked = user ? isBookedByUser(participants, user.id, null) : false;
     const bookingCount = getInstanceBookingCount(participants, event.creator_id, null);

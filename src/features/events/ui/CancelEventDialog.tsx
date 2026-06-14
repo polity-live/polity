@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import {
   FormControlTextarea,
@@ -160,9 +161,13 @@ export function CancelEventDialog({
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           {item.amendment ? (
-                            <FileText className="h-4 w-4 text-blue-500" />
+                            <FileText
+                              className={featureThemeClassName('eventCancelEventDialogInfoIcon')}
+                            />
                           ) : item.election ? (
-                            <Vote className="h-4 w-4 text-purple-500" />
+                            <Vote
+                              className={featureThemeClassName('eventCancelEventDialogAccentIcon')}
+                            />
                           ) : null}
                           <span className="truncate font-medium">{item.title}</span>
                         </div>
@@ -207,7 +212,7 @@ export function CancelEventDialog({
                       <FormControlSelectItem key={event.id} value={event.id}>
                         <div className="flex items-center gap-2">
                           <span>{event.title}</span>
-                          <BadgeControl variant="outline" className="text-xs">
+                          <BadgeControl variant="outline" size="xs">
                             {event.start_date
                               ? new Date(event.start_date).toLocaleDateString()
                               : ''}

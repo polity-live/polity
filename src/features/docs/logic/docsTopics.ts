@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import type { DocsTopicDefinition, DocsTopicSlug } from '../types/docs.types';
 
 export const docsTopicDefinitions: DocsTopicDefinition[] = [
@@ -225,7 +226,7 @@ export const docsTopicDefinitions: DocsTopicDefinition[] = [
       steps: [
         { id: 'search-across', tone: 'entry' },
         { id: 'narrow-context', tone: 'action' },
-        { id: 'jump-to-target', tone: 'result' },
+        { id: featureThemeClassName('docsDocsTopicsThemedGradientSurface'), tone: 'result' },
       ],
     },
   },

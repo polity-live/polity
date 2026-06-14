@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { cn } from '@/features/shared/utils/utils';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Progress } from '@/features/shared/ui/ui/progress';
@@ -72,7 +73,11 @@ export function CreateProgressIndicator({
                   )}
                   title={label}
                 >
-                  <span className="flex h-4 w-4 items-center justify-center rounded-full text-[10px]">
+                  <span
+                    className={featureThemeClassName(
+                      'createCreateProgressIndicatorThemedRoundIcon'
+                    )}
+                  >
                     {index + 1}
                   </span>
                   <span className="hidden sm:inline">{label}</span>

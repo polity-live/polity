@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import {
   Card,
@@ -23,10 +24,10 @@ export function AccessDenied({ description, title }: AccessDeniedProps) {
 
   return (
     <div className="flex min-h-[50vh] items-center justify-center p-4">
-      <Card className="w-full max-w-md text-center shadow-lg">
+      <Card elevation="lg" className="w-full max-w-md">
         <CardHeader className="pb-4">
-          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
-            <ShieldAlert className="h-10 w-10 text-red-600 dark:text-red-400" />
+          <div className={featureThemeClassName('authAccessDeniedDangerRoundIcon')}>
+            <ShieldAlert className={featureThemeClassName('authAccessDeniedDangerIcon')} />
           </div>
           <CardTitle className="text-2xl">{title ?? t('errors.accessDenied.title')}</CardTitle>
           <CardDescription className="text-base">

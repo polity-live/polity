@@ -1,3 +1,4 @@
+import { featureThemeValue } from '@/features/shared/theme';
 /**
  * Hook for calculating financial data and chart data from payments
  */
@@ -5,7 +6,15 @@
 import { useMemo } from 'react';
 import type { GroupPayment, FinancialSummary, ChartData } from '../types/group.types';
 
-const CHART_COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658'];
+const CHART_COLORS = [
+  featureThemeValue('groupUseFinancialDataThemeValue'),
+  featureThemeValue('groupUseFinancialDataSuccessColor'),
+  featureThemeValue('groupUseFinancialDataWarningColor'),
+  featureThemeValue('groupUseFinancialDataWarningColorAlpha'),
+  featureThemeValue('groupUseFinancialDataAccentColor'),
+  featureThemeValue('groupUseFinancialDataSuccessColorAlpha'),
+  featureThemeValue('groupUseFinancialDataThemeValueAlpha'),
+];
 
 export function useFinancialData(payments: GroupPayment[], groupId: string) {
   const financialData = useMemo(() => {
@@ -20,21 +29,25 @@ export function useFinancialData(payments: GroupPayment[], groupId: string) {
 
       if (isIncome) {
         totalIncome += amount;
-        incomeByType[payment.type || 'other'] = (incomeByType[payment.type || 'other'] || 0) + amount;
+        incomeByType[payment.type || 'other'] =
+          (incomeByType[payment.type || 'other'] || 0) + amount;
       } else {
         totalExpenditure += amount;
-        expenditureByType[payment.type || 'other'] = (expenditureByType[payment.type || 'other'] || 0) + amount;
+        expenditureByType[payment.type || 'other'] =
+          (expenditureByType[payment.type || 'other'] || 0) + amount;
       }
     });
 
     const balance = totalIncome - totalExpenditure;
 
     // Prepare data for income chart
-    const incomeChartData: ChartData[] = Object.entries(incomeByType).map(([type, value], index) => ({
-      name: type.replace(/_/g, ' '),
-      value,
-      fill: CHART_COLORS[index % CHART_COLORS.length],
-    }));
+    const incomeChartData: ChartData[] = Object.entries(incomeByType).map(
+      ([type, value], index) => ({
+        name: type.replace(/_/g, ' '),
+        value,
+        fill: CHART_COLORS[index % CHART_COLORS.length],
+      })
+    );
 
     // Add available/balance to income chart if positive
     if (balance > 0) {
@@ -46,11 +59,13 @@ export function useFinancialData(payments: GroupPayment[], groupId: string) {
     }
 
     // Prepare data for expenditure chart
-    const expenditureChartData: ChartData[] = Object.entries(expenditureByType).map(([type, value], index) => ({
-      name: type.replace(/_/g, ' '),
-      value,
-      fill: CHART_COLORS[index % CHART_COLORS.length],
-    }));
+    const expenditureChartData: ChartData[] = Object.entries(expenditureByType).map(
+      ([type, value], index) => ({
+        name: type.replace(/_/g, ' '),
+        value,
+        fill: CHART_COLORS[index % CHART_COLORS.length],
+      })
+    );
 
     // Add deficit to expenditure chart if negative balance
     if (balance < 0) {

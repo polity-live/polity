@@ -49,7 +49,7 @@ export function DecisionWidgetFrame({
         </Tooltip>
         <h3 className="min-w-0 flex-1 truncate text-sm font-semibold">{title}</h3>
         {typeof count === 'number' ? (
-          <BadgeControl variant="secondary" className="rounded-md font-mono text-[10px]">
+          <BadgeControl variant="secondary" size="tiny" shape="rounded" textStyle="mono">
             {Math.round(count)}
           </BadgeControl>
         ) : null}

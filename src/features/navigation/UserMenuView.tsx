@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import type { RefObject } from 'react';
 import { Link } from '@tanstack/react-router';
 import { LogOut, Search, Settings, User, X } from 'lucide-react';
@@ -178,7 +179,9 @@ export function UserMenuView({
                         src={group.image_url ?? undefined}
                         alt={group.name ?? undefined}
                       />
-                      <AvatarFallback className="text-[10px]">
+                      <AvatarFallback
+                        className={featureThemeClassName('agendaAccreditationSectionThemedText')}
+                      >
                         {group.name?.[0]?.toUpperCase() || 'G'}
                       </AvatarFallback>
                     </Avatar>
@@ -193,7 +196,7 @@ export function UserMenuView({
 
           <DropdownMenuItem
             onClick={() => onLogoutDialogOpenChange(true)}
-            className="text-red-600 focus:text-red-600"
+            className={featureThemeClassName('navigationUserMenuDangerText')}
           >
             <LogOut className="mr-2 h-4 w-4" />
             {labels.logout}

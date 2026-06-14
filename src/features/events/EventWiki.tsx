@@ -405,7 +405,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
                     <CardTitle className="flex items-center justify-between">
                       <span>{election.title}</span>
                       {existingCandidacy && (
-                        <BadgeControl variant="secondary" className="text-xs">
+                        <BadgeControl variant="secondary" size="xs">
                           {translateText('generated.inline.0435_bereits_kandidat_ef4a51da')}
                         </BadgeControl>
                       )}
@@ -431,7 +431,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
                         {election.candidates?.length || 0}
                       </span>
                       {election.majority_type && (
-                        <BadgeControl variant="outline" className="text-xs">
+                        <BadgeControl variant="outline" size="xs">
                           {election.majority_type}
                         </BadgeControl>
                       )}
@@ -494,7 +494,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
                       <span className="text-muted-foreground">
                         {translateText('generated.inline.0440_wahlverfahren_e5f84d31')}
                       </span>
-                      <BadgeControl variant="outline" className="text-xs">
+                      <BadgeControl variant="outline" size="xs">
                         {selectedElection.majority_type}
                       </BadgeControl>
                     </div>
@@ -583,18 +583,18 @@ export function EventWiki({ eventId }: EventWikiProps) {
                                 </p>
                               )}
                               {participant.status && (
-                                <BadgeControl variant="secondary" className="text-xs">
+                                <BadgeControl variant="secondary" size="xs">
                                   {participant.status}
                                 </BadgeControl>
                               )}
                               {showComposition && participant.partGroup?.name ? (
-                                <BadgeControl variant="outline" className="text-xs">
+                                <BadgeControl variant="outline" size="xs">
                                   {translateText('generated.inline.0445_subgroup_a9453c74')}
                                   {participant.partGroup.name}
                                 </BadgeControl>
                               ) : null}
                               {showComposition && participant.baseGroup?.name ? (
-                                <BadgeControl variant="outline" className="text-xs">
+                                <BadgeControl variant="outline" size="xs">
                                   {translateText('generated.inline.0446_base_group_1e6d0a99')}
                                   {participant.baseGroup.name}
                                 </BadgeControl>
@@ -676,7 +676,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
                           </p>
                         )}
                         {participant.status && (
-                          <BadgeControl variant="secondary" className="text-xs">
+                          <BadgeControl variant="secondary" size="xs">
                             {participant.status}
                           </BadgeControl>
                         )}

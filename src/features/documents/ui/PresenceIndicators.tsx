@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 /**
  * Presence Indicators Component
  *
@@ -34,7 +35,10 @@ export function PresenceIndicators({ peers }: PresenceIndicatorsProps) {
             title={peer.name}
           >
             {peer.avatar ? <AvatarImage src={peer.avatar} alt={peer.name} /> : null}
-            <AvatarFallback style={{ backgroundColor: peer.color }} className="text-xs text-white">
+            <AvatarFallback
+              style={{ backgroundColor: peer.color }}
+              className={featureThemeClassName('documentPresenceIndicatorsContrastText')}
+            >
               {peer.name?.[0]?.toUpperCase()}
             </AvatarFallback>
           </Avatar>

@@ -3,23 +3,23 @@
  * Composes useNotificationDispatch with amendment-specific notification builders.
  */
 
-import { useCallback } from 'react'
-import { useNotificationDispatch } from '@/zero/notifications/useNotificationDispatch'
-import type { NotificationType } from '@/features/notifications/types/notification.types'
+import { useCallback } from 'react';
+import { useNotificationDispatch } from '@/zero/notifications/useNotificationDispatch';
+import type { NotificationType } from '@/features/notifications/types/notification.types';
 
 export function useAmendmentNotifications() {
-  const { dispatchEntity } = useNotificationDispatch()
+  const { dispatchEntity } = useNotificationDispatch();
 
   const notifyAmendment = useCallback(
     async (params: {
-      type: NotificationType
-      title: string
-      message: string
-      senderId: string
-      amendmentId: string
-      actionUrl?: string
-      relatedEntityType?: 'group' | 'event' | 'amendment' | 'blog' | 'user'
-      relatedEntityId?: string
+      type: NotificationType;
+      title: string;
+      message: string;
+      senderId: string;
+      amendmentId: string;
+      actionUrl?: string;
+      relatedEntityType?: 'group' | 'event' | 'amendment' | 'blog' | 'user';
+      relatedEntityId?: string;
     }) => {
       await dispatchEntity({
         type: params.type,
@@ -32,10 +32,10 @@ export function useAmendmentNotifications() {
         category: 'amendment',
         relatedEntityType: params.relatedEntityType,
         relatedEntityId: params.relatedEntityId,
-      })
+      });
     },
     [dispatchEntity]
-  )
+  );
 
-  return { notifyAmendment }
+  return { notifyAmendment };
 }

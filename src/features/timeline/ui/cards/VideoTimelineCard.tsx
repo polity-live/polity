@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { useState } from 'react';
@@ -119,15 +120,19 @@ export function VideoTimelineCard({ video, onPlay, className }: VideoTimelineCar
             loading="lazy"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-pink-100 to-red-100 dark:from-pink-900/40 dark:to-red-900/50">
+          <div
+            className={featureThemeClassName(
+              'timelineVideoTimelineCardDangerAccentGradientSurface'
+            )}
+          >
             <Video className="text-muted-foreground h-12 w-12" />
           </div>
         )}
 
         {/* Play Button Overlay */}
-        <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover:opacity-100">
-          <div className="transform rounded-full bg-white/90 p-4 shadow-lg transition-transform group-hover:scale-110">
-            <Play className="h-8 w-8 fill-gray-900 text-gray-900" />
+        <div className={featureThemeClassName('timelineVideoTimelineCardContrastBackground')}>
+          <div className={featureThemeClassName('timelineVideoTimelineCardContrastPanel')}>
+            <Play className={featureThemeClassName('timelineVideoTimelineCardNeutralIcon')} />
           </div>
         </div>
 
@@ -135,7 +140,7 @@ export function VideoTimelineCard({ video, onPlay, className }: VideoTimelineCar
         {video.duration && (
           <BadgeControl
             variant="secondary"
-            className="absolute right-2 bottom-2 bg-black/80 font-mono text-xs text-white"
+            className={featureThemeClassName('timelineVideoTimelineCardContrastBackgroundAlpha')}
           >
             {formatDuration(video.duration)}
           </BadgeControl>
@@ -145,7 +150,7 @@ export function VideoTimelineCard({ video, onPlay, className }: VideoTimelineCar
         {video.sourceType && (
           <BadgeControl
             variant="outline"
-            className="absolute top-2 left-2 bg-white/80 text-xs dark:bg-gray-900/80"
+            className={featureThemeClassName('timelineImageTimelineCardNeutralContrastBackground')}
           >
             {SOURCE_LABELS[video.sourceType] || video.sourceType}
           </BadgeControl>
@@ -226,7 +231,7 @@ export function VideoTimelineCard({ video, onPlay, className }: VideoTimelineCar
           <DialogHeader>
             <DialogTitle>{video.title}</DialogTitle>
           </DialogHeader>
-          <div className="aspect-video w-full overflow-hidden rounded-lg bg-black">
+          <div className={featureThemeClassName('timelineVideoTimelineCardContrastBackgroundBeta')}>
             {video.videoUrl ? (
               <video src={video.videoUrl} controls autoPlay className="h-full w-full" />
             ) : (

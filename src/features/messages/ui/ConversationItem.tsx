@@ -1,4 +1,4 @@
-import { BadgeControl } from '@/features/shared/ui/status';
+import { BadgeControl, StatusDotIndicator } from '@/features/shared/ui/status';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Button } from '@/features/shared/ui/ui/button';
 import { cn } from '@/features/shared/utils/utils';
@@ -50,7 +50,10 @@ export function ConversationItem({
             </AvatarFallback>
           </Avatar>
           {isOnline && !display.isCollective && (
-            <span className="border-background absolute -right-0.5 -bottom-0.5 block h-3.5 w-3.5 rounded-full border-2 bg-green-500" />
+            <StatusDotIndicator
+              tone="success"
+              className="absolute -right-0.5 -bottom-0.5 h-3.5 w-3.5 border-2"
+            />
           )}
         </div>
         <div className="min-w-0 flex-1">
@@ -59,7 +62,7 @@ export function ConversationItem({
               {conversation.pinned && <Pin className="text-primary h-3.5 w-3.5 flex-shrink-0" />}
               <p className="truncate font-semibold">{display.name}</p>
               {display.isCollective && (
-                <BadgeControl variant="secondary" className="ml-1 flex-shrink-0 text-xs">
+                <BadgeControl variant="secondary" size="xs" className="ml-1 flex-shrink-0">
                   {display.participantCount}
                 </BadgeControl>
               )}

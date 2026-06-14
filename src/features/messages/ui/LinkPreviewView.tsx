@@ -49,7 +49,7 @@ export function LinkPreviewCardView({
   badgeLabel,
 }: LinkPreviewCardViewProps) {
   return (
-    <Card asChild className={cn('hover:bg-accent', accentClassName, className)}>
+    <Card asChild interactive="accent" className={cn(accentClassName, className)}>
       <SmartLink href={href} target={target} rel={rel}>
         <CardContent className="flex items-center gap-3 p-3">
           <div className={cn('flex-shrink-0', iconContainerClassName)}>{icon}</div>
@@ -74,7 +74,7 @@ export function LinkPreviewCardView({
             {meta}
           </div>
           {badgeLabel ? (
-            <BadgeControl variant="outline" className="flex-shrink-0 text-xs">
+            <BadgeControl variant="outline" size="xs" className="flex-shrink-0">
               {badgeLabel}
             </BadgeControl>
           ) : null}

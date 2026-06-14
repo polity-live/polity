@@ -32,9 +32,9 @@ export function TodoDetailPage({ todoId }: TodoDetailPageProps) {
   if (!todo) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <AlertCircle className="mb-4 h-12 w-12 text-muted-foreground" />
+        <AlertCircle className="text-muted-foreground mb-4 h-12 w-12" />
         <h2 className="mb-2 text-xl font-semibold">{t('features.todos.detail.notFound')}</h2>
-        <p className="mb-4 text-muted-foreground">
+        <p className="text-muted-foreground mb-4">
           {t('features.todos.detail.noAccessDescription')}
         </p>
         <Link to="/todos">

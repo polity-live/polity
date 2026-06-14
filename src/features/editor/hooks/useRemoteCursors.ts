@@ -1,3 +1,4 @@
+import { featureThemeValue } from '@/features/shared/theme';
 /**
  * Remote Cursors Hook
  *
@@ -7,7 +8,7 @@
  * Must be called inside a <Plate> context (needs useEditorRef).
  */
 
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useEditorRef } from 'platejs/react';
 import { CursorOverlayPlugin } from '@platejs/selection/react';
 import { usePresence } from '@/presence/usePresence';
@@ -47,7 +48,7 @@ export function useRemoteCursors({
 
   const { publishTopic, subscribeTopic, isConnected } = usePresence(
     entityId ? `editor:${entityId}` : '',
-    { enabled: enabled && !!entityId && !!userId },
+    { enabled: enabled && !!entityId && !!userId }
   );
 
   // Helper to notify parent about active cursor user IDs
@@ -61,12 +62,13 @@ export function useRemoteCursors({
   useEffect(() => {
     if (!enabled || !entityId || !userId || !editor) return;
 
-    const unsubscribe = subscribeTopic('cursor', (payload) => {
+    const unsubscribe = subscribeTopic('cursor', payload => {
       const senderId = payload.senderId as string | undefined;
       if (!senderId || senderId === userId) return;
 
       const selection = payload.selection as TRange | null;
-      const senderColor = (payload.userColor as string) || '#888888';
+      const senderColor =
+        (payload.userColor as string) || featureThemeValue('editorUseEditorPresenceNeutralColor');
 
       const cursorApi = editor.getApi(CursorOverlayPlugin).cursorOverlay;
 
@@ -125,7 +127,7 @@ export function useRemoteCursors({
       const payload = {
         senderId: userId,
         userName: userName || 'Anonymous',
-        userColor: userColor || '#888888',
+        userColor: userColor || featureThemeValue('editorUseEditorPresenceNeutralColor'),
         selection,
       };
 

@@ -1,10 +1,8 @@
-import { Eye, EyeOff } from 'lucide-react';
-import { useState, type ComponentProps, type ReactNode } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 
-import { FormFieldShell } from '@/features/shared/ui/form/FormFieldShell';
-import { Button } from '@/features/shared/ui/ui/button';
 import { Input } from '@/features/shared/ui/ui/input';
-import { cn } from '@/features/shared/utils/utils';
+import { usePasswordFieldController } from '@/features/shared/hooks/usePasswordFieldController';
+import { PasswordFieldView } from './PasswordFieldView';
 
 interface PasswordFieldProps extends Omit<ComponentProps<typeof Input>, 'type'> {
   label?: ReactNode;
@@ -43,49 +41,27 @@ export function PasswordField({
   onChange,
   ...props
 }: PasswordFieldProps) {
-  const [isVisible, setIsVisible] = useState(false);
-
   return (
-    <FormFieldShell
-      id={id}
+    <PasswordFieldView
       label={label}
       labelAction={labelAction}
       description={description}
       error={error}
       invalid={invalid}
       required={required}
-      className={fieldClassName}
+      fieldClassName={fieldClassName}
       labelClassName={labelClassName}
       descriptionClassName={descriptionClassName}
       errorClassName={errorClassName}
-    >
-      {({ id, describedBy, invalid }) => (
-        <div className="relative">
-          <Input
-            {...props}
-            id={id}
-            type={isVisible ? 'text' : 'password'}
-            aria-describedby={describedBy}
-            aria-invalid={invalid || undefined}
-            required={required}
-            onChange={event => {
-              onValueChange?.(event.target.value);
-              onChange?.(event);
-            }}
-            className={cn('pr-10', className, inputClassName)}
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="absolute top-1/2 right-1 size-7 -translate-y-1/2"
-            onClick={() => setIsVisible(value => !value)}
-          >
-            {isVisible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-            <span className="sr-only">{isVisible ? hidePasswordLabel : showPasswordLabel}</span>
-          </Button>
-        </div>
-      )}
-    </FormFieldShell>
+      inputClassName={inputClassName}
+      onValueChange={onValueChange}
+      showPasswordLabel={showPasswordLabel}
+      hidePasswordLabel={hidePasswordLabel}
+      className={className}
+      id={id}
+      onChange={onChange}
+      {...props}
+      {...usePasswordFieldController()}
+    />
   );
 }

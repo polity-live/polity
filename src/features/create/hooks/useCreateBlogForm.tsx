@@ -8,7 +8,7 @@ import {
   useTranslation,
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { VisibilityInput } from '../ui/inputs/VisibilityInput';
 import { HashtagEditor } from '@/features/shared/ui/hashtags';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';

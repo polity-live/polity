@@ -1,9 +1,8 @@
 'use client';
 
-import { BadgeControl } from '@/features/shared/ui/status';
+import { BadgeControl, StatusBadge, type BadgeTone } from '@/features/shared/ui/status';
 import { Calendar, Clock3, Hash, Tag } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { cn } from '@/features/shared/utils/utils';
 import { normalizeTimelineText } from '@/features/timeline/logic/normalizeTimelineText';
 import {
   TimelineCardBase,
@@ -54,18 +53,18 @@ function formatDateTime(value?: string | Date | null): string | null {
   }).format(parsed);
 }
 
-function getStatusBadgeClass(status?: string | null): string {
+function getStatusBadgeTone(status?: string | null): BadgeTone {
   switch (status) {
     case 'active':
     case 'in-progress':
-      return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300';
+      return 'success';
     case 'completed':
-      return 'bg-blue-500/15 text-blue-700 dark:text-blue-300';
+      return 'info';
     case 'pending':
     case 'planned':
-      return 'bg-amber-500/15 text-amber-700 dark:text-amber-300';
+      return 'warning';
     default:
-      return 'bg-muted text-muted-foreground';
+      return 'neutral';
   }
 }
 
@@ -99,12 +98,9 @@ export function AgendaItemTimelineCard({ agendaItem, className }: AgendaItemTime
           )}
 
           {statusLabel && (
-            <BadgeControl
-              variant="secondary"
-              className={cn('border-0', getStatusBadgeClass(agendaItem.status))}
-            >
+            <StatusBadge status={agendaItem.status} tone={getStatusBadgeTone(agendaItem.status)}>
               {statusLabel}
-            </BadgeControl>
+            </StatusBadge>
           )}
         </div>
 

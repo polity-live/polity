@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useGroupState } from '@/zero/groups/useGroupState';
 import { useGroupConnectionState } from '@/zero/network';
-import { RIGHT_TYPES } from '@/features/network/ui/RightFilters';
+import { RIGHT_TYPES } from '@/features/shared/ui/status';
 import {
   type CanonicalMembershipMode,
   type GroupedRelationshipSummary,

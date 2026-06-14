@@ -69,7 +69,7 @@ export function AgendaCRVoteTimeline({
               {completedItems.length}/{crTimeline.length}
             </BadgeControl>
             {isTimelineComplete && (
-              <BadgeControl variant="default" className="bg-green-600">
+              <BadgeControl variant="default" tone="successStrong">
                 {t('features.agendas.crTimeline.allCompleted')}
               </BadgeControl>
             )}

@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { Image as ImageIcon, MapPin, User, Heart, MessageSquare } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -83,16 +84,20 @@ export function ImageTimelineCard({ image, onImageClick, className }: ImageTimel
         />
 
         {/* Gradient Overlay with Caption */}
-        <div className="absolute right-0 bottom-0 left-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-4">
+        <div className={featureThemeClassName('timelineImageTimelineCardContrastGradientSurface')}>
           {image.caption && (
             <div className="mb-2 flex items-start gap-2">
-              <ImageIcon className="mt-0.5 h-4 w-4 flex-shrink-0 text-white/80" />
-              <p className="line-clamp-2 text-sm text-white">{image.caption}</p>
+              <ImageIcon
+                className={featureThemeClassName('timelineImageTimelineCardContrastIcon')}
+              />
+              <p className={featureThemeClassName('timelineImageTimelineCardContrastText')}>
+                {image.caption}
+              </p>
             </div>
           )}
 
           {image.location && (
-            <div className="flex items-center gap-1 text-xs text-white/80">
+            <div className={featureThemeClassName('timelineImageTimelineCardContrastTextAlpha')}>
               <MapPin className="h-3 w-3" />
               <span>{image.location}</span>
             </div>
@@ -103,7 +108,7 @@ export function ImageTimelineCard({ image, onImageClick, className }: ImageTimel
         {image.sourceType && (
           <BadgeControl
             variant="outline"
-            className="absolute top-2 left-2 bg-white/80 text-xs dark:bg-gray-900/80"
+            className={featureThemeClassName('timelineImageTimelineCardNeutralContrastBackground')}
           >
             {SOURCE_LABELS[image.sourceType] || image.sourceType}
           </BadgeControl>

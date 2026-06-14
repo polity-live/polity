@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import type { FormEventHandler } from 'react';
 import { ArrowRight, Mail } from 'lucide-react';
 
@@ -36,7 +37,7 @@ export function LoginFormView({
     <FormCard
       title={copy.title}
       description={copy.description}
-      icon={<Mail className="h-12 w-12 text-blue-500" />}
+      icon={<Mail className={featureThemeClassName('authForgotPasswordFormInfoIcon')} />}
     >
       <form onSubmit={onSubmit} className="space-y-4">
         <TextField

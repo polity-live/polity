@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { useGroupTodos as useFacadeGroupTodos } from '@/zero/groups/useGroupState';
 import { useTodoActions } from '@/zero/todos/useTodoActions';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export function useGroupTodos(groupId: string, userId?: string) {

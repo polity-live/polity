@@ -1,7 +1,7 @@
-import { Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react';
 
 interface PropagationProgressProps {
-  message: string
+  message: string;
 }
 
 /**
@@ -16,5 +16,5 @@ export function PropagationProgress({ message }: PropagationProgressProps) {
         <p className="text-muted-foreground text-sm font-medium">{message}</p>
       </div>
     </div>
-  )
+  );
 }

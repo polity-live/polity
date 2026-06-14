@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -146,7 +147,7 @@ export function MemberRightsDialog<TParticipation extends ParticipationLike>({
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="border-border/70 from-background via-background to-muted/30 rounded-2xl border bg-gradient-to-br p-4">
+          <div className={featureThemeClassName('groupMemberRightsDialogThemedGradientSurface')}>
             <div className="text-sm font-medium">
               {t('components.memberRightsDialog.assignedRoles')}
             </div>

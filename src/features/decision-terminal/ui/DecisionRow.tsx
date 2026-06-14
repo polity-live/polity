@@ -1,15 +1,19 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import type { ReactNode } from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/features/shared/utils/utils';
+import {
+  DecisionStatusBadge as StatusBadge,
+  type DecisionStatus,
+} from '@/features/shared/ui/status';
+import { DecisionResultCompact as ResultCompact } from '@/features/shared/ui/voting';
 import { Vote, Award } from 'lucide-react';
-import { StatusBadge, type DecisionStatus } from './StatusBadge';
 import { TrendIndicator } from './TrendIndicator';
 import { CountdownTimer, EndedAgo } from './CountdownTimer';
 import { CandidateBarCompact, VoteBarCompact } from './VoteProgressBar';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { ResultCompact } from './ResultBadge';
 import type { DecisionItem } from './types';
 
 export interface DecisionRowProps {
@@ -62,7 +66,7 @@ function DecisionLink({
 
 function DecisionContextLinks({ decision }: { decision: DecisionItem }) {
   return (
-    <div className="text-muted-foreground mt-0.5 flex min-w-0 flex-wrap gap-x-2 gap-y-0.5 font-mono text-[10px]">
+    <div className={featureThemeClassName('decisionterminalDecisionRowThemedText')}>
       {decision.entity ? (
         <DecisionLink href={decision.entity.href} className="truncate">
           {decision.entity.name}
@@ -122,7 +126,10 @@ export function DecisionRow({ decision }: DecisionRowProps) {
       {/* ID */}
       <div className="flex items-center gap-1">
         <Icon className="text-muted-foreground h-3.5 w-3.5" />
-        <DecisionLink href={decision.href} className="font-mono text-[11px] font-medium">
+        <DecisionLink
+          href={decision.href}
+          className={featureThemeClassName('decisionterminalDecisionRowThemedTextAlpha')}
+        >
           {decision.id}
         </DecisionLink>
       </div>
@@ -137,7 +144,7 @@ export function DecisionRow({ decision }: DecisionRowProps) {
 
       {/* Body/Category */}
       <div className="flex items-center">
-        <span className="text-muted-foreground truncate font-mono text-[10px] tracking-[0.8px] uppercase">
+        <span className={featureThemeClassName('decisionterminalDecisionRowThemedTextBeta')}>
           {decision.body}
         </span>
       </div>
@@ -169,7 +176,10 @@ export function DecisionRow({ decision }: DecisionRowProps) {
             winnerName={decision.winnerName}
           />
         ) : (
-          <StatusBadge status={decision.status as DecisionStatus} className="text-[10px]" />
+          <StatusBadge
+            status={decision.status as DecisionStatus}
+            className={featureThemeClassName('agendaAccreditationSectionThemedText')}
+          />
         )}
       </div>
 
@@ -183,7 +193,7 @@ export function DecisionRow({ decision }: DecisionRowProps) {
               </span>
             )}
             {!decision.isIndicationPhase && electionBarData.candidates.some(c => c.value > 0) && (
-              <span className="text-muted-foreground shrink-0 font-mono text-[9px] uppercase">
+              <span className={featureThemeClassName('decisionterminalDecisionRowThemedTextGamma')}>
                 {t('timeline.terminal.indication')} →
               </span>
             )}
@@ -191,7 +201,7 @@ export function DecisionRow({ decision }: DecisionRowProps) {
               candidates={electionBarData.candidates}
               className="min-w-0 flex-1"
             />
-            <span className="text-muted-foreground shrink-0 font-mono text-[10px]">
+            <span className={featureThemeClassName('decisionterminalDecisionRowThemedTextDelta')}>
               {electionBarData.totalSelections}
             </span>
           </div>
@@ -202,7 +212,7 @@ export function DecisionRow({ decision }: DecisionRowProps) {
                 {t('timeline.terminal.indication')}
               </span>
             ) : decision.indicationVotes && !decision.isIndicationPhase ? (
-              <span className="text-muted-foreground shrink-0 font-mono text-[9px] uppercase">
+              <span className={featureThemeClassName('decisionterminalDecisionRowThemedTextGamma')}>
                 {t('timeline.terminal.indication')} →
               </span>
             ) : null}
@@ -214,7 +224,7 @@ export function DecisionRow({ decision }: DecisionRowProps) {
               }
               className={cn('min-w-0 flex-1', decision.isIndicationPhase && 'opacity-70')}
             />
-            <span className="text-muted-foreground shrink-0 font-mono text-[10px]">
+            <span className={featureThemeClassName('decisionterminalDecisionRowThemedTextDelta')}>
               {(() => {
                 const v =
                   decision.isIndicationPhase && decision.indicationVotes

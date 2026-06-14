@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 // Helper function to get appropriate styling based on amendment status
 export function getStatusStyles(status: string) {
   switch (status) {
@@ -5,34 +6,30 @@ export function getStatusStyles(status: string) {
     case 'passed':
       return {
         badge: 'primary',
-        bgColor:
-          'bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-900/40 dark:to-emerald-900/50',
-        textColor: 'text-green-800 dark:text-green-300',
-        badgeTextColor: 'bg-green-600 text-white hover:bg-green-700',
+        bgColor: featureThemeClassName('userUserWikiSuccessGradientSurface'),
+        textColor: featureThemeClassName('userBadgeColorsSuccessText'),
+        badgeTextColor: featureThemeClassName('userUserWikiSuccessContrastBackground'),
       };
     case 'Rejected':
     case 'rejected':
       return {
         badge: 'destructive',
-        bgColor:
-          'bg-gradient-to-br from-red-50 to-rose-100 dark:from-red-900/40 dark:to-rose-900/50',
-        textColor: 'text-red-800 dark:text-red-300',
-        badgeTextColor: 'text-white',
+        bgColor: featureThemeClassName('userUserWikiDangerGradientSurface'),
+        textColor: featureThemeClassName('userUserWikiDangerText'),
+        badgeTextColor: featureThemeClassName('userUserWikiContrastText'),
       };
     case 'Under Review':
       return {
         badge: 'secondary',
-        bgColor:
-          'bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/40 dark:to-indigo-900/50',
-        textColor: 'text-blue-800 dark:text-blue-300',
+        bgColor: featureThemeClassName('userUserWikiInfoAccentGradientSurface'),
+        textColor: featureThemeClassName('userBadgeColorsInfoText'),
       };
     case 'Drafting':
     default:
       return {
         badge: 'outline',
-        bgColor:
-          'bg-gradient-to-br from-gray-50 to-slate-100 dark:from-gray-900/40 dark:to-slate-900/50',
-        textColor: 'text-gray-800 dark:text-gray-300',
+        bgColor: featureThemeClassName('userUserWikiNeutralGradientSurface'),
+        textColor: featureThemeClassName('userUserWikiNeutralText'),
       };
   }
 }
@@ -61,8 +58,8 @@ export function getRoleBadgeColor(role: string) {
   // Handle undefined or null role
   if (!role) {
     return {
-      bg: 'bg-gray-100 dark:bg-gray-800/40',
-      text: 'text-gray-800 dark:text-gray-300',
+      bg: featureThemeClassName('userUserWikiNeutralBackground'),
+      text: featureThemeClassName('userUserWikiNeutralText'),
       badge: 'gray',
     };
   }
@@ -70,26 +67,26 @@ export function getRoleBadgeColor(role: string) {
   switch (role.toLowerCase()) {
     case 'founder':
       return {
-        bg: 'bg-purple-100 dark:bg-purple-900/40',
-        text: 'text-purple-800 dark:text-purple-300',
+        bg: featureThemeClassName('timelineActionTimelineCardAccentBackground'),
+        text: featureThemeClassName('userBadgeColorsAccentText'),
         badge: 'purple',
       };
     case 'advisor':
       return {
-        bg: 'bg-blue-100 dark:bg-blue-900/40',
-        text: 'text-blue-800 dark:text-blue-300',
+        bg: featureThemeClassName('timelineActionTimelineCardInfoBackground'),
+        text: featureThemeClassName('userBadgeColorsInfoText'),
         badge: 'blue',
       };
     case 'member':
       return {
-        bg: 'bg-green-100 dark:bg-green-900/40',
-        text: 'text-green-800 dark:text-green-300',
+        bg: featureThemeClassName('timelineUseTodoTimelineCardSuccessBackground'),
+        text: featureThemeClassName('userBadgeColorsSuccessText'),
         badge: 'green',
       };
     default:
       return {
-        bg: 'bg-gray-100 dark:bg-gray-800/40',
-        text: 'text-gray-800 dark:text-gray-300',
+        bg: featureThemeClassName('userUserWikiNeutralBackground'),
+        text: featureThemeClassName('userUserWikiNeutralText'),
         badge: 'gray',
       };
   }

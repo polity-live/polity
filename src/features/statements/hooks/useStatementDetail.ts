@@ -30,20 +30,14 @@ export function useStatementDetail({ id }: UseStatementDetailOptions) {
     createSurvey,
     deleteSurvey,
     createSurveyOption,
-    deleteSurveyOption,
     createSurveyVote,
     deleteSurveyVote,
   } = useStatementMutations();
 
   const { updateStatement: updateStatementRaw } = useStatementActions();
 
-  const {
-    createThread,
-    addComment,
-    voteComment,
-    updateCommentVote,
-    deleteCommentVote,
-  } = useDocumentActions();
+  const { createThread, addComment, voteComment, updateCommentVote, deleteCommentVote } =
+    useDocumentActions();
 
   // ── Edit state ─────────────────────────────────────────────────
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -52,29 +46,36 @@ export function useStatementDetail({ id }: UseStatementDetailOptions) {
   const handleEditClose = useCallback(() => setIsEditOpen(false), []);
 
   const handleUpdate = useCallback(
-    async (text: string, options?: { imageUrl?: string | null; videoUrl?: string | null; visibility?: 'public' | 'authenticated' | 'private' }) => {
+    async (
+      text: string,
+      options?: {
+        imageUrl?: string | null;
+        videoUrl?: string | null;
+        visibility?: 'public' | 'authenticated' | 'private';
+      }
+    ) => {
       await updateStatement(id, text, options);
       setIsEditOpen(false);
     },
-    [id, updateStatement],
+    [id, updateStatement]
   );
 
   // ── Vote handling ──────────────────────────────────────────────
   const supportVotes = statement?.support_votes ?? [];
 
   const computedUpvotes = useMemo(
-    () => supportVotes.filter((v) => v.vote === 1).length,
-    [supportVotes],
+    () => supportVotes.filter(v => v.vote === 1).length,
+    [supportVotes]
   );
 
   const computedDownvotes = useMemo(
-    () => supportVotes.filter((v) => v.vote === -1).length,
-    [supportVotes],
+    () => supportVotes.filter(v => v.vote === -1).length,
+    [supportVotes]
   );
 
   const currentVote = useMemo(() => {
     if (!userId || !statement) return null;
-    return supportVotes.find((v) => v.user_id === userId) ?? null;
+    return supportVotes.find(v => v.user_id === userId) ?? null;
   }, [userId, statement, supportVotes]);
 
   const currentVoteValue: VoteValue = (currentVote?.vote ?? 0) as VoteValue;
@@ -94,7 +95,7 @@ export function useStatementDetail({ id }: UseStatementDetailOptions) {
         });
       }
     },
-    [userId, id, currentVote, createSupportVote, updateSupportVote, deleteSupportVote],
+    [userId, id, currentVote, createSupportVote, updateSupportVote, deleteSupportVote]
   );
 
   // ── Survey handling ────────────────────────────────────────────
@@ -112,14 +113,14 @@ export function useStatementDetail({ id }: UseStatementDetailOptions) {
       }
       await createSurveyVote({ id: crypto.randomUUID(), option_id: optionId });
     },
-    [userId, createSurveyVote, deleteSurveyVote],
+    [userId, createSurveyVote, deleteSurveyVote]
   );
 
   const handleSurveyRetract = useCallback(
     async (voteId: string) => {
       await deleteSurveyVote(voteId);
     },
-    [deleteSurveyVote],
+    [deleteSurveyVote]
   );
 
   // ── Delete ─────────────────────────────────────────────────────
@@ -147,9 +148,7 @@ export function useStatementDetail({ id }: UseStatementDetailOptions) {
         count++;
         for (const r1 of c.replies ?? []) {
           count++;
-          for (const r2 of r1.replies ?? []) {
-            count++;
-          }
+          count += r1.replies?.length ?? 0;
         }
       }
     }
@@ -168,12 +167,15 @@ export function useStatementDetail({ id }: UseStatementDetailOptions) {
       creator: c.user
         ? {
             id: c.user.id,
-            name: `${c.user.first_name ?? ''} ${c.user.last_name ?? ''}`.trim() || c.user.handle || 'Unknown',
+            name:
+              `${c.user.first_name ?? ''} ${c.user.last_name ?? ''}`.trim() ||
+              c.user.handle ||
+              'Unknown',
             handle: c.user.handle ?? undefined,
             avatar: c.user.avatar ?? undefined,
           }
         : undefined,
-      votes: [...c.votes].map((v) => ({
+      votes: [...c.votes].map(v => ({
         id: v.id,
         vote: v.vote ?? 0,
         user: v.user ? { id: v.user.id } : undefined,
@@ -182,7 +184,7 @@ export function useStatementDetail({ id }: UseStatementDetailOptions) {
     });
 
     // Top-level: comments with no parent_id
-    return rawComments.filter((c) => !c.parent_id).map(mapComment);
+    return rawComments.filter(c => !c.parent_id).map(mapComment);
   }, [discussionThread]);
 
   const handleAddComment = useCallback(
@@ -222,7 +224,15 @@ export function useStatementDetail({ id }: UseStatementDetailOptions) {
       // Increment denormalized comment_count on the statement
       await updateStatementRaw({ id, comment_count: computedCommentCount + 1 });
     },
-    [userId, id, discussionThread, createThread, addComment, updateStatementRaw, computedCommentCount],
+    [
+      userId,
+      id,
+      discussionThread,
+      createThread,
+      addComment,
+      updateStatementRaw,
+      computedCommentCount,
+    ]
   );
 
   const handleCommentVote = useCallback(
@@ -243,7 +253,7 @@ export function useStatementDetail({ id }: UseStatementDetailOptions) {
         });
       }
     },
-    [userId, voteComment, updateCommentVote, deleteCommentVote],
+    [userId, voteComment, updateCommentVote, deleteCommentVote]
   );
 
   const isOwner = !!userId && statement?.user_id === userId;
@@ -278,7 +288,7 @@ export function useStatementDetail({ id }: UseStatementDetailOptions) {
         });
       }
     },
-    [id, survey, createSurvey, createSurveyOption, deleteSurvey],
+    [id, survey, createSurvey, createSurveyOption, deleteSurvey]
   );
 
   const handleDeleteSurvey = useCallback(async () => {

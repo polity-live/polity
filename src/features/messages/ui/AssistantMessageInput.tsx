@@ -1,8 +1,10 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import {
   FormControlInput,
+  FormControlLabel,
   FormControlTextarea,
   FormControlSelect,
   FormControlSelectContent,
@@ -27,7 +29,7 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import {
@@ -78,22 +80,19 @@ const REASONING_OPTIONS: readonly {
     value: 'low',
     label: translateText('generated.inline.0183_low_a124947c'),
     Icon: Sparkles,
-    gradientClass:
-      'bg-gradient-to-br from-slate-200/80 via-slate-200/60 to-slate-100/40 text-slate-700 dark:bg-slate-700/20 dark:text-slate-200',
+    gradientClass: featureThemeClassName('messageAssistantMessageInputNeutralGradientSurface'),
   },
   {
     value: 'medium',
     label: translateText('generated.inline.0184_medium_d404968e'),
     Icon: Zap,
-    gradientClass:
-      'bg-gradient-to-br from-amber-500/20 via-orange-500/20 to-yellow-400/20 text-amber-700 dark:text-amber-200',
+    gradientClass: featureThemeClassName('messageAssistantMessageInputWarningGradientSurface'),
   },
   {
     value: 'high',
     label: translateText('generated.inline.0185_high_b1a5954a'),
     Icon: Brain,
-    gradientClass:
-      'bg-gradient-to-br from-fuchsia-500/20 via-purple-500/20 to-indigo-500/20 text-fuchsia-700 dark:text-fuchsia-200',
+    gradientClass: featureThemeClassName('messageAssistantMessageInputAccentGradientSurface'),
   },
 ] as const;
 
@@ -314,7 +313,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
 
     return (
       <div className="space-y-1" key={kind}>
-        <div className="text-muted-foreground px-2 pt-1 text-[11px] font-semibold tracking-[0.14em] uppercase">
+        <div className={featureThemeClassName('messageAssistantMessageInputThemedText')}>
           {label}
         </div>
         <DropdownMenuCheckboxItem
@@ -335,7 +334,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                   : t('features.messages.ai.createToolsDescription')}
               </div>
             </div>
-            <BadgeControl variant="outline" className="text-[10px] uppercase">
+            <BadgeControl variant="outline" size="tiny" textTransform="uppercase">
               {tools.length}
             </BadgeControl>
           </div>
@@ -399,8 +398,8 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
 
     return {
       className: isFreeRouterModel
-        ? 'inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[11px] font-bold leading-none text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300'
-        : 'inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-amber-100 text-[11px] font-bold leading-none text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
+        ? featureThemeClassName('messageAssistantMessageInputSuccessRoundIcon')
+        : featureThemeClassName('messageAssistantMessageInputWarningRoundIcon'),
       message: isFreeRouterModel ? freeRouterMessage : reliabilityMessage,
     };
   }, [assistantChat.selectedModel, freeRouterModelKey, freeRouterMessage, reliabilityMessage]);
@@ -559,12 +558,12 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
   };
 
   return (
-    <CardContent className="flex-shrink-0 border-t p-4">
+    <CardContent separator className="flex-shrink-0 p-4">
       <div className="space-y-3">
         {assistantChat.selectedTools.length > 0 && (
           <div className="flex flex-wrap items-center gap-2">
             {visibleSelectedTools.map(tool => (
-              <BadgeControl key={tool.name} variant="secondary" className="gap-1 pr-1 text-xs">
+              <BadgeControl key={tool.name} variant="secondary" size="xs" className="gap-1 pr-1">
                 <Wrench className="h-3 w-3" />
                 {tool.label}
                 <span className="text-muted-foreground">{tool.name}</span>
@@ -580,7 +579,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
               </BadgeControl>
             ))}
             {hiddenSelectedToolCount > 0 && (
-              <BadgeControl variant="outline" className="gap-1 text-xs">
+              <BadgeControl variant="outline" size="xs" className="gap-1">
                 <Wrench className="h-3 w-3" />+{hiddenSelectedToolCount}{' '}
                 {t('features.messages.ai.moreTools')}
               </BadgeControl>
@@ -591,7 +590,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
         {assistantChat.selectedSkills.length > 0 && (
           <div className="flex flex-wrap items-center gap-2">
             {assistantChat.selectedSkills.map(skill => (
-              <BadgeControl key={skill.slug} variant="secondary" className="gap-1 pr-1 text-xs">
+              <BadgeControl key={skill.slug} variant="secondary" size="xs" className="gap-1 pr-1">
                 <Sparkles className="h-3 w-3" />
                 {skill.name}
                 <span className="text-muted-foreground">/{skill.slug}</span>
@@ -636,7 +635,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
         )}
 
         {assistantChat.isUploadingAttachments && assistantChat.uploadingAttachmentName && (
-          <BadgeControl variant="secondary" className="gap-1 text-xs">
+          <BadgeControl variant="secondary" size="xs" className="gap-1">
             <LoaderCircle className="h-3 w-3 animate-spin" />
             {t('features.messages.compose.uploading')}:{assistantChat.uploadingAttachmentName}
           </BadgeControl>
@@ -727,7 +726,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                               {tool.description}
                             </span>
                           </span>
-                          <BadgeControl variant="outline" className="text-[10px] uppercase">
+                          <BadgeControl variant="outline" size="tiny" textTransform="uppercase">
                             {tool.kind}
                           </BadgeControl>
                         </Button>
@@ -756,7 +755,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                             </span>
                           </span>
                           {skill.isBuiltIn && (
-                            <BadgeControl variant="secondary" className="text-[10px] uppercase">
+                            <BadgeControl variant="secondary" size="tiny" textTransform="uppercase">
                               {translateText('generated.inline.0751_built_in_20f409cc')}
                             </BadgeControl>
                           )}
@@ -814,7 +813,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                               </span>
                             )}
                           </span>
-                          <BadgeControl variant="outline" className="text-[10px] uppercase">
+                          <BadgeControl variant="outline" size="tiny" textTransform="uppercase">
                             {option.entityType}
                           </BadgeControl>
                         </Button>
@@ -846,16 +845,16 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                     {assistantChat.selectedModel && (
                       <span className="flex flex-shrink-0 items-center gap-1.5">
                         {assistantChat.selectedModel.free && (
-                          <BadgeControl className="border-0 bg-gradient-to-r from-emerald-500/20 via-green-500/20 to-lime-500/20 text-[10px] text-emerald-800 dark:text-emerald-200">
+                          <BadgeControl tone="gradientSuccess" size="tiny">
                             {translateText('generated.inline.0752_free_75f52718')}
                           </BadgeControl>
                         )}
                         {assistantChat.selectedModel.source === 'byok' && (
-                          <BadgeControl className="border-0 bg-gradient-to-r from-slate-500/20 via-zinc-500/20 to-stone-500/20 text-[10px] text-slate-800 dark:text-slate-200">
+                          <BadgeControl tone="gradientNeutral" size="tiny">
                             {translateText('generated.inline.0113_byok_36068183')}
                           </BadgeControl>
                         )}
-                        <BadgeControl className="border-0 bg-gradient-to-r from-cyan-500/20 via-sky-500/20 to-blue-500/20 text-[10px] text-sky-800 dark:text-sky-200">
+                        <BadgeControl tone="gradientInfo" size="tiny">
                           {translateText('generated.inline.0114_ctx_4024700f')}
                           {formatContextWindow(assistantChat.selectedModel.context_window)}
                         </BadgeControl>
@@ -879,8 +878,8 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                     const displayLabel = getModelDisplayLabel(model);
                     const modelHint = isFreeRouterModel ? freeRouterMessage : reliabilityMessage;
                     const modelHintClass = isFreeRouterModel
-                      ? 'inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-100 text-[11px] font-bold leading-none text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300'
-                      : 'inline-flex h-4 w-4 items-center justify-center rounded-full bg-amber-100 text-[11px] font-bold leading-none text-amber-700 dark:bg-amber-500/20 dark:text-amber-300';
+                      ? featureThemeClassName('messageAssistantMessageInputSuccessRoundIconAlpha')
+                      : featureThemeClassName('messageAssistantMessageInputWarningRoundIconAlpha');
 
                     return (
                       <FormControlSelectItem
@@ -893,16 +892,16 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                           <span className="truncate font-medium">{displayLabel}</span>
                           <span className="flex flex-shrink-0 items-center gap-1.5">
                             {model.free && (
-                              <BadgeControl className="border-0 bg-gradient-to-r from-emerald-500/20 via-green-500/20 to-lime-500/20 text-[10px] text-emerald-800 dark:text-emerald-200">
+                              <BadgeControl tone="gradientSuccess" size="tiny">
                                 {translateText('generated.inline.0752_free_75f52718')}
                               </BadgeControl>
                             )}
                             {model.source === 'byok' && (
-                              <BadgeControl className="border-0 bg-gradient-to-r from-slate-500/20 via-zinc-500/20 to-stone-500/20 text-[10px] text-slate-800 dark:text-slate-200">
+                              <BadgeControl tone="gradientNeutral" size="tiny">
                                 {translateText('generated.inline.0113_byok_36068183')}
                               </BadgeControl>
                             )}
-                            <BadgeControl className="border-0 bg-gradient-to-r from-cyan-500/20 via-sky-500/20 to-blue-500/20 text-[10px] text-sky-800 dark:text-sky-200">
+                            <BadgeControl tone="gradientInfo" size="tiny">
                               {translateText('generated.inline.0114_ctx_4024700f')}
                               {formatContextWindow(model.context_window)}
                             </BadgeControl>
@@ -934,14 +933,16 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
               </FormControlSelectTrigger>
               <FormControlSelectContent>
                 <div className="px-3 py-2">
-                  <div className="text-xs font-medium text-slate-900 dark:text-slate-100">
+                  <div className={featureThemeClassName('messageAssistantMessageInputNeutralText')}>
                     {t('features.messages.ai.reasoningDropdownTitle')}
                   </div>
                   <div className="text-muted-foreground text-xs">
                     {t('features.messages.ai.reasoningDropdownDescription')}
                   </div>
                 </div>
-                <div className="border-t border-slate-200 dark:border-slate-700" />
+                <div
+                  className={featureThemeClassName('messageAssistantMessageInputNeutralBorder')}
+                />
                 {REASONING_OPTIONS.map(option => (
                   <FormControlSelectItem key={option.value} value={option.value}>
                     <div className="flex items-center gap-2">
@@ -1120,7 +1121,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
 
           <div className="space-y-3">
             <div className="space-y-2">
-              <label className="text-sm font-medium">{t('pages.user.ai.skills.name')}</label>
+              <FormControlLabel>{t('pages.user.ai.skills.name')}</FormControlLabel>
               <FormControlInput
                 value={skillName}
                 onChange={event => setSkillName(event.target.value)}
@@ -1128,7 +1129,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">{t('pages.user.ai.skills.slug')}</label>
+              <FormControlLabel>{t('pages.user.ai.skills.slug')}</FormControlLabel>
               <FormControlInput
                 value={skillSlug}
                 onChange={event => setSkillSlug(event.target.value)}
@@ -1137,7 +1138,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">{t('pages.user.ai.skills.aliases')}</label>
+              <FormControlLabel>{t('pages.user.ai.skills.aliases')}</FormControlLabel>
               <HashtagInput
                 value={parseAliases(skillAliases)}
                 onChange={aliases => setSkillAliases(aliases.join(','))}
@@ -1147,9 +1148,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">
-                {t('pages.user.ai.skills.systemPrompt')}
-              </label>
+              <FormControlLabel>{t('pages.user.ai.skills.systemPrompt')}</FormControlLabel>
               <FormControlTextarea
                 value={skillPrompt}
                 onChange={event => setSkillPrompt(event.target.value)}

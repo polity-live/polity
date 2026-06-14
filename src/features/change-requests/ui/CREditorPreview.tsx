@@ -42,7 +42,7 @@ export function CREditorPreview({
   return (
     <Collapsible open={isOpen} onOpenChange={onOpenChange}>
       <CollapsibleTrigger asChild>
-        <Button variant="ghost" size="sm" className="text-muted-foreground gap-1 text-xs">
+        <Button variant="ghost" size="sm" presentation="mutedTiny" className="gap-1">
           {isOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
           {translateText('generated.inline.0288_document_preview_88c64603')}
         </Button>

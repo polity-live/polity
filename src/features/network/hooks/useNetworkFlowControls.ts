@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { RIGHT_TYPES } from '@/features/network/ui/RightFilters';
+import { RIGHT_TYPES } from '@/features/shared/ui/status';
 import type { NetworkDialogEntity } from '@/features/network/ui/NetworkEntityDialog';
 import type { NetworkRelationshipKind } from '@/features/network/logic/networkRelationshipHelpers';
 import type {

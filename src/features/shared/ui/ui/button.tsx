@@ -35,15 +35,42 @@ const buttonVariants = cva(
 type ButtonProps = React.ComponentProps<'button'> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean;
+    presentation?:
+      | 'default'
+      | 'transparentGhost'
+      | 'success'
+      | 'monoCompact'
+      | 'mutedTiny'
+      | 'floatingShadow';
   };
 
-function Button({ className, variant, size, asChild = false, ...props }: ButtonProps) {
+const buttonPresentationClasses: Record<NonNullable<ButtonProps['presentation']>, string> = {
+  default: '',
+  transparentGhost: 'h-auto p-0 hover:bg-transparent',
+  success: 'bg-green-600 hover:bg-green-700',
+  monoCompact: 'font-mono text-xs',
+  mutedTiny: 'text-muted-foreground text-xs',
+  floatingShadow: 'shadow-md',
+};
+
+function Button({
+  className,
+  variant,
+  size,
+  asChild = false,
+  presentation = 'default',
+  ...props
+}: ButtonProps) {
   const Comp = asChild ? Slot : 'button';
 
   return (
     <Comp
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(
+        buttonVariants({ variant, size }),
+        buttonPresentationClasses[presentation],
+        className
+      )}
       {...props}
     />
   );

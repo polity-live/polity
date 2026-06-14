@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '@/providers/auth-provider';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { useEventActions } from '@/zero/events/useEventActions';
 import { useEventById, useEventParticipantsQuery } from '@/zero/events/useEventState';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';

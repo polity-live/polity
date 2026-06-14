@@ -11,7 +11,7 @@ import { useAgendaActions } from '@/zero/agendas';
 import { useVoteActions } from '@/zero/votes/useVoteActions';
 import { useAuth } from '@/providers/auth-provider';
 import { usePermissions } from '@/zero/rbac';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { computeVoteResult, type MajorityType, type VoteResult } from '../logic/computeVoteResult';
 import { computeEligibleVoters, type EligibleVoter } from '../logic/computeEligibleVoters';
 import { isNamedBallot } from '@/zero/shared';

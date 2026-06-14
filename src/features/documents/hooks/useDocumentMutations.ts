@@ -6,7 +6,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';

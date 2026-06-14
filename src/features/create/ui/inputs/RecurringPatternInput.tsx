@@ -1,14 +1,13 @@
 import {
   FormControlInput,
   FormControlLabel,
-  FormControlRadioGroup,
-  FormControlRadioGroupItem,
+  ChoiceCardField,
+  SegmentedChoiceField,
 } from '@/features/shared/ui/form';
 import { Calendar } from '@/features/shared/ui/ui/calendar';
 import { Button } from '@/features/shared/ui/ui/button';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { formatLocalDateInput, parseLocalDateInput } from '@/features/shared/logic/localDateTime';
-import { cn } from '@/features/shared/utils/utils';
 
 interface RecurringPatternInputProps {
   value: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'four-yearly';
@@ -100,30 +99,19 @@ export function RecurringPatternInput({
         <FormControlLabel>{t('pages.create.event.recurring')}</FormControlLabel>
         <p className="text-muted-foreground text-sm">{t('pages.create.event.tips.recurring')}</p>
       </div>
-      <FormControlRadioGroup
+      <ChoiceCardField
+        id="recurring"
+        grid="three"
         value={value}
         onValueChange={nextValue =>
           onChange(nextValue as 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'four-yearly')
         }
-      >
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {options.map(opt => (
-            <FormControlLabel
-              key={opt.value}
-              htmlFor={`recurring-${opt.value}`}
-              className={`border-border/70 flex cursor-pointer flex-col rounded-xl border p-3 transition-colors ${
-                value === opt.value ? 'border-primary bg-primary/5 shadow-sm' : 'hover:bg-muted/50'
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <FormControlRadioGroupItem value={opt.value} id={`recurring-${opt.value}`} />
-                <span className="text-sm font-medium">{opt.label}</span>
-              </div>
-              <span className="text-muted-foreground mt-1 text-xs">{opt.description}</span>
-            </FormControlLabel>
-          ))}
-        </div>
-      </FormControlRadioGroup>
+        options={options.map(option => ({
+          value: option.value,
+          label: option.label,
+          description: option.description,
+        }))}
+      />
 
       {value !== 'none' && (
         <div className="border-border/70 bg-background/70 space-y-4 rounded-xl border p-4">
@@ -144,28 +132,19 @@ export function RecurringPatternInput({
           )}
 
           {value === 'weekly' && onWeekdaysChange && (
-            <div className="space-y-2">
-              <FormControlLabel>{t('pages.create.event.recurringWeekdays')}</FormControlLabel>
-              <div className="flex flex-wrap gap-2">
-                {WEEKDAY_INDICES.map(day => (
-                  <Button
-                    key={day}
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => toggleWeekday(day)}
-                    className={cn(
-                      'h-9 w-9 rounded-full text-xs transition-colors',
-                      weekdays.includes(day)
-                        ? 'bg-primary text-primary-foreground shadow-sm'
-                        : 'hover:bg-muted border'
-                    )}
-                  >
-                    {dayLabels[day]}
-                  </Button>
-                ))}
-              </div>
-            </div>
+            <SegmentedChoiceField
+              label={t('pages.create.event.recurringWeekdays')}
+              value=""
+              columns="auto"
+              size="icon"
+              isOptionSelected={option => weekdays.includes(Number(option.value))}
+              onValueChange={day => toggleWeekday(Number(day))}
+              options={WEEKDAY_INDICES.map(day => ({
+                value: String(day),
+                label: dayLabels[day],
+                tone: 'accent',
+              }))}
+            />
           )}
 
           {onEndDateChange && (

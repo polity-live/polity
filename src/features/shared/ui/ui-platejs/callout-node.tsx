@@ -26,7 +26,7 @@ export function CalloutElement({
 
   return (
     <PlateElement
-      className={cn('my-1 flex rounded-sm bg-muted p-4 pl-3', className)}
+      className={cn('bg-muted my-1 flex rounded-sm p-4 pl-3', className)}
       style={{
         backgroundColor: (props.element as { backgroundColor?: string }).backgroundColor,
       }}
@@ -42,7 +42,7 @@ export function CalloutElement({
           control={
             <Button
               variant="ghost"
-              className="size-6 select-none p-1 text-[18px] hover:bg-muted-foreground/15"
+              className="hover:bg-muted-foreground/15 size-6 p-1 text-[18px] select-none"
               style={{
                 fontFamily:
                   '"Apple Color Emoji", "Segoe UI Emoji", NotoColorEmoji, "Noto Color Emoji", "Segoe UI Symbol", "Android Emoji", EmojiSymbols',

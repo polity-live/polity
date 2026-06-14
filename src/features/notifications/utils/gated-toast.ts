@@ -6,7 +6,7 @@
  *
  * The settings cache is synced from React via useToastSettingsSync().
  */
-import { toast as sonnerToast, type ExternalToast } from 'sonner';
+import { toast as sonnerToast, type ExternalToast } from '@/features/shared/ui/ui/sonner';
 
 let inAppEnabled = true;
 

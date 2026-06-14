@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { useNavigate } from '@tanstack/react-router';
 import {
   Plus,
@@ -337,7 +338,7 @@ export function AgendaActionBar({
               'bg-background border px-3 font-semibold shadow-sm transition-all',
               disableVoteButton
                 ? 'border-muted-foreground/30 text-muted-foreground opacity-70'
-                : 'animate-pulse border-fuchsia-300 text-fuchsia-700 hover:border-fuchsia-400 hover:bg-fuchsia-50 hover:text-fuchsia-800'
+                : featureThemeClassName('agendaAgendaActionBarAccentBadge')
             )}
           >
             {voteLoading ? <Loader2 className="animate-spin" /> : <Vote />}
@@ -350,7 +351,7 @@ export function AgendaActionBar({
             tooltip={offlineTallyTooltip || 'Manage offline tally'}
             onClick={onOfflineTallyClick}
             disabled={!onOfflineTallyClick}
-            className="border border-sky-300 px-3 text-sky-700"
+            className={featureThemeClassName('agendaAgendaActionBarInfoBorder')}
           >
             {offlineTallyMode === 'edit' ? <PencilLine /> : <FileEdit />}
             <span>{translateText('generated.inline.0012_enter_tally_70132614')}</span>
@@ -386,7 +387,7 @@ export function AgendaActionBar({
             tooltip={t('features.events.navigation.start')}
             onClick={onStartItem}
             disabled={startDisabled}
-            className="border border-emerald-300 text-emerald-700"
+            className={featureThemeClassName('agendaAgendaActionBarSuccessBorder')}
           >
             {navigationLoading ? <Loader2 className="animate-spin" /> : <Play />}
           </ToolbarButton>
@@ -398,8 +399,8 @@ export function AgendaActionBar({
             disabled={completeDisabled}
             className={cn(
               isCurrentItemCompleted
-                ? 'border border-emerald-500 bg-emerald-500/10 text-emerald-700'
-                : 'border border-emerald-300 text-emerald-700'
+                ? featureThemeClassName('agendaAgendaActionBarSuccessBadge')
+                : featureThemeClassName('agendaAgendaActionBarSuccessBorder')
             )}
           >
             {navigationLoading ? <Loader2 className="animate-spin" /> : <CheckCircle2 />}

@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState, type MouseEvent } from 'react';
 import type { Edge, Node } from '@xyflow/react';
-import { RIGHT_TYPES } from '@/features/network/ui/RightFilters';
+import { RIGHT_TYPES } from '@/features/shared/ui/status';
 import { buildNetworkRelationshipDialogData } from '@/features/network/logic/networkEdgeHelpers';
 import {
   filterEdgesByConnectionDirections,

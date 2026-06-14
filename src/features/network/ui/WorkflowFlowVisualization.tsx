@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName, featureThemeValue } from '@/features/shared/theme';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Node, Edge, useNodesState, useEdgesState, MarkerType } from '@xyflow/react';
 import { NetworkFlowBase } from '@/features/network/ui/NetworkFlowBase';
@@ -46,9 +47,21 @@ interface WorkflowFlowVisualizationProps {
 
 // Color palette matching the group network hierarchy style
 const NODE_COLORS = {
-  first: { bg: '#c8e6c9', border: '#a5d6a7', stroke: '#66bb6a' }, // green – start
-  middle: { bg: '#bbdefb', border: '#90caf9', stroke: '#42a5f5' }, // blue – intermediate
-  last: { bg: '#ffe0b2', border: '#ffcc80', stroke: '#ffb74d' }, // orange – end
+  first: {
+    bg: featureThemeValue('amendmentAmendmentPathVisualizationSuccessColor'),
+    border: featureThemeValue('amendmentAmendmentPathVisualizationThemeValueAlpha'),
+    stroke: featureThemeValue('amendmentAmendmentPathVisualizationSuccessColorAlpha'),
+  }, // green – start
+  middle: {
+    bg: featureThemeValue('floweditorUseFlowEditorInfoColor'),
+    border: featureThemeValue('amendmentAmendmentPathVisualizationInfoColor'),
+    stroke: featureThemeValue('networkWorkflowFlowVisualizationInfoColor'),
+  }, // blue – intermediate
+  last: {
+    bg: featureThemeValue('floweditorFlowEditorDefaultsWarningColor'),
+    border: featureThemeValue('networkWorkflowFlowVisualizationWarningColor'),
+    stroke: featureThemeValue('networkUseGroupNetworkFlowWarningColor'),
+  }, // orange – end
 } as const;
 
 export function WorkflowFlowVisualization({ workflow }: WorkflowFlowVisualizationProps) {
@@ -96,7 +109,7 @@ export function WorkflowFlowVisualization({ workflow }: WorkflowFlowVisualizatio
         },
         style: {
           background: colors.bg,
-          color: '#333',
+          color: featureThemeValue('amendmentAmendmentPathVisualizationNeutralColor'),
           border: `2px solid ${colors.border}`,
           borderRadius: '5px',
           padding: '10px',
@@ -177,17 +190,23 @@ export function WorkflowFlowVisualization({ workflow }: WorkflowFlowVisualizatio
             {
               id: 'start-step',
               label: t('features.network.workflows.legendStart'),
-              swatchClassName: 'h-4 w-4 rounded border border-[#a5d6a7] bg-[#c8e6c9]',
+              swatchClassName: featureThemeClassName(
+                'amendmentAmendmentPathVisualizationThemedSurfaceAlpha'
+              ),
             },
             {
               id: 'intermediate-step',
               label: t('features.network.workflows.legendIntermediate'),
-              swatchClassName: 'h-4 w-4 rounded border border-[#90caf9] bg-[#bbdefb]',
+              swatchClassName: featureThemeClassName(
+                'networkWorkflowFlowVisualizationThemedSurface'
+              ),
             },
             {
               id: 'end-step',
               label: t('features.network.workflows.legendEnd'),
-              swatchClassName: 'h-4 w-4 rounded border border-[#ffcc80] bg-[#ffe0b2]',
+              swatchClassName: featureThemeClassName(
+                'networkWorkflowFlowVisualizationThemedSurfaceAlpha'
+              ),
             },
             {
               id: 'workflow-approval-state',
@@ -195,9 +214,13 @@ export function WorkflowFlowVisualization({ workflow }: WorkflowFlowVisualizatio
                 ? t('features.network.workflows.legendAccepted')
                 : t('features.network.workflows.legendPending'),
               swatch: isAcceptedByAllGroups ? (
-                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                <CheckCircle2
+                  className={featureThemeClassName('networkWorkflowFlowVisualizationSuccessIcon')}
+                />
               ) : (
-                <Clock3 className="h-4 w-4 text-amber-600" />
+                <Clock3
+                  className={featureThemeClassName('networkWorkflowFlowVisualizationWarningIcon')}
+                />
               ),
             },
           ]}

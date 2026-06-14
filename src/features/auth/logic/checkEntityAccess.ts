@@ -17,7 +17,7 @@ export type Visibility = 'public' | 'authenticated' | 'private';
 export function checkEntityAccess(
   visibility: string | undefined | null,
   isAuthenticated: boolean,
-  hasRelationship: boolean,
+  hasRelationship: boolean
 ): boolean {
   // Treat missing/null visibility as public (backward compat)
   const v = visibility ?? 'public';

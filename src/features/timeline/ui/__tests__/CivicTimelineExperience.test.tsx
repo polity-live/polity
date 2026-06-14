@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { CivicTimelineItem, CivicTimelineSection } from '../../logic/civicTimeline';
 import { CivicTimelineMap } from '../CivicTimelineMap';
 import { CivicTimelineRail } from '../CivicTimelineRail';
+import { Button } from '@/features/shared/ui/ui/button';
 
 const { mockFlyTo, mockGetZoom } = vi.hoisted(() => ({
   mockFlyTo: vi.fn(),
@@ -13,6 +14,7 @@ const { mockFlyTo, mockGetZoom } = vi.hoisted(() => ({
 }));
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
+  translate: (key: string, fallback?: string) => fallback ?? key,
   useTranslation: () => ({
     t: (_key: string, options?: { defaultValue?: string }) => options?.defaultValue ?? _key,
   }),
@@ -40,7 +42,7 @@ vi.mock('react-leaflet', () => ({
       mouseover?: () => void;
     };
   }) => (
-    <button
+    <Button
       type="button"
       data-testid="mock-marker"
       onClick={() => eventHandlers?.click?.()}
@@ -48,7 +50,7 @@ vi.mock('react-leaflet', () => ({
       onMouseLeave={() => eventHandlers?.mouseout?.()}
     >
       {children}
-    </button>
+    </Button>
   ),
   TileLayer: () => <div data-testid="mock-tile-layer" />,
   Tooltip: ({ children }: { children: ReactNode }) => <div>{children}</div>,

@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 /**
  * VotingPhaseIndicator Component
@@ -31,12 +32,30 @@ interface VotingPhaseIndicatorProps {
 }
 
 const phaseConfig: Record<VotingPhase, { icon: React.ElementType; color: string }> = {
-  setup: { icon: PauseCircle, color: 'bg-gray-500' },
-  introduction: { icon: PlayCircle, color: 'bg-blue-500' },
-  voting: { icon: Timer, color: 'bg-amber-500' },
-  closed: { icon: CheckCircle, color: 'bg-green-500' },
-  indication: { icon: PauseCircle, color: 'bg-blue-400' },
-  final_vote: { icon: Timer, color: 'bg-amber-500' },
+  setup: {
+    icon: PauseCircle,
+    color: featureThemeClassName('timelineUseSwipeGesturesNeutralBackground'),
+  },
+  introduction: {
+    icon: PlayCircle,
+    color: featureThemeClassName('agendaAgendaVoteSectionInfoBackground'),
+  },
+  voting: {
+    icon: Timer,
+    color: featureThemeClassName('decisionterminalDecisionWidgetContentWarningBackground'),
+  },
+  closed: {
+    icon: CheckCircle,
+    color: featureThemeClassName('agendaAgendaVoteSectionSuccessBackground'),
+  },
+  indication: {
+    icon: PauseCircle,
+    color: featureThemeClassName('voteVotingPhaseIndicatorInfoBackground'),
+  },
+  final_vote: {
+    icon: Timer,
+    color: featureThemeClassName('decisionterminalDecisionWidgetContentWarningBackground'),
+  },
 };
 
 const resultConfig: Record<
@@ -45,11 +64,19 @@ const resultConfig: Record<
 > = {
   passed: {
     icon: CheckCircle,
-    color: 'text-green-600',
-    bgColor: 'bg-green-100 dark:bg-green-900/30',
+    color: featureThemeClassName('timelineUseTodoTimelineCardSuccessText'),
+    bgColor: featureThemeClassName('voteVotingPhaseIndicatorSuccessBackground'),
   },
-  rejected: { icon: XCircle, color: 'text-red-600', bgColor: 'bg-red-100 dark:bg-red-900/30' },
-  tie: { icon: PauseCircle, color: 'text-amber-600', bgColor: 'bg-amber-100 dark:bg-amber-900/30' },
+  rejected: {
+    icon: XCircle,
+    color: featureThemeClassName('timelineUseTodoTimelineCardDangerText'),
+    bgColor: featureThemeClassName('voteVotingPhaseIndicatorDangerBackground'),
+  },
+  tie: {
+    icon: PauseCircle,
+    color: featureThemeClassName('voteVotingPhaseIndicatorWarningText'),
+    bgColor: featureThemeClassName('voteVotingPhaseIndicatorWarningBackground'),
+  },
 };
 
 export function VotingPhaseIndicator({
@@ -98,19 +125,25 @@ export function VotingPhaseIndicator({
         {/* Vote breakdown */}
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
-            <div className="text-2xl font-bold text-green-600">{acceptCount}</div>
+            <div className={featureThemeClassName('voteVotingPhaseIndicatorSuccessText')}>
+              {acceptCount}
+            </div>
             <div className="text-muted-foreground text-xs">
               {t('features.events.voting.accept')}
             </div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-red-600">{rejectCount}</div>
+            <div className={featureThemeClassName('voteVotingPhaseIndicatorDangerText')}>
+              {rejectCount}
+            </div>
             <div className="text-muted-foreground text-xs">
               {t('features.events.voting.reject')}
             </div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-gray-600">{abstainCount}</div>
+            <div className={featureThemeClassName('voteVotingPhaseIndicatorNeutralText')}>
+              {abstainCount}
+            </div>
             <div className="text-muted-foreground text-xs">
               {t('features.events.voting.abstain')}
             </div>
@@ -126,7 +159,7 @@ export function VotingPhaseIndicator({
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className={cn('rounded-full p-1', config.color)}>
-            <PhaseIcon className="h-4 w-4 text-white" />
+            <PhaseIcon className={featureThemeClassName('authSummaryStepContrastIcon')} />
           </div>
           <span className="font-medium">{t(`features.events.voting.phases.${phase}`)}</span>
         </div>
@@ -137,7 +170,7 @@ export function VotingPhaseIndicator({
             className={cn(
               'flex items-center gap-1 rounded-full px-2 py-1 font-mono text-sm',
               isExpired || timeRemaining < 30
-                ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                ? featureThemeClassName('voteVotingPhaseIndicatorDangerBackgroundAlpha')
                 : 'bg-muted'
             )}
           >
@@ -160,9 +193,15 @@ export function VotingPhaseIndicator({
 
           {/* Current vote counts */}
           <div className="text-muted-foreground mt-2 flex justify-between text-xs">
-            <span className="text-green-600">✓ {acceptCount}</span>
-            <span className="text-red-600">✗ {rejectCount}</span>
-            <span className="text-gray-500">○ {abstainCount}</span>
+            <span className={featureThemeClassName('timelineUseTodoTimelineCardSuccessText')}>
+              ✓ {acceptCount}
+            </span>
+            <span className={featureThemeClassName('timelineUseTodoTimelineCardDangerText')}>
+              ✗ {rejectCount}
+            </span>
+            <span className={featureThemeClassName('timelineReasonDisplayNeutralText')}>
+              ○ {abstainCount}
+            </span>
           </div>
         </div>
       )}

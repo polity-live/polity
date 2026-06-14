@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import {
   FormControlInput,
   FormControlLabel,
@@ -542,7 +543,7 @@ export function OpenAssignmentsPanel({
         if (!canScheduleMore) {
           return (
             <div className="space-y-3">
-              <div className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-3 py-2 text-sm text-emerald-700">
+              <div className={featureThemeClassName('groupOpenAssignmentsPanelSuccessBadge')}>
                 <CheckCircle2 className="h-4 w-4" />
                 {t('features.groups.memberships.openAssignments.completedBanner')}
               </div>
@@ -728,7 +729,7 @@ export function OpenAssignmentsPanel({
 
   if (assignments.length === 0) {
     return (
-      <Card className="border-border/70 from-background to-muted/20 bg-gradient-to-b">
+      <Card surface="subtleGradient">
         <CardHeader>
           <CardTitle>{t('features.groups.memberships.openAssignments.title')}</CardTitle>
           <CardDescription>
@@ -741,7 +742,7 @@ export function OpenAssignmentsPanel({
 
   return (
     <>
-      <Card className="border-border/70 from-background to-muted/20 bg-gradient-to-b">
+      <Card surface="subtleGradient">
         <CardHeader>
           <CardTitle>
             {t('features.groups.memberships.openAssignments.titleWithCount', {
@@ -842,8 +843,8 @@ export function OpenAssignmentsPanel({
                       className={cn(
                         'rounded-2xl border transition-all',
                         delegateDialogEventId === event.id
-                          ? 'border-primary shadow-[0_0_0_1px_hsl(var(--primary)/0.35)]'
-                          : 'border-transparent'
+                          ? featureThemeClassName('groupOpenAssignmentsPanelThemedBorder')
+                          : featureThemeClassName('groupOpenAssignmentsPanelThemedBorderAlpha')
                       )}
                     >
                       {buildEventCard(event, () => {

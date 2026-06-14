@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { useRef, useState, useEffect } from 'react';
 import { Link } from '@tanstack/react-router';
@@ -184,26 +185,26 @@ export function EventStreamSection({
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+        return featureThemeClassName('agendaEventStreamSectionSuccessBackground');
       case 'in-progress':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+        return featureThemeClassName('agendaEventStreamSectionInfoBackground');
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+        return featureThemeClassName('agendaEventStreamSectionNeutralBackground');
     }
   };
 
   const getTypeColor = (type: string) => {
     switch (type) {
       case 'election':
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
+        return featureThemeClassName('agendaEventStreamSectionAccentBackground');
       case 'vote':
-        return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
+        return featureThemeClassName('agendaEventStreamSectionWarningBackground');
       case 'speech':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+        return featureThemeClassName('agendaEventStreamSectionInfoBackground');
       case 'accreditation':
-        return 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200';
+        return featureThemeClassName('agendaEventStreamSectionTealBackground');
       default:
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+        return featureThemeClassName('agendaEventStreamSectionSuccessBackground');
     }
   };
 
@@ -241,12 +242,12 @@ export function EventStreamSection({
 
   return (
     <Collapsible open={expanded} onOpenChange={setExpanded}>
-      <Card className="border-primary/50 border-2">
-        <CardHeader className="bg-primary/5">
+      <Card surface="primaryStrong">
+        <CardHeader surface="primarySoft">
           <CollapsibleTrigger asChild>
             <Button
               variant="ghost"
-              className="flex w-full items-center justify-between p-0 hover:bg-transparent"
+              className={featureThemeClassName('agendaEventAgendaThemedPanel')}
             >
               <div className="flex items-center gap-3">
                 <div className="bg-primary text-primary-foreground relative flex h-10 w-10 items-center justify-center rounded-lg shadow-md">
@@ -254,12 +255,18 @@ export function EventStreamSection({
                     currentAgendaItem.type ??
                       translateText('generated.inline.0011_discussion_c255751d')
                   )}
-                  <div className="absolute -top-1 -right-1 flex h-4 w-4 animate-pulse items-center justify-center rounded-full bg-green-500 text-white">
-                    <Play className="h-2 w-2 fill-white" />
+                  <div
+                    className={featureThemeClassName(
+                      'agendaEventStreamSectionSuccessContrastPulseDot'
+                    )}
+                  >
+                    <Play
+                      className={featureThemeClassName('agendaEventStreamSectionContrastStyle')}
+                    />
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <BadgeControl variant="default" className="animate-pulse">
+                  <BadgeControl variant="default" pulse>
                     {t('features.events.stream.live')}
                   </BadgeControl>
                   <CardTitle className="text-lg">{currentAgendaItem.title}</CardTitle>
@@ -303,7 +310,9 @@ export function EventStreamSection({
               (() => {
                 const videoId = getYouTubeVideoId(streamUrl);
                 return videoId ? (
-                  <div className="relative w-full overflow-hidden rounded-lg bg-black shadow-xl">
+                  <div
+                    className={featureThemeClassName('agendaEventStreamSectionContrastBackground')}
+                  >
                     <div className="aspect-video">
                       <iframe
                         className="h-full w-full"
@@ -386,7 +395,7 @@ export function EventStreamSection({
                   <CollapsibleTrigger asChild>
                     <Button
                       variant="ghost"
-                      className="flex items-center gap-2 p-0 hover:bg-transparent"
+                      className={featureThemeClassName('agendaEventStreamSectionThemedPanel')}
                     >
                       <h3 className="text-lg font-semibold">
                         {t('features.events.stream.speakersList')} ({speakerList.length})
@@ -513,7 +522,7 @@ export function EventStreamSection({
                                   )}
                                 </div>
                                 <div className="flex justify-center">
-                                  <BadgeControl variant="secondary" className="px-3 py-1 text-sm">
+                                  <BadgeControl variant="secondary" size="sm" className="px-3 py-1">
                                     <Clock className="mr-1.5 h-3 w-3" />
                                     {formatTime(speakerTime)} ({speaker.time}
                                     {translateText('generated.inline.0056_min_c5cceefd')}
@@ -523,7 +532,9 @@ export function EventStreamSection({
                                   <div className="flex justify-center">
                                     <BadgeControl
                                       variant="outline"
-                                      className="bg-green-100 dark:bg-green-900"
+                                      className={featureThemeClassName(
+                                        'agendaEventStreamSectionSuccessBackgroundAlpha'
+                                      )}
                                     >
                                       {translateText('generated.inline.0057_completed_1798b3ba')}
                                     </BadgeControl>

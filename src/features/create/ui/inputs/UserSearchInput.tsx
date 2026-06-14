@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
 import { useUserState } from '@/zero/users/useUserState';
-import { CreateTypeaheadField } from '../CreateFields';
+import { CreateTypeaheadField } from '@/features/shared/ui/form';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface UserSearchInputProps {

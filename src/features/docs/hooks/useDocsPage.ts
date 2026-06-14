@@ -16,10 +16,7 @@ const categoryOrder: DocsCategory[] = [
 export function useDocsLandingPage() {
   const { t } = useTranslation();
 
-  const featuredTopics = useMemo(
-    () => docsTopicDefinitions.filter(topic => topic.featured),
-    []
-  );
+  const featuredTopics = useMemo(() => docsTopicDefinitions.filter(topic => topic.featured), []);
 
   const categorySections = useMemo(
     () =>

@@ -1,4 +1,4 @@
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { useUserActions } from '@/zero/users/useUserActions';
 import { createClient } from '@/lib/supabase/client';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';

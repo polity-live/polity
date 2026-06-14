@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { FormControlInput } from '@/features/shared/ui/form';
 /**
  * Editor Header Component
@@ -100,7 +101,7 @@ export function EditorHeader({
                 {peer.avatar ? <AvatarImage src={peer.avatar} alt={peer.name} /> : null}
                 <AvatarFallback
                   style={{ backgroundColor: peer.color }}
-                  className="text-xs text-white"
+                  className={featureThemeClassName('documentPresenceIndicatorsContrastText')}
                 >
                   {peer.name?.[0]?.toUpperCase()}
                 </AvatarFallback>
@@ -131,7 +132,9 @@ export function EditorHeader({
           </>
         ) : hasUnsavedChanges ? (
           <>
-            <span className="text-yellow-600">{t('features.editor.header.unsavedChanges')}</span>
+            <span className={featureThemeClassName('editorEditorHeaderWarningText')}>
+              {t('features.editor.header.unsavedChanges')}
+            </span>
           </>
         ) : (
           <>

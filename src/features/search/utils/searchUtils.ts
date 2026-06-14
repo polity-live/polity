@@ -1,7 +1,6 @@
-import { SearchType } from '../types/search.types';
 import { extractHashtags } from '@/zero/common/hashtagHelpers';
 
-type HashtagJunction = ReadonlyArray<{ hashtag?: { id: string; tag: string } | null }>;
+type HashtagJunction = readonly { hashtag?: { id: string; tag: string } | null }[];
 
 interface HashtagEntity {
   hashtags?: { id: string; tag: string }[];
@@ -86,20 +85,22 @@ export const matchesUserQuery = (user: UserLike | null | undefined, queryParam: 
   if (!queryParam) return true;
 
   const displayName = getUserDisplayName(user);
-  return [
-    displayName,
-    user?.handle,
-    user?.bio,
-    user?.location,
-    user?.contactLocation,
-  ].some(value => filterByQuery(value, queryParam));
+  return [displayName, user?.handle, user?.bio, user?.location, user?.contactLocation].some(value =>
+    filterByQuery(value, queryParam)
+  );
 };
 
 export const sortResults = <T extends SortableItem>(items: readonly T[], sortBy: string): T[] => {
   if (sortBy === 'date') {
     return [...items].sort((a, b) => {
-      const dateA = (a.created_at ?? a.date ?? a.joined_at ?? new Date(0)) as string | number | Date;
-      const dateB = (b.created_at ?? b.date ?? b.joined_at ?? new Date(0)) as string | number | Date;
+      const dateA = (a.created_at ?? a.date ?? a.joined_at ?? new Date(0)) as
+        | string
+        | number
+        | Date;
+      const dateB = (b.created_at ?? b.date ?? b.joined_at ?? new Date(0)) as
+        | string
+        | number
+        | Date;
       return new Date(dateB).getTime() - new Date(dateA).getTime();
     });
   }

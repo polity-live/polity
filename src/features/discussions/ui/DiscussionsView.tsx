@@ -157,7 +157,7 @@ export function DiscussionsView({
       <div className="space-y-6">
         {threads.length === 0 ? (
           <Card>
-            <CardContent className="py-12 text-center">
+            <CardContent align="center" className="py-12">
               <MessageSquare className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
               <p className="text-muted-foreground mb-4">
                 {translateText(

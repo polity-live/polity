@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 /**
  * Roles Permissions Table Component
  *
@@ -173,7 +174,9 @@ export function RolesPermissionsTable<TRole extends ParticipationRoleLike>({
                                 <RoleTag
                                   roleId={role.id}
                                   roleName={role.name || 'Role'}
-                                  className="pointer-events-none text-[11px]"
+                                  className={featureThemeClassName(
+                                    'groupRolesPermissionsTableThemedText'
+                                  )}
                                 />
                               </div>
                               <span className="text-muted-foreground text-xs font-normal">

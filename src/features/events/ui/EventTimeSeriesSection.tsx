@@ -1,7 +1,8 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { FormControlLabel } from '@/features/shared/ui/form';
 import { AlarmClock, CalendarDays, Clock3, Repeat2 } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { CreateInputField } from '@/features/create/ui/CreateFields';
+import { CreateInputField } from '@/features/shared/ui/form';
 import { DateTimeRangeInput } from '@/features/create/ui/inputs/DateTimeRangeInput';
 import { RecurringPatternInput } from '@/features/create/ui/inputs/RecurringPatternInput';
 import type { RecurrencePattern } from '@/features/events/logic/rruleHelpers';
@@ -128,13 +129,13 @@ export function EventTimeSeriesSection({
       </div>
 
       {schedulingWindowMessage ? (
-        <div className="rounded-xl border border-sky-500/30 bg-sky-500/10 px-4 py-3 text-sm">
+        <div className={featureThemeClassName('eventEventTimeSeriesSectionInfoBadge')}>
           {schedulingWindowMessage}
         </div>
       ) : null}
 
       {validationMessage ? (
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm">
+        <div className={featureThemeClassName('eventEventTimeSeriesSectionWarningBadge')}>
           {validationMessage}
         </div>
       ) : null}

@@ -50,7 +50,7 @@ export default meta;
 type Story = StoryObj;
 
 export const StatementCarouselDefault: Story = {
-  render: (args) => (
+  render: args => (
     <StatementCarousel
       statements={mockStatements}
       authorName="Sarah Johnson"

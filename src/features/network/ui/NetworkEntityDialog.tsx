@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import {
@@ -317,10 +318,10 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
                           variant="outline"
                           className={
                             relationshipKind === 'active'
-                              ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                              ? featureThemeClassName('networkNetworkEntityDialogSuccessBadge')
                               : relationshipKind === 'incoming'
-                                ? 'border-blue-200 bg-blue-50 text-blue-700'
-                                : 'border-amber-200 bg-amber-50 text-amber-700'
+                                ? featureThemeClassName('networkNetworkEntityDialogInfoBadge')
+                                : featureThemeClassName('networkNetworkEntityDialogWarningBadge')
                           }
                         >
                           {getRelationshipKindLabel(relationshipKind)}

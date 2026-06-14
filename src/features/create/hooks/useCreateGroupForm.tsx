@@ -1,4 +1,8 @@
-import { BadgeControl } from '@/features/shared/ui/status';
+import { featureThemeClassName } from '@/features/shared/theme';
+import {
+  BadgeControl,
+  getRelationshipBadgeClassName as getRelationshipBadgeClasses,
+} from '@/features/shared/ui/status';
 import {
   FileUploadTrigger,
   FormControlLabel,
@@ -58,7 +62,7 @@ import {
   toZeroRichTextValue,
 } from '@/features/shared/logic/richText';
 import { X, Upload, Link2, FileSpreadsheet } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import type { CreateFormConfig } from '../types/create-form.types';
 import type {
@@ -201,16 +205,6 @@ function buildCreateLinkPresetDefaults(preset: GroupConnectionPreset = CREATE_LI
     >,
     preset: presetValue.preset,
   };
-}
-
-function getRelationshipBadgeClasses(type: LinkedGroup['type']) {
-  if (type === 'sibling') {
-    return 'border-violet-300 bg-violet-50 text-violet-800';
-  }
-
-  return type === 'parent'
-    ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
-    : 'border-sky-300 bg-sky-50 text-sky-800';
 }
 
 function buildCanonicalGroupConnection(args: {
@@ -1011,7 +1005,7 @@ export function useCreateGroupForm(): CreateFormConfig {
                                 ? t('pages.create.group.child')
                                 : t('common.network.sibling')}
                           </BadgeControl>
-                          <BadgeControl className="border-muted bg-muted/50 text-foreground text-xs hover:opacity-100">
+                          <BadgeControl tone="mutedContrast" size="xs">
                             {getCanonicalMembershipModeLabel(linkedGroup.membershipMode)}
                           </BadgeControl>
                           <div className="min-w-0 flex-1 space-y-2">
@@ -1196,10 +1190,12 @@ export function useCreateGroupForm(): CreateFormConfig {
                     excludeUserId={user?.id}
                     multi
                   />
-                  <Card className="bg-muted/20 border-dashed shadow-none">
+                  <Card surface="mutedSubtle" borderStyle="dashed" elevation="none">
                     <CardHeader className="pb-3">
                       <CardTitle className="flex items-center gap-2 text-base">
-                        <FileSpreadsheet className="h-4 w-4 text-emerald-700" />
+                        <FileSpreadsheet
+                          className={featureThemeClassName('createUseCreateGroupFormSuccessIcon')}
+                        />
                         {allowGuestInvites
                           ? translateText(
                               'generated.inline.0051_gaeste_per_csv_vorbereiten_7af02b36'
@@ -1254,7 +1250,7 @@ export function useCreateGroupForm(): CreateFormConfig {
                     </FileUploadTrigger>
                   </div>
                   {csvInviteSummary && (
-                    <Card className="border-muted bg-background shadow-none">
+                    <Card surface="background" borderStyle="muted" elevation="none">
                       <CardHeader className="pb-3">
                         <CardTitle className="text-base">
                           {t('pages.create.group.csvSummaryTitle')}
@@ -1265,18 +1261,18 @@ export function useCreateGroupForm(): CreateFormConfig {
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <div className="flex flex-wrap gap-2">
-                          <BadgeControl className="border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-50">
+                          <BadgeControl tone="successPale">
                             {t('pages.create.group.csvFoundCount', {
                               count: csvInviteSummary.matchedNames.length,
                             })}
                           </BadgeControl>
-                          <BadgeControl className="border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-50">
+                          <BadgeControl tone="dangerPale">
                             {t('pages.create.group.csvNotFoundCount', {
                               count: csvInviteSummary.notFoundNames.length,
                             })}
                           </BadgeControl>
                           {csvInviteSummary.ambiguousNames.length > 0 && (
-                            <BadgeControl className="border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-50">
+                            <BadgeControl tone="warningPale">
                               {t('pages.create.group.csvAmbiguousCount', {
                                 count: csvInviteSummary.ambiguousNames.length,
                               })}
@@ -1286,14 +1282,20 @@ export function useCreateGroupForm(): CreateFormConfig {
 
                         {csvInviteSummary.matchedNames.length > 0 && (
                           <div className="space-y-2">
-                            <FormControlLabel className="text-xs tracking-wide text-emerald-700 uppercase">
+                            <FormControlLabel
+                              className={featureThemeClassName(
+                                'createUseCreateGroupFormSuccessText'
+                              )}
+                            >
                               {t('pages.create.group.csvFoundNames')}
                             </FormControlLabel>
                             <div className="flex flex-wrap gap-2">
                               {csvInviteSummary.matchedNames.map(name => (
                                 <BadgeControl
                                   key={name}
-                                  className="border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-50"
+                                  className={featureThemeClassName(
+                                    'createUseCreateGroupFormSuccessBadge'
+                                  )}
                                 >
                                   {name}
                                 </BadgeControl>
@@ -1304,14 +1306,20 @@ export function useCreateGroupForm(): CreateFormConfig {
 
                         {csvInviteSummary.notFoundNames.length > 0 && (
                           <div className="space-y-2">
-                            <FormControlLabel className="text-xs tracking-wide text-rose-700 uppercase">
+                            <FormControlLabel
+                              className={featureThemeClassName(
+                                'createUseCreateGroupFormDangerText'
+                              )}
+                            >
                               {t('pages.create.group.csvNotFoundNames')}
                             </FormControlLabel>
                             <div className="flex flex-wrap gap-2">
                               {csvInviteSummary.notFoundNames.map(name => (
                                 <BadgeControl
                                   key={name}
-                                  className="border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-50"
+                                  className={featureThemeClassName(
+                                    'createUseCreateGroupFormDangerBadge'
+                                  )}
                                 >
                                   {name}
                                 </BadgeControl>
@@ -1322,19 +1330,33 @@ export function useCreateGroupForm(): CreateFormConfig {
 
                         {csvInviteSummary.ambiguousNames.length > 0 && (
                           <div className="space-y-2">
-                            <FormControlLabel className="text-xs tracking-wide text-amber-700 uppercase">
+                            <FormControlLabel
+                              className={featureThemeClassName(
+                                'createUseCreateGroupFormWarningText'
+                              )}
+                            >
                               {t('pages.create.group.csvAmbiguousNames')}
                             </FormControlLabel>
                             <div className="space-y-2">
                               {csvInviteSummary.ambiguousNames.map(entry => (
                                 <div
                                   key={entry.fullName}
-                                  className="rounded-md border border-amber-200 bg-amber-50/60 p-3"
+                                  className={featureThemeClassName(
+                                    'createUseCreateGroupFormWarningSurface'
+                                  )}
                                 >
-                                  <div className="text-sm font-medium text-amber-900">
+                                  <div
+                                    className={featureThemeClassName(
+                                      'createUseCreateGroupFormWarningTextAlpha'
+                                    )}
+                                  >
                                     {entry.fullName}
                                   </div>
-                                  <div className="text-xs text-amber-800">
+                                  <div
+                                    className={featureThemeClassName(
+                                      'createUseCreateGroupFormWarningTextBeta'
+                                    )}
+                                  >
                                     {t('pages.create.group.csvAmbiguousCandidates', {
                                       candidates: entry.candidates
                                         .map(candidate => candidate.name)
@@ -1349,14 +1371,20 @@ export function useCreateGroupForm(): CreateFormConfig {
 
                         {csvInviteSummary.invalidRows.length > 0 && (
                           <div className="space-y-2">
-                            <FormControlLabel className="text-xs tracking-wide text-amber-700 uppercase">
+                            <FormControlLabel
+                              className={featureThemeClassName(
+                                'createUseCreateGroupFormWarningText'
+                              )}
+                            >
                               {t('pages.create.group.csvInvalidRows')}
                             </FormControlLabel>
                             <div className="flex flex-wrap gap-2">
                               {csvInviteSummary.invalidRows.map(row => (
                                 <BadgeControl
                                   key={row}
-                                  className="border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-50"
+                                  className={featureThemeClassName(
+                                    'createUseCreateGroupFormWarningBadge'
+                                  )}
                                 >
                                   {row}
                                 </BadgeControl>

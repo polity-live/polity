@@ -9,7 +9,7 @@ export function computeVoteResult(
   accept: number,
   reject: number,
   totalVoters: number,
-  majorityType: MajorityType,
+  majorityType: MajorityType
 ): VoteResult {
   if (accept === reject) return 'tie';
 

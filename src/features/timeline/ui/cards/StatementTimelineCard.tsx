@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { Quote, ThumbsUp, ThumbsDown, MessageSquare, Video, BarChart3 } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
@@ -111,12 +112,16 @@ export function StatementTimelineCard({ statement, className }: StatementTimelin
         {/* Central media display */}
         {hasMedia && (
           <div className="mt-3 flex justify-center">
-            <div className="h-32 w-full overflow-hidden rounded-xl bg-black/10">
+            <div
+              className={featureThemeClassName('timelineStatementTimelineCardContrastBackground')}
+            >
               {statement.imageUrl ? (
                 <img src={statement.imageUrl} alt="" className="h-full w-full object-cover" />
               ) : (
                 <div className="flex h-full w-full items-center justify-center">
-                  <Video className="h-8 w-8 text-indigo-200" />
+                  <Video
+                    className={featureThemeClassName('timelineStatementTimelineCardAccentIcon')}
+                  />
                 </div>
               )}
             </div>
@@ -131,13 +136,21 @@ export function StatementTimelineCard({ statement, className }: StatementTimelin
                 surveyTotalVotes > 0 ? Math.round((opt.voteCount / surveyTotalVotes) * 100) : 0;
               return (
                 <div key={i} className="space-y-0.5">
-                  <div className="flex items-center justify-between text-xs text-white/90">
+                  <div
+                    className={featureThemeClassName('timelineStatementTimelineCardContrastText')}
+                  >
                     <span className="truncate">{opt.label}</span>
                     {surveyTotalVotes > 0 && <span className="ml-1 shrink-0">{percent}%</span>}
                   </div>
-                  <div className="h-1.5 overflow-hidden rounded-full bg-white/15">
+                  <div
+                    className={featureThemeClassName(
+                      'timelineStatementTimelineCardContrastBackgroundAlpha'
+                    )}
+                  >
                     <div
-                      className="h-full rounded-full bg-white/50 transition-all"
+                      className={featureThemeClassName(
+                        'timelineStatementTimelineCardContrastBackgroundBeta'
+                      )}
                       style={{ width: `${percent}%` }}
                     />
                   </div>
@@ -145,7 +158,9 @@ export function StatementTimelineCard({ statement, className }: StatementTimelin
               );
             })}
             {surveyOptions.length > 4 && (
-              <p className="text-center text-xs text-white/60">
+              <p
+                className={featureThemeClassName('timelineStatementTimelineCardContrastTextAlpha')}
+              >
                 +{surveyOptions.length - 4}
                 {translateText('generated.inline.0142_more_e7c95b4c')}
               </p>
@@ -170,7 +185,7 @@ export function StatementTimelineCard({ statement, className }: StatementTimelin
                 hashtags={statement.hashtags.slice(0, 3)}
                 centered={false}
                 badgeClassName={cn(
-                  'border bg-white/70 dark:bg-gray-900/60',
+                  featureThemeClassName('timelineEventTimelineCardNeutralContrastSurface'),
                   statementStyle.borderColor,
                   statementStyle.accentColor
                 )}

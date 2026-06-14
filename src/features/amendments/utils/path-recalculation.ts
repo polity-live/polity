@@ -9,7 +9,14 @@ import { createClient } from '@supabase/supabase-js';
 
 // Initialize the Supabase client for server-side operations
 const getAdminDb = () => {
-  return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error('Missing Supabase admin environment variables');
+  }
+
+  return createClient(supabaseUrl, serviceRoleKey);
 };
 
 interface PathSegment {
@@ -43,9 +50,7 @@ export async function recalculateAmendmentPaths(
 
   try {
     // Find all amendments that have the cancelled event in their path
-    const { data: amendments } = await adminDb
-      .from('amendment')
-      .select('id, title, path_segments');
+    const { data: amendments } = await adminDb.from('amendment').select('id, title, path_segments');
 
     for (const amendment of amendments || []) {
       let pathSegments: PathSegment[] = [];
@@ -76,10 +81,13 @@ export async function recalculateAmendmentPaths(
             entityId: targetEventId,
           };
 
-          await adminDb.from('amendment').update({
-            path_segments: newPathSegments,
-            updated_at: new Date().toISOString(),
-          }).eq('id', amendment.id);
+          await adminDb
+            .from('amendment')
+            .update({
+              path_segments: newPathSegments,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', amendment.id);
 
           results.push({
             amendmentId: amendment.id,
@@ -88,11 +96,14 @@ export async function recalculateAmendmentPaths(
             newPath: newPathSegments,
           });
         } else {
-          await adminDb.from('amendment').update({
-            path_status: 'invalid',
-            path_invalid_reason: 'Event cancelled with no valid reassignment target',
-            updated_at: new Date().toISOString(),
-          }).eq('id', amendment.id);
+          await adminDb
+            .from('amendment')
+            .update({
+              path_status: 'invalid',
+              path_invalid_reason: 'Event cancelled with no valid reassignment target',
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', amendment.id);
 
           results.push({
             amendmentId: amendment.id,
@@ -130,9 +141,7 @@ export async function findAffectedAmendments(
   const affected: { id: string; title: string }[] = [];
 
   try {
-    const { data: amendments } = await adminDb
-      .from('amendment')
-      .select('id, title, path_segments');
+    const { data: amendments } = await adminDb.from('amendment').select('id, title, path_segments');
 
     for (const amendment of amendments || []) {
       let pathSegments: PathSegment[] = [];
@@ -179,12 +188,15 @@ export async function handleOrphanedAgendaItems(
 
   for (const itemId of agendaItemIds) {
     try {
-      await adminDb.from('agenda_item').update({
-        status: 'orphaned',
-        orphaned_reason: reason,
-        orphaned_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }).eq('id', itemId);
+      await adminDb
+        .from('agenda_item')
+        .update({
+          status: 'orphaned',
+          orphaned_reason: reason,
+          orphaned_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', itemId);
     } catch (err) {
       console.error(`Error marking agenda item ${itemId} as orphaned:`, err);
     }
@@ -236,7 +248,7 @@ export async function validateAmendmentPath(pathSegments: PathSegment[]): Promis
           reasons.push(`Group at position ${i + 1} no longer exists`);
         }
       }
-    } catch (err) {
+    } catch {
       invalidSegments.push(i);
       reasons.push(`Error validating segment at position ${i + 1}`);
     }

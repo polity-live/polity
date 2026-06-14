@@ -12,7 +12,7 @@ export const UserWikiHeader: React.FC<UserWikiHeaderProps> = ({ name, avatar, su
     <WikiAvatar name={name} avatar={avatar} className="h-24 w-24 md:h-32 md:w-32" />
     <div className="flex-1 text-center md:text-left">
       <h1 className="text-2xl font-bold md:text-4xl">{name}</h1>
-      <p className="mt-1 text-muted-foreground">{subtitle}</p>
+      <p className="text-muted-foreground mt-1">{subtitle}</p>
     </div>
   </div>
 );

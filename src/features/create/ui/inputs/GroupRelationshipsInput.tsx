@@ -9,7 +9,7 @@ import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import { useAllGroups } from '@/zero/groups/useGroupState';
 import { X, Check, Link as LinkIcon } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 
 type RelationshipType = 'isParent' | 'isChild';
 
@@ -193,7 +193,7 @@ export function GroupRelationshipsInput({ value, onChange }: GroupRelationshipsI
                   <div className="flex-1">
                     <div className="mb-1 flex items-center gap-2">
                       <span className="font-medium">{link.groupName}</span>
-                      <BadgeControl variant="outline" className="text-xs">
+                      <BadgeControl variant="outline" size="xs">
                         {link.relationshipType === 'isParent'
                           ? t('pages.create.group.parent')
                           : t('pages.create.group.child')}
@@ -201,7 +201,7 @@ export function GroupRelationshipsInput({ value, onChange }: GroupRelationshipsI
                     </div>
                     <div className="flex flex-wrap gap-1">
                       {link.rights.map(right => (
-                        <BadgeControl key={right} variant="secondary" className="text-xs">
+                        <BadgeControl key={right} variant="secondary" size="xs">
                           {t(`pages.create.group.rights.${right}`)}
                         </BadgeControl>
                       ))}

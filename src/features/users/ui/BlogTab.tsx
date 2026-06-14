@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import React from 'react';
 import {
   Card,
@@ -34,9 +35,9 @@ export const BlogsCard: React.FC<BlogsCardProps> = ({ blog, gradientClass, href 
             <CardTitle>{blog.title}</CardTitle>
             <CardDescription>{blog.date}</CardDescription>
           </CardHeader>
-          <CardFooter className="text-muted-foreground mt-auto flex items-center justify-between">
+          <CardFooter tone="muted" className="mt-auto flex items-center justify-between">
             <span className="flex items-center">
-              <span className="text-orange-500">👍</span>
+              <span className={featureThemeClassName('discussionsCommentTreeWarningText')}>👍</span>
               <span className="ml-1">
                 {blog.supporters}
                 {translateText('generated.inline.0180_supporters_dbb25078')}
@@ -61,9 +62,9 @@ export const BlogsCard: React.FC<BlogsCardProps> = ({ blog, gradientClass, href 
         <CardTitle>{blog.title}</CardTitle>
         <CardDescription>{blog.date}</CardDescription>
       </CardHeader>
-      <CardFooter className="text-muted-foreground mt-auto flex items-center justify-between">
+      <CardFooter tone="muted" className="mt-auto flex items-center justify-between">
         <span className="flex items-center">
-          <span className="text-orange-500">👍</span>
+          <span className={featureThemeClassName('discussionsCommentTreeWarningText')}>👍</span>
           <span className="ml-1">
             {blog.supporters}
             {translateText('generated.inline.0180_supporters_dbb25078')}

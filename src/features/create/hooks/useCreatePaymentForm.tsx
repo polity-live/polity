@@ -10,7 +10,7 @@ import {
   useTranslation,
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { Button } from '@/features/shared/ui/ui/button';
 import { UserSearchInput } from '../ui/inputs/UserSearchInput';
 import { DirectionInput } from '../ui/inputs/DirectionInput';

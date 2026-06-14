@@ -13,7 +13,7 @@ import { useGroupData } from '../hooks/useGroupData';
 import { GroupEditForm } from './GroupEditForm';
 import { useAuth } from '@/providers/auth-provider';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { RIGHT_TYPES, type RightType } from '@/features/network/ui/RightFilters';
+import { RIGHT_TYPES, type RightType } from '@/features/shared/ui/status';
 import { richTextToPlainText, toRichTextValue } from '@/features/shared/logic/richText';
 import type { GroupFormData, GroupType, RelationshipDirection } from '../hooks/useGroupUpdate';
 import { useGroupConnectionState } from '@/zero/network';

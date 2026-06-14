@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { ReactNode } from 'react';
 import { Link } from '@tanstack/react-router';
@@ -41,7 +42,7 @@ export function TimelineCardBase({
   const shadowClasses = getCardShadowClasses(elevated);
 
   const cardStyles = cn(
-    'flex min-h-0 flex-col overflow-hidden border border-gray-100 dark:border-gray-800',
+    featureThemeClassName('timelineTimelineCardBaseNeutralBorder'),
     'bg-card text-card-foreground',
     CARD_RADIUS.card,
     shadowClasses,

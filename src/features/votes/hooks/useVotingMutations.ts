@@ -1,6 +1,6 @@
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { useCallback } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { useDocumentActions } from '@/zero/documents';
 
 /**

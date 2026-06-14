@@ -48,17 +48,17 @@ const HANDLE_NOUNS = [
 /**
  * Generate a random handle for a new user
  * Format: AdjectiveNoun#### (e.g., QuickFox1234)
- * 
+ *
  * @returns A randomly generated handle
  */
 export function generateRandomHandle(): string {
   const adjective = HANDLE_ADJECTIVES[Math.floor(Math.random() * HANDLE_ADJECTIVES.length)];
   const noun = HANDLE_NOUNS[Math.floor(Math.random() * HANDLE_NOUNS.length)];
   const number = Math.floor(Math.random() * 9000) + 1000; // 1000-9999
-  
+
   const handle = `${adjective}${noun}${number}`;
   console.log('🎲 Generated random handle:', handle);
-  
+
   return handle;
 }
 

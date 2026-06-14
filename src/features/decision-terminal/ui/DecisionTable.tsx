@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { cn } from '@/features/shared/utils/utils';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { DecisionRow } from './DecisionRow';
@@ -23,25 +24,25 @@ export function DecisionTable({ decisions, className }: DecisionTableProps) {
       {/* Table header */}
       <div className="bg-muted/95 sticky top-0 z-10 min-w-[860px] backdrop-blur">
         <div className={cn('grid gap-2 border-b px-2 py-1.5', gridColumnsClass)}>
-          <div className="text-muted-foreground font-mono text-[10px] font-semibold tracking-[1px] uppercase">
+          <div className={featureThemeClassName('decisionterminalDecisionTableThemedText')}>
             {t('timeline.terminal.columns.id')}
           </div>
-          <div className="text-muted-foreground font-mono text-[10px] font-semibold tracking-[1px] uppercase">
+          <div className={featureThemeClassName('decisionterminalDecisionTableThemedText')}>
             {t('timeline.terminal.columns.title')}
           </div>
-          <div className="text-muted-foreground font-mono text-[10px] font-semibold tracking-[1px] uppercase">
+          <div className={featureThemeClassName('decisionterminalDecisionTableThemedText')}>
             {t('timeline.terminal.columns.body')}
           </div>
-          <div className="text-muted-foreground font-mono text-[10px] font-semibold tracking-[1px] uppercase">
+          <div className={featureThemeClassName('decisionterminalDecisionTableThemedText')}>
             {t('timeline.terminal.columns.time')}
           </div>
-          <div className="text-muted-foreground font-mono text-[10px] font-semibold tracking-[1px] uppercase">
+          <div className={featureThemeClassName('decisionterminalDecisionTableThemedText')}>
             {t('timeline.terminal.columns.status')}
           </div>
-          <div className="text-muted-foreground font-mono text-[10px] font-semibold tracking-[1px] uppercase">
+          <div className={featureThemeClassName('decisionterminalDecisionTableThemedText')}>
             {t('timeline.terminal.columns.votes')}
           </div>
-          <div className="text-muted-foreground font-mono text-[10px] font-semibold tracking-[1px] uppercase">
+          <div className={featureThemeClassName('decisionterminalDecisionTableThemedText')}>
             {t('timeline.terminal.columns.trend')}
           </div>
         </div>

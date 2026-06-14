@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useGroupSubscribers } from '@/zero/groups/useGroupState';
 import { useCommonActions } from '@/zero/common/useCommonActions';
 import { useAuth } from '@/providers/auth-provider';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 /**

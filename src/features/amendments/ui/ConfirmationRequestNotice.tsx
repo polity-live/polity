@@ -1,19 +1,7 @@
 'use client';
 
-import { BadgeControl } from '@/features/shared/ui/status';
-/**
- * ConfirmationRequestNotice Component
- *
- * Displays a notice to supporters when they have pending
- * confirmation requests for changes made to amendments they support.
- */
-
-import { Alert, AlertDescription, AlertTitle } from '@/features/shared/ui/ui/alert';
-import { Button } from '@/features/shared/ui/ui/button';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { Bell, Check, X, Eye } from 'lucide-react';
-import { useState } from 'react';
-import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
+import { useConfirmationRequestNoticeController } from '@/features/amendments/hooks/useConfirmationRequestNoticeController';
+import { ConfirmationRequestNoticeView } from './ConfirmationRequestNoticeView';
 
 interface ConfirmationRequestNoticeProps {
   userId: string;
@@ -28,104 +16,10 @@ export function ConfirmationRequestNotice({
   onDecline,
   onViewChanges,
 }: ConfirmationRequestNoticeProps) {
-  const { t } = useTranslation();
-  const [processingId, setProcessingId] = useState<string | null>(null);
-
-  // Query pending confirmations for this user
-  const { supportConfirmations: pendingConfirmations } = useAmendmentState({
-    userId,
-    includeSupportConfirmations: true,
-  });
-
-  const handleConfirm = async (confirmationId: string) => {
-    setProcessingId(confirmationId);
-    try {
-      onConfirm?.(confirmationId);
-    } finally {
-      setProcessingId(null);
-    }
-  };
-
-  const handleDecline = async (confirmationId: string) => {
-    setProcessingId(confirmationId);
-    try {
-      onDecline?.(confirmationId);
-    } finally {
-      setProcessingId(null);
-    }
-  };
-
-  if (pendingConfirmations.length === 0) {
-    return null;
-  }
-
   return (
-    <Alert className="mb-4 border-amber-500/50 bg-amber-50 dark:bg-amber-950/20">
-      <Bell className="h-5 w-5 text-amber-600" />
-      <AlertTitle className="text-amber-800 dark:text-amber-200">
-        {t('features.amendments.supportConfirmation.pendingNotice.title')}
-        <BadgeControl variant="secondary" className="ml-2">
-          {pendingConfirmations.length}
-        </BadgeControl>
-      </AlertTitle>
-      <AlertDescription className="mt-3">
-        <p className="mb-3 text-sm text-amber-700 dark:text-amber-300">
-          {t('features.amendments.supportConfirmation.pendingNotice.description')}
-        </p>
-
-        <div className="space-y-2">
-          {pendingConfirmations.map(confirmation => (
-            <div
-              key={confirmation.id}
-              className="flex items-center justify-between gap-2 rounded-md border bg-white p-2 dark:bg-gray-900"
-            >
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">
-                  {confirmation.amendment?.title ?? t('features.amendments.common.untitled')}
-                </p>
-                {(confirmation as { changeRequest?: { title?: string } }).changeRequest?.title && (
-                  <p className="text-muted-foreground truncate text-xs">
-                    {t('features.amendments.changeRequests.changeRequest')}:{' '}
-                    {(confirmation as { changeRequest?: { title?: string } }).changeRequest?.title}
-                  </p>
-                )}
-              </div>
-
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => onViewChanges?.(confirmation.id, confirmation.amendment?.id ?? '')}
-                  title={t('features.amendments.supportConfirmation.actions.viewChanges')}
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-green-600 hover:bg-green-50 hover:text-green-700"
-                  onClick={() => handleConfirm(confirmation.id)}
-                  disabled={processingId === confirmation.id}
-                  title={t('features.amendments.supportConfirmation.actions.confirm')}
-                >
-                  <Check className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-red-600 hover:bg-red-50 hover:text-red-700"
-                  onClick={() => handleDecline(confirmation.id)}
-                  disabled={processingId === confirmation.id}
-                  title={t('features.amendments.supportConfirmation.actions.decline')}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </AlertDescription>
-    </Alert>
+    <ConfirmationRequestNoticeView
+      onViewChanges={onViewChanges}
+      {...useConfirmationRequestNoticeController({ userId, onConfirm, onDecline })}
+    />
   );
 }

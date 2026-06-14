@@ -33,7 +33,7 @@ import {
 } from '@/features/shared/ui/ui/command';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Check, ChevronsUpDown, Plus } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface AddPaymentDialogProps {

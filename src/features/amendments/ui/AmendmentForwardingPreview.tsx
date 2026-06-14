@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { Link } from '@tanstack/react-router';
 import { ArrowRight, CalendarClock, Vote } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -40,19 +41,21 @@ export function AmendmentForwardingPreview({
   return (
     <div
       className={cn(
-        'rounded-xl border border-pink-500/25 bg-pink-500/10',
+        featureThemeClassName('amendmentAmendmentForwardingPreviewAccentSurface'),
         compact ? 'space-y-2 px-3 py-3 text-sm' : 'space-y-3 px-4 py-4',
         className
       )}
     >
-      <div className="flex items-center gap-2 font-medium text-pink-950 dark:text-pink-100">
+      <div className={featureThemeClassName('amendmentAmendmentForwardingPreviewAccentText')}>
         <ArrowRight className="h-4 w-4" />
         <span>{t('features.amendments.process.forwardingPreviewTitle')}</span>
       </div>
 
       <div className="space-y-2 text-sm">
         <div className="flex items-start gap-2">
-          <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-pink-700 dark:text-pink-300" />
+          <CalendarClock
+            className={featureThemeClassName('amendmentAmendmentForwardingPreviewAccentIcon')}
+          />
           <div>
             {nextEventId ? (
               <Link
@@ -74,7 +77,9 @@ export function AmendmentForwardingPreview({
         </div>
 
         <div className="flex items-start gap-2">
-          <Vote className="mt-0.5 h-4 w-4 shrink-0 text-pink-700 dark:text-pink-300" />
+          <Vote
+            className={featureThemeClassName('amendmentAmendmentForwardingPreviewAccentIcon')}
+          />
           <p className="text-muted-foreground">
             {t('features.amendments.process.forwardingPreviewDescription')}
           </p>

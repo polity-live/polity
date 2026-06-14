@@ -46,7 +46,7 @@ export function MediaPreviewDialog() {
 
   return (
     <div
-      className={cn('fixed left-0 top-0 z-50 h-screen w-screen select-none', !isOpen && 'hidden')}
+      className={cn('fixed top-0 left-0 z-50 h-screen w-screen select-none', !isOpen && 'hidden')}
       onContextMenu={e => e.stopPropagation()}
       {...maskLayerProps}
     >
@@ -126,7 +126,9 @@ export function MediaPreviewDialog() {
               className={cn(buttonVariants())}
               type="button"
               onClick={() => {
-                const img = document.querySelector('[data-plate-preview] img, .plate-PreviewImage img') as HTMLImageElement;
+                const img = document.querySelector(
+                  '[data-plate-preview] img, .plate-PreviewImage img'
+                ) as HTMLImageElement;
                 const url = img?.src || img?.currentSrc;
                 if (!url) return;
                 const a = document.createElement('a');

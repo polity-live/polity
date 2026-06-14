@@ -456,7 +456,7 @@ export function useWorkflowEditorViewModel({
       }}
     >
       <ScrollableDialogContent className="flex h-screen w-screen max-w-none flex-col rounded-none border-0 p-0 sm:h-screen sm:max-w-none">
-        <DialogHeader className="border-b px-6 pt-6 pb-4">
+        <DialogHeader separator className="px-6 pt-6 pb-4">
           <DialogTitle>
             {editingWorkflow
               ? t('features.network.workflows.edit')
@@ -936,7 +936,7 @@ export function useWorkflowEditorViewModel({
           </div>
         </div>
 
-        <DialogFooter className="border-t px-6 py-4">
+        <DialogFooter separator className="px-6 py-4">
           <Button variant="outline" onClick={onClose}>
             {t('common.cancel')}
           </Button>

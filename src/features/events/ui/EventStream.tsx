@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { useRef, useState, useEffect, useMemo } from 'react';
 import { Link } from '@tanstack/react-router';
@@ -26,7 +27,7 @@ import {
   UserCheck,
   Play,
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { useEventStream } from '../hooks/useEventStream';
 import {
   useTranslation,
@@ -238,26 +239,26 @@ export function EventStream({ eventId }: { eventId: string }) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+        return featureThemeClassName('agendaEventStreamSectionSuccessBackground');
       case 'in-progress':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+        return featureThemeClassName('agendaEventStreamSectionInfoBackground');
       case 'pending':
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+        return featureThemeClassName('agendaEventStreamSectionNeutralBackground');
     }
   };
 
   const getTypeColor = (type: string) => {
     switch (type) {
       case 'election':
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
+        return featureThemeClassName('agendaEventStreamSectionAccentBackground');
       case 'vote':
-        return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
+        return featureThemeClassName('agendaEventStreamSectionWarningBackground');
       case 'speech':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+        return featureThemeClassName('agendaEventStreamSectionInfoBackground');
       case 'discussion':
       default:
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+        return featureThemeClassName('agendaEventStreamSectionSuccessBackground');
     }
   };
 
@@ -288,7 +289,7 @@ export function EventStream({ eventId }: { eventId: string }) {
         (() => {
           const videoId = getYouTubeVideoId(event.stream_url);
           return videoId ? (
-            <div className="relative w-full overflow-hidden rounded-lg bg-black shadow-xl">
+            <div className={featureThemeClassName('agendaEventStreamSectionContrastBackground')}>
               <div className="aspect-video">
                 <iframe
                   className="h-full w-full"
@@ -304,8 +305,8 @@ export function EventStream({ eventId }: { eventId: string }) {
 
       {/* Current Agenda Item - Prominent Display */}
       <div ref={activeContentRef}>
-        <Card className="border-primary ring-primary/20 border-2 shadow-lg ring-2">
-          <CardHeader className="bg-primary/5">
+        <Card elevation="ringPrimary">
+          <CardHeader surface="primarySoft">
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-4">
                 <div className="bg-primary text-primary-foreground relative flex h-14 w-14 items-center justify-center rounded-lg shadow-md">
@@ -313,13 +314,13 @@ export function EventStream({ eventId }: { eventId: string }) {
                     currentAgendaItem.type ??
                       translateText('generated.inline.0011_discussion_c255751d')
                   )}
-                  <div className="absolute -top-1 -right-1 flex h-5 w-5 animate-pulse items-center justify-center rounded-full bg-green-500 text-white">
-                    <Play className="h-3 w-3 fill-white" />
+                  <div className={featureThemeClassName('eventEventStreamSuccessContrastPulseDot')}>
+                    <Play className={featureThemeClassName('eventEventStreamContrastStyle')} />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <BadgeControl variant="default" className="animate-pulse">
+                    <BadgeControl variant="default" pulse>
                       {t('features.events.stream.live')}
                     </BadgeControl>
                     <CardTitle className="text-2xl">{currentAgendaItem.title}</CardTitle>
@@ -416,7 +417,7 @@ export function EventStream({ eventId }: { eventId: string }) {
               <CollapsibleTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="flex items-center gap-2 p-0 hover:bg-transparent"
+                  className={featureThemeClassName('agendaEventStreamSectionThemedPanel')}
                 >
                   <CardTitle className="text-2xl">
                     {t('features.events.stream.speakersList')} ({speakerList.length})
@@ -564,7 +565,7 @@ export function EventStream({ eventId }: { eventId: string }) {
 
                             {/* Time Badge */}
                             <div className="flex justify-center">
-                              <BadgeControl variant="secondary" className="px-4 py-2 text-base">
+                              <BadgeControl variant="secondary" size="md" className="px-4 py-2">
                                 <Clock className="mr-2 h-4 w-4" />
                                 {formatTime(speakerTime)} ({speaker.time}
                                 {translateText('generated.inline.0056_min_c5cceefd')}
@@ -576,7 +577,9 @@ export function EventStream({ eventId }: { eventId: string }) {
                               <div className="flex justify-center">
                                 <BadgeControl
                                   variant="outline"
-                                  className="bg-green-100 dark:bg-green-900"
+                                  className={featureThemeClassName(
+                                    'agendaEventStreamSectionSuccessBackgroundAlpha'
+                                  )}
                                 >
                                   {translateText('generated.inline.0057_completed_1798b3ba')}
                                 </BadgeControl>

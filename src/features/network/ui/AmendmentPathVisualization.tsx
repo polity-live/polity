@@ -1,3 +1,4 @@
+import { featureThemeClassName, featureThemeValue } from '@/features/shared/theme';
 import { useState } from 'react';
 import { MarkerType, type Edge, type Node } from '@xyflow/react';
 import { CalendarClock, ChevronDown, ChevronRight, Clock3, ScrollText } from 'lucide-react';
@@ -45,32 +46,32 @@ function getNodeStatePalette(state: ProcessNodeState) {
   switch (state) {
     case 'approved':
       return {
-        borderColor: '#22c55e',
-        backgroundColor: '#f0fdf4',
-        textColor: '#14532d',
-        shadowColor: 'rgba(34, 197, 94, 0.2)',
+        borderColor: featureThemeValue('editorEditorViewShellSuccessColor'),
+        backgroundColor: featureThemeValue('networkAmendmentPathVisualizationSuccessColor'),
+        textColor: featureThemeValue('networkAmendmentPathVisualizationSuccessColorAlpha'),
+        shadowColor: featureThemeValue('networkAmendmentPathVisualizationOverlayColor'),
       };
     case 'active-next':
       return {
-        borderColor: '#ec4899',
-        backgroundColor: '#fdf2f8',
-        textColor: '#831843',
-        shadowColor: 'rgba(236, 72, 153, 0.22)',
+        borderColor: featureThemeValue('networkAmendmentPathVisualizationAccentColor'),
+        backgroundColor: featureThemeValue('networkAmendmentPathVisualizationAccentColorAlpha'),
+        textColor: featureThemeValue('networkAmendmentPathVisualizationDangerColor'),
+        shadowColor: featureThemeValue('networkAmendmentPathVisualizationOverlayColorAlpha'),
       };
     case 'rejected':
       return {
-        borderColor: '#ef4444',
-        backgroundColor: '#fff1f2',
-        textColor: '#7f1d1d',
-        shadowColor: 'rgba(239, 68, 68, 0.22)',
+        borderColor: featureThemeValue('networkAmendmentPathVisualizationDangerColorAlpha'),
+        backgroundColor: featureThemeValue('networkAmendmentPathVisualizationDangerColorBeta'),
+        textColor: featureThemeValue('networkAmendmentPathVisualizationDangerColorGamma'),
+        shadowColor: featureThemeValue('networkAmendmentPathVisualizationOverlayColorBeta'),
       };
     case 'pending':
     default:
       return {
-        borderColor: '#94a3b8',
-        backgroundColor: '#f8fafc',
-        textColor: '#334155',
-        shadowColor: 'rgba(148, 163, 184, 0.18)',
+        borderColor: featureThemeValue('networkAmendmentPathVisualizationNeutralColor'),
+        backgroundColor: featureThemeValue('networkAmendmentPathVisualizationNeutralColorAlpha'),
+        textColor: featureThemeValue('networkAmendmentPathVisualizationNeutralColorBeta'),
+        shadowColor: featureThemeValue('networkAmendmentPathVisualizationOverlayColorGamma'),
       };
   }
 }
@@ -204,7 +205,7 @@ export function AmendmentPathVisualization({
         groupId: segment.groupId,
         label: (
           <div className="space-y-3">
-            <div className="text-[11px] font-semibold tracking-[0.18em] uppercase opacity-75">
+            <div className={featureThemeClassName('networkAmendmentPathVisualizationThemedText')}>
               {t('features.amendments.process.groupNode')}
             </div>
             <div className="text-sm font-semibold">
@@ -213,7 +214,9 @@ export function AmendmentPathVisualization({
                 groupTypeById.get(segment.groupId ?? '') ?? null
               )}
             </div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-current/15 bg-white/70 px-3 py-1 text-[11px] font-medium dark:bg-black/10">
+            <div
+              className={featureThemeClassName('networkAmendmentPathVisualizationContrastBadge')}
+            >
               <ScrollText className="h-3.5 w-3.5" />
               {nodeState === 'approved'
                 ? t('features.amendments.process.stepApproved')
@@ -240,7 +243,7 @@ export function AmendmentPathVisualization({
         eventId: segment.eventId,
         label: (
           <div className="space-y-3">
-            <div className="text-[11px] font-semibold tracking-[0.18em] uppercase opacity-75">
+            <div className={featureThemeClassName('networkAmendmentPathVisualizationThemedText')}>
               {t('features.amendments.process.eventNode')}
             </div>
             <div className="text-sm font-semibold">
@@ -325,7 +328,9 @@ export function AmendmentPathVisualization({
                 <Button
                   type="button"
                   variant="ghost"
-                  className="h-auto w-full items-start justify-between p-0 text-left whitespace-normal hover:bg-transparent"
+                  className={featureThemeClassName(
+                    'networkAmendmentPathVisualizationContrastPanel'
+                  )}
                   aria-label={t('features.amendments.process.pathVisualization')}
                 >
                   <div>

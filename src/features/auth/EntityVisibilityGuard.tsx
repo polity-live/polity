@@ -1,13 +1,7 @@
 import type { ReactNode } from 'react';
-import { Navigate } from '@tanstack/react-router';
-import { useAuth } from '@/providers/auth-provider';
-import { AccessDenied } from '@/features/auth/ui/AccessDenied';
-import {
-  resolveRouteVisibilityAccess,
-  type RouteVisibilityInput,
-} from '@/features/auth/logic/routeVisibilityAccess';
-import { GlobalLoadingAnimation } from '@/features/shared/ui/feedback';
-import { NotFound } from '@/features/shared/ui/feedback';
+import type { RouteVisibilityInput } from '@/features/auth/logic/routeVisibilityAccess';
+import { useEntityVisibilityGuardController } from './hooks/useEntityVisibilityGuardController';
+import { EntityVisibilityGuardView } from './EntityVisibilityGuardView';
 
 interface EntityVisibilityGuardProps {
   children: ReactNode;
@@ -26,25 +20,17 @@ export function EntityVisibilityGuard({
   visibilities,
   canAccessPrivate = false,
 }: EntityVisibilityGuardProps) {
-  const { user } = useAuth();
-
-  if (isLoading) {
-    return <GlobalLoadingAnimation connectionStatus="connecting" />;
-  }
-
-  if (hasError) {
-    return <AccessDenied />;
-  }
-
-  if (!entityExists) {
-    return <NotFound />;
-  }
-
-  const decision = resolveRouteVisibilityAccess(visibilities, !!user, canAccessPrivate);
-
-  if (!decision.allowed) {
-    return <Navigate to="/unauthorized" search={{ reason: decision.reason }} replace />;
-  }
-
-  return <>{children}</>;
+  return (
+    <EntityVisibilityGuardView
+      guard={useEntityVisibilityGuardController({
+        entityExists,
+        hasError,
+        isLoading,
+        visibilities,
+        canAccessPrivate,
+      })}
+    >
+      {children}
+    </EntityVisibilityGuardView>
+  );
 }

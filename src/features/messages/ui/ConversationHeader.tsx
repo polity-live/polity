@@ -1,4 +1,5 @@
 import { FormControlInput } from '@/features/shared/ui/form';
+import { StatusDotIndicator } from '@/features/shared/ui/status';
 import { useEffect, useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Button } from '@/features/shared/ui/ui/button';
@@ -75,7 +76,10 @@ export function ConversationHeader({
         </AvatarFallback>
       </Avatar>
       {isOnline && !display.isCollective && (
-        <span className="border-background absolute -right-0.5 -bottom-0.5 block h-3 w-3 rounded-full border-2 bg-green-500" />
+        <StatusDotIndicator
+          tone="success"
+          className="absolute -right-0.5 -bottom-0.5 h-3 w-3 border-2"
+        />
       )}
     </div>
   );
@@ -174,7 +178,7 @@ export function ConversationHeader({
   );
 
   return (
-    <CardHeader className="flex-shrink-0 flex-row items-center justify-between space-y-0 border-b">
+    <CardHeader separator className="flex-shrink-0 flex-row items-center justify-between space-y-0">
       <div className="flex items-center">
         <Button variant="ghost" size="icon" className="mr-2 md:hidden" onClick={onBack}>
           <ArrowLeft className="h-4 w-4" />

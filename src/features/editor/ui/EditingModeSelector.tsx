@@ -1,5 +1,7 @@
 'use client';
 
+import { cn } from '@/features/shared/utils/utils';
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
@@ -26,13 +28,13 @@ const modes = [
     value: 'suggest_event' as const,
     label: translateText('generated.inline.0090_event_suggesting_6e3bb22b'),
     icon: MessageSquare,
-    color: 'bg-purple-500',
+    color: featureThemeClassName('agendaAgendaVoteSectionAccentBackground'),
   },
   {
     value: 'vote_event' as const,
     label: translateText('generated.inline.0091_event_voting_4b62fa3e'),
     icon: Vote,
-    color: 'bg-orange-500',
+    color: featureThemeClassName('agendaAgendaVoteSectionWarningBackground'),
   },
 ];
 
@@ -71,7 +73,11 @@ export function EditingModeSelector({ amendmentId, currentMode }: EditingModeSel
             >
               <div className="flex w-full items-start gap-3">
                 <div
-                  className={`mt-0.5 rounded p-1 text-white ${mode.color} ${isActive ? 'ring-2 ring-offset-2' : ''}`}
+                  className={cn(
+                    featureThemeClassName('editorEditingModeSelectorContrastText'),
+                    mode.color,
+                    isActive && featureThemeClassName('editorEditingModeSelectorThemedRing')
+                  )}
                 >
                   <ModeIcon className="h-3 w-3" />
                 </div>
@@ -79,7 +85,7 @@ export function EditingModeSelector({ amendmentId, currentMode }: EditingModeSel
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium">{mode.label}</span>
                     {isActive && (
-                      <BadgeControl variant="secondary" className="text-xs">
+                      <BadgeControl variant="secondary" size="xs">
                         {t('features.amendments.modeSelector.active')}
                       </BadgeControl>
                     )}

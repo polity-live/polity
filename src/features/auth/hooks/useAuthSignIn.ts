@@ -4,7 +4,7 @@
  */
 
 import { useState, useCallback } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { createClient } from '@/lib/supabase/client';
 import { useAuthStore } from '../auth';
 import { useTranslation } from '@/features/shared/hooks/use-translation';

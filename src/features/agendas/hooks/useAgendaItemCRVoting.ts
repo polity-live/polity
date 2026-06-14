@@ -1,5 +1,5 @@
 import { useMemo, useCallback } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { useAgendaItemCRTimeline } from '@/zero/agendas/useAgendaState';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useVoteActions } from '@/zero/votes/useVoteActions';

@@ -1,5 +1,4 @@
-import { FormControlLabel } from '@/features/shared/ui/form';
-import { Button } from '@/features/shared/ui/ui/button';
+import { SegmentedChoiceField } from '@/features/shared/ui/form';
 import { ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
@@ -14,28 +13,24 @@ export function DirectionInput({ value, onChange }: DirectionInputProps) {
   const { t } = useTranslation();
 
   return (
-    <div className="space-y-2">
-      <FormControlLabel>{t('pages.create.payment.direction')}</FormControlLabel>
-      <div className="flex gap-2">
-        <Button
-          type="button"
-          variant={value === 'income' ? 'default' : 'outline'}
-          className={`flex-1 gap-2 ${value === 'income' ? 'bg-green-600 hover:bg-green-700' : ''}`}
-          onClick={() => onChange('income')}
-        >
-          <ArrowDownLeft className="h-4 w-4" />
-          {t('pages.create.payment.income')}
-        </Button>
-        <Button
-          type="button"
-          variant={value === 'expense' ? 'default' : 'outline'}
-          className={`flex-1 gap-2 ${value === 'expense' ? 'bg-red-600 hover:bg-red-700' : ''}`}
-          onClick={() => onChange('expense')}
-        >
-          <ArrowUpRight className="h-4 w-4" />
-          {t('pages.create.payment.expense')}
-        </Button>
-      </div>
-    </div>
+    <SegmentedChoiceField
+      label={t('pages.create.payment.direction')}
+      value={value}
+      onValueChange={onChange}
+      options={[
+        {
+          value: 'income',
+          label: t('pages.create.payment.income'),
+          icon: ArrowDownLeft,
+          tone: 'success',
+        },
+        {
+          value: 'expense',
+          label: t('pages.create.payment.expense'),
+          icon: ArrowUpRight,
+          tone: 'destructive',
+        },
+      ]}
+    />
   );
 }

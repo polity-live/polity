@@ -1,15 +1,12 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import type { ReactNode } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Panel } from '@/features/network/ui/NetworkFlowBase';
-import {
-  RightFilters,
-  RIGHT_TYPES,
-  RIGHT_GRADIENTS,
-  getRightLabel,
-} from '@/features/network/ui/RightFilters';
+import { RIGHT_GRADIENTS, RIGHT_TYPES, getRightLabel } from '@/features/shared/ui/status';
+import { RightFilters } from '@/features/network/ui/RightFilters';
 import { NETWORK_CONNECTION_DIRECTION_COLORS } from '@/features/network/logic/networkEdgeHelpers';
 import { cn } from '@/features/shared/utils/utils';
 import {
@@ -35,15 +32,11 @@ export interface NetworkRelationshipStatusFilter {
 }
 
 export const NETWORK_FILTER_ACTIVE_CLASS_NAMES = {
-  neutral:
-    'border-slate-200 bg-slate-100 text-slate-900 hover:bg-slate-200 hover:text-slate-950 dark:border-white/70 dark:bg-white/10 dark:text-white dark:hover:bg-white/15 dark:hover:text-white',
-  green:
-    'border-emerald-200 bg-emerald-100 text-emerald-900 hover:bg-emerald-200 hover:text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-100 dark:hover:bg-emerald-900 dark:hover:text-emerald-50',
-  blue: 'border-blue-200 bg-blue-100 text-blue-900 hover:bg-blue-200 hover:text-blue-950 dark:border-blue-800 dark:bg-blue-950/70 dark:text-blue-100 dark:hover:bg-blue-900 dark:hover:text-blue-50',
-  orange:
-    'border-amber-200 bg-amber-100 text-amber-900 hover:bg-amber-200 hover:text-amber-950 dark:border-amber-800 dark:bg-amber-950/70 dark:text-amber-100 dark:hover:bg-amber-900 dark:hover:text-amber-50',
-  purple:
-    'border-violet-200 bg-violet-100 text-violet-900 hover:bg-violet-200 hover:text-violet-950 dark:border-violet-800 dark:bg-violet-950/70 dark:text-violet-100 dark:hover:bg-violet-900 dark:hover:text-violet-50',
+  neutral: featureThemeClassName('networkNetworkControlPanelNeutralContrastBadge'),
+  green: featureThemeClassName('networkNetworkControlPanelSuccessBadge'),
+  blue: featureThemeClassName('networkNetworkControlPanelInfoBadge'),
+  orange: featureThemeClassName('networkNetworkControlPanelWarningBadge'),
+  purple: featureThemeClassName('networkNetworkControlPanelAccentBadge'),
 } as const;
 
 interface NetworkControlPanelProps {
@@ -158,7 +151,7 @@ export function NetworkControlPanel({
     }
 
     return (
-      <div className="border-border/70 bg-background/95 dark:bg-card/95 rounded-lg border p-2 shadow-sm">
+      <div className={featureThemeClassName('networkNetworkControlPanelThemedSurface')}>
         <div className="flex shrink-0 flex-wrap gap-2">
           {filters.map(filter => (
             <Button
@@ -173,7 +166,7 @@ export function NetworkControlPanel({
                   ? (filter.activeClassName ??
                       'border-primary bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground')
                   : (filter.inactiveClassName ??
-                      'border-border bg-background/90 text-foreground hover:bg-accent hover:text-accent-foreground dark:bg-card/90 dark:text-foreground'),
+                      featureThemeClassName('networkNetworkControlPanelThemedBadge')),
                 filter.disabled && 'pointer-events-none opacity-50'
               )}
             >
@@ -188,7 +181,7 @@ export function NetworkControlPanel({
   return (
     <Panel
       position="top-left"
-      className="border-border/80 bg-background/95 dark:bg-background/95 flex max-h-[calc(100%-1rem)] w-[calc(100%-1rem)] max-w-sm flex-col overflow-hidden rounded border p-4 shadow-lg supports-[backdrop-filter]:backdrop-blur-sm"
+      className={featureThemeClassName('networkNetworkControlPanelThemedSurfaceAlpha')}
     >
       <div className="mb-2 flex shrink-0 items-center justify-between">
         <h2 className="text-lg font-bold">{title}</h2>
@@ -205,7 +198,9 @@ export function NetworkControlPanel({
       {!panelCollapsed && (
         <div className="flex min-h-0 flex-1 flex-col">
           {description ? (
-            <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">{description}</p>
+            <p className={featureThemeClassName('networkNetworkControlPanelNeutralText')}>
+              {description}
+            </p>
           ) : null}
 
           <div className="space-y-3">
@@ -235,15 +230,15 @@ export function NetworkControlPanel({
           ) : null}
 
           {filterRight ? (
-            <div className="mt-3 shrink-0 rounded-md bg-blue-50 p-2 text-sm dark:bg-blue-950/20">
+            <div className={featureThemeClassName('networkNetworkControlPanelInfoPanel')}>
               <span className="font-medium">{filteredByPrefix}:</span>{' '}
-              <span className="text-blue-700 dark:text-blue-300">
+              <span className={featureThemeClassName('networkNetworkControlPanelInfoText')}>
                 {getRightLabel(filterRight, (key, fallback) => t(key) || fallback || key)}
               </span>
             </div>
           ) : null}
 
-          <div className="border-border/70 bg-background/95 dark:bg-card/95 mt-3 flex min-h-0 flex-1 flex-col rounded-lg border p-3 shadow-sm">
+          <div className={featureThemeClassName('networkNetworkControlPanelThemedSurfaceBeta')}>
             <Button
               type="button"
               variant="ghost"
@@ -273,17 +268,31 @@ export function NetworkControlPanel({
 
                 {showGroupTypeLegend ? (
                   <>
-                    <hr className="my-1 border-gray-200 dark:border-gray-700" />
+                    <hr
+                      className={featureThemeClassName('networkUseGroupNetworkFlowNeutralBorder')}
+                    />
                     <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 rounded border-2 border-solid border-gray-400 bg-gray-100"></div>
+                      <div
+                        className={featureThemeClassName(
+                          'networkNetworkControlPanelNeutralSurface'
+                        )}
+                      ></div>
                       <span>{baseGroupLabel}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 rounded border-2 border-dashed border-gray-400 bg-gray-100"></div>
+                      <div
+                        className={featureThemeClassName(
+                          'networkNetworkControlPanelNeutralSurfaceAlpha'
+                        )}
+                      ></div>
                       <span>{hierarchicalGroupLabel}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 rounded border-2 border-[#fbbf24] bg-[#fff8e1]"></div>
+                      <div
+                        className={featureThemeClassName(
+                          'networkNetworkControlPanelThemedSurfaceGamma'
+                        )}
+                      ></div>
                       <span>{siblingGroupLabel}</span>
                     </div>
                   </>
@@ -291,7 +300,9 @@ export function NetworkControlPanel({
 
                 {showConnectionDirectionLegend ? (
                   <>
-                    <hr className="my-1 border-gray-200 dark:border-gray-700" />
+                    <hr
+                      className={featureThemeClassName('networkUseGroupNetworkFlowNeutralBorder')}
+                    />
                     <div className="space-y-2">
                       <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                         {connectionDirectionLegendTitle}
@@ -327,7 +338,9 @@ export function NetworkControlPanel({
                 relationshipStatusFilters.length > 0 &&
                 relationshipStatusFiltersLabel ? (
                   <>
-                    <hr className="my-1 border-gray-200 dark:border-gray-700" />
+                    <hr
+                      className={featureThemeClassName('networkUseGroupNetworkFlowNeutralBorder')}
+                    />
                     <div className="space-y-2">
                       {relationshipStatusFiltersLabel ? (
                         <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
@@ -340,7 +353,9 @@ export function NetworkControlPanel({
 
                 {showRightsLegend ? (
                   <>
-                    <hr className="my-1 border-gray-200 dark:border-gray-700" />
+                    <hr
+                      className={featureThemeClassName('networkUseGroupNetworkFlowNeutralBorder')}
+                    />
                     {RIGHT_TYPES.map(right => (
                       <div key={right} className="flex items-center gap-2">
                         <div className={`h-3 w-6 rounded-sm ${RIGHT_GRADIENTS[right]}`}></div>

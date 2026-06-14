@@ -1,14 +1,30 @@
 import { test, expect } from '../fixtures/test-base';
 test.describe('Create Feature', () => {
   test('Guided Mode - Create Amendment', async ({ authenticatedPage: page }) => {
+    const mutationErrors: string[] = [];
+    const permissionErrorPattern = /Permission denied|documents\.updateContent/i;
+
+    page.on('console', message => {
+      const text = message.text();
+      if (permissionErrorPattern.test(text)) {
+        mutationErrors.push(text);
+      }
+    });
+    page.on('pageerror', error => {
+      const text = error.message;
+      if (permissionErrorPattern.test(text)) {
+        mutationErrors.push(text);
+      }
+    });
+
     await page.goto('/create/amendment');
 
     // Step 0: Title + Subtitle
-    const titleInput = page.locator('#amendment-title');
-    await expect(titleInput).toBeVisible();
+    const titleInput = page.getByRole('textbox', { name: /amendment title/i });
+    await expect(titleInput).toBeVisible({ timeout: 15000 });
     await titleInput.fill('Climate Action Amendment 2024');
 
-    const subtitleInput = page.locator('#amendment-subtitle');
+    const subtitleInput = page.getByRole('textbox', { name: /subtitle/i });
     if (await subtitleInput.isVisible()) {
       await subtitleInput.fill('An amendment to address climate change policies');
     }
@@ -27,14 +43,14 @@ test.describe('Create Feature', () => {
       }
     }
 
-    // If we reached review, try to create
-    const createButton = page.getByRole('button', { name: /create.*amendment/i });
-    if (await createButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await createButton.click();
-      await page.waitForURL(/\/amendment\//, { timeout: 10000 }).catch(() => {});
-    }
+    // The review step should expose the final create action.
+    const createButton = page.locator('main').getByRole('button', { name: /^create$/i });
+    await expect(createButton).toBeVisible({ timeout: 5000 });
+    await createButton.click();
+    await page.waitForURL(/\/amendment\/[^/]+/, { timeout: 10000 });
+    await page.waitForTimeout(1000);
 
-    // Verify we at least loaded the form correctly
-    expect(page.url()).toContain('/create/amendment');
+    expect(mutationErrors).toEqual([]);
+    expect(page.url()).toMatch(/\/amendment\/[^/]+/);
   });
 });

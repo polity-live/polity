@@ -1,6 +1,8 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import type { ReactNode } from 'react';
 
 import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
+import { FormControlLabel } from '@/features/shared/ui/form';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
   Dialog,
@@ -67,10 +69,8 @@ export function TransferAgendaItemDialogView({
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <label className="text-muted-foreground text-sm font-medium">
-              {t('features.events.agenda.currentEvent')}
-            </label>
-            <Card className="bg-muted/50">
+            <FormControlLabel>{t('features.events.agenda.currentEvent')}</FormControlLabel>
+            <Card surface="muted">
               <CardContent className="flex items-center gap-3 p-4">
                 <Calendar className="text-muted-foreground h-5 w-5" />
                 <div>
@@ -86,16 +86,14 @@ export function TransferAgendaItemDialogView({
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">
-              {t('features.events.agenda.destinationEvent')}
-            </label>
+            <FormControlLabel>{t('features.events.agenda.destinationEvent')}</FormControlLabel>
             {participationsLoading ? (
               <div className="flex items-center justify-center p-8">
                 <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
               </div>
             ) : eventsWithPermission.length === 0 ? (
-              <Card className="bg-muted/50">
-                <CardContent className="text-muted-foreground p-6 text-center">
+              <Card surface="muted">
+                <CardContent tone="muted" align="center" className="p-6">
                   <p>{t('features.events.agenda.noEventsWithPermission')}</p>
                 </CardContent>
               </Card>
@@ -115,9 +113,11 @@ export function TransferAgendaItemDialogView({
           </div>
 
           {selectedEvent && (
-            <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/50">
-              <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-600 dark:text-amber-400" />
-              <p className="text-sm text-amber-800 dark:text-amber-200">
+            <div className={featureThemeClassName('agendaTransferAgendaItemDialogWarningSurface')}>
+              <AlertTriangle
+                className={featureThemeClassName('agendaTransferAgendaItemDialogWarningIcon')}
+              />
+              <p className={featureThemeClassName('agendaTransferAgendaItemDialogWarningText')}>
                 {t('features.events.agenda.transferWarning')}
               </p>
             </div>

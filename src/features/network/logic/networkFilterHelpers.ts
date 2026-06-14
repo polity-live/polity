@@ -1,3 +1,4 @@
+import { featureThemeValue } from '@/features/shared/theme';
 import type { Edge, Node } from '@xyflow/react';
 import type {
   NetworkConnectionDirection,
@@ -155,7 +156,10 @@ function applyVisibleRights(edge: Edge, visibleRights: string[]): Edge | null {
     style: {
       ...edge.style,
       stroke: getVisibleRelationshipStrokeColor({
-        fallbackColor: typeof edge.style?.stroke === 'string' ? edge.style.stroke : '#64748b',
+        fallbackColor:
+          typeof edge.style?.stroke === 'string'
+            ? edge.style.stroke
+            : featureThemeValue('networkNetworkFilterHelpersNeutralColor'),
         connectionDirection: visibleConnectionDirection,
         rightEdgeDirections: visibleRightEdgeDirections,
       }),

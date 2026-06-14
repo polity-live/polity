@@ -7,7 +7,7 @@
  */
 
 import { useCallback } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import type { Value } from 'platejs';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';

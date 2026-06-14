@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
-import type { NavigationView, NavigationType } from '@/features/navigation/types/navigation.types.tsx';
+import type {
+  NavigationView,
+  NavigationType,
+} from '@/features/navigation/types/navigation.types.tsx';
 
 interface NavigationState {
   navigationType: NavigationType;

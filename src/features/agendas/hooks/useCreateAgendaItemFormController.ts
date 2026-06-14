@@ -6,7 +6,7 @@ import { useElectionActions } from '@/zero/elections/useElectionActions';
 import { useVoteActions } from '@/zero/votes/useVoteActions';
 import { useAllEvents, useAllAmendments, useRolesWithGroups } from '@/zero/events/useEventState';
 import { useAuth } from '@/providers/auth-provider';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export interface CreateAgendaItemFormData {

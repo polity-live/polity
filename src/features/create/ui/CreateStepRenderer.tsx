@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { useState, type FocusEvent, type ReactNode } from 'react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { FieldGrid, FieldList, TextField, TypeaheadField } from '@/features/shared/ui/form';
@@ -30,7 +31,7 @@ function getHintToneClass(isInvalid: boolean, isValid: boolean): string {
   }
 
   if (isValid) {
-    return 'text-emerald-600 dark:text-emerald-400';
+    return featureThemeClassName('authNameStepSuccessText');
   }
 
   return 'text-muted-foreground';
@@ -129,8 +130,7 @@ function CreateTextDescriptorField({
       descriptionClassName={cn('text-xs', getHintToneClass(invalid, validationState.isValid))}
       errorClassName="text-xs"
       className={cn(
-        validationState.isValid &&
-          'focus-visible:ring-emerald-500/20 dark:focus-visible:ring-emerald-500/30',
+        validationState.isValid && featureThemeClassName('createCreateFieldsSuccessRing'),
         field.inputClassName
       )}
     />
@@ -153,8 +153,7 @@ function CreateTypeaheadDescriptorField({
   });
   const invalid = field.invalid ?? validationState.isInvalid;
   const className = cn(
-    validationState.isValid &&
-      '[&_[data-slot=input]]:border-emerald-500 [&_[data-slot=input]]:focus-visible:ring-emerald-500/20 dark:[&_[data-slot=input]]:border-emerald-400 dark:[&_[data-slot=input]]:focus-visible:ring-emerald-500/30 [&_[data-slot=typeahead-selected]]:border-emerald-500 dark:[&_[data-slot=typeahead-selected]]:border-emerald-400',
+    validationState.isValid && featureThemeClassName('createCreateFieldsSuccessBorderAlpha'),
     field.inputClassName
   );
 

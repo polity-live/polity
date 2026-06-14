@@ -1,0 +1,135 @@
+.sharedEdgeOverlay {
+  position: absolute;
+  pointer-events: all;
+}
+
+.sharedEdgeLabel {
+  position: absolute;
+  padding: 2px 5px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 4px;
+  background: hsl(var(--background));
+  font-size: 12px;
+  font-weight: 700;
+  pointer-events: all;
+}
+
+.sharedEdgeLabelButton {
+  position: absolute;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  pointer-events: all;
+}
+
+.sharedEdgeLabelButton:focus-visible {
+  outline: 2px solid rgb(99 102 241);
+  outline-offset: 3px;
+}
+
+.sharedEdgeBendPointContainer {
+  position: absolute;
+  pointer-events: all;
+}
+
+.sharedEdgeBendPointEventContainer {
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sharedEdgeBendPointEventContainer.is-active {
+  width: 500px;
+  height: 500px;
+}
+
+.sharedEdgePositionHandle,
+.sharedEdgeBendPointHandle {
+  display: block;
+  padding: 0;
+  border-radius: 9999px;
+  cursor: grab;
+}
+
+.sharedEdgePositionHandle {
+  width: 10px;
+  height: 10px;
+  border: 1px solid #ddd41d;
+  background: #fff319;
+}
+
+.sharedEdgeBendPointHandle {
+  width: 12px;
+  height: 12px;
+  border: 1px solid rgb(99 102 241 / 0.55);
+  background: rgb(255 255 255 / 0.95);
+  box-shadow: 0 0 0 2px rgb(99 102 241 / 0.12);
+}
+
+.sharedEdgePositionHandle:hover {
+  box-shadow: 0 0 6px 2px rgb(0 0 0 / 0.08);
+}
+
+.sharedEdgeBendPointHandle:hover {
+  box-shadow: 0 0 0 3px rgb(99 102 241 / 0.2);
+}
+
+.sharedEdgePositionHandle:focus-visible,
+.sharedEdgeBendPointHandle:focus-visible {
+  outline: 2px solid rgb(99 102 241);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgb(99 102 241 / 0.18);
+}
+
+.sharedEdgePositionHandle.is-active,
+.sharedEdgeBendPointHandle.is-dragging,
+.sharedEdgeBendPointHandle:active,
+.sharedEdgeDragPath.is-dragging {
+  cursor: grabbing;
+}
+
+.sharedEdgeDragPath {
+  cursor: grab;
+}
+
+.sharedEdgeBendPointContainer:hover .sharedEdgeBendPointDeleteButton,
+.sharedEdgeBendPointDeleteButton:focus-visible {
+  opacity: 1;
+  transform: translate(9px, -9px) scale(1);
+}
+
+.sharedEdgeBendPointDeleteButton {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid rgb(239 68 68 / 0.45);
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 0.98);
+  color: rgb(220 38 38);
+  box-shadow: 0 2px 8px rgb(15 23 42 / 0.15);
+  opacity: 0;
+  transform: translate(6px, -6px) scale(0.92);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease,
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+.sharedEdgeBendPointDeleteButton:hover,
+.sharedEdgeBendPointDeleteButton:focus-visible {
+  background: rgb(254 242 242);
+  color: rgb(185 28 28);
+  outline: 2px solid rgb(239 68 68 / 0.8);
+  outline-offset: 2px;
+}

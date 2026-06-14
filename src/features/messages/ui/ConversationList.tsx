@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { FormControlInput } from '@/features/shared/ui/form';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useRef } from 'react';
@@ -121,7 +122,7 @@ export function ConversationList({
                       gradient && 'text-foreground hover:text-foreground border-transparent',
                       gradient &&
                         (conversationFilter === filter
-                          ? 'opacity-100 shadow-sm ring-1 ring-black/10 dark:ring-white/15'
+                          ? featureThemeClassName('messageConversationListContrastRing')
                           : 'opacity-70 hover:opacity-100')
                     )}
                     onClick={() => onConversationFilterChange(filter)}

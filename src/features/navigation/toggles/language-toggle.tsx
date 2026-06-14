@@ -1,24 +1,6 @@
-import { Button } from '@/features/shared/ui/ui/button.tsx';
-import { Popover, PopoverContent, PopoverTrigger } from '@/features/shared/ui/ui/popover.tsx';
-import {
-  DropdownMenuItem,
-  DropdownMenuPortal,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-} from '@/features/shared/ui/ui/dropdown-menu.tsx';
-import { cn } from '@/features/shared/utils/utils.ts';
-import { toast } from 'sonner';
-import {
-  useTranslation,
-  translate as translateText,
-} from '@/features/shared/hooks/use-translation';
-import type { Language } from '@/features/shared/global-state/language.store.tsx';
+import { useLanguageToggleController } from '@/features/navigation/hooks/useLanguageToggleController';
 import type { Size } from '@/features/navigation/types/navigation.types.tsx';
-import { useState } from 'react';
-import enTranslation from '@/i18n/locales/en/enTranslation.ts';
-import deTranslation from '@/i18n/locales/de/deTranslation.ts';
+import { LanguageToggleView } from './LanguageToggleView';
 
 export function LanguageToggle({
   size = 'default',
@@ -33,120 +15,14 @@ export function LanguageToggle({
   sideOffset?: number;
   variant?: 'popover' | 'dropdown';
 }) {
-  const [isLanguagePopoverOpen, setIsLanguagePopoverOpen] = useState(false);
-  const { t, language, changeLanguage } = useTranslation();
-
-  // Helper function to render the language display
-  const renderLanguageDisplay = (lang: Language) => {
-    return (
-      <span className="flex items-center gap-2">
-        <span className={cn('text-base', size === 'small' && 'text-sm')}>
-          {lang === 'en' ? '🇺🇸' : '🇩🇪'}
-        </span>
-        <span className={cn('text-sm', size === 'small' && 'text-xs')}>
-          {lang === 'en'
-            ? t('navigation.toggles.language.english')
-            : t('navigation.toggles.language.german')}
-        </span>
-      </span>
-    );
-  };
-
-  // Custom language setter with toast notification and i18n integration
-  const handleLanguageChange = async (lang: Language) => {
-    // Get the translations for the NEW language directly
-    const translations = lang === 'en' ? enTranslation : deTranslation;
-    const successMessage = translations.navigation.toggles.language.changeSuccess;
-    const description = translations.navigation.toggles.language.changeDescription;
-
-    // Change the language using our custom hook
-    await changeLanguage(lang);
-
-    // Show notification in the NEW language
-    toast.success(successMessage, {
-      description: description,
-      icon: lang === 'en' ? '🇺🇸' : '🇩🇪',
-    });
-  };
-
-  // If dropdown variant is selected, return the dropdown submenu version
-  if (variant === 'dropdown') {
-    return (
-      <DropdownMenuSub>
-        <DropdownMenuSubTrigger>
-          <p>{renderLanguageDisplay(language)}</p>
-        </DropdownMenuSubTrigger>
-        <DropdownMenuPortal>
-          <DropdownMenuSubContent>
-            <DropdownMenuItem onClick={() => handleLanguageChange('en')}>
-              {renderLanguageDisplay('en')}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleLanguageChange('de')}>
-              {renderLanguageDisplay('de')}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem disabled>
-              {t('navigation.toggles.language.moreLanguages')}
-            </DropdownMenuItem>
-          </DropdownMenuSubContent>
-        </DropdownMenuPortal>
-      </DropdownMenuSub>
-    );
-  }
-
-  // Default popover variant
   return (
-    <Popover open={isLanguagePopoverOpen} onOpenChange={setIsLanguagePopoverOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className={cn('h-8 w-8', size === 'small' && 'h-6 w-6', className)}
-          title={t('navigation.toggles.language.title')}
-          onMouseEnter={() => setIsLanguagePopoverOpen(true)}
-        >
-          <span className={cn('text-sm', size === 'small' && 'text-xs')}>
-            {language === 'en' ? '🇺🇸' : '🇩🇪'}
-          </span>
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent
-        className="z-40 w-auto p-1"
-        side={side}
-        sideOffset={sideOffset}
-        onMouseLeave={() => setIsLanguagePopoverOpen(false)}
-      >
-        <div className="flex flex-col gap-1">
-          <Button
-            variant={language === 'en' ? 'default' : 'ghost'}
-            size="sm"
-            className="h-8 justify-start gap-2"
-            onClick={() => {
-              handleLanguageChange('en');
-              setIsLanguagePopoverOpen(false);
-            }}
-          >
-            <span className="text-base">🇺🇸</span>
-            <span className="text-sm">
-              {translateText('generated.inline.0755_english_649df08a')}
-            </span>
-          </Button>
-          <Button
-            variant={language === 'de' ? 'default' : 'ghost'}
-            size="sm"
-            className="h-8 justify-start gap-2"
-            onClick={() => {
-              handleLanguageChange('de');
-              setIsLanguagePopoverOpen(false);
-            }}
-          >
-            <span className="text-base">🇩🇪</span>
-            <span className="text-sm">
-              {translateText('generated.inline.0756_deutsch_a6a77092')}
-            </span>
-          </Button>
-        </div>
-      </PopoverContent>
-    </Popover>
+    <LanguageToggleView
+      size={size}
+      className={className}
+      side={side}
+      sideOffset={sideOffset}
+      variant={variant}
+      {...useLanguageToggleController()}
+    />
   );
 }

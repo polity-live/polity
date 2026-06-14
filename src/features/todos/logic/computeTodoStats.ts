@@ -17,20 +17,19 @@ export interface TodoStatusCounts {
  */
 export function computeTodoStats(
   todos: Todo[] | undefined,
-  userId: string | undefined,
+  userId: string | undefined
 ): TodoStatusCounts {
   if (!todos) return { all: 0, pending: 0, in_progress: 0, completed: 0, cancelled: 0 };
 
   const userTodos = todos.filter(
-    (todo) =>
-      todo.creator?.id === userId || todo.assignments?.some((a) => a.user?.id === userId),
+    todo => todo.creator?.id === userId || todo.assignments?.some(a => a.user?.id === userId)
   );
 
   return {
     all: userTodos.length,
-    pending: userTodos.filter((t) => t.status === 'pending').length,
-    in_progress: userTodos.filter((t) => t.status === 'in_progress').length,
-    completed: userTodos.filter((t) => t.status === 'completed').length,
-    cancelled: userTodos.filter((t) => t.status === 'cancelled').length,
+    pending: userTodos.filter(t => t.status === 'pending').length,
+    in_progress: userTodos.filter(t => t.status === 'in_progress').length,
+    completed: userTodos.filter(t => t.status === 'completed').length,
+    cancelled: userTodos.filter(t => t.status === 'cancelled').length,
   };
 }

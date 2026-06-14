@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import type { Value } from 'platejs';
 import { useNavigate } from '@tanstack/react-router';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { useUserMutations } from './useUserMutations';
 import { useCommonState } from '@/zero/common/useCommonState';
 import type { UserProfile } from '../types/user.types';

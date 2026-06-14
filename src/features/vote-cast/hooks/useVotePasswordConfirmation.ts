@@ -8,7 +8,7 @@
 
 import { useState, useCallback } from 'react';
 import { useZero } from '@rocicorp/zero/react';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { mutators } from '@/zero/mutators';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';

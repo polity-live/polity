@@ -1,8 +1,15 @@
 // @vitest-environment jsdom
 
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { InviteDialog } from '@/features/amendments/collaborators/ui/InviteDialog';
+
+vi.mock('@tanstack/react-router', () => ({
+  Link: ({ children, ...props }: { children: ReactNode; [key: string]: unknown }) => (
+    <a {...props}>{children}</a>
+  ),
+}));
 
 vi.mock('@/features/amendments/collaborators/hooks/useUserSearch', () => ({
   useUserSearch: () => ({
@@ -41,11 +48,11 @@ describe('InviteDialog', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Invite Collaborator/i }));
     fireEvent.focus(screen.getByPlaceholderText('Search by name, handle, or email...'));
-    fireEvent.mouseDown(screen.getByText('Alice Example'));
+    fireEvent.click(screen.getByRole('button', { name: /Alice Example/i }));
 
     expect(screen.getByText('@alice')).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: /Invite \(1\)/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Invite\s*\(1\)/i }));
 
     await waitFor(() =>
       expect(onInviteUsers).toHaveBeenCalledWith(['user-1'], 'amendment-1', 'role-1')

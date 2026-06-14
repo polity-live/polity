@@ -4,7 +4,7 @@
  */
 
 import { useState, useCallback } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { useAuthStore } from '../auth';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
@@ -85,12 +85,13 @@ export function useAuthLogin(options: UseAuthLoginOptions = {}): UseAuthLoginRet
         return { success: true };
       } catch (error) {
         console.error('❌ Magic link send flow failed:', error);
-        const errorMessage = error instanceof Error ? error.message : t('features.auth.errors.unexpectedError');
-        
+        const errorMessage =
+          error instanceof Error ? error.message : t('features.auth.errors.unexpectedError');
+
         if (onError && error instanceof Error) {
           await onError(email, error);
         }
-        
+
         toast.error(errorMessage);
         return { success: false, error: errorMessage };
       } finally {

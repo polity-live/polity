@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { ReactNode } from 'react';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import {
@@ -81,8 +82,7 @@ export function AgendaCard({
   const visualStatus = isActive ? 'active' : status;
   const cardClassName = cn(
     'cursor-pointer transition-all hover:shadow-md',
-    isActive &&
-      'before:animate-spin-slow relative overflow-hidden before:absolute before:inset-0 before:-z-10 before:rounded-lg before:bg-gradient-to-r before:from-green-500 before:via-emerald-500 before:to-green-500 before:p-[3px]',
+    isActive && featureThemeClassName('agendaAgendaCardSuccessGradientSurface'),
     className
   );
   const cardContent = (

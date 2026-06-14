@@ -2,7 +2,7 @@ import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItem
 import { useElectionState } from '@/zero/elections/useElectionState';
 import { useMemo } from 'react';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
-import { CreateTypeaheadField } from '../CreateFields';
+import { CreateTypeaheadField } from '@/features/shared/ui/form';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface ElectionSearchInputProps {

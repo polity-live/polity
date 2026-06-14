@@ -15,7 +15,7 @@ import {
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
 import type { NavigationType, ScreenType } from '@/features/navigation/types/navigation.types.tsx';
-import { useScreenStore } from '@/features/shared/global-state/screen.store.tsx';
+import { useIsMobileScreen } from '@/features/shared/hooks/useIsMobileScreen';
 
 export default function NavigationDemo({
   onScreenTypeChange,
@@ -25,7 +25,7 @@ export default function NavigationDemo({
   onPriorityChange?: (priority: NavigationType) => void;
 }) {
   const { t } = useTranslation();
-  const isMobile = useScreenStore(state => state.isMobileScreen);
+  const isMobile = useIsMobileScreen();
   const [screenType, setScreenType] = useState<ScreenType>('automatic');
   const [actualScreen, setActualScreen] = useState<'mobile' | 'desktop'>('desktop');
   const [priority, setPriority] = useState<NavigationType>('combined');

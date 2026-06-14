@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { stripeCreateCheckoutFn } from '@/server/stripe-create-checkout';
 import { stripeCancelSubscriptionFn } from '@/server/stripe-cancel-subscription';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';

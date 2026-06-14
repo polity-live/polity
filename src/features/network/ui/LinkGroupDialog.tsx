@@ -19,7 +19,7 @@ import {
 import { useGroupRoles, useGroupState } from '@/zero/groups/useGroupState';
 import { useGroupConnectionActions, useGroupConnectionState } from '@/zero/network';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import type {
   CanonicalMembershipMode,
   GroupRelationshipType,
@@ -656,7 +656,7 @@ export function LinkGroupDialog({
           />
         </div>
 
-        <DialogFooter className="border-t px-6 py-4">
+        <DialogFooter separator className="px-6 py-4">
           {preflight.isLoading ? (
             <div className="text-muted-foreground mr-auto text-sm">
               {translateText('generated.inline.0798_pr_fe_konflikte_f9c644cd')}

@@ -12,7 +12,7 @@ interface TodosHeaderProps {
 
 export function TodosHeader({ viewMode, setViewMode }: TodosHeaderProps) {
   const { t } = useTranslation();
-  
+
   return (
     <div className="mb-6 flex items-center justify-between">
       <div>

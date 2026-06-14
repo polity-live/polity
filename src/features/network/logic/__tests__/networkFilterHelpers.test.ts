@@ -1,3 +1,4 @@
+import { featureThemeValue } from '@/features/shared/theme';
 import { MarkerType, type Edge } from '@xyflow/react';
 import { describe, expect, it } from 'vitest';
 
@@ -11,16 +12,16 @@ function createRelationshipEdge(): Edge<EditableRightsLabelEdgeData> {
     target: 'group-b',
     type: 'rightsLabel',
     style: {
-      stroke: '#64748b',
+      stroke: featureThemeValue('networkNetworkFilterHelpersNeutralColor'),
       strokeWidth: 2,
     },
     markerStart: {
       type: MarkerType.ArrowClosed,
-      color: '#64748b',
+      color: featureThemeValue('networkNetworkFilterHelpersNeutralColor'),
     },
     markerEnd: {
       type: MarkerType.ArrowClosed,
-      color: '#64748b',
+      color: featureThemeValue('networkNetworkFilterHelpersNeutralColor'),
     },
     data: {
       rights: ['amendmentRight', 'rightToSpeak'],
@@ -44,7 +45,7 @@ describe('networkFilterHelpers', () => {
       new Set(['amendmentRight', 'rightToSpeak'])
     );
 
-    expect(edge?.style?.stroke).toBe('#7c3aed');
+    expect(edge?.style?.stroke).toBe(featureThemeValue('chartChartRendererAccentColor'));
     expect(edge?.animated).toBe(false);
     expect((edge?.data as EditableRightsLabelEdgeData | undefined)?.visibleFlowDirection).toBe(
       'bidirectional'
@@ -64,7 +65,7 @@ describe('networkFilterHelpers', () => {
     expect((edge?.data as EditableRightsLabelEdgeData | undefined)?.visibleRights).toEqual([
       'amendmentRight',
     ]);
-    expect(edge?.style?.stroke).toBe('#2563eb');
+    expect(edge?.style?.stroke).toBe(featureThemeValue('chartChartRendererInfoColor'));
     expect(edge?.animated).toBe(true);
     expect(edge?.style?.animationDirection).toBeUndefined();
   });
@@ -92,7 +93,7 @@ describe('networkFilterHelpers', () => {
     expect((edge?.data as EditableRightsLabelEdgeData | undefined)?.visibleRights).toEqual([
       'rightToSpeak',
     ]);
-    expect(edge?.style?.stroke).toBe('#d97706');
+    expect(edge?.style?.stroke).toBe(featureThemeValue('networkNetworkEdgeHelpersWarningColor'));
     expect(edge?.animated).toBe(true);
     expect(edge?.style?.animationDirection).toBe('reverse');
   });

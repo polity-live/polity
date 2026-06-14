@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { useState } from 'react';
 import { Button } from '@/features/shared/ui/ui/button';
@@ -7,7 +8,7 @@ import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Check, X, Minus } from 'lucide-react';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface VoteControlsProps {
@@ -155,7 +156,7 @@ export function VoteControls({
             onClick={() => handleVote('accept')}
             disabled={isVoting}
             variant="default"
-            className="flex-1 bg-green-600 hover:bg-green-700"
+            className={featureThemeClassName('voteVoteControlsSuccessBackground')}
           >
             <Check className="mr-2 h-4 w-4" />
             {t('features.amendments.voteControls.accept')}
@@ -180,7 +181,7 @@ export function VoteControls({
           </Button>
         </div>
       ) : (
-        <Card className="border-blue-500/50 bg-blue-500/5">
+        <Card surface="infoSoft">
           <CardContent className="py-3">
             <p className="text-sm">
               {t('features.amendments.voteControls.yourVote').replace(
@@ -204,14 +205,14 @@ export function VoteControls({
           <div>
             <div className="mb-1 flex items-center justify-between text-sm">
               <span className="flex items-center gap-2">
-                <Check className="h-3 w-3 text-green-600" />
+                <Check className={featureThemeClassName('timelineVoteTimelineCardSuccessIcon')} />
                 {t('features.amendments.voteControls.accept')}
               </span>
               <span className="font-semibold">{acceptVotes}</span>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+            <div className={featureThemeClassName('voteVoteControlsNeutralBackground')}>
               <div
-                className="h-full bg-green-600 transition-all"
+                className={featureThemeClassName('voteVoteControlsSuccessBackgroundAlpha')}
                 style={{
                   width:
                     totalCollaborators > 0 ? `${(acceptVotes / totalCollaborators) * 100}%` : '0%',
@@ -223,14 +224,14 @@ export function VoteControls({
           <div>
             <div className="mb-1 flex items-center justify-between text-sm">
               <span className="flex items-center gap-2">
-                <X className="h-3 w-3 text-red-600" />
+                <X className={featureThemeClassName('timelineVoteTimelineCardDangerIcon')} />
                 {t('features.amendments.voteControls.reject')}
               </span>
               <span className="font-semibold">{rejectVotes}</span>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+            <div className={featureThemeClassName('voteVoteControlsNeutralBackground')}>
               <div
-                className="h-full bg-red-600 transition-all"
+                className={featureThemeClassName('voteVoteControlsDangerBackground')}
                 style={{
                   width:
                     totalCollaborators > 0 ? `${(rejectVotes / totalCollaborators) * 100}%` : '0%',
@@ -242,14 +243,14 @@ export function VoteControls({
           <div>
             <div className="mb-1 flex items-center justify-between text-sm">
               <span className="flex items-center gap-2">
-                <Minus className="h-3 w-3 text-gray-600" />
+                <Minus className={featureThemeClassName('voteVoteControlsNeutralIcon')} />
                 {t('features.amendments.voteControls.abstain')}
               </span>
               <span className="font-semibold">{abstainVotes}</span>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+            <div className={featureThemeClassName('voteVoteControlsNeutralBackground')}>
               <div
-                className="h-full bg-gray-600 transition-all"
+                className={featureThemeClassName('voteVoteControlsNeutralBackgroundAlpha')}
                 style={{
                   width:
                     totalCollaborators > 0 ? `${(abstainVotes / totalCollaborators) * 100}%` : '0%',
@@ -285,10 +286,10 @@ export function VoteControls({
                     variant="outline"
                     className={`ml-1 ${
                       vote.vote === 'accept'
-                        ? 'border-green-600 text-green-600'
+                        ? featureThemeClassName('voteVoteControlsSuccessBorder')
                         : vote.vote === 'reject'
-                          ? 'border-red-600 text-red-600'
-                          : 'border-gray-600 text-gray-600'
+                          ? featureThemeClassName('voteVoteControlsDangerBorder')
+                          : featureThemeClassName('voteVoteControlsNeutralBorder')
                     }`}
                   >
                     {vote.vote}

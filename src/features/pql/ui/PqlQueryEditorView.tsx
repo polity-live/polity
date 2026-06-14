@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import type { ChangeEvent, KeyboardEvent, RefObject } from 'react';
 
 import { BadgeControl } from '@/features/shared/ui/status/StatusBadges';
@@ -92,7 +93,7 @@ export function PqlQueryEditorView<TItem, TFieldKey extends string>({
               >
                 <BadgeControl
                   variant="outline"
-                  className="min-w-16 justify-center text-[10px] uppercase"
+                  className={featureThemeClassName('pqlPqlQueryEditorThemedText')}
                 >
                   {suggestion.kind}
                 </BadgeControl>
@@ -112,12 +113,12 @@ export function PqlQueryEditorView<TItem, TFieldKey extends string>({
 
       <div className="flex flex-wrap gap-2">
         {visibleFields.map(field => (
-          <BadgeControl key={field.key} variant="secondary" className="font-mono text-xs">
+          <BadgeControl key={field.key} variant="secondary" size="xs" textStyle="mono">
             {field.key}
           </BadgeControl>
         ))}
         {fields.length > visibleFields.length ? (
-          <BadgeControl variant="outline" className="font-mono text-xs">
+          <BadgeControl variant="outline" size="xs" textStyle="mono">
             +{fields.length - visibleFields.length}
             {translateText('generated.inline.0142_more_e7c95b4c')}
           </BadgeControl>

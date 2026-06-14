@@ -13,8 +13,7 @@ import { SubscriptionStatus } from '@/features/payments/ui/SubscriptionStatus';
 import { FormStyleSelector } from '@/features/create/ui/FormStyleSelector';
 import { ThemeToggle } from '@/features/navigation/toggles/theme-toggle';
 import { LanguageToggle } from '@/features/navigation/toggles/language-toggle';
-import { StateToggle } from '@/features/navigation/toggles/state-toggle';
-import { useNavigationStore } from '@/features/navigation/state/navigation.store';
+import { NavigationViewStateToggle } from '@/features/navigation/toggles/NavigationViewStateToggle';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { VotingPasswordTab } from './VotingPasswordTab';
 import { AccountPasswordSection } from './AccountPasswordSection';
@@ -65,7 +64,6 @@ export function UserProfileEditForm({
   onCancelSubscription,
 }: UserProfileEditFormProps) {
   const { t } = useTranslation();
-  const { navigationView, setNavigationView } = useNavigationStore();
 
   return (
     <div>
@@ -206,7 +204,7 @@ export function UserProfileEditForm({
               title={t('pages.user.preferences.navigationStyle')}
               description={t('pages.user.preferences.navigationStyleDescription')}
             >
-              <StateToggle currentState={navigationView} onStateChange={setNavigationView} />
+              <NavigationViewStateToggle />
             </SettingsPanel>
             <SettingsPanel
               title={t('pages.create.preferences.formStyle')}

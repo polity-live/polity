@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { useMemo } from 'react';
 import {
@@ -143,7 +144,7 @@ function UploadContextCard({
   const downloadUrl = buildUploadAttachmentDownloadUrl(cardPayload.fileUrl, cardPayload.fileName);
 
   return (
-    <Card className="bg-background/80 overflow-hidden border-sky-500/20">
+    <Card surface="skyPanel" className="overflow-hidden">
       {showImagePreview && (
         <a href={cardPayload.fileUrl} target="_blank" rel="noopener noreferrer" className="block">
           <img
@@ -160,9 +161,9 @@ function UploadContextCard({
           <div className="flex min-w-0 items-start gap-3">
             <div className="bg-muted flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg">
               {showImagePreview ? (
-                <ImageIcon className="h-5 w-5 text-sky-700 dark:text-sky-300" />
+                <ImageIcon className={featureThemeClassName('messageAiContextCardsInfoIcon')} />
               ) : (
-                <FileText className="h-5 w-5 text-sky-700 dark:text-sky-300" />
+                <FileText className={featureThemeClassName('messageAiContextCardsInfoIcon')} />
               )}
             </div>
 
@@ -175,7 +176,7 @@ function UploadContextCard({
             </div>
           </div>
 
-          <BadgeControl className="border-0 bg-sky-500/15 text-[10px] text-sky-700 dark:text-sky-300">
+          <BadgeControl tone="skyTint" size="tiny">
             {showImagePreview
               ? t('common.actions.uploadImage')
               : formatEntityTypeLabel(attachment.entityType)}
@@ -194,7 +195,7 @@ function UploadContextCard({
             href={cardPayload.fileUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-md border border-sky-500/20 bg-sky-500/10 px-3 py-1.5 text-xs font-medium text-sky-700 transition-colors hover:bg-sky-500/15 dark:text-sky-300"
+            className={featureThemeClassName('messageAiContextCardsInfoBadge')}
           >
             <ExternalLink className="h-3.5 w-3.5" />
             {t('features.messages.compose.openAttachment')}
@@ -273,18 +274,18 @@ export function AiContextCards({
       {contextCards.length > 0 && (
         <div
           className={cn(
-            'overflow-hidden rounded-2xl bg-gradient-to-br',
+            featureThemeClassName('messageAiContextCardsThemedGradientSurface'),
             isOutputContext
-              ? 'via-background/80 border border-emerald-500/20 from-emerald-500/10 to-teal-500/10'
-              : 'via-background/80 border border-sky-500/20 from-sky-500/10 to-cyan-500/10'
+              ? featureThemeClassName('messageAiContextCardsSuccessTealGradientSurface')
+              : featureThemeClassName('messageAiContextCardsInfoGradientSurface')
           )}
         >
           <div
             className={cn(
-              'flex items-center gap-1.5 border-b px-3 py-2 text-[11px] font-semibold tracking-[0.16em] uppercase',
+              featureThemeClassName('messageAiContextCardsThemedBorder'),
               isOutputContext
-                ? 'border-emerald-500/15 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
-                : 'border-sky-500/15 bg-sky-500/10 text-sky-700 dark:text-sky-300'
+                ? featureThemeClassName('messageAiContextCardsSuccessBadge')
+                : featureThemeClassName('messageAiContextCardsInfoBadgeAlpha')
             )}
           >
             <Search className="h-3.5 w-3.5" />
@@ -318,7 +319,7 @@ export function AiContextCards({
               const preview = getSkillPreview(card.attachment.prompt_context);
 
               return (
-                <Card key={card.key} className="bg-background/80 overflow-hidden border-sky-500/20">
+                <Card key={card.key} surface="skyPanel" className="overflow-hidden">
                   <CardContent className="space-y-3 p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
@@ -331,7 +332,7 @@ export function AiContextCards({
                           </p>
                         )}
                       </div>
-                      <BadgeControl className="border-0 bg-sky-500/15 text-[10px] text-sky-700 dark:text-sky-300">
+                      <BadgeControl tone="skyTint" size="tiny">
                         {formatEntityTypeLabel(card.attachment.entityType)}
                       </BadgeControl>
                     </div>
@@ -355,12 +356,12 @@ export function AiContextCards({
         return (
           <Card
             key={card.key}
-            className="via-background overflow-hidden border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 to-lime-500/10"
+            className={featureThemeClassName('messageAiContextCardsSuccessGradientSurface')}
           >
             <CardContent className="space-y-3 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.16em] text-emerald-700 uppercase dark:text-emerald-300">
+                  <div className={featureThemeClassName('messageAiContextCardsSuccessText')}>
                     <Sparkles className="h-3.5 w-3.5" />
                     {t('features.messages.ai.skillCardLabel')}
                   </div>
@@ -373,7 +374,7 @@ export function AiContextCards({
                     </p>
                   )}
                 </div>
-                <BadgeControl className="border-0 bg-emerald-500/15 text-[10px] text-emerald-700 dark:text-emerald-300">
+                <BadgeControl tone="emeraldTint" size="tiny">
                   {t('features.messages.ai.skillCardBadge')}
                 </BadgeControl>
               </div>

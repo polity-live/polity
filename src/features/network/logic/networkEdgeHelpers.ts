@@ -1,3 +1,4 @@
+import { featureThemeValue } from '@/features/shared/theme';
 import { MarkerType, Position, type Edge } from '@xyflow/react';
 import { getHierarchyRelationshipPair } from './groupRelationshipOrientation';
 import type { NetworkRelationshipKind } from './networkRelationshipHelpers';
@@ -114,9 +115,9 @@ interface ResolvedInnerAutoEdgeAnchors {
 }
 
 export const NETWORK_CONNECTION_DIRECTION_COLORS: Record<NetworkConnectionDirection, string> = {
-  bidirectional: '#7c3aed',
-  incoming: '#2563eb',
-  outgoing: '#d97706',
+  bidirectional: featureThemeValue('chartChartRendererAccentColor'),
+  incoming: featureThemeValue('chartChartRendererInfoColor'),
+  outgoing: featureThemeValue('networkNetworkEdgeHelpersWarningColor'),
 };
 
 export function resolveInnerAutoEdgeAnchors({

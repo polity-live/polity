@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import type { CSSProperties } from 'react';
 
 import { Button } from '@/features/shared/ui/ui/button';
@@ -148,7 +149,7 @@ export function SharedWeekViewView({
                     style={{ top: `${hour * WEEK_VIEW_HOUR_HEIGHT}px` }}
                   >
                     {hour < 24 && (
-                      <span className="text-muted-foreground absolute top-0 right-2 -translate-y-1/2 text-[11px] font-medium">
+                      <span className={featureThemeClassName('eventSharedWeekViewNeutralText')}>
                         {formatHourLabel(hour, locale)}
                       </span>
                     )}
@@ -206,7 +207,7 @@ export function SharedWeekViewView({
                       onPointerDown={event => event.stopPropagation()}
                     >
                       <div className="bg-popover w-max max-w-full rounded-md border p-2 shadow-lg">
-                        <p className="text-muted-foreground mb-2 text-[10px] font-medium">
+                        <p className={featureThemeClassName('eventSharedWeekViewThemedText')}>
                           {formatTimeRange(selectedRange.start, selectedRange.end, locale)}
                         </p>
                         <Button

@@ -1,4 +1,9 @@
+import { featureThemeValue } from '@/features/shared/theme';
 import * as React from 'react';
+import {
+  useChartRendererController,
+  type HoverTooltipState,
+} from '../hooks/useChartRendererController';
 import {
   Area,
   AreaChart,
@@ -11,10 +16,10 @@ import {
   LineChart,
   Pie,
   PieChart,
-  Tooltip,
+  RechartsTooltip,
   XAxis,
   YAxis,
-} from 'recharts';
+} from '@/features/shared/ui/charting';
 import type { ChartPoint, ChartPresentation, ChartType } from '../types';
 import {
   ChartContainer,
@@ -28,14 +33,14 @@ import { cn } from '@/features/shared/utils/utils';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export const CHART_PALETTE = [
-  '#2563eb',
-  '#0d9488',
-  '#7c3aed',
-  '#ea580c',
-  '#db2777',
-  '#65a30d',
-  '#0891b2',
-  '#dc2626',
+  featureThemeValue('chartChartRendererInfoColor'),
+  featureThemeValue('chartChartRendererInfoColorAlpha'),
+  featureThemeValue('chartChartRendererAccentColor'),
+  featureThemeValue('chartChartRendererThemeValue'),
+  featureThemeValue('chartChartRendererAccentColorAlpha'),
+  featureThemeValue('chartChartRendererThemeValueAlpha'),
+  featureThemeValue('chartChartRendererInfoColorBeta'),
+  featureThemeValue('chartChartRendererDangerColor'),
 ] as const;
 
 interface ChartRendererProps {
@@ -51,19 +56,6 @@ interface ChartRendererProps {
 interface CartesianRow {
   x: string;
   [series: string]: string | number | null;
-}
-
-interface HoverTooltipItem {
-  color?: string;
-  name: string;
-  value: string;
-}
-
-interface HoverTooltipState {
-  items: HoverTooltipItem[];
-  label?: string;
-  x: number;
-  y: number;
 }
 
 type HoverTooltipSetter = (state: HoverTooltipState | null) => void;
@@ -261,7 +253,10 @@ function CartesianChartContent({
       <YAxis tickLine={false} axisLine={false} width={48} />
       {showTooltip ? (
         staticMode ? (
-          <Tooltip isAnimationActive={false} wrapperStyle={{ pointerEvents: 'none', zIndex: 50 }} />
+          <RechartsTooltip
+            isAnimationActive={false}
+            wrapperStyle={{ pointerEvents: 'none', zIndex: 50 }}
+          />
         ) : (
           <ChartTooltip
             cursor
@@ -400,7 +395,7 @@ function PieChartContent({
       </Pie>
       {showTooltip ? (
         staticMode ? (
-          <Tooltip
+          <RechartsTooltip
             isAnimationActive={false}
             formatter={(value, _name, item) => {
               const point = item.payload as ChartPoint;
@@ -496,8 +491,7 @@ export function ChartRenderer({
   const series = React.useMemo(() => getSeries(points), [points]);
   const rows = React.useMemo(() => toCartesianRows(points), [points]);
   const config = React.useMemo(() => getChartConfig(series), [series]);
-  const [hoverTooltip, setHoverTooltip] = React.useState<HoverTooltipState | null>(null);
-  const onHoverChange = staticMode ? undefined : setHoverTooltip;
+  const { hoverTooltip, onHoverChange } = useChartRendererController(staticMode);
   const chart =
     chartType === 'pie' ? (
       <PieChartContent

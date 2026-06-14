@@ -1,14 +1,18 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { cn } from '@/features/shared/utils/utils';
 import { Button } from '@/features/shared/ui/ui/button';
+import {
+  DecisionStatusBadge as StatusBadge,
+  type DecisionStatus,
+} from '@/features/shared/ui/status';
+import { DecisionResultBadge as ResultBadge } from '@/features/shared/ui/voting';
 import { Vote, Award, ChevronRight } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { StatusBadge, type DecisionStatus } from './StatusBadge';
 import { CountdownTimer, EndedAgo } from './CountdownTimer';
 import { CandidateBarCompact, VoteBarCompact } from './VoteProgressBar';
 import { TrendIndicator } from './TrendIndicator';
-import { ResultBadge } from './ResultBadge';
 import type { DecisionItem } from './types';
 
 export interface MobileDecisionCardProps {
@@ -88,9 +92,11 @@ export function MobileDecisionCard({ decision, onClick, className }: MobileDecis
       <div className="mb-2 flex items-start gap-2">
         <Icon className="text-muted-foreground mt-0.5 h-4 w-4 flex-shrink-0" />
         <div className="min-w-0 flex-1">
-          <span className="text-muted-foreground mr-2 font-mono text-[10px]">{decision.id}</span>
+          <span className={featureThemeClassName('decisionterminalMobileDecisionCardThemedText')}>
+            {decision.id}
+          </span>
           <h3 className="truncate text-sm leading-tight font-semibold">{decision.title}</h3>
-          <p className="text-muted-foreground mt-0.5 truncate font-mono text-[10px] tracking-[1px] uppercase">
+          <p className={featureThemeClassName('decisionterminalMobileDecisionCardThemedTextAlpha')}>
             {decision.body}
           </p>
         </div>
@@ -103,7 +109,7 @@ export function MobileDecisionCard({ decision, onClick, className }: MobileDecis
               candidates={electionBarData.candidates}
               className="min-w-0 flex-1"
             />
-            <span className="text-muted-foreground shrink-0 font-mono text-[10px]">
+            <span className={featureThemeClassName('decisionterminalDecisionRowThemedTextDelta')}>
               {Math.round(electionBarData.totalSelections)}
             </span>
           </div>
@@ -113,7 +119,7 @@ export function MobileDecisionCard({ decision, onClick, className }: MobileDecis
         <div className="mt-2 mb-2 space-y-1.5">
           <div className="flex items-center gap-2">
             <VoteBarCompact votes={votes} className="min-w-0 flex-1" />
-            <span className="text-muted-foreground shrink-0 font-mono text-[10px]">
+            <span className={featureThemeClassName('decisionterminalDecisionRowThemedTextDelta')}>
               {Math.round(votes.support)}/{Math.round(votes.oppose)}/{Math.round(votes.abstain)}
             </span>
           </div>

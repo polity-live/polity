@@ -24,8 +24,8 @@ export const GroupsList: React.FC<GroupsListProps> = ({ groups, isLoading }) => 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2 text-muted-foreground">{t('features.groups.list.loading')}</span>
+        <Loader2 className="text-primary h-8 w-8 animate-spin" />
+        <span className="text-muted-foreground ml-2">{t('features.groups.list.loading')}</span>
       </div>
     );
   }
@@ -34,11 +34,11 @@ export const GroupsList: React.FC<GroupsListProps> = ({ groups, isLoading }) => 
     return (
       <div className="py-12 text-center">
         <div className="mb-4">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+          <div className="bg-muted mx-auto flex h-16 w-16 items-center justify-center rounded-full">
             <span className="text-2xl">🔍</span>
           </div>
         </div>
-        <h3 className="mb-2 text-lg font-medium text-foreground">
+        <h3 className="text-foreground mb-2 text-lg font-medium">
           {t('features.groups.list.noGroups')}
         </h3>
         <p className="text-muted-foreground">{t('features.groups.list.noGroupsDescription')}</p>
@@ -49,7 +49,7 @@ export const GroupsList: React.FC<GroupsListProps> = ({ groups, isLoading }) => 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-foreground">
+        <h2 className="text-foreground text-lg font-semibold">
           {t('features.groups.list.groupsFound', { count: groups.length })}
         </h2>
       </div>

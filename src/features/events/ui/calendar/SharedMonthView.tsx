@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
 import { cn } from '@/features/shared/utils/utils';
@@ -137,7 +138,7 @@ export function SharedMonthView({
                         <div
                           key={event.id}
                           className={cn(
-                            'cursor-pointer rounded px-1 py-0.5 text-[11px] leading-tight transition-all',
+                            featureThemeClassName('eventSharedMonthThemedText'),
                             getCompactCalendarEventClassName(event)
                           )}
                           onClick={e => {

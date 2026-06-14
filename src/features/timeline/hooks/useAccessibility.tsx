@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { ScreenReaderLiveRegion } from '../ui/ScreenReaderLiveRegion';
 
 /**
  * Hook to announce messages to screen readers
@@ -8,6 +9,9 @@ import * as React from 'react';
  */
 export function useScreenReaderAnnounce() {
   const [announcement, setAnnouncement] = React.useState('');
+  const [announcementPriority, setAnnouncementPriority] = React.useState<'polite' | 'assertive'>(
+    'polite'
+  );
   const timeoutRef = React.useRef<NodeJS.Timeout | undefined>(undefined);
 
   const announce = React.useCallback(
@@ -22,6 +26,7 @@ export function useScreenReaderAnnounce() {
 
       // Small delay to ensure the change is detected
       timeoutRef.current = setTimeout(() => {
+        setAnnouncementPriority(priority);
         setAnnouncement(message);
       }, 100);
     },
@@ -29,12 +34,12 @@ export function useScreenReaderAnnounce() {
   );
 
   const LiveRegion = React.useCallback(
-    () => (
-      <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
-        {announcement}
-      </div>
-    ),
-    [announcement]
+    () =>
+      React.createElement(ScreenReaderLiveRegion, {
+        announcement,
+        priority: announcementPriority,
+      }),
+    [announcement, announcementPriority]
   );
 
   React.useEffect(() => {

@@ -73,21 +73,49 @@ function DialogContent({
   );
 }
 
-function DialogHeader({ className, ...props }: React.ComponentProps<'div'>) {
+interface DialogSectionProps extends React.ComponentProps<'div'> {
+  separator?: boolean;
+  sticky?: boolean;
+  surface?: 'default' | 'background';
+}
+
+function DialogHeader({
+  className,
+  separator = false,
+  surface = 'default',
+  ...props
+}: DialogSectionProps) {
   return (
     <div
       data-slot="dialog-header"
-      className={cn('flex flex-col gap-2 text-center sm:text-left', className)}
+      className={cn(
+        'flex flex-col gap-2 text-center sm:text-left',
+        separator && 'border-b',
+        surface === 'background' && 'bg-background',
+        className
+      )}
       {...props}
     />
   );
 }
 
-function DialogFooter({ className, ...props }: React.ComponentProps<'div'>) {
+function DialogFooter({
+  className,
+  separator = false,
+  sticky = false,
+  surface = 'default',
+  ...props
+}: DialogSectionProps) {
   return (
     <div
       data-slot="dialog-footer"
-      className={cn('flex flex-col-reverse gap-2 sm:flex-row sm:justify-end', className)}
+      className={cn(
+        'flex flex-col-reverse gap-2 sm:flex-row sm:justify-end',
+        separator && 'border-t',
+        sticky && 'sticky bottom-0',
+        surface === 'background' && 'bg-background',
+        className
+      )}
       {...props}
     />
   );

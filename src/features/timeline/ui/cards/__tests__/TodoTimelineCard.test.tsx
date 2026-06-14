@@ -3,6 +3,7 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { Button } from '@/features/shared/ui/ui/button';
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
   useTranslation: () => ({
@@ -50,7 +51,7 @@ vi.mock('@/features/notifications/utils/notification-helpers.ts', () => ({
 }));
 
 vi.mock('@/features/shared/ui/action-buttons/ShareButton.tsx', () => ({
-  ShareButton: () => <button type="button">Share</button>,
+  ShareButton: () => <Button type="button">Share</Button>,
 }));
 
 vi.mock('../TimelineCardBase', () => ({
@@ -62,9 +63,9 @@ vi.mock('../TimelineCardBase', () => ({
   TimelineCardContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   TimelineCardActions: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   TimelineCardActionButton: ({ label, onClick }: { label: string; onClick?: () => void }) => (
-    <button type="button" onClick={onClick}>
+    <Button type="button" onClick={onClick}>
       {label}
-    </button>
+    </Button>
   ),
   TimelineCardBadge: ({ label }: { label: string }) => <span>{label}</span>,
   TimelineCardHeader: ({

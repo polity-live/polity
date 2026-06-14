@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import {
   FormControlInput,
@@ -99,7 +100,7 @@ export function VotingSessionManager({
           <CardHeader>
             <div className="flex items-center justify-between">
               <CollapsibleTrigger asChild>
-                <Button variant="ghost" className="h-auto p-0 hover:bg-transparent">
+                <Button variant="ghost" presentation="transparentGhost">
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Play className="h-5 w-5" />
                     {t('features.events.voting.startVoting')}
@@ -181,15 +182,17 @@ export function VotingSessionManager({
 
   return (
     <Collapsible open={expanded} onOpenChange={setExpanded}>
-      <Card className={currentSession.phase === 'voting' ? 'border-primary' : ''}>
+      <Card surface={currentSession.phase === 'voting' ? 'primarySoft' : 'default'}>
         <CardHeader>
           <div className="flex items-center justify-between">
             <CollapsibleTrigger asChild>
-              <Button variant="ghost" className="h-auto p-0 hover:bg-transparent">
+              <Button variant="ghost" presentation="transparentGhost">
                 <CardTitle className="flex items-center gap-2 text-lg">
                   {currentSession.phase === 'introduction' && (
                     <>
-                      <Play className="h-5 w-5 text-yellow-500" />
+                      <Play
+                        className={featureThemeClassName('voteVotingSessionManagerWarningIcon')}
+                      />
                       {t('features.events.voting.introduction')}
                     </>
                   )}
@@ -201,7 +204,11 @@ export function VotingSessionManager({
                   )}
                   {currentSession.phase === 'completed' && (
                     <>
-                      <CheckCircle2 className="h-5 w-5 text-green-500" />
+                      <CheckCircle2
+                        className={featureThemeClassName(
+                          'agendaChangeRequestTimelineCardSuccessIcon'
+                        )}
+                      />
                       {t('features.events.voting.completed')}
                     </>
                   )}
@@ -224,7 +231,13 @@ export function VotingSessionManager({
             {currentSession.phase === 'voting' && timeRemaining !== null && (
               <div className="flex items-center justify-center gap-2 font-mono text-2xl">
                 <Clock className="h-6 w-6" />
-                <span className={timeRemaining < 60 ? 'text-red-500' : ''}>
+                <span
+                  className={
+                    timeRemaining < 60
+                      ? featureThemeClassName('notificationNotificationDangerText')
+                      : ''
+                  }
+                >
                   {formatTimeRemaining(timeRemaining)}
                 </span>
               </div>
@@ -246,24 +259,24 @@ export function VotingSessionManager({
             {/* Vote results (show after voting) */}
             {(currentSession.phase === 'voting' || currentSession.phase === 'completed') && (
               <div className="grid grid-cols-3 gap-2 text-center">
-                <div className="rounded bg-green-100 p-2 dark:bg-green-900/30">
-                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                <div className={featureThemeClassName('voteVotingSessionManagerSuccessPanel')}>
+                  <div className={featureThemeClassName('voteVotingSessionManagerSuccessText')}>
                     {voteResults.accept}
                   </div>
                   <div className="text-muted-foreground text-xs">
                     {t('features.events.voting.accept')}
                   </div>
                 </div>
-                <div className="rounded bg-red-100 p-2 dark:bg-red-900/30">
-                  <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+                <div className={featureThemeClassName('voteVotingSessionManagerDangerPanel')}>
+                  <div className={featureThemeClassName('voteVotingSessionManagerDangerText')}>
                     {voteResults.reject}
                   </div>
                   <div className="text-muted-foreground text-xs">
                     {t('features.events.voting.reject')}
                   </div>
                 </div>
-                <div className="rounded bg-gray-100 p-2 dark:bg-gray-800">
-                  <div className="text-2xl font-bold text-gray-600 dark:text-gray-400">
+                <div className={featureThemeClassName('voteVotingSessionManagerNeutralPanel')}>
+                  <div className={featureThemeClassName('voteVotingSessionManagerNeutralText')}>
                     {voteResults.abstain}
                   </div>
                   <div className="text-muted-foreground text-xs">

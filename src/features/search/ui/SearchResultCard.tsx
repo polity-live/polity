@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { Search } from 'lucide-react';
 import { DynamicTimelineCard } from '@/features/timeline/ui/LazyCardComponents';
 import {
@@ -194,7 +195,7 @@ function SearchFallbackCard({ document }: { document: SearchDocument }) {
             {tags.map(tag => (
               <span
                 key={tag}
-                className="text-muted-foreground rounded-md border bg-white/70 px-2 py-0.5 text-xs dark:bg-gray-900/60"
+                className={featureThemeClassName('searchSearchResultCardNeutralContrastBadge')}
               >
                 #{tag}
               </span>

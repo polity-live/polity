@@ -1,6 +1,7 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { useState } from 'react';
 import { differenceInDays, format, isPast, isToday } from 'date-fns';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 
 import { useTodoMutations } from '@/features/todos/hooks/useTodoMutations';
 import type { TodoStatus } from '@/features/todos/types/todo.types';
@@ -19,24 +20,24 @@ function getUrgencyConfig(dueDate: Date): TodoTimelineUrgency {
 
   if (isPast(dueDate)) {
     return {
-      color: 'text-red-600',
-      bgColor: 'bg-red-100 dark:bg-red-900/40',
+      color: featureThemeClassName('timelineUseTodoTimelineCardDangerText'),
+      bgColor: featureThemeClassName('timelineUseTodoTimelineCardDangerBackground'),
       label: translateText('generated.inline.0533_overdue_07217c77'),
     };
   }
 
   if (isToday(dueDate) || daysUntilDue === 0) {
     return {
-      color: 'text-red-600',
-      bgColor: 'bg-red-100 dark:bg-red-900/40',
+      color: featureThemeClassName('timelineUseTodoTimelineCardDangerText'),
+      bgColor: featureThemeClassName('timelineUseTodoTimelineCardDangerBackground'),
       label: translateText('generated.inline.0534_due_today_e2219e75'),
     };
   }
 
   if (daysUntilDue <= 3) {
     return {
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-100 dark:bg-orange-900/40',
+      color: featureThemeClassName('timelineUseTodoTimelineCardWarningText'),
+      bgColor: featureThemeClassName('timelineUseTodoTimelineCardWarningBackground'),
       label: translateText('generated.inline.0535_due_in_daysuntildue_days_bb3b7b94', {
         daysUntilDue,
       }),
@@ -45,8 +46,8 @@ function getUrgencyConfig(dueDate: Date): TodoTimelineUrgency {
 
   if (daysUntilDue <= 7) {
     return {
-      color: 'text-yellow-600',
-      bgColor: 'bg-yellow-100 dark:bg-yellow-900/40',
+      color: featureThemeClassName('editorEditorHeaderWarningText'),
+      bgColor: featureThemeClassName('timelineUseTodoTimelineCardWarningBackgroundAlpha'),
       label: translateText('generated.inline.0535_due_in_daysuntildue_days_bb3b7b94', {
         daysUntilDue,
       }),
@@ -54,8 +55,8 @@ function getUrgencyConfig(dueDate: Date): TodoTimelineUrgency {
   }
 
   return {
-    color: 'text-green-600',
-    bgColor: 'bg-green-100 dark:bg-green-900/40',
+    color: featureThemeClassName('timelineUseTodoTimelineCardSuccessText'),
+    bgColor: featureThemeClassName('timelineUseTodoTimelineCardSuccessBackground'),
     label: format(dueDate, 'MMM d'),
   };
 }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { DEFAULT_AI_SKILLS } from '@/features/assistant/logic/defaultAiSkills';
 import { buildAiModelKey, getPreferredDefaultAiModelKey } from '@/lib/ai/models';
 import { DEFAULT_AI_TOOLS, type AiToolName } from '@/lib/ai/defaultAiTools';

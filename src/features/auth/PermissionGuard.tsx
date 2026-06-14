@@ -17,7 +17,7 @@ interface PermissionGuardProps {
 
 /**
  * PermissionGuard
- * 
+ *
  * A wrapper component that protects its children based on RBAC permissions.
  * If the user has the required permission, the children are rendered.
  * Otherwise, a fallback (defaulting to AccessDenied) is shown.
@@ -36,7 +36,7 @@ export function PermissionGuard({
     return (
       loadingComponent || (
         <div className="flex min-h-[200px] items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <Loader2 className="text-muted-foreground h-8 w-8 animate-spin" />
         </div>
       )
     );

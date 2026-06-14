@@ -13,11 +13,7 @@ export function BlogNotifications({ blogId }: BlogNotificationsProps) {
 
   return (
     <PageWrapper>
-      <EntityNotifications
-        entityId={blogId}
-        entityType="blog"
-        entityName={blog?.title || 'Blog'}
-      />
+      <EntityNotifications entityId={blogId} entityType="blog" entityName={blog?.title || 'Blog'} />
     </PageWrapper>
   );
 }

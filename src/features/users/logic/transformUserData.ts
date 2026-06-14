@@ -4,4 +4,4 @@
  * Consumers now use FullProfileRow (snake_case) directly.
  * Delete this file when cleaning up.
  */
-export {}
+export {};

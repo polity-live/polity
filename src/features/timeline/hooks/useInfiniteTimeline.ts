@@ -8,7 +8,10 @@ export interface UseInfiniteTimelineOptions<T> {
   /** Page size (items per batch) */
   pageSize?: number;
   /** Function to fetch more items */
-  fetchMore: (cursor: string | null, pageSize: number) => Promise<{
+  fetchMore: (
+    cursor: string | null,
+    pageSize: number
+  ) => Promise<{
     items: T[];
     nextCursor: string | null;
     hasMore: boolean;
@@ -44,7 +47,7 @@ export interface UseInfiniteTimelineReturn<T> {
 
 /**
  * useInfiniteTimeline - Hook for infinite scrolling timeline data
- * 
+ *
  * Provides:
  * - Cursor-based pagination
  * - Automatic loading when scrolling near bottom
@@ -65,7 +68,7 @@ export function useInfiniteTimeline<T>({
   const [error, setError] = useState<Error | null>(null);
   const [cursor, setCursor] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-  
+
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const isLoadingRef = useRef(false);
@@ -76,18 +79,18 @@ export function useInfiniteTimeline<T>({
 
     isLoadingRef.current = true;
     const isFirstLoad = items.length === 0;
-    
+
     if (isFirstLoad) {
       setIsLoading(true);
     } else {
       setIsLoadingMore(true);
     }
-    
+
     setError(null);
 
     try {
       const result = await fetchMore(cursor, pageSize);
-      
+
       setItems(prev => [...prev, ...result.items]);
       setCursor(result.nextCursor);
       setHasMore(result.hasMore);
@@ -108,13 +111,13 @@ export function useInfiniteTimeline<T>({
     setHasMore(true);
     setPage(1);
     setError(null);
-    
+
     isLoadingRef.current = false;
     setIsLoading(true);
 
     try {
       const result = await fetchMore(null, pageSize);
-      
+
       setItems(result.items);
       setCursor(result.nextCursor);
       setHasMore(result.hasMore);
@@ -130,7 +133,7 @@ export function useInfiniteTimeline<T>({
   useEffect(() => {
     if (!autoLoad || !sentinelRef.current) return;
 
-    const handleIntersection: IntersectionObserverCallback = (entries) => {
+    const handleIntersection: IntersectionObserverCallback = entries => {
       const [entry] = entries;
       if (entry.isIntersecting && hasMore && !isLoadingRef.current) {
         loadMore();

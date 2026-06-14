@@ -43,7 +43,7 @@ import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useBlogState } from '@/zero/blogs/useBlogState';
 import { useDocumentState } from '@/zero/documents/useDocumentState';
 import { mutators } from '@/zero/mutators';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import {
   adaptAmendmentToEntity,
   adaptBlogToEntity,

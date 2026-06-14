@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 /**
  * Auto Save Hook
  *
@@ -82,14 +83,7 @@ export interface UseAutoSaveResult<T = unknown> {
  * save({ content: newContent });
  */
 export function useAutoSave<T = unknown>(options: UseAutoSaveOptions<T>): UseAutoSaveResult<T> {
-  const {
-    debounceMs = 500,
-    throttleMs = 1000,
-    onSave,
-    onSaveStart,
-    onSaveEnd,
-    onError,
-  } = options;
+  const { debounceMs = 500, throttleMs = 1000, onSave, onSaveStart, onSaveEnd, onError } = options;
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastSaveTimeRef = useRef<number>(0);
@@ -114,22 +108,22 @@ export function useAutoSave<T = unknown>(options: UseAutoSaveOptions<T>): UseAut
       try {
         await onSave(data);
         lastSaveTimeRef.current = Date.now();
-        
+
         // If there's pending data, schedule it
         if (pendingDataRef.current) {
           const pending = pendingDataRef.current;
           pendingDataRef.current = null;
-          
+
           // Schedule the pending save with throttle
           const timeSinceLastSave = Date.now() - lastSaveTimeRef.current;
           const delay = Math.max(0, throttleMs - timeSinceLastSave);
-          
+
           throttleTimeoutRef.current = setTimeout(() => {
             executeSave(pending);
           }, delay);
         }
       } catch (error) {
-        console.error('Auto-save failed:', error);
+        console.error(featureThemeClassName('documentUseAutoSaveThemedStyle'), error);
         onError?.(error as Error);
       } finally {
         isSavingRef.current = false;
@@ -156,7 +150,7 @@ export function useAutoSave<T = unknown>(options: UseAutoSaveOptions<T>): UseAut
       if (timeSinceLastSave < throttleMs && !isSavingRef.current) {
         // Within throttle period, save after delay
         pendingDataRef.current = data;
-        
+
         debounceTimeoutRef.current = setTimeout(() => {
           if (pendingDataRef.current) {
             executeSave(pendingDataRef.current);

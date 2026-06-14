@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { describe, expect, it } from 'vitest';
 import {
   calculateProcessPathWithClosestEvents,
@@ -182,7 +183,7 @@ describe('amendmentPathHelpers', () => {
     expect(reachableFromParent.map(group => group.id)).toEqual([]);
   });
 
-  it('traverses explicit holder-to-scope grants from B2 through H2 to K2 only forward', () => {
+  it(featureThemeClassName('amendmentAmendmentPathHelpersThemedGradientSurface'), () => {
     const groups = [
       createGroup('group-b2', 'B2'),
       createGroup('group-h2', 'H2'),

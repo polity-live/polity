@@ -15,10 +15,7 @@ export function useUserNotifications() {
     includeUserNotifications: true,
   });
 
-  const data = useMemo(
-    () => ({ notifications: userNotifications }),
-    [userNotifications]
-  );
+  const data = useMemo(() => ({ notifications: userNotifications }), [userNotifications]);
 
   return {
     data,

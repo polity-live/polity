@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
@@ -16,7 +17,7 @@ import {
   ThumbsDown,
   Minus,
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { useChangeRequestVoting } from '../hooks/useChangeRequestVoting';
 import {
   useTranslation,
@@ -101,10 +102,10 @@ function ChangeRequestItem({
     <div
       className={`rounded-lg border p-4 ${
         isActive
-          ? 'border-blue-500 bg-blue-50 dark:bg-blue-950'
+          ? featureThemeClassName('voteAmendmentVotingQueueInfoSurface')
           : isCompleted
-            ? 'border-gray-300 bg-gray-50 dark:bg-gray-900'
-            : 'border-gray-200'
+            ? featureThemeClassName('voteAmendmentVotingQueueNeutralSurface')
+            : featureThemeClassName('voteAmendmentVotingQueueNeutralBorder')
       }`}
     >
       <div className="flex items-start gap-3">
@@ -134,17 +135,23 @@ function ChangeRequestItem({
         <div className="flex-1 space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-gray-600">#{index + 1}</span>
+              <span className={featureThemeClassName('voteAmendmentVotingQueueNeutralText')}>
+                #{index + 1}
+              </span>
               <h4 className="font-semibold">{changeRequest.title}</h4>
               {isActive && (
-                <BadgeControl variant="default" className="bg-blue-500">
+                <BadgeControl variant="default" tone="infoStrong">
                   {translateText('generated.inline.1246_aktuelle_abstimmung_bf7b15bd')}
                 </BadgeControl>
               )}
               {isCompleted && voteResults && (
                 <BadgeControl
                   variant={acceptPercentage > 50 ? 'default' : 'secondary'}
-                  className={acceptPercentage > 50 ? 'bg-green-500' : 'bg-red-500'}
+                  className={
+                    acceptPercentage > 50
+                      ? featureThemeClassName('agendaAgendaVoteSectionSuccessBackground')
+                      : featureThemeClassName('agendaAgendaVoteSectionDangerBackground')
+                  }
                 >
                   {acceptPercentage > 50 ? (
                     <>
@@ -176,7 +183,7 @@ function ChangeRequestItem({
                   translateText('generated.inline.0028_unbekannt_d0b00a9f')}
               </span>
               {changeRequest.source && (
-                <BadgeControl variant="outline" className="text-xs">
+                <BadgeControl variant="outline" size="xs">
                   {changeRequest.source === 'collaborator'
                     ? translateText('generated.inline.0157_collaborator_794b34c1')
                     : translateText('generated.inline.0158_event_teilnehmer_c24630ba')}
@@ -374,7 +381,7 @@ export function AmendmentVotingQueue({
                 <p className="text-muted-foreground text-sm">{currentChangeRequest.title}</p>
               </div>
               {hasVoted && (
-                <BadgeControl variant="outline" className="bg-green-50">
+                <BadgeControl variant="outline" tone="successSoft">
                   <CheckCircle2 className="mr-1 h-3 w-3" />
                   {t('features.events.voting.voted')}
                 </BadgeControl>
@@ -385,15 +392,19 @@ export function AmendmentVotingQueue({
             {currentVoteResults && (
               <div className="flex items-center gap-4 text-sm">
                 <span className="flex items-center gap-1">
-                  <ThumbsUp className="h-4 w-4 text-green-600" />
+                  <ThumbsUp
+                    className={featureThemeClassName('timelineTodoTimelineCardSuccessIcon')}
+                  />
                   {currentVoteResults.accept}
                 </span>
                 <span className="flex items-center gap-1">
-                  <ThumbsDown className="h-4 w-4 text-red-600" />
+                  <ThumbsDown
+                    className={featureThemeClassName('voteAmendmentVotingQueueDangerIcon')}
+                  />
                   {currentVoteResults.reject}
                 </span>
                 <span className="flex items-center gap-1">
-                  <Minus className="h-4 w-4 text-gray-600" />
+                  <Minus className={featureThemeClassName('voteAmendmentVotingQueueNeutralIcon')} />
                   {currentVoteResults.abstain}
                 </span>
               </div>
@@ -406,7 +417,7 @@ export function AmendmentVotingQueue({
                   onClick={() => castVote('accept')}
                   disabled={votingLoading}
                   variant="outline"
-                  className="flex-1 border-green-500 text-green-600 hover:bg-green-50"
+                  className={featureThemeClassName('voteAmendmentVotingQueueSuccessBadge')}
                 >
                   <ThumbsUp className="mr-2 h-4 w-4" />
                   {t('features.events.voting.accept')}
@@ -415,7 +426,7 @@ export function AmendmentVotingQueue({
                   onClick={() => castVote('reject')}
                   disabled={votingLoading}
                   variant="outline"
-                  className="flex-1 border-red-500 text-red-600 hover:bg-red-50"
+                  className={featureThemeClassName('voteAmendmentVotingQueueDangerBadge')}
                 >
                   <ThumbsDown className="mr-2 h-4 w-4" />
                   {t('features.events.voting.reject')}
@@ -439,8 +450,8 @@ export function AmendmentVotingQueue({
           <div
             className={`rounded-lg border-2 p-4 ${
               currentSession?.status === 'active'
-                ? 'border-green-500 bg-green-50 dark:bg-green-950'
-                : 'border-gray-300'
+                ? featureThemeClassName('voteAmendmentVotingQueueSuccessSurface')
+                : featureThemeClassName('voteAmendmentVotingQueueNeutralBorderAlpha')
             }`}
           >
             <div className="flex items-center justify-between">
@@ -455,7 +466,7 @@ export function AmendmentVotingQueue({
                 </p>
               </div>
               {currentSession?.status === 'active' && (
-                <BadgeControl variant="default" className="bg-green-500">
+                <BadgeControl variant="default" tone="successStrong">
                   {translateText('generated.inline.1246_aktuelle_abstimmung_bf7b15bd')}
                 </BadgeControl>
               )}
@@ -472,7 +483,12 @@ export function AmendmentVotingQueue({
                 {translateText('generated.inline.1263_n_chster_vorschlag_17267465')}
               </Button>
             ) : (
-              <Button onClick={onComplete} variant="default" className="flex-1 bg-green-600">
+              <Button
+                onClick={onComplete}
+                variant="default"
+                presentation="success"
+                className="flex-1"
+              >
                 <CheckCircle2 className="mr-2 h-4 w-4" />
                 {translateText('generated.inline.1264_abstimmung_abschlie_en_4133d62a')}
               </Button>

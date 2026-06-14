@@ -252,7 +252,7 @@ export function BlogDetailView({
             ) : null}
           </div>
         </CardHeader>
-        <CardContent className="prose prose-slate dark:prose-invert max-w-none">
+        <CardContent prose className="max-w-none">
           {content && Array.isArray(content) && content.length > 0 ? (
             <RichTextPreview content={content} />
           ) : (
@@ -290,7 +290,7 @@ export function BlogDetailView({
           <AlertDialogFooter>
             <AlertDialogCancel>{t('common.actions.cancel')}</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive hover:bg-destructive/90 text-white"
+              variant="destructive"
               onClick={async () => {
                 onDeleteOpenChange(false);
                 await onConfirmDelete();

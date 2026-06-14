@@ -120,7 +120,11 @@ export function TimelineHeader({
 
               {/* Active filter count badge */}
               {activeFilterCount > 0 && (
-                <BadgeControl variant="secondary" className="ml-2 h-5 min-w-[20px] px-1.5 text-xs">
+                <BadgeControl
+                  variant="secondary"
+                  size="xs"
+                  className="ml-2 h-5 min-w-[20px] px-1.5"
+                >
                   {activeFilterCount}
                 </BadgeControl>
               )}

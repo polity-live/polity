@@ -1,10 +1,11 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import type { FormEventHandler } from 'react';
 import { ArrowRight, Mail, MailCheck, UserPlus } from 'lucide-react';
 
 import { FormButton, FormCard, PasswordField, TextField } from '@/features/shared/ui/form';
 import { InlineNotice, Spinner } from '@/features/shared/ui/feedback';
 import { cn } from '@/features/shared/utils/utils';
-import { GoogleIcon } from './GoogleIcon';
+import { GoogleIcon } from '@/features/shared/ui/icons';
 
 interface SignUpFormCopy {
   title: string;
@@ -69,7 +70,7 @@ function fieldHintClassName(hasError: boolean, hasSuccess: boolean) {
   return cn(
     'text-xs',
     hasError && 'text-destructive',
-    hasSuccess && 'text-emerald-600 dark:text-emerald-400'
+    hasSuccess && featureThemeClassName('authNameStepSuccessText')
   );
 }
 
@@ -109,7 +110,7 @@ export function SignUpFormView({
       <FormCard
         title={copy.confirmationPendingTitle}
         description={copy.confirmationPendingDescription}
-        icon={<MailCheck className="h-12 w-12 text-blue-500" />}
+        icon={<MailCheck className={featureThemeClassName('authForgotPasswordFormInfoIcon')} />}
         contentClassName="space-y-4"
       >
         <InlineNotice variant="info">{copy.confirmationPendingInstructions}</InlineNotice>
@@ -134,7 +135,7 @@ export function SignUpFormView({
     <FormCard
       title={copy.title}
       description={copy.description}
-      icon={<UserPlus className="h-12 w-12 text-blue-500" />}
+      icon={<UserPlus className={featureThemeClassName('authForgotPasswordFormInfoIcon')} />}
     >
       <form onSubmit={onSubmit} className="space-y-4">
         <TextField
@@ -210,7 +211,7 @@ export function SignUpFormView({
 
       <FormButton
         type="button"
-        className="mt-4 w-full border border-[#dadce0] bg-white text-[#3c4043] hover:bg-[#f8f9fa] dark:border-[#5f6368] dark:bg-[#202124] dark:text-[#e8eaed] dark:hover:bg-[#303134]"
+        className={featureThemeClassName('authSignInFormContrastBadge')}
         onClick={onGoogleAuth}
         disabled={isLoading}
       >

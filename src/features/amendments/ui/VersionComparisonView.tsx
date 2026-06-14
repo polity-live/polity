@@ -63,7 +63,7 @@ export function VersionComparisonView({
     <Card className="mt-4">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium">
+          <CardTitle size="sm" weight="medium">
             {t('features.amendments.supportConfirmation.comparison.title')}
           </CardTitle>
           {hasChanges && (

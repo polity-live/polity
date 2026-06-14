@@ -206,3 +206,23 @@ export function VotingResultBadge({
     </StatusBadge>
   );
 }
+
+export function VotingResultCompact({
+  label,
+  className,
+}: {
+  label: ReactNode;
+  className?: string;
+}) {
+  return (
+    <span
+      className={cn(
+        'flex max-w-full min-w-0 items-center font-mono text-xs font-medium',
+        className
+      )}
+      title={typeof label === 'string' ? label : undefined}
+    >
+      <span className="min-w-0 truncate">{label}</span>
+    </span>
+  );
+}

@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeMarkup, featureThemeValue } from '@/features/shared/theme';
 import { createContext, ReactNode, useContext, type ComponentProps } from 'react';
 import {
   ReactFlow,
@@ -130,41 +131,7 @@ export function NetworkFlowBaseView<T extends Node = Node>({
           : ['rounded-lg', containerClassName]
       )}
     >
-      <style>{`
-      /* Dark mode styles for ReactFlow controls */
-      .dark .react-flow__controls {
-        button {
-          background-color: hsl(var(--background));
-          border-color: hsl(var(--border));
-          color: hsl(var(--foreground));
-        }
-
-        button:hover {
-          background-color: hsl(var(--accent));
-        }
-
-        button path {
-          fill: currentColor;
-        }
-      }
-
-      /* Dark mode styles for MiniMap */
-      .dark .react-flow__minimap {
-        background-color: hsl(var(--background));
-        border-color: hsl(var(--border));
-      }
-
-      .dark .react-flow__minimap-mask {
-        fill: hsl(var(--muted) / 0.3);
-      }
-
-      /* Dark mode styles for Panel */
-      .dark .react-flow__panel {
-        background-color: hsl(var(--background));
-        border-color: hsl(var(--border));
-        color: hsl(var(--foreground));
-      }
-    `}</style>
+      <style>{featureThemeMarkup('networkNetworkFlowBaseReactFlowDarkModeStyles')}</style>
       <ReactFlow
         className="h-full w-full"
         nodes={nodes}
@@ -191,7 +158,7 @@ export function NetworkFlowBaseView<T extends Node = Node>({
           </ControlButton>
         </Controls>
         {showMiniMap && <MiniMap zoomable pannable {...miniMapProps} />}
-        <Background color="#aaa" gap={16} />
+        <Background color={featureThemeValue('floweditorFlowEditorNeutralColor')} gap={16} />
       </ReactFlow>
       {children}
     </div>

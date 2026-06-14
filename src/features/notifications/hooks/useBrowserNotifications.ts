@@ -32,7 +32,9 @@ export function useBrowserNotifications() {
       ids.add(n.id);
     }
     seenIdsRef.current = ids;
-    console.log(`[BrowserNotif] Seeded ${ids.size} existing unread IDs. Ready for new notifications.`);
+    console.log(
+      `[BrowserNotif] Seeded ${ids.size} existing unread IDs. Ready for new notifications.`
+    );
   }, [unread, isLoading]);
 
   // ── Watch for new unread notifications ─────────────────────────────
@@ -50,7 +52,9 @@ export function useBrowserNotifications() {
       return;
     }
     if (Notification.permission !== 'granted') {
-      console.log(`[BrowserNotif] Watch skipped: permission is "${Notification.permission}" (needs "granted")`);
+      console.log(
+        `[BrowserNotif] Watch skipped: permission is "${Notification.permission}" (needs "granted")`
+      );
       return;
     }
 
@@ -60,11 +64,15 @@ export function useBrowserNotifications() {
       ? (deliverySettings as Record<string, boolean>).inAppNotifications !== false
       : true;
     if (!enabled) {
-      console.log('[BrowserNotif] Watch skipped: inAppNotifications is disabled in delivery settings');
+      console.log(
+        '[BrowserNotif] Watch skipped: inAppNotifications is disabled in delivery settings'
+      );
       return;
     }
 
-    console.log(`[BrowserNotif] Checking ${unread.length} unread, seenIds has ${seenIdsRef.current.size} entries`);
+    console.log(
+      `[BrowserNotif] Checking ${unread.length} unread, seenIds has ${seenIdsRef.current.size} entries`
+    );
 
     for (const n of unread) {
       if (seenIdsRef.current.has(n.id)) continue;
@@ -86,15 +94,18 @@ export function useBrowserNotifications() {
 
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.ready
-          .then((reg) => {
+          .then(reg => {
             console.log(`[BrowserNotif] Using SW showNotification`, notifOptions);
             return reg.showNotification(n.title || 'Polity', notifOptions);
           })
           .then(() => {
             console.log(`[BrowserNotif] showNotification promise resolved`);
           })
-          .catch((err) => {
-            console.error('[BrowserNotif] SW showNotification failed, falling back to Notification API', err);
+          .catch(err => {
+            console.error(
+              '[BrowserNotif] SW showNotification failed, falling back to Notification API',
+              err
+            );
             new Notification(n.title || 'Polity', notifOptions);
           });
       } else {

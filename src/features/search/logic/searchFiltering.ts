@@ -1,6 +1,10 @@
 import type { SearchContentItem } from '../types/search.types';
 import type { ContentType } from '@/features/timeline/constants/content-type-config';
-import type { DateRangeFilter, EngagementFilter, TimelineSortOption } from '@/features/timeline/hooks/useTimelineFilters';
+import type {
+  DateRangeFilter,
+  EngagementFilter,
+  TimelineSortOption,
+} from '@/features/timeline/hooks/useTimelineFilters';
 
 export function getDateCutoff(dateRange: DateRangeFilter): Date | null {
   const now = new Date();
@@ -38,7 +42,7 @@ export function filterAndSortContentItems(
     topics: string[];
     engagement: EngagementFilter;
     sortBy: TimelineSortOption;
-  },
+  }
 ): SearchContentItem[] {
   let items = [...contentItems];
 
@@ -110,9 +114,17 @@ export function collectAvailableTopics(contentItems: SearchContentItem[]): strin
 }
 
 export function buildAgendaItemsByEventId(
-  agendaItems: readonly { event_id?: string | null; event?: { id?: string } | null; election?: { id?: string } | null; amendment?: { id?: string } | null }[],
-): Map<string, Array<{ election?: { id?: string } | null; amendment?: { id?: string } | null }>> {
-  const map = new Map<string, Array<{ election?: { id?: string } | null; amendment?: { id?: string } | null }>>();
+  agendaItems: readonly {
+    event_id?: string | null;
+    event?: { id?: string } | null;
+    election?: { id?: string } | null;
+    amendment?: { id?: string } | null;
+  }[]
+): Map<string, { election?: { id?: string } | null; amendment?: { id?: string } | null }[]> {
+  const map = new Map<
+    string,
+    { election?: { id?: string } | null; amendment?: { id?: string } | null }[]
+  >();
   for (const item of agendaItems ?? []) {
     const eventId = item.event?.id ?? item.event_id;
     if (!eventId) continue;
@@ -129,7 +141,7 @@ export function hasActiveFilters(
   dateRange: DateRangeFilter,
   topics: string[],
   engagement: EngagementFilter,
-  searchQuery: string,
+  searchQuery: string
 ): boolean {
   return (
     contentTypes.length !== allContentTypesLength ||

@@ -41,7 +41,7 @@ function DocumentsEmptyState({
 }) {
   return (
     <Card>
-      <CardContent className="flex flex-col items-center justify-center py-20 text-center">
+      <CardContent align="center" className="flex flex-col items-center justify-center py-20">
         <FileText className="text-muted-foreground mb-4 h-16 w-16" />
         <p className="text-muted-foreground mb-2 text-lg">
           {hasActiveFilters
@@ -95,7 +95,7 @@ export function GroupDocumentsListView({
           </div>
         ) : null}
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-20 text-center">
+          <CardContent align="center" className="flex flex-col items-center justify-center py-20">
             <FileText className="text-muted-foreground mb-4 h-16 w-16" />
             <p className="text-muted-foreground mb-4 text-lg">
               {canManageDocuments

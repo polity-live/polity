@@ -28,7 +28,7 @@ interface SuggestionMark {
 export function applySuggestionToContent(
   content: Value,
   suggestionId: string,
-  action: SuggestionAction,
+  action: SuggestionAction
 ): Value {
   return processNodes(content, suggestionId, action) as Value;
 }
@@ -36,7 +36,7 @@ export function applySuggestionToContent(
 function processNodes(
   nodes: Descendant[],
   suggestionId: string,
-  action: SuggestionAction,
+  action: SuggestionAction
 ): Descendant[] {
   const result: Descendant[] = [];
 
@@ -51,7 +51,7 @@ function processNodes(
 function processNode(
   node: Descendant,
   suggestionId: string,
-  action: SuggestionAction,
+  action: SuggestionAction
 ): Descendant[] {
   // Check if this is a text node with suggestion marks
   const suggestionKey = findSuggestionKey(node, suggestionId);
@@ -132,7 +132,7 @@ function findSuggestionKey(node: Descendant, suggestionId: string): string | nul
 
 function stripSuggestionMark(node: Descendant, suggestionKey: string): Descendant {
   const copy = { ...node } as Record<string, unknown>;
-  delete copy[suggestionKey];
+  Reflect.deleteProperty(copy, suggestionKey);
 
   // Remove the suggestion boolean flag if no other suggestion marks remain.
   // This flag is what plate-js uses to render the green/red suggestion highlighting.

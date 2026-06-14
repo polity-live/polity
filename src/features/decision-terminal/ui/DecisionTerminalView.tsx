@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import type { ReactNode } from 'react';
 
 import type { DecisionTerminalDashboardConfig } from '@/zero/preferences';
@@ -41,7 +42,7 @@ export function DecisionTerminalView({
   return (
     <div
       className={cn(
-        'bg-card flex h-full min-h-[640px] flex-col overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700',
+        featureThemeClassName('decisionterminalDecisionTerminalNeutralSurface'),
         className
       )}
       data-testid="decision-terminal"

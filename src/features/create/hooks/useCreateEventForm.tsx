@@ -3,7 +3,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useQuery } from '@rocicorp/zero/react';
 import type { Value } from 'platejs';
 import { useNavigate, useSearch } from '@tanstack/react-router';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import {
   useTranslation,
   translate as translateText,
@@ -11,7 +11,7 @@ import {
 import { Button } from '@/features/shared/ui/ui/button';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { HashtagEditor } from '@/features/shared/ui/hashtags';
-import { CreateInputField } from '../ui/CreateFields';
+import { CreateInputField } from '@/features/shared/ui/form';
 import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
 import { VisibilityInput } from '../ui/inputs/VisibilityInput';
 import { CreateSummaryStep } from '../ui/CreateSummaryStep';

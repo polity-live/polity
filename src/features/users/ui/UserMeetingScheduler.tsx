@@ -435,7 +435,7 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
 
       <Dialog open={isEditDialogOpen} onOpenChange={handleEditDialogOpenChange}>
         <ScrollableDialogContent className="!flex !max-h-[calc(100vh-2rem)] !max-w-2xl !flex-col !overflow-hidden sm:!max-w-2xl">
-          <DialogHeader className="border-b px-6 pt-6 pr-14 pb-4">
+          <DialogHeader separator className="px-6 pt-6 pr-14 pb-4">
             <DialogTitle>
               {translateText('generated.inline.1216_edit_meeting_offer_cbc09a1f')}
             </DialogTitle>

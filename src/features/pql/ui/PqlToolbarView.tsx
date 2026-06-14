@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status/StatusBadges';
 import { FormControlInput, SearchField } from '@/features/shared/ui/form';
 import { ChevronDown, Pencil, Plus, Trash2, X } from 'lucide-react';
@@ -120,7 +121,7 @@ export function PqlToolbarView<TItem, TFieldKey extends string>({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-4 w-4 p-0 text-inherit hover:bg-transparent"
+                    className={featureThemeClassName('pqlPqlToolbarThemedPanel')}
                     onClick={badge.onClear}
                     aria-label={`Remove ${badge.label}`}
                   >
@@ -314,7 +315,7 @@ export function PqlToolbarView<TItem, TFieldKey extends string>({
                           <Button
                             type="button"
                             variant="ghost"
-                            className="h-auto flex-1 justify-start p-0 text-left whitespace-normal hover:bg-transparent"
+                            className={featureThemeClassName('pqlPqlToolbarContrastPanel')}
                             onClick={() => onCustomFilterToggle(filter.id)}
                           >
                             <div className="flex items-center gap-2">

@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { Link } from '@tanstack/react-router';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton';
@@ -63,12 +64,14 @@ export function StatementSearchCard({ item }: StatementSearchCardProps) {
           )}
 
           {/* Bottom row: creator, group, stats */}
-          <div className="text-muted-foreground mt-1.5 flex items-center gap-2 text-[11px]">
+          <div className={featureThemeClassName('searchStatementSearchCardThemedText')}>
             {/* Creator */}
             <div className="flex min-w-0 items-center gap-1">
               <Avatar className="h-4 w-4 shrink-0">
                 <AvatarImage src={item.authorAvatar ?? undefined} />
-                <AvatarFallback className="text-[8px]">
+                <AvatarFallback
+                  className={featureThemeClassName('editorInviteCollaboratorDialogThemedText')}
+                >
                   <User className="h-2.5 w-2.5" />
                 </AvatarFallback>
               </Avatar>
@@ -85,7 +88,11 @@ export function StatementSearchCard({ item }: StatementSearchCardProps) {
                   {item.groupImageUrl ? (
                     <Avatar className="h-4 w-4 shrink-0">
                       <AvatarImage src={item.groupImageUrl} />
-                      <AvatarFallback className="text-[8px]">
+                      <AvatarFallback
+                        className={featureThemeClassName(
+                          'editorInviteCollaboratorDialogThemedText'
+                        )}
+                      >
                         <Users className="h-2.5 w-2.5" />
                       </AvatarFallback>
                     </Avatar>

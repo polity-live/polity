@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { useGroupLinks as useFacadeGroupLinks } from '@/zero/groups/useGroupState';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { useCommonActions } from '@/zero/common/useCommonActions';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 

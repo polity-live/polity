@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { Check, Loader2, UserPlus, X } from 'lucide-react';
 
 import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
@@ -84,7 +85,11 @@ export function InviteCollaboratorDialogView({ model }: InviteCollaboratorDialog
                           alt={[user.first_name, user.last_name].filter(Boolean).join(' ')}
                         />
                       ) : null}
-                      <AvatarFallback className="text-[8px]">
+                      <AvatarFallback
+                        className={featureThemeClassName(
+                          'editorInviteCollaboratorDialogThemedText'
+                        )}
+                      >
                         {user.first_name?.[0]?.toUpperCase() || '?'}
                       </AvatarFallback>
                     </Avatar>
@@ -96,7 +101,7 @@ export function InviteCollaboratorDialogView({ model }: InviteCollaboratorDialog
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-4 w-4 p-0 hover:bg-transparent"
+                      className={featureThemeClassName('editorInviteCollaboratorDialogThemedPanel')}
                       onClick={() => toggleUserSelection(userId)}
                     >
                       <X className="h-3 w-3" />

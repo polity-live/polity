@@ -70,7 +70,7 @@ export function GroupDocumentCard({ document, href }: GroupDocumentCardProps) {
 
   if (href) {
     return (
-      <Card asChild className="transition-shadow hover:shadow-lg">
+      <Card asChild interactive="shadow">
         <SmartLink href={href} className="block cursor-pointer">
           {content}
         </SmartLink>
@@ -78,5 +78,5 @@ export function GroupDocumentCard({ document, href }: GroupDocumentCardProps) {
     );
   }
 
-  return <Card className="transition-shadow hover:shadow-lg">{content}</Card>;
+  return <Card interactive="shadow">{content}</Card>;
 }

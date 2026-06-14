@@ -24,7 +24,7 @@ import { VisibilitySelector } from '@/features/shared/ui/form';
 import { TooltipProvider } from '@/features/shared/ui/ui/tooltip';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
 import { useAuth } from '@/providers/auth-provider';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { PageWrapper } from '@/layout/page-wrapper';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
@@ -295,20 +295,20 @@ export function CreateBlogForm() {
               {/* Step 3: Review */}
               <CarouselItem>
                 <div className="p-4">
-                  <Card className="overflow-hidden border-2 bg-gradient-to-br from-yellow-100 to-orange-100 dark:from-yellow-900/40 dark:to-orange-900/50">
+                  <Card surface="warmGradient" className="overflow-hidden">
                     <CardHeader>
                       <div className="mb-2 flex items-center justify-between">
-                        <BadgeControl variant="default" className="text-xs">
+                        <BadgeControl variant="default" size="xs">
                           {translateText('generated.inline.0281_blog_post_6c8d4a5b')}
                         </BadgeControl>
-                        <BadgeControl variant="outline" className="text-xs">
+                        <BadgeControl variant="outline" size="xs">
                           {formData.visibility}
                         </BadgeControl>
                       </div>
                       {formData.hashtags.length > 0 && (
                         <div className="flex flex-wrap gap-1">
                           {formData.hashtags.map((tag, index) => (
-                            <BadgeControl key={index} variant="secondary" className="text-xs">
+                            <BadgeControl key={index} variant="secondary" size="xs">
                               #{tag}
                             </BadgeControl>
                           ))}

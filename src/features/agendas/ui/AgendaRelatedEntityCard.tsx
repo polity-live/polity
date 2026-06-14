@@ -145,7 +145,7 @@ export function AgendaRelatedRoleCard({
       >
         {hasText(role.term) && (
           <div className="mt-2 flex flex-wrap gap-2">
-            <BadgeControl variant="secondary" className="text-xs">
+            <BadgeControl variant="secondary" size="xs">
               {role.term}
             </BadgeControl>
           </div>

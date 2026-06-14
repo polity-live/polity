@@ -1,3 +1,4 @@
+import { featureThemeValue } from '@/features/shared/theme';
 /**
  * Unified Editor Presence Hook
  *
@@ -39,18 +40,17 @@ export function useEditorPresence(options: UseEditorPresenceOptions): UseEditorP
   const { entityId, userId, userName, userAvatar, enabled = true } = options;
 
   const userColor = useMemo(() => {
-    return userId ? generateUserColor(userId) : '#888888';
+    return userId
+      ? generateUserColor(userId)
+      : featureThemeValue('editorUseEditorPresenceNeutralColor');
   }, [userId]);
 
-  const { peers, publishPresence: wsPublish } = usePresence(
-    `editor:${entityId}`,
-    {
-      enabled,
-      initialData: userId
-        ? { userId, name: userName || 'Anonymous', avatar: userAvatar, color: userColor }
-        : undefined,
-    }
-  );
+  const { peers, publishPresence: wsPublish } = usePresence(`editor:${entityId}`, {
+    enabled,
+    initialData: userId
+      ? { userId, name: userName || 'Anonymous', avatar: userAvatar, color: userColor }
+      : undefined,
+  });
 
   const onlinePeers = useMemo<EditorPresencePeer[]>(() => {
     return peers
@@ -61,7 +61,7 @@ export function useEditorPresence(options: UseEditorPresenceOptions): UseEditorP
         userId: peer.userId,
         name: peer.name || 'Anonymous',
         avatar: peer.avatar,
-        color: peer.color || '#888888',
+        color: peer.color || featureThemeValue('editorUseEditorPresenceNeutralColor'),
       })) as EditorPresencePeer[];
   }, [peers, userId]);
 

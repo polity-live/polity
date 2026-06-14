@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import type { FormEventHandler } from 'react';
 import { Mail } from 'lucide-react';
 
@@ -77,7 +78,7 @@ export function AccountEmailSectionView({
               descriptionClassName={cn(
                 'text-xs',
                 showEmailError && 'text-destructive',
-                showEmailSuccess && 'text-emerald-600 dark:text-emerald-400'
+                showEmailSuccess && featureThemeClassName('authNameStepSuccessText')
               )}
               invalid={showEmailError}
               required

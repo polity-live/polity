@@ -4,7 +4,7 @@ import { ModeSelector as EditorModeSelector } from '@/features/editor/ui/ModeSel
 import type { EditorMode } from '@/features/editor/types';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 
 interface ModeSelectorProps {
   blogId: string;

@@ -5,8 +5,9 @@ import { useVoteActions } from '@/zero/votes/useVoteActions';
 
 export function useVoting() {
   const { user } = useAuth();
-  const { castIndicativeVote: castElectionIndicative, castFinalVote: castElectionFinal, createElector } = useElectionActions();
-  const { castIndicativeVote: castVoteIndicative, castFinalVote: castVoteFinal, createVoter } = useVoteActions();
+  const { castIndicativeVote: castElectionIndicative, castFinalVote: castElectionFinal } =
+    useElectionActions();
+  const { castIndicativeVote: castVoteIndicative, castFinalVote: castVoteFinal } = useVoteActions();
   const [votingLoading, setVotingLoading] = useState<string | null>(null);
 
   const handleElectionVote = async (
@@ -25,12 +26,14 @@ export function useVoting() {
         election_id: electionId,
         elector_id: electorId,
       };
-      const selections = [{
-        id: crypto.randomUUID(),
-        election_id: electionId,
-        candidate_id: candidateId,
-        elector_participation_id: participationId,
-      }];
+      const selections = [
+        {
+          id: crypto.randomUUID(),
+          election_id: electionId,
+          candidate_id: candidateId,
+          elector_participation_id: participationId,
+        },
+      ];
 
       if (options?.isIndicative !== false) {
         await castElectionIndicative(participationArgs, selections);
@@ -61,12 +64,14 @@ export function useVoting() {
         vote_id: voteId,
         voter_id: voterId,
       };
-      const decisions = [{
-        id: crypto.randomUUID(),
-        vote_id: voteId,
-        choice_id: choiceId,
-        voter_participation_id: participationId,
-      }];
+      const decisions = [
+        {
+          id: crypto.randomUUID(),
+          vote_id: voteId,
+          choice_id: choiceId,
+          voter_participation_id: participationId,
+        },
+      ];
 
       if (options?.isIndicative !== false) {
         await castVoteIndicative(participationArgs, decisions);

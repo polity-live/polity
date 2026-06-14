@@ -3,7 +3,7 @@ import { BlogsAndStatementsView } from '@/features/content/ui/BlogsAndStatements
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { usePermissions } from '@/zero/rbac';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 
 interface GroupBlogsAndStatementsPageProps {
   groupId: string;

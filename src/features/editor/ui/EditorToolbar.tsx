@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 /**
  * Editor Toolbar Component
@@ -161,7 +162,7 @@ export function EditorToolbar({
                   {peer.avatar ? <AvatarImage src={peer.avatar} alt={peer.name} /> : null}
                   <AvatarFallback
                     style={{ backgroundColor: peer.color }}
-                    className="text-xs text-white"
+                    className={featureThemeClassName('documentPresenceIndicatorsContrastText')}
                   >
                     {peer.name?.[0]?.toUpperCase()}
                   </AvatarFallback>
@@ -178,7 +179,7 @@ export function EditorToolbar({
 
         {/* Status Badge */}
         {statusBadge && (
-          <BadgeControl variant="outline" className="capitalize">
+          <BadgeControl variant="outline" textTransform="capitalize">
             {statusBadge}
           </BadgeControl>
         )}

@@ -52,7 +52,7 @@ export function SupportConfirmationPanel({ groupId }: SupportConfirmationPanelPr
   if (pendingConfirmations.length === 0) {
     return (
       <Card>
-        <CardContent className="text-muted-foreground py-8 text-center">
+        <CardContent tone="muted" align="center" className="py-8">
           <CheckCircle className="mx-auto mb-4 h-12 w-12 opacity-50" />
           <p>{t('features.amendments.supportConfirmation.noPending')}</p>
         </CardContent>

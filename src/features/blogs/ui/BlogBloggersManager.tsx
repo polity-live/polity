@@ -49,7 +49,7 @@ import {
   CommandItem,
   CommandList,
 } from '@/features/shared/ui/ui/command';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { useAuth } from '@/providers/auth-provider';
 import { usePermissions } from '@/zero/rbac/usePermissions';
 import type { User } from '@/zero';

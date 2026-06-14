@@ -9,6 +9,7 @@ import {
 } from '../../logic/dashboard-config';
 import { DecisionTerminal } from '../DecisionTerminal';
 import type { DecisionItem } from '../types';
+import { Button } from '@/features/shared/ui/ui/button';
 
 const { saveDecisionTerminalDashboard, canVote } = vi.hoisted(() => ({
   saveDecisionTerminalDashboard: vi.fn(),
@@ -119,12 +120,12 @@ vi.mock('react-grid-layout/legacy', () => {
           {resizeHandle?.(axis, { current: null })}
         </div>
       ))}
-      <button type="button" onClick={() => onDragStop?.(dragStopLayout)}>
+      <Button type="button" onClick={() => onDragStop?.(dragStopLayout)}>
         simulate drag stop
-      </button>
-      <button type="button" onClick={() => onResizeStop?.(resizeStopLayout)}>
+      </Button>
+      <Button type="button" onClick={() => onResizeStop?.(resizeStopLayout)}>
         simulate resize stop
-      </button>
+      </Button>
       {children}
     </div>
   );

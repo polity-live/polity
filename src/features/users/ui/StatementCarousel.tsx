@@ -50,20 +50,20 @@ export const StatementCarousel: React.FC<StatementCarouselProps> = ({
                     groupName: statement.group?.name ?? undefined,
                     groupAvatar: statement.group?.image_url ?? undefined,
                     groupId: statement.group_id ?? undefined,
-                    supportCount: supportVotes.filter((v) => v.vote === 1).length,
-                    opposeCount: supportVotes.filter((v) => v.vote === -1).length,
+                    supportCount: supportVotes.filter(v => v.vote === 1).length,
+                    opposeCount: supportVotes.filter(v => v.vote === -1).length,
                     commentCount: statement.comment_count ?? 0,
                     surveyQuestion: survey?.question ?? undefined,
-                    surveyOptions: survey?.options?.map((o) => ({
+                    surveyOptions: survey?.options?.map(o => ({
                       label: o.label,
                       voteCount: o.votes?.length ?? 0,
                     })),
                     hashtags: (statement.statement_hashtags ?? [])
-                      .map((jn) => ({
+                      .map(jn => ({
                         id: jn.hashtag?.id ?? jn.id,
                         tag: jn.hashtag?.tag ?? '',
                       }))
-                      .filter((h) => h.tag),
+                      .filter(h => h.tag),
                   }}
                 />
               </CarouselItem>

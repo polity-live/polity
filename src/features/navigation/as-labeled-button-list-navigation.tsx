@@ -17,7 +17,7 @@ export function AsLabeledButtonListNavigation({
     return (
       <div
         className={cn(
-          'fixed left-0 right-0 z-40 bg-background',
+          'bg-background fixed right-0 left-0 z-40',
           isPrimary ? 'bottom-0 border-t' : 'top-0 border-b'
         )}
       >
@@ -46,8 +46,8 @@ export function AsLabeledButtonListNavigation({
   return (
     <div
       className={cn(
-        'fixed top-0 z-40 flex h-full w-64 flex-col border-r bg-background',
-        isPrimary ? 'left-0' : 'right-0 border-l border-r-0'
+        'bg-background fixed top-0 z-40 flex h-full w-64 flex-col border-r',
+        isPrimary ? 'left-0' : 'right-0 border-r-0 border-l'
       )}
     >
       <div className="scrollbar-hide flex-1 overflow-y-auto p-4">
@@ -62,7 +62,7 @@ export function AsLabeledButtonListNavigation({
       <div className="flex-shrink-0 border-t">
         {isPrimary && <NavUserAvatar navigationView="asLabeledButtonList" isMobile={false} />}
         {isPrimary && (
-          <div className="px-4 pb-2 pt-4">
+          <div className="px-4 pt-4 pb-2">
             <StateSwitcher isMobile={false} navigationType={navigationType} />
           </div>
         )}

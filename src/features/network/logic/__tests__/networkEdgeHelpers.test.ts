@@ -1,3 +1,4 @@
+import { featureThemeClassName, featureThemeValue } from '@/features/shared/theme';
 import { Position } from '@xyflow/react';
 import { describe, expect, it } from 'vitest';
 
@@ -50,52 +51,61 @@ describe('networkEdgeHelpers', () => {
 
   it('keeps the fallback stroke color for single-direction edges', () => {
     expect(
-      getRelationshipStrokeColor('#66bb6a', {
-        amendmentRight: 'forward',
-      })
-    ).toBe('#66bb6a');
+      getRelationshipStrokeColor(
+        featureThemeValue('amendmentAmendmentPathVisualizationSuccessColorAlpha'),
+        {
+          amendmentRight: 'forward',
+        }
+      )
+    ).toBe(featureThemeValue('amendmentAmendmentPathVisualizationSuccessColorAlpha'));
   });
 
   it('uses the shared bidirectional color when a right is explicitly bidirectional', () => {
     expect(
-      getRelationshipStrokeColor('#66bb6a', {
-        amendmentRight: 'bidirectional',
-      })
-    ).toBe('#7c3aed');
+      getRelationshipStrokeColor(
+        featureThemeValue('amendmentAmendmentPathVisualizationSuccessColorAlpha'),
+        {
+          amendmentRight: 'bidirectional',
+        }
+      )
+    ).toBe(featureThemeValue('chartChartRendererAccentColor'));
   });
 
   it('uses the shared bidirectional color when different rights point in opposite directions', () => {
     expect(
-      getRelationshipStrokeColor('#66bb6a', {
-        amendmentRight: 'forward',
-        informationRight: 'backward',
-      })
-    ).toBe('#7c3aed');
+      getRelationshipStrokeColor(
+        featureThemeValue('amendmentAmendmentPathVisualizationSuccessColorAlpha'),
+        {
+          amendmentRight: 'forward',
+          informationRight: 'backward',
+        }
+      )
+    ).toBe(featureThemeValue('chartChartRendererAccentColor'));
   });
 
   it('uses the connection-direction color when the visible rights are unidirectional', () => {
     expect(
       getVisibleRelationshipStrokeColor({
-        fallbackColor: '#66bb6a',
+        fallbackColor: featureThemeValue('amendmentAmendmentPathVisualizationSuccessColorAlpha'),
         connectionDirection: 'incoming',
         rightEdgeDirections: {
           amendmentRight: 'forward',
         },
       })
-    ).toBe('#2563eb');
+    ).toBe(featureThemeValue('chartChartRendererInfoColor'));
   });
 
   it('prefers purple over incoming/outgoing colors when visible rights are mixed-opposite', () => {
     expect(
       getVisibleRelationshipStrokeColor({
-        fallbackColor: '#66bb6a',
+        fallbackColor: featureThemeValue('amendmentAmendmentPathVisualizationSuccessColorAlpha'),
         connectionDirection: 'incoming',
         rightEdgeDirections: {
           amendmentRight: 'forward',
           informationRight: 'backward',
         },
       })
-    ).toBe('#7c3aed');
+    ).toBe(featureThemeValue('chartChartRendererAccentColor'));
   });
 
   it('maps forward and backward edge directions to anchor-usage directions', () => {
@@ -305,20 +315,30 @@ describe('networkEdgeHelpers', () => {
 
   it('places forward markers at the edge end and backward markers at the edge start', () => {
     expect(
-      buildRelationshipEdgeMarkers('#66bb6a', {
-        amendmentRight: 'forward',
-      })
+      buildRelationshipEdgeMarkers(
+        featureThemeValue('amendmentAmendmentPathVisualizationSuccessColorAlpha'),
+        {
+          amendmentRight: 'forward',
+        }
+      )
     ).toMatchObject({
       markerStart: undefined,
-      markerEnd: { color: '#66bb6a' },
+      markerEnd: {
+        color: featureThemeValue('amendmentAmendmentPathVisualizationSuccessColorAlpha'),
+      },
     });
 
     expect(
-      buildRelationshipEdgeMarkers('#66bb6a', {
-        amendmentRight: 'backward',
-      })
+      buildRelationshipEdgeMarkers(
+        featureThemeValue('amendmentAmendmentPathVisualizationSuccessColorAlpha'),
+        {
+          amendmentRight: 'backward',
+        }
+      )
     ).toMatchObject({
-      markerStart: { color: '#66bb6a' },
+      markerStart: {
+        color: featureThemeValue('amendmentAmendmentPathVisualizationSuccessColorAlpha'),
+      },
       markerEnd: undefined,
     });
   });
@@ -345,7 +365,7 @@ describe('networkEdgeHelpers', () => {
 
   it('builds shared relationship edges with the same preview metadata used by the group network', () => {
     const edge = buildNetworkRelationshipEdge({
-      edgeId: 'edge-parent-h1-to-b1',
+      edgeId: featureThemeClassName('networkNetworkEdgeHelpersThemedGradientSurface'),
       sourceId: 'group-h1',
       targetId: 'group-b1',
       sourceGroupId: 'group-h1',
@@ -358,7 +378,9 @@ describe('networkEdgeHelpers', () => {
       memberSourceGroupId: 'group-b1',
       memberTargetGroupId: 'group-h1',
       rightEdgeDirections: { amendmentRight: 'backward' },
-      fallbackStrokeColor: '#66bb6a',
+      fallbackStrokeColor: featureThemeValue(
+        'amendmentAmendmentPathVisualizationSuccessColorAlpha'
+      ),
       sourceName: 'H1',
       targetName: 'B1',
       previewCurrentGroupId: 'group-b1',
@@ -385,7 +407,7 @@ describe('networkEdgeHelpers', () => {
 
   it('animates forward rights toward the edge end marker', () => {
     const edge = buildNetworkRelationshipEdge({
-      edgeId: 'edge-b1-to-h1',
+      edgeId: featureThemeClassName('networkNetworkEdgeHelpersThemedGradientSurfaceAlpha'),
       sourceId: 'group-b1',
       targetId: 'group-h1',
       sourceGroupId: 'group-b1',
@@ -396,7 +418,9 @@ describe('networkEdgeHelpers', () => {
       rightRelationshipKinds: { amendmentRight: 'active' },
       membershipMode: 'none',
       rightEdgeDirections: { amendmentRight: 'forward' },
-      fallbackStrokeColor: '#66bb6a',
+      fallbackStrokeColor: featureThemeValue(
+        'amendmentAmendmentPathVisualizationSuccessColorAlpha'
+      ),
       sourceName: 'B1',
       targetName: 'H1',
     });
@@ -409,7 +433,7 @@ describe('networkEdgeHelpers', () => {
 
   it('keeps the graph root as the current group for sibling preview metadata', () => {
     const edge = buildNetworkRelationshipEdge({
-      edgeId: 'edge-h1-to-f1',
+      edgeId: featureThemeClassName('networkNetworkEdgeHelpersThemedGradientSurfaceBeta'),
       sourceId: 'group-h1',
       targetId: 'group-f1',
       sourceGroupId: 'group-h1',
@@ -422,7 +446,9 @@ describe('networkEdgeHelpers', () => {
       memberSourceGroupId: 'group-f1',
       memberTargetGroupId: 'group-h1',
       rightEdgeDirections: { amendmentRight: 'backward' },
-      fallbackStrokeColor: '#66bb6a',
+      fallbackStrokeColor: featureThemeValue(
+        'amendmentAmendmentPathVisualizationSuccessColorAlpha'
+      ),
       sourceName: 'H1',
       targetName: 'Fraktion H1',
       graphRootGroupId: 'group-h1',

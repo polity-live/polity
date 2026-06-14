@@ -62,7 +62,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
   const sourceGroupIdParam = searchParams.sourceGroupId ?? '';
   const targetGroupIdParam = searchParams.targetGroupId ?? '';
   const { user } = useAuth();
-  const { createAmendment } = useAmendmentActions();
+  const { createAmendment, updateAmendment } = useAmendmentActions();
   const { createDocument, addCollaborator } = useDocumentActions();
   const commonActions = useCommonActions();
   const { createAmendmentPath } = useCreateAmendmentPath();
@@ -220,18 +220,6 @@ export function useCreateAmendmentForm(): CreateFormConfig {
       const normalizedEventId = targetSelection?.eventId ? targetSelection.eventId : null;
       const documentId = crypto.randomUUID();
 
-      // Create document first so amendment can reference it
-      const createDocumentResult = createDocument({
-        id: documentId,
-        amendment_id: null,
-        content: [
-          { type: 'h1', children: [{ text: title.trim() }] },
-          { type: 'p', children: [{ text: '' }] },
-        ],
-        editing_mode: 'collaborative',
-      });
-      await serverConfirmed(createDocumentResult);
-
       const createAmendmentResult = createAmendment({
         id: amendmentId,
         title: title.trim(),
@@ -243,7 +231,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
         group_id: normalizedGroupId,
         event_id: normalizedEventId,
         clone_source_id: null,
-        document_id: documentId,
+        document_id: null,
         tags: hashtags.length > 0 ? hashtags : null,
         visibility,
         discussions: null,
@@ -254,6 +242,22 @@ export function useCreateAmendmentForm(): CreateFormConfig {
         website: null,
       });
       await serverConfirmed(createAmendmentResult);
+
+      const createDocumentResult = createDocument({
+        id: documentId,
+        amendment_id: amendmentId,
+        content: [
+          { type: 'h1', children: [{ text: title.trim() }] },
+          { type: 'p', children: [{ text: '' }] },
+        ],
+        editing_mode: 'collaborative',
+      });
+      await serverConfirmed(createDocumentResult);
+
+      await updateAmendment({
+        id: amendmentId,
+        document_id: documentId,
+      });
 
       // Add creator as document collaborator
       const addCollaboratorResult = addCollaborator({

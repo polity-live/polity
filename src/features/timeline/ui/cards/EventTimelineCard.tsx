@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { useState } from 'react';
 import { Calendar, MapPin, Users, Trophy, ScrollText, Bell } from 'lucide-react';
@@ -263,8 +264,10 @@ export function EventTimelineCard({
         subtitleHref={eventSubtitleHref}
         badge={
           eventTimeStatus === 'live' ? (
-            <BadgeControl variant="destructive" className="animate-pulse">
-              <span className="mr-1.5 h-2 w-2 animate-pulse rounded-full bg-white" />
+            <BadgeControl variant="destructive" pulse>
+              <span
+                className={featureThemeClassName('timelineEventTimelineCardContrastPulseDot')}
+              />
               {t('features.timeline.cards.happeningNow')}
             </BadgeControl>
           ) : (
@@ -276,7 +279,7 @@ export function EventTimelineCard({
         <div className="mt-3 flex justify-center">
           <div
             className={cn(
-              'flex flex-col items-center rounded-xl bg-white/80 px-4 py-2 shadow-sm dark:bg-gray-900/80',
+              featureThemeClassName('timelineEventTimelineCardNeutralContrastPanel'),
               eventTimeStatus === 'past' && 'opacity-60'
             )}
           >
@@ -284,7 +287,7 @@ export function EventTimelineCard({
             <span className="text-2xl leading-none font-bold">{day}</span>
             <span className="text-muted-foreground mt-0.5 text-xs">{time}</span>
             {dateLabel && (
-              <BadgeControl variant="secondary" className="mt-1 text-xs">
+              <BadgeControl variant="secondary" size="xs" className="mt-1">
                 {dateLabel}
               </BadgeControl>
             )}
@@ -311,7 +314,7 @@ export function EventTimelineCard({
                 hashtags={event.hashtags.slice(0, 3)}
                 centered={false}
                 badgeClassName={cn(
-                  'border bg-white/70 dark:bg-gray-900/60',
+                  featureThemeClassName('timelineEventTimelineCardNeutralContrastSurface'),
                   eventStyle.borderColor,
                   eventStyle.accentColor
                 )}
@@ -452,7 +455,7 @@ export function EventTimelineCard({
           className="flex items-center gap-1.5"
         >
           <Bell
-            className={`h-3.5 w-3.5 ${(event.isSubscribed ?? subscription.isSubscribed) ? 'fill-current' : ''}`}
+            className={`h-3.5 w-3.5 ${(event.isSubscribed ?? subscription.isSubscribed) ? featureThemeClassName('timelineActionBarThemedStyle') : ''}`}
           />
         </Button>
 

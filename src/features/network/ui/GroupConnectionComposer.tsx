@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import {
   FormControlLabel,
   FormControlCheckbox,
@@ -437,7 +438,11 @@ export function GroupConnectionComposer({
                               selectedGroupId={value.selectedGroupId}
                               selectedGroupName={selectedGroupName}
                             />
-                            <div className="text-muted-foreground text-[11px]">
+                            <div
+                              className={featureThemeClassName(
+                                'networkGroupConnectionComposerThemedText'
+                              )}
+                            >
                               {`Membership: ${getCanonicalMembershipModeLabel(option.membershipMode)}`}
                             </div>
                           </div>
@@ -747,7 +752,7 @@ export function GroupConnectionComposer({
       ) : null}
 
       {preflight.blocking ? (
-        <div className="space-y-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
+        <div className={featureThemeClassName('groupGroupConflictPanelWarningSurface')}>
           <div className="flex items-start justify-between gap-3">
             <div>
               <div className="text-sm font-semibold">

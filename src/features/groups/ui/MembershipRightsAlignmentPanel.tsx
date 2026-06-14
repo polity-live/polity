@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowUpDown, Eye, ShieldCheck, ShieldAlert, ShieldX } from 'lucide-react';
@@ -14,7 +15,7 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/features/shared/ui/ui/toggle-group';
 import { UserTableCell } from '@/features/shared/ui/data-table';
 import { cn } from '@/features/shared/utils/utils';
-import { getRightLabel } from '@/features/network/ui/RightFilters';
+import { getRightLabel } from '@/features/shared/ui/status';
 import { getMembershipDisplayRoles } from '../logic/buildMembershipRightsSummary';
 import type {
   ActionRightDefinition,
@@ -216,7 +217,11 @@ export function MembershipRightsAlignmentPanel<TMembership extends Participation
         <SummaryTile status="mixed" count={counts.mixed} />
       </div>
 
-      <Panel className="border-border/70 from-background to-muted/20 bg-gradient-to-b">
+      <Panel
+        className={featureThemeClassName(
+          'groupMembershipRightsAlignmentPanelThemedGradientSurface'
+        )}
+      >
         <PanelHeader>
           <PanelTitle>{t('features.groups.memberships.rightsAlignment.tableTitle')}</PanelTitle>
           <PanelDescription>
@@ -260,11 +265,13 @@ function SummaryTile({
       className={cn(
         'border-border/70 rounded-lg border px-4 py-3',
         status === 'aligned' &&
-          'bg-emerald-50 text-emerald-950 dark:bg-emerald-950/30 dark:text-emerald-100',
+          featureThemeClassName('groupMembershipRightsAlignmentPanelSuccessBackground'),
         status === 'missing' &&
-          'bg-amber-50 text-amber-950 dark:bg-amber-950/30 dark:text-amber-100',
-        status === 'extra' && 'bg-sky-50 text-sky-950 dark:bg-sky-950/30 dark:text-sky-100',
-        status === 'mixed' && 'bg-rose-50 text-rose-950 dark:bg-rose-950/30 dark:text-rose-100'
+          featureThemeClassName('groupMembershipRightsAlignmentPanelWarningBackground'),
+        status === 'extra' &&
+          featureThemeClassName('groupMembershipRightsAlignmentPanelInfoBackground'),
+        status === 'mixed' &&
+          featureThemeClassName('groupMembershipRightsAlignmentPanelDangerBackground')
       )}
     >
       <div className="flex items-center justify-between gap-3">

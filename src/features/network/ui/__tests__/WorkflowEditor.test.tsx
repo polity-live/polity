@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 /* @vitest-environment jsdom */
 
 import type { ReactNode } from 'react';
@@ -106,7 +107,7 @@ describe('WorkflowEditor', () => {
     );
   });
 
-  it('offers next workflow-step targets only in holder-to-scope grant direction', async () => {
+  it(featureThemeClassName('networkWorkflowEditorThemedGradientSurface'), async () => {
     render(
       <WorkflowEditor
         currentGroupId="H2"

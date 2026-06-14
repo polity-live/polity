@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import {
   Dialog,
   DialogDescription,
@@ -114,10 +115,12 @@ export function GroupConflictPanel({ response }: GroupConflictPanelProps) {
         return (
           <div
             key={`${conflict.kind}-${index}`}
-            className="space-y-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4"
+            className={featureThemeClassName('groupGroupConflictPanelWarningSurface')}
           >
             <div className="flex items-start gap-2">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+              <AlertTriangle
+                className={featureThemeClassName('groupGroupConflictPanelWarningIcon')}
+              />
               <div className="space-y-1">
                 <p className="text-sm font-semibold">{getLocalizedConflictSummary(conflict, t)}</p>
                 <p className="text-muted-foreground text-sm">

@@ -11,7 +11,7 @@ import { useEventActions } from '@/zero/events/useEventActions';
 import { useEventWithAgendaAndParticipants } from '@/zero/events/useEventState';
 import { useAuth } from '@/providers/auth-provider';
 import { usePermissions } from '@/zero/rbac';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface AgendaItem {

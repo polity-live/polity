@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import {
   FormControlInput,
@@ -47,7 +48,7 @@ import {
   Info,
   GripVertical,
 } from 'lucide-react';
-import { toast as sonnerToast } from 'sonner';
+import { toast as sonnerToast } from '@/features/shared/ui/ui/sonner';
 import { gatedToast as toast } from '@/features/notifications/utils/gated-toast';
 import {
   useTranslation,
@@ -1215,7 +1216,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
             }}
           >
             {dragOverAgendaItemId === item.id && dragInsertPosition === 'above' && (
-              <div className="bg-primary absolute -top-3 right-6 left-6 z-20 h-0.5 rounded-full shadow-[0_0_0_1px_rgba(255,255,255,0.9)]" />
+              <div className={featureThemeClassName('agendaEventAgendaThemedBackground')} />
             )}
             {isSpotlightItem && (
               <div className="absolute top-1/2 -left-4 flex -translate-y-1/2 items-center gap-2">
@@ -1239,7 +1240,9 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
               >
                 {isCompleted && (
                   <div className="absolute -top-2 -right-2 z-10">
-                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-500 text-white">
+                    <div
+                      className={featureThemeClassName('agendaEventAgendaSuccessContrastRoundIcon')}
+                    >
                       <Check className="h-4 w-4" />
                     </div>
                   </div>
@@ -1258,10 +1261,12 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                   isActive={isActive}
                   footerRight={renderAgendaTimer(item)}
                   className={cn(
-                    isCompleted ? 'border-emerald-500/70' : undefined,
+                    isCompleted
+                      ? featureThemeClassName('agendaEventAgendaSuccessBorder')
+                      : undefined,
                     isSpotlightItem
                       ? isLiveItem
-                        ? 'border-primary shadow-[0_0_0_1px_hsl(var(--primary)/0.25)]'
+                        ? featureThemeClassName('agendaEventAgendaThemedBorder')
                         : 'border-primary/60'
                       : undefined
                   )}
@@ -1282,7 +1287,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
               </div>
             </TimelineItem>
             {dragOverAgendaItemId === item.id && dragInsertPosition === 'below' && (
-              <div className="bg-primary absolute right-6 -bottom-3 left-6 z-20 h-0.5 rounded-full shadow-[0_0_0_1px_rgba(255,255,255,0.9)]" />
+              <div className={featureThemeClassName('agendaEventAgendaThemedBackgroundAlpha')} />
             )}
           </div>
         );
@@ -1336,7 +1341,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     return (
       <div>
         <Card>
-          <CardContent className="p-6 text-center">
+          <CardContent align="center" className="p-6">
             <h2 className="mb-2 text-2xl font-bold">{t('features.events.wiki.notFound')}</h2>
             <p className="text-muted-foreground mb-4">
               {t('features.events.wiki.notFoundDescription')}
@@ -1498,15 +1503,15 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
             <CollapsibleTrigger asChild>
               <Button
                 variant="ghost"
-                className="flex w-full items-center justify-between p-0 hover:bg-transparent"
+                className={featureThemeClassName('agendaEventAgendaThemedPanel')}
               >
                 <div className="flex items-center gap-2">
-                  <Radio className="h-5 w-5 text-red-500" />
+                  <Radio className={featureThemeClassName('agendaEventAgendaDangerIcon')} />
                   <CardTitle className="text-lg">
                     {t('features.events.stream.liveStream')}
                   </CardTitle>
                   {streamIsLive && (
-                    <BadgeControl variant="default" className="animate-pulse">
+                    <BadgeControl variant="default" pulse>
                       {t('features.events.stream.live', 'LIVE')}
                     </BadgeControl>
                   )}
@@ -1536,11 +1541,15 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                         className="bg-primary/5 hover:bg-primary/10 h-auto w-full justify-start rounded-lg p-3 text-left whitespace-normal transition-colors"
                       >
                         <div className="bg-primary text-primary-foreground relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg">
-                          <Play className="h-4 w-4 fill-current" />
+                          <Play className={featureThemeClassName('agendaEventAgendaThemedStyle')} />
                           {isEventStarted ? (
-                            <div className="absolute -top-1 -right-1 h-3 w-3 animate-pulse rounded-full bg-green-500" />
+                            <div
+                              className={featureThemeClassName('agendaEventAgendaSuccessPulseDot')}
+                            />
                           ) : (
-                            <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-amber-500" />
+                            <div
+                              className={featureThemeClassName('agendaEventAgendaWarningRoundIcon')}
+                            />
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
@@ -1593,7 +1602,11 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                         (() => {
                           const videoId = getYouTubeVideoId(event.stream_url);
                           return videoId ? (
-                            <div className="relative w-full overflow-hidden rounded-lg bg-black">
+                            <div
+                              className={featureThemeClassName(
+                                'agendaEventAgendaContrastBackground'
+                              )}
+                            >
                               <div className="aspect-video">
                                 <iframe
                                   className="h-full w-full"
@@ -1720,7 +1733,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
             <CollapsibleTrigger asChild>
               <Button
                 variant="ghost"
-                className="flex w-full items-center justify-between p-0 hover:bg-transparent"
+                className={featureThemeClassName('agendaEventAgendaThemedPanel')}
               >
                 <CardTitle className="text-lg">{t('features.events.agenda.statistics')}</CardTitle>
                 {statsOpen ? (
@@ -1735,8 +1748,8 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
             <CardContent>
               <div className="grid grid-cols-3 gap-2 md:gap-4">
                 <div className="flex items-center gap-1.5 rounded-lg border p-2 md:gap-3 md:p-4">
-                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-purple-100 md:h-10 md:w-10 dark:bg-purple-900">
-                    <Vote className="h-4 w-4 text-purple-600 md:h-5 md:w-5 dark:text-purple-300" />
+                  <div className={featureThemeClassName('agendaEventAgendaAccentRoundIcon')}>
+                    <Vote className={featureThemeClassName('agendaEventAgendaAccentIcon')} />
                   </div>
                   <div className="min-w-0">
                     <p className="text-lg font-bold md:text-2xl">
@@ -1751,8 +1764,8 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                 </div>
 
                 <div className="flex items-center gap-1.5 rounded-lg border p-2 md:gap-3 md:p-4">
-                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-orange-100 md:h-10 md:w-10 dark:bg-orange-900">
-                    <Gavel className="h-4 w-4 text-orange-600 md:h-5 md:w-5 dark:text-orange-300" />
+                  <div className={featureThemeClassName('agendaEventAgendaWarningRoundIconAlpha')}>
+                    <Gavel className={featureThemeClassName('agendaEventAgendaWarningIcon')} />
                   </div>
                   <div className="min-w-0">
                     <p className="text-lg font-bold md:text-2xl">
@@ -1767,8 +1780,8 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                 </div>
 
                 <div className="flex items-center gap-1.5 rounded-lg border p-2 md:gap-3 md:p-4">
-                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 md:h-10 md:w-10 dark:bg-blue-900">
-                    <FileText className="h-4 w-4 text-blue-600 md:h-5 md:w-5 dark:text-blue-300" />
+                  <div className={featureThemeClassName('agendaEventAgendaInfoRoundIcon')}>
+                    <FileText className={featureThemeClassName('agendaEventAgendaInfoIcon')} />
                   </div>
                   <div className="min-w-0">
                     <p className="text-lg font-bold md:text-2xl">
@@ -1887,7 +1900,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       {/* Agenda Items List */}
       {filteredAgendaItems.length === 0 ? (
         <Card>
-          <CardContent className="p-8 text-center">
+          <CardContent align="center" className="p-8">
             <Calendar className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
             <h3 className="mb-2 text-lg font-semibold">{t('features.events.agenda.noItems')}</h3>
             <p className="text-muted-foreground mb-4">
@@ -1906,7 +1919,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
           {confirmedAgendaItems.length > 0 ? renderAgendaItemsList(confirmedAgendaItems) : null}
 
           {scheduledButUnconfirmedAgendaItems.length > 0 ? (
-            <Card className="border-dashed">
+            <Card borderStyle="dashed">
               <CardHeader>
                 <CardTitle>{t('features.events.agenda.scheduledButUnconfirmedTitle')}</CardTitle>
                 <CardDescription>

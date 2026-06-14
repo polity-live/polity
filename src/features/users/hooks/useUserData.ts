@@ -8,8 +8,7 @@ import type { UserProfile } from '../types/user.types';
 export function useUserData(userId?: string) {
   const { fullProfile, isLoading } = useUserState({ userId, includeFullProfile: true });
 
-  const user: UserProfile | null =
-    userId && fullProfile.length > 0 ? fullProfile[0] : null;
+  const user: UserProfile | null = userId && fullProfile.length > 0 ? fullProfile[0] : null;
 
   return {
     user,

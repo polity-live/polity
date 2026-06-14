@@ -1,9 +1,9 @@
+import { featureThemeClassName } from '@/features/shared/theme';
+import type { DecisionStatus } from '@/features/shared/ui/status';
 /**
  * Decision status utilities for the Decision Terminal
  * Calculates status, urgency levels, and formats countdowns
  */
-
-import type { DecisionStatus } from '../ui/StatusBadge';
 
 /**
  * Calculate vote/election status based on end time
@@ -120,20 +120,20 @@ export function formatCountdown(endsAt: Date | string): string {
 export function getStatusColorClass(status: DecisionStatus): string {
   switch (status) {
     case 'open':
-      return 'text-green-600 dark:text-green-400';
+      return featureThemeClassName('decisionterminalDecisionStatusSuccessText');
     case 'closing_soon':
-      return 'text-yellow-600 dark:text-yellow-400';
+      return featureThemeClassName('decisionterminalDecisionStatusWarningText');
     case 'last_hour':
-      return 'text-orange-600 dark:text-orange-400';
+      return featureThemeClassName('decisionterminalDecisionStatusWarningTextAlpha');
     case 'final_minutes':
-      return 'text-red-600 dark:text-red-400 animate-pulse';
+      return featureThemeClassName('decisionterminalDecisionStatusDangerText');
     case 'passed':
     case 'elected':
-      return 'text-green-600 dark:text-green-400';
+      return featureThemeClassName('decisionterminalDecisionStatusSuccessText');
     case 'failed':
-      return 'text-red-600 dark:text-red-400';
+      return featureThemeClassName('decisionterminalDecisionStatusDangerTextAlpha');
     case 'tied':
-      return 'text-gray-600 dark:text-gray-400';
+      return featureThemeClassName('decisionterminalDecisionStatusNeutralText');
     default:
       return 'text-muted-foreground';
   }

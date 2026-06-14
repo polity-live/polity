@@ -1,6 +1,7 @@
 'use client';
 
-import { BadgeControl } from '@/features/shared/ui/status';
+import { featureThemeClassName } from '@/features/shared/theme';
+import { BadgeControl, TodoPriorityBadge, TodoPriorityIcon } from '@/features/shared/ui/status';
 import {
   FormControlInput,
   FormControlLabel,
@@ -52,7 +53,7 @@ import {
 import { Link } from '@tanstack/react-router';
 import { useGroupState } from '@/zero/groups/useGroupState.ts';
 import { useTodoActions } from '@/zero/todos/useTodoActions.ts';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { cn } from '@/features/shared/utils/utils.ts';
 import {
   useTranslation,
@@ -346,25 +347,33 @@ export function TodoDetailDialog({
                   <FormControlSelectContent>
                     <FormControlSelectItem value="low">
                       <div className="flex items-center gap-2">
-                        <Flag className="h-4 w-4 text-blue-500" />
+                        <Flag className={featureThemeClassName('eventCancelEventDialogInfoIcon')} />
                         {t('features.todos.priority.low')}
                       </div>
                     </FormControlSelectItem>
                     <FormControlSelectItem value="medium">
                       <div className="flex items-center gap-2">
-                        <Flag className="h-4 w-4 text-yellow-500" />
+                        <Flag
+                          className={featureThemeClassName(
+                            'agendaAgendaElectionSectionWarningIcon'
+                          )}
+                        />
                         {t('features.todos.priority.medium')}
                       </div>
                     </FormControlSelectItem>
                     <FormControlSelectItem value="high">
                       <div className="flex items-center gap-2">
-                        <Flag className="h-4 w-4 text-orange-500" />
+                        <Flag
+                          className={featureThemeClassName('positionPositionsTableWarningIcon')}
+                        />
                         {t('features.todos.priority.high')}
                       </div>
                     </FormControlSelectItem>
                     <FormControlSelectItem value="urgent">
                       <div className="flex items-center gap-2">
-                        <AlertCircle className="h-4 w-4 text-red-500" />
+                        <AlertCircle
+                          className={featureThemeClassName('paymentSubscriptionStatusDangerIcon')}
+                        />
                         {t('features.todos.priority.urgent')}
                       </div>
                     </FormControlSelectItem>
@@ -372,8 +381,8 @@ export function TodoDetailDialog({
                 </FormControlSelect>
               ) : (
                 <div className="flex items-center gap-2">
-                  <PriorityIcon priority={(todo.priority ?? 'medium') as TodoPriority} />
-                  <PriorityBadge priority={(todo.priority ?? 'medium') as TodoPriority} />
+                  <TodoPriorityIcon priority={(todo.priority ?? 'medium') as TodoPriority} />
+                  <TodoPriorityBadge priority={(todo.priority ?? 'medium') as TodoPriority} />
                 </div>
               )}
             </div>
@@ -721,40 +730,14 @@ function StatusIcon({ status }: { status: TodoStatus }) {
     case 'pending':
       return <Circle className="text-muted-foreground h-4 w-4" />;
     case 'in_progress':
-      return <Clock className="h-4 w-4 text-blue-500" />;
+      return <Clock className={featureThemeClassName('eventCancelEventDialogInfoIcon')} />;
     case 'completed':
-      return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+      return (
+        <CheckCircle2 className={featureThemeClassName('agendaAgendaElectionSectionSuccessIcon')} />
+      );
     case 'cancelled':
-      return <XCircle className="h-4 w-4 text-red-500" />;
+      return <XCircle className={featureThemeClassName('paymentSubscriptionStatusDangerIcon')} />;
   }
-}
-
-function PriorityIcon({ priority }: { priority: TodoPriority }) {
-  switch (priority) {
-    case 'urgent':
-      return <AlertCircle className="h-3.5 w-3.5 text-red-500" />;
-    case 'high':
-      return <Flag className="h-3.5 w-3.5 text-orange-500" />;
-    case 'medium':
-      return <Flag className="h-3.5 w-3.5 text-yellow-500" />;
-    case 'low':
-      return <Flag className="h-3.5 w-3.5 text-blue-500" />;
-  }
-}
-
-function PriorityBadge({ priority }: { priority: TodoPriority }) {
-  const colors = {
-    urgent: 'bg-red-500/10 text-red-500 border-red-500/20',
-    high: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
-    medium: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
-    low: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-  };
-
-  return (
-    <BadgeControl variant="outline" className={`${colors[priority]} capitalize`}>
-      {priority}
-    </BadgeControl>
-  );
 }
 
 function VisibilityIcon({ visibility }: { visibility: TodoVisibility }) {

@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Button } from '@/features/shared/ui/ui/button';
@@ -111,7 +112,9 @@ export function NotificationItem({
                   <SmartLink href={`/user/${notification.sender.id}`} className="shrink-0">
                     <Avatar className="hover:ring-primary h-5 w-5 hover:ring-1">
                       <AvatarImage src={notification.sender.avatar ?? undefined} />
-                      <AvatarFallback className="text-[10px]">
+                      <AvatarFallback
+                        className={featureThemeClassName('agendaAccreditationSectionThemedText')}
+                      >
                         {getDisplayName(notification.sender)?.[0]?.toUpperCase() || 'U'}
                       </AvatarFallback>
                     </Avatar>
@@ -119,7 +122,9 @@ export function NotificationItem({
                 ) : (
                   <Avatar className="h-5 w-5 shrink-0">
                     <AvatarImage src={notification.sender.avatar ?? undefined} />
-                    <AvatarFallback className="text-[10px]">
+                    <AvatarFallback
+                      className={featureThemeClassName('agendaAccreditationSectionThemedText')}
+                    >
                       {getDisplayName(notification.sender)?.[0]?.toUpperCase() || 'U'}
                     </AvatarFallback>
                   </Avatar>
@@ -145,9 +150,15 @@ export function NotificationItem({
               <>
                 {onBehalfEntityHref ? (
                   <SmartLink href={onBehalfEntityHref} className="shrink-0">
-                    <Avatar className="h-5 w-5 hover:ring-1 hover:ring-blue-500">
+                    <Avatar
+                      className={featureThemeClassName('notificationNotificationItemInfoRing')}
+                    >
                       <AvatarImage src={onBehalfEntity.image_url ?? undefined} />
-                      <AvatarFallback className="bg-blue-500 text-[10px] text-white">
+                      <AvatarFallback
+                        className={featureThemeClassName(
+                          'notificationNotificationItemInfoContrastBackground'
+                        )}
+                      >
                         {('name' in onBehalfEntity
                           ? onBehalfEntity.name?.[0]
                           : 'title' in onBehalfEntity
@@ -160,7 +171,11 @@ export function NotificationItem({
                 ) : (
                   <Avatar className="h-5 w-5 shrink-0">
                     <AvatarImage src={onBehalfEntity.image_url ?? undefined} />
-                    <AvatarFallback className="bg-blue-500 text-[10px] text-white">
+                    <AvatarFallback
+                      className={featureThemeClassName(
+                        'notificationNotificationItemInfoContrastBackground'
+                      )}
+                    >
                       {('name' in onBehalfEntity
                         ? onBehalfEntity.name?.[0]
                         : 'title' in onBehalfEntity
@@ -211,9 +226,7 @@ export function NotificationItem({
               </BadgeControl>
             )}
           </div>
-          {!notification.is_read && (
-            <BadgeControl variant="default" className="h-2 w-2 rounded-full p-0" />
-          )}
+          {!notification.is_read && <BadgeControl variant="default" size="dot" />}
         </div>
         <p className="text-muted-foreground text-sm">{notification.message}</p>
         <div className="flex items-center justify-between">

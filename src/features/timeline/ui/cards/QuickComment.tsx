@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import * as React from 'react';
 import { MessageCircle, Send, X, Loader2 } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
@@ -96,10 +97,7 @@ export function QuickComment({
           setIsExpanded(true);
           setTimeout(() => inputRef.current?.focus(), 0);
         }}
-        className={cn(
-          'text-muted-foreground hover:text-foreground h-auto gap-1.5 p-0 text-sm transition-colors hover:bg-transparent',
-          className
-        )}
+        className={cn(featureThemeClassName('timelineQuickCommentThemedPanel'), className)}
       >
         <MessageCircle className="h-4 w-4" />
         {commentCount > 0 && <span>{commentCount}</span>}

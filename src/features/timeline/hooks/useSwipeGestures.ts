@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 /**
  * Custom hook for touch swipe gesture detection
  * Implements swipe-to-dismiss and swipe-to-react functionality for timeline cards
@@ -186,7 +187,7 @@ export function useSwipeGestures(options: SwipeGestureOptions = {}): UseSwipeGes
       return;
     }
 
-    const { offsetX, offsetY, thresholdReached } = state;
+    const { thresholdReached } = state;
 
     // Trigger action if threshold reached
     if (thresholdReached) {
@@ -248,13 +249,25 @@ export function getSwipeActionIndicator(
 
   switch (direction) {
     case 'left':
-      return { icon: 'react', color: 'bg-green-500' };
+      return {
+        icon: 'react',
+        color: featureThemeClassName('agendaAgendaVoteSectionSuccessBackground'),
+      };
     case 'right':
-      return { icon: 'dismiss', color: 'bg-red-500' };
+      return {
+        icon: 'dismiss',
+        color: featureThemeClassName('agendaAgendaVoteSectionDangerBackground'),
+      };
     case 'up':
-      return { icon: 'hide', color: 'bg-gray-500' };
+      return {
+        icon: 'hide',
+        color: featureThemeClassName('timelineUseSwipeGesturesNeutralBackground'),
+      };
     case 'down':
-      return { icon: 'share', color: 'bg-blue-500' };
+      return {
+        icon: 'share',
+        color: featureThemeClassName('agendaAgendaVoteSectionInfoBackground'),
+      };
     default:
       return { icon: null, color: '' };
   }

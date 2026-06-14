@@ -35,7 +35,6 @@ const BROADCAST_THROTTLE_MS = 200;
 export function useRealtimeSync({
   entityId,
   userId,
-  content,
   onRemoteContent,
   enabled = true,
 }: UseRealtimeSyncOptions): UseRealtimeSyncReturn {
@@ -50,14 +49,14 @@ export function useRealtimeSync({
 
   const { publishTopic, subscribeTopic, isConnected } = usePresence(
     entityId ? `editor:${entityId}` : '',
-    { enabled: enabled && !!entityId && !!userId },
+    { enabled: enabled && !!entityId && !!userId }
   );
 
   // Subscribe to remote content broadcasts
   useEffect(() => {
     if (!enabled || !entityId || !userId) return;
 
-    const unsubscribe = subscribeTopic('content', (payload) => {
+    const unsubscribe = subscribeTopic('content', payload => {
       const senderId = payload.senderId as string | undefined;
       if (senderId === userId) return; // Skip own broadcasts
 
@@ -82,12 +81,18 @@ export function useRealtimeSync({
       const now = Date.now();
       if (now - lastBroadcastTime.current >= BROADCAST_THROTTLE_MS) {
         // Leading edge: broadcast immediately
-        publishTopic('content', { senderId: userId, content: newContent as Record<string, unknown>[] });
+        publishTopic('content', {
+          senderId: userId,
+          content: newContent as Record<string, unknown>[],
+        });
         lastBroadcastTime.current = now;
       } else {
         // Trailing edge: schedule broadcast
         broadcastTimeoutRef.current = setTimeout(() => {
-          publishTopic('content', { senderId: userId, content: newContent as Record<string, unknown>[] });
+          publishTopic('content', {
+            senderId: userId,
+            content: newContent as Record<string, unknown>[],
+          });
           lastBroadcastTime.current = Date.now();
         }, BROADCAST_THROTTLE_MS);
       }

@@ -1,4 +1,5 @@
 export { ChoiceField } from './ChoiceField';
+export { ChoiceCardField, type ChoiceCardOption, type ChoiceCardGrid } from './ChoiceCardField';
 export {
   CreateReviewCard,
   SummaryField,
@@ -7,6 +8,15 @@ export {
   type ReviewCardSection,
   type ReviewMediaPreview,
 } from './CreateReviewCard';
+export {
+  CreateInputField,
+  CreateTextareaField,
+  CreateTypeaheadField,
+  type CreateFieldValidator,
+  type CreateInputFieldProps,
+  type CreateTextareaFieldProps,
+  type CreateTypeaheadFieldProps,
+} from './CreateFields';
 export { FieldGrid, FieldList } from './FieldLayout';
 export { FileInputField } from './FileInputField';
 export { FileUploadTrigger } from './FileUploadTrigger';
@@ -36,6 +46,11 @@ export { PasswordField } from './PasswordField';
 export { RadioGroupField } from './RadioGroupField';
 export { SearchField } from './SearchField';
 export { SelectField } from './SelectField';
+export {
+  SegmentedChoiceField,
+  type SegmentedChoiceOption,
+  type SegmentedChoiceTone,
+} from './SegmentedChoiceField';
 export { SettingsPanel } from './SettingsPanel';
 export { SwitchField } from './SwitchField';
 export { TextField, type TextFieldProps } from './TextField';

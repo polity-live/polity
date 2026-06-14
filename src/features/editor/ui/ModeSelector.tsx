@@ -16,7 +16,7 @@ import {
 } from '@/features/shared/ui/ui/dropdown-menu';
 import { EditingModeMenuItems, getEditingModeOption } from '@/features/shared/ui/status';
 import { ChevronDown } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { EditorEntityType, EditorMode } from '../types';
 

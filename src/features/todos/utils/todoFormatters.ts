@@ -25,7 +25,7 @@ export function formatTodoDateTime(timestamp: number | string): string {
 export function isOverdue(dueDate: number | string | undefined, status: string): boolean {
   if (!dueDate) return false;
   if (status === 'completed') return false;
-  
+
   const dueDateMs = typeof dueDate === 'number' ? dueDate : new Date(dueDate).getTime();
   return dueDateMs < Date.now();
 }

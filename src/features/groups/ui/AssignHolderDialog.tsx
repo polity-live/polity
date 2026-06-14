@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import {
   FormControlLabel,
   FormControlSelect,
@@ -30,7 +31,7 @@ import {
 } from '@/features/shared/ui/ui/command';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Check, ChevronsUpDown } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { cn } from '@/features/shared/utils/utils';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
@@ -138,14 +139,14 @@ export function AssignHolderDialog({
           </DialogHeader>
           <div className="space-y-4 py-4">
             {isElectedRole && (
-              <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
+              <div className={featureThemeClassName('groupAssignHolderDialogInfoBadge')}>
                 {translateText(
                   'generated.inline.0647_start_or_complete_an_election_to_assign_this__b960eee5'
                 )}
               </div>
             )}
             {currentHolder && (
-              <div className="rounded-lg border border-orange-200 bg-orange-50 p-3">
+              <div className={featureThemeClassName('groupAssignHolderDialogWarningSurface')}>
                 <div className="flex items-center gap-2">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={currentHolder.avatar ?? undefined} />

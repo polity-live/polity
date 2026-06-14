@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import type { FormEventHandler } from 'react';
 import { KeyRound } from 'lucide-react';
 
@@ -76,7 +77,7 @@ export function AccountPasswordSectionView({
           descriptionClassName={cn(
             'text-xs',
             showPasswordError && 'text-destructive',
-            showPasswordSuccess && 'text-emerald-600 dark:text-emerald-400'
+            showPasswordSuccess && featureThemeClassName('authNameStepSuccessText')
           )}
           invalid={showPasswordError}
           minLength={6}
@@ -97,7 +98,7 @@ export function AccountPasswordSectionView({
           descriptionClassName={cn(
             'text-xs',
             showConfirmPasswordError && 'text-destructive',
-            showConfirmPasswordSuccess && 'text-emerald-600 dark:text-emerald-400'
+            showConfirmPasswordSuccess && featureThemeClassName('authNameStepSuccessText')
           )}
           invalid={showConfirmPasswordError}
           minLength={6}

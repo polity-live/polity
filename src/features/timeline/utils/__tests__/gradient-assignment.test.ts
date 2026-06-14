@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { describe, it, expect } from 'vitest';
 import {
   EXTENDED_GRADIENTS,
@@ -15,15 +16,21 @@ describe('gradient-assignment', () => {
 
     it('should all contain gradient classes', () => {
       EXTENDED_GRADIENTS.forEach(gradient => {
-        expect(gradient).toContain('bg-gradient-to-br');
-        expect(gradient).toContain('from-');
-        expect(gradient).toContain('to-');
+        expect(gradient).toContain(
+          featureThemeClassName('timelineGradientAssignmentThemedGradientSurface')
+        );
+        expect(gradient).toContain(
+          featureThemeClassName('timelineGradientAssignmentThemedGradientSurfaceAlpha')
+        );
+        expect(gradient).toContain(
+          featureThemeClassName('timelineGradientAssignmentThemedGradientSurfaceBeta')
+        );
       });
     });
 
     it('should include dark mode variants', () => {
       EXTENDED_GRADIENTS.forEach(gradient => {
-        expect(gradient).toContain('dark:');
+        expect(gradient).toContain(featureThemeClassName('timelineGradientAssignmentThemedStyle'));
       });
     });
   });
@@ -94,31 +101,41 @@ describe('gradient-assignment', () => {
     it('should return gradient for group content type', () => {
       const gradient = getGradientForContentType('group');
       expect(typeof gradient).toBe('string');
-      expect(gradient).toContain('bg-gradient');
+      expect(gradient).toContain(
+        featureThemeClassName('timelineGradientAssignmentThemedGradientSurfaceGamma')
+      );
     });
 
     it('should return gradient for event content type', () => {
       const gradient = getGradientForContentType('event');
       expect(typeof gradient).toBe('string');
-      expect(gradient).toContain('bg-gradient');
+      expect(gradient).toContain(
+        featureThemeClassName('timelineGradientAssignmentThemedGradientSurfaceGamma')
+      );
     });
 
     it('should return gradient for amendment content type', () => {
       const gradient = getGradientForContentType('amendment');
       expect(typeof gradient).toBe('string');
-      expect(gradient).toContain('bg-gradient');
+      expect(gradient).toContain(
+        featureThemeClassName('timelineGradientAssignmentThemedGradientSurfaceGamma')
+      );
     });
 
     it('should return gradient for vote content type', () => {
       const gradient = getGradientForContentType('vote');
       expect(typeof gradient).toBe('string');
-      expect(gradient).toContain('bg-gradient');
+      expect(gradient).toContain(
+        featureThemeClassName('timelineGradientAssignmentThemedGradientSurfaceGamma')
+      );
     });
 
     it('should return gradient for election content type', () => {
       const gradient = getGradientForContentType('election');
       expect(typeof gradient).toBe('string');
-      expect(gradient).toContain('bg-gradient');
+      expect(gradient).toContain(
+        featureThemeClassName('timelineGradientAssignmentThemedGradientSurfaceGamma')
+      );
     });
   });
 

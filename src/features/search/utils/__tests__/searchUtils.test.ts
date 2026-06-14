@@ -61,45 +61,35 @@ describe('searchUtils', () => {
     // ── Junction row format via user_hashtags ──────────────────────
     it('should match against user_hashtags junction rows', () => {
       const item = {
-        user_hashtags: [
-          { hashtag: { id: 'h1', tag: 'democracy' } },
-        ],
+        user_hashtags: [{ hashtag: { id: 'h1', tag: 'democracy' } }],
       };
       expect(matchesHashtag(item, 'democracy')).toBe(true);
     });
 
     it('should match against group_hashtags junction rows', () => {
       const item = {
-        group_hashtags: [
-          { hashtag: { id: 'h1', tag: 'environment' } },
-        ],
+        group_hashtags: [{ hashtag: { id: 'h1', tag: 'environment' } }],
       };
       expect(matchesHashtag(item, 'environment')).toBe(true);
     });
 
     it('should match against amendment_hashtags junction rows', () => {
       const item = {
-        amendment_hashtags: [
-          { hashtag: { id: 'h1', tag: 'reform' } },
-        ],
+        amendment_hashtags: [{ hashtag: { id: 'h1', tag: 'reform' } }],
       };
       expect(matchesHashtag(item, 'reform')).toBe(true);
     });
 
     it('should match against event_hashtags junction rows', () => {
       const item = {
-        event_hashtags: [
-          { hashtag: { id: 'h1', tag: 'summit' } },
-        ],
+        event_hashtags: [{ hashtag: { id: 'h1', tag: 'summit' } }],
       };
       expect(matchesHashtag(item, 'summit')).toBe(true);
     });
 
     it('should match against blog_hashtags junction rows', () => {
       const item = {
-        blog_hashtags: [
-          { hashtag: { id: 'h1', tag: 'opinion' } },
-        ],
+        blog_hashtags: [{ hashtag: { id: 'h1', tag: 'opinion' } }],
       };
       expect(matchesHashtag(item, 'opinion')).toBe(true);
     });
@@ -155,7 +145,7 @@ describe('searchUtils', () => {
         getUserAvatar({
           avatar: 'https://example.com/avatar.png',
           imageURL: 'https://example.com/fallback.png',
-        }),
+        })
       ).toBe('https://example.com/avatar.png');
     });
 
@@ -189,11 +179,7 @@ describe('searchUtils', () => {
     });
 
     it('should sort by name alphabetically', () => {
-      const items = [
-        { name: 'Charlie' },
-        { name: 'Alice' },
-        { name: 'Bob' },
-      ];
+      const items = [{ name: 'Charlie' }, { name: 'Alice' }, { name: 'Bob' }];
       const sorted = sortResults(items, 'name');
       expect(sorted[0].name).toBe('Alice');
       expect(sorted[1].name).toBe('Bob');
@@ -201,7 +187,10 @@ describe('searchUtils', () => {
     });
 
     it('should return unsorted for unknown sort key', () => {
-      const items = [{ id: '1', name: 'a' }, { id: '2', name: 'b' }];
+      const items = [
+        { id: '1', name: 'a' },
+        { id: '2', name: 'b' },
+      ];
       const sorted = sortResults(items, 'unknown');
       expect(sorted).toEqual(items);
     });

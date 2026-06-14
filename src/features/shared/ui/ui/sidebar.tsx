@@ -16,7 +16,7 @@ import {
   TooltipTrigger,
 } from '@/features/shared/ui/ui/tooltip.tsx';
 import { useTranslation } from 'react-i18next';
-import { useScreenStore } from '@/features/shared/global-state/screen.store.tsx';
+import { useIsMobileScreen } from '@/features/shared/hooks/useIsMobileScreen';
 
 const SIDEBAR_COOKIE_NAME = 'sidebar:state';
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
@@ -66,7 +66,7 @@ const SidebarProvider = React.forwardRef<
     },
     ref
   ) => {
-    const { isMobileScreen } = useScreenStore();
+    const isMobileScreen = useIsMobileScreen();
     const [openMobile, setOpenMobile] = React.useState(false);
 
     // This is the internal state of the sidebar.

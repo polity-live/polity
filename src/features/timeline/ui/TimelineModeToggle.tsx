@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { MapPinned, Monitor } from 'lucide-react';
 import {
@@ -45,9 +46,8 @@ const MODE_CONFIG: Record<
   decisions: {
     icon: Monitor,
     labelKey: 'features.timeline.modes.decisions',
-    activeClass:
-      'bg-slate-900 text-slate-50 data-[state=on]:bg-slate-900 data-[state=on]:text-slate-50 dark:bg-slate-100 dark:text-slate-900 dark:data-[state=on]:bg-slate-100 dark:data-[state=on]:text-slate-900',
-    hoverClass: 'hover:bg-slate-100 dark:hover:bg-slate-800',
+    activeClass: featureThemeClassName('timelineTimelineModeToggleNeutralBackground'),
+    hoverClass: featureThemeClassName('timelineTimelineModeToggleNeutralBackgroundAlpha'),
   },
 };
 
@@ -131,8 +131,14 @@ export function TimelineModeToggle({
               decisionsBadge > 0 &&
               !isActive && (
                 <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+                  <span
+                    className={featureThemeClassName('timelineTimelineModeToggleDangerRoundIcon')}
+                  />
+                  <span
+                    className={featureThemeClassName(
+                      'timelineTimelineModeToggleDangerRoundIconAlpha'
+                    )}
+                  />
                 </span>
               )}
           </ToggleGroupItem>

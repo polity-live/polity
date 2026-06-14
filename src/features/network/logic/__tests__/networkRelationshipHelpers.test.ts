@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -488,7 +489,7 @@ describe('networkRelationshipHelpers', () => {
     expect(relationshipTree.siblingAttachments).toEqual([]);
   });
 
-  it('traverses right-filtered graphs only in holder-to-scope direction', () => {
+  it(featureThemeClassName('networkNetworkRelationshipHelpersDangerGradientSurface'), () => {
     const grants = [
       rel({
         id: 'grant-b2-h2',

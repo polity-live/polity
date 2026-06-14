@@ -1,7 +1,10 @@
 import { useMemo } from 'react';
 import type { Value } from 'platejs';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
-import { extractSuggestionContent, type SuggestionProperties } from '../utils/suggestion-extraction';
+import {
+  extractSuggestionContent,
+  type SuggestionProperties,
+} from '../utils/suggestion-extraction';
 
 /** Shape of entries in the amendment's `discussions` JSON column */
 interface DiscussionEntry {
@@ -41,7 +44,12 @@ export interface ChangeRequest {
     vote?: string | null;
     user_id?: string;
     created_at?: number;
-    user?: { id: string; first_name?: string | null; last_name?: string | null; avatar?: string | null } | null;
+    user?: {
+      id: string;
+      first_name?: string | null;
+      last_name?: string | null;
+      avatar?: string | null;
+    } | null;
   }[];
   changeRequestEntityId?: string;
 }
@@ -64,10 +72,7 @@ export function useChangeRequests(amendmentId: string) {
   } = useAmendmentState({ amendmentId });
 
   // Fetch document and users via facade
-  const {
-    documents: docResults,
-    isLoading: facadeLoading,
-  } = useAmendmentState({
+  const { documents: docResults, isLoading: facadeLoading } = useAmendmentState({
     amendmentId,
     includeDocuments: true,
   });
@@ -82,16 +87,16 @@ export function useChangeRequests(amendmentId: string) {
     // Process open change requests from amendment.discussions
     if (amendment?.discussions && Array.isArray(amendment.discussions)) {
       openRequests.push(
-        ...((amendment.discussions as readonly DiscussionEntry[])
-          .filter((discussion) => !!discussion.crId)
-          .map((suggestion) => {
+        ...(amendment.discussions as readonly DiscussionEntry[])
+          .filter(discussion => !!discussion.crId)
+          .map(suggestion => {
             const suggestionContent = extractSuggestionContent(
               suggestion.id,
               document?.content as Value | undefined
             );
 
             const matchingChangeRequest = savedChangeRequests.find(
-              (cr) => cr.title === suggestion.crId
+              cr => cr.title === suggestion.crId
             );
 
             return {
@@ -119,7 +124,6 @@ export function useChangeRequests(amendmentId: string) {
               changeRequestEntityId: matchingChangeRequest?.id,
             } as ChangeRequest;
           })
-        )
       );
     }
 
@@ -129,13 +133,13 @@ export function useChangeRequests(amendmentId: string) {
 
       closedRequests.push(
         ...savedChangeRequests
-          .filter((cr) => {
+          .filter(cr => {
             if (openRequestCrIds.has(cr.title)) {
               return false;
             }
             return isApprovedStatus(cr.status) || isDeclinedStatus(cr.status);
           })
-          .map((cr) => ({
+          .map(cr => ({
             id: cr.id,
             crId: cr.title,
             crNumber: parseInt(cr.title?.replace('CR-', '') || '0'),
@@ -177,18 +181,24 @@ export function useChangeRequests(amendmentId: string) {
   );
 
   const approvedChangeRequests = useMemo(
-    () => closedChangeRequests.filter(req => isApprovedStatus(req.status) || isApprovedStatus(req.resolution)),
+    () =>
+      closedChangeRequests.filter(
+        req => isApprovedStatus(req.status) || isApprovedStatus(req.resolution)
+      ),
     [closedChangeRequests]
   );
 
   const declinedChangeRequests = useMemo(
-    () => closedChangeRequests.filter(req => isDeclinedStatus(req.status) || isDeclinedStatus(req.resolution)),
+    () =>
+      closedChangeRequests.filter(
+        req => isDeclinedStatus(req.status) || isDeclinedStatus(req.resolution)
+      ),
     [closedChangeRequests]
   );
 
   // Get unique user IDs from change requests
   const userIds = useMemo(
-    () => Array.from(new Set(changeRequests.map((cr) => cr.userId).filter(Boolean))),
+    () => Array.from(new Set(changeRequests.map(cr => cr.userId).filter(Boolean))),
     [changeRequests]
   );
 
@@ -201,10 +211,11 @@ export function useChangeRequests(amendmentId: string) {
   const users = useMemo(() => {
     const map: Record<string, { name: string }> = {};
     if (usersResults) {
-      usersResults.forEach((user) => {
+      usersResults.forEach(user => {
         if (user?.id) {
           map[user.id] = {
-            name: `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || user.handle || 'Unknown',
+            name:
+              `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || user.handle || 'Unknown',
           };
         }
       });

@@ -1,3 +1,4 @@
+import { featureThemeClassName, featureThemeValue } from '@/features/shared/theme';
 import { FormControlInput, FormControlLabel } from '@/features/shared/ui/form';
 import ReactFlow, { Background, Controls, MiniMap, Panel } from 'reactflow';
 import type { NodeTypes } from 'reactflow';
@@ -11,7 +12,6 @@ import {
   type FlowEditorController,
 } from './hooks/useFlowEditorController';
 import PositionableEdge from './PositionableEdge.tsx';
-import './PositionableEdge.css';
 
 const GroupNode = ({ data }: { data: { label: string }; selected: boolean }) => {
   return (
@@ -23,7 +23,7 @@ const GroupNode = ({ data }: { data: { label: string }; selected: boolean }) => 
           top: '8px',
           left: '8px',
           padding: '2px 5px',
-          background: 'rgba(255, 255, 255, 0.9)',
+          background: featureThemeValue('floweditorFlowEditorOverlayColor'),
           borderRadius: '3px',
           fontSize: '12px',
           fontWeight: 'bold',
@@ -105,11 +105,14 @@ export function FlowEditorView({ controller }: { controller: FlowEditorControlle
         onEdgeClick={onEdgeClick as never}
         fitView
       >
-        <Panel position="top-left" className="rounded bg-white p-4 shadow">
+        <Panel
+          position="top-left"
+          className={featureThemeClassName('floweditorFlowEditorContrastPanel')}
+        >
           <h2 className="mb-2 text-lg font-bold">
             {translateText('generated.inline.0528_city_council_workflow_b72c9f88')}
           </h2>
-          <p className="mb-3 text-sm text-gray-600">
+          <p className={featureThemeClassName('floweditorFlowEditorNeutralText')}>
             {translateText(
               'generated.inline.0529_interactive_diagram_showing_the_proposal_life_2110afd8'
             )}
@@ -163,7 +166,10 @@ export function FlowEditorView({ controller }: { controller: FlowEditorControlle
         </Panel>
 
         {isInteractive && selectedNodes.length === 1 ? (
-          <Panel position="top-right" className="w-80 rounded bg-white p-4 shadow">
+          <Panel
+            position="top-right"
+            className={featureThemeClassName('floweditorFlowEditorContrastPanelAlpha')}
+          >
             {isEditingNode ? (
               <div className="space-y-2">
                 <h3 className="text-md mb-2 font-bold">
@@ -204,7 +210,10 @@ export function FlowEditorView({ controller }: { controller: FlowEditorControlle
         ) : null}
 
         {isInteractive && selectedEdge ? (
-          <Panel position="top-right" className="w-80 rounded bg-white p-4 shadow">
+          <Panel
+            position="top-right"
+            className={featureThemeClassName('floweditorFlowEditorContrastPanelAlpha')}
+          >
             <h3 className="text-md mb-2 font-bold">
               {translateText('generated.inline.0538_edit_edge_label_e8252be9')}
             </h3>
@@ -243,7 +252,7 @@ export function FlowEditorView({ controller }: { controller: FlowEditorControlle
 
         <Controls onInteractiveChange={handleInteractiveChange} />
         <MiniMap zoomable pannable />
-        <Background color="#aaa" gap={16} />
+        <Background color={featureThemeValue('floweditorFlowEditorNeutralColor')} gap={16} />
       </ReactFlow>
     </div>
   );

@@ -4,7 +4,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useState } from 'react';
 import { describe, expect, it } from 'vitest';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
-import { CreateTypeaheadField } from '@/features/create/ui/CreateFields';
+import { CreateTypeaheadField } from '@/features/shared/ui/form';
 
 const items: TypeaheadItem[] = [
   {

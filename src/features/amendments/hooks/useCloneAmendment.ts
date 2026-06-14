@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
+import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import type { PathWithEventSegment } from '@/features/amendments/logic/amendmentPathHelpers';
 import { notifyAmendmentCloned } from '@/features/notifications/utils/notification-helpers.ts';
 import { useCreateAmendmentPath } from './useCreateAmendmentPath';
@@ -50,7 +51,11 @@ export function useCloneAmendment(
   const [cloneDialogOpen, setCloneDialogOpen] = useState(false);
   const [isCloning, setIsCloning] = useState(false);
 
-  const { createAmendment, requestCollaboration: addAmendmentCollaborator } = useAmendmentActions();
+  const {
+    createAmendment,
+    updateAmendment,
+    requestCollaboration: addAmendmentCollaborator,
+  } = useAmendmentActions();
   const { createDocument } = useDocumentActions();
   const { createAmendmentPath } = useCreateAmendmentPath();
 
@@ -120,16 +125,7 @@ export function useCloneAmendment(
         });
       }
 
-      // Create cloned document first so amendment can reference it
-      await createDocument({
-        id: cloneDocumentId,
-        amendment_id: null,
-        content: originalDocument?.content ?? { type: 'doc', content: [] },
-        editing_mode: 'collaborative',
-      });
-
-      // Create cloned amendment
-      await createAmendment({
+      const createAmendmentResult = createAmendment({
         id: cloneId,
         title: translateText('generated.inline.0016_valuea36c_clone_a73c56fa', {
           valuea36c: amendment.title ?? '',
@@ -142,7 +138,7 @@ export function useCloneAmendment(
         event_id: selectedEventId,
         clone_source_id: amendmentId,
         origin_amendment_id: amendment.origin_amendment_id ?? amendmentId,
-        document_id: cloneDocumentId,
+        document_id: null,
         tags: amendment.tags ?? [],
         visibility: amendment.visibility ?? 'public',
         editing_mode: 'edit',
@@ -152,6 +148,20 @@ export function useCloneAmendment(
         linkedin: '',
         website: '',
         image_url: amendment.image_url ?? null,
+      });
+      await serverConfirmed(createAmendmentResult);
+
+      const createDocumentResult = createDocument({
+        id: cloneDocumentId,
+        amendment_id: cloneId,
+        content: originalDocument?.content ?? { type: 'doc', content: [] },
+        editing_mode: 'collaborative',
+      });
+      await serverConfirmed(createDocumentResult);
+
+      await updateAmendment({
+        id: cloneId,
+        document_id: cloneDocumentId,
       });
 
       // Add current user as admin collaborator

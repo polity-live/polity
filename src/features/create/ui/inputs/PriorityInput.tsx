@@ -1,5 +1,4 @@
-import { FormControlLabel } from '@/features/shared/ui/form';
-import { Button } from '@/features/shared/ui/ui/button';
+import { SegmentedChoiceField } from '@/features/shared/ui/form';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 type Priority = 'low' | 'medium' | 'high';
@@ -9,37 +8,29 @@ interface PriorityInputProps {
   onChange: (priority: Priority) => void;
 }
 
-const PRIORITY_COLORS: Record<Priority, string> = {
-  low: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
-  medium: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300',
-  high: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
-};
-
 export function PriorityInput({ value, onChange }: PriorityInputProps) {
   const { t } = useTranslation();
 
-  const options: { value: Priority; label: string }[] = [
-    { value: 'low', label: t('pages.create.todo.priority.low') },
-    { value: 'medium', label: t('pages.create.todo.priority.medium') },
-    { value: 'high', label: t('pages.create.todo.priority.high') },
+  const options = [
+    { value: 'low' as const, label: t('pages.create.todo.priority.low'), tone: 'success' as const },
+    {
+      value: 'medium' as const,
+      label: t('pages.create.todo.priority.medium'),
+      tone: 'warning' as const,
+    },
+    {
+      value: 'high' as const,
+      label: t('pages.create.todo.priority.high'),
+      tone: 'destructive' as const,
+    },
   ];
 
   return (
-    <div className="space-y-2">
-      <FormControlLabel>{t('pages.create.todo.priorityLabel')}</FormControlLabel>
-      <div className="flex gap-2">
-        {options.map(opt => (
-          <Button
-            key={opt.value}
-            type="button"
-            variant="outline"
-            className={`flex-1 ${value === opt.value ? PRIORITY_COLORS[opt.value] + ' border-current' : ''}`}
-            onClick={() => onChange(opt.value)}
-          >
-            {opt.label}
-          </Button>
-        ))}
-      </div>
-    </div>
+    <SegmentedChoiceField
+      label={t('pages.create.todo.priorityLabel')}
+      value={value}
+      onValueChange={onChange}
+      options={options}
+    />
   );
 }

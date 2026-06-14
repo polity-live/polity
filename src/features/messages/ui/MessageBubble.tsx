@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { AlertCircle } from 'lucide-react';
 import { MessageContent } from '@/features/messages/ui/MessageContent.tsx';
@@ -40,7 +41,7 @@ export function MessageBubble({
               isOwnMessage
                 ? 'bg-primary text-primary-foreground'
                 : isAssistantError
-                  ? 'border border-red-500/20 bg-red-500/10 text-red-700 dark:text-red-300'
+                  ? featureThemeClassName('messageMessageBubbleDangerBadge')
                   : 'bg-muted'
             )}
           >
@@ -65,7 +66,7 @@ export function MessageBubble({
                 isOwnMessage
                   ? 'text-primary-foreground/70'
                   : isAssistantError
-                    ? 'text-red-700/70 dark:text-red-300/70'
+                    ? featureThemeClassName('messageMessageBubbleDangerText')
                     : 'text-muted-foreground'
               )}
             >

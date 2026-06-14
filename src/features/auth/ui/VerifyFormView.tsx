@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import type { ClipboardEvent, KeyboardEvent } from 'react';
 import { ArrowLeft, RotateCcw, Shield } from 'lucide-react';
 
@@ -60,7 +61,7 @@ export function VerifyFormView({
           {copy.description} <strong>{email}</strong>
         </>
       }
-      icon={<Shield className="h-12 w-12 text-blue-500" />}
+      icon={<Shield className={featureThemeClassName('authForgotPasswordFormInfoIcon')} />}
       contentClassName="space-y-6"
     >
       <div className="space-y-2">

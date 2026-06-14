@@ -49,7 +49,7 @@ export default meta;
 type Story = StoryObj;
 
 export const AmendmentListTabDefault: Story = {
-  render: (args) => {
+  render: args => {
     const [searchValue, setSearchValue] = React.useState('');
     return (
       <AmendmentListTab

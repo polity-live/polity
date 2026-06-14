@@ -14,6 +14,10 @@ vi.mock('@tanstack/react-router', () => ({
 }));
 
 vi.mock('react-i18next', () => ({
+  initReactI18next: {
+    type: '3rdParty',
+    init: vi.fn(),
+  },
   useTranslation: () => ({
     t: (key: string, fallbackOrOptions?: string | { defaultValue?: string; count?: number }) => {
       if (typeof fallbackOrOptions === 'string') {
@@ -30,8 +34,18 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
+  translate: (key: string, fallback?: string) =>
+    key === 'generated.inline.0722_view_documents_f5f5d899' ? 'View Documents' : (fallback ?? key),
   useTranslation: () => ({
-    t: (key: string, fallback?: string) => fallback ?? key,
+    t: (key: string, fallback?: string) =>
+      (
+        ({
+          'features.groups.memberships.rightsAlignment.actions.rights': 'Rights',
+          'features.groups.memberships.rightsAlignment.actions.manageRoles': 'Manage roles',
+        }) as Record<string, string>
+      )[key] ??
+      fallback ??
+      key,
   }),
 }));
 
@@ -109,8 +123,16 @@ describe('MembershipRightsAlignmentPanel', () => {
     expect(screen.getByText('Info')).toBeTruthy();
     expect(screen.getByText('View Documents')).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: /rights/i }));
-    fireEvent.click(screen.getByRole('button', { name: /manage roles/i }));
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /^features\.groups\.memberships\.rightsAlignment\.actions\.rights$/,
+      })
+    );
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /^features\.groups\.memberships\.rightsAlignment\.actions\.manageRoles$/,
+      })
+    );
 
     expect(onOpenRightsDialog).toHaveBeenCalledWith(rows[0].membership);
     expect(onOpenChangeRoleDialog).toHaveBeenCalledWith(rows[0].membership);

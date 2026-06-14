@@ -1,3 +1,4 @@
+import { featureThemeClassName, featureThemeValue } from '@/features/shared/theme';
 import type { Edge, Node } from '@xyflow/react';
 import {
   NETWORK_CONNECTION_DIRECTION_COLORS,
@@ -43,15 +44,15 @@ function withNodeSize<TNode extends LandingNetworkNode>(
 
 const eventNodeStyle = {
   width: 190,
-  border: '2px solid #0f766e',
+  border: featureThemeClassName('publiclandingLandingNetworkPreviewThemedStyle'),
   borderRadius: '10px',
-  background: '#ccfbf1',
-  color: '#134e4a',
+  background: featureThemeValue('publiclandingLandingNetworkPreviewTealColor'),
+  color: featureThemeValue('publiclandingLandingNetworkPreviewTealColorAlpha'),
   fontSize: 12,
   fontWeight: 700,
   padding: '10px 12px',
   textAlign: 'center' as const,
-  boxShadow: '0 10px 24px rgba(15, 118, 110, 0.16)',
+  boxShadow: featureThemeClassName('publiclandingLandingNetworkPreviewThemedStyleAlpha'),
   cursor: 'pointer',
 };
 

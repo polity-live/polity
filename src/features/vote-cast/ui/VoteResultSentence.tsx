@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { Crown } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -65,22 +66,21 @@ export function VoteResultSentence({
     const winnerPart = winnerLink ? (
       <Link
         to={winnerLink}
-        className="font-semibold text-yellow-700 underline underline-offset-4 hover:text-yellow-600 dark:text-yellow-400"
+        className={featureThemeClassName('votecastVoteResultSentenceWarningText')}
       >
         {winnerName}
       </Link>
     ) : (
-      <span className="font-semibold text-yellow-700 dark:text-yellow-400">{winnerName}</span>
+      <span className={featureThemeClassName('votecastVoteResultSentenceWarningTextAlpha')}>
+        {winnerName}
+      </span>
     );
 
     return (
       <div
-        className={cn(
-          'flex items-center gap-2 rounded-lg bg-yellow-50 px-4 py-3 text-sm dark:bg-yellow-950/30',
-          className
-        )}
+        className={cn(featureThemeClassName('votecastVoteResultSentenceWarningPanel'), className)}
       >
-        <Crown className="h-5 w-5 shrink-0 text-yellow-500" />
+        <Crown className={featureThemeClassName('votecastVoteResultSentenceWarningIcon')} />
         <p>
           {rolePart ? (
             <>
@@ -120,10 +120,10 @@ export function VoteResultSentence({
       className={cn(
         'rounded-lg px-4 py-3 text-sm',
         isSuccess
-          ? 'bg-green-50 text-green-800 dark:bg-green-950/30 dark:text-green-300'
+          ? featureThemeClassName('votecastVoteResultSentenceSuccessBackground')
           : result === 'rejected'
-            ? 'bg-red-50 text-red-800 dark:bg-red-950/30 dark:text-red-300'
-            : 'bg-amber-50 text-amber-800 dark:bg-amber-950/30 dark:text-amber-300',
+            ? featureThemeClassName('votecastVoteResultSentenceDangerBackground')
+            : featureThemeClassName('votecastVoteResultSentenceWarningBackground'),
         className
       )}
     >

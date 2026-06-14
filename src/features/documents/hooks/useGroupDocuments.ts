@@ -5,10 +5,10 @@
  * Includes ownership verification and document metadata.
  */
 
-import { useGroupDocuments as useFacadeGroupDocuments } from '@/zero/groups/useGroupState'
+import { useGroupDocuments as useFacadeGroupDocuments } from '@/zero/groups/useGroupState';
 
 export function useGroupDocuments(groupId: string) {
-  const { documents, isLoading } = useFacadeGroupDocuments(groupId)
+  const { documents, isLoading } = useFacadeGroupDocuments(groupId);
 
   return {
     documents,

@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import {
   FormControlLabel,
   FormControlSelect,
@@ -35,7 +36,7 @@ import { formatLocation } from '@/features/shared/logic/locationHelpers';
 import { useAllGroups, useGroupState } from '@/zero/groups/useGroupState';
 import { useGroupConnectionState } from '@/zero/network';
 import { getGroupRelationshipRightLabel } from '@/features/network/ui/GroupRelationshipFields';
-import { RIGHT_TYPES, type RightType } from '@/features/network/ui/RightFilters';
+import { RIGHT_TYPES, type RightType } from '@/features/shared/ui/status';
 import { useGroupConflictPreflight } from '../hooks/useGroupConflictPreflight';
 import { GroupConflictDialog, GroupConflictPanel } from './GroupConflictPanel';
 import { getCanonicalMembershipModeLabel } from '@/features/network/logic/groupConnectionDerived';
@@ -523,7 +524,7 @@ export function GroupEditForm({
           </div>
 
           {siblingConfigurationPreflight.blocking ? (
-            <div className="space-y-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
+            <div className={featureThemeClassName('groupGroupConflictPanelWarningSurface')}>
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="text-sm font-semibold">
@@ -560,9 +561,9 @@ export function GroupEditForm({
 
       {/* Hashtags */}
       <div className="space-y-2">
-        <label className="text-sm font-medium">
+        <FormControlLabel>
           {translateText('generated.inline.0685_hashtags_338da6e1')}
-        </label>
+        </FormControlLabel>
         <HashtagEditor
           value={formData.hashtags}
           onChange={tags => setFormData({ ...formData, hashtags: tags })}

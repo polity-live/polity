@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
   FileUploadTrigger,
+  FormControlLabel,
   FormFieldShell,
   InlineCheckbox,
   SelectField,
@@ -229,7 +230,7 @@ export function ChartDialogView({ model }: ChartDialogViewProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <ScrollableDialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto p-0 sm:max-w-5xl">
-        <DialogHeader className="border-b px-5 py-4 pr-12">
+        <DialogHeader separator className="px-5 py-4 pr-12">
           <DialogTitle>
             {editingElement ? t('plateJs.chart.editTitle') : t('plateJs.chart.insertTitle')}
           </DialogTitle>
@@ -664,44 +665,56 @@ export function ChartDialogView({ model }: ChartDialogViewProps) {
               />
             </div>
             <div className="flex flex-wrap gap-x-5 gap-y-3">
-              <label className="flex items-center gap-2 text-sm font-normal">
+              <div className="flex items-center gap-2">
                 <InlineCheckbox
+                  id="chart-show-legend"
                   checked={presentation.showLegend !== false}
                   onCheckedChange={checked =>
                     setPresentation(current => ({ ...current, showLegend: checked === true }))
                   }
                 />
-                {t('plateJs.chart.legend')}
-              </label>
-              <label className="flex items-center gap-2 text-sm font-normal">
+                <FormControlLabel htmlFor="chart-show-legend">
+                  {t('plateJs.chart.legend')}
+                </FormControlLabel>
+              </div>
+              <div className="flex items-center gap-2">
                 <InlineCheckbox
+                  id="chart-show-tooltip"
                   checked={presentation.showTooltip !== false}
                   onCheckedChange={checked =>
                     setPresentation(current => ({ ...current, showTooltip: checked === true }))
                   }
                 />
-                {t('plateJs.chart.hoverValues')}
-              </label>
+                <FormControlLabel htmlFor="chart-show-tooltip">
+                  {t('plateJs.chart.hoverValues')}
+                </FormControlLabel>
+              </div>
               {chartType !== 'pie' ? (
-                <label className="flex items-center gap-2 text-sm font-normal">
+                <div className="flex items-center gap-2">
                   <InlineCheckbox
+                    id="chart-show-grid"
                     checked={presentation.showGrid !== false}
                     onCheckedChange={checked =>
                       setPresentation(current => ({ ...current, showGrid: checked === true }))
                     }
                   />
-                  {t('plateJs.chart.grid')}
-                </label>
+                  <FormControlLabel htmlFor="chart-show-grid">
+                    {t('plateJs.chart.grid')}
+                  </FormControlLabel>
+                </div>
               ) : (
-                <label className="flex items-center gap-2 text-sm font-normal">
+                <div className="flex items-center gap-2">
                   <InlineCheckbox
+                    id="chart-donut"
                     checked={presentation.donut !== false}
                     onCheckedChange={checked =>
                       setPresentation(current => ({ ...current, donut: checked === true }))
                     }
                   />
-                  {t('plateJs.chart.donut')}
-                </label>
+                  <FormControlLabel htmlFor="chart-donut">
+                    {t('plateJs.chart.donut')}
+                  </FormControlLabel>
+                </div>
               )}
             </div>
             <div className="border-t pt-4">
@@ -731,7 +744,7 @@ export function ChartDialogView({ model }: ChartDialogViewProps) {
           </p>
         ) : null}
 
-        <DialogFooter className="bg-background sticky bottom-0 border-t px-5 py-4">
+        <DialogFooter separator surface="background" sticky className="px-5 py-4">
           <Button type="button" variant="outline" onClick={() => setOpen(false)}>
             {t('plateJs.chart.cancel')}
           </Button>

@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName, featureThemeValue } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { useEffect } from 'react';
 import { Node, Edge, useNodesState, useEdgesState, MarkerType } from '@xyflow/react';
@@ -71,9 +72,13 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
           type: 'group',
         },
         style: {
-          background: isTarget ? '#ffcdd2' : isFirst ? '#e3f2fd' : '#c8e6c9',
-          color: '#333',
-          border: `2px solid ${isTarget ? '#ef9a9a' : isFirst ? '#90caf9' : '#a5d6a7'}`,
+          background: isTarget
+            ? featureThemeValue('amendmentAmendmentPathVisualizationDangerColor')
+            : isFirst
+              ? featureThemeValue('amendmentAmendmentPathVisualizationThemeValue')
+              : featureThemeValue('amendmentAmendmentPathVisualizationSuccessColor'),
+          color: featureThemeValue('amendmentAmendmentPathVisualizationNeutralColor'),
+          border: `2px solid ${isTarget ? featureThemeValue('amendmentAmendmentPathVisualizationDangerColorAlpha') : isFirst ? featureThemeValue('amendmentAmendmentPathVisualizationInfoColor') : featureThemeValue('amendmentAmendmentPathVisualizationThemeValueAlpha')}`,
           borderRadius: '5px',
           padding: '10px',
           fontSize: '12px',
@@ -94,9 +99,12 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
           type: 'smoothstep',
           animated: true,
           label: translateText('generated.inline.0021_amendmentright_eba6c724'),
-          style: { stroke: '#66bb6a', strokeWidth: 2 },
+          style: {
+            stroke: featureThemeValue('amendmentAmendmentPathVisualizationSuccessColorAlpha'),
+            strokeWidth: 2,
+          },
           labelStyle: {
-            fill: '#2e7d32',
+            fill: featureThemeValue('amendmentAmendmentPathVisualizationSuccessColorBeta'),
             fontWeight: 600,
             fontSize: '11px',
           },
@@ -108,7 +116,7 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
           labelBgBorderRadius: 4,
           markerEnd: {
             type: MarkerType.ArrowClosed,
-            color: '#66bb6a',
+            color: featureThemeValue('amendmentAmendmentPathVisualizationSuccessColorAlpha'),
           },
         });
       }
@@ -248,19 +256,33 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
               panel={
                 <Panel
                   position="top-right"
-                  className="dark:bg-background rounded bg-white p-3 shadow"
+                  className={featureThemeClassName(
+                    'amendmentAmendmentPathVisualizationContrastPanel'
+                  )}
                 >
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 rounded border border-[#90caf9] bg-[#e3f2fd]"></div>
+                      <div
+                        className={featureThemeClassName(
+                          'amendmentAmendmentPathVisualizationThemedSurface'
+                        )}
+                      ></div>
                       <span>{t('features.amendments.pathVisualization.start')}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 rounded border border-[#a5d6a7] bg-[#c8e6c9]"></div>
+                      <div
+                        className={featureThemeClassName(
+                          'amendmentAmendmentPathVisualizationThemedSurfaceAlpha'
+                        )}
+                      ></div>
                       <span>{t('features.amendments.pathVisualization.path')}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 rounded border border-[#ef9a9a] bg-[#ffcdd2]"></div>
+                      <div
+                        className={featureThemeClassName(
+                          'amendmentAmendmentPathVisualizationThemedSurfaceBeta'
+                        )}
+                      ></div>
                       <span>{t('features.amendments.process.target')}</span>
                     </div>
                   </div>

@@ -4,6 +4,7 @@ import type { MouseEventHandler, ReactNode } from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TargetGroupEventSelector } from '@/features/amendments/ui/TargetGroupEventSelector';
+import { Button } from '@/features/shared/ui/ui/button';
 
 const amendmentGroups = [
   {
@@ -132,11 +133,12 @@ vi.mock('@/features/network/ui/UserNetworkFlow', () => ({
   }: {
     onGroupClick?: (groupId: string, groupData: { id: string; name: string }) => void;
   }) => (
-    <button
+    <Button
+      type="button"
       onClick={() => onGroupClick?.('group-start', { id: 'group-start', name: 'Budget Circle' })}
     >
       Select graph start
-    </button>
+    </Button>
   ),
 }));
 
@@ -150,16 +152,18 @@ vi.mock('@/features/network/ui/GroupNetworkFlow', () => ({
   }) => (
     <div>
       <div>{`Rooted graph: ${groupId}`}</div>
-      <button
+      <Button
+        type="button"
         onClick={() => onGroupClick?.('group-mid', { id: 'group-mid', name: 'Regional Council' })}
       >
         Select graph target mid
-      </button>
-      <button
+      </Button>
+      <Button
+        type="button"
         onClick={() => onGroupClick?.('group-target', { id: 'group-target', name: 'Parliament' })}
       >
         Select graph target final
-      </button>
+      </Button>
     </div>
   ),
 }));

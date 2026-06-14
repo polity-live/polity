@@ -1,5 +1,7 @@
 'use client';
 
+import { cn } from '@/features/shared/utils/utils';
+import { featureThemeClassName } from '@/features/shared/theme';
 import { User, Users, MapPin, Mail, Bell, Star } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -89,7 +91,9 @@ export function UserTimelineCard({
         <div className="mb-3 flex flex-col items-center gap-2 text-center">
           <Avatar className="border-background h-16 w-16 border-2 shadow-md">
             <AvatarImage src={user.avatarUrl} alt={user.name} />
-            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white">
+            <AvatarFallback
+              className={featureThemeClassName('timelineUserTimelineCardInfoAccentGradientSurface')}
+            >
               {initials}
             </AvatarFallback>
           </Avatar>
@@ -113,7 +117,11 @@ export function UserTimelineCard({
               <HashtagDisplay
                 hashtags={user.hashtags.slice(0, 3)}
                 centered={false}
-                badgeClassName={`border bg-white/70 dark:bg-gray-900/60 ${amendmentStyle.borderColor} ${amendmentStyle.accentColor}`}
+                badgeClassName={cn(
+                  featureThemeClassName('timelineAmendmentTimelineCardNeutralContrastSurface'),
+                  amendmentStyle.borderColor,
+                  amendmentStyle.accentColor
+                )}
               />
             </div>
           )}
@@ -201,7 +209,9 @@ export function UserTimelineCard({
               disabled={subscription.isLoading}
               className="flex items-center gap-1.5"
             >
-              <Bell className={`h-3.5 w-3.5 ${subscription.isSubscribed ? 'fill-current' : ''}`} />
+              <Bell
+                className={`h-3.5 w-3.5 ${subscription.isSubscribed ? featureThemeClassName('timelineActionBarThemedStyle') : ''}`}
+              />
             </Button>
             <Button variant="outline" size="sm" asChild className="flex items-center gap-1.5">
               <Link

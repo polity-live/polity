@@ -5,9 +5,7 @@
  * Computes the next suggestion ID (CR-x format) from existing discussions.
  * Finds the max existing CR-x number and increments by 1.
  */
-export function getNextSuggestionIdFromDiscussions(
-  discussions: Array<{ crId?: string }>
-): string {
+export function getNextSuggestionIdFromDiscussions(discussions: { crId?: string }[]): string {
   let maxCounter = 0;
   for (const d of discussions) {
     if (d.crId) {
@@ -46,9 +44,7 @@ export function isValidSuggestionId(suggestionId: string): boolean {
 /**
  * Gets the current max suggestion counter from existing discussions
  */
-export function getCurrentSuggestionCounter(
-  discussions: Array<{ crId?: string }>
-): number {
+export function getCurrentSuggestionCounter(discussions: { crId?: string }[]): number {
   let maxCounter = 0;
   for (const d of discussions) {
     if (d.crId) {

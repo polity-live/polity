@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
@@ -303,7 +304,11 @@ export function AmendmentTimelineCard({
               <HashtagDisplay
                 hashtags={amendment.hashtags.slice(0, 3)}
                 centered={false}
-                badgeClassName={`border bg-white/70 dark:bg-gray-900/60 ${amendmentStyle.borderColor} ${amendmentStyle.accentColor}`}
+                badgeClassName={cn(
+                  featureThemeClassName('timelineAmendmentTimelineCardNeutralContrastSurface'),
+                  amendmentStyle.borderColor,
+                  amendmentStyle.accentColor
+                )}
               />
             </div>
           )}
@@ -318,7 +323,9 @@ export function AmendmentTimelineCard({
                 <span
                   className={cn(
                     'font-medium',
-                    amendment.supportPercentage >= 50 ? 'text-green-600' : 'text-red-600'
+                    amendment.supportPercentage >= 50
+                      ? featureThemeClassName('timelineUseTodoTimelineCardSuccessText')
+                      : featureThemeClassName('timelineUseTodoTimelineCardDangerText')
                   )}
                 >
                   {amendment.supportPercentage}%
@@ -331,8 +338,9 @@ export function AmendmentTimelineCard({
                   (amendment.status === 'passed' ||
                     amendment.status === 'accepted' ||
                     amendment.status === 'approved') &&
-                    '[&>div]:bg-green-500',
-                  amendment.status === 'rejected' && '[&>div]:bg-red-500'
+                    featureThemeClassName('timelineTodoTimelineCardSuccessProgressFill'),
+                  amendment.status === 'rejected' &&
+                    featureThemeClassName('timelineVoteTimelineCardDangerProgressFill')
                 )}
               />
             </div>
@@ -364,13 +372,17 @@ export function AmendmentTimelineCard({
             <div className="text-muted-foreground flex items-center gap-4 text-xs">
               {amendment.supportCount !== undefined && (
                 <div className="flex items-center gap-1">
-                  <ThumbsUp className="h-3.5 w-3.5 text-green-600" />
+                  <ThumbsUp
+                    className={featureThemeClassName('timelineAmendmentTimelineCardSuccessIcon')}
+                  />
                   <span>{amendment.supportCount}</span>
                 </div>
               )}
               {amendment.opposeCount !== undefined && (
                 <div className="flex items-center gap-1">
-                  <ThumbsDown className="h-3.5 w-3.5 text-red-600" />
+                  <ThumbsDown
+                    className={featureThemeClassName('timelineAmendmentTimelineCardDangerIcon')}
+                  />
                   <span>{amendment.opposeCount}</span>
                 </div>
               )}
@@ -498,7 +510,7 @@ export function AmendmentTimelineCard({
           className="flex items-center gap-1.5"
         >
           <Bell
-            className={`h-3.5 w-3.5 ${(amendment.isSubscribed ?? subscription.isSubscribed) ? 'fill-current' : ''}`}
+            className={`h-3.5 w-3.5 ${(amendment.isSubscribed ?? subscription.isSubscribed) ? featureThemeClassName('timelineActionBarThemedStyle') : ''}`}
           />
         </Button>
 

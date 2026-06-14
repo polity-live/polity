@@ -13,7 +13,7 @@ import type { Value } from 'platejs';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useDocumentState } from '@/zero/documents/useDocumentState';
 import { useBlogState } from '@/zero/blogs/useBlogState';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { EditorEntityType, EditorVersion, VersionCreationType } from '../types';
 

@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { Link } from '@tanstack/react-router';
 import { Check, Trash2, UserRoundCheck } from 'lucide-react';
 
@@ -182,7 +183,7 @@ export function GuestsTable<TGuestAccess extends GuestAccessLike>({
   ];
 
   return (
-    <Panel className="border-border/70 from-background to-muted/20 mb-6 bg-gradient-to-b">
+    <Panel className={featureThemeClassName('groupActiveMembersTableThemedGradientSurface')}>
       <PanelHeader>
         <PanelTitle className="flex items-center gap-2">
           <UserRoundCheck className="h-5 w-5" />

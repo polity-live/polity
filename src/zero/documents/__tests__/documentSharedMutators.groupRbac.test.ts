@@ -127,6 +127,69 @@ describe('documentSharedMutators group RBAC', () => {
     expect(tx.mutate.document.update).not.toHaveBeenCalled();
   });
 
+  it('authorizes amendment-linked document content updates through amendment document rights', async () => {
+    const tx = createTx('server');
+    const ctx = createCtx();
+
+    tx.run
+      .mockResolvedValueOnce({
+        id: 'doc-1',
+        amendment_id: 'amendment-1',
+      })
+      .mockResolvedValueOnce({
+        id: 'amendment-1',
+        group_id: 'group-1',
+      });
+    canMock.mockResolvedValueOnce(undefined);
+
+    await documentSharedMutators.updateContent.fn({
+      tx: tx as never,
+      ctx,
+      args: {
+        id: 'doc-1',
+        content: [{ type: 'p', children: [{ text: 'Updated' }] }],
+      },
+    });
+
+    expect(canMock).toHaveBeenCalledWith(tx, ctx, {
+      action: 'update',
+      resource: 'documents',
+      amendmentId: 'amendment-1',
+    });
+    expect(tx.mutate.document.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'doc-1',
+        content: [{ type: 'p', children: [{ text: 'Updated' }] }],
+        updated_at: expect.any(Number),
+      })
+    );
+  });
+
+  it('rejects standalone document content updates without an active collaborator', async () => {
+    const tx = createTx('server');
+
+    tx.run
+      .mockResolvedValueOnce({
+        id: 'doc-1',
+        amendment_id: null,
+      })
+      .mockResolvedValueOnce(null);
+
+    await expect(
+      documentSharedMutators.updateContent.fn({
+        tx: tx as never,
+        ctx: createCtx(),
+        args: {
+          id: 'doc-1',
+          content: [],
+        },
+      })
+    ).rejects.toThrow(PermissionError);
+
+    expect(canMock).not.toHaveBeenCalled();
+    expect(tx.mutate.document.update).not.toHaveBeenCalled();
+  });
+
   it('updates group document titles through the document mutator when authorized', async () => {
     const tx = createTx('server');
 

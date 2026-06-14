@@ -16,8 +16,7 @@ export function useTodoDetailPage(todoId: string) {
   // Visibility access check: creator or assignee can access private todos
   const isCreatorOrAssignee =
     !!user?.id &&
-    (todo?.creator_id === user.id ||
-      (assignments ?? []).some((a) => a.user_id === user.id));
+    (todo?.creator_id === user.id || (assignments ?? []).some(a => a.user_id === user.id));
   const canAccess = checkEntityAccess(todo?.visibility, !!user?.id, isCreatorOrAssignee);
 
   const [formData, setFormData] = useState<TodoFormData>({

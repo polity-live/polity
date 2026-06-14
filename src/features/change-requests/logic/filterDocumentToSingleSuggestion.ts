@@ -27,15 +27,12 @@ interface SuggestionMark {
  */
 export function filterDocumentToSuggestions(
   content: Value,
-  targetSuggestionIds: Set<string>,
+  targetSuggestionIds: Set<string>
 ): Value {
   return processNodes(content, targetSuggestionIds) as Value;
 }
 
-function processNodes(
-  nodes: Descendant[],
-  targetIds: Set<string>,
-): Descendant[] {
+function processNodes(nodes: Descendant[], targetIds: Set<string>): Descendant[] {
   const result: Descendant[] = [];
 
   for (const node of nodes) {
@@ -46,10 +43,7 @@ function processNodes(
   return result;
 }
 
-function processNode(
-  node: Descendant,
-  targetIds: Set<string>,
-): Descendant[] {
+function processNode(node: Descendant, targetIds: Set<string>): Descendant[] {
   const allSuggestionKeys = findAllSuggestionKeys(node);
 
   if (allSuggestionKeys.length === 0) {
@@ -62,13 +56,13 @@ function processNode(
   }
 
   // Check if this node has any target suggestion
-  const targetKey = allSuggestionKeys.find((key) => {
+  const targetKey = allSuggestionKeys.find(key => {
     const mark = (node as Record<string, unknown>)[key] as SuggestionMark;
     return targetIds.has(mark?.id ?? '');
   });
 
   // Get keys for non-target suggestions
-  const otherKeys = allSuggestionKeys.filter((key) => {
+  const otherKeys = allSuggestionKeys.filter(key => {
     const mark = (node as Record<string, unknown>)[key] as SuggestionMark;
     return !targetIds.has(mark?.id ?? '');
   });
@@ -89,18 +83,20 @@ function processNode(
     if (type === 'insert') {
       // Another suggestion inserted this text — but we need the text for the target
       // Just strip the non-target mark
-      delete cleaned[otherKey];
+      Reflect.deleteProperty(cleaned, otherKey);
     } else if (type === 'remove' || type === 'replace') {
-      delete cleaned[otherKey];
+      Reflect.deleteProperty(cleaned, otherKey);
     } else if (type === 'update') {
       // Revert the non-target update (restore original properties)
-      const fullMark = cleaned[otherKey] as SuggestionMark & { properties?: Record<string, unknown> };
+      const fullMark = cleaned[otherKey] as SuggestionMark & {
+        properties?: Record<string, unknown>;
+      };
       if (fullMark?.properties) {
         cleaned = { ...cleaned, ...fullMark.properties };
       }
-      delete cleaned[otherKey];
+      Reflect.deleteProperty(cleaned, otherKey);
     } else {
-      delete cleaned[otherKey];
+      Reflect.deleteProperty(cleaned, otherKey);
     }
   }
 
@@ -114,10 +110,7 @@ function processNode(
  * - replace: remove the text (replacement we don't want)
  * - update: revert to original properties, strip the mark
  */
-function resolveOtherSuggestions(
-  node: Descendant,
-  otherKeys: string[],
-): Descendant[] {
+function resolveOtherSuggestions(node: Descendant, otherKeys: string[]): Descendant[] {
   for (const key of otherKeys) {
     const mark = (node as Record<string, unknown>)[key] as SuggestionMark;
     const type = mark?.type;
@@ -135,7 +128,7 @@ function resolveOtherSuggestions(
     if (type === 'remove') {
       // Reject remove: keep the text, strip the mark
       const cleaned = { ...node } as Record<string, unknown>;
-      delete cleaned[key];
+      Reflect.deleteProperty(cleaned, key);
       return [cleaned as Descendant];
     }
 
@@ -146,7 +139,7 @@ function resolveOtherSuggestions(
       if (fullMark?.properties) {
         Object.assign(cleaned, fullMark.properties);
       }
-      delete cleaned[key];
+      Reflect.deleteProperty(cleaned, key);
       return [cleaned as Descendant];
     }
   }
@@ -154,12 +147,12 @@ function resolveOtherSuggestions(
   // Unknown type: just strip all marks
   const cleaned = { ...node } as Record<string, unknown>;
   for (const key of otherKeys) {
-    delete cleaned[key];
+    Reflect.deleteProperty(cleaned, key);
   }
   return [cleaned as Descendant];
 }
 
 function findAllSuggestionKeys(node: Descendant): string[] {
   if (!node || typeof node !== 'object') return [];
-  return Object.keys(node).filter((k) => k.startsWith('suggestion_'));
+  return Object.keys(node).filter(k => k.startsWith('suggestion_'));
 }

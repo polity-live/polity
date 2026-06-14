@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import type { Value } from 'platejs';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 
 import { useBlogState } from '@/zero/blogs/useBlogState';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';

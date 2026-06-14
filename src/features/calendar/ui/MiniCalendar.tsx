@@ -14,7 +14,7 @@ export const MiniCalendar = ({ selectedDate, onSelect, events }: MiniCalendarPro
   const { t } = useTranslation();
 
   const getEventsForDate = (date: Date) => {
-    return events.filter((event) => isSameDay(event.start_date, date));
+    return events.filter(event => isSameDay(event.start_date, date));
   };
 
   return (
@@ -26,7 +26,7 @@ export const MiniCalendar = ({ selectedDate, onSelect, events }: MiniCalendarPro
         <Calendar
           mode="single"
           selected={selectedDate}
-          onSelect={(date) => date && onSelect(date)}
+          onSelect={date => date && onSelect(date)}
           modifiers={{
             hasEvents: (date: Date) => getEventsForDate(date).length > 0,
           }}

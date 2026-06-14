@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import {
@@ -40,8 +41,8 @@ export function MembershipConfirmStep({
     <div className="space-y-6">
       <div className="text-center">
         <div className="mb-4 flex justify-center">
-          <div className="rounded-full bg-gradient-to-br from-purple-500 to-violet-600 p-4">
-            <UserPlus className="h-8 w-8 text-white" />
+          <div className={featureThemeClassName('authMembershipConfirmStepAccentGradientSurface')}>
+            <UserPlus className={featureThemeClassName('authGroupSearchStepContrastIcon')} />
           </div>
         </div>
         <h2 className="text-2xl font-bold">{t('onboarding.confirmStep.title')}</h2>
@@ -49,7 +50,7 @@ export function MembershipConfirmStep({
       </div>
 
       {/* Selected Group Card */}
-      <Card className="border-emerald-500 bg-emerald-50/50 ring-2 ring-emerald-500/20 ring-offset-2 dark:border-emerald-400 dark:bg-emerald-950/20 dark:ring-emerald-400/25 dark:ring-offset-gray-900">
+      <Card surface="emeraldSelected">
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between gap-2">
             <CardTitle className="text-lg">{group.name}</CardTitle>
@@ -74,13 +75,13 @@ export function MembershipConfirmStep({
 
       {/* Confirmation Buttons */}
       {requestSent ? (
-        <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-center dark:border-green-800 dark:bg-green-950">
+        <div className={featureThemeClassName('authMembershipConfirmStepSuccessBadge')}>
           <div className="mb-2 flex justify-center">
-            <div className="rounded-full bg-green-500 p-2">
-              <Check className="h-5 w-5 text-white" />
+            <div className={featureThemeClassName('authMembershipConfirmStepSuccessPanel')}>
+              <Check className={featureThemeClassName('authMembershipConfirmStepContrastIcon')} />
             </div>
           </div>
-          <p className="font-medium text-green-800 dark:text-green-200">
+          <p className={featureThemeClassName('authMembershipConfirmStepSuccessText')}>
             {t('onboarding.confirmStep.requestSent')}
           </p>
         </div>

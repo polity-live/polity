@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useAuth } from '@/providers/auth-provider';

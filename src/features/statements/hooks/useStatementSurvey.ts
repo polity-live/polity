@@ -28,20 +28,19 @@ interface UseStatementSurveyOptions {
 
 export function useStatementSurvey({ survey, userId }: UseStatementSurveyOptions) {
   const options = useMemo(
-    () =>
-      [...(survey?.options ?? [])].sort((a, b) => a.position - b.position),
-    [survey?.options],
+    () => [...(survey?.options ?? [])].sort((a, b) => a.position - b.position),
+    [survey?.options]
   );
 
   // Compute vote counts from actual vote records (not denormalized vote_count)
   const totalVotes = useMemo(
     () => options.reduce((sum, o) => sum + (o.votes?.length ?? 0), 0),
-    [options],
+    [options]
   );
 
   const percentages = useMemo(
     () =>
-      options.map((o) => {
+      options.map(o => {
         const voteCount = o.votes?.length ?? 0;
         return {
           optionId: o.id,
@@ -50,14 +49,14 @@ export function useStatementSurvey({ survey, userId }: UseStatementSurveyOptions
           percent: totalVotes > 0 ? Math.round((voteCount / totalVotes) * 100) : 0,
         };
       }),
-    [options, totalVotes],
+    [options, totalVotes]
   );
 
   // Votes are nested inside each option (from query: surveys → options → votes)
   const userVote = useMemo(() => {
     if (!userId) return null;
     for (const opt of options) {
-      const vote = opt.votes?.find((v) => v.user_id === userId);
+      const vote = opt.votes?.find(v => v.user_id === userId);
       if (vote) return vote;
     }
     return null;

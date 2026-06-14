@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import type { ComponentProps, ReactNode } from 'react';
 
 import { RoleBadge } from '@/features/shared/ui/status';
@@ -24,7 +25,7 @@ export function RoleTag({
   return (
     <RoleBadge
       className={cn(
-        'border-0 text-white shadow-sm shadow-black/10 dark:text-white',
+        featureThemeClassName('groupRoleTagContrastBorder'),
         getRoleGradientClassName(roleKey),
         className
       )}

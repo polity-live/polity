@@ -212,7 +212,7 @@ export function MessageInput({ conversation, currentUserId, onSendMessage }: Mes
   }
 
   return (
-    <CardContent className="flex-shrink-0 border-t p-4">
+    <CardContent separator className="flex-shrink-0 p-4">
       {isPendingDirectConversation && isConversationRequester ? (
         <div className="text-muted-foreground text-center text-sm">
           {t('features.messages.conversation.waitingForAccept', { name: otherParticipantName })}
@@ -260,7 +260,7 @@ export function MessageInput({ conversation, currentUserId, onSendMessage }: Mes
           )}
 
           {attachments.isUploadingAttachments && attachments.uploadingAttachmentName && (
-            <BadgeControl variant="secondary" className="gap-1 text-xs">
+            <BadgeControl variant="secondary" size="xs" className="gap-1">
               <LoaderCircle className="h-3 w-3 animate-spin" />
               {t('features.messages.compose.uploading')}:{attachments.uploadingAttachmentName}
             </BadgeControl>
@@ -367,7 +367,7 @@ export function MessageInput({ conversation, currentUserId, onSendMessage }: Mes
                                 </span>
                               )}
                             </span>
-                            <BadgeControl variant="outline" className="text-[10px] uppercase">
+                            <BadgeControl variant="outline" size="tiny" textTransform="uppercase">
                               {option.entityType}
                             </BadgeControl>
                           </Button>

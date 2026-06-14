@@ -2,6 +2,7 @@
 
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { Button } from '@/features/shared/ui/ui/button';
 
 vi.mock('@tanstack/react-router', () => ({
   useNavigate: () => vi.fn(),
@@ -35,9 +36,9 @@ vi.mock('@/features/shared/ui/layout', () => ({
     className?: string;
     title?: string;
   }) => (
-    <button className={className} disabled={disabled} onClick={onClick} title={title} type="button">
+    <Button className={className} disabled={disabled} onClick={onClick} title={title} type="button">
       {children}
-    </button>
+    </Button>
   ),
 }));
 

@@ -54,12 +54,12 @@ export function AmendmentMetadata({
       {/* Amendment metadata badges */}
       <div className="flex flex-wrap items-center gap-4 text-sm">
         {code && (
-          <BadgeControl variant="secondary" className="font-mono">
+          <BadgeControl variant="secondary" textStyle="mono">
             {code}
           </BadgeControl>
         )}
         {status && (
-          <BadgeControl variant="outline" className="capitalize">
+          <BadgeControl variant="outline" textTransform="capitalize">
             {status}
           </BadgeControl>
         )}
@@ -98,7 +98,7 @@ export function AmendmentMetadata({
                 {collab.user?.name || translateText('generated.inline.0031_unknown_bc7819b3')}
               </span>
               {collab.status && collab.status !== 'member' && (
-                <BadgeControl variant="outline" className="ml-1 h-4 px-1 text-[10px]">
+                <BadgeControl variant="outline" size="tiny" className="ml-1 h-4 px-1">
                   {collab.status}
                 </BadgeControl>
               )}

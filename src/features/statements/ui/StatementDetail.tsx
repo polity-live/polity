@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { Link } from '@tanstack/react-router';
 import { MessageSquare, Pencil, Trash2, User, Users } from 'lucide-react';
 
@@ -104,7 +105,11 @@ export function StatementDetail({ model }: StatementDetailProps) {
                   >
                     <Avatar className="h-4 w-4 shrink-0">
                       <AvatarImage src={group.image_url ?? undefined} />
-                      <AvatarFallback className="text-[8px]">
+                      <AvatarFallback
+                        className={featureThemeClassName(
+                          'editorInviteCollaboratorDialogThemedText'
+                        )}
+                      >
                         <Users className="h-2.5 w-2.5" />
                       </AvatarFallback>
                     </Avatar>
@@ -115,7 +120,9 @@ export function StatementDetail({ model }: StatementDetailProps) {
                 <span className="flex items-center gap-1">
                   <Avatar className="h-4 w-4 shrink-0">
                     <AvatarImage src={author?.avatar ?? undefined} />
-                    <AvatarFallback className="text-[8px]">
+                    <AvatarFallback
+                      className={featureThemeClassName('editorInviteCollaboratorDialogThemedText')}
+                    >
                       <User className="h-2.5 w-2.5" />
                     </AvatarFallback>
                   </Avatar>
@@ -177,7 +184,7 @@ export function StatementDetail({ model }: StatementDetailProps) {
 
               <div className="border-t pt-2">
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm" className="text-muted-foreground text-xs">
+                  <Button variant="ghost" size="sm" presentation="mutedTiny">
                     <MessageSquare className="mr-1 h-4 w-4" />
                     {computedCommentCount} {labels.comments}
                   </Button>
@@ -236,10 +243,7 @@ export function StatementDetail({ model }: StatementDetailProps) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{labels.cancel}</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive hover:bg-destructive/90 text-white"
-              onClick={model.onConfirmDelete}
-            >
+            <AlertDialogAction variant="destructive" onClick={model.onConfirmDelete}>
               {labels.delete}
             </AlertDialogAction>
           </AlertDialogFooter>

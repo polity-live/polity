@@ -3,23 +3,23 @@
  * Composes useNotificationDispatch with group-specific notification builders.
  */
 
-import { useCallback } from 'react'
-import { useNotificationDispatch } from '@/zero/notifications/useNotificationDispatch'
-import type { NotificationType } from '@/features/notifications/types/notification.types'
+import { useCallback } from 'react';
+import { useNotificationDispatch } from '@/zero/notifications/useNotificationDispatch';
+import type { NotificationType } from '@/features/notifications/types/notification.types';
 
 export function useGroupNotifications() {
-  const { dispatchEntity } = useNotificationDispatch()
+  const { dispatchEntity } = useNotificationDispatch();
 
   const notifyGroup = useCallback(
     async (params: {
-      type: NotificationType
-      title: string
-      message: string
-      senderId: string
-      groupId: string
-      actionUrl?: string
-      relatedEntityType?: 'group' | 'event' | 'amendment' | 'blog' | 'user'
-      relatedEntityId?: string
+      type: NotificationType;
+      title: string;
+      message: string;
+      senderId: string;
+      groupId: string;
+      actionUrl?: string;
+      relatedEntityType?: 'group' | 'event' | 'amendment' | 'blog' | 'user';
+      relatedEntityId?: string;
     }) => {
       await dispatchEntity({
         type: params.type,
@@ -32,10 +32,10 @@ export function useGroupNotifications() {
         category: 'group',
         relatedEntityType: params.relatedEntityType,
         relatedEntityId: params.relatedEntityId,
-      })
+      });
     },
     [dispatchEntity]
-  )
+  );
 
-  return { notifyGroup }
+  return { notifyGroup };
 }

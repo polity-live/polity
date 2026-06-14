@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName, featureThemeValue } from '@/features/shared/theme';
 import { useCallback, useMemo, useState } from 'react';
 import { addEdge, useEdgesState, useNodesState } from 'reactflow';
 
@@ -37,7 +38,7 @@ export function useFlowEditorController() {
         style: {
           ...node.style,
           boxShadow: selectedNodes.some(selectedNode => selectedNode.id === node.id)
-            ? '0 0 0 2px #ff0072'
+            ? featureThemeClassName('floweditorUseFlowEditorThemedStyle')
             : undefined,
         },
       })),
@@ -50,7 +51,10 @@ export function useFlowEditorController() {
         ...edge,
         style: {
           ...edge.style,
-          stroke: selectedEdge?.id === edge.id ? '#ff0072' : undefined,
+          stroke:
+            selectedEdge?.id === edge.id
+              ? featureThemeValue('floweditorUseFlowEditorAccentColor')
+              : undefined,
           strokeWidth: selectedEdge?.id === edge.id ? 3 : undefined,
         },
       })),
@@ -161,8 +165,8 @@ export function useFlowEditorController() {
       style: {
         width: maxX - minX,
         height: maxY - minY,
-        backgroundColor: 'rgba(240, 240, 240, 0.7)',
-        border: '1px dashed #aaa',
+        backgroundColor: featureThemeValue('floweditorUseFlowEditorOverlayColor'),
+        border: featureThemeClassName('floweditorUseFlowEditorThemedStyleAlpha'),
         borderRadius: 8,
         padding: 10,
         zIndex: -1,
@@ -232,7 +236,12 @@ export function useFlowEditorController() {
       data: {
         label: translateText('generated.inline.0134_new_proposal_newid_77d2f0cc', { newId }),
       },
-      style: { background: '#bbdefb', padding: 10, borderRadius: 5, width: 180 },
+      style: {
+        background: featureThemeValue('floweditorUseFlowEditorInfoColor'),
+        padding: 10,
+        borderRadius: 5,
+        width: 180,
+      },
       position: { x: 100, y: 100 },
     };
     setNodes(currentNodes => currentNodes.concat(newNode));

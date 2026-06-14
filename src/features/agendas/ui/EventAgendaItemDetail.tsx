@@ -1109,7 +1109,7 @@ export function EventAgendaItemDetail({
   if (!agendaItem || !event) {
     return (
       <Card>
-        <CardContent className="p-6 text-center">
+        <CardContent align="center" className="p-6">
           <AlertCircle className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
           <h2 className="mb-2 text-2xl font-bold">
             {translateText('generated.inline.0051_tagesordnungspunkt_nicht_gefunden_6faf6631')}

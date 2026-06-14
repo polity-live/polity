@@ -119,7 +119,7 @@ export function OnboardingWizard({ userId, userEmail, onComplete }: OnboardingWi
       <Card className="w-full max-w-md">
         <CardHeader className="pb-2">
           <div className="mb-2 flex items-center justify-between">
-            <CardTitle className="text-muted-foreground text-lg">
+            <CardTitle tone="muted" size="lg">
               {t('onboarding.welcome')}
             </CardTitle>
             <span className="text-muted-foreground text-sm">

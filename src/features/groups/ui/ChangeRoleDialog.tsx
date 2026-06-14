@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { FormControlLabel, FormControlCheckbox } from '@/features/shared/ui/form';
 /**
  * Change Role Dialog Component
@@ -210,7 +211,7 @@ export function ChangeRoleDialog<TRole extends ParticipationRoleLike>({
           </div>
 
           <Collapsible open={rightsOpen} onOpenChange={setRightsOpen}>
-            <div className="border-border/70 from-background via-background to-muted/30 overflow-hidden rounded-2xl border bg-gradient-to-br">
+            <div className={featureThemeClassName('groupChangeRoleDialogThemedGradientSurface')}>
               <CollapsibleTrigger asChild>
                 <Button
                   type="button"

@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import * as React from 'react';
 import { ChevronDown, ChevronUp, FileText, AlertCircle, Lightbulb } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
@@ -34,11 +35,11 @@ const SECTION_ICONS: Record<
 };
 
 const SECTION_COLORS: Record<DecisionSummarySection['type'], string> = {
-  summary: 'text-blue-600 dark:text-blue-400',
-  problem: 'text-red-600 dark:text-red-400',
-  proposal: 'text-green-600 dark:text-green-400',
-  impact: 'text-amber-600 dark:text-amber-400',
-  background: 'text-gray-600 dark:text-gray-400',
+  summary: featureThemeClassName('decisionterminalDecisionSummaryInfoText'),
+  problem: featureThemeClassName('decisionterminalDecisionStatusDangerTextAlpha'),
+  proposal: featureThemeClassName('decisionterminalDecisionStatusSuccessText'),
+  impact: featureThemeClassName('decisionterminalCountdownTimerWarningText'),
+  background: featureThemeClassName('decisionterminalDecisionStatusNeutralText'),
 };
 
 interface CollapsibleSectionProps {
@@ -66,12 +67,12 @@ function CollapsibleSection({
   }, [section.content, maxContentHeight]);
 
   return (
-    <div className="border-b border-gray-200 last:border-b-0 dark:border-gray-700">
+    <div className={featureThemeClassName('decisionterminalDecisionSummaryNeutralBorder')}>
       <Button
         type="button"
         variant="ghost"
         onClick={onToggle}
-        className="h-auto w-full justify-between rounded-none p-3 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50"
+        className={featureThemeClassName('decisionterminalDecisionSummaryNeutralPanel')}
         aria-expanded={!isCollapsed}
       >
         <div className="flex items-center gap-2">
@@ -79,9 +80,13 @@ function CollapsibleSection({
           <span className="text-sm font-medium">{section.title}</span>
         </div>
         {isCollapsed ? (
-          <ChevronDown className="h-4 w-4 text-gray-400" />
+          <ChevronDown
+            className={featureThemeClassName('decisionterminalDecisionSummaryNeutralIcon')}
+          />
         ) : (
-          <ChevronUp className="h-4 w-4 text-gray-400" />
+          <ChevronUp
+            className={featureThemeClassName('decisionterminalDecisionSummaryNeutralIcon')}
+          />
         )}
       </Button>
 
@@ -94,7 +99,7 @@ function CollapsibleSection({
         <div
           ref={contentRef}
           className={cn(
-            'px-3 pb-3 text-sm text-gray-600 dark:text-gray-300',
+            featureThemeClassName('decisionterminalDecisionSummaryNeutralText'),
             isCollapsed ? 'opacity-0' : 'opacity-100'
           )}
           style={{
@@ -158,10 +163,15 @@ export function DecisionSummary({
   }
 
   return (
-    <div className={cn('rounded-lg border border-gray-200 dark:border-gray-700', className)}>
+    <div
+      className={cn(
+        featureThemeClassName('decisionterminalDecisionSummaryNeutralBorderAlpha'),
+        className
+      )}
+    >
       {/* Header with expand/collapse all */}
-      <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-700 dark:bg-gray-800/50">
-        <span className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
+      <div className={featureThemeClassName('decisionterminalDecisionSummaryNeutralSurface')}>
+        <span className={featureThemeClassName('decisionterminalDecisionSummaryNeutralTextAlpha')}>
           {t('features.timeline.terminal.details')}
         </span>
         <div className="flex gap-1">
@@ -219,7 +229,7 @@ export function DecisionSummaryCompact({
     <div className={cn('text-sm', className)}>
       <p
         className={cn(
-          'text-gray-600 transition-all dark:text-gray-300',
+          featureThemeClassName('decisionterminalDecisionSummaryNeutralTextBeta'),
           !isExpanded && 'line-clamp-2'
         )}
       >

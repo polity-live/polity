@@ -16,7 +16,10 @@ export interface ParsedHashtag {
   end: number;
 }
 
-export type ParsedToken = ParsedMention | ParsedHashtag | { type: 'text'; value: string; start: number; end: number };
+export type ParsedToken =
+  | ParsedMention
+  | ParsedHashtag
+  | { type: 'text'; value: string; start: number; end: number };
 
 const MENTION_REGEX = /(?:^|(?<=\s))@([\w.-]+)/g;
 const HASHTAG_REGEX = /(?:^|(?<=\s))#([\w-]+)/g;
@@ -52,8 +55,8 @@ export function tokenizeText(text: string): ParsedToken[] {
   const hashtags = parseHashtags(text);
 
   const markers = [
-    ...mentions.map((m) => ({ ...m, sortKey: m.start })),
-    ...hashtags.map((h) => ({ ...h, sortKey: h.start })),
+    ...mentions.map(m => ({ ...m, sortKey: m.start })),
+    ...hashtags.map(h => ({ ...h, sortKey: h.start })),
   ].sort((a, b) => a.sortKey - b.sortKey);
 
   const tokens: ParsedToken[] = [];
@@ -61,7 +64,12 @@ export function tokenizeText(text: string): ParsedToken[] {
 
   for (const marker of markers) {
     if (marker.start > cursor) {
-      tokens.push({ type: 'text', value: text.slice(cursor, marker.start), start: cursor, end: marker.start });
+      tokens.push({
+        type: 'text',
+        value: text.slice(cursor, marker.start),
+        start: cursor,
+        end: marker.start,
+      });
     }
     tokens.push(marker);
     cursor = marker.end;

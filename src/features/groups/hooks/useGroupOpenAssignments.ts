@@ -3,7 +3,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useQuery, useZero } from '@rocicorp/zero/react';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { normalizeDelegateElectionMode } from '@/features/elections/logic/electionMode';
 import { attachProcessTaskToEvent } from '@/features/amendments/logic/attachProcessTaskToEvent';
 import {

@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
@@ -71,7 +72,7 @@ function StreamingBubble({
             <div className="space-y-3">
               <MessageContent content={streamingAssistantMessage.text} />
               {streamingAssistantMessage.errorMessage && (
-                <div className="flex items-start gap-2 rounded-md border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">
+                <div className={featureThemeClassName('messageMessageListDangerBadge')}>
                   <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
                   <span>{streamingAssistantMessage.errorMessage}</span>
                 </div>
@@ -92,7 +93,7 @@ function StreamingBubble({
                 </span>
               </div>
               <div className="border-border/60 bg-background/70 overflow-hidden rounded-md border px-3 py-2">
-                <div className="text-muted-foreground mb-1 text-[11px] font-medium tracking-[0.18em] uppercase">
+                <div className={featureThemeClassName('messageMessageListThemedText')}>
                   {t('features.messages.ai.toolCallLabel')}
                 </div>
                 <div className="text-foreground font-mono text-xs leading-5 break-all">
@@ -131,7 +132,7 @@ function StreamingBubble({
               </div>
             </div>
           ) : streamingAssistantMessage.errorMessage ? (
-            <div className="flex items-start gap-2 text-sm text-red-700 dark:text-red-300">
+            <div className={featureThemeClassName('messageMessageListDangerText')}>
               <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
               <span>{streamingAssistantMessage.errorMessage}</span>
             </div>
@@ -337,7 +338,12 @@ export function MessageList({
     <div className="relative min-h-0 flex-1">
       {hasNewMessages && (
         <div className="pointer-events-none absolute inset-x-0 bottom-4 z-20 flex justify-center">
-          <Button className="pointer-events-auto shadow-md" size="sm" onClick={scrollToBottom}>
+          <Button
+            presentation="floatingShadow"
+            className="pointer-events-auto"
+            size="sm"
+            onClick={scrollToBottom}
+          >
             {translateText('generated.inline.0753_neue_nachrichten_df7c6ff1')}
           </Button>
         </div>
@@ -395,7 +401,7 @@ export function MessageList({
 
                   {row.type === 'conversation-request' && (
                     <div className="border-t pt-4">
-                      <Card className="bg-muted/50">
+                      <Card surface="muted">
                         <CardContent className="flex flex-col items-center gap-3 p-4">
                           {conversation.requested_by?.id === currentUserId ? (
                             <p className="text-center text-sm font-medium">

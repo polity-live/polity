@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { useGroupRoles as useFacadeGroupRoles } from '@/zero/groups/useGroupState';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';

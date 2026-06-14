@@ -15,7 +15,7 @@ export function useDiscussionMutations() {
       title: string,
       description: string,
       _userId: string,
-      fileId?: string,
+      fileId?: string
     ) => {
       const content = description ? `${title}\n\n${description}` : title;
       const threadId = crypto.randomUUID();
@@ -41,12 +41,7 @@ export function useDiscussionMutations() {
   );
 
   const createComment = useCallback(
-    async (
-      threadId: string,
-      text: string,
-      _userId: string,
-      parentCommentId?: string,
-    ) => {
+    async (threadId: string, text: string, _userId: string, parentCommentId?: string) => {
       const commentId = crypto.randomUUID();
 
       await zeroAddComment({

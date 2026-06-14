@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import { BadgeControl } from '@/features/shared/ui/status';
 import { ArrowDownLeft, ArrowUpRight, Calendar, Tag } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -92,8 +93,8 @@ export function PaymentTimelineCard({ payment, className }: PaymentTimelineCardP
               <p
                 className={cn(
                   'text-2xl font-semibold tracking-tight',
-                  isIncome && 'text-emerald-700 dark:text-emerald-300',
-                  isExpense && 'text-rose-700 dark:text-rose-300'
+                  isIncome && featureThemeClassName('timelineContentTypeConfigSuccessText'),
+                  isExpense && featureThemeClassName('timelinePaymentTimelineCardDangerText')
                 )}
               >
                 {amountLabel}
@@ -111,8 +112,8 @@ export function PaymentTimelineCard({ payment, className }: PaymentTimelineCardP
                 variant="secondary"
                 className={cn(
                   'border-0',
-                  isIncome && 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
-                  isExpense && 'bg-rose-500/15 text-rose-700 dark:text-rose-300'
+                  isIncome && featureThemeClassName('timelinePaymentTimelineCardSuccessBackground'),
+                  isExpense && featureThemeClassName('timelinePaymentTimelineCardDangerBackground')
                 )}
               >
                 {isIncome ? (

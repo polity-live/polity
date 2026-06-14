@@ -21,8 +21,7 @@ export function useGroupBlogsAndStatementsPage({ groupId }: UseGroupBlogsAndStat
     const q = searchQuery.toLowerCase();
     return items.filter(
       b =>
-        (b.title ?? '').toLowerCase().includes(q) ||
-        (b.description ?? '').toLowerCase().includes(q),
+        (b.title ?? '').toLowerCase().includes(q) || (b.description ?? '').toLowerCase().includes(q)
     );
   }, [blogsByGroup, searchQuery]);
 

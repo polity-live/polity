@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import {
   FormControlInput,
   FormControlLabel,
@@ -76,25 +77,29 @@ export function TodoDetailEdit({ formData, onUpdate }: TodoDetailEditProps) {
             <FormControlSelectContent>
               <FormControlSelectItem value="low">
                 <div className="flex items-center gap-2">
-                  <Flag className="h-4 w-4 text-blue-500" />
+                  <Flag className={featureThemeClassName('eventCancelEventDialogInfoIcon')} />
                   {translateText('generated.inline.0638_low_a124947c')}
                 </div>
               </FormControlSelectItem>
               <FormControlSelectItem value="medium">
                 <div className="flex items-center gap-2">
-                  <Flag className="h-4 w-4 text-yellow-500" />
+                  <Flag
+                    className={featureThemeClassName('agendaAgendaElectionSectionWarningIcon')}
+                  />
                   {translateText('generated.inline.0639_medium_d404968e')}
                 </div>
               </FormControlSelectItem>
               <FormControlSelectItem value="high">
                 <div className="flex items-center gap-2">
-                  <Flag className="h-4 w-4 text-orange-500" />
+                  <Flag className={featureThemeClassName('positionPositionsTableWarningIcon')} />
                   {translateText('generated.inline.0640_high_b1a5954a')}
                 </div>
               </FormControlSelectItem>
               <FormControlSelectItem value="urgent">
                 <div className="flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 text-red-500" />
+                  <AlertCircle
+                    className={featureThemeClassName('paymentSubscriptionStatusDangerIcon')}
+                  />
                   {translateText('generated.inline.0641_urgent_ecb26f46')}
                 </div>
               </FormControlSelectItem>

@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import { CheckCircle2, Clock, XCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -79,11 +80,13 @@ function SubscriptionStatusBadge({ status }: { status: string }) {
 function PaymentStatusIcon({ status }: { status: string }) {
   switch (status) {
     case 'paid':
-      return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+      return (
+        <CheckCircle2 className={featureThemeClassName('agendaAgendaElectionSectionSuccessIcon')} />
+      );
     case 'failed':
-      return <XCircle className="h-4 w-4 text-red-500" />;
+      return <XCircle className={featureThemeClassName('paymentSubscriptionStatusDangerIcon')} />;
     default:
-      return <Clock className="h-4 w-4 text-yellow-500" />;
+      return <Clock className={featureThemeClassName('agendaAgendaElectionSectionWarningIcon')} />;
   }
 }
 

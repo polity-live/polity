@@ -434,7 +434,7 @@ export function ProcessAgendaPreviewDialog({
             ) : null}
 
             {scheduledButNotConfirmedItems.length > 0 ? (
-              <Card className="border-dashed">
+              <Card borderStyle="dashed">
                 <CardHeader>
                   <CardTitle>
                     {translateText('generated.inline.0715_scheduled_but_not_confirmed_512467ae')}

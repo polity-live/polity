@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName } from '@/features/shared/theme';
 import {
   Calendar,
   CheckSquare,
@@ -96,7 +97,7 @@ function UserPreviewContainer({ userId, className }: { userId: string; className
       href={`/user/${userId}`}
       className={className}
       accentClassName="border-l-4 border-l-blue-500"
-      icon={<User className="h-5 w-5 text-blue-500" />}
+      icon={<User className={featureThemeClassName('messageLinkPreviewInfoIcon')} />}
       avatar={{
         src: user.avatar ?? undefined,
         fallback: (user.first_name || user.handle)?.[0]?.toUpperCase() || 'U',
@@ -122,7 +123,7 @@ function GroupPreviewContainer({ groupId, className }: { groupId: string; classN
       href={`/group/${groupId}`}
       className={className}
       accentClassName="border-l-4 border-l-purple-500"
-      icon={<Users className="h-5 w-5 text-purple-500" />}
+      icon={<Users className={featureThemeClassName('messageLinkPreviewAccentIcon')} />}
       avatar={{ fallback: group.name?.[0]?.toUpperCase() || 'G' }}
       title={group.name}
       description={normalizeMessagePreviewText(group.description)}
@@ -149,7 +150,9 @@ function EventPreviewContainer({ eventId, className }: { eventId: string; classN
       href={`/event/${eventId}`}
       className={className}
       accentClassName="border-l-4 border-l-green-500"
-      icon={<Calendar className="h-5 w-5 text-green-500" />}
+      icon={
+        <Calendar className={featureThemeClassName('agendaChangeRequestTimelineCardSuccessIcon')} />
+      }
       title={event.title}
       subtitle={event.start_date ? new Date(event.start_date).toLocaleDateString() : undefined}
       description={event.location_name}
@@ -177,7 +180,7 @@ function AmendmentPreviewContainer({
       href={`/amendment/${amendmentId}`}
       className={className}
       accentClassName="border-l-4 border-l-orange-500"
-      icon={<FileText className="h-5 w-5 text-orange-500" />}
+      icon={<FileText className={featureThemeClassName('messageLinkPreviewWarningIcon')} />}
       title={amendment.title}
       description={normalizeMessagePreviewText(amendment.reason)}
       meta={
@@ -213,7 +216,9 @@ function BlogPreviewContainer({ blogId, className }: { blogId: string; className
       href={blogViewUrl}
       className={className}
       accentClassName="border-l-4 border-l-pink-500"
-      icon={<MessageSquare className="h-5 w-5 text-pink-500" />}
+      icon={
+        <MessageSquare className={featureThemeClassName('messageLinkPreviewAccentIconAlpha')} />
+      }
       title={blog.title}
       meta={
         <div className="text-muted-foreground mt-1 flex items-center gap-2 text-xs">
@@ -250,7 +255,7 @@ function StatementPreviewContainer({
       href={`/statement/${statementId}`}
       className={className}
       accentClassName="border-l-4 border-l-cyan-500"
-      icon={<FileText className="h-5 w-5 text-cyan-500" />}
+      icon={<FileText className={featureThemeClassName('messageLinkPreviewInfoIconAlpha')} />}
       title={normalizeMessagePreviewText(statement.text) ?? ''}
       titleClassName="line-clamp-2 text-sm font-normal"
       badgeLabel={t('components.linkPreview.statement')}
@@ -271,15 +276,15 @@ function TodoPreviewContainer({ todoId, className }: { todoId: string; className
       href={`/todos/${todoId}`}
       className={className}
       accentClassName="border-l-4 border-l-indigo-500"
-      icon={<CheckSquare className="h-5 w-5 text-indigo-500" />}
+      icon={<CheckSquare className={featureThemeClassName('messageLinkPreviewAccentIconBeta')} />}
       title={todo.title}
       description={normalizeMessagePreviewText(todo.description)}
       meta={
         <div className="mt-1 flex items-center gap-2">
-          <BadgeControl variant="secondary" className="text-xs capitalize">
+          <BadgeControl variant="secondary" size="xs" textTransform="capitalize">
             {todo.status?.replace('_', ' ')}
           </BadgeControl>
-          <BadgeControl variant="outline" className="text-xs capitalize">
+          <BadgeControl variant="outline" size="xs" textTransform="capitalize">
             {todo.priority}
           </BadgeControl>
         </div>

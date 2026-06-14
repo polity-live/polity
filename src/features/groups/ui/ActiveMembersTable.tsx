@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 /**
  * Active Members Table Component
  *
@@ -180,7 +181,7 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
   ];
 
   return (
-    <Panel className="border-border/70 from-background to-muted/20 mb-6 bg-gradient-to-b">
+    <Panel className={featureThemeClassName('groupActiveMembersTableThemedGradientSurface')}>
       <PanelHeader>
         <PanelTitle className="flex items-center gap-2">
           <Users className="h-5 w-5" />

@@ -1,3 +1,4 @@
+import { featureThemeClassName } from '@/features/shared/theme';
 import React from 'react';
 
 interface WikiStatsItemProps {
@@ -34,13 +35,15 @@ export const StatsItem: React.FC<WikiStatsItemProps> = ({
       {value}
       {unit || ''}
     </p>
-    <p className="text-xs text-muted-foreground">{label}</p>
+    <p className="text-muted-foreground text-xs">{label}</p>
     {/* Animation overlay for the Followers stat */}
     {label === 'Followers' && showAnimation && (
       <div
         ref={animationRef}
-        className={`absolute left-0 right-0 top-0 text-xl font-bold ${
-          animationText?.includes('+') ? 'text-green-500' : 'text-red-500'
+        className={`absolute top-0 right-0 left-0 text-xl font-bold ${
+          animationText?.includes('+')
+            ? featureThemeClassName('notificationNotificationSuccessText')
+            : featureThemeClassName('notificationNotificationDangerText')
         } animate-fly-up opacity-0`}
       >
         {animationText}

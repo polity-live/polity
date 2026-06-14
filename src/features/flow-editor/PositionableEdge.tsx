@@ -10,7 +10,11 @@ import type { EdgeProps } from 'reactflow';
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 
 import ClickableBaseEdge from './ClickableBaseEdge.tsx';
-import './PositionableEdge.css';
+import {
+  GraphEdgeLabel,
+  GraphPositionHandle,
+  GraphPositionHandleContainer,
+} from '@/features/shared/ui/graph';
 
 interface PositionHandler {
   x: number;
@@ -231,60 +235,41 @@ export default function PositionableEdge({
       ))}
       {label && (
         <EdgeLabelRenderer>
-          <div
-            style={{
-              position: 'absolute',
-              transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
-              background: 'white',
-              padding: '2px 5px',
-              borderRadius: 4,
-              fontSize: 12,
-              fontWeight: 700,
-              pointerEvents: 'all',
-              border: '1px solid #ddd',
-            }}
-            className="nodrag nopan"
-          >
+          <GraphEdgeLabel x={labelX} y={labelY}>
             {label}
-          </div>
+          </GraphEdgeLabel>
         </EdgeLabelRenderer>
       )}
       {positionHandlers.map(({ x, y, active }, handlerIndex) => (
         <EdgeLabelRenderer key={`edge${id}_handler${handlerIndex}`}>
-          <div
-            className="nopan positionHandlerContainer"
-            style={{
-              transform: `translate(-50%, -50%) translate(${x}px,${y}px)`,
+          <GraphPositionHandleContainer
+            x={x}
+            y={y}
+            active={active}
+            onMouseMove={event => {
+              if (!active) {
+                return;
+              }
+              const position = reactFlowInstance.screenToFlowPosition({
+                x: event.clientX,
+                y: event.clientY,
+              });
+              movePositionHandlerTo(handlerIndex, position.x, position.y);
             }}
+            onMouseUp={clearActivePositionHandlers}
           >
-            <div
-              className={`positionHandlerEventContainer ${active ? 'active' : ''}`}
-              onMouseMove={event => {
-                if (!active) {
-                  return;
-                }
-                const position = reactFlowInstance.screenToFlowPosition({
-                  x: event.clientX,
-                  y: event.clientY,
-                });
-                movePositionHandlerTo(handlerIndex, position.x, position.y);
+            <GraphPositionHandle
+              active={active}
+              aria-label="Move edge bend point"
+              aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Delete Backspace"
+              onMouseDown={() => setPositionHandlerActive(handlerIndex, true)}
+              onContextMenu={event => {
+                event.preventDefault();
+                removePositionHandler(handlerIndex);
               }}
-              onMouseUp={clearActivePositionHandlers}
-            >
-              <button
-                type="button"
-                aria-label="Move edge bend point"
-                aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Delete Backspace"
-                className="positionHandler"
-                onMouseDown={() => setPositionHandlerActive(handlerIndex, true)}
-                onContextMenu={event => {
-                  event.preventDefault();
-                  removePositionHandler(handlerIndex);
-                }}
-                onKeyDown={event => handlePositionHandlerKeyDown(event, handlerIndex)}
-              ></button>
-            </div>
-          </div>
+              onKeyDown={event => handlePositionHandlerKeyDown(event, handlerIndex)}
+            />
+          </GraphPositionHandleContainer>
         </EdgeLabelRenderer>
       ))}
     </>

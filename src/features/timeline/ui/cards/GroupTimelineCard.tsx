@@ -1,5 +1,7 @@
 'use client';
 
+import { cn } from '@/features/shared/utils/utils';
+import { featureThemeClassName } from '@/features/shared/theme';
 import { useState } from 'react';
 import { Users, ScrollText, Calendar, UserPlus, UserMinus, Clock, Check, Bell } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -170,7 +172,11 @@ export function GroupTimelineCard({
               <HashtagDisplay
                 hashtags={groupHashtags.slice(0, 3)}
                 centered={false}
-                badgeClassName={`border bg-white/70 dark:bg-gray-900/60 ${groupStyle.borderColor} ${groupStyle.accentColor}`}
+                badgeClassName={cn(
+                  featureThemeClassName('timelineAmendmentTimelineCardNeutralContrastSurface'),
+                  groupStyle.borderColor,
+                  groupStyle.accentColor
+                )}
               />
             </div>
           )}
@@ -305,7 +311,7 @@ export function GroupTimelineCard({
           className="flex items-center gap-1.5"
         >
           <Bell
-            className={`h-3.5 w-3.5 ${(group.isSubscribed ?? subscription.isSubscribed) ? 'fill-current' : ''}`}
+            className={`h-3.5 w-3.5 ${(group.isSubscribed ?? subscription.isSubscribed) ? featureThemeClassName('timelineActionBarThemedStyle') : ''}`}
           />
         </Button>
 

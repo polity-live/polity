@@ -1,5 +1,6 @@
 'use client';
 
+import { featureThemeClassName, featureThemeValue } from '@/features/shared/theme';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { Node, Edge, useNodesState, useEdgesState, MarkerType } from '@xyflow/react';
 import { NetworkFlowBase } from '@/features/network/ui/NetworkFlowBase';
@@ -297,9 +298,9 @@ export function useUserNetworkFlowController({
         type: 'user',
       },
       style: {
-        background: '#e3f2fd',
-        color: '#333',
-        border: '3px solid #2196f3',
+        background: featureThemeValue('amendmentAmendmentPathVisualizationThemeValue'),
+        color: featureThemeValue('amendmentAmendmentPathVisualizationNeutralColor'),
+        border: featureThemeClassName('networkUseUserNetworkFlowThemedStyle'),
         borderRadius: '50%',
         padding: '20px',
         fontSize: '14px',
@@ -350,9 +351,12 @@ export function useUserNetworkFlowController({
           type: 'smoothstep',
           animated: true,
           label: translateText('generated.inline.0200_member_6853c98a'),
-          style: { stroke: '#2196f3', strokeWidth: 2 },
+          style: {
+            stroke: featureThemeValue('networkUseUserNetworkFlowInfoColor'),
+            strokeWidth: 2,
+          },
           labelStyle: {
-            fill: '#1976d2',
+            fill: featureThemeValue('networkUseUserNetworkFlowInfoColorAlpha'),
             fontWeight: 600,
             fontSize: '11px',
           },
@@ -364,7 +368,7 @@ export function useUserNetworkFlowController({
           labelBgBorderRadius: 4,
           markerEnd: {
             type: MarkerType.ArrowClosed,
-            color: '#2196f3',
+            color: featureThemeValue('networkUseUserNetworkFlowInfoColor'),
           },
           data: createNetworkRelationshipEdgeData({
             rights: [],
@@ -469,7 +473,9 @@ export function useUserNetworkFlowController({
               memberTargetGroupId: parent.memberTargetGroupId ?? null,
               rightEdgeDirections,
               relationshipDepth: (parent.level ?? 1) === 1 ? 'direct' : 'indirect',
-              fallbackStrokeColor: '#66bb6a',
+              fallbackStrokeColor: featureThemeValue(
+                'amendmentAmendmentPathVisualizationSuccessColorAlpha'
+              ),
               strokeDasharray: '5 5',
               sourceName: groupNameMap.get(edgeSourceGroupId) ?? null,
               targetName: groupNameMap.get(edgeTargetGroupId) ?? null,
@@ -533,7 +539,7 @@ export function useUserNetworkFlowController({
               memberTargetGroupId: child.memberTargetGroupId ?? null,
               rightEdgeDirections,
               relationshipDepth: (child.level ?? 1) === 1 ? 'direct' : 'indirect',
-              fallbackStrokeColor: '#ffb74d',
+              fallbackStrokeColor: featureThemeValue('networkUseGroupNetworkFlowWarningColor'),
               strokeDasharray: '5 5',
               sourceName: groupNameMap.get(edgeSource) ?? null,
               targetName: groupNameMap.get(child.group.id) ?? null,
@@ -854,7 +860,9 @@ export function useUserNetworkFlowController({
               memberTargetGroupId,
               rightEdgeDirections,
               relationshipDepth: 'direct',
-              fallbackStrokeColor: isSiblingToSibling ? '#f59e0b' : '#a855f7',
+              fallbackStrokeColor: isSiblingToSibling
+                ? featureThemeValue('networkUseGroupNetworkFlowWarningColorAlpha')
+                : featureThemeValue('networkUseGroupNetworkFlowAccentColor'),
               strokeDasharray: isSiblingToSibling ? undefined : '6 4',
               sourceName: groupNameMap.get(sourceId) ?? null,
               targetName: groupNameMap.get(targetId) ?? null,
@@ -999,7 +1007,9 @@ export function useUserNetworkFlowController({
         ...node,
         style: {
           ...node.style,
-          boxShadow: selectedNodes.includes(node.id) ? '0 0 0 2px #ff0072' : undefined,
+          boxShadow: selectedNodes.includes(node.id)
+            ? featureThemeClassName('floweditorUseFlowEditorThemedStyle')
+            : undefined,
         },
       }))}
       edges={filteredEdges}
@@ -1031,7 +1041,7 @@ export function useUserNetworkFlowController({
             {
               id: 'user',
               label: t('common.network.user'),
-              swatchClassName: 'h-4 w-4 rounded-full border-2 border-[#2196f3] bg-[#e3f2fd]',
+              swatchClassName: featureThemeClassName('networkUseUserNetworkFlowThemedRoundIcon'),
             },
             createGroupNodeLegendItem({
               id: 'current-group',

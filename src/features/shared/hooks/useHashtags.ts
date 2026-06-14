@@ -1,7 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useCommonState } from '@/zero/common/useCommonState';
 import { useCommonActions } from '@/zero/common/useCommonActions';
-import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 
 interface UseHashtagsOptions {
   entityType: 'user' | 'group' | 'amendment' | 'event' | 'blog' | 'statement';
@@ -17,20 +16,11 @@ export function useHashtags({ entityType, entityId }: UseHashtagsOptions) {
   const { syncEntityHashtags } = useCommonActions();
   const [tags, setTags] = useState<string[]>([]);
 
-  const suggestions = useMemo(
-    () => (allHashtags ?? []).map(h => h.tag),
-    [allHashtags],
-  );
+  const suggestions = useMemo(() => (allHashtags ?? []).map(h => h.tag), [allHashtags]);
 
   const syncHashtags = useCallback(async () => {
     if (!entityId) return;
-    await syncEntityHashtags(
-      entityType,
-      entityId,
-      tags,
-      [],
-      allHashtags ?? [],
-    );
+    await syncEntityHashtags(entityType, entityId, tags, [], allHashtags ?? []);
   }, [entityType, entityId, tags, allHashtags, syncEntityHashtags]);
 
   return {

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Value } from 'platejs';
 import { useNavigate } from '@tanstack/react-router';
-import { toast } from 'sonner';
+import { toast } from '@/features/shared/ui/ui/sonner';
 import { useEventData } from './useEventData';
 import { useEventMutations } from './useEventMutations';
 import { useEventActions } from '@/zero/events/useEventActions';
