@@ -1,3 +1,5 @@
+import { FormControlInput, FormControlLabel } from '@/features/shared/ui/form';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 /**
  * Add Link Dialog Component
  *
@@ -6,11 +8,8 @@
 
 import { useState } from 'react';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Label } from '@/features/shared/ui/ui/label';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -45,7 +44,7 @@ export function AddLinkDialog({ isOpen, onOpenChange, onSubmit }: AddLinkDialogP
           {translateText('generated.inline.0761_add_link_2cf006b1')}
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <ScrollableDialogContent>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>
@@ -57,10 +56,10 @@ export function AddLinkDialog({ isOpen, onOpenChange, onSubmit }: AddLinkDialogP
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="link-label">
+              <FormControlLabel htmlFor="link-label">
                 {translateText('generated.inline.0535_label_74341e3c')}
-              </Label>
-              <Input
+              </FormControlLabel>
+              <FormControlInput
                 id="link-label"
                 placeholder={translateText(
                   'generated.inline.0764_website_social_media_etc_a52f7d5f'
@@ -71,10 +70,10 @@ export function AddLinkDialog({ isOpen, onOpenChange, onSubmit }: AddLinkDialogP
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="link-url">
+              <FormControlLabel htmlFor="link-url">
                 {translateText('generated.inline.0028_url_0e2d9b07')}
-              </Label>
-              <Input
+              </FormControlLabel>
+              <FormControlInput
                 id="link-url"
                 type="url"
                 placeholder="https://example.com"
@@ -90,7 +89,7 @@ export function AddLinkDialog({ isOpen, onOpenChange, onSubmit }: AddLinkDialogP
             </Button>
           </DialogFooter>
         </form>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

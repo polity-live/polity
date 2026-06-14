@@ -1,3 +1,12 @@
+import {
+  FormControlLabel,
+  FormControlSelect,
+  FormControlCheckbox,
+  FormControlSelectContent,
+  FormControlSelectItem,
+  FormControlSelectTrigger,
+  FormControlSelectValue,
+} from '@/features/shared/ui/form';
 /**
  * Group Edit Form Component
  *
@@ -27,15 +36,6 @@ import { useAllGroups, useGroupState } from '@/zero/groups/useGroupState';
 import { useGroupConnectionState } from '@/zero/network';
 import { getGroupRelationshipRightLabel } from '@/features/network/ui/GroupRelationshipFields';
 import { RIGHT_TYPES, type RightType } from '@/features/network/ui/RightFilters';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/features/shared/ui/ui/select';
-import { Label } from '@/features/shared/ui/ui/label';
-import { Checkbox } from '@/features/shared/ui/ui/checkbox';
 import { useGroupConflictPreflight } from '../hooks/useGroupConflictPreflight';
 import { GroupConflictDialog, GroupConflictPanel } from './GroupConflictPanel';
 import { getCanonicalMembershipModeLabel } from '@/features/network/logic/groupConnectionDerived';
@@ -326,29 +326,33 @@ export function GroupEditForm({
       {groupType === 'sibling' ? (
         <div className="space-y-4 rounded-lg border p-4">
           <div className="space-y-2">
-            <Label>{translateText('generated.inline.0547_verbundene_gruppe_2d1da077')}</Label>
-            <Select
+            <FormControlLabel>
+              {translateText('generated.inline.0547_verbundene_gruppe_2d1da077')}
+            </FormControlLabel>
+            <FormControlSelect
               value={formData.connected_group_id ?? ''}
               onValueChange={value => updateField('connected_group_id', value)}
             >
-              <SelectTrigger>
-                <SelectValue
+              <FormControlSelectTrigger>
+                <FormControlSelectValue
                   placeholder={translateText('generated.inline.0673_gruppe_waehlen_ef267c5c')}
                 />
-              </SelectTrigger>
-              <SelectContent>
+              </FormControlSelectTrigger>
+              <FormControlSelectContent>
                 {selectableConnectedGroups.map(group => (
-                  <SelectItem key={group.id} value={group.id}>
+                  <FormControlSelectItem key={group.id} value={group.id}>
                     {group.name || translateText('generated.inline.0094_group_171a0606')}
-                  </SelectItem>
+                  </FormControlSelectItem>
                 ))}
-              </SelectContent>
-            </Select>
+              </FormControlSelectContent>
+            </FormControlSelect>
           </div>
 
           <div className="space-y-2">
-            <Label>{translateText('generated.inline.0674_membership_richtung_3a1dbdaf')}</Label>
-            <Select
+            <FormControlLabel>
+              {translateText('generated.inline.0674_membership_richtung_3a1dbdaf')}
+            </FormControlLabel>
+            <FormControlSelect
               value={formData.siblingMembershipDirection ?? ''}
               onValueChange={value =>
                 updateField(
@@ -357,27 +361,29 @@ export function GroupEditForm({
                 )
               }
             >
-              <SelectTrigger>
-                <SelectValue
+              <FormControlSelectTrigger>
+                <FormControlSelectValue
                   placeholder={translateText('generated.inline.0675_richtung_waehlen_2c1eefdb')}
                 />
-              </SelectTrigger>
-              <SelectContent>
+              </FormControlSelectTrigger>
+              <FormControlSelectContent>
                 {membershipDirectionOptions.map(option => (
-                  <SelectItem key={option.value} value={option.value}>
+                  <FormControlSelectItem key={option.value} value={option.value}>
                     <div className="space-y-1">
                       <div>{option.label}</div>
                       <div className="text-muted-foreground text-xs">{option.description}</div>
                     </div>
-                  </SelectItem>
+                  </FormControlSelectItem>
                 ))}
-              </SelectContent>
-            </Select>
+              </FormControlSelectContent>
+            </FormControlSelect>
           </div>
 
           <div className="space-y-2">
-            <Label>{translateText('generated.inline.0676_mitgliedschaftsmodus_cb90aa67')}</Label>
-            <Select
+            <FormControlLabel>
+              {translateText('generated.inline.0676_mitgliedschaftsmodus_cb90aa67')}
+            </FormControlLabel>
+            <FormControlSelect
               value={formData.sibling_membership_mode ?? 'none'}
               onValueChange={value =>
                 updateField(
@@ -386,47 +392,51 @@ export function GroupEditForm({
                 )
               }
             >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
+              <FormControlSelectTrigger>
+                <FormControlSelectValue />
+              </FormControlSelectTrigger>
+              <FormControlSelectContent>
                 {(['none', 'all_members', 'role_members', 'selected_source_groups'] as const).map(
                   mode => (
-                    <SelectItem key={mode} value={mode}>
+                    <FormControlSelectItem key={mode} value={mode}>
                       {getCanonicalMembershipModeLabel(mode)}
-                    </SelectItem>
+                    </FormControlSelectItem>
                   )
                 )}
-              </SelectContent>
-            </Select>
+              </FormControlSelectContent>
+            </FormControlSelect>
           </div>
 
           {formData.sibling_membership_mode === 'role_members' ? (
             <div className="space-y-2">
-              <Label>{translateText('generated.inline.0677_verbundene_rolle_6c578cbb')}</Label>
-              <Select
+              <FormControlLabel>
+                {translateText('generated.inline.0677_verbundene_rolle_6c578cbb')}
+              </FormControlLabel>
+              <FormControlSelect
                 value={formData.sibling_role_id ?? ''}
                 onValueChange={value => updateField('sibling_role_id', value)}
               >
-                <SelectTrigger>
-                  <SelectValue
+                <FormControlSelectTrigger>
+                  <FormControlSelectValue
                     placeholder={translateText('generated.inline.0678_rolle_waehlen_51cf1595')}
                   />
-                </SelectTrigger>
-                <SelectContent>
+                </FormControlSelectTrigger>
+                <FormControlSelectContent>
                   {selectableConnectedRoles.map(role => (
-                    <SelectItem key={role.id} value={role.id}>
+                    <FormControlSelectItem key={role.id} value={role.id}>
                       {role.name || translateText('generated.inline.0092_role_c3f104d1')}
-                    </SelectItem>
+                    </FormControlSelectItem>
                   ))}
-                </SelectContent>
-              </Select>
+                </FormControlSelectContent>
+              </FormControlSelect>
             </div>
           ) : null}
 
           {formData.sibling_membership_mode === 'selected_source_groups' ? (
             <div className="space-y-2">
-              <Label>{translateText('generated.inline.0679_source_groups_ad11f792')}</Label>
+              <FormControlLabel>
+                {translateText('generated.inline.0679_source_groups_ad11f792')}
+              </FormControlLabel>
               <div className="grid gap-2 rounded-lg border p-3">
                 {availableGroups
                   .filter(group => group.id !== groupId)
@@ -434,11 +444,11 @@ export function GroupEditForm({
                     const checked =
                       formData.parliament_source_group_ids?.includes(group.id) ?? false;
                     return (
-                      <Label
+                      <FormControlLabel
                         key={group.id}
                         className="flex items-center gap-3 rounded-md border px-3 py-2"
                       >
-                        <Checkbox
+                        <FormControlCheckbox
                           checked={checked}
                           onCheckedChange={(nextChecked: boolean | 'indeterminate') =>
                             updateField(
@@ -459,7 +469,7 @@ export function GroupEditForm({
                         <span className="text-sm">
                           {group.name || translateText('generated.inline.0094_group_171a0606')}
                         </span>
-                      </Label>
+                      </FormControlLabel>
                     );
                   })}
               </div>
@@ -468,7 +478,9 @@ export function GroupEditForm({
 
           <div className="space-y-3">
             <div className="space-y-1">
-              <Label>{translateText('generated.inline.0680_rechterichtung_75533cc6')}</Label>
+              <FormControlLabel>
+                {translateText('generated.inline.0680_rechterichtung_75533cc6')}
+              </FormControlLabel>
               <p className="text-muted-foreground text-xs">
                 {translateText(
                   'generated.inline.0681_lege_pro_recht_fest_in_welche_richtung_die_ve_27eaae4c'
@@ -484,7 +496,7 @@ export function GroupEditForm({
                   <div className="text-sm font-medium">
                     {getGroupRelationshipRightLabel(right, t)}
                   </div>
-                  <Select
+                  <FormControlSelect
                     value={formData.connectedRelationshipDirections[right]}
                     onValueChange={value =>
                       updateField('connectedRelationshipDirections', {
@@ -494,17 +506,17 @@ export function GroupEditForm({
                       })
                     }
                   >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
+                    <FormControlSelectTrigger>
+                      <FormControlSelectValue />
+                    </FormControlSelectTrigger>
+                    <FormControlSelectContent>
                       {relationshipDirectionOptions.map(option => (
-                        <SelectItem key={option.value} value={option.value}>
+                        <FormControlSelectItem key={option.value} value={option.value}>
                           {option.label}
-                        </SelectItem>
+                        </FormControlSelectItem>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </FormControlSelectContent>
+                  </FormControlSelect>
                 </div>
               ))}
             </div>

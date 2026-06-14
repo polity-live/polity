@@ -1,3 +1,4 @@
+import { FormControlLabel } from '@/features/shared/ui/form';
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useAuth } from '@/providers/auth-provider';
@@ -9,7 +10,6 @@ import {
   useTranslation,
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
-import { Label } from '@/features/shared/ui/ui/label';
 import { VisibilityInput } from '../ui/inputs/VisibilityInput';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
 import { SummaryPillList } from '@/features/shared/ui/ui/create-review-card';
@@ -206,9 +206,9 @@ export function useCreateStatementForm(): CreateFormConfig {
                 videoDescription={t('pages.create.statement.videoDescription')}
               />
               <div className="space-y-2 rounded-lg border p-4">
-                <Label className="text-base font-semibold">
+                <FormControlLabel className="text-base font-semibold">
                   {t('features.statements.survey.addSurvey')}
-                </Label>
+                </FormControlLabel>
                 <CreateInputField
                   label={t('features.statements.survey.question')}
                   value={surveyQuestion}

@@ -1,3 +1,4 @@
+import { FormControlLabel } from '@/features/shared/ui/form';
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useAuth } from '@/providers/auth-provider';
@@ -10,7 +11,6 @@ import {
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
 import { toast } from 'sonner';
-import { Label } from '@/features/shared/ui/ui/label';
 import { Button } from '@/features/shared/ui/ui/button';
 import { UserSearchInput } from '../ui/inputs/UserSearchInput';
 import { DirectionInput } from '../ui/inputs/DirectionInput';
@@ -205,11 +205,11 @@ export function useCreatePaymentForm(): CreateFormConfig {
           isValid: () => hasEntity,
           content: (
             <div className="space-y-4">
-              <Label>
+              <FormControlLabel>
                 {direction === 'income'
                   ? t('pages.create.payment.fromPayer')
                   : t('pages.create.payment.toReceiver')}
-              </Label>
+              </FormControlLabel>
               <div className="flex gap-2">
                 <Button
                   type="button"

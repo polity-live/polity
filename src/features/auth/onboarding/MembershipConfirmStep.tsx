@@ -1,5 +1,6 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import {
   Card,
@@ -8,7 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/features/shared/ui/ui/card.tsx';
-import { Badge } from '@/features/shared/ui/ui/badge.tsx';
 import { Users, MapPin, ArrowLeft, Check, X, Loader2, UserPlus } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import type { Group } from '../hooks/useOnboarding.ts';
@@ -53,10 +53,10 @@ export function MembershipConfirmStep({
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between gap-2">
             <CardTitle className="text-lg">{group.name}</CardTitle>
-            <Badge variant="outline" className="flex-shrink-0">
+            <BadgeControl variant="outline" className="flex-shrink-0">
               <Users className="mr-1 h-3 w-3" />
               {group.member_count}
-            </Badge>
+            </BadgeControl>
           </div>
           {group.description && (
             <CardDescription className="text-sm">{group.description}</CardDescription>

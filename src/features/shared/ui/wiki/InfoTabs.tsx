@@ -23,7 +23,7 @@ import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import { hasGeoCoordinates } from '@/features/shared/logic/geoCoordinates';
 import { formatLocation } from '@/features/shared/logic/locationHelpers';
 import { buildContactLinkHref } from '@/features/shared/logic/contactLinkHelpers';
-import { RichTextPreview } from '@/features/shared/ui/rich-text/RichTextPreview';
+import { RichTextPreview } from '@/features/shared/ui/rich-text';
 import { GeoAddressMap } from '@/features/shared/ui/form/GeoAddressMap';
 
 interface ContactInfo {
@@ -129,15 +129,11 @@ export const InfoTabs: React.FC<InfoTabsProps> = ({ about, contact, eventDetails
     },
   ].filter(item => item.value);
 
-  const locationCoordinates = hasGeoCoordinates({
-    latitude: contact?.latitude,
-    longitude: contact?.longitude,
-  })
-    ? {
-        latitude: contact.latitude,
-        longitude: contact.longitude,
-      }
-    : null;
+  const contactCoordinates = {
+    latitude: contact?.latitude ?? undefined,
+    longitude: contact?.longitude ?? undefined,
+  };
+  const locationCoordinates = hasGeoCoordinates(contactCoordinates) ? contactCoordinates : null;
 
   const hasLocationTab = Boolean(eventDetails || locationItems.length > 0 || locationCoordinates);
   const defaultTab = about ? 'about' : hasLocationTab ? 'location' : 'contact';

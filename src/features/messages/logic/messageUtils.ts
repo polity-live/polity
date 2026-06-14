@@ -1,5 +1,5 @@
-import { Conversation, ConversationDisplay } from '../types/message.types';
-import { isAssistantConversation } from '@/features/assistant/logic/assistantHelpers';
+import { ConversationDisplay } from '../types/message.types';
+import { ARIA_KAI_USER_ID } from '@/features/assistant/constants';
 
 interface UnreadMessageLike {
   is_read: boolean;
@@ -26,8 +26,45 @@ interface UnreadConversationLike {
   participants: readonly UnreadParticipantLike[];
 }
 
+interface ConversationDisplayLike {
+  type?: string | null;
+  name?: string | null;
+  group?: {
+    id?: string | null;
+    name?: string | null;
+    image_url?: string | null;
+  } | null;
+  event?: {
+    id?: string | null;
+    title?: string | null;
+    image_url?: string | null;
+  } | null;
+  participants: readonly {
+    user_id?: string | null;
+    user?: {
+      id?: string | null;
+      first_name?: string | null;
+      last_name?: string | null;
+      avatar?: string | null;
+      handle?: string | null;
+    } | null;
+  }[];
+  assistant_for_user_id?: string | null;
+}
+
+function isAssistantConversationLike(conversation: ConversationDisplayLike) {
+  if (conversation.assistant_for_user_id) {
+    return true;
+  }
+
+  return conversation.participants.some(
+    participant =>
+      participant.user_id === ARIA_KAI_USER_ID || participant.user?.id === ARIA_KAI_USER_ID
+  );
+}
+
 export const getConversationDisplay = (
-  conversation: Conversation,
+  conversation: ConversationDisplayLike,
   currentUserId?: string
 ): ConversationDisplay => {
   if (conversation.type === 'group') {
@@ -56,7 +93,7 @@ export const getConversationDisplay = (
 
   const otherUser = conversation.participants.find(p => p.user?.id !== currentUserId)?.user;
 
-  if (isAssistantConversation(conversation)) {
+  if (isAssistantConversationLike(conversation)) {
     const assistantName =
       [otherUser?.first_name, otherUser?.last_name].filter(Boolean).join(' ') || 'Aria & Kai';
 
@@ -83,7 +120,10 @@ export const getConversationDisplay = (
   };
 };
 
-export const getOtherParticipant = (conversation: Conversation, currentUserId?: string) => {
+export const getOtherParticipant = (
+  conversation: ConversationDisplayLike,
+  currentUserId?: string
+) => {
   if (conversation.type === 'group' || conversation.type === 'event') return null;
   return conversation.participants.find(p => p.user?.id !== currentUserId)?.user;
 };

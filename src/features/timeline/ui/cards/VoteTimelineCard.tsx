@@ -1,10 +1,10 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { ThumbsUp, ThumbsDown, Clock, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Progress } from '@/features/shared/ui/ui/progress';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import {
@@ -132,7 +132,7 @@ export function VoteTimelineCard({ vote, className }: VoteTimelineCardProps) {
         title={t('features.timeline.contentTypes.vote')}
         href={agendaHref || fallbackHref}
         badge={
-          <Badge
+          <BadgeControl
             variant="outline"
             className={cn(
               'flex items-center gap-1.5 text-xs',
@@ -154,7 +154,7 @@ export function VoteTimelineCard({ vote, className }: VoteTimelineCardProps) {
               )}
             />
             {vote.status.replace('_', ' ').toUpperCase()}
-          </Badge>
+          </BadgeControl>
         }
       >
         {/* Timer */}
@@ -299,9 +299,9 @@ export function VoteTimelineCard({ vote, className }: VoteTimelineCardProps) {
 
       <TimelineCardActions>
         {vote.hasVoted && (
-          <Badge variant="secondary" className="text-xs">
+          <BadgeControl variant="secondary" className="text-xs">
             {t('features.timeline.cards.voted')}: {vote.userVote}
-          </Badge>
+          </BadgeControl>
         )}
         <div onClick={e => e.preventDefault()}>
           <ShareButton

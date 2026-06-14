@@ -1,24 +1,24 @@
 'use client';
 
+import {
+  FormControlLabel,
+  FormControlSelect,
+  FormControlSelectContent,
+  FormControlSelectItem,
+  FormControlSelectTrigger,
+  FormControlSelectValue,
+} from '@/features/shared/ui/form';
 import { useState } from 'react';
 import { useGroupActiveMembers } from '@/zero/groups/useGroupState';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog';
-import { Label } from '@/features/shared/ui/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/features/shared/ui/ui/select';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/features/shared/ui/ui/popover';
 import {
   Command,
@@ -113,7 +113,7 @@ export function AssignHolderDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-[500px]">
+      <ScrollableDialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-[500px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>
@@ -167,10 +167,10 @@ export function AssignHolderDialog({
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="holder-select">
+              <FormControlLabel htmlFor="holder-select">
                 {translateText('generated.inline.0650_select_member_09555414')}
                 <span className="text-destructive">*</span>
-              </Label>
+              </FormControlLabel>
               <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger asChild>
                   <Button
@@ -258,26 +258,26 @@ export function AssignHolderDialog({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="assignment-reason">
+              <FormControlLabel htmlFor="assignment-reason">
                 {translateText('generated.inline.0654_assignment_reason_74518646')}
-              </Label>
-              <Select
+              </FormControlLabel>
+              <FormControlSelect
                 value={reason}
                 onValueChange={value => setReason(value as 'elected' | 'appointed')}
                 disabled={isElectedRole}
               >
-                <SelectTrigger id="assignment-reason">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="appointed">
+                <FormControlSelectTrigger id="assignment-reason">
+                  <FormControlSelectValue />
+                </FormControlSelectTrigger>
+                <FormControlSelectContent>
+                  <FormControlSelectItem value="appointed">
                     {translateText('generated.inline.0655_appointed_9f51a760')}
-                  </SelectItem>
-                  <SelectItem value="elected">
+                  </FormControlSelectItem>
+                  <FormControlSelectItem value="elected">
                     {translateText('generated.inline.0656_elected_27d35d1d')}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+                  </FormControlSelectItem>
+                </FormControlSelectContent>
+              </FormControlSelect>
               <p className="text-muted-foreground text-xs">
                 {translateText(
                   'generated.inline.0657_this_will_be_recorded_in_the_role_s_history_2bd38069'
@@ -300,7 +300,7 @@ export function AssignHolderDialog({
             )}
           </DialogFooter>
         </form>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

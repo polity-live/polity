@@ -1,16 +1,15 @@
+import { BadgeControl } from '@/features/shared/ui/status';
+import { FormControlInput, FormControlLabel } from '@/features/shared/ui/form';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { useEffect, useMemo, useState } from 'react';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Label } from '@/features/shared/ui/ui/label';
 import {
   serializePqlFilter,
   type PqlFieldDefinition,
@@ -129,7 +128,7 @@ export function PqlFilterBuilderDialog<TItem, TFieldKey extends string>({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-4xl">
+      <ScrollableDialogContent className="sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle>
             {filter
@@ -146,10 +145,10 @@ export function PqlFilterBuilderDialog<TItem, TFieldKey extends string>({
         <div className="space-y-4 py-4">
           <div className="grid gap-4 md:grid-cols-[2fr_auto] md:items-end">
             <div className="space-y-2">
-              <Label htmlFor="pql-filter-label">
+              <FormControlLabel htmlFor="pql-filter-label">
                 {translateText('generated.inline.1000_name_709a2322')}
-              </Label>
-              <Input
+              </FormControlLabel>
+              <FormControlInput
                 id="pql-filter-label"
                 value={label}
                 onChange={event => setLabel(event.target.value)}
@@ -162,15 +161,15 @@ export function PqlFilterBuilderDialog<TItem, TFieldKey extends string>({
               />
             </div>
 
-            <Badge variant="outline" className="h-10 justify-center px-3 font-mono text-xs">
+            <BadgeControl variant="outline" className="h-10 justify-center px-3 font-mono text-xs">
               {translateText('generated.inline.0141_pql_4ef7dac2')}
-            </Badge>
+            </BadgeControl>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="pql-filter-query">
+            <FormControlLabel htmlFor="pql-filter-query">
               {translateText('generated.inline.1090_query_a618b4be')}
-            </Label>
+            </FormControlLabel>
             <PqlQueryEditor
               fields={fields}
               value={query}
@@ -205,7 +204,7 @@ export function PqlFilterBuilderDialog<TItem, TFieldKey extends string>({
             {translateText('generated.inline.1093_save_filter_f7f579af')}
           </Button>
         </DialogFooter>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

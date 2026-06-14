@@ -1,18 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/features/shared/ui/ui/button';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Label } from '@/features/shared/ui/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
-import { Loader2, KeyRound } from 'lucide-react';
+
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useAccountActions } from '@/features/auth/hooks/useAccountActions';
 import { CurrentPasswordConfirmationDialog } from './CurrentPasswordConfirmationDialog';
 import { useAuth } from '@/providers/auth-provider';
 import { useDebounce } from '@/features/shared/hooks/use-debounce';
-import { cn } from '@/features/shared/utils/utils.ts';
 import { isValidPassword, passwordsMatch } from '@/features/auth/logic/authValidation';
+import {
+  AccountPasswordSectionView,
+  type AccountPasswordSectionCopy,
+} from './AccountPasswordSectionView';
 
 export function AccountPasswordSection() {
   const { t } = useTranslation();
@@ -34,10 +33,7 @@ export function AccountPasswordSection() {
   const passwordsAreMatching = passwordsMatch(password, confirmPassword);
 
   const isValid =
-    password.length > 0 &&
-    confirmPassword.length > 0 &&
-    passwordIsValid &&
-    passwordsAreMatching;
+    password.length > 0 && confirmPassword.length > 0 && passwordIsValid && passwordsAreMatching;
   const showPasswordError =
     passwordTouched && debouncedPassword.length > 0 && !isValidPassword(debouncedPassword);
   const showPasswordSuccess =
@@ -113,102 +109,50 @@ export function AccountPasswordSection() {
     setDialogError(result.error ?? null);
   };
 
+  const copy: AccountPasswordSectionCopy = {
+    title: t('pages.user.accountPassword.title'),
+    description: t('pages.user.accountPassword.description'),
+    initialDescription: t('pages.user.accountPassword.initialDescription'),
+    newPassword: t('pages.user.accountPassword.newPassword'),
+    newPasswordPlaceholder: t('pages.user.accountPassword.newPasswordPlaceholder'),
+    passwordHint: t('auth.signUp.passwordHint'),
+    confirmPassword: t('pages.user.accountPassword.confirmPassword'),
+    confirmPasswordPlaceholder: t('pages.user.accountPassword.confirmPasswordPlaceholder'),
+    confirmPasswordHint: t('auth.signUp.confirmPasswordHint'),
+    initialHelp: t('pages.user.accountPassword.initialHelp'),
+    update: t('pages.user.accountPassword.update'),
+    updating: t('pages.user.accountPassword.updating'),
+    setInitialPassword: t('pages.user.accountPassword.setInitialPassword'),
+  };
+
   return (
     <>
-      <Card className="border-destructive ring-[3px] ring-destructive/20 dark:ring-destructive/40">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <KeyRound className="h-5 w-5" />
-            <CardTitle>{t('pages.user.accountPassword.title')}</CardTitle>
-          </div>
-          <CardDescription>
-            {requiresInitialPassword
-              ? t('pages.user.accountPassword.initialDescription')
-              : t('pages.user.accountPassword.description')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="account-password">{t('pages.user.accountPassword.newPassword')}</Label>
-              <Input
-                id="account-password"
-                type="password"
-                placeholder={t('pages.user.accountPassword.newPasswordPlaceholder')}
-                value={password}
-                onChange={e => {
-                  setPassword(e.target.value);
-                  setPasswordTouched(true);
-                  setError(null);
-                }}
-                onBlur={() => setPasswordTouched(true)}
-                minLength={6}
-                required
-                disabled={isUpdating || authStateLoading}
-                autoComplete="new-password"
-                aria-invalid={showPasswordError}
-                data-valid={showPasswordSuccess ? 'true' : undefined}
-              />
-              <p
-                className={cn(
-                  'text-xs text-muted-foreground',
-                  showPasswordError && 'text-destructive',
-                  showPasswordSuccess && 'text-emerald-600 dark:text-emerald-400'
-                )}
-              >
-                {t('auth.signUp.passwordHint')}
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="account-password-confirm">
-                {t('pages.user.accountPassword.confirmPassword')}
-              </Label>
-              <Input
-                id="account-password-confirm"
-                type="password"
-                placeholder={t('pages.user.accountPassword.confirmPasswordPlaceholder')}
-                value={confirmPassword}
-                onChange={e => {
-                  setConfirmPassword(e.target.value);
-                  setConfirmPasswordTouched(true);
-                  setError(null);
-                }}
-                onBlur={() => setConfirmPasswordTouched(true)}
-                minLength={6}
-                required
-                disabled={isUpdating || authStateLoading}
-                autoComplete="new-password"
-                aria-invalid={showConfirmPasswordError}
-                data-valid={showConfirmPasswordSuccess ? 'true' : undefined}
-              />
-              <p
-                className={cn(
-                  'text-xs text-muted-foreground',
-                  showConfirmPasswordError && 'text-destructive',
-                  showConfirmPasswordSuccess && 'text-emerald-600 dark:text-emerald-400'
-                )}
-              >
-                {t('auth.signUp.confirmPasswordHint')}
-              </p>
-            </div>
-
-            {requiresInitialPassword ? (
-              <p className="text-sm text-muted-foreground">
-                {t('pages.user.accountPassword.initialHelp')}
-              </p>
-            ) : null}
-
-            {error && <p className="text-sm text-destructive">{error}</p>}
-
-            <Button type="submit" disabled={!isValid || isUpdating || authStateLoading}>
-              {isUpdating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              {isUpdating ? t('pages.user.accountPassword.updating') : requiresInitialPassword
-                ? t('pages.user.accountPassword.setInitialPassword')
-                : t('pages.user.accountPassword.update')}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+      <AccountPasswordSectionView
+        copy={copy}
+        password={password}
+        confirmPassword={confirmPassword}
+        requiresInitialPassword={requiresInitialPassword}
+        isBusy={isUpdating || authStateLoading}
+        isValid={isValid}
+        error={error}
+        showPasswordError={showPasswordError}
+        showPasswordSuccess={showPasswordSuccess}
+        showConfirmPasswordError={showConfirmPasswordError}
+        showConfirmPasswordSuccess={showConfirmPasswordSuccess}
+        onSubmit={handleSubmit}
+        onPasswordChange={value => {
+          setPassword(value);
+          setPasswordTouched(true);
+          setError(null);
+        }}
+        onPasswordBlur={() => setPasswordTouched(true)}
+        onConfirmPasswordChange={value => {
+          setConfirmPassword(value);
+          setConfirmPasswordTouched(true);
+          setError(null);
+        }}
+        onConfirmPasswordBlur={() => setConfirmPasswordTouched(true)}
+      />
 
       {requiresInitialPassword ? null : (
         <CurrentPasswordConfirmationDialog

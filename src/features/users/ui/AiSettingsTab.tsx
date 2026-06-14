@@ -1,16 +1,6 @@
 import { KeyRound, Loader2, Pencil, ShieldCheck, Sparkles, Trash2, Wrench } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/features/shared/ui/ui/alert-dialog';
-import {
   Card,
   CardContent,
   CardDescription,
@@ -19,26 +9,16 @@ import {
 } from '@/features/shared/ui/ui/card';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog';
-import { Input } from '@/features/shared/ui/ui/input';
 import { HashtagInput } from '@/features/shared/ui/ui/hashtag-input';
-import { Label } from '@/features/shared/ui/ui/label';
-import { Textarea } from '@/features/shared/ui/ui/textarea';
-import { Badge } from '@/features/shared/ui/ui/badge';
-import { Switch } from '@/features/shared/ui/ui/switch';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/features/shared/ui/ui/table';
+import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
+import { FormFieldShell, InlineSwitch, PasswordField, TextField } from '@/features/shared/ui/form';
+import { DangerConfirmDialog, ScrollableDialogContent } from '@/features/shared/ui/dialog';
+import { StatusBadge } from '@/features/shared/ui/status';
 import {
   useTranslation,
   translate as translateText,
@@ -131,18 +111,6 @@ function inputStateClass(value: string, error: string | null, hasBeenEvaluated: 
   return '';
 }
 
-function fieldHintClass(error: string | null, hasBeenEvaluated: boolean): string {
-  if (error) {
-    return 'text-xs text-red-500';
-  }
-
-  if (hasBeenEvaluated) {
-    return 'text-xs text-emerald-600';
-  }
-
-  return 'text-muted-foreground text-xs';
-}
-
 function renderAliasBadges(aliases: string[]) {
   if (aliases.length === 0) {
     return (
@@ -155,12 +123,9 @@ function renderAliasBadges(aliases: string[]) {
   return (
     <div className="flex flex-wrap gap-1.5">
       {aliases.map(alias => (
-        <Badge
-          key={alias}
-          className="border-0 bg-gradient-to-r from-cyan-500/20 via-sky-500/20 to-blue-500/20 text-[11px] text-sky-800 dark:text-sky-200"
-        >
+        <StatusBadge key={alias} status="alias" tone="info">
           {alias}
-        </Badge>
+        </StatusBadge>
       ))}
     </div>
   );
@@ -194,6 +159,285 @@ export function AiSettingsTab() {
   const skillDialogDescription = isEditingBuiltIn
     ? t('pages.user.ai.editBuiltInDescription')
     : t('pages.user.ai.skillFormHint');
+
+  type AiModelRow = (typeof ai.models)[number];
+  type BuiltInToolRow = (typeof ai.builtInTools)[number];
+  type BuiltInSkillRow = (typeof ai.builtInSkills)[number];
+  type CustomSkillRow = (typeof customSkills)[number];
+
+  const modelColumns: ColumnDef<AiModelRow>[] = [
+    {
+      accessorKey: 'label',
+      header: t('pages.user.ai.models.model'),
+      cell: ({ row }) => <span className="font-medium">{row.original.label}</span>,
+    },
+    {
+      accessorKey: 'provider',
+      header: t('pages.user.ai.models.provider'),
+      cell: ({ row }) => (
+        <span className="text-muted-foreground uppercase">{row.original.provider}</span>
+      ),
+    },
+    {
+      accessorKey: 'context_window',
+      header: t('pages.user.ai.models.contextWindow'),
+      cell: ({ row }) => formatContextWindow(row.original.context_window),
+    },
+    {
+      id: 'tags',
+      header: t('pages.user.ai.models.tags'),
+      cell: ({ row }) => {
+        const model = row.original;
+
+        return (
+          <div className="flex flex-wrap gap-1.5">
+            <StatusBadge status={model.source} tone={model.source === 'app' ? 'info' : 'accent'}>
+              {model.source === 'app'
+                ? translateText('generated.inline.0177_app_7d104347')
+                : translateText('generated.inline.0178_byok_15b99395')}
+            </StatusBadge>
+            {model.free ? (
+              <StatusBadge status="free" tone="success">
+                {translateText('generated.inline.0179_free_4ff88aad')}
+              </StatusBadge>
+            ) : null}
+            <StatusBadge
+              status={isAlwaysAvailableModel(model) ? 'stable' : 'may-fail'}
+              tone={isAlwaysAvailableModel(model) ? 'success' : 'destructive'}
+            >
+              {isAlwaysAvailableModel(model)
+                ? t('pages.user.ai.models.stable', 'stable')
+                : t('pages.user.ai.models.mayFail')}
+            </StatusBadge>
+          </div>
+        );
+      },
+    },
+  ];
+
+  const toolColumns: ColumnDef<BuiltInToolRow>[] = [
+    {
+      accessorKey: 'label',
+      header: t('pages.user.ai.tools.name'),
+      cell: ({ row }) => <span className="font-medium">{row.original.label}</span>,
+    },
+    {
+      accessorKey: 'name',
+      header: t('pages.user.ai.tools.identifier'),
+    },
+    {
+      accessorKey: 'kind',
+      header: t('pages.user.ai.tools.type'),
+      cell: ({ row }) => (
+        <StatusBadge
+          status={row.original.kind}
+          tone={row.original.kind === 'create' ? 'warning' : 'info'}
+        >
+          {row.original.kind}
+        </StatusBadge>
+      ),
+    },
+    {
+      accessorKey: 'description',
+      header: t('pages.user.ai.tools.descriptionColumn'),
+      cell: ({ row }) => (
+        <span className="text-muted-foreground text-sm">{row.original.description}</span>
+      ),
+    },
+    {
+      id: 'enabled',
+      header: t('common.labels.enabled'),
+      cell: ({ row }) => {
+        const tool = row.original;
+        const override = builtInToolOverridesByName.get(tool.name);
+        const isEnabled = override?.enabled ?? true;
+
+        return (
+          <InlineSwitch
+            checked={isEnabled}
+            onCheckedChange={checked => ai.toggleBuiltInToolEnabled(tool.name, checked)}
+            aria-label={t('pages.user.ai.tools.toggle')}
+          />
+        );
+      },
+    },
+    {
+      id: 'status',
+      header: t('common.labels.status'),
+      cell: ({ row }) => {
+        const override = builtInToolOverridesByName.get(row.original.name);
+
+        return (
+          <StatusBadge
+            status={override ? 'overridden' : 'default'}
+            tone={override ? 'accent' : 'success'}
+          >
+            {override
+              ? t('pages.user.ai.tools.overridden', 'overridden')
+              : t('pages.user.ai.tools.default', 'default')}
+          </StatusBadge>
+        );
+      },
+    },
+  ];
+
+  const builtInSkillColumns: ColumnDef<BuiltInSkillRow>[] = [
+    {
+      id: 'name',
+      header: t('pages.user.ai.skills.name'),
+      cell: ({ row }) => {
+        const override = builtInOverridesBySlug.get(row.original.slug);
+
+        return <span className="font-medium">{override?.name ?? row.original.name}</span>;
+      },
+    },
+    {
+      accessorKey: 'slug',
+      header: t('pages.user.ai.skills.slug'),
+      cell: ({ row }) => <>/{row.original.slug}</>,
+    },
+    {
+      id: 'aliases',
+      header: t('pages.user.ai.skills.aliases'),
+      cell: ({ row }) => {
+        const override = builtInOverridesBySlug.get(row.original.slug);
+        const effectiveAliases = override
+          ? parseAliases(override.aliases ?? '')
+          : [...row.original.aliases];
+
+        return renderAliasBadges(effectiveAliases);
+      },
+    },
+    {
+      id: 'enabled-status',
+      header: t('common.labels.status'),
+      cell: ({ row }) => {
+        const override = builtInOverridesBySlug.get(row.original.slug);
+        const isEnabled = override?.enabled ?? true;
+
+        return (
+          <StatusBadge
+            status={isEnabled ? 'enabled' : 'disabled'}
+            tone={isEnabled ? 'success' : 'neutral'}
+          >
+            {isEnabled
+              ? t('common.status.enabled', 'enabled')
+              : t('common.status.disabled', 'disabled')}
+          </StatusBadge>
+        );
+      },
+    },
+    {
+      id: 'enabled',
+      header: t('common.labels.enabled'),
+      cell: ({ row }) => {
+        const override = builtInOverridesBySlug.get(row.original.slug);
+        const isEnabled = override?.enabled ?? true;
+
+        return (
+          <InlineSwitch
+            checked={isEnabled}
+            onCheckedChange={checked => ai.toggleBuiltInSkillEnabled(row.original.slug, checked)}
+            aria-label={t('pages.user.ai.skills.toggle')}
+          />
+        );
+      },
+    },
+    {
+      id: 'override-status',
+      header: t('common.labels.status'),
+      cell: ({ row }) => {
+        const override = builtInOverridesBySlug.get(row.original.slug);
+
+        return (
+          <StatusBadge
+            status={override ? 'overridden' : 'default'}
+            tone={override ? 'accent' : 'success'}
+          >
+            {override
+              ? t('pages.user.ai.skills.overridden', 'overridden')
+              : t('pages.user.ai.skills.default', 'default')}
+          </StatusBadge>
+        );
+      },
+    },
+    {
+      id: 'actions',
+      header: t('common.actions.edit'),
+      meta: {
+        cellClassName: 'w-[120px]',
+      },
+      cell: ({ row }) => (
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() => ai.startEditBuiltInSkill(row.original.slug)}
+        >
+          <Pencil className="mr-1 h-3.5 w-3.5" />
+          {t('common.actions.edit')}
+        </Button>
+      ),
+    },
+  ];
+
+  const customSkillColumns: ColumnDef<CustomSkillRow>[] = [
+    {
+      accessorKey: 'name',
+      header: t('pages.user.ai.skills.name'),
+      cell: ({ row }) => <span className="font-medium">{row.original.name}</span>,
+    },
+    {
+      accessorKey: 'slug',
+      header: t('pages.user.ai.skills.slug'),
+      cell: ({ row }) => <>/{row.original.slug}</>,
+    },
+    {
+      accessorKey: 'aliases',
+      header: t('pages.user.ai.skills.aliases'),
+      cell: ({ row }) => renderAliasBadges(parseAliases(row.original.aliases ?? '')),
+    },
+    {
+      accessorKey: 'enabled',
+      header: t('common.labels.enabled'),
+      cell: ({ row }) => (
+        <InlineSwitch
+          checked={row.original.enabled}
+          onCheckedChange={checked => ai.toggleCustomSkillEnabled(row.original.id, checked)}
+          aria-label={t('pages.user.ai.skills.toggle')}
+        />
+      ),
+    },
+    {
+      id: 'actions',
+      header: t('common.actions.edit'),
+      meta: {
+        cellClassName: 'w-[180px]',
+      },
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => ai.startEditSkill(row.original.id)}
+          >
+            <Pencil className="mr-1 h-3.5 w-3.5" />
+            {t('common.actions.edit')}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => ai.requestDeleteSkill(row.original.id)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
   const aiSettingsOverviewCard = (
     <Card>
       <CardHeader>
@@ -218,56 +462,14 @@ export function AiSettingsTab() {
         <CardDescription>{t('pages.user.ai.availableModelsDescription')}</CardDescription>
       </CardHeader>
       <CardContent className="text-muted-foreground space-y-3 text-sm">
-        {ai.models.length === 0 ? (
-          <p>{t('pages.user.ai.noModels')}</p>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t('pages.user.ai.models.model')}</TableHead>
-                <TableHead>{t('pages.user.ai.models.provider')}</TableHead>
-                <TableHead>{t('pages.user.ai.models.contextWindow')}</TableHead>
-                <TableHead>{t('pages.user.ai.models.tags')}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {ai.models.map(model => (
-                <TableRow key={`${model.provider}:${model.id}`}>
-                  <TableCell className="font-medium">{model.label}</TableCell>
-                  <TableCell className="text-muted-foreground uppercase">
-                    {model.provider}
-                  </TableCell>
-                  <TableCell>{formatContextWindow(model.context_window)}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1.5">
-                      <Badge className="border-0 bg-gradient-to-r from-indigo-500/20 via-blue-500/20 to-cyan-500/20 text-[11px] text-blue-800 dark:text-blue-200">
-                        {model.source === 'app'
-                          ? translateText('generated.inline.0177_app_7d104347')
-                          : translateText('generated.inline.0178_byok_15b99395')}
-                      </Badge>
-                      {model.free && (
-                        <Badge className="border-0 bg-gradient-to-r from-emerald-500/20 via-green-500/20 to-lime-500/20 text-[11px] text-emerald-800 dark:text-emerald-200">
-                          {translateText('generated.inline.0179_free_4ff88aad')}
-                        </Badge>
-                      )}
-                      <Badge
-                        className={
-                          isAlwaysAvailableModel(model)
-                            ? 'border-0 bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-cyan-500/20 text-[11px] text-emerald-800 dark:text-emerald-200'
-                            : 'border-0 bg-gradient-to-r from-rose-500/20 via-red-500/20 to-orange-500/20 text-[11px] text-red-800 dark:text-red-200'
-                        }
-                      >
-                        {isAlwaysAvailableModel(model)
-                          ? t('pages.user.ai.models.stable', 'stable')
-                          : t('pages.user.ai.models.mayFail')}
-                      </Badge>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
+        <DataTable
+          columns={modelColumns}
+          data={ai.models}
+          getRowId={model => `${model.provider}:${model.id}`}
+          enablePagination={false}
+          emptyTitle={t('pages.user.ai.availableModelsTitle')}
+          emptyDescription={t('pages.user.ai.noModels')}
+        />
       </CardContent>
     </Card>
   );
@@ -285,65 +487,12 @@ export function AiSettingsTab() {
           <CardDescription>{t('pages.user.ai.toolsDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t('pages.user.ai.tools.name')}</TableHead>
-                <TableHead>{t('pages.user.ai.tools.identifier')}</TableHead>
-                <TableHead>{t('pages.user.ai.tools.type')}</TableHead>
-                <TableHead>{t('pages.user.ai.tools.descriptionColumn')}</TableHead>
-                <TableHead>{t('common.labels.enabled')}</TableHead>
-                <TableHead>{t('common.labels.status')}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {ai.builtInTools.map(tool => {
-                const override = builtInToolOverridesByName.get(tool.name);
-                const isEnabled = override?.enabled ?? true;
-
-                return (
-                  <TableRow key={tool.name}>
-                    <TableCell className="font-medium">{tool.label}</TableCell>
-                    <TableCell>{tool.name}</TableCell>
-                    <TableCell>
-                      <Badge
-                        className={
-                          tool.kind === 'create'
-                            ? 'border-0 bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-yellow-500/20 text-[11px] text-amber-800 dark:text-amber-200'
-                            : 'border-0 bg-gradient-to-r from-sky-500/20 via-cyan-500/20 to-blue-500/20 text-[11px] text-sky-800 dark:text-sky-200'
-                        }
-                      >
-                        {tool.kind}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-sm">
-                      {tool.description}
-                    </TableCell>
-                    <TableCell>
-                      <Switch
-                        checked={isEnabled}
-                        onCheckedChange={checked => ai.toggleBuiltInToolEnabled(tool.name, checked)}
-                        aria-label={t('pages.user.ai.tools.toggle')}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        className={
-                          override
-                            ? 'border-0 bg-gradient-to-r from-violet-500/20 via-fuchsia-500/20 to-pink-500/20 text-[11px] text-fuchsia-800 dark:text-fuchsia-200'
-                            : 'border-0 bg-gradient-to-r from-emerald-500/20 via-green-500/20 to-lime-500/20 text-[11px] text-emerald-800 dark:text-emerald-200'
-                        }
-                      >
-                        {override
-                          ? t('pages.user.ai.tools.overridden', 'overridden')
-                          : t('pages.user.ai.tools.default', 'default')}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+          <DataTable
+            columns={toolColumns}
+            data={[...ai.builtInTools]}
+            getRowId={tool => tool.name}
+            enablePagination={false}
+          />
         </CardContent>
       </Card>
 
@@ -353,74 +502,12 @@ export function AiSettingsTab() {
           <CardDescription>{t('pages.user.ai.skillsBuiltInDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t('pages.user.ai.skills.name')}</TableHead>
-                <TableHead>{t('pages.user.ai.skills.slug')}</TableHead>
-                <TableHead>{t('pages.user.ai.skills.aliases')}</TableHead>
-                <TableHead>{t('common.labels.status')}</TableHead>
-                <TableHead>{t('common.labels.enabled')}</TableHead>
-                <TableHead>{t('common.labels.status')}</TableHead>
-                <TableHead className="w-[120px]">{t('common.actions.edit')}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {ai.builtInSkills.map(skill => {
-                const override = builtInOverridesBySlug.get(skill.slug);
-                const effectiveAliases = override ? parseAliases(override.aliases) : skill.aliases;
-                const isEnabled = override?.enabled ?? true;
-
-                return (
-                  <TableRow key={skill.slug}>
-                    <TableCell className="font-medium">{override?.name ?? skill.name}</TableCell>
-                    <TableCell>/{skill.slug}</TableCell>
-                    <TableCell>{renderAliasBadges(effectiveAliases)}</TableCell>
-                    <TableCell>
-                      <Badge
-                        className={
-                          isEnabled
-                            ? 'border-0 bg-gradient-to-r from-emerald-500/20 via-green-500/20 to-lime-500/20 text-[11px] text-emerald-800 dark:text-emerald-200'
-                            : 'border-0 bg-gradient-to-r from-zinc-500/20 via-slate-500/20 to-stone-500/20 text-[11px] text-slate-800 dark:text-slate-200'
-                        }
-                      >
-                        {isEnabled
-                          ? t('common.status.enabled', 'enabled')
-                          : t('common.status.disabled', 'disabled')}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Switch
-                        checked={isEnabled}
-                        onCheckedChange={checked =>
-                          ai.toggleBuiltInSkillEnabled(skill.slug, checked)
-                        }
-                        aria-label={t('pages.user.ai.skills.toggle')}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Badge className="border-0 bg-gradient-to-r from-violet-500/20 via-fuchsia-500/20 to-pink-500/20 text-[11px] text-fuchsia-800 dark:text-fuchsia-200">
-                        {override
-                          ? t('pages.user.ai.skills.overridden', 'overridden')
-                          : t('pages.user.ai.skills.default', 'default')}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => ai.startEditBuiltInSkill(skill.slug)}
-                      >
-                        <Pencil className="mr-1 h-3.5 w-3.5" />
-                        {t('common.actions.edit')}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+          <DataTable
+            columns={builtInSkillColumns}
+            data={[...ai.builtInSkills]}
+            getRowId={skill => skill.slug}
+            enablePagination={false}
+          />
         </CardContent>
       </Card>
 
@@ -438,60 +525,14 @@ export function AiSettingsTab() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {customSkills.length === 0 ? (
-            <div className="text-muted-foreground rounded-md border border-dashed p-4 text-sm">
-              {t('pages.user.ai.noCustomSkills')}
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('pages.user.ai.skills.name')}</TableHead>
-                  <TableHead>{t('pages.user.ai.skills.slug')}</TableHead>
-                  <TableHead>{t('pages.user.ai.skills.aliases')}</TableHead>
-                  <TableHead>{t('common.labels.enabled')}</TableHead>
-                  <TableHead className="w-[180px]">{t('common.actions.edit')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {customSkills.map(skill => (
-                  <TableRow key={skill.id}>
-                    <TableCell className="font-medium">{skill.name}</TableCell>
-                    <TableCell>/{skill.slug}</TableCell>
-                    <TableCell>{renderAliasBadges(parseAliases(skill.aliases))}</TableCell>
-                    <TableCell>
-                      <Switch
-                        checked={skill.enabled}
-                        onCheckedChange={checked => ai.toggleCustomSkillEnabled(skill.id, checked)}
-                        aria-label={t('pages.user.ai.skills.toggle')}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => ai.startEditSkill(skill.id)}
-                        >
-                          <Pencil className="mr-1 h-3.5 w-3.5" />
-                          {t('common.actions.edit')}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => ai.requestDeleteSkill(skill.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+          <DataTable
+            columns={customSkillColumns}
+            data={customSkills}
+            getRowId={skill => skill.id}
+            enablePagination={false}
+            emptyTitle={t('pages.user.ai.customSkills')}
+            emptyDescription={t('pages.user.ai.noCustomSkills')}
+          />
         </CardContent>
       </Card>
 
@@ -533,20 +574,15 @@ export function AiSettingsTab() {
                       )}
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor={`ai-provider-${provider}`}>
-                        {t('pages.user.ai.credentials.apiKey')}
-                      </Label>
-                      <Input
-                        id={`ai-provider-${provider}`}
-                        type="password"
-                        autoComplete="off"
-                        value={ai.providerInputs[provider]}
-                        onChange={event => ai.updateProviderInput(provider, event.target.value)}
-                        placeholder={t('pages.user.ai.credentials.placeholder')}
-                      />
-                      <p className="text-muted-foreground text-xs">{config.note}</p>
-                    </div>
+                    <PasswordField
+                      id={`ai-provider-${provider}`}
+                      label={t('pages.user.ai.credentials.apiKey')}
+                      description={config.note}
+                      autoComplete="off"
+                      value={ai.providerInputs[provider]}
+                      onChange={event => ai.updateProviderInput(provider, event.target.value)}
+                      placeholder={t('pages.user.ai.credentials.placeholder')}
+                    />
 
                     <div className="flex gap-2">
                       <Button
@@ -598,7 +634,7 @@ export function AiSettingsTab() {
           ai.cancelSkillEdit();
         }}
       >
-        <DialogContent>
+        <ScrollableDialogContent>
           <DialogHeader>
             <DialogTitle>{skillDialogTitle}</DialogTitle>
             <DialogDescription>{skillDialogDescription}</DialogDescription>
@@ -606,123 +642,108 @@ export function AiSettingsTab() {
 
           <div className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="ai-skill-name">{t('pages.user.ai.skills.name')}</Label>
-                <Input
-                  id="ai-skill-name"
-                  value={ai.skillForm.name}
-                  onChange={event => {
-                    ai.touchSkillField('name');
-                    ai.updateSkillForm('name', event.target.value);
-                  }}
-                  onBlur={() => ai.touchSkillField('name')}
-                  className={inputStateClass(
-                    ai.skillForm.name,
-                    ai.visibleSkillFormErrors.name,
-                    skillFieldEvaluated.name
-                  )}
-                />
-                <p
-                  className={fieldHintClass(
-                    ai.visibleSkillFormErrors.name,
-                    skillFieldEvaluated.name
-                  )}
-                >
-                  {ai.visibleSkillFormErrors.name ||
-                    (skillFieldEvaluated.name
+              <TextField
+                id="ai-skill-name"
+                label={t('pages.user.ai.skills.name')}
+                value={ai.skillForm.name}
+                onValueChange={value => {
+                  ai.touchSkillField('name');
+                  ai.updateSkillForm('name', value);
+                }}
+                onBlur={() => ai.touchSkillField('name')}
+                error={ai.visibleSkillFormErrors.name}
+                description={
+                  ai.visibleSkillFormErrors.name
+                    ? undefined
+                    : skillFieldEvaluated.name
                       ? t('common.validation.good')
-                      : t('pages.user.ai.skills.requiredHint'))}
-                </p>
-              </div>
+                      : t('pages.user.ai.skills.requiredHint')
+                }
+                className={inputStateClass(
+                  ai.skillForm.name,
+                  ai.visibleSkillFormErrors.name,
+                  skillFieldEvaluated.name
+                )}
+              />
 
-              <div className="space-y-2">
-                <Label htmlFor="ai-skill-slug">{t('pages.user.ai.skills.slug')}</Label>
-                <Input
-                  id="ai-skill-slug"
-                  value={ai.skillForm.slug}
-                  onChange={event => {
-                    ai.touchSkillField('slug');
-                    ai.updateSkillForm('slug', event.target.value);
+              <TextField
+                id="ai-skill-slug"
+                label={t('pages.user.ai.skills.slug')}
+                value={ai.skillForm.slug}
+                onValueChange={value => {
+                  ai.touchSkillField('slug');
+                  ai.updateSkillForm('slug', value);
+                }}
+                onBlur={() => ai.touchSkillField('slug')}
+                disabled={isEditingBuiltIn}
+                error={ai.visibleSkillFormErrors.slug}
+                description={
+                  ai.visibleSkillFormErrors.slug ? undefined : t('pages.user.ai.skills.slugHint')
+                }
+                className={inputStateClass(
+                  ai.skillForm.slug,
+                  ai.visibleSkillFormErrors.slug,
+                  skillFieldEvaluated.slug
+                )}
+                placeholder={
+                  ai.skillForm.name
+                    ? ai.skillForm.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+                    : 'campaign-planner'
+                }
+              />
+            </div>
+
+            <FormFieldShell
+              id="ai-skill-aliases"
+              label={t('pages.user.ai.skills.aliases')}
+              error={ai.visibleSkillFormErrors.aliases}
+              description={
+                ai.visibleSkillFormErrors.aliases ? undefined : t('pages.user.ai.skills.aliasHint')
+              }
+            >
+              {({ id }) => (
+                <HashtagInput
+                  inputId={id}
+                  value={parseAliases(ai.skillForm.aliases)}
+                  onChange={aliases => {
+                    ai.touchSkillField('aliases');
+                    ai.updateSkillForm('aliases', aliases.join(','));
                   }}
-                  onBlur={() => ai.touchSkillField('slug')}
-                  disabled={isEditingBuiltIn}
-                  className={inputStateClass(
-                    ai.skillForm.slug,
-                    ai.visibleSkillFormErrors.slug,
-                    skillFieldEvaluated.slug
+                  showLabel={false}
+                  inputClassName={inputStateClass(
+                    ai.skillForm.aliases,
+                    ai.visibleSkillFormErrors.aliases,
+                    skillFieldEvaluated.aliases
                   )}
-                  placeholder={
-                    ai.skillForm.name
-                      ? ai.skillForm.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
-                      : 'campaign-planner'
-                  }
+                  placeholder={t('pages.user.ai.skills.aliasesPlaceholder')}
                 />
-                <p
-                  className={fieldHintClass(
-                    ai.visibleSkillFormErrors.slug,
-                    skillFieldEvaluated.slug
-                  )}
-                >
-                  {ai.visibleSkillFormErrors.slug || t('pages.user.ai.skills.slugHint')}
-                </p>
-              </div>
-            </div>
+              )}
+            </FormFieldShell>
 
-            <div className="space-y-2">
-              <Label htmlFor="ai-skill-aliases">{t('pages.user.ai.skills.aliases')}</Label>
-              <HashtagInput
-                inputId="ai-skill-aliases"
-                value={parseAliases(ai.skillForm.aliases)}
-                onChange={aliases => {
-                  ai.touchSkillField('aliases');
-                  ai.updateSkillForm('aliases', aliases.join(','));
-                }}
-                showLabel={false}
-                inputClassName={inputStateClass(
-                  ai.skillForm.aliases,
-                  ai.visibleSkillFormErrors.aliases,
-                  skillFieldEvaluated.aliases
-                )}
-                placeholder={t('pages.user.ai.skills.aliasesPlaceholder')}
-              />
-              <p
-                className={fieldHintClass(
-                  ai.visibleSkillFormErrors.aliases,
-                  skillFieldEvaluated.aliases
-                )}
-              >
-                {ai.visibleSkillFormErrors.aliases || t('pages.user.ai.skills.aliasHint')}
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="ai-skill-prompt">{t('pages.user.ai.skills.systemPrompt')}</Label>
-              <Textarea
-                id="ai-skill-prompt"
-                value={ai.skillForm.systemPrompt}
-                onChange={event => {
-                  ai.touchSkillField('systemPrompt');
-                  ai.updateSkillForm('systemPrompt', event.target.value);
-                }}
-                onBlur={() => ai.touchSkillField('systemPrompt')}
-                className={`min-h-[180px] ${inputStateClass(
-                  ai.skillForm.systemPrompt,
-                  ai.visibleSkillFormErrors.systemPrompt,
-                  skillFieldEvaluated.systemPrompt
-                )}`}
-              />
-              <p
-                className={fieldHintClass(
-                  ai.visibleSkillFormErrors.systemPrompt,
-                  skillFieldEvaluated.systemPrompt
-                )}
-              >
-                {ai.visibleSkillFormErrors.systemPrompt ||
-                  (skillFieldEvaluated.systemPrompt
+            <TextField
+              id="ai-skill-prompt"
+              label={t('pages.user.ai.skills.systemPrompt')}
+              value={ai.skillForm.systemPrompt}
+              onValueChange={value => {
+                ai.touchSkillField('systemPrompt');
+                ai.updateSkillForm('systemPrompt', value);
+              }}
+              onBlur={() => ai.touchSkillField('systemPrompt')}
+              error={ai.visibleSkillFormErrors.systemPrompt}
+              description={
+                ai.visibleSkillFormErrors.systemPrompt
+                  ? undefined
+                  : skillFieldEvaluated.systemPrompt
                     ? t('pages.user.ai.skills.promptHint')
-                    : t('pages.user.ai.skills.requiredHint'))}
-              </p>
-            </div>
+                    : t('pages.user.ai.skills.requiredHint')
+              }
+              multiline
+              className={`min-h-[180px] ${inputStateClass(
+                ai.skillForm.systemPrompt,
+                ai.visibleSkillFormErrors.systemPrompt,
+                skillFieldEvaluated.systemPrompt
+              )}`}
+            />
           </div>
 
           <DialogFooter>
@@ -735,38 +756,25 @@ export function AiSettingsTab() {
                 : t('pages.user.ai.skills.create')}
             </Button>
           </DialogFooter>
-        </DialogContent>
+        </ScrollableDialogContent>
       </Dialog>
 
-      <AlertDialog
+      <DangerConfirmDialog
         open={Boolean(ai.pendingSkillDeletion)}
         onOpenChange={open => {
           if (!open) {
             ai.cancelDeleteSkill();
           }
         }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t('pages.user.ai.skills.deleteTitle')}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t('pages.user.ai.skills.deleteDescription').replace(
-                '{{name}}',
-                ai.pendingSkillDeletion?.name ?? ''
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={ai.confirmDeleteSkill}
-              className="bg-destructive hover:bg-destructive/90 text-white"
-            >
-              {t('common.actions.delete')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        title={t('pages.user.ai.skills.deleteTitle')}
+        description={t('pages.user.ai.skills.deleteDescription').replace(
+          '{{name}}',
+          ai.pendingSkillDeletion?.name ?? ''
+        )}
+        cancelLabel={t('common.cancel')}
+        confirmLabel={t('common.actions.delete')}
+        onConfirm={ai.confirmDeleteSkill}
+      />
     </div>
   );
 }

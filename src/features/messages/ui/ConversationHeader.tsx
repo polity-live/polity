@@ -1,8 +1,8 @@
+import { FormControlInput } from '@/features/shared/ui/form';
 import { useEffect, useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Button } from '@/features/shared/ui/ui/button';
 import { CardHeader } from '@/features/shared/ui/ui/card';
-import { Input } from '@/features/shared/ui/ui/input';
 import { ArrowLeft, Check, Pencil, Pin, PinOff, Trash2, X } from 'lucide-react';
 import { Conversation } from '../types/message.types';
 import { getConversationDisplay, getOtherParticipant } from '../logic/messageUtils';
@@ -83,7 +83,7 @@ export function ConversationHeader({
   const titleContent =
     isAiConversation && isEditingName ? (
       <div className="flex items-center gap-2">
-        <Input
+        <FormControlInput
           value={draftName}
           onChange={event => setDraftName(event.target.value)}
           onKeyDown={event => {

@@ -1,9 +1,9 @@
+import { BadgeControl } from '@/features/shared/ui/status';
+import { FormControlInput } from '@/features/shared/ui/form';
 import { useMemo, useState } from 'react';
 import { ChevronDown, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
-import { Input } from '@/features/shared/ui/ui/input';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
 import { HashtagInput } from '@/features/shared/ui/ui/hashtag-input';
 import {
@@ -101,7 +101,7 @@ export function PqlToolbar<TItem, TFieldKey extends string>({
         <CardContent className="space-y-4 pt-6">
           <div className="relative">
             <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-            <Input
+            <FormControlInput
               placeholder={searchPlaceholder}
               value={searchQuery}
               onChange={event => onSearchQueryChange(event.target.value)}
@@ -123,7 +123,7 @@ export function PqlToolbar<TItem, TFieldKey extends string>({
           {activeBadges.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {activeBadges.map(badge => (
-                <Badge key={badge.id} variant="secondary" className="gap-1">
+                <BadgeControl key={badge.id} variant="secondary" className="gap-1">
                   <span>{badge.label}</span>
                   <button
                     type="button"
@@ -132,7 +132,7 @@ export function PqlToolbar<TItem, TFieldKey extends string>({
                   >
                     <X className="h-3 w-3" />
                   </button>
-                </Badge>
+                </BadgeControl>
               ))}
             </div>
           ) : null}
@@ -150,7 +150,7 @@ export function PqlToolbar<TItem, TFieldKey extends string>({
                       {translateText('generated.inline.1095_field_filters_8d9ccc52')}
                     </span>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline">{activeQuickBadges.length}</Badge>
+                      <BadgeControl variant="outline">{activeQuickBadges.length}</BadgeControl>
                       <ChevronDown
                         className={cn(
                           'h-4 w-4 transition-transform',
@@ -228,7 +228,7 @@ export function PqlToolbar<TItem, TFieldKey extends string>({
                               suggestions={options.map(option => option.value)}
                             />
                           ) : quickFilter.inputKind === 'date' ? (
-                            <Input
+                            <FormControlInput
                               type="date"
                               value={values[0] ?? ''}
                               onChange={event =>
@@ -279,7 +279,7 @@ export function PqlToolbar<TItem, TFieldKey extends string>({
                     {translateText('generated.inline.1097_custom_filters_3be34e01')}
                   </span>
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline">{savedFilters.length}</Badge>
+                    <BadgeControl variant="outline">{savedFilters.length}</BadgeControl>
                     <ChevronDown
                       className={cn(
                         'h-4 w-4 transition-transform',
@@ -326,11 +326,11 @@ export function PqlToolbar<TItem, TFieldKey extends string>({
                           >
                             <div className="flex items-center gap-2">
                               <span className="font-medium">{filter.label}</span>
-                              <Badge variant={isActive ? 'default' : 'outline'}>
+                              <BadgeControl variant={isActive ? 'default' : 'outline'}>
                                 {isActive
                                   ? translateText('generated.inline.0126_active_a733b809')
                                   : translateText('generated.inline.0134_inactive_09af574c')}
-                              </Badge>
+                              </BadgeControl>
                             </div>
                             <p className="text-muted-foreground mt-1 font-mono text-xs break-words">
                               {describeFilter(filter)}

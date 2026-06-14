@@ -1,3 +1,4 @@
+import { FormControlInput, FormControlLabel } from '@/features/shared/ui/form';
 import { useCallback, useState } from 'react';
 import ReactFlow, {
   MiniMap,
@@ -13,8 +14,6 @@ import ReactFlow, {
 import type { NodeTypes } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
-import { Input } from '@/features/shared/ui/ui/input.tsx';
-import { Label } from '@/features/shared/ui/ui/label.tsx';
 import PositionableEdge from './PositionableEdge.tsx';
 import './PositionableEdge.css';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
@@ -721,10 +720,10 @@ export function FlowEditor() {
                 <h3 className="text-md mb-2 font-bold">
                   {translateText('generated.inline.0534_edit_node_1519442f')}
                 </h3>
-                <Label htmlFor="nodeLabel">
+                <FormControlLabel htmlFor="nodeLabel">
                   {translateText('generated.inline.0535_label_74341e3c')}
-                </Label>
-                <Input
+                </FormControlLabel>
+                <FormControlInput
                   id="nodeLabel"
                   value={nodeLabel}
                   onChange={e => setNodeLabel(e.target.value)}
@@ -767,10 +766,10 @@ export function FlowEditor() {
               )}
             </p>
             <div className="space-y-2">
-              <Label htmlFor="edgeLabel">
+              <FormControlLabel htmlFor="edgeLabel">
                 {translateText('generated.inline.0535_label_74341e3c')}
-              </Label>
-              <Input
+              </FormControlLabel>
+              <FormControlInput
                 id="edgeLabel"
                 value={edgeLabel}
                 onChange={e => setEdgeLabel(e.target.value)}

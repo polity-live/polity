@@ -1,3 +1,5 @@
+import { FormControlInput, FormControlLabel } from '@/features/shared/ui/form';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 /**
  * Create Document Dialog Component
  *
@@ -7,15 +9,12 @@
 import { useState } from 'react';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/features/shared/ui/ui/dialog';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Label } from '@/features/shared/ui/ui/label';
 import { Plus, Loader2 } from 'lucide-react';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
@@ -56,7 +55,7 @@ export function CreateDocumentDialog({
           {translateText('generated.inline.0404_new_document_e69f5da6')}
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <ScrollableDialogContent>
         <DialogHeader>
           <DialogTitle>
             {translateText('generated.inline.0405_create_new_document_07d90501')}
@@ -73,10 +72,10 @@ export function CreateDocumentDialog({
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="title">
+            <FormControlLabel htmlFor="title">
               {translateText('generated.inline.0407_document_title_73ee9605')}
-            </Label>
-            <Input
+            </FormControlLabel>
+            <FormControlInput
               id="title"
               placeholder={translateText('generated.inline.0408_my_document_3916ed57')}
               value={title}
@@ -97,7 +96,7 @@ export function CreateDocumentDialog({
             )}
           </Button>
         </div>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

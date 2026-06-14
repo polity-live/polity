@@ -1,9 +1,12 @@
 'use client';
 
+import {
+  FormControlLabel,
+  FormControlCheckbox,
+  FormControlRadioGroup,
+  FormControlRadioGroupItem,
+} from '@/features/shared/ui/form';
 import { useEffect, useMemo, useState } from 'react';
-import { Checkbox } from '@/features/shared/ui/ui/checkbox';
-import { Label } from '@/features/shared/ui/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/features/shared/ui/ui/radio-group';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
@@ -352,7 +355,9 @@ export function GroupConnectionComposer({
         </TabsList>
 
         <div className="grid gap-2">
-          <Label htmlFor="group-connection-composer-group">{groupSelectorLabel}</Label>
+          <FormControlLabel htmlFor="group-connection-composer-group">
+            {groupSelectorLabel}
+          </FormControlLabel>
           {disableGroupSelection ? (
             <div className="bg-muted/30 rounded-md border px-3 py-2 text-sm font-medium">
               {selectedGroupName || currentGroupName}
@@ -394,8 +399,10 @@ export function GroupConnectionComposer({
           {value.selectedGroupId ? (
             <>
               <div className="grid gap-2">
-                <Label>{translateText('generated.inline.0780_variante_f51a07e2')}</Label>
-                <RadioGroup
+                <FormControlLabel>
+                  {translateText('generated.inline.0780_variante_f51a07e2')}
+                </FormControlLabel>
+                <FormControlRadioGroup
                   value={value.preset}
                   onValueChange={nextValue =>
                     onValueChange(
@@ -408,14 +415,14 @@ export function GroupConnectionComposer({
                       const disabled = presetDisabled(option.value);
                       const isSelected = selectedPreset.value === option.value;
                       return (
-                        <Label
+                        <FormControlLabel
                           key={option.value}
                           htmlFor={`preset-${option.value}`}
                           className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
                             isSelected ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
                           } ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
                         >
-                          <RadioGroupItem
+                          <FormControlRadioGroupItem
                             id={`preset-${option.value}`}
                             value={option.value}
                             disabled={disabled}
@@ -434,18 +441,18 @@ export function GroupConnectionComposer({
                               {`Membership: ${getCanonicalMembershipModeLabel(option.membershipMode)}`}
                             </div>
                           </div>
-                        </Label>
+                        </FormControlLabel>
                       );
                     })}
                   </div>
-                </RadioGroup>
+                </FormControlRadioGroup>
               </div>
 
               {selectedPreset.value === 'elected' ? (
                 <div className="grid gap-2">
-                  <Label>
+                  <FormControlLabel>
                     {translateText('generated.inline.0781_rolle_der_verbundenen_gruppe_b0e1caee')}
-                  </Label>
+                  </FormControlLabel>
                   <TypeaheadSearch
                     items={toTypeaheadItems(
                       selectableRolesByDirection[selectedPresetMembershipDirection] ?? [],
@@ -470,18 +477,20 @@ export function GroupConnectionComposer({
 
               {selectedPreset.value === 'parliament' ? (
                 <div className="grid gap-2">
-                  <Label>{translateText('generated.inline.0679_source_groups_ad11f792')}</Label>
+                  <FormControlLabel>
+                    {translateText('generated.inline.0679_source_groups_ad11f792')}
+                  </FormControlLabel>
                   <div className="grid gap-2 rounded-lg border p-3">
                     {availableGroups
                       .filter(group => group.id !== presetMembershipSourceGroupId)
                       .map(group => {
                         const checked = presetMembershipRule.sourceGroupIds.includes(group.id);
                         return (
-                          <Label
+                          <FormControlLabel
                             key={group.id}
                             className="flex items-center gap-3 rounded-md border px-3 py-2"
                           >
-                            <Checkbox
+                            <FormControlCheckbox
                               checked={checked}
                               onCheckedChange={nextChecked =>
                                 updateMembershipRule(selectedPresetMembershipDirection, {
@@ -502,7 +511,7 @@ export function GroupConnectionComposer({
                             <span className="text-sm">
                               {group.name || translateText('generated.inline.0094_group_171a0606')}
                             </span>
-                          </Label>
+                          </FormControlLabel>
                         );
                       })}
                   </div>
@@ -538,10 +547,10 @@ export function GroupConnectionComposer({
 
               <div className="grid gap-4 rounded-lg border p-4">
                 <div className="grid gap-2">
-                  <Label>
+                  <FormControlLabel>
                     {translateText('generated.inline.0674_membership_richtung_3a1dbdaf')}
-                  </Label>
-                  <RadioGroup
+                  </FormControlLabel>
+                  <FormControlRadioGroup
                     value={membershipDirection}
                     onValueChange={nextValue =>
                       setActiveMembershipDirection(nextValue as RelativeMembershipDirection)
@@ -554,7 +563,7 @@ export function GroupConnectionComposer({
                           'current_members_to_partner',
                         ] as RelativeMembershipDirection[]
                       ).map(direction => (
-                        <Label
+                        <FormControlLabel
                           key={`membership-direction-${direction}`}
                           htmlFor={`membership-direction-${direction}`}
                           className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
@@ -563,7 +572,7 @@ export function GroupConnectionComposer({
                               : 'hover:bg-muted/50'
                           }`}
                         >
-                          <RadioGroupItem
+                          <FormControlRadioGroupItem
                             id={`membership-direction-${direction}`}
                             value={direction}
                             className="mt-0.5"
@@ -576,16 +585,18 @@ export function GroupConnectionComposer({
                               {getMembershipDirectionDescription(direction)}
                             </div>
                           </div>
-                        </Label>
+                        </FormControlLabel>
                       ))}
                     </div>
-                  </RadioGroup>
+                  </FormControlRadioGroup>
                 </div>
 
                 <div className="grid gap-4 rounded-lg border p-4">
                   <div className="grid gap-2">
-                    <Label>{translateText('generated.inline.0784_membership_mode_5a0af553')}</Label>
-                    <RadioGroup
+                    <FormControlLabel>
+                      {translateText('generated.inline.0784_membership_mode_5a0af553')}
+                    </FormControlLabel>
+                    <FormControlRadioGroup
                       value={activeMembershipRule.membershipMode}
                       onValueChange={nextValue =>
                         updateMembershipRule(membershipDirection, {
@@ -600,7 +611,7 @@ export function GroupConnectionComposer({
                     >
                       <div className="grid gap-2 sm:grid-cols-2">
                         {MEMBERSHIP_MODE_OPTIONS.map(option => (
-                          <Label
+                          <FormControlLabel
                             key={`${membershipDirection}-${option}`}
                             htmlFor={`advanced-membership-mode-${membershipDirection}-${option}`}
                             className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
@@ -609,7 +620,7 @@ export function GroupConnectionComposer({
                                 : 'hover:bg-muted/50'
                             }`}
                           >
-                            <RadioGroupItem
+                            <FormControlRadioGroupItem
                               id={`advanced-membership-mode-${membershipDirection}-${option}`}
                               value={option}
                               className="mt-0.5"
@@ -630,17 +641,17 @@ export function GroupConnectionComposer({
                                 />
                               </div>
                             </div>
-                          </Label>
+                          </FormControlLabel>
                         ))}
                       </div>
-                    </RadioGroup>
+                    </FormControlRadioGroup>
                   </div>
 
                   {activeMembershipRule.membershipMode === 'role_members' ? (
                     <div className="grid gap-2">
-                      <Label>
+                      <FormControlLabel>
                         {translateText('generated.inline.0785_rolle_der_quellgruppe_808d2b9d')}
-                      </Label>
+                      </FormControlLabel>
                       <TypeaheadSearch
                         items={toTypeaheadItems(
                           selectableRoles,
@@ -665,18 +676,20 @@ export function GroupConnectionComposer({
 
                   {activeMembershipRule.membershipMode === 'selected_source_groups' ? (
                     <div className="grid gap-2">
-                      <Label>{translateText('generated.inline.0679_source_groups_ad11f792')}</Label>
+                      <FormControlLabel>
+                        {translateText('generated.inline.0679_source_groups_ad11f792')}
+                      </FormControlLabel>
                       <div className="grid gap-2 rounded-lg border p-3">
                         {availableGroups
                           .filter(group => group.id !== activeMembershipSourceGroupId)
                           .map(group => {
                             const checked = activeMembershipRule.sourceGroupIds.includes(group.id);
                             return (
-                              <Label
+                              <FormControlLabel
                                 key={`${membershipDirection}-${group.id}`}
                                 className="flex items-center gap-3 rounded-md border px-3 py-2"
                               >
-                                <Checkbox
+                                <FormControlCheckbox
                                   checked={checked}
                                   onCheckedChange={nextChecked =>
                                     updateMembershipRule(membershipDirection, {
@@ -698,7 +711,7 @@ export function GroupConnectionComposer({
                                   {group.name ||
                                     translateText('generated.inline.0094_group_171a0606')}
                                 </span>
-                              </Label>
+                              </FormControlLabel>
                             );
                           })}
                       </div>

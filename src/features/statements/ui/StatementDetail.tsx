@@ -1,29 +1,21 @@
+import { BadgeControl } from '@/features/shared/ui/status';
+import { FormControlInput, FormControlTextarea, FormControlLabel } from '@/features/shared/ui/form';
+import { ScrollableAlertDialogContent, ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { useState } from 'react';
 import { PageWrapper } from '@/layout/page-wrapper';
 import { Card } from '@/features/shared/ui/ui/card';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Label } from '@/features/shared/ui/ui/label';
-import { Textarea } from '@/features/shared/ui/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
-  AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/features/shared/ui/ui/alert-dialog';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/features/shared/ui/ui/dialog';
-import { Input } from '@/features/shared/ui/ui/input';
+import { Dialog, DialogFooter, DialogHeader, DialogTitle } from '@/features/shared/ui/ui/dialog';
 import { useStatementDetail } from '@/features/statements/hooks/useStatementDetail';
 import { VoteButtons } from '@/features/shared/ui/voting/VoteButtons';
 import { StatementTextRenderer } from './StatementTextRenderer';
@@ -222,12 +214,12 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
                 <div className="mb-3 flex flex-wrap gap-1">
                   {hashtags.map(tag => (
                     <Link key={tag} to="/search" search={{ hashtag: tag }}>
-                      <Badge
+                      <BadgeControl
                         variant="secondary"
                         className="hover:bg-secondary/80 cursor-pointer text-xs"
                       >
                         #{tag}
-                      </Badge>
+                      </BadgeControl>
                     </Link>
                   ))}
                 </div>
@@ -306,7 +298,7 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
 
       {/* Delete confirmation */}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent>
+        <ScrollableAlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
               {t('features.statements.actions.deleteConfirmTitle')}
@@ -327,7 +319,7 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
               {t('common.actions.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
-        </AlertDialogContent>
+        </ScrollableAlertDialogContent>
       </AlertDialog>
 
       {/* Edit dialog */}
@@ -337,14 +329,14 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
           if (!open) handleEditClose();
         }}
       >
-        <DialogContent className="max-w-lg">
+        <ScrollableDialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>{t('features.statements.actions.edit')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>{t('features.statements.form.text')}</Label>
-              <Textarea
+              <FormControlLabel>{t('features.statements.form.text')}</FormControlLabel>
+              <FormControlTextarea
                 value={editText}
                 onChange={e => setEditText(e.target.value.slice(0, 280))}
                 rows={4}
@@ -368,16 +360,16 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
 
             {/* Survey editing */}
             <div className="space-y-2 rounded-lg border p-4">
-              <Label className="text-base font-semibold">
+              <FormControlLabel className="text-base font-semibold">
                 {t('features.statements.survey.addSurvey')}
-              </Label>
-              <Input
+              </FormControlLabel>
+              <FormControlInput
                 value={editSurveyQuestion}
                 onChange={e => setEditSurveyQuestion(e.target.value)}
                 placeholder={t('features.statements.survey.question')}
               />
               {editSurveyOptions.map((opt, idx) => (
-                <Input
+                <FormControlInput
                   key={idx}
                   value={opt}
                   onChange={e => {
@@ -398,8 +390,8 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
                 </button>
               )}
               <div className="space-y-2">
-                <Label>{t('features.statements.survey.duration')}</Label>
-                <Input
+                <FormControlLabel>{t('features.statements.survey.duration')}</FormControlLabel>
+                <FormControlInput
                   type="number"
                   min={1}
                   max={168}
@@ -444,7 +436,7 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
               {t('common.actions.save')}
             </Button>
           </DialogFooter>
-        </DialogContent>
+        </ScrollableDialogContent>
       </Dialog>
     </PageWrapper>
   );

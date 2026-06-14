@@ -1,9 +1,9 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { ReactNode } from 'react';
 import { Link } from '@tanstack/react-router';
 import { cn } from '@/features/shared/utils/utils';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
 import { LinkSurface } from '@/features/shared/ui/navigation/LinkSurface.tsx';
 import { CARD_RADIUS, getCardShadowClasses } from '../../logic/gradient-assignment';
@@ -271,9 +271,9 @@ export function TimelineCardBadge({
   className,
 }: TimelineCardBadgeProps) {
   return (
-    <Badge variant={variant} className={cn('flex-shrink-0 text-xs', className)}>
+    <BadgeControl variant={variant} className={cn('flex-shrink-0 text-xs', className)}>
       {Icon && <Icon className="mr-1 h-3 w-3" />}
       {label}
-    </Badge>
+    </BadgeControl>
   );
 }

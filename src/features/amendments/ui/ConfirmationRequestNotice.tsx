@@ -1,3 +1,6 @@
+'use client';
+
+import { BadgeControl } from '@/features/shared/ui/status';
 /**
  * ConfirmationRequestNotice Component
  *
@@ -5,24 +8,12 @@
  * confirmation requests for changes made to amendments they support.
  */
 
-'use client';
-
 import { Alert, AlertDescription, AlertTitle } from '@/features/shared/ui/ui/alert';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { Bell, Check, X, Eye } from 'lucide-react';
 import { useState } from 'react';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
-
-interface PendingConfirmation {
-  id: string;
-  amendmentId: string;
-  amendmentTitle: string;
-  changeRequestId?: string;
-  changeRequestTitle?: string;
-  requestedAt: number;
-}
 
 interface ConfirmationRequestNoticeProps {
   userId: string;
@@ -73,9 +64,9 @@ export function ConfirmationRequestNotice({
       <Bell className="h-5 w-5 text-amber-600" />
       <AlertTitle className="text-amber-800 dark:text-amber-200">
         {t('features.amendments.supportConfirmation.pendingNotice.title')}
-        <Badge variant="secondary" className="ml-2">
+        <BadgeControl variant="secondary" className="ml-2">
           {pendingConfirmations.length}
-        </Badge>
+        </BadgeControl>
       </AlertTitle>
       <AlertDescription className="mt-3">
         <p className="mb-3 text-sm text-amber-700 dark:text-amber-300">
@@ -83,7 +74,7 @@ export function ConfirmationRequestNotice({
         </p>
 
         <div className="space-y-2">
-          {pendingConfirmations.map((confirmation) => (
+          {pendingConfirmations.map(confirmation => (
             <div
               key={confirmation.id}
               className="flex items-center justify-between gap-2 rounded-md border bg-white p-2 dark:bg-gray-900"
@@ -93,7 +84,7 @@ export function ConfirmationRequestNotice({
                   {confirmation.amendment?.title ?? t('features.amendments.common.untitled')}
                 </p>
                 {(confirmation as { changeRequest?: { title?: string } }).changeRequest?.title && (
-                  <p className="truncate text-xs text-muted-foreground">
+                  <p className="text-muted-foreground truncate text-xs">
                     {t('features.amendments.changeRequests.changeRequest')}:{' '}
                     {(confirmation as { changeRequest?: { title?: string } }).changeRequest?.title}
                   </p>

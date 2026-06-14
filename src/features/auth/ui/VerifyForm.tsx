@@ -1,25 +1,15 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type ClipboardEvent, type KeyboardEvent } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
-import { Button } from '@/features/shared/ui/ui/button';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Label } from '@/features/shared/ui/ui/label';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/features/shared/ui/ui/card';
-import { Alert, AlertDescription } from '@/features/shared/ui/ui/alert';
-import { Loader2, Shield, ArrowLeft, RotateCcw } from 'lucide-react';
+
 import {
   useTranslation,
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { useAuthVerification } from '@/features/auth/hooks/useAuthVerification';
+import { VerifyFormView, type VerifyFormCopy } from './VerifyFormView';
 
 export function VerifyForm() {
   const { t } = useTranslation();
@@ -62,11 +52,11 @@ export function VerifyForm() {
 
     // Auto-submit when all fields are filled
     if (newCode.every(digit => digit !== '') && value) {
-      handleVerify(newCode.join(''));
+      void handleVerify(newCode.join(''));
     }
   };
 
-  const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
+  const handleKeyDown = (index: number, e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Backspace' && !code[index] && index > 0) {
       // Focus previous input on backspace if current is empty
       inputRefs.current[index - 1]?.focus();
@@ -77,7 +67,7 @@ export function VerifyForm() {
     }
   };
 
-  const handlePaste = (e: React.ClipboardEvent) => {
+  const handlePaste = (e: ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
     const pastedText = e.clipboardData
       .getData(translateText('generated.inline.0024_text_372ea08c'))
@@ -86,7 +76,7 @@ export function VerifyForm() {
     if (pastedText.length === 6) {
       const newCode = pastedText.split('');
       setCode(newCode);
-      handleVerify(pastedText);
+      void handleVerify(pastedText);
     }
   };
 
@@ -139,100 +129,35 @@ export function VerifyForm() {
     navigate({ to: '/auth/sign-in' });
   };
 
+  const copy: VerifyFormCopy = {
+    title: t('auth.verify.title'),
+    description: t('auth.verify.description'),
+    codeLabel: t('auth.verify.codeLabel'),
+    verifying: t('auth.verify.verifying'),
+    submit: t('auth.verify.submit'),
+    back: t('auth.verify.back'),
+    resend: t('auth.verify.resend'),
+    checkSpam: t('auth.verify.footer.checkSpam'),
+    devNote: t('auth.verify.footer.devNote'),
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4 dark:from-gray-900 dark:to-gray-800">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mb-4 flex justify-center">
-            <Shield className="h-12 w-12 text-blue-500" />
-          </div>
-          <CardTitle className="text-2xl font-bold">{t('auth.verify.title')}</CardTitle>
-          <CardDescription>
-            {t('auth.verify.description')} <strong>{email}</strong>
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <Label>{t('auth.verify.codeLabel')}</Label>
-            <div className="flex justify-center gap-2">
-              {code.map((digit, index) => (
-                <Input
-                  key={index}
-                  ref={el => {
-                    inputRefs.current[index] = el;
-                  }}
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={1}
-                  className="h-12 w-12 text-center text-lg font-semibold"
-                  value={digit}
-                  onChange={e => handleCodeChange(index, e.target.value)}
-                  onKeyDown={e => handleKeyDown(index, e)}
-                  onPaste={index === 0 ? handlePaste : undefined}
-                  disabled={isVerifying}
-                />
-              ))}
-            </div>
-          </div>
-
-          {(error || verificationError) && (
-            <Alert variant="destructive">
-              <AlertDescription>{verificationError || error}</AlertDescription>
-            </Alert>
-          )}
-
-          <div className="space-y-3">
-            <Button
-              onClick={() => handleVerify()}
-              className="w-full"
-              disabled={isVerifying || code.some(digit => digit === '')}
-            >
-              {isVerifying ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t('auth.verify.verifying')}
-                </>
-              ) : (
-                t('auth.verify.submit')
-              )}
-            </Button>
-
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={handleBackToEmail}
-                className="flex-1"
-                disabled={isVerifying}
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                {t('auth.verify.back')}
-              </Button>
-
-              <Button
-                variant="outline"
-                onClick={handleResendCode}
-                disabled={isVerifying || isResending}
-                className="flex-1"
-              >
-                {isResending ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <RotateCcw className="mr-2 h-4 w-4" />
-                )}
-                {t('auth.verify.resend')}
-              </Button>
-            </div>
-          </div>
-
-          <div className="text-muted-foreground text-center text-sm">
-            <p>{t('auth.verify.footer.checkSpam')}</p>
-            <p className="mt-1">
-              {t('auth.verify.footer.devNote')}{' '}
-              <code className="bg-muted rounded px-1">123456</code>
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    <VerifyFormView
+      copy={copy}
+      email={email}
+      code={code}
+      displayError={verificationError || error}
+      isVerifying={isVerifying}
+      isResending={isResending}
+      setInputRef={(index, element) => {
+        inputRefs.current[index] = element;
+      }}
+      onCodeChange={handleCodeChange}
+      onCodeKeyDown={handleKeyDown}
+      onCodePaste={handlePaste}
+      onVerify={() => void handleVerify()}
+      onResendCode={() => void handleResendCode()}
+      onBackToEmail={handleBackToEmail}
+    />
   );
 }

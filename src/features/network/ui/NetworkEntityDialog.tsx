@@ -1,8 +1,9 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -11,7 +12,6 @@ import {
 import { Button } from '@/features/shared/ui/ui/button';
 import { GroupSearchCard } from '@/features/search/ui/GroupSearchCard';
 import { GroupEventsList } from './GroupEventsList';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import {
   type GroupRelationshipRight,
   GroupRelationshipMembershipModeSummary,
@@ -150,7 +150,7 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <ScrollableDialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>
             {entity.type === 'group'
@@ -312,7 +312,7 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {entity.data.relationshipKinds.map(relationshipKind => (
-                        <Badge
+                        <BadgeControl
                           key={relationshipKind}
                           variant="outline"
                           className={
@@ -324,7 +324,7 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
                           }
                         >
                           {getRelationshipKindLabel(relationshipKind)}
-                        </Badge>
+                        </BadgeControl>
                       ))}
                     </div>
                   </div>
@@ -421,7 +421,7 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
             </Button>
           )}
         </DialogFooter>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

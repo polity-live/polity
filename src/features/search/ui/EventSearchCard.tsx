@@ -28,7 +28,7 @@ function getCreatorName(event: EventSearchCardRow): string | undefined {
     return event.organizer?.name ?? undefined;
   }
 
-  return event.organizerName;
+  return 'organizerName' in event ? event.organizerName : undefined;
 }
 
 function getCreatorId(event: EventSearchCardRow): string | undefined {
@@ -40,7 +40,9 @@ function getCreatorId(event: EventSearchCardRow): string | undefined {
     return event.organizer.id;
   }
 
-  return event.organizerId;
+  return 'organizerId' in event && typeof event.organizerId === 'string'
+    ? event.organizerId
+    : undefined;
 }
 
 function getGroupName(event: EventSearchCardRow, fallbackGroupName?: string): string | undefined {
@@ -52,7 +54,7 @@ function getGroupName(event: EventSearchCardRow, fallbackGroupName?: string): st
     return event.group.name;
   }
 
-  return event.groupName;
+  return 'groupName' in event && typeof event.groupName === 'string' ? event.groupName : undefined;
 }
 
 function getGroupId(event: EventSearchCardRow, fallbackGroupId?: string): string | undefined {
@@ -88,7 +90,7 @@ function getHashtags(event: EventSearchCardRow): { id: string; tag: string }[] {
     return extractHashtags(event.event_hashtags);
   }
 
-  return Array.isArray(event.hashtags) ? [...event.hashtags] : [];
+  return 'hashtags' in event && Array.isArray(event.hashtags) ? [...event.hashtags] : [];
 }
 
 function getAgendaCounts(event: EventSearchCardRow): {
@@ -103,6 +105,29 @@ function getAgendaCounts(event: EventSearchCardRow): {
     electionsCount: event.agenda_items.filter(item => Boolean(item.election)).length,
     amendmentsCount: event.agenda_items.filter(item => Boolean(item.amendment)).length,
   };
+}
+
+function getLocationName(event: EventSearchCardRow): string | undefined {
+  if ('location_name' in event) {
+    return event.location_name ?? undefined;
+  }
+
+  const location = (event as Record<string, unknown>).location;
+  if (typeof location === 'string') return location;
+
+  return undefined;
+}
+
+function getPostcode(event: EventSearchCardRow): string | undefined {
+  if ('postcode' in event && typeof event.postcode === 'string') {
+    return event.postcode;
+  }
+
+  if ('post_code' in event && typeof event.post_code === 'string') {
+    return event.post_code;
+  }
+
+  return undefined;
 }
 
 export function EventSearchCard({
@@ -132,9 +157,9 @@ export function EventSearchCard({
         description: typeof event.description === 'string' ? event.description : undefined,
         startDate,
         endDate,
-        location: ('location_name' in event ? event.location_name : event.location) ?? undefined,
+        location: getLocationName(event),
         city: event.city ?? undefined,
-        postcode: event.postcode ?? undefined,
+        postcode: getPostcode(event),
         attendeeCount: getAttendeeCount(event),
         organizerName: creatorName,
         organizerId: creatorId,

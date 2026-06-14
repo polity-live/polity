@@ -1,6 +1,6 @@
+import { BadgeControl } from '@/features/shared/ui/status';
+import { FormControlInput } from '@/features/shared/ui/form';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Search as SearchIcon, Filter, X } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
@@ -35,20 +35,20 @@ export function SearchHeader({
       </div>
 
       {/* Search Bar - Fixed/Sticky */}
-      <div className="sticky top-0 z-10 mb-6 space-y-4 bg-background pb-4 pt-2">
+      <div className="bg-background sticky top-0 z-10 mb-6 space-y-4 pt-2 pb-4">
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
+            <SearchIcon className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+            <FormControlInput
               placeholder={t('features.search.placeholderDetailed')}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="pl-10 pr-10"
+              className="pr-10 pl-10"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2"
                 aria-label={t('common.actions.clear')}
               >
                 <X className="h-4 w-4" />
@@ -68,11 +68,11 @@ export function SearchHeader({
         {/* Active Filters Display */}
         {activeTopics.length > 0 && !showFilters && (
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm text-muted-foreground">
+            <span className="text-muted-foreground text-sm">
               {t('features.search.filters.title')}:
             </span>
             {activeTopics.map(topic => (
-              <Badge
+              <BadgeControl
                 key={topic}
                 variant="secondary"
                 className="cursor-pointer"
@@ -80,7 +80,7 @@ export function SearchHeader({
               >
                 {topic}
                 <button
-                  className="ml-2 hover:text-destructive"
+                  className="hover:text-destructive ml-2"
                   onClick={e => {
                     e.stopPropagation();
                     onTopicRemove(topic);
@@ -88,7 +88,7 @@ export function SearchHeader({
                 >
                   <X className="h-3 w-3" />
                 </button>
-              </Badge>
+              </BadgeControl>
             ))}
           </div>
         )}
@@ -97,7 +97,7 @@ export function SearchHeader({
       {/* Results Summary */}
       {(queryParam || activeTopics.length > 0) && (
         <div className="mb-4">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             {queryParam &&
               t('features.search.results.showingFor', { count: totalResults, query: queryParam })}
             {queryParam && activeTopics.length > 0 && ' '}

@@ -1,5 +1,15 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
+import {
+  FormControlInput,
+  FormControlLabel,
+  FormControlSelect,
+  FormControlSelectContent,
+  FormControlSelectItem,
+  FormControlSelectTrigger,
+  FormControlSelectValue,
+} from '@/features/shared/ui/form';
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useEventData } from '@/features/events/hooks/useEventData';
@@ -15,21 +25,11 @@ import {
   CardTitle,
 } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Label } from '@/features/shared/ui/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/features/shared/ui/ui/select';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/features/shared/ui/ui/collapsible';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import {
   Calendar,
   Vote,
@@ -1583,9 +1583,9 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                     {t('features.events.stream.liveStream')}
                   </CardTitle>
                   {streamIsLive && (
-                    <Badge variant="default" className="animate-pulse">
+                    <BadgeControl variant="default" className="animate-pulse">
                       {t('features.events.stream.live', 'LIVE')}
-                    </Badge>
+                    </BadgeControl>
                   )}
                 </div>
                 {streamOpen ? (
@@ -1879,7 +1879,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
         <div className="flex gap-2">
           <div className="relative flex-1">
             <SearchIcon className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-            <Input
+            <FormControlInput
               placeholder={t('features.events.agenda.searchPlaceholder')}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
@@ -1900,49 +1900,59 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="type-filter">{t('features.events.agenda.type')}</Label>
-                  <Select value={typeFilter} onValueChange={setTypeFilter}>
-                    <SelectTrigger id="type-filter">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t('features.events.agenda.allTypes')}</SelectItem>
-                      <SelectItem value="election">
+                  <FormControlLabel htmlFor="type-filter">
+                    {t('features.events.agenda.type')}
+                  </FormControlLabel>
+                  <FormControlSelect value={typeFilter} onValueChange={setTypeFilter}>
+                    <FormControlSelectTrigger id="type-filter">
+                      <FormControlSelectValue />
+                    </FormControlSelectTrigger>
+                    <FormControlSelectContent>
+                      <FormControlSelectItem value="all">
+                        {t('features.events.agenda.allTypes')}
+                      </FormControlSelectItem>
+                      <FormControlSelectItem value="election">
                         {t('features.events.agenda.typeElection')}
-                      </SelectItem>
-                      <SelectItem value="vote">{t('features.events.agenda.typeVote')}</SelectItem>
-                      <SelectItem value="speech">
+                      </FormControlSelectItem>
+                      <FormControlSelectItem value="vote">
+                        {t('features.events.agenda.typeVote')}
+                      </FormControlSelectItem>
+                      <FormControlSelectItem value="speech">
                         {t('features.events.agenda.typeSpeech')}
-                      </SelectItem>
-                      <SelectItem value="discussion">
+                      </FormControlSelectItem>
+                      <FormControlSelectItem value="discussion">
                         {t('features.events.agenda.typeDiscussion')}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                      </FormControlSelectItem>
+                    </FormControlSelectContent>
+                  </FormControlSelect>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="status-filter">{t('features.events.agenda.statusLabel')}</Label>
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger id="status-filter">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t('features.events.agenda.allStatus')}</SelectItem>
-                      <SelectItem value="pending">
+                  <FormControlLabel htmlFor="status-filter">
+                    {t('features.events.agenda.statusLabel')}
+                  </FormControlLabel>
+                  <FormControlSelect value={statusFilter} onValueChange={setStatusFilter}>
+                    <FormControlSelectTrigger id="status-filter">
+                      <FormControlSelectValue />
+                    </FormControlSelectTrigger>
+                    <FormControlSelectContent>
+                      <FormControlSelectItem value="all">
+                        {t('features.events.agenda.allStatus')}
+                      </FormControlSelectItem>
+                      <FormControlSelectItem value="pending">
                         {t('features.events.agenda.statusPending')}
-                      </SelectItem>
-                      <SelectItem value="in-progress">
+                      </FormControlSelectItem>
+                      <FormControlSelectItem value="in-progress">
                         {t('features.events.agenda.statusInProgress')}
-                      </SelectItem>
-                      <SelectItem value="completed">
+                      </FormControlSelectItem>
+                      <FormControlSelectItem value="completed">
                         {t('features.events.agenda.statusCompleted')}
-                      </SelectItem>
-                      <SelectItem value="planned">
+                      </FormControlSelectItem>
+                      <FormControlSelectItem value="planned">
                         {t('features.events.agenda.statusPlanned')}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                      </FormControlSelectItem>
+                    </FormControlSelectContent>
+                  </FormControlSelect>
                 </div>
               </div>
             </CardContent>

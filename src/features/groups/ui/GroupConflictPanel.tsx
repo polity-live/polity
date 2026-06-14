@@ -2,12 +2,12 @@
 
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/features/shared/ui/ui/dialog';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { Button } from '@/features/shared/ui/ui/button';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type {
@@ -286,13 +286,13 @@ export function GroupConflictDialog({
           {resolvedTriggerLabel}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[min(90dvh,42rem)] overflow-y-auto sm:max-w-2xl">
+      <ScrollableDialogContent className="max-h-[min(90dvh,42rem)] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{resolvedTitle}</DialogTitle>
           <DialogDescription>{resolvedDescription}</DialogDescription>
         </DialogHeader>
         <GroupConflictPanel response={response} />
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

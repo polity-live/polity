@@ -1,5 +1,7 @@
 'use client';
 
+import { FormControlInput, FormControlTextarea, FormControlLabel } from '@/features/shared/ui/form';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import {
@@ -14,15 +16,11 @@ import { Calendar } from '@/features/shared/ui/ui/calendar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Label } from '@/features/shared/ui/ui/label';
-import { Textarea } from '@/features/shared/ui/ui/textarea';
 import { startOfDay, isPast } from 'date-fns';
 import {
   Calendar as CalendarIcon,
@@ -43,6 +41,7 @@ import {
   MeetingWeekView,
 } from '@/features/meet/ui/MeetingCalendarViews';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { richTextToPlainText } from '@/features/shared/logic/richText';
 
 interface UserMeetingSchedulerProps {
   userId: string;
@@ -134,7 +133,7 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
 
     setEditingMeetingId(meeting.id);
     setEditTitle(meeting.title ?? instance.title);
-    setEditDescription(meeting.description ?? '');
+    setEditDescription(richTextToPlainText(meeting.description));
     setEditDate(startDate);
     setEditTime(format(startDate, 'HH:mm'));
     setEditDuration(String(durationMinutes));
@@ -362,7 +361,7 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
 
       {/* Booking Dialog */}
       <Dialog open={isBookingDialogOpen} onOpenChange={setIsBookingDialogOpen}>
-        <DialogContent>
+        <ScrollableDialogContent>
           <DialogHeader>
             <DialogTitle>
               {translateText('generated.inline.1212_book_meeting_offer_114d8cc1')}
@@ -431,11 +430,11 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
               {translateText('generated.inline.1215_confirm_booking_eb9e1e0e')}
             </Button>
           </DialogFooter>
-        </DialogContent>
+        </ScrollableDialogContent>
       </Dialog>
 
       <Dialog open={isEditDialogOpen} onOpenChange={handleEditDialogOpenChange}>
-        <DialogContent className="!flex !max-h-[calc(100vh-2rem)] !max-w-2xl !flex-col !overflow-hidden sm:!max-w-2xl">
+        <ScrollableDialogContent className="!flex !max-h-[calc(100vh-2rem)] !max-w-2xl !flex-col !overflow-hidden sm:!max-w-2xl">
           <DialogHeader className="border-b px-6 pt-6 pr-14 pb-4">
             <DialogTitle>
               {translateText('generated.inline.1216_edit_meeting_offer_cbc09a1f')}
@@ -455,7 +454,9 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
           <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
             <div className="space-y-4 pb-2">
               <div className="space-y-2">
-                <Label>{translateText('generated.inline.1218_meeting_type_a3a5c802')}</Label>
+                <FormControlLabel>
+                  {translateText('generated.inline.1218_meeting_type_a3a5c802')}
+                </FormControlLabel>
                 <div className="flex gap-2">
                   <Button
                     type="button"
@@ -478,10 +479,10 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="edit-meeting-title">
+                <FormControlLabel htmlFor="edit-meeting-title">
                   {translateText('generated.inline.0028_title_768e0c1c')}
-                </Label>
-                <Input
+                </FormControlLabel>
+                <FormControlInput
                   id="edit-meeting-title"
                   value={editTitle}
                   onChange={event => setEditTitle(event.target.value)}
@@ -490,10 +491,10 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="edit-meeting-description">
+                <FormControlLabel htmlFor="edit-meeting-description">
                   {translateText('generated.inline.0030_description_55f8ebc8')}
-                </Label>
-                <Textarea
+                </FormControlLabel>
+                <FormControlTextarea
                   id="edit-meeting-description"
                   value={editDescription}
                   onChange={event => setEditDescription(event.target.value)}
@@ -503,20 +504,20 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-meeting-location">
+                  <FormControlLabel htmlFor="edit-meeting-location">
                     {translateText('generated.inline.1221_location_d219c681')}
-                  </Label>
-                  <Input
+                  </FormControlLabel>
+                  <FormControlInput
                     id="edit-meeting-location"
                     value={editLocation}
                     onChange={event => setEditLocation(event.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-meeting-location-url">
+                  <FormControlLabel htmlFor="edit-meeting-location-url">
                     {translateText('generated.inline.1222_online_meeting_url_cd6a1657')}
-                  </Label>
-                  <Input
+                  </FormControlLabel>
+                  <FormControlInput
                     id="edit-meeting-location-url"
                     type="url"
                     value={editLocationUrl}
@@ -527,10 +528,10 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
 
               {editType === 'public-meeting' && (
                 <div className="space-y-2">
-                  <Label htmlFor="edit-max-bookings">
+                  <FormControlLabel htmlFor="edit-max-bookings">
                     {translateText('generated.inline.1223_max_participants_fe3a4998')}
-                  </Label>
-                  <Input
+                  </FormControlLabel>
+                  <FormControlInput
                     id="edit-max-bookings"
                     type="number"
                     min="1"
@@ -542,7 +543,9 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
               )}
 
               <div className="space-y-2">
-                <Label>{translateText('generated.inline.0277_date_eb9a4bc1')}</Label>
+                <FormControlLabel>
+                  {translateText('generated.inline.0277_date_eb9a4bc1')}
+                </FormControlLabel>
                 <Calendar
                   mode="single"
                   selected={editDate}
@@ -554,10 +557,10 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-meeting-time">
+                  <FormControlLabel htmlFor="edit-meeting-time">
                     {translateText('generated.inline.1224_start_time_41c1074d')}
-                  </Label>
-                  <Input
+                  </FormControlLabel>
+                  <FormControlInput
                     id="edit-meeting-time"
                     type="time"
                     value={editTime}
@@ -565,10 +568,10 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-meeting-duration">
+                  <FormControlLabel htmlFor="edit-meeting-duration">
                     {translateText('generated.inline.1225_duration_min_b9d7d9c7')}
-                  </Label>
-                  <Input
+                  </FormControlLabel>
+                  <FormControlInput
                     id="edit-meeting-duration"
                     type="number"
                     min="15"
@@ -596,7 +599,7 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
               </Button>
             </DialogFooter>
           </div>
-        </DialogContent>
+        </ScrollableDialogContent>
       </Dialog>
     </div>
   );

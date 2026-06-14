@@ -1,10 +1,10 @@
 'use client';
 
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'lucide-react';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -625,7 +625,7 @@ export function LinkGroupDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="h-[min(90dvh,46rem)] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden p-0 sm:max-w-[760px]">
+      <ScrollableDialogContent className="h-[min(90dvh,46rem)] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden p-0 sm:max-w-[760px]">
         <DialogHeader className="px-6 pt-6 pr-12 pb-4">
           <DialogTitle>
             {isEditMode ? t('common.network.editRelationship') : t('common.network.linkGroupTitle')}
@@ -702,7 +702,7 @@ export function LinkGroupDialog({
                 : t('common.actions.create')}
           </Button>
         </DialogFooter>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

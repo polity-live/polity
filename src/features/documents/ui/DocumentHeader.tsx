@@ -1,11 +1,11 @@
+import { BadgeControl } from '@/features/shared/ui/status';
+import { FormControlInput } from '@/features/shared/ui/form';
 /**
  * Document Header Component
  *
  * Displays document title, save status, and online users.
  */
 
-import { Input } from '@/features/shared/ui/ui/input';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Loader2, Eye } from 'lucide-react';
 import { PresenceIndicators } from './PresenceIndicators';
 import type { EditorPresencePeer } from '@/features/editor';
@@ -30,7 +30,7 @@ export function DocumentHeader({
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-4">
         <div className="flex-1">
-          <Input
+          <FormControlInput
             value={title}
             onChange={e => onTitleChange(e.target.value)}
             className="border-none px-0 text-2xl font-bold shadow-none focus-visible:ring-0"
@@ -55,7 +55,9 @@ export function DocumentHeader({
       <div className="flex items-center gap-4">
         <PresenceIndicators peers={onlinePeers} />
         {isOwner && (
-          <Badge variant="outline">{translateText('generated.inline.0412_owner_89ff3122')}</Badge>
+          <BadgeControl variant="outline">
+            {translateText('generated.inline.0412_owner_89ff3122')}
+          </BadgeControl>
         )}
       </div>
     </div>

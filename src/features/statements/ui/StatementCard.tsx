@@ -1,7 +1,7 @@
+import { BadgeControl } from '@/features/shared/ui/status';
 import { Link } from '@tanstack/react-router';
 import { cn } from '@/features/shared/utils/utils';
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { StatementTextRenderer } from './StatementTextRenderer';
 import {
   ArrowBigUp,
@@ -73,9 +73,9 @@ export function StatementCard({ statement, className }: StatementCardProps) {
       {tags.length > 0 && (
         <div className="mb-2 flex flex-wrap gap-1">
           {tags.map(tag => (
-            <Badge key={tag} variant="secondary" className="text-xs">
+            <BadgeControl key={tag} variant="secondary" className="text-xs">
               #{tag}
-            </Badge>
+            </BadgeControl>
           ))}
         </div>
       )}

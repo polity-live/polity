@@ -1,8 +1,8 @@
+import { BadgeControl } from '@/features/shared/ui/status';
 import { useRef, useState, useEffect } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import {
   Collapsible,
@@ -271,9 +271,9 @@ export function EventStreamSection({
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant="default" className="animate-pulse">
+                  <BadgeControl variant="default" className="animate-pulse">
                     {t('features.events.stream.live')}
-                  </Badge>
+                  </BadgeControl>
                   <CardTitle className="text-lg">{currentAgendaItem.title}</CardTitle>
                 </div>
               </div>
@@ -285,17 +285,17 @@ export function EventStreamSection({
             </Button>
           </CollapsibleTrigger>
           <div className="mt-2 flex items-center gap-2">
-            <Badge className={getTypeColor(currentAgendaItem.type ?? 'discussion')}>
+            <BadgeControl className={getTypeColor(currentAgendaItem.type ?? 'discussion')}>
               <span className="capitalize">{currentAgendaItem.type}</span>
-            </Badge>
-            <Badge className={getStatusColor(currentAgendaItem.status ?? 'pending')}>
+            </BadgeControl>
+            <BadgeControl className={getStatusColor(currentAgendaItem.status ?? 'pending')}>
               {currentAgendaItem.status}
-            </Badge>
+            </BadgeControl>
             {currentAgendaItem.duration && (
-              <Badge variant="outline">
+              <BadgeControl variant="outline">
                 <Clock className="mr-1 h-3 w-3" />
                 {currentAgendaItem.duration} {t('common.minutes')}
-              </Badge>
+              </BadgeControl>
             )}
             <Button asChild variant="outline" size="sm" className="ml-auto">
               <Link
@@ -519,26 +519,26 @@ export function EventStreamSection({
                                     {speakerName}
                                   </h4>
                                   {isCurrentUser && (
-                                    <Badge variant="secondary" className="mt-1">
+                                    <BadgeControl variant="secondary" className="mt-1">
                                       {translateText('generated.inline.0055_you_905cb326')}
-                                    </Badge>
+                                    </BadgeControl>
                                   )}
                                 </div>
                                 <div className="flex justify-center">
-                                  <Badge variant="secondary" className="px-3 py-1 text-sm">
+                                  <BadgeControl variant="secondary" className="px-3 py-1 text-sm">
                                     <Clock className="mr-1.5 h-3 w-3" />
                                     {formatTime(speakerTime)} ({speaker.time}
                                     {translateText('generated.inline.0056_min_c5cceefd')}
-                                  </Badge>
+                                  </BadgeControl>
                                 </div>
                                 {speaker.completed && (
                                   <div className="flex justify-center">
-                                    <Badge
+                                    <BadgeControl
                                       variant="outline"
                                       className="bg-green-100 dark:bg-green-900"
                                     >
                                       {translateText('generated.inline.0057_completed_1798b3ba')}
-                                    </Badge>
+                                    </BadgeControl>
                                   </div>
                                 )}
                               </CardContent>

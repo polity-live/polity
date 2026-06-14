@@ -476,7 +476,7 @@ function isActivePassiveVotingRelationship(relationship: MembershipCompositionRe
   return (
     relationship.status === 'active' &&
     relationship.relationship_type !== 'sibling' &&
-    relationship.with_right == null
+    (relationship.with_right == null || relationship.with_right === 'passiveVotingRight')
   );
 }
 

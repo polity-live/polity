@@ -1,3 +1,4 @@
+import { FormControlLabel } from '@/features/shared/ui/form';
 /**
  * Basic Info Section Component
  *
@@ -18,7 +19,6 @@ import {
 } from '@/features/shared/hooks/use-translation';
 import { MiniPlateEditor } from '@/features/shared/ui/form/MiniPlateEditor';
 import { ValidatedInputField } from '@/features/shared/ui/form/ValidatedInputField';
-import { Label } from '@/features/shared/ui/ui/label';
 import type { Value } from 'platejs';
 import type { GroupFormData } from '../hooks/useGroupUpdate';
 
@@ -55,9 +55,9 @@ export function BasicInfoSection({
           required
         />
         <div className="space-y-2">
-          <Label htmlFor="description">
+          <FormControlLabel htmlFor="description">
             {translateText('generated.inline.0030_description_55f8ebc8')}
-          </Label>
+          </FormControlLabel>
           <MiniPlateEditor
             id="description"
             value={formData.descriptionContent}

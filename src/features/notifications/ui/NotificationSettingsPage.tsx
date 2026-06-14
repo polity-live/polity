@@ -1,5 +1,14 @@
 'use client';
 
+import {
+  FormControlLabel,
+  FormControlSelect,
+  FormControlSwitch,
+  FormControlSelectContent,
+  FormControlSelectItem,
+  FormControlSelectTrigger,
+  FormControlSelectValue,
+} from '@/features/shared/ui/form';
 import { useState } from 'react';
 import {
   Card,
@@ -8,18 +17,9 @@ import {
   CardHeader,
   CardTitle,
 } from '@/features/shared/ui/ui/card';
-import { Label } from '@/features/shared/ui/ui/label';
-import { Switch } from '@/features/shared/ui/ui/switch';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Tabs, TabsContent, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import { ScrollableTabsList } from '@/features/shared/ui/ui/scrollable-tabs';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/features/shared/ui/ui/select';
 import { Separator } from '@/features/shared/ui/ui/separator';
 import {
   Users,
@@ -62,17 +62,17 @@ function SettingItem({
   return (
     <div className="flex items-center justify-between space-x-4 py-3">
       <div className="flex-1 space-y-0.5">
-        <Label className="text-sm font-medium">
+        <FormControlLabel className="text-sm font-medium">
           {label}
           {adminOnly && (
             <span className="bg-muted text-muted-foreground ml-2 rounded-full px-2 py-0.5 text-xs">
               {translateText('generated.inline.0804_admin_only_da21f2ed')}
             </span>
           )}
-        </Label>
+        </FormControlLabel>
         {description && <p className="text-muted-foreground text-xs">{description}</p>}
       </div>
-      <Switch checked={checked} onCheckedChange={onCheckedChange} disabled={disabled} />
+      <FormControlSwitch checked={checked} onCheckedChange={onCheckedChange} disabled={disabled} />
     </div>
   );
 }
@@ -186,9 +186,9 @@ export function NotificationSettingsPage({ userId }: NotificationSettingsPagePro
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between space-x-4 py-3">
                 <div className="flex-1 space-y-0.5">
-                  <Label className="text-sm font-medium">
+                  <FormControlLabel className="text-sm font-medium">
                     {translateText('generated.inline.0814_push_notifications_b8fe58ff')}
-                  </Label>
+                  </FormControlLabel>
                   <p className="text-muted-foreground text-xs">
                     {translateText(
                       'generated.inline.0815_receive_browser_push_notifications_even_when__28e15171'
@@ -935,40 +935,40 @@ export function NotificationSettingsPage({ userId }: NotificationSettingsPagePro
               <Separator />
               <div className="flex items-center justify-between space-x-4 py-3">
                 <div className="flex-1 space-y-0.5">
-                  <Label className="text-sm font-medium">
+                  <FormControlLabel className="text-sm font-medium">
                     {translateText('generated.inline.0941_refresh_frequency_23798dc4')}
-                  </Label>
+                  </FormControlLabel>
                   <p className="text-muted-foreground text-xs">
                     {translateText(
                       'generated.inline.0942_how_often_the_timeline_automatically_refreshe_52ada5c8'
                     )}
                   </p>
                 </div>
-                <Select
+                <FormControlSelect
                   value={settings.timelineSettings.refreshFrequency}
                   onValueChange={(value: TimelineRefreshFrequency) =>
                     updateTimelineSettings({ refreshFrequency: value })
                   }
                   disabled={isUpdating}
                 >
-                  <SelectTrigger className="w-40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="realtime">
+                  <FormControlSelectTrigger className="w-40">
+                    <FormControlSelectValue />
+                  </FormControlSelectTrigger>
+                  <FormControlSelectContent>
+                    <FormControlSelectItem value="realtime">
                       {translateText('generated.inline.0943_real_time_cc635525')}
-                    </SelectItem>
-                    <SelectItem value="every5min">
+                    </FormControlSelectItem>
+                    <FormControlSelectItem value="every5min">
                       {translateText('generated.inline.0944_every_5_minutes_d4f3e0d1')}
-                    </SelectItem>
-                    <SelectItem value="every15min">
+                    </FormControlSelectItem>
+                    <FormControlSelectItem value="every15min">
                       {translateText('generated.inline.0945_every_15_minutes_c7bafbc9')}
-                    </SelectItem>
-                    <SelectItem value="manual">
+                    </FormControlSelectItem>
+                    <FormControlSelectItem value="manual">
                       {translateText('generated.inline.0946_manual_only_aaf64b3f')}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                    </FormControlSelectItem>
+                  </FormControlSelectContent>
+                </FormControlSelect>
               </div>
             </CardContent>
           </Card>

@@ -1,5 +1,5 @@
+import { BadgeControl } from '@/features/shared/ui/status';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Clock, CalendarClock } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
@@ -54,7 +54,7 @@ export function EventDeadlinesCard({
 }: EventDeadlinesCardProps) {
   const { t } = useTranslation();
 
-  const deadlines: DeadlineItem[] = [
+  const deadlines: ActiveDeadlineItem[] = [
     {
       label: t('features.events.deadlines.registration'),
       timestamp: registrationDeadline,
@@ -93,13 +93,13 @@ export function EventDeadlinesCard({
                   {formatDeadlineDate(deadline.timestamp)}
                 </p>
               </div>
-              <Badge
+              <BadgeControl
                 variant={remaining.isPast ? 'destructive' : 'secondary'}
                 className="flex items-center gap-1"
               >
                 <Clock className="h-3 w-3" />
                 {remaining.isPast ? t('features.events.deadlines.expired') : remaining.text}
-              </Badge>
+              </BadgeControl>
             </div>
           );
         })}

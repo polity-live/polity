@@ -1,5 +1,7 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
+import { FormControlInput, FormControlLabel } from '@/features/shared/ui/form';
 import { useState, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import {
@@ -10,10 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/features/shared/ui/ui/card';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Label } from '@/features/shared/ui/ui/label';
 import {
   Carousel,
   CarouselContent,
@@ -233,10 +232,10 @@ export function CreateBlogForm() {
               <CarouselItem>
                 <div className="space-y-4 p-4">
                   <div className="space-y-2">
-                    <Label htmlFor="blog-title">
+                    <FormControlLabel htmlFor="blog-title">
                       {translateText('generated.inline.0028_title_768e0c1c')}
-                    </Label>
-                    <Input
+                    </FormControlLabel>
+                    <FormControlInput
                       id="blog-title"
                       placeholder={translateText('generated.inline.0276_enter_blog_title_37b29848')}
                       value={formData.title}
@@ -245,10 +244,10 @@ export function CreateBlogForm() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="blog-date">
+                    <FormControlLabel htmlFor="blog-date">
                       {translateText('generated.inline.0277_date_eb9a4bc1')}
-                    </Label>
-                    <Input
+                    </FormControlLabel>
+                    <FormControlInput
                       id="blog-date"
                       type="date"
                       value={formData.date}
@@ -299,19 +298,19 @@ export function CreateBlogForm() {
                   <Card className="overflow-hidden border-2 bg-gradient-to-br from-yellow-100 to-orange-100 dark:from-yellow-900/40 dark:to-orange-900/50">
                     <CardHeader>
                       <div className="mb-2 flex items-center justify-between">
-                        <Badge variant="default" className="text-xs">
+                        <BadgeControl variant="default" className="text-xs">
                           {translateText('generated.inline.0281_blog_post_6c8d4a5b')}
-                        </Badge>
-                        <Badge variant="outline" className="text-xs">
+                        </BadgeControl>
+                        <BadgeControl variant="outline" className="text-xs">
                           {formData.visibility}
-                        </Badge>
+                        </BadgeControl>
                       </div>
                       {formData.hashtags.length > 0 && (
                         <div className="flex flex-wrap gap-1">
                           {formData.hashtags.map((tag, index) => (
-                            <Badge key={index} variant="secondary" className="text-xs">
+                            <BadgeControl key={index} variant="secondary" className="text-xs">
                               #{tag}
-                            </Badge>
+                            </BadgeControl>
                           ))}
                         </div>
                       )}

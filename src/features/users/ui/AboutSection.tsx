@@ -1,3 +1,4 @@
+import { FormControlLabel } from '@/features/shared/ui/form';
 import {
   Card,
   CardContent,
@@ -5,7 +6,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/features/shared/ui/ui/card';
-import { Label } from '@/features/shared/ui/ui/label';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { Value } from 'platejs';
 import { MiniPlateEditor } from '@/features/shared/ui/form/MiniPlateEditor';
@@ -26,7 +26,9 @@ export function AboutSection({ aboutContent, onAboutContentChange }: AboutSectio
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
-          <Label htmlFor="about">{t('pages.user.settingsForm.about.bioLabel')}</Label>
+          <FormControlLabel htmlFor="about">
+            {t('pages.user.settingsForm.about.bioLabel')}
+          </FormControlLabel>
           <MiniPlateEditor
             id="about"
             value={aboutContent}

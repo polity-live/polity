@@ -1,10 +1,10 @@
 'use client';
 
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -197,7 +197,7 @@ export function HierarchyConflictDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[min(90dvh,42rem)] overflow-y-auto sm:max-w-3xl">
+      <ScrollableDialogContent className="max-h-[min(90dvh,42rem)] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>{t('common.network.manageLinkRequest')}</DialogTitle>
           <DialogDescription>
@@ -362,7 +362,7 @@ export function HierarchyConflictDialog({
             {t('common.network.accept')}
           </Button>
         </DialogFooter>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

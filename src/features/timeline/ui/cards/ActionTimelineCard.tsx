@@ -154,7 +154,7 @@ function ActorAvatars({ actors, maxDisplay = 3 }: { actors: ActionActor[]; maxDi
   return (
     <div className="flex -space-x-2">
       {displayActors.map(actor => (
-        <Avatar key={actor.id} className="h-8 w-8 border-2 border-background">
+        <Avatar key={actor.id} className="border-background h-8 w-8 border-2">
           <AvatarImage src={actor.avatarUrl} alt={actor.name} />
           <AvatarFallback className="bg-gray-100 text-xs dark:bg-gray-800">
             {getInitials(actor.name)}
@@ -162,7 +162,7 @@ function ActorAvatars({ actors, maxDisplay = 3 }: { actors: ActionActor[]; maxDi
         </Avatar>
       ))}
       {remaining > 0 && (
-        <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-background bg-gray-100 text-xs font-medium dark:bg-gray-800">
+        <div className="border-background flex h-8 w-8 items-center justify-center rounded-full border-2 bg-gray-100 text-xs font-medium dark:bg-gray-800">
           +{remaining}
         </div>
       )}
@@ -313,7 +313,7 @@ export function ActionTimelineCard({ action, onViewDetails, className }: ActionT
             <div className="mt-2 flex flex-wrap items-center gap-2">
               {action.sourceEntity && <EntityLink entity={action.sourceEntity} />}
               {action.sourceEntity && action.targetEntity && (
-                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+                <ArrowRight className="text-muted-foreground h-3.5 w-3.5" />
               )}
               {action.targetEntity && <EntityLink entity={action.targetEntity} />}
             </div>
@@ -322,19 +322,19 @@ export function ActionTimelineCard({ action, onViewDetails, className }: ActionT
             {action.type === 'amendment_forwarded' &&
               action.metadata?.fromGroup &&
               action.metadata?.toGroup && (
-                <p className="mt-2 text-xs text-muted-foreground">
+                <p className="text-muted-foreground mt-2 text-xs">
                   {t('features.timeline.cards.action.from')} {action.metadata.fromGroup}{' '}
                   {t('features.timeline.cards.action.to')} {action.metadata.toGroup}
                 </p>
               )}
 
             {/* Timestamp */}
-            <p className="mt-2 text-xs text-muted-foreground">
+            <p className="text-muted-foreground mt-2 text-xs">
               {formatDistanceToNow(timestamp, { addSuffix: true })}
             </p>
 
             {/* Stats Bar with Tooltips */}
-            <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
+            <div className="text-muted-foreground mt-3 flex items-center gap-4 text-xs">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="flex cursor-help items-center gap-1">

@@ -8,9 +8,16 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { WorkflowEditor } from '../WorkflowEditor';
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
+  translate: (key: string, fallback?: string | Record<string, unknown>) =>
+    typeof fallback === 'string' ? fallback : key,
   useTranslation: () => ({
-    t: (key: string, fallback?: string | Record<string, unknown>) =>
-      typeof fallback === 'string' ? fallback : key,
+    t: (key: string, fallback?: string | Record<string, unknown>) => {
+      const labels: Record<string, string> = {
+        'features.network.workflows.searchConnectedGroup': 'Search connected group...',
+      };
+
+      return labels[key] ?? (typeof fallback === 'string' ? fallback : key);
+    },
   }),
 }));
 

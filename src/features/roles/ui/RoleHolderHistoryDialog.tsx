@@ -1,14 +1,14 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { History, User, Calendar, TrendingUp, UserX, Award, UserCheck, Clock } from 'lucide-react';
 import { format, formatDistanceStrict, formatDistanceToNow } from 'date-fns';
@@ -116,7 +116,7 @@ export function RoleHolderHistoryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto">
+      <ScrollableDialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <History className="h-5 w-5" />
@@ -152,23 +152,26 @@ export function RoleHolderHistoryDialog({
                             <div className="space-y-1">
                               <div className="flex flex-wrap items-center gap-2">
                                 <span className="font-semibold">{displayName}</span>
-                                <Badge className="bg-primary">
+                                <BadgeControl className="bg-primary">
                                   {translateText('generated.inline.1060_present_4e9f7a31')}
-                                </Badge>
+                                </BadgeControl>
                                 {entry.source === 'membership' ? (
-                                  <Badge
+                                  <BadgeControl
                                     variant="outline"
                                     className="border-cyan-300 bg-cyan-50 text-cyan-700"
                                   >
                                     {translateText(
                                       'generated.inline.1061_membership_role_8da20220'
                                     )}
-                                  </Badge>
+                                  </BadgeControl>
                                 ) : entry.reason ? (
-                                  <Badge variant="outline" className={getReasonColor(entry.reason)}>
+                                  <BadgeControl
+                                    variant="outline"
+                                    className={getReasonColor(entry.reason)}
+                                  >
                                     <span className="mr-1">{getReasonIcon(entry.reason)}</span>
                                     {getReasonLabel(entry.reason)}
-                                  </Badge>
+                                  </BadgeControl>
                                 ) : null}
                               </div>
                               {entry.user.handle ? (
@@ -227,10 +230,10 @@ export function RoleHolderHistoryDialog({
                           <div className="text-muted-foreground flex items-center gap-2 text-sm">
                             <Clock className="h-3.5 w-3.5" />
                             <span>{formatPeriodDuration(period.startDate, period.endDate)}</span>
-                            <Badge variant="outline">
+                            <BadgeControl variant="outline">
                               {period.entries.length}
                               {translateText('generated.inline.0134_holders_6f9351dc')}
-                            </Badge>
+                            </BadgeControl>
                           </div>
                         </div>
 
@@ -250,13 +253,13 @@ export function RoleHolderHistoryDialog({
                                     {getUserDisplayName(entry.user)}
                                   </span>
                                   {entry.reason ? (
-                                    <Badge
+                                    <BadgeControl
                                       variant="outline"
                                       className={getReasonColor(entry.reason)}
                                     >
                                       <span className="mr-1">{getReasonIcon(entry.reason)}</span>
                                       {getReasonLabel(entry.reason)}
-                                    </Badge>
+                                    </BadgeControl>
                                   ) : null}
                                 </div>
                                 {entry.user?.handle ? (
@@ -287,7 +290,7 @@ export function RoleHolderHistoryDialog({
             </div>
           ) : null}
         </div>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

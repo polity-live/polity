@@ -2303,4 +2303,4 @@ export const allRelationships = [
   groupWorkflowRelationships,
   groupWorkflowStepRelationships,
   groupWorkflowApprovalRelationships,
-];
+] as const;

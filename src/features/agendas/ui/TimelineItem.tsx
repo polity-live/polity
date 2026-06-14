@@ -1,7 +1,7 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { ReactNode } from 'react';
-import { Badge } from '@/features/shared/ui/ui/badge.tsx';
 import { cn } from '@/features/shared/utils/utils.ts';
 
 interface TimelineItemProps {
@@ -25,16 +25,16 @@ export function TimelineItem({
     <div className={cn('relative flex gap-4', className)}>
       {/* Time Column */}
       <div className="relative flex w-24 flex-shrink-0 flex-col items-center pt-4">
-        <div className="h-3 w-3 rounded-full border-2 border-background bg-primary" />
-        <div className="mb-2 mt-2 flex h-8 w-8 items-center justify-center rounded-full bg-muted text-sm font-semibold">
+        <div className="border-background bg-primary h-3 w-3 rounded-full border-2" />
+        <div className="bg-muted mt-2 mb-2 flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold">
           {order}
         </div>
         <div className="mt-2 text-center">
           <div className="text-sm font-semibold">{startTime}</div>
-          <div className="mt-1 text-xs text-muted-foreground">{endTime}</div>
-          <Badge variant="outline" className="mt-2 text-xs">
+          <div className="text-muted-foreground mt-1 text-xs">{endTime}</div>
+          <BadgeControl variant="outline" className="mt-2 text-xs">
             {duration}m
-          </Badge>
+          </BadgeControl>
         </div>
       </div>
 

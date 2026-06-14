@@ -1,18 +1,17 @@
 'use client';
 
+import { FormControlInput, FormControlLabel } from '@/features/shared/ui/form';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { Loader2 } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Label } from '@/features/shared/ui/ui/label';
 
 interface CurrentPasswordConfirmationDialogProps {
   open: boolean;
@@ -42,18 +41,20 @@ export function CurrentPasswordConfirmationDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <ScrollableDialogContent className="sm:max-w-md">
         <form onSubmit={handleSubmit} className="space-y-4">
           <DialogHeader>
             <DialogTitle>{t('pages.user.securityConfirmation.title')}</DialogTitle>
-            <DialogDescription>{t('pages.user.securityConfirmation.description')}</DialogDescription>
+            <DialogDescription>
+              {t('pages.user.securityConfirmation.description')}
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-2">
-            <Label htmlFor="current-account-password">
+            <FormControlLabel htmlFor="current-account-password">
               {t('pages.user.securityConfirmation.currentPassword')}
-            </Label>
-            <Input
+            </FormControlLabel>
+            <FormControlInput
               id="current-account-password"
               type="password"
               autoComplete="current-password"
@@ -64,7 +65,7 @@ export function CurrentPasswordConfirmationDialog({
             />
           </div>
 
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
+          {error ? <p className="text-destructive text-sm">{error}</p> : null}
 
           <DialogFooter>
             <Button
@@ -83,7 +84,7 @@ export function CurrentPasswordConfirmationDialog({
             </Button>
           </DialogFooter>
         </form>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

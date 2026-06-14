@@ -1,8 +1,8 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { Image as ImageIcon, MapPin, User, Heart, MessageSquare } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { TimelineCardBase, TimelineCardContent, TimelineCardActions } from './TimelineCardBase';
@@ -101,12 +101,12 @@ export function ImageTimelineCard({ image, onImageClick, className }: ImageTimel
 
         {/* Source Badge */}
         {image.sourceType && (
-          <Badge
+          <BadgeControl
             variant="outline"
             className="absolute top-2 left-2 bg-white/80 text-xs dark:bg-gray-900/80"
           >
             {SOURCE_LABELS[image.sourceType] || image.sourceType}
-          </Badge>
+          </BadgeControl>
         )}
       </div>
 

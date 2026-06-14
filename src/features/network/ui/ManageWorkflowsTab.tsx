@@ -7,27 +7,10 @@ import {
   CardHeader,
   CardTitle,
 } from '@/features/shared/ui/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/features/shared/ui/ui/table';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/features/shared/ui/ui/alert-dialog';
+import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
+import { DangerConfirmDialog } from '@/features/shared/ui/dialog';
+import { StatusBadge } from '@/features/shared/ui/status';
 import { WorkflowEditor } from './WorkflowEditor';
 import {
   useTranslation,
@@ -88,39 +71,6 @@ interface ManageWorkflowsTabProps {
   onDeleteWorkflow: (workflowId: string) => void;
   onApproveWorkflowApproval: (approvalId: string) => void;
   onRejectWorkflowApproval: (approvalId: string) => void;
-}
-
-function getWorkflowStatusClasses(status?: string | null) {
-  switch (status) {
-    case 'active':
-      return 'border-0 bg-gradient-to-r from-emerald-500 to-teal-500 text-white';
-    case 'rejected':
-      return 'border-0 bg-gradient-to-r from-rose-500 to-red-500 text-white';
-    default:
-      return 'border-0 bg-gradient-to-r from-amber-400 to-orange-500 text-white';
-  }
-}
-
-function getApprovalStatusClasses(status?: string | null) {
-  switch (status) {
-    case 'accepted':
-      return 'border-0 bg-gradient-to-r from-emerald-500 to-teal-500 text-white';
-    case 'rejected':
-      return 'border-0 bg-gradient-to-r from-rose-500 to-red-500 text-white';
-    default:
-      return 'border-0 bg-gradient-to-r from-sky-500 to-indigo-500 text-white';
-  }
-}
-
-function getWorkflowRoleClasses(role: 'final' | 'start' | 'co-owner') {
-  switch (role) {
-    case 'final':
-      return 'border-0 bg-gradient-to-r from-emerald-500 to-teal-500 text-white';
-    case 'start':
-      return 'border-0 bg-gradient-to-r from-sky-500 to-violet-500 text-white';
-    default:
-      return 'border-0 bg-gradient-to-r from-fuchsia-500 to-amber-500 text-white';
-  }
 }
 
 function getSectionCardClasses(section: 'incoming' | 'outgoing' | 'active') {
@@ -192,9 +142,9 @@ function renderWorkflowApprovalTag(args: {
   const approvalGroupName = (args.approval.group?.name ?? args.approval.group_id) || 'Group';
 
   const badge = (
-    <Badge className={getApprovalStatusClasses(args.approval.status)}>
+    <StatusBadge status={args.approval.status}>
       {approvalGroupName}: {args.approval.status}
-    </Badge>
+    </StatusBadge>
   );
 
   if (!approvalGroupId) {
@@ -235,9 +185,9 @@ function renderWorkflowPath(workflow: WorkflowWithStepsRow, currentGroupId: stri
             currentGroupId,
           })}
           {step.label ? (
-            <Badge variant="outline" className="bg-background/70 text-xs">
+            <StatusBadge status="workflow-step" tone="outline" className="bg-background/70 text-xs">
               {step.label}
-            </Badge>
+            </StatusBadge>
           ) : null}
         </span>
       ))}
@@ -301,6 +251,239 @@ export function ManageWorkflowsTab({
   const hasVisibleTables =
     incomingRows.length > 0 || outgoingRequests.length > 0 || activeRelevantWorkflows.length > 0;
 
+  type IncomingWorkflowRow = (typeof incomingRows)[number];
+
+  const renderWorkflowTitleCell = (workflow: WorkflowWithStepsRow, fallbackStatus: string) => (
+    <div className="space-y-1">
+      <p className="font-medium">{workflow.name ?? t('common.untitled')}</p>
+      <div className="flex flex-wrap gap-2">
+        <StatusBadge status={workflow.status ?? fallbackStatus}>
+          {workflow.status ?? fallbackStatus}
+        </StatusBadge>
+        <RightBadge right="amendmentRight" variant="outline" />
+        {workflow.is_default_entry ? (
+          <StatusBadge status="default" tone="outline">
+            {t('features.network.workflows.defaultEntryBadge')}
+          </StatusBadge>
+        ) : null}
+      </div>
+    </div>
+  );
+
+  const renderWorkflowDeleteAction = (workflow: WorkflowWithStepsRow) => (
+    <DangerConfirmDialog
+      trigger={
+        <Button variant="ghost" size="icon">
+          <Trash2 className="h-4 w-4" />
+          <span className="sr-only">{t('common.actions.delete')}</span>
+        </Button>
+      }
+      title={t('features.network.workflows.deleteConfirm')}
+      description={t('features.network.workflows.deleteDescription')}
+      cancelLabel={t('common.cancel')}
+      confirmLabel={t('common.delete')}
+      onConfirm={() => onDeleteWorkflow(workflow.id)}
+    />
+  );
+
+  const incomingColumns: ColumnDef<IncomingWorkflowRow>[] = [
+    {
+      id: 'name',
+      header: t('common.name'),
+      cell: ({ row }) => renderWorkflowTitleCell(row.original.workflow, 'pending_approval'),
+    },
+    {
+      id: 'group',
+      header: t('common.group'),
+      cell: ({ row }) =>
+        renderWorkflowGroupTag({
+          groupId: row.original.workflow.group?.id ?? row.original.workflow.group_id,
+          groupName: row.original.workflow.group?.name ?? row.original.workflow.group_id,
+          currentGroupId: groupId,
+        }),
+    },
+    {
+      id: 'start-group',
+      header: t('features.network.workflows.startGroup'),
+      cell: ({ row }) =>
+        renderWorkflowGroupTag({
+          groupId: getWorkflowStartGroup(row.original.workflow).id,
+          groupName: getWorkflowStartGroup(row.original.workflow).name,
+          currentGroupId: groupId,
+        }),
+    },
+    {
+      id: 'path',
+      header: t('features.network.workflows.path'),
+      cell: ({ row }) => renderWorkflowPath(row.original.workflow, groupId),
+    },
+    {
+      id: 'actions',
+      header: t('common.actions.actions'),
+      meta: {
+        headerClassName: 'text-right',
+        cellClassName: 'text-right',
+      },
+      cell: ({ row }) => (
+        <div className="flex items-center justify-end gap-2">
+          <Button size="sm" onClick={() => onApproveWorkflowApproval(row.original.approval.id)}>
+            {t('common.actions.confirm')}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onRejectWorkflowApproval(row.original.approval.id)}
+          >
+            {t('common.actions.reject')}
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
+  const outgoingColumns: ColumnDef<WorkflowWithStepsRow>[] = [
+    {
+      id: 'name',
+      header: t('common.name'),
+      cell: ({ row }) => renderWorkflowTitleCell(row.original, 'pending_approval'),
+    },
+    {
+      id: 'start-group',
+      header: t('features.network.workflows.startGroup'),
+      cell: ({ row }) =>
+        renderWorkflowGroupTag({
+          groupId: getWorkflowStartGroup(row.original).id,
+          groupName: getWorkflowStartGroup(row.original).name,
+          currentGroupId: groupId,
+        }),
+    },
+    {
+      id: 'final-group',
+      header: t('features.network.workflows.finalGroup'),
+      cell: ({ row }) =>
+        renderWorkflowGroupTag({
+          groupId: getWorkflowFinalGroup(row.original).id,
+          groupName: getWorkflowFinalGroup(row.original).name,
+          currentGroupId: groupId,
+        }),
+    },
+    {
+      id: 'approvals',
+      header: t('features.network.workflows.approvals'),
+      cell: ({ row }) => (
+        <div className="flex flex-wrap gap-2">
+          {(row.original.approvals ?? [])
+            .filter(approval => approval.group_id !== groupId)
+            .map(approval => (
+              <div key={approval.id}>
+                {renderWorkflowApprovalTag({ approval, currentGroupId: groupId })}
+              </div>
+            ))}
+        </div>
+      ),
+    },
+    ...(canManageWorkflows
+      ? [
+          {
+            id: 'actions',
+            header: t('common.actions.actions'),
+            meta: {
+              headerClassName: 'text-right',
+              cellClassName: 'text-right',
+            },
+            cell: ({ row }) => (
+              <div className="flex items-center justify-end gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onOpenEditWorkflow(row.original)}
+                >
+                  <Pencil className="h-4 w-4" />
+                  <span className="sr-only">{t('features.network.workflows.edit')}</span>
+                </Button>
+                {renderWorkflowDeleteAction(row.original)}
+              </div>
+            ),
+          } satisfies ColumnDef<WorkflowWithStepsRow>,
+        ]
+      : []),
+  ];
+
+  const activeColumns: ColumnDef<WorkflowWithStepsRow>[] = [
+    {
+      id: 'name',
+      header: t('common.name'),
+      cell: ({ row }) =>
+        renderWorkflowTitleCell(
+          row.original,
+          translateText('generated.inline.0045_active_2bb6b986')
+        ),
+    },
+    {
+      id: 'role',
+      header: t('features.network.workflows.role'),
+      cell: ({ row }) => {
+        const isFinalGroup = row.original.group_id === groupId;
+        const isStartGroup = row.original.start_group_id === groupId;
+        const role: 'final' | 'start' | 'co-owner' = isFinalGroup
+          ? 'final'
+          : isStartGroup
+            ? 'start'
+            : 'co-owner';
+
+        return (
+          <StatusBadge
+            status={role}
+            tone={role === 'final' ? 'success' : role === 'start' ? 'info' : 'accent'}
+          >
+            {isFinalGroup
+              ? t('features.network.workflows.roleFinalGroup')
+              : isStartGroup
+                ? t('features.network.workflows.roleStartGroup')
+                : t('features.network.workflows.roleCoOwner')}
+          </StatusBadge>
+        );
+      },
+    },
+    {
+      id: 'start-group',
+      header: t('features.network.workflows.startGroup'),
+      cell: ({ row }) =>
+        renderWorkflowGroupTag({
+          groupId: getWorkflowStartGroup(row.original).id,
+          groupName: getWorkflowStartGroup(row.original).name,
+          currentGroupId: groupId,
+        }),
+    },
+    {
+      id: 'path',
+      header: t('features.network.workflows.path'),
+      cell: ({ row }) => renderWorkflowPath(row.original, groupId),
+    },
+    {
+      id: 'actions',
+      header: t('common.actions.actions'),
+      meta: {
+        headerClassName: 'text-right',
+        cellClassName: 'text-right',
+      },
+      cell: ({ row }) =>
+        canManageWorkflows ? (
+          <div className="flex items-center justify-end gap-1">
+            <Button variant="ghost" size="icon" onClick={() => onOpenEditWorkflow(row.original)}>
+              <Pencil className="h-4 w-4" />
+              <span className="sr-only">{t('features.network.workflows.edit')}</span>
+            </Button>
+            {renderWorkflowDeleteAction(row.original)}
+          </div>
+        ) : (
+          <span className="text-muted-foreground text-sm">
+            {t('features.network.workflows.readOnlyNoPermission')}
+          </span>
+        ),
+    },
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -344,67 +527,12 @@ export function ManageWorkflowsTab({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t('common.name')}</TableHead>
-                    <TableHead>{t('common.group')}</TableHead>
-                    <TableHead>{t('features.network.workflows.startGroup')}</TableHead>
-                    <TableHead>{t('features.network.workflows.path')}</TableHead>
-                    <TableHead className="text-right">{t('common.actions.actions')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {incomingRows.map(({ workflow, approval }) => (
-                    <TableRow key={workflow.id}>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <p className="font-medium">{workflow.name ?? t('common.untitled')}</p>
-                          <div className="flex flex-wrap gap-2">
-                            <Badge className={getWorkflowStatusClasses(workflow.status)}>
-                              {workflow.status ?? 'pending_approval'}
-                            </Badge>
-                            <RightBadge right="amendmentRight" variant="outline" />
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {renderWorkflowGroupTag({
-                          groupId: workflow.group?.id ?? workflow.group_id,
-                          groupName: workflow.group?.name ?? workflow.group_id,
-                          currentGroupId: groupId,
-                        })}
-                      </TableCell>
-                      <TableCell>
-                        {renderWorkflowGroupTag({
-                          groupId: getWorkflowStartGroup(workflow).id,
-                          groupName: getWorkflowStartGroup(workflow).name,
-                          currentGroupId: groupId,
-                        })}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {renderWorkflowPath(workflow, groupId)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button size="sm" onClick={() => onApproveWorkflowApproval(approval.id)}>
-                            {t('common.actions.confirm')}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => onRejectWorkflowApproval(approval.id)}
-                          >
-                            {t('common.actions.reject')}
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <DataTable
+              columns={incomingColumns}
+              data={incomingRows}
+              getRowId={row => row.workflow.id}
+              enablePagination={false}
+            />
           </CardContent>
         </Card>
       ) : null}
@@ -421,101 +549,12 @@ export function ManageWorkflowsTab({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t('common.name')}</TableHead>
-                    <TableHead>{t('features.network.workflows.startGroup')}</TableHead>
-                    <TableHead>{t('features.network.workflows.finalGroup')}</TableHead>
-                    <TableHead>{t('features.network.workflows.approvals')}</TableHead>
-                    <TableHead className="text-right">{t('common.actions.actions')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {outgoingRequests.map(workflow => (
-                    <TableRow key={workflow.id}>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <p className="font-medium">{workflow.name ?? t('common.untitled')}</p>
-                          <div className="flex flex-wrap gap-2">
-                            <Badge className={getWorkflowStatusClasses(workflow.status)}>
-                              {workflow.status ?? 'pending_approval'}
-                            </Badge>
-                            <RightBadge right="amendmentRight" variant="outline" />
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {renderWorkflowGroupTag({
-                          groupId: getWorkflowStartGroup(workflow).id,
-                          groupName: getWorkflowStartGroup(workflow).name,
-                          currentGroupId: groupId,
-                        })}
-                      </TableCell>
-                      <TableCell>
-                        {renderWorkflowGroupTag({
-                          groupId: getWorkflowFinalGroup(workflow).id,
-                          groupName: getWorkflowFinalGroup(workflow).name,
-                          currentGroupId: groupId,
-                        })}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-2">
-                          {(workflow.approvals ?? [])
-                            .filter(approval => approval.group_id !== groupId)
-                            .map(approval => (
-                              <div key={approval.id}>
-                                {renderWorkflowApprovalTag({ approval, currentGroupId: groupId })}
-                              </div>
-                            ))}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {canManageWorkflows ? (
-                          <div className="flex items-center justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => onOpenEditWorkflow(workflow)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                              <span className="sr-only">
-                                {t('features.network.workflows.edit')}
-                              </span>
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                  <Trash2 className="h-4 w-4" />
-                                  <span className="sr-only">{t('common.actions.delete')}</span>
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    {t('features.network.workflows.deleteConfirm')}
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    {t('features.network.workflows.deleteDescription')}
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => onDeleteWorkflow(workflow.id)}>
-                                    {t('common.delete')}
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        ) : null}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <DataTable
+              columns={outgoingColumns}
+              data={outgoingRequests}
+              getRowId={workflow => workflow.id}
+              enablePagination={false}
+            />
           </CardContent>
         </Card>
       ) : null}
@@ -532,117 +571,12 @@ export function ManageWorkflowsTab({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t('common.name')}</TableHead>
-                    <TableHead>{t('features.network.workflows.role')}</TableHead>
-                    <TableHead>{t('features.network.workflows.startGroup')}</TableHead>
-                    <TableHead>{t('features.network.workflows.path')}</TableHead>
-                    <TableHead className="text-right">{t('common.actions.actions')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {activeRelevantWorkflows.map(workflow => {
-                    const isFinalGroup = workflow.group_id === groupId;
-                    const isStartGroup = workflow.start_group_id === groupId;
-                    const role: 'final' | 'start' | 'co-owner' = isFinalGroup
-                      ? 'final'
-                      : isStartGroup
-                        ? 'start'
-                        : 'co-owner';
-
-                    return (
-                      <TableRow key={workflow.id}>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <p className="font-medium">{workflow.name ?? t('common.untitled')}</p>
-                            <div className="flex flex-wrap gap-2">
-                              <Badge className={getWorkflowStatusClasses(workflow.status)}>
-                                {workflow.status ??
-                                  translateText('generated.inline.0045_active_2bb6b986')}
-                              </Badge>
-                              <RightBadge right="amendmentRight" variant="outline" />
-                              {workflow.is_default_entry ? (
-                                <Badge variant="outline">
-                                  {t('features.network.workflows.defaultEntryBadge')}
-                                </Badge>
-                              ) : null}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={getWorkflowRoleClasses(role)}>
-                            {isFinalGroup
-                              ? t('features.network.workflows.roleFinalGroup')
-                              : isStartGroup
-                                ? t('features.network.workflows.roleStartGroup')
-                                : t('features.network.workflows.roleCoOwner')}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {renderWorkflowGroupTag({
-                            groupId: getWorkflowStartGroup(workflow).id,
-                            groupName: getWorkflowStartGroup(workflow).name,
-                            currentGroupId: groupId,
-                          })}
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {renderWorkflowPath(workflow, groupId)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {canManageWorkflows ? (
-                            <div className="flex items-center justify-end gap-1">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => onOpenEditWorkflow(workflow)}
-                              >
-                                <Pencil className="h-4 w-4" />
-                                <span className="sr-only">
-                                  {t('features.network.workflows.edit')}
-                                </span>
-                              </Button>
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button variant="ghost" size="icon">
-                                    <Trash2 className="h-4 w-4" />
-                                    <span className="sr-only">{t('common.actions.delete')}</span>
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>
-                                      {t('features.network.workflows.deleteConfirm')}
-                                    </AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      {t('features.network.workflows.deleteDescription')}
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() => onDeleteWorkflow(workflow.id)}
-                                    >
-                                      {t('common.delete')}
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground text-sm">
-                              {t('features.network.workflows.readOnlyNoPermission')}
-                            </span>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
+            <DataTable
+              columns={activeColumns}
+              data={activeRelevantWorkflows}
+              getRowId={workflow => workflow.id}
+              enablePagination={false}
+            />
           </CardContent>
         </Card>
       ) : null}

@@ -1,5 +1,5 @@
+import { FormControlInput } from '@/features/shared/ui/form';
 import React, { useMemo } from 'react';
-import { Input } from '@/features/shared/ui/ui/input';
 import { Search } from 'lucide-react';
 import { StatementTimelineCard } from '@/features/timeline/ui/cards/StatementTimelineCard';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -36,7 +36,7 @@ export const StatementListTab: React.FC<StatementListTabProps> = ({
     <>
       <div className="relative mb-4">
         <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-        <Input
+        <FormControlInput
           placeholder={t('pages.user.statements.searchPlaceholder')}
           className="pl-10"
           value={searchValue}

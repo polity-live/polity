@@ -26,22 +26,22 @@ import type { EditorEntityType, EditorMode } from '../types';
 interface ModeSelectorProps {
   entityType: EditorEntityType;
   entityId: string;
-  currentMode: EditorMode;
+  currentMode: EditorMode | string;
   isOwnerOrCollaborator: boolean;
-  onModeChange?: (mode: EditorMode) => void;
+  onModeChange?: (mode: EditorMode) => void | Promise<void>;
 }
 
 export function ModeSelector({
-  entityType: _entityType,
   currentMode,
   isOwnerOrCollaborator,
   onModeChange,
 }: ModeSelectorProps) {
   const { t } = useTranslation();
   const currentModeConfig = getEditingModeOption(currentMode, t);
+  const normalizedMode = currentModeConfig.value as EditorMode;
 
   const handleModeChange = async (newMode: EditorMode) => {
-    if (newMode === currentMode) return;
+    if (newMode === normalizedMode) return;
 
     if (!isOwnerOrCollaborator) {
       toast.error(t('features.editor.modeSelector.errors.onlyCollaborators'));
@@ -50,7 +50,7 @@ export function ModeSelector({
 
     try {
       if (onModeChange) {
-        onModeChange(newMode);
+        await onModeChange(newMode);
       }
     } catch (error) {
       console.error('Failed to change mode:', error);
@@ -71,7 +71,7 @@ export function ModeSelector({
       <DropdownMenuContent align="end" className="w-80">
         <DropdownMenuLabel>{t('features.editor.modeSelector.selectMode')}</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <EditingModeMenuItems value={currentMode} onValueChange={handleModeChange} />
+        <EditingModeMenuItems value={normalizedMode} onValueChange={handleModeChange} />
       </DropdownMenuContent>
     </DropdownMenu>
   );

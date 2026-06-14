@@ -1,6 +1,6 @@
 'use client';
 
-import { Input } from '@/features/shared/ui/ui/input';
+import { FormControlInput, FormControlLabel } from '@/features/shared/ui/form';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
   Card,
@@ -9,8 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/features/shared/ui/ui/card';
-import { Badge } from '@/features/shared/ui/ui/badge';
-import { Label } from '@/features/shared/ui/ui/label';
+import { EntityBadge, StatusBadge } from '@/features/shared/ui/status';
 import { ToggleGroup, ToggleGroupItem } from '@/features/shared/ui/ui/toggle-group';
 import {
   useTranslation,
@@ -55,7 +54,7 @@ export function AmendmentSearchAndFilters({
       <div className="flex gap-2">
         <div className="relative flex-1">
           <SearchIcon className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-          <Input
+          <FormControlInput
             placeholder={t('features.groups.amendments.searchPlaceholder')}
             value={filters.searchQuery}
             onChange={e => onSearchChange(e.target.value)}
@@ -74,7 +73,11 @@ export function AmendmentSearchAndFilters({
             {t('features.groups.common.filters.active')}
           </span>
           {filters.statusFilter !== 'all' && (
-            <Badge variant="secondary" className="cursor-pointer" onClick={onClearStatusFilter}>
+            <StatusBadge
+              status={filters.statusFilter}
+              className="cursor-pointer"
+              onClick={onClearStatusFilter}
+            >
               {translateText('generated.inline.0643_status_11dc9e19')}
               {statusLabels[filters.statusFilter] ?? filters.statusFilter}
               <button
@@ -86,10 +89,10 @@ export function AmendmentSearchAndFilters({
               >
                 ×
               </button>
-            </Badge>
+            </StatusBadge>
           )}
           {filters.hashtagFilter && (
-            <Badge variant="secondary" className="cursor-pointer" onClick={onClearHashtagFilter}>
+            <EntityBadge tone="neutral" className="cursor-pointer" onClick={onClearHashtagFilter}>
               <Hash className="mr-1 h-3 w-3" />
               {filters.hashtagFilter.replace(/^#/, '')}
               <button
@@ -101,7 +104,7 @@ export function AmendmentSearchAndFilters({
               >
                 ×
               </button>
-            </Badge>
+            </EntityBadge>
           )}
         </div>
       )}
@@ -115,7 +118,9 @@ export function AmendmentSearchAndFilters({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="status-filter">{t('features.groups.common.filters.status')}</Label>
+              <FormControlLabel htmlFor="status-filter">
+                {t('features.groups.common.filters.status')}
+              </FormControlLabel>
               <ToggleGroup
                 id="status-filter"
                 type="single"
@@ -162,8 +167,10 @@ export function AmendmentSearchAndFilters({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="hashtag-filter">{t('features.groups.common.filters.hashtag')}</Label>
-              <Input
+              <FormControlLabel htmlFor="hashtag-filter">
+                {t('features.groups.common.filters.hashtag')}
+              </FormControlLabel>
+              <FormControlInput
                 id="hashtag-filter"
                 placeholder={t('features.groups.events.hashtagPlaceholder')}
                 value={filters.hashtagFilter}

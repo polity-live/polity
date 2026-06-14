@@ -1,8 +1,8 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Vote, CheckCircle2, Crown, Expand } from 'lucide-react';
 import {
   useTranslation,
@@ -199,19 +199,19 @@ export function AgendaVoteSection({
           <Vote className="h-5 w-5" />
           {t('features.events.agenda.voteResults')}
           {attendanceMode ? (
-            <Badge variant="outline" className="capitalize">
+            <BadgeControl variant="outline" className="capitalize">
               {attendanceMode}
-            </Badge>
+            </BadgeControl>
           ) : null}
           <VotePhaseBadge
             phase={isIndicationPhase ? 'indication' : isClosed ? 'closed' : 'final_vote'}
             className="ml-auto"
           />
           {isInteractive ? (
-            <Badge variant="secondary" className="gap-1">
+            <BadgeControl variant="secondary" className="gap-1">
               <Expand className="h-3 w-3" />
               {translateText('generated.inline.0013_namentlich_8d49da42')}
-            </Badge>
+            </BadgeControl>
           ) : null}
         </CardTitle>
       </CardHeader>
@@ -247,14 +247,14 @@ export function AgendaVoteSection({
             </span>
             <div className="flex items-center gap-2">
               {isIndicationPhase ? (
-                <Badge variant="secondary" className="text-xs">
+                <BadgeControl variant="secondary" className="text-xs">
                   * {t('features.events.agenda.indicationOnly')}
-                </Badge>
+                </BadgeControl>
               ) : null}
               {isInteractive ? (
-                <Badge variant="outline" className="text-xs">
+                <BadgeControl variant="outline" className="text-xs">
                   {translateText('generated.inline.0015_klick_fuer_einzelansicht_9d7ff135')}
-                </Badge>
+                </BadgeControl>
               ) : null}
             </div>
           </div>

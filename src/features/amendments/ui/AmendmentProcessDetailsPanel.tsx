@@ -1,10 +1,10 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Building2, ChevronDown, ChevronRight, ExternalLink, ScrollText } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import {
   Collapsible,
   CollapsibleContent,
@@ -108,7 +108,7 @@ export function AmendmentProcessDetailsPanel({
 
             <div className="flex flex-wrap gap-2">
               {amendment.group?.id && amendment.group?.name ? (
-                <Badge variant="outline" className="text-xs">
+                <BadgeControl variant="outline" className="text-xs">
                   <Link
                     to="/group/$id"
                     params={{ id: amendment.group.id }}
@@ -117,12 +117,12 @@ export function AmendmentProcessDetailsPanel({
                     <Building2 className="h-3 w-3" />
                     {amendment.group.name}
                   </Link>
-                </Badge>
+                </BadgeControl>
               ) : amendment.group?.name ? (
-                <Badge variant="outline" className="text-xs">
+                <BadgeControl variant="outline" className="text-xs">
                   <Building2 className="mr-1 h-3 w-3" />
                   {amendment.group.name}
-                </Badge>
+                </BadgeControl>
               ) : null}
             </div>
 

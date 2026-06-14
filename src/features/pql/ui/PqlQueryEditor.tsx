@@ -1,6 +1,6 @@
+import { BadgeControl } from '@/features/shared/ui/status';
+import { FormControlTextarea } from '@/features/shared/ui/form';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Badge } from '@/features/shared/ui/ui/badge';
-import { Textarea } from '@/features/shared/ui/ui/textarea';
 import { cn } from '@/features/shared/utils/utils';
 import type { PqlFieldDefinition } from '../logic/applyPqlFilter';
 import {
@@ -107,7 +107,7 @@ export function PqlQueryEditor<TItem, TFieldKey extends string>({
   return (
     <div className={cn('space-y-3', className)}>
       <div className="relative">
-        <Textarea
+        <FormControlTextarea
           ref={textareaRef}
           value={value}
           placeholder={placeholder}
@@ -191,9 +191,12 @@ export function PqlQueryEditor<TItem, TFieldKey extends string>({
                 }}
                 onMouseEnter={() => setSelectedSuggestionIndex(index)}
               >
-                <Badge variant="outline" className="min-w-16 justify-center text-[10px] uppercase">
+                <BadgeControl
+                  variant="outline"
+                  className="min-w-16 justify-center text-[10px] uppercase"
+                >
                   {suggestion.kind}
-                </Badge>
+                </BadgeControl>
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-medium">{suggestion.label}</div>
                   {suggestion.detail ? (
@@ -210,15 +213,15 @@ export function PqlQueryEditor<TItem, TFieldKey extends string>({
 
       <div className="flex flex-wrap gap-2">
         {visibleFields.map(field => (
-          <Badge key={field.key} variant="secondary" className="font-mono text-xs">
+          <BadgeControl key={field.key} variant="secondary" className="font-mono text-xs">
             {field.key}
-          </Badge>
+          </BadgeControl>
         ))}
         {fields.length > visibleFields.length ? (
-          <Badge variant="outline" className="font-mono text-xs">
+          <BadgeControl variant="outline" className="font-mono text-xs">
             +{fields.length - visibleFields.length}
             {translateText('generated.inline.0142_more_e7c95b4c')}
-          </Badge>
+          </BadgeControl>
         ) : null}
       </div>
 

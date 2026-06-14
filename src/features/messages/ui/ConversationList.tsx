@@ -1,8 +1,8 @@
+import { FormControlInput } from '@/features/shared/ui/form';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useRef } from 'react';
 import { Card, CardHeader } from '@/features/shared/ui/ui/card';
 import { Separator } from '@/features/shared/ui/ui/separator';
-import { Input } from '@/features/shared/ui/ui/input';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Search, MessageCircle, Bot } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
@@ -96,7 +96,7 @@ export function ConversationList({
         <div className="space-y-2">
           <div className="relative">
             <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-            <Input
+            <FormControlInput
               placeholder={t('features.messages.searchConversations')}
               value={searchQuery}
               onChange={e => onSearchChange(e.target.value)}

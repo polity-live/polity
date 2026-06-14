@@ -1,5 +1,6 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import {
   Card,
   CardContent,
@@ -7,7 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/features/shared/ui/ui/card';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Users, Copy } from 'lucide-react';
 import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
@@ -15,7 +15,7 @@ import { extractHashtags } from '@/zero/common/hashtagHelpers';
 import { StatsBar } from '@/features/shared/ui/ui/StatsBar';
 import { ActionBar } from '@/features/shared/ui/ui/ActionBar';
 import { SubscribeButton, MembershipButton } from '@/features/shared/ui/action-buttons';
-import { InfoTabs } from '@/features/shared/ui/wiki/InfoTabs.tsx';
+import { InfoTabs, WikiIncumbentPanel } from '@/features/shared/ui/wiki';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { EditingModeBadge } from '@/features/shared/ui/ui/editing-mode.tsx';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
@@ -30,7 +30,6 @@ import {
 } from '@/features/shared/hooks/use-translation';
 import { useAmendmentWikiPage } from './hooks/useAmendmentWikiPage';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
-import { WikiIncumbentPanel } from '@/features/shared/ui/wiki/WikiIncumbentPanel';
 import { buildAmendmentWikiCollaboratorSections } from '@/features/amendments/logic/buildAmendmentWikiCollaboratorSections';
 import { SupporterDirectorySection } from './ui/SupporterDirectorySection';
 
@@ -356,10 +355,10 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
           <CardContent className="space-y-3 text-sm">
             <div className="flex flex-wrap items-center gap-3">
               {implementationDisplayStatus ? (
-                <Badge variant="secondary">{implementationDisplayStatus}</Badge>
+                <BadgeControl variant="secondary">{implementationDisplayStatus}</BadgeControl>
               ) : null}
               {implementationStatus ? (
-                <Badge variant="outline">{implementationStatus}</Badge>
+                <BadgeControl variant="outline">{implementationStatus}</BadgeControl>
               ) : null}
             </div>
 
@@ -403,9 +402,9 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
             <div className="flex flex-wrap gap-2">
               {evaluationEvent?.id ? (
                 <Link to="/event/$id" params={{ id: evaluationEvent.id }}>
-                  <Badge variant="outline">
+                  <BadgeControl variant="outline">
                     {evaluationEvent.title ?? translateText('generated.inline.0023_event_ad8919ac')}
-                  </Badge>
+                  </BadgeControl>
                 </Link>
               ) : null}
               {evaluationEvent?.id && evaluationAgendaItem?.id ? (
@@ -413,10 +412,10 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
                   to="/event/$id/agenda/$agendaItemId"
                   params={{ id: evaluationEvent.id, agendaItemId: evaluationAgendaItem.id }}
                 >
-                  <Badge variant="outline">
+                  <BadgeControl variant="outline">
                     {evaluationAgendaItem.title ??
                       translateText('generated.inline.0024_agenda_item_39cc1416')}
-                  </Badge>
+                  </BadgeControl>
                 </Link>
               ) : null}
             </div>
@@ -465,9 +464,9 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
                       <div className="flex flex-wrap gap-2">
                         <EditingModeBadge mode={clone.editing_mode} showIcon />
                         {clone.code && (
-                          <Badge variant="outline" className="text-xs">
+                          <BadgeControl variant="outline" className="text-xs">
                             {clone.code}
-                          </Badge>
+                          </BadgeControl>
                         )}
                       </div>
                     </CardHeader>

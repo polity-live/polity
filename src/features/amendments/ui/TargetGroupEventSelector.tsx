@@ -1,16 +1,16 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Badge } from '@/features/shared/ui/ui/badge';
-import { Label } from '@/features/shared/ui/ui/label';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/features/shared/ui/ui/tabs';
+import { BadgeControl } from '@/features/shared/ui/status';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/features/shared/ui/ui/select';
+  FormControlLabel,
+  FormControlSelect,
+  FormControlSelectContent,
+  FormControlSelectItem,
+  FormControlSelectTrigger,
+  FormControlSelectValue,
+} from '@/features/shared/ui/form';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/features/shared/ui/ui/tabs';
 import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
@@ -1006,7 +1006,9 @@ export function TargetGroupEventSelector({
       )}
 
       <div className="space-y-2">
-        <Label>{translateText('generated.inline.0178_startgruppe_27591dc9')}</Label>
+        <FormControlLabel>
+          {translateText('generated.inline.0178_startgruppe_27591dc9')}
+        </FormControlLabel>
         {activeSourceGroups.length === 0 ? (
           <p className="text-muted-foreground text-sm">
             {translateText(
@@ -1064,7 +1066,9 @@ export function TargetGroupEventSelector({
 
           <TabsContent value="hierarchy" className="space-y-4">
             <div className="space-y-2">
-              <Label>{translateText('generated.inline.0183_zielgruppe_10f54053')}</Label>
+              <FormControlLabel>
+                {translateText('generated.inline.0183_zielgruppe_10f54053')}
+              </FormControlLabel>
               {availableTargetGroups.length === 0 ? (
                 <p className="text-muted-foreground text-sm">
                   {translateText(
@@ -1096,8 +1100,10 @@ export function TargetGroupEventSelector({
 
             {selectedSourceGroup && selectedGroup && availableHierarchyPaths.length > 1 ? (
               <div className="space-y-2">
-                <Label>{translateText('generated.inline.0186_route_4999528e')}</Label>
-                <Select
+                <FormControlLabel>
+                  {translateText('generated.inline.0186_route_4999528e')}
+                </FormControlLabel>
+                <FormControlSelect
                   value={selectedHierarchyPathId}
                   onValueChange={value => {
                     setSelectedHierarchyPathId(value);
@@ -1106,19 +1112,19 @@ export function TargetGroupEventSelector({
                     setPathValidationError(null);
                   }}
                 >
-                  <SelectTrigger>
-                    <SelectValue
+                  <FormControlSelectTrigger>
+                    <FormControlSelectValue
                       placeholder={translateText('generated.inline.0187_pfad_auswaehlen_42ca323f')}
                     />
-                  </SelectTrigger>
-                  <SelectContent>
+                  </FormControlSelectTrigger>
+                  <FormControlSelectContent>
                     {availableHierarchyPaths.map(pathOption => (
-                      <SelectItem key={pathOption.id} value={pathOption.id}>
+                      <FormControlSelectItem key={pathOption.id} value={pathOption.id}>
                         {formatPathOptionLabel(pathOption, networkGroups)}
-                      </SelectItem>
+                      </FormControlSelectItem>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </FormControlSelectContent>
+                </FormControlSelect>
                 <p className="text-muted-foreground text-xs">
                   {translateText(
                     'generated.inline.0188_mehrere_gueltige_amendment_pfade_gefunden_hie_635b9345'
@@ -1130,7 +1136,9 @@ export function TargetGroupEventSelector({
 
           <TabsContent value="workflow" className="space-y-4">
             <div className="space-y-2">
-              <Label>{translateText('generated.inline.0189_ziel_workflow_f6a9c843')}</Label>
+              <FormControlLabel>
+                {translateText('generated.inline.0189_ziel_workflow_f6a9c843')}
+              </FormControlLabel>
               <TypeaheadSearch
                 items={toTypeaheadItems(
                   reachableWorkflows,
@@ -1159,7 +1167,9 @@ export function TargetGroupEventSelector({
             {selectedWorkflowIdState && (
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>{translateText('generated.inline.0191_workflow_start_24e8baa4')}</Label>
+                  <FormControlLabel>
+                    {translateText('generated.inline.0191_workflow_start_24e8baa4')}
+                  </FormControlLabel>
                   <div className="bg-muted/40 rounded-md border px-3 py-2 text-sm font-medium">
                     {selectedWorkflowStartGroup?.name ??
                       translateText('generated.inline.0028_unbekannt_d0b00a9f')}
@@ -1172,9 +1182,9 @@ export function TargetGroupEventSelector({
                 </div>
 
                 <div className="space-y-2">
-                  <Label>
+                  <FormControlLabel>
                     {translateText('generated.inline.0193_abgeleitete_zielgruppe_28e1d067')}
-                  </Label>
+                  </FormControlLabel>
                   <div className="bg-muted/40 rounded-md border px-3 py-2 text-sm font-medium">
                     {selectedWorkflowFinalGroup?.name ??
                       translateText('generated.inline.0028_unbekannt_d0b00a9f')}
@@ -1191,7 +1201,9 @@ export function TargetGroupEventSelector({
         </Tabs>
       ) : (
         <div className="space-y-2">
-          <Label>{translateText('generated.inline.0183_zielgruppe_10f54053')}</Label>
+          <FormControlLabel>
+            {translateText('generated.inline.0183_zielgruppe_10f54053')}
+          </FormControlLabel>
           {availableTargetGroups.length === 0 ? (
             <p className="text-muted-foreground text-sm">
               {translateText(
@@ -1223,11 +1235,11 @@ export function TargetGroupEventSelector({
       )}
 
       <div className="space-y-2">
-        <Label>
+        <FormControlLabel>
           {selectedSourceGroup
             ? translateText('generated.inline.0029_netzwerk_der_startgruppe_e8e9bbf1')
             : translateText('generated.inline.0030_startgruppen_netzwerk_83d1c873')}
-        </Label>
+        </FormControlLabel>
         <div className="h-[28rem] min-h-[28rem] overflow-hidden rounded-md border">
           {selectedSourceGroup ? (
             <GroupNetworkFlow
@@ -1258,7 +1270,9 @@ export function TargetGroupEventSelector({
 
       {selectedGroup && (
         <div className="space-y-2">
-          <Label>{translateText('generated.inline.0198_ziel_event_8f4df57f')}</Label>
+          <FormControlLabel>
+            {translateText('generated.inline.0198_ziel_event_8f4df57f')}
+          </FormControlLabel>
           {upcomingEvents.length === 0 ? (
             <p className="text-muted-foreground text-sm">
               {translateText(
@@ -1285,9 +1299,9 @@ export function TargetGroupEventSelector({
         <div className="border-border bg-muted/30 space-y-3 rounded-md border p-3">
           <div className="flex items-center gap-2">
             <Target className="text-muted-foreground h-4 w-4" />
-            <Label className="text-sm">
+            <FormControlLabel className="text-sm">
               {translateText('generated.inline.0201_prozesspfad_a9e34361')}
-            </Label>
+            </FormControlLabel>
           </div>
 
           <div className="space-y-3">
@@ -1325,10 +1339,13 @@ export function TargetGroupEventSelector({
                         ) : null}
                       </div>
                     </div>
-                    <Badge variant={segment.eventId ? 'secondary' : 'outline'} className="text-xs">
+                    <BadgeControl
+                      variant={segment.eventId ? 'secondary' : 'outline'}
+                      className="text-xs"
+                    >
                       {translateText('generated.inline.0204_schritt_cc71ba9d')}
                       {index + 1}
-                    </Badge>
+                    </BadgeControl>
                   </div>
 
                   {segmentEvents.length > 0 ? (
@@ -1448,11 +1465,14 @@ export function TargetGroupEventDisplay({
           <div className="mt-2 flex flex-wrap items-center gap-1">
             {pathWithEvents.map((segment, index) => (
               <div key={segment.segmentKey} className="flex items-center gap-1">
-                <Badge variant={segment.eventId ? 'secondary' : 'outline'} className="text-xs">
+                <BadgeControl
+                  variant={segment.eventId ? 'secondary' : 'outline'}
+                  className="text-xs"
+                >
                   {segment.stepLabel
                     ? `${segment.groupName} (${segment.stepLabel})`
                     : segment.groupName}
-                </Badge>
+                </BadgeControl>
                 {index < pathWithEvents.length - 1 && (
                   <ChevronRight className="text-muted-foreground h-3 w-3" />
                 )}

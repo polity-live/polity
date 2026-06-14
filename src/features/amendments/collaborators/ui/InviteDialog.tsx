@@ -7,13 +7,13 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { UserPlus, Loader2 } from 'lucide-react';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/features/shared/ui/ui/dialog';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
 import { toast } from 'sonner';
@@ -90,7 +90,7 @@ export function InviteDialog({
           {translateText('generated.inline.0109_invite_collaborator_aea80de5')}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <ScrollableDialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
             {translateText('generated.inline.0110_invite_collaborators_b801b9cc')}
@@ -144,7 +144,7 @@ export function InviteDialog({
             )}
           </Button>
         </DialogFooter>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

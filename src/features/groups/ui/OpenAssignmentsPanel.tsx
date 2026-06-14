@@ -1,3 +1,12 @@
+import {
+  FormControlInput,
+  FormControlLabel,
+  FormControlSelect,
+  FormControlSelectContent,
+  FormControlSelectItem,
+  FormControlSelectTrigger,
+  FormControlSelectValue,
+} from '@/features/shared/ui/form';
 import { useMemo, useState } from 'react';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
@@ -23,7 +32,8 @@ import {
   type GroupOpenAssignment,
 } from '@/features/groups/logic/openAssignments';
 import { DynamicTimelineCard } from '@/features/timeline/ui/LazyCardComponents';
-import { Badge } from '@/features/shared/ui/ui/badge';
+import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
+import { CountBadge, EntityBadge, StatusBadge } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
   Card,
@@ -32,32 +42,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@/features/shared/ui/ui/card';
-import { TableTag } from '@/features/shared/ui/ui/table-tag';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Label } from '@/features/shared/ui/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/features/shared/ui/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/features/shared/ui/ui/table';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { cn } from '@/features/shared/utils/utils';
 import { ProcessAgendaPreviewDialog } from '@/features/groups/ui/ProcessAgendaPreviewDialog';
 import type { DelegateElectionMode } from '../hooks/useGroupOpenAssignments';
@@ -88,25 +80,30 @@ interface OpenAssignmentsPanelProps {
   onScheduleProcessTask: (assignment: GroupOpenAssignment, eventId: string) => Promise<void>;
 }
 
+interface OpenAssignmentTableRow {
+  assignment: GroupOpenAssignment;
+  remainingSeatCount: number;
+}
+
 function getStatusBadge(t: TFunction, assignment: GroupOpenAssignment) {
   switch (assignment.status) {
     case 'completed':
       return (
-        <Badge className="bg-emerald-600 text-white">
+        <StatusBadge status="completed">
           {t('features.groups.memberships.openAssignments.status.completed')}
-        </Badge>
+        </StatusBadge>
       );
     case 'scheduled':
       return (
-        <Badge variant="secondary">
+        <StatusBadge status="scheduled">
           {t('features.groups.memberships.openAssignments.status.scheduled')}
-        </Badge>
+        </StatusBadge>
       );
     default:
       return (
-        <Badge variant="outline">
+        <StatusBadge status="open">
           {t('features.groups.memberships.openAssignments.status.open')}
-        </Badge>
+        </StatusBadge>
       );
   }
 }
@@ -115,29 +112,31 @@ function getAssignmentTypeBadge(t: TFunction, assignment: GroupOpenAssignment) {
   switch (assignment.kind) {
     case 'delegate_election':
       return (
-        <Badge>{t('features.groups.memberships.openAssignments.type.delegateElection')}</Badge>
+        <StatusBadge status="delegate" tone="info">
+          {t('features.groups.memberships.openAssignments.type.delegateElection')}
+        </StatusBadge>
       );
     case 'role_renewal':
       return (
-        <Badge variant="secondary">
+        <StatusBadge status="role-renewal" tone="warning">
           {t('features.groups.memberships.openAssignments.type.roleRenewal')}
-        </Badge>
+        </StatusBadge>
       );
     case 'process_task':
       return (
-        <Badge variant="outline">
+        <StatusBadge status="process-task" tone="neutral">
           {assignment.processTaskType === 'implementation_evaluation'
             ? t('features.groups.memberships.openAssignments.type.implementationEvaluation')
             : assignment.processTaskType === 'support_confirmation'
               ? t('features.groups.memberships.openAssignments.type.supportConfirmation')
               : t('features.groups.memberships.openAssignments.type.processTask')}
-        </Badge>
+        </StatusBadge>
       );
     default:
       return (
-        <Badge variant="outline">
+        <StatusBadge status="assignment" tone="neutral">
           {t('features.groups.memberships.openAssignments.type.assignment')}
-        </Badge>
+        </StatusBadge>
       );
   }
 }
@@ -275,27 +274,23 @@ function EventTag({
   label: string;
 }) {
   return (
-    <Link to="/event/$id" params={{ id: event.id }} className="inline-flex hover:opacity-90">
-      <TableTag entityType="event" className="max-w-full">
+    <EntityBadge asChild tone="info" className="max-w-full hover:opacity-90">
+      <Link to="/event/$id" params={{ id: event.id }} className="inline-flex">
         <span className="truncate">
           {label}: {event.title || translateText('generated.inline.0102_veranstaltung_e6fdb4cc')}
         </span>
-      </TableTag>
-    </Link>
+      </Link>
+    </EntityBadge>
   );
 }
 
 function AmendmentTag({ amendment }: { amendment: NonNullable<GroupOpenAssignment['amendment']> }) {
   return (
-    <Link
-      to="/amendment/$id"
-      params={{ id: amendment.id }}
-      className="inline-flex hover:opacity-90"
-    >
-      <TableTag entityType="amendment" className="max-w-full">
+    <EntityBadge asChild tone="accent" className="max-w-full hover:opacity-90">
+      <Link to="/amendment/$id" params={{ id: amendment.id }} className="inline-flex">
         <span className="truncate">{amendment.title}</span>
-      </TableTag>
-    </Link>
+      </Link>
+    </EntityBadge>
   );
 }
 
@@ -414,6 +409,310 @@ export function OpenAssignmentsPanel({
     assignment.processTaskType !== 'support_confirmation' &&
     Boolean(assignment.amendment?.id);
 
+  const assignmentColumns: ColumnDef<OpenAssignmentTableRow>[] = [
+    {
+      id: 'assignment',
+      header: t('features.groups.memberships.openAssignments.columns.assignment'),
+      cell: ({ row }) => {
+        const { assignment, remainingSeatCount } = row.original;
+        const dueAtLabel = formatDateTime(assignment.dueAt, i18n.language);
+
+        return (
+          <div className="space-y-2">
+            <div className="flex items-start gap-2">
+              {assignment.kind === 'delegate_election' ? (
+                <Vote className="mt-0.5 h-4 w-4 flex-shrink-0" />
+              ) : (
+                <Clock3 className="mt-0.5 h-4 w-4 flex-shrink-0" />
+              )}
+              <div className="min-w-0">
+                <p className="font-medium">{assignment.title}</p>
+                <p className="text-muted-foreground text-sm">{assignment.description}</p>
+              </div>
+            </div>
+
+            {assignment.kind === 'delegate_election' ? (
+              <div className="flex flex-wrap gap-2">
+                <CountBadge
+                  count={assignment.seatCount ?? 0}
+                  label={t('features.groups.memberships.openAssignments.seatCount')}
+                />
+                <CountBadge
+                  count={assignment.completedSeatCount ?? 0}
+                  label={t('features.groups.memberships.openAssignments.completedSeatCount')}
+                  tone="success"
+                />
+                <CountBadge
+                  count={assignment.scheduledSeatCount ?? 0}
+                  label={t('features.groups.memberships.openAssignments.scheduledSeatCount')}
+                  tone="warning"
+                />
+                <CountBadge
+                  count={remainingSeatCount}
+                  label={t('features.groups.memberships.openAssignments.openSeatCount')}
+                  tone="info"
+                />
+                <StatusBadge status="delegate-mode" tone="neutral" className="font-normal">
+                  {getElectionModeLabel(
+                    normalizeDelegateElectionMode(assignment.targetEvent?.delegate_election_mode)
+                  )}
+                </StatusBadge>
+              </div>
+            ) : null}
+
+            {dueAtLabel ? (
+              <p className="text-muted-foreground text-xs">
+                {t('features.groups.memberships.openAssignments.dueAt')}: {dueAtLabel}
+              </p>
+            ) : null}
+          </div>
+        );
+      },
+    },
+    {
+      id: 'type',
+      header: t('features.groups.memberships.openAssignments.columns.type'),
+      cell: ({ row }) => getAssignmentTypeBadge(t, row.original.assignment),
+    },
+    {
+      id: 'status',
+      header: t('features.groups.memberships.openAssignments.columns.status'),
+      cell: ({ row }) => getStatusBadge(t, row.original.assignment),
+    },
+    {
+      id: 'amendment',
+      header: t('features.groups.memberships.openAssignments.columns.amendment'),
+      cell: ({ row }) =>
+        row.original.assignment.amendment ? (
+          <div className="flex flex-wrap gap-2">
+            <AmendmentTag amendment={row.original.assignment.amendment} />
+          </div>
+        ) : (
+          <span className="text-muted-foreground text-sm">
+            {t('features.groups.memberships.openAssignments.noAmendment')}
+          </span>
+        ),
+    },
+    {
+      id: 'events',
+      header: t('features.groups.memberships.openAssignments.columns.events'),
+      cell: ({ row }) => {
+        const { assignment } = row.original;
+
+        return (
+          <div className="flex flex-wrap gap-2">
+            {assignment.targetEvent?.id ? (
+              <EventTag
+                event={assignment.targetEvent}
+                label={t('features.groups.memberships.openAssignments.targetEventLabel')}
+              />
+            ) : null}
+            {assignment.linkedEvent?.id ? (
+              <EventTag
+                event={assignment.linkedEvent}
+                label={t('features.groups.memberships.openAssignments.linkedEventLabel')}
+              />
+            ) : null}
+            {!assignment.targetEvent?.id && !assignment.linkedEvent?.id ? (
+              <span className="text-muted-foreground text-sm">
+                {t('features.groups.memberships.openAssignments.noEventLinked')}
+              </span>
+            ) : null}
+          </div>
+        );
+      },
+    },
+    {
+      id: 'action',
+      header: t('features.groups.memberships.openAssignments.columns.action'),
+      meta: {
+        className: 'w-[26rem]',
+      },
+      cell: ({ row }) => {
+        const { assignment, remainingSeatCount } = row.original;
+        const eligibleEvents = getEligibleEventsForAssignment(assignment, groupId, availableEvents);
+        const selectedEventId = getDefaultEventId(assignment, eligibleEvents, selectedEventIds);
+        const schedulingWindowLabel = getAssignmentSchedulingWindowLabel(assignment, groupId);
+        const showAgendaPreviewButton = isAmendmentProcessAssignment(assignment);
+        const canScheduleMore =
+          assignment.kind === 'delegate_election'
+            ? remainingSeatCount > 0
+            : assignment.status !== 'completed';
+
+        if (!canScheduleMore) {
+          return (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-3 py-2 text-sm text-emerald-700">
+                <CheckCircle2 className="h-4 w-4" />
+                {t('features.groups.memberships.openAssignments.completedBanner')}
+              </div>
+              {showAgendaPreviewButton ? (
+                <Button
+                  variant="outline"
+                  className="w-full justify-center"
+                  onClick={() => setAgendaPreviewAssignmentId(assignment.id)}
+                >
+                  {t('features.groups.memberships.openAssignments.showAgendaItems')}
+                </Button>
+              ) : null}
+            </div>
+          );
+        }
+
+        if (eligibleEvents.length === 0) {
+          return (
+            <div className="space-y-3 rounded-lg border border-dashed p-3">
+              <p className="text-muted-foreground text-sm">
+                {availableEvents.length === 0
+                  ? t('features.groups.memberships.openAssignments.noEligibleEventsForGroup', {
+                      groupName:
+                        groupName || t('features.groups.memberships.openAssignments.thisGroup'),
+                      defaultValue:
+                        'There is currently no upcoming or ongoing event for {{groupName}}.',
+                    })
+                  : translateText(
+                      'generated.inline.0103_keines_der_vorhandenen_events_liegt_im_erlaub_4c83a2ed'
+                    )}
+              </p>
+              {schedulingWindowLabel ? (
+                <p className="text-muted-foreground text-xs">{schedulingWindowLabel}</p>
+              ) : null}
+              <Button asChild variant="outline" className="w-full justify-center">
+                <Link
+                  to="/create/event"
+                  search={
+                    assignment.kind === 'process_task' && assignment.processTaskId
+                      ? buildCreateEventSearchFromProcessTask({
+                          task: {
+                            id: assignment.processTaskId,
+                            group_id: groupId,
+                            process_run_id: assignment.processRunId ?? null,
+                            step_run_id: assignment.stepRunId ?? null,
+                            due_at: assignment.dueAt ?? null,
+                            metadata: assignment.processTaskMetadata,
+                          },
+                          groupId,
+                          returnTo: `/group/${groupId}/memberships?tab=openAssignments`,
+                        })
+                      : { groupId }
+                  }
+                >
+                  <CalendarPlus2 className="mr-2 h-4 w-4" />
+                  {t('features.groups.memberships.openAssignments.createEvent')}
+                </Link>
+              </Button>
+              {showAgendaPreviewButton ? (
+                <Button
+                  variant="outline"
+                  className="w-full justify-center"
+                  onClick={() => setAgendaPreviewAssignmentId(assignment.id)}
+                >
+                  {t('features.groups.memberships.openAssignments.showAgendaItems')}
+                </Button>
+              ) : null}
+            </div>
+          );
+        }
+
+        if (assignment.kind === 'delegate_election') {
+          return (
+            <div className="space-y-2">
+              <p className="text-muted-foreground text-sm">
+                {t('features.groups.memberships.openAssignments.delegateElectionHelp', {
+                  groupName:
+                    groupName || t('features.groups.memberships.openAssignments.thisGroup'),
+                  defaultValue:
+                    'Delegates must be elected at an upcoming or ongoing event for {{groupName}}.',
+                })}
+              </p>
+              <Button
+                className="w-full justify-center"
+                disabled={isScheduling}
+                onClick={() => openDelegateDialog(assignment)}
+              >
+                <Search className="mr-2 h-4 w-4" />
+                {t('features.groups.memberships.openAssignments.searchDelegateElectionEvent')}
+              </Button>
+            </div>
+          );
+        }
+
+        return (
+          <div className="space-y-3">
+            {schedulingWindowLabel ? (
+              <p className="text-muted-foreground text-xs">{schedulingWindowLabel}</p>
+            ) : null}
+            <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
+              <div className="space-y-2">
+                <FormControlLabel className="text-xs">
+                  {t('features.groups.memberships.openAssignments.selectEventLabel')}
+                </FormControlLabel>
+                <FormControlSelect
+                  value={selectedEventId}
+                  onValueChange={value =>
+                    setSelectedEventIds(current => ({
+                      ...current,
+                      [assignment.id]: value,
+                    }))
+                  }
+                >
+                  <FormControlSelectTrigger>
+                    <FormControlSelectValue
+                      placeholder={t(
+                        'features.groups.memberships.openAssignments.selectEventPlaceholder'
+                      )}
+                    />
+                  </FormControlSelectTrigger>
+                  <FormControlSelectContent>
+                    {eligibleEvents.map(event => (
+                      <FormControlSelectItem key={event.id} value={event.id}>
+                        {event.title ||
+                          t('features.groups.memberships.openAssignments.eventFallback')}
+                      </FormControlSelectItem>
+                    ))}
+                  </FormControlSelectContent>
+                </FormControlSelect>
+              </div>
+
+              <div className="flex items-end">
+                <Button
+                  className="w-full justify-center"
+                  disabled={!selectedEventId || isScheduling}
+                  onClick={() =>
+                    void (assignment.kind === 'process_task'
+                      ? onScheduleProcessTask(assignment, selectedEventId)
+                      : onScheduleRoleRenewal(assignment, selectedEventId))
+                  }
+                >
+                  <CalendarPlus2 className="mr-2 h-4 w-4" />
+                  {assignment.kind === 'process_task'
+                    ? assignment.processTaskType === 'implementation_evaluation'
+                      ? t(
+                          'features.groups.memberships.openAssignments.scheduleImplementationReview'
+                        )
+                      : assignment.processTaskType === 'support_confirmation'
+                        ? t('features.groups.memberships.openAssignments.scheduleConfirmation')
+                        : t('features.groups.memberships.openAssignments.attachToEvent')
+                    : t('features.groups.memberships.openAssignments.attachToEvent')}
+                </Button>
+              </div>
+            </div>
+
+            {showAgendaPreviewButton ? (
+              <Button
+                variant="outline"
+                className="w-full justify-center"
+                onClick={() => setAgendaPreviewAssignmentId(assignment.id)}
+              >
+                {t('features.groups.memberships.openAssignments.showAgendaItems')}
+              </Button>
+            ) : null}
+          </div>
+        );
+      },
+    },
+  ];
+
   if (isLoading) {
     return (
       <Card>
@@ -455,349 +754,17 @@ export function OpenAssignmentsPanel({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="border-border/70 overflow-x-auto rounded-2xl border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>
-                    {t('features.groups.memberships.openAssignments.columns.assignment')}
-                  </TableHead>
-                  <TableHead>
-                    {t('features.groups.memberships.openAssignments.columns.type')}
-                  </TableHead>
-                  <TableHead>
-                    {t('features.groups.memberships.openAssignments.columns.status')}
-                  </TableHead>
-                  <TableHead>
-                    {t('features.groups.memberships.openAssignments.columns.amendment')}
-                  </TableHead>
-                  <TableHead>
-                    {t('features.groups.memberships.openAssignments.columns.events')}
-                  </TableHead>
-                  <TableHead className="w-[26rem]">
-                    {t('features.groups.memberships.openAssignments.columns.action')}
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {assignmentsWithProgress.map(({ assignment, remainingSeatCount }) => {
-                  const eligibleEvents = getEligibleEventsForAssignment(
-                    assignment,
-                    groupId,
-                    availableEvents
-                  );
-                  const selectedEventId = getDefaultEventId(
-                    assignment,
-                    eligibleEvents,
-                    selectedEventIds
-                  );
-                  const schedulingWindowLabel = getAssignmentSchedulingWindowLabel(
-                    assignment,
-                    groupId
-                  );
-                  const showAgendaPreviewButton = isAmendmentProcessAssignment(assignment);
-                  const canScheduleMore =
-                    assignment.kind === 'delegate_election'
-                      ? remainingSeatCount > 0
-                      : assignment.status !== 'completed';
-                  const dueAtLabel = formatDateTime(assignment.dueAt, i18n.language);
-
-                  return (
-                    <TableRow key={assignment.id}>
-                      <TableCell className="align-top">
-                        <div className="space-y-2">
-                          <div className="flex items-start gap-2">
-                            {assignment.kind === 'delegate_election' ? (
-                              <Vote className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                            ) : (
-                              <Clock3 className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                            )}
-                            <div className="min-w-0">
-                              <p className="font-medium">{assignment.title}</p>
-                              <p className="text-muted-foreground text-sm">
-                                {assignment.description}
-                              </p>
-                            </div>
-                          </div>
-
-                          {assignment.kind === 'delegate_election' ? (
-                            <div className="flex flex-wrap gap-2">
-                              <Badge variant="outline">
-                                {t('features.groups.memberships.openAssignments.seatCount')}:{' '}
-                                {assignment.seatCount ?? 0}
-                              </Badge>
-                              <Badge variant="outline">
-                                {t(
-                                  'features.groups.memberships.openAssignments.completedSeatCount'
-                                )}
-                                : {assignment.completedSeatCount ?? 0}
-                              </Badge>
-                              <Badge variant="outline">
-                                {t(
-                                  'features.groups.memberships.openAssignments.scheduledSeatCount'
-                                )}
-                                : {assignment.scheduledSeatCount ?? 0}
-                              </Badge>
-                              <Badge variant="outline">
-                                {t('features.groups.memberships.openAssignments.openSeatCount')}:{' '}
-                                {remainingSeatCount}
-                              </Badge>
-                              <Badge variant="outline" className="font-normal">
-                                {getElectionModeLabel(
-                                  normalizeDelegateElectionMode(
-                                    assignment.targetEvent?.delegate_election_mode
-                                  )
-                                )}
-                              </Badge>
-                            </div>
-                          ) : null}
-
-                          {dueAtLabel ? (
-                            <p className="text-muted-foreground text-xs">
-                              {t('features.groups.memberships.openAssignments.dueAt')}: {dueAtLabel}
-                            </p>
-                          ) : null}
-                        </div>
-                      </TableCell>
-
-                      <TableCell className="align-top">
-                        {getAssignmentTypeBadge(t, assignment)}
-                      </TableCell>
-                      <TableCell className="align-top">{getStatusBadge(t, assignment)}</TableCell>
-
-                      <TableCell className="align-top">
-                        {assignment.amendment ? (
-                          <div className="flex flex-wrap gap-2">
-                            <AmendmentTag amendment={assignment.amendment} />
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">
-                            {t('features.groups.memberships.openAssignments.noAmendment')}
-                          </span>
-                        )}
-                      </TableCell>
-
-                      <TableCell className="align-top">
-                        <div className="flex flex-wrap gap-2">
-                          {assignment.targetEvent?.id ? (
-                            <EventTag
-                              event={assignment.targetEvent}
-                              label={t(
-                                'features.groups.memberships.openAssignments.targetEventLabel'
-                              )}
-                            />
-                          ) : null}
-                          {assignment.linkedEvent?.id ? (
-                            <EventTag
-                              event={assignment.linkedEvent}
-                              label={t(
-                                'features.groups.memberships.openAssignments.linkedEventLabel'
-                              )}
-                            />
-                          ) : null}
-                          {!assignment.targetEvent?.id && !assignment.linkedEvent?.id ? (
-                            <span className="text-muted-foreground text-sm">
-                              {t('features.groups.memberships.openAssignments.noEventLinked')}
-                            </span>
-                          ) : null}
-                        </div>
-                      </TableCell>
-
-                      <TableCell className="align-top">
-                        {!canScheduleMore ? (
-                          <div className="space-y-3">
-                            <div className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-3 py-2 text-sm text-emerald-700">
-                              <CheckCircle2 className="h-4 w-4" />
-                              {t('features.groups.memberships.openAssignments.completedBanner')}
-                            </div>
-                            {showAgendaPreviewButton ? (
-                              <Button
-                                variant="outline"
-                                className="w-full justify-center"
-                                onClick={() => setAgendaPreviewAssignmentId(assignment.id)}
-                              >
-                                {t('features.groups.memberships.openAssignments.showAgendaItems')}
-                              </Button>
-                            ) : null}
-                          </div>
-                        ) : eligibleEvents.length === 0 ? (
-                          <div className="space-y-3 rounded-lg border border-dashed p-3">
-                            <p className="text-muted-foreground text-sm">
-                              {availableEvents.length === 0
-                                ? t(
-                                    'features.groups.memberships.openAssignments.noEligibleEventsForGroup',
-                                    {
-                                      groupName:
-                                        groupName ||
-                                        t('features.groups.memberships.openAssignments.thisGroup'),
-                                      defaultValue:
-                                        'There is currently no upcoming or ongoing event for {{groupName}}.',
-                                    }
-                                  )
-                                : translateText(
-                                    'generated.inline.0103_keines_der_vorhandenen_events_liegt_im_erlaub_4c83a2ed'
-                                  )}
-                            </p>
-                            {schedulingWindowLabel ? (
-                              <p className="text-muted-foreground text-xs">
-                                {schedulingWindowLabel}
-                              </p>
-                            ) : null}
-                            <Button asChild variant="outline" className="w-full justify-center">
-                              <Link
-                                to="/create/event"
-                                search={
-                                  assignment.kind === 'process_task' && assignment.processTaskId
-                                    ? buildCreateEventSearchFromProcessTask({
-                                        task: {
-                                          id: assignment.processTaskId,
-                                          group_id: groupId,
-                                          process_run_id: assignment.processRunId ?? null,
-                                          step_run_id: assignment.stepRunId ?? null,
-                                          due_at: assignment.dueAt ?? null,
-                                          metadata: assignment.processTaskMetadata,
-                                        },
-                                        groupId,
-                                        returnTo: `/group/${groupId}/memberships?tab=openAssignments`,
-                                      })
-                                    : { groupId }
-                                }
-                              >
-                                <CalendarPlus2 className="mr-2 h-4 w-4" />
-                                {t('features.groups.memberships.openAssignments.createEvent')}
-                              </Link>
-                            </Button>
-                            {showAgendaPreviewButton ? (
-                              <Button
-                                variant="outline"
-                                className="w-full justify-center"
-                                onClick={() => setAgendaPreviewAssignmentId(assignment.id)}
-                              >
-                                {t('features.groups.memberships.openAssignments.showAgendaItems')}
-                              </Button>
-                            ) : null}
-                          </div>
-                        ) : assignment.kind === 'delegate_election' ? (
-                          <div className="space-y-2">
-                            <p className="text-muted-foreground text-sm">
-                              {t(
-                                'features.groups.memberships.openAssignments.delegateElectionHelp',
-                                {
-                                  groupName:
-                                    groupName ||
-                                    t('features.groups.memberships.openAssignments.thisGroup'),
-                                  defaultValue:
-                                    'Delegates must be elected at an upcoming or ongoing event for {{groupName}}.',
-                                }
-                              )}
-                            </p>
-                            <Button
-                              className="w-full justify-center"
-                              disabled={isScheduling}
-                              onClick={() => openDelegateDialog(assignment)}
-                            >
-                              <Search className="mr-2 h-4 w-4" />
-                              {t(
-                                'features.groups.memberships.openAssignments.searchDelegateElectionEvent'
-                              )}
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="space-y-3">
-                            {schedulingWindowLabel ? (
-                              <p className="text-muted-foreground text-xs">
-                                {schedulingWindowLabel}
-                              </p>
-                            ) : null}
-                            <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
-                              <div className="space-y-2">
-                                <Label className="text-xs">
-                                  {t(
-                                    'features.groups.memberships.openAssignments.selectEventLabel'
-                                  )}
-                                </Label>
-                                <Select
-                                  value={selectedEventId}
-                                  onValueChange={value =>
-                                    setSelectedEventIds(current => ({
-                                      ...current,
-                                      [assignment.id]: value,
-                                    }))
-                                  }
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue
-                                      placeholder={t(
-                                        'features.groups.memberships.openAssignments.selectEventPlaceholder'
-                                      )}
-                                    />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {eligibleEvents.map(event => (
-                                      <SelectItem key={event.id} value={event.id}>
-                                        {event.title ||
-                                          t(
-                                            'features.groups.memberships.openAssignments.eventFallback'
-                                          )}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-
-                              <div className="flex items-end">
-                                <Button
-                                  className="w-full justify-center"
-                                  disabled={!selectedEventId || isScheduling}
-                                  onClick={() =>
-                                    void (assignment.kind === 'process_task'
-                                      ? onScheduleProcessTask(assignment, selectedEventId)
-                                      : onScheduleRoleRenewal(assignment, selectedEventId))
-                                  }
-                                >
-                                  <CalendarPlus2 className="mr-2 h-4 w-4" />
-                                  {assignment.kind === 'process_task'
-                                    ? assignment.processTaskType === 'implementation_evaluation'
-                                      ? t(
-                                          'features.groups.memberships.openAssignments.scheduleImplementationReview'
-                                        )
-                                      : assignment.processTaskType === 'support_confirmation'
-                                        ? t(
-                                            'features.groups.memberships.openAssignments.scheduleConfirmation'
-                                          )
-                                        : t(
-                                            'features.groups.memberships.openAssignments.attachToEvent'
-                                          )
-                                    : t(
-                                        'features.groups.memberships.openAssignments.attachToEvent'
-                                      )}
-                                </Button>
-                              </div>
-                            </div>
-
-                            {showAgendaPreviewButton ? (
-                              <Button
-                                variant="outline"
-                                className="w-full justify-center"
-                                onClick={() => setAgendaPreviewAssignmentId(assignment.id)}
-                              >
-                                {t('features.groups.memberships.openAssignments.showAgendaItems')}
-                              </Button>
-                            ) : null}
-                          </div>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
+          <DataTable
+            columns={assignmentColumns}
+            data={assignmentsWithProgress}
+            getRowId={row => row.assignment.id}
+            enablePagination={false}
+          />
         </CardContent>
       </Card>
 
       <Dialog open={!!activeDelegateAssignment} onOpenChange={closeDelegateDialog}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-4xl">
+        <ScrollableDialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle>
               {t('features.groups.memberships.openAssignments.delegateDialog.title')}
@@ -815,14 +782,14 @@ export function OpenAssignmentsPanel({
             <div className="space-y-4">
               <div className="bg-muted/30 rounded-xl border p-4">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="outline">
+                  <StatusBadge status="delegate-mode" tone="neutral">
                     {getElectionModeLabel(
                       normalizeDelegateElectionMode(
                         activeDelegateAssignment.targetEvent?.delegate_election_mode
                       )
                     )}
-                  </Badge>
-                  <Badge variant="secondary">
+                  </StatusBadge>
+                  <StatusBadge status="open" tone="info">
                     {t(
                       'features.groups.memberships.openAssignments.delegateDialog.remainingSeats',
                       {
@@ -830,7 +797,7 @@ export function OpenAssignmentsPanel({
                         defaultValue: '{{count}} delegates to elect',
                       }
                     )}
-                  </Badge>
+                  </StatusBadge>
                 </div>
                 <p className="text-muted-foreground mt-3 text-sm">
                   {t('features.groups.memberships.openAssignments.delegateDialog.targetEvent')}
@@ -843,12 +810,12 @@ export function OpenAssignmentsPanel({
               </div>
 
               <div className="space-y-2">
-                <Label>
+                <FormControlLabel>
                   {t('features.groups.memberships.openAssignments.delegateDialog.searchLabel')}
-                </Label>
+                </FormControlLabel>
                 <div className="relative">
                   <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-                  <Input
+                  <FormControlInput
                     value={delegateDialogSearchQuery}
                     onChange={event => {
                       const nextValue = event.target.value;
@@ -911,7 +878,7 @@ export function OpenAssignmentsPanel({
               {t('features.groups.memberships.openAssignments.delegateDialog.create')}
             </Button>
           </DialogFooter>
-        </DialogContent>
+        </ScrollableDialogContent>
       </Dialog>
 
       {activeAgendaPreviewAssignment?.amendment?.id ? (

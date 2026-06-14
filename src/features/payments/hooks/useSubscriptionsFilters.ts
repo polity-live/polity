@@ -6,8 +6,24 @@ export type FilterType = 'all' | 'users' | 'groups' | 'amendments' | 'events' | 
 type SubscriptionItem = NonNullable<ReturnType<typeof useCommonState>['userSubscriptions']>[number];
 type SubscriberItem = NonNullable<ReturnType<typeof useCommonState>['userSubscribers']>[number];
 
-function createSearchText(parts: (string | null | undefined)[]) {
-  return parts.filter((part): part is string => Boolean(part)).join(' ').toLowerCase();
+function toSearchTextPart(part: unknown): string | null {
+  if (typeof part === 'string') {
+    return part;
+  }
+
+  if (typeof part === 'number' || typeof part === 'boolean') {
+    return String(part);
+  }
+
+  return null;
+}
+
+function createSearchText(parts: unknown[]) {
+  return parts
+    .map(toSearchTextPart)
+    .filter((part): part is string => Boolean(part))
+    .join(' ')
+    .toLowerCase();
 }
 
 export interface UseSubscriptionsFiltersOptions {
@@ -45,7 +61,7 @@ export function useSubscriptionsFilters({
     if (!searchQuery.trim()) return subscriptions;
 
     const query = searchQuery.trim().toLowerCase();
-    return subscriptions.filter((subscription) => {
+    return subscriptions.filter(subscription => {
       if (subscription.user) {
         return createSearchText([
           subscription.user.first_name,
@@ -54,10 +70,9 @@ export function useSubscriptionsFilters({
       }
 
       if (subscription.group) {
-        return createSearchText([
-          subscription.group.name,
-          subscription.group.description,
-        ]).includes(query);
+        return createSearchText([subscription.group.name, subscription.group.description]).includes(
+          query
+        );
       }
 
       if (subscription.amendment) {
@@ -84,7 +99,7 @@ export function useSubscriptionsFilters({
       return searchFilteredSubscriptions;
     }
 
-    return searchFilteredSubscriptions.filter((subscription) => {
+    return searchFilteredSubscriptions.filter(subscription => {
       switch (filterType) {
         case 'users':
           return !!subscription.user;
@@ -106,7 +121,7 @@ export function useSubscriptionsFilters({
     if (!searchQuery.trim()) return subscribers;
 
     const query = searchQuery.trim().toLowerCase();
-    return subscribers.filter((subscription) =>
+    return subscribers.filter(subscription =>
       createSearchText([
         subscription.subscriber_user?.first_name,
         subscription.subscriber_user?.last_name,
@@ -117,11 +132,12 @@ export function useSubscriptionsFilters({
   const subscriptionCounts: SubscriptionCounts = useMemo(() => {
     return {
       all: searchFilteredSubscriptions.length,
-      users: searchFilteredSubscriptions.filter((subscription) => !!subscription.user).length,
-      groups: searchFilteredSubscriptions.filter((subscription) => !!subscription.group).length,
-      amendments: searchFilteredSubscriptions.filter((subscription) => !!subscription.amendment).length,
-      events: searchFilteredSubscriptions.filter((subscription) => !!subscription.event).length,
-      blogs: searchFilteredSubscriptions.filter((subscription) => !!subscription.blog).length,
+      users: searchFilteredSubscriptions.filter(subscription => !!subscription.user).length,
+      groups: searchFilteredSubscriptions.filter(subscription => !!subscription.group).length,
+      amendments: searchFilteredSubscriptions.filter(subscription => !!subscription.amendment)
+        .length,
+      events: searchFilteredSubscriptions.filter(subscription => !!subscription.event).length,
+      blogs: searchFilteredSubscriptions.filter(subscription => !!subscription.blog).length,
     };
   }, [searchFilteredSubscriptions]);
 

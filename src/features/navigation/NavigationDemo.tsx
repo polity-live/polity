@@ -1,3 +1,4 @@
+import { BadgeControl } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import {
   Card,
@@ -6,7 +7,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/features/shared/ui/ui/card.tsx';
-import { Badge } from '@/features/shared/ui/ui/badge.tsx';
 import { ThemeToggle } from '@/features/navigation/toggles/theme-toggle.tsx';
 import { Search } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -88,9 +88,9 @@ export default function NavigationDemo({
               </Button>
             </div>
             <div className="text-muted-foreground mt-2 flex items-center text-sm">
-              <Badge variant="outline" className="mr-2">
+              <BadgeControl variant="outline" className="mr-2">
                 {screenType}
-              </Badge>
+              </BadgeControl>
               <span>{t('navigationDemo.screenType.description')}</span>
             </div>
           </div>
@@ -146,16 +146,16 @@ export default function NavigationDemo({
           <div className="border-t pt-4">
             <h3 className="mb-3 text-lg font-medium">{t('navigationDemo.currentConfig.title')}</h3>
             <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary">
+              <BadgeControl variant="secondary">
                 {t('navigationDemo.currentConfig.state')}
                 {translateText('generated.inline.0754_asbutton_0e7e9874')}
-              </Badge>
-              <Badge variant="secondary">
+              </BadgeControl>
+              <BadgeControl variant="secondary">
                 {t('navigationDemo.currentConfig.priority')}: {priority}
-              </Badge>
-              <Badge variant="secondary">
+              </BadgeControl>
+              <BadgeControl variant="secondary">
                 {t('navigationDemo.currentConfig.screen')}: {actualScreen}
-              </Badge>
+              </BadgeControl>
             </div>
           </div>
           <div className="border-t pt-4">

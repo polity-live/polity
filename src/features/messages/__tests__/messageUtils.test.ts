@@ -5,7 +5,13 @@ import {
   hasUnreadConversationRequest,
 } from '../logic/messageUtils';
 
-const createConversation = (overrides: Partial<Parameters<typeof getUnreadCount>[0]> = {}) => ({
+type TestConversationOverrides = Partial<Parameters<typeof getUnreadCount>[0]> & {
+  name?: string | null;
+  group?: { id?: string; name?: string | null; image_url?: string | null } | null;
+  event?: { id?: string; title?: string | null; image_url?: string | null } | null;
+};
+
+const createConversation = (overrides: TestConversationOverrides = {}) => ({
   type: 'direct',
   status: 'accepted',
   requested_by_id: 'user-b',

@@ -1,9 +1,8 @@
 'use client';
 
+import { FormControlInput, FormControlLabel } from '@/features/shared/ui/form';
 import { useState } from 'react';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
-import { Input } from '@/features/shared/ui/ui/input.tsx';
-import { Label } from '@/features/shared/ui/ui/label.tsx';
 import { ArrowRight, User } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import { cn } from '@/features/shared/utils/utils.ts';
@@ -77,13 +76,15 @@ export function NameStep({
           </div>
         </div>
         <h2 className="text-2xl font-bold">{t('onboarding.nameStep.title')}</h2>
-        <p className="mt-2 text-muted-foreground">{t('onboarding.nameStep.description')}</p>
+        <p className="text-muted-foreground mt-2">{t('onboarding.nameStep.description')}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="firstName">{t('onboarding.nameStep.firstName')}</Label>
-          <Input
+          <FormControlLabel htmlFor="firstName">
+            {t('onboarding.nameStep.firstName')}
+          </FormControlLabel>
+          <FormControlInput
             id="firstName"
             type="text"
             placeholder={t('onboarding.nameStep.firstNamePlaceholder')}
@@ -101,7 +102,7 @@ export function NameStep({
           />
           <p
             className={cn(
-              'text-xs text-muted-foreground',
+              'text-muted-foreground text-xs',
               firstNameShowError && 'text-destructive',
               firstNameShowSuccess && 'text-emerald-600 dark:text-emerald-400'
             )}
@@ -111,8 +112,10 @@ export function NameStep({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="lastName">{t('onboarding.nameStep.lastName')}</Label>
-          <Input
+          <FormControlLabel htmlFor="lastName">
+            {t('onboarding.nameStep.lastName')}
+          </FormControlLabel>
+          <FormControlInput
             id="lastName"
             type="text"
             placeholder={t('onboarding.nameStep.lastNamePlaceholder')}
@@ -129,7 +132,7 @@ export function NameStep({
           />
           <p
             className={cn(
-              'text-xs text-muted-foreground',
+              'text-muted-foreground text-xs',
               lastNameShowError && 'text-destructive',
               lastNameShowSuccess && 'text-emerald-600 dark:text-emerald-400'
             )}

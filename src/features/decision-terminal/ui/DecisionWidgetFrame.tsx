@@ -1,9 +1,9 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import type { ReactNode } from 'react';
 import { GripHorizontal } from 'lucide-react';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
 import { cn } from '@/features/shared/utils/utils';
 
@@ -46,9 +46,9 @@ export function DecisionWidgetFrame({
         </Tooltip>
         <h3 className="min-w-0 flex-1 truncate text-sm font-semibold">{title}</h3>
         {typeof count === 'number' ? (
-          <Badge variant="secondary" className="rounded-md font-mono text-[10px]">
+          <BadgeControl variant="secondary" className="rounded-md font-mono text-[10px]">
             {Math.round(count)}
-          </Badge>
+          </BadgeControl>
         ) : null}
       </div>
       <div className="decision-widget-content min-h-0 flex-1 overflow-auto">{children}</div>

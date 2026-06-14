@@ -58,6 +58,16 @@ interface DataTableProps<TData, TValue> {
   tableClassName?: string;
 }
 
+interface DataTableColumnMeta {
+  className?: string;
+  headerClassName?: string;
+  cellClassName?: string;
+}
+
+function getColumnMeta(columnDef: { meta?: unknown }): DataTableColumnMeta {
+  return (columnDef.meta ?? {}) as DataTableColumnMeta;
+}
+
 export function DataTable<TData, TValue>({
   columns,
   data,
@@ -135,13 +145,17 @@ export function DataTable<TData, TValue>({
           <TableHeader>
             {table.getHeaderGroups().map(headerGroup => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map(header => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
-                  </TableHead>
-                ))}
+                {headerGroup.headers.map(header => {
+                  const meta = getColumnMeta(header.column.columnDef);
+
+                  return (
+                    <TableHead key={header.id} className={cn(meta.className, meta.headerClassName)}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(header.column.columnDef.header, header.getContext())}
+                    </TableHead>
+                  );
+                })}
               </TableRow>
             ))}
           </TableHeader>
@@ -167,11 +181,15 @@ export function DataTable<TData, TValue>({
                     data-state={row.getIsSelected() && 'selected'}
                     data-testid={testId}
                   >
-                    {row.getVisibleCells().map(cell => (
-                      <TableCell key={cell.id}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </TableCell>
-                    ))}
+                    {row.getVisibleCells().map(cell => {
+                      const meta = getColumnMeta(cell.column.columnDef);
+
+                      return (
+                        <TableCell key={cell.id} className={cn(meta.className, meta.cellClassName)}>
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </TableCell>
+                      );
+                    })}
                   </TableRow>
                 );
               })

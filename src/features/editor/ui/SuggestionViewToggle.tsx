@@ -1,12 +1,9 @@
 'use client';
 
+import { FormControlCheckbox } from '@/features/shared/ui/form';
 import { useState } from 'react';
 import { Button } from '@/features/shared/ui/ui/button';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/features/shared/ui/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/features/shared/ui/ui/popover';
 import {
   Command,
   CommandEmpty,
@@ -16,7 +13,6 @@ import {
   CommandList,
 } from '@/features/shared/ui/ui/command';
 import { ToggleGroup, ToggleGroupItem } from '@/features/shared/ui/ui/toggle-group';
-import { Checkbox } from '@/features/shared/ui/ui/checkbox';
 import { Layers, Filter, Check } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { TDiscussion } from '../types';
@@ -111,16 +107,15 @@ export function SuggestionViewToggle({
     onSelectedCrIdsChange(null);
   };
 
-  const allSelected = selectedCrIds !== null && crOptions.length > 0 && crOptions.every(o => selectedCrIds.has(o.crId));
+  const allSelected =
+    selectedCrIds !== null &&
+    crOptions.length > 0 &&
+    crOptions.every(o => selectedCrIds.has(o.crId));
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
-          variant={isFiltered ? 'default' : 'outline'}
-          size="sm"
-          className="gap-2"
-        >
+        <Button variant={isFiltered ? 'default' : 'outline'} size="sm" className="gap-2">
           {isFiltered ? <Filter className="h-4 w-4" /> : <Layers className="h-4 w-4" />}
           {buttonLabel}
         </Button>
@@ -151,23 +146,18 @@ export function SuggestionViewToggle({
             <CommandList>
               <CommandEmpty>{t('features.editor.suggestionView.noResults')}</CommandEmpty>
               <CommandGroup>
-                <CommandItem
-                  onSelect={() => handleSelectCr(null)}
-                >
+                <CommandItem onSelect={() => handleSelectCr(null)}>
                   <Layers className="mr-2 h-4 w-4" />
                   {t('features.editor.suggestionView.allSuggestions')}
                   {selectedCrIds === null && <Check className="ml-auto h-4 w-4" />}
                 </CommandItem>
                 {crOptions.map(option => (
-                  <CommandItem
-                    key={option.crId}
-                    onSelect={() => handleSelectCr(option.crId)}
-                  >
+                  <CommandItem key={option.crId} onSelect={() => handleSelectCr(option.crId)}>
                     <Filter className="mr-2 h-4 w-4" />
                     <div className="flex flex-col">
                       <span className="font-mono text-sm">{option.crId}</span>
                       {option.title !== option.crId && (
-                        <span className="text-xs text-muted-foreground">{option.title}</span>
+                        <span className="text-muted-foreground text-xs">{option.title}</span>
                       )}
                     </div>
                     {selectedCrIds?.has(option.crId) && <Check className="ml-auto h-4 w-4" />}
@@ -184,14 +174,8 @@ export function SuggestionViewToggle({
               <CommandEmpty>{t('features.editor.suggestionView.noResults')}</CommandEmpty>
               <CommandGroup>
                 {/* Select All / Deselect All */}
-                <CommandItem
-                  onSelect={allSelected ? handleDeselectAll : handleSelectAll}
-                >
-                  <Checkbox
-                    checked={allSelected}
-                    className="mr-2"
-                    tabIndex={-1}
-                  />
+                <CommandItem onSelect={allSelected ? handleDeselectAll : handleSelectAll}>
+                  <FormControlCheckbox checked={allSelected} className="mr-2" tabIndex={-1} />
                   {allSelected
                     ? t('features.editor.suggestionView.deselectAll')
                     : t('features.editor.suggestionView.selectAll')}
@@ -199,19 +183,12 @@ export function SuggestionViewToggle({
                 {crOptions.map(option => {
                   const isChecked = selectedCrIds?.has(option.crId) ?? false;
                   return (
-                    <CommandItem
-                      key={option.crId}
-                      onSelect={() => handleToggleCr(option.crId)}
-                    >
-                      <Checkbox
-                        checked={isChecked}
-                        className="mr-2"
-                        tabIndex={-1}
-                      />
+                    <CommandItem key={option.crId} onSelect={() => handleToggleCr(option.crId)}>
+                      <FormControlCheckbox checked={isChecked} className="mr-2" tabIndex={-1} />
                       <div className="flex flex-col">
                         <span className="font-mono text-sm">{option.crId}</span>
                         {option.title !== option.crId && (
-                          <span className="text-xs text-muted-foreground">{option.title}</span>
+                          <span className="text-muted-foreground text-xs">{option.title}</span>
                         )}
                       </div>
                     </CommandItem>

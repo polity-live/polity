@@ -1,6 +1,6 @@
+import { FormControlLabel } from '@/features/shared/ui/form';
 import { AlarmClock, CalendarDays, Clock3, Repeat2 } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { Label } from '@/features/shared/ui/ui/label';
 import { CreateInputField } from '@/features/create/ui/CreateFields';
 import { DateTimeRangeInput } from '@/features/create/ui/inputs/DateTimeRangeInput';
 import { RecurringPatternInput } from '@/features/create/ui/inputs/RecurringPatternInput';
@@ -169,7 +169,9 @@ export function EventTimeSeriesSection({
           <div className="mb-4 space-y-1">
             <div className="flex items-center gap-2">
               <AlarmClock className="text-muted-foreground h-4 w-4" />
-              <Label>{t('pages.create.event.timeSeriesSummary.deadlines')}</Label>
+              <FormControlLabel>
+                {t('pages.create.event.timeSeriesSummary.deadlines')}
+              </FormControlLabel>
             </div>
             <p className="text-muted-foreground text-sm">
               {t('pages.create.event.timeSeriesSummary.deadlinesDescription')}

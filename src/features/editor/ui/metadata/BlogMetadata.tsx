@@ -1,5 +1,6 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 /**
  * Blog Metadata Component
  *
@@ -7,7 +8,6 @@
  * and bloggers list.
  */
 
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Globe, Lock, Users } from 'lucide-react';
 import {
@@ -52,7 +52,7 @@ export function BlogMetadata({
       {/* Blog metadata badges */}
       <div className="flex flex-wrap items-center gap-4 text-sm">
         {visibility !== undefined && (
-          <Badge variant="outline" className="flex items-center gap-1">
+          <BadgeControl variant="outline" className="flex items-center gap-1">
             {visibility === 'public' ? (
               <>
                 <Globe className="h-3 w-3" />
@@ -69,7 +69,7 @@ export function BlogMetadata({
                 {t('features.editor.metadata.private')}
               </>
             )}
-          </Badge>
+          </BadgeControl>
         )}
         {date && (
           <span className="text-muted-foreground">
@@ -106,9 +106,9 @@ export function BlogMetadata({
                 {blogger.user?.name || translateText('generated.inline.0031_unknown_bc7819b3')}
               </span>
               {blogger.status && blogger.status === 'owner' && (
-                <Badge variant="outline" className="ml-1 h-4 px-1 text-[10px]">
+                <BadgeControl variant="outline" className="ml-1 h-4 px-1 text-[10px]">
                   {t('features.editor.metadata.owner')}
-                </Badge>
+                </BadgeControl>
               )}
             </div>
           ))}

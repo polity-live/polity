@@ -1,33 +1,27 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/features/shared/ui/ui/card';
-import { Button } from '@/features/shared/ui/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/features/shared/ui/ui/table';
-import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { TableTag } from '@/features/shared/ui/ui/table-tag';
-import { SmartLink } from '@/features/shared/ui/navigation/SmartLink.tsx';
-import { Check, X, Trash2, LucideIcon } from 'lucide-react';
+import { Check, Trash2, type LucideIcon, X } from 'lucide-react';
+
+import { GroupConflictDialog } from '@/features/groups/ui/GroupConflictPanel';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
-import type { FilterableRecord } from '../hooks/useUserMembershipsFilters';
-import type { GroupMembershipsByUserRow } from '@/zero/groups/queries';
-import type { EventParticipantsByUserRow } from '@/zero/events/queries';
-import type { AmendmentCollaboratorsByUserRow } from '@/zero/amendments/queries';
-import type { BloggersByUserRow } from '@/zero/blogs/queries';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { useGroupConflictPreflight } from '@/features/groups/hooks/useGroupConflictPreflight';
 import type { GroupConflictMembershipPreflight } from '@/features/groups/logic/groupConflictPreflight';
-import { GroupConflictDialog } from '@/features/groups/ui/GroupConflictPanel';
-import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { SmartLink } from '@/features/shared/ui/navigation/SmartLink.tsx';
+import { DataTable, EntityCell, type ColumnDef } from '@/features/shared/ui/data-table';
+import {
+  Panel,
+  PanelContent,
+  PanelDescription,
+  PanelHeader,
+  PanelTitle,
+} from '@/features/shared/ui/layout';
+import { EntityBadge } from '@/features/shared/ui/status';
+import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
+import { Button } from '@/features/shared/ui/ui/button';
+import type { AmendmentCollaboratorsByUserRow } from '@/zero/amendments/queries';
+import type { BloggersByUserRow } from '@/zero/blogs/queries';
+import type { EventParticipantsByUserRow } from '@/zero/events/queries';
+import type { GroupMembershipsByUserRow } from '@/zero/groups/queries';
+import type { FilterableRecord } from '../hooks/useUserMembershipsFilters';
 
 type EntityKey = 'group' | 'event' | 'amendment' | 'blog';
 
@@ -113,31 +107,6 @@ export function MembershipStatusTable({
   getEntityHref,
   getAcceptPreflightInput,
 }: MembershipStatusTableProps) {
-  if (items.length === 0 && statusType === 'active') {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Icon className="h-5 w-5" />
-            {title}
-          </CardTitle>
-          <CardDescription>{description}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground py-8 text-center">
-            {translateText('generated.inline.0609_no_816c52fd')}
-            {statusType}
-            {translateText('generated.inline.1196_items_found_b7242dc8')}
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (items.length === 0) {
-    return null;
-  }
-
   const getEntityData = (item: FilterableRecord): DisplayEntity | null => {
     switch (entityKey) {
       case 'group':
@@ -178,128 +147,126 @@ export function MembershipStatusTable({
     }
   };
 
+  const columns: ColumnDef<FilterableRecord>[] = [
+    {
+      id: 'entity',
+      header: entityKey.charAt(0).toUpperCase() + entityKey.slice(1),
+      cell: ({ row }) => {
+        const entity = getEntityData(row.original);
+        const entityName = getEntityName(entity);
+        const entityImage = getEntityImage(entity);
+        const entityDescription =
+          statusType === 'active' ? richTextToPlainText(entity?.description) : '';
+        const entityHref = getEntityHref?.(entity, row.original) ?? buildDefaultEntityHref(entity);
+        const content = (
+          <EntityCell
+            title={entityName}
+            description={entityDescription || undefined}
+            leading={
+              <Avatar className="h-10 w-10">
+                {entityImage ? <AvatarImage src={entityImage} alt={entityName} /> : null}
+                <AvatarFallback>
+                  <FallbackIcon className="h-5 w-5" />
+                </AvatarFallback>
+              </Avatar>
+            }
+          />
+        );
+
+        if (!entityHref) {
+          return content;
+        }
+
+        return (
+          <SmartLink href={entityHref} className="block hover:underline">
+            {content}
+          </SmartLink>
+        );
+      },
+    },
+    {
+      id: 'role',
+      header: translateText('generated.inline.0091_role_c3f104d1'),
+      cell: ({ row }) => {
+        const role = (row.original as { role?: { name?: string | null } }).role?.name || 'Member';
+
+        return <EntityBadge tone="accent">{role}</EntityBadge>;
+      },
+    },
+    {
+      id: 'created',
+      header:
+        statusType === 'invited'
+          ? translateText('generated.inline.0146_invited_53469df1')
+          : statusType === 'requested'
+            ? translateText('generated.inline.0147_requested_c26bf60f')
+            : translateText('generated.inline.0148_joined_43a1c626'),
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">
+          {row.original.created_at ? new Date(row.original.created_at).toLocaleDateString() : 'N/A'}
+        </span>
+      ),
+    },
+    {
+      id: 'actions',
+      header: translateText('generated.inline.0093_actions_c3cd636a'),
+      meta: {
+        headerClassName: 'text-right',
+        cellClassName: 'text-right',
+      },
+      cell: ({ row }) => (
+        <>
+          {statusType === 'invited' ? (
+            <InvitationActions
+              item={row.original}
+              onAccept={onAccept}
+              onDecline={onDecline}
+              getAcceptPreflightInput={getAcceptPreflightInput}
+            />
+          ) : null}
+          {statusType === 'active' ? (
+            <Button variant="ghost" size="sm" onClick={() => onLeave?.(row.original.id)}>
+              <Trash2 className="h-4 w-4" />
+              <span className="ml-2">{translateText('generated.inline.1197_leave_7e3520a9')}</span>
+            </Button>
+          ) : null}
+          {statusType === 'requested' ? (
+            <Button variant="ghost" size="sm" onClick={() => onWithdraw?.(row.original.id)}>
+              <Trash2 className="h-4 w-4" />
+              <span className="ml-2">
+                {translateText('generated.inline.1198_withdraw_request_898cc3e4')}
+              </span>
+            </Button>
+          ) : null}
+        </>
+      ),
+    },
+  ];
+
+  if (items.length === 0 && statusType !== 'active') {
+    return null;
+  }
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <Panel>
+      <PanelHeader>
+        <PanelTitle className="flex items-center gap-2">
           <Icon className="h-5 w-5" />
           {title}
-        </CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{entityKey.charAt(0).toUpperCase() + entityKey.slice(1)}</TableHead>
-              {statusType === 'active' && (
-                <TableHead>{translateText('generated.inline.0091_role_c3f104d1')}</TableHead>
-              )}
-              {statusType === 'invited' && (
-                <TableHead>{translateText('generated.inline.0091_role_c3f104d1')}</TableHead>
-              )}
-              {statusType === 'requested' && (
-                <TableHead>{translateText('generated.inline.0091_role_c3f104d1')}</TableHead>
-              )}
-              <TableHead>
-                {statusType === 'invited'
-                  ? translateText('generated.inline.0146_invited_53469df1')
-                  : statusType === 'requested'
-                    ? translateText('generated.inline.0147_requested_c26bf60f')
-                    : translateText('generated.inline.0148_joined_43a1c626')}
-              </TableHead>
-              <TableHead className="text-right">
-                {translateText('generated.inline.0093_actions_c3cd636a')}
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {items.map(item => {
-              const entity = getEntityData(item);
-              const entityName = getEntityName(entity);
-              const entityImage = getEntityImage(entity);
-              const role = (item as { role?: { name?: string | null } }).role?.name || 'Member';
-              const createdAt = item.created_at
-                ? new Date(item.created_at).toLocaleDateString()
-                : 'N/A';
-              const entityDescription =
-                statusType === translateText('generated.inline.0045_active_2bb6b986')
-                  ? richTextToPlainText(entity?.description)
-                  : '';
-              const entityHref = getEntityHref?.(entity, item) ?? buildDefaultEntityHref(entity);
-              const entityContent = (
-                <>
-                  <Avatar className="h-10 w-10">
-                    {entityImage && <AvatarImage src={entityImage} alt={entityName} />}
-                    <AvatarFallback>
-                      <FallbackIcon className="h-5 w-5" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <div className="font-medium">{entityName}</div>
-                    {entityDescription && (
-                      <div className="text-muted-foreground line-clamp-1 text-sm">
-                        {entityDescription}
-                      </div>
-                    )}
-                  </div>
-                </>
-              );
-
-              return (
-                <TableRow key={item.id}>
-                  <TableCell>
-                    {entityHref ? (
-                      <SmartLink
-                        href={entityHref}
-                        className="flex items-center gap-3 hover:underline"
-                      >
-                        {entityContent}
-                      </SmartLink>
-                    ) : (
-                      <div className="flex items-center gap-3">{entityContent}</div>
-                    )}
-                  </TableCell>
-                  {(statusType === 'active' ||
-                    statusType === 'invited' ||
-                    statusType === 'requested') && (
-                    <TableCell>
-                      <TableTag entityType={entityKey}>{role}</TableTag>
-                    </TableCell>
-                  )}
-                  <TableCell className="text-muted-foreground">{createdAt}</TableCell>
-                  <TableCell className="text-right">
-                    {statusType === 'invited' && (
-                      <InvitationActions
-                        item={item}
-                        onAccept={onAccept}
-                        onDecline={onDecline}
-                        getAcceptPreflightInput={getAcceptPreflightInput}
-                      />
-                    )}
-                    {statusType === 'active' && (
-                      <Button variant="ghost" size="sm" onClick={() => onLeave?.(item.id)}>
-                        <Trash2 className="h-4 w-4" />
-                        <span className="ml-2">
-                          {translateText('generated.inline.1197_leave_7e3520a9')}
-                        </span>
-                      </Button>
-                    )}
-                    {statusType === 'requested' && (
-                      <Button variant="ghost" size="sm" onClick={() => onWithdraw?.(item.id)}>
-                        <Trash2 className="h-4 w-4" />
-                        <span className="ml-2">
-                          {translateText('generated.inline.1198_withdraw_request_898cc3e4')}
-                        </span>
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+        </PanelTitle>
+        <PanelDescription>{description}</PanelDescription>
+      </PanelHeader>
+      <PanelContent>
+        <DataTable
+          columns={columns}
+          data={items}
+          getRowId={item => item.id}
+          enablePagination={false}
+          emptyTitle={`${translateText('generated.inline.0609_no_816c52fd')}${statusType}${translateText(
+            'generated.inline.1196_items_found_b7242dc8'
+          )}`}
+        />
+      </PanelContent>
+    </Panel>
   );
 }

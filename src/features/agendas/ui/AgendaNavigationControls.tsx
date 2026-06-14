@@ -1,8 +1,8 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Progress } from '@/features/shared/ui/ui/progress';
 import { ChevronLeft, ChevronRight, CheckCircle2, Play, Loader2 } from 'lucide-react';
 import { useAgendaNavigation } from '../hooks/useAgendaNavigation';
@@ -43,9 +43,9 @@ export function AgendaNavigationControls({ eventId }: AgendaNavigationControlsPr
             <span className="text-muted-foreground">
               {t('features.events.navigation.progress')}
             </span>
-            <Badge variant="secondary">
+            <BadgeControl variant="secondary">
               {currentIndex + 1} / {totalItems}
-            </Badge>
+            </BadgeControl>
           </div>
           <Progress value={progressPercentage} className="h-2" />
 
@@ -56,7 +56,7 @@ export function AgendaNavigationControls({ eventId }: AgendaNavigationControlsPr
               <span className="truncate font-medium">
                 {t('features.events.navigation.currentItem')}: {currentAgendaItem.title}
               </span>
-              <Badge
+              <BadgeControl
                 variant={
                   currentAgendaItem.status === 'in-progress'
                     ? 'default'
@@ -66,7 +66,7 @@ export function AgendaNavigationControls({ eventId }: AgendaNavigationControlsPr
                 }
               >
                 {currentAgendaItem.status}
-              </Badge>
+              </BadgeControl>
             </div>
           ) : (
             <div className="text-muted-foreground text-sm">

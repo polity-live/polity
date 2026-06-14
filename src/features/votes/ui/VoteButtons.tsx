@@ -1,16 +1,59 @@
 'use client';
 
-import { Button } from '@/features/shared/ui/ui/button';
-import { Badge } from '@/features/shared/ui/ui/badge';
-import { Check, X, Minus, Loader2 } from 'lucide-react';
-import { useEventVoting, type VoteValue } from '../hooks/useEventVoting';
+import {
+  SelectedVoteBadge,
+  VoteChoiceButtons,
+  VotingUnavailableMessage,
+  type SelectedVoteLabels,
+  type VotingChoiceLabels,
+  type VotingChoiceValue,
+} from '@/features/shared/ui/voting';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { useEventVoting, type VoteValue } from '../hooks/useEventVoting';
 
 interface VoteButtonsProps {
   eventId: string;
   agendaItemId: string;
   sessionId: string;
   size?: 'sm' | 'default' | 'lg';
+}
+
+export interface VoteButtonsViewProps {
+  canVote: boolean;
+  hasUserVoted: boolean;
+  userVote: VoteValue | null;
+  isLoading: boolean;
+  onVote: (vote: VotingChoiceValue) => void | Promise<void>;
+  labels: VotingChoiceLabels;
+  selectedVoteLabels: SelectedVoteLabels;
+  noVotingRightsLabel: string;
+  size?: 'sm' | 'default' | 'lg';
+}
+
+export function VoteButtonsView({
+  canVote,
+  hasUserVoted,
+  userVote,
+  isLoading,
+  onVote,
+  labels,
+  selectedVoteLabels,
+  noVotingRightsLabel,
+  size = 'default',
+}: VoteButtonsViewProps) {
+  if (hasUserVoted && userVote) {
+    return (
+      <div className="flex flex-col items-center gap-2">
+        <SelectedVoteBadge vote={userVote} labels={selectedVoteLabels} />
+      </div>
+    );
+  }
+
+  if (!canVote) {
+    return <VotingUnavailableMessage>{noVotingRightsLabel}</VotingUnavailableMessage>;
+  }
+
+  return <VoteChoiceButtons labels={labels} onVote={onVote} isLoading={isLoading} size={size} />;
 }
 
 export function VoteButtons({
@@ -25,94 +68,30 @@ export function VoteButtons({
     agendaItemId
   );
 
-  const handleVote = async (vote: VoteValue) => {
-    await castVote(sessionId, vote);
-  };
-
-  // Don't show if voting is not active
   if (!currentSession || currentSession.phase !== 'voting') {
     return null;
   }
 
-  // Show user's vote if already voted
-  if (hasUserVoted && userVote) {
-    return (
-      <div className="flex flex-col items-center gap-2">
-        <Badge
-          variant={
-            userVote === 'accept' ? 'default' : userVote === 'reject' ? 'destructive' : 'secondary'
-          }
-          className="px-4 py-2"
-        >
-          {userVote === 'accept' && <Check className="mr-2 h-4 w-4" />}
-          {userVote === 'reject' && <X className="mr-2 h-4 w-4" />}
-          {userVote === 'abstain' && <Minus className="mr-2 h-4 w-4" />}
-          {t('features.events.voting.yourVote')}:{' '}
-          {userVote === 'accept'
-            ? t('features.events.voting.accept')
-            : userVote === 'reject'
-              ? t('features.events.voting.reject')
-              : t('features.events.voting.abstain')}
-        </Badge>
-      </div>
-    );
-  }
-
-  // Don't show if user can't vote
-  if (!canVote) {
-    return (
-      <div className="text-muted-foreground text-center text-sm">
-        {t('features.events.voting.noVotingRights')}
-      </div>
-    );
-  }
-
-  const buttonSize = size === 'lg' ? 'lg' : size === 'sm' ? 'sm' : 'default';
+  const labels = {
+    accept: t('features.events.voting.accept'),
+    reject: t('features.events.voting.reject'),
+    abstain: t('features.events.voting.abstain'),
+  };
 
   return (
-    <div className="flex justify-center gap-2">
-      <Button
-        variant="default"
-        size={buttonSize}
-        onClick={() => handleVote('accept')}
-        disabled={isLoading}
-        className="bg-green-600 hover:bg-green-700"
-      >
-        {isLoading ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        ) : (
-          <Check className="mr-2 h-4 w-4" />
-        )}
-        {t('features.events.voting.accept')}
-      </Button>
-
-      <Button
-        variant="destructive"
-        size={buttonSize}
-        onClick={() => handleVote('reject')}
-        disabled={isLoading}
-      >
-        {isLoading ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        ) : (
-          <X className="mr-2 h-4 w-4" />
-        )}
-        {t('features.events.voting.reject')}
-      </Button>
-
-      <Button
-        variant="secondary"
-        size={buttonSize}
-        onClick={() => handleVote('abstain')}
-        disabled={isLoading}
-      >
-        {isLoading ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        ) : (
-          <Minus className="mr-2 h-4 w-4" />
-        )}
-        {t('features.events.voting.abstain')}
-      </Button>
-    </div>
+    <VoteButtonsView
+      canVote={canVote}
+      hasUserVoted={hasUserVoted}
+      userVote={userVote}
+      isLoading={isLoading}
+      onVote={vote => castVote(sessionId, vote)}
+      labels={labels}
+      selectedVoteLabels={{
+        ...labels,
+        prefix: t('features.events.voting.yourVote'),
+      }}
+      noVotingRightsLabel={t('features.events.voting.noVotingRights')}
+      size={size}
+    />
   );
 }

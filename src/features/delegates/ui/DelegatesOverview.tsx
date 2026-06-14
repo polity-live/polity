@@ -1,3 +1,4 @@
+import { BadgeControl } from '@/features/shared/ui/status';
 import {
   Card,
   CardContent,
@@ -5,7 +6,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/features/shared/ui/ui/card';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Users, CheckCircle2, Clock } from 'lucide-react';
 import { useEventDelegates } from '@/zero/events/useEventState';
@@ -109,7 +109,7 @@ export function DelegatesOverview({ eventId, groupId }: DelegatesOverviewProps) 
                     {allocation !== 1 ? 's' : ''}
                   </CardDescription>
                 </div>
-                <Badge variant={isDelegatesFinalized ? 'default' : 'secondary'}>
+                <BadgeControl variant={isDelegatesFinalized ? 'default' : 'secondary'}>
                   {isDelegatesFinalized ? (
                     <>
                       <CheckCircle2 className="mr-1 h-3 w-3" />
@@ -121,7 +121,7 @@ export function DelegatesOverview({ eventId, groupId }: DelegatesOverviewProps) 
                       {translateText('generated.inline.0370_pending_96f608c1')}
                     </>
                   )}
-                </Badge>
+                </BadgeControl>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -161,10 +161,10 @@ export function DelegatesOverview({ eventId, groupId }: DelegatesOverviewProps) 
                             <p className="text-muted-foreground text-sm">@{delegate.user.handle}</p>
                           )}
                         </div>
-                        <Badge variant="default" className="bg-green-600">
+                        <BadgeControl variant="default" className="bg-green-600">
                           <CheckCircle2 className="mr-1 h-3 w-3" />
                           {translateText('generated.inline.0372_confirmed_8cc7acb8')}
-                        </Badge>
+                        </BadgeControl>
                       </div>
                     ))}
                   </div>
@@ -207,7 +207,7 @@ export function DelegatesOverview({ eventId, groupId }: DelegatesOverviewProps) 
                             <p className="text-muted-foreground text-sm">@{delegate.user.handle}</p>
                           )}
                         </div>
-                        <Badge variant="outline">#{index + 1}</Badge>
+                        <BadgeControl variant="outline">#{index + 1}</BadgeControl>
                       </div>
                     ))}
                   </div>
@@ -250,9 +250,9 @@ export function DelegatesOverview({ eventId, groupId }: DelegatesOverviewProps) 
                             <p className="text-muted-foreground text-sm">@{delegate.user.handle}</p>
                           )}
                         </div>
-                        <Badge variant="secondary">
+                        <BadgeControl variant="secondary">
                           {translateText('generated.inline.0375_standby_88a2d0bb')}
-                        </Badge>
+                        </BadgeControl>
                       </div>
                     ))}
                   </div>

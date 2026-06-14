@@ -1,9 +1,9 @@
 'use client';
 
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { useMemo, useState } from 'react';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -100,7 +100,7 @@ export function TargetSelectionDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="flex h-[85vh] max-w-4xl flex-col">
+      <ScrollableDialogContent className="flex h-[85vh] max-w-4xl flex-col">
         <DialogHeader>
           <DialogTitle>{dialogTitle}</DialogTitle>
           <DialogDescription>{dialogDescription}</DialogDescription>
@@ -125,7 +125,7 @@ export function TargetSelectionDialog({
             {confirmText}
           </Button>
         </DialogFooter>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

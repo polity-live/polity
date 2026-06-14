@@ -1,3 +1,4 @@
+import { FormControlTextarea } from '@/features/shared/ui/form';
 /**
  * Blog Edit Component
  *
@@ -16,7 +17,6 @@ import {
 import { Button } from '@/features/shared/ui/ui/button';
 import { hasMinLength } from '@/features/shared/logic/inputValidation';
 import { ValidatedInputField } from '@/features/shared/ui/form/ValidatedInputField';
-import { Textarea } from '@/features/shared/ui/ui/textarea';
 import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
 import { Loader2 } from 'lucide-react';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
@@ -115,7 +115,7 @@ export function BlogEdit({ blogId }: BlogEditProps) {
               <label htmlFor="description" className="text-sm leading-none font-medium">
                 {t('features.blogs.editPage.descriptionLabel')}
               </label>
-              <Textarea
+              <FormControlTextarea
                 id="description"
                 value={formData.description}
                 onChange={e => updateField('description', e.target.value)}

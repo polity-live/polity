@@ -1,7 +1,7 @@
+import { BadgeControl } from '@/features/shared/ui/status';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { LinkSurface } from '@/features/shared/ui/navigation/LinkSurface.tsx';
 import { SmartLink, isPlainLeftClick } from '@/features/shared/ui/navigation/SmartLink.tsx';
 import { Users, X } from 'lucide-react';
@@ -200,7 +200,7 @@ export function NotificationItem({
               {notification.title}
             </p>
             {isEntityNotification && recipientEntity && (
-              <Badge variant="outline" className={cn('w-fit', entityColors?.badgeBg)}>
+              <BadgeControl variant="outline" className={cn('w-fit', entityColors?.badgeBg)}>
                 <Users className="mr-1 h-3 w-3" />
                 {'name' in recipientEntity
                   ? recipientEntity.name
@@ -208,11 +208,11 @@ export function NotificationItem({
                     ? recipientEntity.title
                     : translateText('generated.inline.0119_entity_c7fb3177')}{' '}
                 {t('features.notifications.item.notification')}
-              </Badge>
+              </BadgeControl>
             )}
           </div>
           {!notification.is_read && (
-            <Badge variant="default" className="h-2 w-2 rounded-full p-0" />
+            <BadgeControl variant="default" className="h-2 w-2 rounded-full p-0" />
           )}
         </div>
         <p className="text-muted-foreground text-sm">{notification.message}</p>

@@ -1,6 +1,6 @@
 'use client';
 
-import { Badge } from '@/features/shared/ui/ui/badge';
+import { BadgeControl } from '@/features/shared/ui/status';
 import { cn } from '@/features/shared/utils/utils';
 
 export interface TopicPillProps {
@@ -134,7 +134,7 @@ export function TopicPill({ topic, variant, size = 'sm', className, onClick }: T
   const colors = TOPIC_COLORS[colorVariant] || TOPIC_COLORS.default;
 
   return (
-    <Badge
+    <BadgeControl
       variant="outline"
       className={cn(
         'border font-medium transition-colors',
@@ -148,7 +148,7 @@ export function TopicPill({ topic, variant, size = 'sm', className, onClick }: T
       onClick={onClick}
     >
       {topic}
-    </Badge>
+    </BadgeControl>
   );
 }
 
@@ -175,12 +175,12 @@ export function TopicPillList({
         <TopicPill key={`${topic}-${index}`} topic={topic} size={size} />
       ))}
       {remainingCount > 0 && (
-        <Badge
+        <BadgeControl
           variant="secondary"
           className={cn('font-medium', size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm')}
         >
           +{remainingCount}
-        </Badge>
+        </BadgeControl>
       )}
     </div>
   );

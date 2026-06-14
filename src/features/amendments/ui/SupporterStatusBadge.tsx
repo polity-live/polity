@@ -1,3 +1,6 @@
+'use client';
+
+import { BadgeControl } from '@/features/shared/ui/status';
 /**
  * SupporterStatusBadge Component
  *
@@ -5,9 +8,6 @@
  * with appropriate colors and icons.
  */
 
-'use client';
-
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { CheckCircle, Clock, XCircle } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
@@ -67,7 +67,7 @@ export function SupporterStatusBadge({
   };
 
   return (
-    <Badge
+    <BadgeControl
       variant="outline"
       className={cn(
         config.className,
@@ -77,6 +77,6 @@ export function SupporterStatusBadge({
     >
       {showIcon && <Icon className={cn('mr-1', size === 'sm' ? 'h-3 w-3' : 'h-3.5 w-3.5')} />}
       {statusLabels[status]}
-    </Badge>
+    </BadgeControl>
   );
 }

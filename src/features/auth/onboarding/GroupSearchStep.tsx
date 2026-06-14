@@ -1,8 +1,9 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
+import { FormControlInput } from '@/features/shared/ui/form';
 import { useState, useMemo } from 'react';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
-import { Input } from '@/features/shared/ui/ui/input.tsx';
 import {
   Card,
   CardContent,
@@ -10,7 +11,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/features/shared/ui/ui/card.tsx';
-import { Badge } from '@/features/shared/ui/ui/badge.tsx';
 import { Search, Users, MapPin, ArrowRight, ArrowLeft, Check, SkipForward } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import { usePublicGroups } from '@/zero/groups/useGroupState.ts';
@@ -97,7 +97,7 @@ export function GroupSearchStep({
       {/* Search Input */}
       <div className="relative">
         <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-        <Input
+        <FormControlInput
           placeholder={t('onboarding.groupStep.searchPlaceholder')}
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
@@ -142,10 +142,10 @@ export function GroupSearchStep({
                               <Check className="h-3 w-3 text-white dark:text-emerald-950" />
                             </div>
                           )}
-                          <Badge variant="outline" className="flex-shrink-0">
+                          <BadgeControl variant="outline" className="flex-shrink-0">
                             <Users className="mr-1 h-3 w-3" />
                             {group.member_count || 0}
-                          </Badge>
+                          </BadgeControl>
                         </div>
                       </div>
                       {description && (

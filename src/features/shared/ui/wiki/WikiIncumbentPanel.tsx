@@ -124,7 +124,8 @@ function PersonCard({
     >
       <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-white/10 to-black/5" />
       <Link
-        to={`/user/${card.userId}`}
+        to="/user/$id"
+        params={{ id: card.userId }}
         className="focus-visible:ring-primary absolute inset-0 z-10 rounded-[inherit] focus-visible:ring-2 focus-visible:outline-none"
         aria-label={`Open profile for ${card.name}`}
       >

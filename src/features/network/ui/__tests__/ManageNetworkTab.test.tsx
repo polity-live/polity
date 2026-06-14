@@ -14,9 +14,17 @@ vi.mock('@tanstack/react-router', () => ({
 }));
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
+  translate: (key: string, fallback?: string | Record<string, unknown>) =>
+    typeof fallback === 'string' ? fallback : key,
   useTranslation: () => ({
-    t: (key: string, fallback?: string | Record<string, unknown>) =>
-      typeof fallback === 'string' ? fallback : key,
+    t: (key: string, fallback?: string | Record<string, unknown>) => {
+      const labels: Record<string, string> = {
+        'common.network.structureMembership': 'Structure / membership',
+        'common.network.structureMembershipChange': 'Structure / membership change',
+      };
+
+      return labels[key] ?? (typeof fallback === 'string' ? fallback : key);
+    },
   }),
 }));
 

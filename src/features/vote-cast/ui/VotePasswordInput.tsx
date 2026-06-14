@@ -1,7 +1,7 @@
 'use client';
 
+import { FormControlInput } from '@/features/shared/ui/form';
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Input } from '@/features/shared/ui/ui/input';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 
@@ -105,7 +105,7 @@ export function VotePasswordInput({
       </p>
       <div className="flex justify-center gap-3" onPaste={handlePaste}>
         {digits.map((digit, i) => (
-          <Input
+          <FormControlInput
             key={i}
             ref={el => {
               inputRefs.current[i] = el;

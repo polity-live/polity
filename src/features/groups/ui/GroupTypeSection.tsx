@@ -1,11 +1,11 @@
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/features/shared/ui/ui/card';
-import { Badge } from '@/features/shared/ui/ui/badge';
+  Panel,
+  PanelContent,
+  PanelDescription,
+  PanelHeader,
+  PanelTitle,
+} from '@/features/shared/ui/layout';
+import { EntityBadge } from '@/features/shared/ui/status';
 import {
   useTranslation,
   translate as translateText,
@@ -22,12 +22,12 @@ export function GroupTypeSection({ groupType }: GroupTypeSectionProps) {
   const isSibling = groupType === 'sibling';
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t('features.groups.editPage.groupType.title')}</CardTitle>
-        <CardDescription>{t('features.groups.editPage.groupType.description')}</CardDescription>
-      </CardHeader>
-      <CardContent>
+    <Panel>
+      <PanelHeader>
+        <PanelTitle>{t('features.groups.editPage.groupType.title')}</PanelTitle>
+        <PanelDescription>{t('features.groups.editPage.groupType.description')}</PanelDescription>
+      </PanelHeader>
+      <PanelContent>
         <div className="flex items-start justify-between gap-4 rounded-lg border p-4">
           <div className="space-y-1">
             <p className="text-sm font-medium">{t('features.groups.editPage.groupType.label')}</p>
@@ -41,15 +41,15 @@ export function GroupTypeSection({ groupType }: GroupTypeSectionProps) {
                   : t('features.groups.editPage.groupType.baseDescription')}
             </p>
           </div>
-          <Badge variant={isSibling || isHierarchical ? 'default' : 'secondary'}>
+          <EntityBadge tone={isSibling || isHierarchical ? 'accent' : 'neutral'}>
             {isSibling
               ? translateText('generated.inline.0080_geschwistergruppe_1053d99c')
               : isHierarchical
                 ? t('components.badges.hierarchicalGroup')
                 : t('components.badges.baseGroup')}
-          </Badge>
+          </EntityBadge>
         </div>
-      </CardContent>
-    </Card>
+      </PanelContent>
+    </Panel>
   );
 }

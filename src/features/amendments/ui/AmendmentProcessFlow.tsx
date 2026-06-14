@@ -1,5 +1,7 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
@@ -11,7 +13,6 @@ import {
 import { richTextToPlainText } from '@/features/shared/logic/richText';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -25,7 +26,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/features/shared/ui/ui/card';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import {
   TargetGroupEventDisplay,
   TargetGroupEventSelector,
@@ -163,7 +163,7 @@ function GroupReference({
   );
 
   return (
-    <Badge variant="outline" className={cn('gap-1.5', badgeClassName)}>
+    <BadgeControl variant="outline" className={cn('gap-1.5', badgeClassName)}>
       {group.id ? (
         <Link
           to="/group/$id"
@@ -178,7 +178,7 @@ function GroupReference({
       ) : (
         <span className={cn('inline-flex items-center gap-1.5', textClassName)}>{content}</span>
       )}
-    </Badge>
+    </BadgeControl>
   );
 }
 
@@ -312,7 +312,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
   const displayPathSegments = useMemo(
     () =>
       [...(displayPath?.segments ?? [])].sort(
-        (left, right) => left.order_index - right.order_index
+        (left, right) => (left.order_index ?? 0) - (right.order_index ?? 0)
       ),
     [displayPath?.segments]
   );
@@ -640,12 +640,12 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
           {currentRun ? (
             <>
               <div className="flex flex-wrap gap-2">
-                <Badge
+                <BadgeControl
                   variant={getBadgeVariant(currentRun.status)}
                   className={getStatusBadgeClassName(currentRun.status)}
                 >
                   {currentRun.status}
-                </Badge>
+                </BadgeControl>
                 <GroupReference
                   group={currentRun.selected_source_group}
                   label={t('features.amendments.process.sourceGroup')}
@@ -657,22 +657,22 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                   badgeClassName={getInfoBadgeClassName('group')}
                 />
                 {currentRun.selected_target_workflow?.name ? (
-                  <Badge
+                  <BadgeControl
                     variant="secondary"
                     className={cn('gap-1.5', getInfoBadgeClassName('workflow'))}
                   >
                     <Workflow className="mr-1 h-3 w-3" />
                     {currentRun.selected_target_workflow.name}
-                  </Badge>
+                  </BadgeControl>
                 ) : null}
-                <Badge
+                <BadgeControl
                   variant="secondary"
                   className={cn('gap-1.5', getInfoBadgeClassName('count'))}
                 >
                   <GitBranch className="mr-1 h-3 w-3" />
                   {branches.length} {t('features.amendments.process.branchCount')}
-                </Badge>
-                <Badge
+                </BadgeControl>
+                <BadgeControl
                   variant={openTasks.length > 0 ? 'secondary' : 'outline'}
                   className={cn(
                     'gap-1.5',
@@ -683,7 +683,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                 >
                   <Clock3 className="mr-1 h-3 w-3" />
                   {openTasks.length} {t('features.amendments.process.openTasks')}
-                </Badge>
+                </BadgeControl>
               </div>
 
               {currentRun.implementation_status ? (
@@ -703,7 +703,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
         </CardContent>
       </Card>
 
-      {currentRun && activeBranch ? (
+      {amendment && currentRun && activeBranch ? (
         <>
           <AmendmentProcessDetailsPanel
             amendment={{
@@ -743,43 +743,43 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                         <div className="space-y-2">
                           <div className="flex flex-wrap items-center gap-2">
-                            <Badge
+                            <BadgeControl
                               variant="outline"
                               className={cn('gap-1.5', getInfoBadgeClassName('step'))}
                             >
                               {t('features.amendments.process.step')} {step.order_index + 1}
-                            </Badge>
-                            <Badge
+                            </BadgeControl>
+                            <BadgeControl
                               variant={getBadgeVariant(step.status)}
                               className={getStatusBadgeClassName(step.status)}
                             >
                               {step.status}
-                            </Badge>
+                            </BadgeControl>
                             {step.decision_status ? (
-                              <Badge
+                              <BadgeControl
                                 variant={getBadgeVariant(step.decision_status)}
                                 className={getStatusBadgeClassName(step.decision_status)}
                               >
                                 {step.decision_status}
-                              </Badge>
+                              </BadgeControl>
                             ) : null}
                             {isCurrentStep ? (
-                              <Badge
+                              <BadgeControl
                                 variant="secondary"
                                 className={cn('gap-1.5', getInfoBadgeClassName('current'))}
                               >
                                 <CheckCircle2 className="mr-1 h-3 w-3" />
                                 {t('features.amendments.process.currentStep')}
-                              </Badge>
+                              </BadgeControl>
                             ) : null}
                             {!step.event?.title && hasPendingScheduleEventTask ? (
-                              <Badge
+                              <BadgeControl
                                 variant="secondary"
                                 className={cn('gap-1.5', getInfoBadgeClassName('task'))}
                               >
                                 <Clock3 className="mr-1 h-3 w-3" />
                                 {t('features.amendments.process.eventRequestedPending')}
-                              </Badge>
+                              </BadgeControl>
                             ) : null}
                           </div>
 
@@ -834,18 +834,18 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                             {relatedTasks.map(task => (
                               <div key={task.id} className="space-y-1 text-xs">
                                 <div className="flex flex-wrap items-center gap-2">
-                                  <Badge
+                                  <BadgeControl
                                     variant={getBadgeVariant(task.status)}
                                     className={getStatusBadgeClassName(task.status)}
                                   >
                                     {task.status}
-                                  </Badge>
-                                  <Badge
+                                  </BadgeControl>
+                                  <BadgeControl
                                     variant="outline"
                                     className={getInfoBadgeClassName('task')}
                                   >
                                     {task.task_type}
-                                  </Badge>
+                                  </BadgeControl>
                                 </div>
                                 <p className="text-muted-foreground">
                                   {task.title ?? task.description}
@@ -885,7 +885,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                       <div className="space-y-2">
                         <div className="flex flex-wrap items-center gap-2">
-                          <Badge
+                          <BadgeControl
                             variant={
                               branch.id === currentRun.active_branch_id ? 'default' : 'outline'
                             }
@@ -898,20 +898,20 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                             {branch.id === currentRun.active_branch_id
                               ? t('features.amendments.process.activeBranchBadge')
                               : t('features.amendments.process.branchBadge')}
-                          </Badge>
-                          <Badge
+                          </BadgeControl>
+                          <BadgeControl
                             variant={getBadgeVariant(branch.status)}
                             className={getStatusBadgeClassName(branch.status)}
                           >
                             {branch.status}
-                          </Badge>
+                          </BadgeControl>
                           {branch.resolution ? (
-                            <Badge
+                            <BadgeControl
                               variant={getBadgeVariant(branch.resolution)}
                               className={getStatusBadgeClassName(branch.resolution)}
                             >
                               {branch.resolution}
-                            </Badge>
+                            </BadgeControl>
                           ) : null}
                         </div>
                         <p className="font-medium">
@@ -920,7 +920,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                         <div className="flex flex-wrap items-center gap-2 text-xs">
                           {branchStepRuns.map((step, index) => (
                             <div key={step.id} className="flex items-center gap-2">
-                              <Badge
+                              <BadgeControl
                                 variant={getBadgeVariant(step.status)}
                                 className={cn('gap-1.5', getStatusBadgeClassName(step.status))}
                               >
@@ -940,7 +940,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                                       `Step ${step.order_index + 1}`}
                                   </span>
                                 )}
-                              </Badge>
+                              </BadgeControl>
                               {index < branchStepRuns.length - 1 ? (
                                 <ArrowRight className="text-muted-foreground h-3 w-3" />
                               ) : null}
@@ -1014,23 +1014,29 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                           </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                          <Badge
+                          <BadgeControl
                             variant={getBadgeVariant(visibleStatus)}
                             className={getStatusBadgeClassName(visibleStatus)}
                           >
                             {visibleStatus}
-                          </Badge>
+                          </BadgeControl>
                           {decision.process_run_id ? (
-                            <Badge variant="outline" className={getInfoBadgeClassName('step')}>
+                            <BadgeControl
+                              variant="outline"
+                              className={getInfoBadgeClassName('step')}
+                            >
                               {translateText('generated.inline.0018_run_df6ad190')}
                               {decision.process_run_id.slice(0, 8)}
-                            </Badge>
+                            </BadgeControl>
                           ) : null}
                           {decision.process_branch_id ? (
-                            <Badge variant="outline" className={getInfoBadgeClassName('step')}>
+                            <BadgeControl
+                              variant="outline"
+                              className={getInfoBadgeClassName('step')}
+                            >
                               {translateText('generated.inline.0019_branch_10d735e5')}
                               {decision.process_branch_id.slice(0, 8)}
-                            </Badge>
+                            </BadgeControl>
                           ) : null}
                         </div>
                       </div>
@@ -1059,16 +1065,19 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                   <div className="space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <Badge
+                      <BadgeControl
                         variant={getBadgeVariant(run.status)}
                         className={getStatusBadgeClassName(run.status)}
                       >
                         {run.status}
-                      </Badge>
+                      </BadgeControl>
                       {run.selected_target_workflow?.name ? (
-                        <Badge variant="secondary" className={getInfoBadgeClassName('workflow')}>
+                        <BadgeControl
+                          variant="secondary"
+                          className={getInfoBadgeClassName('workflow')}
+                        >
                           {run.selected_target_workflow.name}
-                        </Badge>
+                        </BadgeControl>
                       ) : null}
                     </div>
                     {run.selected_target_group?.id && run.selected_target_group?.name ? (
@@ -1092,10 +1101,10 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                   </div>
 
                   <div className="flex flex-wrap gap-2">
-                    <Badge variant="outline" className={getInfoBadgeClassName('count')}>
+                    <BadgeControl variant="outline" className={getInfoBadgeClassName('count')}>
                       {run.branches?.length ?? 0} {t('features.amendments.process.branchCount')}
-                    </Badge>
-                    <Badge
+                    </BadgeControl>
+                    <BadgeControl
                       variant={
                         run.tasks?.some(task => task.status !== 'completed')
                           ? 'secondary'
@@ -1109,7 +1118,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                     >
                       {run.tasks?.filter(task => task.status !== 'completed').length ?? 0}{' '}
                       {t('features.amendments.process.openTasks')}
-                    </Badge>
+                    </BadgeControl>
                   </div>
                 </div>
               </div>
@@ -1127,7 +1136,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
           }
         }}
       >
-        <DialogContent className="flex h-screen w-screen max-w-none flex-col rounded-none border-0 p-0 sm:h-screen sm:max-w-none">
+        <ScrollableDialogContent className="flex h-screen w-screen max-w-none flex-col rounded-none border-0 p-0 sm:h-screen sm:max-w-none">
           <DialogHeader>
             <DialogTitle className="px-6 pt-6">
               {currentRun
@@ -1201,7 +1210,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                   : t('features.amendments.process.confirmStart')}
             </Button>
           </DialogFooter>
-        </DialogContent>
+        </ScrollableDialogContent>
       </Dialog>
     </div>
   );

@@ -1,24 +1,24 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
+import {
+  FormControlInput,
+  FormControlLabel,
+  FormControlSelect,
+  FormControlSelectContent,
+  FormControlSelectItem,
+  FormControlSelectTrigger,
+  FormControlSelectValue,
+} from '@/features/shared/ui/form';
 import { useState } from 'react';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/features/shared/ui/ui/collapsible';
 import { Progress } from '@/features/shared/ui/ui/progress';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Label } from '@/features/shared/ui/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/features/shared/ui/ui/select';
 import {
   Clock,
   Users,
@@ -116,31 +116,31 @@ export function VotingSessionManager({
           <CollapsibleContent>
             <CardContent className="space-y-4">
               <div>
-                <Label>{t('features.events.voting.majorityType')}</Label>
-                <Select
+                <FormControlLabel>{t('features.events.voting.majorityType')}</FormControlLabel>
+                <FormControlSelect
                   value={majorityType}
                   onValueChange={v => setMajorityType(v as MajorityType)}
                 >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="simple">
+                  <FormControlSelectTrigger>
+                    <FormControlSelectValue />
+                  </FormControlSelectTrigger>
+                  <FormControlSelectContent>
+                    <FormControlSelectItem value="simple">
                       {t('features.events.voting.simpleMajority')}
-                    </SelectItem>
-                    <SelectItem value="absolute">
+                    </FormControlSelectItem>
+                    <FormControlSelectItem value="absolute">
                       {t('features.events.voting.absoluteMajority')}
-                    </SelectItem>
-                    <SelectItem value="two_thirds">
+                    </FormControlSelectItem>
+                    <FormControlSelectItem value="two_thirds">
                       {t('features.events.voting.twoThirdsMajority')}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                    </FormControlSelectItem>
+                  </FormControlSelectContent>
+                </FormControlSelect>
               </div>
 
               <div>
-                <Label>{t('features.events.voting.timeLimit')}</Label>
-                <Input
+                <FormControlLabel>{t('features.events.voting.timeLimit')}</FormControlLabel>
+                <FormControlInput
                   type="number"
                   value={timeLimit}
                   onChange={e => setTimeLimit(parseInt(e.target.value) || 300)}
@@ -213,9 +213,9 @@ export function VotingSessionManager({
                 </CardTitle>
               </Button>
             </CollapsibleTrigger>
-            <Badge variant={currentSession.result === 'passed' ? 'default' : 'secondary'}>
+            <BadgeControl variant={currentSession.result === 'passed' ? 'default' : 'secondary'}>
               {getMajorityTypeText(currentSession.majorityType)}
-            </Badge>
+            </BadgeControl>
           </div>
         </CardHeader>
         <CollapsibleContent>
@@ -276,7 +276,7 @@ export function VotingSessionManager({
             {/* Result badge */}
             {currentSession.phase === 'completed' && currentSession.result && (
               <div className="flex justify-center">
-                <Badge
+                <BadgeControl
                   variant={currentSession.result === 'passed' ? 'default' : 'destructive'}
                   className="px-4 py-2 text-lg"
                 >
@@ -285,7 +285,7 @@ export function VotingSessionManager({
                     : currentSession.result === 'rejected'
                       ? t('features.events.voting.rejected')
                       : t('features.events.voting.tie')}
-                </Badge>
+                </BadgeControl>
               </div>
             )}
 

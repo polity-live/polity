@@ -1,3 +1,5 @@
+import { BadgeControl } from '@/features/shared/ui/status';
+import { FormControlLabel } from '@/features/shared/ui/form';
 /**
  * Event Edit Component
  *
@@ -14,14 +16,12 @@ import {
   CardTitle,
 } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Label } from '@/features/shared/ui/ui/label';
 import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
 import { DelegateAllocationInput } from '@/features/create/ui/inputs/DelegateAllocationInput';
 import { ElectionModeInput } from '@/features/elections/ui/ElectionModeInput';
 import { Loader2, XCircle } from 'lucide-react';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import { useEventUpdate } from '../hooks/useEventUpdate';
 import {
@@ -313,9 +313,9 @@ export function EventEdit({ eventId, mode = 'edit', defaultTab }: EventEditProps
                   required
                 />
                 <div className="space-y-2">
-                  <Label htmlFor="description">
+                  <FormControlLabel htmlFor="description">
                     {t('features.events.editPage.eventDescription')}
-                  </Label>
+                  </FormControlLabel>
                   <MiniPlateEditor
                     id="description"
                     value={formData.descriptionContent}
@@ -329,13 +329,13 @@ export function EventEdit({ eventId, mode = 'edit', defaultTab }: EventEditProps
                 />
                 {!isCreating && event?.event_type && (
                   <div className="space-y-2">
-                    <Label>{t('pages.create.event.eventType')}</Label>
+                    <FormControlLabel>{t('pages.create.event.eventType')}</FormControlLabel>
                     <div>
-                      <Badge variant="outline">
+                      <BadgeControl variant="outline">
                         {t(
                           `pages.create.event.eventTypes.${getEventTypeTranslationKey(event.event_type)}`
                         )}
-                      </Badge>
+                      </BadgeControl>
                     </div>
                   </div>
                 )}
@@ -348,7 +348,9 @@ export function EventEdit({ eventId, mode = 'edit', defaultTab }: EventEditProps
                 <CardDescription>{t('pages.create.event.tips.group')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
-                <Label htmlFor="groupId">{t('pages.create.event.associatedGroupLabel')}</Label>
+                <FormControlLabel htmlFor="groupId">
+                  {t('pages.create.event.associatedGroupLabel')}
+                </FormControlLabel>
                 <TypeaheadSearch
                   items={groupTypeaheadItems}
                   value={formData.groupId || undefined}
@@ -367,7 +369,9 @@ export function EventEdit({ eventId, mode = 'edit', defaultTab }: EventEditProps
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label>{translateText('generated.inline.0327_attendance_mode_507f30a9')}</Label>
+                  <FormControlLabel>
+                    {translateText('generated.inline.0327_attendance_mode_507f30a9')}
+                  </FormControlLabel>
                   <div className="flex flex-wrap gap-2">
                     {(['online', 'hybrid', 'offline'] as const).map(modeOption => (
                       <Button
@@ -567,12 +571,12 @@ export function EventEdit({ eventId, mode = 'edit', defaultTab }: EventEditProps
               <CardContent className="space-y-4">
                 {event?.event_type ? (
                   <div className="space-y-2">
-                    <Label>{t('pages.create.event.eventType')}</Label>
-                    <Badge variant="outline">
+                    <FormControlLabel>{t('pages.create.event.eventType')}</FormControlLabel>
+                    <BadgeControl variant="outline">
                       {t(
                         `pages.create.event.eventTypes.${getEventTypeTranslationKey(event.event_type)}`
                       )}
-                    </Badge>
+                    </BadgeControl>
                   </div>
                 ) : null}
 

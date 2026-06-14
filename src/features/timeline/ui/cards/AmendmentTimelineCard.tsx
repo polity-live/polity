@@ -1,5 +1,6 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import {
@@ -18,7 +19,6 @@ import {
 } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
 import { getEditingModeOption } from '@/features/shared/ui/ui/editing-mode.tsx';
 import { Progress } from '@/features/shared/ui/ui/progress';
@@ -282,12 +282,12 @@ export function AmendmentTimelineCard({
       >
         {/* Status Badge */}
         <div className="mt-2 flex justify-center">
-          <Badge
+          <BadgeControl
             variant={statusConfig.variant}
             className={cn('px-3 py-1 text-xs', isVoting && 'animate-pulse')}
           >
             {statusLabel}
-          </Badge>
+          </BadgeControl>
         </div>
       </TimelineCardHeader>
 

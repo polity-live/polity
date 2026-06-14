@@ -1,9 +1,9 @@
+import { BadgeControl } from '@/features/shared/ui/status';
+import { FormControlTextarea } from '@/features/shared/ui/form';
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AtSign, LoaderCircle, Paperclip, Send, X } from 'lucide-react';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
-import { Textarea } from '@/features/shared/ui/ui/textarea';
 import { Conversation } from '../types/message.types';
 import { getOtherParticipant } from '../logic/messageUtils';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -244,7 +244,7 @@ export function MessageInput({ conversation, currentUserId, onSendMessage }: Mes
           {attachments.selectedAttachments.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {attachments.selectedAttachments.map(attachment => (
-                <Badge
+                <BadgeControl
                   key={`${attachment.entityType}:${attachment.entityId}`}
                   variant="outline"
                   className="gap-1 pr-1 text-xs"
@@ -266,20 +266,20 @@ export function MessageInput({ conversation, currentUserId, onSendMessage }: Mes
                   >
                     <X className="h-3 w-3" />
                   </Button>
-                </Badge>
+                </BadgeControl>
               ))}
             </div>
           )}
 
           {attachments.isUploadingAttachments && attachments.uploadingAttachmentName && (
-            <Badge variant="secondary" className="gap-1 text-xs">
+            <BadgeControl variant="secondary" className="gap-1 text-xs">
               <LoaderCircle className="h-3 w-3 animate-spin" />
               {t('features.messages.compose.uploading')}:{attachments.uploadingAttachmentName}
-            </Badge>
+            </BadgeControl>
           )}
 
           <div className="relative">
-            <Textarea
+            <FormControlTextarea
               ref={textareaRef}
               placeholder={t('features.messages.compose.messagePlaceholder')}
               value={messageText}
@@ -377,9 +377,9 @@ export function MessageInput({ conversation, currentUserId, onSendMessage }: Mes
                                 </span>
                               )}
                             </span>
-                            <Badge variant="outline" className="text-[10px] uppercase">
+                            <BadgeControl variant="outline" className="text-[10px] uppercase">
                               {option.entityType}
-                            </Badge>
+                            </BadgeControl>
                           </button>
                         ))}
                       </>

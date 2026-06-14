@@ -1,3 +1,4 @@
+import { FormControlLabel } from '@/features/shared/ui/form';
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import {
@@ -6,7 +7,6 @@ import {
 } from '@/features/shared/hooks/use-translation';
 import { useAuth } from '@/providers/auth-provider';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Label } from '@/features/shared/ui/ui/label';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
 import { SummaryPillList } from '@/features/shared/ui/ui/create-review-card';
@@ -421,7 +421,9 @@ export function useCreateAmendmentForm(): CreateFormConfig {
           content: (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>{translateText('generated.inline.0320_evaluierungsmodus_37f2926b')}</Label>
+                <FormControlLabel>
+                  {translateText('generated.inline.0320_evaluierungsmodus_37f2926b')}
+                </FormControlLabel>
                 <div className="flex flex-wrap gap-2">
                   {(
                     [

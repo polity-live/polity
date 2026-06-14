@@ -1,21 +1,21 @@
-import { Label } from '@/features/shared/ui/ui/label'
-import { Button } from '@/features/shared/ui/ui/button'
-import { ArrowDownLeft, ArrowUpRight } from 'lucide-react'
-import { useTranslation } from '@/features/shared/hooks/use-translation'
+import { FormControlLabel } from '@/features/shared/ui/form';
+import { Button } from '@/features/shared/ui/ui/button';
+import { ArrowDownLeft, ArrowUpRight } from 'lucide-react';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
-type PaymentDirection = 'income' | 'expense'
+type PaymentDirection = 'income' | 'expense';
 
 interface DirectionInputProps {
-  value: PaymentDirection
-  onChange: (direction: PaymentDirection) => void
+  value: PaymentDirection;
+  onChange: (direction: PaymentDirection) => void;
 }
 
 export function DirectionInput({ value, onChange }: DirectionInputProps) {
-  const { t } = useTranslation()
+  const { t } = useTranslation();
 
   return (
     <div className="space-y-2">
-      <Label>{t('pages.create.payment.direction')}</Label>
+      <FormControlLabel>{t('pages.create.payment.direction')}</FormControlLabel>
       <div className="flex gap-2">
         <Button
           type="button"
@@ -37,5 +37,5 @@ export function DirectionInput({ value, onChange }: DirectionInputProps) {
         </Button>
       </div>
     </div>
-  )
+  );
 }

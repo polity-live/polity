@@ -1,9 +1,9 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Avatar, AvatarFallback } from '@/features/shared/ui/ui/avatar';
 import { ShieldCheck, CheckCircle2, Loader2, Users } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -72,10 +72,10 @@ export function AccreditationSection({ eventId, agendaItemId }: AccreditationSec
             <ShieldCheck className="h-5 w-5" />
             <CardTitle>{t('features.events.agenda.accreditation.title')}</CardTitle>
           </div>
-          <Badge variant="secondary">
+          <BadgeControl variant="secondary">
             <Users className="mr-1 h-3 w-3" />
             {accreditedCount} {t('features.events.agenda.accreditation.accredited', 'accredited')}
-          </Badge>
+          </BadgeControl>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">

@@ -130,7 +130,7 @@ export function useMeetPage(userId: string) {
           id: inst.id,
           parentEventId: meeting.id,
           title: inst.title ?? 'Meeting',
-          description: inst.description ?? null,
+          description: typeof inst.description === 'string' ? inst.description : null,
           meetingType: meeting.meeting_type ?? null,
           startDate: inst.start_date ?? 0,
           endDate: inst.end_date ?? 0,

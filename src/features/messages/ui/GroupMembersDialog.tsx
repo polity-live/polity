@@ -1,6 +1,6 @@
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
@@ -25,7 +25,7 @@ export function GroupMembersDialog({ open, onOpenChange, conversation }: GroupMe
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <ScrollableDialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{t('features.messages.conversation.participants')}</DialogTitle>
           <DialogDescription>
@@ -57,7 +57,7 @@ export function GroupMembersDialog({ open, onOpenChange, conversation }: GroupMe
             </div>
           ))}
         </div>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

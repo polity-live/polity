@@ -1,11 +1,11 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { useState } from 'react';
 import { Calendar, MapPin, Users, Trophy, ScrollText, Bell } from 'lucide-react';
 import { format, isToday, isTomorrow, isPast, differenceInHours } from 'date-fns';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/features/shared/ui/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
@@ -263,10 +263,10 @@ export function EventTimelineCard({
         subtitleHref={eventSubtitleHref}
         badge={
           eventTimeStatus === 'live' ? (
-            <Badge variant="destructive" className="animate-pulse">
+            <BadgeControl variant="destructive" className="animate-pulse">
               <span className="mr-1.5 h-2 w-2 animate-pulse rounded-full bg-white" />
               {t('features.timeline.cards.happeningNow')}
-            </Badge>
+            </BadgeControl>
           ) : (
             <TimelineCardBadge label={t('features.timeline.contentTypes.event')} icon={Calendar} />
           )
@@ -284,9 +284,9 @@ export function EventTimelineCard({
             <span className="text-2xl leading-none font-bold">{day}</span>
             <span className="text-muted-foreground mt-0.5 text-xs">{time}</span>
             {dateLabel && (
-              <Badge variant="secondary" className="mt-1 text-xs">
+              <BadgeControl variant="secondary" className="mt-1 text-xs">
                 {dateLabel}
-              </Badge>
+              </BadgeControl>
             )}
           </div>
         </div>

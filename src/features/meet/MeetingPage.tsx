@@ -23,7 +23,9 @@ export function MeetingPage({ meetingId }: MeetingPageProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-lg text-muted-foreground">{t('features.meet.page.loadingMeeting')}</div>
+        <div className="text-muted-foreground text-lg">
+          {t('features.meet.page.loadingMeeting')}
+        </div>
       </div>
     );
   }
@@ -32,9 +34,7 @@ export function MeetingPage({ meetingId }: MeetingPageProps) {
     return (
       <div className="py-12 text-center">
         <h1 className="mb-4 text-2xl font-bold">{t('features.meet.page.notFound')}</h1>
-        <p className="text-muted-foreground">
-          {t('features.meet.page.notFoundDescription')}
-        </p>
+        <p className="text-muted-foreground">{t('features.meet.page.notFoundDescription')}</p>
       </div>
     );
   }
@@ -47,17 +47,23 @@ export function MeetingPage({ meetingId }: MeetingPageProps) {
     cancelMeetingBooking(event.id);
   };
 
-  const creator = event.creator as { id: string; first_name?: string | null; avatar?: string | null } | undefined;
-  const participants = (event.participants ?? []).map((p) => ({
-    id: p.id ?? '',
-    status: p.status ?? '',
-    booker: p.user ? {
-      id: p.user.id,
-      name: p.user.first_name ?? undefined,
-      handle: p.user.handle ?? undefined,
-      avatar: p.user.avatar ?? undefined,
-    } : undefined,
-  })).filter((p) => p.booker?.id !== event.creator_id);
+  const creator = event.creator as
+    | { id: string; first_name?: string | null; avatar?: string | null }
+    | undefined;
+  const participants = (event.participants ?? [])
+    .map(p => ({
+      id: p.id ?? '',
+      status: p.status ?? '',
+      booker: p.user
+        ? {
+            id: p.user.id,
+            name: p.user.first_name ?? undefined,
+            handle: p.user.handle ?? undefined,
+            avatar: p.user.avatar ?? undefined,
+          }
+        : undefined,
+    }))
+    .filter(p => p.booker?.id !== event.creator_id);
 
   return (
     <>
@@ -77,7 +83,7 @@ export function MeetingPage({ meetingId }: MeetingPageProps) {
       <MeetingActions
         meetingId={event.id}
         title={event.title || 'Meeting'}
-        description={event.description || ''}
+        description={typeof event.description === 'string' ? event.description : ''}
         isOwner={isOwner}
         hasBooked={hasBooked}
         isAvailable={isAvailable}
@@ -98,9 +104,7 @@ export function MeetingPage({ meetingId }: MeetingPageProps) {
 
       <MeetingParticipants bookings={participants} count={bookingCount} />
 
-      {event.description && (
-        <InfoTabs about={event.description} contact={{}} className="mb-12" />
-      )}
+      {event.description && <InfoTabs about={event.description} contact={{}} className="mb-12" />}
     </>
   );
 }

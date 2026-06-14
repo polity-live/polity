@@ -1,5 +1,16 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
+import {
+  FormControlInput,
+  FormControlTextarea,
+  FormControlSelect,
+  FormControlSelectContent,
+  FormControlSelectItem,
+  FormControlSelectTrigger,
+  FormControlSelectValue,
+} from '@/features/shared/ui/form';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import {
   useLayoutEffect,
   useMemo,
@@ -23,19 +34,16 @@ import {
   Zap,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog';
 import { HashtagInput } from '@/features/shared/ui/ui/hashtag-input';
-import { Input } from '@/features/shared/ui/ui/input';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -44,14 +52,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/features/shared/ui/ui/dropdown-menu';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/features/shared/ui/ui/select';
-import { Textarea } from '@/features/shared/ui/ui/textarea';
 import type { AiReasoningEffort } from '@/lib/ai/schemas';
 import {
   useTranslation,
@@ -342,9 +342,9 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                   : t('features.messages.ai.createToolsDescription')}
               </div>
             </div>
-            <Badge variant="outline" className="text-[10px] uppercase">
+            <BadgeControl variant="outline" className="text-[10px] uppercase">
               {tools.length}
-            </Badge>
+            </BadgeControl>
           </div>
         </DropdownMenuCheckboxItem>
         {tools.map(tool => (
@@ -582,7 +582,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
         {assistantChat.selectedTools.length > 0 && (
           <div className="flex flex-wrap items-center gap-2">
             {visibleSelectedTools.map(tool => (
-              <Badge key={tool.name} variant="secondary" className="gap-1 pr-1 text-xs">
+              <BadgeControl key={tool.name} variant="secondary" className="gap-1 pr-1 text-xs">
                 <Wrench className="h-3 w-3" />
                 {tool.label}
                 <span className="text-muted-foreground">{tool.name}</span>
@@ -595,13 +595,13 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                 >
                   <X className="h-3 w-3" />
                 </Button>
-              </Badge>
+              </BadgeControl>
             ))}
             {hiddenSelectedToolCount > 0 && (
-              <Badge variant="outline" className="gap-1 text-xs">
+              <BadgeControl variant="outline" className="gap-1 text-xs">
                 <Wrench className="h-3 w-3" />+{hiddenSelectedToolCount}{' '}
                 {t('features.messages.ai.moreTools')}
-              </Badge>
+              </BadgeControl>
             )}
           </div>
         )}
@@ -609,7 +609,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
         {assistantChat.selectedSkills.length > 0 && (
           <div className="flex flex-wrap items-center gap-2">
             {assistantChat.selectedSkills.map(skill => (
-              <Badge key={skill.slug} variant="secondary" className="gap-1 pr-1 text-xs">
+              <BadgeControl key={skill.slug} variant="secondary" className="gap-1 pr-1 text-xs">
                 <Sparkles className="h-3 w-3" />
                 {skill.name}
                 <span className="text-muted-foreground">/{skill.slug}</span>
@@ -622,7 +622,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                 >
                   <X className="h-3 w-3" />
                 </Button>
-              </Badge>
+              </BadgeControl>
             ))}
           </div>
         )}
@@ -630,7 +630,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
         {assistantChat.selectedAttachments.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {assistantChat.selectedAttachments.map(attachment => (
-              <Badge
+              <BadgeControl
                 key={`${attachment.entityType}:${attachment.entityId}`}
                 variant="outline"
                 className="gap-1 pr-1 text-xs"
@@ -648,20 +648,20 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                 >
                   <X className="h-3 w-3" />
                 </Button>
-              </Badge>
+              </BadgeControl>
             ))}
           </div>
         )}
 
         {assistantChat.isUploadingAttachments && assistantChat.uploadingAttachmentName && (
-          <Badge variant="secondary" className="gap-1 text-xs">
+          <BadgeControl variant="secondary" className="gap-1 text-xs">
             <LoaderCircle className="h-3 w-3 animate-spin" />
             {t('features.messages.compose.uploading')}:{assistantChat.uploadingAttachmentName}
-          </Badge>
+          </BadgeControl>
         )}
 
         <div className="relative">
-          <Textarea
+          <FormControlTextarea
             ref={textareaRef}
             placeholder={t('features.messages.ai.placeholder')}
             value={messageText}
@@ -744,9 +744,9 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                               {tool.description}
                             </span>
                           </span>
-                          <Badge variant="outline" className="text-[10px] uppercase">
+                          <BadgeControl variant="outline" className="text-[10px] uppercase">
                             {tool.kind}
-                          </Badge>
+                          </BadgeControl>
                         </button>
                       ))}
                     </>
@@ -772,9 +772,9 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                             </span>
                           </span>
                           {skill.isBuiltIn && (
-                            <Badge variant="secondary" className="text-[10px] uppercase">
+                            <BadgeControl variant="secondary" className="text-[10px] uppercase">
                               {translateText('generated.inline.0751_built_in_20f409cc')}
-                            </Badge>
+                            </BadgeControl>
                           )}
                         </button>
                       ))}
@@ -828,9 +828,9 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                               </span>
                             )}
                           </span>
-                          <Badge variant="outline" className="text-[10px] uppercase">
+                          <BadgeControl variant="outline" className="text-[10px] uppercase">
                             {option.entityType}
-                          </Badge>
+                          </BadgeControl>
                         </button>
                       ))}
                     </>
@@ -855,11 +855,11 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
 
           <div className="min-w-[240px] flex-1">
             <div className="flex items-center gap-1">
-              <Select
+              <FormControlSelect
                 value={assistantChat.selectedModelKey}
                 onValueChange={assistantChat.setSelectedModelKey}
               >
-                <SelectTrigger className="h-8 gap-2">
+                <FormControlSelectTrigger className="h-8 gap-2">
                   <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
                     <span
                       className={`min-w-0 flex-1 truncate text-left ${assistantChat.selectedModel ? 'text-foreground' : 'text-muted-foreground'}`}
@@ -871,19 +871,19 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                     {assistantChat.selectedModel && (
                       <span className="flex flex-shrink-0 items-center gap-1.5">
                         {assistantChat.selectedModel.free && (
-                          <Badge className="border-0 bg-gradient-to-r from-emerald-500/20 via-green-500/20 to-lime-500/20 text-[10px] text-emerald-800 dark:text-emerald-200">
+                          <BadgeControl className="border-0 bg-gradient-to-r from-emerald-500/20 via-green-500/20 to-lime-500/20 text-[10px] text-emerald-800 dark:text-emerald-200">
                             {translateText('generated.inline.0752_free_75f52718')}
-                          </Badge>
+                          </BadgeControl>
                         )}
                         {assistantChat.selectedModel.source === 'byok' && (
-                          <Badge className="border-0 bg-gradient-to-r from-slate-500/20 via-zinc-500/20 to-stone-500/20 text-[10px] text-slate-800 dark:text-slate-200">
+                          <BadgeControl className="border-0 bg-gradient-to-r from-slate-500/20 via-zinc-500/20 to-stone-500/20 text-[10px] text-slate-800 dark:text-slate-200">
                             {translateText('generated.inline.0113_byok_36068183')}
-                          </Badge>
+                          </BadgeControl>
                         )}
-                        <Badge className="border-0 bg-gradient-to-r from-cyan-500/20 via-sky-500/20 to-blue-500/20 text-[10px] text-sky-800 dark:text-sky-200">
+                        <BadgeControl className="border-0 bg-gradient-to-r from-cyan-500/20 via-sky-500/20 to-blue-500/20 text-[10px] text-sky-800 dark:text-sky-200">
                           {translateText('generated.inline.0114_ctx_4024700f')}
                           {formatContextWindow(assistantChat.selectedModel.context_window)}
-                        </Badge>
+                        </BadgeControl>
                         {selectedModelHint && (
                           <span
                             className={selectedModelHint.className}
@@ -896,8 +896,8 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                       </span>
                     )}
                   </div>
-                </SelectTrigger>
-                <SelectContent>
+                </FormControlSelectTrigger>
+                <FormControlSelectContent>
                   {assistantChat.models.map(model => {
                     const modelKey = buildModelKey(model);
                     const isFreeRouterModel = freeRouterModelKey === modelKey;
@@ -908,7 +908,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                       : 'inline-flex h-4 w-4 items-center justify-center rounded-full bg-amber-100 text-[11px] font-bold leading-none text-amber-700 dark:bg-amber-500/20 dark:text-amber-300';
 
                     return (
-                      <SelectItem
+                      <FormControlSelectItem
                         key={modelKey}
                         value={modelKey}
                         textValue={displayLabel}
@@ -918,19 +918,19 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                           <span className="truncate font-medium">{displayLabel}</span>
                           <span className="flex flex-shrink-0 items-center gap-1.5">
                             {model.free && (
-                              <Badge className="border-0 bg-gradient-to-r from-emerald-500/20 via-green-500/20 to-lime-500/20 text-[10px] text-emerald-800 dark:text-emerald-200">
+                              <BadgeControl className="border-0 bg-gradient-to-r from-emerald-500/20 via-green-500/20 to-lime-500/20 text-[10px] text-emerald-800 dark:text-emerald-200">
                                 {translateText('generated.inline.0752_free_75f52718')}
-                              </Badge>
+                              </BadgeControl>
                             )}
                             {model.source === 'byok' && (
-                              <Badge className="border-0 bg-gradient-to-r from-slate-500/20 via-zinc-500/20 to-stone-500/20 text-[10px] text-slate-800 dark:text-slate-200">
+                              <BadgeControl className="border-0 bg-gradient-to-r from-slate-500/20 via-zinc-500/20 to-stone-500/20 text-[10px] text-slate-800 dark:text-slate-200">
                                 {translateText('generated.inline.0113_byok_36068183')}
-                              </Badge>
+                              </BadgeControl>
                             )}
-                            <Badge className="border-0 bg-gradient-to-r from-cyan-500/20 via-sky-500/20 to-blue-500/20 text-[10px] text-sky-800 dark:text-sky-200">
+                            <BadgeControl className="border-0 bg-gradient-to-r from-cyan-500/20 via-sky-500/20 to-blue-500/20 text-[10px] text-sky-800 dark:text-sky-200">
                               {translateText('generated.inline.0114_ctx_4024700f')}
                               {formatContextWindow(model.context_window)}
-                            </Badge>
+                            </BadgeControl>
                             <span
                               className={modelHintClass}
                               title={modelHint}
@@ -940,24 +940,24 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                             </span>
                           </span>
                         </div>
-                      </SelectItem>
+                      </FormControlSelectItem>
                     );
                   })}
-                </SelectContent>
-              </Select>
+                </FormControlSelectContent>
+              </FormControlSelect>
             </div>
           </div>
 
           <div className="w-[120px]">
-            <Select
+            <FormControlSelect
               value={assistantChat.reasoningEffort}
               onValueChange={value => assistantChat.setReasoningEffort(value as AiReasoningEffort)}
               disabled={!assistantChat.selectedModel?.supports_reasoning_effort}
             >
-              <SelectTrigger className="h-8">
-                <SelectValue placeholder={t('features.messages.ai.reasoning')} />
-              </SelectTrigger>
-              <SelectContent>
+              <FormControlSelectTrigger className="h-8">
+                <FormControlSelectValue placeholder={t('features.messages.ai.reasoning')} />
+              </FormControlSelectTrigger>
+              <FormControlSelectContent>
                 <div className="px-3 py-2">
                   <div className="text-xs font-medium text-slate-900 dark:text-slate-100">
                     {t('features.messages.ai.reasoningDropdownTitle')}
@@ -968,7 +968,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                 </div>
                 <div className="border-t border-slate-200 dark:border-slate-700" />
                 {REASONING_OPTIONS.map(option => (
-                  <SelectItem key={option.value} value={option.value}>
+                  <FormControlSelectItem key={option.value} value={option.value}>
                     <div className="flex items-center gap-2">
                       <span
                         className={`inline-flex h-6 w-6 items-center justify-center rounded-full ${option.gradientClass}`}
@@ -977,10 +977,10 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                       </span>
                       <span className="text-sm font-medium">{option.label}</span>
                     </div>
-                  </SelectItem>
+                  </FormControlSelectItem>
                 ))}
-              </SelectContent>
-            </Select>
+              </FormControlSelectContent>
+            </FormControlSelect>
           </div>
 
           <DropdownMenu>
@@ -1130,7 +1130,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
       </div>
 
       <Dialog open={createSkillOpen} onOpenChange={setCreateSkillOpen}>
-        <DialogContent>
+        <ScrollableDialogContent>
           <DialogHeader>
             <DialogTitle>{t('features.messages.ai.createSkill')}</DialogTitle>
             <DialogDescription>
@@ -1141,12 +1141,15 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
           <div className="space-y-3">
             <div className="space-y-2">
               <label className="text-sm font-medium">{t('pages.user.ai.skills.name')}</label>
-              <Input value={skillName} onChange={event => setSkillName(event.target.value)} />
+              <FormControlInput
+                value={skillName}
+                onChange={event => setSkillName(event.target.value)}
+              />
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium">{t('pages.user.ai.skills.slug')}</label>
-              <Input
+              <FormControlInput
                 value={skillSlug}
                 onChange={event => setSkillSlug(event.target.value)}
                 placeholder={slugifySkillName(skillName) || 'campaign-planner'}
@@ -1167,7 +1170,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
               <label className="text-sm font-medium">
                 {t('pages.user.ai.skills.systemPrompt')}
               </label>
-              <Textarea
+              <FormControlTextarea
                 value={skillPrompt}
                 onChange={event => setSkillPrompt(event.target.value)}
                 className="min-h-[160px]"
@@ -1183,7 +1186,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
               {t('common.create')}
             </Button>
           </DialogFooter>
-        </DialogContent>
+        </ScrollableDialogContent>
       </Dialog>
     </CardContent>
   );

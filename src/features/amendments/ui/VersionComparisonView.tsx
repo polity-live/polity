@@ -1,3 +1,6 @@
+'use client';
+
+import { BadgeControl } from '@/features/shared/ui/status';
 /**
  * VersionComparisonView Component
  *
@@ -5,11 +8,8 @@
  * added their support) and the current version after changes were accepted.
  */
 
-'use client';
-
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
@@ -67,22 +67,22 @@ export function VersionComparisonView({
             {t('features.amendments.supportConfirmation.comparison.title')}
           </CardTitle>
           {hasChanges && (
-            <Badge variant="secondary" className="flex items-center gap-1">
+            <BadgeControl variant="secondary" className="flex items-center gap-1">
               <AlertTriangle className="h-3 w-3" />
               {t('features.amendments.supportConfirmation.comparison.hasChanges')}
-            </Badge>
+            </BadgeControl>
           )}
         </div>
       </CardHeader>
 
       <CardContent>
         {changeRequest && (
-          <div className="mb-4 rounded-lg bg-muted p-3">
+          <div className="bg-muted mb-4 rounded-lg p-3">
             <div className="mb-1 flex items-center gap-2 text-sm font-medium">
               <FileText className="h-4 w-4" />
               {changeRequest.title}
             </div>
-            <p className="text-sm text-muted-foreground">{changeRequest.description}</p>
+            <p className="text-muted-foreground text-sm">{changeRequest.description}</p>
           </div>
         )}
 
@@ -102,15 +102,15 @@ export function VersionComparisonView({
           <TabsContent value="side-by-side">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  <Badge variant="outline">
+                <div className="text-muted-foreground flex items-center gap-2 text-sm font-medium">
+                  <BadgeControl variant="outline">
                     {t('features.amendments.supportConfirmation.comparison.originalLabel')}
-                  </Badge>
+                  </BadgeControl>
                 </div>
                 <ScrollArea className="h-64 w-full rounded-md border p-4">
-                  <div className="whitespace-pre-wrap font-mono text-sm">
+                  <div className="font-mono text-sm whitespace-pre-wrap">
                     {originalText || (
-                      <span className="italic text-muted-foreground">
+                      <span className="text-muted-foreground italic">
                         {t('features.amendments.supportConfirmation.comparison.empty')}
                       </span>
                     )}
@@ -119,16 +119,16 @@ export function VersionComparisonView({
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <div className="text-muted-foreground flex items-center gap-2 text-sm font-medium">
                   <ArrowRight className="h-4 w-4" />
-                  <Badge variant="outline">
+                  <BadgeControl variant="outline">
                     {t('features.amendments.supportConfirmation.comparison.currentLabel')}
-                  </Badge>
+                  </BadgeControl>
                 </div>
                 <ScrollArea className="h-64 w-full rounded-md border p-4">
-                  <div className="whitespace-pre-wrap font-mono text-sm">
+                  <div className="font-mono text-sm whitespace-pre-wrap">
                     {currentText || (
-                      <span className="italic text-muted-foreground">
+                      <span className="text-muted-foreground italic">
                         {t('features.amendments.supportConfirmation.comparison.empty')}
                       </span>
                     )}
@@ -140,9 +140,9 @@ export function VersionComparisonView({
 
           <TabsContent value="original">
             <ScrollArea className="h-80 w-full rounded-md border p-4">
-              <div className="whitespace-pre-wrap font-mono text-sm">
+              <div className="font-mono text-sm whitespace-pre-wrap">
                 {originalText || (
-                  <span className="italic text-muted-foreground">
+                  <span className="text-muted-foreground italic">
                     {t('features.amendments.supportConfirmation.comparison.empty')}
                   </span>
                 )}
@@ -152,9 +152,9 @@ export function VersionComparisonView({
 
           <TabsContent value="current">
             <ScrollArea className="h-80 w-full rounded-md border p-4">
-              <div className="whitespace-pre-wrap font-mono text-sm">
+              <div className="font-mono text-sm whitespace-pre-wrap">
                 {currentText || (
-                  <span className="italic text-muted-foreground">
+                  <span className="text-muted-foreground italic">
                     {t('features.amendments.supportConfirmation.comparison.empty')}
                   </span>
                 )}

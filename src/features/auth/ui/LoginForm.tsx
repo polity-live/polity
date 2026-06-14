@@ -2,21 +2,11 @@
 
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { Button } from '@/features/shared/ui/ui/button';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Label } from '@/features/shared/ui/ui/label';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/features/shared/ui/ui/card';
-import { Alert, AlertDescription } from '@/features/shared/ui/ui/alert';
-import { Loader2, Mail, ArrowRight } from 'lucide-react';
+
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { useAuthLogin } from '@/features/auth/hooks/useAuthLogin';
+import { LoginFormView, type LoginFormCopy } from './LoginFormView';
 
 export function LoginForm() {
   const { t } = useTranslation();
@@ -38,58 +28,25 @@ export function LoginForm() {
     }
   };
 
+  const copy: LoginFormCopy = {
+    title: t('auth.login.title'),
+    description: t('auth.login.description'),
+    emailLabel: t('auth.login.emailLabel'),
+    emailPlaceholder: t('auth.login.emailPlaceholder'),
+    sendCode: t('auth.login.sendCode'),
+    sending: t('auth.login.sending'),
+    footerNoPassword: t('auth.login.footer.noPassword'),
+    footerCheckEmail: t('auth.login.footer.checkEmail'),
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4 dark:from-gray-900 dark:to-gray-800">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mb-4 flex justify-center">
-            <Mail className="h-12 w-12 text-blue-500" />
-          </div>
-          <CardTitle className="text-2xl font-bold">{t('auth.login.title')}</CardTitle>
-          <CardDescription>{t('auth.login.description')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">{t('auth.login.emailLabel')}</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder={t('auth.login.emailPlaceholder')}
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-                disabled={isSending}
-              />
-            </div>
-
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            <Button type="submit" className="w-full" disabled={isSending || !email}>
-              {isSending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t('auth.login.sending')}
-                </>
-              ) : (
-                <>
-                  {t('auth.login.sendCode')}
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </>
-              )}
-            </Button>
-          </form>
-
-          <div className="text-muted-foreground mt-6 text-center text-sm">
-            <p>{t('auth.login.footer.noPassword')}</p>
-            <p>{t('auth.login.footer.checkEmail')}</p>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    <LoginFormView
+      copy={copy}
+      email={email}
+      error={error}
+      isSending={isSending}
+      onSubmit={handleSubmit}
+      onEmailChange={setEmail}
+    />
   );
 }

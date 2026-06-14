@@ -1,5 +1,10 @@
 'use client';
 
+import {
+  FormControlTextarea,
+  FormControlLabel,
+  FormControlSwitch,
+} from '@/features/shared/ui/form';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Card,
@@ -9,8 +14,6 @@ import {
   CardTitle,
 } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Label } from '@/features/shared/ui/ui/label';
-import { Textarea } from '@/features/shared/ui/ui/textarea';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { ChevronDown, Loader2 } from 'lucide-react';
@@ -22,7 +25,6 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/features/shared/ui/ui/dropdown-menu.tsx';
-import { Switch } from '@/features/shared/ui/ui/switch';
 import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
@@ -498,8 +500,10 @@ export function AmendmentEditContent({
               hint={t('common.validation.subtitleHint')}
             />
             <div className="space-y-2">
-              <Label htmlFor="code">{t('features.amendments.editContent.codeLabel')}</Label>
-              <Textarea
+              <FormControlLabel htmlFor="code">
+                {t('features.amendments.editContent.codeLabel')}
+              </FormControlLabel>
+              <FormControlTextarea
                 id="code"
                 value={formData.code}
                 onChange={e => setFormData({ ...formData, code: e.target.value })}
@@ -559,9 +563,9 @@ export function AmendmentEditContent({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="workflowStatus">
+              <FormControlLabel htmlFor="workflowStatus">
                 {t('features.amendments.editContent.workflowStatusLabel')}
-              </Label>
+              </FormControlLabel>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -598,14 +602,14 @@ export function AmendmentEditContent({
               <div className="space-y-2 rounded-lg border p-4">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label htmlFor="autoCloseVoting">
+                    <FormControlLabel htmlFor="autoCloseVoting">
                       {t('features.amendments.editContent.autoCloseVoting')}
-                    </Label>
+                    </FormControlLabel>
                     <p className="text-muted-foreground text-xs">
                       {t('features.amendments.editContent.autoCloseVotingDescription')}
                     </p>
                   </div>
-                  <Switch
+                  <FormControlSwitch
                     id="autoCloseVoting"
                     checked={formData.autoCloseVoting}
                     onCheckedChange={(checked: boolean) =>

@@ -1,11 +1,14 @@
-import { Badge, type BadgeProps } from '@/features/shared/ui/ui/badge';
+import type { ComponentProps, ReactNode } from 'react';
+
+import { RoleBadge } from '@/features/shared/ui/status';
 import { BADGE_GRADIENTS } from '@/features/timeline/logic/gradient-assignment';
 import { cn } from '@/features/shared/utils/utils';
 
-interface RoleTagProps extends BadgeProps {
+interface RoleTagProps extends Omit<ComponentProps<typeof RoleBadge>, 'children'> {
   roleId?: string | null;
   roleName?: string | null;
   fallbackKey?: string;
+  children?: ReactNode;
 }
 
 export function RoleTag({
@@ -19,7 +22,7 @@ export function RoleTag({
   const roleKey = roleId ?? roleName ?? fallbackKey;
 
   return (
-    <Badge
+    <RoleBadge
       className={cn(
         'border-0 text-white shadow-sm shadow-black/10 dark:text-white',
         getRoleGradientClassName(roleKey),
@@ -28,7 +31,7 @@ export function RoleTag({
       {...props}
     >
       {children ?? roleName ?? 'Role'}
-    </Badge>
+    </RoleBadge>
   );
 }
 

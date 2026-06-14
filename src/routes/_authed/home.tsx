@@ -1,9 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { ModernTimeline } from '@/features/timeline';
 
 export const Route = createFileRoute('/_authed/home')({
-  component: RouteComponent,
+  component: HomeRoute,
 });
 
-function RouteComponent() {
-  return <div>Hello "/_authed/home"!</div>;
+function HomeRoute() {
+  return <ModernTimeline />;
 }

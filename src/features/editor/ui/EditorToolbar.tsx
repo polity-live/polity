@@ -1,5 +1,6 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 /**
  * Editor Toolbar Component
  *
@@ -12,7 +13,6 @@
  */
 
 import { Button } from '@/features/shared/ui/ui/button';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { ArrowLeft, Users } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
@@ -178,9 +178,9 @@ export function EditorToolbar({
 
         {/* Status Badge */}
         {statusBadge && (
-          <Badge variant="outline" className="capitalize">
+          <BadgeControl variant="outline" className="capitalize">
             {statusBadge}
-          </Badge>
+          </BadgeControl>
         )}
       </div>
     </div>

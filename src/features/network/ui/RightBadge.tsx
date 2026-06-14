@@ -1,4 +1,4 @@
-import { Badge } from '@/features/shared/ui/ui/badge';
+import { BadgeControl } from '@/features/shared/ui/status';
 import { cn } from '@/features/shared/utils/utils';
 import { getRightLabel, RIGHT_GRADIENTS, type RightType } from '@/features/network/ui/RightFilters';
 import { ArrowDownLeft, ArrowUpRight } from 'lucide-react';
@@ -36,9 +36,9 @@ export function RightBadge({
   if (variant === 'outline') {
     return (
       <span className="relative inline-flex shrink-0 overflow-visible align-middle">
-        <Badge variant="outline" className={cn('text-xs', className)}>
+        <BadgeControl variant="outline" className={cn('text-xs', className)}>
           {label}
-        </Badge>
+        </BadgeControl>
         {requestKind && requestStatusLabel && (
           <span
             className={cn(
@@ -59,7 +59,7 @@ export function RightBadge({
 
   return (
     <span className="relative inline-flex shrink-0 overflow-visible align-middle">
-      <Badge
+      <BadgeControl
         className={cn(
           'border-0 text-xs text-white',
           gradient ?? 'bg-muted text-muted-foreground',
@@ -67,7 +67,7 @@ export function RightBadge({
         )}
       >
         {label}
-      </Badge>
+      </BadgeControl>
       {requestKind && requestStatusLabel && (
         <span
           className={cn(

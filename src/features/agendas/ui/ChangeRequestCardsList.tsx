@@ -1,15 +1,15 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
+import { FormControlInput } from '@/features/shared/ui/form';
 import { useState, useMemo } from 'react';
 import type { Value } from 'platejs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Progress } from '@/features/shared/ui/ui/progress';
 import { Tabs, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import { Vote, FileEdit, AlertTriangle, CheckCircle2, Search } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { Input } from '@/features/shared/ui/ui/input';
 import type { TDiscussion } from '@/features/editor/types';
 import { ChangeRequestTimelineCard, type ChangeRequestDiffData } from './ChangeRequestTimelineCard';
 import { getCRFilterStatus } from '../logic/createMockCRTimelineItems';
@@ -265,9 +265,9 @@ export function ChangeRequestCardsList({
           >
             <CheckCircle2 className="h-4 w-4" />
             <span className="font-medium">{t('features.agendas.crTimeline.votingActive')}</span>
-            <Badge variant="outline" className="ml-auto text-xs">
+            <BadgeControl variant="outline" className="ml-auto text-xs">
               vote_event
-            </Badge>
+            </BadgeControl>
           </div>
         ) : (
           <div
@@ -292,14 +292,14 @@ export function ChangeRequestCardsList({
             <CardTitle className="text-base">{t('features.agendas.crTimeline.title')}</CardTitle>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="outline">
+            <BadgeControl variant="outline">
               {completedCount ?? categorized.accepted.length + categorized.rejected.length}/
               {crItems.length}
-            </Badge>
+            </BadgeControl>
             {isTimelineComplete && (
-              <Badge variant="default" className="bg-green-600">
+              <BadgeControl variant="default" className="bg-green-600">
                 {t('features.agendas.crTimeline.allCompleted')}
-              </Badge>
+              </BadgeControl>
             )}
           </div>
         </div>
@@ -336,30 +336,30 @@ export function ChangeRequestCardsList({
           <TabsList>
             <TabsTrigger value="all" className="gap-1.5">
               {t('features.agendas.crTimeline.tabAll')}
-              <Badge variant="secondary" className="ml-0.5 text-xs">
+              <BadgeControl variant="secondary" className="ml-0.5 text-xs">
                 {searchedItems.length}
-              </Badge>
+              </BadgeControl>
             </TabsTrigger>
             <TabsTrigger value="open" className="gap-1.5">
               {t('features.agendas.crTimeline.tabOpen')}
-              <Badge variant="secondary" className="ml-0.5 text-xs">
+              <BadgeControl variant="secondary" className="ml-0.5 text-xs">
                 {categorized.open.length}
-              </Badge>
+              </BadgeControl>
             </TabsTrigger>
             <TabsTrigger value="accepted" className="gap-1.5">
               {t('features.agendas.crTimeline.tabAccepted')}
-              <Badge
+              <BadgeControl
                 variant="outline"
                 className="ml-0.5 border-green-500/30 bg-green-500/10 text-xs text-green-700 dark:text-green-400"
               >
                 {categorized.accepted.length}
-              </Badge>
+              </BadgeControl>
             </TabsTrigger>
             <TabsTrigger value="rejected" className="gap-1.5">
               {t('features.agendas.crTimeline.tabRejected')}
-              <Badge variant="secondary" className="ml-0.5 text-xs">
+              <BadgeControl variant="secondary" className="ml-0.5 text-xs">
                 {categorized.rejected.length}
-              </Badge>
+              </BadgeControl>
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -368,7 +368,7 @@ export function ChangeRequestCardsList({
         {crItems.length > 1 && (
           <div className="relative">
             <Search className="text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4" />
-            <Input
+            <FormControlInput
               placeholder={t('features.agendas.crTimeline.searchPlaceholder')}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}

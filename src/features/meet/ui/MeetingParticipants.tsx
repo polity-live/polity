@@ -1,6 +1,6 @@
+import { BadgeControl } from '@/features/shared/ui/status';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import {
   useTranslation,
   translate as translateText,
@@ -57,7 +57,7 @@ export function MeetingParticipants({ bookings, count }: MeetingParticipantsProp
                   </p>
                 )}
               </div>
-              <Badge variant="outline">{booking.status}</Badge>
+              <BadgeControl variant="outline">{booking.status}</BadgeControl>
             </div>
           ))}
         </div>

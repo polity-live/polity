@@ -1,9 +1,9 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Vote, UserPlus, CheckCircle2, Crown, User, Loader2, Expand } from 'lucide-react';
 import {
@@ -227,22 +227,22 @@ export function AgendaElectionSection({
           </CardTitle>
           <div className="flex flex-wrap items-center justify-end gap-2">
             {attendanceMode ? (
-              <Badge variant="outline" className="capitalize">
+              <BadgeControl variant="outline" className="capitalize">
                 {attendanceMode}
-              </Badge>
+              </BadgeControl>
             ) : null}
             {electionMode ? (
-              <Badge variant="secondary">
+              <BadgeControl variant="secondary">
                 {getElectionModeSummaryLabel(electionMode, seatCount)}
-              </Badge>
+              </BadgeControl>
             ) : null}
             {isInteractive ? (
-              <Badge variant="secondary" className="gap-1">
+              <BadgeControl variant="secondary" className="gap-1">
                 <Expand className="h-3 w-3" />
                 {translateText('generated.inline.0013_namentlich_8d49da42')}
-              </Badge>
+              </BadgeControl>
             ) : null}
-            <Badge variant="outline">{roleName}</Badge>
+            <BadgeControl variant="outline">{roleName}</BadgeControl>
           </div>
         </div>
       </CardHeader>
@@ -285,14 +285,14 @@ export function AgendaElectionSection({
             </span>
             <div className="flex items-center gap-2">
               {isIndicationPhase ? (
-                <Badge variant="secondary" className="text-xs">
+                <BadgeControl variant="secondary" className="text-xs">
                   * {t('features.events.agenda.indicationOnly')}
-                </Badge>
+                </BadgeControl>
               ) : null}
               {isInteractive ? (
-                <Badge variant="outline" className="text-xs">
+                <BadgeControl variant="outline" className="text-xs">
                   {translateText('generated.inline.0015_klick_fuer_einzelansicht_9d7ff135')}
-                </Badge>
+                </BadgeControl>
               ) : null}
             </div>
           </div>
@@ -329,14 +329,14 @@ export function AgendaElectionSection({
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <span className="font-medium">{displayName}</span>
-                          <Badge
+                          <BadgeControl
                             variant={candidate.status === 'accepted' ? 'default' : 'secondary'}
                             className="text-xs"
                           >
                             {candidate.status === 'accepted'
                               ? t('features.events.agenda.candidateAccepted')
                               : t('features.events.agenda.candidateNominated')}
-                          </Badge>
+                          </BadgeControl>
                           {isLeading && isClosed ? (
                             <Crown className="h-4 w-4 text-yellow-500" />
                           ) : null}

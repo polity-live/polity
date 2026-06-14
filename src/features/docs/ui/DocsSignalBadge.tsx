@@ -1,4 +1,4 @@
-import { Badge } from '@/features/shared/ui/ui/badge';
+import { BadgeControl } from '@/features/shared/ui/status';
 import { cn } from '@/features/shared/utils/utils';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
@@ -17,15 +17,15 @@ export function DocsSignalBadge({ tone, className }: { tone: DocsSignalTone; cla
   const { t } = useTranslation();
 
   return (
-    <Badge
+    <BadgeControl
       variant="outline"
       className={cn(
-        'font-mono text-[11px] font-bold uppercase tracking-[0.2em]',
+        'font-mono text-[11px] font-bold tracking-[0.2em] uppercase',
         toneStyles[tone],
         className
       )}
     >
       {t(`pages.docs.tones.${tone}`)}
-    </Badge>
+    </BadgeControl>
   );
 }

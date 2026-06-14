@@ -1,12 +1,9 @@
 'use client';
 
+import { VotingResultBadge } from '@/features/shared/ui/voting';
 import { cn } from '@/features/shared/utils/utils';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Check, X, Minus, Trophy } from 'lucide-react';
-import {
-  useTranslation,
-  translate as translateText,
-} from '@/features/shared/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 export type ResultType = 'passed' | 'failed' | 'tied' | 'elected';
 
@@ -75,23 +72,16 @@ export function ResultBadge({
   const Icon = config.Icon;
 
   return (
-    <Badge
-      variant="outline"
-      className={cn(
-        'max-w-full rounded-md px-2 py-0.5 font-mono text-xs font-bold tracking-wide uppercase',
-        config.colorClass,
-        className
-      )}
-    >
-      {showIcon && <Icon className="mr-1 h-3 w-3" />}
-      <span>{t(config.labelKey)}</span>
-      {result === 'elected' && winnerName && (
-        <span className="ml-1 truncate font-normal normal-case" title={winnerName}>
-          {winnerName}
-        </span>
-      )}
-      {percentage !== undefined && <span className="ml-1 font-normal">{percentage}%</span>}
-    </Badge>
+    <VotingResultBadge
+      status={result}
+      tone="outline"
+      label={t(config.labelKey)}
+      Icon={Icon}
+      winnerName={result === 'elected' ? winnerName : undefined}
+      percentage={percentage}
+      showIcon={showIcon}
+      className={cn(config.colorClass, className)}
+    />
   );
 }
 
@@ -107,10 +97,7 @@ export function ResultCompact({
   winnerName?: string;
   className?: string;
 }) {
-  const label =
-    result === translateText('generated.inline.0048_elected_7b1d05c6') && winnerName
-      ? winnerName
-      : result.toUpperCase();
+  const label = result === 'elected' && winnerName ? winnerName : result.toUpperCase();
 
   return (
     <span

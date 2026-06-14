@@ -72,6 +72,9 @@ export function useCalendarPage() {
     },
     [navigate]
   );
+  const onCreateEvent = useCallback(() => {
+    navigate({ to: '/create/event' });
+  }, [navigate]);
 
   return {
     t,
@@ -95,5 +98,6 @@ export function useCalendarPage() {
     groupItems,
     onEventSelect,
     onCreateEventRange,
+    onCreateEvent,
   };
 }

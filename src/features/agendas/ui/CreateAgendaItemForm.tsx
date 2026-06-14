@@ -1,5 +1,7 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
+import { FormControlInput, FormControlTextarea, FormControlLabel } from '@/features/shared/ui/form';
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import {
@@ -10,11 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/features/shared/ui/ui/card';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Label } from '@/features/shared/ui/ui/label';
-import { Textarea } from '@/features/shared/ui/ui/textarea';
 import {
   Carousel,
   CarouselContent,
@@ -206,9 +204,9 @@ export function CreateAgendaItemForm() {
               <CarouselItem>
                 <div className="space-y-4 p-4">
                   <div className="space-y-2">
-                    <Label htmlFor="agenda-event">
+                    <FormControlLabel htmlFor="agenda-event">
                       {translateText('generated.inline.0026_event_ad8919ac')}
-                    </Label>
+                    </FormControlLabel>
                     <TypeaheadSearch
                       items={toTypeaheadItems(
                         userEvents,
@@ -231,10 +229,10 @@ export function CreateAgendaItemForm() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="agenda-title">
+                    <FormControlLabel htmlFor="agenda-title">
                       {translateText('generated.inline.0028_title_768e0c1c')}
-                    </Label>
-                    <Input
+                    </FormControlLabel>
+                    <FormControlInput
                       id="agenda-title"
                       placeholder={translateText(
                         'generated.inline.0029_enter_agenda_item_title_2e1f5120'
@@ -245,10 +243,10 @@ export function CreateAgendaItemForm() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="agenda-description">
+                    <FormControlLabel htmlFor="agenda-description">
                       {translateText('generated.inline.0030_description_55f8ebc8')}
-                    </Label>
-                    <Textarea
+                    </FormControlLabel>
+                    <FormControlTextarea
                       id="agenda-description"
                       placeholder={translateText(
                         'generated.inline.0031_describe_this_agenda_item_optional_7065a335'
@@ -272,10 +270,10 @@ export function CreateAgendaItemForm() {
                   </TooltipProvider>
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="agenda-order">
+                      <FormControlLabel htmlFor="agenda-order">
                         {translateText('generated.inline.0032_order_1d75774c')}
-                      </Label>
-                      <Input
+                      </FormControlLabel>
+                      <FormControlInput
                         id="agenda-order"
                         type="number"
                         min="1"
@@ -288,10 +286,10 @@ export function CreateAgendaItemForm() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="agenda-duration">
+                      <FormControlLabel htmlFor="agenda-duration">
                         {translateText('generated.inline.0033_duration_minutes_10c3d1ca')}
-                      </Label>
-                      <Input
+                      </FormControlLabel>
+                      <FormControlInput
                         id="agenda-duration"
                         type="number"
                         min="1"
@@ -309,9 +307,9 @@ export function CreateAgendaItemForm() {
                 <div className="space-y-4 p-4">
                   {formData.type === 'vote' && (
                     <div className="space-y-2">
-                      <Label htmlFor="agenda-amendment">
+                      <FormControlLabel htmlFor="agenda-amendment">
                         {translateText('generated.inline.0035_amendment_optional_c6a38580')}
-                      </Label>
+                      </FormControlLabel>
                       <TypeaheadSearch
                         items={toTypeaheadItems(
                           userAmendments,
@@ -333,9 +331,9 @@ export function CreateAgendaItemForm() {
                   )}
                   {formData.type === 'election' && (
                     <div className="space-y-2">
-                      <Label htmlFor="agenda-role">
+                      <FormControlLabel htmlFor="agenda-role">
                         {translateText('generated.inline.0037_elective_role_optional_5a97b6c3')}
-                      </Label>
+                      </FormControlLabel>
                       <TypeaheadSearch
                         items={toTypeaheadItems(
                           userRoles,
@@ -369,12 +367,12 @@ export function CreateAgendaItemForm() {
                   <Card className="overflow-hidden border-2 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/50">
                     <CardHeader>
                       <div className="mb-2 flex items-center justify-between">
-                        <Badge variant="default" className="text-xs">
+                        <BadgeControl variant="default" className="text-xs">
                           {translateText('generated.inline.0040_agenda_item_0a13737b')}
-                        </Badge>
-                        <Badge variant="secondary" className="text-xs">
+                        </BadgeControl>
+                        <BadgeControl variant="secondary" className="text-xs">
                           {formData.type}
-                        </Badge>
+                        </BadgeControl>
                       </div>
                       <CardTitle className="text-lg">
                         {formData.title ||

@@ -1,9 +1,9 @@
 'use client';
 
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { useState, useCallback } from 'react';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -180,7 +180,7 @@ export function VoteCastDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-lg">
+      <ScrollableDialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Vote className="h-5 w-5" />
@@ -360,7 +360,7 @@ export function VoteCastDialog({
             </Button>
           )}
         </DialogFooter>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

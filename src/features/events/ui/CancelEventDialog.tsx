@@ -1,3 +1,17 @@
+'use client';
+
+import { BadgeControl } from '@/features/shared/ui/status';
+import {
+  FormControlTextarea,
+  FormControlLabel,
+  FormControlSelect,
+  FormControlCheckbox,
+  FormControlSelectContent,
+  FormControlSelectItem,
+  FormControlSelectTrigger,
+  FormControlSelectValue,
+} from '@/features/shared/ui/form';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 /**
  * CancelEventDialog Component
  *
@@ -5,29 +19,15 @@
  * to another event.
  */
 
-'use client';
-
 import { useState, useEffect } from 'react';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Label } from '@/features/shared/ui/ui/label';
-import { Textarea } from '@/features/shared/ui/ui/textarea';
-import { Checkbox } from '@/features/shared/ui/ui/checkbox';
-import { Badge } from '@/features/shared/ui/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/features/shared/ui/ui/select';
 import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useCancelEvent } from '../hooks/useCancelEvent';
@@ -97,7 +97,7 @@ export function CancelEventDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <ScrollableDialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="text-destructive flex items-center gap-2">
             <CalendarX className="h-5 w-5" />
@@ -122,8 +122,10 @@ export function CancelEventDialog({
 
           {/* Reason input */}
           <div className="space-y-2">
-            <Label htmlFor="reason">{t('features.events.cancel.reason.label')}</Label>
-            <Textarea
+            <FormControlLabel htmlFor="reason">
+              {t('features.events.cancel.reason.label')}
+            </FormControlLabel>
+            <FormControlTextarea
               id="reason"
               value={reason}
               onChange={e => setReason(e.target.value)}
@@ -136,7 +138,7 @@ export function CancelEventDialog({
           {agendaItems.length > 0 && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <Label>{t('features.events.cancel.reassign.label')}</Label>
+                <FormControlLabel>{t('features.events.cancel.reassign.label')}</FormControlLabel>
                 <Button variant="ghost" size="sm" onClick={handleSelectAll}>
                   {selectedItems.length === agendaItems.length
                     ? t('common.deselectAll')
@@ -151,7 +153,7 @@ export function CancelEventDialog({
                       key={item.id}
                       className="hover:bg-muted flex items-center gap-3 rounded-lg p-2"
                     >
-                      <Checkbox
+                      <FormControlCheckbox
                         checked={selectedItems.includes(item.id)}
                         onCheckedChange={() => handleItemToggle(item.id)}
                       />
@@ -186,36 +188,40 @@ export function CancelEventDialog({
           {/* Target event selection */}
           {selectedItems.length > 0 && (
             <div className="space-y-2">
-              <Label>{t('features.events.cancel.reassign.targetEvent')}</Label>
-              <Select value={targetEventId} onValueChange={setTargetEventId}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t('features.events.cancel.reassign.selectEvent')} />
-                </SelectTrigger>
-                <SelectContent>
+              <FormControlLabel>
+                {t('features.events.cancel.reassign.targetEvent')}
+              </FormControlLabel>
+              <FormControlSelect value={targetEventId} onValueChange={setTargetEventId}>
+                <FormControlSelectTrigger>
+                  <FormControlSelectValue
+                    placeholder={t('features.events.cancel.reassign.selectEvent')}
+                  />
+                </FormControlSelectTrigger>
+                <FormControlSelectContent>
                   {availableEvents.length === 0 ? (
                     <div className="text-muted-foreground p-4 text-center text-sm">
                       {t('features.events.cancel.reassign.noEvents')}
                     </div>
                   ) : (
                     availableEvents.map(event => (
-                      <SelectItem key={event.id} value={event.id}>
+                      <FormControlSelectItem key={event.id} value={event.id}>
                         <div className="flex items-center gap-2">
                           <span>{event.title}</span>
-                          <Badge variant="outline" className="text-xs">
+                          <BadgeControl variant="outline" className="text-xs">
                             {event.start_date
                               ? new Date(event.start_date).toLocaleDateString()
                               : ''}
-                          </Badge>
+                          </BadgeControl>
                         </div>
-                      </SelectItem>
+                      </FormControlSelectItem>
                     ))
                   )}
-                </SelectContent>
-              </Select>
+                </FormControlSelectContent>
+              </FormControlSelect>
 
               {targetEventId && (
                 <div className="text-muted-foreground mt-2 flex items-center gap-2 text-sm">
-                  <Badge variant="secondary">{selectedItems.length}</Badge>
+                  <BadgeControl variant="secondary">{selectedItems.length}</BadgeControl>
                   <span>{t('features.events.cancel.reassign.itemCount')}</span>
                   <ArrowRight className="h-4 w-4" />
                   <span>{availableEvents.find(e => e.id === targetEventId)?.title}</span>
@@ -237,7 +243,7 @@ export function CancelEventDialog({
             {isLoading ? t('common.loading') : t('features.events.cancel.confirm')}
           </Button>
         </DialogFooter>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

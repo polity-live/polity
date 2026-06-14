@@ -1,6 +1,6 @@
+import { FormControlLabel } from '@/features/shared/ui/form';
 import { Calendar } from '@/features/shared/ui/ui/calendar';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Label } from '@/features/shared/ui/ui/label';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { formatLocalDateInput, parseLocalDateInput } from '@/features/shared/logic/localDateTime';
 import { CreateInputField } from '../CreateFields';
@@ -45,14 +45,14 @@ export function DateTimeRangeInput({
   return (
     <div className="space-y-5">
       <div className="space-y-1">
-        <Label>{t('pages.create.event.dateTime')}</Label>
+        <FormControlLabel>{t('pages.create.event.dateTime')}</FormControlLabel>
         <p className="text-muted-foreground text-sm">{t('pages.create.event.tips.dateTime')}</p>
       </div>
       <div className={showEnd ? 'grid gap-4 lg:grid-cols-2' : 'grid gap-4'}>
         <div className="border-border/70 bg-background/70 space-y-3 rounded-xl border p-4">
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-2">
-              <Label>{t('pages.create.event.startDate')}</Label>
+              <FormControlLabel>{t('pages.create.event.startDate')}</FormControlLabel>
               {selectedStartDate ? (
                 <Button
                   type="button"
@@ -84,7 +84,7 @@ export function DateTimeRangeInput({
           <div className="border-border/70 bg-background/70 space-y-3 rounded-xl border p-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">
-                <Label>{t('pages.create.event.endDate')}</Label>
+                <FormControlLabel>{t('pages.create.event.endDate')}</FormControlLabel>
                 {selectedEndDate ? (
                   <Button
                     type="button"

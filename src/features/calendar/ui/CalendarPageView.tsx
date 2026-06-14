@@ -1,0 +1,118 @@
+import { Plus } from 'lucide-react';
+
+import { CalendarFilterBar, CalendarHeader } from '@/features/shared/ui/calendar';
+import { Button } from '@/features/shared/ui/ui/button';
+import { CalendarExportButton } from '@/features/events/ui/calendar/CalendarExportButton';
+import { CalendarViewContainer } from '@/features/events/ui/calendar/CalendarViewContainer';
+import type { CalendarEvent, CalendarViewMode } from '@/features/events/hooks/useCalendarView';
+import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
+import { CalendarGroupFilter } from './CalendarGroupFilter';
+
+export interface CalendarPageViewProps {
+  isLoading: boolean;
+  loadingLabel: string;
+  title: string;
+  createEventLabel: string;
+  viewMode: CalendarViewMode;
+  setViewMode: (viewMode: CalendarViewMode) => void;
+  currentViewTitle: string;
+  onPrevious: () => void;
+  onNext: () => void;
+  onToday: () => void;
+  onCreateEvent: () => void;
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+  dateFilter: string;
+  onDateFilterChange: (date: string) => void;
+  groupItems: TypeaheadItem[];
+  selectedGroupId: string;
+  onGroupChange: (groupId: string) => void;
+  selectedDate: Date;
+  onDateSelect: (date: Date) => void;
+  events: CalendarEvent[];
+  filteredEvents: CalendarEvent[];
+  onEventSelect: (event: CalendarEvent) => void;
+  onCreateEventRange: (range: { start: Date; end: Date }) => void;
+}
+
+export function CalendarPageView({
+  isLoading,
+  loadingLabel,
+  title,
+  createEventLabel,
+  viewMode,
+  setViewMode,
+  currentViewTitle,
+  onPrevious,
+  onNext,
+  onToday,
+  onCreateEvent,
+  searchQuery,
+  onSearchChange,
+  dateFilter,
+  onDateFilterChange,
+  groupItems,
+  selectedGroupId,
+  onGroupChange,
+  selectedDate,
+  onDateSelect,
+  events,
+  filteredEvents,
+  onEventSelect,
+  onCreateEventRange,
+}: CalendarPageViewProps) {
+  if (isLoading) {
+    return (
+      <div className="flex h-[400px] items-center justify-center">
+        <p className="text-muted-foreground">{loadingLabel}</p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <CalendarHeader
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        currentViewTitle={currentViewTitle}
+        onPrevious={onPrevious}
+        onNext={onNext}
+        onToday={onToday}
+        title={title}
+        actions={
+          <>
+            <CalendarExportButton events={events} />
+            <Button onClick={onCreateEvent}>
+              <Plus className="mr-2 h-4 w-4" />
+              {createEventLabel}
+            </Button>
+          </>
+        }
+      />
+
+      <CalendarFilterBar
+        searchQuery={searchQuery}
+        onSearchChange={onSearchChange}
+        dateFilter={dateFilter}
+        onDateFilterChange={onDateFilterChange}
+        middleFilter={
+          <CalendarGroupFilter
+            items={groupItems}
+            selectedGroupId={selectedGroupId}
+            onGroupChange={onGroupChange}
+          />
+        }
+      />
+
+      <CalendarViewContainer
+        viewMode={viewMode}
+        selectedDate={selectedDate}
+        events={filteredEvents}
+        allEvents={events}
+        onDateSelect={onDateSelect}
+        onEventSelect={onEventSelect}
+        onCreateEventRange={onCreateEventRange}
+      />
+    </>
+  );
+}

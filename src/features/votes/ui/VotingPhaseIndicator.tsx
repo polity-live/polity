@@ -1,3 +1,6 @@
+'use client';
+
+import { BadgeControl } from '@/features/shared/ui/status';
 /**
  * VotingPhaseIndicator Component
  *
@@ -5,9 +8,6 @@
  * and result display when completed.
  */
 
-'use client';
-
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Progress } from '@/features/shared/ui/ui/progress';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useSyncedVotingTimer } from '../hooks/useVotingTimer';
@@ -92,26 +92,26 @@ export function VotingPhaseIndicator({
               {t(`features.events.voting.${result}`)}
             </span>
           </div>
-          <Badge variant="outline">{t('features.events.voting.closed')}</Badge>
+          <BadgeControl variant="outline">{t('features.events.voting.closed')}</BadgeControl>
         </div>
 
         {/* Vote breakdown */}
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
             <div className="text-2xl font-bold text-green-600">{acceptCount}</div>
-            <div className="text-xs text-muted-foreground">
+            <div className="text-muted-foreground text-xs">
               {t('features.events.voting.accept')}
             </div>
           </div>
           <div>
             <div className="text-2xl font-bold text-red-600">{rejectCount}</div>
-            <div className="text-xs text-muted-foreground">
+            <div className="text-muted-foreground text-xs">
               {t('features.events.voting.reject')}
             </div>
           </div>
           <div>
             <div className="text-2xl font-bold text-gray-600">{abstainCount}</div>
-            <div className="text-xs text-muted-foreground">
+            <div className="text-muted-foreground text-xs">
               {t('features.events.voting.abstain')}
             </div>
           </div>
@@ -159,7 +159,7 @@ export function VotingPhaseIndicator({
           <Progress value={voteProgress} className="h-2" />
 
           {/* Current vote counts */}
-          <div className="mt-2 flex justify-between text-xs text-muted-foreground">
+          <div className="text-muted-foreground mt-2 flex justify-between text-xs">
             <span className="text-green-600">✓ {acceptCount}</span>
             <span className="text-red-600">✗ {rejectCount}</span>
             <span className="text-gray-500">○ {abstainCount}</span>
@@ -169,14 +169,14 @@ export function VotingPhaseIndicator({
 
       {/* Introduction phase message */}
       {phase === 'introduction' && (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           {t('features.events.voting.setup.startVoting')}
         </p>
       )}
 
       {/* Setup phase message */}
       {phase === 'setup' && (
-        <p className="text-sm text-muted-foreground">{t('features.events.voting.setup.title')}</p>
+        <p className="text-muted-foreground text-sm">{t('features.events.voting.setup.title')}</p>
       )}
     </div>
   );

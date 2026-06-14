@@ -1,5 +1,6 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { UserCheck, Vote, Users, FileText, ShieldCheck, ScrollText, Building2 } from 'lucide-react';
@@ -8,7 +9,6 @@ import {
   getElectionModeSummaryLabel,
   type ElectionMode,
 } from '@/features/elections/logic/electionMode';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { cn } from '@/features/shared/utils/utils';
 import { CountdownTimer, EndedAgo } from '@/features/decision-terminal/ui/CountdownTimer';
 import type { AgendaItemStatus, AgendaItemType } from './AgendaCard';
@@ -115,7 +115,7 @@ export function AgendaStatusBadge({
   const config = getAgendaStatusConfig(status, t);
 
   return (
-    <Badge
+    <BadgeControl
       variant="outline"
       className={cn(
         'font-mono text-[11px] font-bold tracking-wide uppercase',
@@ -126,7 +126,7 @@ export function AgendaStatusBadge({
     >
       <span className="mr-1">{config.emoji}</span>
       {config.label}
-    </Badge>
+    </BadgeControl>
   );
 }
 
@@ -136,7 +136,7 @@ export function AgendaTypeBadge({ type, className }: { type: AgendaItemType; cla
   const Icon = config.icon;
 
   return (
-    <Badge
+    <BadgeControl
       variant="outline"
       className={cn(
         'font-mono text-[11px] font-bold tracking-wide uppercase',
@@ -146,7 +146,7 @@ export function AgendaTypeBadge({ type, className }: { type: AgendaItemType; cla
     >
       <Icon className="mr-1 h-3.5 w-3.5" />
       {config.label}
-    </Badge>
+    </BadgeControl>
   );
 }
 
@@ -160,7 +160,7 @@ export function AgendaElectionModeBadge({
   className?: string;
 }) {
   return (
-    <Badge
+    <BadgeControl
       variant="outline"
       className={cn(
         'font-mono text-[11px] font-bold tracking-wide uppercase',
@@ -169,7 +169,7 @@ export function AgendaElectionModeBadge({
       )}
     >
       {getElectionModeSummaryLabel(electionMode, seatCount)}
-    </Badge>
+    </BadgeControl>
   );
 }
 
@@ -196,7 +196,7 @@ export function AgendaEntityBadge({
 
   return (
     <Link to={href} onClick={e => e.stopPropagation()}>
-      <Badge
+      <BadgeControl
         variant="outline"
         className={cn(
           'cursor-pointer font-mono text-[11px] font-bold tracking-wide uppercase transition-colors',
@@ -206,7 +206,7 @@ export function AgendaEntityBadge({
       >
         <Icon className="mr-1 h-3.5 w-3.5" />
         {label}
-      </Badge>
+      </BadgeControl>
     </Link>
   );
 }

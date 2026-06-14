@@ -1,8 +1,8 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { Card, CardContent } from '@/features/shared/ui/ui/card.tsx';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar.tsx';
-import { Badge } from '@/features/shared/ui/ui/badge.tsx';
 import { EditingModeBadge } from '@/features/shared/ui/ui/editing-mode.tsx';
 import {
   Users,
@@ -118,9 +118,9 @@ function UserPreview({ userId, className }: { userId: string; className?: string
             )}
             {userBio && <p className="text-muted-foreground truncate text-xs">{userBio}</p>}
           </div>
-          <Badge variant="outline" className="flex-shrink-0 text-xs">
+          <BadgeControl variant="outline" className="flex-shrink-0 text-xs">
             {t('components.linkPreview.user')}
-          </Badge>
+          </BadgeControl>
         </CardContent>
       </SmartLink>
     </Card>
@@ -155,9 +155,9 @@ function GroupPreview({ groupId, className }: { groupId: string; className?: str
               {group.member_count || 0} {t('components.linkPreview.members')}
             </p>
           </div>
-          <Badge variant="outline" className="flex-shrink-0 text-xs">
+          <BadgeControl variant="outline" className="flex-shrink-0 text-xs">
             {t('components.linkPreview.group')}
-          </Badge>
+          </BadgeControl>
         </CardContent>
       </SmartLink>
     </Card>
@@ -188,9 +188,9 @@ function EventPreview({ eventId, className }: { eventId: string; className?: str
               <p className="text-muted-foreground truncate text-xs">{event.location_name}</p>
             )}
           </div>
-          <Badge variant="outline" className="flex-shrink-0 text-xs">
+          <BadgeControl variant="outline" className="flex-shrink-0 text-xs">
             {t('components.linkPreview.event')}
-          </Badge>
+          </BadgeControl>
         </CardContent>
       </SmartLink>
     </Card>
@@ -225,9 +225,9 @@ function AmendmentPreview({ amendmentId, className }: { amendmentId: string; cla
               />
             )}
           </div>
-          <Badge variant="outline" className="flex-shrink-0 text-xs">
+          <BadgeControl variant="outline" className="flex-shrink-0 text-xs">
             {t('components.linkPreview.amendment')}
-          </Badge>
+          </BadgeControl>
         </CardContent>
       </SmartLink>
     </Card>
@@ -265,9 +265,9 @@ function BlogPreview({ blogId, className }: { blogId: string; className?: string
               </span>
             </div>
           </div>
-          <Badge variant="outline" className="flex-shrink-0 text-xs">
+          <BadgeControl variant="outline" className="flex-shrink-0 text-xs">
             {t('components.linkPreview.blog')}
-          </Badge>
+          </BadgeControl>
         </CardContent>
       </SmartLink>
     </Card>
@@ -296,9 +296,9 @@ function StatementPreview({ statementId, className }: { statementId: string; cla
           <div className="min-w-0 flex-1">
             <p className="line-clamp-2 text-sm">{statementText ?? ''}</p>
           </div>
-          <Badge variant="outline" className="flex-shrink-0 text-xs">
+          <BadgeControl variant="outline" className="flex-shrink-0 text-xs">
             {t('components.linkPreview.statement')}
-          </Badge>
+          </BadgeControl>
         </CardContent>
       </SmartLink>
     </Card>
@@ -326,17 +326,17 @@ function TodoPreview({ todoId, className }: { todoId: string; className?: string
               <p className="text-muted-foreground line-clamp-1 text-xs">{todoDescription}</p>
             )}
             <div className="mt-1 flex items-center gap-2">
-              <Badge variant="secondary" className="text-xs capitalize">
+              <BadgeControl variant="secondary" className="text-xs capitalize">
                 {todo.status?.replace('_', ' ')}
-              </Badge>
-              <Badge variant="outline" className="text-xs capitalize">
+              </BadgeControl>
+              <BadgeControl variant="outline" className="text-xs capitalize">
                 {todo.priority}
-              </Badge>
+              </BadgeControl>
             </div>
           </div>
-          <Badge variant="outline" className="flex-shrink-0 text-xs">
+          <BadgeControl variant="outline" className="flex-shrink-0 text-xs">
             {t('components.linkPreview.todo')}
-          </Badge>
+          </BadgeControl>
         </CardContent>
       </SmartLink>
     </Card>

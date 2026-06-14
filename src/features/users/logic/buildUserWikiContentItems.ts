@@ -61,7 +61,6 @@ export function buildUserWikiContentItems({
       groupName: amendment.group?.name,
       status: amendment.editing_mode,
       collaboratorCount: amendment.collaborators?.length,
-      supportingGroupsCount: amendment.supporting_groups?.length,
       changeRequestCount: amendment.change_requests?.length,
       commentCount: amendment.comment_count,
       stats: {
@@ -106,7 +105,6 @@ export function buildUserWikiContentItems({
       groupId: blog.group_id ?? undefined,
       commentCount: blog.comment_count,
       stats: {
-        reactions: blog.support_votes?.length,
         comments: blog.comment_count,
       },
       searchText: buildSearchText(blog.title, blog.description, blog.date, tags),
@@ -134,11 +132,11 @@ export function buildUserWikiContentItems({
       tags,
       groupId: group.id,
       groupName: group.name,
-      memberCount: group.member_count ?? group.memberships?.length,
+      memberCount: group.member_count ?? undefined,
       eventCount: group.event_count ?? group.events?.length,
       amendmentCount: group.amendment_count ?? group.amendments?.length,
       stats: {
-        members: group.member_count ?? group.memberships?.length,
+        members: group.member_count ?? undefined,
       },
       searchText: buildSearchText(group.name, group.description, membershipRoleNames, tags),
     });

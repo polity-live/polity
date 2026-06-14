@@ -1,9 +1,9 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import {
   Collapsible,
   CollapsibleContent,
@@ -550,16 +550,16 @@ function ElectionDetailsSection({
                 />
               ) : null}
               {role?.term && (
-                <Badge variant="secondary" className="text-xs">
+                <BadgeControl variant="secondary" className="text-xs">
                   <Calendar className="mr-1 h-3 w-3" />
                   {t('features.events.agenda.term')}: {role.term}
-                </Badge>
+                </BadgeControl>
               )}
               {group?.name && (
-                <Badge variant="outline" className="text-xs">
+                <BadgeControl variant="outline" className="text-xs">
                   <Building2 className="mr-1 h-3 w-3" />
                   {group.name}
-                </Badge>
+                </BadgeControl>
               )}
             </div>
           </div>

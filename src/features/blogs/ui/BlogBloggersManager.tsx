@@ -6,30 +6,22 @@ import { useBlogActions } from '@/zero/blogs/useBlogActions';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useUserState } from '@/zero/users/useUserState';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Input } from '@/features/shared/ui/ui/input';
+import { ArrowLeft, UserPlus, UserX, Loader2, Plus, X, Check, Trash2, Shield } from 'lucide-react';
 import {
-  ArrowLeft,
-  UserPlus,
-  UserX,
-  Loader2,
-  Search,
-  Plus,
-  X,
-  Check,
-  Trash2,
-  Shield,
-} from 'lucide-react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/features/shared/ui/ui/table';
+  DataTable,
+  EntityCell,
+  MatrixCheckbox,
+  MatrixTable,
+  MatrixTableBody,
+  MatrixTableCell,
+  MatrixTableHead,
+  MatrixTableHeader,
+  MatrixTableRow,
+  type ColumnDef,
+} from '@/features/shared/ui/data-table';
 import { Tabs, TabsContent, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import { ScrollableTabsList } from '@/features/shared/ui/ui/scrollable-tabs';
-import { Checkbox } from '@/features/shared/ui/ui/checkbox';
+import { InlineCheckbox, SearchField, ValidatedField } from '@/features/shared/ui/form';
 import {
   Card,
   CardContent,
@@ -37,24 +29,18 @@ import {
   CardHeader,
   CardTitle,
 } from '@/features/shared/ui/ui/card';
-import { Badge } from '@/features/shared/ui/ui/badge';
+import { RoleBadge } from '@/features/shared/ui/status';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/features/shared/ui/ui/select';
+import { NativeSelect } from '@/features/shared/ui/ui/native-select';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/features/shared/ui/ui/dialog';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import {
   Command,
   CommandEmpty,
@@ -106,6 +92,31 @@ function displayName(u: Pick<User, 'first_name' | 'last_name'> | undefined | nul
 function initials(u: Pick<User, 'first_name' | 'last_name'> | undefined | null): string {
   if (!u) return 'U';
   return u.first_name?.charAt(0) || u.last_name?.charAt(0) || 'U';
+}
+
+interface BloggerUserLike extends Pick<User, 'first_name' | 'last_name'> {
+  avatar?: string | null;
+  handle?: string | null;
+  email?: string | null;
+}
+
+function BloggerUserCell({ user }: { user?: BloggerUserLike | null }) {
+  return (
+    <EntityCell
+      title={displayName(user)}
+      description={
+        user?.handle || user?.email
+          ? `@${user.handle || user.email || translateText('generated.inline.0025_unknown_50d8b4a9')}`
+          : undefined
+      }
+      leading={
+        <Avatar>
+          <AvatarImage src={user?.avatar || ''} />
+          <AvatarFallback>{initials(user)}</AvatarFallback>
+        </Avatar>
+      }
+    />
+  );
 }
 
 interface BlogBloggersManagerProps {
@@ -334,6 +345,155 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
   const activeBloggers = filteredBloggers.filter(b => b.status === 'member');
   const invitedBloggers = filteredBloggers.filter(b => b.status === 'invited');
   const requestedBloggers = filteredBloggers.filter(b => b.status === 'requested');
+  type BloggerRow = (typeof bloggers)[number];
+
+  const getCreatedAt = (blogger: BloggerRow) =>
+    blogger.created_at ? new Date(blogger.created_at).toLocaleDateString() : 'N/A';
+
+  const invitedColumns: ColumnDef<BloggerRow>[] = [
+    {
+      id: 'user',
+      header: translateText('generated.inline.0090_user_9f8a2389'),
+      cell: ({ row }) => <BloggerUserCell user={row.original.user} />,
+    },
+    {
+      id: 'role',
+      header: translateText('generated.inline.0091_role_c3f104d1'),
+      cell: ({ row }) => (
+        <RoleBadge>
+          {row.original.role?.name || translateText('generated.inline.0034_no_role_2e54b8e7')}
+        </RoleBadge>
+      ),
+    },
+    {
+      id: 'invited',
+      header: translateText('generated.inline.0117_invited_53469df1'),
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">{getCreatedAt(row.original)}</span>
+      ),
+    },
+    {
+      id: 'actions',
+      header: translateText('generated.inline.0093_actions_c3cd636a'),
+      meta: { headerClassName: 'text-right', cellClassName: 'text-right' },
+      cell: ({ row }) =>
+        canManageBloggers ? (
+          <Button variant="ghost" size="sm" onClick={() => handleRemoveBlogger(row.original.id)}>
+            <UserX className="h-4 w-4" />
+            <span className="ml-2">{translateText('generated.inline.0065_cancel_77dfd213')}</span>
+          </Button>
+        ) : null,
+    },
+  ];
+
+  const activeColumns: ColumnDef<BloggerRow>[] = [
+    {
+      id: 'user',
+      header: translateText('generated.inline.0090_user_9f8a2389'),
+      cell: ({ row }) => <BloggerUserCell user={row.original.user} />,
+    },
+    {
+      id: 'role',
+      header: translateText('generated.inline.0091_role_c3f104d1'),
+      cell: ({ row }) =>
+        canManageBloggers && row.original.user?.id !== currentUserId ? (
+          <NativeSelect
+            value={row.original.role?.id ?? ''}
+            className="w-[180px]"
+            onChange={event => void handleUpdateRole(row.original.id, event.target.value)}
+          >
+            {row.original.role?.id ? null : (
+              <option value="">
+                {translateText('generated.inline.0255_select_role_04fa02bb')}
+              </option>
+            )}
+            {rolesData.roles.map(role => (
+              <option key={role.id} value={role.id}>
+                {role.name}
+              </option>
+            ))}
+          </NativeSelect>
+        ) : (
+          <RoleBadge>
+            {row.original.role?.name || translateText('generated.inline.0034_no_role_2e54b8e7')}
+          </RoleBadge>
+        ),
+    },
+    {
+      id: 'joined',
+      header: translateText('generated.inline.0092_joined_43a1c626'),
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">{getCreatedAt(row.original)}</span>
+      ),
+    },
+    {
+      id: 'actions',
+      header: translateText('generated.inline.0093_actions_c3cd636a'),
+      meta: { headerClassName: 'text-right', cellClassName: 'text-right' },
+      cell: ({ row }) =>
+        canManageBloggers && row.original.user?.id !== currentUserId ? (
+          <Button variant="ghost" size="sm" onClick={() => handleRemoveBlogger(row.original.id)}>
+            <UserX className="h-4 w-4" />
+            <span className="ml-2">{translateText('generated.inline.0096_remove_e963907d')}</span>
+          </Button>
+        ) : null,
+    },
+  ];
+
+  const requestedColumns: ColumnDef<BloggerRow>[] = [
+    {
+      id: 'user',
+      header: translateText('generated.inline.0090_user_9f8a2389'),
+      cell: ({ row }) => <BloggerUserCell user={row.original.user} />,
+    },
+    {
+      id: 'role',
+      header: translateText('generated.inline.0091_role_c3f104d1'),
+      cell: ({ row }) => (
+        <RoleBadge>
+          {row.original.role?.name || translateText('generated.inline.0034_no_role_2e54b8e7')}
+        </RoleBadge>
+      ),
+    },
+    {
+      id: 'requested',
+      header: translateText('generated.inline.0120_requested_c26bf60f'),
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">{getCreatedAt(row.original)}</span>
+      ),
+    },
+    {
+      id: 'actions',
+      header: translateText('generated.inline.0093_actions_c3cd636a'),
+      meta: { headerClassName: 'text-right', cellClassName: 'text-right' },
+      cell: ({ row }) =>
+        canManageBloggers ? (
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => {
+                blogActions.updateEntry({
+                  id: row.original.id,
+                  status: 'member',
+                });
+              }}
+            >
+              <Check className="mr-1 h-4 w-4" />
+              {translateText('generated.inline.0121_accept_bb54db51')}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleRemoveBlogger(row.original.id)}
+            >
+              <X className="mr-1 h-4 w-4" />
+              {translateText('generated.inline.0122_decline_b59cf9ed')}
+            </Button>
+          </div>
+        ) : null,
+    },
+  ];
 
   if (isLoading) {
     return (
@@ -379,15 +539,12 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
       {/* Search Bar */}
       <div className="mb-6">
         <div className="flex items-center justify-between gap-4">
-          <div className="relative flex-1">
-            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-            <Input
-              placeholder={translateText('generated.inline.0244_search_bloggers_98b779c5')}
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
-          </div>
+          <SearchField
+            value={searchQuery}
+            onValueChange={setSearchQuery}
+            placeholder={translateText('generated.inline.0244_search_bloggers_98b779c5')}
+            fieldClassName="flex-1"
+          />
           {canManageBloggers && (
             <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
               <DialogTrigger asChild>
@@ -396,7 +553,7 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                   {translateText('generated.inline.0245_invite_bloggers_0224f12b')}
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
+              <ScrollableDialogContent className="max-w-2xl">
                 <DialogHeader>
                   <DialogTitle>
                     {translateText('generated.inline.0245_invite_bloggers_0224f12b')}
@@ -430,7 +587,7 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                               className="flex cursor-pointer items-center space-x-2"
                               onSelect={() => toggleUserSelection(u.id)}
                             >
-                              <Checkbox
+                              <InlineCheckbox
                                 checked={selectedUsers.includes(u.id)}
                                 onCheckedChange={() => toggleUserSelection(u.id)}
                               />
@@ -481,7 +638,7 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                     )}
                   </Button>
                 </DialogFooter>
-              </DialogContent>
+              </ScrollableDialogContent>
             </Dialog>
           )}
         </div>
@@ -514,69 +671,12 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{translateText('generated.inline.0090_user_9f8a2389')}</TableHead>
-                      <TableHead>{translateText('generated.inline.0091_role_c3f104d1')}</TableHead>
-                      <TableHead>
-                        {translateText('generated.inline.0117_invited_53469df1')}
-                      </TableHead>
-                      <TableHead className="text-right">
-                        {translateText('generated.inline.0093_actions_c3cd636a')}
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {invitedBloggers.map(blogger => {
-                      const createdAt = blogger.created_at
-                        ? new Date(blogger.created_at).toLocaleDateString()
-                        : 'N/A';
-
-                      return (
-                        <TableRow key={blogger.id}>
-                          <TableCell>
-                            <div className="flex items-center space-x-3">
-                              <Avatar>
-                                <AvatarImage src={blogger.user?.avatar || ''} />
-                                <AvatarFallback>{initials(blogger.user)}</AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <div className="font-medium">{displayName(blogger.user)}</div>
-                                <div className="text-muted-foreground text-sm">
-                                  @
-                                  {blogger.user?.handle ||
-                                    translateText('generated.inline.0025_unknown_50d8b4a9')}
-                                </div>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">
-                              {blogger.role?.name ||
-                                translateText('generated.inline.0034_no_role_2e54b8e7')}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">{createdAt}</TableCell>
-                          <TableCell className="text-right">
-                            {canManageBloggers && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleRemoveBlogger(blogger.id)}
-                              >
-                                <UserX className="h-4 w-4" />
-                                <span className="ml-2">
-                                  {translateText('generated.inline.0065_cancel_77dfd213')}
-                                </span>
-                              </Button>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+                <DataTable
+                  columns={invitedColumns}
+                  data={invitedBloggers}
+                  getRowId={blogger => blogger.id}
+                  enablePagination={false}
+                />
               </CardContent>
             </Card>
           )}
@@ -603,91 +703,12 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                       )}
                 </p>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{translateText('generated.inline.0090_user_9f8a2389')}</TableHead>
-                      <TableHead>{translateText('generated.inline.0091_role_c3f104d1')}</TableHead>
-                      <TableHead>
-                        {translateText('generated.inline.0092_joined_43a1c626')}
-                      </TableHead>
-                      <TableHead className="text-right">
-                        {translateText('generated.inline.0093_actions_c3cd636a')}
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {activeBloggers.map(blogger => {
-                      const createdAt = blogger.created_at
-                        ? new Date(blogger.created_at).toLocaleDateString()
-                        : 'N/A';
-
-                      return (
-                        <TableRow key={blogger.id}>
-                          <TableCell>
-                            <div className="flex items-center space-x-3">
-                              <Avatar>
-                                <AvatarImage src={blogger.user?.avatar || ''} />
-                                <AvatarFallback>{initials(blogger.user)}</AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <div className="font-medium">{displayName(blogger.user)}</div>
-                                <div className="text-muted-foreground text-sm">
-                                  @
-                                  {blogger.user?.handle ||
-                                    translateText('generated.inline.0025_unknown_50d8b4a9')}
-                                </div>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {canManageBloggers && blogger.user?.id !== currentUserId ? (
-                              <Select
-                                value={blogger.role?.id}
-                                onValueChange={newRoleId => handleUpdateRole(blogger.id, newRoleId)}
-                              >
-                                <SelectTrigger className="w-[180px]">
-                                  <SelectValue
-                                    placeholder={translateText(
-                                      'generated.inline.0255_select_role_04fa02bb'
-                                    )}
-                                  />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {rolesData.roles.map(r => (
-                                    <SelectItem key={r.id} value={r.id}>
-                                      {r.name}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            ) : (
-                              <Badge>
-                                {blogger.role?.name ||
-                                  translateText('generated.inline.0034_no_role_2e54b8e7')}
-                              </Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">{createdAt}</TableCell>
-                          <TableCell className="text-right">
-                            {canManageBloggers && blogger.user?.id !== currentUserId && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleRemoveBlogger(blogger.id)}
-                              >
-                                <UserX className="h-4 w-4" />
-                                <span className="ml-2">
-                                  {translateText('generated.inline.0096_remove_e963907d')}
-                                </span>
-                              </Button>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+                <DataTable
+                  columns={activeColumns}
+                  data={activeBloggers}
+                  getRowId={blogger => blogger.id}
+                  enablePagination={false}
+                />
               )}
             </CardContent>
           </Card>
@@ -706,82 +727,12 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{translateText('generated.inline.0090_user_9f8a2389')}</TableHead>
-                      <TableHead>{translateText('generated.inline.0091_role_c3f104d1')}</TableHead>
-                      <TableHead>
-                        {translateText('generated.inline.0120_requested_c26bf60f')}
-                      </TableHead>
-                      <TableHead className="text-right">
-                        {translateText('generated.inline.0093_actions_c3cd636a')}
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {requestedBloggers.map(blogger => {
-                      const createdAt = blogger.created_at
-                        ? new Date(blogger.created_at).toLocaleDateString()
-                        : 'N/A';
-
-                      return (
-                        <TableRow key={blogger.id}>
-                          <TableCell>
-                            <div className="flex items-center space-x-3">
-                              <Avatar>
-                                <AvatarImage src={blogger.user?.avatar || ''} />
-                                <AvatarFallback>{initials(blogger.user)}</AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <div className="font-medium">{displayName(blogger.user)}</div>
-                                <div className="text-muted-foreground text-sm">
-                                  @
-                                  {blogger.user?.handle ||
-                                    translateText('generated.inline.0025_unknown_50d8b4a9')}
-                                </div>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">
-                              {blogger.role?.name ||
-                                translateText('generated.inline.0034_no_role_2e54b8e7')}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">{createdAt}</TableCell>
-                          <TableCell className="text-right">
-                            {canManageBloggers && (
-                              <div className="flex justify-end gap-2">
-                                <Button
-                                  variant="default"
-                                  size="sm"
-                                  onClick={() => {
-                                    blogActions.updateEntry({
-                                      id: blogger.id,
-                                      status: 'member',
-                                    });
-                                  }}
-                                >
-                                  <Check className="mr-1 h-4 w-4" />
-                                  {translateText('generated.inline.0121_accept_bb54db51')}
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleRemoveBlogger(blogger.id)}
-                                >
-                                  <X className="mr-1 h-4 w-4" />
-                                  {translateText('generated.inline.0122_decline_b59cf9ed')}
-                                </Button>
-                              </div>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+                <DataTable
+                  columns={requestedColumns}
+                  data={requestedBloggers}
+                  getRowId={blogger => blogger.id}
+                  enablePagination={false}
+                />
               </CardContent>
             </Card>
           )}
@@ -810,7 +761,7 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                         {translateText('generated.inline.0125_add_role_82d0afcc')}
                       </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <ScrollableDialogContent>
                       <DialogHeader>
                         <DialogTitle>
                           {translateText('generated.inline.0126_add_new_role_241eb33f')}
@@ -822,32 +773,25 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                         </DialogDescription>
                       </DialogHeader>
                       <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                          <label htmlFor="role-name" className="text-sm font-medium">
-                            {translateText('generated.inline.0128_role_name_a8b23a08')}
-                          </label>
-                          <Input
-                            id="role-name"
-                            placeholder={translateText(
-                              'generated.inline.0261_e_g_editor_contributor_27c5d564'
-                            )}
-                            value={newRoleName}
-                            onChange={e => setNewRoleName(e.target.value)}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label htmlFor="role-description" className="text-sm font-medium">
-                            {translateText('generated.inline.0130_description_optional_f1da5c02')}
-                          </label>
-                          <Input
-                            id="role-description"
-                            placeholder={translateText(
-                              'generated.inline.0131_describe_this_role_s_purpose_16c2c88f'
-                            )}
-                            value={newRoleDescription}
-                            onChange={e => setNewRoleDescription(e.target.value)}
-                          />
-                        </div>
+                        <ValidatedField
+                          label={translateText('generated.inline.0128_role_name_a8b23a08')}
+                          placeholder={translateText(
+                            'generated.inline.0261_e_g_editor_contributor_27c5d564'
+                          )}
+                          value={newRoleName}
+                          onValueChange={setNewRoleName}
+                          required
+                        />
+                        <ValidatedField
+                          label={translateText(
+                            'generated.inline.0130_description_optional_f1da5c02'
+                          )}
+                          placeholder={translateText(
+                            'generated.inline.0131_describe_this_role_s_purpose_16c2c88f'
+                          )}
+                          value={newRoleDescription}
+                          onValueChange={setNewRoleDescription}
+                        />
                       </div>
                       <DialogFooter>
                         <Button
@@ -861,7 +805,7 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                           {translateText('generated.inline.0132_create_role_5bea05a8')}
                         </Button>
                       </DialogFooter>
-                    </DialogContent>
+                    </ScrollableDialogContent>
                   </Dialog>
                 )}
               </div>
@@ -869,14 +813,14 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
             <CardContent>
               {rolesData.roles && rolesData.roles.length > 0 ? (
                 <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="min-w-[200px]">
+                  <MatrixTable>
+                    <MatrixTableHeader>
+                      <MatrixTableRow>
+                        <MatrixTableHead className="min-w-[200px]">
                           {translateText('generated.inline.0262_permission_17857134')}
-                        </TableHead>
+                        </MatrixTableHead>
                         {rolesData.roles.map(r => (
-                          <TableHead key={r.id} className="min-w-[120px] text-center">
+                          <MatrixTableHead key={r.id} className="min-w-[120px] text-center">
                             <div className="flex flex-col items-center gap-1">
                               <span className="font-semibold">{r.name}</span>
                               {r.description && (
@@ -895,24 +839,24 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                                 </Button>
                               )}
                             </div>
-                          </TableHead>
+                          </MatrixTableHead>
                         ))}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+                      </MatrixTableRow>
+                    </MatrixTableHeader>
+                    <MatrixTableBody>
                       {ACTION_RIGHTS.map(({ resource, action, label }) => {
                         const rightKey = `${resource}-${action}`;
                         return (
-                          <TableRow key={rightKey}>
-                            <TableCell className="font-medium">{label}</TableCell>
+                          <MatrixTableRow key={rightKey}>
+                            <MatrixTableCell className="font-medium">{label}</MatrixTableCell>
                             {rolesData.roles.map(r => {
                               const hasRight = r.action_rights?.some(
                                 ar => ar.resource === resource && ar.action === action
                               );
                               return (
-                                <TableCell key={r.id} className="text-center">
+                                <MatrixTableCell key={r.id} className="text-center">
                                   <div className="flex justify-center">
-                                    <Checkbox
+                                    <MatrixCheckbox
                                       checked={hasRight}
                                       disabled={!canManageBloggers}
                                       onCheckedChange={() =>
@@ -920,14 +864,14 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                                       }
                                     />
                                   </div>
-                                </TableCell>
+                                </MatrixTableCell>
                               );
                             })}
-                          </TableRow>
+                          </MatrixTableRow>
                         );
                       })}
-                    </TableBody>
-                  </Table>
+                    </MatrixTableBody>
+                  </MatrixTable>
                 </div>
               ) : (
                 <div className="py-12 text-center">

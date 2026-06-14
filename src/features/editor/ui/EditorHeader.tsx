@@ -1,12 +1,12 @@
 'use client';
 
+import { FormControlInput } from '@/features/shared/ui/form';
 /**
  * Editor Header Component
  *
  * Displays title editing, save status, and online users.
  */
 
-import { Input } from '@/features/shared/ui/ui/input';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Loader2, Eye, Pencil, Users } from 'lucide-react';
@@ -49,7 +49,7 @@ export function EditorHeader({
     <div className="flex items-center gap-4">
       <div className="flex-1">
         {isEditingTitle && canEditTitle ? (
-          <Input
+          <FormControlInput
             value={title}
             onChange={e => onTitleChange(e.target.value)}
             className="border-none px-0 text-2xl font-bold shadow-none focus-visible:ring-0"

@@ -1,27 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { BadgeControl } from '@/features/shared/ui/status';
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/features/shared/ui/ui/dialog.tsx';
+  FormControlInput,
+  FormControlTextarea,
+  FormControlSelect,
+  FormControlSelectContent,
+  FormControlSelectItem,
+  FormControlSelectTrigger,
+  FormControlSelectValue,
+} from '@/features/shared/ui/form';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
+import { useState } from 'react';
+import { Dialog, DialogClose, DialogHeader, DialogTitle } from '@/features/shared/ui/ui/dialog.tsx';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
-import { Input } from '@/features/shared/ui/ui/input.tsx';
-import { Textarea } from '@/features/shared/ui/ui/textarea.tsx';
-import { Badge } from '@/features/shared/ui/ui/badge.tsx';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar.tsx';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor.tsx';
 import { VisibilitySelector } from '@/features/shared/ui/ui/visibility-selector.tsx';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/features/shared/ui/ui/select.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/features/shared/ui/ui/popover.tsx';
 import {
   Command,
@@ -240,12 +235,15 @@ export function TodoDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
-      <DialogContent showCloseButton={false} className="max-h-[90vh] max-w-4xl overflow-y-auto">
+      <ScrollableDialogContent
+        showCloseButton={false}
+        className="max-h-[90vh] max-w-4xl overflow-y-auto"
+      >
         <DialogHeader>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <DialogTitle className="min-w-0 flex-1">
               {isEditing ? (
-                <Input
+                <FormControlInput
                   value={formData.title}
                   onChange={e => setFormData({ ...formData, title: e.target.value })}
                   className="text-2xl font-bold"
@@ -290,40 +288,40 @@ export function TodoDetailDialog({
                 {t('features.todos.detail.status')}
               </label>
               {isEditing && canManageTodos ? (
-                <Select
+                <FormControlSelect
                   value={formData.status}
                   onValueChange={(v: TodoStatus) => setFormData({ ...formData, status: v })}
                 >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pending">
+                  <FormControlSelectTrigger>
+                    <FormControlSelectValue />
+                  </FormControlSelectTrigger>
+                  <FormControlSelectContent>
+                    <FormControlSelectItem value="pending">
                       <div className="flex items-center gap-2">
                         <Circle className="h-4 w-4" />
                         {t('features.todos.status.pending')}
                       </div>
-                    </SelectItem>
-                    <SelectItem value="in_progress">
+                    </FormControlSelectItem>
+                    <FormControlSelectItem value="in_progress">
                       <div className="flex items-center gap-2">
                         <Clock className="h-4 w-4" />
                         {t('features.todos.status.inProgress')}
                       </div>
-                    </SelectItem>
-                    <SelectItem value="completed">
+                    </FormControlSelectItem>
+                    <FormControlSelectItem value="completed">
                       <div className="flex items-center gap-2">
                         <CheckCircle2 className="h-4 w-4" />
                         {t('features.todos.status.completed')}
                       </div>
-                    </SelectItem>
-                    <SelectItem value="cancelled">
+                    </FormControlSelectItem>
+                    <FormControlSelectItem value="cancelled">
                       <div className="flex items-center gap-2">
                         <XCircle className="h-4 w-4" />
                         {t('features.todos.status.cancelled')}
                       </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                    </FormControlSelectItem>
+                  </FormControlSelectContent>
+                </FormControlSelect>
               ) : (
                 <div className="flex items-center gap-2">
                   <StatusIcon status={(todo.status ?? 'pending') as TodoStatus} />
@@ -337,40 +335,40 @@ export function TodoDetailDialog({
                 {t('features.todos.detail.priority')}
               </label>
               {isEditing && canManageTodos ? (
-                <Select
+                <FormControlSelect
                   value={formData.priority}
                   onValueChange={(v: TodoPriority) => setFormData({ ...formData, priority: v })}
                 >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">
+                  <FormControlSelectTrigger>
+                    <FormControlSelectValue />
+                  </FormControlSelectTrigger>
+                  <FormControlSelectContent>
+                    <FormControlSelectItem value="low">
                       <div className="flex items-center gap-2">
                         <Flag className="h-4 w-4 text-blue-500" />
                         {t('features.todos.priority.low')}
                       </div>
-                    </SelectItem>
-                    <SelectItem value="medium">
+                    </FormControlSelectItem>
+                    <FormControlSelectItem value="medium">
                       <div className="flex items-center gap-2">
                         <Flag className="h-4 w-4 text-yellow-500" />
                         {t('features.todos.priority.medium')}
                       </div>
-                    </SelectItem>
-                    <SelectItem value="high">
+                    </FormControlSelectItem>
+                    <FormControlSelectItem value="high">
                       <div className="flex items-center gap-2">
                         <Flag className="h-4 w-4 text-orange-500" />
                         {t('features.todos.priority.high')}
                       </div>
-                    </SelectItem>
-                    <SelectItem value="urgent">
+                    </FormControlSelectItem>
+                    <FormControlSelectItem value="urgent">
                       <div className="flex items-center gap-2">
                         <AlertCircle className="h-4 w-4 text-red-500" />
                         {t('features.todos.priority.urgent')}
                       </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                    </FormControlSelectItem>
+                  </FormControlSelectContent>
+                </FormControlSelect>
               ) : (
                 <div className="flex items-center gap-2">
                   <PriorityIcon priority={(todo.priority ?? 'medium') as TodoPriority} />
@@ -386,7 +384,7 @@ export function TodoDetailDialog({
               {t('features.todos.detail.description')}
             </label>
             {isEditing && canManageTodos ? (
-              <Textarea
+              <FormControlTextarea
                 value={formData.description}
                 onChange={e => setFormData({ ...formData, description: e.target.value })}
                 placeholder={t('features.todos.detail.addDescription')}
@@ -405,7 +403,7 @@ export function TodoDetailDialog({
               {t('features.todos.dueDate.title')}
             </label>
             {isEditing && canManageTodos ? (
-              <Input
+              <FormControlInput
                 type="date"
                 value={formData.dueDate}
                 onChange={e => setFormData({ ...formData, dueDate: e.target.value })}
@@ -417,10 +415,10 @@ export function TodoDetailDialog({
                   {formatDate(todo.due_date)}
                 </span>
                 {isOverdue && (
-                  <Badge variant="destructive" className="ml-2">
+                  <BadgeControl variant="destructive" className="ml-2">
                     <AlertTriangle className="mr-1 h-3 w-3" />
                     {t('features.todos.status.overdue')}
-                  </Badge>
+                  </BadgeControl>
                 )}
               </div>
             ) : (
@@ -682,9 +680,9 @@ export function TodoDetailDialog({
                   </label>
                   <div className="flex flex-wrap gap-2">
                     {(todo.tags ?? []).map((tag: string, idx: number) => (
-                      <Badge key={idx} variant="secondary">
+                      <BadgeControl key={idx} variant="secondary">
                         {tag}
-                      </Badge>
+                      </BadgeControl>
                     ))}
                   </div>
                 </>
@@ -712,7 +710,7 @@ export function TodoDetailDialog({
             </div>
           </div>
         </div>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }
@@ -752,9 +750,9 @@ function PriorityBadge({ priority }: { priority: TodoPriority }) {
   };
 
   return (
-    <Badge variant="outline" className={`${colors[priority]} capitalize`}>
+    <BadgeControl variant="outline" className={`${colors[priority]} capitalize`}>
       {priority}
-    </Badge>
+    </BadgeControl>
   );
 }
 

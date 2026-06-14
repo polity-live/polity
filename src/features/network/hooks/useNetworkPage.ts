@@ -7,10 +7,7 @@ import { useAuth } from '@/providers/auth-provider';
 import { RIGHT_TYPES } from '@/features/network/ui/RightFilters';
 import { useWorkflowEditor } from './useWorkflowEditor';
 import { useHierarchyLinkConflicts } from './useHierarchyLinkConflicts';
-import {
-  useTranslation,
-  translate as translateText,
-} from '@/features/shared/hooks/use-translation';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { toast } from 'sonner';
 import { getRelationshipTypeForGroup } from '../logic/groupRelationshipOrientation';
 import { buildActiveRelationshipSummaries } from '../logic/relationshipSummaryHelpers';
@@ -163,9 +160,7 @@ export function useNetworkPage(groupId: string) {
       const query = searchQuery.toLowerCase();
       items = items.filter(item => {
         const description =
-          typeof item.group.description === translateText('generated.inline.0056_string_ecb25204')
-            ? item.group.description.toLowerCase()
-            : '';
+          typeof item.group.description === 'string' ? item.group.description.toLowerCase() : '';
 
         return item.group.name?.toLowerCase().includes(query) || description.includes(query);
       });

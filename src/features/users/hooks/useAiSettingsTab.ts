@@ -352,8 +352,8 @@ export function useAiSettingsTab() {
       setSkillForm({
         name: skill.name,
         slug: skill.slug,
-        aliases: skill.aliases,
-        systemPrompt: skill.system_prompt,
+        aliases: skill.aliases ?? '',
+        systemPrompt: skill.system_prompt ?? '',
       });
     },
     [resetSkillFormValidationState, skills]
@@ -561,7 +561,7 @@ export function useAiSettingsTab() {
       if (toolOverride) {
         aiActions.updateTool({
           id: toolOverride.id,
-          tool_name: toolOverride.tool_name,
+          tool_name: toolName,
           enabled,
         });
         return;

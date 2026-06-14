@@ -1,3 +1,4 @@
+import { FormControlLabel } from '@/features/shared/ui/form';
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useQuery } from '@rocicorp/zero/react';
 import type { Value } from 'platejs';
@@ -8,7 +9,6 @@ import {
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Label } from '@/features/shared/ui/ui/label';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
 import { CreateInputField } from '../ui/CreateFields';
@@ -469,7 +469,7 @@ export function useCreateEventForm(): CreateFormConfig {
                 placeholder={t('pages.create.event.titlePlaceholder')}
               />
               <div className="space-y-2">
-                <Label>{t('pages.create.event.descriptionLabel')}</Label>
+                <FormControlLabel>{t('pages.create.event.descriptionLabel')}</FormControlLabel>
                 <p className="text-muted-foreground text-xs">
                   {t('pages.create.event.tips.description')}
                 </p>
@@ -505,7 +505,7 @@ export function useCreateEventForm(): CreateFormConfig {
                 content: (
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label>{t('pages.create.event.meetingFormat')}</Label>
+                      <FormControlLabel>{t('pages.create.event.meetingFormat')}</FormControlLabel>
                       <div className="flex flex-wrap gap-2">
                         <Button
                           type="button"
@@ -663,7 +663,9 @@ export function useCreateEventForm(): CreateFormConfig {
           content: (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>{translateText('generated.inline.0327_attendance_mode_507f30a9')}</Label>
+                <FormControlLabel>
+                  {translateText('generated.inline.0327_attendance_mode_507f30a9')}
+                </FormControlLabel>
                 <div className="flex flex-wrap gap-2">
                   {(['online', 'hybrid', 'offline'] as const).map(mode => (
                     <Button

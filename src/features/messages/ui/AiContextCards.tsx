@@ -1,5 +1,6 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { useMemo } from 'react';
 import {
   Download,
@@ -9,11 +10,7 @@ import {
   Search,
   Sparkles,
 } from 'lucide-react';
-import {
-  useTranslation,
-  translate as translateText,
-} from '@/features/shared/hooks/use-translation';
-import { Badge } from '@/features/shared/ui/ui/badge';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import {
   DynamicTimelineCard,
@@ -114,6 +111,16 @@ function parseAttachmentCardPayload(cardDataJson?: string | null): AttachmentCar
   }
 }
 
+function isUploadContextPayload(
+  cardPayload: AttachmentCardPayload
+): cardPayload is UploadAttachmentCardPayload {
+  return 'kind' in cardPayload && cardPayload.kind === 'upload';
+}
+
+function isTimelineContextPayload(cardPayload: AttachmentCardPayload): cardPayload is CardPayload {
+  return 'cardType' in cardPayload;
+}
+
 function getSkillPreview(promptContext?: string | null): string | null {
   const normalized = promptContext?.replace(/\s+/g, ' ').trim();
   return normalized ? normalized : null;
@@ -168,11 +175,11 @@ function UploadContextCard({
             </div>
           </div>
 
-          <Badge className="border-0 bg-sky-500/15 text-[10px] text-sky-700 dark:text-sky-300">
+          <BadgeControl className="border-0 bg-sky-500/15 text-[10px] text-sky-700 dark:text-sky-300">
             {showImagePreview
               ? t('common.actions.uploadImage')
               : formatEntityTypeLabel(attachment.entityType)}
-          </Badge>
+          </BadgeControl>
         </div>
 
         {!showImagePreview && (
@@ -209,7 +216,7 @@ function UploadContextCard({
 export function AiContextCards({
   attachments,
   contextJson,
-  contextLabel = translateText('generated.inline.0112_input_140f86aa'),
+  contextLabel = 'input',
   resolveAttachmentCardData,
   className,
 }: AiContextCardsProps) {
@@ -229,11 +236,11 @@ export function AiContextCards({
             null
         );
 
-        if (cardPayload && 'kind' in cardPayload && cardPayload.kind === 'upload') {
+        if (cardPayload && isUploadContextPayload(cardPayload)) {
           return [{ kind: 'upload', key, attachment, cardPayload }];
         }
 
-        if (cardPayload) {
+        if (cardPayload && isTimelineContextPayload(cardPayload)) {
           return [{ kind: 'timeline', key, cardPayload }];
         }
 
@@ -324,9 +331,9 @@ export function AiContextCards({
                           </p>
                         )}
                       </div>
-                      <Badge className="border-0 bg-sky-500/15 text-[10px] text-sky-700 dark:text-sky-300">
+                      <BadgeControl className="border-0 bg-sky-500/15 text-[10px] text-sky-700 dark:text-sky-300">
                         {formatEntityTypeLabel(card.attachment.entityType)}
-                      </Badge>
+                      </BadgeControl>
                     </div>
 
                     {preview && (
@@ -366,9 +373,9 @@ export function AiContextCards({
                     </p>
                   )}
                 </div>
-                <Badge className="border-0 bg-emerald-500/15 text-[10px] text-emerald-700 dark:text-emerald-300">
+                <BadgeControl className="border-0 bg-emerald-500/15 text-[10px] text-emerald-700 dark:text-emerald-300">
                   {t('features.messages.ai.skillCardBadge')}
-                </Badge>
+                </BadgeControl>
               </div>
 
               {promptPreview && (

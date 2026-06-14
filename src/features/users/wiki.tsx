@@ -1,3 +1,4 @@
+import { BadgeControl } from '@/features/shared/ui/status';
 import '@/styles/animations.css';
 import { SocialBar } from '@/features/users/ui/SocialBar';
 import { useNavigate } from '@tanstack/react-router';
@@ -22,7 +23,7 @@ import { useMemo } from 'react';
 import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
 import { formatLocation } from '@/features/shared/logic/locationHelpers';
-import { Badge } from '@/features/shared/ui/ui/badge';
+import { richTextToPlainText } from '@/features/shared/logic/richText';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/features/shared/ui/ui/hover-card';
 import { useSubscriptionStatusByUser } from '@/zero/payments/usePaymentState';
 
@@ -120,6 +121,9 @@ export function UserWiki(_props: UserWikiProps) {
   // Visibility access check: own profile always accessible
   const canAccess = checkEntityAccess(dbUser?.visibility, !!authUser, isOwnUser);
   const userLocation = formatLocation(dbUser);
+  const bioText = richTextToPlainText(dbUser?.bio);
+  const aboutText = richTextToPlainText(dbUser?.about);
+  const shareDescription = bioText || aboutText || undefined;
 
   if (dbUser && !canAccess) {
     return <AccessDenied />;
@@ -171,9 +175,12 @@ export function UserWiki(_props: UserWikiProps) {
               <span className="inline-flex items-center gap-3">
                 <span>{fullName}</span>
                 <span className="bg-background/80 inline-flex items-center gap-1 rounded-full border px-2 py-1 shadow-sm">
-                  <Badge variant="secondary" className="rounded-full px-3 py-1 text-xs font-medium">
+                  <BadgeControl
+                    variant="secondary"
+                    className="rounded-full px-3 py-1 text-xs font-medium"
+                  >
                     {supportTier.label}
-                  </Badge>
+                  </BadgeControl>
                   <HoverCard openDelay={150}>
                     <HoverCardTrigger asChild>
                       <Button
@@ -193,7 +200,7 @@ export function UserWiki(_props: UserWikiProps) {
                 </span>
               </span>
             </h1>
-            {dbUser.bio && <p className="text-muted-foreground">{dbUser.bio}</p>}
+            {bioText ? <p className="text-muted-foreground">{bioText}</p> : null}
           </div>
 
           {/* User Image */}
@@ -249,12 +256,12 @@ export function UserWiki(_props: UserWikiProps) {
             <ShareButton
               url={`/user/${userIdToFetch}`}
               title={fullName || 'User'}
-              description={dbUser.about || ''}
+              description={aboutText}
               shareContextItem={{
                 id: userIdToFetch || '',
                 type: 'user',
                 title: fullName || 'User',
-                description: dbUser.bio ?? dbUser.about ?? undefined,
+                description: shareDescription,
                 createdAt: new Date(),
                 authorId: userIdToFetch || undefined,
                 authorName: fullName || 'User',

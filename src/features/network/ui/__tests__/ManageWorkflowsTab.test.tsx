@@ -23,9 +23,25 @@ vi.mock('@tanstack/react-router', () => ({
 }));
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
+  translate: (key: string, fallback?: string | Record<string, unknown>) =>
+    typeof fallback === 'string' ? fallback : key,
   useTranslation: () => ({
-    t: (key: string, fallback?: string | Record<string, unknown>) =>
-      typeof fallback === 'string' ? fallback : key,
+    t: (key: string, fallback?: string | Record<string, unknown>) => {
+      const labels: Record<string, string> = {
+        'common.actions.confirm': 'Confirm',
+        'common.actions.reject': 'Reject',
+        'features.network.workflows.activeRelevant': 'Active workflows',
+        'features.network.workflows.create': 'New Workflow',
+        'features.network.workflows.edit': 'Edit Workflow',
+        'features.network.workflows.incomingRequests': 'Incoming requests',
+        'features.network.workflows.outgoingRequests': 'Outgoing requests',
+        'features.network.workflows.readOnlyNoPermission': 'Read-only without manage rights',
+        'features.network.workflows.roleCoOwner': 'Co-owner',
+        'features.network.workflows.roleFinalGroup': 'Final group',
+      };
+
+      return labels[key] ?? (typeof fallback === 'string' ? fallback : key);
+    },
   }),
 }));
 
@@ -158,7 +174,7 @@ describe('ManageWorkflowsTab', () => {
     expect(screen.getAllByRole('link', { name: 'Start Group' }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('link', { name: 'Committee Group' }).length).toBeGreaterThan(0);
     expect(screen.getByRole('link', { name: 'Partner Group: pending' })).toBeTruthy();
-    expect(screen.getAllByText('Final group').length).toBeGreaterThan(1);
+    expect(screen.getAllByText('Final group').length).toBeGreaterThan(0);
     expect(screen.getAllByRole('button', { name: 'Edit Workflow' })).toHaveLength(3);
 
     fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));

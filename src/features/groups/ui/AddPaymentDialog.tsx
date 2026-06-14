@@ -1,27 +1,27 @@
 'use client';
 
+import {
+  FormControlInput,
+  FormControlLabel,
+  FormControlSelect,
+  FormControlSelectContent,
+  FormControlSelectItem,
+  FormControlSelectTrigger,
+  FormControlSelectValue,
+} from '@/features/shared/ui/form';
 import { useState } from 'react';
 import { useUserState } from '@/zero/users/useUserState';
 import { useAllGroups } from '@/zero/groups/useGroupState';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/features/shared/ui/ui/dialog';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Label } from '@/features/shared/ui/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/features/shared/ui/ui/select';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/features/shared/ui/ui/popover';
 import {
   Command,
@@ -169,7 +169,7 @@ export function AddPaymentDialog({
             : translateText('generated.inline.0085_expense_a0db8e68')}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <ScrollableDialogContent className="sm:max-w-[500px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>
@@ -186,10 +186,10 @@ export function AddPaymentDialog({
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="payment-label">
+              <FormControlLabel htmlFor="payment-label">
                 {translateText('generated.inline.0535_label_74341e3c')}
-              </Label>
-              <Input
+              </FormControlLabel>
+              <FormControlInput
                 id="payment-label"
                 placeholder={translateText('generated.inline.0598_description_of_payment_e677bce7')}
                 value={label}
@@ -198,43 +198,43 @@ export function AddPaymentDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="payment-type">
+              <FormControlLabel htmlFor="payment-type">
                 {translateText('generated.inline.0599_type_3deb7456')}
-              </Label>
-              <Select value={type} onValueChange={setType}>
-                <SelectTrigger id="payment-type">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="membership_fee">
+              </FormControlLabel>
+              <FormControlSelect value={type} onValueChange={setType}>
+                <FormControlSelectTrigger id="payment-type">
+                  <FormControlSelectValue />
+                </FormControlSelectTrigger>
+                <FormControlSelectContent>
+                  <FormControlSelectItem value="membership_fee">
                     {translateText('generated.inline.0600_membership_fee_1fa71c2d')}
-                  </SelectItem>
-                  <SelectItem value="donation">
+                  </FormControlSelectItem>
+                  <FormControlSelectItem value="donation">
                     {translateText('generated.inline.0601_donation_2c093025')}
-                  </SelectItem>
-                  <SelectItem value="subsidies">
+                  </FormControlSelectItem>
+                  <FormControlSelectItem value="subsidies">
                     {translateText('generated.inline.0602_subsidies_6df12817')}
-                  </SelectItem>
-                  <SelectItem value="campaign">
+                  </FormControlSelectItem>
+                  <FormControlSelectItem value="campaign">
                     {translateText('generated.inline.0603_campaign_69390e16')}
-                  </SelectItem>
-                  <SelectItem value="material">
+                  </FormControlSelectItem>
+                  <FormControlSelectItem value="material">
                     {translateText('generated.inline.0604_material_d8169782')}
-                  </SelectItem>
-                  <SelectItem value="events">
+                  </FormControlSelectItem>
+                  <FormControlSelectItem value="events">
                     {translateText('generated.inline.0605_events_c5497bca')}
-                  </SelectItem>
-                  <SelectItem value="others">
+                  </FormControlSelectItem>
+                  <FormControlSelectItem value="others">
                     {translateText('generated.inline.0606_others_8d7bf5bf')}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+                  </FormControlSelectItem>
+                </FormControlSelectContent>
+              </FormControlSelect>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="payment-amount">
+              <FormControlLabel htmlFor="payment-amount">
                 {translateText('generated.inline.0607_amount_0dde6c59')}
-              </Label>
-              <Input
+              </FormControlLabel>
+              <FormControlInput
                 id="payment-amount"
                 type="number"
                 step="0.01"
@@ -246,11 +246,11 @@ export function AddPaymentDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="payment-entity">
+              <FormControlLabel htmlFor="payment-entity">
                 {direction === 'income'
                   ? translateText('generated.inline.0086_from_payer_9c4d29c7')
                   : translateText('generated.inline.0087_to_receiver_243f4d32')}
-              </Label>
+              </FormControlLabel>
 
               {/* Toggle between User and Group */}
               <div className="mb-2 flex gap-2">
@@ -400,7 +400,7 @@ export function AddPaymentDialog({
                                 className="cursor-pointer"
                               >
                                 <div className="flex flex-1 items-center gap-2">
-                                  <div className="bg-primary/10 text-primary flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold">
+                                  <div className="bg-primary/10 text-primary flex h-6 w-6 items-center justify-center rounded-md text-xs font-semibold">
                                     {(group.name ?? '')[0]?.toUpperCase()}
                                   </div>
                                   <div className="flex-1">
@@ -431,7 +431,7 @@ export function AddPaymentDialog({
             </Button>
           </DialogFooter>
         </form>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

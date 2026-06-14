@@ -1,5 +1,7 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 /**
  * Unified Invite Collaborator Dialog
  *
@@ -10,7 +12,6 @@ import { useState } from 'react';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -26,7 +27,6 @@ import {
   CommandList,
 } from '@/features/shared/ui/ui/command';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useUserState } from '@/zero/users/useUserState';
@@ -168,7 +168,7 @@ export function InviteCollaboratorDialog({
           {t('features.editor.inviteDialog.invite')}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <ScrollableDialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{t('features.editor.inviteDialog.title')}</DialogTitle>
           <DialogDescription>{t('features.editor.inviteDialog.description')}</DialogDescription>
@@ -183,7 +183,11 @@ export function InviteCollaboratorDialog({
                 if (!user) return null;
 
                 return (
-                  <Badge key={userId} variant="secondary" className="flex items-center gap-1 pr-1">
+                  <BadgeControl
+                    key={userId}
+                    variant="secondary"
+                    className="flex items-center gap-1 pr-1"
+                  >
                     <Avatar className="h-4 w-4">
                       {user.avatar ? (
                         <AvatarImage
@@ -208,7 +212,7 @@ export function InviteCollaboratorDialog({
                     >
                       <X className="h-3 w-3" />
                     </Button>
-                  </Badge>
+                  </BadgeControl>
                 );
               })}
             </div>
@@ -286,7 +290,7 @@ export function InviteCollaboratorDialog({
             {t('features.editor.inviteDialog.invite')} ({selectedUsers.length})
           </Button>
         </DialogFooter>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

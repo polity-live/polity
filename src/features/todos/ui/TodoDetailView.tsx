@@ -1,4 +1,4 @@
-import { Badge } from '@/features/shared/ui/ui/badge';
+import { BadgeControl } from '@/features/shared/ui/status';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Calendar, Tag, Users, Building2, AlertTriangle } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
@@ -63,10 +63,10 @@ export function TodoDetailView({ todo }: TodoDetailViewProps) {
               {formatTodoDate(todo.due_date)}
             </span>
             {todoIsOverdue && (
-              <Badge variant="destructive" className="ml-2">
+              <BadgeControl variant="destructive" className="ml-2">
                 <AlertTriangle className="mr-1 h-3 w-3" />
                 {translateText('generated.inline.1173_overdue_07217c77')}
-              </Badge>
+              </BadgeControl>
             )}
           </div>
         ) : (
@@ -160,9 +160,9 @@ export function TodoDetailView({ todo }: TodoDetailViewProps) {
           </label>
           <div className="flex flex-wrap gap-2">
             {todo.tags.map((tag, idx) => (
-              <Badge key={idx} variant="secondary">
+              <BadgeControl key={idx} variant="secondary">
                 {tag}
-              </Badge>
+              </BadgeControl>
             ))}
           </div>
         </div>

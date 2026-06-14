@@ -3,7 +3,7 @@ import type { CalendarEvent } from '@/features/events/hooks/useCalendarView';
 import { getBaseEventId } from '@/features/calendar/logic/eventIdUtils';
 import { EventTimelineCard } from '@/features/timeline/ui/cards/EventTimelineCard';
 import { MeetupTimelineCard } from '@/features/timeline/ui/cards/MeetupTimelineCard';
-import { SharedChronologicalListView } from './SharedChronologicalListView';
+import { CalendarChronologicalListView } from '@/features/shared/ui/calendar';
 
 interface SharedListViewProps {
   events: CalendarEvent[];
@@ -51,7 +51,7 @@ export function SharedListView({ events, selectedDate, onEventSelect }: SharedLi
   const { t } = useTranslation();
 
   return (
-    <SharedChronologicalListView
+    <CalendarChronologicalListView
       items={events}
       selectedDate={selectedDate}
       getItemDate={event => event.start_date}

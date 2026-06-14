@@ -1,16 +1,16 @@
 'use client';
 
+import { FormControlInput } from '@/features/shared/ui/form';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { useEffect, useMemo, useState } from 'react';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Input } from '@/features/shared/ui/ui/input';
 import { VotePasswordInput } from '@/features/vote-cast/ui/VotePasswordInput';
 import { cn } from '@/features/shared/utils/utils';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
@@ -86,7 +86,7 @@ export function OfflineElectionTallyDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+      <ScrollableDialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
@@ -121,7 +121,7 @@ export function OfflineElectionTallyDialog({
                 className="grid gap-2 md:grid-cols-[1fr_120px] md:items-center"
               >
                 <span className="text-sm font-medium">{candidate.label}</span>
-                <Input
+                <FormControlInput
                   type="number"
                   min="0"
                   inputMode="numeric"
@@ -166,7 +166,7 @@ export function OfflineElectionTallyDialog({
             {translateText('generated.inline.0065_cancel_77dfd213')}
           </Button>
         </DialogFooter>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

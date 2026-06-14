@@ -1,8 +1,8 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { useState } from 'react';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Check, X, Minus } from 'lucide-react';
@@ -195,9 +195,9 @@ export function VoteControls({
       <div className="bg-muted/50 rounded-lg border p-4">
         <div className="mb-3 flex items-center justify-between">
           <h4 className="font-semibold">{t('features.amendments.voteControls.votingProgress')}</h4>
-          <Badge variant="secondary">
+          <BadgeControl variant="secondary">
             {totalVotes} / {totalCollaborators} {t('features.amendments.voteControls.voted')}
-          </Badge>
+          </BadgeControl>
         </div>
 
         <div className="space-y-2">
@@ -281,7 +281,7 @@ export function VoteControls({
                   <span>
                     {vote.voter?.user?.name || t('features.amendments.voteControls.unspecified')}
                   </span>
-                  <Badge
+                  <BadgeControl
                     variant="outline"
                     className={`ml-1 ${
                       vote.vote === 'accept'
@@ -292,7 +292,7 @@ export function VoteControls({
                     }`}
                   >
                     {vote.vote}
-                  </Badge>
+                  </BadgeControl>
                 </div>
               ))}
             </div>

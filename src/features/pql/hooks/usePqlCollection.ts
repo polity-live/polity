@@ -47,11 +47,15 @@ export interface UsePqlCollectionOptions<TItem, TFieldKey extends string> {
 }
 
 function normalizeSearchValue(value: PqlSearchValue): readonly string[] {
+  if (typeof value === 'string') {
+    return value ? [value.trim().toLowerCase()] : [];
+  }
+
   if (Array.isArray(value)) {
     return value.map(entry => entry.trim().toLowerCase()).filter(Boolean);
   }
 
-  return value ? [value.trim().toLowerCase()] : [];
+  return [];
 }
 
 function readPersistedState<TFieldKey extends string>(
@@ -364,7 +368,9 @@ export function usePqlCollection<TItem, TFieldKey extends string>({
     filteredItems,
     hasActiveFilters:
       searchQuery.trim().length > 0 ||
-      Object.values(quickFilterValues).some(values => Boolean(values?.length)) ||
+      Object.values(quickFilterValues as Partial<Record<string, string[]>>).some(values =>
+        Boolean(values?.length)
+      ) ||
       activeCustomFilterIds.length > 0,
   };
 }

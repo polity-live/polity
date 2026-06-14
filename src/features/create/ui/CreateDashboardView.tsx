@@ -1,0 +1,65 @@
+import type { LucideIcon } from 'lucide-react';
+
+import {
+  PageHeader,
+  PageShell,
+  Panel,
+  PanelContent,
+  PanelGrid,
+  PanelHeader,
+  PanelTitle,
+  Section,
+} from '@/features/shared/ui/layout';
+
+export interface CreateDashboardItemViewModel {
+  href: string;
+  icon: LucideIcon;
+  title: string;
+  description: string;
+}
+
+export interface CreateDashboardSectionViewModel {
+  key: string;
+  title: string;
+  items: CreateDashboardItemViewModel[];
+}
+
+interface CreateDashboardViewProps {
+  title: string;
+  subtitle: string;
+  sections: CreateDashboardSectionViewModel[];
+}
+
+export function CreateDashboardView({ title, subtitle, sections }: CreateDashboardViewProps) {
+  return (
+    <PageShell contentClassName="max-w-5xl">
+      <PageHeader title={title} description={subtitle} />
+
+      <div className="space-y-8">
+        {sections.map(section => (
+          <Section key={section.key} title={section.title}>
+            <PanelGrid className="xl:grid-cols-2">
+              {section.items.map(item => {
+                const Icon = item.icon;
+
+                return (
+                  <a key={item.href} href={item.href} className="block">
+                    <Panel className="hover:bg-accent/60 focus-within:ring-ring h-full transition-colors focus-within:ring-2">
+                      <PanelHeader>
+                        <Icon className="text-primary size-7" />
+                        <PanelTitle>{item.title}</PanelTitle>
+                      </PanelHeader>
+                      <PanelContent>
+                        <p className="text-muted-foreground text-sm">{item.description}</p>
+                      </PanelContent>
+                    </Panel>
+                  </a>
+                );
+              })}
+            </PanelGrid>
+          </Section>
+        ))}
+      </div>
+    </PageShell>
+  );
+}

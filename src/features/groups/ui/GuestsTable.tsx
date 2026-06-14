@@ -1,25 +1,19 @@
 import { Link } from '@tanstack/react-router';
+import { Check, Trash2, UserRoundCheck } from 'lucide-react';
+
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { DataTable, EntityCell, type ColumnDef } from '@/features/shared/ui/data-table';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/features/shared/ui/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/features/shared/ui/ui/table';
+  Panel,
+  PanelContent,
+  PanelDescription,
+  PanelHeader,
+  PanelTitle,
+} from '@/features/shared/ui/layout';
+import { StatusBadge } from '@/features/shared/ui/status';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Badge } from '@/features/shared/ui/ui/badge';
-import { Check, Trash2, UserRoundCheck } from 'lucide-react';
 import { RoleTag } from './RoleTag';
-import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface GuestAccessRoleLike {
   id?: string | null;
@@ -71,19 +65,37 @@ function getGuestStatusLabel(status: string | null | undefined) {
   }
 }
 
-function getGuestStatusVariant(
-  status: string | null | undefined
-): 'default' | 'secondary' | 'outline' {
-  switch (status) {
-    case 'active':
-      return 'default';
-    case 'requested':
-      return 'secondary';
-    case 'invited':
-      return 'outline';
-    default:
-      return 'outline';
+function GuestUserCell({ user }: { user: GuestAccessUserLike | null | undefined }) {
+  const userName = getGuestDisplayName(user);
+  const userEmail = user?.email || undefined;
+  const userId = user?.id || null;
+  const initials = userName
+    .split(' ')
+    .map(namePart => namePart[0])
+    .join('')
+    .toUpperCase();
+  const content = (
+    <EntityCell
+      title={<span className={userId ? 'group-hover:underline' : undefined}>{userName}</span>}
+      description={userEmail}
+      leading={
+        <Avatar className="h-10 w-10">
+          <AvatarImage src="" alt={userName} />
+          <AvatarFallback>{initials}</AvatarFallback>
+        </Avatar>
+      }
+    />
+  );
+
+  if (!userId) {
+    return content;
   }
+
+  return (
+    <Link to="/user/$id" params={{ id: userId }} className="group block text-left">
+      {content}
+    </Link>
+  );
 }
 
 export function GuestsTable<TGuestAccess extends GuestAccessLike>({
@@ -95,137 +107,98 @@ export function GuestsTable<TGuestAccess extends GuestAccessLike>({
     'generated.inline.0086_users_with_guest_roles_and_access_rights_6ef79881'
   ),
 }: GuestsTableProps<TGuestAccess>) {
+  const columns: ColumnDef<TGuestAccess>[] = [
+    {
+      id: 'user',
+      header: translateText('generated.inline.0090_user_9f8a2389'),
+      cell: ({ row }) => <GuestUserCell user={row.original.user} />,
+    },
+    {
+      id: 'status',
+      header: translateText('generated.inline.0688_status_bae7d5be'),
+      cell: ({ row }) => (
+        <StatusBadge status={row.original.status}>
+          {getGuestStatusLabel(row.original.status)}
+        </StatusBadge>
+      ),
+    },
+    {
+      id: 'roles',
+      header: translateText('generated.inline.0689_roles_47dcc27d'),
+      cell: ({ row }) => {
+        const guest = row.original;
+
+        return (
+          <div className="flex flex-wrap gap-2">
+            {(guest.roles ?? []).length > 0 ? (
+              (guest.roles ?? []).map(role => (
+                <RoleTag
+                  key={role.id ?? `${guest.id}-${role.name ?? 'role'}`}
+                  roleId={role.id}
+                  roleName={role.name || 'Role'}
+                />
+              ))
+            ) : (
+              <RoleTag fallbackKey={`guest-${guest.id}`}>
+                {translateText('generated.inline.0690_no_guest_role_0a807d70')}
+              </RoleTag>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      id: 'actions',
+      header: translateText('generated.inline.0093_actions_c3cd636a'),
+      meta: {
+        headerClassName: 'text-right',
+        cellClassName: 'text-right',
+      },
+      cell: ({ row }) => {
+        const guest = row.original;
+
+        return (
+          <div className="flex justify-end gap-2">
+            {guest.status === 'requested' && onApprove ? (
+              <Button variant="default" size="sm" onClick={() => onApprove(guest.id)}>
+                <Check className="mr-1 h-4 w-4" />
+                {translateText('generated.inline.0691_approve_7b2c7f14')}
+              </Button>
+            ) : null}
+            {onRevoke ? (
+              <Button variant="ghost" size="sm" onClick={() => onRevoke(guest.id)}>
+                <Trash2 className="h-4 w-4" />
+                <span className="ml-2">
+                  {guest.status === 'requested'
+                    ? translateText('generated.inline.0099_reject_2b03b592')
+                    : translateText('generated.inline.0100_revoke_0be72075')}
+                </span>
+              </Button>
+            ) : null}
+          </div>
+        );
+      },
+    },
+  ];
+
   return (
-    <Card className="border-border/70 from-background to-muted/20 mb-6 bg-gradient-to-b">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <Panel className="border-border/70 from-background to-muted/20 mb-6 bg-gradient-to-b">
+      <PanelHeader>
+        <PanelTitle className="flex items-center gap-2">
           <UserRoundCheck className="h-5 w-5" />
           {title} ({guests.length})
-        </CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        {guests.length === 0 ? (
-          <p className="text-muted-foreground py-8 text-center">
-            {translateText('generated.inline.0687_no_guests_yet_a19e5185')}
-          </p>
-        ) : (
-          <div className="border-border/70 overflow-x-auto rounded-2xl border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{translateText('generated.inline.0090_user_9f8a2389')}</TableHead>
-                  <TableHead>{translateText('generated.inline.0688_status_bae7d5be')}</TableHead>
-                  <TableHead>{translateText('generated.inline.0689_roles_47dcc27d')}</TableHead>
-                  <TableHead className="text-right">
-                    {translateText('generated.inline.0093_actions_c3cd636a')}
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {guests.map(guest => {
-                  const user = guest.user;
-                  const userName = getGuestDisplayName(user);
-                  const userEmail = user?.email || '';
-                  const userId = user?.id || null;
-
-                  return (
-                    <TableRow key={guest.id}>
-                      <TableCell>
-                        {userId ? (
-                          <Link
-                            to="/user/$id"
-                            params={{ id: userId }}
-                            className="group flex items-center gap-3 text-left"
-                          >
-                            <Avatar className="h-10 w-10">
-                              <AvatarImage src="" alt={userName} />
-                              <AvatarFallback>
-                                {userName
-                                  .split(' ')
-                                  .map(namePart => namePart[0])
-                                  .join('')
-                                  .toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="group-hover:underline">
-                              <div className="font-medium">{userName}</div>
-                              {userEmail ? (
-                                <div className="text-muted-foreground text-sm">{userEmail}</div>
-                              ) : null}
-                            </div>
-                          </Link>
-                        ) : (
-                          <div className="flex items-center gap-3 text-left">
-                            <Avatar className="h-10 w-10">
-                              <AvatarImage src="" alt={userName} />
-                              <AvatarFallback>
-                                {userName
-                                  .split(' ')
-                                  .map(namePart => namePart[0])
-                                  .join('')
-                                  .toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <div className="font-medium">{userName}</div>
-                              {userEmail ? (
-                                <div className="text-muted-foreground text-sm">{userEmail}</div>
-                              ) : null}
-                            </div>
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getGuestStatusVariant(guest.status)}>
-                          {getGuestStatusLabel(guest.status)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-2">
-                          {(guest.roles ?? []).length > 0 ? (
-                            (guest.roles ?? []).map(role => (
-                              <RoleTag
-                                key={role.id ?? `${guest.id}-${role.name ?? 'role'}`}
-                                roleId={role.id}
-                                roleName={role.name || 'Role'}
-                              />
-                            ))
-                          ) : (
-                            <RoleTag fallbackKey={`guest-${guest.id}`}>
-                              {translateText('generated.inline.0690_no_guest_role_0a807d70')}
-                            </RoleTag>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          {guest.status === 'requested' && onApprove ? (
-                            <Button variant="default" size="sm" onClick={() => onApprove(guest.id)}>
-                              <Check className="mr-1 h-4 w-4" />
-                              {translateText('generated.inline.0691_approve_7b2c7f14')}
-                            </Button>
-                          ) : null}
-                          {onRevoke ? (
-                            <Button variant="ghost" size="sm" onClick={() => onRevoke(guest.id)}>
-                              <Trash2 className="h-4 w-4" />
-                              <span className="ml-2">
-                                {guest.status === 'requested'
-                                  ? translateText('generated.inline.0099_reject_2b03b592')
-                                  : translateText('generated.inline.0100_revoke_0be72075')}
-                              </span>
-                            </Button>
-                          ) : null}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+        </PanelTitle>
+        <PanelDescription>{description}</PanelDescription>
+      </PanelHeader>
+      <PanelContent>
+        <DataTable
+          columns={columns}
+          data={[...guests]}
+          getRowId={guest => guest.id}
+          enablePagination={false}
+          emptyTitle={translateText('generated.inline.0687_no_guests_yet_a19e5185')}
+        />
+      </PanelContent>
+    </Panel>
   );
 }

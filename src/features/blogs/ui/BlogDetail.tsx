@@ -1,5 +1,6 @@
 'use client';
 
+import { ScrollableAlertDialogContent } from '@/features/shared/ui/dialog';
 import { useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useZero } from '@rocicorp/zero/react';
@@ -35,8 +36,8 @@ import {
 } from '@/features/shared/hooks/use-translation';
 import { useBlogPermissions } from '../hooks/useBlogPermissions';
 import { usePermissions } from '@/zero/rbac/usePermissions';
-import { PlateEditor } from '@/features/shared/ui/kit-platejs/plate-editor';
 import type { Value } from 'platejs';
+import { RichTextPreview } from '@/features/shared/ui/rich-text';
 import { Link } from '@tanstack/react-router';
 import { mutators } from '@/zero/mutators';
 import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
@@ -45,7 +46,6 @@ import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
-  AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
@@ -415,11 +415,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
         </CardHeader>
         <CardContent className="prose prose-slate dark:prose-invert max-w-none">
           {blog.content && Array.isArray(blog.content) && blog.content.length > 0 ? (
-            <PlateEditor
-              value={blog.content as Value}
-              currentMode="view"
-              isOwnerOrCollaborator={false}
-            />
+            <RichTextPreview content={blog.content as Value} />
           ) : (
             <div className="text-muted-foreground py-8 text-center">
               <p>{t('features.blogs.detail.noContentAvailable')}</p>
@@ -447,7 +443,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent>
+        <ScrollableAlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t('features.blogs.detail.confirmDeleteTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
@@ -466,7 +462,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
               {t('common.actions.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
-        </AlertDialogContent>
+        </ScrollableAlertDialogContent>
       </AlertDialog>
     </PageWrapper>
   );

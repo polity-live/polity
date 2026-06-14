@@ -1,7 +1,7 @@
 'use client';
 
+import { StatusBadgeWithDot } from '@/features/shared/ui/status';
 import { cn } from '@/features/shared/utils/utils';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export type DecisionStatus =
@@ -105,19 +105,15 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
   const config = getStatusConfig(status);
 
   return (
-    <Badge
-      variant="outline"
-      className={cn(
-        'font-mono text-xs font-bold tracking-wide uppercase',
-        'rounded-md px-2 py-0.5',
-        config.colorClass,
-        config.pulseClass,
-        className
-      )}
+    <StatusBadgeWithDot
+      status={status}
+      tone="outline"
+      dotClassName={config.dotClass}
+      pulse={Boolean(config.pulseClass)}
+      className={cn('rounded-md px-2 py-0.5', config.colorClass, className)}
     >
-      <span className={cn('mr-1 h-1.5 w-1.5', config.dotClass)} />
       {config.label}
-    </Badge>
+    </StatusBadgeWithDot>
   );
 }
 

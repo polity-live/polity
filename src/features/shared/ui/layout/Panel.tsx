@@ -52,4 +52,17 @@ function PanelContent({ className, ...props }: React.ComponentProps<'div'>) {
   );
 }
 
-export { Panel, PanelContent, PanelDescription, PanelHeader, PanelTitle };
+function PanelFooter({ className, ...props }: React.ComponentProps<'div'>) {
+  return (
+    <div
+      data-slot="panel-footer"
+      className={cn(
+        'flex flex-col-reverse gap-2 p-4 pt-0 sm:flex-row sm:justify-end sm:p-5 sm:pt-0',
+        className
+      )}
+      {...props}
+    />
+  );
+}
+
+export { Panel, PanelContent, PanelDescription, PanelFooter, PanelHeader, PanelTitle };

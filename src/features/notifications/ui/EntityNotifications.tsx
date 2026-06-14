@@ -1,12 +1,12 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { useEffect, useState, useMemo } from 'react';
 import { useNotificationState } from '@/zero/notifications/useNotificationState.ts';
 import { useNotificationActions } from '@/zero/notifications/useNotificationActions.ts';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar.tsx';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { Card, CardContent } from '@/features/shared/ui/ui/card.tsx';
-import { Badge } from '@/features/shared/ui/ui/badge.tsx';
 import { Tabs, TabsContent, TabsTrigger } from '@/features/shared/ui/ui/tabs.tsx';
 import { ScrollableTabsList } from '@/features/shared/ui/ui/scrollable-tabs.tsx';
 import { Bell, Check, CheckCheck } from 'lucide-react';
@@ -230,7 +230,7 @@ export function EntityNotifications({
               {notification.title}
             </p>
             {!notification.is_read && (
-              <Badge variant="default" className="h-2 w-2 rounded-full p-0" />
+              <BadgeControl variant="default" className="h-2 w-2 rounded-full p-0" />
             )}
           </div>
           <p className="text-muted-foreground text-sm">{notification.message}</p>
@@ -322,16 +322,16 @@ export function EntityNotifications({
         <ScrollableTabsList>
           <TabsTrigger value="all">
             {t('pages.notifications.filters.all')}
-            <Badge variant="secondary" className="ml-2">
+            <BadgeControl variant="secondary" className="ml-2">
               {notifications.length}
-            </Badge>
+            </BadgeControl>
           </TabsTrigger>
           <TabsTrigger value="unread">
             {t('pages.notifications.filters.unread')}
             {unreadNotifications.length > 0 && (
-              <Badge variant="default" className="ml-2">
+              <BadgeControl variant="default" className="ml-2">
                 {unreadNotifications.length}
-              </Badge>
+              </BadgeControl>
             )}
           </TabsTrigger>
           <TabsTrigger value="read">{t('pages.notifications.filters.read')}</TabsTrigger>

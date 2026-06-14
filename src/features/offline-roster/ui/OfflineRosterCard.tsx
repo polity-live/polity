@@ -3,7 +3,6 @@
 import { useId, useMemo, useRef, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { Badge, badgeVariants } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
   Card,
@@ -14,33 +13,24 @@ import {
 } from '@/features/shared/ui/ui/card';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Label } from '@/features/shared/ui/ui/label';
 import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/features/shared/ui/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
-import { Textarea } from '@/features/shared/ui/ui/textarea';
 import { TypeaheadSearch } from '@/features/shared/ui/typeahead';
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import { cn } from '@/features/shared/utils/utils';
-import { getTableTagSurfaceClassName } from '@/features/shared/ui/ui/table-tag';
 import { UserTableCell } from '@/features/shared/ui/ui/user-table-cell';
 import { RoleTag } from '@/features/groups/ui/RoleTag';
 import type { ParticipationUserLike } from '@/features/shared/types/participation';
+import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
+import { FormFieldShell, TextField } from '@/features/shared/ui/form';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
+import { EntityBadge, StatusBadge } from '@/features/shared/ui/status';
 import {
   ArrowUpDown,
   Check,
@@ -265,23 +255,17 @@ function ConnectedUserChip({ user }: { user: OfflineRosterConnectedUser }) {
   const displayName = getUserDisplayName(user);
 
   return (
-    <Link
-      to="/user/$id"
-      params={{ id: user.id }}
-      className={cn(
-        badgeVariants({ variant: 'outline' }),
-        getTableTagSurfaceClassName('user'),
-        'inline-flex h-auto items-center gap-2 rounded-full px-2 py-1 hover:opacity-90'
-      )}
-    >
-      <Avatar className="h-5 w-5">
-        <AvatarImage src={user.avatar ?? undefined} alt={displayName} />
-        <AvatarFallback className="text-[10px]">
-          {getInitials(user.first_name, user.last_name)}
-        </AvatarFallback>
-      </Avatar>
-      <span>{displayName}</span>
-    </Link>
+    <EntityBadge asChild tone="info" className="h-auto gap-2 px-2 py-1 hover:opacity-90">
+      <Link to="/user/$id" params={{ id: user.id }}>
+        <Avatar className="h-5 w-5">
+          <AvatarImage src={user.avatar ?? undefined} alt={displayName} />
+          <AvatarFallback className="text-[10px]">
+            {getInitials(user.first_name, user.last_name)}
+          </AvatarFallback>
+        </Avatar>
+        <span>{displayName}</span>
+      </Link>
+    </EntityBadge>
   );
 }
 
@@ -297,17 +281,11 @@ function ProvenanceTag({
   }
 
   return (
-    <Link
-      to="/group/$id"
-      params={{ id: group.id }}
-      className={cn(
-        badgeVariants({ variant: 'outline' }),
-        getTableTagSurfaceClassName('group'),
-        'hover:opacity-90'
-      )}
-    >
-      {group.name || fallbackLabel || translateText('generated.inline.0094_group_171a0606')}
-    </Link>
+    <EntityBadge asChild tone="accent" className="hover:opacity-90">
+      <Link to="/group/$id" params={{ id: group.id }}>
+        {group.name || fallbackLabel || translateText('generated.inline.0094_group_171a0606')}
+      </Link>
+    </EntityBadge>
   );
 }
 
@@ -626,17 +604,17 @@ export function OfflineRosterCard({
       <span>{row.reasonNotSignedUp || '-'}</span>
       {row.attendanceStatus ? (
         <div className="flex flex-wrap gap-2">
-          <Badge variant="secondary">
+          <StatusBadge status={row.attendanceStatus}>
             {row.attendanceStatus === 'confirmed'
               ? translateText('generated.inline.0120_participation_confirmed_e2ee357b')
               : translateText('generated.inline.0121_participation_listed_84952d30')}
-          </Badge>
+          </StatusBadge>
           {row.participationChannel ? (
-            <Badge variant="outline">
+            <StatusBadge status={row.participationChannel} tone="outline">
               {row.participationChannel === 'offline'
                 ? translateText('generated.inline.0122_offline_channel_8775eb7b')
                 : translateText('generated.inline.0123_online_channel_368ecb25')}
-            </Badge>
+            </StatusBadge>
           ) : null}
         </div>
       ) : null}
@@ -730,6 +708,191 @@ export function OfflineRosterCard({
     );
   };
 
+  const renderConnectedUserCell = (row: OfflineRosterRow) =>
+    row.connectedUser ? (
+      <ConnectedUserChip user={row.connectedUser} />
+    ) : (
+      <span className="text-muted-foreground">-</span>
+    );
+
+  const renderRolesCell = (row: OfflineRosterRow, showFallbackTag: boolean) => (
+    <div className="flex flex-wrap gap-2">
+      {row.roles && row.roles.length > 0 ? (
+        row.roles.map(role => (
+          <RoleTag key={`${row.id}-${role.id}`} roleId={role.id} roleName={role.name || 'Role'} />
+        ))
+      ) : showFallbackTag ? (
+        <RoleTag fallbackKey={`offline-roster-${row.id}`}>{fallbackRoleLabel}</RoleTag>
+      ) : (
+        <span className="text-muted-foreground">-</span>
+      )}
+    </div>
+  );
+
+  const membershipColumns: ColumnDef<OfflineRosterRow>[] = [
+    {
+      id: 'user',
+      header: translateText('generated.inline.0090_user_9f8a2389'),
+      cell: ({ row }) => (
+        <UserTableCell
+          user={row.original.user}
+          displayName={[row.original.firstName, row.original.lastName].filter(Boolean).join(' ')}
+        />
+      ),
+    },
+    ...(showRolesColumn
+      ? [
+          {
+            id: 'roles',
+            header: translateText('generated.inline.0091_role_c3f104d1'),
+            cell: ({ row }) => renderRolesCell(row.original, true),
+          } satisfies ColumnDef<OfflineRosterRow>,
+        ]
+      : []),
+    ...(showConnectedUserColumn
+      ? [
+          {
+            id: 'connected-user',
+            header: translateText('generated.inline.0951_connected_active_user_0aaf89ce'),
+            cell: ({ row }) => renderConnectedUserCell(row.original),
+          } satisfies ColumnDef<OfflineRosterRow>,
+        ]
+      : []),
+    {
+      id: 'reason',
+      header: translateText('generated.inline.0952_reason_why_not_signed_up_3bd4bff9'),
+      cell: ({ row }) => renderReasonCell(row.original),
+    },
+    ...(showProvenanceColumns
+      ? [
+          {
+            id: 'part-group',
+            header: translateText('generated.inline.0953_part_group_b6252576'),
+            cell: ({ row }) => (
+              <ProvenanceTag
+                group={row.original.partGroup}
+                fallbackLabel={row.original.partGroup?.name ?? undefined}
+              />
+            ),
+          } satisfies ColumnDef<OfflineRosterRow>,
+          {
+            id: 'base-group',
+            header: translateText('generated.inline.0954_base_group_6c9d0b40'),
+            cell: ({ row }) => (
+              <ProvenanceTag
+                group={row.original.baseGroup}
+                fallbackLabel={row.original.baseGroup?.name ?? undefined}
+              />
+            ),
+          } satisfies ColumnDef<OfflineRosterRow>,
+        ]
+      : []),
+    {
+      id: 'actions',
+      header: translateText('generated.inline.0093_actions_c3cd636a'),
+      meta: {
+        headerClassName: 'text-right',
+        cellClassName: 'text-right',
+      },
+      cell: ({ row }) => renderRowActions(row.original),
+    },
+  ];
+
+  const defaultColumns: ColumnDef<OfflineRosterRow>[] = [
+    {
+      id: 'active-user',
+      header: translateText('generated.inline.0955_active_user_7bce0daf'),
+      cell: ({ row }) =>
+        row.original.isActiveUser ? (
+          <StatusBadge status="active" tone="success">
+            <CircleCheck className="mr-1 h-4 w-4" />
+            {translateText('generated.inline.0958_yes_5397e058')}
+          </StatusBadge>
+        ) : (
+          <StatusBadge status="inactive" tone="destructive">
+            <CircleX className="mr-1 h-4 w-4" />
+            {translateText('generated.inline.0609_no_816c52fd')}
+          </StatusBadge>
+        ),
+    },
+    {
+      accessorKey: 'firstName',
+      header: translateText('generated.inline.0956_firstname_cf23ba48'),
+    },
+    {
+      accessorKey: 'lastName',
+      header: translateText('generated.inline.0957_lastname_639860fb'),
+    },
+    {
+      id: 'connected-user',
+      header: translateText('generated.inline.0951_connected_active_user_0aaf89ce'),
+      cell: ({ row }) => renderConnectedUserCell(row.original),
+    },
+    ...(showRolesColumn
+      ? [
+          {
+            id: 'roles',
+            header: translateText('generated.inline.0689_roles_47dcc27d'),
+            cell: ({ row }) => renderRolesCell(row.original, false),
+          } satisfies ColumnDef<OfflineRosterRow>,
+        ]
+      : []),
+    {
+      id: 'reason',
+      header: translateText('generated.inline.0952_reason_why_not_signed_up_3bd4bff9'),
+      cell: ({ row }) => renderReasonCell(row.original),
+    },
+    ...(showProvenanceColumns
+      ? [
+          {
+            id: 'part-group',
+            header: translateText('generated.inline.0953_part_group_b6252576'),
+            cell: ({ row }) => (
+              <ProvenanceTag
+                group={row.original.partGroup}
+                fallbackLabel={row.original.partGroup?.name ?? undefined}
+              />
+            ),
+          } satisfies ColumnDef<OfflineRosterRow>,
+          {
+            id: 'base-group',
+            header: translateText('generated.inline.0954_base_group_6c9d0b40'),
+            cell: ({ row }) => (
+              <ProvenanceTag
+                group={row.original.baseGroup}
+                fallbackLabel={row.original.baseGroup?.name ?? undefined}
+              />
+            ),
+          } satisfies ColumnDef<OfflineRosterRow>,
+        ]
+      : []),
+    {
+      id: 'actions',
+      header: translateText('generated.inline.0093_actions_c3cd636a'),
+      meta: {
+        headerClassName: 'text-right',
+        cellClassName: 'text-right',
+      },
+      cell: ({ row }) => renderRowActions(row.original),
+    },
+  ];
+
+  const csvPreviewColumns: ColumnDef<DraftRosterEntry>[] = [
+    {
+      accessorKey: 'firstName',
+      header: translateText('generated.inline.0956_firstname_cf23ba48'),
+    },
+    {
+      accessorKey: 'lastName',
+      header: translateText('generated.inline.0957_lastname_639860fb'),
+    },
+    {
+      accessorKey: 'reasonNotSignedUp',
+      header: translateText('generated.inline.0952_reason_why_not_signed_up_3bd4bff9'),
+      cell: ({ row }) => row.original.reasonNotSignedUp || '-',
+    },
+  ];
+
   return (
     <>
       <Card className="border-border/70 from-background to-muted/20 bg-gradient-to-b">
@@ -749,212 +912,19 @@ export function OfflineRosterCard({
           ) : null}
         </CardHeader>
         <CardContent>
-          {sortedRows.length === 0 ? (
-            <p className="text-muted-foreground py-8 text-center">{emptyStateLabel}</p>
-          ) : (
-            <div className="border-border/70 overflow-x-auto rounded-2xl border">
-              {tableVariant === 'membership' ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{translateText('generated.inline.0090_user_9f8a2389')}</TableHead>
-                      {showRolesColumn ? (
-                        <TableHead>
-                          {translateText('generated.inline.0091_role_c3f104d1')}
-                        </TableHead>
-                      ) : null}
-                      {showConnectedUserColumn ? (
-                        <TableHead>
-                          {translateText('generated.inline.0951_connected_active_user_0aaf89ce')}
-                        </TableHead>
-                      ) : null}
-                      <TableHead>
-                        {translateText('generated.inline.0952_reason_why_not_signed_up_3bd4bff9')}
-                      </TableHead>
-                      {showProvenanceColumns ? (
-                        <TableHead>
-                          {translateText('generated.inline.0953_part_group_b6252576')}
-                        </TableHead>
-                      ) : null}
-                      {showProvenanceColumns ? (
-                        <TableHead>
-                          {translateText('generated.inline.0954_base_group_6c9d0b40')}
-                        </TableHead>
-                      ) : null}
-                      <TableHead className="text-right">
-                        {translateText('generated.inline.0093_actions_c3cd636a')}
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {sortedRows.map(row => (
-                      <TableRow key={row.id}>
-                        <TableCell>
-                          <UserTableCell
-                            user={row.user}
-                            displayName={[row.firstName, row.lastName].filter(Boolean).join(' ')}
-                          />
-                        </TableCell>
-                        {showRolesColumn ? (
-                          <TableCell>
-                            <div className="flex flex-wrap gap-2">
-                              {row.roles && row.roles.length > 0 ? (
-                                row.roles.map(role => (
-                                  <RoleTag
-                                    key={`${row.id}-${role.id}`}
-                                    roleId={role.id}
-                                    roleName={role.name || 'Role'}
-                                  />
-                                ))
-                              ) : (
-                                <RoleTag fallbackKey={`offline-roster-${row.id}`}>
-                                  {fallbackRoleLabel}
-                                </RoleTag>
-                              )}
-                            </div>
-                          </TableCell>
-                        ) : null}
-                        {showConnectedUserColumn ? (
-                          <TableCell>
-                            {row.connectedUser ? (
-                              <ConnectedUserChip user={row.connectedUser} />
-                            ) : (
-                              <span className="text-muted-foreground">-</span>
-                            )}
-                          </TableCell>
-                        ) : null}
-                        <TableCell>{renderReasonCell(row)}</TableCell>
-                        {showProvenanceColumns ? (
-                          <TableCell>
-                            <ProvenanceTag
-                              group={row.partGroup}
-                              fallbackLabel={row.partGroup?.name ?? undefined}
-                            />
-                          </TableCell>
-                        ) : null}
-                        {showProvenanceColumns ? (
-                          <TableCell>
-                            <ProvenanceTag
-                              group={row.baseGroup}
-                              fallbackLabel={row.baseGroup?.name ?? undefined}
-                            />
-                          </TableCell>
-                        ) : null}
-                        <TableCell className="text-right">{renderRowActions(row)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>
-                        {translateText('generated.inline.0955_active_user_7bce0daf')}
-                      </TableHead>
-                      <TableHead>
-                        {translateText('generated.inline.0956_firstname_cf23ba48')}
-                      </TableHead>
-                      <TableHead>
-                        {translateText('generated.inline.0957_lastname_639860fb')}
-                      </TableHead>
-                      <TableHead>
-                        {translateText('generated.inline.0951_connected_active_user_0aaf89ce')}
-                      </TableHead>
-                      {showRolesColumn ? (
-                        <TableHead>
-                          {translateText('generated.inline.0689_roles_47dcc27d')}
-                        </TableHead>
-                      ) : null}
-                      <TableHead>
-                        {translateText('generated.inline.0952_reason_why_not_signed_up_3bd4bff9')}
-                      </TableHead>
-                      {showProvenanceColumns ? (
-                        <TableHead>
-                          {translateText('generated.inline.0953_part_group_b6252576')}
-                        </TableHead>
-                      ) : null}
-                      {showProvenanceColumns ? (
-                        <TableHead>
-                          {translateText('generated.inline.0954_base_group_6c9d0b40')}
-                        </TableHead>
-                      ) : null}
-                      <TableHead className="text-right">
-                        {translateText('generated.inline.0093_actions_c3cd636a')}
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {sortedRows.map(row => (
-                      <TableRow key={row.id}>
-                        <TableCell>
-                          {row.isActiveUser ? (
-                            <Badge className="bg-emerald-600 text-white hover:bg-emerald-600">
-                              <CircleCheck className="mr-1 h-4 w-4" />
-                              {translateText('generated.inline.0958_yes_5397e058')}
-                            </Badge>
-                          ) : (
-                            <Badge variant="destructive">
-                              <CircleX className="mr-1 h-4 w-4" />
-                              {translateText('generated.inline.0609_no_816c52fd')}
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>{row.firstName}</TableCell>
-                        <TableCell>{row.lastName}</TableCell>
-                        <TableCell>
-                          {row.connectedUser ? (
-                            <ConnectedUserChip user={row.connectedUser} />
-                          ) : (
-                            <span className="text-muted-foreground">-</span>
-                          )}
-                        </TableCell>
-                        {showRolesColumn ? (
-                          <TableCell>
-                            <div className="flex flex-wrap gap-2">
-                              {row.roles && row.roles.length > 0 ? (
-                                row.roles.map(role => (
-                                  <Badge key={`${row.id}-${role.id}`} variant="outline">
-                                    {role.name ||
-                                      translateText('generated.inline.0092_role_c3f104d1')}
-                                  </Badge>
-                                ))
-                              ) : (
-                                <span className="text-muted-foreground">-</span>
-                              )}
-                            </div>
-                          </TableCell>
-                        ) : null}
-                        <TableCell>{renderReasonCell(row)}</TableCell>
-                        {showProvenanceColumns ? (
-                          <TableCell>
-                            <ProvenanceTag
-                              group={row.partGroup}
-                              fallbackLabel={row.partGroup?.name ?? undefined}
-                            />
-                          </TableCell>
-                        ) : null}
-                        {showProvenanceColumns ? (
-                          <TableCell>
-                            <ProvenanceTag
-                              group={row.baseGroup}
-                              fallbackLabel={row.baseGroup?.name ?? undefined}
-                            />
-                          </TableCell>
-                        ) : null}
-                        <TableCell className="text-right">{renderRowActions(row)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </div>
-          )}
+          <DataTable
+            columns={tableVariant === 'membership' ? membershipColumns : defaultColumns}
+            data={sortedRows}
+            getRowId={row => row.id}
+            enablePagination={false}
+            emptyTitle={title}
+            emptyDescription={emptyStateLabel}
+          />
         </CardContent>
       </Card>
 
       <Dialog open={manageOpen} onOpenChange={handleCloseManageDialog}>
-        <DialogContent className="max-h-[90vh] max-w-4xl">
+        <ScrollableDialogContent className="max-h-[90vh] max-w-4xl">
           <DialogHeader>
             <DialogTitle>{manageDialogTitle}</DialogTitle>
             <DialogDescription>{manageDialogDescription}</DialogDescription>
@@ -974,47 +944,36 @@ export function OfflineRosterCard({
             </TabsList>
             <TabsContent value="single" className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="offline-single-first-name">
-                    {translateText('generated.inline.0956_firstname_cf23ba48')}
-                  </Label>
-                  <Input
-                    id="offline-single-first-name"
-                    value={singleDraft.firstName}
-                    onChange={event =>
-                      setSingleDraft(current => ({ ...current, firstName: event.target.value }))
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="offline-single-last-name">
-                    {translateText('generated.inline.0957_lastname_639860fb')}
-                  </Label>
-                  <Input
-                    id="offline-single-last-name"
-                    value={singleDraft.lastName}
-                    onChange={event =>
-                      setSingleDraft(current => ({ ...current, lastName: event.target.value }))
-                    }
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="offline-single-reason">
-                  {translateText('generated.inline.0952_reason_why_not_signed_up_3bd4bff9')}
-                </Label>
-                <Textarea
-                  id="offline-single-reason"
-                  value={singleDraft.reasonNotSignedUp}
-                  onChange={event =>
-                    setSingleDraft(current => ({
-                      ...current,
-                      reasonNotSignedUp: event.target.value,
-                    }))
+                <TextField
+                  id="offline-single-first-name"
+                  label={translateText('generated.inline.0956_firstname_cf23ba48')}
+                  value={singleDraft.firstName}
+                  onValueChange={value =>
+                    setSingleDraft(current => ({ ...current, firstName: value }))
                   }
-                  rows={4}
+                />
+                <TextField
+                  id="offline-single-last-name"
+                  label={translateText('generated.inline.0957_lastname_639860fb')}
+                  value={singleDraft.lastName}
+                  onValueChange={value =>
+                    setSingleDraft(current => ({ ...current, lastName: value }))
+                  }
                 />
               </div>
+              <TextField
+                id="offline-single-reason"
+                label={translateText('generated.inline.0952_reason_why_not_signed_up_3bd4bff9')}
+                value={singleDraft.reasonNotSignedUp}
+                onValueChange={value =>
+                  setSingleDraft(current => ({
+                    ...current,
+                    reasonNotSignedUp: value,
+                  }))
+                }
+                multiline
+                rows={4}
+              />
             </TabsContent>
             <TabsContent value="csv" className="space-y-4">
               <div
@@ -1085,37 +1044,19 @@ export function OfflineRosterCard({
               )}
 
               {csvPreviewRows.length > 0 ? (
-                <div className="space-y-2">
-                  <Label>{translateText('generated.inline.0520_preview_f1fbb2b4')}</Label>
-                  <ScrollArea className="h-[40vh] rounded-xl border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>
-                            {translateText('generated.inline.0956_firstname_cf23ba48')}
-                          </TableHead>
-                          <TableHead>
-                            {translateText('generated.inline.0957_lastname_639860fb')}
-                          </TableHead>
-                          <TableHead>
-                            {translateText(
-                              'generated.inline.0952_reason_why_not_signed_up_3bd4bff9'
-                            )}
-                          </TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {csvPreviewRows.map((row, index) => (
-                          <TableRow key={`${row.firstName}-${row.lastName}-${index}`}>
-                            <TableCell>{row.firstName}</TableCell>
-                            <TableCell>{row.lastName}</TableCell>
-                            <TableCell>{row.reasonNotSignedUp || '-'}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </ScrollArea>
-                </div>
+                <FormFieldShell label={translateText('generated.inline.0520_preview_f1fbb2b4')}>
+                  {() => (
+                    <ScrollArea className="h-[40vh] rounded-xl border">
+                      <DataTable
+                        columns={csvPreviewColumns}
+                        data={csvPreviewRows}
+                        getRowId={(row, index) => `${row.firstName}-${row.lastName}-${index}`}
+                        enablePagination={false}
+                        className="space-y-0"
+                      />
+                    </ScrollArea>
+                  )}
+                </FormFieldShell>
               ) : null}
             </TabsContent>
           </Tabs>
@@ -1138,7 +1079,7 @@ export function OfflineRosterCard({
               {translateText('generated.inline.0966_hinzufuegen_38099f83')}
             </Button>
           </DialogFooter>
-        </DialogContent>
+        </ScrollableDialogContent>
       </Dialog>
 
       <Dialog
@@ -1150,7 +1091,7 @@ export function OfflineRosterCard({
           }
         }}
       >
-        <DialogContent className="max-w-2xl">
+        <ScrollableDialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
               {translateText('generated.inline.0967_connect_active_user_3b32e5de')}
@@ -1161,15 +1102,16 @@ export function OfflineRosterCard({
               )}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2">
-            <Label>{translateText('generated.inline.0955_active_user_7bce0daf')}</Label>
-            <TypeaheadSearch
-              items={connectItems}
-              value={selectedConnectedUser?.id}
-              onChange={item => setSelectedConnectedUser(item)}
-              placeholder={translateText('generated.inline.0969_search_active_users_87482496')}
-            />
-          </div>
+          <FormFieldShell label={translateText('generated.inline.0955_active_user_7bce0daf')}>
+            {() => (
+              <TypeaheadSearch
+                items={connectItems}
+                value={selectedConnectedUser?.id}
+                onChange={item => setSelectedConnectedUser(item)}
+                placeholder={translateText('generated.inline.0969_search_active_users_87482496')}
+              />
+            )}
+          </FormFieldShell>
           <DialogFooter>
             <Button
               type="button"
@@ -1189,7 +1131,7 @@ export function OfflineRosterCard({
               {translateText('generated.inline.0970_verknuepfen_c7a633a7')}
             </Button>
           </DialogFooter>
-        </DialogContent>
+        </ScrollableDialogContent>
       </Dialog>
 
       <Dialog
@@ -1200,7 +1142,7 @@ export function OfflineRosterCard({
           }
         }}
       >
-        <DialogContent className="max-w-2xl">
+        <ScrollableDialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
               {translateText('generated.inline.0971_edit_offline_user_be53ee65')}
@@ -1212,44 +1154,29 @@ export function OfflineRosterCard({
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="offline-edit-first-name">
-                {translateText('generated.inline.0956_firstname_cf23ba48')}
-              </Label>
-              <Input
-                id="offline-edit-first-name"
-                value={editDraft.firstName}
-                onChange={event =>
-                  setEditDraft(current => ({ ...current, firstName: event.target.value }))
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="offline-edit-last-name">
-                {translateText('generated.inline.0957_lastname_639860fb')}
-              </Label>
-              <Input
-                id="offline-edit-last-name"
-                value={editDraft.lastName}
-                onChange={event =>
-                  setEditDraft(current => ({ ...current, lastName: event.target.value }))
-                }
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="offline-edit-reason">
-              {translateText('generated.inline.0952_reason_why_not_signed_up_3bd4bff9')}
-            </Label>
-            <Textarea
-              id="offline-edit-reason"
-              rows={4}
-              value={editDraft.reasonNotSignedUp}
-              onChange={event =>
-                setEditDraft(current => ({ ...current, reasonNotSignedUp: event.target.value }))
-              }
+            <TextField
+              id="offline-edit-first-name"
+              label={translateText('generated.inline.0956_firstname_cf23ba48')}
+              value={editDraft.firstName}
+              onValueChange={value => setEditDraft(current => ({ ...current, firstName: value }))}
+            />
+            <TextField
+              id="offline-edit-last-name"
+              label={translateText('generated.inline.0957_lastname_639860fb')}
+              value={editDraft.lastName}
+              onValueChange={value => setEditDraft(current => ({ ...current, lastName: value }))}
             />
           </div>
+          <TextField
+            id="offline-edit-reason"
+            label={translateText('generated.inline.0952_reason_why_not_signed_up_3bd4bff9')}
+            rows={4}
+            value={editDraft.reasonNotSignedUp}
+            onValueChange={value =>
+              setEditDraft(current => ({ ...current, reasonNotSignedUp: value }))
+            }
+            multiline
+          />
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setEditRow(null)}>
               {translateText('generated.inline.0065_cancel_77dfd213')}
@@ -1258,7 +1185,7 @@ export function OfflineRosterCard({
               {translateText('generated.inline.0269_save_efc007a3')}
             </Button>
           </DialogFooter>
-        </DialogContent>
+        </ScrollableDialogContent>
       </Dialog>
     </>
   );

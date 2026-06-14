@@ -1,3 +1,10 @@
+import { BadgeControl } from '@/features/shared/ui/status';
+import {
+  FormControlLabel,
+  FormControlRadioGroup,
+  FormControlSwitch,
+  FormControlRadioGroupItem,
+} from '@/features/shared/ui/form';
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import type { Value } from 'platejs';
 import { useNavigate } from '@tanstack/react-router';
@@ -5,8 +12,6 @@ import {
   useTranslation,
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
-import { Label } from '@/features/shared/ui/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/features/shared/ui/ui/radio-group';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
 import { DateTimeRangeInput } from '../ui/inputs/DateTimeRangeInput';
@@ -26,7 +31,6 @@ import {
   type GroupRelationshipRight,
 } from '@/features/network/ui/GroupRelationshipFields';
 import { useGroupConnectionActions } from '@/zero/network';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
   Card,
@@ -35,21 +39,13 @@ import {
   CardHeader,
   CardTitle,
 } from '@/features/shared/ui/ui/card';
-import { Switch } from '@/features/shared/ui/ui/switch';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/features/shared/ui/ui/accordion';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/features/shared/ui/ui/table';
+import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
 import { MiniPlateEditor } from '@/features/shared/ui/form/MiniPlateEditor';
 import { GeoAddressPicker } from '@/features/shared/ui/form/GeoAddressPicker';
 import { isValidOptionalEmailAddress } from '@/features/shared/logic/inputValidation';
@@ -768,6 +764,32 @@ export function useCreateGroupForm(): CreateFormConfig {
 
     return statuses.size > 0 ? statuses : undefined;
   }, [linkGroupId, linkedGroups]);
+  const csvGuideRows = useMemo(
+    () => [
+      {
+        firstName: translateText('generated.inline.0333_ada_5c3cb098'),
+        lastName: translateText('generated.inline.0334_lovelace_57bd0d90'),
+      },
+      {
+        firstName: translateText('generated.inline.0335_grace_01c95267'),
+        lastName: translateText('generated.inline.0336_hopper_1eb8e6de'),
+      },
+    ],
+    []
+  );
+  const csvGuideColumns = useMemo<ColumnDef<(typeof csvGuideRows)[number]>[]>(
+    () => [
+      {
+        accessorKey: 'firstName',
+        header: t('pages.create.group.csvColumnFirstName'),
+      },
+      {
+        accessorKey: 'lastName',
+        header: t('pages.create.group.csvColumnLastName'),
+      },
+    ],
+    [t]
+  );
   const config = useMemo(
     (): CreateFormConfig => ({
       entityType: 'group',
@@ -789,7 +811,7 @@ export function useCreateGroupForm(): CreateFormConfig {
                 placeholder={t('pages.create.group.namePlaceholder')}
               />
               <div className="space-y-2">
-                <Label>{t('pages.create.group.descriptionLabel')}</Label>
+                <FormControlLabel>{t('pages.create.group.descriptionLabel')}</FormControlLabel>
                 <p className="text-muted-foreground text-xs">
                   {t('pages.create.group.tips.description')}
                 </p>
@@ -810,13 +832,13 @@ export function useCreateGroupForm(): CreateFormConfig {
                 placeholder={t('pages.create.group.emailPlaceholder')}
               />
               <div className="space-y-2">
-                <Label>{t('pages.create.group.groupType')}</Label>
-                <RadioGroup
+                <FormControlLabel>{t('pages.create.group.groupType')}</FormControlLabel>
+                <FormControlRadioGroup
                   value={radioGroupType}
                   onValueChange={value => setGroupType(value as GroupType)}
                 >
                   <div className="space-y-2">
-                    <Label
+                    <FormControlLabel
                       htmlFor="group-type-base"
                       className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
                         radioGroupType === 'base'
@@ -824,7 +846,11 @@ export function useCreateGroupForm(): CreateFormConfig {
                           : 'hover:bg-muted/50'
                       }`}
                     >
-                      <RadioGroupItem value="base" id="group-type-base" className="mt-0.5" />
+                      <FormControlRadioGroupItem
+                        value="base"
+                        id="group-type-base"
+                        className="mt-0.5"
+                      />
                       <div>
                         <div className="text-sm font-medium">
                           {t('pages.create.group.groupTypes.base')}
@@ -833,8 +859,8 @@ export function useCreateGroupForm(): CreateFormConfig {
                           {t('pages.create.group.groupTypes.baseDesc')}
                         </div>
                       </div>
-                    </Label>
-                    <Label
+                    </FormControlLabel>
+                    <FormControlLabel
                       htmlFor="group-type-hierarchical"
                       className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
                         radioGroupType === 'hierarchical'
@@ -842,7 +868,7 @@ export function useCreateGroupForm(): CreateFormConfig {
                           : 'hover:bg-muted/50'
                       }`}
                     >
-                      <RadioGroupItem
+                      <FormControlRadioGroupItem
                         value="hierarchical"
                         id="group-type-hierarchical"
                         className="mt-0.5"
@@ -855,9 +881,9 @@ export function useCreateGroupForm(): CreateFormConfig {
                           {t('pages.create.group.groupTypes.hierarchicalDesc')}
                         </div>
                       </div>
-                    </Label>
+                    </FormControlLabel>
                   </div>
-                </RadioGroup>
+                </FormControlRadioGroup>
               </div>
             </div>
           ),
@@ -869,11 +895,11 @@ export function useCreateGroupForm(): CreateFormConfig {
             <div className="space-y-6">
               <div className="space-y-4 rounded-lg border p-4">
                 <div className="space-y-1">
-                  <Label>
+                  <FormControlLabel>
                     {translateText(
                       'generated.inline.0330_verbindungen_zu_anderen_gruppen_99ad40c5'
                     )}
-                  </Label>
+                  </FormControlLabel>
                   <p className="text-muted-foreground text-xs">
                     {groupType === 'base'
                       ? t('pages.create.group.tips.linkGroups')
@@ -948,15 +974,15 @@ export function useCreateGroupForm(): CreateFormConfig {
 
               {linkedGroups.length > 0 ? (
                 <div className="space-y-2">
-                  <Label className="text-muted-foreground text-xs">
+                  <FormControlLabel className="text-muted-foreground text-xs">
                     {t('pages.create.group.linkedGroups')}
-                  </Label>
+                  </FormControlLabel>
                   {linkedGroups.map(linkedGroup => (
                     <div
                       key={`${linkedGroup.type}-${linkedGroup.groupId}`}
                       className="flex items-start gap-3 rounded-md border p-3"
                     >
-                      <Badge
+                      <BadgeControl
                         className={cn(
                           'border text-xs hover:opacity-100',
                           getRelationshipBadgeClasses(linkedGroup.type)
@@ -967,10 +993,10 @@ export function useCreateGroupForm(): CreateFormConfig {
                           : linkedGroup.type === 'child'
                             ? t('pages.create.group.child')
                             : t('common.network.sibling')}
-                      </Badge>
-                      <Badge className="border-muted bg-muted/50 text-foreground text-xs hover:opacity-100">
+                      </BadgeControl>
+                      <BadgeControl className="border-muted bg-muted/50 text-foreground text-xs hover:opacity-100">
                         {getCanonicalMembershipModeLabel(linkedGroup.membershipMode)}
-                      </Badge>
+                      </BadgeControl>
                       <div className="min-w-0 flex-1 space-y-2">
                         <div className="space-y-1">
                           <span className="block text-sm font-medium">{linkedGroup.groupName}</span>
@@ -1154,32 +1180,13 @@ export function useCreateGroupForm(): CreateFormConfig {
                         {t('pages.create.group.csvGuideTrigger')}
                       </AccordionTrigger>
                       <AccordionContent className="space-y-3 px-1 pt-2">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>{t('pages.create.group.csvColumnFirstName')}</TableHead>
-                              <TableHead>{t('pages.create.group.csvColumnLastName')}</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            <TableRow>
-                              <TableCell>
-                                {translateText('generated.inline.0333_ada_5c3cb098')}
-                              </TableCell>
-                              <TableCell>
-                                {translateText('generated.inline.0334_lovelace_57bd0d90')}
-                              </TableCell>
-                            </TableRow>
-                            <TableRow>
-                              <TableCell>
-                                {translateText('generated.inline.0335_grace_01c95267')}
-                              </TableCell>
-                              <TableCell>
-                                {translateText('generated.inline.0336_hopper_1eb8e6de')}
-                              </TableCell>
-                            </TableRow>
-                          </TableBody>
-                        </Table>
+                        <DataTable
+                          columns={csvGuideColumns}
+                          data={csvGuideRows}
+                          getRowId={row => `${row.firstName}-${row.lastName}`}
+                          enablePagination={false}
+                          className="space-y-0"
+                        />
                         <p className="text-muted-foreground text-xs">
                           {t('pages.create.group.csvGuideFootnote')}
                         </p>
@@ -1189,7 +1196,7 @@ export function useCreateGroupForm(): CreateFormConfig {
                 </CardContent>
               </Card>
               <div className="flex items-center gap-2">
-                <Label
+                <FormControlLabel
                   htmlFor="csv-upload"
                   className="hover:bg-muted/50 flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm transition-colors"
                 >
@@ -1198,7 +1205,7 @@ export function useCreateGroupForm(): CreateFormConfig {
                     ? translateText('generated.inline.0053_gaeste_importieren_b28ba907')
                     : t('pages.create.group.inviteMembersOptional')}{' '}
                   {translateText('generated.inline.0337_csv_bba7e432')}
-                </Label>
+                </FormControlLabel>
                 <input
                   id="csv-upload"
                   type="file"
@@ -1219,38 +1226,38 @@ export function useCreateGroupForm(): CreateFormConfig {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex flex-wrap gap-2">
-                      <Badge className="border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-50">
+                      <BadgeControl className="border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-50">
                         {t('pages.create.group.csvFoundCount', {
                           count: csvInviteSummary.matchedNames.length,
                         })}
-                      </Badge>
-                      <Badge className="border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-50">
+                      </BadgeControl>
+                      <BadgeControl className="border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-50">
                         {t('pages.create.group.csvNotFoundCount', {
                           count: csvInviteSummary.notFoundNames.length,
                         })}
-                      </Badge>
+                      </BadgeControl>
                       {csvInviteSummary.ambiguousNames.length > 0 && (
-                        <Badge className="border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-50">
+                        <BadgeControl className="border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-50">
                           {t('pages.create.group.csvAmbiguousCount', {
                             count: csvInviteSummary.ambiguousNames.length,
                           })}
-                        </Badge>
+                        </BadgeControl>
                       )}
                     </div>
 
                     {csvInviteSummary.matchedNames.length > 0 && (
                       <div className="space-y-2">
-                        <Label className="text-xs tracking-wide text-emerald-700 uppercase">
+                        <FormControlLabel className="text-xs tracking-wide text-emerald-700 uppercase">
                           {t('pages.create.group.csvFoundNames')}
-                        </Label>
+                        </FormControlLabel>
                         <div className="flex flex-wrap gap-2">
                           {csvInviteSummary.matchedNames.map(name => (
-                            <Badge
+                            <BadgeControl
                               key={name}
                               className="border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-50"
                             >
                               {name}
-                            </Badge>
+                            </BadgeControl>
                           ))}
                         </div>
                       </div>
@@ -1258,17 +1265,17 @@ export function useCreateGroupForm(): CreateFormConfig {
 
                     {csvInviteSummary.notFoundNames.length > 0 && (
                       <div className="space-y-2">
-                        <Label className="text-xs tracking-wide text-rose-700 uppercase">
+                        <FormControlLabel className="text-xs tracking-wide text-rose-700 uppercase">
                           {t('pages.create.group.csvNotFoundNames')}
-                        </Label>
+                        </FormControlLabel>
                         <div className="flex flex-wrap gap-2">
                           {csvInviteSummary.notFoundNames.map(name => (
-                            <Badge
+                            <BadgeControl
                               key={name}
                               className="border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-50"
                             >
                               {name}
-                            </Badge>
+                            </BadgeControl>
                           ))}
                         </div>
                       </div>
@@ -1276,9 +1283,9 @@ export function useCreateGroupForm(): CreateFormConfig {
 
                     {csvInviteSummary.ambiguousNames.length > 0 && (
                       <div className="space-y-2">
-                        <Label className="text-xs tracking-wide text-amber-700 uppercase">
+                        <FormControlLabel className="text-xs tracking-wide text-amber-700 uppercase">
                           {t('pages.create.group.csvAmbiguousNames')}
-                        </Label>
+                        </FormControlLabel>
                         <div className="space-y-2">
                           {csvInviteSummary.ambiguousNames.map(entry => (
                             <div
@@ -1303,17 +1310,17 @@ export function useCreateGroupForm(): CreateFormConfig {
 
                     {csvInviteSummary.invalidRows.length > 0 && (
                       <div className="space-y-2">
-                        <Label className="text-xs tracking-wide text-amber-700 uppercase">
+                        <FormControlLabel className="text-xs tracking-wide text-amber-700 uppercase">
                           {t('pages.create.group.csvInvalidRows')}
-                        </Label>
+                        </FormControlLabel>
                         <div className="flex flex-wrap gap-2">
                           {csvInviteSummary.invalidRows.map(row => (
-                            <Badge
+                            <BadgeControl
                               key={row}
                               className="border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-50"
                             >
                               {row}
-                            </Badge>
+                            </BadgeControl>
                           ))}
                         </div>
                       </div>
@@ -1343,11 +1350,13 @@ export function useCreateGroupForm(): CreateFormConfig {
                 {t('pages.create.group.tips.constitutionalEvent')}
               </p>
               <div className="flex items-center gap-3">
-                <Switch
+                <FormControlSwitch
                   checked={createConstitutionalEvent}
                   onCheckedChange={setCreateConstitutionalEvent}
                 />
-                <Label>{t('pages.create.group.optionalGeneralAssembly')}</Label>
+                <FormControlLabel>
+                  {t('pages.create.group.optionalGeneralAssembly')}
+                </FormControlLabel>
               </div>
               {createConstitutionalEvent && (
                 <div className="space-y-4 rounded-md border p-4">
@@ -1537,6 +1546,8 @@ export function useCreateGroupForm(): CreateFormConfig {
       linkRightDirections,
       linkComposerTab,
       linkPreset,
+      csvGuideColumns,
+      csvGuideRows,
       allowGuestInvites,
       allowOfficialMemberInvites,
       selectableRolesByDirection,

@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { Plus } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
-import { Badge } from '@/features/shared/ui/ui/badge';
+import { StatusBadge } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button';
 import { PqlToolbar } from '@/features/pql/ui/PqlToolbar';
 import {
@@ -439,12 +439,17 @@ export function PaymentsSection({
                         <span className="font-medium">
                           {payment.label || getPaymentTypeLabel(payment.type)}
                         </span>
-                        <Badge variant={direction === 'income' ? 'default' : 'secondary'}>
+                        <StatusBadge
+                          status={direction}
+                          tone={direction === 'income' ? 'success' : 'warning'}
+                        >
                           {direction === 'income'
                             ? translateText('generated.inline.0084_income_1c89b1f2')
                             : translateText('generated.inline.0085_expense_a0db8e68')}
-                        </Badge>
-                        <Badge variant="outline">{getPaymentTypeLabel(payment.type)}</Badge>
+                        </StatusBadge>
+                        <StatusBadge status={payment.type} tone="outline">
+                          {getPaymentTypeLabel(payment.type)}
+                        </StatusBadge>
                       </div>
                       <p className="text-muted-foreground text-sm">{counterpartyLabel}</p>
                       <p className="text-muted-foreground text-xs">

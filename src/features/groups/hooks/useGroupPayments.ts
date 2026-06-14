@@ -55,6 +55,11 @@ export function useGroupPayments(groupId: string) {
     groupName?: string,
     adminUserIds?: string[]
   ) => {
+    void paymentLabel;
+    void senderId;
+    void groupName;
+    void adminUserIds;
+
     setIsLoading(true);
     try {
       await deletePaymentAction({ id: paymentId });

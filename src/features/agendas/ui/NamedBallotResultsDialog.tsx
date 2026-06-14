@@ -1,14 +1,14 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { Link } from '@tanstack/react-router';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import type { NamedBallotResultsModel } from '@/features/agendas/logic/buildNamedBallotResults';
 import { cn } from '@/features/shared/utils/utils';
@@ -65,7 +65,7 @@ export function NamedBallotResultsDialog({
 }: NamedBallotResultsDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-screen w-screen max-w-none flex-col rounded-none border-0 p-0 sm:h-screen sm:max-w-none">
+      <ScrollableDialogContent className="flex h-screen w-screen max-w-none flex-col rounded-none border-0 p-0 sm:h-screen sm:max-w-none">
         <DialogHeader className="border-b px-6 py-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="space-y-2">
@@ -75,16 +75,16 @@ export function NamedBallotResultsDialog({
 
             {model ? (
               <div className="flex flex-wrap items-center justify-end gap-2">
-                <Badge variant="secondary">{getPhaseLabel(model.phase)}</Badge>
-                <Badge variant="outline">
+                <BadgeControl variant="secondary">{getPhaseLabel(model.phase)}</BadgeControl>
+                <BadgeControl variant="outline">
                   {model.totalRecordedCount}/{model.totalEligibleCount}
                   {translateText('generated.inline.0012_erfasst_27314b65')}
-                </Badge>
+                </BadgeControl>
                 {model.totalOfflineAggregatedCount > 0 ? (
-                  <Badge variant="outline">
+                  <BadgeControl variant="outline">
                     {model.totalOfflineAggregatedCount}
                     {translateText('generated.inline.0061_offline_aggregiert_f49dc01b')}
-                  </Badge>
+                  </BadgeControl>
                 ) : null}
               </div>
             ) : null}
@@ -105,24 +105,24 @@ export function NamedBallotResultsDialog({
                   {model.groupedBySourceGroup ? (
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="text-lg font-semibold">{group.label}</h3>
-                      <Badge variant="outline">
+                      <BadgeControl variant="outline">
                         {group.recordedCount}/{group.eligibleCount}
                         {translateText('generated.inline.0012_erfasst_27314b65')}
-                      </Badge>
+                      </BadgeControl>
                       {group.offlineAggregatedCount > 0 ? (
-                        <Badge variant="outline">
+                        <BadgeControl variant="outline">
                           {group.offlineAggregatedCount}
                           {translateText('generated.inline.0061_offline_aggregiert_f49dc01b')}
-                        </Badge>
+                        </BadgeControl>
                       ) : null}
                       {group.optionSummaries.map(summary => (
-                        <Badge
+                        <BadgeControl
                           key={summary.id}
                           variant="outline"
                           className={getDecisionBadgeClassName(summary.label)}
                         >
                           {summary.label}: {summary.count}
-                        </Badge>
+                        </BadgeControl>
                       ))}
                     </div>
                   ) : null}
@@ -185,22 +185,22 @@ export function NamedBallotResultsDialog({
 
                         <div className="flex flex-wrap items-center justify-end gap-2">
                           {row.selections.map(selection => (
-                            <Badge
+                            <BadgeControl
                               key={`${row.id}:${selection}`}
                               variant="outline"
                               className={getDecisionBadgeClassName(selection)}
                             >
                               {selection}
-                            </Badge>
+                            </BadgeControl>
                           ))}
                           {row.selections.length === 0 ? (
-                            <Badge
+                            <BadgeControl
                               variant={
                                 row.status === 'offline_aggregated' ? 'outline' : 'secondary'
                               }
                             >
                               {row.statusLabel}
-                            </Badge>
+                            </BadgeControl>
                           ) : null}
                         </div>
                       </div>
@@ -211,7 +211,7 @@ export function NamedBallotResultsDialog({
             </div>
           )}
         </div>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

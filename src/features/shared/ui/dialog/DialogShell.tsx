@@ -1,6 +1,18 @@
 import { type ReactNode } from 'react';
 
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/features/shared/ui/ui/alert-dialog';
+import { Button, type ButtonProps } from '@/features/shared/ui/ui/button';
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -9,7 +21,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/features/shared/ui/ui/dialog';
-import { Button, type ButtonProps } from '@/features/shared/ui/ui/button';
+import { SheetContent } from '@/features/shared/ui/ui/sheet';
 import { cn } from '@/features/shared/utils/utils';
 
 interface EntityDialogProps {
@@ -33,6 +45,33 @@ export function ScrollableDialogContent({
     <DialogContent className={cn('max-h-[calc(100vh-2rem)] overflow-y-auto', className)} {...props}>
       {children}
     </DialogContent>
+  );
+}
+
+export function ScrollableAlertDialogContent({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<typeof AlertDialogContent>) {
+  return (
+    <AlertDialogContent
+      className={cn('max-h-[calc(100vh-2rem)] overflow-y-auto', className)}
+      {...props}
+    >
+      {children}
+    </AlertDialogContent>
+  );
+}
+
+export function ScrollableSheetContent({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<typeof SheetContent>) {
+  return (
+    <SheetContent className={cn('max-h-screen overflow-y-auto', className)} {...props}>
+      {children}
+    </SheetContent>
   );
 }
 
@@ -84,8 +123,8 @@ export function FormDialog({
 }
 
 interface ConfirmDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   title: ReactNode;
   description?: ReactNode;
   trigger?: ReactNode;
@@ -109,24 +148,82 @@ export function ConfirmDialog({
   disabled,
 }: ConfirmDialogProps) {
   return (
-    <EntityDialog
-      open={open}
-      onOpenChange={onOpenChange}
-      title={title}
-      description={description}
-      trigger={trigger}
-      footer={
-        <>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            {cancelLabel}
-          </Button>
-          <Button type="button" variant={confirmVariant} disabled={disabled} onClick={onConfirm}>
-            {confirmLabel}
-          </Button>
-        </>
-      }
-    >
-      {description ? null : <span className="sr-only">{title}</span>}
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      {trigger ? <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger> : null}
+      <ScrollableAlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          {description ? <AlertDialogDescription>{description}</AlertDialogDescription> : null}
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={disabled}>{cancelLabel}</AlertDialogCancel>
+          <AlertDialogAction asChild>
+            <Button type="button" variant={confirmVariant} disabled={disabled} onClick={onConfirm}>
+              {confirmLabel}
+            </Button>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </ScrollableAlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+export function DangerConfirmDialog(props: Omit<ConfirmDialogProps, 'confirmVariant'>) {
+  return <ConfirmDialog {...props} confirmVariant="destructive" />;
+}
+
+interface SelectionDialogOption {
+  value: string;
+  label: ReactNode;
+  description?: ReactNode;
+  disabled?: boolean;
+}
+
+interface SelectionDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: ReactNode;
+  description?: ReactNode;
+  trigger?: ReactNode;
+  options: SelectionDialogOption[];
+  selectedValue?: string | null;
+  onSelect: (value: string) => void;
+  footer?: ReactNode;
+  className?: string;
+  bodyClassName?: string;
+}
+
+export function SelectionDialog({
+  options,
+  selectedValue,
+  onSelect,
+  bodyClassName,
+  ...props
+}: SelectionDialogProps) {
+  return (
+    <EntityDialog {...props} bodyClassName={cn('grid gap-2', bodyClassName)}>
+      {options.map(option => {
+        const isSelected = option.value === selectedValue;
+
+        return (
+          <button
+            key={option.value}
+            type="button"
+            disabled={option.disabled}
+            className={cn(
+              'flex w-full flex-col gap-1 rounded-md border p-3 text-left text-sm transition-colors',
+              isSelected ? 'border-primary bg-primary/5' : 'hover:bg-muted/50',
+              option.disabled && 'cursor-not-allowed opacity-50'
+            )}
+            onClick={() => onSelect(option.value)}
+          >
+            <span className="font-medium">{option.label}</span>
+            {option.description ? (
+              <span className="text-muted-foreground text-xs">{option.description}</span>
+            ) : null}
+          </button>
+        );
+      })}
     </EntityDialog>
   );
 }

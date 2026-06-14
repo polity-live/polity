@@ -1,5 +1,12 @@
 'use client';
 
+import {
+  FormControlSelect,
+  FormControlSelectContent,
+  FormControlSelectItem,
+  FormControlSelectTrigger,
+  FormControlSelectValue,
+} from '@/features/shared/ui/form';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 import { Node, Edge, useNodesState, useEdgesState } from '@xyflow/react';
@@ -68,13 +75,6 @@ import type {
   GroupRelationshipType,
   NetworkGroupEntity,
 } from '@/features/network/types/network.types';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/features/shared/ui/ui/select';
 
 interface GroupNode extends Node {
   data: {
@@ -1310,18 +1310,20 @@ export function GroupNetworkFlow({
           <Button variant="default" size="sm" onClick={() => setViewMode('workflow')}>
             {t('common.network.workflowView')}
           </Button>
-          <Select value={selectedWorkflowId} onValueChange={setSelectedWorkflowId}>
-            <SelectTrigger className="w-[240px]">
-              <SelectValue placeholder={t('features.network.workflows.selectWorkflow')} />
-            </SelectTrigger>
-            <SelectContent>
+          <FormControlSelect value={selectedWorkflowId} onValueChange={setSelectedWorkflowId}>
+            <FormControlSelectTrigger className="w-[240px]">
+              <FormControlSelectValue
+                placeholder={t('features.network.workflows.selectWorkflow')}
+              />
+            </FormControlSelectTrigger>
+            <FormControlSelectContent>
               {sortedGroupWorkflows.map(w => (
-                <SelectItem key={w.id} value={w.id}>
+                <FormControlSelectItem key={w.id} value={w.id}>
                   {w.name ?? translateText('generated.inline.0093_untitled_621521f9')}
-                </SelectItem>
+                </FormControlSelectItem>
               ))}
-            </SelectContent>
-          </Select>
+            </FormControlSelectContent>
+          </FormControlSelect>
         </div>
         {sortedGroupWorkflows.length === 0 ? (
           <div className="bg-background flex min-h-[24rem] flex-1 items-center justify-center rounded-lg border">

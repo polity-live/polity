@@ -1,8 +1,6 @@
 import { useId, useState, type ComponentProps } from 'react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Textarea } from '@/features/shared/ui/ui/textarea';
-import { FormFieldShell } from '@/features/shared/ui/form';
+import { FormFieldShell, FormControlInput, FormControlTextarea } from '@/features/shared/ui/form';
 import { TypeaheadSearch } from '@/features/shared/ui/typeahead';
 import type {
   TypeaheadMultiProps,
@@ -23,13 +21,17 @@ interface CreateFieldBaseProps {
 }
 
 interface CreateInputFieldProps
-  extends Omit<ComponentProps<typeof Input>, 'value' | 'onChange'>, CreateFieldBaseProps {
+  extends
+    Omit<ComponentProps<typeof FormControlInput>, 'value' | 'onChange'>,
+    CreateFieldBaseProps {
   value: string | number | null | undefined;
   onValueChange: (value: string) => void;
 }
 
 interface CreateTextareaFieldProps
-  extends Omit<ComponentProps<typeof Textarea>, 'value' | 'onChange'>, CreateFieldBaseProps {
+  extends
+    Omit<ComponentProps<typeof FormControlTextarea>, 'value' | 'onChange'>,
+    CreateFieldBaseProps {
   value: string | number | null | undefined;
   onValueChange: (value: string) => void;
 }
@@ -133,7 +135,7 @@ export function CreateInputField({
       errorClassName={cn('text-xs', hintClassName)}
     >
       {({ id, describedBy }) => (
-        <Input
+        <FormControlInput
           {...inputProps}
           id={id}
           value={normalizeValue(value)}
@@ -195,7 +197,7 @@ export function CreateTextareaField({
       errorClassName={cn('text-xs', hintClassName)}
     >
       {({ id, describedBy }) => (
-        <Textarea
+        <FormControlTextarea
           {...textareaProps}
           id={id}
           value={normalizeValue(value)}

@@ -1,8 +1,8 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { useState } from 'react';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/features/shared/ui/ui/popover';
 import {
   Command,
@@ -90,9 +90,9 @@ export function EditorViewModeToggle({
             <Button variant="outline" size="sm" className="gap-1.5">
               {selectedCR ? (
                 <>
-                  <Badge variant="secondary" className="font-mono text-xs">
+                  <BadgeControl variant="secondary" className="font-mono text-xs">
                     {selectedCR.crId}
-                  </Badge>
+                  </BadgeControl>
                   <span className="max-w-[150px] truncate">{selectedCR.title}</span>
                 </>
               ) : (
@@ -122,9 +122,9 @@ export function EditorViewModeToggle({
                           selectedCRId === cr.id ? 'opacity-100' : 'opacity-0'
                         )}
                       />
-                      <Badge variant="secondary" className="mr-2 font-mono text-xs">
+                      <BadgeControl variant="secondary" className="mr-2 font-mono text-xs">
                         {cr.crId}
-                      </Badge>
+                      </BadgeControl>
                       <span className="truncate">{cr.title}</span>
                     </CommandItem>
                   ))}

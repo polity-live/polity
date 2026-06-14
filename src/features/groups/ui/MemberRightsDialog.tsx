@@ -2,32 +2,26 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
+import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
+import { CountBadge, RoleBadge, StatusBadge } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Badge } from '@/features/shared/ui/ui/badge';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/features/shared/ui/ui/table';
-import { TableTag } from '@/features/shared/ui/ui/table-tag';
 import {
   buildMembershipRightsSummary,
   getMembershipDisplayRoles,
   getMembershipRoleSummary,
+  type MembershipRightSummary,
 } from '@/features/groups/logic/buildMembershipRightsSummary';
 import type { ActionRightOption } from '@/features/groups/types/group.types';
 import type { SearchCardGradientEntity } from '@/features/shared/utils/search-card-gradients';
 import type { ParticipationLike } from '@/features/shared/types/participation';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { RoleTag } from './RoleTag';
 
 interface MemberRightsDialogProps<TParticipation extends ParticipationLike> {
   isOpen: boolean;
@@ -85,10 +79,61 @@ export function MemberRightsDialog<TParticipation extends ParticipationLike>({
     : t('components.memberRightsDialog.unknownUser');
   const roleSummary = membership ? getMembershipRoleSummary(membership) : resolvedFallbackRoleLabel;
   const profileUserId = membership?.user?.id ?? null;
+  const countTone = entityType === 'event' ? 'info' : 'neutral';
+  const rightsColumns: ColumnDef<MembershipRightSummary>[] = [
+    {
+      id: 'right',
+      header: t('components.memberRightsDialog.effectiveRight'),
+      meta: {
+        className: 'min-w-[220px]',
+      },
+      cell: ({ row }) => (
+        <div className="space-y-1">
+          <div className="font-medium">{row.original.label}</div>
+          <div className="text-muted-foreground text-xs">
+            {row.original.resource} / {row.original.action}
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'grantedBy',
+      header: t('components.memberRightsDialog.grantedBy'),
+      cell: ({ row }) => (
+        <div className="flex flex-wrap gap-2">
+          {row.original.sources.map(source => (
+            <div
+              key={`${row.original.key}-${source.roleId}`}
+              className="border-border/70 bg-muted/30 rounded-md border px-3 py-2 text-xs"
+            >
+              <RoleBadge>{source.roleName}</RoleBadge>
+              {!source.isDirect ? (
+                <span className="text-muted-foreground ml-2">
+                  {t('components.memberRightsDialog.via', {
+                    label: source.viaLabel,
+                    defaultValue: 'via {{label}}',
+                  })}
+                </span>
+              ) : null}
+              <StatusBadge
+                status={source.isDirect ? 'direct' : 'implied'}
+                tone={source.isDirect ? 'success' : 'info'}
+                className="ml-2"
+              >
+                {source.isDirect
+                  ? t('components.memberRightsDialog.direct', 'direct')
+                  : t('components.memberRightsDialog.implied', 'implied')}
+              </StatusBadge>
+            </div>
+          ))}
+        </div>
+      ),
+    },
+  ];
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-[920px]">
+      <ScrollableDialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-[920px]">
         <DialogHeader>
           <DialogTitle>{memberName}</DialogTitle>
           <DialogDescription>
@@ -108,93 +153,37 @@ export function MemberRightsDialog<TParticipation extends ParticipationLike>({
             <div className="mt-3 flex flex-wrap gap-2">
               {displayRoles.length > 0 ? (
                 displayRoles.map(role => (
-                  <TableTag key={role.id} entityType={entityType}>
-                    {role.name || t('components.memberRightsDialog.roleFallback')}
-                  </TableTag>
+                  <RoleTag
+                    key={role.id}
+                    roleId={role.id}
+                    roleName={role.name || t('components.memberRightsDialog.roleFallback')}
+                  />
                 ))
               ) : (
-                <TableTag entityType={entityType}>{resolvedFallbackRoleLabel}</TableTag>
+                <RoleTag fallbackKey={`member-rights-${membership?.id ?? 'unknown'}`}>
+                  {resolvedFallbackRoleLabel}
+                </RoleTag>
               )}
             </div>
-            <p className="text-muted-foreground mt-3 text-sm">
-              {t('components.memberRightsDialog.effectiveRightsSummary', {
-                count: rightsSummary.length,
-                role: membership ? roleSummary : resolvedFallbackRoleLabel,
-                defaultValue: '{{count}} effective rights from {{role}}.',
-              })}
-            </p>
+            <div className="text-muted-foreground mt-3 flex flex-wrap items-center gap-2 text-sm">
+              <CountBadge count={rightsSummary.length} tone={countTone} className="mr-2" />
+              <span>
+                {t('components.memberRightsDialog.effectiveRightsSummary', {
+                  count: rightsSummary.length,
+                  role: membership ? roleSummary : resolvedFallbackRoleLabel,
+                  defaultValue: '{{count}} effective rights from {{role}}.',
+                })}
+              </span>
+            </div>
           </div>
 
-          <div className="border-border/70 overflow-x-auto rounded-2xl border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="min-w-[220px]">
-                    {t('components.memberRightsDialog.effectiveRight')}
-                  </TableHead>
-                  <TableHead>{t('components.memberRightsDialog.grantedBy')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rightsSummary.length > 0 ? (
-                  rightsSummary.map(right => (
-                    <TableRow key={right.key}>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <div className="font-medium">{right.label}</div>
-                          <div className="text-muted-foreground text-xs">
-                            {right.resource} / {right.action}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-2">
-                          {right.sources.map(source => (
-                            <div
-                              key={`${right.key}-${source.roleId}`}
-                              className="border-border/70 bg-muted/30 rounded-full border px-3 py-1 text-xs"
-                            >
-                              <span className="font-medium">{source.roleName}</span>
-                              {!source.isDirect ? (
-                                <span className="text-muted-foreground">
-                                  {' '}
-                                  {t('components.memberRightsDialog.via', {
-                                    label: source.viaLabel,
-                                    defaultValue: 'via {{label}}',
-                                  })}
-                                </span>
-                              ) : null}
-                              {source.isDirect ? (
-                                <Badge
-                                  variant="outline"
-                                  className="ml-2 border-emerald-500/50 text-emerald-700 dark:text-emerald-300"
-                                >
-                                  {t('components.memberRightsDialog.direct', 'direct')}
-                                </Badge>
-                              ) : (
-                                <Badge
-                                  variant="outline"
-                                  className="ml-2 border-sky-500/50 text-sky-700 dark:text-sky-300"
-                                >
-                                  {t('components.memberRightsDialog.implied', 'implied')}
-                                </Badge>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={2} className="text-muted-foreground py-8 text-center">
-                      {resolvedEmptyRightsLabel}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
+          <DataTable
+            columns={rightsColumns}
+            data={rightsSummary}
+            getRowId={right => right.key}
+            enablePagination={false}
+            emptyTitle={resolvedEmptyRightsLabel}
+          />
         </div>
 
         <DialogFooter>
@@ -205,7 +194,7 @@ export function MemberRightsDialog<TParticipation extends ParticipationLike>({
           ) : null}
           <Button onClick={() => onOpenChange(false)}>{resolvedCloseButtonLabel}</Button>
         </DialogFooter>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

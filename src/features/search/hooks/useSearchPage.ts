@@ -1,20 +1,31 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useSearchURL } from './useSearchURL';
-import { useSearchData } from './useSearchData';
-import { useSearchFilters } from './useSearchFilters';
-import { mapMosaicToContentItems } from '../logic/searchMappers';
+import { useQuery } from '@rocicorp/zero/react';
+import { useSearch } from '@tanstack/react-router';
+
+import { queries } from '@/zero/queries';
 import {
-  filterAndSortContentItems,
-  collectAvailableTopics,
-  buildAgendaItemsByEventId,
-  hasActiveFilters as checkActiveFilters,
-} from '../logic/searchFiltering';
-import { ALL_CONTENT_TYPES } from '@/features/timeline/hooks/useTimelineFilters';
+  ALL_CONTENT_TYPES,
+  type DateRangeFilter,
+} from '@/features/timeline/hooks/useTimelineFilters';
 import type { ContentType } from '@/features/timeline/constants/content-type-config';
-import type { SearchContentItem } from '../types/search.types';
-import { buildTimelineCardProps } from '../logic/buildTimelineCardProps';
+import type { SearchListContext } from '../types/search-document.types';
+import { useSearchURL } from './useSearchURL';
+
+function createdAfterForRange(range: DateRangeFilter) {
+  const now = new Date();
+  if (range === 'today') {
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  }
+  if (range === 'week') return now.getTime() - 7 * 24 * 60 * 60 * 1000;
+  if (range === 'month') return now.getTime() - 30 * 24 * 60 * 60 * 1000;
+  if (range === 'year') return now.getTime() - 365 * 24 * 60 * 60 * 1000;
+  return null;
+}
 
 export function useSearchPage() {
+  const [showFilters, setShowFilters] = useState(false);
+  const [totalResults, setTotalResults] = useState(0);
+  const searchParams = useSearch({ strict: false }) as Record<string, string | undefined>;
   const {
     searchQuery,
     setSearchQuery,
@@ -27,89 +38,64 @@ export function useSearchPage() {
     engagement,
     setEngagement,
     sortBy,
-    setSortBy,
   } = useSearchURL();
 
-  const [showFilters, setShowFilters] = useState(false);
+  const [topicRows] = useQuery(queries.search.searchDocumentTopics({ limit: 160 }));
 
-  const { data, isLoading } = useSearchData(searchQuery);
-
-  const agendaItemsByEventId = useMemo(
-    () =>
-      buildAgendaItemsByEventId(
-        (data?.agendaItems ?? []) as Parameters<typeof buildAgendaItemsByEventId>[0]
-      ),
-    [data?.agendaItems]
+  const availableTopics = useMemo(
+    () => Array.from(new Set((topicRows ?? []).map(row => row.topic))).slice(0, 80),
+    [topicRows]
   );
-
-  const { mosaicResults } = useSearchFilters(data, {
-    query: searchQuery,
-    sortBy,
-    topics,
-  });
 
   const toggleContentType = useCallback(
     (type: ContentType) => {
-      setContentTypes(prev =>
-        prev.includes(type) ? prev.filter(item => item !== type) : [...prev, type]
+      setContentTypes(
+        contentTypes.includes(type)
+          ? contentTypes.filter(contentType => contentType !== type)
+          : [...contentTypes, type]
       );
     },
-    [setContentTypes]
+    [contentTypes, setContentTypes]
   );
 
   const toggleTopic = useCallback(
     (topic: string) => {
-      setTopics(prev =>
-        prev.includes(topic) ? prev.filter(item => item !== topic) : [...prev, topic]
+      setTopics(
+        topics.includes(topic) ? topics.filter(item => item !== topic) : [...topics, topic]
       );
     },
-    [setTopics]
+    [setTopics, topics]
   );
 
   const resetFilters = useCallback(() => {
+    setSearchQuery('');
     setContentTypes([...ALL_CONTENT_TYPES]);
     setDateRange('all');
     setTopics([]);
     setEngagement('all');
-    setSortBy('recent');
-  }, [setContentTypes, setDateRange, setTopics, setEngagement, setSortBy]);
+  }, [setContentTypes, setDateRange, setEngagement, setSearchQuery, setTopics]);
 
-  const contentItems = useMemo(
-    () => mapMosaicToContentItems(mosaicResults, agendaItemsByEventId),
-    [mosaicResults, agendaItemsByEventId]
+  const hasActiveFilters =
+    contentTypes.length !== ALL_CONTENT_TYPES.length ||
+    dateRange !== 'all' ||
+    topics.length > 0 ||
+    engagement !== 'all' ||
+    searchQuery.trim().length > 0;
+
+  const searchContext = useMemo<SearchListContext>(
+    () => ({
+      query: searchQuery,
+      types: contentTypes.length === ALL_CONTENT_TYPES.length ? [] : contentTypes,
+      topics,
+      createdAfter: createdAfterForRange(dateRange),
+      engagement,
+      sort: sortBy,
+      snapshotAt: null,
+    }),
+    [contentTypes, dateRange, engagement, searchQuery, sortBy, topics]
   );
-
-  const filteredItems = useMemo(
-    () =>
-      filterAndSortContentItems(contentItems, {
-        contentTypes,
-        dateRange,
-        topics,
-        engagement,
-        sortBy,
-      }),
-    [contentItems, contentTypes, dateRange, topics, engagement, sortBy]
-  );
-
-  const availableTopics = useMemo(() => collectAvailableTopics(contentItems), [contentItems]);
-
-  const hasActiveFiltersMemo = useMemo(
-    () =>
-      checkActiveFilters(
-        contentTypes,
-        ALL_CONTENT_TYPES.length,
-        dateRange,
-        topics,
-        engagement,
-        searchQuery
-      ),
-    [contentTypes, dateRange, topics, engagement, searchQuery]
-  );
-
-  const buildCardProps = useCallback((item: SearchContentItem) => buildTimelineCardProps(item), []);
 
   return {
-    // URL state
     searchQuery,
     setSearchQuery,
     contentTypes,
@@ -117,29 +103,18 @@ export function useSearchPage() {
     dateRange,
     setDateRange,
     topics,
-    setTopics,
     engagement,
     setEngagement,
-    sortBy,
-    setSortBy,
-
-    // UI state
     showFilters,
     setShowFilters,
-
-    // Data
-    isLoading,
-    contentItems,
-    filteredItems,
+    totalResults,
+    setTotalResults,
     availableTopics,
-
-    // Derived
-    hasActiveFilters: hasActiveFiltersMemo,
-
-    // Handlers
     toggleContentType,
     toggleTopic,
     resetFilters,
-    buildCardProps,
+    hasActiveFilters,
+    searchContext,
+    permalinkId: searchParams.result ?? null,
   };
 }

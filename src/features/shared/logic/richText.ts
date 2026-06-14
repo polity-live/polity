@@ -29,16 +29,29 @@ function sanitizeNode(node: unknown): Descendant {
   } as Descendant;
 }
 
+function sanitizeElement(node: unknown): Value[number] {
+  const sanitizedNode = sanitizeNode(node);
+
+  if (isRecord(sanitizedNode) && Array.isArray(sanitizedNode.children)) {
+    return sanitizedNode as Value[number];
+  }
+
+  return {
+    type: 'p',
+    children: [sanitizedNode],
+  };
+}
+
 function parseStructuredRichText(value: unknown): Value | null {
   if (Array.isArray(value)) {
-    return value.map(sanitizeNode);
+    return value.map(sanitizeElement);
   }
 
   if (typeof value === 'string') {
     try {
       const parsed = JSON.parse(value) as unknown;
       if (Array.isArray(parsed)) {
-        return parsed.map(sanitizeNode);
+        return parsed.map(sanitizeElement);
       }
     } catch {
       return null;

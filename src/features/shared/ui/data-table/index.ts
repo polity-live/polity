@@ -1,1 +1,19 @@
 export { DataTable, type ColumnDef, type DataTableProps } from './DataTable';
+export {
+  DataTablePagination,
+  DataTableToolbar,
+  DateCell,
+  EntityCell,
+  RowActions,
+  SortableHeader,
+  StatusCell,
+} from './DataTableParts';
+export {
+  MatrixCheckbox,
+  MatrixTable,
+  MatrixTableBody,
+  MatrixTableCell,
+  MatrixTableHead,
+  MatrixTableHeader,
+  MatrixTableRow,
+} from './MatrixTable';

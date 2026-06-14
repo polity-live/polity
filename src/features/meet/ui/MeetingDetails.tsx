@@ -1,8 +1,12 @@
+import { BadgeControl } from '@/features/shared/ui/status';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Calendar, Clock } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { formatMeetingDate, formatMeetingTime, formatMeetingType } from '../logic/meetingFormatters';
+import {
+  formatMeetingDate,
+  formatMeetingTime,
+  formatMeetingType,
+} from '../logic/meetingFormatters';
 import { calculateDuration, getMeetingStatus } from '../logic/meetingUtils';
 
 interface MeetingDetailsProps {
@@ -32,31 +36,31 @@ export function MeetingDetails({
       <CardContent className="space-y-4">
         <div className="grid gap-4 md:grid-cols-2">
           <div className="flex items-start gap-3">
-            <Calendar className="mt-1 h-5 w-5 text-muted-foreground" />
+            <Calendar className="text-muted-foreground mt-1 h-5 w-5" />
             <div>
               <p className="font-medium">{formatMeetingDate(startTime)}</p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 {formatMeetingTime(startTime)} - {formatMeetingTime(endTime)}
               </p>
             </div>
           </div>
 
           <div className="flex items-start gap-3">
-            <Clock className="mt-1 h-5 w-5 text-muted-foreground" />
+            <Clock className="text-muted-foreground mt-1 h-5 w-5" />
             <div>
               <p className="font-medium">{t('features.meet.page.duration')}</p>
-              <p className="text-sm text-muted-foreground">{duration}</p>
+              <p className="text-muted-foreground text-sm">{duration}</p>
             </div>
           </div>
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <Badge variant={status.variant} className={status.className}>
+          <BadgeControl variant={status.variant} className={status.className}>
             {status.label}
-          </Badge>
-          <Badge variant="outline" className="capitalize">
+          </BadgeControl>
+          <BadgeControl variant="outline" className="capitalize">
             {formatMeetingType(meetingType)}
-          </Badge>
+          </BadgeControl>
         </div>
       </CardContent>
     </Card>

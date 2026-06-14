@@ -1,9 +1,9 @@
 'use client';
 
+import { FormControlInput } from '@/features/shared/ui/form';
 import { useState } from 'react';
 import { cn } from '@/features/shared/utils/utils';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Input } from '@/features/shared/ui/ui/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -69,7 +69,7 @@ export function TerminalHeader({
               </span>
             </span>
           )}
-          <span className="flex items-center gap-1 font-mono text-xs text-muted-foreground">
+          <span className="text-muted-foreground flex items-center gap-1 font-mono text-xs">
             📊 {activeCount} {t('timeline.terminal.active')}
           </span>
         </div>
@@ -128,7 +128,7 @@ export function TerminalHeader({
           </DropdownMenu>
 
           {showSearch ? (
-            <Input
+            <FormControlInput
               type="text"
               placeholder={t('timeline.terminal.searchPlaceholder')}
               value={searchQuery}

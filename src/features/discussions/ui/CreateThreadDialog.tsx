@@ -1,11 +1,9 @@
+import { FormControlInput, FormControlTextarea, FormControlLabel } from '@/features/shared/ui/form';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { useState } from 'react';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Label } from '@/features/shared/ui/ui/label';
-import { Textarea } from '@/features/shared/ui/ui/textarea';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -76,7 +74,7 @@ export function CreateThreadDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <ScrollableDialogContent>
         <DialogHeader>
           <DialogTitle>
             {translateText('generated.inline.0380_create_new_discussion_thread_bcf180d6')}
@@ -89,8 +87,10 @@ export function CreateThreadDialog({
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <Label htmlFor="title">{translateText('generated.inline.0028_title_768e0c1c')}</Label>
-            <Input
+            <FormControlLabel htmlFor="title">
+              {translateText('generated.inline.0028_title_768e0c1c')}
+            </FormControlLabel>
+            <FormControlInput
               id="title"
               placeholder={translateText('generated.inline.0382_enter_thread_title_14bd46df')}
               value={title}
@@ -98,10 +98,10 @@ export function CreateThreadDialog({
             />
           </div>
           <div>
-            <Label htmlFor="description">
+            <FormControlLabel htmlFor="description">
               {translateText('generated.inline.0130_description_optional_f1da5c02')}
-            </Label>
-            <Textarea
+            </FormControlLabel>
+            <FormControlTextarea
               id="description"
               placeholder={translateText(
                 'generated.inline.0383_describe_what_this_thread_is_about_133a420c'
@@ -112,9 +112,9 @@ export function CreateThreadDialog({
             />
           </div>
           <div>
-            <Label htmlFor="file">
+            <FormControlLabel htmlFor="file">
               {translateText('generated.inline.0384_attachment_optional_fe28692b')}
-            </Label>
+            </FormControlLabel>
             <div className="mt-2">
               {selectedFile ? (
                 <div className="flex items-center justify-between rounded-lg border p-3">
@@ -162,7 +162,7 @@ export function CreateThreadDialog({
                 : translateText('generated.inline.0058_create_thread_ea3fa33f')}
           </Button>
         </DialogFooter>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

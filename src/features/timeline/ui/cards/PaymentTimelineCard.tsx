@@ -1,8 +1,8 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { ArrowDownLeft, ArrowUpRight, Calendar, Tag } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { cn } from '@/features/shared/utils/utils';
 import { normalizeTimelineText } from '@/features/timeline/logic/normalizeTimelineText';
 import {
@@ -107,7 +107,7 @@ export function PaymentTimelineCard({ payment, className }: PaymentTimelineCardP
 
           <div className="flex flex-wrap gap-2">
             {payment.direction && (
-              <Badge
+              <BadgeControl
                 variant="secondary"
                 className={cn(
                   'border-0',
@@ -121,14 +121,14 @@ export function PaymentTimelineCard({ payment, className }: PaymentTimelineCardP
                   <ArrowUpRight className="mr-1 h-3 w-3" />
                 )}
                 {isIncome ? t('pages.create.payment.income') : t('pages.create.payment.expense')}
-              </Badge>
+              </BadgeControl>
             )}
 
             {paymentTypeLabel && (
-              <Badge variant="outline">
+              <BadgeControl variant="outline">
                 <Tag className="mr-1 h-3 w-3" />
                 {paymentTypeLabel}
-              </Badge>
+              </BadgeControl>
             )}
           </div>
         </div>

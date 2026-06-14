@@ -1,8 +1,16 @@
+import { BadgeControl } from '@/features/shared/ui/status';
+import {
+  FormControlLabel,
+  FormControlSelect,
+  FormControlSelectContent,
+  FormControlSelectItem,
+  FormControlSelectTrigger,
+  FormControlSelectValue,
+} from '@/features/shared/ui/form';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useQuery, useZero } from '@rocicorp/zero/react';
 import { toast } from 'sonner';
-import { Label } from '@/features/shared/ui/ui/label';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
 import { TypeSelector } from '@/features/shared/ui/ui/type-selector';
@@ -11,14 +19,6 @@ import { CreateSummaryStep } from '../ui/CreateSummaryStep';
 import { CreateInputField, CreateTextareaField, CreateTypeaheadField } from '../ui/CreateFields';
 import type { CreateFormConfig } from '../types/create-form.types';
 import { RoleSearchInput } from '../ui/inputs/RoleSearchInput';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/features/shared/ui/ui/select';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import {
   useTranslation,
   translate as translateText,
@@ -737,18 +737,18 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
               {delegateAssignment ? (
                 <div className="bg-muted/30 rounded-2xl border p-4">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="outline">
+                    <BadgeControl variant="outline">
                       {translateText('generated.inline.0305_delegiertenauftrag_5a165b38')}
-                    </Badge>
+                    </BadgeControl>
                     {assignmentModeLabel ? (
-                      <Badge variant="secondary">{assignmentModeLabel}</Badge>
+                      <BadgeControl variant="secondary">{assignmentModeLabel}</BadgeControl>
                     ) : null}
-                    <Badge variant="secondary">
+                    <BadgeControl variant="secondary">
                       {delegateSeatCount}{' '}
                       {delegateSeatCount === 1
                         ? translateText('generated.inline.0041_delegierte_109dfa4c')
                         : translateText('generated.inline.0041_delegierte_109dfa4c')}
-                    </Badge>
+                    </BadgeControl>
                   </div>
                   <p className="text-muted-foreground mt-3 text-sm">
                     {translateText(
@@ -909,26 +909,28 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                     ) : null}
 
                     <div className="space-y-2">
-                      <Label>{t('pages.create.agendaItem.majorityType')}</Label>
-                      <Select
+                      <FormControlLabel>
+                        {t('pages.create.agendaItem.majorityType')}
+                      </FormControlLabel>
+                      <FormControlSelect
                         value={majorityType}
                         onValueChange={(value: string) => setMajorityType(value as MajorityType)}
                       >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="simple">
+                        <FormControlSelectTrigger>
+                          <FormControlSelectValue />
+                        </FormControlSelectTrigger>
+                        <FormControlSelectContent>
+                          <FormControlSelectItem value="simple">
                             {t('pages.create.agendaItem.majoritySimple')}
-                          </SelectItem>
-                          <SelectItem value="absolute">
+                          </FormControlSelectItem>
+                          <FormControlSelectItem value="absolute">
                             {t('pages.create.agendaItem.majorityAbsolute')}
-                          </SelectItem>
-                          <SelectItem value="two_thirds">
+                          </FormControlSelectItem>
+                          <FormControlSelectItem value="two_thirds">
                             {t('pages.create.agendaItem.majorityTwoThirds')}
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
+                          </FormControlSelectItem>
+                        </FormControlSelectContent>
+                      </FormControlSelect>
                     </div>
                     <CreateInputField
                       label={t('pages.create.agendaItem.timeLimit')}

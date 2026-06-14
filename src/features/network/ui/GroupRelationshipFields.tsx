@@ -1,12 +1,17 @@
+import { BadgeControl } from '@/features/shared/ui/status';
+import {
+  FormControlLabel,
+  FormControlSelect,
+  FormControlSelectContent,
+  FormControlSelectItem,
+  FormControlSelectTrigger,
+} from '@/features/shared/ui/form';
 import { Check } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import {
   useTranslation,
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
-import { Badge } from '@/features/shared/ui/ui/badge';
-import { Label } from '@/features/shared/ui/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger } from '@/features/shared/ui/ui/select';
 import { cn } from '@/features/shared/utils/utils';
 import {
   getSiblingMembershipModeLabel,
@@ -297,7 +302,7 @@ export function GroupRelationshipNameTag({
         });
 
   const badge = (
-    <Badge
+    <BadgeControl
       variant="outline"
       className={cn(
         translateText('generated.inline.0116_max_w_full_text_11px_font_semibold_c328bdd2'),
@@ -305,7 +310,7 @@ export function GroupRelationshipNameTag({
       )}
     >
       <span className="truncate">{displayName}</span>
-    </Badge>
+    </BadgeControl>
   );
 
   if (!groupId || !linkGroups) {
@@ -757,13 +762,13 @@ export function GroupRelationshipTypeSelect({
 
   return (
     <div className="grid gap-2">
-      <Label htmlFor={id}>{label}</Label>
-      <Select
+      <FormControlLabel htmlFor={id}>{label}</FormControlLabel>
+      <FormControlSelect
         value={value}
         onValueChange={next => onValueChange(next as GroupRelationshipType)}
         disabled={disabled}
       >
-        <SelectTrigger id={id} className="h-auto min-h-12 py-3 [&>span]:line-clamp-none">
+        <FormControlSelectTrigger id={id} className="h-auto min-h-12 py-3 [&>span]:line-clamp-none">
           <div className="min-w-0 flex-1 text-left">
             <RelationshipTypeOptionContent
               relationshipType={value}
@@ -776,9 +781,9 @@ export function GroupRelationshipTypeSelect({
             />
             <span className="sr-only">{selectedLabel}</span>
           </div>
-        </SelectTrigger>
-        <SelectContent className="w-[var(--radix-select-trigger-width)] max-w-none">
-          <SelectItem value="parent" disabled={disabledOptions?.parent} className="py-2">
+        </FormControlSelectTrigger>
+        <FormControlSelectContent className="w-[var(--radix-select-trigger-width)] max-w-none">
+          <FormControlSelectItem value="parent" disabled={disabledOptions?.parent} className="py-2">
             <RelationshipTypeOptionContent
               relationshipType="parent"
               currentGroupName={currentGroupName}
@@ -787,8 +792,8 @@ export function GroupRelationshipTypeSelect({
               selectedGroupId={selectedGroupId}
               linkGroups={false}
             />
-          </SelectItem>
-          <SelectItem value="child" disabled={disabledOptions?.child} className="py-2">
+          </FormControlSelectItem>
+          <FormControlSelectItem value="child" disabled={disabledOptions?.child} className="py-2">
             <RelationshipTypeOptionContent
               relationshipType="child"
               currentGroupName={currentGroupName}
@@ -797,8 +802,12 @@ export function GroupRelationshipTypeSelect({
               selectedGroupId={selectedGroupId}
               linkGroups={false}
             />
-          </SelectItem>
-          <SelectItem value="sibling" disabled={disabledOptions?.sibling} className="py-2">
+          </FormControlSelectItem>
+          <FormControlSelectItem
+            value="sibling"
+            disabled={disabledOptions?.sibling}
+            className="py-2"
+          >
             <RelationshipTypeOptionContent
               relationshipType="sibling"
               currentGroupName={currentGroupName}
@@ -808,9 +817,9 @@ export function GroupRelationshipTypeSelect({
               selectedGroupId={selectedGroupId}
               linkGroups={false}
             />
-          </SelectItem>
-        </SelectContent>
-      </Select>
+          </FormControlSelectItem>
+        </FormControlSelectContent>
+      </FormControlSelect>
       {helperText ? <p className="text-muted-foreground text-sm">{helperText}</p> : null}
     </div>
   );
@@ -1168,12 +1177,12 @@ export function GroupRelationshipRightsSummary({
                   <div className="text-muted-foreground text-sm">{t(option.descKey)}</div>
                 </div>
                 {status ? (
-                  <Badge
+                  <BadgeControl
                     variant={isRequestDisplayStatus(status) ? 'secondary' : 'default'}
                     className="shrink-0"
                   >
                     {getStatusBadgeLabel(status, t)}
-                  </Badge>
+                  </BadgeControl>
                 ) : null}
               </div>
               <div className="mt-3 rounded-md border px-3 py-2">
@@ -1217,7 +1226,7 @@ export function GroupRelationshipRightsSelector({
   return (
     <div className="grid gap-3">
       <div className="space-y-1">
-        <Label>{label}</Label>
+        <FormControlLabel>{label}</FormControlLabel>
         {helperText ? <p className="text-muted-foreground text-sm">{helperText}</p> : null}
       </div>
       <div className={cn('grid gap-2', optionsContainerClassName)}>
@@ -1261,12 +1270,12 @@ export function GroupRelationshipRightsSelector({
                   <div className="flex items-start justify-between gap-3">
                     <div className="font-medium">{t(option.labelKey)}</div>
                     {status ? (
-                      <Badge
+                      <BadgeControl
                         variant={isRequestDisplayStatus(status) ? 'secondary' : 'default'}
                         className="shrink-0"
                       >
                         {getStatusBadgeLabel(status, t)}
-                      </Badge>
+                      </BadgeControl>
                     ) : null}
                   </div>
                   <div
@@ -1286,14 +1295,14 @@ export function GroupRelationshipRightsSelector({
                     isSelected ? 'border-white/30 bg-white/10' : 'border-border bg-background'
                   )}
                 >
-                  <Select
+                  <FormControlSelect
                     value={selectedDirection}
                     onValueChange={value =>
                       onDirectionChange(option.value, value as GroupRelationshipDirection)
                     }
                     disabled={disabled}
                   >
-                    <SelectTrigger
+                    <FormControlSelectTrigger
                       className={cn(
                         'h-auto min-h-10 border-white/25 bg-white/15 py-2 text-left shadow-none',
                         isSelected &&
@@ -1320,10 +1329,13 @@ export function GroupRelationshipRightsSelector({
                           })}
                         </span>
                       </div>
-                    </SelectTrigger>
-                    <SelectContent>
+                    </FormControlSelectTrigger>
+                    <FormControlSelectContent>
                       {directionOptions.map(directionOption => (
-                        <SelectItem key={directionOption.value} value={directionOption.value}>
+                        <FormControlSelectItem
+                          key={directionOption.value}
+                          value={directionOption.value}
+                        >
                           <GroupRelationshipDirectionSentence
                             direction={directionOption.value}
                             right={option.value}
@@ -1333,10 +1345,10 @@ export function GroupRelationshipRightsSelector({
                             selectedGroupId={selectedGroupId}
                             linkGroups={false}
                           />
-                        </SelectItem>
+                        </FormControlSelectItem>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </FormControlSelectContent>
+                  </FormControlSelect>
                 </div>
               ) : null}
             </div>

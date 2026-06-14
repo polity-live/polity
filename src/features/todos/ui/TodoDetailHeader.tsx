@@ -1,5 +1,5 @@
+import { FormControlInput } from '@/features/shared/ui/form';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Input } from '@/features/shared/ui/ui/input';
 import { Edit, Save, X } from 'lucide-react';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
@@ -28,7 +28,7 @@ export function TodoDetailHeader({
     <div className="flex items-start justify-between">
       <div className="flex-1">
         {isEditing ? (
-          <Input
+          <FormControlInput
             value={formTitle}
             onChange={e => onTitleChange?.(e.target.value)}
             className="text-2xl font-bold"

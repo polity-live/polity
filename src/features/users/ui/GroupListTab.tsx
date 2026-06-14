@@ -1,7 +1,7 @@
+import { FormControlInput } from '@/features/shared/ui/form';
 import React, { useMemo } from 'react';
 import { getMembershipRoleNames } from '@/features/shared/logic/membershipRoleHelpers';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
-import { Input } from '@/features/shared/ui/ui/input';
 import { Search } from 'lucide-react';
 import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCard';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -59,7 +59,7 @@ export const GroupsListTab: React.FC<GroupsListTabProps> = ({
     <>
       <div className="relative mb-4">
         <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-        <Input
+        <FormControlInput
           placeholder={t('pages.user.groups.searchPlaceholder')}
           className="pl-10"
           value={searchValue}

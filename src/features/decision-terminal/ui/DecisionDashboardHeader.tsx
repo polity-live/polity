@@ -1,9 +1,9 @@
 'use client';
 
+import { FormControlInput } from '@/features/shared/ui/form';
 import { LayoutDashboard, RotateCcw, Search } from 'lucide-react';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Input } from '@/features/shared/ui/ui/input';
 import { cn } from '@/features/shared/utils/utils';
 
 interface DecisionDashboardHeaderProps {
@@ -50,7 +50,7 @@ export function DecisionDashboardHeader({
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative min-w-56 flex-1 sm:flex-none">
             <Search className="text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4" />
-            <Input
+            <FormControlInput
               value={searchQuery}
               onChange={event => onSearchChange(event.target.value)}
               placeholder={translateText('generated.inline.0341_search_decisions_b5f1fd2e')}

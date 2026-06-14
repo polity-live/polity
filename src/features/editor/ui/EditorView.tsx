@@ -1,5 +1,6 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 /**
  * Unified Editor View Component
  *
@@ -12,7 +13,6 @@ import { Link } from '@tanstack/react-router';
 import { PlateEditor } from '@/features/shared/ui/kit-platejs/plate-editor';
 import { Card, CardContent, CardDescription, CardHeader } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Loader2, ArrowLeft, FileText } from 'lucide-react';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
@@ -263,20 +263,20 @@ export function EditorView({
     if (!entity) return null;
     if (entityType === 'amendment' && entity.metadata?.amendmentEditingMode) {
       return (
-        <Badge variant="outline" className="capitalize">
+        <BadgeControl variant="outline" className="capitalize">
           {entity.metadata.amendmentEditingMode}
-        </Badge>
+        </BadgeControl>
       );
     }
     if (entityType === 'blog') {
       return (
-        <Badge variant="outline" className="capitalize">
+        <BadgeControl variant="outline" className="capitalize">
           {entity.visibility === 'public'
             ? translateText('generated.inline.0063_public_dc5eb704')
             : entity.visibility === 'authenticated'
               ? translateText('generated.inline.0064_authenticated_c2be8376')
               : translateText('generated.inline.0065_private_237dfa0a')}
-        </Badge>
+        </BadgeControl>
       );
     }
     return null;
@@ -448,9 +448,9 @@ export function EditorView({
           {/* Entity-specific metadata */}
           <div className="mt-4 flex flex-wrap items-center gap-4 text-sm">
             {entity.metadata?.amendmentCode && (
-              <Badge variant="secondary" className="font-mono">
+              <BadgeControl variant="secondary" className="font-mono">
                 {entity.metadata.amendmentCode}
-              </Badge>
+              </BadgeControl>
             )}
             {entity.metadata?.amendmentDate && (
               <span className="text-muted-foreground">

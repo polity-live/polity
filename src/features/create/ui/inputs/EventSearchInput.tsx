@@ -1,7 +1,7 @@
+import { FormControlLabel } from '@/features/shared/ui/form';
 import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
 import { useAllEvents } from '@/zero/events/useEventState';
-import { Label } from '@/features/shared/ui/ui/label';
 import { useMemo } from 'react';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
@@ -42,7 +42,7 @@ export function EventSearchInput({
 
   return (
     <div>
-      {label && <Label className="mb-2 block">{label}</Label>}
+      {label && <FormControlLabel className="mb-2 block">{label}</FormControlLabel>}
       <TypeaheadSearch
         items={items}
         value={value}

@@ -1,4 +1,4 @@
-import { Badge } from '@/features/shared/ui/ui/badge.tsx';
+import { BadgeControl } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { cn } from '@/features/shared/utils/utils.ts';
 import { Popover, PopoverContent, PopoverTrigger } from '@/features/shared/ui/ui/popover.tsx';
@@ -82,14 +82,14 @@ export function NavItemList({
                     )}
                     <span className="text-sm">{item.label}</span>
                     {item.badge && (
-                      <Badge
+                      <BadgeControl
                         className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center p-0"
                         variant="default"
                       >
                         {(() => {
                           return item.badge;
                         })()}
-                      </Badge>
+                      </BadgeControl>
                     )}
                   </Button>
                 </Link>
@@ -127,12 +127,12 @@ export function NavItemList({
                   )}
                   <span className="text-sm">{item.label}</span>
                   {item.badge && (
-                    <Badge
+                    <BadgeControl
                       className="absolute top-2 right-4 flex h-5 w-5 items-center justify-center p-0"
                       variant="default"
                     >
                       {item.badge}
-                    </Badge>
+                    </BadgeControl>
                   )}
                 </Button>
               </Link>
@@ -180,14 +180,14 @@ export function NavItemList({
                       ),
                     })}
                     {item.badge && (
-                      <Badge
+                      <BadgeControl
                         className="absolute top-2 right-4 flex h-5 w-5 items-center justify-center p-0"
                         variant="default"
                       >
                         {(() => {
                           return item.badge;
                         })()}
-                      </Badge>
+                      </BadgeControl>
                     )}
                   </Button>
                 </Link>
@@ -236,12 +236,12 @@ export function NavItemList({
                     ),
                   })}
                   {item.badge && (
-                    <Badge
+                    <BadgeControl
                       className="absolute -top-0 -right-1 flex h-5 w-5 items-center justify-center p-0"
                       variant="default"
                     >
                       {item.badge}
-                    </Badge>
+                    </BadgeControl>
                   )}
                 </Button>
               </Link>
@@ -292,12 +292,12 @@ export function NavItemList({
                     ),
                   })}
                   {item.badge && (
-                    <Badge
+                    <BadgeControl
                       className="absolute -top-3 -right-5 flex h-5 w-5 items-center justify-center p-0"
                       variant="default"
                     >
                       {item.badge}
-                    </Badge>
+                    </BadgeControl>
                   )}
                 </div>
                 <span className="text-center text-xs leading-tight whitespace-nowrap">
@@ -342,9 +342,9 @@ export function NavItemList({
               })}
               <span>{item.label}</span>
               {item.badge && (
-                <Badge className="ml-auto" variant="default">
+                <BadgeControl className="ml-auto" variant="default">
                   {item.badge}
-                </Badge>
+                </BadgeControl>
               )}
             </Button>
           </Link>

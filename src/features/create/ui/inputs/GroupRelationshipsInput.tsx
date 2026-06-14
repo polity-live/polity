@@ -1,6 +1,6 @@
+import { BadgeControl } from '@/features/shared/ui/status';
+import { FormControlLabel } from '@/features/shared/ui/form';
 import { useState, useMemo } from 'react';
-import { Label } from '@/features/shared/ui/ui/label';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Card } from '@/features/shared/ui/ui/card';
 import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch';
@@ -100,10 +100,10 @@ export function GroupRelationshipsInput({ value, onChange }: GroupRelationshipsI
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <Label>{t('pages.create.group.linkGroupsOptional')}</Label>
-        <Badge variant="secondary">
+        <FormControlLabel>{t('pages.create.group.linkGroupsOptional')}</FormControlLabel>
+        <BadgeControl variant="secondary">
           {value.length} {t('pages.create.group.linked')}
-        </Badge>
+        </BadgeControl>
       </div>
       <p className="text-muted-foreground text-sm">
         {t('pages.create.group.requestRelationships')}
@@ -111,7 +111,7 @@ export function GroupRelationshipsInput({ value, onChange }: GroupRelationshipsI
 
       {/* Group search */}
       <div className="space-y-2">
-        <Label>{t('pages.create.group.selectGroup')}</Label>
+        <FormControlLabel>{t('pages.create.group.selectGroup')}</FormControlLabel>
         <TypeaheadSearch
           items={toTypeaheadItems(
             availableGroups,
@@ -131,7 +131,7 @@ export function GroupRelationshipsInput({ value, onChange }: GroupRelationshipsI
       {selectedGroupId && (
         <>
           <div className="space-y-2">
-            <Label>{t('pages.create.group.relationshipType')}</Label>
+            <FormControlLabel>{t('pages.create.group.relationshipType')}</FormControlLabel>
             <div className="grid grid-cols-2 gap-2">
               <Button
                 type="button"
@@ -151,7 +151,7 @@ export function GroupRelationshipsInput({ value, onChange }: GroupRelationshipsI
           </div>
 
           <div className="space-y-2">
-            <Label>{t('pages.create.group.selectRights')}</Label>
+            <FormControlLabel>{t('pages.create.group.selectRights')}</FormControlLabel>
             <div className="grid grid-cols-2 gap-2">
               {RIGHT_KEYS.map(right => (
                 <Button
@@ -183,7 +183,9 @@ export function GroupRelationshipsInput({ value, onChange }: GroupRelationshipsI
       {/* Linked groups list */}
       {value.length > 0 && (
         <div className="mt-4 space-y-2">
-          <Label className="text-sm">{t('pages.create.group.linkedGroups')}</Label>
+          <FormControlLabel className="text-sm">
+            {t('pages.create.group.linkedGroups')}
+          </FormControlLabel>
           <div className="space-y-2">
             {value.map(link => (
               <Card key={link.groupId} className="p-3">
@@ -191,17 +193,17 @@ export function GroupRelationshipsInput({ value, onChange }: GroupRelationshipsI
                   <div className="flex-1">
                     <div className="mb-1 flex items-center gap-2">
                       <span className="font-medium">{link.groupName}</span>
-                      <Badge variant="outline" className="text-xs">
+                      <BadgeControl variant="outline" className="text-xs">
                         {link.relationshipType === 'isParent'
                           ? t('pages.create.group.parent')
                           : t('pages.create.group.child')}
-                      </Badge>
+                      </BadgeControl>
                     </div>
                     <div className="flex flex-wrap gap-1">
                       {link.rights.map(right => (
-                        <Badge key={right} variant="secondary" className="text-xs">
+                        <BadgeControl key={right} variant="secondary" className="text-xs">
                           {t(`pages.create.group.rights.${right}`)}
-                        </Badge>
+                        </BadgeControl>
                       ))}
                     </div>
                   </div>

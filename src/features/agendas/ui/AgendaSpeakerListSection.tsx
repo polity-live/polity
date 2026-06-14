@@ -1,10 +1,10 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import {
   Carousel,
   CarouselContent,
@@ -188,9 +188,9 @@ export function AgendaSpeakerListSection({
                 </CardTitle>
               </Button>
             </CollapsibleTrigger>
-            <Badge variant="outline">
+            <BadgeControl variant="outline">
               {t('features.events.agenda.speakerCount', { count: speakers.length })}
-            </Badge>
+            </BadgeControl>
           </div>
         </CardHeader>
 
@@ -246,14 +246,14 @@ export function AgendaSpeakerListSection({
                                         {speakerName}
                                       </p>
                                       {speaker.isCurrent && (
-                                        <Badge variant="default">
+                                        <BadgeControl variant="default">
                                           {t('features.events.agenda.currentSpeaker')}
-                                        </Badge>
+                                        </BadgeControl>
                                       )}
                                       {speaker.isCurrentUser && (
-                                        <Badge variant="secondary">
+                                        <BadgeControl variant="secondary">
                                           {t('features.events.agenda.alreadyOnList')}
-                                        </Badge>
+                                        </BadgeControl>
                                       )}
                                     </div>
                                     <p className="text-muted-foreground text-sm">
@@ -302,9 +302,9 @@ export function AgendaSpeakerListSection({
                                     {speaker.time} {t('common.minutes')}
                                   </span>
                                   {speaker.completed && (
-                                    <Badge variant="outline">
+                                    <BadgeControl variant="outline">
                                       {t('features.events.agenda.completedSpeaker')}
-                                    </Badge>
+                                    </BadgeControl>
                                   )}
                                 </div>
                               </div>

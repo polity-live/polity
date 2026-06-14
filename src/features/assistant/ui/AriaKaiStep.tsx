@@ -1,7 +1,7 @@
+import { FormControlCheckbox } from '@/features/shared/ui/form';
 import { MessageCircle, Sparkles } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/features/shared/ui/ui/avatar.tsx';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
-import { Checkbox } from '@/features/shared/ui/ui/checkbox.tsx';
 import {
   Card,
   CardContent,
@@ -79,7 +79,7 @@ export function AriaKaiStep({ onNext, dontShowAgain, onDontShowAgainChange }: Ar
         </div>
 
         <div className="flex items-center space-x-2 pt-2">
-          <Checkbox
+          <FormControlCheckbox
             id="dont-show-again"
             checked={dontShowAgain}
             onCheckedChange={onDontShowAgainChange}

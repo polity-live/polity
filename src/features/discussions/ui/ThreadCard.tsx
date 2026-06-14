@@ -1,8 +1,8 @@
+import { BadgeControl } from '@/features/shared/ui/status';
+import { FormControlTextarea } from '@/features/shared/ui/form';
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Textarea } from '@/features/shared/ui/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { ArrowUp, ArrowDown, Clock, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
@@ -148,11 +148,11 @@ export function ThreadCard({
                   <Clock className="h-4 w-4" />
                   <span>{new Date(thread.created_at).toLocaleDateString()}</span>
                 </div>
-                <Badge variant="outline">
+                <BadgeControl variant="outline">
                   {sortedComments.length}
                   {translateText('generated.inline.0050_comment_118a9989')}
                   {sortedComments.length !== 1 ? 's' : ''}
-                </Badge>
+                </BadgeControl>
               </div>
             </div>
           </div>
@@ -193,7 +193,7 @@ export function ThreadCard({
 
           {isCommenting && (
             <div className="space-y-2 rounded-lg border p-4">
-              <Textarea
+              <FormControlTextarea
                 placeholder={translateText('generated.inline.0397_write_your_comment_b1d820b5')}
                 value={commentText}
                 onChange={e => setCommentText(e.target.value)}

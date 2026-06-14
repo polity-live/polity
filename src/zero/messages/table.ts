@@ -1,5 +1,4 @@
 import { table, string, number, boolean } from '@rocicorp/zero';
-import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export const conversation = table('conversation')
   .columns({
@@ -31,7 +30,7 @@ export const conversationParticipant = table('conversation_participant')
   })
   .primaryKey('id');
 
-export const message = table(translateText('generated.inline.0195_message_6f9b9af3'))
+export const message = table('message')
   .columns({
     id: string(),
     conversation_id: string(),
@@ -43,4 +42,4 @@ export const message = table(translateText('generated.inline.0195_message_6f9b9a
     created_at: number(),
     updated_at: number(),
   })
-  .primaryKey(translateText('generated.inline.0194_id_87ea5dfc'));
+  .primaryKey('id');

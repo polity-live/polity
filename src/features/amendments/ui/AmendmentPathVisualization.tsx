@@ -1,5 +1,6 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { useEffect } from 'react';
 import { Node, Edge, useNodesState, useEdgesState, MarkerType } from '@xyflow/react';
 import { NetworkFlowBase, Panel } from '@/features/network/ui/NetworkFlowBase';
@@ -10,7 +11,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/features/shared/ui/ui/card';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Calendar, ArrowRight, Target } from 'lucide-react';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import {
@@ -280,12 +280,14 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
                   <div className="flex items-center gap-2">
                     <h4 className="font-semibold">{segment.group_id || t('common.unspecified')}</h4>
                     {index === 0 && (
-                      <Badge variant="secondary">
+                      <BadgeControl variant="secondary">
                         {t('features.amendments.pathVisualization.start')}
-                      </Badge>
+                      </BadgeControl>
                     )}
                     {index === pathSegments.length - 1 && (
-                      <Badge variant="destructive">{t('features.amendments.process.target')}</Badge>
+                      <BadgeControl variant="destructive">
+                        {t('features.amendments.process.target')}
+                      </BadgeControl>
                     )}
                   </div>
                   {segment.event_id && (

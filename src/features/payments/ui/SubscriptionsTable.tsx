@@ -12,7 +12,7 @@ import {
 } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { TableTag } from '@/features/shared/ui/ui/table-tag';
+import { EntityBadge, getEntityBadgeSurfaceClassName } from '@/features/shared/ui/status';
 import { SmartLink } from '@/features/shared/ui/navigation/SmartLink.tsx';
 import { DataTable } from '@/features/shared/ui/data-table';
 import type { SearchCardGradientEntity } from '@/features/shared/utils/search-card-gradients';
@@ -183,9 +183,12 @@ export function SubscriptionsTable({
         accessorKey: 'entityInfo.type',
         header: translateText('generated.inline.0599_type_3deb7456'),
         cell: ({ row }) => (
-          <TableTag entityType={row.original.entityInfo.entityType}>
+          <EntityBadge
+            tone="outline"
+            className={getEntityBadgeSurfaceClassName(row.original.entityInfo.entityType)}
+          >
             {row.original.entityInfo.type}
-          </TableTag>
+          </EntityBadge>
         ),
       },
       {

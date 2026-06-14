@@ -40,13 +40,11 @@ export function isAssistantErrorContext(contextJson?: string | null): boolean {
   try {
     const parsed: unknown = JSON.parse(contextJson);
 
-    return (
-      Boolean(parsed) &&
-      typeof parsed === 'object' &&
-      !Array.isArray(parsed) &&
-      'kind' in parsed &&
-      parsed.kind === ASSISTANT_ERROR_CONTEXT_KIND
-    );
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return false;
+    }
+
+    return (parsed as { kind?: unknown }).kind === ASSISTANT_ERROR_CONTEXT_KIND;
   } catch {
     return false;
   }

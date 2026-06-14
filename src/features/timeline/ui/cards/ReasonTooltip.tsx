@@ -3,7 +3,12 @@
 import { useState } from 'react';
 import { cn } from '@/features/shared/utils/utils';
 import { Info, TrendingUp, Users, Star, User } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/features/shared/ui/ui/tooltip';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 export type ReasonCategory = 'trending' | 'popular_topic' | 'similar_groups' | 'your_content';
@@ -18,7 +23,7 @@ export interface ReasonTooltipProps {
 /**
  * Get reason configuration for display
  */
-function getReasonConfig(category: ReasonCategory, context?: string) {
+function getReasonConfig(category: ReasonCategory) {
   switch (category) {
     case 'trending':
       return {
@@ -66,7 +71,7 @@ function getReasonConfig(category: ReasonCategory, context?: string) {
 export function ReasonTooltip({ category, context, className }: ReasonTooltipProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const config = getReasonConfig(category, context);
+  const config = getReasonConfig(category);
   const Icon = config.Icon;
 
   // Build the reason text
@@ -84,7 +89,7 @@ export function ReasonTooltip({ category, context, className }: ReasonTooltipPro
           <button
             className={cn(
               'inline-flex items-center justify-center rounded-full p-1 transition-colors',
-              'hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring',
+              'hover:bg-muted focus:ring-ring focus:ring-2 focus:outline-none',
               className
             )}
             onClick={e => {
@@ -93,7 +98,7 @@ export function ReasonTooltip({ category, context, className }: ReasonTooltipPro
             }}
             aria-label={t('timeline.explore.whySeeing')}
           >
-            <Info className="h-3.5 w-3.5 text-muted-foreground" />
+            <Info className="text-muted-foreground h-3.5 w-3.5" />
           </button>
         </TooltipTrigger>
         <TooltipContent
@@ -114,7 +119,7 @@ export function ReasonTooltip({ category, context, className }: ReasonTooltipPro
  */
 export function ReasonBadge({ category, context, className }: ReasonTooltipProps) {
   const { t } = useTranslation();
-  const config = getReasonConfig(category, context);
+  const config = getReasonConfig(category);
   const Icon = config.Icon;
 
   let reasonText = t(config.labelKey);

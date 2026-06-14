@@ -1,9 +1,9 @@
 'use client';
 
+import { FormControlInput } from '@/features/shared/ui/form';
 import React, { useId, useState, useRef } from 'react';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { Card, CardContent } from '@/features/shared/ui/ui/card.tsx';
-import { Input } from '@/features/shared/ui/ui/input.tsx';
 import { Upload, X, Loader2 } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils.ts';
 import {
@@ -309,7 +309,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
                 <label className="sr-only" htmlFor={urlInputId}>
                   {t('common.labels.orProvideUrl')}
                 </label>
-                <Input
+                <FormControlInput
                   id={urlInputId}
                   type="url"
                   value={currentImage || ''}

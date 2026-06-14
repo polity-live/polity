@@ -2,7 +2,10 @@
 
 import { useState } from 'react';
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
-import { groupAmendmentsByDisplayStatus } from '@/features/groups/logic/groupAmendmentStatus';
+import {
+  groupAmendmentsByDisplayStatus,
+  type GroupAmendmentDisplayStatus,
+} from '@/features/groups/logic/groupAmendmentStatus';
 
 export interface AmendmentFilters {
   searchQuery: string;
@@ -50,10 +53,10 @@ interface FilterableAmendment {
   title?: string | null;
   subtitle?: string | null;
   code?: string | null;
-  decision_status?: string | null;
+  decision_status?: GroupAmendmentDisplayStatus | null;
   editing_mode?: string | null;
   date?: string | number | null;
-  amendment_hashtags?: readonly { hashtag?: { tag?: string | null } | null }[];
+  amendment_hashtags?: readonly { hashtag?: { id: string; tag: string } | null }[];
 }
 
 /**

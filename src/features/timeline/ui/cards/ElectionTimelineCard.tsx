@@ -1,9 +1,9 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { Award, Users, Calendar, Crown, Trophy } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import {
@@ -352,7 +352,7 @@ export function ElectionTimelineCard({
         subtitle={election.groupName}
         subtitleHref={election.groupId ? `/group/${election.groupId}` : undefined}
         badge={
-          <Badge
+          <BadgeControl
             variant="outline"
             className={cn(
               'flex items-center gap-1 text-xs',
@@ -363,7 +363,7 @@ export function ElectionTimelineCard({
           >
             {statusConfig.icon}
             {getStatusLabel()}
-          </Badge>
+          </BadgeControl>
         }
       >
         {dateText && (

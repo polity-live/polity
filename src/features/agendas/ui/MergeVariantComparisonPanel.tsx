@@ -1,10 +1,10 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { useMemo } from 'react';
 import { computeDiff } from '@platejs/diff';
 import { createSlateEditor, type Descendant, type Value } from 'platejs';
 import { GitCompare, FileText } from 'lucide-react';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { EditorStatic } from '@/features/shared/ui/ui-platejs/editor-static';
 import { BaseEditorKit } from '@/features/shared/ui/kit-platejs/editor-base-kit';
@@ -107,12 +107,12 @@ function VariantPreview({
   return (
     <div className="rounded-md border p-3">
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <Badge variant={isBase ? 'default' : 'outline'}>{candidate.label}</Badge>
+        <BadgeControl variant={isBase ? 'default' : 'outline'}>{candidate.label}</BadgeControl>
         {candidate.groupName ? (
-          <Badge variant="secondary" className="gap-1">
+          <BadgeControl variant="secondary" className="gap-1">
             <FileText className="h-3 w-3" />
             {candidate.groupName}
-          </Badge>
+          </BadgeControl>
         ) : null}
         {isBase ? (
           <span className="text-muted-foreground text-xs">
@@ -150,9 +150,9 @@ export function MergeVariantComparisonPanel({
           <CardTitle className="text-base">
             {translateText('generated.inline.0059_variantenvergleich_eaeb6685')}
           </CardTitle>
-          <Badge variant="outline" className="ml-auto">
+          <BadgeControl variant="outline" className="ml-auto">
             {translateText('generated.inline.0060_relative_wahl_5e35f421')}
-          </Badge>
+          </BadgeControl>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">

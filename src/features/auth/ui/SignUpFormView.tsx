@@ -1,19 +1,8 @@
 import type { FormEventHandler } from 'react';
-import { Link } from '@tanstack/react-router';
 import { ArrowRight, Mail, MailCheck, UserPlus } from 'lucide-react';
 
-import { Alert, AlertDescription } from '@/features/shared/ui/ui/alert';
-import { Button } from '@/features/shared/ui/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/features/shared/ui/ui/card';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Spinner } from '@/features/shared/ui/ui/spinner';
-import { FormFieldShell } from '@/features/shared/ui/form';
+import { FormButton, FormCard, FormControlInput, FormFieldShell } from '@/features/shared/ui/form';
+import { InlineNotice, Spinner } from '@/features/shared/ui/feedback';
 import { cn } from '@/features/shared/utils/utils';
 import { GoogleIcon } from './GoogleIcon';
 
@@ -117,198 +106,180 @@ export function SignUpFormView({
 }: SignUpFormViewProps) {
   if (pendingConfirmationEmail) {
     return (
-      <div className="bg-background flex min-h-screen items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="mb-4 flex justify-center">
-              <MailCheck className="h-12 w-12 text-blue-500" />
-            </div>
-            <CardTitle className="text-2xl font-bold">{copy.confirmationPendingTitle}</CardTitle>
-            <CardDescription>{copy.confirmationPendingDescription}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Alert>
-              <AlertDescription>{copy.confirmationPendingInstructions}</AlertDescription>
-            </Alert>
+      <FormCard
+        title={copy.confirmationPendingTitle}
+        description={copy.confirmationPendingDescription}
+        icon={<MailCheck className="h-12 w-12 text-blue-500" />}
+        contentClassName="space-y-4"
+      >
+        <InlineNotice variant="info">{copy.confirmationPendingInstructions}</InlineNotice>
 
-            <Button className="w-full" onClick={onGoToSignIn}>
-              {copy.signInLink}
-            </Button>
+        <FormButton className="w-full" onClick={onGoToSignIn}>
+          {copy.signInLink}
+        </FormButton>
 
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              onClick={onUseDifferentEmail}
-            >
-              {copy.useDifferentEmail}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+        <FormButton
+          type="button"
+          variant="outline"
+          className="w-full"
+          onClick={onUseDifferentEmail}
+        >
+          {copy.useDifferentEmail}
+        </FormButton>
+      </FormCard>
     );
   }
 
   return (
-    <div className="bg-background flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mb-4 flex justify-center">
-            <UserPlus className="h-12 w-12 text-blue-500" />
-          </div>
-          <CardTitle className="text-2xl font-bold">{copy.title}</CardTitle>
-          <CardDescription>{copy.description}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={onSubmit} className="space-y-4">
-            <FormFieldShell
-              id="email"
-              label={copy.emailLabel}
-              description={copy.emailHint}
-              descriptionClassName={fieldHintClassName(showEmailError, showEmailSuccess)}
-              invalid={showEmailError}
+    <FormCard
+      title={copy.title}
+      description={copy.description}
+      icon={<UserPlus className="h-12 w-12 text-blue-500" />}
+    >
+      <form onSubmit={onSubmit} className="space-y-4">
+        <FormFieldShell
+          id="email"
+          label={copy.emailLabel}
+          description={copy.emailHint}
+          descriptionClassName={fieldHintClassName(showEmailError, showEmailSuccess)}
+          invalid={showEmailError}
+          required
+        >
+          {({ id, describedBy, invalid }) => (
+            <FormControlInput
+              id={id}
+              type="email"
+              placeholder={copy.emailPlaceholder}
+              value={email}
+              onChange={event => onEmailChange(event.target.value)}
+              onBlur={onEmailBlur}
               required
-            >
-              {({ id, describedBy, invalid }) => (
-                <Input
-                  id={id}
-                  type="email"
-                  placeholder={copy.emailPlaceholder}
-                  value={email}
-                  onChange={event => onEmailChange(event.target.value)}
-                  onBlur={onEmailBlur}
-                  required
-                  disabled={isLoading}
-                  autoComplete="email"
-                  aria-describedby={describedBy}
-                  aria-invalid={invalid}
-                  data-valid={showEmailSuccess ? 'true' : undefined}
-                />
-              )}
-            </FormFieldShell>
+              disabled={isLoading}
+              autoComplete="email"
+              aria-describedby={describedBy}
+              aria-invalid={invalid}
+              data-valid={showEmailSuccess ? 'true' : undefined}
+            />
+          )}
+        </FormFieldShell>
 
-            <FormFieldShell
-              id="password"
-              label={copy.passwordLabel}
-              description={copy.passwordHint}
-              descriptionClassName={fieldHintClassName(showPasswordError, showPasswordSuccess)}
-              invalid={showPasswordError}
+        <FormFieldShell
+          id="password"
+          label={copy.passwordLabel}
+          description={copy.passwordHint}
+          descriptionClassName={fieldHintClassName(showPasswordError, showPasswordSuccess)}
+          invalid={showPasswordError}
+          required
+        >
+          {({ id, describedBy, invalid }) => (
+            <FormControlInput
+              id={id}
+              type="password"
+              placeholder={copy.passwordPlaceholder}
+              value={password}
+              onChange={event => onPasswordChange(event.target.value)}
+              onBlur={onPasswordBlur}
               required
-            >
-              {({ id, describedBy, invalid }) => (
-                <Input
-                  id={id}
-                  type="password"
-                  placeholder={copy.passwordPlaceholder}
-                  value={password}
-                  onChange={event => onPasswordChange(event.target.value)}
-                  onBlur={onPasswordBlur}
-                  required
-                  minLength={6}
-                  disabled={isLoading}
-                  autoComplete="new-password"
-                  aria-describedby={describedBy}
-                  aria-invalid={invalid}
-                  data-valid={showPasswordSuccess ? 'true' : undefined}
-                />
-              )}
-            </FormFieldShell>
+              minLength={6}
+              disabled={isLoading}
+              autoComplete="new-password"
+              aria-describedby={describedBy}
+              aria-invalid={invalid}
+              data-valid={showPasswordSuccess ? 'true' : undefined}
+            />
+          )}
+        </FormFieldShell>
 
-            <FormFieldShell
-              id="confirm-password"
-              label={copy.confirmPasswordLabel}
-              description={copy.confirmPasswordHint}
-              descriptionClassName={fieldHintClassName(
-                showConfirmPasswordError,
-                showConfirmPasswordSuccess
-              )}
-              invalid={showConfirmPasswordError}
+        <FormFieldShell
+          id="confirm-password"
+          label={copy.confirmPasswordLabel}
+          description={copy.confirmPasswordHint}
+          descriptionClassName={fieldHintClassName(
+            showConfirmPasswordError,
+            showConfirmPasswordSuccess
+          )}
+          invalid={showConfirmPasswordError}
+          required
+        >
+          {({ id, describedBy, invalid }) => (
+            <FormControlInput
+              id={id}
+              type="password"
+              placeholder={copy.confirmPasswordPlaceholder}
+              value={confirmPassword}
+              onChange={event => onConfirmPasswordChange(event.target.value)}
+              onBlur={onConfirmPasswordBlur}
               required
-            >
-              {({ id, describedBy, invalid }) => (
-                <Input
-                  id={id}
-                  type="password"
-                  placeholder={copy.confirmPasswordPlaceholder}
-                  value={confirmPassword}
-                  onChange={event => onConfirmPasswordChange(event.target.value)}
-                  onBlur={onConfirmPasswordBlur}
-                  required
-                  minLength={6}
-                  disabled={isLoading}
-                  autoComplete="new-password"
-                  aria-describedby={describedBy}
-                  aria-invalid={invalid}
-                  data-valid={showConfirmPasswordSuccess ? 'true' : undefined}
-                />
-              )}
-            </FormFieldShell>
+              minLength={6}
+              disabled={isLoading}
+              autoComplete="new-password"
+              aria-describedby={describedBy}
+              aria-invalid={invalid}
+              data-valid={showConfirmPasswordSuccess ? 'true' : undefined}
+            />
+          )}
+        </FormFieldShell>
 
-            {displayError ? (
-              <Alert variant="destructive">
-                <AlertDescription>{displayError}</AlertDescription>
-              </Alert>
-            ) : null}
+        {displayError ? <InlineNotice variant="destructive">{displayError}</InlineNotice> : null}
 
-            <Button type="submit" className="w-full" disabled={isLoading || !isFormValid}>
-              {isSigningUp ? (
-                <>
-                  <Spinner className="mr-2" />
-                  {copy.submitting}
-                </>
-              ) : (
-                <>
-                  {copy.submit}
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </>
-              )}
-            </Button>
-          </form>
+        <FormButton type="submit" className="w-full" disabled={isLoading || !isFormValid}>
+          {isSigningUp ? (
+            <>
+              <Spinner className="mr-2" />
+              {copy.submitting}
+            </>
+          ) : (
+            <>
+              {copy.submit}
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </>
+          )}
+        </FormButton>
+      </form>
 
-          <Button
+      <FormButton
+        type="button"
+        className="mt-4 w-full border border-[#dadce0] bg-white text-[#3c4043] hover:bg-[#f8f9fa] dark:border-[#5f6368] dark:bg-[#202124] dark:text-[#e8eaed] dark:hover:bg-[#303134]"
+        onClick={onGoogleAuth}
+        disabled={isLoading}
+      >
+        {isRedirecting ? <Spinner className="mr-2" /> : <GoogleIcon className="mr-2 h-5 w-5" />}
+        {isRedirecting ? copy.googleLoading : copy.googleButton}
+      </FormButton>
+
+      <div className="relative my-6">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-card text-muted-foreground px-2">{copy.magicLinkAlt}</span>
+        </div>
+      </div>
+
+      <FormButton
+        type="button"
+        variant="outline"
+        className="w-full"
+        onClick={onMagicLink}
+        disabled={magicLinkDisabled}
+      >
+        {isSendingMagicLink ? <Spinner className="mr-2" /> : <Mail className="mr-2 h-4 w-4" />}
+        {isSendingMagicLink ? copy.magicLinkSending : copy.sendCode}
+      </FormButton>
+
+      <div className="text-muted-foreground mt-6 text-center text-sm">
+        <p>
+          {copy.hasAccount}{' '}
+          <button
             type="button"
-            className="mt-4 w-full border border-[#dadce0] bg-white text-[#3c4043] hover:bg-[#f8f9fa] dark:border-[#5f6368] dark:bg-[#202124] dark:text-[#e8eaed] dark:hover:bg-[#303134]"
-            onClick={onGoogleAuth}
-            disabled={isLoading}
+            className="text-primary font-medium underline-offset-4 hover:underline"
+            onClick={onGoToSignIn}
           >
-            {isRedirecting ? <Spinner className="mr-2" /> : <GoogleIcon className="mr-2 h-5 w-5" />}
-            {isRedirecting ? copy.googleLoading : copy.googleButton}
-          </Button>
-
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card text-muted-foreground px-2">{copy.magicLinkAlt}</span>
-            </div>
-          </div>
-
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            onClick={onMagicLink}
-            disabled={magicLinkDisabled}
-          >
-            {isSendingMagicLink ? <Spinner className="mr-2" /> : <Mail className="mr-2 h-4 w-4" />}
-            {isSendingMagicLink ? copy.magicLinkSending : copy.sendCode}
-          </Button>
-
-          <div className="text-muted-foreground mt-6 text-center text-sm">
-            <p>
-              {copy.hasAccount}{' '}
-              <Link
-                to="/auth/sign-in"
-                className="text-primary font-medium underline-offset-4 hover:underline"
-              >
-                {copy.signInLink}
-              </Link>
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+            {copy.signInLink}
+          </button>
+        </p>
+      </div>
+    </FormCard>
   );
 }
 

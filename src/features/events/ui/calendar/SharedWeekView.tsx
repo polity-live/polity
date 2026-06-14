@@ -15,7 +15,7 @@ import {
   WEEK_VIEW_SLOT_HEIGHT,
   WEEK_VIEW_SLOT_MINUTES,
   WEEK_VIEW_SLOTS_PER_DAY,
-} from '@/features/events/logic/weekViewGrid';
+} from '@/features/shared/ui/calendar';
 import { Calendar as CalendarIcon, MapPin } from 'lucide-react';
 import {
   getCompactCalendarEventClassName,

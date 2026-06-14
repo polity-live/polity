@@ -1,3 +1,4 @@
+import { FormControlInput } from '@/features/shared/ui/form';
 import { useState } from 'react';
 import {
   Card,
@@ -7,7 +8,6 @@ import {
   CardTitle,
 } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Input } from '@/features/shared/ui/ui/input';
 import { Loader2 } from 'lucide-react';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
@@ -239,7 +239,7 @@ export function SubscriptionPlansGrid({
                 {hasCustomPlan ? (
                   <span className="text-2xl font-bold">{(activeAmount / 100).toFixed(0)}</span>
                 ) : (
-                  <Input
+                  <FormControlInput
                     type="text"
                     inputMode="numeric"
                     maxLength={3}

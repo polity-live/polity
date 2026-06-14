@@ -1,5 +1,4 @@
-import { Card, CardContent } from '@/features/shared/ui/ui/card';
-import { Loader2 } from 'lucide-react';
+import { FeedList, FeedStatePanel } from '@/features/shared/ui/feed';
 import { Notification } from '../types/notification.types';
 import { NotificationItem } from './NotificationItem';
 
@@ -23,30 +22,16 @@ export function NotificationsList({
   onDeleteNotification,
 }: NotificationsListProps) {
   if (isLoading) {
-    return (
-      <Card>
-        <CardContent className="flex flex-col items-center justify-center py-12">
-          <Loader2 className="mb-4 h-12 w-12 animate-spin text-muted-foreground" />
-        </CardContent>
-      </Card>
-    );
+    return <FeedStatePanel isLoading />;
   }
 
   if (notifications.length === 0) {
-    return (
-      <Card>
-        <CardContent className="flex flex-col items-center justify-center py-12">
-          <EmptyIcon className="mb-4 h-12 w-12 text-muted-foreground" />
-          <p className="text-lg font-semibold">{emptyTitle}</p>
-          <p className="text-sm text-muted-foreground">{emptyDescription}</p>
-        </CardContent>
-      </Card>
-    );
+    return <FeedStatePanel icon={EmptyIcon} title={emptyTitle} description={emptyDescription} />;
   }
 
   return (
-    <div className="space-y-3">
-      {notifications.map((notification) => (
+    <FeedList>
+      {notifications.map(notification => (
         <NotificationItem
           key={notification.id}
           notification={notification}
@@ -54,6 +39,6 @@ export function NotificationsList({
           onDeleteNotification={onDeleteNotification}
         />
       ))}
-    </div>
+    </FeedList>
   );
 }

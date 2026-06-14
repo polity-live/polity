@@ -1,4 +1,4 @@
-import { Badge } from '@/features/shared/ui/ui/badge';
+import { BadgeControl } from '@/features/shared/ui/status';
 import { Flag, AlertCircle } from 'lucide-react';
 import { TodoPriority } from '../types/todo.types';
 
@@ -16,10 +16,10 @@ export function TodoPriorityBadge({ priority, showIcon = false }: TodoPriorityBa
   };
 
   return (
-    <Badge variant="outline" className={`${colors[priority]} capitalize`}>
+    <BadgeControl variant="outline" className={`${colors[priority]} capitalize`}>
       {showIcon && <TodoPriorityIcon priority={priority} />}
       {priority}
-    </Badge>
+    </BadgeControl>
   );
 }
 

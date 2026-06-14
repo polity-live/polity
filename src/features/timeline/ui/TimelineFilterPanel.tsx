@@ -1,5 +1,7 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
+import { FormControlLabel, FormControlCheckbox } from '@/features/shared/ui/form';
 import { X, RotateCcw } from 'lucide-react';
 import {
   useTranslation,
@@ -7,17 +9,9 @@ import {
 } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Checkbox } from '@/features/shared/ui/ui/checkbox';
-import { Label } from '@/features/shared/ui/ui/label';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Separator } from '@/features/shared/ui/ui/separator';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/features/shared/ui/ui/sheet';
+import { ScrollableSheetContent } from '@/features/shared/ui/dialog';
+import { Sheet, SheetDescription, SheetHeader, SheetTitle } from '@/features/shared/ui/ui/sheet';
 import { ContentType, CONTENT_TYPE_CONFIG } from '../constants/content-type-config';
 import { DateRangeFilter, EngagementFilter, ALL_CONTENT_TYPES } from '../hooks/useTimelineFilters';
 
@@ -158,7 +152,7 @@ export function TimelineFilterPanel({
 
   return (
     <Sheet open={open} onOpenChange={isOpen => !isOpen && onClose()}>
-      <SheetContent className="w-[320px] overflow-y-auto sm:w-[400px]">
+      <ScrollableSheetContent className="w-[320px] sm:w-[400px]">
         <SheetHeader>
           <SheetTitle className="flex items-center justify-between">
             {t('features.timeline.filters.title', { defaultValue: 'Filters' })}
@@ -218,18 +212,18 @@ export function TimelineFilterPanel({
                         : 'bg-muted/50 border-transparent'
                     )}
                   >
-                    <Checkbox
+                    <FormControlCheckbox
                       id={`filter-${type}`}
                       checked={isSelected}
                       onCheckedChange={() => onContentTypeToggle(type)}
                     />
-                    <Label
+                    <FormControlLabel
                       htmlFor={`filter-${type}`}
                       className="flex cursor-pointer items-center gap-1.5 text-sm"
                     >
                       <Icon className={cn('h-4 w-4', config.accentColor)} />
                       {t(config.labelKey)}
-                    </Label>
+                    </FormControlLabel>
                   </div>
                 );
               })}
@@ -322,7 +316,7 @@ export function TimelineFilterPanel({
                   {availableTopics.map(topic => {
                     const isSelected = topics.includes(topic);
                     return (
-                      <Badge
+                      <BadgeControl
                         key={topic}
                         variant={isSelected ? 'default' : 'outline'}
                         className={cn(
@@ -333,7 +327,7 @@ export function TimelineFilterPanel({
                       >
                         {topic}
                         {isSelected && <X className="ml-1 h-3 w-3" />}
-                      </Badge>
+                      </BadgeControl>
                     );
                   })}
                 </div>
@@ -348,7 +342,7 @@ export function TimelineFilterPanel({
             {t('common.actions.close', { defaultValue: 'Close' })}
           </Button>
         </div>
-      </SheetContent>
+      </ScrollableSheetContent>
     </Sheet>
   );
 }

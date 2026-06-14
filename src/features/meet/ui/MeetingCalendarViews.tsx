@@ -7,15 +7,15 @@ import { MapPin, Video } from 'lucide-react';
 import { formatTime } from '@/features/meet/logic/date-helpers.ts';
 import type { MeetingInstance } from '../hooks/useMeetPage';
 import { MeetingInstanceCard } from './MeetingInstanceCard';
-import { SharedChronologicalListView } from '@/features/events/ui/calendar/SharedChronologicalListView';
 import {
   buildDayTimeLayout,
+  CalendarChronologicalListView,
   DEFAULT_WEEK_VIEW_SCROLL_TOP,
   getWeekGridDays,
   isSameWeekGridDay,
   WEEK_VIEW_HOUR_HEIGHT,
   WEEK_VIEW_SLOT_HEIGHT,
-} from '@/features/events/logic/weekViewGrid';
+} from '@/features/shared/ui/calendar';
 
 interface MeetingListViewProps {
   instances: MeetingInstance[];
@@ -197,7 +197,7 @@ export function MeetingListView({
   const { t } = useTranslation();
 
   return (
-    <SharedChronologicalListView
+    <CalendarChronologicalListView
       items={instances}
       selectedDate={selectedDate}
       getItemDate={instance => instance.startDate}

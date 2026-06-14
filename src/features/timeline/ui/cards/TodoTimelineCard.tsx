@@ -1,5 +1,6 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { useState } from 'react';
 import { CheckSquare, Square, Users, Clock, UserPlus, Activity, UserCheck } from 'lucide-react';
 import {
@@ -7,7 +8,6 @@ import {
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Progress } from '@/features/shared/ui/ui/progress';
 import { Popover, PopoverContent, PopoverTrigger } from '@/features/shared/ui/ui/popover';
 import { Button } from '@/features/shared/ui/ui/button';
@@ -248,10 +248,13 @@ export function TodoTimelineCard({
           ) : null}
 
           {urgency && !todo.isCompleted && (
-            <Badge variant="outline" className={cn('text-xs', urgency.bgColor, urgency.color)}>
+            <BadgeControl
+              variant="outline"
+              className={cn('text-xs', urgency.bgColor, urgency.color)}
+            >
               <Clock className="mr-1 h-3 w-3" />
               {urgency.label}
-            </Badge>
+            </BadgeControl>
           )}
         </div>
       </TimelineCardHeader>

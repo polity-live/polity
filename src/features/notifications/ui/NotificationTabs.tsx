@@ -1,4 +1,4 @@
-import { Badge } from '@/features/shared/ui/ui/badge';
+import { BadgeControl } from '@/features/shared/ui/status';
 import { TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import { ScrollableTabsList } from '@/features/shared/ui/ui/scrollable-tabs';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -17,35 +17,35 @@ export function NotificationTabs({
   entityCount,
 }: NotificationTabsProps) {
   const { t } = useTranslation();
-  
+
   return (
     <ScrollableTabsList>
       <TabsTrigger value="all">
         {t('features.notifications.filters.all')}
-        <Badge variant="secondary" className="ml-2">
+        <BadgeControl variant="secondary" className="ml-2">
           {allCount}
-        </Badge>
+        </BadgeControl>
       </TabsTrigger>
       <TabsTrigger value="unread">
         {t('features.notifications.filters.unread')}
         {unreadCount > 0 && (
-          <Badge variant="default" className="ml-2">
+          <BadgeControl variant="default" className="ml-2">
             {unreadCount}
-          </Badge>
+          </BadgeControl>
         )}
       </TabsTrigger>
       <TabsTrigger value="read">{t('features.notifications.filters.read')}</TabsTrigger>
       <TabsTrigger value="personal">
         {t('features.notifications.filters.personal')}
-        <Badge variant="secondary" className="ml-2">
+        <BadgeControl variant="secondary" className="ml-2">
           {personalCount}
-        </Badge>
+        </BadgeControl>
       </TabsTrigger>
       <TabsTrigger value="entity">
         {t('features.notifications.filters.entity')}
-        <Badge variant="secondary" className="ml-2">
+        <BadgeControl variant="secondary" className="ml-2">
           {entityCount}
-        </Badge>
+        </BadgeControl>
       </TabsTrigger>
     </ScrollableTabsList>
   );

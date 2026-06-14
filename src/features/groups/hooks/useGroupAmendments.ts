@@ -11,6 +11,19 @@ import {
   type GroupAmendmentDisplayStatus,
 } from '@/features/groups/logic/groupAmendmentStatus';
 
+type AmendmentHashtagJunction = readonly {
+  hashtag?: { id: string; tag: string } | null;
+}[];
+
+interface AmendmentSummary {
+  id?: string | null;
+  title?: string | null;
+  reason?: string | null;
+  code?: string | null;
+  editing_mode?: string | null;
+  amendment_hashtags?: AmendmentHashtagJunction | null;
+}
+
 export interface GroupAmendmentListItem {
   id: string;
   amendment_id: string;
@@ -21,8 +34,14 @@ export interface GroupAmendmentListItem {
   group_status?: GroupAmendmentBadgeStatus | null;
   editing_mode?: string | null;
   date?: number | string | null;
-  amendment_hashtags?: GroupAmendmentRow['amendment']['amendment_hashtags'];
+  amendment_hashtags?: AmendmentHashtagJunction;
   process_step_run_id?: string | null;
+}
+
+function isGroupAmendmentListItem(
+  item: GroupAmendmentListItem | null
+): item is GroupAmendmentListItem {
+  return item !== null;
 }
 
 /**
@@ -40,7 +59,8 @@ export function useGroupAmendments(
   const decisionItems = useMemo<GroupAmendmentListItem[]>(
     () =>
       (amendments as GroupAmendmentRow[])
-        .map(decision => {
+        .map((decision): GroupAmendmentListItem | null => {
+          const amendment = decision.amendment as AmendmentSummary | null | undefined;
           const groupStatus = getGroupAmendmentBadgeStatus(decision.status);
           const displayStatus = normalizeGroupAmendmentDisplayStatus(decision.status);
           if (!groupStatus || !displayStatus) {
@@ -49,39 +69,40 @@ export function useGroupAmendments(
 
           return {
             id: decision.id,
-            amendment_id: decision.amendment?.id ?? decision.amendment_id,
-            title: decision.amendment?.title ?? null,
-            subtitle: decision.amendment?.reason ?? null,
-            code: decision.amendment?.code ?? null,
+            amendment_id: amendment?.id ?? decision.amendment_id,
+            title: amendment?.title ?? null,
+            subtitle: amendment?.reason ?? null,
+            code: amendment?.code ?? null,
             decision_status: displayStatus,
             group_status: groupStatus,
-            editing_mode: decision.amendment?.editing_mode ?? null,
+            editing_mode: amendment?.editing_mode ?? null,
             date: decision.decided_at ?? decision.updated_at ?? decision.created_at ?? null,
-            amendment_hashtags: decision.amendment?.amendment_hashtags ?? [],
+            amendment_hashtags: amendment?.amendment_hashtags ?? [],
             process_step_run_id: decision.process_step_run_id ?? null,
           };
         })
-        .filter((item): item is GroupAmendmentListItem => item !== null),
+        .filter(isGroupAmendmentListItem),
     [amendments]
   );
 
   const eventStepRunItems = useMemo<GroupAmendmentListItem[]>(
     () =>
       (stepRuns as GroupAmendmentEventStepRunRow[])
-        .map(stepRun => {
-          const amendment = stepRun.process_run?.amendment;
+        .map((stepRun): GroupAmendmentListItem | null => {
+          const amendment = stepRun.process_run?.amendment as AmendmentSummary | null | undefined;
           const groupStatus = getGroupAmendmentBadgeStatus(stepRun.decision_status, stepRun.status);
           const displayStatus = normalizeGroupAmendmentDisplayStatus(
             stepRun.decision_status,
             stepRun.status
           );
-          if (!groupStatus || !displayStatus || !stepRun.amendment_id) {
+          const amendmentId = amendment?.id;
+          if (!groupStatus || !displayStatus || !amendmentId) {
             return null;
           }
 
           return {
             id: `event-step:${stepRun.id}`,
-            amendment_id: amendment?.id ?? stepRun.amendment_id,
+            amendment_id: amendmentId,
             title: amendment?.title ?? null,
             subtitle: amendment?.reason ?? null,
             code: amendment?.code ?? null,
@@ -93,7 +114,7 @@ export function useGroupAmendments(
             process_step_run_id: stepRun.id,
           };
         })
-        .filter((item): item is GroupAmendmentListItem => item !== null),
+        .filter(isGroupAmendmentListItem),
     [stepRuns]
   );
 

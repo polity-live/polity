@@ -1,5 +1,4 @@
-import { Label } from '@/features/shared/ui/ui/label';
-import { Switch } from '@/features/shared/ui/ui/switch';
+import { FormControlLabel, FormControlSwitch } from '@/features/shared/ui/form';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 
 interface SettingItemProps {
@@ -24,17 +23,17 @@ export function SettingItem({
   return (
     <div className="flex items-center justify-between space-x-4 py-3">
       <div className="flex-1 space-y-0.5">
-        <Label className="text-sm font-medium">
+        <FormControlLabel className="text-sm font-medium">
           {label}
           {adminOnly && (
-            <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+            <span className="bg-muted text-muted-foreground ml-2 rounded-full px-2 py-0.5 text-xs">
               {t('pages.notifications.settingsPage.adminOnly')}
             </span>
           )}
-        </Label>
-        {description && <p className="text-xs text-muted-foreground">{description}</p>}
+        </FormControlLabel>
+        {description && <p className="text-muted-foreground text-xs">{description}</p>}
       </div>
-      <Switch checked={checked} onCheckedChange={onCheckedChange} disabled={disabled} />
+      <FormControlSwitch checked={checked} onCheckedChange={onCheckedChange} disabled={disabled} />
     </div>
   );
 }

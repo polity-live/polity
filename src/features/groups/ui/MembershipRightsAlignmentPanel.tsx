@@ -1,23 +1,16 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowUpDown, Eye, ShieldCheck, ShieldAlert, ShieldX } from 'lucide-react';
-import { Badge } from '@/features/shared/ui/ui/badge';
+import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
+import {
+  Panel,
+  PanelContent,
+  PanelDescription,
+  PanelHeader,
+  PanelTitle,
+} from '@/features/shared/ui/layout';
+import { StatusBadge as SharedStatusBadge } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/features/shared/ui/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/features/shared/ui/ui/table';
 import { ToggleGroup, ToggleGroupItem } from '@/features/shared/ui/ui/toggle-group';
 import { UserTableCell } from '@/features/shared/ui/ui/user-table-cell';
 import { cn } from '@/features/shared/utils/utils';
@@ -85,6 +78,95 @@ export function MembershipRightsAlignmentPanel<TMembership extends Participation
         }),
     [filter, rows]
   );
+  const columns: ColumnDef<MembershipRightsAlignmentRow<TMembership>>[] = [
+    {
+      id: 'member',
+      header: t('features.groups.memberships.rightsAlignment.columns.member'),
+      meta: {
+        className: 'min-w-[220px]',
+      },
+      cell: ({ row }) => (
+        <div className="space-y-2">
+          <UserTableCell user={row.original.membership.user} />
+          <AlignmentStatusBadge status={row.original.status} />
+        </div>
+      ),
+    },
+    {
+      id: 'origin',
+      header: t('features.groups.memberships.rightsAlignment.columns.origin'),
+      meta: {
+        className: 'min-w-[180px]',
+      },
+      cell: ({ row }) => (
+        <OriginCell
+          partGroup={row.original.membership.partGroup ?? null}
+          baseGroup={row.original.membership.baseGroup ?? null}
+          sourceGroupId={row.original.sourceGroupId}
+        />
+      ),
+    },
+    {
+      id: 'connectedRights',
+      header: t('features.groups.memberships.rightsAlignment.columns.connectedRights'),
+      meta: {
+        className: 'min-w-[180px]',
+      },
+      cell: ({ row }) => <ConnectedRightsCell row={row.original} />,
+    },
+    {
+      id: 'missing',
+      header: t('features.groups.memberships.rightsAlignment.columns.missing'),
+      meta: {
+        className: 'min-w-[220px]',
+      },
+      cell: ({ row }) => <ActionRightList rights={row.original.missingRights} variant="missing" />,
+    },
+    {
+      id: 'extra',
+      header: t('features.groups.memberships.rightsAlignment.columns.extra'),
+      meta: {
+        className: 'min-w-[220px]',
+      },
+      cell: ({ row }) => <ActionRightList rights={row.original.extraRights} variant="extra" />,
+    },
+    {
+      id: 'roles',
+      header: t('features.groups.memberships.rightsAlignment.columns.roles'),
+      meta: {
+        className: 'min-w-[180px]',
+      },
+      cell: ({ row }) => <RoleList membership={row.original.membership} />,
+    },
+    {
+      id: 'actions',
+      header: t('features.groups.memberships.rightsAlignment.columns.actions'),
+      meta: {
+        headerClassName: 'text-right',
+        cellClassName: 'text-right',
+      },
+      cell: ({ row }) => (
+        <div className="flex justify-end gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onOpenRightsDialog(row.original.membership)}
+          >
+            <Eye className="mr-1 h-4 w-4" />
+            {t('features.groups.memberships.rightsAlignment.actions.rights')}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onOpenChangeRoleDialog(row.original.membership)}
+          >
+            <ArrowUpDown className="mr-1 h-4 w-4" />
+            {t('features.groups.memberships.rightsAlignment.actions.manageRoles')}
+          </Button>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -134,109 +216,31 @@ export function MembershipRightsAlignmentPanel<TMembership extends Participation
         <SummaryTile status="mixed" count={counts.mixed} />
       </div>
 
-      <Card className="border-border/70 from-background to-muted/20 bg-gradient-to-b">
-        <CardHeader>
-          <CardTitle>{t('features.groups.memberships.rightsAlignment.tableTitle')}</CardTitle>
-          <CardDescription>
+      <Panel className="border-border/70 from-background to-muted/20 bg-gradient-to-b">
+        <PanelHeader>
+          <PanelTitle>{t('features.groups.memberships.rightsAlignment.tableTitle')}</PanelTitle>
+          <PanelDescription>
             {t('features.groups.memberships.rightsAlignment.tableDescription', {
               count: visibleRows.length,
               defaultValue: '{{count}} visible members',
             })}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <p className="text-muted-foreground py-12 text-center text-sm">
-              {t('features.groups.memberships.rightsAlignment.loading')}
-            </p>
-          ) : visibleRows.length === 0 ? (
-            <p className="text-muted-foreground py-12 text-center text-sm">
-              {t('features.groups.memberships.rightsAlignment.empty')}
-            </p>
-          ) : (
-            <div className="border-border/70 overflow-x-auto rounded-lg border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="min-w-[220px]">
-                      {t('features.groups.memberships.rightsAlignment.columns.member')}
-                    </TableHead>
-                    <TableHead className="min-w-[180px]">
-                      {t('features.groups.memberships.rightsAlignment.columns.origin')}
-                    </TableHead>
-                    <TableHead className="min-w-[180px]">
-                      {t('features.groups.memberships.rightsAlignment.columns.connectedRights')}
-                    </TableHead>
-                    <TableHead className="min-w-[220px]">
-                      {t('features.groups.memberships.rightsAlignment.columns.missing')}
-                    </TableHead>
-                    <TableHead className="min-w-[220px]">
-                      {t('features.groups.memberships.rightsAlignment.columns.extra')}
-                    </TableHead>
-                    <TableHead className="min-w-[180px]">
-                      {t('features.groups.memberships.rightsAlignment.columns.roles')}
-                    </TableHead>
-                    <TableHead className="text-right">
-                      {t('features.groups.memberships.rightsAlignment.columns.actions')}
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {visibleRows.map(row => (
-                    <TableRow key={row.membership.id}>
-                      <TableCell>
-                        <div className="space-y-2">
-                          <UserTableCell user={row.membership.user} />
-                          <StatusBadge status={row.status} />
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <OriginCell
-                          partGroup={row.membership.partGroup ?? null}
-                          baseGroup={row.membership.baseGroup ?? null}
-                          sourceGroupId={row.sourceGroupId}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <ConnectedRightsCell row={row} />
-                      </TableCell>
-                      <TableCell>
-                        <ActionRightList rights={row.missingRights} variant="missing" />
-                      </TableCell>
-                      <TableCell>
-                        <ActionRightList rights={row.extraRights} variant="extra" />
-                      </TableCell>
-                      <TableCell>
-                        <RoleList membership={row.membership} />
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => onOpenRightsDialog(row.membership)}
-                          >
-                            <Eye className="mr-1 h-4 w-4" />
-                            {t('features.groups.memberships.rightsAlignment.actions.rights')}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => onOpenChangeRoleDialog(row.membership)}
-                          >
-                            <ArrowUpDown className="mr-1 h-4 w-4" />
-                            {t('features.groups.memberships.rightsAlignment.actions.manageRoles')}
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          </PanelDescription>
+        </PanelHeader>
+        <PanelContent>
+          <DataTable
+            columns={columns}
+            data={visibleRows}
+            getRowId={row => row.membership.id}
+            isLoading={isLoading}
+            loadingRowCount={4}
+            enablePagination={false}
+            emptyTitle={t('features.groups.memberships.rightsAlignment.empty')}
+            emptyDescription={
+              isLoading ? t('features.groups.memberships.rightsAlignment.loading') : undefined
+            }
+          />
+        </PanelContent>
+      </Panel>
     </div>
   );
 }
@@ -274,21 +278,21 @@ function SummaryTile({
   );
 }
 
-function StatusBadge({ status }: { status: MembershipRightsAlignmentStatus }) {
+function AlignmentStatusBadge({ status }: { status: MembershipRightsAlignmentStatus }) {
   const { t } = useTranslation();
-  const className =
+  const tone =
     status === 'aligned'
-      ? 'border-emerald-500/50 text-emerald-700 dark:text-emerald-300'
+      ? 'success'
       : status === 'missing'
-        ? 'border-amber-500/50 text-amber-700 dark:text-amber-300'
+        ? 'warning'
         : status === 'extra'
-          ? 'border-sky-500/50 text-sky-700 dark:text-sky-300'
-          : 'border-rose-500/50 text-rose-700 dark:text-rose-300';
+          ? 'info'
+          : 'destructive';
 
   return (
-    <Badge variant="outline" className={className}>
+    <SharedStatusBadge status={status} tone={tone}>
       {getStatusLabel(status, t)}
-    </Badge>
+    </SharedStatusBadge>
   );
 }
 
@@ -344,9 +348,14 @@ function ConnectedRightsCell<TMembership extends ParticipationLike>({
   return (
     <div className="flex flex-wrap gap-2">
       {row.connectedRights.map(right => (
-        <Badge key={right.rightKey} variant="secondary" title={formatPathTitle(right.paths)}>
+        <SharedStatusBadge
+          key={right.rightKey}
+          status="connected"
+          tone="neutral"
+          title={formatPathTitle(right.paths)}
+        >
           {getRightLabel(right.rightKey, (key, fallback) => tText(t, key, fallback ?? key))}
-        </Badge>
+        </SharedStatusBadge>
       ))}
     </div>
   );
@@ -375,17 +384,13 @@ function ActionRightList({
   return (
     <div className="flex flex-wrap gap-2">
       {rights.map(right => (
-        <Badge
+        <SharedStatusBadge
           key={`${right.resource}:${right.action}`}
-          variant="outline"
-          className={
-            variant === 'missing'
-              ? 'border-amber-500/50 text-amber-700 dark:text-amber-300'
-              : 'border-sky-500/50 text-sky-700 dark:text-sky-300'
-          }
+          status={variant}
+          tone={variant === 'missing' ? 'warning' : 'info'}
         >
           {right.label}
-        </Badge>
+        </SharedStatusBadge>
       ))}
     </div>
   );

@@ -1,6 +1,6 @@
+import { FormControlInput } from '@/features/shared/ui/form';
 import { BlogTimelineCard } from '@/features/timeline/ui/cards/BlogTimelineCard';
 import { StatementTimelineCard } from '@/features/timeline/ui/cards/StatementTimelineCard';
-import { Input } from '@/features/shared/ui/ui/input';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
   useTranslation,
@@ -108,7 +108,7 @@ export function BlogsAndStatementsView({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-          <Input
+          <FormControlInput
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             placeholder={translateText('generated.inline.0299_search_6d7a30a9')}

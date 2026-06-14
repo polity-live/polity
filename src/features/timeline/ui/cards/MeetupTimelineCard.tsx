@@ -1,5 +1,6 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { format, isToday, isTomorrow } from 'date-fns';
 import { Clock, ExternalLink, MapPin, Trash2, Users, Video } from 'lucide-react';
 import {
@@ -7,7 +8,6 @@ import {
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
 import { cn } from '@/features/shared/utils/utils';
 import {
@@ -149,10 +149,10 @@ export function MeetupTimelineCard({
         subtitle={meetup.organizerName}
         badge={
           state === 'live' ? (
-            <Badge variant="destructive" className="animate-pulse">
+            <BadgeControl variant="destructive" className="animate-pulse">
               <span className="mr-1.5 h-2 w-2 animate-pulse rounded-full bg-white" />
               {t('features.timeline.cards.happeningNow')}
-            </Badge>
+            </BadgeControl>
           ) : (
             <TimelineCardBadge
               label={meetingTypeLabel}
@@ -174,9 +174,9 @@ export function MeetupTimelineCard({
             <span className="text-2xl leading-none font-bold">{format(startDate, 'd')}</span>
             <span className="text-muted-foreground mt-0.5 text-xs">{format(startDate, 'p')}</span>
             {dateLabel && (
-              <Badge variant="secondary" className="mt-1 text-xs">
+              <BadgeControl variant="secondary" className="mt-1 text-xs">
                 {dateLabel}
-              </Badge>
+              </BadgeControl>
             )}
           </div>
         </div>
@@ -214,25 +214,29 @@ export function MeetupTimelineCard({
 
         <div className="mb-3 flex flex-wrap gap-2">
           {isOwner && (
-            <Badge variant="secondary">{t('features.calendar.eventCard.yourMeeting')}</Badge>
+            <BadgeControl variant="secondary">
+              {t('features.calendar.eventCard.yourMeeting')}
+            </BadgeControl>
           )}
           {!isOwner && isBookedByMe && (
-            <Badge className="bg-green-500/15 text-green-700 dark:text-green-400">
+            <BadgeControl className="bg-green-500/15 text-green-700 dark:text-green-400">
               {t('features.calendar.meeting.booked')}
-            </Badge>
+            </BadgeControl>
           )}
           {!isBookedByMe && isFull && (
-            <Badge variant="outline">{t('features.calendar.meeting.fullyBooked')}</Badge>
+            <BadgeControl variant="outline">
+              {t('features.calendar.meeting.fullyBooked')}
+            </BadgeControl>
           )}
           {!isBookedByMe && !isFull && !isPast && isBookable && (
-            <Badge variant="outline" className="border-dashed">
+            <BadgeControl variant="outline" className="border-dashed">
               {t('features.calendar.meeting.available')}
-            </Badge>
+            </BadgeControl>
           )}
           {isPast && (
-            <Badge variant="secondary">
+            <BadgeControl variant="secondary">
               {translateText('generated.inline.1161_past_405c12fb')}
-            </Badge>
+            </BadgeControl>
           )}
         </div>
 

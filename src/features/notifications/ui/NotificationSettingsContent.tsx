@@ -1,5 +1,13 @@
 'use client';
 
+import {
+  FormControlLabel,
+  FormControlSelect,
+  FormControlSelectContent,
+  FormControlSelectItem,
+  FormControlSelectTrigger,
+  FormControlSelectValue,
+} from '@/features/shared/ui/form';
 import { useState } from 'react';
 import {
   Card,
@@ -8,15 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/features/shared/ui/ui/card';
-import { Label } from '@/features/shared/ui/ui/label';
 import { Button } from '@/features/shared/ui/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/features/shared/ui/ui/select';
 import { Separator } from '@/features/shared/ui/ui/separator';
 import {
   Users,
@@ -101,9 +101,9 @@ export function NotificationSettingsContent({ userId }: NotificationSettingsCont
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between space-x-4 py-3">
             <div className="flex-1 space-y-0.5">
-              <Label className="text-sm font-medium">
+              <FormControlLabel className="text-sm font-medium">
                 {t('pages.notifications.settingsPage.delivery.push')}
-              </Label>
+              </FormControlLabel>
               <p className="text-muted-foreground text-xs">
                 {t('pages.notifications.settingsPage.delivery.pushDescription')}
               </p>
@@ -695,38 +695,38 @@ export function NotificationSettingsContent({ userId }: NotificationSettingsCont
           <Separator />
           <div className="flex items-center justify-between space-x-4 py-3">
             <div className="flex-1 space-y-0.5">
-              <Label className="text-sm font-medium">
+              <FormControlLabel className="text-sm font-medium">
                 {t('pages.notifications.settingsPage.timeline.refreshFrequency')}
-              </Label>
+              </FormControlLabel>
               <p className="text-muted-foreground text-xs">
                 {t('pages.notifications.settingsPage.timeline.refreshFrequencyDesc')}
               </p>
             </div>
-            <Select
+            <FormControlSelect
               value={settings.timelineSettings.refreshFrequency}
               onValueChange={(value: TimelineRefreshFrequency) =>
                 updateTimelineSettings({ refreshFrequency: value })
               }
               disabled={isUpdating}
             >
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="realtime">
+              <FormControlSelectTrigger className="w-40">
+                <FormControlSelectValue />
+              </FormControlSelectTrigger>
+              <FormControlSelectContent>
+                <FormControlSelectItem value="realtime">
                   {t('pages.notifications.settingsPage.timeline.realtime')}
-                </SelectItem>
-                <SelectItem value="every5min">
+                </FormControlSelectItem>
+                <FormControlSelectItem value="every5min">
                   {t('pages.notifications.settingsPage.timeline.every5min')}
-                </SelectItem>
-                <SelectItem value="every15min">
+                </FormControlSelectItem>
+                <FormControlSelectItem value="every15min">
                   {t('pages.notifications.settingsPage.timeline.every15min')}
-                </SelectItem>
-                <SelectItem value="manual">
+                </FormControlSelectItem>
+                <FormControlSelectItem value="manual">
                   {t('pages.notifications.settingsPage.timeline.manualOnly')}
-                </SelectItem>
-              </SelectContent>
-            </Select>
+                </FormControlSelectItem>
+              </FormControlSelectContent>
+            </FormControlSelect>
           </div>
         </CardContent>
       </Card>

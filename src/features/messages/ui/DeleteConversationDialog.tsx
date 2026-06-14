@@ -1,6 +1,6 @@
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
@@ -23,12 +23,10 @@ export function DeleteConversationDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <ScrollableDialogContent>
         <DialogHeader>
           <DialogTitle>{t('features.messages.conversation.delete')}</DialogTitle>
-          <DialogDescription>
-            {t('features.messages.conversation.deleteConfirm')}
-          </DialogDescription>
+          <DialogDescription>{t('features.messages.conversation.deleteConfirm')}</DialogDescription>
         </DialogHeader>
         <div className="flex justify-end gap-2 pt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -44,7 +42,7 @@ export function DeleteConversationDialog({
             {t('common.actions.delete')}
           </Button>
         </div>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

@@ -1,3 +1,5 @@
+import { BadgeControl } from '@/features/shared/ui/status';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { Link } from '@tanstack/react-router';
 import { Calendar, Clock, MapPin, Users, Video } from 'lucide-react';
 import { getBaseEventId } from '@/features/calendar/logic/eventIdUtils';
@@ -5,11 +7,9 @@ import {
   useTranslation,
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -85,21 +85,23 @@ export function CalendarItemDetailsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[80vh] overflow-hidden sm:max-w-xl">
+      <ScrollableDialogContent className="max-h-[80vh] overflow-hidden sm:max-w-xl">
         <DialogHeader>
           <div className="flex flex-wrap items-center gap-2 pr-8">
-            <Badge variant="outline">
+            <BadgeControl variant="outline">
               {item.isMeeting
                 ? t('features.timeline.contentTypes.meetup')
                 : t('features.timeline.contentTypes.event')}
-            </Badge>
+            </BadgeControl>
             {item.isMeeting && item.isBookedByMe && (
-              <Badge className="bg-green-500/15 text-green-700 dark:text-green-400">
+              <BadgeControl className="bg-green-500/15 text-green-700 dark:text-green-400">
                 {t('features.calendar.meeting.booked')}
-              </Badge>
+              </BadgeControl>
             )}
             {item.isMeeting && !item.isBookedByMe && item.is_bookable && (
-              <Badge variant="secondary">{t('features.calendar.meeting.available')}</Badge>
+              <BadgeControl variant="secondary">
+                {t('features.calendar.meeting.available')}
+              </BadgeControl>
             )}
           </div>
           <DialogTitle className="pr-8">{item.title}</DialogTitle>
@@ -186,9 +188,9 @@ export function CalendarItemDetailsDialog({
             {item.hashtags && item.hashtags.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {item.hashtags.map(hashtag => (
-                  <Badge key={hashtag.id} variant="secondary">
+                  <BadgeControl key={hashtag.id} variant="secondary">
                     #{hashtag.tag}
-                  </Badge>
+                  </BadgeControl>
                 ))}
               </div>
             )}
@@ -205,7 +207,7 @@ export function CalendarItemDetailsDialog({
             </Button>
           )}
         </DialogFooter>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

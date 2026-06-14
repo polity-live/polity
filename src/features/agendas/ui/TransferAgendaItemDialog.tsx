@@ -1,14 +1,13 @@
 'use client';
 
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { useState, useMemo } from 'react';
-import { usePermissions } from '@/zero/rbac';
 import { useAuth } from '@/providers/auth-provider';
 import { useUserEventParticipations } from '@/zero/events/useEventState';
 import { useAgendaItemMutations } from '../hooks/useAgendaItemMutations';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -19,7 +18,6 @@ import { TypeaheadSearch } from '@/features/shared/ui/typeahead/TypeaheadSearch'
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { ArrowRight, Calendar, AlertTriangle, Loader2 } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { toast } from 'sonner';
@@ -65,7 +63,8 @@ export function TransferAgendaItemDialog({
   const { handleTransfer, transferLoading } = useAgendaItemMutations(agendaItemId, currentEventId);
 
   // Query all events where user is a participant
-  const { participations: participationsData, isLoading: participationsLoading } = useUserEventParticipations(user?.id);
+  const { participations: participationsData, isLoading: participationsLoading } =
+    useUserEventParticipations(user?.id);
 
   // Filter events where user has agendaItems.manage permission
   const eventsWithPermission = useMemo(() => {
@@ -73,7 +72,7 @@ export function TransferAgendaItemDialog({
 
     const events: EventWithPermission[] = [];
 
-    participationsData.forEach((participation) => {
+    participationsData.forEach(participation => {
       // Skip current event
       if (participation.event?.id === currentEventId) return;
       if (!participation.event) return;
@@ -129,7 +128,7 @@ export function TransferAgendaItemDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <ScrollableDialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{t('features.events.agenda.transferItem')}</DialogTitle>
           <DialogDescription>
@@ -140,15 +139,15 @@ export function TransferAgendaItemDialog({
         <div className="space-y-4 py-4">
           {/* Current Event Display */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">
+            <label className="text-muted-foreground text-sm font-medium">
               {t('features.events.agenda.currentEvent')}
             </label>
             <Card className="bg-muted/50">
               <CardContent className="flex items-center gap-3 p-4">
-                <Calendar className="h-5 w-5 text-muted-foreground" />
+                <Calendar className="text-muted-foreground h-5 w-5" />
                 <div>
                   <p className="font-medium">{currentEventTitle}</p>
-                  <p className="text-sm text-muted-foreground">{agendaItemTitle}</p>
+                  <p className="text-muted-foreground text-sm">{agendaItemTitle}</p>
                 </div>
               </CardContent>
             </Card>
@@ -156,7 +155,7 @@ export function TransferAgendaItemDialog({
 
           {/* Arrow Indicator */}
           <div className="flex justify-center">
-            <ArrowRight className="h-6 w-6 text-muted-foreground" />
+            <ArrowRight className="text-muted-foreground h-6 w-6" />
           </div>
 
           {/* Destination Event Selection */}
@@ -166,11 +165,11 @@ export function TransferAgendaItemDialog({
             </label>
             {participationsLoading ? (
               <div className="flex items-center justify-center p-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
               </div>
             ) : eventsWithPermission.length === 0 ? (
               <Card className="bg-muted/50">
-                <CardContent className="p-6 text-center text-muted-foreground">
+                <CardContent className="text-muted-foreground p-6 text-center">
                   <p>{t('features.events.agenda.noEventsWithPermission')}</p>
                 </CardContent>
               </Card>
@@ -180,7 +179,7 @@ export function TransferAgendaItemDialog({
                   eventsWithPermission,
                   'event',
                   (e: EventWithPermission) => e.title,
-                  (e: EventWithPermission) => e.group?.name,
+                  (e: EventWithPermission) => e.group?.name
                 )}
                 value={selectedEventId}
                 onChange={(item: TypeaheadItem | null) => setSelectedEventId(item?.id ?? '')}
@@ -218,7 +217,7 @@ export function TransferAgendaItemDialog({
             )}
           </Button>
         </DialogFooter>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

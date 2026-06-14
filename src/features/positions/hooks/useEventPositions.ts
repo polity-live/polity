@@ -50,7 +50,7 @@ export function useEventRoles(eventId: string) {
 
       await createRole({
         id: roleId,
-        title: roleTitle,
+        name: roleTitle,
         description: description.trim(),
         event_id: eventId,
       });
@@ -83,7 +83,7 @@ export function useEventRoles(eventId: string) {
     try {
       await updateRole({
         id: editingRole.id,
-        title: title.trim(),
+        name: title.trim(),
         description: description.trim(),
       });
     } catch (error) {

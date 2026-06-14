@@ -1,26 +1,26 @@
 'use client';
 
+import {
+  FormControlInput,
+  FormControlTextarea,
+  FormControlLabel,
+  FormControlSelect,
+  FormControlSelectContent,
+  FormControlSelectItem,
+  FormControlSelectTrigger,
+  FormControlSelectValue,
+} from '@/features/shared/ui/form';
 import { useState } from 'react';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/features/shared/ui/ui/dialog';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Label } from '@/features/shared/ui/ui/label';
-import { Textarea } from '@/features/shared/ui/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/features/shared/ui/ui/select';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { Plus } from 'lucide-react';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
@@ -58,7 +58,7 @@ export function AddTodoDialog({ open, onOpenChange, onSubmit }: AddTodoDialogPro
           {translateText('generated.inline.0632_add_task_44e578a5')}
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <ScrollableDialogContent>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>
@@ -70,10 +70,10 @@ export function AddTodoDialog({ open, onOpenChange, onSubmit }: AddTodoDialogPro
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="todo-title">
+              <FormControlLabel htmlFor="todo-title">
                 {translateText('generated.inline.0028_title_768e0c1c')}
-              </Label>
-              <Input
+              </FormControlLabel>
+              <FormControlInput
                 id="todo-title"
                 placeholder={translateText('generated.inline.0635_task_title_624d94d8')}
                 value={title}
@@ -82,10 +82,10 @@ export function AddTodoDialog({ open, onOpenChange, onSubmit }: AddTodoDialogPro
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="todo-description">
+              <FormControlLabel htmlFor="todo-description">
                 {translateText('generated.inline.0030_description_55f8ebc8')}
-              </Label>
-              <Textarea
+              </FormControlLabel>
+              <FormControlTextarea
                 id="todo-description"
                 placeholder={translateText(
                   'generated.inline.0636_task_description_optional_e457f179'
@@ -96,34 +96,34 @@ export function AddTodoDialog({ open, onOpenChange, onSubmit }: AddTodoDialogPro
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="todo-priority">
+              <FormControlLabel htmlFor="todo-priority">
                 {translateText('generated.inline.0637_priority_886cbff9')}
-              </Label>
-              <Select value={priority} onValueChange={setPriority}>
-                <SelectTrigger id="todo-priority">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">
+              </FormControlLabel>
+              <FormControlSelect value={priority} onValueChange={setPriority}>
+                <FormControlSelectTrigger id="todo-priority">
+                  <FormControlSelectValue />
+                </FormControlSelectTrigger>
+                <FormControlSelectContent>
+                  <FormControlSelectItem value="low">
                     {translateText('generated.inline.0638_low_a124947c')}
-                  </SelectItem>
-                  <SelectItem value="medium">
+                  </FormControlSelectItem>
+                  <FormControlSelectItem value="medium">
                     {translateText('generated.inline.0639_medium_d404968e')}
-                  </SelectItem>
-                  <SelectItem value="high">
+                  </FormControlSelectItem>
+                  <FormControlSelectItem value="high">
                     {translateText('generated.inline.0640_high_b1a5954a')}
-                  </SelectItem>
-                  <SelectItem value="urgent">
+                  </FormControlSelectItem>
+                  <FormControlSelectItem value="urgent">
                     {translateText('generated.inline.0641_urgent_ecb26f46')}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+                  </FormControlSelectItem>
+                </FormControlSelectContent>
+              </FormControlSelect>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="todo-dueDate">
+              <FormControlLabel htmlFor="todo-dueDate">
                 {translateText('generated.inline.0642_due_date_optional_5908e2f2')}
-              </Label>
-              <Input
+              </FormControlLabel>
+              <FormControlInput
                 id="todo-dueDate"
                 type="date"
                 value={dueDate}
@@ -137,7 +137,7 @@ export function AddTodoDialog({ open, onOpenChange, onSubmit }: AddTodoDialogPro
             </Button>
           </DialogFooter>
         </form>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

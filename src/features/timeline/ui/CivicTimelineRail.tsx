@@ -1,7 +1,7 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { ArrowUpRight, Clock3, MapPin, Radio, Sparkles } from 'lucide-react';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Skeleton } from '@/features/shared/ui/ui/skeleton';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -167,12 +167,12 @@ export function CivicTimelineRail({
 
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <Badge
+                        <BadgeControl
                           variant={item.reason === 'urgent_decision' ? 'destructive' : 'secondary'}
                           className="rounded-md"
                         >
                           {reasonLabel}
-                        </Badge>
+                        </BadgeControl>
                         <span className="text-muted-foreground inline-flex items-center gap-1 text-xs">
                           <Clock3 className="h-3.5 w-3.5" />
                           {formatDateTime(getItemTime(item))}
@@ -222,19 +222,23 @@ export function CivicTimelineRail({
 
                       <div className="mt-3 flex flex-wrap items-center gap-2">
                         {item.status && (
-                          <Badge variant="outline" className="rounded-md">
+                          <BadgeControl variant="outline" className="rounded-md">
                             {item.status.replace(/[_-]/g, ' ')}
-                          </Badge>
+                          </BadgeControl>
                         )}
                         {item.statsLabel && (
-                          <Badge variant="outline" className="rounded-md">
+                          <BadgeControl variant="outline" className="rounded-md">
                             {item.statsLabel}
-                          </Badge>
+                          </BadgeControl>
                         )}
                         {(item.tags ?? []).slice(0, 3).map(tag => (
-                          <Badge key={tag} variant="outline" className="rounded-md font-normal">
+                          <BadgeControl
+                            key={tag}
+                            variant="outline"
+                            className="rounded-md font-normal"
+                          >
                             #{tag}
-                          </Badge>
+                          </BadgeControl>
                         ))}
                       </div>
                     </div>

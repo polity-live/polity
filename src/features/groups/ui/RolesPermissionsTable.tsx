@@ -7,21 +7,21 @@
 
 import { useRef, useState } from 'react';
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from '@/features/shared/ui/ui/card';
-import { Checkbox } from '@/features/shared/ui/ui/checkbox';
+  MatrixCheckbox,
+  MatrixTable,
+  MatrixTableBody,
+  MatrixTableCell,
+  MatrixTableHead,
+  MatrixTableHeader,
+  MatrixTableRow,
+} from '@/features/shared/ui/data-table';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/features/shared/ui/ui/table';
+  Panel,
+  PanelContent,
+  PanelDescription,
+  PanelHeader,
+  PanelTitle,
+} from '@/features/shared/ui/layout';
 import { GripVertical, Shield } from 'lucide-react';
 import { ACTION_RIGHTS } from '@/zero/rbac/constants';
 import { getActionRightSections } from '@/features/groups/logic/actionRightSections';
@@ -112,17 +112,17 @@ export function RolesPermissionsTable<TRole extends ParticipationRoleLike>({
   };
 
   return (
-    <Card>
-      <CardHeader>
+    <Panel>
+      <PanelHeader>
         <div>
-          <CardTitle className="flex items-center gap-2">
+          <PanelTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5" />
             {title}
-          </CardTitle>
-          <CardDescription>{description}</CardDescription>
+          </PanelTitle>
+          <PanelDescription>{description}</PanelDescription>
         </div>
-      </CardHeader>
-      <CardContent>
+      </PanelHeader>
+      <PanelContent>
         {roles && roles.length > 0 ? (
           <div className="space-y-8">
             {actionRightSections.map(section => (
@@ -143,14 +143,14 @@ export function RolesPermissionsTable<TRole extends ParticipationRoleLike>({
                 </div>
 
                 <div className="border-border/70 overflow-x-auto rounded-2xl border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="min-w-[200px]">
+                  <MatrixTable>
+                    <MatrixTableHeader>
+                      <MatrixTableRow>
+                        <MatrixTableHead className="min-w-[200px]">
                           {translateText('generated.inline.0731_action_right_5c493b37')}
-                        </TableHead>
+                        </MatrixTableHead>
                         {roles.map((role, index) => (
-                          <TableHead
+                          <MatrixTableHead
                             key={role.id}
                             className={`min-w-[120px] text-center transition-colors ${
                               draggedIndex === index ? 'opacity-50' : ''
@@ -182,16 +182,16 @@ export function RolesPermissionsTable<TRole extends ParticipationRoleLike>({
                                   : translateText('generated.inline.0113_assignment_e55df441')}
                               </span>
                             </div>
-                          </TableHead>
+                          </MatrixTableHead>
                         ))}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+                      </MatrixTableRow>
+                    </MatrixTableHeader>
+                    <MatrixTableBody>
                       {section.rights.map(({ resource, action, label }) => {
                         const rightKey = `${resource}-${action}`;
                         return (
-                          <TableRow key={rightKey}>
-                            <TableCell className="font-medium">{label}</TableCell>
+                          <MatrixTableRow key={rightKey}>
+                            <MatrixTableCell className="font-medium">{label}</MatrixTableCell>
                             {roles.map(role => {
                               const hasRight = role.action_rights?.some(
                                 ar => ar.resource === resource && ar.action === action
@@ -199,12 +199,12 @@ export function RolesPermissionsTable<TRole extends ParticipationRoleLike>({
                               const disabledReason =
                                 isPermissionDisabled?.(role, resource, action) ?? null;
                               return (
-                                <TableCell key={role.id} className="text-center">
+                                <MatrixTableCell key={role.id} className="text-center">
                                   <div
                                     className="flex justify-center"
                                     title={disabledReason ?? undefined}
                                   >
-                                    <Checkbox
+                                    <MatrixCheckbox
                                       checked={hasRight}
                                       disabled={Boolean(disabledReason)}
                                       onCheckedChange={() =>
@@ -217,14 +217,14 @@ export function RolesPermissionsTable<TRole extends ParticipationRoleLike>({
                                       }
                                     />
                                   </div>
-                                </TableCell>
+                                </MatrixTableCell>
                               );
                             })}
-                          </TableRow>
+                          </MatrixTableRow>
                         );
                       })}
-                    </TableBody>
-                  </Table>
+                    </MatrixTableBody>
+                  </MatrixTable>
                 </div>
               </section>
             ))}
@@ -239,7 +239,7 @@ export function RolesPermissionsTable<TRole extends ParticipationRoleLike>({
             </p>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </PanelContent>
+    </Panel>
   );
 }

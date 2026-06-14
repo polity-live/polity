@@ -1,5 +1,6 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 /**
  * Amendment Metadata Component
  *
@@ -7,7 +8,6 @@
  * and collaborators list.
  */
 
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import {
   useTranslation,
@@ -54,14 +54,14 @@ export function AmendmentMetadata({
       {/* Amendment metadata badges */}
       <div className="flex flex-wrap items-center gap-4 text-sm">
         {code && (
-          <Badge variant="secondary" className="font-mono">
+          <BadgeControl variant="secondary" className="font-mono">
             {code}
-          </Badge>
+          </BadgeControl>
         )}
         {status && (
-          <Badge variant="outline" className="capitalize">
+          <BadgeControl variant="outline" className="capitalize">
             {status}
-          </Badge>
+          </BadgeControl>
         )}
         {date && (
           <span className="text-muted-foreground">
@@ -98,9 +98,9 @@ export function AmendmentMetadata({
                 {collab.user?.name || translateText('generated.inline.0031_unknown_bc7819b3')}
               </span>
               {collab.status && collab.status !== 'member' && (
-                <Badge variant="outline" className="ml-1 h-4 px-1 text-[10px]">
+                <BadgeControl variant="outline" className="ml-1 h-4 px-1 text-[10px]">
                   {collab.status}
-                </Badge>
+                </BadgeControl>
               )}
             </div>
           ))}

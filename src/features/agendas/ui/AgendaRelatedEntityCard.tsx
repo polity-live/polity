@@ -1,6 +1,6 @@
 'use client';
 
-import { Badge } from '@/features/shared/ui/ui/badge';
+import { BadgeControl } from '@/features/shared/ui/status';
 import { EditingModeBadge } from '@/features/shared/ui/ui/editing-mode.tsx';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import {
@@ -145,9 +145,9 @@ export function AgendaRelatedRoleCard({
       >
         {hasText(role.term) && (
           <div className="mt-2 flex flex-wrap gap-2">
-            <Badge variant="secondary" className="text-xs">
+            <BadgeControl variant="secondary" className="text-xs">
               {role.term}
-            </Badge>
+            </BadgeControl>
           </div>
         )}
       </TimelineCardHeader>

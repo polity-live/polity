@@ -8,6 +8,8 @@ vi.mock('@tanstack/react-router', () => ({
 }));
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
+  translate: (key: string, fallback?: string) =>
+    fallback ?? (key.includes('enter_tally') ? 'Enter Tally' : key),
   useTranslation: () => ({
     t: (_key: string, fallback?: string) => fallback ?? _key,
   }),

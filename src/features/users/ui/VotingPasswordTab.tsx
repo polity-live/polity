@@ -1,18 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/features/shared/ui/ui/button';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Label } from '@/features/shared/ui/ui/label';
-import { Badge } from '@/features/shared/ui/ui/badge';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/features/shared/ui/ui/card';
-import { CheckCircle2, AlertCircle, Loader2, KeyRound } from 'lucide-react';
+
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useVotingPasswordActions } from '@/zero/voting-password/useVotingPasswordActions';
 import { useVotingPasswordState } from '@/zero/voting-password/useVotingPasswordState';
@@ -20,7 +9,7 @@ import { useAccountActions } from '@/features/auth/hooks/useAccountActions';
 import { CurrentPasswordConfirmationDialog } from './CurrentPasswordConfirmationDialog';
 import { useAuth } from '@/providers/auth-provider';
 import { useDebounce } from '@/features/shared/hooks/use-debounce';
-import { cn } from '@/features/shared/utils/utils.ts';
+import { VotingPasswordTabView, type VotingPasswordTabCopy } from './VotingPasswordTabView';
 
 interface VotingPasswordTabProps {
   userId: string;
@@ -133,123 +122,53 @@ export function VotingPasswordTab({ userId }: VotingPasswordTabProps) {
     }
   };
 
+  const copy: VotingPasswordTabCopy = {
+    title: t('pages.user.votingPassword.title'),
+    description: t('pages.user.votingPassword.description'),
+    set: t('pages.user.votingPassword.set'),
+    notSet: t('pages.user.votingPassword.notSet'),
+    initialPasswordRequired: t('pages.user.votingPassword.initialPasswordRequired'),
+    newPassword: t('pages.user.votingPassword.newPassword'),
+    setPassword: t('pages.user.votingPassword.setPassword'),
+    confirmPassword: t('pages.user.votingPassword.confirmPassword'),
+    passwordHint: t('pages.user.votingPassword.passwordHint'),
+    confirmPasswordHint: t('pages.user.votingPassword.confirmPasswordHint'),
+    update: t('pages.user.votingPassword.update'),
+    save: t('pages.user.votingPassword.save'),
+  };
+
   return (
-    <div className="space-y-6">
-      <Card className="border-destructive ring-destructive/20 dark:ring-destructive/40 ring-[3px]">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <KeyRound className="h-5 w-5" />
-              <CardTitle>{t('pages.user.votingPassword.title')}</CardTitle>
-            </div>
-            {!stateLoading && (
-              <Badge variant={hasVotingPassword ? 'default' : 'secondary'}>
-                {hasVotingPassword ? (
-                  <span className="flex items-center gap-1">
-                    <CheckCircle2 className="h-3 w-3" />
-                    {t('pages.user.votingPassword.set')}
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {t('pages.user.votingPassword.notSet')}
-                  </span>
-                )}
-              </Badge>
-            )}
-          </div>
-          <CardDescription>{t('pages.user.votingPassword.description')}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {requiresInitialPassword ? (
-            <p className="text-muted-foreground text-sm">
-              {t('pages.user.votingPassword.initialPasswordRequired')}
-            </p>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="voting-password">
-                  {hasVotingPassword
-                    ? t('pages.user.votingPassword.newPassword')
-                    : t('pages.user.votingPassword.setPassword')}
-                </Label>
-                <Input
-                  id="voting-password"
-                  type="password"
-                  inputMode="numeric"
-                  maxLength={4}
-                  pattern="\d{4}"
-                  placeholder="••••"
-                  value={password}
-                  onChange={e => {
-                    const val = e.target.value.replace(/\D/g, '').slice(0, 4);
-                    setPassword(val);
-                    setPasswordTouched(true);
-                    setError(null);
-                  }}
-                  onBlur={() => setPasswordTouched(true)}
-                  required
-                  disabled={isSubmitting || authStateLoading}
-                  aria-invalid={showPasswordError}
-                  data-valid={showPasswordSuccess ? 'true' : undefined}
-                />
-                <p
-                  className={cn(
-                    'text-muted-foreground text-xs',
-                    showPasswordError && 'text-destructive',
-                    showPasswordSuccess && 'text-emerald-600 dark:text-emerald-400'
-                  )}
-                >
-                  {t('pages.user.votingPassword.passwordHint')}
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirm-voting-password">
-                  {t('pages.user.votingPassword.confirmPassword')}
-                </Label>
-                <Input
-                  id="confirm-voting-password"
-                  type="password"
-                  inputMode="numeric"
-                  maxLength={4}
-                  pattern="\d{4}"
-                  placeholder="••••"
-                  value={confirmPassword}
-                  onChange={e => {
-                    const val = e.target.value.replace(/\D/g, '').slice(0, 4);
-                    setConfirmPassword(val);
-                    setConfirmPasswordTouched(true);
-                    setError(null);
-                  }}
-                  onBlur={() => setConfirmPasswordTouched(true)}
-                  required
-                  disabled={isSubmitting || authStateLoading}
-                  aria-invalid={showConfirmPasswordError}
-                  data-valid={showConfirmPasswordSuccess ? 'true' : undefined}
-                />
-                <p
-                  className={cn(
-                    'text-muted-foreground text-xs',
-                    showConfirmPasswordError && 'text-destructive',
-                    showConfirmPasswordSuccess && 'text-emerald-600 dark:text-emerald-400'
-                  )}
-                >
-                  {t('pages.user.votingPassword.confirmPasswordHint')}
-                </p>
-              </div>
-
-              {error && <p className="text-destructive text-sm">{error}</p>}
-
-              <Button type="submit" disabled={!isValid || isSubmitting || authStateLoading}>
-                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                {hasVotingPassword
-                  ? t('pages.user.votingPassword.update')
-                  : t('pages.user.votingPassword.save')}
-              </Button>
-            </form>
-          )}
-        </CardContent>
-      </Card>
+    <>
+      <VotingPasswordTabView
+        copy={copy}
+        hasVotingPassword={hasVotingPassword}
+        stateLoading={stateLoading}
+        requiresInitialPassword={requiresInitialPassword}
+        password={password}
+        confirmPassword={confirmPassword}
+        isBusy={isSubmitting || authStateLoading}
+        isValid={isValid}
+        error={error}
+        showPasswordError={showPasswordError}
+        showPasswordSuccess={showPasswordSuccess}
+        showConfirmPasswordError={showConfirmPasswordError}
+        showConfirmPasswordSuccess={showConfirmPasswordSuccess}
+        onSubmit={handleSubmit}
+        onPasswordChange={value => {
+          const nextValue = value.replace(/\D/g, '').slice(0, 4);
+          setPassword(nextValue);
+          setPasswordTouched(true);
+          setError(null);
+        }}
+        onPasswordBlur={() => setPasswordTouched(true)}
+        onConfirmPasswordChange={value => {
+          const nextValue = value.replace(/\D/g, '').slice(0, 4);
+          setConfirmPassword(nextValue);
+          setConfirmPasswordTouched(true);
+          setError(null);
+        }}
+        onConfirmPasswordBlur={() => setConfirmPasswordTouched(true)}
+      />
 
       {requiresInitialPassword ? null : (
         <CurrentPasswordConfirmationDialog
@@ -265,6 +184,6 @@ export function VotingPasswordTab({ userId }: VotingPasswordTabProps) {
           onConfirm={handleConfirm}
         />
       )}
-    </div>
+    </>
   );
 }

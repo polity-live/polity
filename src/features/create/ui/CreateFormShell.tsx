@@ -1,20 +1,11 @@
 import { useState, useCallback, useEffect } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/features/shared/ui/ui/card';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useFormStyle } from '../hooks/useFormStyle';
-import { CarouselFormLayout } from './CarouselFormLayout';
-import { OnePageFormLayout } from './OnePageFormLayout';
-import { FormStyleSelector } from './FormStyleSelector';
 import type { CreateFormConfig } from '../types/create-form.types';
 import { usePreferenceState } from '@/zero/preferences/usePreferenceState';
 import { usePreferenceActions } from '@/zero/preferences/usePreferenceActions';
 import type { CreateFormStyle } from '@/zero/preferences/schema';
+import { CreateFormShellView } from './CreateFormShellView';
 
 interface CreateFormShellProps {
   config: CreateFormConfig;
@@ -52,36 +43,17 @@ export function CreateFormShell({ config }: CreateFormShellProps) {
     }
   }, [createFormStyle, optimisticFormStyle]);
 
-  const Layout = isCarouselLayout ? CarouselFormLayout : OnePageFormLayout;
-
   return (
-    <div
-      className={
-        isCarouselLayout
-          ? 'mx-auto flex h-[calc(100dvh-3rem)] min-h-0 w-full max-w-2xl flex-col overflow-hidden px-4 py-6'
-          : 'mx-auto w-full max-w-2xl px-4 py-6'
-      }
-    >
-      <Card
-        className={isCarouselLayout ? 'flex min-h-0 flex-1 flex-col overflow-hidden' : undefined}
-      >
-        <CardHeader className="flex flex-row items-start justify-between">
-          <div>
-            <CardTitle>{t(config.title)}</CardTitle>
-            <CardDescription className="sr-only">{t(config.title)}</CardDescription>
-          </div>
-          <FormStyleSelector value={selectedFormStyle} onChange={handleFormStyleChange} />
-        </CardHeader>
-        <CardContent className={isCarouselLayout ? 'flex min-h-0 flex-1 flex-col' : undefined}>
-          <Layout
-            steps={config.steps}
-            currentStep={currentStep}
-            onStepChange={handleStepChange}
-            onSubmit={config.onSubmit}
-            isSubmitting={config.isSubmitting}
-          />
-        </CardContent>
-      </Card>
-    </div>
+    <CreateFormShellView
+      title={t(config.title)}
+      isCarouselLayout={isCarouselLayout}
+      selectedFormStyle={selectedFormStyle}
+      steps={config.steps}
+      currentStep={currentStep}
+      onFormStyleChange={handleFormStyleChange}
+      onStepChange={handleStepChange}
+      onSubmit={config.onSubmit}
+      isSubmitting={config.isSubmitting}
+    />
   );
 }

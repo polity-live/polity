@@ -1,6 +1,6 @@
+import { FormControlTextarea } from '@/features/shared/ui/form';
 import { useState } from 'react';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Textarea } from '@/features/shared/ui/ui/textarea';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Reply, ArrowUp, ArrowDown, Clock } from 'lucide-react';
@@ -146,7 +146,7 @@ export function CommentTree({
 
               {isReplying && (
                 <div className="mt-4 space-y-2">
-                  <Textarea
+                  <FormControlTextarea
                     placeholder={translateText('generated.inline.0378_write_your_reply_fa39b3d9')}
                     value={replyText}
                     onChange={e => setReplyText(e.target.value)}

@@ -1,6 +1,6 @@
+import { FormControlInput } from '@/features/shared/ui/form';
 import React from 'react';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Badge } from '@/features/shared/ui/ui/badge';
+import { EntityBadge, StatusBadge } from '@/features/shared/ui/status';
 import { Search, X } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -31,8 +31,8 @@ export const GroupsFilters: React.FC<GroupsFiltersProps> = ({
     <div className="mb-6 space-y-4">
       {/* Search Bar */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
+        <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+        <FormControlInput
           placeholder={t('features.groups.list.searchPlaceholder')}
           className="pl-10"
           value={searchTerm}
@@ -43,13 +43,15 @@ export const GroupsFilters: React.FC<GroupsFiltersProps> = ({
       {/* Tag Filters */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-foreground">{t('features.groups.list.filters.filterByTags')}</h3>
+          <h3 className="text-foreground text-sm font-medium">
+            {t('features.groups.list.filters.filterByTags')}
+          </h3>
           {hasActiveFilters && (
             <Button
               variant="ghost"
               size="sm"
               onClick={clearAllFilters}
-              className="h-8 px-3 text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground h-8 px-3"
             >
               <X className="mr-1 h-3 w-3" />
               {t('features.groups.list.filters.clearFilters')}
@@ -61,14 +63,14 @@ export const GroupsFilters: React.FC<GroupsFiltersProps> = ({
           {allTags.map(tag => {
             const isSelected = selectedTags.includes(tag);
             return (
-              <Badge
+              <EntityBadge
                 key={tag}
-                variant={isSelected ? 'default' : 'outline'}
+                tone={isSelected ? 'accent' : 'outline'}
                 className="cursor-pointer transition-opacity hover:opacity-80"
                 onClick={() => toggleTag(tag)}
               >
                 #{tag}
-              </Badge>
+              </EntityBadge>
             );
           })}
         </div>
@@ -76,17 +78,17 @@ export const GroupsFilters: React.FC<GroupsFiltersProps> = ({
 
       {/* Active Filters Display */}
       {hasActiveFilters && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="text-muted-foreground flex items-center gap-2 text-sm">
           <span>{t('features.groups.list.filters.activeFilters')}</span>
           {searchTerm && (
-            <Badge variant="secondary" className="text-xs">
+            <StatusBadge status="search" tone="neutral" className="text-xs">
               {t('features.groups.list.filters.searchLabel', { query: searchTerm })}
-            </Badge>
+            </StatusBadge>
           )}
           {selectedTags.map(tag => (
-            <Badge key={tag} variant="secondary" className="text-xs">
+            <EntityBadge key={tag} tone="neutral" className="text-xs">
               #{tag}
-            </Badge>
+            </EntityBadge>
           ))}
         </div>
       )}

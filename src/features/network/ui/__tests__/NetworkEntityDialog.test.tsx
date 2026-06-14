@@ -26,6 +26,27 @@ vi.mock('@tanstack/react-router', () => ({
 }));
 
 vi.mock('@/features/shared/hooks/use-translation', () => ({
+  translate: (
+    key: string,
+    paramsOrFallback?: string | Record<string, unknown>,
+    fallback?: string
+  ) => {
+    const labels: Record<string, string> = {
+      'generated.inline.0770_ist_bergeordnet_die_aktuelle_gruppe_36b12d80':
+        'ist übergeordnet, die aktuelle Gruppe',
+      'generated.inline.0771_ist_untergeordnet_9610f87b': 'ist untergeordnet',
+      'generated.inline.0772_die_aktuelle_gruppe_d7fbaf59': 'Die aktuelle Gruppe',
+      'generated.inline.0773_ist_bergeordnet_die_gew_hlte_partnergruppe_4d9d2a93':
+        'ist übergeordnet, die gewählte Partnergruppe',
+      'generated.inline.0788_alle_aktiven_mitglieder_von_f860cd6f': 'Alle aktiven Mitglieder von',
+      'generated.inline.0789_werden_in_96b98a79': 'werden in',
+      'generated.inline.0795_die_gew_hlte_partnergruppe_1a260d6d': 'Die gewählte Partnergruppe',
+    };
+
+    return (
+      labels[key] ?? (typeof paramsOrFallback === 'string' ? paramsOrFallback : fallback) ?? key
+    );
+  },
   useTranslation: () => ({
     t: (key: string, paramsOrFallback?: string | Record<string, unknown>, fallback?: string) => {
       const templates: Record<string, string> = {

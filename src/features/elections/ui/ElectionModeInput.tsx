@@ -1,7 +1,7 @@
+import { BadgeControl } from '@/features/shared/ui/status';
+import { FormControlLabel } from '@/features/shared/ui/form';
 import { type ReactNode } from 'react';
 import { getElectionModeLabel, type ElectionMode } from '@/features/elections/logic/electionMode';
-import { Badge } from '@/features/shared/ui/ui/badge';
-import { Label } from '@/features/shared/ui/ui/label';
 import { cn } from '@/features/shared/utils/utils';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
@@ -25,7 +25,7 @@ export function ElectionModeInput({
   return (
     <div className={cn('space-y-3', className)}>
       <div className="space-y-1">
-        <Label>{label}</Label>
+        <FormControlLabel>{label}</FormControlLabel>
         {hint ? <p className="text-muted-foreground text-sm">{hint}</p> : null}
       </div>
 
@@ -49,11 +49,11 @@ export function ElectionModeInput({
                   <div className="text-muted-foreground text-sm">{descriptions[mode]}</div>
                 ) : null}
               </div>
-              <Badge variant={value === mode ? 'default' : 'outline'}>
+              <BadgeControl variant={value === mode ? 'default' : 'outline'}>
                 {value === mode
                   ? translateText('generated.inline.0067_aktiv_16a766ca')
                   : translateText('generated.inline.0068_waehlen_ef754cb8')}
-              </Badge>
+              </BadgeControl>
             </div>
           </button>
         ))}

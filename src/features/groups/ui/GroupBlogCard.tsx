@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { cn } from '@/features/shared/utils/utils';
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
-import { Badge } from '@/features/shared/ui/ui/badge';
+import { EntityBadge } from '@/features/shared/ui/status';
 import { BookOpen, MessageSquare, ThumbsUp, Calendar } from 'lucide-react';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
@@ -52,9 +52,9 @@ export function GroupBlogCard({ blog, groupId, className }: GroupBlogCardProps) 
       {tags.length > 0 && (
         <div className="mb-2 flex flex-wrap gap-1">
           {tags.map(tag => (
-            <Badge key={tag} variant="secondary" className="text-xs">
+            <EntityBadge key={tag} tone="neutral" className="text-xs">
               #{tag}
-            </Badge>
+            </EntityBadge>
           ))}
         </div>
       )}

@@ -10,7 +10,11 @@ interface UseSuggestionIdAssignmentProps {
   documentId: string;
   discussions: TDiscussion[];
   onDiscussionsUpdate: (discussions: TDiscussion[]) => void;
-  onChangeRequestCreate?: (params: { crId: string; discussionId: string; changeRequestEntityId: string }) => void;
+  onChangeRequestCreate?: (params: {
+    crId: string;
+    discussionId: string;
+    changeRequestEntityId: string;
+  }) => void;
   suggestions?: ResolvedSuggestion[]; // Optional: resolved suggestions from PlateJS
 }
 
@@ -30,7 +34,7 @@ export function useSuggestionIdAssignment({
   const assignMissingIds = React.useCallback(() => {
     if (!documentId || !discussions || discussions.length === 0) return;
 
-    let updatedDiscussions = [...discussions];
+    const updatedDiscussions = [...discussions];
     let hasChanges = false;
 
     // Pass 1: Assign crId to discussions that don't have one
@@ -39,7 +43,11 @@ export function useSuggestionIdAssignment({
     );
 
     if (discussionsNeedingIds.length > 0) {
-      console.log('[useSuggestionIdAssignment] Pass 1: Found', discussionsNeedingIds.length, 'discussions needing crId');
+      console.log(
+        '[useSuggestionIdAssignment] Pass 1: Found',
+        discussionsNeedingIds.length,
+        'discussions needing crId'
+      );
 
       // Sort by creation date to maintain chronological order for ID assignment
       discussionsNeedingIds.sort(
@@ -64,13 +72,25 @@ export function useSuggestionIdAssignment({
     // Pass 2: Create change_request entities for discussions that have crId but no entity
     if (onChangeRequestCreate) {
       const discussionsNeedingEntity = updatedDiscussions.filter(
-        discussion => discussion.crId && !discussion.changeRequestEntityId && !processedEntities.current.has(discussion.id)
+        discussion =>
+          discussion.crId &&
+          !discussion.changeRequestEntityId &&
+          !processedEntities.current.has(discussion.id)
       );
 
       if (discussionsNeedingEntity.length > 0) {
-        console.log('[useSuggestionIdAssignment] Pass 2: Found', discussionsNeedingEntity.length, 'discussions needing change_request entity');
+        console.log(
+          '[useSuggestionIdAssignment] Pass 2: Found',
+          discussionsNeedingEntity.length,
+          'discussions needing change_request entity'
+        );
 
         for (const discussion of discussionsNeedingEntity) {
+          const crId = discussion.crId;
+          if (!crId) {
+            continue;
+          }
+
           const changeRequestEntityId = crypto.randomUUID();
           const index = updatedDiscussions.findIndex(d => d.id === discussion.id);
 
@@ -88,7 +108,7 @@ export function useSuggestionIdAssignment({
               changeRequestEntityId,
             });
             onChangeRequestCreate({
-              crId: discussion.crId!,
+              crId,
               discussionId: discussion.id,
               changeRequestEntityId,
             });

@@ -1,5 +1,5 @@
+import { BadgeControl } from '@/features/shared/ui/status';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
 import { cn } from '@/features/shared/utils/utils';
 import { Pin, Trash2 } from 'lucide-react';
@@ -57,9 +57,9 @@ export function ConversationItem({
               {conversation.pinned && <Pin className="text-primary h-3.5 w-3.5 flex-shrink-0" />}
               <p className="truncate font-semibold">{display.name}</p>
               {display.isCollective && (
-                <Badge variant="secondary" className="ml-1 flex-shrink-0 text-xs">
+                <BadgeControl variant="secondary" className="ml-1 flex-shrink-0 text-xs">
                   {display.participantCount}
-                </Badge>
+                </BadgeControl>
               )}
             </div>
             {lastMessage && (
@@ -77,12 +77,12 @@ export function ConversationItem({
               </p>
             )}
             {unreadCount > 0 && (
-              <Badge
+              <BadgeControl
                 variant="default"
                 className="ml-2 h-5 min-w-[20px] flex-shrink-0 rounded-full px-1.5 text-xs"
               >
                 {unreadCount > 99 ? '99+' : unreadCount}
-              </Badge>
+              </BadgeControl>
             )}
           </div>
         </div>

@@ -1,10 +1,9 @@
 'use client';
 
+import { FormControlTextarea, FormControlLabel } from '@/features/shared/ui/form';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Textarea } from '@/features/shared/ui/ui/textarea';
-import { Label } from '@/features/shared/ui/ui/label';
 import { Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { useBlogState } from '@/zero/blogs/useBlogState';
@@ -83,10 +82,10 @@ export function BlogEditor({ blogId }: BlogEditorProps) {
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            <Label htmlFor="content">
+            <FormControlLabel htmlFor="content">
               {translateText('generated.inline.0270_blog_content_75727b2c')}
-            </Label>
-            <Textarea
+            </FormControlLabel>
+            <FormControlTextarea
               id="content"
               value={content}
               onChange={e => setContent(e.target.value)}

@@ -1,13 +1,13 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
+import { ScrollableAlertDialogContent, ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { useMemo } from 'react';
 import { Link } from '@tanstack/react-router';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Trophy, Users, Repeat } from 'lucide-react';
 import {
   Dialog,
-  DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
@@ -16,7 +16,6 @@ import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
-  AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
@@ -135,10 +134,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
       ),
     [event.participants]
   );
-  const eventDescription =
-    typeof event.description === translateText('generated.inline.0056_string_ecb25204')
-      ? event.description
-      : undefined;
+  const eventDescription = typeof event.description === 'string' ? event.description : undefined;
   const {
     showComposition,
     participantsWithProvenance,
@@ -157,17 +153,17 @@ export function EventWiki({ eventId }: EventWikiProps) {
         <div className="mb-2 flex items-center justify-center gap-3">
           <h1 className="text-4xl font-bold">{event.title}</h1>
           {event.visibility === 'public' ? (
-            <Badge variant="default">{t('components.badges.public')}</Badge>
+            <BadgeControl variant="default">{t('components.badges.public')}</BadgeControl>
           ) : (
-            <Badge variant="secondary">{t('components.badges.private')}</Badge>
+            <BadgeControl variant="secondary">{t('components.badges.private')}</BadgeControl>
           )}
           {event.event_type && (
-            <Badge variant="outline">
+            <BadgeControl variant="outline">
               {t(`pages.create.event.eventTypes.${getEventTypeTranslationKey(event.event_type)}`)}
-            </Badge>
+            </BadgeControl>
           )}
           {event.recurrence_pattern && (
-            <Badge variant="outline">
+            <BadgeControl variant="outline">
               <Repeat className="mr-1 h-3 w-3" />
               {event.recurrence_pattern === 'daily'
                 ? translateText('generated.inline.0069_t_glich_3e286c33')
@@ -180,7 +176,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
                       : event.recurrence_pattern === 'four-yearly'
                         ? translateText('generated.inline.0073_4_j_hrig_44aa9820')
                         : event.recurrence_pattern}
-            </Badge>
+            </BadgeControl>
           )}
         </div>
 
@@ -383,7 +379,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
 
       {/* Elections Selection Dialog */}
       <Dialog open={electionsDialogOpen} onOpenChange={setElectionsDialogOpen}>
-        <DialogContent className="max-w-3xl">
+        <ScrollableDialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>
               {translateText('generated.inline.0433_w_hlen_sie_eine_wahl_aus_a4f16bb3')}
@@ -409,9 +405,9 @@ export function EventWiki({ eventId }: EventWikiProps) {
                     <CardTitle className="flex items-center justify-between">
                       <span>{election.title}</span>
                       {existingCandidacy && (
-                        <Badge variant="secondary" className="text-xs">
+                        <BadgeControl variant="secondary" className="text-xs">
                           {translateText('generated.inline.0435_bereits_kandidat_ef4a51da')}
-                        </Badge>
+                        </BadgeControl>
                       )}
                     </CardTitle>
                     {election.description && (
@@ -435,9 +431,9 @@ export function EventWiki({ eventId }: EventWikiProps) {
                         {election.candidates?.length || 0}
                       </span>
                       {election.majority_type && (
-                        <Badge variant="outline" className="text-xs">
+                        <BadgeControl variant="outline" className="text-xs">
                           {election.majority_type}
-                        </Badge>
+                        </BadgeControl>
                       )}
                     </div>
                   </CardContent>
@@ -445,12 +441,12 @@ export function EventWiki({ eventId }: EventWikiProps) {
               );
             })}
           </div>
-        </DialogContent>
+        </ScrollableDialogContent>
       </Dialog>
 
       {/* Confirmation Dialog */}
       <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
-        <AlertDialogContent>
+        <ScrollableAlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
               {translateText('generated.inline.0437_kandidatur_best_tigen_838a848e')}
@@ -498,9 +494,9 @@ export function EventWiki({ eventId }: EventWikiProps) {
                       <span className="text-muted-foreground">
                         {translateText('generated.inline.0440_wahlverfahren_e5f84d31')}
                       </span>
-                      <Badge variant="outline" className="text-xs">
+                      <BadgeControl variant="outline" className="text-xs">
                         {selectedElection.majority_type}
-                      </Badge>
+                      </BadgeControl>
                     </div>
                   )}
                 </div>
@@ -518,12 +514,12 @@ export function EventWiki({ eventId }: EventWikiProps) {
                 : translateText('generated.inline.0075_kandidatur_best_tigen_838a848e')}
             </AlertDialogAction>
           </AlertDialogFooter>
-        </AlertDialogContent>
+        </ScrollableAlertDialogContent>
       </AlertDialog>
 
       {/* Participants Dialog */}
       <Dialog open={participantsDialogOpen} onOpenChange={setParticipantsDialogOpen}>
-        <DialogContent className="max-h-[80vh] max-w-3xl overflow-y-auto">
+        <ScrollableDialogContent className="max-h-[80vh] max-w-3xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {translateText('generated.inline.0441_event_participants_df407348')}
@@ -587,21 +583,21 @@ export function EventWiki({ eventId }: EventWikiProps) {
                                 </p>
                               )}
                               {participant.status && (
-                                <Badge variant="secondary" className="text-xs">
+                                <BadgeControl variant="secondary" className="text-xs">
                                   {participant.status}
-                                </Badge>
+                                </BadgeControl>
                               )}
                               {showComposition && participant.partGroup?.name ? (
-                                <Badge variant="outline" className="text-xs">
+                                <BadgeControl variant="outline" className="text-xs">
                                   {translateText('generated.inline.0445_subgroup_a9453c74')}
                                   {participant.partGroup.name}
-                                </Badge>
+                                </BadgeControl>
                               ) : null}
                               {showComposition && participant.baseGroup?.name ? (
-                                <Badge variant="outline" className="text-xs">
+                                <BadgeControl variant="outline" className="text-xs">
                                   {translateText('generated.inline.0446_base_group_1e6d0a99')}
                                   {participant.baseGroup.name}
-                                </Badge>
+                                </BadgeControl>
                               ) : null}
                             </div>
                           </CardContent>
@@ -680,9 +676,9 @@ export function EventWiki({ eventId }: EventWikiProps) {
                           </p>
                         )}
                         {participant.status && (
-                          <Badge variant="secondary" className="text-xs">
+                          <BadgeControl variant="secondary" className="text-xs">
                             {participant.status}
-                          </Badge>
+                          </BadgeControl>
                         )}
                       </div>
                     </CardContent>
@@ -714,7 +710,7 @@ export function EventWiki({ eventId }: EventWikiProps) {
               )}
             </div>
           )}
-        </DialogContent>
+        </ScrollableDialogContent>
       </Dialog>
     </div>
   );

@@ -1,10 +1,10 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { SlidersHorizontal, ArrowUpDown, Settings } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -120,9 +120,9 @@ export function TimelineHeader({
 
               {/* Active filter count badge */}
               {activeFilterCount > 0 && (
-                <Badge variant="secondary" className="ml-2 h-5 min-w-[20px] px-1.5 text-xs">
+                <BadgeControl variant="secondary" className="ml-2 h-5 min-w-[20px] px-1.5 text-xs">
                   {activeFilterCount}
-                </Badge>
+                </BadgeControl>
               )}
             </Button>
           )}

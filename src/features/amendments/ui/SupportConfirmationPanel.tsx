@@ -1,11 +1,12 @@
+'use client';
+
+import { BadgeControl } from '@/features/shared/ui/status';
 /**
  * SupportConfirmationPanel Component
  *
  * Displays pending support confirmations for a group and allows
  * group admins to confirm or decline continued support.
  */
-
-'use client';
 
 import { useState } from 'react';
 import {
@@ -16,7 +17,6 @@ import {
   CardTitle,
 } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import {
   useTranslation,
   translate as translateText,
@@ -86,9 +86,9 @@ export function SupportConfirmationPanel({ groupId }: SupportConfirmationPanelPr
         <h2 className="text-xl font-semibold">
           {t('features.amendments.supportConfirmation.title')}
         </h2>
-        <Badge variant="secondary">
+        <BadgeControl variant="secondary">
           {pendingConfirmations.length} {t('features.amendments.supportConfirmation.pending')}
-        </Badge>
+        </BadgeControl>
       </div>
 
       {pendingConfirmations.map((confirmation, index) => (
@@ -113,11 +113,11 @@ export function SupportConfirmationPanel({ groupId }: SupportConfirmationPanelPr
                   })}
                 </CardDescription>
               </div>
-              <Badge variant="outline">
+              <BadgeControl variant="outline">
                 {t('features.amendments.supportConfirmation.changeRequest')}:{' '}
                 {confirmation.amendment?.title ||
                   translateText('generated.inline.0027_change_request_9c839351')}
-              </Badge>
+              </BadgeControl>
             </div>
           </CardHeader>
 

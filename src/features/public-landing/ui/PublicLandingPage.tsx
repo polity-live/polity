@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Link, useLocation } from '@tanstack/react-router';
+import { BadgeControl } from '@/features/shared/ui/status';
+import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { Link } from '@tanstack/react-router';
 import {
   Calendar,
   CheckCircle2,
@@ -17,7 +18,6 @@ import {
   Workflow,
   type LucideIcon,
 } from 'lucide-react';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
   Card,
@@ -82,28 +82,7 @@ const landingPreviewUserId = 'landing-preview-user';
 type LandingAssistantChatPreview = Parameters<typeof AssistantMessageInput>[0]['assistantChat'];
 
 export function PublicLandingPage() {
-  const { hash } = useLocation();
   const { t, tArray } = useTranslation();
-
-  useEffect(() => {
-    if (!hash) {
-      return;
-    }
-
-    const sectionId = hash.startsWith('#') ? hash.slice(1) : hash;
-    if (!sectionId) {
-      return;
-    }
-
-    const frame = window.requestAnimationFrame(() => {
-      document.getElementById(sectionId)?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      });
-    });
-
-    return () => window.cancelAnimationFrame(frame);
-  }, [hash]);
 
   return (
     <div className="bg-background text-foreground min-h-screen">
@@ -441,7 +420,9 @@ export function LandingNetworkFlowPreview() {
               {t('pages.home.publicLanding.network.description')}
             </p>
           </div>
-          <Badge variant="secondary">{t('pages.home.publicLanding.network.badge')}</Badge>
+          <BadgeControl variant="secondary">
+            {t('pages.home.publicLanding.network.badge')}
+          </BadgeControl>
         </div>
       </div>
       <NetworkFlowBase
@@ -600,10 +581,12 @@ export function LandingAgendaTimelinePreview() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Badge variant="outline">{t('pages.home.publicLanding.timeline.badge')}</Badge>
-            <Badge variant="secondary" className="font-mono text-[11px]">
+            <BadgeControl variant="outline">
+              {t('pages.home.publicLanding.timeline.badge')}
+            </BadgeControl>
+            <BadgeControl variant="secondary" className="font-mono text-[11px]">
               {LANDING_AGENDA_ITEM_ID}
-            </Badge>
+            </BadgeControl>
           </div>
         </div>
       </div>
@@ -666,9 +649,9 @@ export function LandingAmendmentEditorPreview({
               {t('pages.home.publicLanding.amendmentWorkspace.description')}
             </p>
           </div>
-          <Badge variant="secondary">
+          <BadgeControl variant="secondary">
             {t('pages.home.publicLanding.amendmentWorkspace.badge')}
-          </Badge>
+          </BadgeControl>
         </div>
       </div>
       <div className="space-y-4 p-5 pt-4">
@@ -686,9 +669,11 @@ export function LandingAmendmentEditorPreview({
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Badge variant="secondary">{t('pages.home.publicLanding.amendmentText.status')}</Badge>
-          <Badge variant="outline">#climate</Badge>
-          <Badge variant="outline">#budget</Badge>
+          <BadgeControl variant="secondary">
+            {t('pages.home.publicLanding.amendmentText.status')}
+          </BadgeControl>
+          <BadgeControl variant="outline">#climate</BadgeControl>
+          <BadgeControl variant="outline">#budget</BadgeControl>
         </div>
         <PlateEditor
           key={t('pages.home.publicLanding.amendmentText.documentTitle')}
@@ -999,16 +984,16 @@ export function LandingActivityStripPreview() {
   return (
     <div className="bg-card space-y-4 rounded-lg border p-5 shadow-sm">
       <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
-        <Badge variant="outline" className="rounded-md">
+        <BadgeControl variant="outline" className="rounded-md">
           <MapPinned className="mr-1.5 h-3.5 w-3.5" />
           {t('features.timeline.around.mappedCount', {
             count: landingActivityTimelineItems.length,
             defaultValue: '{{count}} mapped',
           })}
-        </Badge>
-        <Badge variant="outline" className="rounded-md">
+        </BadgeControl>
+        <BadgeControl variant="outline" className="rounded-md">
           {t('pages.home.publicLanding.timeline.badge')}
-        </Badge>
+        </BadgeControl>
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[minmax(280px,0.82fr)_minmax(0,1.18fr)]">

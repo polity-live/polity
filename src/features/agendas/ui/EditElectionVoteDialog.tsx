@@ -1,27 +1,28 @@
 'use client';
 
+import {
+  FormControlInput,
+  FormControlTextarea,
+  FormControlLabel,
+  FormControlSelect,
+  FormControlRadioGroup,
+  FormControlSelectContent,
+  FormControlSelectItem,
+  FormControlSelectTrigger,
+  FormControlSelectValue,
+  FormControlRadioGroupItem,
+} from '@/features/shared/ui/form';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { useState, useEffect } from 'react';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Label } from '@/features/shared/ui/ui/label';
-import { Textarea } from '@/features/shared/ui/ui/textarea';
 import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/features/shared/ui/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/features/shared/ui/ui/radio-group';
 import { Loader2, Plus, X } from 'lucide-react';
 import {
   useTranslation,
@@ -257,7 +258,7 @@ export function EditElectionVoteDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-lg">
+      <ScrollableDialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
             {isElection
@@ -271,8 +272,10 @@ export function EditElectionVoteDialog({
 
         <div className="space-y-5 py-4">
           <div className="space-y-2">
-            <Label htmlFor="agenda-title">{t('features.events.agenda.item.title')}</Label>
-            <Input
+            <FormControlLabel htmlFor="agenda-title">
+              {t('features.events.agenda.item.title')}
+            </FormControlLabel>
+            <FormControlInput
               id="agenda-title"
               value={title}
               onChange={e => setTitle(e.target.value)}
@@ -281,10 +284,10 @@ export function EditElectionVoteDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="agenda-description">
+            <FormControlLabel htmlFor="agenda-description">
               {t('features.events.agenda.item.description')}
-            </Label>
-            <Textarea
+            </FormControlLabel>
+            <FormControlTextarea
               id="agenda-description"
               value={description}
               onChange={e => setDescription(e.target.value)}
@@ -294,8 +297,10 @@ export function EditElectionVoteDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="agenda-duration">{t('features.events.agenda.duration')}</Label>
-            <Input
+            <FormControlLabel htmlFor="agenda-duration">
+              {t('features.events.agenda.duration')}
+            </FormControlLabel>
+            <FormControlInput
               id="agenda-duration"
               type="number"
               min={1}
@@ -307,47 +312,49 @@ export function EditElectionVoteDialog({
 
           {/* Majority type */}
           <div className="space-y-2">
-            <Label>{t('features.events.agenda.majorityType')}</Label>
-            <Select value={majorityType} onValueChange={setMajorityType}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="relative">
+            <FormControlLabel>{t('features.events.agenda.majorityType')}</FormControlLabel>
+            <FormControlSelect value={majorityType} onValueChange={setMajorityType}>
+              <FormControlSelectTrigger>
+                <FormControlSelectValue />
+              </FormControlSelectTrigger>
+              <FormControlSelectContent>
+                <FormControlSelectItem value="relative">
                   {t('features.events.agenda.majorityRelative')}
-                </SelectItem>
-                <SelectItem value="absolute">
+                </FormControlSelectItem>
+                <FormControlSelectItem value="absolute">
                   {t('features.events.agenda.majorityAbsolute')}
-                </SelectItem>
-                <SelectItem value="two_thirds_absolute">
+                </FormControlSelectItem>
+                <FormControlSelectItem value="two_thirds_absolute">
                   {t('features.events.agenda.majorityTwoThirds')}
-                </SelectItem>
-              </SelectContent>
-            </Select>
+                </FormControlSelectItem>
+              </FormControlSelectContent>
+            </FormControlSelect>
           </div>
 
           {/* Closing type */}
           <div className="space-y-2">
-            <Label>{t('features.events.agenda.closingType')}</Label>
-            <RadioGroup value={closingType} onValueChange={setClosingType}>
+            <FormControlLabel>{t('features.events.agenda.closingType')}</FormControlLabel>
+            <FormControlRadioGroup value={closingType} onValueChange={setClosingType}>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="moderator" id="closing-moderator" />
-                <Label htmlFor="closing-moderator">
+                <FormControlRadioGroupItem value="moderator" id="closing-moderator" />
+                <FormControlLabel htmlFor="closing-moderator">
                   {t('features.events.agenda.closingModerator')}
-                </Label>
+                </FormControlLabel>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="time" id="closing-time" />
-                <Label htmlFor="closing-time">{t('features.events.agenda.closingTime')}</Label>
+                <FormControlRadioGroupItem value="time" id="closing-time" />
+                <FormControlLabel htmlFor="closing-time">
+                  {t('features.events.agenda.closingTime')}
+                </FormControlLabel>
               </div>
-            </RadioGroup>
+            </FormControlRadioGroup>
           </div>
 
           {/* Duration (only when time-based) */}
           {closingType === 'time' && (
             <div className="space-y-2">
-              <Label>{t('features.events.agenda.closingDuration')}</Label>
-              <Input
+              <FormControlLabel>{t('features.events.agenda.closingDuration')}</FormControlLabel>
+              <FormControlInput
                 type="number"
                 min={1}
                 max={120}
@@ -371,8 +378,8 @@ export function EditElectionVoteDialog({
           {/* Max votes (elections only) */}
           {isElection && (
             <div className="space-y-2">
-              <Label>{t('features.events.agenda.maxVotes')}</Label>
-              <Input
+              <FormControlLabel>{t('features.events.agenda.maxVotes')}</FormControlLabel>
+              <FormControlInput
                 type="number"
                 min={1}
                 value={maxVotes}
@@ -384,7 +391,7 @@ export function EditElectionVoteDialog({
           {/* Choices list (votes only) */}
           {!isElection && (
             <div className="space-y-2">
-              <Label>{t('features.events.agenda.choices')}</Label>
+              <FormControlLabel>{t('features.events.agenda.choices')}</FormControlLabel>
               <div className="space-y-2">
                 {localChoices.map(choice => (
                   <div key={choice.id} className="flex items-center gap-2">
@@ -401,7 +408,7 @@ export function EditElectionVoteDialog({
                   </div>
                 ))}
                 <div className="flex items-center gap-2">
-                  <Input
+                  <FormControlInput
                     placeholder={t('features.events.agenda.newChoice')}
                     value={newChoiceLabel}
                     onChange={e => setNewChoiceLabel(e.target.value)}
@@ -436,7 +443,7 @@ export function EditElectionVoteDialog({
             {t('common.actions.save')}
           </Button>
         </DialogFooter>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

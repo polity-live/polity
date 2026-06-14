@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Badge } from '@/features/shared/ui/ui/badge';
+import { StatusBadge } from '@/features/shared/ui/status';
 import {
   Dialog,
   DialogDescription,
@@ -201,9 +201,7 @@ export function InviteMembersDialog<TRole extends ParticipationRoleLike>({
                             className="text-xs"
                           />
                           {role.default_invite_role ? (
-                            <Badge className="border-transparent bg-emerald-100 text-emerald-950 dark:bg-emerald-500/20 dark:text-emerald-200">
-                              {defaultInviteLabel}
-                            </Badge>
+                            <StatusBadge status="active">{defaultInviteLabel}</StatusBadge>
                           ) : null}
                         </span>
                       }

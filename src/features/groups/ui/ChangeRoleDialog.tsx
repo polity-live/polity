@@ -1,3 +1,4 @@
+import { FormControlLabel, FormControlCheckbox } from '@/features/shared/ui/form';
 /**
  * Change Role Dialog Component
  *
@@ -8,33 +9,29 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
+import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
+import { RoleBadge, StatusBadge } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Label } from '@/features/shared/ui/ui/label';
-import { Checkbox } from '@/features/shared/ui/ui/checkbox';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/features/shared/ui/ui/collapsible';
-import { Badge } from '@/features/shared/ui/ui/badge';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/features/shared/ui/ui/table';
 import { ChevronDown, ShieldCheck } from 'lucide-react';
-import { buildRightsSummaryForRoles, sortGroupRoles } from '../logic/buildMembershipRightsSummary';
+import {
+  buildRightsSummaryForRoles,
+  sortGroupRoles,
+  type MembershipRightSummary,
+} from '../logic/buildMembershipRightsSummary';
 import type { ParticipationRoleLike } from '@/features/shared/types/participation';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { RoleTag } from './RoleTag';
 
 interface ChangeRoleDialogProps<TRole extends ParticipationRoleLike> {
   isOpen: boolean;
@@ -93,6 +90,54 @@ export function ChangeRoleDialog<TRole extends ParticipationRoleLike>({
     .filter(Boolean)
     .join(', ');
   const selectedRoleNames = selectedRoles.map(role => role.name || 'Role').join(', ');
+  const rightsColumns: ColumnDef<MembershipRightSummary>[] = [
+    {
+      id: 'right',
+      header: translateText('generated.inline.0669_effective_right_706cda84'),
+      meta: {
+        className: 'min-w-[220px]',
+      },
+      cell: ({ row }) => (
+        <div className="space-y-1">
+          <div className="font-medium">{row.original.label}</div>
+          <div className="text-muted-foreground text-xs">
+            {row.original.resource} / {row.original.action}
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'grantedBy',
+      header: translateText('generated.inline.0670_granted_by_9db3801b'),
+      cell: ({ row }) => (
+        <div className="flex flex-wrap gap-2">
+          {row.original.sources.map(source => (
+            <div
+              key={`${row.original.key}-${source.roleId}`}
+              className="border-border/70 bg-muted/30 rounded-md border px-3 py-2 text-xs"
+            >
+              <RoleBadge>{source.roleName}</RoleBadge>
+              {!source.isDirect ? (
+                <span className="text-muted-foreground ml-2">
+                  {translateText('generated.inline.0082_via_a19e070e')}
+                  {source.viaLabel}
+                </span>
+              ) : null}
+              <StatusBadge
+                status={source.isDirect ? 'direct' : 'implied'}
+                tone={source.isDirect ? 'success' : 'info'}
+                className="ml-2"
+              >
+                {source.isDirect
+                  ? translateText('generated.inline.0083_direct_24a1733c')
+                  : translateText('generated.inline.0084_implied_b0cc834f')}
+              </StatusBadge>
+            </div>
+          ))}
+        </div>
+      ),
+    },
+  ];
 
   const handleConfirm = () => {
     onConfirm(selectedRoleIds);
@@ -117,7 +162,7 @@ export function ChangeRoleDialog<TRole extends ParticipationRoleLike>({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-[920px]">
+      <ScrollableDialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-[920px]">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
@@ -140,12 +185,12 @@ export function ChangeRoleDialog<TRole extends ParticipationRoleLike>({
                 const isChecked = selectedRoleIds.includes(role.id);
 
                 return (
-                  <Label
+                  <FormControlLabel
                     key={role.id}
                     htmlFor={`role-${role.id}`}
                     className="hover:bg-accent flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors"
                   >
-                    <Checkbox
+                    <FormControlCheckbox
                       id={`role-${role.id}`}
                       checked={isChecked}
                       onCheckedChange={checked => toggleRoleSelection(role.id, checked === true)}
@@ -156,7 +201,7 @@ export function ChangeRoleDialog<TRole extends ParticipationRoleLike>({
                         <div className="text-muted-foreground text-xs">{role.description}</div>
                       )}
                     </div>
-                  </Label>
+                  </FormControlLabel>
                 );
               })
             ) : (
@@ -201,95 +246,23 @@ export function ChangeRoleDialog<TRole extends ParticipationRoleLike>({
                     <div className="mt-3 flex flex-wrap gap-2">
                       {selectedRoles.length > 0 ? (
                         selectedRoles.map(role => (
-                          <Badge
-                            key={role.id}
-                            variant="secondary"
-                            className="rounded-full px-3 py-1"
-                          >
-                            {role.name || translateText('generated.inline.0092_role_c3f104d1')}
-                          </Badge>
+                          <RoleTag key={role.id} roleId={role.id} roleName={role.name || 'Role'} />
                         ))
                       ) : (
-                        <Badge variant="outline" className="rounded-full px-3 py-1">
+                        <StatusBadge status="empty" tone="neutral">
                           {noSelectedRolesLabel}
-                        </Badge>
+                        </StatusBadge>
                       )}
                     </div>
                   </div>
 
-                  <div className="border-border/70 overflow-x-auto rounded-2xl border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="min-w-[220px]">
-                            {translateText('generated.inline.0669_effective_right_706cda84')}
-                          </TableHead>
-                          <TableHead>
-                            {translateText('generated.inline.0670_granted_by_9db3801b')}
-                          </TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {rightsSummary.length > 0 ? (
-                          rightsSummary.map(right => (
-                            <TableRow key={right.key}>
-                              <TableCell>
-                                <div className="space-y-1">
-                                  <div className="font-medium">{right.label}</div>
-                                  <div className="text-muted-foreground text-xs">
-                                    {right.resource} / {right.action}
-                                  </div>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex flex-wrap gap-2">
-                                  {right.sources.map(source => (
-                                    <div
-                                      key={`${right.key}-${source.roleId}`}
-                                      className="border-border/70 bg-muted/30 rounded-full border px-3 py-1 text-xs"
-                                    >
-                                      <span className="font-medium">{source.roleName}</span>
-                                      {!source.isDirect ? (
-                                        <span className="text-muted-foreground">
-                                          {' '}
-                                          {translateText('generated.inline.0082_via_a19e070e')}
-                                          {source.viaLabel}
-                                        </span>
-                                      ) : null}
-                                      {source.isDirect ? (
-                                        <Badge
-                                          variant="outline"
-                                          className="ml-2 border-emerald-500/50 text-emerald-700 dark:text-emerald-300"
-                                        >
-                                          {translateText('generated.inline.0083_direct_24a1733c')}
-                                        </Badge>
-                                      ) : (
-                                        <Badge
-                                          variant="outline"
-                                          className="ml-2 border-sky-500/50 text-sky-700 dark:text-sky-300"
-                                        >
-                                          {translateText('generated.inline.0084_implied_b0cc834f')}
-                                        </Badge>
-                                      )}
-                                    </div>
-                                  ))}
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell
-                              colSpan={2}
-                              className="text-muted-foreground py-8 text-center"
-                            >
-                              {emptyRightsLabel}
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
+                  <DataTable
+                    columns={rightsColumns}
+                    data={rightsSummary}
+                    getRowId={right => right.key}
+                    enablePagination={false}
+                    emptyTitle={emptyRightsLabel}
+                  />
                 </div>
               </CollapsibleContent>
             </div>
@@ -302,7 +275,7 @@ export function ChangeRoleDialog<TRole extends ParticipationRoleLike>({
           </Button>
           <Button onClick={handleConfirm}>{submitLabel}</Button>
         </DialogFooter>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

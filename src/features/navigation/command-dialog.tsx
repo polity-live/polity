@@ -1,3 +1,4 @@
+import { BadgeControl } from '@/features/shared/ui/status';
 import {
   CommandDialog,
   CommandEmpty,
@@ -8,7 +9,6 @@ import {
   CommandSeparator,
   CommandShortcut,
 } from '@/features/shared/ui/ui/command.tsx';
-import { Badge } from '@/features/shared/ui/ui/badge.tsx';
 import { getIconComponent } from '@/features/navigation/nav-items/icon-map.tsx';
 import { getShortcutForItem } from '@/features/navigation/nav-keyboard/keyboard-navigation.ts';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
@@ -103,9 +103,9 @@ export function NavigationCommandDialog({
                   <IconComponent className="mr-2 h-4 w-4" />
                   <span>{item.label}</span>
                   {item.badge && (
-                    <Badge className="ml-2" variant="secondary">
+                    <BadgeControl className="ml-2" variant="secondary">
                       {item.badge}
-                    </Badge>
+                    </BadgeControl>
                   )}
                 </div>
                 <CommandShortcut>{getShortcutForItem(item.id).display}</CommandShortcut>
@@ -139,9 +139,9 @@ export function NavigationCommandDialog({
                         <IconComponent className="mr-2 h-4 w-4" />
                         <span>{item.label}</span>
                         {item.badge && (
-                          <Badge className="ml-2" variant="secondary">
+                          <BadgeControl className="ml-2" variant="secondary">
                             {item.badge}
-                          </Badge>
+                          </BadgeControl>
                         )}
                       </div>
                       <CommandShortcut>{getShortcutForItem(item.id).display}</CommandShortcut>

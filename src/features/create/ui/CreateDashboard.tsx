@@ -1,187 +1,101 @@
 'use client';
 
-import { Link } from '@tanstack/react-router';
-import { PageWrapper } from '@/layout/page-wrapper';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/features/shared/ui/ui/card';
-import {
-  Users,
-  FileText,
   BookOpen,
-  Scale,
-  CheckSquare,
   Calendar,
-  UserCheck,
+  CheckSquare,
   DollarSign,
+  FileText,
+  Scale,
+  UserCheck,
+  Users,
 } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { CreateDashboardView, type CreateDashboardSectionViewModel } from './CreateDashboardView';
 
 export function CreateDashboard() {
   const { t } = useTranslation();
 
-  const coreItems = [
+  const sections: CreateDashboardSectionViewModel[] = [
     {
-      href: '/create/group',
-      icon: Users,
-      title: t('pages.create.group.pageTitle'),
-      description: t('pages.create.group.description'),
+      key: 'core',
+      title: t('pages.create.dashboard.core'),
+      items: [
+        {
+          href: '/create/group',
+          icon: Users,
+          title: t('pages.create.group.pageTitle'),
+          description: t('pages.create.group.description'),
+        },
+        {
+          href: '/create/event',
+          icon: Calendar,
+          title: t('pages.create.event.pageTitle'),
+          description: t('pages.create.event.description'),
+        },
+        {
+          href: '/create/amendment',
+          icon: Scale,
+          title: t('pages.create.amendment.pageTitle'),
+          description: t('pages.create.amendment.description'),
+        },
+        {
+          href: '/create/blog-entry',
+          icon: BookOpen,
+          title: t('pages.create.blog.pageTitle'),
+          description: t('pages.create.blog.description'),
+        },
+      ],
     },
     {
-      href: '/create/event',
-      icon: Calendar,
-      title: t('pages.create.event.pageTitle'),
-      description: t('pages.create.event.description'),
+      key: 'operational',
+      title: t('pages.create.dashboard.operational'),
+      items: [
+        {
+          href: '/create/todo',
+          icon: CheckSquare,
+          title: t('pages.create.todo.pageTitle'),
+          description: t('pages.create.todo.description'),
+        },
+        {
+          href: '/create/statement',
+          icon: FileText,
+          title: t('pages.create.statement.pageTitle'),
+          description: t('pages.create.statement.description'),
+        },
+        {
+          href: '/create/payment',
+          icon: DollarSign,
+          title: t('pages.create.payment.pageTitle'),
+          description: t('pages.create.payment.description'),
+        },
+      ],
     },
     {
-      href: '/create/amendment',
-      icon: Scale,
-      title: t('pages.create.amendment.pageTitle'),
-      description: t('pages.create.amendment.description'),
-    },
-    {
-      href: '/create/blog-entry',
-      icon: BookOpen,
-      title: t('pages.create.blog.pageTitle'),
-      description: t('pages.create.blog.description'),
-    },
-  ];
-
-  const operationalItems = [
-    {
-      href: '/create/todo',
-      icon: CheckSquare,
-      title: t('pages.create.todo.pageTitle'),
-      description: t('pages.create.todo.description'),
-    },
-    {
-      href: '/create/statement',
-      icon: FileText,
-      title: t('pages.create.statement.pageTitle'),
-      description: t('pages.create.statement.description'),
-    },
-    {
-      href: '/create/payment',
-      icon: DollarSign,
-      title: t('pages.create.payment.pageTitle'),
-      description: t('pages.create.payment.description'),
-    },
-  ];
-
-  const eventOptionsItems = [
-    {
-      href: '/create/agenda-item',
-      icon: Calendar,
-      title: t('pages.create.agendaItem.pageTitle'),
-      description: t('pages.create.agendaItem.description'),
-    },
-    {
-      href: '/create/election-candidate',
-      icon: UserCheck,
-      title: t('pages.create.electionCandidate.pageTitle'),
-      description: t('pages.create.electionCandidate.description'),
+      key: 'event-options',
+      title: t('pages.create.dashboard.eventOptions'),
+      items: [
+        {
+          href: '/create/agenda-item',
+          icon: Calendar,
+          title: t('pages.create.agendaItem.pageTitle'),
+          description: t('pages.create.agendaItem.description'),
+        },
+        {
+          href: '/create/election-candidate',
+          icon: UserCheck,
+          title: t('pages.create.electionCandidate.pageTitle'),
+          description: t('pages.create.electionCandidate.description'),
+        },
+      ],
     },
   ];
 
   return (
-    <PageWrapper>
-      <div className="mb-6">
-        <h1 className="mb-2 text-3xl font-bold">{t('pages.create.dashboard.title')}</h1>
-        <p className="text-muted-foreground">{t('pages.create.dashboard.subtitle')}</p>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('pages.create.dashboard.cardTitle')}</CardTitle>
-          <CardDescription>{t('pages.create.dashboard.cardDescription')}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-8">
-          {/* Core Set */}
-          <div>
-            <h3 className="text-muted-foreground mb-3 text-sm font-semibold tracking-wider uppercase">
-              {t('pages.create.dashboard.core')}
-            </h3>
-            <div className="grid gap-4 md:grid-cols-2">
-              {coreItems.map(item => {
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.href}
-                    to={item.href}
-                    className="hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground flex flex-col items-start gap-3 rounded-lg border p-4 text-left transition-colors focus:outline-none"
-                  >
-                    <Icon className="h-8 w-8" />
-                    <div>
-                      <h4 className="font-semibold">{item.title}</h4>
-                      <p className="text-muted-foreground text-sm">{item.description}</p>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Visual Separator */}
-          <div className="border-t" />
-
-          {/* Operational Set */}
-          <div>
-            <h3 className="text-muted-foreground mb-3 text-sm font-semibold tracking-wider uppercase">
-              {t('pages.create.dashboard.operational')}
-            </h3>
-            <div className="grid gap-4 md:grid-cols-2">
-              {operationalItems.map(item => {
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.href}
-                    to={item.href}
-                    className="hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground flex flex-col items-start gap-3 rounded-lg border p-4 text-left transition-colors focus:outline-none"
-                  >
-                    <Icon className="h-8 w-8" />
-                    <div>
-                      <h4 className="font-semibold">{item.title}</h4>
-                      <p className="text-muted-foreground text-sm">{item.description}</p>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Visual Separator */}
-          <div className="border-t" />
-
-          {/* Event Options Set */}
-          <div>
-            <h3 className="text-muted-foreground mb-3 text-sm font-semibold tracking-wider uppercase">
-              {t('pages.create.dashboard.eventOptions')}
-            </h3>
-            <div className="grid gap-4 md:grid-cols-2">
-              {eventOptionsItems.map(item => {
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.href}
-                    to={item.href}
-                    className="hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground flex flex-col items-start gap-3 rounded-lg border p-4 text-left transition-colors focus:outline-none"
-                  >
-                    <Icon className="h-8 w-8" />
-                    <div>
-                      <h4 className="font-semibold">{item.title}</h4>
-                      <p className="text-muted-foreground text-sm">{item.description}</p>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </PageWrapper>
+    <CreateDashboardView
+      title={t('pages.create.dashboard.title')}
+      subtitle={t('pages.create.dashboard.subtitle')}
+      sections={sections}
+    />
   );
 }

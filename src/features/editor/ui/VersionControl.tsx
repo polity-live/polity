@@ -1,5 +1,8 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
+import { FormControlInput, FormControlLabel } from '@/features/shared/ui/form';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 /**
  * Unified Version Control Component
  *
@@ -10,16 +13,12 @@ import { useState, useMemo } from 'react';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
   DialogFooter,
 } from '@/features/shared/ui/ui/dialog';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Label } from '@/features/shared/ui/ui/label';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { ScrollArea } from '@/features/shared/ui/ui/scroll-area';
 import {
   GitBranch,
@@ -49,6 +48,11 @@ interface VersionControlProps {
   currentContent: Value;
   currentUserId: string;
   onRestoreVersion: (content: Value) => void;
+  onVersionCreated?: (details: {
+    changeSummary: string;
+    versionId: string;
+    versionNumber: number;
+  }) => void | Promise<void>;
   /** Amendment-specific props for notifications */
   amendmentId?: string;
   amendmentTitle?: string;
@@ -59,6 +63,7 @@ export function VersionControl({
   entityId,
   currentContent,
   onRestoreVersion,
+  onVersionCreated,
 }: VersionControlProps) {
   const { t } = useTranslation();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -133,6 +138,12 @@ export function VersionControl({
         document_id: entityType === 'blog' ? '' : entityId,
         amendment_id: null,
         blog_id: entityType === 'blog' ? entityId : null,
+      });
+
+      await onVersionCreated?.({
+        changeSummary: versionTitle,
+        versionId,
+        versionNumber: nextVersionNumber,
       });
 
       toast.success(
@@ -212,7 +223,7 @@ export function VersionControl({
             {t('features.editor.versionControl.saveVersion')}
           </Button>
         </DialogTrigger>
-        <DialogContent>
+        <ScrollableDialogContent>
           <DialogHeader>
             <DialogTitle>{t('features.editor.versionControl.createVersion')}</DialogTitle>
             <DialogDescription>
@@ -221,10 +232,10 @@ export function VersionControl({
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="version-title">
+              <FormControlLabel htmlFor="version-title">
                 {t('features.editor.versionControl.versionTitle')}
-              </Label>
-              <Input
+              </FormControlLabel>
+              <FormControlInput
                 id="version-title"
                 value={versionTitle}
                 onChange={e => setVersionTitle(e.target.value)}
@@ -241,7 +252,7 @@ export function VersionControl({
               {t('features.editor.versionControl.save')}
             </Button>
           </DialogFooter>
-        </DialogContent>
+        </ScrollableDialogContent>
       </Dialog>
 
       {/* Version History Button */}
@@ -251,13 +262,13 @@ export function VersionControl({
             <History className="mr-2 h-4 w-4" />
             {t('features.editor.versionControl.history')}
             {versions.length > 0 && (
-              <Badge variant="secondary" className="ml-2">
+              <BadgeControl variant="secondary" className="ml-2">
                 {versions.length}
-              </Badge>
+              </BadgeControl>
             )}
           </Button>
         </DialogTrigger>
-        <DialogContent className="max-w-2xl">
+        <ScrollableDialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>{t('features.editor.versionControl.versionHistory')}</DialogTitle>
             <DialogDescription>
@@ -268,7 +279,7 @@ export function VersionControl({
           {/* Search */}
           <div className="relative">
             <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-            <Input
+            <FormControlInput
               placeholder={t('features.editor.versionControl.searchVersions')}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
@@ -299,10 +310,12 @@ export function VersionControl({
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline">v{version.version_number ?? 0}</Badge>
+                        <BadgeControl variant="outline">
+                          v{version.version_number ?? 0}
+                        </BadgeControl>
                         {editingVersionId === version.id ? (
                           <div className="flex items-center gap-1">
-                            <Input
+                            <FormControlInput
                               value={editingTitle}
                               onChange={e => setEditingTitle(e.target.value)}
                               className="h-7 w-48"
@@ -366,7 +379,7 @@ export function VersionControl({
               </div>
             )}
           </ScrollArea>
-        </DialogContent>
+        </ScrollableDialogContent>
       </Dialog>
     </div>
   );

@@ -78,7 +78,7 @@ describe('PqlToolbar', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Field filters/i }));
     fireEvent.focus(screen.getByPlaceholderText('Search assignees'));
-    fireEvent.mouseDown(screen.getByText('Alice Example'));
+    fireEvent.click(screen.getByText('Alice Example'));
 
     expect(screen.getByText('@alice')).toBeTruthy();
     expect(screen.getByText('Assignees: Alice Example')).toBeTruthy();

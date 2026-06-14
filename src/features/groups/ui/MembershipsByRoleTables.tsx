@@ -1,35 +1,30 @@
 import { Link } from '@tanstack/react-router';
-import { useTranslation } from 'react-i18next';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/features/shared/ui/ui/card';
-import { Button } from '@/features/shared/ui/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/features/shared/ui/ui/table';
 import { Eye } from 'lucide-react';
-import { TableTag } from '@/features/shared/ui/ui/table-tag';
-import { getTableTagSurfaceClassName } from '@/features/shared/ui/ui/table-tag';
-import { badgeVariants } from '@/features/shared/ui/ui/badge';
-import { cn } from '@/features/shared/utils/utils.ts';
-import type { SearchCardGradientEntity } from '@/features/shared/utils/search-card-gradients';
+import { useTranslation } from 'react-i18next';
+
+import { getMembershipDisplayRoles } from '@/features/groups/logic/membershipDisplayRoles';
+import { getMembershipProvenanceDisplayLabel } from '@/features/groups/logic/membershipComposition';
 import type {
   ParticipationLike,
   ParticipationRoleLike,
 } from '@/features/shared/types/participation';
+import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
+import {
+  Panel,
+  PanelContent,
+  PanelDescription,
+  PanelHeader,
+  PanelTitle,
+} from '@/features/shared/ui/layout';
+import { CountBadge, EntityBadge, StatusBadge } from '@/features/shared/ui/status';
+import { Button } from '@/features/shared/ui/ui/button';
 import { UserTableCell } from '@/features/shared/ui/ui/user-table-cell';
-import { getMembershipDisplayRoles } from '@/features/groups/logic/membershipDisplayRoles';
-import { getMembershipProvenanceDisplayLabel } from '@/features/groups/logic/membershipComposition';
+import type { SearchCardGradientEntity } from '@/features/shared/utils/search-card-gradients';
 import { RoleTag } from './RoleTag';
+
+function resolveTranslatedFallback(value: string, key: string, fallback: string) {
+  return value === key ? fallback : value;
+}
 
 interface MembershipsByRoleTablesProps<
   TRole extends ParticipationRoleLike,
@@ -93,8 +88,13 @@ export function MembershipsByRoleTables<
     derivedRemoveTooltip ?? t('components.membershipTables.derivedRemoveTooltip');
   const resolvedEmptyStateLabel =
     emptyStateLabel ?? t('components.membershipTables.emptyStateByRole');
-  const noUserRoleLabel = t('components.membershipTables.noUserRole', 'No user role');
-  const noUserRoleDescription = t(
+  const noUserRoleLabel = resolveTranslatedFallback(
+    t('components.membershipTables.noUserRole', 'No user role'),
+    'components.membershipTables.noUserRole',
+    'No user role'
+  );
+  const noUserRoleDescription = resolveTranslatedFallback(
+    t('components.membershipTables.noUserRoleDescription', 'Members without an assigned role.'),
     'components.membershipTables.noUserRoleDescription',
     'Members without an assigned role.'
   );
@@ -106,6 +106,7 @@ export function MembershipsByRoleTables<
   const rightsLabel = t('components.membershipTables.rights');
   const secondaryActionDefaultLabel = t('components.membershipTables.manage');
   const notAvailableLabel = t('components.membershipTables.notAvailable', 'N/A');
+  const countTone = entityType === 'event' ? 'info' : 'neutral';
   const membersWithoutRoles = members.filter(
     membership => getMembershipDisplayRoles(membership).length === 0
   );
@@ -144,21 +145,15 @@ export function MembershipsByRoleTables<
     });
 
     if (!group?.id) {
-      return <span>{label}</span>;
+      return <span className="text-muted-foreground">{label}</span>;
     }
 
     return (
-      <Link
-        to="/group/$id"
-        params={{ id: group.id }}
-        className={cn(
-          badgeVariants({ variant: 'outline' }),
-          getTableTagSurfaceClassName('group'),
-          'hover:opacity-90'
-        )}
-      >
-        {label}
-      </Link>
+      <EntityBadge asChild tone="info" className="hover:opacity-90">
+        <Link to="/group/$id" params={{ id: group.id }}>
+          {label}
+        </Link>
+      </EntityBadge>
     );
   };
 
@@ -166,165 +161,163 @@ export function MembershipsByRoleTables<
     <div className="space-y-4">
       {sections.map(section => {
         const roleMembers = section.members;
+        const provenanceColumns: ColumnDef<TParticipation>[] = showProvenanceColumns
+          ? [
+              {
+                id: 'partGroup',
+                header: () => t('components.tableColumns.partGroup'),
+                cell: ({ row }) => renderProvenanceGroupTag(row.original, 'partGroup'),
+              },
+              {
+                id: 'baseGroup',
+                header: () => t('components.tableColumns.baseGroup'),
+                cell: ({ row }) => renderProvenanceGroupTag(row.original, 'baseGroup'),
+              },
+            ]
+          : [];
+        const columns: ColumnDef<TParticipation>[] = [
+          {
+            id: 'user',
+            header: userColumnLabel,
+            cell: ({ row }) => <UserTableCell user={row.original.user} />,
+          },
+          {
+            id: 'roles',
+            header: section.kind === 'role' ? otherRolesColumnLabel : assignedRolesColumnLabel,
+            cell: ({ row }) => {
+              const membership = row.original;
+              const displayRoles = getMembershipDisplayRoles(membership);
+              const otherRoles =
+                section.kind === 'role' && section.role
+                  ? displayRoles.filter(membershipRole => membershipRole.id !== section.role?.id)
+                  : displayRoles;
+
+              return (
+                <div className="flex flex-wrap gap-2">
+                  {otherRoles.length > 0 ? (
+                    otherRoles.map(otherRole => (
+                      <RoleTag
+                        key={otherRole.id}
+                        roleId={otherRole.id}
+                        roleName={otherRole.name || roleFallbackLabel}
+                      />
+                    ))
+                  ) : section.kind === 'no-role' ? (
+                    <RoleTag fallbackKey={`no-role-${membership.id}`}>{noUserRoleLabel}</RoleTag>
+                  ) : (
+                    <span className="text-muted-foreground text-sm">
+                      {resolvedNoOtherRolesLabel}
+                    </span>
+                  )}
+                </div>
+              );
+            },
+          },
+          ...provenanceColumns,
+          {
+            id: 'joined',
+            header: joinedColumnLabel,
+            cell: ({ row }) => (
+              <span className="text-muted-foreground">
+                {row.original.created_at
+                  ? new Date(row.original.created_at).toLocaleDateString()
+                  : notAvailableLabel}
+              </span>
+            ),
+          },
+          {
+            id: 'actions',
+            header: actionsColumnLabel,
+            meta: {
+              headerClassName: 'text-right',
+              cellClassName: 'text-right',
+            },
+            cell: ({ row }) => {
+              const membership = row.original;
+
+              return (
+                <div className="flex justify-end gap-2">
+                  <Button variant="ghost" size="sm" onClick={() => onOpenRightsDialog(membership)}>
+                    <Eye className="mr-1 h-4 w-4" />
+                    {rightsLabel}
+                  </Button>
+                  {onSecondaryAction ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onSecondaryAction(membership)}
+                      title={secondaryActionTooltip}
+                    >
+                      {secondaryActionLabel || secondaryActionDefaultLabel}
+                    </Button>
+                  ) : null}
+                  {section.kind === 'role' && section.role ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={membership.source === 'derived'}
+                      onClick={() => onRemoveRole(membership, section.role.id)}
+                      title={
+                        membership.source === 'derived'
+                          ? resolvedDerivedRemoveTooltip
+                          : 'Remove this role from the member.'
+                      }
+                    >
+                      {resolvedRemoveActionLabel}
+                    </Button>
+                  ) : null}
+                </div>
+              );
+            },
+          },
+        ];
 
         return (
-          <Card
+          <Panel
             key={section.id}
             className="border-border/70 from-background to-muted/20 bg-gradient-to-b"
           >
-            <CardHeader>
+            <PanelHeader>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <CardTitle className="flex items-center gap-2">
+                  <PanelTitle className="flex items-center gap-2">
                     {section.kind === 'role' && section.role ? (
                       <RoleTag roleId={section.role.id} roleName={section.title} />
                     ) : (
                       <span className="font-semibold">{section.title}</span>
                     )}
-                    <TableTag entityType={entityType}>
-                      {roleMembers.length} {resolvedCountLabel}
-                    </TableTag>
-                  </CardTitle>
-                  <CardDescription>{section.description}</CardDescription>
+                    <CountBadge
+                      count={roleMembers.length}
+                      label={resolvedCountLabel}
+                      tone={countTone}
+                    />
+                  </PanelTitle>
+                  <PanelDescription>{section.description}</PanelDescription>
                 </div>
                 {section.kind === 'role' && section.role ? (
                   <div className="flex flex-wrap gap-2">
                     {section.role.default_request_role ? (
-                      <TableTag entityType={entityType}>{resolvedDefaultRequestLabel}</TableTag>
+                      <StatusBadge status="active">{resolvedDefaultRequestLabel}</StatusBadge>
                     ) : null}
                     {section.role.default_invite_role ? (
-                      <TableTag entityType={entityType}>{resolvedDefaultInviteLabel}</TableTag>
+                      <StatusBadge status="invited" tone="info">
+                        {resolvedDefaultInviteLabel}
+                      </StatusBadge>
                     ) : null}
                   </div>
                 ) : null}
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="border-border/70 overflow-x-auto rounded-2xl border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{userColumnLabel}</TableHead>
-                      <TableHead>
-                        {section.kind === 'role' ? otherRolesColumnLabel : assignedRolesColumnLabel}
-                      </TableHead>
-                      {showProvenanceColumns ? (
-                        <TableHead>{t('components.tableColumns.partGroup')}</TableHead>
-                      ) : null}
-                      {showProvenanceColumns ? (
-                        <TableHead>{t('components.tableColumns.baseGroup')}</TableHead>
-                      ) : null}
-                      <TableHead>{joinedColumnLabel}</TableHead>
-                      <TableHead className="text-right">{actionsColumnLabel}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {roleMembers.length > 0 ? (
-                      roleMembers.map(membership => {
-                        const displayRoles = getMembershipDisplayRoles(membership);
-                        const otherRoles =
-                          section.kind === 'role' && section.role
-                            ? displayRoles.filter(
-                                membershipRole => membershipRole.id !== section.role?.id
-                              )
-                            : displayRoles;
-
-                        return (
-                          <TableRow key={`${section.id}-${membership.id}`}>
-                            <TableCell>
-                              <UserTableCell user={membership.user} />
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex flex-wrap gap-2">
-                                {otherRoles.length > 0 ? (
-                                  otherRoles.map(otherRole => (
-                                    <RoleTag
-                                      key={otherRole.id}
-                                      roleId={otherRole.id}
-                                      roleName={otherRole.name || roleFallbackLabel}
-                                    />
-                                  ))
-                                ) : section.kind === 'no-role' ? (
-                                  <RoleTag fallbackKey={`no-role-${membership.id}`}>
-                                    {noUserRoleLabel}
-                                  </RoleTag>
-                                ) : (
-                                  <span className="text-muted-foreground text-sm">
-                                    {resolvedNoOtherRolesLabel}
-                                  </span>
-                                )}
-                              </div>
-                            </TableCell>
-                            {showProvenanceColumns ? (
-                              <TableCell className="text-muted-foreground">
-                                {renderProvenanceGroupTag(membership, 'partGroup')}
-                              </TableCell>
-                            ) : null}
-                            {showProvenanceColumns ? (
-                              <TableCell className="text-muted-foreground">
-                                {renderProvenanceGroupTag(membership, 'baseGroup')}
-                              </TableCell>
-                            ) : null}
-                            <TableCell className="text-muted-foreground">
-                              {membership.created_at
-                                ? new Date(membership.created_at).toLocaleDateString()
-                                : notAvailableLabel}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex justify-end gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => onOpenRightsDialog(membership)}
-                                >
-                                  <Eye className="mr-1 h-4 w-4" />
-                                  {rightsLabel}
-                                </Button>
-                                {onSecondaryAction ? (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => onSecondaryAction(membership)}
-                                    title={secondaryActionTooltip}
-                                  >
-                                    {secondaryActionLabel || secondaryActionDefaultLabel}
-                                  </Button>
-                                ) : null}
-                                {section.kind === 'role' && section.role ? (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    disabled={membership.source === 'derived'}
-                                    onClick={() => onRemoveRole(membership, section.role.id)}
-                                    title={
-                                      membership.source === 'derived'
-                                        ? resolvedDerivedRemoveTooltip
-                                        : 'Remove this role from the member.'
-                                    }
-                                  >
-                                    {resolvedRemoveActionLabel}
-                                  </Button>
-                                ) : null}
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })
-                    ) : (
-                      <TableRow>
-                        <TableCell
-                          colSpan={showProvenanceColumns ? 6 : 4}
-                          className="text-muted-foreground py-8 text-center"
-                        >
-                          {resolvedEmptyStateLabel}
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
+            </PanelHeader>
+            <PanelContent>
+              <DataTable
+                columns={columns}
+                data={roleMembers}
+                getRowId={membership => `${section.id}-${membership.id}`}
+                enablePagination={false}
+                emptyTitle={resolvedEmptyStateLabel}
+              />
+            </PanelContent>
+          </Panel>
         );
       })}
     </div>

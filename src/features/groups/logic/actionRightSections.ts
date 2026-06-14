@@ -62,12 +62,16 @@ export function getActionRightSections(
     ACTION_RIGHT_SECTION_DEFINITIONS.flatMap(section => section.resources)
   );
 
-  const sections = ACTION_RIGHT_SECTION_DEFINITIONS.map(section => ({
-    id: section.id,
-    title: section.title,
-    description: section.description,
-    rights: actionRights.filter(right => section.resources.includes(right.resource)),
-  })).filter(section => section.rights.length > 0);
+  const sections: ActionRightSection[] = ACTION_RIGHT_SECTION_DEFINITIONS.map(section => {
+    const sectionResources = new Set<string>(section.resources);
+
+    return {
+      id: section.id,
+      title: section.title,
+      description: section.description,
+      rights: actionRights.filter(right => sectionResources.has(right.resource)),
+    };
+  }).filter(section => section.rights.length > 0);
 
   const otherRights = actionRights.filter(right => !categorizedResources.has(right.resource));
 

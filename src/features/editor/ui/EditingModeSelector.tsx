@@ -1,7 +1,7 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -79,9 +79,9 @@ export function EditingModeSelector({ amendmentId, currentMode }: EditingModeSel
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium">{mode.label}</span>
                     {isActive && (
-                      <Badge variant="secondary" className="text-xs">
+                      <BadgeControl variant="secondary" className="text-xs">
                         {t('features.amendments.modeSelector.active')}
-                      </Badge>
+                      </BadgeControl>
                     )}
                   </div>
                 </div>

@@ -1,9 +1,9 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Progress } from '@/features/shared/ui/ui/progress';
 import {
   ArrowUp,
@@ -137,12 +137,12 @@ function ChangeRequestItem({
               <span className="text-sm font-semibold text-gray-600">#{index + 1}</span>
               <h4 className="font-semibold">{changeRequest.title}</h4>
               {isActive && (
-                <Badge variant="default" className="bg-blue-500">
+                <BadgeControl variant="default" className="bg-blue-500">
                   {translateText('generated.inline.1246_aktuelle_abstimmung_bf7b15bd')}
-                </Badge>
+                </BadgeControl>
               )}
               {isCompleted && voteResults && (
-                <Badge
+                <BadgeControl
                   variant={acceptPercentage > 50 ? 'default' : 'secondary'}
                   className={acceptPercentage > 50 ? 'bg-green-500' : 'bg-red-500'}
                 >
@@ -157,13 +157,13 @@ function ChangeRequestItem({
                       {translateText('generated.inline.1248_abgelehnt_110d6fe7')}
                     </>
                   )}
-                </Badge>
+                </BadgeControl>
               )}
             </div>
-            <Badge variant="outline">
+            <BadgeControl variant="outline">
               {changeRequest.characterCount || 0}
               {translateText('generated.inline.1249_zeichen_ge_ndert_2bb3e4a3')}
-            </Badge>
+            </BadgeControl>
           </div>
 
           <p className="text-muted-foreground text-sm">{changeRequest.description}</p>
@@ -176,11 +176,11 @@ function ChangeRequestItem({
                   translateText('generated.inline.0028_unbekannt_d0b00a9f')}
               </span>
               {changeRequest.source && (
-                <Badge variant="outline" className="text-xs">
+                <BadgeControl variant="outline" className="text-xs">
                   {changeRequest.source === 'collaborator'
                     ? translateText('generated.inline.0157_collaborator_794b34c1')
                     : translateText('generated.inline.0158_event_teilnehmer_c24630ba')}
-                </Badge>
+                </BadgeControl>
               )}
             </div>
           )}
@@ -303,11 +303,11 @@ export function AmendmentVotingQueue({
             {translateText('generated.inline.1257_abstimmungs_warteschlange_81e93825')}
           </CardTitle>
           {currentSession?.status === 'active' && (
-            <Badge variant="default" className="gap-1">
+            <BadgeControl variant="default" className="gap-1">
               <Clock className="h-3 w-3" />
               {minutesRemaining}:{secondsRemaining.toString().padStart(2, '0')}
               {translateText('generated.inline.0184_verbleibend_6ffd5c42')}
-            </Badge>
+            </BadgeControl>
           )}
         </div>
       </CardHeader>
@@ -374,10 +374,10 @@ export function AmendmentVotingQueue({
                 <p className="text-muted-foreground text-sm">{currentChangeRequest.title}</p>
               </div>
               {hasVoted && (
-                <Badge variant="outline" className="bg-green-50">
+                <BadgeControl variant="outline" className="bg-green-50">
                   <CheckCircle2 className="mr-1 h-3 w-3" />
                   {t('features.events.voting.voted')}
-                </Badge>
+                </BadgeControl>
               )}
             </div>
 
@@ -455,9 +455,9 @@ export function AmendmentVotingQueue({
                 </p>
               </div>
               {currentSession?.status === 'active' && (
-                <Badge variant="default" className="bg-green-500">
+                <BadgeControl variant="default" className="bg-green-500">
                   {translateText('generated.inline.1246_aktuelle_abstimmung_bf7b15bd')}
-                </Badge>
+                </BadgeControl>
               )}
             </div>
           </div>

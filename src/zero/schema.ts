@@ -132,155 +132,157 @@ import { allRelationships } from './relationships';
 // ============================================
 // Schema Export
 // ============================================
+const zeroTables = [
+  // Users
+  user,
+  file,
+  // Groups
+  group,
+  groupMembership,
+  groupOfflineMember,
+  groupOfflineMembership,
+  groupMembershipRole,
+  groupOfflineMembershipRole,
+  groupGuestAccess,
+  groupGuestRole,
+  role,
+  roleHolderHistory,
+  actionRight,
+  // Events
+  event,
+  eventParticipant,
+  eventOfflineParticipant,
+  eventParticipantRole,
+  participant,
+  eventException,
+  // Amendments
+  amendment,
+  amendmentCollaborator,
+  amendmentPath,
+  amendmentPathSegment,
+  supportConfirmation,
+  amendmentGroupDecision,
+  amendmentProcessRun,
+  amendmentProcessBranch,
+  amendmentProcessStepRun,
+  processTask,
+  // Documents
+  document,
+  documentVersion,
+  documentCollaborator,
+  documentCursor,
+  // Agendas
+  agendaItem,
+  speakerList,
+  agendaItemChangeRequest,
+  // Elections
+  election,
+  electionCandidate,
+  electionOfflineTally,
+  elector,
+  indicativeElectorParticipation,
+  indicativeCandidateSelection,
+  finalElectorParticipation,
+  finalCandidateSelection,
+  // Votes
+  vote,
+  voteChoice,
+  voteOfflineTally,
+  voter,
+  indicativeVoterParticipation,
+  indicativeChoiceDecision,
+  finalVoterParticipation,
+  finalChoiceDecision,
+  amendmentSupportVote,
+  changeRequestVote,
+  blogSupportVote,
+  statementSupportVote,
+  threadVote,
+  commentVote,
+  // Change Requests
+  changeRequest,
+  // Discussions
+  thread,
+  comment,
+  // Delegates
+  eventDelegate,
+  groupDelegateAllocation,
+  // Network
+  follow,
+  groupConnection,
+  groupRightGrant,
+  groupMembershipRule,
+  groupMembershipRuleOrigin,
+  groupConnectionRequest,
+  groupRightGrantRequest,
+  groupMembershipRuleRequest,
+  groupMembershipRuleRequestOrigin,
+  subscriber,
+  groupWorkflow,
+  groupWorkflowStep,
+  groupWorkflowApproval,
+  // Todos
+  todo,
+  todoAssignment,
+  // Messages
+  conversation,
+  conversationParticipant,
+  message,
+  // Search Documents
+  searchDocument,
+  searchDocumentTopic,
+  searchDocumentAcl,
+  // Notifications
+  notification,
+  pushSubscription,
+  notificationSetting,
+  notificationRead,
+  // Blogs
+  blog,
+  blogBlogger,
+  // Payments
+  payment,
+  stripeCustomer,
+  stripeSubscription,
+  stripePayment,
+  // Statements
+  statement,
+  statementSurvey,
+  statementSurveyOption,
+  statementSurveyVote,
+  // Preferences
+  userPreference,
+  // PQL
+  pqlFilter,
+  // AI
+  aiSkill,
+  aiTool,
+  // Common
+  hashtag,
+  userHashtag,
+  groupHashtag,
+  amendmentHashtag,
+  eventHashtag,
+  blogHashtag,
+  statementHashtag,
+  link,
+  timelineEvent,
+  reaction,
+  // Calendar Subscriptions
+  calendarSubscription,
+  // Voting Password
+  votingPassword,
+  // Accreditation
+  accreditation,
+  // Eurostat and chart projections
+  eurostatDataset,
+  eurostatObservation,
+  chartProjection,
+  chartProjectionPoint,
+] as const;
+
 export const schema = createSchema({
-  tables: [
-    // Users
-    user,
-    file,
-    // Groups
-    group,
-    groupMembership,
-    groupOfflineMember,
-    groupOfflineMembership,
-    groupMembershipRole,
-    groupOfflineMembershipRole,
-    groupGuestAccess,
-    groupGuestRole,
-    role,
-    roleHolderHistory,
-    actionRight,
-    // Events
-    event,
-    eventParticipant,
-    eventOfflineParticipant,
-    eventParticipantRole,
-    participant,
-    eventException,
-    // Amendments
-    amendment,
-    amendmentCollaborator,
-    amendmentPath,
-    amendmentPathSegment,
-    supportConfirmation,
-    amendmentGroupDecision,
-    amendmentProcessRun,
-    amendmentProcessBranch,
-    amendmentProcessStepRun,
-    processTask,
-    // Documents
-    document,
-    documentVersion,
-    documentCollaborator,
-    documentCursor,
-    // Agendas
-    agendaItem,
-    speakerList,
-    agendaItemChangeRequest,
-    // Elections
-    election,
-    electionCandidate,
-    electionOfflineTally,
-    elector,
-    indicativeElectorParticipation,
-    indicativeCandidateSelection,
-    finalElectorParticipation,
-    finalCandidateSelection,
-    // Votes
-    vote,
-    voteChoice,
-    voteOfflineTally,
-    voter,
-    indicativeVoterParticipation,
-    indicativeChoiceDecision,
-    finalVoterParticipation,
-    finalChoiceDecision,
-    amendmentSupportVote,
-    changeRequestVote,
-    blogSupportVote,
-    statementSupportVote,
-    threadVote,
-    commentVote,
-    // Change Requests
-    changeRequest,
-    // Discussions
-    thread,
-    comment,
-    // Delegates
-    eventDelegate,
-    groupDelegateAllocation,
-    // Network
-    follow,
-    groupConnection,
-    groupRightGrant,
-    groupMembershipRule,
-    groupMembershipRuleOrigin,
-    groupConnectionRequest,
-    groupRightGrantRequest,
-    groupMembershipRuleRequest,
-    groupMembershipRuleRequestOrigin,
-    subscriber,
-    groupWorkflow,
-    groupWorkflowStep,
-    groupWorkflowApproval,
-    // Todos
-    todo,
-    todoAssignment,
-    // Messages
-    conversation,
-    conversationParticipant,
-    message,
-    // Search Documents
-    searchDocument,
-    searchDocumentTopic,
-    searchDocumentAcl,
-    // Notifications
-    notification,
-    pushSubscription,
-    notificationSetting,
-    notificationRead,
-    // Blogs
-    blog,
-    blogBlogger,
-    // Payments
-    payment,
-    stripeCustomer,
-    stripeSubscription,
-    stripePayment,
-    // Statements
-    statement,
-    statementSurvey,
-    statementSurveyOption,
-    statementSurveyVote,
-    // Preferences
-    userPreference,
-    // PQL
-    pqlFilter,
-    // AI
-    aiSkill,
-    aiTool,
-    // Common
-    hashtag,
-    userHashtag,
-    groupHashtag,
-    amendmentHashtag,
-    eventHashtag,
-    blogHashtag,
-    statementHashtag,
-    link,
-    timelineEvent,
-    reaction,
-    // Calendar Subscriptions
-    calendarSubscription,
-    // Voting Password
-    votingPassword,
-    // Accreditation
-    accreditation,
-    // Eurostat and chart projections
-    eurostatDataset,
-    eurostatObservation,
-    chartProjection,
-    chartProjectionPoint,
-  ],
+  tables: zeroTables,
   relationships: allRelationships,
 });
 

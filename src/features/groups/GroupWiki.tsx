@@ -1,5 +1,6 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import {
   Card,
   CardContent,
@@ -7,7 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/features/shared/ui/ui/card';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { LinkGroupDialog } from '@/features/network/ui/LinkGroupDialog';
 import { BookOpen, Network } from 'lucide-react';
 import { HashtagDisplay } from '@/features/shared/ui/ui/hashtag-display';
@@ -128,17 +128,17 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
         <div className="mb-2 flex items-center justify-center gap-3">
           <h1 className="text-4xl font-bold">{group.name}</h1>
           {group.visibility === 'public' && (
-            <Badge variant="secondary" className="text-sm">
+            <BadgeControl variant="secondary" className="text-sm">
               {t('components.badges.public')}
-            </Badge>
+            </BadgeControl>
           )}
-          <Badge variant="outline" className="text-sm">
+          <BadgeControl variant="outline" className="text-sm">
             {isSibling
               ? translateText('generated.inline.0080_geschwistergruppe_1053d99c')
               : isHierarchical
                 ? t('components.badges.hierarchicalGroup')
                 : t('components.badges.baseGroup')}
-          </Badge>
+          </BadgeControl>
         </div>
         {groupLocation && <p className="text-muted-foreground">{groupLocation}</p>}
       </div>
@@ -297,9 +297,9 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             {primarySiblingMembershipMode ? (
-              <Badge variant="outline" className="w-fit text-xs">
+              <BadgeControl variant="outline" className="w-fit text-xs">
                 {getCanonicalMembershipModeLabel(primarySiblingMembershipMode)}
-              </Badge>
+              </BadgeControl>
             ) : null}
             {group.sibling_membership_mode ? (
               <div className="border-border/70 bg-background/80 rounded-lg border px-3 py-3 shadow-sm">

@@ -1,9 +1,9 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { useMemo, useState } from 'react';
 import type { Value } from 'platejs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
   Collapsible,
@@ -120,9 +120,9 @@ function getStatusBadge(
   if (status === 'completed') {
     if (voteResult === 'passed' || originalStatus === 'approved' || originalStatus === 'accepted') {
       return (
-        <Badge variant="default" className="bg-green-600">
+        <BadgeControl variant="default" className="bg-green-600">
           {t('features.agendas.crTimeline.accepted')}
-        </Badge>
+        </BadgeControl>
       );
     }
     if (
@@ -132,27 +132,27 @@ function getStatusBadge(
       originalStatus === 'rejected'
     ) {
       return (
-        <Badge variant="default" className="bg-red-600">
+        <BadgeControl variant="default" className="bg-red-600">
           {t('features.agendas.crTimeline.rejected')}
-        </Badge>
+        </BadgeControl>
       );
     }
     return (
-      <Badge variant="default" className="bg-green-600">
+      <BadgeControl variant="default" className="bg-green-600">
         {t('features.agendas.crTimeline.completed')}
-      </Badge>
+      </BadgeControl>
     );
   }
   if (isCurrent)
     return (
-      <Badge variant="default" className="bg-blue-600">
+      <BadgeControl variant="default" className="bg-blue-600">
         {t('features.agendas.crTimeline.voting')}
-      </Badge>
+      </BadgeControl>
     );
   return (
-    <Badge variant="default" className="bg-blue-600">
+    <BadgeControl variant="default" className="bg-blue-600">
       {t('features.agendas.crTimeline.open')}
-    </Badge>
+    </BadgeControl>
   );
 }
 
@@ -364,9 +364,9 @@ export function ChangeRequestTimelineCard({
             </div>
             <div className="flex items-center gap-2">
               {hasUserVoted && (
-                <Badge variant="outline" className="text-xs">
+                <BadgeControl variant="outline" className="text-xs">
                   {t('features.agendas.crTimeline.voted')}
-                </Badge>
+                </BadgeControl>
               )}
               {!isLocked && vote && (
                 <VotePhaseBadge
@@ -417,9 +417,13 @@ export function ChangeRequestTimelineCard({
                         <div className="rounded-lg bg-blue-500/10 p-3">
                           <div className="mb-1 flex flex-wrap gap-2">
                             {Object.entries(diff.newProperties).map(([key, value]) => (
-                              <Badge key={key} variant="outline" className="text-xs capitalize">
+                              <BadgeControl
+                                key={key}
+                                variant="outline"
+                                className="text-xs capitalize"
+                              >
                                 {key}: {String(value)}
-                              </Badge>
+                              </BadgeControl>
                             ))}
                           </div>
                           <p className="text-xs whitespace-pre-wrap">
@@ -437,13 +441,13 @@ export function ChangeRequestTimelineCard({
                           </p>
                           <div className="flex flex-wrap gap-2">
                             {Object.entries(diff.properties).map(([key, value]) => (
-                              <Badge
+                              <BadgeControl
                                 key={key}
                                 variant="outline"
                                 className="text-xs capitalize opacity-60"
                               >
                                 {key}: {String(value)}
-                              </Badge>
+                              </BadgeControl>
                             ))}
                           </div>
                         </div>

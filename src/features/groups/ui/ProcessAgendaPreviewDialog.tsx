@@ -18,11 +18,11 @@ import {
 } from '@/features/shared/ui/ui/card';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface ProcessAgendaPreviewDialogProps {
@@ -389,7 +389,7 @@ export function ProcessAgendaPreviewDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-5xl">
+      <ScrollableDialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-5xl">
         <DialogHeader>
           <DialogTitle>
             {translateText('generated.inline.0710_neue_agenda_items_anzeigen_bf362c2d')}
@@ -456,7 +456,7 @@ export function ProcessAgendaPreviewDialog({
             ) : null}
           </div>
         )}
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

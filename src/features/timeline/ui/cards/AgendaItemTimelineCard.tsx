@@ -1,8 +1,8 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { Calendar, Clock3, Hash, Tag } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { cn } from '@/features/shared/utils/utils';
 import { normalizeTimelineText } from '@/features/timeline/logic/normalizeTimelineText';
 import {
@@ -92,19 +92,19 @@ export function AgendaItemTimelineCard({ agendaItem, className }: AgendaItemTime
       <TimelineCardContent className="space-y-3">
         <div className="flex flex-wrap gap-2">
           {typeLabel && (
-            <Badge variant="outline">
+            <BadgeControl variant="outline">
               <Tag className="mr-1 h-3 w-3" />
               {typeLabel}
-            </Badge>
+            </BadgeControl>
           )}
 
           {statusLabel && (
-            <Badge
+            <BadgeControl
               variant="secondary"
               className={cn('border-0', getStatusBadgeClass(agendaItem.status))}
             >
               {statusLabel}
-            </Badge>
+            </BadgeControl>
           )}
         </div>
 

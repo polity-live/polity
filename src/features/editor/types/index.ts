@@ -302,6 +302,11 @@ export interface VersionControlProps {
   currentContent: Value;
   currentUserId: string;
   onRestoreVersion: (content: Value) => void;
+  onVersionCreated?: (details: {
+    changeSummary: string;
+    versionId: string;
+    versionNumber: number;
+  }) => void | Promise<void>;
   /** Amendment-specific props */
   amendmentId?: string;
   amendmentTitle?: string;
@@ -313,9 +318,9 @@ export interface VersionControlProps {
 export interface ModeSelectorProps {
   entityType: EditorEntityType;
   entityId: string;
-  currentMode: EditorMode;
+  currentMode: EditorMode | string;
   isOwnerOrCollaborator: boolean;
-  onModeChange?: (mode: EditorMode) => void;
+  onModeChange?: (mode: EditorMode) => void | Promise<void>;
 }
 
 /**

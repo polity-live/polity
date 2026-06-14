@@ -1,12 +1,12 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 /**
  * Document Metadata Component
  *
  * Displays document-specific metadata including owner and collaborators.
  */
 
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Globe, Lock, Users } from 'lucide-react';
 import {
@@ -70,9 +70,9 @@ export function DocumentMetadata({
     <div className="space-y-4">
       {/* Document metadata badges */}
       <div className="flex flex-wrap items-center gap-4 text-sm">
-        {groupName && <Badge variant="secondary">{groupName}</Badge>}
+        {groupName && <BadgeControl variant="secondary">{groupName}</BadgeControl>}
         {visibility !== undefined && (
-          <Badge variant="outline" className="flex items-center gap-1">
+          <BadgeControl variant="outline" className="flex items-center gap-1">
             {visibility === 'public' ? (
               <>
                 <Globe className="h-3 w-3" />
@@ -89,7 +89,7 @@ export function DocumentMetadata({
                 {t('features.editor.metadata.private')}
               </>
             )}
-          </Badge>
+          </BadgeControl>
         )}
         {formattedDate && (
           <span className="text-muted-foreground">
@@ -141,9 +141,9 @@ export function DocumentMetadata({
                 {collab.user?.name || translateText('generated.inline.0031_unknown_bc7819b3')}
               </span>
               {collab.canEdit && (
-                <Badge variant="outline" className="ml-1 h-4 px-1 text-[10px]">
+                <BadgeControl variant="outline" className="ml-1 h-4 px-1 text-[10px]">
                   {t('features.editor.metadata.canEdit')}
-                </Badge>
+                </BadgeControl>
               )}
             </div>
           ))}

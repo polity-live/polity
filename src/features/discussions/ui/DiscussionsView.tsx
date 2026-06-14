@@ -1,45 +1,72 @@
-import { useState } from 'react';
+import type { ComponentProps, RefObject } from 'react';
 import { Link } from '@tanstack/react-router';
+import {
+  FormControlSelect,
+  FormControlSelectContent,
+  FormControlSelectItem,
+  FormControlSelectTrigger,
+  FormControlSelectValue,
+} from '@/features/shared/ui/form';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/features/shared/ui/ui/select';
 import { PageWrapper } from '@/layout/page-wrapper';
 import { ArrowLeft, MessageSquare, Plus, TrendingUp, Calendar as CalendarIcon } from 'lucide-react';
-import { useDiscussions } from '../hooks/useDiscussions';
-import { useDiscussionMutations } from '../hooks/useDiscussionMutations';
-import { useVotingMutations } from '@/features/votes/hooks/useVotingMutations';
+import type { Thread } from '../hooks/useDiscussions';
 import { ThreadCard } from './ThreadCard';
 import { CreateThreadDialog } from './CreateThreadDialog';
-import { useInfiniteScroll } from '@/features/shared/hooks/useInfiniteScroll';
-import { useAuth } from '@/providers/auth-provider';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
+
+export type DiscussionSortMode = 'votes' | 'time';
+type ThreadCardCallbacks = Pick<
+  ComponentProps<typeof ThreadCard>,
+  'onCreateComment' | 'onVoteComment' | 'onVoteThread'
+>;
 
 interface DiscussionsViewProps {
   amendmentId: string;
+  amendmentTitle?: string;
+  hasAmendment: boolean;
+  authUserEmail?: string;
+  hasMore: boolean;
+  isCreateDialogOpen: boolean;
+  isLoading: boolean;
+  loadMoreRef: RefObject<HTMLDivElement | null>;
+  onCreateComment: ThreadCardCallbacks['onCreateComment'];
+  onCreateDialogOpenChange: (open: boolean) => void;
+  onCreateThread: (
+    amendmentId: string,
+    title: string,
+    description: string,
+    userId: string,
+    fileId?: string
+  ) => Promise<string>;
+  onSortByChange: (sortBy: DiscussionSortMode) => void;
+  onVoteComment: ThreadCardCallbacks['onVoteComment'];
+  onVoteThread: ThreadCardCallbacks['onVoteThread'];
+  sortBy: DiscussionSortMode;
+  threads: Thread[];
   userId?: string;
 }
 
-export function DiscussionsView({ amendmentId, userId }: DiscussionsViewProps) {
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [sortBy, setSortBy] = useState<'votes' | 'time'>('votes');
-  const { user: authUser } = useAuth();
-
-  const { amendment, threads, isLoading, hasMore, loadMore } = useDiscussions(amendmentId, sortBy);
-  const { createThread, createComment } = useDiscussionMutations();
-  const { voteOnThread, voteOnComment } = useVotingMutations();
-
-  const loadMoreRef = useInfiniteScroll({
-    hasMore,
-    isLoading,
-    onLoadMore: loadMore,
-  });
-
+export function DiscussionsView({
+  amendmentId,
+  amendmentTitle,
+  authUserEmail,
+  hasMore,
+  hasAmendment,
+  isCreateDialogOpen,
+  isLoading,
+  loadMoreRef,
+  onCreateComment,
+  onCreateDialogOpenChange,
+  onCreateThread,
+  onSortByChange,
+  onVoteComment,
+  onVoteThread,
+  sortBy,
+  threads,
+  userId,
+}: DiscussionsViewProps) {
   if (isLoading) {
     return (
       <PageWrapper>
@@ -50,7 +77,7 @@ export function DiscussionsView({ amendmentId, userId }: DiscussionsViewProps) {
     );
   }
 
-  if (!amendment) {
+  if (!hasAmendment) {
     return (
       <PageWrapper>
         <div className="py-12 text-center">
@@ -69,7 +96,6 @@ export function DiscussionsView({ amendmentId, userId }: DiscussionsViewProps) {
 
   return (
     <PageWrapper>
-      {/* Back button */}
       <div className="mb-6">
         <Link to="/amendment/$id" params={{ id: amendmentId }}>
           <Button variant="ghost" size="sm">
@@ -79,7 +105,6 @@ export function DiscussionsView({ amendmentId, userId }: DiscussionsViewProps) {
         </Link>
       </div>
 
-      {/* Header */}
       <div className="mb-8 flex items-center justify-between">
         <div>
           <div className="mb-2 flex items-center gap-3">
@@ -95,39 +120,40 @@ export function DiscussionsView({ amendmentId, userId }: DiscussionsViewProps) {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {/* Sort selector */}
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground text-sm">
               {translateText('generated.inline.0389_sort_by_9bb640e5')}
             </span>
-            <Select value={sortBy} onValueChange={(value: 'votes' | 'time') => setSortBy(value)}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="votes">
+            <FormControlSelect
+              value={sortBy}
+              onValueChange={value => onSortByChange(value as DiscussionSortMode)}
+            >
+              <FormControlSelectTrigger className="w-[180px]">
+                <FormControlSelectValue />
+              </FormControlSelectTrigger>
+              <FormControlSelectContent>
+                <FormControlSelectItem value="votes">
                   <div className="flex items-center gap-2">
                     <TrendingUp className="h-4 w-4" />
                     <span>{translateText('generated.inline.0390_top_voted_3ecc2d00')}</span>
                   </div>
-                </SelectItem>
-                <SelectItem value="time">
+                </FormControlSelectItem>
+                <FormControlSelectItem value="time">
                   <div className="flex items-center gap-2">
                     <CalendarIcon className="h-4 w-4" />
                     <span>{translateText('generated.inline.0391_newest_first_a40bb555')}</span>
                   </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
+                </FormControlSelectItem>
+              </FormControlSelectContent>
+            </FormControlSelect>
           </div>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
+          <Button onClick={() => onCreateDialogOpenChange(true)}>
             <Plus className="mr-2 h-4 w-4" />
             {translateText('generated.inline.0392_new_thread_66826f91')}
           </Button>
         </div>
       </div>
 
-      {/* Threads List */}
       <div className="space-y-6">
         {threads.length === 0 ? (
           <Card>
@@ -138,7 +164,7 @@ export function DiscussionsView({ amendmentId, userId }: DiscussionsViewProps) {
                   'generated.inline.0393_no_discussion_threads_yet_start_a_conversatio_e634e88d'
                 )}
               </p>
-              <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Button onClick={() => onCreateDialogOpenChange(true)}>
                 <Plus className="mr-2 h-4 w-4" />
                 {translateText('generated.inline.0394_create_first_thread_e26d65a7')}
               </Button>
@@ -152,11 +178,11 @@ export function DiscussionsView({ amendmentId, userId }: DiscussionsViewProps) {
                 thread={thread}
                 userId={userId}
                 amendmentId={amendmentId}
-                amendmentTitle={amendment?.title ?? undefined}
-                senderName={authUser?.email ?? undefined}
-                onCreateComment={createComment}
-                onVoteThread={voteOnThread}
-                onVoteComment={voteOnComment}
+                amendmentTitle={amendmentTitle}
+                senderName={authUserEmail}
+                onCreateComment={onCreateComment}
+                onVoteThread={onVoteThread}
+                onVoteComment={onVoteComment}
               />
             ))}
             {hasMore && <div ref={loadMoreRef} className="h-px" />}
@@ -164,15 +190,14 @@ export function DiscussionsView({ amendmentId, userId }: DiscussionsViewProps) {
         )}
       </div>
 
-      {/* Create Thread Dialog */}
       <CreateThreadDialog
         amendmentId={amendmentId}
         userId={userId}
-        amendmentTitle={amendment?.title ?? undefined}
-        senderName={authUser?.email ?? undefined}
+        amendmentTitle={amendmentTitle}
+        senderName={authUserEmail}
         open={isCreateDialogOpen}
-        onOpenChange={setIsCreateDialogOpen}
-        onCreateThread={createThread}
+        onOpenChange={onCreateDialogOpenChange}
+        onCreateThread={onCreateThread}
       />
     </PageWrapper>
   );

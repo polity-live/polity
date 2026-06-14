@@ -8,7 +8,7 @@ import { useAuthSignIn } from '@/features/auth/hooks/useAuthSignIn';
 import { useGoogleAuth } from '@/features/auth/hooks/useGoogleAuth';
 import { useDebounce } from '@/features/shared/hooks/use-debounce';
 import { isValidEmailAddress } from '@/features/auth/logic/authValidation';
-import { SignInFormView } from './SignInFormView';
+import { SignInFormView, type SignInFormCopy } from './SignInFormView';
 
 export function SignInForm() {
   const { t } = useTranslation();
@@ -83,11 +83,33 @@ export function SignInForm() {
     await continueWithGoogle('sign-in');
   };
 
+  const copy: SignInFormCopy = {
+    title: t('auth.signIn.title'),
+    description: t('auth.signIn.description'),
+    emailLabel: t('auth.signIn.emailLabel'),
+    emailPlaceholder: t('auth.signIn.emailPlaceholder'),
+    emailHint: t('auth.signIn.emailHint'),
+    passwordLabel: t('auth.signIn.passwordLabel'),
+    passwordPlaceholder: t('auth.signIn.passwordPlaceholder'),
+    forgotPassword: t('auth.signIn.forgotPassword'),
+    magicLinkSent: t('auth.signIn.magicLinkSent'),
+    submit: t('auth.signIn.submit'),
+    submitting: t('auth.signIn.submitting'),
+    googleButton: t('auth.signIn.googleButton'),
+    googleLoading: t('auth.signIn.googleLoading'),
+    magicLinkAlt: t('auth.signIn.magicLinkAlt'),
+    magicLinkSending: t('auth.signIn.magicLinkSending'),
+    sendCode: t('auth.signIn.sendCode'),
+    noAccount: t('auth.signIn.noAccount'),
+    signUpLink: t('auth.signIn.signUpLink'),
+  };
+
   const displayError = localError || error;
   const isLoading = isSigningIn || isRedirecting;
 
   return (
     <SignInFormView
+      copy={copy}
       email={email}
       password={password}
       magicLinkSent={magicLinkSent}
@@ -113,6 +135,13 @@ export function SignInForm() {
       }}
       onMagicLink={handleMagicLink}
       onGoogleAuth={handleGoogleAuth}
+      onForgotPassword={() =>
+        navigate({
+          to: '/auth/forgot-password',
+          search: { email: email || undefined },
+        })
+      }
+      onGoToSignUp={() => navigate({ to: '/auth/sign-up' })}
     />
   );
 }

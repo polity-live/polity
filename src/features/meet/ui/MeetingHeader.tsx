@@ -1,5 +1,5 @@
+import { BadgeControl } from '@/features/shared/ui/status';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Globe, Lock } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { formatMeetingType } from '../logic/meetingFormatters';
@@ -23,15 +23,15 @@ export function MeetingHeader({ title, isPublic, owner, meetingType }: MeetingHe
       <div className="mb-2 flex items-center justify-center gap-3">
         <h1 className="text-4xl font-bold">{title}</h1>
         {isPublic ? (
-          <Badge variant="default">
+          <BadgeControl variant="default">
             <Globe className="mr-1 h-3 w-3" />
             {t('features.meet.page.public')}
-          </Badge>
+          </BadgeControl>
         ) : (
-          <Badge variant="secondary">
+          <BadgeControl variant="secondary">
             <Lock className="mr-1 h-3 w-3" />
             {t('features.meet.page.private')}
-          </Badge>
+          </BadgeControl>
         )}
       </div>
 
@@ -41,8 +41,12 @@ export function MeetingHeader({ title, isPublic, owner, meetingType }: MeetingHe
           <AvatarFallback>{owner?.name?.[0]?.toUpperCase() || 'O'}</AvatarFallback>
         </Avatar>
         <div className="text-left">
-          <p className="text-sm font-medium">{t('features.meet.page.hostedBy', { name: owner?.name || t('features.meet.participants.unspecified') })}</p>
-          <p className="text-xs text-muted-foreground">{formatMeetingType(meetingType)}</p>
+          <p className="text-sm font-medium">
+            {t('features.meet.page.hostedBy', {
+              name: owner?.name || t('features.meet.participants.unspecified'),
+            })}
+          </p>
+          <p className="text-muted-foreground text-xs">{formatMeetingType(meetingType)}</p>
         </div>
       </div>
     </div>

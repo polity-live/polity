@@ -1,9 +1,9 @@
+import { BadgeControl } from '@/features/shared/ui/status';
 import { useRef, useState, useEffect, useMemo } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useNavigate } from '@tanstack/react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import {
   Collapsible,
@@ -319,23 +319,23 @@ export function EventStream({ eventId }: { eventId: string }) {
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <Badge variant="default" className="animate-pulse">
+                    <BadgeControl variant="default" className="animate-pulse">
                       {t('features.events.stream.live')}
-                    </Badge>
+                    </BadgeControl>
                     <CardTitle className="text-2xl">{currentAgendaItem.title}</CardTitle>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge className={getTypeColor(currentAgendaItem.type ?? 'discussion')}>
+                    <BadgeControl className={getTypeColor(currentAgendaItem.type ?? 'discussion')}>
                       <span className="capitalize">{currentAgendaItem.type}</span>
-                    </Badge>
-                    <Badge className={getStatusColor(currentAgendaItem.status ?? 'pending')}>
+                    </BadgeControl>
+                    <BadgeControl className={getStatusColor(currentAgendaItem.status ?? 'pending')}>
                       {currentAgendaItem.status}
-                    </Badge>
+                    </BadgeControl>
                     {currentAgendaItem.duration && (
-                      <Badge variant="outline">
+                      <BadgeControl variant="outline">
                         <Clock className="mr-1 h-3 w-3" />
                         {currentAgendaItem.duration} {t('common.minutes')}
-                      </Badge>
+                      </BadgeControl>
                     )}
                   </div>
                 </div>
@@ -546,9 +546,9 @@ export function EventStream({ eventId }: { eventId: string }) {
                                 {speakerName}
                               </h3>
                               {isCurrentUser && (
-                                <Badge variant="secondary" className="mt-1">
+                                <BadgeControl variant="secondary" className="mt-1">
                                   {translateText('generated.inline.0055_you_905cb326')}
-                                </Badge>
+                                </BadgeControl>
                               )}
                             </div>
 
@@ -564,19 +564,22 @@ export function EventStream({ eventId }: { eventId: string }) {
 
                             {/* Time Badge */}
                             <div className="flex justify-center">
-                              <Badge variant="secondary" className="px-4 py-2 text-base">
+                              <BadgeControl variant="secondary" className="px-4 py-2 text-base">
                                 <Clock className="mr-2 h-4 w-4" />
                                 {formatTime(speakerTime)} ({speaker.time}
                                 {translateText('generated.inline.0056_min_c5cceefd')}
-                              </Badge>
+                              </BadgeControl>
                             </div>
 
                             {/* Completed Badge */}
                             {speaker.completed && (
                               <div className="flex justify-center">
-                                <Badge variant="outline" className="bg-green-100 dark:bg-green-900">
+                                <BadgeControl
+                                  variant="outline"
+                                  className="bg-green-100 dark:bg-green-900"
+                                >
                                   {translateText('generated.inline.0057_completed_1798b3ba')}
-                                </Badge>
+                                </BadgeControl>
                               </div>
                             )}
                           </CardContent>

@@ -1,5 +1,7 @@
 'use client';
 
+import { FormControlInput } from '@/features/shared/ui/form';
+import { ScrollableAlertDialogContent } from '@/features/shared/ui/dialog';
 import { useState, useMemo, useRef } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
@@ -15,14 +17,12 @@ import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
-  AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/features/shared/ui/ui/alert-dialog.tsx';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar.tsx';
-import { Input } from '@/features/shared/ui/ui/input.tsx';
 import { LogOut, Search, Settings, User, X } from 'lucide-react';
 import { useAuth } from '@/providers/auth-provider.tsx';
 import { useGroupState } from '@/zero/groups/useGroupState.ts';
@@ -166,7 +166,7 @@ export function UserMenu({
                 <div className="px-2 pb-1">
                   <div className="relative">
                     <Search className="text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
-                    <Input
+                    <FormControlInput
                       ref={inputRef}
                       autoFocus
                       value={groupSearchQuery}
@@ -197,8 +197,8 @@ export function UserMenu({
                   group && (
                     <DropdownMenuItem key={group.id} asChild>
                       <Link
-                        to="/group/$groupId"
-                        params={{ groupId: group.id }}
+                        to="/group/$id"
+                        params={{ id: group.id }}
                         className="flex w-full items-center gap-2"
                       >
                         <Avatar className="h-5 w-5">
@@ -231,7 +231,7 @@ export function UserMenu({
       </DropdownMenu>
 
       <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
-        <AlertDialogContent>
+        <ScrollableAlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t('auth.logout.button')}</AlertDialogTitle>
             <AlertDialogDescription>{t('auth.logout.confirm')}</AlertDialogDescription>
@@ -240,7 +240,7 @@ export function UserMenu({
             <AlertDialogCancel>{t('common.actions.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleLogout}>{t('auth.logout.button')}</AlertDialogAction>
           </AlertDialogFooter>
-        </AlertDialogContent>
+        </ScrollableAlertDialogContent>
       </AlertDialog>
     </>
   );

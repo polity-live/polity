@@ -1,3 +1,10 @@
+import {
+  FormControlTextarea,
+  FormControlLabel,
+  FormControlRadioGroup,
+  FormControlSwitch,
+  FormControlRadioGroupItem,
+} from '@/features/shared/ui/form';
 /**
  * Add Role Dialog Component
  *
@@ -5,22 +12,18 @@
  */
 
 import { Button } from '@/features/shared/ui/ui/button';
-import { Textarea } from '@/features/shared/ui/ui/textarea';
 import { ValidatedInputField } from '@/features/shared/ui/form/ValidatedInputField';
-import { Label } from '@/features/shared/ui/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/features/shared/ui/ui/radio-group';
-import { Switch } from '@/features/shared/ui/ui/switch';
 import { VisibilitySelector } from '@/features/shared/ui/ui/visibility-selector';
 import { RecurringPatternInput } from '@/features/create/ui/inputs/RecurringPatternInput';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/features/shared/ui/ui/dialog';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { CheckCircle2, Plus } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
 import type { RoleEditorFormState } from '../types/group.types';
@@ -94,7 +97,7 @@ export function AddRoleDialog({
       ) : trigger ? (
         <DialogTrigger asChild>{trigger}</DialogTrigger>
       ) : null}
-      <DialogContent className="!flex !max-h-[calc(100vh-2rem)] !max-w-3xl !flex-col !overflow-hidden sm:!max-w-3xl">
+      <ScrollableDialogContent className="!flex !max-h-[calc(100vh-2rem)] !max-w-3xl !flex-col !overflow-hidden sm:!max-w-3xl">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
@@ -126,14 +129,14 @@ export function AddRoleDialog({
                       'generated.inline.0616_choose_a_short_name_members_will_recognize_in_e089ee04'
                     )}
                     validator={value => value.trim().length >= 2}
-                    showHint={translateText('generated.inline.0073_always_6656018a')}
+                    showHint="always"
                   />
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <label htmlFor="role-description" className="text-sm font-medium">
                     {translateText('generated.inline.0030_description_55f8ebc8')}
                   </label>
-                  <Textarea
+                  <FormControlTextarea
                     id="role-description"
                     placeholder={translateText(
                       'generated.inline.0617_describe_what_this_role_does_and_how_it_shoul_e5a3b6d4'
@@ -166,8 +169,10 @@ export function AddRoleDialog({
               </div>
               <div className="space-y-4">
                 <div className="space-y-3">
-                  <Label>{translateText('generated.inline.0620_access_type_6f01b1a4')}</Label>
-                  <RadioGroup
+                  <FormControlLabel>
+                    {translateText('generated.inline.0620_access_type_6f01b1a4')}
+                  </FormControlLabel>
+                  <FormControlRadioGroup
                     value={form.assignee_kind}
                     onValueChange={value =>
                       onFormChange({
@@ -192,7 +197,7 @@ export function AddRoleDialog({
                           ),
                         },
                       ].map(option => (
-                        <Label
+                        <FormControlLabel
                           key={option.value}
                           htmlFor={`role-assignee-kind-${option.value}`}
                           className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
@@ -201,7 +206,7 @@ export function AddRoleDialog({
                               : 'hover:bg-muted/50'
                           }`}
                         >
-                          <RadioGroupItem
+                          <FormControlRadioGroupItem
                             value={option.value}
                             id={`role-assignee-kind-${option.value}`}
                             className="mt-0.5"
@@ -212,15 +217,17 @@ export function AddRoleDialog({
                               {option.description}
                             </div>
                           </div>
-                        </Label>
+                        </FormControlLabel>
                       ))}
                     </div>
-                  </RadioGroup>
+                  </FormControlRadioGroup>
                 </div>
 
                 <div className="space-y-3">
-                  <Label>{translateText('generated.inline.0621_assignment_e55df441')}</Label>
-                  <RadioGroup
+                  <FormControlLabel>
+                    {translateText('generated.inline.0621_assignment_e55df441')}
+                  </FormControlLabel>
+                  <FormControlRadioGroup
                     value={form.assignment_mode}
                     onValueChange={value =>
                       onFormChange({
@@ -245,7 +252,7 @@ export function AddRoleDialog({
                           ),
                         },
                       ].map(option => (
-                        <Label
+                        <FormControlLabel
                           key={option.value}
                           htmlFor={`role-assignment-${option.value}`}
                           className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
@@ -254,7 +261,7 @@ export function AddRoleDialog({
                               : 'hover:bg-muted/50'
                           }`}
                         >
-                          <RadioGroupItem
+                          <FormControlRadioGroupItem
                             value={option.value}
                             id={`role-assignment-${option.value}`}
                             className="mt-0.5"
@@ -265,10 +272,10 @@ export function AddRoleDialog({
                               {option.description}
                             </div>
                           </div>
-                        </Label>
+                        </FormControlLabel>
                       ))}
                     </div>
-                  </RadioGroup>
+                  </FormControlRadioGroup>
                 </div>
 
                 <VisibilitySelector
@@ -303,7 +310,7 @@ export function AddRoleDialog({
                           'generated.inline.0623_anchor_recurring_terms_to_the_first_expected__cb0a2ea4'
                         )}
                         valid={Boolean(form.term_start_date)}
-                        showHint={translateText('generated.inline.0073_always_6656018a')}
+                        showHint="always"
                       />
                       <ValidatedInputField
                         id="role-next-revote"
@@ -315,7 +322,7 @@ export function AddRoleDialog({
                           'generated.inline.0625_optional_set_this_if_you_already_know_the_nex_04129027'
                         )}
                         valid={Boolean(form.scheduled_revote_date)}
-                        showHint={translateText('generated.inline.0073_always_6656018a')}
+                        showHint="always"
                       />
                     </div>
                   </>
@@ -349,7 +356,7 @@ export function AddRoleDialog({
                       )}
                     </p>
                   </div>
-                  <Switch
+                  <FormControlSwitch
                     checked={requestRoleDisabled ? false : form.default_request_role}
                     disabled={requestRoleDisabled}
                     onCheckedChange={checked =>
@@ -369,7 +376,7 @@ export function AddRoleDialog({
                       )}
                     </p>
                   </div>
-                  <Switch
+                  <FormControlSwitch
                     checked={inviteRoleDisabled ? false : form.default_invite_role}
                     disabled={inviteRoleDisabled}
                     onCheckedChange={checked =>
@@ -389,7 +396,7 @@ export function AddRoleDialog({
             {submitLabel}
           </Button>
         </DialogFooter>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

@@ -1,28 +1,28 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
+import {
+  FormControlInput,
+  FormControlTextarea,
+  FormControlLabel,
+  FormControlSelect,
+  FormControlSwitch,
+  FormControlSelectContent,
+  FormControlSelectItem,
+  FormControlSelectTrigger,
+  FormControlSelectValue,
+} from '@/features/shared/ui/form';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Label } from '@/features/shared/ui/ui/label';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Textarea } from '@/features/shared/ui/ui/textarea';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
-import { Switch } from '@/features/shared/ui/ui/switch';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/features/shared/ui/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import {
   Accordion,
@@ -455,7 +455,7 @@ export function WorkflowEditor({
         }
       }}
     >
-      <DialogContent className="flex h-screen w-screen max-w-none flex-col rounded-none border-0 p-0 sm:h-screen sm:max-w-none">
+      <ScrollableDialogContent className="flex h-screen w-screen max-w-none flex-col rounded-none border-0 p-0 sm:h-screen sm:max-w-none">
         <DialogHeader className="border-b px-6 pt-6 pb-4">
           <DialogTitle>
             {editingWorkflow
@@ -468,8 +468,8 @@ export function WorkflowEditor({
         <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
           <div className="space-y-5">
             <div className="space-y-2">
-              <Label>{t('common.name')}</Label>
-              <Input
+              <FormControlLabel>{t('common.name')}</FormControlLabel>
+              <FormControlInput
                 value={draftName}
                 onChange={event => setDraftName(event.target.value)}
                 placeholder={t('features.network.workflows.namePlaceholder')}
@@ -503,7 +503,9 @@ export function WorkflowEditor({
                     <TabsContent value="type" className="space-y-4">
                       {draftSteps.length === 0 ? (
                         <div className="space-y-2">
-                          <Label>{t('features.network.workflows.startGroup')}</Label>
+                          <FormControlLabel>
+                            {t('features.network.workflows.startGroup')}
+                          </FormControlLabel>
                           <TypeaheadSearch
                             items={allGroupItems}
                             value={draftStartGroupId}
@@ -520,7 +522,9 @@ export function WorkflowEditor({
                         </div>
                       ) : (
                         <div className="space-y-2">
-                          <Label>{t('features.network.workflows.currentStart')}</Label>
+                          <FormControlLabel>
+                            {t('features.network.workflows.currentStart')}
+                          </FormControlLabel>
                           <div className="bg-muted/40 rounded-md border px-3 py-2 text-sm font-medium">
                             {getGroupName(pendingSourceGroupId, availableGroups)}
                           </div>
@@ -664,8 +668,8 @@ export function WorkflowEditor({
                 </AccordionTrigger>
                 <AccordionContent className="space-y-4 px-4 pb-4">
                   <div className="space-y-2">
-                    <Label>{t('common.description')}</Label>
-                    <Textarea
+                    <FormControlLabel>{t('common.description')}</FormControlLabel>
+                    <FormControlTextarea
                       value={draftDescription}
                       onChange={event => setDraftDescription(event.target.value)}
                       placeholder={t('features.network.workflows.descriptionPlaceholder')}
@@ -675,9 +679,9 @@ export function WorkflowEditor({
 
                   <div className="flex items-center justify-between rounded-lg border px-4 py-3">
                     <div className="space-y-1">
-                      <Label htmlFor="workflow-default-entry">
+                      <FormControlLabel htmlFor="workflow-default-entry">
                         {t('features.network.workflows.defaultEntryLabel')}
-                      </Label>
+                      </FormControlLabel>
                       <p className="text-muted-foreground text-xs">
                         {finalTargetGroupId
                           ? t(
@@ -687,7 +691,7 @@ export function WorkflowEditor({
                           : t('features.network.workflows.defaultEntryHint')}
                       </p>
                     </div>
-                    <Switch
+                    <FormControlSwitch
                       id="workflow-default-entry"
                       checked={draftIsDefaultEntry}
                       onCheckedChange={setDraftIsDefaultEntry}
@@ -724,24 +728,24 @@ export function WorkflowEditor({
                         {t('features.network.workflows.summary')}
                       </div>
                       <div className="flex flex-wrap items-center gap-2 text-sm">
-                        <Badge variant="secondary">
+                        <BadgeControl variant="secondary">
                           {draftStartGroupId
                             ? getGroupName(draftStartGroupId, availableGroups)
                             : t('features.network.workflows.noStartSelected')}
-                        </Badge>
+                        </BadgeControl>
                         {draftSteps.map((step, index) => (
                           <span
                             key={`${step.id ?? step.group_id}-${index}`}
                             className="flex items-center gap-2"
                           >
                             <ArrowRight className="text-muted-foreground h-3.5 w-3.5" />
-                            <Badge
+                            <BadgeControl
                               variant={index === draftSteps.length - 1 ? 'default' : 'outline'}
                             >
                               {step.label
                                 ? `${getGroupName(step.group_id, availableGroups)} (${step.label})`
                                 : getGroupName(step.group_id, availableGroups)}
-                            </Badge>
+                            </BadgeControl>
                           </span>
                         ))}
                       </div>
@@ -810,13 +814,13 @@ export function WorkflowEditor({
                           <div className="flex flex-wrap items-center justify-between gap-3">
                             <div className="flex items-center gap-2">
                               <GripVertical className="text-muted-foreground h-4 w-4 cursor-grab active:cursor-grabbing" />
-                              <Badge variant="outline">
+                              <BadgeControl variant="outline">
                                 {t('features.network.workflows.stepNumber', `Step ${index + 1}`)}
-                              </Badge>
+                              </BadgeControl>
                               {isInvalidTransition ? (
-                                <Badge variant="destructive">
+                                <BadgeControl variant="destructive">
                                   {t('features.network.workflows.invalidStep')}
-                                </Badge>
+                                </BadgeControl>
                               ) : null}
                             </div>
 
@@ -852,7 +856,9 @@ export function WorkflowEditor({
 
                           <div className="grid gap-4 md:grid-cols-2">
                             <div className="space-y-2">
-                              <Label>{t('features.network.workflows.sourceGroup')}</Label>
+                              <FormControlLabel>
+                                {t('features.network.workflows.sourceGroup')}
+                              </FormControlLabel>
                               {index === 0 ? (
                                 <TypeaheadSearch
                                   items={allGroupItems}
@@ -873,26 +879,28 @@ export function WorkflowEditor({
                             </div>
 
                             <div className="space-y-2">
-                              <Label>{t('features.network.workflows.targetGroup')}</Label>
-                              <Select
+                              <FormControlLabel>
+                                {t('features.network.workflows.targetGroup')}
+                              </FormControlLabel>
+                              <FormControlSelect
                                 value={step.group_id}
                                 onValueChange={value => handleRowTargetChange(index, value)}
                               >
-                                <SelectTrigger>
-                                  <SelectValue
+                                <FormControlSelectTrigger>
+                                  <FormControlSelectValue
                                     placeholder={t(
                                       'features.network.workflows.listTargetPlaceholder'
                                     )}
                                   />
-                                </SelectTrigger>
-                                <SelectContent>
+                                </FormControlSelectTrigger>
+                                <FormControlSelectContent>
                                   {targetOptions.map(group => (
-                                    <SelectItem key={group.id} value={group.id}>
+                                    <FormControlSelectItem key={group.id} value={group.id}>
                                       {group.name ?? group.id}
-                                    </SelectItem>
+                                    </FormControlSelectItem>
                                   ))}
-                                </SelectContent>
-                              </Select>
+                                </FormControlSelectContent>
+                              </FormControlSelect>
                             </div>
                           </div>
                           <div className="rounded-lg border border-dashed px-4 py-3 text-sm">
@@ -936,7 +944,7 @@ export function WorkflowEditor({
             {editingWorkflow ? t('common.save') : t('features.network.workflows.create')}
           </Button>
         </DialogFooter>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

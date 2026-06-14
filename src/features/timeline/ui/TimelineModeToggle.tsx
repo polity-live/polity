@@ -1,12 +1,12 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { MapPinned, Monitor } from 'lucide-react';
 import {
   useTranslation,
   translate as translateText,
 } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { TimelineMode } from '../hooks/useTimelineMode';
 
 export interface TimelineModeToggleProps {
@@ -104,7 +104,7 @@ export function TimelineModeToggle({
 
             {/* Badge */}
             {showBadge && (
-              <Badge
+              <BadgeControl
                 variant={m === 'decisions' ? 'destructive' : 'secondary'}
                 className={cn(
                   'ml-1 h-5 min-w-[20px] px-1.5 text-xs',
@@ -114,7 +114,7 @@ export function TimelineModeToggle({
                 )}
               >
                 {badgeCount > 99 ? '99+' : badgeCount}
-              </Badge>
+              </BadgeControl>
             )}
 
             {/* Urgent indicator for decisions */}

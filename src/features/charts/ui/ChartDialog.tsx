@@ -1,15 +1,12 @@
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import * as React from 'react';
 import {
   AreaChartIcon,
   BarChart3Icon,
   CheckIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
   LineChartIcon,
   Loader2Icon,
   PieChartIcon,
-  PlusIcon,
-  Trash2Icon,
   UploadIcon,
 } from 'lucide-react';
 import { useQuery } from '@rocicorp/zero/react';
@@ -44,8 +41,6 @@ import {
 import {
   CHART_NODE_TYPE,
   EUROSTAT_DEFAULT_VALUE_FIELD,
-  MAX_MANUAL_CHART_COLUMNS,
-  MAX_MANUAL_CHART_ROWS,
   type ChartPoint,
   type ChartMapping,
   type ChartPresentation,
@@ -57,38 +52,20 @@ import {
 } from '../types';
 import { ChartRenderer } from './ChartRenderer';
 import { EurostatObservationPreviewTable } from './EurostatObservationPreviewTable';
+import { ManualChartTableEditor } from './ManualChartTableEditor';
 import { useAuth } from '@/providers/auth-provider';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Checkbox } from '@/features/shared/ui/ui/checkbox';
+import { FormFieldShell, InlineCheckbox, SelectField, TextField } from '@/features/shared/ui/form';
+import { StateBadge, TokenBadge } from '@/features/shared/ui/status';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog';
-import { Input } from '@/features/shared/ui/ui/input';
-import { Label } from '@/features/shared/ui/ui/label';
 import { Progress } from '@/features/shared/ui/ui/progress';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/features/shared/ui/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/features/shared/ui/ui/table';
 import { Tabs, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
-import { Textarea } from '@/features/shared/ui/ui/textarea';
 import { ToggleGroup, ToggleGroupItem } from '@/features/shared/ui/ui/toggle-group';
 import { queries } from '@/zero/queries';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
@@ -103,7 +80,6 @@ export function openChartDialog(element?: TChartElement) {
   );
 }
 
-const PAGE_SIZE = 20;
 const NO_SERIES = '__none__';
 
 function formatBytes(value: number) {
@@ -234,198 +210,15 @@ function MappingSelect({
 }) {
   const { t } = useTranslation();
   return (
-    <div className="grid gap-2">
-      <Label>{label}</Label>
-      <Select
-        value={value || (optional ? NO_SERIES : undefined)}
-        onValueChange={next => onChange(next === NO_SERIES ? null : next)}
-      >
-        <SelectTrigger>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {optional ? <SelectItem value={NO_SERIES}>{t('plateJs.chart.none')}</SelectItem> : null}
-          {columns.map(column => (
-            <SelectItem key={column} value={column}>
-              {column}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
-  );
-}
-
-function ManualTableEditor({
-  table,
-  onChange,
-}: {
-  table: ParsedChartTable;
-  onChange: (table: ParsedChartTable) => void;
-}) {
-  const { t } = useTranslation();
-  const [page, setPage] = React.useState(0);
-  const pageCount = Math.max(1, Math.ceil(table.rows.length / PAGE_SIZE));
-  const visibleRows = table.rows.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
-
-  React.useEffect(() => {
-    setPage(current => Math.min(current, pageCount - 1));
-  }, [pageCount]);
-
-  const renameColumn = (oldName: string, nextName: string) => {
-    const normalized = nextName.trim();
-    if (!normalized || (normalized !== oldName && table.columns.includes(normalized))) return;
-    onChange({
-      columns: table.columns.map(column => (column === oldName ? normalized : column)),
-      rows: table.rows.map(row =>
-        Object.fromEntries(
-          table.columns.map(column => [column === oldName ? normalized : column, row[column] ?? ''])
-        )
-      ),
-    });
-  };
-
-  const removeColumn = (column: string) => {
-    if (table.columns.length <= 2) return;
-    onChange({
-      columns: table.columns.filter(item => item !== column),
-      rows: table.rows.map(row =>
-        Object.fromEntries(
-          table.columns.filter(item => item !== column).map(item => [item, row[item] ?? ''])
-        )
-      ),
-    });
-  };
-
-  return (
-    <div className="grid gap-3">
-      <div className="max-h-[340px] overflow-auto border">
-        <Table>
-          <TableHeader className="bg-background sticky top-0 z-10">
-            <TableRow>
-              <TableHead className="w-12 px-2 text-center">#</TableHead>
-              {table.columns.map(column => (
-                <TableHead key={column} className="min-w-36 p-2">
-                  <div className="flex items-center gap-1">
-                    <Input
-                      defaultValue={column}
-                      className="hover:border-input h-8 border-transparent px-2 font-medium"
-                      onBlur={event => renameColumn(column, event.target.value)}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="size-8 shrink-0"
-                      disabled={table.columns.length <= 2}
-                      onClick={() => removeColumn(column)}
-                      title={t('plateJs.chart.removeColumn')}
-                    >
-                      <Trash2Icon className="size-4" />
-                    </Button>
-                  </div>
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {visibleRows.map((row, visibleIndex) => {
-              const rowIndex = page * PAGE_SIZE + visibleIndex;
-              return (
-                <TableRow key={rowIndex}>
-                  <TableCell className="text-muted-foreground px-2 text-center">
-                    {rowIndex + 1}
-                  </TableCell>
-                  {table.columns.map(column => (
-                    <TableCell key={column} className="p-1">
-                      <Input
-                        value={row[column] ?? ''}
-                        className="hover:border-input h-9 min-w-32 border-transparent"
-                        onChange={event => {
-                          const rows = [...table.rows];
-                          rows[rowIndex] = { ...row, [column]: event.target.value };
-                          onChange({ ...table, rows });
-                        }}
-                      />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={table.rows.length >= MAX_MANUAL_CHART_ROWS}
-            onClick={() =>
-              onChange({
-                ...table,
-                rows: [
-                  ...table.rows,
-                  Object.fromEntries(table.columns.map(column => [column, ''])),
-                ],
-              })
-            }
-          >
-            <PlusIcon className="size-4" />
-            {t('plateJs.chart.row')}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={table.columns.length >= MAX_MANUAL_CHART_COLUMNS}
-            onClick={() => {
-              let index = table.columns.length + 1;
-              let name = `Column ${index}`;
-              while (table.columns.includes(name)) {
-                index += 1;
-                name = `Column ${index}`;
-              }
-              onChange({
-                columns: [...table.columns, name],
-                rows: table.rows.map(row => ({ ...row, [name]: '' })),
-              });
-            }}
-          >
-            <PlusIcon className="size-4" />
-            {t('plateJs.chart.column')}
-          </Button>
-        </div>
-        <div className="text-muted-foreground flex items-center gap-2 text-sm">
-          <span>
-            {table.rows.length.toLocaleString()}
-            {translateText('generated.inline.0293_rows_df849afe')}
-            {page + 1}/{pageCount}
-          </span>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="size-8"
-            disabled={page === 0}
-            onClick={() => setPage(current => current - 1)}
-          >
-            <ChevronLeftIcon className="size-4" />
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="size-8"
-            disabled={page >= pageCount - 1}
-            onClick={() => setPage(current => current + 1)}
-          >
-            <ChevronRightIcon className="size-4" />
-          </Button>
-        </div>
-      </div>
-    </div>
+    <SelectField
+      label={label}
+      value={value || (optional ? NO_SERIES : undefined)}
+      onValueChange={next => onChange(next === NO_SERIES ? null : next)}
+      options={[
+        ...(optional ? [{ value: NO_SERIES, label: t('plateJs.chart.none') }] : []),
+        ...columns.map(column => ({ value: column, label: column })),
+      ]}
+    />
   );
 }
 
@@ -842,7 +635,7 @@ export function ChartDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto p-0 sm:max-w-5xl">
+      <ScrollableDialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto p-0 sm:max-w-5xl">
         <DialogHeader className="border-b px-5 py-4 pr-12">
           <DialogTitle>
             {editingElement ? t('plateJs.chart.editTitle') : t('plateJs.chart.insertTitle')}
@@ -866,7 +659,7 @@ export function ChartDialog() {
               <>
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <Label>{t('plateJs.chart.dataTable')}</Label>
+                    <p className="text-sm font-medium">{t('plateJs.chart.dataTable')}</p>
                     <p className="text-muted-foreground mt-1 text-xs">
                       {t('plateJs.chart.dataLimits')}
                     </p>
@@ -905,7 +698,7 @@ export function ChartDialog() {
                     {t('plateJs.chart.uploadCsv')}
                   </Button>
                 </div>
-                <ManualTableEditor table={table} onChange={setTable} />
+                <ManualChartTableEditor table={table} onChange={setTable} />
                 <div className="grid gap-3 sm:grid-cols-3">
                   <MappingSelect
                     label={t('plateJs.chart.category')}
@@ -941,30 +734,29 @@ export function ChartDialog() {
                   chartPreviewReady={isEurostatPreviewFresh}
                 />
 
-                <div className="relative grid gap-2">
-                  <Label htmlFor="eurostat-search">{t('plateJs.chart.dataset')}</Label>
-                  <div className="relative">
-                    <Input
-                      id="eurostat-search"
-                      value={search}
-                      onChange={event => {
-                        setSearch(event.target.value);
-                        setDetails(null);
-                        setDatasetId(null);
-                        setImportProgress(null);
-                        setFilters({});
-                        setXDimension('');
-                        setValueField(EUROSTAT_DEFAULT_VALUE_FIELD);
-                        setSeriesDimension(null);
-                        setEurostatPreview(null);
-                      }}
-                      placeholder={t('plateJs.chart.datasetPlaceholder')}
-                      autoComplete="off"
-                    />
-                    {searching ? (
-                      <Loader2Icon className="text-muted-foreground absolute top-3 right-3 size-4 animate-spin" />
-                    ) : null}
-                  </div>
+                <div className="relative">
+                  <TextField
+                    id="eurostat-search"
+                    label={t('plateJs.chart.dataset')}
+                    value={search}
+                    onValueChange={value => {
+                      setSearch(value);
+                      setDetails(null);
+                      setDatasetId(null);
+                      setImportProgress(null);
+                      setFilters({});
+                      setXDimension('');
+                      setValueField(EUROSTAT_DEFAULT_VALUE_FIELD);
+                      setSeriesDimension(null);
+                      setEurostatPreview(null);
+                    }}
+                    placeholder={t('plateJs.chart.datasetPlaceholder')}
+                    autoComplete="off"
+                    className="pr-9"
+                  />
+                  {searching ? (
+                    <Loader2Icon className="text-muted-foreground absolute right-3 bottom-3 size-4 animate-spin" />
+                  ) : null}
                   {searchResults.length > 0 ? (
                     <div className="bg-popover absolute top-full right-0 left-0 z-20 mt-1 max-h-64 overflow-y-auto border shadow-md">
                       {searchResults.map(entry => (
@@ -998,13 +790,16 @@ export function ChartDialog() {
                   <>
                     <div className="space-y-2 border-y py-4">
                       <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant="outline">{details.code}</Badge>
-                        <Badge variant={details.importAllowed ? 'secondary' : 'destructive'}>
+                        <TokenBadge>{details.code}</TokenBadge>
+                        <StateBadge
+                          status={details.importAllowed ? 'active' : 'failed'}
+                          tone={details.importAllowed ? 'neutral' : 'destructive'}
+                        >
                           {t('plateJs.chart.estimated', {
                             defaultValue: '{{size}} estimated',
                             size: formatBytes(details.estimatedBytes),
                           })}
-                        </Badge>
+                        </StateBadge>
                       </div>
                       <p className="text-sm font-medium">{details.title}</p>
                       <p className="text-muted-foreground text-xs">
@@ -1021,7 +816,7 @@ export function ChartDialog() {
 
                     <div className="space-y-3">
                       <div className="flex items-center justify-between gap-3">
-                        <Label>{t('plateJs.chart.publicSnapshot')}</Label>
+                        <p className="text-sm font-medium">{t('plateJs.chart.publicSnapshot')}</p>
                         <Button
                           type="button"
                           size="sm"
@@ -1060,7 +855,7 @@ export function ChartDialog() {
                     {datasetId && isEurostatDatasetReady ? (
                       <div className="space-y-3">
                         <div>
-                          <Label>{t('plateJs.chart.firstRows')}</Label>
+                          <p className="text-sm font-medium">{t('plateJs.chart.firstRows')}</p>
                           <p className="text-muted-foreground mt-1 text-xs">
                             {t('plateJs.chart.firstRowsHint')}
                           </p>
@@ -1077,18 +872,23 @@ export function ChartDialog() {
                       <div className="space-y-4 border-t pt-4">
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div>
-                            <Label>{t('plateJs.chart.assignColumns')}</Label>
+                            <p className="text-sm font-medium">
+                              {t('plateJs.chart.assignColumns')}
+                            </p>
                             <p className="text-muted-foreground mt-1 text-xs">
                               {t('plateJs.chart.assignColumnsHint')}
                             </p>
                           </div>
-                          <Badge variant={missingFilterCount === 0 ? 'secondary' : 'destructive'}>
+                          <StateBadge
+                            status={missingFilterCount === 0 ? 'complete' : 'error'}
+                            tone={missingFilterCount === 0 ? 'success' : 'destructive'}
+                          >
                             {missingFilterCount === 0
                               ? t('plateJs.chart.filtersComplete')
                               : t('plateJs.chart.missingFilters', {
                                   count: missingFilterCount,
                                 })}
-                          </Badge>
+                          </StateBadge>
                         </div>
                         <div className="flex flex-wrap gap-2">
                           <Button
@@ -1169,7 +969,7 @@ export function ChartDialog() {
                         </div>
                         <div className="space-y-3">
                           <div>
-                            <Label>{t('plateJs.chart.filters')}</Label>
+                            <p className="text-sm font-medium">{t('plateJs.chart.filters')}</p>
                             <p className="text-muted-foreground mt-1 text-xs">
                               {t('plateJs.chart.filtersHint')}
                             </p>
@@ -1181,33 +981,26 @@ export function ChartDialog() {
                                   dimension.id !== xDimension && dimension.id !== seriesDimension
                               )
                               .map(dimension => (
-                                <div key={dimension.id} className="grid gap-2">
-                                  <Label>
-                                    {dimension.label
+                                <SelectField
+                                  key={dimension.id}
+                                  label={
+                                    dimension.label
                                       ? `${dimension.id} · ${dimension.label}`
-                                      : dimension.id}
-                                  </Label>
-                                  <Select
-                                    value={filters[dimension.id] || undefined}
-                                    onValueChange={value =>
-                                      setFilters(current => ({
-                                        ...current,
-                                        [dimension.id]: value,
-                                      }))
-                                    }
-                                  >
-                                    <SelectTrigger>
-                                      <SelectValue placeholder={t('plateJs.chart.chooseValue')} />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {dimension.values.map(value => (
-                                        <SelectItem key={value.id} value={value.id}>
-                                          {value.label ? `${value.id} · ${value.label}` : value.id}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
+                                      : dimension.id
+                                  }
+                                  value={filters[dimension.id] || undefined}
+                                  onValueChange={value =>
+                                    setFilters(current => ({
+                                      ...current,
+                                      [dimension.id]: value,
+                                    }))
+                                  }
+                                  placeholder={t('plateJs.chart.chooseValue')}
+                                  options={dimension.values.map(value => ({
+                                    value: value.id,
+                                    label: value.label ? `${value.id} · ${value.label}` : value.id,
+                                  }))}
+                                />
                               ))}
                           </div>
                         </div>
@@ -1244,105 +1037,95 @@ export function ChartDialog() {
           </div>
 
           <div className="min-w-0 space-y-5 border-t pt-5 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-5">
-            <div className="grid gap-2">
-              <Label>{t('plateJs.chart.chartType')}</Label>
-              <ChartTypePicker value={chartType} onChange={setChartType} />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="chart-title">{t('plateJs.chart.title')}</Label>
-              <Input
-                id="chart-title"
-                value={presentation.title ?? ''}
-                onChange={event =>
-                  setPresentation(current => ({ ...current, title: event.target.value }))
-                }
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="chart-description">{t('plateJs.chart.descriptionLabel')}</Label>
-              <Textarea
-                id="chart-description"
-                rows={2}
-                value={presentation.description ?? ''}
-                onChange={event =>
+            <FormFieldShell label={t('plateJs.chart.chartType')}>
+              {() => <ChartTypePicker value={chartType} onChange={setChartType} />}
+            </FormFieldShell>
+            <TextField
+              id="chart-title"
+              label={t('plateJs.chart.title')}
+              value={presentation.title ?? ''}
+              onValueChange={value => setPresentation(current => ({ ...current, title: value }))}
+            />
+            <TextField
+              id="chart-description"
+              label={t('plateJs.chart.descriptionLabel')}
+              rows={2}
+              value={presentation.description ?? ''}
+              onValueChange={value =>
+                setPresentation(current => ({
+                  ...current,
+                  description: value,
+                }))
+              }
+              multiline
+            />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <TextField
+                id="chart-x-axis-label"
+                label={t('plateJs.chart.xAxisLabel')}
+                value={presentation.xAxisLabel ?? ''}
+                onValueChange={value =>
                   setPresentation(current => ({
                     ...current,
-                    description: event.target.value,
+                    xAxisLabel: value,
+                  }))
+                }
+              />
+              <TextField
+                id="chart-y-axis-label"
+                label={t('plateJs.chart.yAxisLabel')}
+                value={presentation.yAxisLabel ?? ''}
+                onValueChange={value =>
+                  setPresentation(current => ({
+                    ...current,
+                    yAxisLabel: value,
                   }))
                 }
               />
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="grid gap-2">
-                <Label htmlFor="chart-x-axis-label">{t('plateJs.chart.xAxisLabel')}</Label>
-                <Input
-                  id="chart-x-axis-label"
-                  value={presentation.xAxisLabel ?? ''}
-                  onChange={event =>
-                    setPresentation(current => ({
-                      ...current,
-                      xAxisLabel: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="chart-y-axis-label">{t('plateJs.chart.yAxisLabel')}</Label>
-                <Input
-                  id="chart-y-axis-label"
-                  value={presentation.yAxisLabel ?? ''}
-                  onChange={event =>
-                    setPresentation(current => ({
-                      ...current,
-                      yAxisLabel: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-            </div>
             <div className="flex flex-wrap gap-x-5 gap-y-3">
-              <Label className="flex items-center gap-2 font-normal">
-                <Checkbox
+              <label className="flex items-center gap-2 text-sm font-normal">
+                <InlineCheckbox
                   checked={presentation.showLegend !== false}
                   onCheckedChange={checked =>
                     setPresentation(current => ({ ...current, showLegend: checked === true }))
                   }
                 />
                 {t('plateJs.chart.legend')}
-              </Label>
-              <Label className="flex items-center gap-2 font-normal">
-                <Checkbox
+              </label>
+              <label className="flex items-center gap-2 text-sm font-normal">
+                <InlineCheckbox
                   checked={presentation.showTooltip !== false}
                   onCheckedChange={checked =>
                     setPresentation(current => ({ ...current, showTooltip: checked === true }))
                   }
                 />
                 {t('plateJs.chart.hoverValues')}
-              </Label>
+              </label>
               {chartType !== 'pie' ? (
-                <Label className="flex items-center gap-2 font-normal">
-                  <Checkbox
+                <label className="flex items-center gap-2 text-sm font-normal">
+                  <InlineCheckbox
                     checked={presentation.showGrid !== false}
                     onCheckedChange={checked =>
                       setPresentation(current => ({ ...current, showGrid: checked === true }))
                     }
                   />
                   {t('plateJs.chart.grid')}
-                </Label>
+                </label>
               ) : (
-                <Label className="flex items-center gap-2 font-normal">
-                  <Checkbox
+                <label className="flex items-center gap-2 text-sm font-normal">
+                  <InlineCheckbox
                     checked={presentation.donut !== false}
                     onCheckedChange={checked =>
                       setPresentation(current => ({ ...current, donut: checked === true }))
                     }
                   />
                   {t('plateJs.chart.donut')}
-                </Label>
+                </label>
               )}
             </div>
             <div className="border-t pt-4">
-              <Label className="mb-3 block">{t('plateJs.chart.preview')}</Label>
+              <p className="mb-3 text-sm font-medium">{t('plateJs.chart.preview')}</p>
               <ChartRenderer
                 chartType={chartType}
                 points={previewPoints}
@@ -1377,7 +1160,7 @@ export function ChartDialog() {
             {primaryButtonLabel}
           </Button>
         </DialogFooter>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

@@ -1,10 +1,11 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { useState } from 'react';
 import { Video, Play, Eye, User } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { Badge } from '@/features/shared/ui/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/features/shared/ui/ui/dialog';
+import { Dialog, DialogHeader, DialogTitle } from '@/features/shared/ui/ui/dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import {
@@ -132,22 +133,22 @@ export function VideoTimelineCard({ video, onPlay, className }: VideoTimelineCar
 
         {/* Duration Badge */}
         {video.duration && (
-          <Badge
+          <BadgeControl
             variant="secondary"
             className="absolute right-2 bottom-2 bg-black/80 font-mono text-xs text-white"
           >
             {formatDuration(video.duration)}
-          </Badge>
+          </BadgeControl>
         )}
 
         {/* Source Badge */}
         {video.sourceType && (
-          <Badge
+          <BadgeControl
             variant="outline"
             className="absolute top-2 left-2 bg-white/80 text-xs dark:bg-gray-900/80"
           >
             {SOURCE_LABELS[video.sourceType] || video.sourceType}
-          </Badge>
+          </BadgeControl>
         )}
       </div>
 
@@ -221,7 +222,7 @@ export function VideoTimelineCard({ video, onPlay, className }: VideoTimelineCar
       </TimelineCardActions>
 
       <Dialog open={playerOpen} onOpenChange={setPlayerOpen}>
-        <DialogContent className="max-w-3xl">
+        <ScrollableDialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>{video.title}</DialogTitle>
           </DialogHeader>
@@ -234,7 +235,7 @@ export function VideoTimelineCard({ video, onPlay, className }: VideoTimelineCar
               </div>
             )}
           </div>
-        </DialogContent>
+        </ScrollableDialogContent>
       </Dialog>
     </TimelineCardBase>
   );

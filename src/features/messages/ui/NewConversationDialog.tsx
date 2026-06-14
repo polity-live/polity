@@ -1,12 +1,12 @@
+import { FormControlInput } from '@/features/shared/ui/form';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
 import { useEffect, useMemo, useState } from 'react';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog';
-import { Input } from '@/features/shared/ui/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Search } from 'lucide-react';
 import { useUserState } from '@/zero/users/useUserState';
@@ -52,7 +52,7 @@ export function NewConversationDialog({
     if (!userSearchQuery.trim()) {
       return allUsers.filter(baseFilter);
     }
-    return allUsers.filter(baseFilter).filter((u) => {
+    return allUsers.filter(baseFilter).filter(u => {
       const name = [u.first_name, u.last_name].filter(Boolean).join(' ').toLowerCase();
       const handle = u.handle?.toLowerCase() || '';
       return (
@@ -64,15 +64,15 @@ export function NewConversationDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <ScrollableDialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{t('features.messages.compose.startNew')}</DialogTitle>
           <DialogDescription>{t('features.messages.compose.searchDescription')}</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
+            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+            <FormControlInput
               placeholder={t('features.messages.compose.searchUsersPlaceholder')}
               value={userSearchQuery}
               onChange={e => setUserSearchQuery(e.target.value)}
@@ -89,10 +89,10 @@ export function NewConversationDialog({
                 </p>
               </div>
             ) : (
-              filteredUsers.map((searchUser) => (
+              filteredUsers.map(searchUser => (
                 <div
                   key={searchUser.id}
-                  className="flex w-full items-center justify-between gap-3 rounded-lg p-3 transition-colors hover:bg-accent"
+                  className="hover:bg-accent flex w-full items-center justify-between gap-3 rounded-lg p-3 transition-colors"
                 >
                   <button
                     onClick={() => onUserSelect(searchUser.id)}
@@ -100,14 +100,17 @@ export function NewConversationDialog({
                   >
                     <Avatar className="h-10 w-10 flex-shrink-0">
                       <AvatarImage src={searchUser.avatar ?? undefined} />
-                      <AvatarFallback>{searchUser.first_name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
+                      <AvatarFallback>
+                        {searchUser.first_name?.[0]?.toUpperCase() || 'U'}
+                      </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-semibold">
-                        {[searchUser.first_name, searchUser.last_name].filter(Boolean).join(' ') || t('common.labels.unspecifiedUser')}
+                        {[searchUser.first_name, searchUser.last_name].filter(Boolean).join(' ') ||
+                          t('common.labels.unspecifiedUser')}
                       </p>
                       {searchUser.handle && (
-                        <p className="truncate text-sm text-muted-foreground">
+                        <p className="text-muted-foreground truncate text-sm">
                           @{searchUser.handle}
                         </p>
                       )}
@@ -118,7 +121,7 @@ export function NewConversationDialog({
             )}
           </div>
         </div>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

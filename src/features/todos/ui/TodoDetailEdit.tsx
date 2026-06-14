@@ -1,12 +1,12 @@
-import { Input } from '@/features/shared/ui/ui/input';
-import { Textarea } from '@/features/shared/ui/ui/textarea';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/features/shared/ui/ui/select';
+  FormControlInput,
+  FormControlTextarea,
+  FormControlSelect,
+  FormControlSelectContent,
+  FormControlSelectItem,
+  FormControlSelectTrigger,
+  FormControlSelectValue,
+} from '@/features/shared/ui/form';
 import { Circle, Clock, CheckCircle2, XCircle, Flag, AlertCircle } from 'lucide-react';
 import { TodoFormData, TodoStatus, TodoPriority } from '../types/todo.types';
 import { translate as translateText } from '@/features/shared/hooks/use-translation';
@@ -25,80 +25,80 @@ export function TodoDetailEdit({ formData, onUpdate }: TodoDetailEditProps) {
           <label className="mb-2 block text-sm font-medium">
             {translateText('generated.inline.0688_status_bae7d5be')}
           </label>
-          <Select
+          <FormControlSelect
             value={formData.status}
             onValueChange={(v: TodoStatus) => onUpdate({ status: v })}
           >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="pending">
+            <FormControlSelectTrigger>
+              <FormControlSelectValue />
+            </FormControlSelectTrigger>
+            <FormControlSelectContent>
+              <FormControlSelectItem value="pending">
                 <div className="flex items-center gap-2">
                   <Circle className="h-4 w-4" />
                   {translateText('generated.inline.0370_pending_96f608c1')}
                 </div>
-              </SelectItem>
-              <SelectItem value="in_progress">
+              </FormControlSelectItem>
+              <FormControlSelectItem value="in_progress">
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4" />
                   {translateText('generated.inline.1168_in_progress_f61eadaf')}
                 </div>
-              </SelectItem>
-              <SelectItem value="completed">
+              </FormControlSelectItem>
+              <FormControlSelectItem value="completed">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4" />
                   {translateText('generated.inline.0057_completed_1798b3ba')}
                 </div>
-              </SelectItem>
-              <SelectItem value="cancelled">
+              </FormControlSelectItem>
+              <FormControlSelectItem value="cancelled">
                 <div className="flex items-center gap-2">
                   <XCircle className="h-4 w-4" />
                   {translateText('generated.inline.1169_cancelled_a1bf92ef')}
                 </div>
-              </SelectItem>
-            </SelectContent>
-          </Select>
+              </FormControlSelectItem>
+            </FormControlSelectContent>
+          </FormControlSelect>
         </div>
 
         <div>
           <label className="mb-2 block text-sm font-medium">
             {translateText('generated.inline.0637_priority_886cbff9')}
           </label>
-          <Select
+          <FormControlSelect
             value={formData.priority}
             onValueChange={(v: TodoPriority) => onUpdate({ priority: v })}
           >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="low">
+            <FormControlSelectTrigger>
+              <FormControlSelectValue />
+            </FormControlSelectTrigger>
+            <FormControlSelectContent>
+              <FormControlSelectItem value="low">
                 <div className="flex items-center gap-2">
                   <Flag className="h-4 w-4 text-blue-500" />
                   {translateText('generated.inline.0638_low_a124947c')}
                 </div>
-              </SelectItem>
-              <SelectItem value="medium">
+              </FormControlSelectItem>
+              <FormControlSelectItem value="medium">
                 <div className="flex items-center gap-2">
                   <Flag className="h-4 w-4 text-yellow-500" />
                   {translateText('generated.inline.0639_medium_d404968e')}
                 </div>
-              </SelectItem>
-              <SelectItem value="high">
+              </FormControlSelectItem>
+              <FormControlSelectItem value="high">
                 <div className="flex items-center gap-2">
                   <Flag className="h-4 w-4 text-orange-500" />
                   {translateText('generated.inline.0640_high_b1a5954a')}
                 </div>
-              </SelectItem>
-              <SelectItem value="urgent">
+              </FormControlSelectItem>
+              <FormControlSelectItem value="urgent">
                 <div className="flex items-center gap-2">
                   <AlertCircle className="h-4 w-4 text-red-500" />
                   {translateText('generated.inline.0641_urgent_ecb26f46')}
                 </div>
-              </SelectItem>
-            </SelectContent>
-          </Select>
+              </FormControlSelectItem>
+            </FormControlSelectContent>
+          </FormControlSelect>
         </div>
       </div>
 
@@ -107,7 +107,7 @@ export function TodoDetailEdit({ formData, onUpdate }: TodoDetailEditProps) {
         <label className="mb-2 block text-sm font-medium">
           {translateText('generated.inline.0030_description_55f8ebc8')}
         </label>
-        <Textarea
+        <FormControlTextarea
           value={formData.description}
           onChange={e => onUpdate({ description: e.target.value })}
           placeholder={translateText('generated.inline.1170_add_a_description_8c1d830e')}
@@ -120,7 +120,7 @@ export function TodoDetailEdit({ formData, onUpdate }: TodoDetailEditProps) {
         <label className="mb-2 block text-sm font-medium">
           {translateText('generated.inline.1171_due_date_a1b308ec')}
         </label>
-        <Input
+        <FormControlInput
           type="date"
           value={formData.dueDate}
           onChange={e => onUpdate({ dueDate: e.target.value })}

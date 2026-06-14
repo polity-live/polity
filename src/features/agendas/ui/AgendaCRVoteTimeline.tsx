@@ -1,7 +1,7 @@
 'use client';
 
+import { BadgeControl } from '@/features/shared/ui/status';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import { Progress } from '@/features/shared/ui/ui/progress';
 import { Vote } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -45,7 +45,12 @@ export function AgendaCRVoteTimeline({
   console.log('[AgendaCRVoteTimeline] currentItem:', currentItem);
 
   if (isLoading || crTimeline.length === 0) {
-    console.log('[AgendaCRVoteTimeline] EARLY RETURN — isLoading:', isLoading, 'crTimeline.length:', crTimeline.length);
+    console.log(
+      '[AgendaCRVoteTimeline] EARLY RETURN — isLoading:',
+      isLoading,
+      'crTimeline.length:',
+      crTimeline.length
+    );
     return null;
   }
 
@@ -57,18 +62,16 @@ export function AgendaCRVoteTimeline({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Vote className="h-5 w-5" />
-            <CardTitle className="text-base">
-              {t('features.agendas.crTimeline.title')}
-            </CardTitle>
+            <CardTitle className="text-base">{t('features.agendas.crTimeline.title')}</CardTitle>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="outline">
+            <BadgeControl variant="outline">
               {completedItems.length}/{crTimeline.length}
-            </Badge>
+            </BadgeControl>
             {isTimelineComplete && (
-              <Badge variant="default" className="bg-green-600">
+              <BadgeControl variant="default" className="bg-green-600">
                 {t('features.agendas.crTimeline.allCompleted')}
-              </Badge>
+              </BadgeControl>
             )}
           </div>
         </div>

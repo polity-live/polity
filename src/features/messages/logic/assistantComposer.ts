@@ -528,7 +528,7 @@ function countDecisionsForChoice(
   ).length;
 }
 
-export function buildVoteSearchItem(vote: VoteWithDetailsRow[number]): SearchContentItem {
+export function buildVoteSearchItem(vote: VoteWithDetailsRow): SearchContentItem {
   const firstChoiceId = vote.choices?.[0]?.id;
   const secondChoiceId = vote.choices?.[1]?.id;
   const supportCount =

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Badge } from '@/features/shared/ui/ui/badge';
+import { CountBadge } from '@/features/shared/ui/status';
 import {
   Collapsible,
   CollapsibleContent,
@@ -102,7 +102,7 @@ export function AmendmentGroups({ groupedAmendments, groupName, groupId }: Amend
                     <ChevronRight className="h-5 w-5" />
                   )}
                   <h2 className="text-xl font-semibold">{section.label}</h2>
-                  <Badge variant="secondary">{section.items.length}</Badge>
+                  <CountBadge count={section.items.length} />
                 </div>
               </CollapsibleTrigger>
               <CollapsibleContent>
