@@ -242,7 +242,7 @@ export function MeetingWeekView({
                   locale={locale}
                   isSelected={isSelected}
                   isToday={isToday}
-                  onSelect={onDateSelect}
+                  onDateSelect={onDateSelect}
                 />
               );
             })}

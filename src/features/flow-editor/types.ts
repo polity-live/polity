@@ -1,33 +1,19 @@
 import type { CSSProperties } from 'react';
+import type { Connection, Edge, Node } from 'reactflow';
 
-export interface FlowEditorConnection {
-  source: string | null;
-  target: string | null;
-  sourceHandle: string | null;
-  targetHandle: string | null;
+export type FlowEditorConnection = Connection;
+
+export interface FlowEditorNodeData {
+  label: string;
 }
 
-export interface FlowEditorNode {
-  id: string;
-  position: { x: number; y: number };
-  data: { label: string };
-  type?: string;
-  style?: CSSProperties;
-  parentId?: string;
-  extent?: 'parent';
-}
-
-export interface FlowEditorEdge {
-  id: string;
-  source: string;
-  target: string;
+export interface FlowEditorEdgeData {
   label?: string;
-  animated?: boolean;
   type?: string;
-  style?: CSSProperties;
-  data?: {
-    label?: string;
-    type?: string;
-    positionHandlers?: { x: number; y: number; active: boolean }[];
-  };
+  positionHandlers?: { x: number; y: number; active: boolean }[];
 }
+
+export type FlowEditorNode = Node<FlowEditorNodeData>;
+export type FlowEditorEdge = Edge<FlowEditorEdgeData>;
+
+export type FlowEditorNodeStyle = CSSProperties;

@@ -15,9 +15,9 @@ beforeEach(() => {
 
 async function loadMutatorContext(options: { includeRegistries?: boolean } = {}) {
   const queryHarness = createQueryHarness();
-  const canMock = vi.fn(async () => undefined);
-  const requireAuthenticatedMock = vi.fn(() => undefined);
-  const requireOwnerMock = vi.fn(() => undefined);
+  const canMock = vi.fn<(...args: unknown[]) => Promise<void>>(async () => undefined);
+  const requireAuthenticatedMock = vi.fn<(...args: unknown[]) => void>(() => undefined);
+  const requireOwnerMock = vi.fn<(...args: unknown[]) => void>(() => undefined);
 
   vi.doMock('@rocicorp/zero', () => ({
     defineMutator: (_schema: unknown, fn: unknown) => ({ fn }),

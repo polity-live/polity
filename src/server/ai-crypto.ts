@@ -5,8 +5,11 @@ function toBase64(bytes: Uint8Array): string {
   return Buffer.from(bytes).toString('base64');
 }
 
-function fromBase64(value: string): Uint8Array {
-  return new Uint8Array(Buffer.from(value, 'base64'));
+function fromBase64(value: string): Uint8Array<ArrayBuffer> {
+  const source = Buffer.from(value, 'base64');
+  const arrayBuffer = new ArrayBuffer(source.byteLength);
+  new Uint8Array(arrayBuffer).set(source);
+  return new Uint8Array(arrayBuffer);
 }
 
 async function getEncryptionKey(): Promise<CryptoKey> {

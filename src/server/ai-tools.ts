@@ -208,15 +208,25 @@ interface TodoSearchRow {
 }
 
 interface GroupMembershipRoleRow {
+  id: string;
   group_id: string;
-  role_id: string | null;
   created_at: number;
 }
 
 interface EventParticipantRoleRow {
+  id: string;
   event_id: string;
-  role_id: string | null;
   created_at: number;
+}
+
+interface GroupMembershipRoleLinkRow {
+  group_membership_id: string;
+  role_id: string;
+}
+
+interface EventParticipantRoleLinkRow {
+  event_participant_id: string;
+  role_id: string;
 }
 
 interface AmendmentCollaboratorRoleRow {
@@ -1153,8 +1163,16 @@ async function findMyGroups(
       zql.group_membership.where('user_id', userId).orderBy('created_at', 'desc')
     )) ?? []) as GroupMembershipRoleRow[];
 
+    const membershipIds = membershipRows.map(row => row.id);
+    const roleRows =
+      membershipIds.length > 0
+        ? (((await tx.run(
+            zql.group_membership_role.where('group_membership_id', 'IN', membershipIds)
+          )) ?? []) as GroupMembershipRoleLinkRow[])
+        : [];
+    const membershipIdsWithRoles = new Set(roleRows.map(row => row.group_membership_id));
     const groupIds = dedupeStrings(
-      membershipRows.filter(row => Boolean(row.role_id)).map(row => row.group_id)
+      membershipRows.filter(row => membershipIdsWithRoles.has(row.id)).map(row => row.group_id)
     );
 
     if (groupIds.length === 0) {
@@ -1221,8 +1239,16 @@ async function findMyRoleEvents(
       zql.event_participant.where('user_id', userId).orderBy('created_at', 'desc')
     )) ?? []) as EventParticipantRoleRow[];
 
+    const participantIds = participantRows.map(row => row.id);
+    const roleRows =
+      participantIds.length > 0
+        ? (((await tx.run(
+            zql.event_participant_role.where('event_participant_id', 'IN', participantIds)
+          )) ?? []) as EventParticipantRoleLinkRow[])
+        : [];
+    const participantIdsWithRoles = new Set(roleRows.map(row => row.event_participant_id));
     const eventIds = dedupeStrings(
-      participantRows.filter(row => Boolean(row.role_id)).map(row => row.event_id)
+      participantRows.filter(row => participantIdsWithRoles.has(row.id)).map(row => row.event_id)
     );
 
     if (eventIds.length === 0) {

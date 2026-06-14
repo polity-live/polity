@@ -14,7 +14,7 @@ const hookMocks = vi.hoisted(() => {
     toastSuccess: vi.fn(),
     toastError: vi.fn(),
     onServerError: vi.fn(),
-    serverConfirmed: vi.fn(async () => undefined),
+    serverConfirmed: vi.fn<(...args: unknown[]) => Promise<void>>(async () => undefined),
     t: vi.fn((key: string) => key),
     userMutators: {
       updateProfile: vi.fn((args: unknown) => token('mutators.users.updateProfile', args)),

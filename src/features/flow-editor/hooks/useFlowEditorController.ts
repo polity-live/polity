@@ -9,13 +9,19 @@ import {
   createInitialFlowEditorEdges,
   createInitialFlowEditorNodes,
 } from '../logic/flowEditorDefaults';
-import type { FlowEditorConnection, FlowEditorEdge, FlowEditorNode } from '../types';
+import type {
+  FlowEditorConnection,
+  FlowEditorEdge,
+  FlowEditorEdgeData,
+  FlowEditorNode,
+  FlowEditorNodeData,
+} from '../types';
 
 export function useFlowEditorController() {
   const initialNodes = useMemo(() => createInitialFlowEditorNodes(), []);
   const initialEdges = useMemo(() => createInitialFlowEditorEdges(), []);
-  const [nodes, setNodes, onNodesChange] = useNodesState<FlowEditorNode>(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<FlowEditorEdge>(initialEdges);
+  const [nodes, setNodes, onNodesChange] = useNodesState<FlowEditorNodeData>(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<FlowEditorEdgeData>(initialEdges);
   const [selectedNodes, setSelectedNodes] = useState<FlowEditorNode[]>([]);
   const [selectedEdge, setSelectedEdge] = useState<FlowEditorEdge | null>(null);
   const [edgeLabel, setEdgeLabel] = useState('');
@@ -106,7 +112,7 @@ export function useFlowEditorController() {
 
       setSelectedNodes([]);
       setSelectedEdge(edge);
-      setEdgeLabel(edge.label || '');
+      setEdgeLabel(typeof edge.label === 'string' ? edge.label : '');
     },
     [isInteractive]
   );

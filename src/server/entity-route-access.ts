@@ -42,7 +42,12 @@ export interface EntityRouteAccessResult {
 export const entityRouteAccessFn = createServerFn({ method: 'POST' })
   .validator(entityRouteAccessSchema.parse)
   .handler(async ({ data }): Promise<EntityRouteAccessResult> => {
-    const session = await getSession(getWebRequest());
+    const request = getWebRequest();
+    if (!request) {
+      throw new Error('Request context unavailable.');
+    }
+
+    const session = await getSession(request);
     const userId = session?.user.id ?? null;
 
     return executeZeroRead(async tx => {

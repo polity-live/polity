@@ -41,7 +41,7 @@ type WeekViewDayHeaderButtonProps = Omit<
   locale: string;
   isSelected?: boolean;
   isToday?: boolean;
-  onSelect: (date: Date) => void;
+  onDateSelect: (date: Date) => void;
 };
 
 export function WeekViewDayHeaderButton({
@@ -49,7 +49,7 @@ export function WeekViewDayHeaderButton({
   locale,
   isSelected,
   isToday,
-  onSelect,
+  onDateSelect,
   className,
   ...props
 }: WeekViewDayHeaderButtonProps) {
@@ -67,7 +67,7 @@ export function WeekViewDayHeaderButton({
             : 'bg-background/95 hover:bg-accent/40',
         className
       )}
-      onClick={() => onSelect(date)}
+      onClick={() => onDateSelect(date)}
       {...props}
     >
       <span className="flex flex-col">

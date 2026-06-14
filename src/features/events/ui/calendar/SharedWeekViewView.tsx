@@ -134,7 +134,7 @@ export function SharedWeekViewView({
                   locale={locale}
                   isSelected={isSelected}
                   isToday={isToday}
-                  onSelect={onDateSelect}
+                  onDateSelect={onDateSelect}
                 />
               );
             })}

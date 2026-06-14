@@ -6,7 +6,7 @@ import { cn } from '@/features/shared/utils/utils';
 type FileUploadInputProps = Omit<
   React.ComponentPropsWithoutRef<'input'>,
   'children' | 'className' | 'type'
->;
+> & Record<`data-${string}`, string | number | boolean | undefined>;
 
 interface FileUploadTriggerProps extends Omit<ButtonProps, 'type'> {
   inputProps?: FileUploadInputProps;
