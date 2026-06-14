@@ -98,7 +98,7 @@ export function ConversationHeader({
             }
           }}
           className="h-8 w-[180px] md:w-[260px]"
-          placeholder={t('features.messages.ai.renameConversationPlaceholder', 'Conversation name')}
+          placeholder={t('features.messages.ai.renameConversationPlaceholder')}
         />
         <Button
           type="button"
@@ -138,7 +138,7 @@ export function ConversationHeader({
               event.preventDefault();
               setIsEditingName(true);
             }}
-            title={t('features.messages.ai.renameConversation', 'Rename AI conversation')}
+            title={t('features.messages.ai.renameConversation')}
           >
             <Pencil className="h-3.5 w-3.5" />
           </Button>

@@ -2,6 +2,7 @@ import { BaseAlignKit } from './align-base-kit.tsx';
 import { BaseBasicBlocksKit } from './basic-blocks-base-kit.tsx';
 import { BaseBasicMarksKit } from './basic-marks-base-kit.tsx';
 import { BaseCalloutKit } from './callout-base-kit.tsx';
+import { BaseChartKit } from './chart-base-kit.tsx';
 import { BaseCodeBlockKit } from './code-block-base-kit.tsx';
 import { BaseColumnKit } from './column-base-kit.tsx';
 import { BaseCommentKit } from './comment-base-kit.tsx';
@@ -26,6 +27,7 @@ export const BaseEditorKit = [
   ...BaseToggleKit,
   ...BaseTocKit,
   ...BaseMediaKit,
+  ...BaseChartKit,
   ...BaseCalloutKit,
   ...BaseColumnKit,
   ...BaseMathKit,

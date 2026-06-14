@@ -8,7 +8,7 @@ import {
   finalizeDelegateSelection,
 } from '@/features/shared/utils/delegate-calculations';
 import { notifyDelegatesFinalized } from '@/features/notifications/utils/notification-helpers.ts';
-import { explodeNetworkLinksToRelationships } from '@/zero/network/derived';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 function getSupabase() {
   const supabaseUrl = process.env.SUPABASE_URL;
@@ -60,67 +60,38 @@ export const finalizeDelegatesFn = createServerFn({ method: 'POST' })
         .select('*, user:user_id(*), group:group_id(*)')
         .eq('event_id', eventId);
 
-      const { data: networkLinks } = await supabase
-        .from('network_link')
-        .select(
-          'id, source_group_id, target_group_id, structural_relation, status, created_at, updated_at'
-        )
-        .or(`source_group_id.eq.${parentGroupId},target_group_id.eq.${parentGroupId}`);
-
-      const linkIds = (networkLinks || []).map(link => link.id);
-      const [{ data: networkLinkRights }, { data: networkLinkRules }] = await Promise.all([
-        linkIds.length > 0
-          ? supabase
-              .from('network_link_right')
-              .select(
-                'id, network_link_id, right_key, direction, status, initiator_group_id, created_at'
-              )
-              .in('network_link_id', linkIds)
-          : Promise.resolve({ data: [] as unknown[] }),
-        linkIds.length > 0
-          ? supabase
-              .from('network_link_membership_rule')
-              .select('id, network_link_id, membership_mode, role_id, source_group_ids')
-              .in('network_link_id', linkIds)
-          : Promise.resolve({ data: [] as unknown[] }),
-      ]);
-
-      const directHierarchyRelationships = explodeNetworkLinksToRelationships({
-        links: (networkLinks || []) as Parameters<
-          typeof explodeNetworkLinksToRelationships
-        >[0]['links'],
-        rights: (networkLinkRights || []) as Parameters<
-          typeof explodeNetworkLinksToRelationships
-        >[0]['rights'],
-        rules: (networkLinkRules || []) as Parameters<
-          typeof explodeNetworkLinksToRelationships
-        >[0]['rules'],
-        includeInactive: false,
-      }).filter(
-        relationship =>
-          relationship.group_id === parentGroupId &&
-          relationship.relationship_type === 'child' &&
-          relationship.with_right === 'passiveVotingRight' &&
-          relationship.status === 'active'
-      );
+      const { data: hierarchyConnections } = await supabase
+        .from('group_connection')
+        .select('id, parent_group_id, child_group_id')
+        .eq('connection_type', 'hierarchy')
+        .eq('parent_group_id', parentGroupId)
+        .eq('status', 'active');
 
       const childGroupIds = [
-        ...new Set(directHierarchyRelationships.map(relationship => relationship.related_group_id)),
+        ...new Set(
+          (hierarchyConnections || [])
+            .map(connection => connection.child_group_id)
+            .filter((id): id is string => Boolean(id))
+        ),
       ];
       const { data: childGroups } =
         childGroupIds.length > 0
           ? await supabase.from('group').select('id, name, member_count').in('id', childGroupIds)
           : { data: [] };
       const childGroupsById = new Map((childGroups || []).map(group => [group.id, group]));
-      const groupRelationships = directHierarchyRelationships.map(relationship => ({
-        id: relationship.id,
-        childGroup: {
-          id: relationship.related_group_id,
-          name: childGroupsById.get(relationship.related_group_id)?.name || 'Group',
-          memberCount: childGroupsById.get(relationship.related_group_id)?.member_count || 0,
-        },
-        parentGroup: { id: relationship.group_id },
-      }));
+      const groupRelationships = (hierarchyConnections || [])
+        .filter((connection): connection is typeof connection & { child_group_id: string } =>
+          Boolean(connection.child_group_id)
+        )
+        .map(connection => ({
+          id: connection.id,
+          childGroup: {
+            id: connection.child_group_id,
+            name: childGroupsById.get(connection.child_group_id)?.name || 'Group',
+            memberCount: childGroupsById.get(connection.child_group_id)?.member_count || 0,
+          },
+          parentGroup: { id: parentGroupId },
+        }));
 
       // Attach delegates to event for business logic compatibility
       const event = { ...eventRow, delegates: delegates || [] };
@@ -215,7 +186,10 @@ export const finalizeDelegatesFn = createServerFn({ method: 'POST' })
         });
       }
 
-      return { success: true, message: 'Delegates finalized successfully' };
+      return {
+        success: true,
+        message: translateText('generated.inline.0654_delegates_finalized_successfully_16440aae'),
+      };
     } catch (error) {
       console.error('Error finalizing delegates:', error);
       throw new Error(error instanceof Error ? error.message : 'Failed to finalize delegates');

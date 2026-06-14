@@ -3,6 +3,7 @@ import { getElectionModeLabel, type ElectionMode } from '@/features/elections/lo
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Label } from '@/features/shared/ui/ui/label';
 import { cn } from '@/features/shared/utils/utils';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface ElectionModeInputProps {
   value: ElectionMode;
@@ -49,7 +50,9 @@ export function ElectionModeInput({
                 ) : null}
               </div>
               <Badge variant={value === mode ? 'default' : 'outline'}>
-                {value === mode ? 'Aktiv' : 'Waehlen'}
+                {value === mode
+                  ? translateText('generated.inline.0067_aktiv_16a766ca')
+                  : translateText('generated.inline.0068_waehlen_ef754cb8')}
               </Badge>
             </div>
           </button>

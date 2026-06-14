@@ -4,6 +4,7 @@ import { useEffect, ReactNode, useState } from 'react';
 import { useNavigate, useLocation } from '@tanstack/react-router';
 import { useAuth } from '@/providers/auth-provider';
 import { Loader2 } from 'lucide-react';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface AuthGuardProps {
   children: ReactNode;
@@ -22,8 +23,6 @@ export function AuthGuard({ children, requireAuth = true, redirectTo, fallback }
   const isAuthenticated = !!user;
   const [isMounted, setIsMounted] = useState(false);
   const [authInitialized, setAuthInitialized] = useState(false);
-
-
 
   // Track when component has mounted to avoid hydration issues
   useEffect(() => {
@@ -77,7 +76,9 @@ export function AuthGuard({ children, requireAuth = true, redirectTo, fallback }
       <div className="flex min-h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-          <p className="text-sm text-muted-foreground">Loading...</p>
+          <p className="text-muted-foreground text-sm">
+            {translateText('generated.inline.0219_loading_b04ba49f')}
+          </p>
         </div>
       </div>
     );

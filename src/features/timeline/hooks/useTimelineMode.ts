@@ -4,10 +4,10 @@ import { useState, useCallback, useEffect } from 'react';
 
 /**
  * Timeline mode types
- * - subscribed: Shows content from entities the user follows
+ * - timeline: Shows the civic timeline around the user
  * - decisions: Bloomberg-style terminal for active votes and elections
  */
-export type TimelineMode = 'subscribed' | 'decisions';
+export type TimelineMode = 'timeline' | 'decisions';
 
 const STORAGE_KEY = 'polity:timeline-mode';
 
@@ -22,14 +22,20 @@ const STORAGE_KEY = 'polity:timeline-mode';
  *
  * return (
  *   <div>
- *     <button onClick={() => setMode('subscribed')}>Following</button>
- *     <button onClick={() => setMode('explore')}>Explore</button>
+ *     <button onClick={() => setMode('timeline')}>Timeline</button>
  *     <button onClick={() => setMode('decisions')}>Decisions</button>
  *   </div>
  * );
  * ```
  */
-export function useTimelineMode(defaultMode: TimelineMode = 'subscribed') {
+export function normalizeTimelineMode(value: string | null | undefined): TimelineMode | null {
+  if (value === 'timeline') return 'timeline';
+  if (value === 'subscribed') return 'timeline';
+  if (value === 'decisions') return 'decisions';
+  return null;
+}
+
+export function useTimelineMode(defaultMode: TimelineMode = 'timeline') {
   // Initialize from localStorage if available
   const [mode, setModeState] = useState<TimelineMode>(() => {
     if (typeof window === 'undefined') {
@@ -38,8 +44,9 @@ export function useTimelineMode(defaultMode: TimelineMode = 'subscribed') {
 
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored && isValidMode(stored)) {
-        return stored as TimelineMode;
+      const normalizedStoredMode = normalizeTimelineMode(stored);
+      if (normalizedStoredMode) {
+        return normalizedStoredMode;
       }
     } catch {
       // Ignore localStorage errors (private browsing, etc.)
@@ -67,17 +74,17 @@ export function useTimelineMode(defaultMode: TimelineMode = 'subscribed') {
   }, []);
 
   /**
-   * Toggle between modes in order: subscribed -> decisions -> subscribed
+   * Toggle between modes in order: timeline -> decisions -> timeline
    */
   const toggleMode = useCallback(() => {
     setModeState(current => {
       switch (current) {
-        case 'subscribed':
+        case 'timeline':
           return 'decisions';
         case 'decisions':
-          return 'subscribed';
+          return 'timeline';
         default:
-          return 'subscribed';
+          return 'timeline';
       }
     });
   }, []);
@@ -88,9 +95,9 @@ export function useTimelineMode(defaultMode: TimelineMode = 'subscribed') {
   const isMode = useCallback((checkMode: TimelineMode) => mode === checkMode, [mode]);
 
   /**
-   * Check if in subscribed (following) mode
+   * Check if in timeline mode
    */
-  const isSubscribedMode = mode === 'subscribed';
+  const isTimelineMode = mode === 'timeline';
 
   /**
    * Check if in decisions (terminal) mode
@@ -102,16 +109,10 @@ export function useTimelineMode(defaultMode: TimelineMode = 'subscribed') {
     setMode,
     toggleMode,
     isMode,
-    isSubscribedMode,
+    isTimelineMode,
+    isSubscribedMode: isTimelineMode,
     isDecisionsMode,
   };
-}
-
-/**
- * Validate that a string is a valid timeline mode
- */
-function isValidMode(value: string): value is TimelineMode {
-  return value === 'subscribed' || value === 'decisions';
 }
 
 export default useTimelineMode;

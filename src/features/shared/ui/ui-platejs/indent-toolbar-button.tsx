@@ -11,11 +11,7 @@ export function IndentToolbarButton(props: React.ComponentProps<typeof ToolbarBu
   const { t } = useTranslation();
 
   return (
-    <ToolbarButton
-      {...props}
-      {...buttonProps}
-      tooltip={t('plateJs.toolbar.indent', 'Increase indent')}
-    >
+    <ToolbarButton {...props} {...buttonProps} tooltip={t('plateJs.toolbar.indent')}>
       <IndentIcon />
     </ToolbarButton>
   );
@@ -26,11 +22,7 @@ export function OutdentToolbarButton(props: React.ComponentProps<typeof ToolbarB
   const { t } = useTranslation();
 
   return (
-    <ToolbarButton
-      {...props}
-      {...buttonProps}
-      tooltip={t('plateJs.toolbar.outdent', 'Decrease indent')}
-    >
+    <ToolbarButton {...props} {...buttonProps} tooltip={t('plateJs.toolbar.outdent')}>
       <OutdentIcon />
     </ToolbarButton>
   );

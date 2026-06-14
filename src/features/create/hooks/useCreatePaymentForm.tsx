@@ -5,7 +5,10 @@ import { useAllGroups, useGroupById } from '@/zero/groups/useGroupState';
 import { usePaymentActions } from '@/zero/payments/usePaymentActions';
 import { useUserState } from '@/zero/users/useUserState';
 import { getUserDisplayName } from '@/features/search/utils/searchUtils';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { toast } from 'sonner';
 import { Label } from '@/features/shared/ui/ui/label';
 import { Button } from '@/features/shared/ui/ui/button';
@@ -128,13 +131,15 @@ export function useCreatePaymentForm(): CreateFormConfig {
       ? getUserDisplayName(selectedUser) || entityId
       : selectedGroup?.name || entityGroupId;
   const directionLabel =
-    direction === 'income' ? t('pages.create.payment.income') : t('pages.create.payment.expense');
+    direction === translateText('generated.inline.0039_income_0f613350')
+      ? t('pages.create.payment.income')
+      : t('pages.create.payment.expense');
   const counterpartLabel =
-    direction === 'income'
+    direction === translateText('generated.inline.0039_income_0f613350')
       ? t('pages.create.payment.fromPayer')
       : t('pages.create.payment.toReceiver');
   const counterpartTypeLabel =
-    entityType === 'user'
+    entityType === translateText('generated.inline.0026_user_12dea96f')
       ? t('pages.create.payment.entityUser')
       : t('pages.create.payment.entityGroup');
 

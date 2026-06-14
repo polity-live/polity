@@ -3,6 +3,7 @@ import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 import { formatLocation } from '@/features/shared/logic/locationHelpers';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
 import { getUserAvatar, getUserDisplayName } from '../utils/searchUtils';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export function toTags(hashtags?: { tag?: string | null }[]): string[] {
   if (!hashtags) return [];
@@ -230,7 +231,7 @@ export function mapMosaicToContentItems(
         acc.push({
           id: item.id,
           type: 'vote',
-          title: 'Vote',
+          title: translateText('generated.inline.0498_vote_64f87291'),
           description: undefined,
           createdAt: new Date(),
         });

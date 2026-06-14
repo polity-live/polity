@@ -398,40 +398,42 @@ export function ElectionTimelineCard({
           )
         )}
 
-        {/* Phase timeline */}
-        <div className="mt-3">
-          <PhaseTimeline currentPhase={currentPhase} />
-          <div className="text-muted-foreground mt-1 text-center text-xs">
-            {currentPhase === 'nomination' &&
-              t('features.timeline.cards.election.phases.nomination')}
-            {currentPhase === 'voting' && t('features.timeline.cards.election.phases.voting')}
-            {currentPhase === 'results' &&
-              t('features.timeline.cards.election.phases.results')}{' '}
-            {t('features.timeline.cards.election.phase')}
+        <div className="mt-auto space-y-3">
+          {/* Phase timeline */}
+          <div>
+            <PhaseTimeline currentPhase={currentPhase} />
+            <div className="text-muted-foreground mt-1 text-center text-xs">
+              {currentPhase === 'nomination' &&
+                t('features.timeline.cards.election.phases.nomination')}
+              {currentPhase === 'voting' && t('features.timeline.cards.election.phases.voting')}
+              {currentPhase === 'results' &&
+                t('features.timeline.cards.election.phases.results')}{' '}
+              {t('features.timeline.cards.election.phase')}
+            </div>
           </div>
-        </div>
 
-        {/* Stats */}
-        <div className="text-muted-foreground mt-4 flex items-center justify-center gap-4 text-xs">
-          <div className="flex items-center gap-1">
-            <Award className="h-3.5 w-3.5" />
-            <span>
-              {election.totalCandidates} {t('features.timeline.cards.election.candidates')}
-            </span>
-          </div>
-          {election.totalVoters !== undefined && (
+          {/* Stats */}
+          <div className="text-muted-foreground flex items-center justify-center gap-4 text-xs">
             <div className="flex items-center gap-1">
-              <Users className="h-3.5 w-3.5" />
+              <Award className="h-3.5 w-3.5" />
               <span>
-                {election.totalVoters} {t('features.timeline.cards.election.voted')}
+                {election.totalCandidates} {t('features.timeline.cards.election.candidates')}
               </span>
             </div>
-          )}
-          {election.turnoutPercentage !== undefined && (
-            <span className="font-medium">
-              {election.turnoutPercentage}% {t('features.timeline.cards.election.turnout')}
-            </span>
-          )}
+            {election.totalVoters !== undefined && (
+              <div className="flex items-center gap-1">
+                <Users className="h-3.5 w-3.5" />
+                <span>
+                  {election.totalVoters} {t('features.timeline.cards.election.voted')}
+                </span>
+              </div>
+            )}
+            {election.turnoutPercentage !== undefined && (
+              <span className="font-medium">
+                {election.turnoutPercentage}% {t('features.timeline.cards.election.turnout')}
+              </span>
+            )}
+          </div>
         </div>
       </TimelineCardContent>
 

@@ -14,17 +14,15 @@ const SAMPLE_LAYOUT: GroupNetworkLayout = {
 };
 
 describe('networkLayoutScopeHelpers', () => {
-  it('falls back to the legacy plain group id when the namespaced key is missing', () => {
+  it('returns null when the scoped layout key is missing', () => {
     const layouts: GroupNetworkLayouts = {
       'group-123': SAMPLE_LAYOUT,
     };
 
-    expect(getPersistedNetworkLayout(layouts, 'group:group-123', ['group-123'])).toEqual(
-      SAMPLE_LAYOUT
-    );
+    expect(getPersistedNetworkLayout(layouts, 'group:group-123')).toBeNull();
   });
 
-  it('writes the namespaced key and drops the legacy fallback key', () => {
+  it('writes only the scoped key and leaves unrelated layouts untouched', () => {
     const layouts: GroupNetworkLayouts = {
       'group-123': SAMPLE_LAYOUT,
     };
@@ -34,14 +32,14 @@ describe('networkLayoutScopeHelpers', () => {
         layouts,
         scopeKey: 'group:group-123',
         layout: SAMPLE_LAYOUT,
-        legacyScopeKeys: ['group-123'],
       })
     ).toEqual({
+      'group-123': SAMPLE_LAYOUT,
       'group:group-123': SAMPLE_LAYOUT,
     });
   });
 
-  it('resets both the namespaced key and any legacy fallback keys together', () => {
+  it('resets only the scoped key', () => {
     const layouts: GroupNetworkLayouts = {
       'group:group-123': SAMPLE_LAYOUT,
       'group-123': SAMPLE_LAYOUT,
@@ -52,9 +50,9 @@ describe('networkLayoutScopeHelpers', () => {
       resetPersistedNetworkLayouts({
         layouts,
         scopeKey: 'group:group-123',
-        legacyScopeKeys: ['group-123'],
       })
     ).toEqual({
+      'group-123': SAMPLE_LAYOUT,
       'user:user-1': SAMPLE_LAYOUT,
     });
   });

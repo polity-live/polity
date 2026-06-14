@@ -1,6 +1,6 @@
 import { Card } from '@/features/shared/ui/ui/card';
 import { cn } from '@/features/shared/utils/utils';
-import { Conversation } from '../types/message.types';
+import { Conversation, Message } from '../types/message.types';
 import { ConversationHeader } from './ConversationHeader';
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
@@ -10,6 +10,10 @@ import { AssistantMessageView } from './AssistantMessageView';
 
 interface MessageViewProps {
   conversation?: Conversation;
+  messages?: Message[];
+  hasMoreOlderMessages?: boolean;
+  onLoadOlderMessages?: () => void;
+  onAtEndChange?: (isAtEnd: boolean) => void;
   currentUserId?: string;
   isConversationUserOnline: boolean;
   onBack: () => void;
@@ -25,6 +29,10 @@ interface MessageViewProps {
 
 export function MessageView({
   conversation,
+  messages,
+  hasMoreOlderMessages,
+  onLoadOlderMessages,
+  onAtEndChange,
   currentUserId,
   isConversationUserOnline,
   onBack,
@@ -43,6 +51,10 @@ export function MessageView({
     return (
       <AssistantMessageView
         conversation={conversation}
+        messages={messages}
+        hasMoreOlderMessages={hasMoreOlderMessages}
+        onLoadOlderMessages={onLoadOlderMessages}
+        onAtEndChange={onAtEndChange}
         currentUserId={currentUserId}
         onBack={onBack}
         onTogglePin={onTogglePin}
@@ -78,6 +90,10 @@ export function MessageView({
           />
           <MessageList
             conversation={conversation}
+            messages={messages}
+            hasMoreOlderMessages={hasMoreOlderMessages}
+            onLoadOlderMessages={onLoadOlderMessages}
+            onAtEndChange={onAtEndChange}
             currentUserId={currentUserId}
             onAcceptConversation={onAcceptConversation}
             onRejectConversation={onRejectConversation}

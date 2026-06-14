@@ -2,6 +2,7 @@ import { type Transaction } from '@rocicorp/zero';
 import { computeVoteResult, type MajorityType } from '@/features/votes/logic/computeVoteResult';
 import type { Schema } from '../schema';
 import { zql } from '../schema';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 type ZeroTransaction = Transaction<Schema>;
 
@@ -152,11 +153,16 @@ function getStepRunFingerprint(stepRun: {
   process_run_id: string;
   workflow_step_id?: string | null;
   target_group_id?: string | null;
+  event_id?: string | null;
   order_index: number;
   step_kind: string;
 }) {
   if (stepRun.workflow_step_id) {
     return `workflow:${stepRun.workflow_step_id}`;
+  }
+
+  if (stepRun.step_kind === 'merge_vote' && stepRun.event_id && stepRun.target_group_id) {
+    return `auto-merge:${stepRun.process_run_id}:${stepRun.target_group_id}:${stepRun.event_id}`;
   }
 
   return `runtime:${stepRun.process_run_id}:${stepRun.target_group_id ?? 'none'}:${stepRun.order_index}:${stepRun.step_kind}`;
@@ -168,6 +174,44 @@ function buildChoiceLabel(label: string) {
 
 function getDefaultDecisionChoices() {
   return [buildChoiceLabel('accept'), buildChoiceLabel('reject'), buildChoiceLabel('abstain')];
+}
+
+function addCalendarOffset(args: {
+  timestamp: number;
+  months?: number | null;
+  years?: number | null;
+}) {
+  const baseDate = new Date(args.timestamp);
+  const originalDay = baseDate.getDate();
+  const result = new Date(args.timestamp);
+  result.setDate(1);
+  result.setFullYear(result.getFullYear() + (args.years ?? 0));
+  result.setMonth(result.getMonth() + (args.months ?? 0));
+  const lastDayOfTargetMonth = new Date(result.getFullYear(), result.getMonth() + 1, 0).getDate();
+  result.setDate(Math.min(originalDay, lastDayOfTargetMonth));
+  return result.getTime();
+}
+
+function resolveConcreteEvaluationDate(args: {
+  evaluationMode?: 'fixed_date' | 'relative_to_vote' | null;
+  evaluationDate?: number | null;
+  evaluationOffsetMonths?: number | null;
+  evaluationOffsetYears?: number | null;
+  decisionTimestamp: number;
+}) {
+  if (args.evaluationMode === 'fixed_date') {
+    return args.evaluationDate ?? null;
+  }
+
+  if (args.evaluationMode === 'relative_to_vote') {
+    return addCalendarOffset({
+      timestamp: args.decisionTimestamp,
+      months: args.evaluationOffsetMonths ?? 0,
+      years: args.evaluationOffsetYears ?? 0,
+    });
+  }
+
+  return null;
 }
 
 async function createVoteChoices(
@@ -238,7 +282,8 @@ async function upsertGroupDecision(
 
 async function updatePathSegmentStatus(tx: ZeroTransaction, stepRunId: string, status: string) {
   const segments = await tx.run(zql.amendment_path_segment.where('process_step_run_id', stepRunId));
-  for (const segment of segments) {
+  const segmentRows = Array.isArray(segments) ? segments.filter(Boolean) : [];
+  for (const segment of segmentRows) {
     await tx.mutate.amendment_path_segment.update({
       id: segment.id,
       status,
@@ -344,6 +389,7 @@ async function createAgendaItemAndVote(
     closing_duration_seconds: null,
     closing_end_time: null,
     visibility: 'public',
+    ballot_visibility: 'named',
     created_at: now,
     updated_at: now,
   });
@@ -368,9 +414,10 @@ async function createScheduleEventTask(
   const existingTask = await tx.run(
     zql.process_task.where('step_run_id', args.stepRunId).where('task_type', 'schedule_event').one()
   );
+  const reusableTask = Array.isArray(existingTask) ? null : existingTask;
 
-  if (existingTask && existingTask.status !== 'completed') {
-    return existingTask.id;
+  if (reusableTask && reusableTask.status !== 'completed') {
+    return reusableTask.id;
   }
 
   const id = crypto.randomUUID();
@@ -395,6 +442,152 @@ async function createScheduleEventTask(
     updated_at: now,
   });
   return id;
+}
+
+async function createImplementationEvaluationTask(
+  tx: ZeroTransaction,
+  args: {
+    processRunId: string;
+    amendmentId: string;
+    amendmentTitle: string;
+    targetGroupId: string;
+    targetGroupName: string;
+    dueAt: number;
+    requiredAfter: number;
+    evaluationMode: 'fixed_date' | 'relative_to_vote';
+  }
+) {
+  const existingTasks = await tx.run(
+    zql.process_task
+      .where('process_run_id', args.processRunId)
+      .where('task_type', 'implementation_evaluation')
+      .orderBy('created_at', 'asc')
+  );
+
+  const reusableTask =
+    existingTasks.find(task => task.status !== 'cancelled') ??
+    existingTasks.find(task => task.status === 'cancelled') ??
+    null;
+
+  if (reusableTask) {
+    if (reusableTask.status !== 'cancelled') {
+      return reusableTask.id;
+    }
+
+    await tx.mutate.process_task.update({
+      id: reusableTask.id,
+      status: 'open',
+      title: translateText('generated.inline.0682_umsetzung_evaluieren_amendmenttitle_7226ff50', {
+        amendmentTitle: args.amendmentTitle,
+      }),
+      description: translateText(
+        'generated.inline.0683_plane_die_umsetzungspruefung_fuer_amendmentti_14e50868',
+        { amendmentTitle: args.amendmentTitle, targetGroupName: args.targetGroupName }
+      ),
+      group_id: args.targetGroupId,
+      target_group_id: args.targetGroupId,
+      event_id: null,
+      agenda_item_id: null,
+      support_confirmation_id: null,
+      due_at: args.dueAt,
+      resolved_at: null,
+      metadata: {
+        amendmentId: args.amendmentId,
+        amendmentTitle: args.amendmentTitle,
+        groupName: args.targetGroupName,
+        requiredAfter: args.requiredAfter,
+        requiredBefore: args.dueAt,
+        targetGroupId: args.targetGroupId,
+        evaluationMode: args.evaluationMode,
+        evaluationDueAt: args.dueAt,
+      } as never,
+      updated_at: Date.now(),
+    });
+
+    return reusableTask.id;
+  }
+
+  const now = Date.now();
+  const taskId = crypto.randomUUID();
+  await tx.mutate.process_task.insert({
+    id: taskId,
+    process_run_id: args.processRunId,
+    branch_id: null,
+    step_run_id: null,
+    task_type: 'implementation_evaluation',
+    status: 'open',
+    title: translateText('generated.inline.0682_umsetzung_evaluieren_amendmenttitle_7226ff50', {
+      amendmentTitle: args.amendmentTitle,
+    }),
+    description: translateText(
+      'generated.inline.0683_plane_die_umsetzungspruefung_fuer_amendmentti_14e50868',
+      { amendmentTitle: args.amendmentTitle, targetGroupName: args.targetGroupName }
+    ),
+    group_id: args.targetGroupId,
+    target_group_id: args.targetGroupId,
+    event_id: null,
+    agenda_item_id: null,
+    support_confirmation_id: null,
+    due_at: args.dueAt,
+    resolved_at: null,
+    metadata: {
+      amendmentId: args.amendmentId,
+      amendmentTitle: args.amendmentTitle,
+      groupName: args.targetGroupName,
+      requiredAfter: args.requiredAfter,
+      requiredBefore: args.dueAt,
+      targetGroupId: args.targetGroupId,
+      evaluationMode: args.evaluationMode,
+      evaluationDueAt: args.dueAt,
+    } as never,
+    created_at: now,
+    updated_at: now,
+  });
+
+  return taskId;
+}
+
+async function createBranchDocumentVersionSnapshot(
+  tx: ZeroTransaction,
+  args: {
+    amendmentId: string;
+    authorId: string;
+    changeSummary: string;
+  }
+) {
+  const amendmentResult = await tx.run(zql.amendment.where('id', args.amendmentId).one());
+  const amendment = Array.isArray(amendmentResult) ? null : amendmentResult;
+  if (!amendment?.document_id) {
+    return null;
+  }
+
+  const document = await tx.run(zql.document.where('id', amendment.document_id).one());
+  if (!document?.content) {
+    return null;
+  }
+
+  const latestVersion = await tx.run(
+    zql.document_version
+      .where('document_id', document.id)
+      .orderBy('version_number', 'desc')
+      .limit(1)
+      .one()
+  );
+  const versionId = crypto.randomUUID();
+
+  await tx.mutate.document_version.insert({
+    id: versionId,
+    document_id: document.id,
+    amendment_id: args.amendmentId,
+    blog_id: null,
+    content: document.content,
+    version_number: (latestVersion?.version_number ?? 0) + 1,
+    change_summary: args.changeSummary,
+    author_id: args.authorId,
+    created_at: Date.now(),
+  });
+
+  return versionId;
 }
 
 async function closeOpenScheduleTasksForStepRun(tx: ZeroTransaction, stepRunId: string) {
@@ -647,7 +840,7 @@ function resolveDecisionVoteOutcome(
   };
 }
 
-function resolveMergeRoundOneOutcome(args: {
+export function resolveMergeRoundOneOutcome(args: {
   vote: NonNullable<Awaited<ReturnType<typeof fetchVoteWithDetails>>>;
   candidateStepRuns: readonly {
     branch_id: string;
@@ -754,9 +947,10 @@ async function getDerivedBranchStatus(
 }
 
 async function syncBranchSchedulingState(tx: ZeroTransaction, branchId: string) {
-  const stepRuns = await tx.run(
+  const stepRunResult = await tx.run(
     zql.amendment_process_step_run.where('branch_id', branchId).orderBy('order_index', 'asc')
   );
+  const stepRuns = Array.isArray(stepRunResult) ? stepRunResult.filter(Boolean) : [];
   const firstUnresolvedStep = stepRuns.find(step => !isTerminalStepStatus(step.status));
 
   for (const stepRun of stepRuns) {
@@ -815,9 +1009,10 @@ async function syncBranchSchedulingState(tx: ZeroTransaction, branchId: string) 
 }
 
 async function recomputeProcessRunState(tx: ZeroTransaction, processRunId: string) {
-  const branches = await tx.run(
+  const branchResult = await tx.run(
     zql.amendment_process_branch.where('process_run_id', processRunId).orderBy('created_at', 'asc')
   );
+  const branches = Array.isArray(branchResult) ? branchResult.filter(Boolean) : [];
 
   const nonTerminalBranches = branches.filter(branch => !isTerminalBranchStatus(branch.status));
 
@@ -846,20 +1041,59 @@ async function recomputeProcessRunState(tx: ZeroTransaction, processRunId: strin
 async function findMatchingActiveRun(
   tx: ZeroTransaction,
   args: {
-    amendmentId: string;
+    originAmendmentId: string;
     targetGroupId: string | null;
     workflowId: string | null;
   }
 ) {
-  const runs = await tx.run(zql.amendment_process_run.where('amendment_id', args.amendmentId));
+  const runs = await tx.run(
+    zql.amendment_process_run.where('amendment_id', args.originAmendmentId)
+  );
+  const runRows = Array.isArray(runs) ? runs.filter(Boolean) : [];
   return (
-    runs.find(
+    runRows.find(
       run =>
         !['completed', 'rejected', 'withdrawn'].includes(run.status) &&
         (run.selected_target_group_id ?? null) === args.targetGroupId &&
         (run.selected_target_workflow_id ?? null) === args.workflowId
     ) ?? null
   );
+}
+
+async function getAmendmentOriginId(tx: ZeroTransaction, amendmentId: string) {
+  const amendmentResult = await tx.run(zql.amendment.where('id', amendmentId).one());
+  const amendment = Array.isArray(amendmentResult) ? null : amendmentResult;
+  const originAmendmentId =
+    amendment?.origin_amendment_id ?? amendment?.clone_source_id ?? amendmentId;
+
+  if (amendment && amendment.origin_amendment_id !== originAmendmentId) {
+    await tx.mutate.amendment.update({
+      id: amendmentId,
+      origin_amendment_id: originAmendmentId,
+      updated_at: Date.now(),
+    });
+  }
+
+  return originAmendmentId;
+}
+
+async function getBranchAmendmentId(
+  tx: ZeroTransaction,
+  branchId: string,
+  fallbackAmendmentId: string
+) {
+  const segments = await tx.run(
+    zql.amendment_path_segment.where('process_branch_id', branchId).orderBy('order_index', 'asc')
+  );
+
+  for (const segment of segments) {
+    const path = await tx.run(zql.amendment_path.where('id', segment.path_id).one());
+    if (path?.amendment_id) {
+      return path.amendment_id;
+    }
+  }
+
+  return fallbackAmendmentId;
 }
 
 async function findFirstUnresolvedStepRunForBranch(tx: ZeroTransaction, branchId: string) {
@@ -971,7 +1205,13 @@ async function maybeScheduleMergeRoundOne(
   if (!existingSharedVote) {
     const candidateLabels = [...candidateBranches]
       .sort((left, right) => left.branch.created_at - right.branch.created_at)
-      .map(({ branch }, index) => buildChoiceLabel(branch.title?.trim() || `Branch ${index + 1}`));
+      .map(({ branch }, index) =>
+        buildChoiceLabel(
+          branch.title?.trim()
+            ? `Antrag ${index + 1}: ${branch.title.trim()}`
+            : `Antrag ${index + 1}`
+        )
+      );
 
     await createAgendaItemAndVote(tx, {
       agendaItemId: existingAgendaItemId,
@@ -1002,12 +1242,125 @@ async function maybeScheduleMergeRoundOne(
     await closeOpenScheduleTasksForStepRun(tx, candidateStepRun.id);
   }
 
+  await appendAgendaItemToConfirmedAgenda(tx, {
+    agendaItemId: existingAgendaItemId,
+    eventId: commonEventId,
+  });
+
   return {
     scheduled: true as const,
     agendaItemId: existingAgendaItemId,
     voteId: existingVoteId,
     candidateStepRunIds: candidateStepRuns.map(step => step.id),
   };
+}
+
+async function maybeScheduleAutomaticMergeAtCrossing(
+  tx: ZeroTransaction,
+  args: {
+    processRunId: string;
+    amendmentId: string;
+    amendmentTitle: string;
+    amendmentReason: string | null;
+    creatorId: string;
+  }
+) {
+  const branches = await tx.run(
+    zql.amendment_process_branch
+      .where('process_run_id', args.processRunId)
+      .orderBy('created_at', 'asc')
+  );
+  const stepRuns = await tx.run(
+    zql.amendment_process_step_run
+      .where('process_run_id', args.processRunId)
+      .orderBy('branch_id', 'asc')
+      .orderBy('order_index', 'asc')
+  );
+  const branchRows = Array.isArray(branches) ? branches.filter(Boolean) : [];
+  const stepRunRows = Array.isArray(stepRuns) ? stepRuns.filter(Boolean) : [];
+
+  const stepRunsByBranchId = new Map<string, (typeof stepRunRows)[number][]>();
+  for (const stepRun of stepRunRows) {
+    const branchSteps = stepRunsByBranchId.get(stepRun.branch_id) ?? [];
+    branchSteps.push(stepRun);
+    stepRunsByBranchId.set(stepRun.branch_id, branchSteps);
+  }
+
+  const candidatesByCrossing = new Map<string, (typeof stepRunRows)[number][]>();
+  for (const branch of branchRows) {
+    if (isTerminalBranchStatus(branch.status)) {
+      continue;
+    }
+
+    const firstUnresolvedStep =
+      (stepRunsByBranchId.get(branch.id) ?? []).find(step => !isTerminalStepStatus(step.status)) ??
+      null;
+
+    if (
+      !firstUnresolvedStep ||
+      !firstUnresolvedStep.event_id ||
+      !firstUnresolvedStep.target_group_id ||
+      (firstUnresolvedStep.step_kind !== 'group_vote' &&
+        firstUnresolvedStep.step_kind !== 'merge_vote')
+    ) {
+      continue;
+    }
+
+    const key = `${firstUnresolvedStep.target_group_id}:${firstUnresolvedStep.event_id}`;
+    const existing = candidatesByCrossing.get(key) ?? [];
+    existing.push(firstUnresolvedStep);
+    candidatesByCrossing.set(key, existing);
+  }
+
+  let scheduled = false;
+
+  for (const candidateStepRuns of candidatesByCrossing.values()) {
+    if (candidateStepRuns.length < 2) {
+      continue;
+    }
+
+    const agendaVotePairsToDelete = new Set<string>();
+    for (const stepRun of candidateStepRuns) {
+      if (stepRun.step_kind === 'group_vote') {
+        const pairKey = `${stepRun.agenda_item_id ?? 'none'}:${stepRun.vote_id ?? 'none'}`;
+        if ((stepRun.agenda_item_id || stepRun.vote_id) && !agendaVotePairsToDelete.has(pairKey)) {
+          agendaVotePairsToDelete.add(pairKey);
+          await deleteScheduledAgendaItemForFutureStep(tx, stepRun);
+        }
+
+        await tx.mutate.amendment_process_step_run.update({
+          id: stepRun.id,
+          step_kind: 'merge_vote',
+          merge_strategy: 'winner_continues',
+          agenda_item_id: null,
+          vote_id: null,
+          status: 'pending_event',
+          decision_status: 'forward_confirmed',
+          updated_at: Date.now(),
+        });
+      }
+    }
+
+    const anchorStepRunId = candidateStepRuns[0]?.id;
+    if (!anchorStepRunId) {
+      continue;
+    }
+
+    const mergeSchedule = await maybeScheduleMergeRoundOne(tx, {
+      processRunId: args.processRunId,
+      stepRunId: anchorStepRunId,
+      amendmentId: args.amendmentId,
+      amendmentTitle: args.amendmentTitle,
+      amendmentReason: args.amendmentReason,
+      creatorId: args.creatorId,
+    });
+
+    if (mergeSchedule.scheduled) {
+      scheduled = true;
+    }
+  }
+
+  return { scheduled };
 }
 
 async function shiftLaterStepRunOrderIndexes(
@@ -1569,8 +1922,9 @@ export async function initializeAmendmentProcessPath(
 
   const targetGroupId = args.enriched_path[args.enriched_path.length - 1]?.groupId ?? null;
   const workflowId = args.workflow_id ?? null;
+  const originAmendmentId = await getAmendmentOriginId(tx, args.amendment_id);
   const existingRun = await findMatchingActiveRun(tx, {
-    amendmentId: args.amendment_id,
+    originAmendmentId,
     targetGroupId,
     workflowId,
   });
@@ -1579,11 +1933,16 @@ export async function initializeAmendmentProcessPath(
   const branchId = crypto.randomUUID();
   const pathId = crypto.randomUUID();
   const now = Date.now();
+  const branchDocumentVersionId = await createBranchDocumentVersionSnapshot(tx, {
+    amendmentId: args.amendment_id,
+    authorId: userId,
+    changeSummary: `Process branch created: ${args.amendment_title}`,
+  });
 
   if (!existingRun) {
     await tx.mutate.amendment_process_run.insert({
       id: processRunId,
-      amendment_id: args.amendment_id,
+      amendment_id: originAmendmentId,
       root_workflow_id: workflowId,
       selected_source_group_id: args.source_group_id ?? args.enriched_path[0]?.groupId ?? null,
       selected_target_group_id: targetGroupId,
@@ -1609,7 +1968,7 @@ export async function initializeAmendmentProcessPath(
     parent_branch_id: null,
     merged_into_branch_id: null,
     source_step_run_id: null,
-    document_version_id: null,
+    document_version_id: branchDocumentVersionId,
     title: args.amendment_title,
     status: 'pending_event',
     resolution: null,
@@ -1669,6 +2028,13 @@ export async function initializeAmendmentProcessPath(
       creatorId: userId,
     });
   }
+  await maybeScheduleAutomaticMergeAtCrossing(tx, {
+    processRunId,
+    amendmentId: originAmendmentId,
+    amendmentTitle: args.amendment_title,
+    amendmentReason: args.amendment_reason,
+    creatorId: userId,
+  });
   const runSync = await recomputeProcessRunState(tx, processRunId);
 
   await tx.mutate.amendment.update({
@@ -1724,9 +2090,13 @@ export async function completeProcessTaskWithEvent(
   const amendmentReason = amendment?.reason ?? null;
   const agendaTitle =
     task.task_type === 'implementation_evaluation'
-      ? `Implementation review: ${amendmentTitle}`
+      ? translateText('generated.inline.0191_implementation_review_amendmenttitle_ada8abc2', {
+          amendmentTitle: amendmentTitle,
+        })
       : task.task_type === 'support_confirmation'
-        ? `Support confirmation: ${amendmentTitle}`
+        ? translateText('generated.inline.0192_support_confirmation_amendmenttitle_a9aff0ac', {
+            amendmentTitle: amendmentTitle,
+          })
         : `Amendment: ${amendmentTitle}`;
   const agendaType: AgendaType =
     task.task_type === 'implementation_evaluation'
@@ -1753,6 +2123,11 @@ export async function completeProcessTaskWithEvent(
       agendaType,
       voteTitle: agendaTitle,
       voteDescription: amendmentReason,
+      choiceLabels:
+        task.task_type === 'implementation_evaluation'
+          ? [buildChoiceLabel('yes'), buildChoiceLabel('no')]
+          : undefined,
+      majorityType: task.task_type === 'implementation_evaluation' ? 'simple' : undefined,
     });
   }
 
@@ -1799,6 +2174,16 @@ export async function completeProcessTaskWithEvent(
     await syncBranchSchedulingState(tx, task.branch_id);
   }
 
+  if (amendmentId) {
+    await maybeScheduleAutomaticMergeAtCrossing(tx, {
+      processRunId: task.process_run_id,
+      amendmentId: processRun.amendment_id,
+      amendmentTitle,
+      amendmentReason,
+      creatorId: processRun.created_by_id,
+    });
+  }
+
   if (stepRun?.step_kind === 'merge_vote' && amendmentId) {
     await maybeScheduleMergeRoundOne(tx, {
       processRunId: task.process_run_id,
@@ -1835,7 +2220,52 @@ export async function resolveAmendmentProcessVote(
   );
 
   if (stepRuns.length === 0) {
-    return { handled: false as const };
+    const implementationTask = await tx.run(
+      zql.process_task
+        .where('agenda_item_id', args.agenda_item_id)
+        .where('task_type', 'implementation_evaluation')
+        .one()
+    );
+    if (!implementationTask) {
+      return { handled: false as const };
+    }
+
+    const agendaItem = await tx.run(zql.agenda_item.where('id', args.agenda_item_id).one());
+    const processRun = await tx.run(
+      zql.amendment_process_run.where('id', implementationTask.process_run_id).one()
+    );
+    const amendmentId = agendaItem?.amendment_id ?? processRun?.amendment_id ?? null;
+    const voteRecord = await tx.run(zql.vote.where('agenda_item_id', args.agenda_item_id).one());
+    const vote = voteRecord ? await fetchVoteWithDetails(tx, voteRecord.id) : null;
+
+    if (!agendaItem || !processRun || !amendmentId || !vote) {
+      return { handled: false as const };
+    }
+
+    const now = Date.now();
+    const voteOutcome = resolveDecisionVoteOutcome(vote);
+
+    await tx.mutate.agenda_item.update({
+      id: agendaItem.id,
+      forwarding_status: voteOutcome.result === 'passed' ? 'approved' : voteOutcome.result,
+      completed_at: now,
+      updated_at: now,
+    });
+    await tx.mutate.amendment_process_run.update({
+      id: processRun.id,
+      implementation_status:
+        voteOutcome.result === 'passed' ? 'implemented' : 'implementation_failed',
+      updated_at: now,
+    });
+
+    return {
+      handled: true as const,
+      amendmentId,
+      processRunId: processRun.id,
+      voteResult: voteOutcome.result,
+      runStatus: processRun.status,
+      terminalDecision: null,
+    };
   }
 
   const agendaItem = await tx.run(zql.agenda_item.where('id', args.agenda_item_id).one());
@@ -1933,11 +2363,17 @@ export async function resolveAmendmentProcessVote(
     });
     await updatePathSegmentStatus(tx, winnerStepRun.id, 'merged');
 
+    const winnerAmendmentId = await getBranchAmendmentId(tx, winnerStepRun.branch_id, amendmentId);
+    const winnerAmendment =
+      winnerAmendmentId === amendment?.id
+        ? amendment
+        : await tx.run(zql.amendment.where('id', winnerAmendmentId).one());
+
     const roundTwoStepRunId = await createRoundTwoMergeApprovalStep(tx, {
       winnerStepRunId: winnerStepRun.id,
-      amendmentId,
-      amendmentTitle: amendment?.title ?? agendaItem.title ?? 'Amendment',
-      amendmentReason: amendment?.reason ?? null,
+      amendmentId: winnerAmendmentId,
+      amendmentTitle: winnerAmendment?.title ?? agendaItem.title ?? 'Amendment',
+      amendmentReason: winnerAmendment?.reason ?? null,
       creatorId: processRun.created_by_id,
     });
 
@@ -2103,10 +2539,50 @@ export async function resolveAmendmentProcessVote(
       updated_at: now,
     });
 
+    const evaluationMode =
+      processRun.evaluation_mode === 'fixed_date' ||
+      processRun.evaluation_mode === 'relative_to_vote'
+        ? processRun.evaluation_mode
+        : null;
+    const concreteEvaluationDate =
+      evaluationMode && (evaluationMode === 'fixed_date' || evaluationMode === 'relative_to_vote')
+        ? resolveConcreteEvaluationDate({
+            evaluationMode,
+            evaluationDate: processRun.evaluation_date ?? null,
+            evaluationOffsetMonths: processRun.evaluation_offset_months ?? null,
+            evaluationOffsetYears: processRun.evaluation_offset_years ?? null,
+            decisionTimestamp: now,
+          })
+        : null;
+    let implementationStatus = processRun.implementation_status ?? null;
+
+    if (evaluationMode && concreteEvaluationDate != null) {
+      const targetGroupId = processRun.selected_target_group_id ?? stepRun.target_group_id ?? null;
+
+      if (concreteEvaluationDate < now || !targetGroupId) {
+        implementationStatus = 'implementation_failed';
+      } else {
+        const targetGroup = await tx.run(zql.group.where('id', targetGroupId).one());
+        await createImplementationEvaluationTask(tx, {
+          processRunId: processRun.id,
+          amendmentId,
+          amendmentTitle: amendment?.title ?? agendaItem.title ?? 'Amendment',
+          targetGroupId,
+          targetGroupName: targetGroup?.name ?? 'die zustaendige Gruppe',
+          dueAt: concreteEvaluationDate,
+          requiredAfter: now,
+          evaluationMode,
+        });
+        implementationStatus = 'awaiting_evaluation';
+      }
+    }
+
     const runSync = await recomputeProcessRunState(tx, processRun.id);
     await tx.mutate.amendment_process_run.update({
       id: processRun.id,
       terminal_step_run_id: stepRun.id,
+      evaluation_date: concreteEvaluationDate ?? processRun.evaluation_date ?? null,
+      implementation_status: implementationStatus,
       updated_at: now,
     });
 
@@ -2171,6 +2647,14 @@ export async function resolveAmendmentProcessVote(
       });
     }
   }
+
+  await maybeScheduleAutomaticMergeAtCrossing(tx, {
+    processRunId: processRun.id,
+    amendmentId: processRun.amendment_id,
+    amendmentTitle: amendment?.title ?? agendaItem.title ?? 'Amendment',
+    amendmentReason: amendment?.reason ?? null,
+    creatorId: processRun.created_by_id,
+  });
 
   const branchSync = await syncBranchSchedulingState(tx, branch.id);
   const runSync = await recomputeProcessRunState(tx, processRun.id);

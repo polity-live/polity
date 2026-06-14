@@ -67,17 +67,34 @@ import { toast } from 'sonner';
 import { useAuth } from '@/providers/auth-provider';
 import { usePermissions } from '@/zero/rbac/usePermissions';
 import type { User } from '@/zero';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 // Define available action rights for blogs
 const ACTION_RIGHTS = [
-  { resource: 'blogs', action: 'update', label: 'Update Blog' },
-  { resource: 'blogs', action: 'delete', label: 'Delete Blog' },
-  { resource: 'blogBloggers', action: 'manage', label: 'Manage Bloggers' },
-  { resource: 'notifications', action: 'viewNotifications', label: 'View Notifications' },
+  {
+    resource: 'blogs',
+    action: 'update',
+    label: translateText('generated.inline.0036_update_blog_09ea894c'),
+  },
+  {
+    resource: 'blogs',
+    action: 'delete',
+    label: translateText('generated.inline.0037_delete_blog_9c6feb0f'),
+  },
+  {
+    resource: 'blogBloggers',
+    action: 'manage',
+    label: translateText('generated.inline.0038_manage_bloggers_58827569'),
+  },
+  {
+    resource: 'notifications',
+    action: 'viewNotifications',
+    label: translateText('generated.inline.0039_view_notifications_26280ee0'),
+  },
   {
     resource: 'notifications',
     action: 'manageNotifications',
-    label: 'Manage Notifications',
+    label: translateText('generated.inline.0040_manage_notifications_32133a0a'),
   },
 ];
 
@@ -183,7 +200,9 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
       setInviteDialogOpen(false);
     } catch (error) {
       console.error('Failed to invite bloggers:', error);
-      toast.error('Failed to invite bloggers. Please try again.');
+      toast.error(
+        translateText('generated.inline.0227_failed_to_invite_bloggers_please_try_again_76577b9e')
+      );
     } finally {
       setIsInviting(false);
     }
@@ -193,10 +212,12 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
   const handleUpdateRole = async (bloggerId: string, newRoleId: string) => {
     try {
       await blogActions.updateEntry({ id: bloggerId, role_id: newRoleId });
-      toast.success('Blogger role updated successfully');
+      toast.success(
+        translateText('generated.inline.0228_blogger_role_updated_successfully_e8d4a3f6')
+      );
     } catch (err) {
       console.error('Error updating role:', err);
-      toast.error('Failed to update blogger role');
+      toast.error(translateText('generated.inline.0229_failed_to_update_blogger_role_fd1c311d'));
     }
   };
 
@@ -204,10 +225,10 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
   const handleRemoveBlogger = async (bloggerId: string) => {
     try {
       await blogActions.deleteEntry(bloggerId);
-      toast.success('Blogger removed successfully');
+      toast.success(translateText('generated.inline.0230_blogger_removed_successfully_09b87897'));
     } catch (err) {
       console.error('Error removing blogger:', err);
-      toast.error('Failed to remove blogger');
+      toast.error(translateText('generated.inline.0231_failed_to_remove_blogger_5c712772'));
     }
   };
 
@@ -242,17 +263,19 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
           amendment_id: null,
         });
       }
-      toast.success('Permission updated successfully');
+      toast.success(
+        translateText('generated.inline.0232_permission_updated_successfully_b593d649')
+      );
     } catch (error) {
       console.error('Failed to toggle action right:', error);
-      toast.error('Failed to update permission');
+      toast.error(translateText('generated.inline.0233_failed_to_update_permission_9cd30398'));
     }
   };
 
   // Handle creating new role
   const handleCreateRole = async () => {
     if (!newRoleName.trim()) {
-      toast.error('Role name is required');
+      toast.error(translateText('generated.inline.0234_role_name_is_required_6193b4dd'));
       return;
     }
 
@@ -270,14 +293,16 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
         sort_order: 0,
       });
 
-      toast.success('Role created successfully');
+      toast.success(translateText('generated.inline.0235_role_created_successfully_150cd5c5'));
 
       setNewRoleName('');
       setNewRoleDescription('');
       setAddRoleDialogOpen(false);
     } catch (error) {
       console.error('Failed to create role:', error);
-      toast.error('Failed to create role. Please try again.');
+      toast.error(
+        translateText('generated.inline.0236_failed_to_create_role_please_try_again_7383aeaf')
+      );
     }
   };
 
@@ -285,10 +310,12 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
   const handleDeleteRole = async (roleId: string) => {
     try {
       await groupActions.deleteRole({ id: roleId });
-      toast.success('Role deleted successfully');
+      toast.success(translateText('generated.inline.0237_role_deleted_successfully_b714d57c'));
     } catch (error) {
       console.error('Failed to delete role:', error);
-      toast.error('Failed to delete role. Please try again.');
+      toast.error(
+        translateText('generated.inline.0238_failed_to_delete_role_please_try_again_fe4624de')
+      );
     }
   };
 
@@ -320,8 +347,12 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h2 className="mb-2 text-2xl font-bold">Blog not found</h2>
-          <Button onClick={() => window.history.back()}>Go Back</Button>
+          <h2 className="mb-2 text-2xl font-bold">
+            {translateText('generated.inline.0239_blog_not_found_70b91de2')}
+          </h2>
+          <Button onClick={() => window.history.back()}>
+            {translateText('generated.inline.0240_go_back_f03e2d07')}
+          </Button>
         </div>
       </div>
     );
@@ -332,11 +363,16 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
       <div className="mb-6">
         <Button variant="ghost" onClick={() => window.history.back()} className="mb-4">
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Blog
+          {translateText('generated.inline.0241_back_to_blog_68c5e1c7')}
         </Button>
-        <h1 className="text-3xl font-bold">Manage Bloggers</h1>
+        <h1 className="text-3xl font-bold">
+          {translateText('generated.inline.0242_manage_bloggers_58827569')}
+        </h1>
         <p className="text-muted-foreground mt-2">
-          Manage blogger access, roles, and permissions for {blog.title}
+          {translateText(
+            'generated.inline.0243_manage_blogger_access_roles_and_permissions_f_1fb4db78'
+          )}
+          {blog.title}
         </p>
       </div>
 
@@ -346,7 +382,7 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
           <div className="relative flex-1">
             <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
             <Input
-              placeholder="Search bloggers..."
+              placeholder={translateText('generated.inline.0244_search_bloggers_98b779c5')}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="pl-9"
@@ -357,25 +393,31 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
               <DialogTrigger asChild>
                 <Button>
                   <UserPlus className="mr-2 h-4 w-4" />
-                  Invite Bloggers
+                  {translateText('generated.inline.0245_invite_bloggers_0224f12b')}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
-                  <DialogTitle>Invite Bloggers</DialogTitle>
+                  <DialogTitle>
+                    {translateText('generated.inline.0245_invite_bloggers_0224f12b')}
+                  </DialogTitle>
                   <DialogDescription>
-                    Search and select users to invite as bloggers
+                    {translateText(
+                      'generated.inline.0246_search_and_select_users_to_invite_as_bloggers_c657d837'
+                    )}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
                   <Command className="rounded-lg border">
                     <CommandInput
-                      placeholder="Search users..."
+                      placeholder={translateText('generated.inline.0247_search_users_8cdc4c09')}
                       value={inviteSearchQuery}
                       onValueChange={setInviteSearchQuery}
                     />
                     <CommandList className="max-h-[300px]">
-                      <CommandEmpty>No users found.</CommandEmpty>
+                      <CommandEmpty>
+                        {translateText('generated.inline.0248_no_users_found_e611ef57')}
+                      </CommandEmpty>
                       <CommandGroup>
                         {isLoadingUsers ? (
                           <div className="p-4 text-center">
@@ -399,7 +441,10 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                               <div className="flex-1">
                                 <div className="font-medium">{displayName(u)}</div>
                                 <div className="text-muted-foreground text-sm">
-                                  @{u.handle || u.email || 'unknown'}
+                                  @
+                                  {u.handle ||
+                                    u.email ||
+                                    translateText('generated.inline.0025_unknown_50d8b4a9')}
                                 </div>
                               </div>
                             </CommandItem>
@@ -410,14 +455,17 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                   </Command>
                   {selectedUsers.length > 0 && (
                     <div className="text-muted-foreground text-sm">
-                      Selected: {selectedUsers.length}{' '}
-                      {selectedUsers.length === 1 ? 'user' : 'users'}
+                      {translateText('generated.inline.0249_selected_2e084478')}
+                      {selectedUsers.length}{' '}
+                      {selectedUsers.length === 1
+                        ? translateText('generated.inline.0026_user_12dea96f')
+                        : translateText('generated.inline.0027_users_5b7dcd14')}
                     </div>
                   )}
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setInviteDialogOpen(false)}>
-                    Cancel
+                    {translateText('generated.inline.0065_cancel_77dfd213')}
                   </Button>
                   <Button
                     onClick={handleInviteBloggers}
@@ -426,10 +474,10 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                     {isInviting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Inviting...
+                        {translateText('generated.inline.0113_inviting_dc7a6e8b')}
                       </>
                     ) : (
-                      `Invite ${selectedUsers.length || ''} ${selectedUsers.length === 1 ? 'Blogger' : 'Bloggers'}`
+                      `Invite ${selectedUsers.length || ''} ${selectedUsers.length === 1 ? translateText('generated.inline.0032_blogger_9b156370') : translateText('generated.inline.0033_bloggers_06e71e76')}`
                     )}
                   </Button>
                 </DialogFooter>
@@ -441,8 +489,14 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <ScrollableTabsList>
-          <TabsTrigger value="bloggers">Bloggers ({filteredBloggers.length})</TabsTrigger>
-          <TabsTrigger value="roles">Roles ({rolesData.roles.length})</TabsTrigger>
+          <TabsTrigger value="bloggers">
+            {translateText('generated.inline.0250_bloggers_4e649307')}
+            {filteredBloggers.length})
+          </TabsTrigger>
+          <TabsTrigger value="roles">
+            {translateText('generated.inline.0251_roles_a7aef93e')}
+            {rolesData.roles.length})
+          </TabsTrigger>
         </ScrollableTabsList>
 
         <TabsContent value="bloggers" className="space-y-4">
@@ -450,19 +504,27 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
           {invitedBloggers.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Invited Bloggers</CardTitle>
+                <CardTitle>
+                  {translateText('generated.inline.0252_invited_bloggers_ab803262')}
+                </CardTitle>
                 <CardDescription>
-                  Users who have been invited but haven't accepted yet
+                  {translateText(
+                    'generated.inline.0116_users_who_have_been_invited_but_haven_t_accep_6522078d'
+                  )}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Invited</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead>{translateText('generated.inline.0090_user_9f8a2389')}</TableHead>
+                      <TableHead>{translateText('generated.inline.0091_role_c3f104d1')}</TableHead>
+                      <TableHead>
+                        {translateText('generated.inline.0117_invited_53469df1')}
+                      </TableHead>
+                      <TableHead className="text-right">
+                        {translateText('generated.inline.0093_actions_c3cd636a')}
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -482,13 +544,18 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                               <div>
                                 <div className="font-medium">{displayName(blogger.user)}</div>
                                 <div className="text-muted-foreground text-sm">
-                                  @{blogger.user?.handle || 'unknown'}
+                                  @
+                                  {blogger.user?.handle ||
+                                    translateText('generated.inline.0025_unknown_50d8b4a9')}
                                 </div>
                               </div>
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline">{blogger.role?.name || 'No role'}</Badge>
+                            <Badge variant="outline">
+                              {blogger.role?.name ||
+                                translateText('generated.inline.0034_no_role_2e54b8e7')}
+                            </Badge>
                           </TableCell>
                           <TableCell className="text-muted-foreground">{createdAt}</TableCell>
                           <TableCell className="text-right">
@@ -499,7 +566,9 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                                 onClick={() => handleRemoveBlogger(blogger.id)}
                               >
                                 <UserX className="h-4 w-4" />
-                                <span className="ml-2">Cancel</span>
+                                <span className="ml-2">
+                                  {translateText('generated.inline.0065_cancel_77dfd213')}
+                                </span>
                               </Button>
                             )}
                           </TableCell>
@@ -515,24 +584,36 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
           {/* Active Bloggers */}
           <Card>
             <CardHeader>
-              <CardTitle>Active Bloggers</CardTitle>
-              <CardDescription>Users with blogger access to this blog</CardDescription>
+              <CardTitle>
+                {translateText('generated.inline.0253_active_bloggers_1806b44e')}
+              </CardTitle>
+              <CardDescription>
+                {translateText(
+                  'generated.inline.0254_users_with_blogger_access_to_this_blog_89f5e930'
+                )}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {activeBloggers.length === 0 ? (
                 <p className="text-muted-foreground py-8 text-center">
                   {bloggers.length === 0
-                    ? 'No active bloggers yet'
-                    : 'No active bloggers match your search'}
+                    ? translateText('generated.inline.0035_no_active_bloggers_yet_f9a61b2d')
+                    : translateText(
+                        'generated.inline.0036_no_active_bloggers_match_your_search_eae577bf'
+                      )}
                 </p>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Joined</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead>{translateText('generated.inline.0090_user_9f8a2389')}</TableHead>
+                      <TableHead>{translateText('generated.inline.0091_role_c3f104d1')}</TableHead>
+                      <TableHead>
+                        {translateText('generated.inline.0092_joined_43a1c626')}
+                      </TableHead>
+                      <TableHead className="text-right">
+                        {translateText('generated.inline.0093_actions_c3cd636a')}
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -552,7 +633,9 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                               <div>
                                 <div className="font-medium">{displayName(blogger.user)}</div>
                                 <div className="text-muted-foreground text-sm">
-                                  @{blogger.user?.handle || 'unknown'}
+                                  @
+                                  {blogger.user?.handle ||
+                                    translateText('generated.inline.0025_unknown_50d8b4a9')}
                                 </div>
                               </div>
                             </div>
@@ -564,7 +647,11 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                                 onValueChange={newRoleId => handleUpdateRole(blogger.id, newRoleId)}
                               >
                                 <SelectTrigger className="w-[180px]">
-                                  <SelectValue placeholder="Select role" />
+                                  <SelectValue
+                                    placeholder={translateText(
+                                      'generated.inline.0255_select_role_04fa02bb'
+                                    )}
+                                  />
                                 </SelectTrigger>
                                 <SelectContent>
                                   {rolesData.roles.map(r => (
@@ -575,7 +662,10 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                                 </SelectContent>
                               </Select>
                             ) : (
-                              <Badge>{blogger.role?.name || 'No role'}</Badge>
+                              <Badge>
+                                {blogger.role?.name ||
+                                  translateText('generated.inline.0034_no_role_2e54b8e7')}
+                              </Badge>
                             )}
                           </TableCell>
                           <TableCell className="text-muted-foreground">{createdAt}</TableCell>
@@ -587,7 +677,9 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                                 onClick={() => handleRemoveBlogger(blogger.id)}
                               >
                                 <UserX className="h-4 w-4" />
-                                <span className="ml-2">Remove</span>
+                                <span className="ml-2">
+                                  {translateText('generated.inline.0096_remove_e963907d')}
+                                </span>
                               </Button>
                             )}
                           </TableCell>
@@ -604,17 +696,27 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
           {requestedBloggers.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Pending Requests</CardTitle>
-                <CardDescription>Users who have requested to be bloggers</CardDescription>
+                <CardTitle>
+                  {translateText('generated.inline.0256_pending_requests_45daa007')}
+                </CardTitle>
+                <CardDescription>
+                  {translateText(
+                    'generated.inline.0257_users_who_have_requested_to_be_bloggers_87cd4984'
+                  )}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Requested</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead>{translateText('generated.inline.0090_user_9f8a2389')}</TableHead>
+                      <TableHead>{translateText('generated.inline.0091_role_c3f104d1')}</TableHead>
+                      <TableHead>
+                        {translateText('generated.inline.0120_requested_c26bf60f')}
+                      </TableHead>
+                      <TableHead className="text-right">
+                        {translateText('generated.inline.0093_actions_c3cd636a')}
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -634,13 +736,18 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                               <div>
                                 <div className="font-medium">{displayName(blogger.user)}</div>
                                 <div className="text-muted-foreground text-sm">
-                                  @{blogger.user?.handle || 'unknown'}
+                                  @
+                                  {blogger.user?.handle ||
+                                    translateText('generated.inline.0025_unknown_50d8b4a9')}
                                 </div>
                               </div>
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="secondary">{blogger.role?.name || 'No role'}</Badge>
+                            <Badge variant="secondary">
+                              {blogger.role?.name ||
+                                translateText('generated.inline.0034_no_role_2e54b8e7')}
+                            </Badge>
                           </TableCell>
                           <TableCell className="text-muted-foreground">{createdAt}</TableCell>
                           <TableCell className="text-right">
@@ -657,7 +764,7 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                                   }}
                                 >
                                   <Check className="mr-1 h-4 w-4" />
-                                  Accept
+                                  {translateText('generated.inline.0121_accept_bb54db51')}
                                 </Button>
                                 <Button
                                   variant="outline"
@@ -665,7 +772,7 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                                   onClick={() => handleRemoveBlogger(blogger.id)}
                                 >
                                   <X className="mr-1 h-4 w-4" />
-                                  Decline
+                                  {translateText('generated.inline.0122_decline_b59cf9ed')}
                                 </Button>
                               </div>
                             )}
@@ -687,10 +794,12 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <Shield className="h-5 w-5" />
-                    Role Permissions
+                    {translateText('generated.inline.0258_role_permissions_2dbfb26f')}
                   </CardTitle>
                   <CardDescription>
-                    Manage roles and their permissions for this blog
+                    {translateText(
+                      'generated.inline.0259_manage_roles_and_their_permissions_for_this_b_991517af'
+                    )}
                   </CardDescription>
                 </div>
                 {canManageBloggers && (
@@ -698,35 +807,43 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                     <DialogTrigger asChild>
                       <Button>
                         <Plus className="mr-2 h-4 w-4" />
-                        Add Role
+                        {translateText('generated.inline.0125_add_role_82d0afcc')}
                       </Button>
                     </DialogTrigger>
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>Add New Role</DialogTitle>
+                        <DialogTitle>
+                          {translateText('generated.inline.0126_add_new_role_241eb33f')}
+                        </DialogTitle>
                         <DialogDescription>
-                          Create a new role with custom permissions for this blog.
+                          {translateText(
+                            'generated.inline.0260_create_a_new_role_with_custom_permissions_for_4c7a8490'
+                          )}
                         </DialogDescription>
                       </DialogHeader>
                       <div className="space-y-4 py-4">
                         <div className="space-y-2">
                           <label htmlFor="role-name" className="text-sm font-medium">
-                            Role Name
+                            {translateText('generated.inline.0128_role_name_a8b23a08')}
                           </label>
                           <Input
                             id="role-name"
-                            placeholder="e.g., Editor, Contributor"
+                            placeholder={translateText(
+                              'generated.inline.0261_e_g_editor_contributor_27c5d564'
+                            )}
                             value={newRoleName}
                             onChange={e => setNewRoleName(e.target.value)}
                           />
                         </div>
                         <div className="space-y-2">
                           <label htmlFor="role-description" className="text-sm font-medium">
-                            Description (Optional)
+                            {translateText('generated.inline.0130_description_optional_f1da5c02')}
                           </label>
                           <Input
                             id="role-description"
-                            placeholder="Describe this role's purpose"
+                            placeholder={translateText(
+                              'generated.inline.0131_describe_this_role_s_purpose_16c2c88f'
+                            )}
                             value={newRoleDescription}
                             onChange={e => setNewRoleDescription(e.target.value)}
                           />
@@ -738,10 +855,10 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                           variant="outline"
                           onClick={() => setAddRoleDialogOpen(false)}
                         >
-                          Cancel
+                          {translateText('generated.inline.0065_cancel_77dfd213')}
                         </Button>
                         <Button type="button" onClick={handleCreateRole}>
-                          Create Role
+                          {translateText('generated.inline.0132_create_role_5bea05a8')}
                         </Button>
                       </DialogFooter>
                     </DialogContent>
@@ -755,7 +872,9 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="min-w-[200px]">Permission</TableHead>
+                        <TableHead className="min-w-[200px]">
+                          {translateText('generated.inline.0262_permission_17857134')}
+                        </TableHead>
                         {rolesData.roles.map(r => (
                           <TableHead key={r.id} className="min-w-[120px] text-center">
                             <div className="flex flex-col items-center gap-1">
@@ -814,7 +933,9 @@ export function BlogBloggersManager({ blogId }: BlogBloggersManagerProps) {
                 <div className="py-12 text-center">
                   <Shield className="text-muted-foreground/50 mx-auto h-12 w-12" />
                   <p className="text-muted-foreground mt-4">
-                    No roles created yet. Click "Add Role" to create your first role.
+                    {translateText(
+                      'generated.inline.0134_no_roles_created_yet_click_add_role_to_create_5594310d'
+                    )}
                   </p>
                 </div>
               )}

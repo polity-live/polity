@@ -1,7 +1,10 @@
 import { useCallback } from 'react';
 import { useZero } from '@rocicorp/zero/react';
 import { gatedToast as toast } from '@/features/notifications/utils/gated-toast';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { mutators } from '../mutators';
 import { onServerError, toMutationError } from '../mutate-with-server-check';
 import { DEFAULT_GROUP_ROLES } from '../rbac/constants';
@@ -62,7 +65,7 @@ export function useGroupActions() {
   const createOfflineMember = useCallback(
     (args: Parameters<typeof mutators.groups.createOfflineMember>[0]) => {
       const result = zero.mutate(mutators.groups.createOfflineMember(args));
-      toast.success('Offline member added');
+      toast.success(translateText('generated.inline.1280_offline_member_added_53457a7c'));
       onServerError(result, msg =>
         handleMutationError(toMutationError(msg), 'Failed to add offline member', t)
       );
@@ -74,7 +77,7 @@ export function useGroupActions() {
   const updateOfflineMember = useCallback(
     (args: Parameters<typeof mutators.groups.updateOfflineMember>[0]) => {
       const result = zero.mutate(mutators.groups.updateOfflineMember(args));
-      toast.success('Offline member updated');
+      toast.success(translateText('generated.inline.1281_offline_member_updated_67288e4f'));
       onServerError(result, msg =>
         handleMutationError(toMutationError(msg), 'Failed to update offline member', t)
       );
@@ -86,7 +89,7 @@ export function useGroupActions() {
   const deleteOfflineMember = useCallback(
     (args: Parameters<typeof mutators.groups.deleteOfflineMember>[0]) => {
       const result = zero.mutate(mutators.groups.deleteOfflineMember(args));
-      toast.success('Offline member removed');
+      toast.success(translateText('generated.inline.1282_offline_member_removed_868d862f'));
       onServerError(result, msg =>
         handleMutationError(toMutationError(msg), 'Failed to remove offline member', t)
       );
@@ -98,7 +101,7 @@ export function useGroupActions() {
   const importOfflineMembers = useCallback(
     (args: Parameters<typeof mutators.groups.importOfflineMembers>[0]) => {
       const result = zero.mutate(mutators.groups.importOfflineMembers(args));
-      toast.success('Offline members imported');
+      toast.success(translateText('generated.inline.1283_offline_members_imported_d757a0cf'));
       onServerError(result, msg =>
         handleMutationError(toMutationError(msg), 'Failed to import offline members', t)
       );
@@ -175,7 +178,7 @@ export function useGroupActions() {
   const inviteGuest = useCallback(
     (args: Parameters<typeof mutators.groups.inviteGuest>[0]) => {
       const result = zero.mutate(mutators.groups.inviteGuest(args));
-      toast.success('Guest invitation sent');
+      toast.success(translateText('generated.inline.1284_guest_invitation_sent_dd6015e7'));
       onServerError(result, msg =>
         handleMutationError(toMutationError(msg), 'Failed to invite guest', t)
       );
@@ -187,7 +190,7 @@ export function useGroupActions() {
   const acceptGuestInvitation = useCallback(
     (args: Parameters<typeof mutators.groups.acceptGuestInvitation>[0]) => {
       const result = zero.mutate(mutators.groups.acceptGuestInvitation(args));
-      toast.success('Guest invitation accepted');
+      toast.success(translateText('generated.inline.1285_guest_invitation_accepted_28e5e390'));
       onServerError(result, msg =>
         handleMutationError(toMutationError(msg), 'Failed to accept guest invitation', t)
       );
@@ -199,7 +202,7 @@ export function useGroupActions() {
   const revokeGuestAccess = useCallback(
     (args: Parameters<typeof mutators.groups.revokeGuestAccess>[0]) => {
       const result = zero.mutate(mutators.groups.revokeGuestAccess(args));
-      toast.success('Guest access revoked');
+      toast.success(translateText('generated.inline.0559_guest_access_revoked_3c6108ee'));
       onServerError(result, msg =>
         handleMutationError(toMutationError(msg), 'Failed to revoke guest access', t)
       );
@@ -211,7 +214,7 @@ export function useGroupActions() {
   const syncGuestRoles = useCallback(
     (args: Parameters<typeof mutators.groups.syncGuestRoles>[0]) => {
       const result = zero.mutate(mutators.groups.syncGuestRoles(args));
-      toast.success('Guest roles updated');
+      toast.success(translateText('generated.inline.1286_guest_roles_updated_a2e608e8'));
       onServerError(result, msg =>
         handleMutationError(toMutationError(msg), 'Failed to update guest roles', t)
       );

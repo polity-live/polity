@@ -26,7 +26,10 @@ import { useBlogState } from '@/zero/blogs/useBlogState';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { toast } from 'sonner';
 import type { Value } from 'platejs';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 
 interface Version {
   id: string;
@@ -50,12 +53,7 @@ interface VersionControlProps {
   onRestoreVersion: (content: Value) => void;
 }
 
-export function VersionControl({
-  blogId,
-  currentContent,
-  currentUserId,
-  onRestoreVersion,
-}: VersionControlProps) {
+export function VersionControl({ blogId, currentContent, onRestoreVersion }: VersionControlProps) {
   const { t } = useTranslation();
   const { versions: versionsRaw } = useBlogState({ blogId, includeVersions: true });
   const { createVersion, updateVersion } = useDocumentActions();
@@ -74,7 +72,14 @@ export function VersionControl({
     content: v.content as Value,
     createdAt: v.created_at,
     creationType: 'manual',
-    creator: v.author ? { id: v.author.id, email: v.author.email, name: v.author.first_name, avatar: v.author.avatar } : undefined,
+    creator: v.author
+      ? {
+          id: v.author.id,
+          email: v.author.email,
+          name: v.author.first_name,
+          avatar: v.author.avatar,
+        }
+      : undefined,
   })) as Version[];
   const sortedVersions = [...versions].sort((a, b) => b.versionNumber - a.versionNumber);
 
@@ -236,8 +241,9 @@ export function VersionControl({
                 }}
               />
             </div>
-            <div className="text-sm text-muted-foreground">
-              {t('features.blogs.versionControl.versionNumber')}: v.
+            <div className="text-muted-foreground text-sm">
+              {t('features.blogs.versionControl.versionNumber')}
+              {translateText('generated.inline.0212_v_319af54a')}
               {versions.length > 0 ? Math.max(...versions.map(v => v.versionNumber)) + 1 : 1}
             </div>
           </div>
@@ -274,7 +280,7 @@ export function VersionControl({
 
           {/* Search Bar */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
             <Input
               placeholder={t('features.blogs.versionControl.searchPlaceholder')}
               value={searchQuery}
@@ -285,7 +291,7 @@ export function VersionControl({
 
           <ScrollArea className="h-[400px] pr-4">
             {!versionsRaw ? (
-              <div className="flex items-center justify-center py-8 text-muted-foreground">
+              <div className="text-muted-foreground flex items-center justify-center py-8">
                 {t('features.blogs.versionControl.loadingVersions')}
               </div>
             ) : filteredVersions.length > 0 ? (
@@ -293,11 +299,11 @@ export function VersionControl({
                 {filteredVersions.map(version => (
                   <div
                     key={version.id}
-                    className="flex items-start justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50"
+                    className="hover:bg-muted/50 flex items-start justify-between rounded-lg border p-4 transition-colors"
                   >
                     <div className="flex-1 space-y-2">
                       <div className="flex items-center gap-2">
-                        <GitBranch className="h-4 w-4 text-muted-foreground" />
+                        <GitBranch className="text-muted-foreground h-4 w-4" />
                         <span className="font-semibold">v.{version.versionNumber}</span>
 
                         {editingVersionId === version.id ? (
@@ -355,14 +361,16 @@ export function VersionControl({
 
                         {getCreationTypeBadge(version.creationType)}
                       </div>
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      <div className="text-muted-foreground flex items-center gap-4 text-xs">
                         <div className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />
                           {formatDate(version.createdAt)}
                         </div>
                         <div className="flex items-center gap-1">
                           <User className="h-3 w-3" />
-                          {version.creator?.name || version.creator?.email || 'Unknown'}
+                          {version.creator?.name ||
+                            version.creator?.email ||
+                            translateText('generated.inline.0031_unknown_bc7819b3')}
                         </div>
                       </div>
                     </div>
@@ -378,14 +386,14 @@ export function VersionControl({
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-center">
-                <History className="mb-2 h-12 w-12 text-muted-foreground" />
+                <History className="text-muted-foreground mb-2 h-12 w-12" />
                 <p className="text-muted-foreground">
                   {searchQuery
                     ? t('features.blogs.versionControl.noVersionsFound')
                     : t('features.blogs.versionControl.noVersionsYet')}
                 </p>
                 {!searchQuery && (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     {t('features.blogs.versionControl.createFirstVersion')}
                   </p>
                 )}

@@ -24,33 +24,54 @@ function createGroup(id: string, name: string): AmendmentNetworkGroup {
 
 function createRelationship(
   id: string,
-  sourceGroupId: string,
-  targetGroupId: string,
+  holderGroupId: string,
+  scopeGroupId: string,
   relationshipType: 'parent' | 'child' | 'sibling',
   overrides?: Partial<AmendmentNetworkRelationship>
 ): AmendmentNetworkRelationship {
+  const connectionType = relationshipType === 'sibling' ? 'peer' : 'hierarchy';
   return {
     id,
-    network_link_id: `link:${id}`,
-    network_link_right_id: `right:${id}`,
-    group_id: sourceGroupId,
-    related_group_id: targetGroupId,
+    connection_id: `connection:${id}`,
+    grant_id: `grant:${id}`,
+    group_id: holderGroupId,
+    related_group_id: scopeGroupId,
     relationship_type: relationshipType,
-    structural_relation: relationshipType === 'sibling' ? 'sibling' : 'parent_child',
+    connection_type: connectionType,
+    parent_group_id:
+      connectionType === 'hierarchy'
+        ? relationshipType === 'parent'
+          ? holderGroupId
+          : scopeGroupId
+        : null,
+    child_group_id:
+      connectionType === 'hierarchy'
+        ? relationshipType === 'parent'
+          ? scopeGroupId
+          : holderGroupId
+        : null,
     with_right: 'amendmentRight',
-    status: 'accepted',
+    status: 'active',
     initiator_group_id: null,
     created_at: now,
-    membership_mode: 'all_members',
-    membership_direction: null,
-    membership_role_id: null,
-    membership_source_group_ids: null,
-    relationship_direction: relationshipType === 'parent' ? 'backward' : 'forward',
-    right_direction: relationshipType === 'parent' ? 'backward' : 'forward',
-    group: createGroup(sourceGroupId, sourceGroupId),
-    related_group: createGroup(targetGroupId, targetGroupId),
+    member_source_group_id: null,
+    member_target_group_id: null,
+    membership_mode: 'none',
+    required_source_role_id: null,
+    eligible_origin_group_ids: [],
+    group: createGroup(holderGroupId, holderGroupId),
+    related_group: createGroup(scopeGroupId, scopeGroupId),
     ...overrides,
   } as AmendmentNetworkRelationship;
+}
+
+function createGrantRelationship(
+  id: string,
+  holderGroupId: string,
+  scopeGroupId: string,
+  overrides?: Partial<AmendmentNetworkRelationship>
+): AmendmentNetworkRelationship {
+  return createRelationship(id, holderGroupId, scopeGroupId, 'child', overrides);
 }
 
 function createMembership(
@@ -139,10 +160,7 @@ describe('amendmentPathHelpers', () => {
   it('includes only the groups where the current source group can exercise amendment rights', () => {
     const groups = [createGroup('group-parent', 'Parent'), createGroup('group-child', 'Child')];
     const relationships = [
-      createRelationship('parent-child', 'group-parent', 'group-child', 'child', {
-        relationship_direction: 'forward',
-        right_direction: 'forward',
-      }),
+      createRelationship('child-parent', 'group-child', 'group-parent', 'child'),
     ];
 
     const reachableFromChild = getReachableTargetGroupsFromSource({
@@ -162,6 +180,46 @@ describe('amendmentPathHelpers', () => {
 
     expect(reachableFromChild.map(group => group.id)).toEqual(['group-parent']);
     expect(reachableFromParent.map(group => group.id)).toEqual([]);
+  });
+
+  it('traverses explicit holder-to-scope grants from B2 through H2 to K2 only forward', () => {
+    const groups = [
+      createGroup('group-b2', 'B2'),
+      createGroup('group-h2', 'H2'),
+      createGroup('group-k2', 'K2'),
+    ];
+    const relationships = [
+      createGrantRelationship('b2-h2', 'group-b2', 'group-h2'),
+      createGrantRelationship('h2-k2', 'group-h2', 'group-k2'),
+    ];
+
+    expect(
+      getReachableTargetGroupsFromSource({
+        sourceGroupId: 'group-b2',
+        groups,
+        relationships,
+        includeSourceGroup: true,
+      }).map(group => group.id)
+    ).toEqual(['group-b2', 'group-h2', 'group-k2']);
+
+    expect(
+      getReachableTargetGroupsFromSource({
+        sourceGroupId: 'group-k2',
+        groups,
+        relationships,
+        includeSourceGroup: true,
+      }).map(group => group.id)
+    ).toEqual(['group-k2']);
+
+    expect(
+      calculateProcessPathWithClosestEvents({
+        sourceGroupId: 'group-b2',
+        targetGroupId: 'group-k2',
+        groups,
+        relationships,
+        events: [],
+      })?.map(segment => segment.groupId)
+    ).toEqual(['group-b2', 'group-h2', 'group-k2']);
   });
 
   it('can still include the source group explicitly when a caller opts in', () => {
@@ -237,7 +295,7 @@ describe('amendmentPathHelpers', () => {
 
   it('rejects reverse traversal when only the opposite amendment-right direction exists', () => {
     const groups = [createGroup('group-a', 'A'), createGroup('group-b', 'B')];
-    const relationships = [createRelationship('stored-a-b', 'group-a', 'group-b', 'child')];
+    const relationships = [createRelationship('stored-b-a', 'group-b', 'group-a', 'child')];
 
     expect(
       calculateProcessPathWithClosestEvents({
@@ -274,8 +332,8 @@ describe('amendmentPathHelpers', () => {
     const relationships = [
       createRelationship('b1-h1', 'group-b1', 'group-h1', 'parent'),
       createRelationship('h1-board', 'group-h1', 'group-board', 'parent'),
-      createRelationship('h1-faction', 'group-faction', 'group-h1', 'sibling'),
-      createRelationship('faction-board', 'group-board', 'group-faction', 'child'),
+      createRelationship('h1-faction', 'group-h1', 'group-faction', 'sibling'),
+      createRelationship('faction-board', 'group-faction', 'group-board', 'child'),
     ];
 
     const options = getProcessPathGroupOptions({
@@ -306,87 +364,30 @@ describe('amendmentPathHelpers', () => {
       createGroup('group-committee', 'Bauaussschuss'),
     ];
     const relationships = [
-      createRelationship('link-h1-b1-forward', 'group-h1', 'group-b1', 'child', {
-        relationship_direction: 'forward',
-        right_direction: 'bidirectional',
-        membership_mode: 'all_members',
-        membership_direction: 'backward',
-        group: createGroup('group-h1', 'H1'),
-        related_group: createGroup('group-b1', 'B1'),
-      }),
-      createRelationship('link-h1-b1-backward', 'group-b1', 'group-h1', 'parent', {
-        relationship_direction: 'backward',
-        right_direction: 'bidirectional',
-        membership_mode: 'all_members',
-        membership_direction: 'backward',
+      createRelationship('grant-b1-h1', 'group-b1', 'group-h1', 'child', {
         group: createGroup('group-b1', 'B1'),
         related_group: createGroup('group-h1', 'H1'),
       }),
-      createRelationship('link-faction-h1-forward', 'group-faction', 'group-h1', 'sibling', {
-        relationship_direction: 'forward',
-        right_direction: 'forward',
-        membership_mode: 'role_members',
-        membership_direction: 'backward',
-        membership_role_id: roleAdminH1,
-        group: createGroup('group-faction', 'Fraktion H1'),
-        related_group: createGroup('group-h1', 'H1'),
+      createRelationship('grant-h1-faction', 'group-h1', 'group-faction', 'sibling', {
+        group: createGroup('group-h1', 'H1'),
+        related_group: createGroup('group-faction', 'Fraktion H1'),
       }),
       createRelationship(
-        'link-parliament-faction-forward',
-        'group-parliament',
-        'group-faction',
-        'sibling',
-        {
-          relationship_direction: 'forward',
-          right_direction: 'bidirectional',
-          membership_mode: 'selected_source_groups',
-          membership_direction: 'backward',
-          membership_source_group_ids: ['group-h1'],
-          group: createGroup('group-parliament', 'Parlament Rosbach'),
-          related_group: createGroup('group-faction', 'Fraktion H1'),
-        }
-      ),
-      createRelationship(
-        'link-parliament-faction-backward',
+        'grant-faction-parliament',
         'group-faction',
         'group-parliament',
         'sibling',
         {
-          relationship_direction: 'backward',
-          right_direction: 'bidirectional',
-          membership_mode: 'selected_source_groups',
-          membership_direction: 'backward',
-          membership_source_group_ids: ['group-h1'],
           group: createGroup('group-faction', 'Fraktion H1'),
           related_group: createGroup('group-parliament', 'Parlament Rosbach'),
         }
       ),
       createRelationship(
-        'link-committee-parliament-forward',
-        'group-committee',
-        'group-parliament',
-        'sibling',
-        {
-          relationship_direction: 'forward',
-          right_direction: 'bidirectional',
-          membership_mode: 'role_members',
-          membership_direction: 'backward',
-          membership_role_id: roleAdminParliament,
-          group: createGroup('group-committee', 'Bauaussschuss'),
-          related_group: createGroup('group-parliament', 'Parlament Rosbach'),
-        }
-      ),
-      createRelationship(
-        'link-committee-parliament-backward',
+        'grant-parliament-committee',
         'group-parliament',
         'group-committee',
         'sibling',
         {
-          relationship_direction: 'backward',
-          right_direction: 'bidirectional',
-          membership_mode: 'role_members',
-          membership_direction: 'backward',
-          membership_role_id: roleAdminParliament,
           group: createGroup('group-parliament', 'Parlament Rosbach'),
           related_group: createGroup('group-committee', 'Bauaussschuss'),
         }

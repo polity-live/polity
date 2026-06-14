@@ -29,7 +29,10 @@ import {
   AlertDialogTrigger,
 } from '@/features/shared/ui/ui/alert-dialog';
 import { WorkflowEditor } from './WorkflowEditor';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import type { DraftWorkflowStep } from '../hooks/useWorkflowEditor';
 import type { NormalizedGroupRelationship, NetworkGroupEntity } from '../types/network.types';
 import type { WorkflowWithStepsRow } from '@/zero/network/queries';
@@ -302,20 +305,15 @@ export function ManageWorkflowsTab({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold">
-            {t('features.network.workflows.title', 'Workflows')}
-          </h3>
+          <h3 className="text-lg font-semibold">{t('features.network.workflows.title')}</h3>
           <p className="text-muted-foreground text-sm">
-            {t(
-              'features.network.workflows.managementDescription',
-              'Manage approvals, monitor outgoing requests, and maintain approved workflow definitions.'
-            )}
+            {t('features.network.workflows.managementDescription')}
           </p>
         </div>
         {canManageWorkflows ? (
           <Button onClick={onOpenNewWorkflow}>
             <Plus className="mr-2 h-4 w-4" />
-            {t('features.network.workflows.create', 'New Workflow')}
+            {t('features.network.workflows.create')}
           </Button>
         ) : null}
       </div>
@@ -325,14 +323,9 @@ export function ManageWorkflowsTab({
           <CardContent className="flex flex-col items-center justify-center gap-3 py-12 text-center">
             <Workflow className="text-muted-foreground h-8 w-8" />
             <div className="space-y-1">
-              <p className="font-medium">
-                {t('features.network.workflows.emptyTitle', 'No workflow activity yet')}
-              </p>
+              <p className="font-medium">{t('features.network.workflows.emptyTitle')}</p>
               <p className="text-muted-foreground text-sm">
-                {t(
-                  'features.network.workflows.emptyDescription',
-                  'Create a workflow or wait for approval requests to see workflow tables here.'
-                )}
+                {t('features.network.workflows.emptyDescription')}
               </p>
             </div>
           </CardContent>
@@ -344,14 +337,10 @@ export function ManageWorkflowsTab({
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <Clock className="h-4 w-4" />
-              {t('features.network.workflows.incomingRequests', 'Incoming requests')} (
-              {incomingRows.length})
+              {t('features.network.workflows.incomingRequests')} ({incomingRows.length})
             </CardTitle>
             <CardDescription>
-              {t(
-                'features.network.workflows.incomingRequestsDescription',
-                'Approve or reject workflow requests that involve this group.'
-              )}
+              {t('features.network.workflows.incomingRequestsDescription')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -359,10 +348,10 @@ export function ManageWorkflowsTab({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>{t('common.name', 'Name')}</TableHead>
-                    <TableHead>{t('common.group', 'Group')}</TableHead>
-                    <TableHead>{t('features.network.workflows.startGroup', 'Start')}</TableHead>
-                    <TableHead>{t('features.network.workflows.path', 'Path')}</TableHead>
+                    <TableHead>{t('common.name')}</TableHead>
+                    <TableHead>{t('common.group')}</TableHead>
+                    <TableHead>{t('features.network.workflows.startGroup')}</TableHead>
+                    <TableHead>{t('features.network.workflows.path')}</TableHead>
                     <TableHead className="text-right">{t('common.actions.actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -371,9 +360,7 @@ export function ManageWorkflowsTab({
                     <TableRow key={workflow.id}>
                       <TableCell>
                         <div className="space-y-1">
-                          <p className="font-medium">
-                            {workflow.name ?? t('common.untitled', 'Untitled')}
-                          </p>
+                          <p className="font-medium">{workflow.name ?? t('common.untitled')}</p>
                           <div className="flex flex-wrap gap-2">
                             <Badge className={getWorkflowStatusClasses(workflow.status)}>
                               {workflow.status ?? 'pending_approval'}
@@ -402,14 +389,14 @@ export function ManageWorkflowsTab({
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
                           <Button size="sm" onClick={() => onApproveWorkflowApproval(approval.id)}>
-                            {t('common.actions.confirm', 'Confirm')}
+                            {t('common.actions.confirm')}
                           </Button>
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => onRejectWorkflowApproval(approval.id)}
                           >
-                            {t('common.actions.reject', 'Reject')}
+                            {t('common.actions.reject')}
                           </Button>
                         </div>
                       </TableCell>
@@ -427,14 +414,10 @@ export function ManageWorkflowsTab({
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <Send className="h-4 w-4" />
-              {t('features.network.workflows.outgoingRequests', 'Outgoing requests')} (
-              {outgoingRequests.length})
+              {t('features.network.workflows.outgoingRequests')} ({outgoingRequests.length})
             </CardTitle>
             <CardDescription>
-              {t(
-                'features.network.workflows.outgoingRequestsDescription',
-                'Track workflow revisions submitted by this group that still need confirmations from others.'
-              )}
+              {t('features.network.workflows.outgoingRequestsDescription')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -442,12 +425,10 @@ export function ManageWorkflowsTab({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>{t('common.name', 'Name')}</TableHead>
-                    <TableHead>{t('features.network.workflows.startGroup', 'Start')}</TableHead>
-                    <TableHead>
-                      {t('features.network.workflows.finalGroup', 'Final group')}
-                    </TableHead>
-                    <TableHead>{t('features.network.workflows.approvals', 'Approvals')}</TableHead>
+                    <TableHead>{t('common.name')}</TableHead>
+                    <TableHead>{t('features.network.workflows.startGroup')}</TableHead>
+                    <TableHead>{t('features.network.workflows.finalGroup')}</TableHead>
+                    <TableHead>{t('features.network.workflows.approvals')}</TableHead>
                     <TableHead className="text-right">{t('common.actions.actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -456,9 +437,7 @@ export function ManageWorkflowsTab({
                     <TableRow key={workflow.id}>
                       <TableCell>
                         <div className="space-y-1">
-                          <p className="font-medium">
-                            {workflow.name ?? t('common.untitled', 'Untitled')}
-                          </p>
+                          <p className="font-medium">{workflow.name ?? t('common.untitled')}</p>
                           <div className="flex flex-wrap gap-2">
                             <Badge className={getWorkflowStatusClasses(workflow.status)}>
                               {workflow.status ?? 'pending_approval'}
@@ -502,39 +481,29 @@ export function ManageWorkflowsTab({
                             >
                               <Pencil className="h-4 w-4" />
                               <span className="sr-only">
-                                {t('features.network.workflows.edit', 'Edit Workflow')}
+                                {t('features.network.workflows.edit')}
                               </span>
                             </Button>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button variant="ghost" size="icon">
                                   <Trash2 className="h-4 w-4" />
-                                  <span className="sr-only">
-                                    {t('common.actions.delete', 'Delete')}
-                                  </span>
+                                  <span className="sr-only">{t('common.actions.delete')}</span>
                                 </Button>
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>
-                                    {t(
-                                      'features.network.workflows.deleteConfirm',
-                                      'Delete workflow?'
-                                    )}
+                                    {t('features.network.workflows.deleteConfirm')}
                                   </AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    {t(
-                                      'features.network.workflows.deleteDescription',
-                                      'This will permanently delete this workflow and all approval requests.'
-                                    )}
+                                    {t('features.network.workflows.deleteDescription')}
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
-                                  <AlertDialogCancel>
-                                    {t('common.cancel', 'Cancel')}
-                                  </AlertDialogCancel>
+                                  <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
                                   <AlertDialogAction onClick={() => onDeleteWorkflow(workflow.id)}>
-                                    {t('common.delete', 'Delete')}
+                                    {t('common.delete')}
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
                               </AlertDialogContent>
@@ -556,14 +525,10 @@ export function ManageWorkflowsTab({
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <Workflow className="h-4 w-4" />
-              {t('features.network.workflows.activeRelevant', 'Active workflows')} (
-              {activeRelevantWorkflows.length})
+              {t('features.network.workflows.activeRelevant')} ({activeRelevantWorkflows.length})
             </CardTitle>
             <CardDescription>
-              {t(
-                'features.network.workflows.activeRelevantDescription',
-                'Accepted participants co-own active workflows and can edit them from their own group page.'
-              )}
+              {t('features.network.workflows.activeRelevantDescription')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -571,10 +536,10 @@ export function ManageWorkflowsTab({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>{t('common.name', 'Name')}</TableHead>
-                    <TableHead>{t('features.network.workflows.role', 'Role')}</TableHead>
-                    <TableHead>{t('features.network.workflows.startGroup', 'Start')}</TableHead>
-                    <TableHead>{t('features.network.workflows.path', 'Path')}</TableHead>
+                    <TableHead>{t('common.name')}</TableHead>
+                    <TableHead>{t('features.network.workflows.role')}</TableHead>
+                    <TableHead>{t('features.network.workflows.startGroup')}</TableHead>
+                    <TableHead>{t('features.network.workflows.path')}</TableHead>
                     <TableHead className="text-right">{t('common.actions.actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -592,20 +557,16 @@ export function ManageWorkflowsTab({
                       <TableRow key={workflow.id}>
                         <TableCell>
                           <div className="space-y-1">
-                            <p className="font-medium">
-                              {workflow.name ?? t('common.untitled', 'Untitled')}
-                            </p>
+                            <p className="font-medium">{workflow.name ?? t('common.untitled')}</p>
                             <div className="flex flex-wrap gap-2">
                               <Badge className={getWorkflowStatusClasses(workflow.status)}>
-                                {workflow.status ?? 'active'}
+                                {workflow.status ??
+                                  translateText('generated.inline.0045_active_2bb6b986')}
                               </Badge>
                               <RightBadge right="amendmentRight" variant="outline" />
                               {workflow.is_default_entry ? (
                                 <Badge variant="outline">
-                                  {t(
-                                    'features.network.workflows.defaultEntryBadge',
-                                    'Default entry'
-                                  )}
+                                  {t('features.network.workflows.defaultEntryBadge')}
                                 </Badge>
                               ) : null}
                             </div>
@@ -614,10 +575,10 @@ export function ManageWorkflowsTab({
                         <TableCell>
                           <Badge className={getWorkflowRoleClasses(role)}>
                             {isFinalGroup
-                              ? t('features.network.workflows.roleFinalGroup', 'Final group')
+                              ? t('features.network.workflows.roleFinalGroup')
                               : isStartGroup
-                                ? t('features.network.workflows.roleStartGroup', 'Start group')
-                                : t('features.network.workflows.roleCoOwner', 'Co-owner')}
+                                ? t('features.network.workflows.roleStartGroup')
+                                : t('features.network.workflows.roleCoOwner')}
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -640,41 +601,31 @@ export function ManageWorkflowsTab({
                               >
                                 <Pencil className="h-4 w-4" />
                                 <span className="sr-only">
-                                  {t('features.network.workflows.edit', 'Edit Workflow')}
+                                  {t('features.network.workflows.edit')}
                                 </span>
                               </Button>
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                   <Button variant="ghost" size="icon">
                                     <Trash2 className="h-4 w-4" />
-                                    <span className="sr-only">
-                                      {t('common.actions.delete', 'Delete')}
-                                    </span>
+                                    <span className="sr-only">{t('common.actions.delete')}</span>
                                   </Button>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                   <AlertDialogHeader>
                                     <AlertDialogTitle>
-                                      {t(
-                                        'features.network.workflows.deleteConfirm',
-                                        'Delete workflow?'
-                                      )}
+                                      {t('features.network.workflows.deleteConfirm')}
                                     </AlertDialogTitle>
                                     <AlertDialogDescription>
-                                      {t(
-                                        'features.network.workflows.deleteDescription',
-                                        'This will permanently delete this workflow and all approval requests.'
-                                      )}
+                                      {t('features.network.workflows.deleteDescription')}
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
-                                    <AlertDialogCancel>
-                                      {t('common.cancel', 'Cancel')}
-                                    </AlertDialogCancel>
+                                    <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
                                     <AlertDialogAction
                                       onClick={() => onDeleteWorkflow(workflow.id)}
                                     >
-                                      {t('common.delete', 'Delete')}
+                                      {t('common.delete')}
                                     </AlertDialogAction>
                                   </AlertDialogFooter>
                                 </AlertDialogContent>
@@ -682,10 +633,7 @@ export function ManageWorkflowsTab({
                             </div>
                           ) : (
                             <span className="text-muted-foreground text-sm">
-                              {t(
-                                'features.network.workflows.readOnlyNoPermission',
-                                'Read-only without manage rights'
-                              )}
+                              {t('features.network.workflows.readOnlyNoPermission')}
                             </span>
                           )}
                         </TableCell>

@@ -3,6 +3,7 @@ import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useOnlineUsers } from '@/presence';
 import { useAuth } from '@/providers/auth-provider';
 import { useUserState } from '@/zero/users/useUserState';
+import { useMessageState } from '@/zero/messages/useMessageState';
 import { useConversationData } from './useConversationData';
 import { useMessageMutations } from './useMessageMutations';
 import { useConversationFilters } from './useConversationFilters';
@@ -24,6 +25,8 @@ export function useMessagesPage() {
   const [memberListDialogOpen, setMemberListDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [conversationToDelete, setConversationToDelete] = useState<string | null>(null);
+  const [messageLimit, setMessageLimit] = useState(80);
+  const [isSelectedConversationAtEnd, setIsSelectedConversationAtEnd] = useState(true);
 
   // Current user name for notifications
   const { currentUser: currentUserData } = useUserState();
@@ -45,6 +48,10 @@ export function useMessagesPage() {
     useConversationSelection(conversations, {
       openAriaKai: shouldOpenAriaKai,
     });
+  const { messages: selectedMessages } = useMessageState({
+    conversationId: selectedConversationId ?? undefined,
+    messageLimit,
+  });
 
   const conversationOnlineStatus = useMemo<Record<string, boolean>>(() => {
     const statusByConversationId: Record<string, boolean> = {};
@@ -195,12 +202,19 @@ export function useMessagesPage() {
     setSelectedConversationId,
   ]);
 
-  // Mark messages as read when viewing a conversation
+  useEffect(() => {
+    setMessageLimit(80);
+    setIsSelectedConversationAtEnd(true);
+  }, [selectedConversationId]);
+
+  // Mark messages as read when viewing a conversation at the end of the thread.
   useEffect(() => {
     if (!selectedConversation || !user?.id) return;
+    if (!isSelectedConversationAtEnd) return;
+    if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
 
     void mutations.markConversationAsRead(selectedConversation, user.id);
-  }, [selectedConversation?.id, selectedConversation?.messages, user?.id]);
+  }, [isSelectedConversationAtEnd, selectedConversation?.id, selectedMessages, user?.id]);
 
   // Handlers
   const handleCreateConversationRequest = async (otherUserId: string) => {
@@ -241,7 +255,7 @@ export function useMessagesPage() {
 
     const result = await mutations.createAssistantConversation(
       user.id,
-      t('features.messages.ai.defaultConversationName', 'Aria & Kai')
+      t('features.messages.ai.defaultConversationName')
     );
 
     if (result.success && result.conversationId) {
@@ -291,11 +305,16 @@ export function useMessagesPage() {
           contextJson,
         }
       );
+      setIsSelectedConversationAtEnd(true);
       return result.success;
     }
 
     return false;
   };
+
+  const loadOlderMessages = useCallback(() => {
+    setMessageLimit(limit => Math.min(limit + 80, 5000));
+  }, []);
 
   const openNewConversationDialog = () => {
     setNewConversationSearch('');
@@ -323,6 +342,10 @@ export function useMessagesPage() {
     selectedConversationId,
     setSelectedConversationId,
     selectedConversation,
+    selectedMessages,
+    hasMoreOlderMessages: selectedMessages.length >= messageLimit,
+    loadOlderMessages,
+    setIsSelectedConversationAtEnd,
     selectedConversationUserOnline,
     searchQuery,
     setSearchQuery,

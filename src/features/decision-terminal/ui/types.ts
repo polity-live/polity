@@ -1,4 +1,6 @@
 import type { Visibility } from '@/features/auth/logic/checkEntityAccess';
+import type { ElectionMode } from '@/features/elections/logic/electionMode';
+import type { VotingPhase } from '@/features/vote-cast/logic/votePhaseHelpers';
 import type { TrendData } from './TrendIndicator';
 import type { VoteData } from './VoteProgressBar';
 
@@ -26,6 +28,9 @@ export type DecisionDisplayStatus =
 export interface DecisionItem {
   /** Unique identifier (e.g., V-204, E-88) */
   id: string;
+
+  /** Actual source entity id from election/vote table */
+  sourceId: string;
 
   /** Type of decision */
   type: DecisionType;
@@ -87,6 +92,17 @@ export interface DecisionItem {
   /** Link to full decision page */
   href: string;
 
+  /** Related event and agenda context for voting */
+  eventId?: string;
+  agendaItemId?: string;
+  voteId?: string;
+  electionId?: string;
+  phase?: VotingPhase;
+  ballotVisibility?: string | null;
+  voterId?: string;
+  electorId?: string;
+  canOpenVoteDialog?: boolean;
+
   /** Summary of the decision */
   summary?: string;
 
@@ -122,7 +138,7 @@ export interface DecisionItem {
   indicationSupportPercentage?: number;
 
   /** Candidates (for elections) */
-  candidates?: Array<{
+  candidates?: {
     id: string;
     name: string;
     avatarUrl?: string;
@@ -130,7 +146,19 @@ export interface DecisionItem {
     isWinner?: boolean;
     indicationVotes?: number;
     indicationPercentage?: number;
-  }>;
+    actualPercentage?: number;
+  }[];
+
+  /** Vote choices (for proposal/amendment votes) */
+  choices?: {
+    id: string;
+    label: string;
+  }[];
+
+  /** Election casting config */
+  maxVotes?: number;
+  electionMode?: ElectionMode | null;
+  seatCount?: number | null;
 }
 
 /**

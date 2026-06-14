@@ -1,7 +1,10 @@
 'use client';
 
 import { X, RotateCcw } from 'lucide-react';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Checkbox } from '@/features/shared/ui/ui/checkbox';
@@ -17,6 +20,8 @@ import {
 } from '@/features/shared/ui/ui/sheet';
 import { ContentType, CONTENT_TYPE_CONFIG } from '../constants/content-type-config';
 import { DateRangeFilter, EngagementFilter, ALL_CONTENT_TYPES } from '../hooks/useTimelineFilters';
+
+export type TimelineRadiusFilter = 'all' | 10 | 25 | 50 | 100 | 250;
 
 export interface TimelineFilterPanelProps {
   /** Whether the panel is open */
@@ -47,6 +52,14 @@ export interface TimelineFilterPanelProps {
   onResetFilters: () => void;
   /** Whether filters are active */
   hasActiveFilters: boolean;
+  /** Optional narrowed list of content types for a specific surface */
+  contentTypeOptions?: ContentType[];
+  /** Optional geographic radius filter */
+  radiusKm?: TimelineRadiusFilter;
+  /** Callback when radius changes */
+  onRadiusChange?: (radius: TimelineRadiusFilter) => void;
+  /** Whether to show engagement controls */
+  showEngagement?: boolean;
 }
 
 /**
@@ -68,6 +81,39 @@ const ENGAGEMENT_OPTIONS: { value: EngagementFilter; labelKey: string }[] = [
   { value: 'popular', labelKey: 'features.timeline.filters.popular' },
   { value: 'rising', labelKey: 'features.timeline.filters.rising' },
   { value: 'discussed', labelKey: 'features.timeline.filters.discussed' },
+];
+
+const RADIUS_OPTIONS: { value: TimelineRadiusFilter; labelKey: string; label: string }[] = [
+  {
+    value: 'all',
+    labelKey: 'features.timeline.around.radius.all',
+    label: translateText('generated.inline.0536_all_areas_7d89e864'),
+  },
+  {
+    value: 10,
+    labelKey: 'features.timeline.around.radius.km10',
+    label: translateText('generated.inline.0537_10_km_61864f46'),
+  },
+  {
+    value: 25,
+    labelKey: 'features.timeline.around.radius.km25',
+    label: translateText('generated.inline.0538_25_km_29507870'),
+  },
+  {
+    value: 50,
+    labelKey: 'features.timeline.around.radius.km50',
+    label: translateText('generated.inline.0539_50_km_3fba1857'),
+  },
+  {
+    value: 100,
+    labelKey: 'features.timeline.around.radius.km100',
+    label: translateText('generated.inline.0540_100_km_bdb17001'),
+  },
+  {
+    value: 250,
+    labelKey: 'features.timeline.around.radius.km250',
+    label: translateText('generated.inline.0541_250_km_b8a0533e'),
+  },
 ];
 
 /**
@@ -95,11 +141,15 @@ export function TimelineFilterPanel({
   onEngagementChange,
   onResetFilters,
   hasActiveFilters,
+  contentTypeOptions = ALL_CONTENT_TYPES,
+  radiusKm,
+  onRadiusChange,
+  showEngagement = true,
 }: TimelineFilterPanelProps) {
   const { t } = useTranslation();
 
   const handleSelectAllContentTypes = () => {
-    onContentTypesChange([...ALL_CONTENT_TYPES]);
+    onContentTypesChange([...contentTypeOptions]);
   };
 
   const handleDeselectAllContentTypes = () => {
@@ -153,7 +203,7 @@ export function TimelineFilterPanel({
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              {ALL_CONTENT_TYPES.map(type => {
+              {contentTypeOptions.map(type => {
                 const config = CONTENT_TYPE_CONFIG[type];
                 const Icon = config.icon;
                 const isSelected = contentTypes.includes(type);
@@ -165,7 +215,7 @@ export function TimelineFilterPanel({
                       'flex items-center gap-2 rounded-md border p-2 transition-colors',
                       isSelected
                         ? 'border-primary/50 bg-primary/5'
-                        : 'border-transparent bg-muted/50'
+                        : 'bg-muted/50 border-transparent'
                     )}
                   >
                     <Checkbox
@@ -188,6 +238,32 @@ export function TimelineFilterPanel({
 
           <Separator />
 
+          {/* Radius */}
+          {radiusKm !== undefined && onRadiusChange && (
+            <>
+              <div>
+                <h4 className="mb-3 text-sm font-medium">
+                  {t('features.timeline.around.radius.title', { defaultValue: 'Radius' })}
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {RADIUS_OPTIONS.map(option => (
+                    <Button
+                      key={option.value}
+                      variant={radiusKm === option.value ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => onRadiusChange(option.value)}
+                      className="h-8"
+                    >
+                      {t(option.labelKey, { defaultValue: option.label })}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <Separator />
+            </>
+          )}
+
           {/* Date Range */}
           <div>
             <h4 className="mb-3 text-sm font-medium">
@@ -208,27 +284,31 @@ export function TimelineFilterPanel({
             </div>
           </div>
 
-          <Separator />
-
           {/* Engagement Level */}
-          <div>
-            <h4 className="mb-3 text-sm font-medium">
-              {t('features.timeline.filters.engagement', { defaultValue: 'Engagement' })}
-            </h4>
-            <div className="flex flex-wrap gap-2">
-              {ENGAGEMENT_OPTIONS.map(option => (
-                <Button
-                  key={option.value}
-                  variant={engagement === option.value ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => onEngagementChange(option.value)}
-                  className="h-8"
-                >
-                  {t(option.labelKey, { defaultValue: option.value })}
-                </Button>
-              ))}
-            </div>
-          </div>
+          {showEngagement && (
+            <>
+              <Separator />
+
+              <div>
+                <h4 className="mb-3 text-sm font-medium">
+                  {t('features.timeline.filters.engagement', { defaultValue: 'Engagement' })}
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {ENGAGEMENT_OPTIONS.map(option => (
+                    <Button
+                      key={option.value}
+                      variant={engagement === option.value ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => onEngagementChange(option.value)}
+                      className="h-8"
+                    >
+                      {t(option.labelKey, { defaultValue: option.value })}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Topics */}
           {availableTopics.length > 0 && (

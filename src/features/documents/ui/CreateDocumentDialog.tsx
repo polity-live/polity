@@ -17,6 +17,7 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
 import { Plus, Loader2 } from 'lucide-react';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface CreateDocumentDialogProps {
   groupId: string;
@@ -26,7 +27,6 @@ interface CreateDocumentDialogProps {
 }
 
 export function CreateDocumentDialog({
-  groupId,
   groupName,
   onCreateDocument,
   isCreating = false,
@@ -36,7 +36,7 @@ export function CreateDocumentDialog({
 
   const handleCreate = async () => {
     if (!title.trim()) return;
-    
+
     await onCreateDocument(title);
     setTitle('');
     setIsOpen(false);
@@ -53,22 +53,32 @@ export function CreateDocumentDialog({
       <DialogTrigger asChild>
         <Button size="lg">
           <Plus className="mr-2 h-4 w-4" />
-          New Document
+          {translateText('generated.inline.0404_new_document_e69f5da6')}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create New Document</DialogTitle>
+          <DialogTitle>
+            {translateText('generated.inline.0405_create_new_document_07d90501')}
+          </DialogTitle>
           <DialogDescription>
-            Enter a title for your new document{groupName ? ` in ${groupName}` : ''}.
+            {translateText('generated.inline.0406_enter_a_title_for_your_new_document_749e9123')}
+            {groupName
+              ? translateText('generated.inline.0051_in_groupname_bd500208', {
+                  groupName: groupName,
+                })
+              : ''}
+            .
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="title">Document Title</Label>
+            <Label htmlFor="title">
+              {translateText('generated.inline.0407_document_title_73ee9605')}
+            </Label>
             <Input
               id="title"
-              placeholder="My Document"
+              placeholder={translateText('generated.inline.0408_my_document_3916ed57')}
               value={title}
               onChange={e => setTitle(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -80,10 +90,10 @@ export function CreateDocumentDialog({
             {isCreating ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
+                {translateText('generated.inline.0409_creating_28ea7667')}
               </>
             ) : (
-              'Create Document'
+              translateText('generated.inline.0059_create_document_040d4708')
             )}
           </Button>
         </div>

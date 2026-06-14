@@ -47,17 +47,20 @@ function normalizeGroupMemberships<
 
 function normalizeSearchableGroup<
   TGroup extends {
-    memberships?:
-      | readonly {
-          membership_roles?: readonly SearchMembershipRoleLinkLike[] | null;
-          role?: SearchGroupRoleLike | null;
-        }[]
-      | null;
+    memberships?: readonly unknown[] | null;
   },
 >(group: TGroup) {
+  const memberships = group.memberships as
+    | readonly {
+        membership_roles?: readonly SearchMembershipRoleLinkLike[] | null;
+        role?: SearchGroupRoleLike | null;
+      }[]
+    | null
+    | undefined;
+
   return {
     ...group,
-    memberships: normalizeGroupMemberships(group.memberships),
+    memberships: normalizeGroupMemberships(memberships),
   };
 }
 

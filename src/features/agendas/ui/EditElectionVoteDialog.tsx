@@ -13,6 +13,7 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
 import { Textarea } from '@/features/shared/ui/ui/textarea';
+import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
 import {
   Select,
   SelectContent,
@@ -21,13 +22,21 @@ import {
   SelectValue,
 } from '@/features/shared/ui/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/features/shared/ui/ui/radio-group';
-import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
 import { Loader2, Plus, X } from 'lucide-react';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useElectionActions } from '@/zero/elections/useElectionActions';
 import { useVoteActions } from '@/zero/votes/useVoteActions';
 import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
+import {
+  resolveElectionBallotVisibility,
+  resolveVoteBallotVisibility,
+  type BallotVisibility,
+} from '@/zero/shared';
+import { BallotVisibilityInput } from './BallotVisibilityInput';
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -37,6 +46,7 @@ interface ElectionSettings {
   closing_type?: string | null;
   closing_duration_seconds?: number | null;
   visibility?: string | null;
+  ballot_visibility?: string | null;
   max_votes?: number;
 }
 
@@ -46,6 +56,7 @@ interface VoteSettings {
   closing_type?: string | null;
   closing_duration_seconds?: number | null;
   visibility?: string | null;
+  ballot_visibility?: string | null;
 }
 
 interface VoteChoice {
@@ -97,6 +108,11 @@ export function EditElectionVoteDialog({
   const [visibility, setVisibility] = useState<Visibility>(
     (entity?.visibility as Visibility) ?? 'public'
   );
+  const [ballotVisibility, setBallotVisibility] = useState<BallotVisibility>(
+    isElection
+      ? resolveElectionBallotVisibility(entity?.ballot_visibility)
+      : resolveVoteBallotVisibility(entity?.ballot_visibility)
+  );
   const [maxVotes, setMaxVotes] = useState(election?.max_votes ?? 1);
   const [title, setTitle] = useState(agendaItemTitle ?? '');
   const [description, setDescription] = useState(agendaItemDescription ?? '');
@@ -120,6 +136,11 @@ export function EditElectionVoteDialog({
         entity.closing_duration_seconds ? Math.round(entity.closing_duration_seconds / 60) : 5
       );
       setVisibility((entity.visibility as Visibility) ?? 'public');
+      setBallotVisibility(
+        isElection
+          ? resolveElectionBallotVisibility(entity.ballot_visibility)
+          : resolveVoteBallotVisibility(entity.ballot_visibility)
+      );
     }
 
     if (isElection && election) {
@@ -188,6 +209,7 @@ export function EditElectionVoteDialog({
           closing_type: closingType,
           closing_duration_seconds: durationSeconds,
           visibility,
+          ballot_visibility: ballotVisibility,
           max_votes: maxVotes,
         });
       } else if (vote) {
@@ -198,6 +220,7 @@ export function EditElectionVoteDialog({
           closing_type: closingType,
           closing_duration_seconds: durationSeconds,
           visibility,
+          ballot_visibility: ballotVisibility,
         });
 
         // Sync choices — add new, remove deleted
@@ -238,48 +261,40 @@ export function EditElectionVoteDialog({
         <DialogHeader>
           <DialogTitle>
             {isElection
-              ? t('features.events.agenda.editElectionSettings', 'Election Settings')
-              : t('features.events.agenda.editVoteSettings', 'Vote Settings')}
+              ? t('features.events.agenda.editElectionSettings')
+              : t('features.events.agenda.editVoteSettings')}
           </DialogTitle>
           <DialogDescription>
-            {t('features.events.agenda.editSettingsDescription', 'Configure voting rules.')}
+            {t('features.events.agenda.editSettingsDescription')}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5 py-4">
           <div className="space-y-2">
-            <Label htmlFor="agenda-title">{t('features.events.agenda.item.title', 'Title')}</Label>
+            <Label htmlFor="agenda-title">{t('features.events.agenda.item.title')}</Label>
             <Input
               id="agenda-title"
               value={title}
               onChange={e => setTitle(e.target.value)}
-              placeholder={t(
-                'features.events.agenda.editItemTitlePlaceholder',
-                'Enter agenda item title'
-              )}
+              placeholder={t('features.events.agenda.editItemTitlePlaceholder')}
             />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="agenda-description">
-              {t('features.events.agenda.item.description', 'Description')}
+              {t('features.events.agenda.item.description')}
             </Label>
             <Textarea
               id="agenda-description"
               value={description}
               onChange={e => setDescription(e.target.value)}
               rows={4}
-              placeholder={t(
-                'features.events.agenda.editItemDescriptionPlaceholder',
-                'Add context for this agenda item...'
-              )}
+              placeholder={t('features.events.agenda.editItemDescriptionPlaceholder')}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="agenda-duration">
-              {t('features.events.agenda.duration', 'Duration (minutes)')}
-            </Label>
+            <Label htmlFor="agenda-duration">{t('features.events.agenda.duration')}</Label>
             <Input
               id="agenda-duration"
               type="number"
@@ -292,20 +307,20 @@ export function EditElectionVoteDialog({
 
           {/* Majority type */}
           <div className="space-y-2">
-            <Label>{t('features.events.agenda.majorityType', 'Majority type')}</Label>
+            <Label>{t('features.events.agenda.majorityType')}</Label>
             <Select value={majorityType} onValueChange={setMajorityType}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="relative">
-                  {t('features.events.agenda.majorityRelative', 'Relative')}
+                  {t('features.events.agenda.majorityRelative')}
                 </SelectItem>
                 <SelectItem value="absolute">
-                  {t('features.events.agenda.majorityAbsolute', 'Absolute')}
+                  {t('features.events.agenda.majorityAbsolute')}
                 </SelectItem>
                 <SelectItem value="two_thirds_absolute">
-                  {t('features.events.agenda.majorityTwoThirds', 'Two-thirds')}
+                  {t('features.events.agenda.majorityTwoThirds')}
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -313,19 +328,17 @@ export function EditElectionVoteDialog({
 
           {/* Closing type */}
           <div className="space-y-2">
-            <Label>{t('features.events.agenda.closingType', 'Closing type')}</Label>
+            <Label>{t('features.events.agenda.closingType')}</Label>
             <RadioGroup value={closingType} onValueChange={setClosingType}>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="moderator" id="closing-moderator" />
                 <Label htmlFor="closing-moderator">
-                  {t('features.events.agenda.closingModerator', 'Moderator closes manually')}
+                  {t('features.events.agenda.closingModerator')}
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="time" id="closing-time" />
-                <Label htmlFor="closing-time">
-                  {t('features.events.agenda.closingTime', 'Time-based auto-close')}
-                </Label>
+                <Label htmlFor="closing-time">{t('features.events.agenda.closingTime')}</Label>
               </div>
             </RadioGroup>
           </div>
@@ -333,7 +346,7 @@ export function EditElectionVoteDialog({
           {/* Duration (only when time-based) */}
           {closingType === 'time' && (
             <div className="space-y-2">
-              <Label>{t('features.events.agenda.closingDuration', 'Duration (minutes)')}</Label>
+              <Label>{t('features.events.agenda.closingDuration')}</Label>
               <Input
                 type="number"
                 min={1}
@@ -347,10 +360,18 @@ export function EditElectionVoteDialog({
           {/* Visibility */}
           <VisibilityInput value={visibility} onChange={setVisibility} />
 
+          <BallotVisibilityInput
+            value={ballotVisibility}
+            onChange={setBallotVisibility}
+            hint={translateText(
+              'generated.inline.0048_geheime_abstimmungen_bleiben_aggregiert_namen_aa853b0e'
+            )}
+          />
+
           {/* Max votes (elections only) */}
           {isElection && (
             <div className="space-y-2">
-              <Label>{t('features.events.agenda.maxVotes', 'Max selections per voter')}</Label>
+              <Label>{t('features.events.agenda.maxVotes')}</Label>
               <Input
                 type="number"
                 min={1}
@@ -363,7 +384,7 @@ export function EditElectionVoteDialog({
           {/* Choices list (votes only) */}
           {!isElection && (
             <div className="space-y-2">
-              <Label>{t('features.events.agenda.choices', 'Choices')}</Label>
+              <Label>{t('features.events.agenda.choices')}</Label>
               <div className="space-y-2">
                 {localChoices.map(choice => (
                   <div key={choice.id} className="flex items-center gap-2">
@@ -381,7 +402,7 @@ export function EditElectionVoteDialog({
                 ))}
                 <div className="flex items-center gap-2">
                   <Input
-                    placeholder={t('features.events.agenda.newChoice', 'New choice…')}
+                    placeholder={t('features.events.agenda.newChoice')}
                     value={newChoiceLabel}
                     onChange={e => setNewChoiceLabel(e.target.value)}
                     onKeyDown={e => {

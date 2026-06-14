@@ -1,0 +1,215 @@
+import { describe, expect, it } from 'vitest';
+import {
+  buildNamedElectionResultsModel,
+  buildNamedVoteResultsModel,
+} from '../buildNamedBallotResults';
+
+describe('buildNamedBallotResults', () => {
+  it('uses indicative participations and sorts eligible voters alphabetically', () => {
+    const model = buildNamedVoteResultsModel({
+      vote: {
+        status: 'indicative',
+        choices: [
+          { id: 'yes', label: 'Yes', order_index: 0 },
+          { id: 'no', label: 'No', order_index: 1 },
+        ],
+        voters: [
+          { id: 'voter-1', user_id: 'user-1' },
+          { id: 'voter-2', user_id: 'user-2' },
+        ],
+        indicative_participations: [
+          {
+            voter_id: 'voter-2',
+            decisions: [{ choice_id: 'yes' }],
+          },
+        ],
+      },
+      eligibleParticipants: [
+        {
+          id: 'participant-1',
+          user_id: 'user-1',
+          user: { id: 'user-1', first_name: 'Bob', last_name: 'Baker' },
+        },
+        {
+          id: 'participant-2',
+          user_id: 'user-2',
+          user: { id: 'user-2', first_name: 'Alice', last_name: 'Able' },
+        },
+      ],
+      confirmedOfflineParticipants: [],
+      groupedBySourceGroup: false,
+    });
+
+    expect(model.phase).toBe('indicative');
+    expect(model.groups[0]?.rows.map(row => row.displayName)).toEqual(['Alice Able', 'Bob Baker']);
+    expect(model.groups[0]?.rows[0]).toMatchObject({
+      selections: ['Yes'],
+      status: 'recorded',
+      isStruckThrough: false,
+    });
+    expect(model.groups[0]?.rows[1]).toMatchObject({
+      status: 'pending',
+      isStruckThrough: false,
+    });
+  });
+
+  it('marks non-participants with strike-through only after closure', () => {
+    const model = buildNamedVoteResultsModel({
+      vote: {
+        status: 'closed',
+        choices: [{ id: 'yes', label: 'Yes', order_index: 0 }],
+        voters: [{ id: 'voter-1', user_id: 'user-1' }],
+        final_participations: [],
+      },
+      eligibleParticipants: [
+        {
+          id: 'participant-1',
+          user_id: 'user-1',
+          user: { id: 'user-1', first_name: 'Chris', last_name: 'Clark' },
+        },
+      ],
+      confirmedOfflineParticipants: [],
+      groupedBySourceGroup: false,
+    });
+
+    expect(model.phase).toBe('final');
+    expect(model.isClosed).toBe(true);
+    expect(model.groups[0]?.rows[0]).toMatchObject({
+      status: 'not_participated',
+      isStruckThrough: true,
+      selections: [],
+    });
+  });
+
+  it('keeps election list selections in ballot order', () => {
+    const model = buildNamedElectionResultsModel({
+      election: {
+        status: 'final_vote',
+        candidates: [
+          {
+            id: 'candidate-b',
+            order_index: 1,
+            user: { id: 'candidate-b', first_name: 'Bravo', last_name: 'Candidate' },
+          },
+          {
+            id: 'candidate-a',
+            order_index: 0,
+            user: { id: 'candidate-a', first_name: 'Alpha', last_name: 'Candidate' },
+          },
+        ],
+        electors: [{ id: 'elector-1', user_id: 'user-1' }],
+        final_participations: [
+          {
+            elector_id: 'elector-1',
+            selections: [{ candidate_id: 'candidate-b' }, { candidate_id: 'candidate-a' }],
+          },
+        ],
+      },
+      eligibleParticipants: [
+        {
+          id: 'participant-1',
+          user_id: 'user-1',
+          user: { id: 'user-1', first_name: 'Dana', last_name: 'Delegate' },
+        },
+      ],
+      confirmedOfflineParticipants: [],
+      groupedBySourceGroup: false,
+    });
+
+    expect(model.groups[0]?.rows[0]?.selections).toEqual(['Alpha Candidate', 'Bravo Candidate']);
+  });
+
+  it('groups named results by source group and aggregates counts per option', () => {
+    const model = buildNamedVoteResultsModel({
+      vote: {
+        status: 'final_vote',
+        choices: [
+          { id: 'yes', label: 'Yes', order_index: 0 },
+          { id: 'no', label: 'No', order_index: 1 },
+        ],
+        voters: [
+          { id: 'voter-1', user_id: 'user-1' },
+          { id: 'voter-2', user_id: 'user-2' },
+          { id: 'voter-3', user_id: 'user-3' },
+        ],
+        final_participations: [
+          { voter_id: 'voter-1', decisions: [{ choice_id: 'yes' }] },
+          { voter_id: 'voter-2', decisions: [{ choice_id: 'yes' }] },
+          { voter_id: 'voter-3', decisions: [{ choice_id: 'no' }] },
+        ],
+      },
+      eligibleParticipants: [
+        {
+          id: 'participant-1',
+          user_id: 'user-1',
+          user: { id: 'user-1', first_name: 'Alice', last_name: 'Able' },
+          source_group: { id: 'group-a', name: 'Alpha' },
+        },
+        {
+          id: 'participant-2',
+          user_id: 'user-2',
+          user: { id: 'user-2', first_name: 'Bea', last_name: 'Baker' },
+          source_group: { id: 'group-a', name: 'Alpha' },
+        },
+        {
+          id: 'participant-3',
+          user_id: 'user-3',
+          user: { id: 'user-3', first_name: 'Carl', last_name: 'Clark' },
+          source_group: { id: 'group-b', name: 'Beta' },
+        },
+      ],
+      confirmedOfflineParticipants: [],
+      groupedBySourceGroup: true,
+    });
+
+    expect(model.groups.map(group => group.label)).toEqual(['Alpha', 'Beta']);
+    expect(model.groups[0]).toMatchObject({
+      eligibleCount: 2,
+      recordedCount: 2,
+    });
+    expect(model.groups[0]?.optionSummaries).toEqual([{ id: 'yes', label: 'Yes', count: 2 }]);
+    expect(model.groups[1]?.optionSummaries).toEqual([{ id: 'no', label: 'No', count: 1 }]);
+  });
+
+  it('marks confirmed offline participants without adding them to named aggregates', () => {
+    const model = buildNamedVoteResultsModel({
+      vote: {
+        status: 'closed',
+        choices: [{ id: 'yes', label: 'Yes', order_index: 0 }],
+        voters: [{ id: 'voter-1', user_id: 'user-1' }],
+        final_participations: [{ voter_id: 'voter-1', decisions: [{ choice_id: 'yes' }] }],
+      },
+      eligibleParticipants: [
+        {
+          id: 'participant-1',
+          user_id: 'user-1',
+          user: { id: 'user-1', first_name: 'Eva', last_name: 'Example' },
+          source_group: { id: 'group-a', name: 'Alpha' },
+        },
+      ],
+      confirmedOfflineParticipants: [
+        {
+          id: 'offline-1',
+          first_name: 'Otto',
+          last_name: 'Offline',
+          attendance_status: 'confirmed',
+          participation_channel: 'offline',
+          group_offline_member: {
+            group: { id: 'group-a', name: 'Alpha' },
+          },
+        },
+      ],
+      groupedBySourceGroup: true,
+    });
+
+    expect(model.totalEligibleCount).toBe(1);
+    expect(model.totalRecordedCount).toBe(1);
+    expect(model.totalOfflineAggregatedCount).toBe(1);
+    expect(model.groups[0]?.offlineAggregatedCount).toBe(1);
+    expect(model.groups[0]?.rows[1]).toMatchObject({
+      displayName: 'Otto Offline',
+      status: 'offline_aggregated',
+      selections: [],
+    });
+  });
+});

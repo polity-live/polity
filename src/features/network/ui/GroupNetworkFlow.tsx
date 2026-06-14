@@ -25,6 +25,7 @@ import {
   buildHierarchyRightEdgeDirections,
   buildNetworkRelationshipDialogData,
   buildNetworkRelationshipEdge,
+  buildSingleDirectionRightEdgeDirections,
   mergeNetworkEdgeRelationshipDirection,
   mergeNetworkRightRelationshipKind,
 } from '@/features/network/logic/networkEdgeHelpers';
@@ -38,6 +39,7 @@ import {
   isAcceptedSiblingRelationship,
   type RelationshipEntry,
   type NetworkRelationshipKind,
+  type RelationshipTraversalMode,
   type SiblingAttachmentEntry,
 } from '@/features/network/logic/networkRelationshipHelpers';
 import {
@@ -52,7 +54,10 @@ import {
   toWorkflowVisualizationWorkflow,
 } from '@/features/network/logic/workflowVisualizationHelpers';
 import { useWorkflowState } from '@/zero/network/useWorkflowState';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { Button } from '@/features/shared/ui/ui/button';
 import type {
   EditableRightsLabelEdgeData,
@@ -60,7 +65,6 @@ import type {
 } from '@/features/network/types/networkEdge.types';
 import type {
   CanonicalMembershipMode,
-  CanonicalNetworkMembershipDirection,
   GroupRelationshipType,
   NetworkGroupEntity,
 } from '@/features/network/types/network.types';
@@ -179,8 +183,10 @@ function mergeRelationshipEntryMaps(
         rights: [...entry.rights],
         relationshipKinds: [...entry.relationshipKinds],
         rightRelationshipKinds: { ...entry.rightRelationshipKinds },
+        sourceRelationshipType: entry.sourceRelationshipType ?? null,
         membershipMode: entry.membershipMode ?? null,
-        membershipCanonicalDirection: entry.membershipCanonicalDirection ?? null,
+        memberSourceGroupId: entry.memberSourceGroupId ?? null,
+        memberTargetGroupId: entry.memberTargetGroupId ?? null,
         membershipDirection: entry.membershipDirection ?? null,
         level: entry.level,
         childId: entry.childId,
@@ -191,6 +197,8 @@ function mergeRelationshipEntryMaps(
 
     entry.rights.forEach(right => addUniqueValue(existing.rights, right));
     entry.relationshipKinds.forEach(kind => addUniqueValue(existing.relationshipKinds, kind));
+    existing.sourceRelationshipType =
+      existing.sourceRelationshipType ?? entry.sourceRelationshipType ?? null;
 
     Object.entries(entry.rightRelationshipKinds).forEach(([right, kind]) => {
       existing.rightRelationshipKinds[right] = mergeNetworkRightRelationshipKind(
@@ -201,7 +209,8 @@ function mergeRelationshipEntryMaps(
 
     if (shouldReplaceMembershipMode(existing.membershipMode, entry.membershipMode)) {
       existing.membershipMode = entry.membershipMode;
-      existing.membershipCanonicalDirection = entry.membershipCanonicalDirection ?? null;
+      existing.memberSourceGroupId = entry.memberSourceGroupId ?? null;
+      existing.memberTargetGroupId = entry.memberTargetGroupId ?? null;
       if (entry.membershipDirection) {
         existing.membershipDirection = entry.membershipDirection;
       }
@@ -247,7 +256,6 @@ export function GroupNetworkFlow({
     resetLayout,
   } = usePersistedNetworkLayout({
     scopeKey: layoutScopeKey ?? `group:${groupId}`,
-    legacyScopeKeys: layoutScopeKey ? [] : [groupId],
   });
   const controls = useNetworkFlowControls();
   const {
@@ -334,8 +342,13 @@ export function GroupNetworkFlow({
       .filter(rel => getGroupRelationshipKind(rel, graphRootGroupId) !== null)
       .filter(rel => !filterRight || (rel.with_right ?? '') === filterRight);
   }, [allRelationships, filterRight, graphRootGroupId]);
+  const relationshipTraversalMode: RelationshipTraversalMode = filterRight ? 'right' : 'structure';
 
   const visibleSiblingRelationships = useMemo(() => {
+    if (relationshipTraversalMode === 'right') {
+      return [];
+    }
+
     const siblingRelationships = stableRelationships.filter(
       rel => rel.relationship_type === 'sibling'
     );
@@ -347,7 +360,7 @@ export function GroupNetworkFlow({
     return siblingRelationships.filter(
       rel => getGroupRelationshipKind(rel, graphRootGroupId) === relationshipStatusFilter
     );
-  }, [graphRootGroupId, relationshipStatusFilter, stableRelationships]);
+  }, [graphRootGroupId, relationshipStatusFilter, relationshipTraversalMode, stableRelationships]);
 
   const siblingGroups = useMemo(() => {
     if (!graphRootGroup) {
@@ -383,20 +396,21 @@ export function GroupNetworkFlow({
   }, [graphRootGroup, graphRootGroupId, relationshipStatusFilter, visibleSiblingRelationships]);
 
   const traversalRelationships = useMemo(() => {
-    const hierarchyRelationships = stableRelationships.filter(
-      rel => rel.relationship_type !== 'sibling'
-    );
+    const topologyRelationships =
+      relationshipTraversalMode === 'right'
+        ? stableRelationships.filter(rel => Boolean(rel.grant_id && rel.with_right))
+        : stableRelationships.filter(rel => rel.relationship_type !== 'sibling');
 
     if (relationshipStatusFilter === 'active') {
-      return hierarchyRelationships.filter(rel => isActiveGroupRelationshipStatus(rel.status));
+      return topologyRelationships.filter(rel => isActiveGroupRelationshipStatus(rel.status));
     }
 
-    return hierarchyRelationships.filter(
+    return topologyRelationships.filter(
       rel => getGroupRelationshipKind(rel, graphRootGroupId) === relationshipStatusFilter
     );
-  }, [graphRootGroupId, relationshipStatusFilter, stableRelationships]);
+  }, [graphRootGroupId, relationshipStatusFilter, relationshipTraversalMode, stableRelationships]);
 
-  const allLabel = t('common.labels.all', 'All');
+  const allLabel = t('common.labels.all');
 
   const depthFilters = useMemo(
     () => [
@@ -456,14 +470,14 @@ export function GroupNetworkFlow({
       },
       {
         id: 'incoming',
-        label: t('common.network.incomingConnections', 'Eingehend'),
+        label: t('common.network.incomingConnections'),
         active: connectionDirectionFilter === 'incoming',
         onToggle: () => setConnectionDirectionFilter('incoming'),
         activeClassName: NETWORK_FILTER_ACTIVE_CLASS_NAMES.blue,
       },
       {
         id: 'outgoing',
-        label: t('common.network.outgoingConnections', 'Ausgehend'),
+        label: t('common.network.outgoingConnections'),
         active: connectionDirectionFilter === 'outgoing',
         onToggle: () => setConnectionDirectionFilter('outgoing'),
         activeClassName: NETWORK_FILTER_ACTIVE_CLASS_NAMES.orange,
@@ -490,7 +504,8 @@ export function GroupNetworkFlow({
             stableRelationships,
             graphRootGroupId,
             filterRight,
-            graphRootGroupId
+            graphRootGroupId,
+            relationshipTraversalMode
           )
         : null;
 
@@ -500,8 +515,20 @@ export function GroupNetworkFlow({
     } else {
       const baseRelationshipTree =
         relationshipDepthFilter === 'direct'
-          ? buildDirectRelationships(traversalRelationships, graphRootGroupId, filterRight)
-          : buildIndirectRelationships(traversalRelationships, graphRootGroupId, filterRight);
+          ? buildDirectRelationships(
+              traversalRelationships,
+              graphRootGroupId,
+              filterRight,
+              graphRootGroupId,
+              relationshipTraversalMode
+            )
+          : buildIndirectRelationships(
+              traversalRelationships,
+              graphRootGroupId,
+              filterRight,
+              graphRootGroupId,
+              relationshipTraversalMode
+            );
 
       mergeRelationshipEntryMaps(baseRelationshipTree.parents, parentEntriesMap);
       mergeRelationshipEntryMaps(baseRelationshipTree.children, childEntriesMap);
@@ -653,7 +680,8 @@ export function GroupNetworkFlow({
       relationshipKinds,
       rightRelationshipKinds,
       membershipMode,
-      membershipCanonicalDirection,
+      memberSourceGroupId,
+      memberTargetGroupId,
       rightEdgeDirections,
       relationshipDepth,
       strokeColor,
@@ -669,7 +697,8 @@ export function GroupNetworkFlow({
       relationshipKinds: NetworkRelationshipKind[];
       rightRelationshipKinds: Record<string, NetworkRelationshipKind>;
       membershipMode: CanonicalMembershipMode | null | undefined;
-      membershipCanonicalDirection?: CanonicalNetworkMembershipDirection | null;
+      memberSourceGroupId?: string | null;
+      memberTargetGroupId?: string | null;
       rightEdgeDirections: Record<string, NetworkEdgeRelationshipDirection> | undefined;
       relationshipDepth: 'direct' | 'indirect';
       strokeColor: string;
@@ -687,7 +716,8 @@ export function GroupNetworkFlow({
           relationshipKinds,
           rightRelationshipKinds,
           membershipMode,
-          membershipCanonicalDirection,
+          memberSourceGroupId,
+          memberTargetGroupId,
           rightEdgeDirections,
           relationshipDepth,
           fallbackStrokeColor: strokeColor,
@@ -713,7 +743,8 @@ export function GroupNetworkFlow({
         relationshipKinds: NetworkRelationshipKind[];
         rightRelationshipKinds: Record<string, NetworkRelationshipKind>;
         membershipMode?: CanonicalMembershipMode | null;
-        membershipCanonicalDirection?: CanonicalNetworkMembershipDirection | null;
+        memberSourceGroupId?: string | null;
+        memberTargetGroupId?: string | null;
         rightEdgeDirections: Record<string, NetworkEdgeRelationshipDirection>;
       }
     >();
@@ -910,7 +941,8 @@ export function GroupNetworkFlow({
             relationshipKinds: [],
             rightRelationshipKinds: {},
             membershipMode: null,
-            membershipCanonicalDirection: null,
+            memberSourceGroupId: null,
+            memberTargetGroupId: null,
             rightEdgeDirections: {},
           };
           siblingRelationshipEntries.set(edgeKey, entry);
@@ -933,7 +965,8 @@ export function GroupNetworkFlow({
 
         if (shouldReplaceMembershipMode(entry.membershipMode, rel.membership_mode)) {
           entry.membershipMode = rel.membership_mode;
-          entry.membershipCanonicalDirection = rel.membership_direction ?? null;
+          entry.memberSourceGroupId = rel.member_source_group_id ?? null;
+          entry.memberTargetGroupId = rel.member_target_group_id ?? null;
         }
 
         const rightDirection =
@@ -958,29 +991,43 @@ export function GroupNetworkFlow({
         return;
       }
 
-      const edgeTargetGroupId =
+      const rightMode = relationshipTraversalMode === 'right' && Boolean(filterRight);
+      const hierarchyChildGroupId =
         showAllDepth && parent.childId && parent.childId !== graphRootGroupId
           ? parent.childId
           : graphRootGroupId;
-      const edgeTargetId = resolveRenderedNodeId(edgeTargetGroupId) ?? graphRootGroupId;
-      const rightEdgeDirections = buildHierarchyRightEdgeDirections(
-        stableRelationships,
-        parent.group.id,
-        edgeTargetGroupId
-      );
+      const hierarchyChildNodeId = resolveRenderedNodeId(hierarchyChildGroupId) ?? graphRootGroupId;
+      const edgeSourceGroupId = rightMode ? hierarchyChildGroupId : parent.group.id;
+      const edgeTargetGroupId = rightMode ? parent.group.id : hierarchyChildGroupId;
+      const edgeSourceId = rightMode ? hierarchyChildNodeId : parentNodeId;
+      const edgeTargetId = rightMode ? parentNodeId : hierarchyChildNodeId;
+      const rightEdgeDirections =
+        rightMode && filterRight
+          ? buildSingleDirectionRightEdgeDirections([filterRight], 'forward')
+          : buildHierarchyRightEdgeDirections(
+              stableRelationships,
+              parent.group.id,
+              hierarchyChildGroupId
+            );
 
       pushRelationshipEdge({
-        edgeId: `edge-parent-${parent.group.id}-to-${edgeTargetId}`,
-        sourceId: parentNodeId,
+        edgeId: rightMode
+          ? `edge-${edgeSourceId}-to-parent-${parent.group.id}`
+          : `edge-parent-${parent.group.id}-to-${edgeTargetId}`,
+        sourceId: edgeSourceId,
         targetId: edgeTargetId,
-        sourceGroupId: parent.group.id,
+        sourceGroupId: edgeSourceGroupId,
         targetGroupId: edgeTargetGroupId,
         rights: parent.rights,
-        structuralType: 'parent',
+        structuralType:
+          relationshipTraversalMode === 'right'
+            ? (parent.sourceRelationshipType ?? 'parent')
+            : 'parent',
         relationshipKinds: parent.relationshipKinds,
         rightRelationshipKinds: parent.rightRelationshipKinds,
         membershipMode: parent.membershipMode,
-        membershipCanonicalDirection: parent.membershipCanonicalDirection,
+        memberSourceGroupId: parent.memberSourceGroupId,
+        memberTargetGroupId: parent.memberTargetGroupId,
         rightEdgeDirections,
         relationshipDepth: (parent.level ?? 1) === 1 ? 'direct' : 'indirect',
         strokeColor: '#66bb6a',
@@ -999,11 +1046,14 @@ export function GroupNetworkFlow({
           ? child.parentId
           : graphRootGroupId;
       const edgeSourceId = resolveRenderedNodeId(edgeSourceGroupId) ?? graphRootGroupId;
-      const rightEdgeDirections = buildHierarchyRightEdgeDirections(
-        stableRelationships,
-        edgeSourceGroupId,
-        child.group.id
-      );
+      const rightEdgeDirections =
+        relationshipTraversalMode === 'right' && filterRight
+          ? buildSingleDirectionRightEdgeDirections([filterRight], 'forward')
+          : buildHierarchyRightEdgeDirections(
+              stableRelationships,
+              edgeSourceGroupId,
+              child.group.id
+            );
 
       pushRelationshipEdge({
         edgeId: `edge-${edgeSourceId}-to-child-${child.group.id}`,
@@ -1012,11 +1062,15 @@ export function GroupNetworkFlow({
         sourceGroupId: edgeSourceGroupId,
         targetGroupId: child.group.id,
         rights: child.rights,
-        structuralType: 'parent',
+        structuralType:
+          relationshipTraversalMode === 'right'
+            ? (child.sourceRelationshipType ?? 'parent')
+            : 'parent',
         relationshipKinds: child.relationshipKinds,
         rightRelationshipKinds: child.rightRelationshipKinds,
         membershipMode: child.membershipMode,
-        membershipCanonicalDirection: child.membershipCanonicalDirection,
+        memberSourceGroupId: child.memberSourceGroupId,
+        memberTargetGroupId: child.memberTargetGroupId,
         rightEdgeDirections,
         relationshipDepth: (child.level ?? 1) === 1 ? 'direct' : 'indirect',
         strokeColor: '#ffb74d',
@@ -1042,7 +1096,8 @@ export function GroupNetworkFlow({
         relationshipKinds: entry.relationshipKinds,
         rightRelationshipKinds: entry.rightRelationshipKinds,
         membershipMode: entry.membershipMode,
-        membershipCanonicalDirection: entry.membershipCanonicalDirection,
+        memberSourceGroupId: entry.memberSourceGroupId,
+        memberTargetGroupId: entry.memberTargetGroupId,
         rightEdgeDirections: entry.rightEdgeDirections,
         relationshipDepth: 'direct',
         strokeColor: isHorizontalSiblingLink ? '#f59e0b' : '#a855f7',
@@ -1062,6 +1117,7 @@ export function GroupNetworkFlow({
     handleEdgeBendPointsChange,
     relationshipDepthFilter,
     relationshipStatusFilter,
+    relationshipTraversalMode,
     setEdges,
     siblingGroups,
     stableRelationships,
@@ -1186,7 +1242,11 @@ export function GroupNetworkFlow({
             : null;
 
       if (groupData && onGroupClick) {
-        onGroupClick(groupData.id, groupData);
+        onGroupClick(groupData.id, {
+          ...groupData,
+          id: groupData.id,
+          name: groupData.name ?? null,
+        });
       }
 
       if (groupData && showGroupDialogOnClick) {
@@ -1245,21 +1305,19 @@ export function GroupNetworkFlow({
       <div className="flex h-full min-h-0 flex-col gap-4">
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => setViewMode('hierarchy')}>
-            {t('common.network.hierarchyView', 'Hierarchy')}
+            {t('common.network.hierarchyView')}
           </Button>
           <Button variant="default" size="sm" onClick={() => setViewMode('workflow')}>
-            {t('common.network.workflowView', 'Workflows')}
+            {t('common.network.workflowView')}
           </Button>
           <Select value={selectedWorkflowId} onValueChange={setSelectedWorkflowId}>
             <SelectTrigger className="w-[240px]">
-              <SelectValue
-                placeholder={t('features.network.workflows.selectWorkflow', 'Select a workflow...')}
-              />
+              <SelectValue placeholder={t('features.network.workflows.selectWorkflow')} />
             </SelectTrigger>
             <SelectContent>
               {sortedGroupWorkflows.map(w => (
                 <SelectItem key={w.id} value={w.id}>
-                  {w.name ?? 'Untitled'}
+                  {w.name ?? translateText('generated.inline.0093_untitled_621521f9')}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -1267,9 +1325,7 @@ export function GroupNetworkFlow({
         </div>
         {sortedGroupWorkflows.length === 0 ? (
           <div className="bg-background flex min-h-[24rem] flex-1 items-center justify-center rounded-lg border">
-            <p className="text-muted-foreground text-sm">
-              {t('features.network.workflows.empty', 'No workflows defined yet.')}
-            </p>
+            <p className="text-muted-foreground text-sm">{t('features.network.workflows.empty')}</p>
           </div>
         ) : selectedWorkflowVisualization ? (
           <div className="min-h-[24rem] flex-1">
@@ -1278,7 +1334,7 @@ export function GroupNetworkFlow({
         ) : (
           <div className="bg-background flex min-h-[24rem] flex-1 items-center justify-center rounded-lg border">
             <p className="text-muted-foreground text-sm">
-              {t('features.network.workflows.selectWorkflow', 'Select a workflow...')}
+              {t('features.network.workflows.selectWorkflow')}
             </p>
           </div>
         )}
@@ -1294,11 +1350,11 @@ export function GroupNetworkFlow({
           size="sm"
           onClick={() => setViewMode('hierarchy')}
         >
-          {t('common.network.hierarchyView', 'Hierarchy')}
+          {t('common.network.hierarchyView')}
         </Button>
         {showWorkflowView && groupWorkflows.length > 0 && (
           <Button variant="outline" size="sm" onClick={() => setViewMode('workflow')}>
-            {t('common.network.workflowView', 'Workflows')}
+            {t('common.network.workflowView')}
           </Button>
         )}
       </div>
@@ -1329,32 +1385,32 @@ export function GroupNetworkFlow({
             legendItems={[
               createGroupNodeLegendItem({
                 id: 'current-group',
-                label: t('common.network.currentGroup', 'Aktuelle Gruppe'),
+                label: t('common.network.currentGroup'),
                 visualVariant: 'current',
               }),
               createGroupNodeLegendItem({
                 id: 'parent-group',
-                label: t('common.network.parentGroup', 'Übergeordnete Gruppe'),
+                label: t('common.network.parentGroup'),
                 visualVariant: 'parent',
               }),
               createGroupNodeLegendItem({
                 id: 'child-group',
-                label: t('common.network.childGroup', 'Untergeordnete Gruppe'),
+                label: t('common.network.childGroup'),
                 visualVariant: 'child',
               }),
               createGroupNodeLegendItem({
                 id: 'sibling-group-open',
-                label: t('common.network.siblingGroupOpen', 'Geschwistergruppe offen'),
+                label: t('common.network.siblingGroupOpen'),
                 visualVariant: 'sibling-open',
               }),
               createGroupNodeLegendItem({
                 id: 'sibling-group-elected',
-                label: t('common.network.siblingGroupElected', 'Geschwistergruppe gewählt'),
+                label: t('common.network.siblingGroupElected'),
                 visualVariant: 'sibling-elected',
               }),
               createGroupNodeLegendItem({
                 id: 'sibling-group-parliament',
-                label: t('common.network.siblingGroupParliament', 'Geschwistergruppe Parlament'),
+                label: t('common.network.siblingGroupParliament'),
                 visualVariant: 'sibling-parliament',
               }),
             ]}
@@ -1391,13 +1447,10 @@ export function GroupNetworkFlow({
             connectionDirectionFilters={connectionDirectionFilters}
             showRightsLegend
             showConnectionDirectionLegend
-            connectionDirectionLegendTitle={t(
-              'common.network.connectionDirections',
-              'Verbindungsrichtungen'
-            )}
-            bidirectionalConnectionLabel={t('common.network.bidirectional', 'Beidseitig')}
-            incomingConnectionLabel={t('common.network.incomingConnections', 'Eingehend')}
-            outgoingConnectionLabel={t('common.network.outgoingConnections', 'Ausgehend')}
+            connectionDirectionLegendTitle={t('common.network.connectionDirections')}
+            bidirectionalConnectionLabel={t('common.network.bidirectional')}
+            incomingConnectionLabel={t('common.network.incomingConnections')}
+            outgoingConnectionLabel={t('common.network.outgoingConnections')}
             relationshipStatusFilters={relationshipStatusFilters}
             relationshipStatusFiltersLabel={t('common.network.relationshipStatuses')}
             filterRight={filterRight}

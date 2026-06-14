@@ -2,7 +2,7 @@
  * Utility functions for extracting suggestion content from document nodes
  */
 
-import type { Value, TElement, Descendant } from 'platejs';
+import type { Value, Descendant } from 'platejs';
 
 /** Properties diff for a Plate suggestion (subset of TElement properties) */
 export type SuggestionProperties = Record<string, string | number | boolean | null | undefined>;
@@ -40,7 +40,14 @@ export function extractSuggestionContent(
         const suggestionKeys = Object.keys(node).filter(key => key.startsWith('suggestion_'));
 
         for (const key of suggestionKeys) {
-          const suggestionData = node[key] as { id?: string; type?: string; properties?: SuggestionProperties; newProperties?: SuggestionProperties } | undefined;
+          const suggestionData = node[key] as
+            | {
+                id?: string;
+                type?: string;
+                properties?: SuggestionProperties;
+                newProperties?: SuggestionProperties;
+              }
+            | undefined;
           if (suggestionData && suggestionData.id === discussionId) {
             type = suggestionData.type || type;
 
@@ -76,4 +83,30 @@ export function extractSuggestionContent(
 
   searchNodes(documentContent);
   return { type, text, newText, properties, newProperties };
+}
+
+function countPropertyCharacters(properties: SuggestionProperties): number {
+  return Object.entries(properties).reduce((sum, [key, value]) => {
+    if (value == null) {
+      return sum + key.length;
+    }
+
+    return sum + key.length + String(value).length;
+  }, 0);
+}
+
+export function countChangedCharacters(content: SuggestionContent): number {
+  return (
+    content.text.length +
+    content.newText.length +
+    countPropertyCharacters(content.properties) +
+    countPropertyCharacters(content.newProperties)
+  );
+}
+
+export function countChangedCharactersForSuggestion(
+  discussionId: string,
+  documentContent: Value | undefined
+): number {
+  return countChangedCharacters(extractSuggestionContent(discussionId, documentContent));
 }

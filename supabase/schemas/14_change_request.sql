@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS public.change_request (
   source_type TEXT,
   source_id UUID,
   source_title TEXT,
+  changed_character_count INTEGER NOT NULL DEFAULT 0,
   votes_for INTEGER NOT NULL DEFAULT 0,
   votes_against INTEGER NOT NULL DEFAULT 0,
   votes_abstain INTEGER NOT NULL DEFAULT 0,
@@ -28,6 +29,7 @@ CREATE TABLE IF NOT EXISTS public.change_request (
 
 CREATE INDEX idx_change_request_amendment ON public.change_request (amendment_id);
 CREATE INDEX idx_change_request_user ON public.change_request (user_id);
+CREATE INDEX idx_change_request_changed_character_count ON public.change_request (changed_character_count);
 
 ALTER TABLE public.change_request ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.change_request FOR ALL TO service_role USING (true);

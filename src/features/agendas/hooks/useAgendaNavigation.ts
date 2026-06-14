@@ -12,6 +12,7 @@ import { useEventWithAgendaAndParticipants } from '@/zero/events/useEventState';
 import { useAuth } from '@/providers/auth-provider';
 import { usePermissions } from '@/zero/rbac';
 import { toast } from 'sonner';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface AgendaItem {
   id: string;
@@ -119,13 +120,17 @@ export function useAgendaNavigation(eventId: string): UseAgendaNavigationResult 
   const activateAgendaItem = useCallback(
     async (itemId: string) => {
       if (!user || !canManageAgenda) {
-        toast.error('You do not have permission to manage the agenda');
+        toast.error(
+          translateText(
+            'generated.inline.0002_you_do_not_have_permission_to_manage_the_agen_69bff3b4'
+          )
+        );
         return;
       }
 
       const item = agendaItems.find(i => i.id === itemId);
       if (!item) {
-        toast.error('Agenda item not found');
+        toast.error(translateText('generated.inline.0003_agenda_item_not_found_b8a57489'));
         return;
       }
 
@@ -154,7 +159,7 @@ export function useAgendaNavigation(eventId: string): UseAgendaNavigationResult 
         toast.success(`Activated: ${item.title}`);
       } catch (error) {
         console.error('Error activating agenda item:', error);
-        toast.error('Failed to activate agenda item');
+        toast.error(translateText('generated.inline.0004_failed_to_activate_agenda_item_e09b69b5'));
         throw error;
       } finally {
         setIsLoading(false);
@@ -165,7 +170,7 @@ export function useAgendaNavigation(eventId: string): UseAgendaNavigationResult 
 
   const startFirstPendingItem = useCallback(async () => {
     if (!startableAgendaItem) {
-      toast.info('No remaining agenda item to start');
+      toast.info(translateText('generated.inline.0005_no_remaining_agenda_item_to_start_dc08d9b5'));
       return;
     }
 
@@ -174,12 +179,14 @@ export function useAgendaNavigation(eventId: string): UseAgendaNavigationResult 
 
   const moveToNextItem = useCallback(async () => {
     if (!hasNextItem) {
-      toast.info('No more agenda items');
+      toast.info(translateText('generated.inline.0006_no_more_agenda_items_c574f6a7'));
       return;
     }
 
     if (!isCurrentItemCompleted) {
-      toast.info('Complete the current agenda item first');
+      toast.info(
+        translateText('generated.inline.0007_complete_the_current_agenda_item_first_0cc77895')
+      );
       return;
     }
 
@@ -189,7 +196,7 @@ export function useAgendaNavigation(eventId: string): UseAgendaNavigationResult 
 
   const moveToPreviousItem = useCallback(async () => {
     if (!hasPreviousItem) {
-      toast.info('No previous agenda items');
+      toast.info(translateText('generated.inline.0008_no_previous_agenda_items_24759f3c'));
       return;
     }
 
@@ -199,7 +206,7 @@ export function useAgendaNavigation(eventId: string): UseAgendaNavigationResult 
 
   const completeCurrentItem = useCallback(async () => {
     if (!user || !canManageAgenda || !currentAgendaItem) {
-      toast.error('Cannot complete agenda item');
+      toast.error(translateText('generated.inline.0009_cannot_complete_agenda_item_6971a097'));
       return;
     }
 
@@ -221,7 +228,7 @@ export function useAgendaNavigation(eventId: string): UseAgendaNavigationResult 
       toast.success(`Completed: ${currentAgendaItem.title}`);
     } catch (error) {
       console.error('Error completing agenda item:', error);
-      toast.error('Failed to complete agenda item');
+      toast.error(translateText('generated.inline.0010_failed_to_complete_agenda_item_46abed2b'));
       throw error;
     } finally {
       setIsLoading(false);

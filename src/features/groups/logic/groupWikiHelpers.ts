@@ -31,7 +31,7 @@ interface RelatedGroupLike {
   name?: string | null;
   description?: unknown;
   group_type?: string | null;
-  member_count?: number;
+  member_count?: number | null;
   memberships?: readonly { id: string; status?: string | null }[];
   amendments?: readonly { id: string }[];
   events?: readonly { id: string }[];

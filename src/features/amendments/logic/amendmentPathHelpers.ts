@@ -79,8 +79,8 @@ function isActiveMembershipStatus(status?: string | null) {
   return status === 'active' || status === 'admin' || status === 'member';
 }
 
-function isAcceptedRelationshipStatus(status?: string | null) {
-  return status == null || status === 'active' || status === 'accepted';
+function isActiveRelationshipStatus(status?: string | null) {
+  return status === 'active';
 }
 
 function getGroupName(group?: Pick<NetworkGroupRow, 'name' | 'description'> | null) {
@@ -154,46 +154,15 @@ function buildUserMembershipTraversalContext(
   };
 }
 
-function getMembershipGateGroupId(relationship: NetworkGroupRelationshipRow) {
-  if (
-    relationship.membership_direction !== 'forward' &&
-    relationship.membership_direction !== 'backward'
-  ) {
-    return relationship.group_id;
-  }
-
-  if (
-    relationship.relationship_direction !== 'forward' &&
-    relationship.relationship_direction !== 'backward'
-  ) {
-    return relationship.group_id;
-  }
-
-  return relationship.membership_direction === relationship.relationship_direction
-    ? relationship.group_id
-    : relationship.related_group_id;
-}
-
 function getAmendmentTraversalEndpoints(relationship: NetworkGroupRelationshipRow) {
-  if (relationship.relationship_direction === 'forward') {
-    return {
-      sourceGroupId: relationship.related_group_id,
-      targetGroupId: relationship.group_id,
-      sourceGroup: relationship.related_group ?? null,
-      targetGroup: relationship.group ?? null,
-    };
-  }
-
-  if (relationship.relationship_direction === 'backward') {
-    return {
+  return [
+    {
       sourceGroupId: relationship.group_id,
       targetGroupId: relationship.related_group_id,
       sourceGroup: relationship.group ?? null,
       targetGroup: relationship.related_group ?? null,
-    };
-  }
-
-  return null;
+    },
+  ];
 }
 
 function canTraverseRelationship(args: {
@@ -201,37 +170,13 @@ function canTraverseRelationship(args: {
   pathGroupIds: readonly string[];
   membershipContext: UserMembershipTraversalContext;
 }) {
-  const { relationship, pathGroupIds, membershipContext } = args;
+  const { relationship } = args;
 
-  if (
-    relationship.with_right !== AMENDMENT_RIGHT ||
-    !isAcceptedRelationshipStatus(relationship.status)
-  ) {
-    return false;
-  }
-
-  const gateGroupId = getMembershipGateGroupId(relationship);
-
-  if (relationship.membership_mode === 'selected_source_groups') {
-    return (
-      !relationship.membership_source_group_ids?.length ||
-      pathGroupIds.some(groupId => relationship.membership_source_group_ids?.includes(groupId))
-    );
-  }
-
-  if (!membershipContext.hasUserContext) {
-    return true;
-  }
-
-  if (relationship.membership_mode === 'role_members') {
-    return relationship.membership_role_id
-      ? (membershipContext.roleIdsByGroupId
-          .get(gateGroupId)
-          ?.has(relationship.membership_role_id) ?? false)
-      : false;
-  }
-
-  return true;
+  return (
+    Boolean(relationship.grant_id) &&
+    relationship.with_right === AMENDMENT_RIGHT &&
+    isActiveRelationshipStatus(relationship.status)
+  );
 }
 
 function getTraversableRelationshipsForPath(args: {
@@ -257,20 +202,15 @@ function getTraversableRelationshipsForPath(args: {
         return [];
       }
 
-      const endpoints = getAmendmentTraversalEndpoints(relationship);
-      if (!endpoints || endpoints.sourceGroupId !== currentGroupId) {
-        return [];
-      }
-
-      return [
-        {
+      return getAmendmentTraversalEndpoints(relationship)
+        .filter(endpoints => endpoints.sourceGroupId === currentGroupId)
+        .map(endpoints => ({
           ...relationship,
           group_id: endpoints.sourceGroupId,
           related_group_id: endpoints.targetGroupId,
           group: endpoints.sourceGroup,
           related_group: endpoints.targetGroup,
-        },
-      ];
+        }));
     })
     .sort((left, right) => {
       const leftName = left.related_group?.name ?? left.related_group_id;

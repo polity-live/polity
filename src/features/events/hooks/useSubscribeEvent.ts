@@ -3,6 +3,7 @@ import { useCommonActions } from '@/zero/common/useCommonActions';
 import { useEventSubscribers } from '@/zero/events/useEventState';
 import { useAuth } from '@/providers/auth-provider';
 import { toast } from 'sonner';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 /**
  * Hook to handle event subscription functionality
@@ -83,7 +84,9 @@ export function useSubscribeEvent(targetEventId?: string) {
         blog_id: null,
       });
 
-      toast.success('Successfully subscribed to event');
+      toast.success(
+        translateText('generated.inline.0482_successfully_subscribed_to_event_00520c61')
+      );
     } catch (error) {
       // Revert optimistic update
       optimisticTargetRef.current = null;
@@ -91,7 +94,11 @@ export function useSubscribeEvent(targetEventId?: string) {
       setIsSubscribed(false);
       setSubscriberCount(prev => prev - 1);
       console.error('Failed to subscribe to event:', error);
-      toast.error('Failed to subscribe to event. Please try again.');
+      toast.error(
+        translateText(
+          'generated.inline.0483_failed_to_subscribe_to_event_please_try_again_807ed05a'
+        )
+      );
     } finally {
       setIsLoading(false);
     }
@@ -123,14 +130,20 @@ export function useSubscribeEvent(targetEventId?: string) {
     try {
       await Promise.all(subsToDelete.map(sub => doUnsubscribe({ id: sub.id })));
       createdSubscriptionIdRef.current = null;
-      toast.success('Successfully unsubscribed from event');
+      toast.success(
+        translateText('generated.inline.0484_successfully_unsubscribed_from_event_719548db')
+      );
     } catch (error) {
       // Revert optimistic update
       optimisticTargetRef.current = null;
       setIsSubscribed(true);
       setSubscriberCount(prev => prev + subsToDelete.length);
       console.error('Failed to unsubscribe from event:', error);
-      toast.error('Failed to unsubscribe from event. Please try again.');
+      toast.error(
+        translateText(
+          'generated.inline.0485_failed_to_unsubscribe_from_event_please_try_a_b92f67c0'
+        )
+      );
     } finally {
       setIsLoading(false);
     }

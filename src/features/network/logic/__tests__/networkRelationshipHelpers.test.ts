@@ -34,49 +34,59 @@ function groupStub(id: string, name: string): NonNullable<NormalizedGroupRelatio
 function rel(
   overrides: RelationshipTestOverrides & Pick<NormalizedGroupRelationship, 'id'>
 ): NormalizedGroupRelationship {
+  const groupId = overrides.group_id ?? 'anchor';
+  const relatedGroupId = overrides.related_group_id ?? 'sibling-a';
+  const relationshipType =
+    overrides.relationship_type === undefined ? 'sibling' : overrides.relationship_type;
+  const connectionType =
+    overrides.connection_type ?? (relationshipType === 'sibling' ? 'peer' : 'hierarchy');
+  const parentGroupId =
+    connectionType === 'hierarchy'
+      ? (overrides.parent_group_id ?? (relationshipType === 'parent' ? relatedGroupId : groupId))
+      : null;
+  const childGroupId =
+    connectionType === 'hierarchy'
+      ? (overrides.child_group_id ?? (relationshipType === 'parent' ? groupId : relatedGroupId))
+      : null;
+  const membershipMode = overrides.membership_mode ?? 'none';
   return {
     id: overrides.id,
-    network_link_id: overrides.network_link_id ?? `link:${overrides.id}`,
-    network_link_right_id: overrides.network_link_right_id ?? `right:${overrides.id}`,
-    group_id: overrides.group_id ?? 'anchor',
-    related_group_id: overrides.related_group_id ?? 'sibling-a',
-    relationship_type: overrides.relationship_type ?? 'sibling',
-    structural_relation:
-      overrides.structural_relation ??
-      ((overrides.relationship_type ?? 'sibling') === 'sibling' ? 'sibling' : 'parent_child'),
+    connection_id: overrides.connection_id ?? `connection:${overrides.id}`,
+    grant_id:
+      overrides.grant_id ?? (overrides.with_right === null ? null : `grant:${overrides.id}`),
+    group_id: groupId,
+    related_group_id: relatedGroupId,
+    relationship_type: relationshipType,
+    connection_type: connectionType,
+    parent_group_id: parentGroupId,
+    child_group_id: childGroupId,
     with_right: 'with_right' in overrides ? (overrides.with_right ?? null) : 'informationRight',
     status: overrides.status ?? 'active',
     initiator_group_id: overrides.initiator_group_id ?? 'anchor',
     created_at: overrides.created_at ?? 0,
-    membership_mode: overrides.membership_mode ?? 'none',
-    membership_direction:
-      overrides.membership_direction ??
-      ((overrides.membership_mode ?? 'none') !== 'none' ? 'forward' : null),
-    relationship_direction:
-      overrides.relationship_direction ??
-      ((overrides.relationship_type ?? 'sibling') === 'parent' ? 'backward' : 'forward'),
-    right_direction:
-      overrides.right_direction ??
-      (((overrides.relationship_type ?? 'sibling') === 'parent' ? 'backward' : 'forward') as
-        | 'forward'
-        | 'backward'
-        | 'bidirectional'),
+    member_source_group_id:
+      overrides.member_source_group_id ?? (membershipMode === 'none' ? null : groupId),
+    member_target_group_id:
+      overrides.member_target_group_id ?? (membershipMode === 'none' ? null : relatedGroupId),
+    membership_mode: membershipMode,
+    required_source_role_id: overrides.required_source_role_id ?? null,
+    eligible_origin_group_ids: overrides.eligible_origin_group_ids ?? [],
     group: overrides.group
       ? groupStub(overrides.group.id, overrides.group.name ?? 'Anchor')
-      : groupStub(overrides.group_id ?? 'anchor', 'Anchor'),
+      : groupStub(groupId, 'Anchor'),
     related_group: overrides.related_group
       ? groupStub(overrides.related_group.id, overrides.related_group.name ?? 'Sibling A')
-      : groupStub(overrides.related_group_id ?? 'sibling-a', 'Sibling A'),
+      : groupStub(relatedGroupId, 'Sibling A'),
   };
 }
 
 describe('networkRelationshipHelpers', () => {
-  it('treats only active or accepted sibling relationships as accepted', () => {
+  it('treats only active sibling relationships as accepted', () => {
     expect(isAcceptedSiblingRelationship(rel({ id: 'active-sibling', status: 'active' }))).toBe(
       true
     );
     expect(isAcceptedSiblingRelationship(rel({ id: 'accepted-sibling', status: 'accepted' }))).toBe(
-      true
+      false
     );
     expect(isAcceptedSiblingRelationship(rel({ id: 'pending-sibling', status: 'pending' }))).toBe(
       false
@@ -223,7 +233,7 @@ describe('networkRelationshipHelpers', () => {
     expect(relationshipTree.children[0]?.group.id).toBe('group-b');
     expect(relationshipTree.children[0]?.rights).toEqual([]);
     expect(relationshipTree.children[0]?.membershipMode).toBe('all_members');
-    expect(relationshipTree.children[0]?.membershipDirection).toBe('outgoing');
+    expect(relationshipTree.children[0]?.membershipDirection).toBe('current_members_to_partner');
   });
 
   it('prefers the active non-none membership rule over a placeholder none row', () => {
@@ -246,7 +256,8 @@ describe('networkRelationshipHelpers', () => {
           relationship_type: 'parent',
           with_right: null,
           membership_mode: 'all_members',
-          membership_direction: 'backward',
+          member_source_group_id: 'group-b',
+          member_target_group_id: 'group-a',
           group: { id: 'group-b', name: 'Group B' },
           related_group: { id: 'group-a', name: 'Group A' },
         }),
@@ -256,7 +267,7 @@ describe('networkRelationshipHelpers', () => {
 
     expect(relationshipTree.children).toHaveLength(1);
     expect(relationshipTree.children[0]?.membershipMode).toBe('all_members');
-    expect(relationshipTree.children[0]?.membershipDirection).toBe('incoming');
+    expect(relationshipTree.children[0]?.membershipDirection).toBe('partner_members_to_current');
   });
 
   it('keeps indirect sibling groups attached to the reachable child branch', () => {
@@ -475,5 +486,107 @@ describe('networkRelationshipHelpers', () => {
 
     expect(relationshipTree.children.map(child => child.group.id)).toEqual(['group-b', 'group-c']);
     expect(relationshipTree.siblingAttachments).toEqual([]);
+  });
+
+  it('traverses right-filtered graphs only in holder-to-scope direction', () => {
+    const grants = [
+      rel({
+        id: 'grant-b2-h2',
+        grant_id: 'grant-b2-h2',
+        group_id: 'B2',
+        related_group_id: 'H2',
+        relationship_type: 'child',
+        parent_group_id: 'H2',
+        child_group_id: 'B2',
+        with_right: 'amendmentRight',
+        group: { id: 'B2', name: 'B2' },
+        related_group: { id: 'H2', name: 'H2' },
+      }),
+      rel({
+        id: 'grant-h2-k2',
+        grant_id: 'grant-h2-k2',
+        group_id: 'H2',
+        related_group_id: 'K2',
+        relationship_type: 'child',
+        parent_group_id: 'K2',
+        child_group_id: 'H2',
+        with_right: 'amendmentRight',
+        group: { id: 'H2', name: 'H2' },
+        related_group: { id: 'K2', name: 'K2' },
+      }),
+    ];
+
+    const reachableFromB2 = buildIndirectRelationships(
+      grants,
+      'B2',
+      'amendmentRight',
+      'B2',
+      'right'
+    );
+    const reachableFromK2 = buildIndirectRelationships(
+      grants,
+      'K2',
+      'amendmentRight',
+      'K2',
+      'right'
+    );
+    const mixedFromB2 = buildMixedRelationshipGraph(grants, 'B2', 'amendmentRight', 'B2', 'right');
+
+    expect(reachableFromB2.parents.map(parent => parent.group.id)).toEqual(['H2', 'K2']);
+    expect(reachableFromB2.parents.map(parent => parent.childId)).toEqual(['B2', 'H2']);
+    expect(reachableFromB2.children).toEqual([]);
+    expect(reachableFromK2.parents).toEqual([]);
+    expect(reachableFromK2.children).toEqual([]);
+    expect(mixedFromB2.parents.map(parent => parent.group.id)).toEqual(['H2', 'K2']);
+    expect(mixedFromB2.parents.map(parent => parent.childId)).toEqual(['B2', 'H2']);
+    expect(mixedFromB2.children).toEqual([]);
+  });
+
+  it('does not convert reverse grants into right-filtered outgoing graph edges', () => {
+    const reverseGrants = [
+      rel({
+        id: 'grant-h2-b2',
+        grant_id: 'grant-h2-b2',
+        group_id: 'H2',
+        related_group_id: 'B2',
+        relationship_type: 'parent',
+        parent_group_id: 'H2',
+        child_group_id: 'B2',
+        with_right: 'amendmentRight',
+        group: { id: 'H2', name: 'H2' },
+        related_group: { id: 'B2', name: 'B2' },
+      }),
+      rel({
+        id: 'grant-k2-h2',
+        grant_id: 'grant-k2-h2',
+        group_id: 'K2',
+        related_group_id: 'H2',
+        relationship_type: 'parent',
+        parent_group_id: 'K2',
+        child_group_id: 'H2',
+        with_right: 'amendmentRight',
+        group: { id: 'K2', name: 'K2' },
+        related_group: { id: 'H2', name: 'H2' },
+      }),
+    ];
+
+    const directFromB2 = buildDirectRelationships(
+      reverseGrants,
+      'B2',
+      'amendmentRight',
+      'B2',
+      'right'
+    );
+    const mixedFromK2 = buildMixedRelationshipGraph(
+      reverseGrants,
+      'K2',
+      'amendmentRight',
+      'K2',
+      'right'
+    );
+
+    expect(directFromB2.children).toEqual([]);
+    expect(mixedFromK2.children.map(child => child.group.id)).toEqual(['H2', 'B2']);
+    expect(mixedFromK2.children.map(child => child.parentId)).toEqual(['K2', 'H2']);
   });
 });

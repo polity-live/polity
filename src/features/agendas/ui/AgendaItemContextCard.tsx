@@ -307,7 +307,7 @@ export function AgendaItemContextCard({
             <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 p-3 shadow-sm">
               <div className="text-muted-foreground mb-1 flex items-center gap-1 text-xs">
                 <Calendar className="h-3 w-3" />
-                {t('features.events.agenda.estimatedStartAt', 'Estimated to start at')}
+                {t('features.events.agenda.estimatedStartAt')}
               </div>
               <div className="text-sm font-medium">
                 {formatAgendaDateTime(estimatedStartedAt, locale)}
@@ -318,7 +318,7 @@ export function AgendaItemContextCard({
               {estimatedStartedAt.getTime() > now ? (
                 <AgendaCountdownPill
                   className="mt-3"
-                  label={t('features.events.stream.startsIn', 'Starts in')}
+                  label={t('features.events.stream.startsIn')}
                   endsAt={estimatedStartedAt}
                   tone="start"
                 />
@@ -361,7 +361,7 @@ export function AgendaItemContextCard({
             <div className="rounded-xl border border-blue-500/25 bg-blue-500/10 p-3 shadow-sm">
               <div className="text-muted-foreground mb-1 flex items-center gap-1 text-xs">
                 <Clock className="h-3 w-3" />
-                {t('features.events.agenda.estimatedCompleteAt', 'Estimated to complete at')}
+                {t('features.events.agenda.estimatedCompleteAt')}
               </div>
               <div className="text-sm font-medium">
                 {formatAgendaDateTime(estimatedCompletedAt, locale)}
@@ -372,7 +372,7 @@ export function AgendaItemContextCard({
               {estimatedCompletedAt.getTime() > now ? (
                 <AgendaCountdownPill
                   className="mt-3"
-                  label={t('features.events.agenda.endsIn', 'Ends in')}
+                  label={t('features.events.agenda.endsIn')}
                   endsAt={estimatedCompletedAt}
                   tone="end"
                 />
@@ -384,7 +384,7 @@ export function AgendaItemContextCard({
             <div className="rounded-xl border border-green-500/25 bg-green-500/10 p-3 shadow-sm">
               <div className="text-muted-foreground mb-1 flex items-center gap-1 text-xs">
                 <Clock className="h-3 w-3" />
-                {t('features.events.agenda.estimatedCompleteAt', 'Estimated to complete at')}
+                {t('features.events.agenda.estimatedCompleteAt')}
               </div>
               <div className="text-sm font-medium">
                 {formatAgendaDateTime(estimatedOngoingCompletedAt, locale)}
@@ -395,7 +395,7 @@ export function AgendaItemContextCard({
               {estimatedOngoingCompletedAt.getTime() > now ? (
                 <AgendaCountdownPill
                   className="mt-3"
-                  label={t('features.events.agenda.endsIn', 'Ends in')}
+                  label={t('features.events.agenda.endsIn')}
                   endsAt={estimatedOngoingCompletedAt}
                   tone="active"
                 />
@@ -419,7 +419,7 @@ export function AgendaItemContextCard({
             <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 p-3 shadow-sm">
               <div className="text-muted-foreground mb-1 flex items-center gap-1 text-xs">
                 <Vote className="h-3 w-3" />
-                {t('features.events.agenda.votingStart', 'Voting Start')}
+                {t('features.events.agenda.votingStart')}
               </div>
               <div className="text-sm font-medium">
                 {format(votingStartTime, 'PPp', { locale })}
@@ -430,7 +430,7 @@ export function AgendaItemContextCard({
               {votingStartTime.getTime() > now ? (
                 <AgendaCountdownPill
                   className="mt-3"
-                  label={t('features.events.stream.startsIn', 'Starts in')}
+                  label={t('features.events.stream.startsIn')}
                   endsAt={votingStartTime}
                   tone="start"
                 />
@@ -442,7 +442,7 @@ export function AgendaItemContextCard({
             <div className="rounded-xl border border-red-500/25 bg-red-500/10 p-3 shadow-sm">
               <div className="text-muted-foreground mb-1 flex items-center gap-1 text-xs">
                 <Clock className="h-3 w-3" />
-                {t('features.events.agenda.votingEnd', 'Voting End')}
+                {t('features.events.agenda.votingEnd')}
               </div>
               <div className="text-sm font-medium">{format(votingEndTime, 'PPp', { locale })}</div>
               <div className="text-muted-foreground text-xs">
@@ -451,7 +451,7 @@ export function AgendaItemContextCard({
               {votingEndTime.getTime() > now ? (
                 <AgendaCountdownPill
                   className="mt-3"
-                  label={t('features.events.agenda.endsIn', 'Ends in')}
+                  label={t('features.events.agenda.endsIn')}
                   endsAt={votingEndTime}
                   tone="end"
                 />
@@ -508,7 +508,7 @@ function ElectionDetailsSection({
         <CollapsibleTrigger className="hover:bg-muted/50 flex w-full items-center gap-2 px-4 py-3 text-sm font-medium transition-colors">
           {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           <UserCheck className="text-muted-foreground h-4 w-4" />
-          <span>{t('features.events.agenda.roleDetails', 'Role Details')}</span>
+          <span>{t('features.events.agenda.roleDetails')}</span>
           {group && (
             <Link
               to="/group/$id"
@@ -516,7 +516,7 @@ function ElectionDetailsSection({
               className="text-primary ml-auto flex items-center gap-1 text-xs hover:underline"
               onClick={e => e.stopPropagation()}
             >
-              {group.name ?? t('features.events.agenda.viewGroup', 'View Group')}
+              {group.name ?? t('features.events.agenda.viewGroup')}
               <ExternalLink className="h-3 w-3" />
             </Link>
           )}
@@ -527,7 +527,7 @@ function ElectionDetailsSection({
             {role?.title && (
               <div>
                 <p className="text-muted-foreground text-xs font-medium">
-                  {t('features.events.agenda.role', 'Role')}
+                  {t('features.events.agenda.role')}
                 </p>
                 <p className="text-sm">{role.title}</p>
               </div>
@@ -536,7 +536,7 @@ function ElectionDetailsSection({
             {role?.description && (
               <div>
                 <p className="text-muted-foreground text-xs font-medium">
-                  {t('common.description', 'Description')}
+                  {t('common.description')}
                 </p>
                 <p className="text-sm whitespace-pre-wrap">{role.description}</p>
               </div>
@@ -552,7 +552,7 @@ function ElectionDetailsSection({
               {role?.term && (
                 <Badge variant="secondary" className="text-xs">
                   <Calendar className="mr-1 h-3 w-3" />
-                  {t('features.events.agenda.term', 'Term')}: {role.term}
+                  {t('features.events.agenda.term')}: {role.term}
                 </Badge>
               )}
               {group?.name && (

@@ -3,6 +3,7 @@ import { useGroupSubscribers } from '@/zero/groups/useGroupState';
 import { useCommonActions } from '@/zero/common/useCommonActions';
 import { useAuth } from '@/providers/auth-provider';
 import { toast } from 'sonner';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 /**
  * Hook to handle group subscription functionality
@@ -85,7 +86,9 @@ export function useSubscribeGroup(targetGroupId?: string) {
         blog_id: null,
       });
 
-      toast.success('Successfully subscribed to group');
+      toast.success(
+        translateText('generated.inline.0591_successfully_subscribed_to_group_41ad056a')
+      );
     } catch (error) {
       // Revert optimistic update
       optimisticTargetRef.current = null;
@@ -93,7 +96,11 @@ export function useSubscribeGroup(targetGroupId?: string) {
       setIsSubscribed(false);
       setSubscriberCount(prev => prev - 1);
       console.error('Failed to subscribe to group:', error);
-      toast.error('Failed to subscribe to group. Please try again.');
+      toast.error(
+        translateText(
+          'generated.inline.0592_failed_to_subscribe_to_group_please_try_again_c1b543c3'
+        )
+      );
     } finally {
       setIsLoading(false);
     }
@@ -125,14 +132,20 @@ export function useSubscribeGroup(targetGroupId?: string) {
     try {
       await Promise.all(subsToDelete.map(sub => unsubscribeAction({ id: sub.id })));
       createdSubscriptionIdRef.current = null;
-      toast.success('Successfully unsubscribed from group');
+      toast.success(
+        translateText('generated.inline.0593_successfully_unsubscribed_from_group_bfd0fdc2')
+      );
     } catch (error) {
       // Revert optimistic update
       optimisticTargetRef.current = null;
       setIsSubscribed(true);
       setSubscriberCount(prev => prev + subsToDelete.length);
       console.error('Failed to unsubscribe from group:', error);
-      toast.error('Failed to unsubscribe from group. Please try again.');
+      toast.error(
+        translateText(
+          'generated.inline.0594_failed_to_unsubscribe_from_group_please_try_a_9b183de8'
+        )
+      );
     } finally {
       setIsLoading(false);
     }

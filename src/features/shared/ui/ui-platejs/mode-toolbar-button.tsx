@@ -65,7 +65,7 @@ export function ModeToolbarButton({
         <ToolbarButton
           key={mode}
           pressed={open}
-          tooltip={t('plateJs.toolbar.editingMode', 'Editing mode')}
+          tooltip={t('plateJs.toolbar.editingMode')}
           isDropdown
         >
           <currentOption.Icon />
@@ -75,8 +75,8 @@ export function ModeToolbarButton({
 
       <DropdownMenuContent className="w-80" align="start">
         {!isOwnerOrCollaborator && (
-          <div className="px-2 py-1.5 text-xs text-muted-foreground">
-            {t('plateJs.toolbar.mode.viewOnly', 'View only - contact owner to change mode')}
+          <div className="text-muted-foreground px-2 py-1.5 text-xs">
+            {t('plateJs.toolbar.mode.viewOnly')}
           </div>
         )}
         <EditingModeMenuItems

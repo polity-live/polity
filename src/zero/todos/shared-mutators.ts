@@ -1,5 +1,7 @@
 import { defineMutator } from '@rocicorp/zero';
 import { can } from '../rbac/can';
+import { requireAuthenticated, requireOwner } from '../rbac/authorize';
+import { PermissionError } from '../rbac/errors';
 import { zql } from '../schema';
 import {
   createTodoSchema,
@@ -26,11 +28,66 @@ async function authorizeGroupTodoManage(
   });
 }
 
+async function loadTodo(tx: Parameters<typeof can>[0], todoId: string) {
+  const todo = await tx.run(zql.todo.where('id', todoId).one());
+  if (!todo) {
+    throw new Error('Todo not found');
+  }
+
+  return todo;
+}
+
+async function authorizeTodoOwnerOrGroupManage(
+  tx: Parameters<typeof can>[0],
+  ctx: Parameters<typeof can>[1],
+  todoId: string,
+  action: 'update' | 'delete' | 'manage'
+) {
+  if (tx.location === 'client') return;
+
+  const todo = await loadTodo(tx, todoId);
+  if (todo.group_id) {
+    await authorizeGroupTodoManage(tx, ctx, todo.group_id);
+    return;
+  }
+
+  requireOwner(tx, ctx, todo.creator_id, { action, resource: 'todos' });
+}
+
+async function authorizeTodoCompletion(
+  tx: Parameters<typeof can>[0],
+  ctx: Parameters<typeof can>[1],
+  todo: NonNullable<Awaited<ReturnType<typeof loadTodo>>>
+) {
+  if (tx.location === 'client') return;
+
+  if (todo.group_id) {
+    await authorizeGroupTodoManage(tx, ctx, todo.group_id);
+    return;
+  }
+
+  requireAuthenticated(tx, ctx, { action: 'update', resource: 'todos' });
+  if (todo.creator_id === ctx.userID) {
+    return;
+  }
+
+  const assignment = await tx.run(
+    zql.todo_assignment.where('todo_id', todo.id).where('user_id', ctx.userID).one()
+  );
+  if (!assignment) {
+    throw new PermissionError('update', 'todos', `todo:${todo.id}`);
+  }
+}
+
 /** Shared mutators — run on both client and server. Server mutators may override these. */
 export const todoSharedMutators = {
   // Create a todo
   create: defineMutator(createTodoSchema, async ({ tx, ctx, args }) => {
-    await authorizeGroupTodoManage(tx, ctx, args.group_id);
+    if (args.group_id) {
+      await authorizeGroupTodoManage(tx, ctx, args.group_id);
+    } else {
+      requireAuthenticated(tx, ctx, { action: 'create', resource: 'todos' });
+    }
 
     const now = Date.now();
     await tx.mutate.todo.insert({
@@ -43,14 +100,7 @@ export const todoSharedMutators = {
 
   // Update a todo
   update: defineMutator(updateTodoSchema, async ({ tx, ctx, args }) => {
-    if (tx.location !== 'client') {
-      const existingTodo = await tx.run(zql.todo.where('id', args.id).one());
-      if (!existingTodo) {
-        throw new Error('Todo not found');
-      }
-
-      await authorizeGroupTodoManage(tx, ctx, existingTodo.group_id);
-    }
+    await authorizeTodoOwnerOrGroupManage(tx, ctx, args.id, 'update');
 
     const { id, ...fields } = args;
     await tx.mutate.todo.update({
@@ -62,28 +112,14 @@ export const todoSharedMutators = {
 
   // Delete a todo
   delete: defineMutator(deleteTodoSchema, async ({ tx, ctx, args }) => {
-    if (tx.location !== 'client') {
-      const existingTodo = await tx.run(zql.todo.where('id', args.id).one());
-      if (!existingTodo) {
-        throw new Error('Todo not found');
-      }
-
-      await authorizeGroupTodoManage(tx, ctx, existingTodo.group_id);
-    }
+    await authorizeTodoOwnerOrGroupManage(tx, ctx, args.id, 'delete');
 
     await tx.mutate.todo.delete({ id: args.id });
   }),
 
   // Assign a user to a todo
   assign: defineMutator(createTodoAssignmentSchema, async ({ tx, ctx, args }) => {
-    if (tx.location !== 'client') {
-      const existingTodo = await tx.run(zql.todo.where('id', args.todo_id).one());
-      if (!existingTodo) {
-        throw new Error('Todo not found');
-      }
-
-      await authorizeGroupTodoManage(tx, ctx, existingTodo.group_id);
-    }
+    await authorizeTodoOwnerOrGroupManage(tx, ctx, args.todo_id, 'manage');
 
     const now = Date.now();
     await tx.mutate.todo_assignment.insert({
@@ -100,12 +136,7 @@ export const todoSharedMutators = {
         throw new Error('Todo assignment not found');
       }
 
-      const existingTodo = await tx.run(zql.todo.where('id', assignment.todo_id).one());
-      if (!existingTodo) {
-        throw new Error('Todo not found');
-      }
-
-      await authorizeGroupTodoManage(tx, ctx, existingTodo.group_id);
+      await authorizeTodoOwnerOrGroupManage(tx, ctx, assignment.todo_id, 'manage');
     }
 
     await tx.mutate.todo_assignment.delete({ id: args.id });
@@ -119,7 +150,7 @@ export const todoSharedMutators = {
       throw new Error('Todo not found');
     }
 
-    await authorizeGroupTodoManage(tx, ctx, existing.group_id);
+    await authorizeTodoCompletion(tx, ctx, existing);
 
     const now = Date.now();
     const isCompleting = existing.status !== 'completed';

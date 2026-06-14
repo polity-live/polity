@@ -3,7 +3,10 @@ import { toast } from 'sonner';
 import { DEFAULT_AI_SKILLS } from '@/features/assistant/logic/defaultAiSkills';
 import type { AiProvider } from '@/lib/ai/schemas';
 import { DEFAULT_AI_TOOLS, type AiToolName } from '@/lib/ai/defaultAiTools';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { useAuth } from '@/providers/auth-provider';
 import { useAiActions } from '@/zero/ai/useAiActions';
 import { useAiState } from '@/zero/ai/useAiState';
@@ -150,7 +153,7 @@ export function useAiSettingsTab() {
       setModels(payload.models ?? []);
     } catch (error) {
       console.error('Failed to load AI settings catalog:', error);
-      toast.error('Failed to load AI settings.');
+      toast.error(translateText('generated.inline.1179_failed_to_load_ai_settings_809836c9'));
     } finally {
       setIsCatalogLoading(false);
     }
@@ -170,18 +173,13 @@ export function useAiSettingsTab() {
   const saveCredential = useCallback(
     async (provider: AiProvider) => {
       if (!session?.access_token) {
-        toast.error(
-          t(
-            'features.messages.ai.sessionMissing',
-            'Your session has expired. Please sign in again.'
-          )
-        );
+        toast.error(t('features.messages.ai.sessionMissing'));
         return;
       }
 
       const apiKey = providerInputs[provider]?.trim();
       if (!apiKey) {
-        toast.error(t('pages.user.ai.credentials.validation', 'Enter an API key first.'));
+        toast.error(t('pages.user.ai.credentials.validation'));
         return;
       }
 
@@ -205,10 +203,10 @@ export function useAiSettingsTab() {
         setCredentials(payload.credentials ?? []);
         setModels(payload.models ?? []);
         updateProviderInput(provider, '');
-        toast.success(t('pages.user.ai.credentials.saved', 'API key saved'));
+        toast.success(t('pages.user.ai.credentials.saved'));
       } catch (error) {
         console.error(`Failed to save ${provider} credential:`, error);
-        toast.error(t('pages.user.ai.credentials.saveFailed', 'Failed to save API key'));
+        toast.error(t('pages.user.ai.credentials.saveFailed'));
       } finally {
         setSavingProvider(null);
       }
@@ -219,12 +217,7 @@ export function useAiSettingsTab() {
   const deleteCredential = useCallback(
     async (provider: AiProvider) => {
       if (!session?.access_token) {
-        toast.error(
-          t(
-            'features.messages.ai.sessionMissing',
-            'Your session has expired. Please sign in again.'
-          )
-        );
+        toast.error(t('features.messages.ai.sessionMissing'));
         return;
       }
 
@@ -248,10 +241,10 @@ export function useAiSettingsTab() {
         setCredentials(payload.credentials ?? []);
         setModels(payload.models ?? []);
         updateProviderInput(provider, '');
-        toast.success(t('pages.user.ai.credentials.deleted', 'API key removed'));
+        toast.success(t('pages.user.ai.credentials.deleted'));
       } catch (error) {
         console.error(`Failed to delete ${provider} credential:`, error);
-        toast.error(t('pages.user.ai.credentials.deleteFailed', 'Failed to remove API key'));
+        toast.error(t('pages.user.ai.credentials.deleteFailed'));
       } finally {
         setDeletingProvider(null);
       }
@@ -278,26 +271,20 @@ export function useAiSettingsTab() {
       .map(alias => alias.trim())
       .filter(Boolean);
 
-    const nameError = name ? null : t('pages.user.ai.skills.validationName', 'Name is required.');
+    const nameError = name ? null : t('pages.user.ai.skills.validationName');
     const slugError = editingBuiltInSlug
       ? null
       : !resolvedSlug
-        ? t('pages.user.ai.skills.validationSlug', 'Slug is required.')
+        ? t('pages.user.ai.skills.validationSlug')
         : SKILL_SLUG_PATTERN.test(resolvedSlug)
           ? null
-          : t(
-              'pages.user.ai.skills.validationSlugPattern',
-              'Skill slug may only contain letters, numbers, and hyphens'
-            );
+          : t('pages.user.ai.skills.validationSlugPattern');
     const aliasesError = aliases.every(alias => SKILL_SLUG_PATTERN.test(alias))
       ? null
-      : t(
-          'pages.user.ai.skills.validationAliasPattern',
-          'Each alias may only contain letters, numbers, and hyphens'
-        );
+      : t('pages.user.ai.skills.validationAliasPattern');
     const systemPromptError = skillForm.systemPrompt.trim()
       ? null
-      : t('pages.user.ai.skills.validationPrompt', 'System prompt is required.');
+      : t('pages.user.ai.skills.validationPrompt');
 
     return {
       name: nameError,
@@ -421,14 +408,12 @@ export function useAiSettingsTab() {
     const systemPrompt = skillForm.systemPrompt.trim();
 
     if (!isSkillFormValid || !name || !slug || !systemPrompt) {
-      toast.error(t('pages.user.ai.skills.validation', 'Name, slug, and prompt are required.'));
+      toast.error(t('pages.user.ai.skills.validation'));
       return;
     }
 
     if (builtInSkillSlugs.has(slug) && !editingSkillId && !editingBuiltInSlug) {
-      toast.error(
-        t('pages.user.ai.skills.slugExists', 'This slug is reserved by a built-in skill.')
-      );
+      toast.error(t('pages.user.ai.skills.slugExists'));
       return;
     }
 
@@ -436,7 +421,7 @@ export function useAiSettingsTab() {
       skill => skill.slug === slug && skill.id !== editingSkillId
     );
     if (slugTakenByAnotherSkill) {
-      toast.error(t('pages.user.ai.skills.slugExists', 'This skill slug already exists.'));
+      toast.error(t('pages.user.ai.skills.slugExists'));
       return;
     }
 

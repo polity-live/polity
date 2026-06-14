@@ -8,7 +8,10 @@ import { useEventActions } from '@/zero/events/useEventActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
 import { useAuth } from '@/providers/auth-provider';
 import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { buildRecurringEventFields } from '@/features/events/logic/buildRecurringEventFields';
 import { buildEventTemporalFields } from '@/features/events/logic/buildEventTemporalFields';
 import { getEventTimeSeriesValidationError } from '@/features/events/logic/eventTimeSeriesValidation';
@@ -335,7 +338,9 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
 
       if (isCreating) {
         if (!user?.id) {
-          toast.error('You must be logged in to create an event');
+          toast.error(
+            translateText('generated.inline.0477_you_must_be_logged_in_to_create_an_event_9cd6fe1e')
+          );
           return;
         }
 
@@ -389,7 +394,7 @@ export function useEventUpdate(eventId: string, mode: 'create' | 'edit' = 'edit'
         await createEvent(createData);
       } else {
         if (!event) {
-          toast.error('No event data to update');
+          toast.error(translateText('generated.inline.0478_no_event_data_to_update_e4627a29'));
           return;
         }
 

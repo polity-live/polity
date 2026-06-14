@@ -24,12 +24,15 @@ import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCar
 import { SupporterStatusBadge } from '@/features/amendments/ui/SupporterStatusBadge';
 import { TargetSelectionDialog } from '@/features/amendments/ui/TargetSelectionDialog';
 import { Link } from '@tanstack/react-router';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { useAmendmentWikiPage } from './hooks/useAmendmentWikiPage';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
 import { WikiIncumbentPanel } from '@/features/shared/ui/wiki/WikiIncumbentPanel';
 import { buildAmendmentWikiCollaboratorSections } from '@/features/amendments/logic/buildAmendmentWikiCollaboratorSections';
-import { SupporterLocalityMap } from './ui/SupporterLocalityMap';
+import { SupporterDirectorySection } from './ui/SupporterDirectorySection';
 
 interface AmendmentWikiProps {
   amendmentId: string;
@@ -55,14 +58,22 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
     amendment,
     roles,
     collaborators,
-    supportingGroups,
+    supporterDirectoryItems,
+    supportingGroupCount,
     clones,
     clonedFrom,
     totalSupportingMembers,
     targetCollaborator,
     targetGroup,
+    evaluationModeLabel,
+    evaluationConfigurationSummary,
     implementationStatus,
-    evaluationDueDate,
+    implementationDisplayStatus,
+    evaluationEvent,
+    evaluationAgendaItem,
+    evaluationVoteOutcomeLabel,
+    evaluationDueDateLabel,
+    hasImplementationEvaluation,
     supporterMapItems,
     upvotes,
     downvotes,
@@ -74,19 +85,25 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
     handleClone,
     handleConfirmClone,
     usersData,
-    getSupportStatus,
   } = useAmendmentWikiPage(amendmentId);
   const normalizedVoteValue: VoteValue =
     currentVoteValue === -1 ? -1 : currentVoteValue === 1 ? 1 : 0;
   const collaboratorSections = buildAmendmentWikiCollaboratorSections(roles, collaborators);
+  const supporterDirectorySection = (
+    <SupporterDirectorySection items={supporterDirectoryItems} mapItems={supporterMapItems} />
+  );
 
   if (!amendment) {
     return (
       <div>
         <div className="py-12 text-center">
-          <h1 className="mb-4 text-2xl font-bold">Amendment Not Found</h1>
+          <h1 className="mb-4 text-2xl font-bold">
+            {translateText('generated.inline.0066_amendment_not_found_3cea3d4d')}
+          </h1>
           <p className="text-muted-foreground">
-            The amendment you're looking for doesn't exist or has been removed.
+            {translateText(
+              'generated.inline.0067_the_amendment_you_re_looking_for_doesn_t_exis_f871134d'
+            )}
           </p>
         </div>
       </div>
@@ -121,7 +138,9 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
               </Avatar>
               <div className="text-left">
                 <p className="text-sm font-medium">{targetCollaborator.name}</p>
-                <p className="text-muted-foreground text-xs">Target Collaborator</p>
+                <p className="text-muted-foreground text-xs">
+                  {translateText('generated.inline.0068_target_collaborator_fcd5de52')}
+                </p>
               </div>
             </div>
           )}
@@ -133,7 +152,9 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
               </Avatar>
               <div className="text-left">
                 <p className="text-sm font-medium">{targetGroup.name}</p>
-                <p className="text-muted-foreground text-xs">Targets</p>
+                <p className="text-muted-foreground text-xs">
+                  {translateText('generated.inline.0069_targets_d35260a0')}
+                </p>
               </div>
             </div>
           )}
@@ -151,7 +172,9 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
               </Avatar>
               <div className="text-left">
                 <p className="text-sm font-medium">{clonedFrom.title}</p>
-                <p className="text-muted-foreground text-xs">Cloned from</p>
+                <p className="text-muted-foreground text-xs">
+                  {translateText('generated.inline.0070_cloned_from_086726de')}
+                </p>
               </div>
             </Link>
           )}
@@ -190,7 +213,7 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
           },
           { value: subscriberCount, labelKey: 'components.labels.subscribers' },
           { value: amendment.clone_count ?? clones.length, labelKey: 'components.labels.clones' },
-          { value: supportingGroups.length, labelKey: 'components.labels.supportingGroups' },
+          { value: supportingGroupCount, labelKey: 'components.labels.supportingGroups' },
           { value: totalSupportingMembers, labelKey: 'components.labels.supportingMembers' },
           {
             value: amendment.change_request_count ?? (amendment.change_requests?.length || 0),
@@ -228,7 +251,7 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
         />
         <Button variant="outline" size="default" onClick={handleClone}>
           <Copy className="mr-2 h-4 w-4" />
-          Clone
+          {translateText('generated.inline.0071_clone_d8cdb573')}
         </Button>
         <ShareButton
           url={`/amendment/${amendmentId}`}
@@ -243,7 +266,7 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
             status: amendment.editing_mode,
             groupName: targetGroup?.name,
             collaboratorCount: collaborators.length,
-            supportingGroupsCount: supportingGroups.length,
+            supportingGroupsCount: supportingGroupCount,
             tags:
               amendment.amendment_hashtags
                 ?.map(relation => relation.hashtag?.tag)
@@ -270,84 +293,138 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
       {collaboratorSections.length > 0 && (
         <WikiIncumbentPanel
           title={`Collaborators (${collaborators.length})`}
-          description="Active collaborators grouped by role"
+          description={translateText(
+            'generated.inline.0072_active_collaborators_grouped_by_role_7813f854'
+          )}
           sections={collaboratorSections}
           icon={Users}
         />
       )}
 
       {/* Supported By Section */}
-      {supportingGroups.length > 0 && (
+      {supporterDirectoryItems.length > 0 && (
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Supported By
+              {translateText('generated.inline.0073_supported_by_2f1057c9')}
             </CardTitle>
             <CardDescription>
-              Groups supporting this amendment ({totalSupportingMembers} total members)
+              {translateText('generated.inline.0074_groups_supporting_this_amendment_542d22d8')}
+              {totalSupportingMembers}
+              {translateText('generated.inline.0075_total_members_f8dd8e9d')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {supportingGroups
-                .filter(group => {
-                  const groupId = group.group?.id ?? group.group_id ?? group.id;
-                  return getSupportStatus(groupId) !== 'declined';
-                })
-                .map(group => {
-                  const groupId = group.group?.id ?? group.group_id ?? group.id;
-                  const supportStatus = getSupportStatus(groupId);
-                  return (
-                    <div key={group.id} className="relative">
-                      <GroupTimelineCard
-                        group={{
-                          id: String(groupId),
-                          name: group.group?.name ?? t('common.unspecified'),
-                          memberCount: group.group?.member_count ?? 0,
-                          hashtags: [],
-                        }}
-                      />
-                      <div className="absolute top-2 right-2">
-                        <SupporterStatusBadge status={supportStatus} size="sm" />
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
-            {supporterMapItems.length > 0 && (
-              <div className="mt-6 space-y-3">
-                <div>
-                  <h3 className="text-base font-semibold">Unterstützerkarte</h3>
-                  <p className="text-muted-foreground text-sm">
-                    Positive Unterstützungsentscheidungen mit vorhandenen Ortsdaten.
-                  </p>
+              {supporterDirectoryItems.map(supporter => (
+                <div key={supporter.groupId} className="relative">
+                  <GroupTimelineCard
+                    group={{
+                      id: supporter.groupId,
+                      name: supporter.name || t('common.unspecified'),
+                      description:
+                        supporter.locationLabel !== 'Location not set'
+                          ? supporter.locationLabel
+                          : undefined,
+                      memberCount: supporter.memberCount,
+                      hashtags: [],
+                    }}
+                  />
+                  <div className="absolute top-2 right-2">
+                    <SupporterStatusBadge status={supporter.supportStatus} size="sm" />
+                  </div>
                 </div>
-                <SupporterLocalityMap items={supporterMapItems} />
-              </div>
-            )}
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}
 
-      {(implementationStatus || evaluationDueDate) && (
+      {hasImplementationEvaluation && (
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Implementation Evaluation</CardTitle>
-            <CardDescription>Aktueller Stand der Umsetzungsprüfung dieses Antrags.</CardDescription>
+            <CardTitle>
+              {translateText('generated.inline.0076_implementation_evaluation_ac69ba0d')}
+            </CardTitle>
+            <CardDescription>
+              {translateText(
+                'generated.inline.0077_evaluierungskonfiguration_termin_und_ergebnis_b34fe309'
+              )}
+            </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-wrap items-center gap-3">
-            {implementationStatus ? (
-              <Badge variant="secondary">{implementationStatus}</Badge>
-            ) : null}
-            {evaluationDueDate ? (
-              <span className="text-muted-foreground text-sm">
-                Fällig bis {new Date(evaluationDueDate).toLocaleDateString('de-DE')}
-              </span>
-            ) : null}
+          <CardContent className="space-y-3 text-sm">
+            <div className="flex flex-wrap items-center gap-3">
+              {implementationDisplayStatus ? (
+                <Badge variant="secondary">{implementationDisplayStatus}</Badge>
+              ) : null}
+              {implementationStatus ? (
+                <Badge variant="outline">{implementationStatus}</Badge>
+              ) : null}
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              <div>
+                <p className="font-medium">
+                  {translateText('generated.inline.0078_modus_a7f116c3')}
+                </p>
+                <p className="text-muted-foreground">{evaluationModeLabel}</p>
+              </div>
+              <div>
+                <p className="font-medium">
+                  {translateText('generated.inline.0079_konfiguration_faa93ceb')}
+                </p>
+                <p className="text-muted-foreground">{evaluationConfigurationSummary}</p>
+              </div>
+              <div>
+                <p className="font-medium">
+                  {translateText('generated.inline.0080_konkretes_f_lligkeitsdatum_d4cbe17b')}
+                </p>
+                <p className="text-muted-foreground">
+                  {evaluationDueDateLabel ??
+                    translateText(
+                      'generated.inline.0021_wird_nach_der_finalen_abstimmung_berechnet_700b6e86'
+                    )}
+                </p>
+              </div>
+              <div>
+                <p className="font-medium">
+                  {translateText('generated.inline.0081_abstimmungsergebnis_ea44fc12')}
+                </p>
+                <p className="text-muted-foreground">
+                  {evaluationVoteOutcomeLabel ??
+                    translateText(
+                      'generated.inline.0022_noch_keine_ja_nein_abstimmung_abgeschlossen_c59a7e5f'
+                    )}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {evaluationEvent?.id ? (
+                <Link to="/event/$id" params={{ id: evaluationEvent.id }}>
+                  <Badge variant="outline">
+                    {evaluationEvent.title ?? translateText('generated.inline.0023_event_ad8919ac')}
+                  </Badge>
+                </Link>
+              ) : null}
+              {evaluationEvent?.id && evaluationAgendaItem?.id ? (
+                <Link
+                  to="/event/$id/agenda/$agendaItemId"
+                  params={{ id: evaluationEvent.id, agendaItemId: evaluationAgendaItem.id }}
+                >
+                  <Badge variant="outline">
+                    {evaluationAgendaItem.title ??
+                      translateText('generated.inline.0024_agenda_item_39cc1416')}
+                  </Badge>
+                </Link>
+              ) : null}
+            </div>
           </CardContent>
         </Card>
       )}
+
+      {supporterDirectorySection}
 
       {/* Clones Section */}
       {clones.length > 0 && (
@@ -355,9 +432,12 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Copy className="h-5 w-5" />
-              Clones ({clones.length})
+              {translateText('generated.inline.0082_clones_8653e7c7')}
+              {clones.length})
             </CardTitle>
-            <CardDescription>Amendments cloned from this one</CardDescription>
+            <CardDescription>
+              {translateText('generated.inline.0083_amendments_cloned_from_this_one_f4168e61')}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
@@ -394,7 +474,8 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
                     {clone.created_at && (
                       <CardContent className="pt-0">
                         <p className="text-muted-foreground text-xs">
-                          Created: {new Date(clone.created_at).toLocaleDateString()}
+                          {translateText('generated.inline.0084_created_0c78dab1')}
+                          {new Date(clone.created_at).toLocaleDateString()}
                         </p>
                       </CardContent>
                     )}
@@ -420,9 +501,11 @@ export function AmendmentWiki({ amendmentId }: AmendmentWikiProps) {
         onConfirm={handleConfirmClone}
         isSaving={isCloning}
         showCollaboratorSelection={false}
-        title="Clone Amendment - Select Target"
-        description="Optionally link the clone to a group and event from your network."
-        confirmButtonText="Clone Amendment"
+        title={translateText('generated.inline.0085_clone_amendment_select_target_8fa1e50c')}
+        description={translateText(
+          'generated.inline.0086_optionally_link_the_clone_to_a_group_and_even_9a83e8d9'
+        )}
+        confirmButtonText={translateText('generated.inline.0009_clone_amendment_71d1877f')}
       />
     </div>
   );

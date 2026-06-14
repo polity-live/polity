@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useGroupState } from '@/zero/groups/useGroupState';
-import { useNetworkLinkState } from '@/zero/network';
+import { useGroupConnectionState } from '@/zero/network';
 import { RIGHT_TYPES } from '@/features/network/ui/RightFilters';
 import {
   type CanonicalMembershipMode,
@@ -16,9 +16,9 @@ import {
   isRequestGroupRelationshipStatus,
 } from '../logic/networkRelationshipHelpers';
 import {
-  explodeNetworkLinkChangeRequestsToRelationships,
-  explodeNetworkLinksToRelationships,
-} from '../logic/networkLinkDerived';
+  deriveNormalizedGroupConnectionRequestRows,
+  deriveNormalizedGroupRelationships,
+} from '../logic/groupConnectionDerived';
 
 interface ParentNetworkItem {
   group: NetworkGroupEntity;
@@ -50,7 +50,7 @@ function getRelationshipMemoKey(relationship: NormalizedGroupRelationship) {
     relationship.status ?? '',
     relationship.with_right ?? '',
     relationship.membership_mode ?? '',
-    relationship.network_link_request_id ?? '',
+    relationship.connection_request_id ?? '',
     relationship.group?.id ?? '',
     relationship.group?.name ?? '',
     relationship.related_group?.id ?? '',
@@ -61,25 +61,25 @@ function getRelationshipMemoKey(relationship: NormalizedGroupRelationship) {
 export function useGroupNetwork(groupId: string) {
   const { group, isLoading: isGroupLoading } = useGroupState({ groupId });
   const {
-    groupLinks,
-    groupLinksLoading,
-    groupChangeRequests,
-    groupChangeRequestsLoading,
-    allLinks,
-    allLinksLoading,
-  } = useNetworkLinkState({ groupId });
+    groupConnections,
+    groupConnectionsLoading,
+    groupConnectionRequests,
+    groupConnectionRequestsLoading,
+    allConnections,
+    allConnectionsLoading,
+  } = useGroupConnectionState({ groupId });
   const [showIndirect, setShowIndirect] = useState(false);
   const [selectedRights, setSelectedRights] = useState<Set<string>>(new Set(RIGHT_TYPES));
 
-  const activeRelationshipsSource = allLinks.length > 0 ? allLinks : groupLinks;
+  const activeRelationshipsSource = allConnections.length > 0 ? allConnections : groupConnections;
 
   const relationships = useMemo<NormalizedGroupRelationship[]>(
-    () => explodeNetworkLinksToRelationships(activeRelationshipsSource),
+    () => deriveNormalizedGroupRelationships(activeRelationshipsSource),
     [activeRelationshipsSource]
   );
   const requestRelationships = useMemo<NormalizedGroupRelationship[]>(
-    () => explodeNetworkLinkChangeRequestsToRelationships(groupChangeRequests),
-    [groupChangeRequests]
+    () => deriveNormalizedGroupConnectionRequestRows(groupConnectionRequests),
+    [groupConnectionRequests]
   );
 
   // Categorize relationships
@@ -289,9 +289,13 @@ export function useGroupNetwork(groupId: string) {
 
   return {
     group,
-    groupLinks,
-    groupChangeRequests,
-    isLoading: isGroupLoading || groupLinksLoading || groupChangeRequestsLoading || allLinksLoading,
+    groupConnections,
+    groupConnectionRequests,
+    isLoading:
+      isGroupLoading ||
+      groupConnectionsLoading ||
+      groupConnectionRequestsLoading ||
+      allConnectionsLoading,
     networkData,
     showIndirect,
     setShowIndirect,

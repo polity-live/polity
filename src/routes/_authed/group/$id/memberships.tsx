@@ -7,6 +7,7 @@ import { MembershipTabs } from '@/features/groups/ui/MembershipTabs';
 import { ActiveMembersTable } from '@/features/groups/ui/ActiveMembersTable';
 import { MembershipsByRoleTables } from '@/features/groups/ui/MembershipsByRoleTables';
 import { MembershipCompositionPanel } from '@/features/groups/ui/MembershipCompositionPanel';
+import { MembershipRightsAlignmentPanel } from '@/features/groups/ui/MembershipRightsAlignmentPanel';
 import { OpenAssignmentsPanel } from '@/features/groups/ui/OpenAssignmentsPanel';
 import { PendingRequestsTable } from '@/features/groups/ui/PendingRequestsTable';
 import { PendingInvitationsTable } from '@/features/groups/ui/PendingInvitationsTable';
@@ -46,6 +47,7 @@ import { EntitySearchBar } from '@/features/shared/ui/ui/entity-search-bar';
 import { emptyRoleEditorForm, roleToEditorForm } from '@/features/groups/logic/roleFormHelpers';
 import { getMembershipDisplayRoles } from '@/features/groups/logic/buildMembershipRightsSummary';
 import { resolveChildBaseGroups } from '@/features/groups/logic/hierarchy';
+import { buildMembershipRightsAlignmentRowsFromRelationships } from '@/features/groups/logic/membershipRightsAlignment';
 import { resolveOfflineRosterProvenance } from '@/features/groups/logic/offlineRosterProvenance';
 import type { MembershipCompositionGroupLike } from '@/features/groups/logic/membershipComposition';
 import { queries } from '@/zero/queries';
@@ -65,6 +67,7 @@ import type {
   MembershipTab,
 } from '@/features/groups/types/group.types';
 import type { GroupOfflineMembershipWithRolesAndRightsByGroupIdsRow } from '@/zero/groups/queries';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 const groupMembershipsSearchSchema = z.object({
   tab: z
@@ -72,6 +75,7 @@ const groupMembershipsSearchSchema = z.object({
       'membershipsByUser',
       'membershipsByRole',
       'composition',
+      'rightsAlignment',
       'openAssignments',
       'guests',
       'roles',
@@ -186,11 +190,12 @@ function GroupMembershipsContent({
   const { group } = useGroupData(groupId);
   const { allRelationshipsWithGroups } = useGroupState({ includeAllRelationshipsWithGroups: true });
   const compositionGroup = useMemo(() => toMembershipCompositionGroup(group), [group]);
+  const showRightsAlignment = canManageMembers && compositionGroup?.group_type === 'hierarchical';
   const hierarchyRelationships = useMemo(
     () => allRelationshipsWithGroups as Parameters<typeof resolveChildBaseGroups>[1],
     [allRelationshipsWithGroups]
   );
-  const groupName = group?.name || t('features.groups.detail.title', 'Group');
+  const groupName = group?.name || t('features.groups.detail.title');
 
   const resolvedDefaultTab = useMemo<MembershipTab>(() => {
     if (
@@ -199,6 +204,10 @@ function GroupMembershipsContent({
       (!canManageMembers || defaultTab === 'openAssignments')
     ) {
       return 'openAssignments';
+    }
+
+    if (defaultTab === 'rightsAlignment' && showRightsAlignment) {
+      return 'rightsAlignment';
     }
 
     if (
@@ -212,7 +221,7 @@ function GroupMembershipsContent({
     }
 
     return canManageMembers ? 'membershipsByUser' : 'openAssignments';
-  }, [canManageAssignments, canManageMembers, defaultTab]);
+  }, [canManageAssignments, canManageMembers, defaultTab, showRightsAlignment]);
   const [activeTab, setActiveTab] = useState<MembershipTab>(resolvedDefaultTab);
   const [membershipSort, setMembershipSort] = useState<MembershipSort>({
     field: 'user',
@@ -612,32 +621,9 @@ function GroupMembershipsContent({
     [compositionGroup, groupsById, hierarchyRelationships, offlineMembersData, siblingRootGroupIds]
   );
 
-  const effectiveOfflineMemberships = useMemo<EffectiveOfflineMembership[]>(() => {
-    const searchValue = memberSearchQuery.trim().toLowerCase();
-
+  const allEffectiveOfflineMemberships = useMemo<EffectiveOfflineMembership[]>(() => {
     return (offlineMembershipsData || [])
       .filter(membership => membership.group_id === groupId)
-      .filter(membership => {
-        if (!searchValue) {
-          return true;
-        }
-
-        const offlineMember = membership.group_offline_member;
-        const haystack = [
-          offlineMember?.first_name,
-          offlineMember?.last_name,
-          offlineMember?.reason_not_signed_up,
-          offlineMember?.connected_user?.first_name,
-          offlineMember?.connected_user?.last_name,
-          offlineMember?.connected_user?.handle,
-          ...(membership.roles ?? []).map(role => role.name),
-        ]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
-
-        return haystack.includes(searchValue);
-      })
       .map(membership => {
         const offlineMember = membership.group_offline_member;
         const provenance = offlineMember?.id
@@ -662,13 +648,33 @@ function GroupMembershipsContent({
           baseGroup: showComposition ? (provenance?.baseGroup ?? null) : null,
         };
       });
-  }, [
-    groupId,
-    memberSearchQuery,
-    offlineMembershipsData,
-    offlineProvenanceByMemberId,
-    showComposition,
-  ]);
+  }, [groupId, offlineMembershipsData, offlineProvenanceByMemberId, showComposition]);
+
+  const effectiveOfflineMemberships = useMemo<EffectiveOfflineMembership[]>(() => {
+    const searchValue = memberSearchQuery.trim().toLowerCase();
+
+    if (!searchValue) {
+      return allEffectiveOfflineMemberships;
+    }
+
+    return allEffectiveOfflineMemberships.filter(membership => {
+      const offlineMember = membership.group_offline_member;
+      const haystack = [
+        offlineMember?.first_name,
+        offlineMember?.last_name,
+        offlineMember?.reason_not_signed_up,
+        offlineMember?.connected_user?.first_name,
+        offlineMember?.connected_user?.last_name,
+        offlineMember?.connected_user?.handle,
+        ...(membership.roles ?? []).map(role => role.name),
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      return haystack.includes(searchValue);
+    });
+  }, [allEffectiveOfflineMemberships, memberSearchQuery]);
 
   const offlineRows = useMemo(() => {
     const searchValue = memberSearchQuery.trim().toLowerCase();
@@ -808,6 +814,23 @@ function GroupMembershipsContent({
     () => [...activeMembers, ...effectiveOfflineMemberships],
     [activeMembers, effectiveOfflineMemberships]
   );
+  const rightsAlignmentRows = useMemo(
+    () =>
+      showRightsAlignment
+        ? buildMembershipRightsAlignmentRowsFromRelationships({
+            targetGroupId: groupId,
+            memberships: [...membershipsWithProvenance, ...allEffectiveOfflineMemberships],
+            relationships: allRelationshipsWithGroups,
+          })
+        : [],
+    [
+      allEffectiveOfflineMemberships,
+      allRelationshipsWithGroups,
+      groupId,
+      membershipsWithProvenance,
+      showRightsAlignment,
+    ]
+  );
   const offlineMembershipsById = useMemo(
     () =>
       new Map(effectiveOfflineMemberships.map(membership => [membership.id, membership] as const)),
@@ -839,13 +862,12 @@ function GroupMembershipsContent({
 
   return (
     <div>
-      <h1 className="mb-6 text-3xl font-bold">
-        {t('features.groups.memberships.manage', 'Manage Memberships')}
-      </h1>
+      <h1 className="mb-6 text-3xl font-bold">{t('features.groups.memberships.manage')}</h1>
 
       {canManageMembers &&
       activeTab !== 'roles' &&
       activeTab !== 'composition' &&
+      activeTab !== 'rightsAlignment' &&
       activeTab !== 'openAssignments' ? (
         <EntitySearchBar
           searchQuery={memberSearchQuery}
@@ -877,20 +899,11 @@ function GroupMembershipsContent({
               onSelectedRoleIdsChange={setSelectedGuestRoleIds}
               onInvite={handleInviteGuests}
               isInviting={isInvitingGuests}
-              triggerLabel={t('features.groups.memberships.inviteGuest', 'Invite Guest')}
-              dialogTitle={t('features.groups.memberships.inviteGuests', 'Invite Guests')}
-              dialogDescription={t(
-                'features.groups.memberships.inviteGuestsDescription',
-                'Invite users as guests with guest roles. Guests get access rights but are not official members.'
-              )}
-              roleSectionDescription={t(
-                'features.groups.memberships.inviteGuestsRoleDescription',
-                'Guest invitations must always include at least one guest role.'
-              )}
-              emptyRolesLabel={t(
-                'features.groups.memberships.inviteGuestsEmptyRoles',
-                'Create a guest role first before inviting guests.'
-              )}
+              triggerLabel={t('features.groups.memberships.inviteGuest')}
+              dialogTitle={t('features.groups.memberships.inviteGuests')}
+              dialogDescription={t('features.groups.memberships.inviteGuestsDescription')}
+              roleSectionDescription={t('features.groups.memberships.inviteGuestsRoleDescription')}
+              emptyRolesLabel={t('features.groups.memberships.inviteGuestsEmptyRoles')}
             />
           ) : activeTab === 'membershipsByUser' || activeTab === 'membershipsByRole' ? (
             <InviteMembersDialog
@@ -946,46 +959,28 @@ function GroupMembershipsContent({
               disabledReason="Members join through subgroups"
               triggerLabel={
                 guestOnlyMembershipFlow
-                  ? t('features.groups.memberships.inviteGuest', 'Invite Guest')
-                  : t('features.groups.memberships.invite', 'Invite Member')
+                  ? t('features.groups.memberships.inviteGuest')
+                  : t('features.groups.memberships.invite')
               }
               dialogTitle={
                 guestOnlyMembershipFlow
-                  ? t('features.groups.memberships.inviteGuests', 'Invite Guests')
-                  : t('features.groups.memberships.inviteMembers', 'Invite Members')
+                  ? t('features.groups.memberships.inviteGuests')
+                  : t('features.groups.memberships.inviteMembers')
               }
               dialogDescription={
                 guestOnlyMembershipFlow
-                  ? t(
-                      'features.groups.memberships.guestOnlyInviteDescription',
-                      'This sibling group only allows guest access invitations. Official member roles are not available here.'
-                    )
-                  : t(
-                      'features.groups.memberships.inviteMembersDescription',
-                      'Search and select users to invite, then choose which roles they should start with.'
-                    )
+                  ? t('features.groups.memberships.guestOnlyInviteDescription')
+                  : t('features.groups.memberships.inviteMembersDescription')
               }
               roleSectionDescription={
                 guestOnlyMembershipFlow
-                  ? t(
-                      'features.groups.memberships.guestOnlyRoleDescription',
-                      'Only guest roles can be used as invite defaults for this group.'
-                    )
-                  : t(
-                      'features.groups.memberships.inviteRoleDescription',
-                      'Tick one or more roles for invited people. The default invite role is preselected.'
-                    )
+                  ? t('features.groups.memberships.guestOnlyRoleDescription')
+                  : t('features.groups.memberships.inviteRoleDescription')
               }
               emptyRolesLabel={
                 guestOnlyMembershipFlow
-                  ? t(
-                      'features.groups.memberships.guestOnlyEmptyRoles',
-                      'Create a guest role first before inviting people to this group.'
-                    )
-                  : t(
-                      'features.groups.memberships.inviteMembersEmptyRoles',
-                      'Create a role first before inviting members.'
-                    )
+                  ? t('features.groups.memberships.guestOnlyEmptyRoles')
+                  : t('features.groups.memberships.inviteMembersEmptyRoles')
               }
             />
           ) : null
@@ -1083,19 +1078,12 @@ function GroupMembershipsContent({
               }}
             />
             <OfflineRosterCard
-              title="All users (incl. non signed-up offline users)"
-              title={t(
-                'features.groups.memberships.offlineRoster.title',
-                'All users (incl. non signed-up offline users)'
-              )}
-              description={t(
-                'features.groups.memberships.offlineRoster.description',
-                'Some real group members may never sign up on the platform. Use this roster to include those offline users, map them to active platform users when needed, and keep counts and delegate calculations grounded in the full real-world membership.'
-              )}
+              title={t('features.groups.memberships.offlineRoster.title')}
+              description={t('features.groups.memberships.offlineRoster.description')}
               rows={allUserRows}
               connectedUserCandidates={connectedUserCandidates}
               tableVariant="membership"
-              fallbackRoleLabel="No user role"
+              fallbackRoleLabel={translateText('generated.inline.1266_no_user_role_c1541334')}
               showManageButton={canManageMembers && !showComposition}
               showProvenanceColumns={showComposition}
               onOpenRightsDialog={row => {
@@ -1118,13 +1106,9 @@ function GroupMembershipsContent({
                   handleOpenChangeRoleDialog(membership);
                 }
               }}
-              manageDialogTitle={t(
-                'features.groups.memberships.offlineRoster.manageDialogTitle',
-                'Manage non signed up users'
-              )}
+              manageDialogTitle={t('features.groups.memberships.offlineRoster.manageDialogTitle')}
               manageDialogDescription={t(
-                'features.groups.memberships.offlineRoster.manageDialogDescription',
-                'Add single offline users or import them from CSV so the full group roster remains complete.'
+                'features.groups.memberships.offlineRoster.manageDialogDescription'
               )}
               onCreate={(entry, correlationId) =>
                 serverConfirmed(
@@ -1191,7 +1175,7 @@ function GroupMembershipsContent({
               onOpenRightsDialog={handleOpenMemberRights}
               onRemoveRole={handleRemoveRoleFromMembershipTypeView}
               onSecondaryAction={handleOpenChangeRoleDialog}
-              secondaryActionLabel="Manage Roles"
+              secondaryActionLabel={translateText('generated.inline.0012_manage_roles_5f9b8531')}
               showProvenanceColumns={showComposition}
             />
           </div>
@@ -1200,6 +1184,14 @@ function GroupMembershipsContent({
           <MembershipCompositionPanel
             buckets={compositionBuckets}
             isLoading={compositionIsLoading}
+          />
+        }
+        rightsAlignmentContent={
+          <MembershipRightsAlignmentPanel
+            rows={rightsAlignmentRows}
+            isLoading={compositionIsLoading}
+            onOpenRightsDialog={handleOpenMemberRights}
+            onOpenChangeRoleDialog={handleOpenChangeRoleDialog}
           />
         }
         openAssignmentsContent={
@@ -1225,10 +1217,12 @@ function GroupMembershipsContent({
           </div>
         }
         showComposition={showComposition}
+        showRightsAlignment={showRightsAlignment}
         showOpenAssignments={canManageAssignments}
         membershipsByUserLabel={t('features.groups.memberships.tabs.membershipsByUser')}
         membershipsByRoleLabel={t('features.groups.memberships.tabs.membershipsByRole')}
         compositionLabel={t('features.groups.memberships.tabs.composition')}
+        rightsAlignmentLabel={t('features.groups.memberships.tabs.rightsAlignment')}
         openAssignmentsLabel={t('features.groups.memberships.tabs.openAssignments')}
         guestsLabel={t('features.groups.memberships.tabs.guests')}
         rolesLabel={t('features.groups.memberships.tabs.roles')}
@@ -1300,8 +1294,10 @@ function GroupMembershipsContent({
         onFormChange={patch => setEditRoleForm(current => ({ ...current, ...patch }))}
         onSubmit={handleSaveEditedRole}
         title={editingRole?.name ? `Edit ${editingRole.name}` : 'Edit Role'}
-        description="Adjust how this role is assigned, who can see it, and when it should come up for a revote."
-        submitLabel="Save Role"
+        description={translateText(
+          'generated.inline.1267_adjust_how_this_role_is_assigned_who_can_see__d7945376'
+        )}
+        submitLabel={translateText('generated.inline.1107_save_role_2f46bd88')}
         trigger={null}
         guestOnlyMembershipFlow={guestOnlyMembershipFlow}
       />

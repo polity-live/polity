@@ -26,36 +26,36 @@ export function getTrendConfig(direction: TrendDirection) {
       return {
         symbol: '▲',
         Icon: TrendingUp,
-        colorClass: 'text-green-600 dark:text-green-400',
-        bgClass: 'bg-green-500/10',
+        colorClass: 'text-emerald-600 dark:text-emerald-400',
+        bgClass: 'bg-emerald-50 dark:bg-emerald-950/30',
       };
     case 'down':
       return {
         symbol: '▼',
         Icon: TrendingDown,
         colorClass: 'text-red-600 dark:text-red-400',
-        bgClass: 'bg-red-500/10',
+        bgClass: 'bg-red-50 dark:bg-red-950/30',
       };
     case 'stable':
       return {
         symbol: '●',
         Icon: Minus,
-        colorClass: 'text-gray-500 dark:text-gray-400',
-        bgClass: 'bg-gray-500/10',
+        colorClass: 'text-muted-foreground',
+        bgClass: 'bg-muted',
       };
     case 'volatile':
       return {
         symbol: '◆',
         Icon: Activity,
-        colorClass: 'text-yellow-600 dark:text-yellow-400',
-        bgClass: 'bg-yellow-500/10',
+        colorClass: 'text-amber-600 dark:text-amber-400',
+        bgClass: 'bg-amber-50 dark:bg-amber-950/30',
       };
     default:
       return {
         symbol: '●',
         Icon: Minus,
-        colorClass: 'text-gray-500',
-        bgClass: 'bg-gray-500/10',
+        colorClass: 'text-muted-foreground',
+        bgClass: 'bg-muted',
       };
   }
 }
@@ -98,7 +98,7 @@ export function TrendIndicator({
   return (
     <div
       className={cn(
-        'inline-flex items-center gap-1 rounded-md px-1.5 py-0.5',
+        'inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5',
         config.bgClass,
         className
       )}

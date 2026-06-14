@@ -4,7 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
 import { UserPlus, UserMinus, Clock, Check } from 'lucide-react';
-import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import type { GroupConflictResponse } from '@/features/groups/logic/groupConflict';
 import { GroupConflictDialog } from '@/features/groups/ui/GroupConflictPanel';
 
@@ -214,9 +217,9 @@ export function MembershipButton({
         {content}
         <GroupConflictDialog
           response={conflictResponse}
-          triggerLabel="Warum?"
+          triggerLabel={translateText('generated.inline.0693_warum_194dad5c')}
           triggerVariant="ghost"
-          title="Warum ist diese Aktion blockiert?"
+          title={translateText('generated.inline.1111_warum_ist_diese_aktion_blockiert_e1fb6477')}
         />
       </div>
     );

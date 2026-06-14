@@ -39,11 +39,277 @@ import {
   resolveAmendmentProcessVote,
 } from './process-engine';
 import { notifyProcessVoteResolution } from './process-notifications';
+import { can } from '../rbac/can';
+import { canReadVisibility, requireAuthenticated, requireOwner } from '../rbac/authorize';
+import { PermissionError } from '../rbac/errors';
 
 /** Server-only mutators — override the shared mutators with additional server-side logic (e.g. notifications). */
+const ACTIVE_AMENDMENT_COLLABORATOR_STATUSES = new Set(['collaborator', 'member', 'admin']);
+
+type AmendmentServerTx = Parameters<typeof mutators.amendments.create.fn>[0]['tx'];
+type AmendmentServerCtx = Parameters<typeof mutators.amendments.create.fn>[0]['ctx'];
+
+async function loadAmendmentForMutation(tx: AmendmentServerTx, amendmentId: string) {
+  const amendment = await tx.run(zql.amendment.where('id', amendmentId).one());
+  if (!amendment) {
+    throw new Error('Amendment not found');
+  }
+  return amendment;
+}
+
+async function assertCanCreateAmendment(
+  tx: AmendmentServerTx,
+  ctx: AmendmentServerCtx,
+  args: { group_id?: string | null; event_id?: string | null }
+) {
+  requireAuthenticated(tx, ctx, { action: 'create', resource: 'amendments' });
+
+  if (args.group_id) {
+    await can(tx, ctx, { action: 'create', resource: 'amendments', groupId: args.group_id });
+  }
+
+  if (args.event_id) {
+    await can(tx, ctx, { action: 'create', resource: 'amendments', eventId: args.event_id });
+  }
+}
+
+async function assertCanMutateAmendment(
+  tx: AmendmentServerTx,
+  ctx: AmendmentServerCtx,
+  amendmentId: string,
+  action: 'update' | 'delete' | 'manage' = 'update'
+) {
+  await can(tx, ctx, { action, resource: 'amendments', amendmentId });
+}
+
+async function assertCanResolveProcessVote(
+  tx: AmendmentServerTx,
+  ctx: AmendmentServerCtx,
+  agendaItemId: string
+) {
+  const agendaItem = await tx.run(zql.agenda_item.where('id', agendaItemId).one());
+  if (!agendaItem) {
+    throw new Error('Agenda item not found');
+  }
+
+  if (agendaItem.event_id) {
+    await can(tx, ctx, {
+      action: 'manage_votes',
+      resource: 'events',
+      eventId: agendaItem.event_id,
+    });
+    return;
+  }
+
+  if (agendaItem.amendment_id) {
+    await assertCanMutateAmendment(tx, ctx, agendaItem.amendment_id, 'manage');
+    return;
+  }
+
+  throw new PermissionError('manage', 'amendments', `agenda-item:${agendaItemId}`);
+}
+
+async function assertCanCompleteProcessTaskWithEvent(
+  tx: AmendmentServerTx,
+  ctx: AmendmentServerCtx,
+  processTaskId: string,
+  targetEventId: string
+) {
+  const task = await tx.run(zql.process_task.where('id', processTaskId).one());
+  if (!task) {
+    throw new Error('Process task not found');
+  }
+
+  const processRun = await tx.run(zql.amendment_process_run.where('id', task.process_run_id).one());
+  if (!processRun?.amendment_id) {
+    throw new Error('Amendment process run not found');
+  }
+
+  await assertCanMutateAmendment(tx, ctx, processRun.amendment_id, 'manage');
+
+  if (task.event_id && task.event_id !== targetEventId) {
+    await can(tx, ctx, {
+      action: 'manage_votes',
+      resource: 'events',
+      eventId: task.event_id,
+    });
+  }
+
+  await can(tx, ctx, {
+    action: 'manage_votes',
+    resource: 'events',
+    eventId: targetEventId,
+  });
+}
+
+async function assertCanViewOrRequestCollaboration(
+  tx: AmendmentServerTx,
+  ctx: AmendmentServerCtx,
+  amendmentId: string
+) {
+  requireAuthenticated(tx, ctx, { action: 'view', resource: 'amendments' });
+
+  const amendment = await loadAmendmentForMutation(tx, amendmentId);
+  if (canReadVisibility(amendment.visibility, ctx, amendment.created_by_id === ctx.userID)) {
+    return;
+  }
+
+  await can(tx, ctx, { action: 'view', resource: 'amendments', amendmentId });
+}
+
+async function loadCollaboratorForMutation(tx: AmendmentServerTx, collaboratorId: string) {
+  const collaborator = await tx.run(zql.amendment_collaborator.where('id', collaboratorId).one());
+  if (!collaborator) {
+    throw new Error('Amendment collaborator not found');
+  }
+  return collaborator;
+}
+
+async function loadChangeRequestForMutation(tx: AmendmentServerTx, changeRequestId: string) {
+  const changeRequest = await tx.run(zql.change_request.where('id', changeRequestId).one());
+  if (!changeRequest) {
+    throw new Error('Change request not found');
+  }
+  return changeRequest;
+}
+
+async function assertCanVoteOnChangeRequest(
+  tx: AmendmentServerTx,
+  ctx: AmendmentServerCtx,
+  changeRequestId: string
+) {
+  requireAuthenticated(tx, ctx, { action: 'vote', resource: 'amendments' });
+  const changeRequest = await loadChangeRequestForMutation(tx, changeRequestId);
+  await can(tx, ctx, {
+    action: 'vote',
+    resource: 'amendments',
+    amendmentId: changeRequest.amendment_id,
+  });
+  return changeRequest;
+}
+
+function changeRequestUpdateNeedsManage(
+  args: Partial<{
+    status: string | null;
+    voting_status: string;
+    votes_for: number;
+    votes_against: number;
+    votes_abstain: number;
+  }>
+) {
+  return (
+    args.status !== undefined ||
+    args.voting_status !== undefined ||
+    args.votes_for !== undefined ||
+    args.votes_against !== undefined ||
+    args.votes_abstain !== undefined
+  );
+}
+
+async function loadSupportVoteForMutation(tx: AmendmentServerTx, voteId: string) {
+  const vote = await tx.run(zql.amendment_support_vote.where('id', voteId).one());
+  if (!vote) {
+    throw new Error('Amendment support vote not found');
+  }
+  return vote;
+}
+
+async function amendmentRoleWithRights(
+  tx: Parameters<typeof mutators.amendments.create.fn>[0]['tx'],
+  roleId: string | null | undefined
+) {
+  if (!roleId) return null;
+  return tx.run(zql.role.where('id', roleId).related('action_rights').one());
+}
+
+function isAmendmentOwnerLikeRole(
+  role:
+    | {
+        name?: string | null;
+        action_rights?: readonly { resource?: string | null; action?: string | null }[] | null;
+      }
+    | null
+    | undefined
+) {
+  if (!role) return false;
+  if (role.name === 'Author' || role.name === 'Owner') return true;
+  return (role.action_rights ?? []).some(
+    right =>
+      (right.resource === 'amendments' && right.action === 'manage') ||
+      (right.resource === 'notifications' && right.action === 'manageNotifications')
+  );
+}
+
+async function notifyAmendmentCollaboratorRoleChange(
+  tx: Parameters<typeof mutators.amendments.create.fn>[0]['tx'],
+  actorUserId: string,
+  collaborator: {
+    amendment_id: string;
+    user_id: string;
+    status?: string | null;
+  },
+  previousRoleId: string | null | undefined,
+  nextRoleId: string | null | undefined,
+  nextStatus: string | null | undefined
+) {
+  if (!ACTIVE_AMENDMENT_COLLABORATOR_STATUSES.has(nextStatus ?? '')) return;
+  if ((previousRoleId ?? null) === (nextRoleId ?? null)) return;
+
+  const [previousRole, nextRole, aTitle] = await Promise.all([
+    amendmentRoleWithRights(tx, previousRoleId),
+    amendmentRoleWithRights(tx, nextRoleId),
+    amendmentTitle(tx, collaborator.amendment_id),
+  ]);
+
+  const wasOwner = isAmendmentOwnerLikeRole(previousRole);
+  const isOwner = isAmendmentOwnerLikeRole(nextRole);
+
+  if (!wasOwner && isOwner) {
+    fireNotification('notifyAmendmentOwnerPromoted', {
+      senderId: actorUserId,
+      recipientUserId: collaborator.user_id,
+      amendmentId: collaborator.amendment_id,
+      amendmentTitle: aTitle,
+    });
+    return;
+  }
+
+  if (wasOwner && !isOwner) {
+    fireNotification('notifyAmendmentOwnerDemoted', {
+      senderId: actorUserId,
+      recipientUserId: collaborator.user_id,
+      amendmentId: collaborator.amendment_id,
+      amendmentTitle: aTitle,
+    });
+    return;
+  }
+
+  fireNotification('notifyCollaborationRoleChanged', {
+    senderId: actorUserId,
+    recipientUserId: collaborator.user_id,
+    amendmentId: collaborator.amendment_id,
+    amendmentTitle: aTitle,
+    newRole: nextRole?.name ?? 'Collaborator',
+  });
+}
+
 export const amendmentServerMutators = {
   create: defineMutator(createAmendmentSchema, async ({ tx, ctx, args }) => {
-    await mutators.amendments.create.fn({ tx, ctx, args });
+    await assertCanCreateAmendment(tx, ctx, args);
+
+    const sourceAmendment = args.clone_source_id
+      ? await tx.run(zql.amendment.where('id', args.clone_source_id).one())
+      : null;
+    const createArgs = {
+      ...args,
+      origin_amendment_id:
+        args.origin_amendment_id ??
+        sourceAmendment?.origin_amendment_id ??
+        args.clone_source_id ??
+        args.id,
+    };
+
+    await mutators.amendments.create.fn({ tx, ctx, args: createArgs });
 
     const now = Date.now();
     let authorRoleId: string | null = null;
@@ -146,6 +412,7 @@ export const amendmentServerMutators = {
   }),
 
   update: defineMutator(updateAmendmentSchema, async ({ tx, ctx, args }) => {
+    await assertCanMutateAmendment(tx, ctx, args.id, 'update');
     const previousAmendment = await tx.run(zql.amendment.where('id', args.id).one());
 
     await mutators.amendments.update.fn({ tx, ctx, args });
@@ -211,6 +478,7 @@ export const amendmentServerMutators = {
   }),
 
   delete: defineMutator(deleteAmendmentSchema, async ({ tx, ctx, args }) => {
+    await assertCanMutateAmendment(tx, ctx, args.id, 'delete');
     const amd = await tx.run(zql.amendment.where('id', args.id).one());
 
     await mutators.amendments.delete.fn({ tx, ctx, args });
@@ -233,6 +501,13 @@ export const amendmentServerMutators = {
   }),
 
   addCollaborator: defineMutator(createAmendmentCollaboratorSchema, async ({ tx, ctx, args }) => {
+    const isSelfRequest = args.user_id === ctx.userID && args.status === 'requested';
+    if (isSelfRequest) {
+      await assertCanViewOrRequestCollaboration(tx, ctx, args.amendment_id);
+    } else {
+      await assertCanMutateAmendment(tx, ctx, args.amendment_id, 'manage');
+    }
+
     await mutators.amendments.addCollaborator.fn({ tx, ctx, args });
 
     if (!args.amendment_id) return;
@@ -265,6 +540,13 @@ export const amendmentServerMutators = {
     deleteAmendmentCollaboratorSchema,
     async ({ tx, ctx, args }) => {
       const collab = await tx.run(zql.amendment_collaborator.where('id', args.id).one());
+      if (!collab) {
+        throw new Error('Amendment collaborator not found');
+      }
+
+      if (collab.user_id !== ctx.userID) {
+        await assertCanMutateAmendment(tx, ctx, collab.amendment_id, 'manage');
+      }
 
       await mutators.amendments.removeCollaborator.fn({ tx, ctx, args });
 
@@ -328,7 +610,15 @@ export const amendmentServerMutators = {
   updateCollaborator: defineMutator(
     updateAmendmentCollaboratorSchema,
     async ({ tx, ctx, args }) => {
-      const oldCollab = await tx.run(zql.amendment_collaborator.where('id', args.id).one());
+      const oldCollab = await loadCollaboratorForMutation(tx, args.id);
+      const isSelfStatusUpdate =
+        oldCollab.user_id === ctx.userID &&
+        args.status !== undefined &&
+        args.role_id === undefined &&
+        args.visibility === undefined;
+      if (!isSelfStatusUpdate) {
+        await assertCanMutateAmendment(tx, ctx, oldCollab.amendment_id, 'manage');
+      }
 
       await mutators.amendments.updateCollaborator.fn({ tx, ctx, args });
 
@@ -341,6 +631,8 @@ export const amendmentServerMutators = {
       const oldStatus = oldCollab.status;
       const newStatus = args.status;
       const isSelf = ctx.userID === collabUserId;
+      const nextStatus = args.status ?? oldCollab.status;
+      const nextRoleId = args.role_id !== undefined ? args.role_id : oldCollab.role_id;
 
       const aTitle = await amendmentTitle(tx, aId);
 
@@ -362,10 +654,23 @@ export const amendmentServerMutators = {
           });
         }
       }
+
+      if (args.role_id !== undefined && args.role_id !== oldCollab.role_id) {
+        await notifyAmendmentCollaboratorRoleChange(
+          tx,
+          ctx.userID,
+          oldCollab,
+          oldCollab.role_id,
+          nextRoleId,
+          nextStatus
+        );
+      }
     }
   ),
 
   createChangeRequest: defineMutator(createChangeRequestSchema, async ({ tx, ctx, args }) => {
+    await assertCanMutateAmendment(tx, ctx, args.amendment_id, 'update');
+
     await mutators.amendments.createChangeRequest.fn({ tx, ctx, args });
 
     const [aTitle, senderName, amendment] = await Promise.all([
@@ -389,12 +694,11 @@ export const amendmentServerMutators = {
   }),
 
   voteOnChangeRequest: defineMutator(createChangeRequestVoteSchema, async ({ tx, ctx, args }) => {
+    const changeRequest = await assertCanVoteOnChangeRequest(tx, ctx, args.change_request_id);
+
     await mutators.amendments.voteOnChangeRequest.fn({ tx, ctx, args });
 
-    const changeRequest = await tx.run(
-      zql.change_request.where('id', args.change_request_id).one()
-    );
-    if (!changeRequest || changeRequest.user_id === ctx.userID) {
+    if (changeRequest.user_id === ctx.userID) {
       return;
     }
 
@@ -415,11 +719,12 @@ export const amendmentServerMutators = {
   }),
 
   updateChangeRequest: defineMutator(updateChangeRequestSchema, async ({ tx, ctx, args }) => {
-    const previous = await tx.run(zql.change_request.where('id', args.id).one());
+    const previous = await loadChangeRequestForMutation(tx, args.id);
+    if (previous.user_id !== ctx.userID || changeRequestUpdateNeedsManage(args)) {
+      await assertCanMutateAmendment(tx, ctx, previous.amendment_id, 'update');
+    }
 
     await mutators.amendments.updateChangeRequest.fn({ tx, ctx, args });
-
-    if (!previous) return;
 
     await recomputeAmendmentCounters(tx, previous.amendment_id);
 
@@ -540,6 +845,7 @@ export const amendmentServerMutators = {
   initializeProcessPath: defineMutator(
     initializeAmendmentProcessPathSchema,
     async ({ tx, ctx, args }) => {
+      await assertCanMutateAmendment(tx, ctx, args.amendment_id, 'manage');
       await initializeAmendmentProcessPath(tx, ctx.userID, args);
     }
   ),
@@ -547,6 +853,7 @@ export const amendmentServerMutators = {
   resolveProcessVote: defineMutator(
     resolveAmendmentProcessVoteSchema,
     async ({ tx, ctx, args }) => {
+      await assertCanResolveProcessVote(tx, ctx, args.agenda_item_id);
       const resolution = await resolveAmendmentProcessVote(tx, args);
       await notifyProcessVoteResolution(tx, ctx.userID, args.agenda_item_id, resolution);
     }
@@ -555,31 +862,33 @@ export const amendmentServerMutators = {
   completeProcessTaskWithEvent: defineMutator(
     completeProcessTaskWithEventSchema,
     async ({ tx, ctx, args }) => {
+      await assertCanCompleteProcessTaskWithEvent(tx, ctx, args.process_task_id, args.event_id);
       await completeProcessTaskWithEvent(tx, ctx.userID, args);
     }
   ),
 
   supportAmendment: defineMutator(createAmendmentSupportVoteSchema, async ({ tx, ctx, args }) => {
+    requireAuthenticated(tx, ctx, { action: 'vote', resource: 'amendments' });
+    await can(tx, ctx, { action: 'vote', resource: 'amendments', amendmentId: args.amendment_id });
+
     await mutators.amendments.supportAmendment.fn({ tx, ctx, args });
     await recomputeAmendmentCounters(tx, args.amendment_id);
   }),
 
   updateSupportVote: defineMutator(updateAmendmentSupportVoteSchema, async ({ tx, ctx, args }) => {
-    const existingVote = await tx.run(zql.amendment_support_vote.where('id', args.id).one());
+    const existingVote = await loadSupportVoteForMutation(tx, args.id);
+    requireOwner(tx, ctx, existingVote.user_id, { action: 'update', resource: 'amendments' });
 
     await mutators.amendments.updateSupportVote.fn({ tx, ctx, args });
-
-    if (!existingVote) return;
 
     await recomputeAmendmentCounters(tx, existingVote.amendment_id);
   }),
 
   deleteSupportVote: defineMutator(deleteAmendmentSupportVoteSchema, async ({ tx, ctx, args }) => {
-    const existingVote = await tx.run(zql.amendment_support_vote.where('id', args.id).one());
+    const existingVote = await loadSupportVoteForMutation(tx, args.id);
+    requireOwner(tx, ctx, existingVote.user_id, { action: 'delete', resource: 'amendments' });
 
     await mutators.amendments.deleteSupportVote.fn({ tx, ctx, args });
-
-    if (!existingVote) return;
 
     await recomputeAmendmentCounters(tx, existingVote.amendment_id);
   }),

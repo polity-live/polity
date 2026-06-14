@@ -19,6 +19,7 @@ import {
   logElectionFlowClient,
   logElectionFlowClientError,
 } from '@/features/elections/logic/electionFlowLogging';
+import { isNamedBallot } from '@/zero/shared';
 
 interface UseVoteCastingOptions {
   agendaItemId: string;
@@ -31,12 +32,12 @@ interface UseVoteCastingOptions {
   electorId?: string;
   /** User's voter record id (for votes) */
   voterId?: string;
-  /** Whether the election/vote is public */
-  isPublic?: boolean;
+  /** Whether the ballot stores named participation links */
+  ballotVisibility?: string | null;
 }
 
 export function useVoteCasting(options: UseVoteCastingOptions) {
-  const { electionId, voteId, eventId, status, electorId, voterId, isPublic = true } = options;
+  const { electionId, voteId, eventId, status, electorId, voterId, ballotVisibility } = options;
   const { user } = useAuth();
   const userId = user?.id;
 
@@ -44,11 +45,12 @@ export function useVoteCasting(options: UseVoteCastingOptions) {
 
   const electionActions = useElectionActions();
   const voteActions = useVoteActions();
+  const shouldRecordParticipation = isNamedBallot(ballotVisibility);
 
   // Derive phase from election/vote status
   const phase: VotingPhase = useMemo(() => {
     if (status === 'final' || status === 'final_vote') return 'final_vote';
-    if (status === 'closed') return 'closed';
+    if (status === 'closed' || status === 'completed') return 'closed';
     return 'indication';
   }, [status]);
 
@@ -96,7 +98,7 @@ export function useVoteCasting(options: UseVoteCastingOptions) {
           id: crypto.randomUUID(),
           election_id: electionId,
           candidate_id: candidateId,
-          elector_participation_id: isPublic ? participationId : null,
+          elector_participation_id: shouldRecordParticipation ? participationId : null,
         }));
 
         if (isIndicationPhase) {
@@ -127,8 +129,8 @@ export function useVoteCasting(options: UseVoteCastingOptions) {
       electionId,
       electorId,
       isIndicationPhase,
-      isPublic,
       phase,
+      shouldRecordParticipation,
       userCanVote,
       userId,
     ]
@@ -170,7 +172,7 @@ export function useVoteCasting(options: UseVoteCastingOptions) {
             id: crypto.randomUUID(),
             vote_id: voteId,
             choice_id: choiceId,
-            voter_participation_id: isPublic ? participationId : null,
+            voter_participation_id: shouldRecordParticipation ? participationId : null,
           },
         ];
 
@@ -197,7 +199,16 @@ export function useVoteCasting(options: UseVoteCastingOptions) {
         throw error;
       }
     },
-    [isIndicationPhase, isPublic, phase, userCanVote, userId, voteActions, voteId, voterId]
+    [
+      isIndicationPhase,
+      phase,
+      shouldRecordParticipation,
+      userCanVote,
+      userId,
+      voteActions,
+      voteId,
+      voterId,
+    ]
   );
 
   // Advance election/vote phase via status update

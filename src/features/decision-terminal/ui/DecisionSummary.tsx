@@ -54,7 +54,6 @@ function CollapsibleSection({
   onToggle,
   maxContentHeight,
 }: CollapsibleSectionProps) {
-  const { t } = useTranslation();
   const Icon = SECTION_ICONS[section.type];
   const colorClass = SECTION_COLORS[section.type];
   const contentRef = React.useRef<HTMLDivElement>(null);
@@ -160,7 +159,7 @@ export function DecisionSummary({
     <div className={cn('rounded-lg border border-gray-200 dark:border-gray-700', className)}>
       {/* Header with expand/collapse all */}
       <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-700 dark:bg-gray-800/50">
-        <span className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+        <span className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
           {t('features.timeline.terminal.details')}
         </span>
         <div className="flex gap-1">

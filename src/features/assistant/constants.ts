@@ -1,3 +1,4 @@
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 /**
  * Assistant Constants
  * System-level constants for the Aria & Kai personal assistant
@@ -17,34 +18,40 @@ export const ARIA_KAI_WELCOME_MESSAGE =
  */
 export const ENTITY_DESCRIPTIONS = {
   overview: {
-    title: 'Welcome to Polity!',
-    message:
-      "We're excited to help you get started! Polity is a platform where you can create political networks, automate processes, and track political decisions in real time.\n\n**Here's what you can do:**\n• Create and manage **Groups** for your organization\n• Organize **Events** and track participation\n• Draft and collaborate on **Amendments**\n• Submit and review **Change Requests**\n• Write and publish **Blogs**\n• Run **Elections** and fill **Roles**\n\nWould you like to learn more about any of these features?",
+    title: translateText('generated.inline.0022_welcome_to_polity_1b9e7a4c'),
+    message: translateText(
+      'generated.inline.0023_we_re_excited_to_help_you_get_started_polity__b88c3cd9'
+    ),
   },
   groups: {
-    title: 'Groups',
-    message:
-      '**Groups** are the foundation of collaboration on Polity.\n\n**What you can do with Groups:**\n• Create organizations, parties, or communities\n• Invite members and assign roles\n• Set permissions and action rights\n• Manage membership requests\n• Create group conversations\n• Share content within your group\n\n**Use cases:**\n• Political parties organizing members\n• NGOs coordinating initiatives\n• Local governments managing departments\n• Community groups collaborating on projects\n\nGroups can be public or private, and you have full control over who can join and what they can do.',
+    title: translateText('generated.inline.0024_groups_ae9629f4'),
+    message: translateText(
+      'generated.inline.0025_groups_are_the_foundation_of_collaboration_on_27481b4c'
+    ),
   },
   events: {
-    title: 'Events',
-    message:
-      '**Events** help you organize meetings, conferences, rallies, and any gathering.\n\n**Event features:**\n• Schedule events with date, time, and location\n• Track RSVPs and participation\n• Send invitations to members\n• Manage event agendas and items\n• Record attendance and outcomes\n• Link events to groups and initiatives\n\n**Examples:**\n• Town hall meetings\n• Party conventions\n• Committee sessions\n• Public consultations\n• Campaign events\n\nEvents integrate with your calendar and keep all participants informed in real-time.',
+    title: translateText('generated.inline.0026_events_c5497bca'),
+    message: translateText(
+      'generated.inline.0027_events_help_you_organize_meetings_conferences_177aaa8c'
+    ),
   },
   amendments: {
-    title: 'Amendments & Change Requests',
-    message:
-      '**Amendments** and **Change Requests** enable collaborative document editing and democratic decision-making.\n\n**Amendments:**\n• Draft policy documents and legislation\n• Propose changes to existing documents\n• Collaborate with multiple authors\n• Track version history\n• Vote on amendments\n• Implement approved changes\n\n**Change Requests:**\n• Suggest specific edits to amendments\n• Provide feedback and comments\n• Review and approve changes\n• Track all modifications\n• Ensure transparency in the editing process\n\nThis workflow ensures that every change is documented, reviewed, and decided upon democratically.',
+    title: translateText('generated.inline.0028_amendments_change_requests_9bbe783a'),
+    message: translateText(
+      'generated.inline.0029_amendments_and_change_requests_enable_collabo_603fdecf'
+    ),
   },
   blogs: {
-    title: 'Blogs',
-    message:
-      '**Blogs** let you share ideas, updates, and announcements with your community.\n\n**Blog features:**\n• Rich text editor with multimedia support\n• Publish articles and opinion pieces\n• Tag posts for easy discovery\n• Share within groups or publicly\n• Engage with readers through comments\n• Build your political presence\n\n**Use blogs for:**\n• Policy explanations\n• Campaign updates\n• Position statements\n• Community news\n• Educational content\n• Thought leadership\n\nBlogs help you communicate your vision and keep stakeholders informed.',
+    title: translateText('generated.inline.0030_blogs_5ef44397'),
+    message: translateText(
+      'generated.inline.0031_blogs_let_you_share_ideas_updates_and_announc_1a1d1885'
+    ),
   },
   elections: {
-    title: 'Elections & Roles',
-    message:
-      '**Elections** and **Roles** bring democratic governance to your organization.\n\n**Elections:**\n• Create election campaigns\n• Nominate candidates\n• Set voting periods\n• Secure ballot casting\n• Automatic vote tallying\n• Transparent results\n\n**Roles:**\n• Define organizational roles\n• Set terms and responsibilities\n• Track role holders\n• Manage succession\n• Link roles to groups\n\n**Perfect for:**\n• Board elections\n• Party leadership contests\n• Committee chair selections\n• Representative elections\n• Organizational governance\n\nEnsure fair, transparent, and efficient democratic processes in your organization.',
+    title: translateText('generated.inline.0032_elections_roles_eeca29d2'),
+    message: translateText(
+      'generated.inline.0033_elections_and_roles_bring_democratic_governan_81f6bd17'
+    ),
   },
 } as const;
 

@@ -17,11 +17,14 @@ import { SocialMediaSection } from './SocialMediaSection';
 import { useGroupUpdate } from '../hooks/useGroupUpdate';
 import type { GroupFormData, GroupType } from '../hooks/useGroupUpdate';
 import { useState, useRef } from 'react';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { CreateReviewCard, SummaryField } from '@/features/shared/ui/ui/create-review-card';
 import { formatLocation } from '@/features/shared/logic/locationHelpers';
 import { useAllGroups, useGroupState } from '@/zero/groups/useGroupState';
-import { useNetworkLinkState } from '@/zero/network';
+import { useGroupConnectionState } from '@/zero/network';
 import { getGroupRelationshipRightLabel } from '@/features/network/ui/GroupRelationshipFields';
 import { RIGHT_TYPES, type RightType } from '@/features/network/ui/RightFilters';
 import {
@@ -35,7 +38,12 @@ import { Label } from '@/features/shared/ui/ui/label';
 import { Checkbox } from '@/features/shared/ui/ui/checkbox';
 import { useGroupConflictPreflight } from '../hooks/useGroupConflictPreflight';
 import { GroupConflictDialog, GroupConflictPanel } from './GroupConflictPanel';
-import { getCanonicalMembershipModeLabel } from '@/features/network/logic/networkLinkDerived';
+import { getCanonicalMembershipModeLabel } from '@/features/network/logic/groupConnectionDerived';
+import {
+  canonicalGroupPair,
+  getExpandedRightDirections,
+  getRightGrantEndpoints,
+} from '@/features/network/logic/groupConnectionComposer';
 
 interface GroupEditFormProps {
   groupId: string;
@@ -74,112 +82,142 @@ export function GroupEditForm({
   const { roles: connectedGroupRoles } = useGroupState({
     groupId: formData.connected_group_id ?? undefined,
   });
-  const { groupLinks } = useNetworkLinkState({ groupId });
+  const { groupConnections } = useGroupConnectionState({ groupId });
   const selectableConnectedGroups = availableGroups.filter(group => group.id !== groupId);
   const selectableConnectedRoles = (connectedGroupRoles ?? []).filter(
     role => role.scope === 'group' && role.assignee_kind !== 'guest'
   );
   const relationshipDirectionOptions: {
-    value: GroupFormData['connected_relationship_directions'][RightType];
+    value: GroupFormData['connectedRelationshipDirections'][RightType];
     label: string;
   }[] = [
-    { value: 'none', label: 'Keine' },
-    { value: 'outgoing', label: 'Aktuelle Gruppe -> andere' },
-    { value: 'incoming', label: 'Andere -> aktuelle Gruppe' },
-    { value: 'bidirectional', label: 'Beidseitig' },
+    { value: 'none', label: translateText('generated.inline.0159_keine_3ce60e74') },
+    {
+      value: 'current_has_right_in_partner',
+      label: translateText(
+        'generated.inline.0160_aktuelle_gruppe_hat_recht_in_partnergruppe_ca1db0de'
+      ),
+    },
+    {
+      value: 'partner_has_right_in_current',
+      label: translateText(
+        'generated.inline.0161_partnergruppe_hat_recht_in_aktueller_gruppe_8b85ec2f'
+      ),
+    },
+    {
+      value: 'mutual',
+      label: translateText('generated.inline.0162_beide_haben_das_recht_gegenseitig_a982cb49'),
+    },
   ];
   const membershipDirectionOptions: {
-    value: NonNullable<GroupFormData['sibling_membership_direction']>;
+    value: NonNullable<GroupFormData['siblingMembershipDirection']>;
     label: string;
     description: string;
   }[] = [
     {
-      value: 'incoming',
-      label: 'Partnergruppe -> aktuelle Gruppe',
-      description: 'Mitglieder fliessen aus der Partnergruppe in die aktuelle Gruppe.',
+      value: 'partner_members_to_current',
+      label: translateText('generated.inline.0163_partnergruppe_aktuelle_gruppe_d9e667ae'),
+      description: translateText(
+        'generated.inline.0164_mitglieder_fliessen_aus_der_partnergruppe_in__034d78c0'
+      ),
     },
     {
-      value: 'outgoing',
-      label: 'Aktuelle Gruppe -> Partnergruppe',
-      description: 'Mitglieder fliessen aus der aktuellen Gruppe in die Partnergruppe.',
+      value: 'current_members_to_partner',
+      label: translateText('generated.inline.0165_aktuelle_gruppe_partnergruppe_e947dfc0'),
+      description: translateText(
+        'generated.inline.0166_mitglieder_fliessen_aus_der_aktuellen_gruppe__57884822'
+      ),
     },
   ];
   const existingSiblingLink =
     formData.connected_group_id == null
       ? null
-      : (groupLinks.find(
-          link =>
-            link.structural_relation === 'sibling' &&
-            ((link.source_group_id === groupId &&
-              link.target_group_id === formData.connected_group_id) ||
-              (link.source_group_id === formData.connected_group_id &&
-                link.target_group_id === groupId))
+      : (groupConnections.find(
+          connection =>
+            connection.connection_type === 'peer' &&
+            ((connection.group_a_id === groupId &&
+              connection.group_b_id === formData.connected_group_id) ||
+              (connection.group_a_id === formData.connected_group_id &&
+                connection.group_b_id === groupId))
         ) ?? null);
-  const siblingRights = RIGHT_TYPES.flatMap(right => {
-    const direction = formData.connected_relationship_directions[right];
-    if (direction === 'none') {
-      return [];
-    }
-
-    return [
-      {
-        id: existingSiblingLink?.rights?.find(existingRight => existingRight.right_key === right)
-          ?.id,
+  const siblingGrants = RIGHT_TYPES.flatMap(right => {
+    const direction = formData.connectedRelationshipDirections[right];
+    return getExpandedRightDirections(direction).map(selectedDirection => {
+      const endpoints = getRightGrantEndpoints(
+        selectedDirection,
+        groupId,
+        formData.connected_group_id ?? ''
+      );
+      return {
+        id: existingSiblingLink?.grants?.find(
+          existingGrant =>
+            existingGrant.right_key === right &&
+            existingGrant.holder_group_id === endpoints.holder_group_id &&
+            existingGrant.scope_group_id === endpoints.scope_group_id
+        )?.id,
         right_key: right,
-        direction:
-          direction === 'bidirectional'
-            ? ('bidirectional' as const)
-            : direction === 'outgoing'
-              ? ('forward' as const)
-              : ('backward' as const),
-        status:
-          (existingSiblingLink?.rights?.find(existingRight => existingRight.right_key === right)
-            ?.status as 'active' | 'requested' | 'pending' | 'rejected' | undefined) ?? 'requested',
-        initiator_group_id:
-          existingSiblingLink?.rights?.find(existingRight => existingRight.right_key === right)
-            ?.initiator_group_id ?? groupId,
-      },
-    ];
+        ...endpoints,
+        status: 'active' as const,
+        initiator_group_id: groupId,
+      };
+    });
   });
   const siblingMembershipRule = {
-    membership_direction:
-      formData.sibling_membership_mode == null || formData.sibling_membership_mode === 'none'
-        ? null
-        : formData.sibling_membership_direction === 'outgoing'
-          ? ('forward' as const)
-          : formData.sibling_membership_direction === 'incoming'
-            ? ('backward' as const)
-            : null,
     membership_mode: formData.sibling_membership_mode ?? 'none',
-    role_id:
+    required_source_role_id:
       formData.sibling_membership_mode === 'role_members'
         ? (formData.sibling_role_id ?? null)
         : null,
-    source_group_ids:
+    eligible_origin_group_ids:
       formData.sibling_membership_mode === 'selected_source_groups'
         ? (formData.parliament_source_group_ids ?? [])
-        : null,
+        : [],
   };
+  const pair = formData.connected_group_id
+    ? canonicalGroupPair(groupId, formData.connected_group_id)
+    : null;
+  const hasSiblingMembership =
+    formData.sibling_membership_mode != null &&
+    formData.sibling_membership_mode !== 'none' &&
+    formData.siblingMembershipDirection != null;
   const siblingConfigurationPreflight = useGroupConflictPreflight(
-    groupType === 'sibling' && formData.connected_group_id && siblingRights.length > 0
+    groupType === 'sibling' &&
+      formData.connected_group_id &&
+      pair &&
+      (siblingGrants.length > 0 || hasSiblingMembership)
       ? {
-          kind: 'network_link_upsert',
-          link_id: existingSiblingLink?.id,
-          source_group_id: groupId,
-          target_group_id: formData.connected_group_id,
-          structural_relation: 'sibling',
-          rights: siblingRights,
-          membership_rule: {
-            membership_direction: siblingMembershipRule.membership_direction,
-            membership_mode: siblingMembershipRule.membership_mode,
-            role_id: siblingMembershipRule.role_id,
-            source_group_ids: siblingMembershipRule.source_group_ids,
-          },
+          kind: 'group_connection_upsert',
+          connection_id: existingSiblingLink?.id,
+          ...pair,
+          connection_type: 'peer',
+          parent_group_id: null,
+          child_group_id: null,
+          grants: siblingGrants,
+          membership_rule: hasSiblingMembership
+            ? {
+                member_source_group_id:
+                  formData.siblingMembershipDirection === 'current_members_to_partner'
+                    ? groupId
+                    : formData.connected_group_id,
+                member_target_group_id:
+                  formData.siblingMembershipDirection === 'current_members_to_partner'
+                    ? formData.connected_group_id
+                    : groupId,
+                membership_mode: siblingMembershipRule.membership_mode as
+                  | 'all_members'
+                  | 'role_members'
+                  | 'selected_source_groups',
+                required_source_role_id: siblingMembershipRule.required_source_role_id,
+                eligible_origin_group_ids: siblingMembershipRule.eligible_origin_group_ids,
+              }
+            : null,
         }
       : null,
     {
       enabled:
-        groupType === 'sibling' && Boolean(formData.connected_group_id) && siblingRights.length > 0,
+        groupType === 'sibling' &&
+        Boolean(formData.connected_group_id) &&
+        (siblingGrants.length > 0 || hasSiblingMembership),
     }
   );
 
@@ -266,8 +304,10 @@ export function GroupEditForm({
         cleanupOnRemove
         entityType="groups"
         entityId={groupId}
-        label="Group Image"
-        description="Upload a group image or provide a URL"
+        label={translateText('generated.inline.0671_group_image_70e21c64')}
+        description={translateText(
+          'generated.inline.0672_upload_a_group_image_or_provide_a_url_7f743f85'
+        )}
       />
 
       {/* Basic Information */}
@@ -286,18 +326,20 @@ export function GroupEditForm({
       {groupType === 'sibling' ? (
         <div className="space-y-4 rounded-lg border p-4">
           <div className="space-y-2">
-            <Label>Verbundene Gruppe</Label>
+            <Label>{translateText('generated.inline.0547_verbundene_gruppe_2d1da077')}</Label>
             <Select
               value={formData.connected_group_id ?? ''}
               onValueChange={value => updateField('connected_group_id', value)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Gruppe waehlen" />
+                <SelectValue
+                  placeholder={translateText('generated.inline.0673_gruppe_waehlen_ef267c5c')}
+                />
               </SelectTrigger>
               <SelectContent>
                 {selectableConnectedGroups.map(group => (
                   <SelectItem key={group.id} value={group.id}>
-                    {group.name || 'Group'}
+                    {group.name || translateText('generated.inline.0094_group_171a0606')}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -305,18 +347,20 @@ export function GroupEditForm({
           </div>
 
           <div className="space-y-2">
-            <Label>Membership-Richtung</Label>
+            <Label>{translateText('generated.inline.0674_membership_richtung_3a1dbdaf')}</Label>
             <Select
-              value={formData.sibling_membership_direction ?? ''}
+              value={formData.siblingMembershipDirection ?? ''}
               onValueChange={value =>
                 updateField(
-                  'sibling_membership_direction',
-                  value as GroupFormData['sibling_membership_direction']
+                  'siblingMembershipDirection',
+                  value as GroupFormData['siblingMembershipDirection']
                 )
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Richtung waehlen" />
+                <SelectValue
+                  placeholder={translateText('generated.inline.0675_richtung_waehlen_2c1eefdb')}
+                />
               </SelectTrigger>
               <SelectContent>
                 {membershipDirectionOptions.map(option => (
@@ -332,7 +376,7 @@ export function GroupEditForm({
           </div>
 
           <div className="space-y-2">
-            <Label>Mitgliedschaftsmodus</Label>
+            <Label>{translateText('generated.inline.0676_mitgliedschaftsmodus_cb90aa67')}</Label>
             <Select
               value={formData.sibling_membership_mode ?? 'none'}
               onValueChange={value =>
@@ -359,18 +403,20 @@ export function GroupEditForm({
 
           {formData.sibling_membership_mode === 'role_members' ? (
             <div className="space-y-2">
-              <Label>Verbundene Rolle</Label>
+              <Label>{translateText('generated.inline.0677_verbundene_rolle_6c578cbb')}</Label>
               <Select
                 value={formData.sibling_role_id ?? ''}
                 onValueChange={value => updateField('sibling_role_id', value)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Rolle waehlen" />
+                  <SelectValue
+                    placeholder={translateText('generated.inline.0678_rolle_waehlen_51cf1595')}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {selectableConnectedRoles.map(role => (
                     <SelectItem key={role.id} value={role.id}>
-                      {role.name || 'Role'}
+                      {role.name || translateText('generated.inline.0092_role_c3f104d1')}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -380,7 +426,7 @@ export function GroupEditForm({
 
           {formData.sibling_membership_mode === 'selected_source_groups' ? (
             <div className="space-y-2">
-              <Label>Source groups</Label>
+              <Label>{translateText('generated.inline.0679_source_groups_ad11f792')}</Label>
               <div className="grid gap-2 rounded-lg border p-3">
                 {availableGroups
                   .filter(group => group.id !== groupId)
@@ -410,7 +456,9 @@ export function GroupEditForm({
                             )
                           }
                         />
-                        <span className="text-sm">{group.name || 'Group'}</span>
+                        <span className="text-sm">
+                          {group.name || translateText('generated.inline.0094_group_171a0606')}
+                        </span>
                       </Label>
                     );
                   })}
@@ -420,9 +468,11 @@ export function GroupEditForm({
 
           <div className="space-y-3">
             <div className="space-y-1">
-              <Label>Rechterichtung</Label>
+              <Label>{translateText('generated.inline.0680_rechterichtung_75533cc6')}</Label>
               <p className="text-muted-foreground text-xs">
-                Lege pro Recht fest, in welche Richtung die Verbindung zur verbundenen Gruppe wirkt.
+                {translateText(
+                  'generated.inline.0681_lege_pro_recht_fest_in_welche_richtung_die_ve_27eaae4c'
+                )}
               </p>
             </div>
             <div className="grid gap-3">
@@ -435,12 +485,12 @@ export function GroupEditForm({
                     {getGroupRelationshipRightLabel(right, t)}
                   </div>
                   <Select
-                    value={formData.connected_relationship_directions[right]}
+                    value={formData.connectedRelationshipDirections[right]}
                     onValueChange={value =>
-                      updateField('connected_relationship_directions', {
-                        ...formData.connected_relationship_directions,
+                      updateField('connectedRelationshipDirections', {
+                        ...formData.connectedRelationshipDirections,
                         [right]:
-                          value as GroupFormData['connected_relationship_directions'][RightType],
+                          value as GroupFormData['connectedRelationshipDirections'][RightType],
                       })
                     }
                   >
@@ -466,16 +516,22 @@ export function GroupEditForm({
                 <div>
                   <div className="text-sm font-semibold">
                     {siblingConfigurationPreflight.response.summary ??
-                      'Diese Konfiguration ist aktuell blockiert.'}
+                      translateText(
+                        'generated.inline.0095_diese_konfiguration_ist_aktuell_blockiert_42554ab1'
+                      )}
                   </div>
                   <div className="text-muted-foreground text-sm">
-                    Bitte bereinige die Konflikte, bevor du speicherst.
+                    {translateText(
+                      'generated.inline.0682_bitte_bereinige_die_konflikte_bevor_du_speich_ec2bc1a4'
+                    )}
                   </div>
                 </div>
                 <GroupConflictDialog
                   response={siblingConfigurationPreflight.response}
-                  triggerLabel="Details"
-                  title="Warum ist diese Konfiguration blockiert?"
+                  triggerLabel={translateText('generated.inline.0683_details_dc3decbb')}
+                  title={translateText(
+                    'generated.inline.0684_warum_ist_diese_konfiguration_blockiert_bef0cbe3'
+                  )}
                 />
               </div>
               <GroupConflictPanel response={siblingConfigurationPreflight.response} />
@@ -492,13 +548,15 @@ export function GroupEditForm({
 
       {/* Hashtags */}
       <div className="space-y-2">
-        <label className="text-sm font-medium">Hashtags</label>
+        <label className="text-sm font-medium">
+          {translateText('generated.inline.0685_hashtags_338da6e1')}
+        </label>
         <HashtagEditor
           value={formData.hashtags}
           onChange={tags => setFormData({ ...formData, hashtags: tags })}
-          label="Hashtags"
+          label={translateText('generated.inline.0685_hashtags_338da6e1')}
           showLabel={false}
-          placeholder="Add hashtags..."
+          placeholder={translateText('generated.inline.0686_add_hashtags_258ebb1b')}
         />
       </div>
 
@@ -506,7 +564,7 @@ export function GroupEditForm({
       <div className="flex gap-4">
         {onCancel && (
           <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
-            Cancel
+            {translateText('generated.inline.0065_cancel_77dfd213')}
           </Button>
         )}
         <Button
@@ -517,12 +575,14 @@ export function GroupEditForm({
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {isCreating ? t('pages.create.common.creating') : 'Saving...'}
+              {isCreating
+                ? t('pages.create.common.creating')
+                : translateText('generated.inline.0096_saving_ae7e8875')}
             </>
           ) : isCreating ? (
             t('pages.create.next')
           ) : (
-            'Save Changes'
+            translateText('generated.inline.0097_save_changes_fa2984b3')
           )}
         </Button>
       </div>

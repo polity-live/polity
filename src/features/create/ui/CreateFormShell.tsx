@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -12,6 +12,9 @@ import { CarouselFormLayout } from './CarouselFormLayout';
 import { OnePageFormLayout } from './OnePageFormLayout';
 import { FormStyleSelector } from './FormStyleSelector';
 import type { CreateFormConfig } from '../types/create-form.types';
+import { usePreferenceState } from '@/zero/preferences/usePreferenceState';
+import { usePreferenceActions } from '@/zero/preferences/usePreferenceActions';
+import type { CreateFormStyle } from '@/zero/preferences/schema';
 
 interface CreateFormShellProps {
   config: CreateFormConfig;
@@ -23,13 +26,31 @@ interface CreateFormShellProps {
  */
 export function CreateFormShell({ config }: CreateFormShellProps) {
   const { t } = useTranslation();
-  const { formMode } = useFormStyle();
+  const { createFormStyle } = usePreferenceState();
+  const { updateFormStyle } = usePreferenceActions();
+  const [optimisticFormStyle, setOptimisticFormStyle] = useState<CreateFormStyle | null>(null);
+  const selectedFormStyle = optimisticFormStyle ?? createFormStyle;
+  const { formMode } = useFormStyle(selectedFormStyle);
   const [currentStep, setCurrentStep] = useState(0);
   const isCarouselLayout = formMode === 'carousel';
 
   const handleStepChange = useCallback((step: number) => {
     setCurrentStep(step);
   }, []);
+
+  const handleFormStyleChange = useCallback(
+    (style: CreateFormStyle) => {
+      setOptimisticFormStyle(style);
+      updateFormStyle(style);
+    },
+    [updateFormStyle]
+  );
+
+  useEffect(() => {
+    if (optimisticFormStyle === createFormStyle) {
+      setOptimisticFormStyle(null);
+    }
+  }, [createFormStyle, optimisticFormStyle]);
 
   const Layout = isCarouselLayout ? CarouselFormLayout : OnePageFormLayout;
 
@@ -49,7 +70,7 @@ export function CreateFormShell({ config }: CreateFormShellProps) {
             <CardTitle>{t(config.title)}</CardTitle>
             <CardDescription className="sr-only">{t(config.title)}</CardDescription>
           </div>
-          <FormStyleSelector />
+          <FormStyleSelector value={selectedFormStyle} onChange={handleFormStyleChange} />
         </CardHeader>
         <CardContent className={isCarouselLayout ? 'flex min-h-0 flex-1 flex-col' : undefined}>
           <Layout

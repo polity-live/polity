@@ -24,6 +24,7 @@ import {
 import { TableTag } from '@/features/shared/ui/ui/table-tag';
 import { cn } from '@/features/shared/utils/utils';
 import { RoleTag } from './RoleTag';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface RoleRow {
   id: string;
@@ -86,12 +87,16 @@ export function RoleDetailsTable<TRole extends RoleRow>({
           <div>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Role Details
+              {translateText('generated.inline.0717_role_details_99faf6f7')}
             </CardTitle>
             <CardDescription>
               {scope === 'event'
-                ? 'Review event role visibility, assignment mode, defaults, and participant access.'
-                : 'Review role visibility, assignment mode, defaults, and manage each elective or assigned role.'}
+                ? translateText(
+                    'generated.inline.0106_review_event_role_visibility_assignment_mode__9d3e73c1'
+                  )
+                : translateText(
+                    'generated.inline.0107_review_role_visibility_assignment_mode_defaul_332a8a56'
+                  )}
             </CardDescription>
           </div>
           {addRoleButton}
@@ -103,12 +108,24 @@ export function RoleDetailsTable<TRole extends RoleRow>({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="min-w-[220px]">Role</TableHead>
-                  <TableHead>Visibility</TableHead>
-                  <TableHead>Assignment</TableHead>
-                  <TableHead>Defaults</TableHead>
-                  {showTermColumn ? <TableHead>Term / Revote</TableHead> : null}
-                  <TableHead className="min-w-[280px] text-right">Manage</TableHead>
+                  <TableHead className="min-w-[220px]">
+                    {translateText('generated.inline.0091_role_c3f104d1')}
+                  </TableHead>
+                  <TableHead>
+                    {translateText('generated.inline.0718_visibility_7d9ff4f0')}
+                  </TableHead>
+                  <TableHead>
+                    {translateText('generated.inline.0621_assignment_e55df441')}
+                  </TableHead>
+                  <TableHead>{translateText('generated.inline.0719_defaults_428819bf')}</TableHead>
+                  {showTermColumn ? (
+                    <TableHead>
+                      {translateText('generated.inline.0720_term_revote_17ae9b60')}
+                    </TableHead>
+                  ) : null}
+                  <TableHead className="min-w-[280px] text-right">
+                    {translateText('generated.inline.0721_manage_bf58d17e')}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -160,11 +177,13 @@ export function RoleDetailsTable<TRole extends RoleRow>({
                           ) : null}
                           <div className="flex flex-wrap gap-2">
                             <TableTag entityType={rightsEntityType}>
-                              {role.action_rights?.length ?? 0} rights
+                              {role.action_rights?.length ?? 0}
+                              {translateText('generated.inline.0016_rights_1407cb23')}
                             </TableTag>
                             {showTermColumn && nextRevote ? (
                               <Badge className="border-transparent bg-gradient-to-r from-rose-100 via-orange-100 to-amber-100 text-amber-950">
-                                Next revote {nextRevote}
+                                {translateText('generated.inline.0624_next_revote_ec9a98d0')}
+                                {nextRevote}
                               </Badge>
                             ) : null}
                           </div>
@@ -178,8 +197,9 @@ export function RoleDetailsTable<TRole extends RoleRow>({
                           )}
                         >
                           {role.visibility === 'authenticated'
-                            ? 'Signed-in'
-                            : role.visibility || 'Public'}
+                            ? translateText('generated.inline.0108_signed_in_d796e4a0')
+                            : role.visibility ||
+                              translateText('generated.inline.0063_public_dc5eb704')}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -190,11 +210,13 @@ export function RoleDetailsTable<TRole extends RoleRow>({
                               getAssignmentBadgeClass(role.assignment_mode)
                             )}
                           >
-                            {role.assignment_mode === 'elected' ? 'Elected' : 'Assigned'}
+                            {role.assignment_mode === 'elected'
+                              ? translateText('generated.inline.0109_elected_27d35d1d')
+                              : translateText('generated.inline.0110_assigned_e24e824b')}
                           </Badge>
                           {hasActiveElection ? (
                             <Badge className="border-transparent bg-gradient-to-r from-sky-100 via-cyan-100 to-blue-100 text-sky-950">
-                              Election active
+                              {translateText('generated.inline.0722_election_active_8b7e89cf')}
                             </Badge>
                           ) : null}
                         </div>
@@ -203,16 +225,18 @@ export function RoleDetailsTable<TRole extends RoleRow>({
                         <div className="flex flex-wrap gap-2">
                           {role.default_request_role ? (
                             <Badge className="border-transparent bg-gradient-to-r from-emerald-100 via-teal-100 to-cyan-100 text-emerald-950">
-                              Request default
+                              {translateText('generated.inline.0723_request_default_2d700a70')}
                             </Badge>
                           ) : null}
                           {role.default_invite_role ? (
                             <Badge className="border-transparent bg-gradient-to-r from-sky-100 via-cyan-100 to-blue-100 text-sky-950">
-                              Invite default
+                              {translateText('generated.inline.0724_invite_default_595a7be7')}
                             </Badge>
                           ) : null}
                           {!role.default_request_role && !role.default_invite_role ? (
-                            <span className="text-muted-foreground text-sm">No default</span>
+                            <span className="text-muted-foreground text-sm">
+                              {translateText('generated.inline.0725_no_default_0cd213a3')}
+                            </span>
                           ) : null}
                         </div>
                       </TableCell>
@@ -229,7 +253,7 @@ export function RoleDetailsTable<TRole extends RoleRow>({
                               <span>
                                 {role.first_term_start
                                   ? `Starts ${format(new Date(role.first_term_start), 'MMM d, yyyy')}`
-                                  : 'No start date'}
+                                  : translateText('generated.inline.0111_no_start_date_52c8423e')}
                               </span>
                             </div>
                           </div>
@@ -240,7 +264,7 @@ export function RoleDetailsTable<TRole extends RoleRow>({
                           {onViewHistory ? (
                             <Button variant="outline" size="sm" onClick={() => onViewHistory(role)}>
                               <History className="mr-2 h-4 w-4" />
-                              View History
+                              {translateText('generated.inline.0726_view_history_8bc3b1ed')}
                             </Button>
                           ) : null}
                           {role.assignment_mode === 'assigned' ? (
@@ -257,7 +281,7 @@ export function RoleDetailsTable<TRole extends RoleRow>({
                                 }
                               >
                                 <UserPlus className="mr-2 h-4 w-4" />
-                                Assign
+                                {translateText('generated.inline.0727_assign_24449284')}
                               </Button>
                             ) : null
                           ) : onCreateElection ? (
@@ -267,16 +291,16 @@ export function RoleDetailsTable<TRole extends RoleRow>({
                               onClick={() => onCreateElection(role.id)}
                             >
                               <Vote className="mr-2 h-4 w-4" />
-                              Create Election
+                              {translateText('generated.inline.0728_create_election_678ef240')}
                             </Button>
                           ) : null}
                           <Button variant="outline" size="sm" onClick={() => onEdit(role)}>
                             <PencilLine className="mr-2 h-4 w-4" />
-                            Edit
+                            {translateText('generated.inline.0729_edit_5301648d')}
                           </Button>
                           <Button variant="ghost" size="sm" onClick={() => onDelete(role.id)}>
                             <Trash2 className="text-destructive mr-2 h-4 w-4" />
-                            Delete
+                            {translateText('generated.inline.0537_delete_f6fdbe48')}
                           </Button>
                         </div>
                       </TableCell>
@@ -290,7 +314,9 @@ export function RoleDetailsTable<TRole extends RoleRow>({
           <div className="py-12 text-center">
             <Users className="text-muted-foreground/50 mx-auto h-12 w-12" />
             <p className="text-muted-foreground mt-4">
-              No roles are ready for detailed management yet.
+              {translateText(
+                'generated.inline.0730_no_roles_are_ready_for_detailed_management_ye_9b3fe260'
+              )}
             </p>
           </div>
         )}

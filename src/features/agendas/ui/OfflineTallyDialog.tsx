@@ -14,6 +14,7 @@ import { Input } from '@/features/shared/ui/ui/input';
 import { VotePasswordInput } from '@/features/vote-cast/ui/VotePasswordInput';
 import { cn } from '@/features/shared/utils/utils';
 import type { OfflineTallyPhase } from '@/features/agendas/logic/offlineTallyToolbar';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface OfflineTallyChoice {
   id: string;
@@ -95,15 +96,21 @@ export function OfflineTallyDialog({
         <div className="space-y-4">
           <div className="bg-muted/30 rounded-lg border p-3 text-sm">
             <div className="flex items-center justify-between gap-3">
-              <span className="font-medium capitalize">{phase} tally</span>
+              <span className="font-medium capitalize">
+                {phase}
+                {translateText('generated.inline.0013_tally_e086c480')}
+              </span>
               <span>
-                Total offline selections: {totalVotes}
+                {translateText('generated.inline.0063_total_offline_selections_31ff1407')}
+                {totalVotes}
                 {maxTotalVotes != null ? ` / ${maxTotalVotes}` : ''}
               </span>
             </div>
             {isOverLimit ? (
               <p className="text-destructive mt-2">
-                The current total exceeds the confirmed offline attendee cap.
+                {translateText(
+                  'generated.inline.0064_the_current_total_exceeds_the_confirmed_offli_9a720fd4'
+                )}
               </p>
             ) : null}
           </div>
@@ -151,11 +158,13 @@ export function OfflineTallyDialog({
             )}
           >
             {isSubmitting
-              ? 'Saving tally...'
-              : 'Enter your voting PIN above to save these tallies.'}
+              ? translateText('generated.inline.0019_saving_tally_a0d995b9')
+              : translateText(
+                  'generated.inline.0020_enter_your_voting_pin_above_to_save_these_tal_7fc92e75'
+                )}
           </p>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {translateText('generated.inline.0065_cancel_77dfd213')}
           </Button>
         </DialogFooter>
       </DialogContent>

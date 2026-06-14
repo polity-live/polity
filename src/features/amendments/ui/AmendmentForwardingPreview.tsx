@@ -47,12 +47,7 @@ export function AmendmentForwardingPreview({
     >
       <div className="flex items-center gap-2 font-medium text-pink-950 dark:text-pink-100">
         <ArrowRight className="h-4 w-4" />
-        <span>
-          {t(
-            'features.amendments.process.forwardingPreviewTitle',
-            'On approval, this amendment forwards to the next event'
-          )}
-        </span>
+        <span>{t('features.amendments.process.forwardingPreviewTitle')}</span>
       </div>
 
       <div className="space-y-2 text-sm">
@@ -81,10 +76,7 @@ export function AmendmentForwardingPreview({
         <div className="flex items-start gap-2">
           <Vote className="mt-0.5 h-4 w-4 shrink-0 text-pink-700 dark:text-pink-300" />
           <p className="text-muted-foreground">
-            {t(
-              'features.amendments.process.forwardingPreviewDescription',
-              'A separate follow-up vote takes place there as soon as this step is approved.'
-            )}
+            {t('features.amendments.process.forwardingPreviewDescription')}
           </p>
         </div>
       </div>

@@ -4,7 +4,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { useAuth } from '@/providers/auth-provider';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
 import {
   Dialog,
@@ -574,17 +577,15 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
 
       toast.success(
         currentRun
-          ? t('features.amendments.process.retargetSuccess', 'Amendment process target updated')
-          : t('features.amendments.process.targetSetSuccess', 'Amendment process target created')
+          ? t('features.amendments.process.retargetSuccess')
+          : t('features.amendments.process.targetSetSuccess')
       );
 
       setSelectorOpen(false);
       setPendingSelection(null);
     } catch (error) {
       console.error('Error starting amendment process:', error);
-      toast.error(
-        t('features.amendments.process.startFailed', 'Failed to start the amendment process')
-      );
+      toast.error(t('features.amendments.process.startFailed'));
     } finally {
       setIsSaving(false);
     }
@@ -593,9 +594,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
   if (!user) {
     return (
       <div className="flex h-[480px] items-center justify-center">
-        <p className="text-muted-foreground">
-          {t('features.amendments.process.pleaseLogin', 'Please sign in to view the process.')}
-        </p>
+        <p className="text-muted-foreground">{t('features.amendments.process.pleaseLogin')}</p>
       </div>
     );
   }
@@ -603,9 +602,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
   if (isLoading) {
     return (
       <div className="flex h-[480px] items-center justify-center">
-        <p className="text-muted-foreground">
-          {t('features.amendments.process.loading', 'Loading amendment process...')}
-        </p>
+        <p className="text-muted-foreground">{t('features.amendments.process.loading')}</p>
       </div>
     );
   }
@@ -618,18 +615,12 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
             <div className="space-y-2">
               <CardTitle className="flex items-center gap-2">
                 <Target className="h-4 w-4" />
-                {t('features.amendments.process.title', 'Amendment process')}
+                {t('features.amendments.process.title')}
               </CardTitle>
               <CardDescription>
                 {currentRun
-                  ? t(
-                      'features.amendments.process.activeRunDescription',
-                      'The forwarding lifecycle now follows the canonical process run, branch, and step records.'
-                    )
-                  : t(
-                      'features.amendments.process.noRunDescription',
-                      'Choose a start group and reachable target to create the first canonical process run.'
-                    )}
+                  ? t('features.amendments.process.activeRunDescription')
+                  : t('features.amendments.process.noRunDescription')}
               </CardDescription>
             </div>
 
@@ -640,8 +631,8 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
               }}
             >
               {currentRun
-                ? t('features.amendments.process.retarget', 'Retarget / start new run')
-                : t('features.amendments.process.start', 'Start process')}
+                ? t('features.amendments.process.retarget')
+                : t('features.amendments.process.start')}
             </Button>
           </div>
         </CardHeader>
@@ -657,12 +648,12 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                 </Badge>
                 <GroupReference
                   group={currentRun.selected_source_group}
-                  label={t('features.amendments.process.sourceGroup', 'Source')}
+                  label={t('features.amendments.process.sourceGroup')}
                   badgeClassName={getInfoBadgeClassName('group')}
                 />
                 <GroupReference
                   group={currentRun.selected_target_group}
-                  label={t('features.amendments.process.targetGroup', 'Target')}
+                  label={t('features.amendments.process.targetGroup')}
                   badgeClassName={getInfoBadgeClassName('group')}
                 />
                 {currentRun.selected_target_workflow?.name ? (
@@ -679,7 +670,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                   className={cn('gap-1.5', getInfoBadgeClassName('count'))}
                 >
                   <GitBranch className="mr-1 h-3 w-3" />
-                  {branches.length} {t('features.amendments.process.branchCount', 'branch(es)')}
+                  {branches.length} {t('features.amendments.process.branchCount')}
                 </Badge>
                 <Badge
                   variant={openTasks.length > 0 ? 'secondary' : 'outline'}
@@ -691,14 +682,14 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                   )}
                 >
                   <Clock3 className="mr-1 h-3 w-3" />
-                  {openTasks.length} {t('features.amendments.process.openTasks', 'open task(s)')}
+                  {openTasks.length} {t('features.amendments.process.openTasks')}
                 </Badge>
               </div>
 
               {currentRun.implementation_status ? (
                 <div className="rounded-lg border px-4 py-3 text-sm">
                   <p className="font-medium">
-                    {t('features.amendments.process.implementationStatus', 'Implementation status')}
+                    {t('features.amendments.process.implementationStatus')}
                   </p>
                   <p className="text-muted-foreground mt-1">{currentRun.implementation_status}</p>
                 </div>
@@ -706,10 +697,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
             </>
           ) : (
             <div className="border-border bg-muted/30 rounded-lg border border-dashed p-4 text-sm">
-              {t(
-                'features.amendments.process.noCurrentRun',
-                'No active process run exists yet for this amendment.'
-              )}
+              {t('features.amendments.process.noCurrentRun')}
             </div>
           )}
         </CardContent>
@@ -735,14 +723,10 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
           <Card>
             <CardHeader>
               <CardTitle className="text-base">
-                {t('features.amendments.process.activeBranch', 'Active branch steps')}
+                {t('features.amendments.process.activeBranch')}
               </CardTitle>
               <CardDescription>
-                {activeBranch.title ??
-                  t(
-                    'features.amendments.process.activeBranchDescription',
-                    'This branch shows the full current forwarding path, including completed and pending steps.'
-                  )}
+                {activeBranch.title ?? t('features.amendments.process.activeBranchDescription')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -763,7 +747,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                               variant="outline"
                               className={cn('gap-1.5', getInfoBadgeClassName('step'))}
                             >
-                              {t('features.amendments.process.step', 'Step')} {step.order_index + 1}
+                              {t('features.amendments.process.step')} {step.order_index + 1}
                             </Badge>
                             <Badge
                               variant={getBadgeVariant(step.status)}
@@ -785,7 +769,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                                 className={cn('gap-1.5', getInfoBadgeClassName('current'))}
                               >
                                 <CheckCircle2 className="mr-1 h-3 w-3" />
-                                {t('features.amendments.process.currentStep', 'Current step')}
+                                {t('features.amendments.process.currentStep')}
                               </Badge>
                             ) : null}
                             {!step.event?.title && hasPendingScheduleEventTask ? (
@@ -794,10 +778,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                                 className={cn('gap-1.5', getInfoBadgeClassName('task'))}
                               >
                                 <Clock3 className="mr-1 h-3 w-3" />
-                                {t(
-                                  'features.amendments.process.eventRequestedPending',
-                                  'Event requested, pending'
-                                )}
+                                {t('features.amendments.process.eventRequestedPending')}
                               </Badge>
                             ) : null}
                           </div>
@@ -819,7 +800,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                             ) : (
                               <p className="font-medium">
                                 {step.workflow_step?.label ??
-                                  t('features.amendments.process.unknownGroup', 'Unknown group')}
+                                  t('features.amendments.process.unknownGroup')}
                               </p>
                             )}
                             <p className="text-muted-foreground text-sm">
@@ -838,14 +819,8 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                             ) : (
                               <span>
                                 {hasPendingScheduleEventTask
-                                  ? t(
-                                      'features.amendments.process.eventRequestedPending',
-                                      'Event requested, pending'
-                                    )
-                                  : t(
-                                      'features.amendments.process.pendingEvent',
-                                      'Waiting for an event to be attached'
-                                    )}
+                                  ? t('features.amendments.process.eventRequestedPending')
+                                  : t('features.amendments.process.pendingEvent')}
                               </span>
                             )}
                           </div>
@@ -854,7 +829,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                         {relatedTasks.length > 0 ? (
                           <div className="min-w-[16rem] space-y-2 rounded-lg border border-dashed p-3">
                             <p className="text-sm font-medium">
-                              {t('features.amendments.process.relatedTasks', 'Related tasks')}
+                              {t('features.amendments.process.relatedTasks')}
                             </p>
                             {relatedTasks.map(task => (
                               <div key={task.id} className="space-y-1 text-xs">
@@ -890,13 +865,10 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
           <Card>
             <CardHeader>
               <CardTitle className="text-base">
-                {t('features.amendments.process.branches', 'Branches')}
+                {t('features.amendments.process.branches')}
               </CardTitle>
               <CardDescription>
-                {t(
-                  'features.amendments.process.branchesDescription',
-                  'Each branch keeps its own ordered step runs and resolution state.'
-                )}
+                {t('features.amendments.process.branchesDescription')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -924,8 +896,8 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                             }
                           >
                             {branch.id === currentRun.active_branch_id
-                              ? t('features.amendments.process.activeBranchBadge', 'Active')
-                              : t('features.amendments.process.branchBadge', 'Branch')}
+                              ? t('features.amendments.process.activeBranchBadge')
+                              : t('features.amendments.process.branchBadge')}
                           </Badge>
                           <Badge
                             variant={getBadgeVariant(branch.status)}
@@ -943,8 +915,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                           ) : null}
                         </div>
                         <p className="font-medium">
-                          {branch.title ??
-                            t('features.amendments.process.untitledBranch', 'Untitled branch')}
+                          {branch.title ?? t('features.amendments.process.untitledBranch')}
                         </p>
                         <div className="flex flex-wrap items-center gap-2 text-xs">
                           {branchStepRuns.map((step, index) => (
@@ -981,14 +952,11 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                       {branchTasks.length > 0 ? (
                         <div className="min-w-[12rem] rounded-lg border border-dashed p-3 text-xs">
                           <p className="font-medium">
-                            {t('features.amendments.process.openTasks', 'Open tasks')}
+                            {t('features.amendments.process.openTasks')}
                           </p>
                           <p className="text-muted-foreground mt-1">
                             {branchTasks.length}{' '}
-                            {t(
-                              'features.amendments.process.tasksNeedAttention',
-                              'task(s) need attention'
-                            )}
+                            {t('features.amendments.process.tasksNeedAttention')}
                           </p>
                         </div>
                       ) : null}
@@ -1004,22 +972,16 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
       <Card>
         <CardHeader>
           <CardTitle className="text-base">
-            {t('features.amendments.process.groupDecisions', 'Group decisions')}
+            {t('features.amendments.process.groupDecisions')}
           </CardTitle>
           <CardDescription>
-            {t(
-              'features.amendments.process.groupDecisionsDescription',
-              'Persisted per-group decisions let us trace accepted, rejected, and withdrawn outcomes independently from run history.'
-            )}
+            {t('features.amendments.process.groupDecisionsDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {groupDecisions.length === 0 ? (
             <p className="text-muted-foreground text-sm">
-              {t(
-                'features.amendments.process.noGroupDecisions',
-                'No per-group decisions have been recorded yet.'
-              )}
+              {t('features.amendments.process.noGroupDecisions')}
             </p>
           ) : (
             <div className="space-y-3">
@@ -1044,7 +1006,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                           ) : (
                             <p className="font-medium">
                               {decision.group?.name ??
-                                t('features.amendments.process.unknownGroup', 'Unknown group')}
+                                t('features.amendments.process.unknownGroup')}
                             </p>
                           )}
                           <p className="text-muted-foreground text-xs">
@@ -1060,12 +1022,14 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                           </Badge>
                           {decision.process_run_id ? (
                             <Badge variant="outline" className={getInfoBadgeClassName('step')}>
-                              run {decision.process_run_id.slice(0, 8)}
+                              {translateText('generated.inline.0018_run_df6ad190')}
+                              {decision.process_run_id.slice(0, 8)}
                             </Badge>
                           ) : null}
                           {decision.process_branch_id ? (
                             <Badge variant="outline" className={getInfoBadgeClassName('step')}>
-                              branch {decision.process_branch_id.slice(0, 8)}
+                              {translateText('generated.inline.0019_branch_10d735e5')}
+                              {decision.process_branch_id.slice(0, 8)}
                             </Badge>
                           ) : null}
                         </div>
@@ -1083,13 +1047,10 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
         <Card>
           <CardHeader>
             <CardTitle className="text-base">
-              {t('features.amendments.process.runHistory', 'Run history')}
+              {t('features.amendments.process.runHistory')}
             </CardTitle>
             <CardDescription>
-              {t(
-                'features.amendments.process.runHistoryDescription',
-                'Earlier destinations remain as process history when the amendment is retargeted.'
-              )}
+              {t('features.amendments.process.runHistoryDescription')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -1122,7 +1083,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                     ) : (
                       <p className="font-medium">
                         {run.selected_target_group?.name ??
-                          t('features.amendments.process.unknownTarget', 'Unknown target')}
+                          t('features.amendments.process.unknownTarget')}
                       </p>
                     )}
                     <p className="text-muted-foreground text-xs">
@@ -1132,8 +1093,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
 
                   <div className="flex flex-wrap gap-2">
                     <Badge variant="outline" className={getInfoBadgeClassName('count')}>
-                      {run.branches?.length ?? 0}{' '}
-                      {t('features.amendments.process.branchCount', 'branch(es)')}
+                      {run.branches?.length ?? 0} {t('features.amendments.process.branchCount')}
                     </Badge>
                     <Badge
                       variant={
@@ -1148,7 +1108,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                       }
                     >
                       {run.tasks?.filter(task => task.status !== 'completed').length ?? 0}{' '}
-                      {t('features.amendments.process.openTasks', 'open task(s)')}
+                      {t('features.amendments.process.openTasks')}
                     </Badge>
                   </div>
                 </div>
@@ -1171,14 +1131,11 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
           <DialogHeader>
             <DialogTitle className="px-6 pt-6">
               {currentRun
-                ? t('features.amendments.process.retargetDialogTitle', 'Retarget amendment process')
-                : t('features.amendments.process.startDialogTitle', 'Start amendment process')}
+                ? t('features.amendments.process.retargetDialogTitle')
+                : t('features.amendments.process.startDialogTitle')}
             </DialogTitle>
             <DialogDescription className="px-6">
-              {t(
-                'features.amendments.process.selectorDescription',
-                'Choose a collaborator, start group, reachable destination, and the event sequence for each step.'
-              )}
+              {t('features.amendments.process.selectorDescription')}
             </DialogDescription>
           </DialogHeader>
 
@@ -1220,10 +1177,7 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                 />
               ) : (
                 <div className="border-border bg-muted/30 rounded-lg border border-dashed p-4 text-sm">
-                  {t(
-                    'features.amendments.process.selectorHint',
-                    'A preview of the selected destination and full process path will appear here.'
-                  )}
+                  {t('features.amendments.process.selectorHint')}
                 </div>
               )}
             </div>
@@ -1237,14 +1191,14 @@ export function AmendmentProcessFlow({ amendmentId }: AmendmentProcessFlowProps)
                 setPendingSelection(null);
               }}
             >
-              {t('common.cancel', 'Cancel')}
+              {t('common.cancel')}
             </Button>
             <Button onClick={handleConfirmSelection} disabled={!pendingSelection || isSaving}>
               {isSaving
-                ? t('features.amendments.process.processing', 'Saving...')
+                ? t('features.amendments.process.processing')
                 : currentRun
-                  ? t('features.amendments.process.confirmRetarget', 'Confirm retargeting')
-                  : t('features.amendments.process.confirmStart', 'Confirm process')}
+                  ? t('features.amendments.process.confirmRetarget')
+                  : t('features.amendments.process.confirmStart')}
             </Button>
           </DialogFooter>
         </DialogContent>

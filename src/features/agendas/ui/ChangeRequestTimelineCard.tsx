@@ -22,7 +22,10 @@ import {
   Crown,
 } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { VotePhaseBadge } from '@/features/vote-cast/ui/VotePhaseBadge';
 import { VoteResultsDisplay, type VoteBarOption } from '@/features/vote-cast/ui/VoteResultsDisplay';
 import { VoteResultSentence } from '@/features/vote-cast/ui/VoteResultSentence';
@@ -118,7 +121,7 @@ function getStatusBadge(
     if (voteResult === 'passed' || originalStatus === 'approved' || originalStatus === 'accepted') {
       return (
         <Badge variant="default" className="bg-green-600">
-          {t('features.agendas.crTimeline.accepted', 'Accepted')}
+          {t('features.agendas.crTimeline.accepted')}
         </Badge>
       );
     }
@@ -130,7 +133,7 @@ function getStatusBadge(
     ) {
       return (
         <Badge variant="default" className="bg-red-600">
-          {t('features.agendas.crTimeline.rejected', 'Rejected')}
+          {t('features.agendas.crTimeline.rejected')}
         </Badge>
       );
     }
@@ -148,7 +151,7 @@ function getStatusBadge(
     );
   return (
     <Badge variant="default" className="bg-blue-600">
-      {t('features.agendas.crTimeline.open', 'Open')}
+      {t('features.agendas.crTimeline.open')}
     </Badge>
   );
 }
@@ -216,7 +219,7 @@ export function ChangeRequestTimelineCard({
   const vote = item.vote;
 
   const title = item.is_final_vote
-    ? t('features.agendas.crTimeline.acceptAmendment', 'Accept amendment as modified')
+    ? t('features.agendas.crTimeline.acceptAmendment')
     : cr?.title || `${t('features.agendas.crTimeline.changeRequest')} ${index + 1}`;
 
   const phase = getVotePhase(item);
@@ -406,7 +409,9 @@ export function ChangeRequestTimelineCard({
                   {diff.changeType === 'update' && diff.newText && (
                     <div>
                       <h4 className="mb-2 text-sm font-semibold text-blue-600 dark:text-blue-400">
-                        {isClosed ? 'Formatting Changed:' : 'Formatting Change:'}
+                        {isClosed
+                          ? translateText('generated.inline.0001_formatting_changed_a569a947')
+                          : translateText('generated.inline.0002_formatting_change_ca927cc5')}
                       </h4>
                       {diff.newProperties && Object.keys(diff.newProperties).length > 0 && (
                         <div className="rounded-lg bg-blue-500/10 p-3">
@@ -418,14 +423,17 @@ export function ChangeRequestTimelineCard({
                             ))}
                           </div>
                           <p className="text-xs whitespace-pre-wrap">
-                            To text: &quot;{diff.newText}&quot;
+                            {translateText('generated.inline.0019_to_text_71c96fa4')}
+                            {diff.newText}&quot;
                           </p>
                         </div>
                       )}
                       {diff.properties && Object.keys(diff.properties).length > 0 && (
                         <div className="bg-muted/50 mt-2 rounded-lg p-3">
                           <p className="text-muted-foreground mb-1 text-xs font-semibold">
-                            {isClosed ? 'Removed formatting:' : 'Remove formatting:'}
+                            {isClosed
+                              ? translateText('generated.inline.0003_removed_formatting_684a9f22')
+                              : translateText('generated.inline.0004_remove_formatting_6266abf5')}
                           </p>
                           <div className="flex flex-wrap gap-2">
                             {Object.entries(diff.properties).map(([key, value]) => (
@@ -450,9 +458,9 @@ export function ChangeRequestTimelineCard({
                         <h4 className="mb-1 text-sm font-semibold text-red-600 dark:text-red-400">
                           {diff.changeType === 'remove'
                             ? isClosed
-                              ? 'Deleted:'
-                              : 'Delete:'
-                            : 'Original Text:'}
+                              ? translateText('generated.inline.0005_deleted_4e8bafed')
+                              : translateText('generated.inline.0006_delete_ed576ebf')
+                            : translateText('generated.inline.0007_original_text_da16d17d')}
                         </h4>
                         <div className="rounded-lg bg-red-500/10 p-3 line-through">
                           <p className="text-xs whitespace-pre-wrap">{diff.originalText}</p>
@@ -467,9 +475,9 @@ export function ChangeRequestTimelineCard({
                         <h4 className="mb-1 text-sm font-semibold text-green-600 dark:text-green-400">
                           {diff.changeType === 'insert'
                             ? isClosed
-                              ? 'Added:'
-                              : 'Add:'
-                            : 'Replace with:'}
+                              ? translateText('generated.inline.0008_added_0ae84aa1')
+                              : translateText('generated.inline.0009_add_c37195fe')
+                            : translateText('generated.inline.0010_replace_with_e0b9893c')}
                         </h4>
                         <div className="rounded-lg bg-green-500/10 p-3">
                           <p className="text-xs whitespace-pre-wrap">{diff.newText}</p>
@@ -480,7 +488,9 @@ export function ChangeRequestTimelineCard({
                   {/* Justification */}
                   {diff.justification && (
                     <div>
-                      <h4 className="mb-1 text-sm font-semibold">Justification:</h4>
+                      <h4 className="mb-1 text-sm font-semibold">
+                        {translateText('generated.inline.0020_justification_fa03998d')}
+                      </h4>
                       <p className="text-muted-foreground text-xs">{diff.justification}</p>
                     </div>
                   )}
@@ -533,9 +543,7 @@ export function ChangeRequestTimelineCard({
             {!isLocked &&
               (choices.length === 0 ? (
                 <div className="rounded-lg border border-dashed p-6 text-center">
-                  <p className="text-muted-foreground">
-                    {t('features.events.agenda.noChoices', 'No choices defined')}
-                  </p>
+                  <p className="text-muted-foreground">{t('features.events.agenda.noChoices')}</p>
                 </div>
               ) : (
                 <div className="space-y-3">

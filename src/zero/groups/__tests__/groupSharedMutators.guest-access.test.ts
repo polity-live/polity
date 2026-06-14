@@ -54,31 +54,25 @@ describe('groupSharedMutators guest-only sibling flow', () => {
       .mockResolvedValueOnce([{ id: 'group-1' }])
       .mockResolvedValueOnce([
         {
-          id: 'link-1',
-          source_group_id: 'group-1',
-          target_group_id: 'group-2',
-          structural_relation: 'sibling',
+          id: 'connection-1',
+          group_a_id: 'group-1',
+          group_b_id: 'group-2',
+          connection_type: 'peer',
           status: 'active',
         },
       ])
-      .mockResolvedValueOnce([
-        {
-          id: 'right-1',
-          network_link_id: 'link-1',
-          right_key: 'informationRight',
-          direction: 'bidirectional',
-          status: 'active',
-        },
-      ])
+      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([
         {
           id: 'rule-1',
-          network_link_id: 'link-1',
+          connection_id: 'connection-1',
+          member_source_group_id: 'group-2',
+          member_target_group_id: 'group-1',
           membership_mode: 'role_members',
-          role_id: null,
-          source_group_ids: null,
+          required_source_role_id: null,
         },
-      ]);
+      ])
+      .mockResolvedValueOnce([]);
 
     await expect(
       groupSharedMutators.joinGroup.fn({
@@ -103,29 +97,29 @@ describe('groupSharedMutators guest-only sibling flow', () => {
       .mockResolvedValueOnce([{ id: 'group-1' }])
       .mockResolvedValueOnce([
         {
-          id: 'link-1',
-          source_group_id: 'group-1',
-          target_group_id: 'group-2',
-          structural_relation: 'sibling',
+          id: 'connection-1',
+          group_a_id: 'group-1',
+          group_b_id: 'group-2',
+          connection_type: 'peer',
           status: 'active',
         },
       ])
-      .mockResolvedValueOnce([
-        {
-          id: 'right-1',
-          network_link_id: 'link-1',
-          right_key: 'informationRight',
-          direction: 'bidirectional',
-          status: 'active',
-        },
-      ])
+      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([
         {
           id: 'rule-1',
-          network_link_id: 'link-1',
+          connection_id: 'connection-1',
+          member_source_group_id: 'group-2',
+          member_target_group_id: 'group-1',
           membership_mode: 'selected_source_groups',
-          role_id: null,
-          source_group_ids: ['group-2'],
+          required_source_role_id: null,
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: 'origin-1',
+          membership_rule_id: 'rule-1',
+          eligible_origin_group_id: 'group-2',
         },
       ])
       .mockResolvedValueOnce(null)

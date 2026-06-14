@@ -39,7 +39,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/features/shared/ui/ui/table';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import type { AiProvider } from '@/lib/ai/schemas';
 import { useAiSettingsTab } from '../hooks/useAiSettingsTab';
 
@@ -52,20 +55,31 @@ const PROVIDER_CONFIG: Record<
   }
 > = {
   openrouter: {
-    title: 'OpenRouter',
-    description:
-      'Bring your own OpenRouter key for paid models. Free app-level OpenRouter models remain available to all users when configured on the server.',
-    note: 'Server-side app key unlocks shared free models. Personal keys unlock paid and account-specific models.',
+    title: translateText('generated.inline.0565_openrouter_12ecf701'),
+    description: translateText(
+      'generated.inline.0566_bring_your_own_openrouter_key_for_paid_models_3ec74496'
+    ),
+    note: translateText(
+      'generated.inline.0567_server_side_app_key_unlocks_shared_free_model_6a9cf0d3'
+    ),
   },
   openai: {
-    title: 'OpenAI',
-    description: 'Use your own OpenAI key for GPT and reasoning models.',
-    note: 'Stored encrypted on the server and never synced back through Zero.',
+    title: translateText('generated.inline.0568_openai_a19ee5a9'),
+    description: translateText(
+      'generated.inline.0569_use_your_own_openai_key_for_gpt_and_reasoning_b159d4b7'
+    ),
+    note: translateText(
+      'generated.inline.0570_stored_encrypted_on_the_server_and_never_sync_1676517b'
+    ),
   },
   anthropic: {
-    title: 'Anthropic',
-    description: 'Use your own Anthropic key for Claude models.',
-    note: 'Stored encrypted on the server and never synced back through Zero.',
+    title: translateText('generated.inline.0571_anthropic_b780a23b'),
+    description: translateText(
+      'generated.inline.0572_use_your_own_anthropic_key_for_claude_models_8f668ee3'
+    ),
+    note: translateText(
+      'generated.inline.0570_stored_encrypted_on_the_server_and_never_sync_1676517b'
+    ),
   },
 };
 
@@ -131,7 +145,11 @@ function fieldHintClass(error: string | null, hasBeenEvaluated: boolean): string
 
 function renderAliasBadges(aliases: string[]) {
   if (aliases.length === 0) {
-    return <span className="text-muted-foreground text-xs">none</span>;
+    return (
+      <span className="text-muted-foreground text-xs">
+        {translateText('generated.inline.0176_none_71f8e797')}
+      </span>
+    );
   }
 
   return (
@@ -171,38 +189,22 @@ export function AiSettingsTab() {
   const isEditingBuiltIn = Boolean(ai.editingBuiltInSlug);
   const skillDialogTitle =
     ai.editingSkillId || isEditingBuiltIn
-      ? t('pages.user.ai.editSkill', 'Edit skill')
-      : t('pages.user.ai.createSkill', 'Create skill');
+      ? t('pages.user.ai.editSkill')
+      : t('pages.user.ai.createSkill');
   const skillDialogDescription = isEditingBuiltIn
-    ? t(
-        'pages.user.ai.editBuiltInDescription',
-        'You are overriding a built-in skill for your account. This override is stored as your personal skill configuration.'
-      )
-    : t(
-        'pages.user.ai.skillFormHint',
-        'Use clear instructions. This prompt is appended to the base Aria & Kai system prompt.'
-      );
+    ? t('pages.user.ai.editBuiltInDescription')
+    : t('pages.user.ai.skillFormHint');
   const aiSettingsOverviewCard = (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-xl">
           <ShieldCheck className="h-5 w-5" />
-          {t('pages.user.ai.title', 'AI settings')}
+          {t('pages.user.ai.title')}
         </CardTitle>
-        <CardDescription>
-          {t(
-            'pages.user.ai.description',
-            'Provider keys are posted once to the server, encrypted at rest, and never exposed through Zero queries or synced back to the client.'
-          )}
-        </CardDescription>
+        <CardDescription>{t('pages.user.ai.description')}</CardDescription>
       </CardHeader>
       <CardContent className="text-muted-foreground text-sm">
-        <p>
-          {t(
-            'pages.user.ai.freeModels',
-            'All users can use free OpenRouter models when OPENROUTER_API_KEY is configured on the server. Paid provider access comes from your BYOK credentials below.'
-          )}
-        </p>
+        <p>{t('pages.user.ai.freeModels')}</p>
       </CardContent>
     </Card>
   );
@@ -211,26 +213,21 @@ export function AiSettingsTab() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-xl">
           <ShieldCheck className="h-5 w-5" />
-          {t('pages.user.ai.availableModelsTitle', 'Available models')}
+          {t('pages.user.ai.availableModelsTitle')}
         </CardTitle>
-        <CardDescription>
-          {t(
-            'pages.user.ai.availableModelsDescription',
-            'These models are currently available to this account in Aria & Kai.'
-          )}
-        </CardDescription>
+        <CardDescription>{t('pages.user.ai.availableModelsDescription')}</CardDescription>
       </CardHeader>
       <CardContent className="text-muted-foreground space-y-3 text-sm">
         {ai.models.length === 0 ? (
-          <p>{t('pages.user.ai.noModels', 'No AI models are currently available.')}</p>
+          <p>{t('pages.user.ai.noModels')}</p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t('pages.user.ai.models.model', 'Model')}</TableHead>
-                <TableHead>{t('pages.user.ai.models.provider', 'Provider')}</TableHead>
-                <TableHead>{t('pages.user.ai.models.contextWindow', 'Context')}</TableHead>
-                <TableHead>{t('pages.user.ai.models.tags', 'Tags')}</TableHead>
+                <TableHead>{t('pages.user.ai.models.model')}</TableHead>
+                <TableHead>{t('pages.user.ai.models.provider')}</TableHead>
+                <TableHead>{t('pages.user.ai.models.contextWindow')}</TableHead>
+                <TableHead>{t('pages.user.ai.models.tags')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -244,11 +241,13 @@ export function AiSettingsTab() {
                   <TableCell>
                     <div className="flex flex-wrap gap-1.5">
                       <Badge className="border-0 bg-gradient-to-r from-indigo-500/20 via-blue-500/20 to-cyan-500/20 text-[11px] text-blue-800 dark:text-blue-200">
-                        {model.source === 'app' ? 'app' : 'byok'}
+                        {model.source === 'app'
+                          ? translateText('generated.inline.0177_app_7d104347')
+                          : translateText('generated.inline.0178_byok_15b99395')}
                       </Badge>
                       {model.free && (
                         <Badge className="border-0 bg-gradient-to-r from-emerald-500/20 via-green-500/20 to-lime-500/20 text-[11px] text-emerald-800 dark:text-emerald-200">
-                          free
+                          {translateText('generated.inline.0179_free_4ff88aad')}
                         </Badge>
                       )}
                       <Badge
@@ -260,7 +259,7 @@ export function AiSettingsTab() {
                       >
                         {isAlwaysAvailableModel(model)
                           ? t('pages.user.ai.models.stable', 'stable')
-                          : t('pages.user.ai.models.mayFail', 'may fail')}
+                          : t('pages.user.ai.models.mayFail')}
                       </Badge>
                     </div>
                   </TableCell>
@@ -281,25 +280,20 @@ export function AiSettingsTab() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <Wrench className="h-5 w-5" />
-            {t('pages.user.ai.toolsTitle', 'Available tools')}
+            {t('pages.user.ai.toolsTitle')}
           </CardTitle>
-          <CardDescription>
-            {t(
-              'pages.user.ai.toolsDescription',
-              'Tools are callable Polity APIs that Aria & Kai can execute and read results from. Skills are prompt instructions and are configured separately below.'
-            )}
-          </CardDescription>
+          <CardDescription>{t('pages.user.ai.toolsDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t('pages.user.ai.tools.name', 'Name')}</TableHead>
-                <TableHead>{t('pages.user.ai.tools.identifier', 'Identifier')}</TableHead>
-                <TableHead>{t('pages.user.ai.tools.type', 'Type')}</TableHead>
-                <TableHead>{t('pages.user.ai.tools.descriptionColumn', 'Description')}</TableHead>
-                <TableHead>{t('common.labels.enabled', 'Enabled')}</TableHead>
-                <TableHead>{t('common.labels.status', 'Status')}</TableHead>
+                <TableHead>{t('pages.user.ai.tools.name')}</TableHead>
+                <TableHead>{t('pages.user.ai.tools.identifier')}</TableHead>
+                <TableHead>{t('pages.user.ai.tools.type')}</TableHead>
+                <TableHead>{t('pages.user.ai.tools.descriptionColumn')}</TableHead>
+                <TableHead>{t('common.labels.enabled')}</TableHead>
+                <TableHead>{t('common.labels.status')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -329,7 +323,7 @@ export function AiSettingsTab() {
                       <Switch
                         checked={isEnabled}
                         onCheckedChange={checked => ai.toggleBuiltInToolEnabled(tool.name, checked)}
-                        aria-label={t('pages.user.ai.tools.toggle', 'Toggle tool')}
+                        aria-label={t('pages.user.ai.tools.toggle')}
                       />
                     </TableCell>
                     <TableCell>
@@ -355,27 +349,20 @@ export function AiSettingsTab() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">
-            {t('pages.user.ai.skillsBuiltIn', 'Built-in skills')}
-          </CardTitle>
-          <CardDescription>
-            {t(
-              'pages.user.ai.skillsBuiltInDescription',
-              'These skills are available in the Aria & Kai chat via slash commands even without creating your own custom skill.'
-            )}
-          </CardDescription>
+          <CardTitle className="text-lg">{t('pages.user.ai.skillsBuiltIn')}</CardTitle>
+          <CardDescription>{t('pages.user.ai.skillsBuiltInDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t('pages.user.ai.skills.name', 'Name')}</TableHead>
-                <TableHead>{t('pages.user.ai.skills.slug', 'Slug')}</TableHead>
-                <TableHead>{t('pages.user.ai.skills.aliases', 'Aliases')}</TableHead>
-                <TableHead>{t('common.labels.status', 'Status')}</TableHead>
-                <TableHead>{t('common.labels.enabled', 'Enabled')}</TableHead>
-                <TableHead>{t('common.labels.status', 'Status')}</TableHead>
-                <TableHead className="w-[120px]">{t('common.actions.edit', 'Edit')}</TableHead>
+                <TableHead>{t('pages.user.ai.skills.name')}</TableHead>
+                <TableHead>{t('pages.user.ai.skills.slug')}</TableHead>
+                <TableHead>{t('pages.user.ai.skills.aliases')}</TableHead>
+                <TableHead>{t('common.labels.status')}</TableHead>
+                <TableHead>{t('common.labels.enabled')}</TableHead>
+                <TableHead>{t('common.labels.status')}</TableHead>
+                <TableHead className="w-[120px]">{t('common.actions.edit')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -408,7 +395,7 @@ export function AiSettingsTab() {
                         onCheckedChange={checked =>
                           ai.toggleBuiltInSkillEnabled(skill.slug, checked)
                         }
-                        aria-label={t('pages.user.ai.skills.toggle', 'Toggle skill')}
+                        aria-label={t('pages.user.ai.skills.toggle')}
                       />
                     </TableCell>
                     <TableCell>
@@ -426,7 +413,7 @@ export function AiSettingsTab() {
                         onClick={() => ai.startEditBuiltInSkill(skill.slug)}
                       >
                         <Pencil className="mr-1 h-3.5 w-3.5" />
-                        {t('common.actions.edit', 'Edit')}
+                        {t('common.actions.edit')}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -441,39 +428,29 @@ export function AiSettingsTab() {
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <CardTitle className="text-lg">
-                {t('pages.user.ai.customSkills', 'Custom skills')}
-              </CardTitle>
-              <CardDescription>
-                {t(
-                  'pages.user.ai.customSkillsDescription',
-                  'Create reusable slash-command skills for Aria & Kai. Custom skills stay reactive through Zero and are available in chat immediately.'
-                )}
-              </CardDescription>
+              <CardTitle className="text-lg">{t('pages.user.ai.customSkills')}</CardTitle>
+              <CardDescription>{t('pages.user.ai.customSkillsDescription')}</CardDescription>
             </div>
             <Button type="button" variant="outline" onClick={ai.startCreateSkill}>
               <Sparkles className="mr-2 h-4 w-4" />
-              {t('pages.user.ai.newSkill', 'New skill')}
+              {t('pages.user.ai.newSkill')}
             </Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {customSkills.length === 0 ? (
             <div className="text-muted-foreground rounded-md border border-dashed p-4 text-sm">
-              {t(
-                'pages.user.ai.noCustomSkills',
-                'No custom skills yet. Create one below and use it in chat with `/your-skill`.'
-              )}
+              {t('pages.user.ai.noCustomSkills')}
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t('pages.user.ai.skills.name', 'Name')}</TableHead>
-                  <TableHead>{t('pages.user.ai.skills.slug', 'Slug')}</TableHead>
-                  <TableHead>{t('pages.user.ai.skills.aliases', 'Aliases')}</TableHead>
-                  <TableHead>{t('common.labels.enabled', 'Enabled')}</TableHead>
-                  <TableHead className="w-[180px]">{t('common.actions.edit', 'Edit')}</TableHead>
+                  <TableHead>{t('pages.user.ai.skills.name')}</TableHead>
+                  <TableHead>{t('pages.user.ai.skills.slug')}</TableHead>
+                  <TableHead>{t('pages.user.ai.skills.aliases')}</TableHead>
+                  <TableHead>{t('common.labels.enabled')}</TableHead>
+                  <TableHead className="w-[180px]">{t('common.actions.edit')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -486,7 +463,7 @@ export function AiSettingsTab() {
                       <Switch
                         checked={skill.enabled}
                         onCheckedChange={checked => ai.toggleCustomSkillEnabled(skill.id, checked)}
-                        aria-label={t('pages.user.ai.skills.toggle', 'Toggle skill')}
+                        aria-label={t('pages.user.ai.skills.toggle')}
                       />
                     </TableCell>
                     <TableCell>
@@ -498,7 +475,7 @@ export function AiSettingsTab() {
                           onClick={() => ai.startEditSkill(skill.id)}
                         >
                           <Pencil className="mr-1 h-3.5 w-3.5" />
-                          {t('common.actions.edit', 'Edit')}
+                          {t('common.actions.edit')}
                         </Button>
                         <Button
                           type="button"
@@ -520,15 +497,8 @@ export function AiSettingsTab() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">
-            {t('pages.user.ai.credentialsTitle', 'Provider API keys')}
-          </CardTitle>
-          <CardDescription>
-            {t(
-              'pages.user.ai.credentialsDescription',
-              'Stored encrypted on the server. Keys are never synced through Zero.'
-            )}
-          </CardDescription>
+          <CardTitle className="text-lg">{t('pages.user.ai.credentialsTitle')}</CardTitle>
+          <CardDescription>{t('pages.user.ai.credentialsDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 xl:grid-cols-3">
@@ -549,15 +519,15 @@ export function AiSettingsTab() {
                       <div className="flex items-center gap-2 font-medium">
                         <KeyRound className="h-4 w-4" />
                         {summary.has_key
-                          ? t('pages.user.ai.credentials.savedState', 'Saved on server')
-                          : t('pages.user.ai.credentials.missingState', 'No key saved')}
+                          ? t('pages.user.ai.credentials.savedState')
+                          : t('pages.user.ai.credentials.missingState')}
                       </div>
                       {summary.key_hint && (
                         <p className="text-muted-foreground mt-1">{summary.key_hint}</p>
                       )}
                       {summary.updated_at && (
                         <p className="text-muted-foreground mt-1 text-xs">
-                          {t('pages.user.ai.credentials.updatedAt', 'Updated')}:{' '}
+                          {t('pages.user.ai.credentials.updatedAt')}:{' '}
                           {formatTimestamp(summary.updated_at)}
                         </p>
                       )}
@@ -565,7 +535,7 @@ export function AiSettingsTab() {
 
                     <div className="space-y-2">
                       <Label htmlFor={`ai-provider-${provider}`}>
-                        {t('pages.user.ai.credentials.apiKey', 'API key')}
+                        {t('pages.user.ai.credentials.apiKey')}
                       </Label>
                       <Input
                         id={`ai-provider-${provider}`}
@@ -573,10 +543,7 @@ export function AiSettingsTab() {
                         autoComplete="off"
                         value={ai.providerInputs[provider]}
                         onChange={event => ai.updateProviderInput(provider, event.target.value)}
-                        placeholder={t(
-                          'pages.user.ai.credentials.placeholder',
-                          'Paste a new API key to save or replace'
-                        )}
+                        placeholder={t('pages.user.ai.credentials.placeholder')}
                       />
                       <p className="text-muted-foreground text-xs">{config.note}</p>
                     </div>
@@ -592,8 +559,8 @@ export function AiSettingsTab() {
                       >
                         {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         {summary.has_key
-                          ? t('pages.user.ai.credentials.update', 'Update key')
-                          : t('pages.user.ai.credentials.save', 'Save key')}
+                          ? t('pages.user.ai.credentials.update')
+                          : t('pages.user.ai.credentials.save')}
                       </Button>
                       <Button
                         type="button"
@@ -640,7 +607,7 @@ export function AiSettingsTab() {
           <div className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="ai-skill-name">{t('pages.user.ai.skills.name', 'Name')}</Label>
+                <Label htmlFor="ai-skill-name">{t('pages.user.ai.skills.name')}</Label>
                 <Input
                   id="ai-skill-name"
                   value={ai.skillForm.name}
@@ -663,13 +630,13 @@ export function AiSettingsTab() {
                 >
                   {ai.visibleSkillFormErrors.name ||
                     (skillFieldEvaluated.name
-                      ? t('common.validation.good', 'Looks good.')
-                      : t('pages.user.ai.skills.requiredHint', 'Required.'))}
+                      ? t('common.validation.good')
+                      : t('pages.user.ai.skills.requiredHint'))}
                 </p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="ai-skill-slug">{t('pages.user.ai.skills.slug', 'Slug')}</Label>
+                <Label htmlFor="ai-skill-slug">{t('pages.user.ai.skills.slug')}</Label>
                 <Input
                   id="ai-skill-slug"
                   value={ai.skillForm.slug}
@@ -696,16 +663,13 @@ export function AiSettingsTab() {
                     skillFieldEvaluated.slug
                   )}
                 >
-                  {ai.visibleSkillFormErrors.slug ||
-                    t('pages.user.ai.skills.slugHint', 'Letters, numbers, hyphens.')}
+                  {ai.visibleSkillFormErrors.slug || t('pages.user.ai.skills.slugHint')}
                 </p>
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="ai-skill-aliases">
-                {t('pages.user.ai.skills.aliases', 'Aliases')}
-              </Label>
+              <Label htmlFor="ai-skill-aliases">{t('pages.user.ai.skills.aliases')}</Label>
               <HashtagInput
                 inputId="ai-skill-aliases"
                 value={parseAliases(ai.skillForm.aliases)}
@@ -719,10 +683,7 @@ export function AiSettingsTab() {
                   ai.visibleSkillFormErrors.aliases,
                   skillFieldEvaluated.aliases
                 )}
-                placeholder={t(
-                  'pages.user.ai.skills.aliasesPlaceholder',
-                  'Add an alias, e.g. campaign-strategy'
-                )}
+                placeholder={t('pages.user.ai.skills.aliasesPlaceholder')}
               />
               <p
                 className={fieldHintClass(
@@ -730,18 +691,12 @@ export function AiSettingsTab() {
                   skillFieldEvaluated.aliases
                 )}
               >
-                {ai.visibleSkillFormErrors.aliases ||
-                  t(
-                    'pages.user.ai.skills.aliasHint',
-                    'Aliases are optional. Press Enter or Add after each one.'
-                  )}
+                {ai.visibleSkillFormErrors.aliases || t('pages.user.ai.skills.aliasHint')}
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="ai-skill-prompt">
-                {t('pages.user.ai.skills.systemPrompt', 'System prompt')}
-              </Label>
+              <Label htmlFor="ai-skill-prompt">{t('pages.user.ai.skills.systemPrompt')}</Label>
               <Textarea
                 id="ai-skill-prompt"
                 value={ai.skillForm.systemPrompt}
@@ -764,20 +719,20 @@ export function AiSettingsTab() {
               >
                 {ai.visibleSkillFormErrors.systemPrompt ||
                   (skillFieldEvaluated.systemPrompt
-                    ? t('pages.user.ai.skills.promptHint', 'Prompt is valid.')
-                    : t('pages.user.ai.skills.requiredHint', 'Required.'))}
+                    ? t('pages.user.ai.skills.promptHint')
+                    : t('pages.user.ai.skills.requiredHint'))}
               </p>
             </div>
           </div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={ai.cancelSkillEdit}>
-              {t('common.cancel', 'Cancel')}
+              {t('common.cancel')}
             </Button>
             <Button type="button" onClick={ai.saveSkill} disabled={!ai.isSkillFormValid}>
               {ai.editingSkillId || isEditingBuiltIn
-                ? t('pages.user.ai.skills.update', 'Update skill')
-                : t('pages.user.ai.skills.create', 'Create skill')}
+                ? t('pages.user.ai.skills.update')
+                : t('pages.user.ai.skills.create')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -793,23 +748,21 @@ export function AiSettingsTab() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t('pages.user.ai.skills.deleteTitle', 'Delete skill?')}
-            </AlertDialogTitle>
+            <AlertDialogTitle>{t('pages.user.ai.skills.deleteTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t(
-                'pages.user.ai.skills.deleteDescription',
-                'This will permanently delete the custom skill "{{name}}" from your account.'
-              ).replace('{{name}}', ai.pendingSkillDeletion?.name ?? '')}
+              {t('pages.user.ai.skills.deleteDescription').replace(
+                '{{name}}',
+                ai.pendingSkillDeletion?.name ?? ''
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t('common.cancel', 'Cancel')}</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={ai.confirmDeleteSkill}
               className="bg-destructive hover:bg-destructive/90 text-white"
             >
-              {t('common.actions.delete', 'Delete')}
+              {t('common.actions.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

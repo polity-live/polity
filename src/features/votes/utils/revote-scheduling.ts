@@ -1,3 +1,4 @@
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 type TermDuration = 'monthly' | 'quarterly' | 'yearly' | 'biannual';
 
 interface ScheduleRevoteParams {
@@ -67,7 +68,7 @@ export function getRoleRevoteStatus(
     return {
       dueDate: null,
       isOverdue: false,
-      label: 'Open term',
+      label: translateText('generated.inline.0574_open_term_941c1a6f'),
     };
   }
 
@@ -81,7 +82,7 @@ export function getRoleRevoteStatus(
     return {
       dueDate: null,
       isOverdue: false,
-      label: 'Recurring term',
+      label: translateText('generated.inline.0575_recurring_term_9a812713'),
     };
   }
 

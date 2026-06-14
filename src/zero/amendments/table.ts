@@ -12,6 +12,7 @@ export const amendment = table('amendment')
     group_id: string().optional(),
     event_id: string().optional(),
     clone_source_id: string().optional(),
+    origin_amendment_id: string().optional(),
     document_id: string().optional(),
     supporters: number(),
     supporters_required: number().optional(),

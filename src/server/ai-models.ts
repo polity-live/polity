@@ -5,6 +5,7 @@ import type { LanguageModel } from 'ai';
 import { z } from 'zod';
 import type { AiModelDescriptor, AiProvider, AiReasoningEffort } from '@/lib/ai/schemas';
 import { getDecryptedAiCredential, listAiCredentialSummaries } from './ai-db';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 const openRouterModelSchema = z.object({
   id: z.string(),
@@ -43,7 +44,7 @@ const OPENAI_MODELS: readonly AiModelOption[] = [
   {
     provider: 'openai',
     id: 'gpt-4.1-mini',
-    label: 'OpenAI GPT-4.1 Mini',
+    label: translateText('generated.inline.0625_openai_gpt_4_1_mini_11c5f625'),
     source: 'byok',
     free: false,
     supports_reasoning_effort: true,
@@ -52,7 +53,7 @@ const OPENAI_MODELS: readonly AiModelOption[] = [
   {
     provider: 'openai',
     id: 'gpt-4.1',
-    label: 'OpenAI GPT-4.1',
+    label: translateText('generated.inline.0626_openai_gpt_4_1_4d2716d2'),
     source: 'byok',
     free: false,
     supports_reasoning_effort: true,
@@ -61,7 +62,7 @@ const OPENAI_MODELS: readonly AiModelOption[] = [
   {
     provider: 'openai',
     id: 'o4-mini',
-    label: 'OpenAI o4-mini',
+    label: translateText('generated.inline.0627_openai_o4_mini_1428ccf2'),
     source: 'byok',
     free: false,
     supports_reasoning_effort: true,
@@ -70,7 +71,7 @@ const OPENAI_MODELS: readonly AiModelOption[] = [
   {
     provider: 'openai',
     id: 'o3',
-    label: 'OpenAI o3',
+    label: translateText('generated.inline.0628_openai_o3_1edeb091'),
     source: 'byok',
     free: false,
     supports_reasoning_effort: true,
@@ -82,7 +83,7 @@ const ANTHROPIC_MODELS: readonly AiModelOption[] = [
   {
     provider: 'anthropic',
     id: 'claude-haiku-4-5',
-    label: 'Anthropic Claude Haiku 4.5',
+    label: translateText('generated.inline.0629_anthropic_claude_haiku_4_5_109ddf7f'),
     source: 'byok',
     free: false,
     supports_reasoning_effort: true,
@@ -91,7 +92,7 @@ const ANTHROPIC_MODELS: readonly AiModelOption[] = [
   {
     provider: 'anthropic',
     id: 'claude-sonnet-4-5',
-    label: 'Anthropic Claude Sonnet 4.5',
+    label: translateText('generated.inline.0630_anthropic_claude_sonnet_4_5_474a5073'),
     source: 'byok',
     free: false,
     supports_reasoning_effort: true,
@@ -100,7 +101,7 @@ const ANTHROPIC_MODELS: readonly AiModelOption[] = [
   {
     provider: 'anthropic',
     id: 'claude-opus-4-1',
-    label: 'Anthropic Claude Opus 4.1',
+    label: translateText('generated.inline.0631_anthropic_claude_opus_4_1_c638eb74'),
     source: 'byok',
     free: false,
     supports_reasoning_effort: true,

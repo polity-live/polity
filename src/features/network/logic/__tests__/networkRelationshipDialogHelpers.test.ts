@@ -42,7 +42,7 @@ describe('networkRelationshipDialogHelpers', () => {
         edgeDirection: 'backward',
         isIncomingPerspective: preview?.isIncomingPerspective ?? false,
       })
-    ).toBe('incoming');
+    ).toBe('partner_has_right_in_current');
   });
 
   it('still swaps incoming hierarchy edges into the current-group perspective', () => {
@@ -67,7 +67,7 @@ describe('networkRelationshipDialogHelpers', () => {
         edgeDirection: 'forward',
         isIncomingPerspective: preview?.isIncomingPerspective ?? false,
       })
-    ).toBe('incoming');
+    ).toBe('partner_has_right_in_current');
   });
 
   it('prefers explicit preview metadata when the edge was display-oriented', () => {

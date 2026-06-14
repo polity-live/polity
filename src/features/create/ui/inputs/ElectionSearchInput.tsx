@@ -3,6 +3,7 @@ import { useElectionState } from '@/zero/elections/useElectionState';
 import { useMemo } from 'react';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import { CreateTypeaheadField } from '../CreateFields';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface ElectionSearchInputProps {
   value: string;
@@ -18,7 +19,7 @@ export function ElectionSearchInput({
   onChange,
   label,
   hint,
-  placeholder = 'Search for an election...',
+  placeholder = translateText('generated.inline.0041_search_for_an_election_fce24966'),
   required,
 }: ElectionSearchInputProps) {
   const { electionsForSearch } = useElectionState({ includeElectionsForSearch: true });

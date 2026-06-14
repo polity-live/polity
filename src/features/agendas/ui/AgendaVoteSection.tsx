@@ -3,8 +3,11 @@
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Badge } from '@/features/shared/ui/ui/badge';
-import { Vote, CheckCircle2, Crown } from 'lucide-react';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { Vote, CheckCircle2, Crown, Expand } from 'lucide-react';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 import { VoteResultsDisplay } from '@/features/vote-cast/ui/VoteResultsDisplay';
 import { VoteResultSentence } from '@/features/vote-cast/ui/VoteResultSentence';
@@ -59,6 +62,7 @@ interface AgendaVoteSectionProps {
   offlineTallies?: readonly VoteOfflineTallyLike[];
   canManageOfflineResults?: boolean;
   offlineEligibleCount?: number;
+  onOpenNamedResults?: () => void;
   className?: string;
 }
 
@@ -82,6 +86,7 @@ export function AgendaVoteSection({
   totalEligibleVoters,
   attendanceMode = 'online',
   offlineTallies = [],
+  onOpenNamedResults,
   className,
 }: AgendaVoteSectionProps) {
   const { t } = useTranslation();
@@ -184,12 +189,15 @@ export function AgendaVoteSection({
     winningChoiceId,
   ]);
 
+  const isInteractive = Boolean(onOpenNamedResults);
+  const ResultsWrapper = isInteractive ? 'button' : 'div';
+
   return (
     <Card className={cn(className)}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Vote className="h-5 w-5" />
-          {t('features.events.agenda.voteResults', 'Vote Results')}
+          {t('features.events.agenda.voteResults')}
           {attendanceMode ? (
             <Badge variant="outline" className="capitalize">
               {attendanceMode}
@@ -199,101 +207,118 @@ export function AgendaVoteSection({
             phase={isIndicationPhase ? 'indication' : isClosed ? 'closed' : 'final_vote'}
             className="ml-auto"
           />
+          {isInteractive ? (
+            <Badge variant="secondary" className="gap-1">
+              <Expand className="h-3 w-3" />
+              {translateText('generated.inline.0013_namentlich_8d49da42')}
+            </Badge>
+          ) : null}
         </CardTitle>
       </CardHeader>
 
       <CardContent className="space-y-6">
-        {/* Result sentence when voting is closed */}
-        {isClosed && resolvedVoteResult && (
-          <VoteResultSentence
-            type="vote"
-            result={resolvedVoteResult}
-            winnerName={winningLabel}
-            voteSharePercent={resolvedVoteSharePercent}
-            isFinal
-          />
-        )}
-
-        {/* Vote title */}
-        <h3 className="font-semibold">{voteTitle}</h3>
-
-        {/* Vote count header */}
-        <div className="text-muted-foreground flex items-center justify-between text-sm">
-          <span>
-            {isIndicationPhase
-              ? `${totalIndicative} ${t('features.events.agenda.indicationVotes')}`
-              : `${totalFinal} ${t('features.events.agenda.votes')}`}
-          </span>
-          {isIndicationPhase && (
-            <Badge variant="secondary" className="text-xs">
-              * {t('features.events.agenda.indicationOnly')}
-            </Badge>
+        <ResultsWrapper
+          {...(isInteractive
+            ? {
+                type: 'button' as const,
+                onClick: onOpenNamedResults,
+                className:
+                  'w-full space-y-6 text-left transition-opacity hover:opacity-95 focus-visible:outline-none',
+              }
+            : { className: 'space-y-6' })}
+        >
+          {isClosed && resolvedVoteResult && (
+            <VoteResultSentence
+              type="vote"
+              result={resolvedVoteResult}
+              winnerName={winningLabel}
+              voteSharePercent={resolvedVoteSharePercent}
+              isFinal
+            />
           )}
-        </div>
 
-        {/* Choices with result bars */}
-        {choices.length === 0 ? (
-          <div className="rounded-lg border border-dashed p-6 text-center">
-            <p className="text-muted-foreground">
-              {t('features.events.agenda.noChoices', 'No choices defined')}
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {choiceStats.map((cs, idx) => {
-              const isWinner = cs.choice.id === winningChoiceId && !isIndicationPhase;
-              const isSelected = userSelectedChoiceIds.includes(cs.choice.id);
-              const colors = CHOICE_COLORS[idx % CHOICE_COLORS.length];
+          <h3 className="font-semibold">{voteTitle}</h3>
 
-              return (
-                <div
-                  key={cs.choice.id}
-                  className={cn(
-                    'rounded-lg border p-3 transition-colors',
-                    isSelected && 'border-primary bg-primary/5',
-                    isWinner && isClosed && 'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/30'
-                  )}
-                >
-                  <div className="mb-2 flex items-center gap-2">
-                    <span className="font-medium">{cs.choice.label || `Choice ${idx + 1}`}</span>
-                    {isWinner && isClosed && <Crown className="h-4 w-4 text-yellow-500" />}
-                    {isSelected && <CheckCircle2 className="text-primary h-4 w-4" />}
-                  </div>
-
-                  <VoteResultsDisplay
-                    options={[
-                      {
-                        key: cs.choice.id,
-                        label: cs.choice.label || `Choice ${idx + 1}`,
-                        color: colors.color,
-                        lightColor: colors.light,
-                        finalCount: cs.finalCount,
-                        finalPercent: cs.finalPercentage,
-                        indicationCount: cs.indicativeCount,
-                        indicationPercent: cs.indicativePercentage,
-                      },
-                    ]}
-                    phase={isIndicationPhase ? 'indication' : isClosed ? 'closed' : 'final_vote'}
-                    totalFinal={totalFinal}
-                    totalIndication={totalIndicative}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* User's current vote indicator */}
-        {userHasVoted && (
-          <div className="flex items-center justify-center gap-2 text-sm">
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
-            <span className="text-muted-foreground">
+          <div className="text-muted-foreground flex items-center justify-between text-sm">
+            <span>
               {isIndicationPhase
-                ? t('features.events.agenda.yourIndication')
-                : t('features.events.agenda.yourVote')}
+                ? `${totalIndicative} ${t('features.events.agenda.indicationVotes')}`
+                : `${totalFinal} ${t('features.events.agenda.votes')}`}
             </span>
+            <div className="flex items-center gap-2">
+              {isIndicationPhase ? (
+                <Badge variant="secondary" className="text-xs">
+                  * {t('features.events.agenda.indicationOnly')}
+                </Badge>
+              ) : null}
+              {isInteractive ? (
+                <Badge variant="outline" className="text-xs">
+                  {translateText('generated.inline.0015_klick_fuer_einzelansicht_9d7ff135')}
+                </Badge>
+              ) : null}
+            </div>
           </div>
-        )}
+
+          {choices.length === 0 ? (
+            <div className="rounded-lg border border-dashed p-6 text-center">
+              <p className="text-muted-foreground">{t('features.events.agenda.noChoices')}</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {choiceStats.map((cs, idx) => {
+                const isWinner = cs.choice.id === winningChoiceId && !isIndicationPhase;
+                const isSelected = userSelectedChoiceIds.includes(cs.choice.id);
+                const colors = CHOICE_COLORS[idx % CHOICE_COLORS.length];
+
+                return (
+                  <div
+                    key={cs.choice.id}
+                    className={cn(
+                      'rounded-lg border p-3 transition-colors',
+                      isSelected && 'border-primary bg-primary/5',
+                      isWinner && isClosed && 'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/30'
+                    )}
+                  >
+                    <div className="mb-2 flex items-center gap-2">
+                      <span className="font-medium">{cs.choice.label || `Choice ${idx + 1}`}</span>
+                      {isWinner && isClosed && <Crown className="h-4 w-4 text-yellow-500" />}
+                      {isSelected && <CheckCircle2 className="text-primary h-4 w-4" />}
+                    </div>
+
+                    <VoteResultsDisplay
+                      options={[
+                        {
+                          key: cs.choice.id,
+                          label: cs.choice.label || `Choice ${idx + 1}`,
+                          color: colors.color,
+                          lightColor: colors.light,
+                          finalCount: cs.finalCount,
+                          finalPercent: cs.finalPercentage,
+                          indicationCount: cs.indicativeCount,
+                          indicationPercent: cs.indicativePercentage,
+                        },
+                      ]}
+                      phase={isIndicationPhase ? 'indication' : isClosed ? 'closed' : 'final_vote'}
+                      totalFinal={totalFinal}
+                      totalIndication={totalIndicative}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {userHasVoted ? (
+            <div className="flex items-center justify-center gap-2 text-sm">
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+              <span className="text-muted-foreground">
+                {isIndicationPhase
+                  ? t('features.events.agenda.yourIndication')
+                  : t('features.events.agenda.yourVote')}
+              </span>
+            </div>
+          ) : null}
+        </ResultsWrapper>
       </CardContent>
     </Card>
   );

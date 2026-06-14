@@ -1,0 +1,26 @@
+import type { SearchDocument as SearchDocumentRow } from '@/zero/schema';
+import type { SearchListContext, SearchStart } from '@/zero/shared/search-query-helpers';
+
+export interface SearchDocumentCardPayload {
+  type?: string;
+  handle?: string | null;
+  code?: string | null;
+  location?: string | null;
+  status?: string | null;
+  priority?: string | null;
+  starts_at?: number | null;
+  ends_at?: number | null;
+  due_at?: number | null;
+  tags?: readonly string[];
+  stats?: Record<string, number | string | null | undefined>;
+  metadata?: Record<string, unknown>;
+  entity_type?: string | null;
+  entity_id?: string | null;
+}
+
+export type SearchDocument = SearchDocumentRow & {
+  readonly topics?: readonly { readonly topic: string }[];
+  readonly group?: { readonly id: string; readonly name?: string | null } | null;
+};
+
+export type { SearchListContext, SearchStart };

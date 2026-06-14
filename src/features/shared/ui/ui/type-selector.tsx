@@ -4,6 +4,7 @@ import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { Label } from '@/features/shared/ui/ui/label.tsx';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip.tsx';
 import { Info, Check, MessageSquare, Mic, Vote, Users, ShieldCheck } from 'lucide-react';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 type AgendaItemType = 'election' | 'vote' | 'speech' | 'discussion' | 'accreditation';
 
@@ -17,32 +18,32 @@ interface TypeOption {
 const typeOptions: TypeOption[] = [
   {
     value: 'discussion',
-    label: 'Discussion',
-    description: 'Open discussion or Q&A session',
+    label: translateText('generated.inline.0519_discussion_8fb937b6'),
+    description: translateText('generated.inline.0520_open_discussion_or_q_a_session_88c93ed7'),
     icon: <MessageSquare className="h-4 w-4" />,
   },
   {
     value: 'speech',
-    label: 'Speech',
-    description: 'Presentation or address',
+    label: translateText('generated.inline.0521_speech_d00d8594'),
+    description: translateText('generated.inline.0522_presentation_or_address_1a285ed2'),
     icon: <Mic className="h-4 w-4" />,
   },
   {
     value: 'election',
-    label: 'Election',
-    description: 'Vote for roles or candidates',
+    label: translateText('generated.inline.0523_election_217da2dc'),
+    description: translateText('generated.inline.0524_vote_for_roles_or_candidates_58f7c048'),
     icon: <Users className="h-4 w-4" />,
   },
   {
     value: 'vote',
-    label: 'Vote',
-    description: 'Vote on a proposal or amendment',
+    label: translateText('generated.inline.0498_vote_64f87291'),
+    description: translateText('generated.inline.0525_vote_on_a_proposal_or_amendment_af19c393'),
     icon: <Vote className="h-4 w-4" />,
   },
   {
     value: 'accreditation',
-    label: 'Accreditation',
-    description: 'Confirm attendance of participants',
+    label: translateText('generated.inline.0526_accreditation_f89dc2b3'),
+    description: translateText('generated.inline.0527_confirm_attendance_of_participants_311c6fe4'),
     icon: <ShieldCheck className="h-4 w-4" />,
   },
 ];

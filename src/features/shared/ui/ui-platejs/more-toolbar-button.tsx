@@ -25,7 +25,7 @@ export function MoreToolbarButton(props: DropdownMenuProps) {
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false} {...props}>
       <DropdownMenuTrigger asChild>
-        <ToolbarButton pressed={open} tooltip={t('plateJs.toolbar.more', 'More')}>
+        <ToolbarButton pressed={open} tooltip={t('plateJs.toolbar.more')}>
           <MoreHorizontalIcon />
         </ToolbarButton>
       </DropdownMenuTrigger>
@@ -43,7 +43,7 @@ export function MoreToolbarButton(props: DropdownMenuProps) {
             }}
           >
             <KeyboardIcon />
-            {t('plateJs.toolbar.keyboardInput', 'Keyboard input')}
+            {t('plateJs.toolbar.keyboardInput')}
           </DropdownMenuItem>
 
           <DropdownMenuItem
@@ -55,7 +55,7 @@ export function MoreToolbarButton(props: DropdownMenuProps) {
             }}
           >
             <SuperscriptIcon />
-            {t('plateJs.toolbar.superscript', 'Superscript')}
+            {t('plateJs.toolbar.superscript')}
             {/* (⌘+,) */}
           </DropdownMenuItem>
           <DropdownMenuItem
@@ -67,7 +67,7 @@ export function MoreToolbarButton(props: DropdownMenuProps) {
             }}
           >
             <SubscriptIcon />
-            {t('plateJs.toolbar.subscript', 'Subscript')}
+            {t('plateJs.toolbar.subscript')}
             {/* (⌘+.) */}
           </DropdownMenuItem>
         </DropdownMenuGroup>

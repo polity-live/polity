@@ -1,5 +1,6 @@
 import { parseDelegateElectionMetadata } from '@/features/elections/logic/electionAssignmentMetadata';
 import { computeRoleScheduledRevoteDate } from '@/features/votes/utils/revote-scheduling';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export interface AssignmentEventSummary {
   id: string;
@@ -228,8 +229,18 @@ export function buildDelegateElectionAssignments(args: {
         id: `delegate:${allocation.id}`,
         kind: 'delegate_election',
         status,
-        title: `Delegiertenwahl fuer ${targetEvent?.title || 'Ziel-Event'}`,
-        description: `${allocation.group?.name || 'Diese Untergruppe'} hat aktuell ${seatCount} Delegiertensitz${seatCount === 1 ? '' : 'e'} fuer ${targetEvent?.group?.name || 'die Zielgruppe'}.`,
+        title: translateText('generated.inline.0149_delegiertenwahl_fuer_valuedb90_6f57955f', {
+          valuedb90: targetEvent?.title || 'Ziel-Event',
+        }),
+        description: translateText(
+          'generated.inline.0150_value3d87_hat_aktuell_seatcount_delegiertensi_99134e30',
+          {
+            value3d87: allocation.group?.name || 'Diese Untergruppe',
+            seatCount: seatCount,
+            value5d0f: seatCount === 1 ? '' : 'e',
+            value6606: targetEvent?.group?.name || 'die Zielgruppe',
+          }
+        ),
         seatCount,
         scheduledSeatCount,
         completedSeatCount,
@@ -275,7 +286,9 @@ export function buildRoleRenewalAssignments(args: {
         id: `role:${role.id}`,
         kind: 'role_renewal',
         status,
-        title: `Neuwahl fuer ${role.title || role.name || 'Rolle'}`,
+        title: translateText('generated.inline.0151_neuwahl_fuer_value435d_6ab2e4a2', {
+          value435d: role.title || role.name || 'Rolle',
+        }),
         description: dueDate
           ? `Die naechste turnusmaessige Wahl ist fuer ${new Date(dueDate).toLocaleDateString('de-DE')} vorgesehen.`
           : 'Diese Rolle braucht eine neue Wahl, sobald ein passendes Event geplant ist.',

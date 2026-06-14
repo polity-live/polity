@@ -5,10 +5,19 @@ import { useNavigate, useSearch } from '@tanstack/react-router';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
 import { Alert, AlertDescription } from '@/features/shared/ui/ui/alert';
 import { Loader2, Shield, ArrowLeft, RotateCcw } from 'lucide-react';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { useAuthStore } from '@/features/auth/auth.ts';
 import { useAuthVerification } from '@/features/auth/hooks/useAuthVerification';
 
@@ -70,7 +79,9 @@ export function VerifyForm() {
 
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
-    const pastedText = e.clipboardData.getData('text').replace(/\D/g, '');
+    const pastedText = e.clipboardData
+      .getData(translateText('generated.inline.0024_text_372ea08c'))
+      .replace(/\D/g, '');
 
     if (pastedText.length === 6) {
       const newCode = pastedText.split('');
@@ -92,7 +103,7 @@ export function VerifyForm() {
 
     if (result.success) {
       console.log('✅ Verification successful, isNewUser:', result.isNewUser);
-      
+
       if (result.isNewUser) {
         // New user - set onboarding flag BEFORE navigating (TanStack Router strips unknown search params)
         console.log('🎉 Setting polity_onboarding in sessionStorage and navigating to /');
@@ -213,11 +224,11 @@ export function VerifyForm() {
             </div>
           </div>
 
-          <div className="text-center text-sm text-muted-foreground">
+          <div className="text-muted-foreground text-center text-sm">
             <p>{t('auth.verify.footer.checkSpam')}</p>
             <p className="mt-1">
               {t('auth.verify.footer.devNote')}{' '}
-              <code className="rounded bg-muted px-1">123456</code>
+              <code className="bg-muted rounded px-1">123456</code>
             </p>
           </div>
         </CardContent>
@@ -225,4 +236,3 @@ export function VerifyForm() {
     </div>
   );
 }
-

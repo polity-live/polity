@@ -12,6 +12,7 @@ import { useEventActions } from '@/zero/events/useEventActions';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useEventForCancel } from '@/zero/events/useEventState';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface AgendaItem {
   id: string;
@@ -84,7 +85,7 @@ export function useCancelEvent(eventId: string): UseCancelEventResult {
   const cancelEvent = useCallback(
     async (params: CancelEventParams) => {
       if (!user) {
-        toast.error('You must be logged in');
+        toast.error(translateText('generated.inline.0159_you_must_be_logged_in_702ab856'));
         return;
       }
 
@@ -109,10 +110,10 @@ export function useCancelEvent(eventId: string): UseCancelEventResult {
           }
         }
 
-        toast.success('Event cancelled successfully');
+        toast.success(translateText('generated.inline.0448_event_cancelled_successfully_aa9fc6b1'));
       } catch (error) {
         console.error('Error cancelling event:', error);
-        toast.error('Failed to cancel event');
+        toast.error(translateText('generated.inline.0449_failed_to_cancel_event_d08bac7e'));
         throw error;
       } finally {
         setIsLoading(false);
@@ -124,7 +125,7 @@ export function useCancelEvent(eventId: string): UseCancelEventResult {
   const scheduleRevote = useCallback(
     async (roleId: string, revoteDate: Date) => {
       if (!user) {
-        toast.error('You must be logged in');
+        toast.error(translateText('generated.inline.0159_you_must_be_logged_in_702ab856'));
         return;
       }
 
@@ -135,10 +136,10 @@ export function useCancelEvent(eventId: string): UseCancelEventResult {
           scheduled_revote_date: revoteDate.getTime(),
         });
 
-        toast.success('Revote scheduled');
+        toast.success(translateText('generated.inline.0450_revote_scheduled_16d14bd2'));
       } catch (error) {
         console.error('Error scheduling revote:', error);
-        toast.error('Failed to schedule revote');
+        toast.error(translateText('generated.inline.0451_failed_to_schedule_revote_dbc40039'));
         throw error;
       } finally {
         setIsLoading(false);

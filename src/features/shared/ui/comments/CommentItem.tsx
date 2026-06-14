@@ -6,6 +6,7 @@ import { ArrowUp, ArrowDown, Clock, Reply, Trash2 } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils';
 import { useState } from 'react';
 import { CommentInput } from './CommentInput';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export interface CommentData {
   id: string;
@@ -30,7 +31,11 @@ export interface CommentData {
 interface CommentItemProps {
   comment: CommentData;
   currentUserId?: string;
-  onVote: (commentId: string, voteValue: number, existingVote?: { id: string; vote: number }) => Promise<void>;
+  onVote: (
+    commentId: string,
+    voteValue: number,
+    existingVote?: { id: string; vote: number }
+  ) => Promise<void>;
   onReply: (commentId: string, text: string) => Promise<void>;
   onDelete?: (commentId: string) => Promise<void>;
   depth?: number;
@@ -57,7 +62,11 @@ export function CommentItem({
   const isOwner = currentUserId && comment.creator?.id === currentUserId;
 
   const handleVote = async (voteValue: number) => {
-    await onVote(comment.id, voteValue, userVote ? { id: userVote.id, vote: userVote.vote } : undefined);
+    await onVote(
+      comment.id,
+      voteValue,
+      userVote ? { id: userVote.id, vote: userVote.vote } : undefined
+    );
   };
 
   const handleReply = async (text: string) => {
@@ -77,10 +86,12 @@ export function CommentItem({
         >
           <ArrowUp className="h-3.5 w-3.5" />
         </Button>
-        <span className={cn(
-          'text-xs font-semibold',
-          score > 0 ? 'text-orange-500' : score < 0 ? 'text-blue-500' : 'text-muted-foreground',
-        )}>
+        <span
+          className={cn(
+            'text-xs font-semibold',
+            score > 0 ? 'text-orange-500' : score < 0 ? 'text-blue-500' : 'text-muted-foreground'
+          )}
+        >
           {score}
         </span>
         <Button
@@ -94,15 +105,17 @@ export function CommentItem({
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="min-w-0 flex-1">
+        <div className="text-muted-foreground flex items-center gap-2 text-sm">
           <Avatar className="h-5 w-5">
             <AvatarImage src={comment.creator?.avatar || comment.creator?.imageURL} />
             <AvatarFallback className="text-[10px]">
               {comment.creator?.name?.[0]?.toUpperCase() || 'U'}
             </AvatarFallback>
           </Avatar>
-          <span className="font-medium text-foreground">{comment.creator?.name || 'Anonymous'}</span>
+          <span className="text-foreground font-medium">
+            {comment.creator?.name || translateText('generated.inline.0056_anonymous_9bed5104')}
+          </span>
           {comment.creator?.handle && <span className="text-xs">@{comment.creator.handle}</span>}
           <span>·</span>
           <span className="flex items-center gap-1 text-xs">
@@ -111,26 +124,26 @@ export function CommentItem({
           </span>
         </div>
 
-        <p className="mt-1 whitespace-pre-wrap text-sm">{comment.text}</p>
+        <p className="mt-1 text-sm whitespace-pre-wrap">{comment.text}</p>
 
         {/* Actions */}
         <div className="mt-1 flex items-center gap-3">
           <button
             type="button"
             onClick={() => setShowReplyInput(!showReplyInput)}
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs"
           >
             <Reply className="h-3 w-3" />
-            Reply
+            {translateText('generated.inline.0377_reply_6c2bb735')}
           </button>
           {isOwner && onDelete && (
             <button
               type="button"
               onClick={() => onDelete(comment.id)}
-              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive"
+              className="text-muted-foreground hover:text-destructive flex items-center gap-1 text-xs"
             >
               <Trash2 className="h-3 w-3" />
-              Delete
+              {translateText('generated.inline.0537_delete_f6fdbe48')}
             </button>
           )}
         </div>
@@ -139,7 +152,7 @@ export function CommentItem({
         {showReplyInput && (
           <CommentInput
             onSubmit={handleReply}
-            placeholder="Write a reply..."
+            placeholder={translateText('generated.inline.1114_write_a_reply_126cd2cd')}
             replyTo={comment.creator?.name || 'this comment'}
             onCancelReply={() => setShowReplyInput(false)}
             className="mt-2"

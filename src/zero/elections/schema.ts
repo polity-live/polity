@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { timestampSchema, nullableTimestampSchema } from '../shared/helpers';
+import {
+  ballotVisibilitySchema,
+  defaultElectionBallotVisibility,
+  nullableTimestampSchema,
+  timestampSchema,
+} from '../shared';
 
 // ============================================
 // Election
@@ -16,6 +21,7 @@ const baseElectionSchema = z.object({
   closing_duration_seconds: z.number().nullable(),
   closing_end_time: nullableTimestampSchema,
   visibility: z.string(),
+  ballot_visibility: ballotVisibilitySchema,
   election_mode: z.string().nullable(),
   seat_count: z.number().nullable(),
   max_votes: z.number(),
@@ -23,11 +29,16 @@ const baseElectionSchema = z.object({
   updated_at: timestampSchema,
 });
 
+const defaultElectionBallotVisibilitySchema = ballotVisibilitySchema
+  .optional()
+  .transform(value => value ?? defaultElectionBallotVisibility);
+
 export const selectElectionSchema = baseElectionSchema;
 export const createElectionSchema = baseElectionSchema
-  .omit({ id: true, created_at: true, updated_at: true })
+  .omit({ id: true, created_at: true, updated_at: true, ballot_visibility: true })
   .extend({
     id: z.string(),
+    ballot_visibility: defaultElectionBallotVisibilitySchema,
     position_id: z.string().nullable().optional(),
     election_mode: z.string().nullable().optional(),
     seat_count: z.number().nullable().optional(),
@@ -43,6 +54,7 @@ export const updateElectionSchema = baseElectionSchema
     closing_duration_seconds: true,
     closing_end_time: true,
     visibility: true,
+    ballot_visibility: true,
     election_mode: true,
     seat_count: true,
     max_votes: true,

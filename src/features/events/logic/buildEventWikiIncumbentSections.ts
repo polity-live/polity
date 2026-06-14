@@ -2,6 +2,7 @@ import {
   buildWikiIncumbentCarouselSections,
   type WikiIncumbentRoleCards,
 } from '@/features/shared/logic/wikiIncumbentSections';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export function buildEventWikiIncumbentSections(
   roles: readonly EventRoleLike[],
@@ -50,7 +51,8 @@ export function buildEventWikiIncumbentSections(
         });
       });
 
-      const title = role.title?.trim() || 'Untitled role';
+      const title =
+        role.title?.trim() || translateText('generated.inline.0017_untitled_role_216c6117');
       const description = role.description?.trim() || null;
       const cards = Array.from(assignees.values()).map(assignee => ({
         kind: 'person' as const,

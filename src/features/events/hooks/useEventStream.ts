@@ -4,10 +4,9 @@ import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useElectionActions } from '@/zero/elections/useElectionActions';
 import { useVoteActions } from '@/zero/votes/useVoteActions';
 import { useEventStreamData } from '@/zero/events/useEventState';
-import {
-  calculateSpeakerTime as calcSpeakerTime,
-  formatTime,
-} from '../logic/eventStreamHelpers';
+import { calculateSpeakerTime as calcSpeakerTime, formatTime } from '../logic/eventStreamHelpers';
+import { isNamedBallot } from '@/zero/shared';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export function useEventStream(eventId: string) {
   const { user } = useAuth();
@@ -26,13 +25,15 @@ export function useEventStream(eventId: string) {
   // Get current agenda item (in-progress or first pending)
   const agendaItems = event?.agenda_items || [];
   const currentAgendaItem =
-    agendaItems.find((item) => item.status === 'in-progress') ||
-    agendaItems.find((item) => item.status === 'pending') ||
+    agendaItems.find(item => item.status === 'in-progress') ||
+    agendaItems.find(item => item.status === 'pending') ||
     [...agendaItems].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))[0];
 
   // Get speaker list for current agenda item, sorted by order
   const speakerList = currentAgendaItem?.speaker_list
-    ? [...currentAgendaItem.speaker_list].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
+    ? [...currentAgendaItem.speaker_list].sort(
+        (a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)
+      )
     : [];
 
   // Calculate current time and speaker times
@@ -62,12 +63,12 @@ export function useEventStream(eventId: string) {
     try {
       // Find the maximum order value
       const maxOrder =
-        speakerList.length > 0 ? Math.max(...speakerList.map((s) => s.order_index ?? 0)) : 0;
+        speakerList.length > 0 ? Math.max(...speakerList.map(s => s.order_index ?? 0)) : 0;
 
       const speakerId = crypto.randomUUID();
       await addSpeaker({
         id: speakerId,
-        title: 'Speaker',
+        title: translateText('generated.inline.0001_speaker_7c23b0d9'),
         time: 3,
         completed: false,
         order_index: maxOrder + 1,
@@ -98,7 +99,7 @@ export function useEventStream(eventId: string) {
   };
 
   // Check if user is already in speaker list
-  const userSpeaker = speakerList.find((speaker) => speaker.user?.id === user?.id);
+  const userSpeaker = speakerList.find(speaker => speaker.user?.id === user?.id);
 
   // Handle election vote via new election actions
   const handleElectionVote = async (electionId: string, candidateId: string) => {
@@ -134,12 +135,30 @@ export function useEventStream(eventId: string) {
       if (isIndicative) {
         await electionActions.castIndicativeVote(
           { id: participationId, election_id: electionId, elector_id: electorId },
-          [{ id: selectionId, election_id: electionId, candidate_id: candidateId, elector_participation_id: participationId }]
+          [
+            {
+              id: selectionId,
+              election_id: electionId,
+              candidate_id: candidateId,
+              elector_participation_id: isNamedBallot(election.ballot_visibility)
+                ? participationId
+                : null,
+            },
+          ]
         );
       } else {
         await electionActions.castFinalVote(
           { id: participationId, election_id: electionId, elector_id: electorId },
-          [{ id: selectionId, election_id: electionId, candidate_id: candidateId, elector_participation_id: participationId }]
+          [
+            {
+              id: selectionId,
+              election_id: electionId,
+              candidate_id: candidateId,
+              elector_participation_id: isNamedBallot(election.ballot_visibility)
+                ? participationId
+                : null,
+            },
+          ]
         );
       }
     } catch (error) {
@@ -150,18 +169,13 @@ export function useEventStream(eventId: string) {
   };
 
   // Handle vote (amendment/choice) via new vote actions
-  const handleAmendmentVote = async (
-    voteId: string,
-    choiceId: string
-  ) => {
+  const handleAmendmentVote = async (voteId: string, choiceId: string) => {
     if (!user) return;
 
     setVotingLoading(voteId);
     try {
       // Get the vote from current agenda item
-      const voteEntity = currentAgendaItem?.votes?.find(
-        (v: { id: string }) => v.id === voteId
-      );
+      const voteEntity = currentAgendaItem?.votes?.find((v: { id: string }) => v.id === voteId);
       if (!voteEntity) return;
 
       // Find or create voter record
@@ -186,12 +200,30 @@ export function useEventStream(eventId: string) {
       if (isIndicative) {
         await voteActionsHook.castIndicativeVote(
           { id: participationId, vote_id: voteId, voter_id: voterId },
-          [{ id: decisionId, vote_id: voteId, choice_id: choiceId, voter_participation_id: participationId }]
+          [
+            {
+              id: decisionId,
+              vote_id: voteId,
+              choice_id: choiceId,
+              voter_participation_id: isNamedBallot(voteEntity.ballot_visibility)
+                ? participationId
+                : null,
+            },
+          ]
         );
       } else {
         await voteActionsHook.castFinalVote(
           { id: participationId, vote_id: voteId, voter_id: voterId },
-          [{ id: decisionId, vote_id: voteId, choice_id: choiceId, voter_participation_id: participationId }]
+          [
+            {
+              id: decisionId,
+              vote_id: voteId,
+              choice_id: choiceId,
+              voter_participation_id: isNamedBallot(voteEntity.ballot_visibility)
+                ? participationId
+                : null,
+            },
+          ]
         );
       }
     } catch (error) {

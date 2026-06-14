@@ -12,7 +12,10 @@ import {
 } from '@/features/shared/ui/ui/dialog';
 import { Button } from '@/features/shared/ui/ui/button';
 import { AlertTriangle, Check, Loader2, Mail, Trash2 } from 'lucide-react';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { toast } from 'sonner';
 import type { NormalizedGroupRelationship } from '../types/network.types';
@@ -21,8 +24,9 @@ import { useGroupConflictPreflight } from '@/features/groups/hooks/useGroupConfl
 import { GroupConflictPanel } from '@/features/groups/ui/GroupConflictPanel';
 import { UserSearchCard } from '@/features/search/ui/UserSearchCard';
 import type { GroupConflictPreflightInput } from '@/features/groups/logic/groupConflictPreflight';
+import { canonicalGroupPair } from '../logic/groupConnectionComposer';
 
-function buildNetworkLinkPreflightFromRelationships(
+function buildGroupConnectionPreflightFromRelationships(
   relationships: readonly NormalizedGroupRelationship[]
 ): GroupConflictPreflightInput | null {
   const firstRelationship = relationships[0];
@@ -30,89 +34,57 @@ function buildNetworkLinkPreflightFromRelationships(
     return null;
   }
 
-  const forwardRelationship = relationships.find(relationship =>
-    relationship.id.endsWith(':forward')
-  );
-  const backwardRelationship = relationships.find(relationship =>
-    relationship.id.endsWith(':backward')
-  );
-
-  const source_group_id = forwardRelationship
-    ? forwardRelationship.group_id
-    : backwardRelationship
-      ? backwardRelationship.related_group_id
-      : firstRelationship.relationship_type === 'child'
-        ? firstRelationship.group_id
-        : firstRelationship.related_group_id;
-  const target_group_id = forwardRelationship
-    ? forwardRelationship.related_group_id
-    : backwardRelationship
-      ? backwardRelationship.group_id
-      : firstRelationship.relationship_type === 'child'
-        ? firstRelationship.related_group_id
-        : firstRelationship.group_id;
-
-  const rightRowsById = new Map<string, NormalizedGroupRelationship[]>();
-  for (const relationship of relationships) {
-    const key =
-      relationship.network_link_right_id ??
-      `${relationship.network_link_id}:${relationship.with_right}`;
-    const rows = rightRowsById.get(key) ?? [];
-    rows.push(relationship);
-    rightRowsById.set(key, rows);
-  }
-
-  const rights = [...rightRowsById.entries()].flatMap(([rightId, rows]) => {
-    const representative = rows[0];
-    if (!representative?.with_right) {
+  const grants = relationships.flatMap(relationship => {
+    if (!relationship.with_right || !relationship.grant_id) {
       return [];
     }
-
-    const hasForward = rows.some(row => row.id.endsWith(':forward'));
-    const hasBackward = rows.some(row => row.id.endsWith(':backward'));
-    const direction =
-      representative.right_direction === 'bidirectional' || (hasForward && hasBackward)
-        ? 'bidirectional'
-        : hasForward
-          ? 'forward'
-          : 'backward';
-
     return [
       {
-        id: representative.network_link_right_id ?? rightId,
-        right_key: representative.with_right as
+        id: relationship.grant_id,
+        right_key: relationship.with_right as
           | 'informationRight'
           | 'amendmentRight'
           | 'rightToSpeak'
           | 'activeVotingRight'
           | 'passiveVotingRight',
-        direction: direction as 'forward' | 'backward' | 'bidirectional',
-        status:
-          (representative.status as 'active' | 'requested' | 'pending' | 'rejected' | null) ??
-          'requested',
-        initiator_group_id: representative.initiator_group_id ?? null,
+        holder_group_id: relationship.group_id,
+        scope_group_id: relationship.related_group_id,
+        status: relationship.status === 'rejected' ? ('rejected' as const) : ('active' as const),
+        initiator_group_id: relationship.initiator_group_id ?? null,
       },
     ];
   });
 
-  if (rights.length === 0) {
+  if (grants.length === 0) {
     return null;
   }
 
+  const pair = canonicalGroupPair(firstRelationship.group_id, firstRelationship.related_group_id);
+  const hasMembership =
+    firstRelationship.membership_mode !== 'none' &&
+    firstRelationship.member_source_group_id != null &&
+    firstRelationship.member_target_group_id != null;
+
   return {
-    kind: 'network_link_upsert' as const,
-    link_id: firstRelationship.network_link_id ?? undefined,
-    source_group_id,
-    target_group_id,
-    structural_relation: (firstRelationship.structural_relation === 'sibling'
-      ? 'sibling'
-      : 'parent_child') as 'sibling' | 'parent_child',
-    rights,
-    membership_rule: {
-      membership_mode: firstRelationship.membership_mode ?? 'none',
-      role_id: null,
-      source_group_ids: null,
-    },
+    kind: 'group_connection_upsert' as const,
+    connection_id: firstRelationship.connection_id,
+    ...pair,
+    connection_type: firstRelationship.connection_type,
+    parent_group_id: firstRelationship.parent_group_id,
+    child_group_id: firstRelationship.child_group_id,
+    grants,
+    membership_rule: hasMembership
+      ? {
+          member_source_group_id: firstRelationship.member_source_group_id as string,
+          member_target_group_id: firstRelationship.member_target_group_id as string,
+          membership_mode: firstRelationship.membership_mode as
+            | 'all_members'
+            | 'role_members'
+            | 'selected_source_groups',
+          required_source_role_id: firstRelationship.required_source_role_id,
+          eligible_origin_group_ids: firstRelationship.eligible_origin_group_ids,
+        }
+      : null,
   };
 }
 
@@ -147,7 +119,7 @@ export function HierarchyConflictDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [removingUserId, setRemovingUserId] = useState<string | null>(null);
   const relationshipPreflightInput = useMemo(
-    () => (open ? buildNetworkLinkPreflightFromRelationships(relationships) : null),
+    () => (open ? buildGroupConnectionPreflightFromRelationships(relationships) : null),
     [open, relationships]
   );
   const relationshipPreflight = useGroupConflictPreflight(relationshipPreflightInput, {
@@ -163,7 +135,7 @@ export function HierarchyConflictDialog({
     [relationships]
   );
   const hasStructuredConflicts = relationshipPreflight.response.conflicts.length > 0;
-  const hasLegacyConflictUsers = affectedUsers.length > 0 || partnerUsers.length > 0;
+  const hasFallbackConflictUsers = affectedUsers.length > 0 || partnerUsers.length > 0;
 
   const handleMessage = (user: HierarchyConflictUser) => {
     navigate({
@@ -240,9 +212,9 @@ export function HierarchyConflictDialog({
         {relationshipPreflight.isLoading ? (
           <div className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
             <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Konflikte werden geprueft ...</span>
+            <span>{translateText('generated.inline.0797_konflikte_werden_geprueft_d2e75312')}</span>
           </div>
-        ) : !hasStructuredConflicts && !hasLegacyConflictUsers ? (
+        ) : !hasStructuredConflicts && !hasFallbackConflictUsers ? (
           <div className="flex items-center gap-2 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm">
             <Check className="h-4 w-4 shrink-0 text-emerald-600" />
             <span>{t('common.network.linkPossibleDescription')}</span>

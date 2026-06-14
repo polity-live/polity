@@ -11,13 +11,13 @@ export const Route = createFileRoute('/_authed/event/$id/notifications')({
 
 function EventNotificationsPage() {
   const { id } = Route.useParams();
-  const { can, isLoading } = usePermissions({ eventId: id });
+  const { can, isParticipant, isLoading } = usePermissions({ eventId: id });
 
   if (isLoading) {
     return <GlobalLoadingAnimation connectionStatus="connecting" />;
   }
 
-  if (!can('manage', 'events')) {
+  if (!isParticipant() || !can('viewNotifications', 'notifications')) {
     return <AccessDenied />;
   }
 

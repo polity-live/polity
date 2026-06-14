@@ -67,17 +67,17 @@ async function loadHierarchyContext(tx: ZeroTransaction) {
 }
 
 async function loadNetworkGroupContext(tx: ZeroTransaction) {
-  const [groups, links, rights, rules] = await Promise.all([
+  const [groups, connections, grants, rules] = await Promise.all([
     tx.run(zql.group),
-    tx.run(zql.network_link),
-    tx.run(zql.network_link_right),
-    tx.run(zql.network_link_membership_rule),
+    tx.run(zql.group_connection),
+    tx.run(zql.group_right_grant),
+    tx.run(zql.group_membership_rule),
   ]);
 
   const metaByGroupId = buildDerivedGroupNetworkMetaMap({
     groupIds: groups.map(group => group.id),
-    links,
-    rights,
+    connections,
+    grants,
     rules,
   });
 

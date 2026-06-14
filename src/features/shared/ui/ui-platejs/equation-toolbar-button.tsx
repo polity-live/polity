@@ -17,7 +17,7 @@ export function InlineEquationToolbarButton(props: React.ComponentProps<typeof T
       onClick={() => {
         insertInlineEquation(editor);
       }}
-      tooltip={t('plateJs.toolbar.equation', 'Mark as equation')}
+      tooltip={t('plateJs.toolbar.equation')}
     >
       <RadicalIcon />
     </ToolbarButton>

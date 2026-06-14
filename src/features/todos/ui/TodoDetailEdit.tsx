@@ -9,6 +9,7 @@ import {
 } from '@/features/shared/ui/ui/select';
 import { Circle, Clock, CheckCircle2, XCircle, Flag, AlertCircle } from 'lucide-react';
 import { TodoFormData, TodoStatus, TodoPriority } from '../types/todo.types';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface TodoDetailEditProps {
   formData: TodoFormData;
@@ -21,7 +22,9 @@ export function TodoDetailEdit({ formData, onUpdate }: TodoDetailEditProps) {
       {/* Status and Priority */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="mb-2 block text-sm font-medium">Status</label>
+          <label className="mb-2 block text-sm font-medium">
+            {translateText('generated.inline.0688_status_bae7d5be')}
+          </label>
           <Select
             value={formData.status}
             onValueChange={(v: TodoStatus) => onUpdate({ status: v })}
@@ -33,25 +36,25 @@ export function TodoDetailEdit({ formData, onUpdate }: TodoDetailEditProps) {
               <SelectItem value="pending">
                 <div className="flex items-center gap-2">
                   <Circle className="h-4 w-4" />
-                  Pending
+                  {translateText('generated.inline.0370_pending_96f608c1')}
                 </div>
               </SelectItem>
               <SelectItem value="in_progress">
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4" />
-                  In Progress
+                  {translateText('generated.inline.1168_in_progress_f61eadaf')}
                 </div>
               </SelectItem>
               <SelectItem value="completed">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4" />
-                  Completed
+                  {translateText('generated.inline.0057_completed_1798b3ba')}
                 </div>
               </SelectItem>
               <SelectItem value="cancelled">
                 <div className="flex items-center gap-2">
                   <XCircle className="h-4 w-4" />
-                  Cancelled
+                  {translateText('generated.inline.1169_cancelled_a1bf92ef')}
                 </div>
               </SelectItem>
             </SelectContent>
@@ -59,7 +62,9 @@ export function TodoDetailEdit({ formData, onUpdate }: TodoDetailEditProps) {
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium">Priority</label>
+          <label className="mb-2 block text-sm font-medium">
+            {translateText('generated.inline.0637_priority_886cbff9')}
+          </label>
           <Select
             value={formData.priority}
             onValueChange={(v: TodoPriority) => onUpdate({ priority: v })}
@@ -71,25 +76,25 @@ export function TodoDetailEdit({ formData, onUpdate }: TodoDetailEditProps) {
               <SelectItem value="low">
                 <div className="flex items-center gap-2">
                   <Flag className="h-4 w-4 text-blue-500" />
-                  Low
+                  {translateText('generated.inline.0638_low_a124947c')}
                 </div>
               </SelectItem>
               <SelectItem value="medium">
                 <div className="flex items-center gap-2">
                   <Flag className="h-4 w-4 text-yellow-500" />
-                  Medium
+                  {translateText('generated.inline.0639_medium_d404968e')}
                 </div>
               </SelectItem>
               <SelectItem value="high">
                 <div className="flex items-center gap-2">
                   <Flag className="h-4 w-4 text-orange-500" />
-                  High
+                  {translateText('generated.inline.0640_high_b1a5954a')}
                 </div>
               </SelectItem>
               <SelectItem value="urgent">
                 <div className="flex items-center gap-2">
                   <AlertCircle className="h-4 w-4 text-red-500" />
-                  Urgent
+                  {translateText('generated.inline.0641_urgent_ecb26f46')}
                 </div>
               </SelectItem>
             </SelectContent>
@@ -99,18 +104,22 @@ export function TodoDetailEdit({ formData, onUpdate }: TodoDetailEditProps) {
 
       {/* Description */}
       <div>
-        <label className="mb-2 block text-sm font-medium">Description</label>
+        <label className="mb-2 block text-sm font-medium">
+          {translateText('generated.inline.0030_description_55f8ebc8')}
+        </label>
         <Textarea
           value={formData.description}
           onChange={e => onUpdate({ description: e.target.value })}
-          placeholder="Add a description..."
+          placeholder={translateText('generated.inline.1170_add_a_description_8c1d830e')}
           rows={6}
         />
       </div>
 
       {/* Due Date */}
       <div>
-        <label className="mb-2 block text-sm font-medium">Due Date</label>
+        <label className="mb-2 block text-sm font-medium">
+          {translateText('generated.inline.1171_due_date_a1b308ec')}
+        </label>
         <Input
           type="date"
           value={formData.dueDate}

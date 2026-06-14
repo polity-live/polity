@@ -9,6 +9,7 @@ import { useBlogState } from '@/zero/blogs/useBlogState';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 const LOG_PREFIX = '[UserMemberships]';
 
@@ -174,8 +175,13 @@ export function useUserMemberships(userId?: string, userName?: string) {
             entityType: 'group',
             entityId: groupSnapshot.id,
             actorId: userId,
-            title: `${safeSenderName} joined ${groupSnapshot.name || 'the group'}`,
-            description: 'A new member has joined the group',
+            title: translateText('generated.inline.0545_safesendername_joined_value8941_609d2520', {
+              safeSenderName: safeSenderName,
+              value8941: groupSnapshot.name || 'the group',
+            }),
+            description: translateText(
+              'generated.inline.0546_a_new_member_has_joined_the_group_331796b6'
+            ),
           },
         });
       }

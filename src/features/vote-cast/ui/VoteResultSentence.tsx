@@ -84,20 +84,20 @@ export function VoteResultSentence({
         <p>
           {rolePart ? (
             <>
-              {t('features.events.voting.forElectionOf', 'For the election of')} {rolePart},{' '}
-              {winnerPart} {t('features.events.voting.wonWith', 'won')}
+              {t('features.events.voting.forElectionOf')} {rolePart}, {winnerPart}{' '}
+              {t('features.events.voting.wonWith', 'won')}
               {voteSharePercent !== undefined && (
                 <>
                   {' '}
                   {t('features.events.voting.withShare', 'with')} {voteSharePercent}%{' '}
-                  {t('features.events.voting.ofVotes', 'of votes')}
+                  {t('features.events.voting.ofVotes')}
                 </>
               )}
               .
             </>
           ) : (
             <>
-              {winnerPart} {t('features.events.voting.wonElection', 'won the election')}
+              {winnerPart} {t('features.events.voting.wonElection')}
               {voteSharePercent !== undefined && (
                 <>
                   {' '}

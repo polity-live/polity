@@ -1,3 +1,4 @@
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 /**
  * Creates mock ChangeRequestTimelineRow-compatible objects from CR summaries.
  * Used to display change requests in the timeline card style before vote_event is initialized.
@@ -40,19 +41,19 @@ function createMockVote(itemId: string) {
       {
         id: `mock-choice-yes-${itemId}`,
         vote_id: `mock-vote-${itemId}`,
-        label: 'yes',
+        label: translateText('generated.inline.0001_yes_fb360f9c'),
         order_index: 0,
       },
       {
         id: `mock-choice-no-${itemId}`,
         vote_id: `mock-vote-${itemId}`,
-        label: 'no',
+        label: translateText('generated.inline.0002_no_fd128635'),
         order_index: 1,
       },
       {
         id: `mock-choice-abstain-${itemId}`,
         vote_id: `mock-vote-${itemId}`,
-        label: 'abstain',
+        label: translateText('generated.inline.0003_abstain_6dcb7d80'),
         order_index: 2,
       },
     ],

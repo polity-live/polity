@@ -2,6 +2,39 @@ import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
 import { zql } from '../schema';
 
+function applyNotificationAccess<T>(q: T, userID: string | undefined): T {
+  const query = q as any;
+
+  if (!userID || userID === 'anon') {
+    return query.where('id', '__unauthorized__') as T;
+  }
+
+  return query.where(({ or, cmp, exists }: any) =>
+    or(
+      cmp('recipient_id', userID),
+      exists('recipient_group', (group: any) =>
+        group.whereExists('memberships', (membership: any) => membership.where('user_id', userID))
+      ),
+      exists('recipient_event', (event: any) =>
+        event.whereExists('participants', (participant: any) =>
+          participant.where('user_id', userID)
+        )
+      ),
+      exists('recipient_amendment', (amendment: any) =>
+        amendment.where(({ or, cmp, exists }: any) =>
+          or(
+            cmp('created_by_id', userID),
+            exists('collaborators', (collaborator: any) => collaborator.where('user_id', userID))
+          )
+        )
+      ),
+      exists('recipient_blog', (blog: any) =>
+        blog.whereExists('bloggers', (blogger: any) => blogger.where('user_id', userID))
+      )
+    )
+  ) as T;
+}
+
 export const notificationQueries = {
   // Notifications for the current user
   byUser: defineQuery(z.object({}), ({ ctx: { userID } }) =>
@@ -27,12 +60,52 @@ export const notificationQueries = {
   byEntity: defineQuery(
     z.object({ entityId: z.string(), entityType: z.string() }),
     ({ ctx: { userID }, args: { entityId, entityType } }) =>
-      zql.notification
-        .where('recipient_entity_id', entityId)
-        .where('recipient_entity_type', entityType)
+      applyNotificationAccess(
+        zql.notification
+          .where('recipient_entity_id', entityId)
+          .where('recipient_entity_type', entityType),
+        userID
+      )
         .related('sender')
+        .related('recipient')
         .related('related_user')
+        .related('related_group')
+        .related('related_event')
+        .related('related_amendment')
+        .related('related_blog')
+        .related('on_behalf_of_group')
+        .related('on_behalf_of_event')
+        .related('on_behalf_of_amendment')
+        .related('on_behalf_of_blog')
         .related('reads', q => q.where('read_by_user_id', userID))
+        .related('recipient_group', q =>
+          q.related('memberships', q =>
+            q
+              .where('user_id', userID)
+              .related('membership_roles', mq =>
+                mq.related('role', rq => rq.related('action_rights'))
+              )
+          )
+        )
+        .related('recipient_event', q =>
+          q.related('participants', q =>
+            q
+              .where('user_id', userID)
+              .related('participant_roles', pq =>
+                pq.related('role', rq => rq.related('action_rights'))
+              )
+          )
+        )
+        .related('recipient_amendment', q =>
+          q.related('collaborators', q =>
+            q.where('user_id', userID).related('role', rq => rq.related('action_rights'))
+          )
+        )
+        .related('recipient_blog', q =>
+          q.related('bloggers', q =>
+            q.where('user_id', userID).related('role', q => q.related('action_rights'))
+          )
+        )
         .orderBy('created_at', 'desc')
         .limit(200)
   ),
@@ -88,8 +161,7 @@ export const notificationQueries = {
   byRecipientGroups: defineQuery(
     z.object({ groupIds: z.array(z.string()) }),
     ({ ctx: { userID }, args: { groupIds } }) =>
-      zql.notification
-        .where('recipient_group_id', 'IN', groupIds)
+      applyNotificationAccess(zql.notification.where('recipient_group_id', 'IN', groupIds), userID)
         .related('sender')
         .related('recipient')
         .related('related_user')
@@ -138,8 +210,7 @@ export const notificationQueries = {
   byRecipientEvents: defineQuery(
     z.object({ eventIds: z.array(z.string()) }),
     ({ ctx: { userID }, args: { eventIds } }) =>
-      zql.notification
-        .where('recipient_event_id', 'IN', eventIds)
+      applyNotificationAccess(zql.notification.where('recipient_event_id', 'IN', eventIds), userID)
         .related('sender')
         .related('recipient')
         .related('related_user')
@@ -152,6 +223,15 @@ export const notificationQueries = {
         .related('on_behalf_of_amendment')
         .related('on_behalf_of_blog')
         .related('reads', q => q.where('read_by_user_id', userID))
+        .related('recipient_group', q =>
+          q.related('memberships', q =>
+            q
+              .where('user_id', userID)
+              .related('membership_roles', mq =>
+                mq.related('role', rq => rq.related('action_rights'))
+              )
+          )
+        )
         .related('recipient_event', q =>
           q.related('participants', q =>
             q
@@ -159,6 +239,16 @@ export const notificationQueries = {
               .related('participant_roles', pq =>
                 pq.related('role', rq => rq.related('action_rights'))
               )
+          )
+        )
+        .related('recipient_amendment', q =>
+          q.related('collaborators', q =>
+            q.where('user_id', userID).related('role', rq => rq.related('action_rights'))
+          )
+        )
+        .related('recipient_blog', q =>
+          q.related('bloggers', q =>
+            q.where('user_id', userID).related('role', q => q.related('action_rights'))
           )
         )
         .orderBy('created_at', 'desc')
@@ -169,8 +259,10 @@ export const notificationQueries = {
   byRecipientAmendments: defineQuery(
     z.object({ amendmentIds: z.array(z.string()) }),
     ({ ctx: { userID }, args: { amendmentIds } }) =>
-      zql.notification
-        .where('recipient_amendment_id', 'IN', amendmentIds)
+      applyNotificationAccess(
+        zql.notification.where('recipient_amendment_id', 'IN', amendmentIds),
+        userID
+      )
         .related('sender')
         .related('recipient')
         .related('related_user')
@@ -183,9 +275,32 @@ export const notificationQueries = {
         .related('on_behalf_of_amendment')
         .related('on_behalf_of_blog')
         .related('reads', q => q.where('read_by_user_id', userID))
+        .related('recipient_group', q =>
+          q.related('memberships', q =>
+            q
+              .where('user_id', userID)
+              .related('membership_roles', mq =>
+                mq.related('role', rq => rq.related('action_rights'))
+              )
+          )
+        )
+        .related('recipient_event', q =>
+          q.related('participants', q =>
+            q
+              .where('user_id', userID)
+              .related('participant_roles', pq =>
+                pq.related('role', rq => rq.related('action_rights'))
+              )
+          )
+        )
         .related('recipient_amendment', q =>
           q.related('collaborators', q =>
             q.where('user_id', userID).related('role', rq => rq.related('action_rights'))
+          )
+        )
+        .related('recipient_blog', q =>
+          q.related('bloggers', q =>
+            q.where('user_id', userID).related('role', q => q.related('action_rights'))
           )
         )
         .orderBy('created_at', 'desc')
@@ -196,8 +311,7 @@ export const notificationQueries = {
   byRecipientBlogs: defineQuery(
     z.object({ blogIds: z.array(z.string()) }),
     ({ ctx: { userID }, args: { blogIds } }) =>
-      zql.notification
-        .where('recipient_blog_id', 'IN', blogIds)
+      applyNotificationAccess(zql.notification.where('recipient_blog_id', 'IN', blogIds), userID)
         .related('sender')
         .related('recipient')
         .related('related_user')
@@ -210,6 +324,29 @@ export const notificationQueries = {
         .related('on_behalf_of_amendment')
         .related('on_behalf_of_blog')
         .related('reads', q => q.where('read_by_user_id', userID))
+        .related('recipient_group', q =>
+          q.related('memberships', q =>
+            q
+              .where('user_id', userID)
+              .related('membership_roles', mq =>
+                mq.related('role', rq => rq.related('action_rights'))
+              )
+          )
+        )
+        .related('recipient_event', q =>
+          q.related('participants', q =>
+            q
+              .where('user_id', userID)
+              .related('participant_roles', pq =>
+                pq.related('role', rq => rq.related('action_rights'))
+              )
+          )
+        )
+        .related('recipient_amendment', q =>
+          q.related('collaborators', q =>
+            q.where('user_id', userID).related('role', rq => rq.related('action_rights'))
+          )
+        )
         .related('recipient_blog', q =>
           q.related('bloggers', q =>
             q.where('user_id', userID).related('role', rq => rq.related('action_rights'))
@@ -249,12 +386,13 @@ export const notificationQueries = {
     zql.blog_blogger.where('user_id', userID).related('blog')
   ),
 
-  byEntityId: defineQuery(z.object({ entity_id: z.string() }), ({ args: { entity_id } }) =>
-    zql.notification
-      .where('recipient_entity_id', entity_id)
-      .related('sender')
-      .orderBy('created_at', 'desc')
-      .limit(200)
+  byEntityId: defineQuery(
+    z.object({ entity_id: z.string() }),
+    ({ args: { entity_id }, ctx: { userID } }) =>
+      applyNotificationAccess(zql.notification.where('recipient_entity_id', entity_id), userID)
+        .related('sender')
+        .orderBy('created_at', 'desc')
+        .limit(200)
   ),
 
   // ── Notification Read queries ──────────────────────────────────────

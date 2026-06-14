@@ -4,6 +4,7 @@ import type { SearchContentItem } from '@/features/search/types/search.types';
 import type { AiAttachmentEntity, AiChatAttachment } from '@/lib/ai/schemas';
 import type { CardType } from '@/features/timeline/ui/LazyCardComponents';
 import type { VoteWithDetailsRow } from '@/zero/votes/queries';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export interface AssistantCardPayload {
   cardType: CardType;
@@ -52,15 +53,51 @@ export const ASSISTANT_ATTACHMENT_TYPE_OPTIONS: readonly {
   token: string;
   label: string;
 }[] = [
-  { entityType: 'user', token: '@user@', label: 'People' },
-  { entityType: 'group', token: '@group@', label: 'Groups' },
-  { entityType: 'statement', token: '@statement@', label: 'Statements' },
-  { entityType: 'event', token: '@event@', label: 'Events' },
-  { entityType: 'amendment', token: '@amendment@', label: 'Amendments' },
-  { entityType: 'blog', token: '@blog@', label: 'Blogs' },
-  { entityType: 'todo', token: '@todo@', label: 'Todos' },
-  { entityType: 'vote', token: '@vote@', label: 'Votes' },
-  { entityType: 'election', token: '@election@', label: 'Elections' },
+  {
+    entityType: 'user',
+    token: '@user@',
+    label: translateText('generated.inline.0177_people_b37554f6'),
+  },
+  {
+    entityType: 'group',
+    token: '@group@',
+    label: translateText('generated.inline.0024_groups_ae9629f4'),
+  },
+  {
+    entityType: 'statement',
+    token: '@statement@',
+    label: translateText('generated.inline.0178_statements_5653cebc'),
+  },
+  {
+    entityType: 'event',
+    token: '@event@',
+    label: translateText('generated.inline.0026_events_c5497bca'),
+  },
+  {
+    entityType: 'amendment',
+    token: '@amendment@',
+    label: translateText('generated.inline.0179_amendments_90086687'),
+  },
+  {
+    entityType: 'blog',
+    token: '@blog@',
+    label: translateText('generated.inline.0030_blogs_5ef44397'),
+  },
+  {
+    entityType: 'todo',
+    token: '@todo@',
+    label: translateText('generated.inline.0180_todos_a4114a83'),
+  },
+  {
+    entityType: 'vote',
+    token: '@vote@',
+    label: translateText('generated.inline.0181_votes_b66c4b27'),
+  },
+  {
+    entityType: 'election',
+    token: '@election@',
+    label: translateText('generated.inline.0182_elections_7213288b'),
+  },
 ] as const;
 
 const AI_ATTACHMENT_ENTITY_SET = new Set<AiAttachmentEntity>([

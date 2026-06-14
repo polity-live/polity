@@ -91,6 +91,7 @@ export const timelineTranslations = {
     blog: 'Blog',
     payment: 'Payment',
     action: 'Activity',
+    workflow: 'Workflow',
     user: 'User',
   },
   // Card-specific translations
@@ -259,15 +260,49 @@ export const timelineTranslations = {
   },
   // Mode selector for Following/Explore/Decisions
   modes: {
+    timeline: 'Timeline',
     following: 'Following',
     explore: 'Explore',
     decisions: 'Decisions',
   },
   // Header translations
   header: {
-    title: 'Your Political Ecosystem',
+    title: 'Timeline',
+    subtitle: 'What is happening around you, ranked by relevance and proximity.',
+    decisionsSubtitle: 'Live votes, elections, and recently closed decisions.',
     filter: 'Filter',
     settings: 'Settings',
+  },
+  around: {
+    mappedCount: '{{count}} mapped',
+    discoverCount: '{{count}} discover',
+    noUserLocation: 'Add a location to your profile to make nearby activity more precise.',
+    empty: 'When civic activity appears around you, it will show up here.',
+    sections: {
+      now: 'Now',
+      today: 'Today',
+      thisWeek: 'This week',
+      later: 'Later',
+      discover: 'Discover',
+    },
+    reasons: {
+      subscribed: 'Following',
+      memberContext: 'Connected',
+      nearYou: 'Near you',
+      activeNow: 'Active now',
+      popularNearby: 'Popular nearby',
+      publicDiscovery: 'Discover',
+      urgentDecision: 'Urgent',
+    },
+    radius: {
+      title: 'Radius',
+      all: 'All areas',
+      km10: '10 km',
+      km25: '25 km',
+      km50: '50 km',
+      km100: '100 km',
+      km250: '250 km',
+    },
   },
   // Sort options
   sort: {

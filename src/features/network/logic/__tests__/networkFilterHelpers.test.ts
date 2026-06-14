@@ -1,4 +1,4 @@
-import type { Edge } from '@xyflow/react';
+import { MarkerType, type Edge } from '@xyflow/react';
 import { describe, expect, it } from 'vitest';
 
 import { filterEdgesByConnectionDirections, filterEdgesByRights } from '../networkFilterHelpers';
@@ -13,6 +13,14 @@ function createRelationshipEdge(): Edge<EditableRightsLabelEdgeData> {
     style: {
       stroke: '#64748b',
       strokeWidth: 2,
+    },
+    markerStart: {
+      type: MarkerType.ArrowClosed,
+      color: '#64748b',
+    },
+    markerEnd: {
+      type: MarkerType.ArrowClosed,
+      color: '#64748b',
     },
     data: {
       rights: ['amendmentRight', 'rightToSpeak'],
@@ -58,7 +66,21 @@ describe('networkFilterHelpers', () => {
     ]);
     expect(edge?.style?.stroke).toBe('#2563eb');
     expect(edge?.animated).toBe(true);
-    expect(edge?.style?.animationDirection).toBe('reverse');
+    expect(edge?.style?.animationDirection).toBeUndefined();
+  });
+
+  it('keeps forward rights on the edge end after right filtering', () => {
+    const [edge] = filterEdgesByRights([createRelationshipEdge()], new Set(['amendmentRight']));
+
+    expect(edge?.markerStart).toBeUndefined();
+    expect(edge?.markerEnd).toBeDefined();
+  });
+
+  it('keeps backward rights on the edge start after right filtering', () => {
+    const [edge] = filterEdgesByRights([createRelationshipEdge()], new Set(['rightToSpeak']));
+
+    expect(edge?.markerStart).toBeDefined();
+    expect(edge?.markerEnd).toBeUndefined();
   });
 
   it('keeps only outgoing rights and recolors the edge orange', () => {
@@ -72,7 +94,7 @@ describe('networkFilterHelpers', () => {
     ]);
     expect(edge?.style?.stroke).toBe('#d97706');
     expect(edge?.animated).toBe(true);
-    expect(edge?.style?.animationDirection).toBeUndefined();
+    expect(edge?.style?.animationDirection).toBe('reverse');
   });
 
   it('does not fall back to the edge-level direction when per-right directions exist', () => {

@@ -6,6 +6,7 @@ import { Input } from '@/features/shared/ui/ui/input.tsx';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { X, Hash } from 'lucide-react';
 import { getHashtagGradient } from '@/features/timeline/logic/gradient-assignment.ts';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface HashtagInputProps {
   value: string[];
@@ -24,7 +25,7 @@ export function HashtagInput({
   onChange,
   label = 'Hashtags',
   showLabel = true,
-  placeholder = 'Add a hashtag',
+  placeholder = translateText('generated.inline.0162_add_a_hashtag_09f298a1'),
   maxTags,
   suggestions = [],
   inputId,
@@ -161,12 +162,13 @@ export function HashtagInput({
           )}
         </div>
         <Button type="button" variant="secondary" onClick={() => addHashtag()}>
-          Add
+          {translateText('generated.inline.0595_add_61cc55aa')}
         </Button>
       </div>
       {maxTags && (
         <p className="text-muted-foreground text-xs">
-          {value.length}/{maxTags} hashtags
+          {value.length}/{maxTags}
+          {translateText('generated.inline.0163_hashtags_7cdf4266')}
         </p>
       )}
     </div>

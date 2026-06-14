@@ -1,6 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { useAuth } from '@/providers/auth-provider';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Label } from '@/features/shared/ui/ui/label';
@@ -31,6 +34,7 @@ import {
   normalizeCreateAmendmentSearch,
 } from '../logic/createAmendmentSearch';
 import type { CreateFormConfig } from '../types/create-form.types';
+import { formatImplementationEvaluationSummary } from '@/features/amendments/logic/implementationEvaluation';
 
 interface CreateTargetGroupData {
   id: string;
@@ -95,9 +99,9 @@ export function useCreateAmendmentForm(): CreateFormConfig {
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const visibilityLabel =
-    visibility === 'public'
+    visibility === translateText('generated.inline.0030_public_61c9b2b1')
       ? t('pages.create.common.public')
-      : visibility === 'authenticated'
+      : visibility === translateText('generated.inline.0031_authenticated_8fda38ce')
         ? t('pages.create.common.authenticated')
         : t('pages.create.common.private');
 
@@ -158,12 +162,12 @@ export function useCreateAmendmentForm(): CreateFormConfig {
     [syncSearch]
   );
 
-  const evaluationSummary =
-    evaluationMode === 'fixed_date'
-      ? evaluationDate || 'Kein Datum'
-      : evaluationMode === 'relative_to_vote'
-        ? `${evaluationOffsetYears || '0'} Jahre, ${evaluationOffsetMonths || '0'} Monate nach Annahme`
-        : 'Keine Evaluierung geplant';
+  const evaluationSummary = formatImplementationEvaluationSummary({
+    mode: evaluationMode,
+    fixedDate: evaluationDate || null,
+    offsetMonths: Number.parseInt(evaluationOffsetMonths, 10) || 0,
+    offsetYears: Number.parseInt(evaluationOffsetYears, 10) || 0,
+  });
 
   const handleTargetSelection = useCallback((selection: TargetGroupEventSelection | null) => {
     if (!selection) {
@@ -392,10 +396,13 @@ export function useCreateAmendmentForm(): CreateFormConfig {
                   />
                   {targetSelection.missingEventSteps.length > 0 && (
                     <div className="rounded-md border border-dashed p-3 text-sm">
-                      <p className="font-medium">Offene Event-Schritte</p>
+                      <p className="font-medium">
+                        {translateText('generated.inline.0318_offene_event_schritte_6d65e743')}
+                      </p>
                       <p className="text-muted-foreground mt-1">
-                        Fuer diese Gruppen wird beim Erstellen automatisch ein `schedule_event`-Task
-                        erzeugt:
+                        {translateText(
+                          'generated.inline.0319_fuer_diese_gruppen_wird_beim_erstellen_automa_ead2264c'
+                        )}
                       </p>
                       <SummaryPillList
                         items={targetSelection.missingEventSteps.map(step => step.groupName)}
@@ -408,13 +415,13 @@ export function useCreateAmendmentForm(): CreateFormConfig {
           ),
         },
         {
-          label: 'Evaluierung',
+          label: translateText('generated.inline.0050_evaluierung_581efef4'),
           isValid: () => evaluationMode !== 'fixed_date' || Boolean(evaluationDate),
           optional: true,
           content: (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Evaluierungsmodus</Label>
+                <Label>{translateText('generated.inline.0320_evaluierungsmodus_37f2926b')}</Label>
                 <div className="flex flex-wrap gap-2">
                   {(
                     [
@@ -440,7 +447,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
 
               {evaluationMode === 'fixed_date' && (
                 <CreateInputField
-                  label="Evaluierungsdatum"
+                  label={translateText('generated.inline.0321_evaluierungsdatum_6b3d2c9b')}
                   type="date"
                   required
                   value={evaluationDate}
@@ -454,7 +461,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
               {evaluationMode === 'relative_to_vote' && (
                 <div className="grid gap-4 md:grid-cols-2">
                   <CreateInputField
-                    label="Monate nach Annahme"
+                    label={translateText('generated.inline.0322_monate_nach_annahme_9ccb5844')}
                     type="number"
                     min={0}
                     value={evaluationOffsetMonths}
@@ -466,7 +473,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
                     }}
                   />
                   <CreateInputField
-                    label="Jahre nach Annahme"
+                    label={translateText('generated.inline.0323_jahre_nach_annahme_42482627')}
                     type="number"
                     min={0}
                     value={evaluationOffsetYears}
@@ -523,7 +530,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
                               : String(targetSelection.groupData.name ?? ''),
                           },
                           {
-                            label: 'Startgruppe',
+                            label: translateText('generated.inline.0051_startgruppe_27591dc9'),
                             value:
                               targetSelection.pathWithEvents[0]?.groupName ??
                               targetSelection.groupData.name ??
@@ -532,7 +539,7 @@ export function useCreateAmendmentForm(): CreateFormConfig {
                           ...(targetSelection.eventData && targetSelection.pathWithEvents.length > 0
                             ? [
                                 {
-                                  label: 'Path',
+                                  label: translateText('generated.inline.0052_path_519e3913'),
                                   value: (
                                     <SummaryPillList
                                       items={targetSelection.pathWithEvents.map(
@@ -547,7 +554,9 @@ export function useCreateAmendmentForm(): CreateFormConfig {
                           ...(targetSelection.missingEventSteps.length > 0
                             ? [
                                 {
-                                  label: 'Offene Event-Schritte',
+                                  label: translateText(
+                                    'generated.inline.0053_offene_event_schritte_6d65e743'
+                                  ),
                                   value: (
                                     <SummaryPillList
                                       items={targetSelection.missingEventSteps.map(
@@ -563,10 +572,10 @@ export function useCreateAmendmentForm(): CreateFormConfig {
                   ],
                 },
                 {
-                  title: 'Evaluierung',
+                  title: translateText('generated.inline.0050_evaluierung_581efef4'),
                   fields: [
                     {
-                      label: 'Modus',
+                      label: translateText('generated.inline.0054_modus_a7f116c3'),
                       value: evaluationSummary,
                     },
                   ],

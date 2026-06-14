@@ -7,10 +7,14 @@
 
 // Resource types (all entities that can have permissions)
 export type ResourceType =
+  | 'accreditations'
   | 'agendaItems'
+  | 'aiSkills'
+  | 'aiTools'
   | 'amendments'
   | 'blogs'
   | 'blogBloggers'
+  | 'calendarSubscriptions'
   | 'changeRequests'
   | 'comments'
   | 'commentVotes'
@@ -35,8 +39,14 @@ export type ResourceType =
   | 'messages'
   | 'notifications'
   | 'payments'
+  | 'pqlFilters'
+  | 'preferences'
   | 'roles'
   | 'actionRights'
+  | 'statements'
+  | 'statementSurveys'
+  | 'statementSurveyVotes'
+  | 'threads'
   | 'todos'
   | 'todoAssignments'
   | '$users'
@@ -61,6 +71,7 @@ export type ActionType =
   | 'manage_roles'
   | 'manage_speakers'
   | 'manage_votes'
+  | 'speak'
   | 'manageNotifications'
   | 'viewNotifications';
 

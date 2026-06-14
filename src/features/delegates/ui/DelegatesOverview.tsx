@@ -9,6 +9,7 @@ import { Badge } from '@/features/shared/ui/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Users, CheckCircle2, Clock } from 'lucide-react';
 import { useEventDelegates } from '@/zero/events/useEventState';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface DelegatesOverviewProps {
   eventId: string;
@@ -68,7 +69,7 @@ export function DelegatesOverview({ eventId, groupId }: DelegatesOverviewProps) 
   if (subgroups.length === 0) {
     return (
       <div className="text-muted-foreground py-8 text-center">
-        No subgroups found for this group
+        {translateText('generated.inline.0366_no_subgroups_found_for_this_group_2ac808e6')}
       </div>
     );
   }
@@ -79,8 +80,9 @@ export function DelegatesOverview({ eventId, groupId }: DelegatesOverviewProps) 
         <div className="flex items-center gap-2 rounded-lg border border-yellow-500/50 bg-yellow-50 p-3 dark:bg-yellow-900/20">
           <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
           <p className="text-sm text-yellow-800 dark:text-yellow-200">
-            Delegates will be finalized when the event starts. Current allocations may change based
-            on membership numbers.
+            {translateText(
+              'generated.inline.0367_delegates_will_be_finalized_when_the_event_st_4a680059'
+            )}
           </p>
         </div>
       )}
@@ -100,7 +102,10 @@ export function DelegatesOverview({ eventId, groupId }: DelegatesOverviewProps) 
                 <div>
                   <CardTitle className="text-lg">{subgroup.name}</CardTitle>
                   <CardDescription>
-                    {subgroup.memberCount} members · {allocation} delegate
+                    {subgroup.memberCount}
+                    {translateText('generated.inline.0368_members_0c3cbc60')}
+                    {allocation}
+                    {translateText('generated.inline.0049_delegate_52934c29')}
                     {allocation !== 1 ? 's' : ''}
                   </CardDescription>
                 </div>
@@ -108,12 +113,12 @@ export function DelegatesOverview({ eventId, groupId }: DelegatesOverviewProps) 
                   {isDelegatesFinalized ? (
                     <>
                       <CheckCircle2 className="mr-1 h-3 w-3" />
-                      Finalized
+                      {translateText('generated.inline.0369_finalized_876126b1')}
                     </>
                   ) : (
                     <>
                       <Clock className="mr-1 h-3 w-3" />
-                      Pending
+                      {translateText('generated.inline.0370_pending_96f608c1')}
                     </>
                   )}
                 </Badge>
@@ -124,7 +129,8 @@ export function DelegatesOverview({ eventId, groupId }: DelegatesOverviewProps) 
               {confirmedDelegates.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-                    Confirmed Delegates ({confirmedDelegates.length})
+                    {translateText('generated.inline.0371_confirmed_delegates_bccbcbb2')}
+                    {confirmedDelegates.length})
                   </p>
                   <div className="space-y-2">
                     {confirmedDelegates.map(delegate => (
@@ -149,7 +155,7 @@ export function DelegatesOverview({ eventId, groupId }: DelegatesOverviewProps) 
                           <p className="font-semibold">
                             {[delegate.user?.first_name, delegate.user?.last_name]
                               .filter(Boolean)
-                              .join(' ') || 'Unknown'}
+                              .join(' ') || translateText('generated.inline.0031_unknown_bc7819b3')}
                           </p>
                           {delegate.user?.handle && (
                             <p className="text-muted-foreground text-sm">@{delegate.user.handle}</p>
@@ -157,7 +163,7 @@ export function DelegatesOverview({ eventId, groupId }: DelegatesOverviewProps) 
                         </div>
                         <Badge variant="default" className="bg-green-600">
                           <CheckCircle2 className="mr-1 h-3 w-3" />
-                          Confirmed
+                          {translateText('generated.inline.0372_confirmed_8cc7acb8')}
                         </Badge>
                       </div>
                     ))}
@@ -169,7 +175,8 @@ export function DelegatesOverview({ eventId, groupId }: DelegatesOverviewProps) 
               {!isDelegatesFinalized && nominatedDelegates.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-                    Nominated ({nominatedDelegates.length})
+                    {translateText('generated.inline.0373_nominated_040171c8')}
+                    {nominatedDelegates.length})
                   </p>
                   <div className="space-y-2">
                     {nominatedDelegates.map((delegate, index) => (
@@ -194,7 +201,7 @@ export function DelegatesOverview({ eventId, groupId }: DelegatesOverviewProps) 
                           <p className="font-semibold">
                             {[delegate.user?.first_name, delegate.user?.last_name]
                               .filter(Boolean)
-                              .join(' ') || 'Unknown'}
+                              .join(' ') || translateText('generated.inline.0031_unknown_bc7819b3')}
                           </p>
                           {delegate.user?.handle && (
                             <p className="text-muted-foreground text-sm">@{delegate.user.handle}</p>
@@ -211,7 +218,8 @@ export function DelegatesOverview({ eventId, groupId }: DelegatesOverviewProps) 
               {standbyDelegates.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-                    Standby ({standbyDelegates.length})
+                    {translateText('generated.inline.0374_standby_dbbfb68a')}
+                    {standbyDelegates.length})
                   </p>
                   <div className="space-y-2">
                     {standbyDelegates.map(delegate => (
@@ -236,13 +244,15 @@ export function DelegatesOverview({ eventId, groupId }: DelegatesOverviewProps) 
                           <p className="font-semibold">
                             {[delegate.user?.first_name, delegate.user?.last_name]
                               .filter(Boolean)
-                              .join(' ') || 'Unknown'}
+                              .join(' ') || translateText('generated.inline.0031_unknown_bc7819b3')}
                           </p>
                           {delegate.user?.handle && (
                             <p className="text-muted-foreground text-sm">@{delegate.user.handle}</p>
                           )}
                         </div>
-                        <Badge variant="secondary">Standby</Badge>
+                        <Badge variant="secondary">
+                          {translateText('generated.inline.0375_standby_88a2d0bb')}
+                        </Badge>
                       </div>
                     ))}
                   </div>
@@ -253,7 +263,9 @@ export function DelegatesOverview({ eventId, groupId }: DelegatesOverviewProps) 
               {delegates.length === 0 && (
                 <div className="border-muted text-muted-foreground flex items-center gap-2 rounded-lg border p-4 text-center text-sm">
                   <Users className="h-4 w-4" />
-                  <p>No delegates nominated yet</p>
+                  <p>
+                    {translateText('generated.inline.0376_no_delegates_nominated_yet_3f1b5625')}
+                  </p>
                 </div>
               )}
             </CardContent>

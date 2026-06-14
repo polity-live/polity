@@ -1,4 +1,5 @@
 import type { NavigationItem } from '@/features/navigation/types/navigation.types.tsx';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 // TanStack Router navigate function type
 type NavigateFn = (opts: { to: string }) => void;
@@ -17,7 +18,7 @@ export const navItemsAuthenticated = (
   const primaryNavItems: NavigationItem[] = [
     {
       id: 'home',
-      label: 'Home',
+      label: translateText('generated.inline.0186_home_70f8bb9a'),
       icon: 'Home',
       href: '/home',
       onClick: () => {
@@ -27,7 +28,7 @@ export const navItemsAuthenticated = (
     },
     {
       id: 'messages',
-      label: 'Messages',
+      label: translateText('generated.inline.0187_messages_f1702b46'),
       icon: 'MessageSquare',
       href: '/messages',
       onClick: () => {
@@ -37,7 +38,7 @@ export const navItemsAuthenticated = (
     },
     {
       id: 'search',
-      label: 'Search',
+      label: translateText('generated.inline.0188_search_bce06414'),
       icon: 'Search',
       href: '/search',
       onClick: () => {
@@ -47,7 +48,7 @@ export const navItemsAuthenticated = (
     },
     {
       id: 'create',
-      label: 'Create',
+      label: translateText('generated.inline.0189_create_6e157c5d'),
       icon: 'PlusCircle',
       href: '/create',
       onClick: () => {
@@ -58,7 +59,7 @@ export const navItemsAuthenticated = (
 
     {
       id: 'calendar',
-      label: 'Calendar',
+      label: translateText('generated.inline.0190_calendar_adab5090'),
       icon: 'Calendar',
       href: '/calendar',
       onClick: () => {
@@ -68,7 +69,7 @@ export const navItemsAuthenticated = (
     },
     {
       id: 'todos',
-      label: 'Todos',
+      label: translateText('generated.inline.0180_todos_a4114a83'),
       icon: 'CheckSquare',
       href: '/todos',
       onClick: () => {
@@ -78,7 +79,7 @@ export const navItemsAuthenticated = (
     },
     {
       id: 'notifications',
-      label: 'Notifications',
+      label: translateText('generated.inline.0191_notifications_753a22b2'),
       icon: 'Bell',
       href: '/notifications',
       onClick: () => {

@@ -22,6 +22,9 @@ import {
   eventOfflineParticipantUpdateSchema,
   eventOfflineParticipantDeleteSchema,
   eventOfflineParticipantBulkImportSchema,
+  eventParticipantRoleAssignSchema,
+  eventParticipantRoleUnassignSchema,
+  eventParticipantRolesSyncSchema,
   eventUpdateSchema,
   eventCancelSchema,
   createEventRoleSchema,
@@ -97,6 +100,115 @@ async function syncEventParticipantRoleLinks(
       });
     }
   }
+}
+
+function sameStringSet(a: readonly string[], b: readonly string[]) {
+  if (a.length !== b.length) return false;
+  const bSet = new Set(b);
+  return a.every(value => bSet.has(value));
+}
+
+async function eventParticipantRoleIds(
+  tx: Parameters<typeof mutators.events.create.fn>[0]['tx'],
+  participantId: string
+) {
+  const links = await tx.run(
+    zql.event_participant_role.where('event_participant_id', participantId)
+  );
+  return links.map(link => link.role_id).filter(Boolean);
+}
+
+async function eventRolesWithRights(
+  tx: Parameters<typeof mutators.events.create.fn>[0]['tx'],
+  roleIds: readonly string[]
+) {
+  return Promise.all(
+    roleIds.map(roleId => tx.run(zql.role.where('id', roleId).related('action_rights').one()))
+  );
+}
+
+function isOrganizerLikeRole(
+  role:
+    | {
+        name?: string | null;
+        action_rights?: readonly { resource?: string | null; action?: string | null }[] | null;
+      }
+    | null
+    | undefined
+) {
+  if (!role) return false;
+  if (role.name === 'Organizer' || role.name === 'Admin') return true;
+  return (role.action_rights ?? []).some(
+    right =>
+      (right.resource === 'events' &&
+        (right.action === 'manage' || right.action === 'manage_participants')) ||
+      (right.resource === 'notifications' && right.action === 'manageNotifications')
+  );
+}
+
+async function eventRoleSummary(
+  tx: Parameters<typeof mutators.events.create.fn>[0]['tx'],
+  roleIds: readonly string[],
+  fallback = 'Participant'
+) {
+  if (roleIds.length === 0) return fallback;
+  const roles = await eventRolesWithRights(tx, roleIds);
+  return roles.map(role => role?.name ?? 'Role').join(', ');
+}
+
+async function hasOrganizerLikeRole(
+  tx: Parameters<typeof mutators.events.create.fn>[0]['tx'],
+  roleIds: readonly string[]
+) {
+  const roles = await eventRolesWithRights(tx, roleIds);
+  return roles.some(isOrganizerLikeRole);
+}
+
+async function notifyActiveEventParticipantRoleChange(
+  tx: Parameters<typeof mutators.events.create.fn>[0]['tx'],
+  actorUserId: string,
+  participant: { id: string; event_id: string; user_id: string; status?: string | null },
+  previousRoleIds: readonly string[]
+) {
+  if (!isActiveEventStatus(participant.status)) return;
+
+  const nextRoleIds = await eventParticipantRoleIds(tx, participant.id);
+  if (sameStringSet(previousRoleIds, nextRoleIds)) return;
+
+  const [eTitle, wasOrganizer, isOrganizer, newRole] = await Promise.all([
+    eventTitle(tx, participant.event_id),
+    hasOrganizerLikeRole(tx, previousRoleIds),
+    hasOrganizerLikeRole(tx, nextRoleIds),
+    eventRoleSummary(tx, nextRoleIds),
+  ]);
+
+  if (!wasOrganizer && isOrganizer) {
+    fireNotification('notifyOrganizerPromoted', {
+      senderId: actorUserId,
+      recipientUserId: participant.user_id,
+      eventId: participant.event_id,
+      eventTitle: eTitle,
+    });
+    return;
+  }
+
+  if (wasOrganizer && !isOrganizer) {
+    fireNotification('notifyOrganizerDemoted', {
+      senderId: actorUserId,
+      recipientUserId: participant.user_id,
+      eventId: participant.event_id,
+      eventTitle: eTitle,
+    });
+    return;
+  }
+
+  fireNotification('notifyParticipationRoleChanged', {
+    senderId: actorUserId,
+    recipientUserId: participant.user_id,
+    eventId: participant.event_id,
+    eventTitle: eTitle,
+    newRole,
+  });
 }
 
 async function isConfirmedDelegateForEvent(
@@ -767,14 +879,57 @@ export const eventServerMutators = {
           ? oldRoleIds.size !== 1 || !oldRoleIds.has(args.role_id)
           : oldRoleIds.size > 0);
 
-      if (legacyRoleChanged && args.role_id) {
-        fireNotification('notifyOrganizerPromoted', {
-          senderId: ctx.userID,
-          recipientUserId: partUserId,
-          eventId: eId,
-          eventTitle: eTitle,
-        });
+      if (legacyRoleChanged) {
+        await notifyActiveEventParticipantRoleChange(tx, ctx.userID, oldPart, [...oldRoleIds]);
       }
+    }
+  ),
+
+  addParticipantRole: defineMutator(eventParticipantRoleAssignSchema, async ({ tx, ctx, args }) => {
+    const participant = await tx.run(
+      zql.event_participant.where('id', args.event_participant_id).one()
+    );
+    const previousRoleIds = participant
+      ? await eventParticipantRoleIds(tx, args.event_participant_id)
+      : [];
+
+    await mutators.events.addParticipantRole.fn({ tx, ctx, args });
+
+    if (!participant) return;
+    await notifyActiveEventParticipantRoleChange(tx, ctx.userID, participant, previousRoleIds);
+  }),
+
+  removeParticipantRole: defineMutator(
+    eventParticipantRoleUnassignSchema,
+    async ({ tx, ctx, args }) => {
+      const participant = await tx.run(
+        zql.event_participant.where('id', args.event_participant_id).one()
+      );
+      const previousRoleIds = participant
+        ? await eventParticipantRoleIds(tx, args.event_participant_id)
+        : [];
+
+      await mutators.events.removeParticipantRole.fn({ tx, ctx, args });
+
+      if (!participant) return;
+      await notifyActiveEventParticipantRoleChange(tx, ctx.userID, participant, previousRoleIds);
+    }
+  ),
+
+  syncParticipantRoles: defineMutator(
+    eventParticipantRolesSyncSchema,
+    async ({ tx, ctx, args }) => {
+      const participant = await tx.run(
+        zql.event_participant.where('id', args.event_participant_id).one()
+      );
+      const previousRoleIds = participant
+        ? await eventParticipantRoleIds(tx, args.event_participant_id)
+        : [];
+
+      await mutators.events.syncParticipantRoles.fn({ tx, ctx, args });
+
+      if (!participant) return;
+      await notifyActiveEventParticipantRoleChange(tx, ctx.userID, participant, previousRoleIds);
     }
   ),
 

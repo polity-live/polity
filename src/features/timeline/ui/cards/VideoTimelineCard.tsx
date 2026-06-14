@@ -102,7 +102,8 @@ export function VideoTimelineCard({ video, onPlay, className }: VideoTimelineCar
     <TimelineCardBase contentType="video" className={className} href={amendmentHref}>
       {/* Video Thumbnail */}
       <div
-        className="group relative aspect-video cursor-pointer bg-muted"
+        className="group bg-muted relative aspect-video shrink-0 cursor-pointer"
+        data-timeline-card-media
         onClick={e => {
           e.preventDefault();
           setPlayerOpen(true);
@@ -118,7 +119,7 @@ export function VideoTimelineCard({ video, onPlay, className }: VideoTimelineCar
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-pink-100 to-red-100 dark:from-pink-900/40 dark:to-red-900/50">
-            <Video className="h-12 w-12 text-muted-foreground" />
+            <Video className="text-muted-foreground h-12 w-12" />
           </div>
         )}
 
@@ -133,7 +134,7 @@ export function VideoTimelineCard({ video, onPlay, className }: VideoTimelineCar
         {video.duration && (
           <Badge
             variant="secondary"
-            className="absolute bottom-2 right-2 bg-black/80 font-mono text-xs text-white"
+            className="absolute right-2 bottom-2 bg-black/80 font-mono text-xs text-white"
           >
             {formatDuration(video.duration)}
           </Badge>
@@ -143,7 +144,7 @@ export function VideoTimelineCard({ video, onPlay, className }: VideoTimelineCar
         {video.sourceType && (
           <Badge
             variant="outline"
-            className="absolute left-2 top-2 bg-white/80 text-xs dark:bg-gray-900/80"
+            className="absolute top-2 left-2 bg-white/80 text-xs dark:bg-gray-900/80"
           >
             {SOURCE_LABELS[video.sourceType] || video.sourceType}
           </Badge>
@@ -154,44 +155,46 @@ export function VideoTimelineCard({ video, onPlay, className }: VideoTimelineCar
         {/* Title */}
         <h3 className="mb-2 line-clamp-2 text-sm font-semibold">{video.title}</h3>
 
-        {/* Author Info */}
-        {(video.authorName || video.sourceName) && (
-          <div className="mb-2 flex items-center gap-2">
-            {video.authorAvatar ? (
-              <img
-                src={video.authorAvatar}
-                alt={video.authorName}
-                className="h-5 w-5 rounded-full object-cover"
-              />
-            ) : (
-              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-muted">
-                <User className="h-3 w-3" />
-              </div>
-            )}
-            <span className="truncate text-xs text-muted-foreground">
-              {video.authorName}
-              {video.sourceName && <span> · {video.sourceName}</span>}
-            </span>
-          </div>
-        )}
-
-        {/* Stats */}
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          {video.views !== undefined && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="flex cursor-help items-center gap-1">
-                  <Eye className="h-3.5 w-3.5" />
-                  {formatViews(video.views)}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>
-                  {video.views} {t('features.timeline.cards.views')}
-                </p>
-              </TooltipContent>
-            </Tooltip>
+        <div className="mt-auto space-y-3">
+          {/* Author Info */}
+          {(video.authorName || video.sourceName) && (
+            <div className="flex items-center gap-2">
+              {video.authorAvatar ? (
+                <img
+                  src={video.authorAvatar}
+                  alt={video.authorName}
+                  className="h-5 w-5 rounded-full object-cover"
+                />
+              ) : (
+                <div className="bg-muted flex h-5 w-5 items-center justify-center rounded-full">
+                  <User className="h-3 w-3" />
+                </div>
+              )}
+              <span className="text-muted-foreground truncate text-xs">
+                {video.authorName}
+                {video.sourceName && <span> · {video.sourceName}</span>}
+              </span>
+            </div>
           )}
+
+          {/* Stats */}
+          <div className="text-muted-foreground flex items-center gap-3 text-xs">
+            {video.views !== undefined && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="flex cursor-help items-center gap-1">
+                    <Eye className="h-3.5 w-3.5" />
+                    {formatViews(video.views)}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    {video.views} {t('features.timeline.cards.views')}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
         </div>
       </TimelineCardContent>
 
@@ -226,7 +229,7 @@ export function VideoTimelineCard({ video, onPlay, className }: VideoTimelineCar
             {video.videoUrl ? (
               <video src={video.videoUrl} controls autoPlay className="h-full w-full" />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
+              <div className="text-muted-foreground flex h-full w-full items-center justify-center text-sm">
                 {t('features.timeline.cards.videoUnavailable')}
               </div>
             )}

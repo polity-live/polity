@@ -15,6 +15,7 @@ import {
   buildDirectRelationships,
   buildIndirectRelationships,
   isAcceptedSiblingRelationship,
+  type RelationshipTraversalMode,
   type RelationshipEntry,
 } from '@/features/network/logic/networkRelationshipHelpers';
 import {
@@ -30,13 +31,17 @@ import {
   getGroupNodeVisualVariant,
 } from '@/features/network/ui/networkVisualHelpers';
 import { useUserState } from '@/zero/users/useUserState';
-import { useNetworkLinkState } from '@/zero/network';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { useGroupConnectionState } from '@/zero/network';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import {
   addUniqueValue,
   buildHierarchyRightEdgeDirections,
   buildNetworkRelationshipDialogData,
   buildNetworkRelationshipEdge,
+  buildSingleDirectionRightEdgeDirections,
   createNetworkRelationshipEdgeData,
   mergeNetworkEdgeRelationshipDirection,
   mergeNetworkRightRelationshipKind,
@@ -45,12 +50,8 @@ import {
   type EditableRightsLabelEdgeData,
   type NetworkEdgeRelationshipDirection,
 } from '../types/networkEdge.types';
-import type {
-  CanonicalMembershipMode,
-  CanonicalNetworkMembershipDirection,
-  NetworkGroupEntity,
-} from '../types/network.types';
-import { explodeNetworkLinksToRelationships } from '../logic/networkLinkDerived';
+import type { CanonicalMembershipMode, NetworkGroupEntity } from '../types/network.types';
+import { deriveNormalizedGroupRelationships } from '../logic/groupConnectionDerived';
 import { Button } from '@/features/shared/ui/ui/button';
 
 interface NetworkNode extends Node {
@@ -142,8 +143,11 @@ export function UserNetworkFlow({
 
   const { userWithGroupMemberships } = useUserState({ userId, includeGroupMemberships: true });
 
-  const { allLinks } = useNetworkLinkState();
-  const allRelationships = useMemo(() => explodeNetworkLinksToRelationships(allLinks), [allLinks]);
+  const { allConnections } = useGroupConnectionState();
+  const allRelationships = useMemo(
+    () => deriveNormalizedGroupRelationships(allConnections),
+    [allConnections]
+  );
 
   const user = userWithGroupMemberships?.[0];
   const memberships = user?.group_memberships || [];
@@ -175,9 +179,10 @@ export function UserNetworkFlow({
     if (!relationships.length) return [];
     return relationships;
   }, [relationships.length, relationships.map(r => r.id).join(',')]);
+  const relationshipTraversalMode: RelationshipTraversalMode = filterRight ? 'right' : 'structure';
   const userGroupIds = useMemo(() => new Set(userGroups.map(group => group.id)), [userGroups]);
 
-  const allLabel = t('common.labels.all', 'All');
+  const allLabel = t('common.labels.all');
 
   const depthFilters = useMemo(
     () => [
@@ -237,14 +242,14 @@ export function UserNetworkFlow({
       },
       {
         id: 'incoming',
-        label: t('common.network.incomingConnections', 'Eingehend'),
+        label: t('common.network.incomingConnections'),
         active: connectionDirectionFilter === 'incoming',
         onToggle: () => setConnectionDirectionFilter('incoming'),
         activeClassName: NETWORK_FILTER_ACTIVE_CLASS_NAMES.blue,
       },
       {
         id: 'outgoing',
-        label: t('common.network.outgoingConnections', 'Ausgehend'),
+        label: t('common.network.outgoingConnections'),
         active: connectionDirectionFilter === 'outgoing',
         onToggle: () => setConnectionDirectionFilter('outgoing'),
         activeClassName: NETWORK_FILTER_ACTIVE_CLASS_NAMES.orange,
@@ -344,7 +349,7 @@ export function UserNetworkFlow({
           target: group.id,
           type: 'smoothstep',
           animated: true,
-          label: 'Member',
+          label: translateText('generated.inline.0200_member_6853c98a'),
           style: { stroke: '#2196f3', strokeWidth: 2 },
           labelStyle: {
             fill: '#1976d2',
@@ -384,8 +389,20 @@ export function UserNetworkFlow({
     userGroups.forEach(group => {
       const relationshipTree =
         relationshipDepthFilter === 'direct'
-          ? buildDirectRelationships(stableRelationships, group.id, filterRight)
-          : buildIndirectRelationships(stableRelationships, group.id, filterRight);
+          ? buildDirectRelationships(
+              stableRelationships,
+              group.id,
+              filterRight,
+              group.id,
+              relationshipTraversalMode
+            )
+          : buildIndirectRelationships(
+              stableRelationships,
+              group.id,
+              filterRight,
+              group.id,
+              relationshipTraversalMode
+            );
       const parents = showIndirectOnly
         ? relationshipTree.parents.filter(parent => (parent.level ?? 1) > 1)
         : relationshipTree.parents;
@@ -404,8 +421,10 @@ export function UserNetworkFlow({
             rights: parent.rights,
             relationshipKinds: parent.relationshipKinds,
             rightRelationshipKinds: parent.rightRelationshipKinds,
+            sourceRelationshipType: parent.sourceRelationshipType ?? null,
             membershipMode: parent.membershipMode ?? null,
-            membershipCanonicalDirection: parent.membershipCanonicalDirection ?? null,
+            memberSourceGroupId: parent.memberSourceGroupId ?? null,
+            memberTargetGroupId: parent.memberTargetGroupId ?? null,
             level: parent.level,
             childId: parent.childId,
             isParent: true,
@@ -413,37 +432,49 @@ export function UserNetworkFlow({
           });
         }
 
-        const edgeTarget = showAllDepth && parent.childId ? parent.childId : group.id;
-        const edgeId = `edge-parent-${parent.group.id}-to-${edgeTarget}`;
+        const rightMode = relationshipTraversalMode === 'right' && Boolean(filterRight);
+        const hierarchyChildGroupId = showAllDepth && parent.childId ? parent.childId : group.id;
+        const edgeSourceGroupId = rightMode ? hierarchyChildGroupId : parent.group.id;
+        const edgeTargetGroupId = rightMode ? parent.group.id : hierarchyChildGroupId;
+        const edgeId = rightMode
+          ? `edge-${edgeSourceGroupId}-to-parent-${parent.group.id}`
+          : `edge-parent-${parent.group.id}-to-${edgeTargetGroupId}`;
 
         // Only add edge if it doesn't already exist
         if (!allEdgesMap.has(edgeId)) {
-          const rightEdgeDirections = buildHierarchyRightEdgeDirections(
-            stableRelationships,
-            parent.group.id,
-            edgeTarget
-          );
+          const rightEdgeDirections =
+            rightMode && filterRight
+              ? buildSingleDirectionRightEdgeDirections([filterRight], 'forward')
+              : buildHierarchyRightEdgeDirections(
+                  stableRelationships,
+                  parent.group.id,
+                  hierarchyChildGroupId
+                );
           allEdgesMap.set(edgeId, {
             ...buildNetworkRelationshipEdge({
               edgeId,
-              sourceId: parent.group.id,
-              targetId: edgeTarget,
-              sourceGroupId: parent.group.id,
-              targetGroupId: edgeTarget,
-              structuralType: 'parent',
+              sourceId: edgeSourceGroupId,
+              targetId: edgeTargetGroupId,
+              sourceGroupId: edgeSourceGroupId,
+              targetGroupId: edgeTargetGroupId,
+              structuralType:
+                relationshipTraversalMode === 'right'
+                  ? (parent.sourceRelationshipType ?? 'parent')
+                  : 'parent',
               rights: parent.rights,
               relationshipKinds: parent.relationshipKinds,
               rightRelationshipKinds: parent.rightRelationshipKinds,
               membershipMode: parent.membershipMode ?? null,
-              membershipCanonicalDirection: parent.membershipCanonicalDirection ?? null,
+              memberSourceGroupId: parent.memberSourceGroupId ?? null,
+              memberTargetGroupId: parent.memberTargetGroupId ?? null,
               rightEdgeDirections,
               relationshipDepth: (parent.level ?? 1) === 1 ? 'direct' : 'indirect',
               fallbackStrokeColor: '#66bb6a',
               strokeDasharray: '5 5',
-              sourceName: groupNameMap.get(parent.group.id) ?? null,
-              targetName: groupNameMap.get(edgeTarget) ?? null,
-              currentGroupId: edgeTarget,
-              previewCurrentGroupId: edgeTarget,
+              sourceName: groupNameMap.get(edgeSourceGroupId) ?? null,
+              targetName: groupNameMap.get(edgeTargetGroupId) ?? null,
+              currentGroupId: rightMode ? edgeSourceGroupId : hierarchyChildGroupId,
+              previewCurrentGroupId: rightMode ? edgeSourceGroupId : hierarchyChildGroupId,
               bendPoints: edgeBendPointsRef.current[edgeId] ?? [],
               edgeEditingEnabled: isInteractiveRef.current,
               onBendPointsChange: handleEdgeBendPointsChange,
@@ -463,8 +494,10 @@ export function UserNetworkFlow({
             rights: child.rights,
             relationshipKinds: child.relationshipKinds,
             rightRelationshipKinds: child.rightRelationshipKinds,
+            sourceRelationshipType: child.sourceRelationshipType ?? null,
             membershipMode: child.membershipMode ?? null,
-            membershipCanonicalDirection: child.membershipCanonicalDirection ?? null,
+            memberSourceGroupId: child.memberSourceGroupId ?? null,
+            memberTargetGroupId: child.memberTargetGroupId ?? null,
             level: child.level,
             parentId: child.parentId,
             isParent: false,
@@ -477,11 +510,10 @@ export function UserNetworkFlow({
 
         // Only add edge if it doesn't already exist
         if (!allEdgesMap.has(edgeId)) {
-          const rightEdgeDirections = buildHierarchyRightEdgeDirections(
-            stableRelationships,
-            edgeSource,
-            child.group.id
-          );
+          const rightEdgeDirections =
+            relationshipTraversalMode === 'right' && filterRight
+              ? buildSingleDirectionRightEdgeDirections([filterRight], 'forward')
+              : buildHierarchyRightEdgeDirections(stableRelationships, edgeSource, child.group.id);
           allEdgesMap.set(edgeId, {
             ...buildNetworkRelationshipEdge({
               edgeId,
@@ -489,12 +521,16 @@ export function UserNetworkFlow({
               targetId: child.group.id,
               sourceGroupId: edgeSource,
               targetGroupId: child.group.id,
-              structuralType: 'parent',
+              structuralType:
+                relationshipTraversalMode === 'right'
+                  ? (child.sourceRelationshipType ?? 'parent')
+                  : 'parent',
               rights: child.rights,
               relationshipKinds: child.relationshipKinds,
               rightRelationshipKinds: child.rightRelationshipKinds,
               membershipMode: child.membershipMode ?? null,
-              membershipCanonicalDirection: child.membershipCanonicalDirection ?? null,
+              memberSourceGroupId: child.memberSourceGroupId ?? null,
+              memberTargetGroupId: child.memberTargetGroupId ?? null,
               rightEdgeDirections,
               relationshipDepth: (child.level ?? 1) === 1 ? 'direct' : 'indirect',
               fallbackStrokeColor: '#ffb74d',
@@ -602,129 +638,133 @@ export function UserNetworkFlow({
         rightRelationshipKinds: Record<string, 'active' | 'incoming' | 'outgoing'>;
         rightEdgeDirections: Record<string, NetworkEdgeRelationshipDirection>;
         membershipMode?: CanonicalMembershipMode | null;
-        membershipCanonicalDirection?: CanonicalNetworkMembershipDirection | null;
+        memberSourceGroupId?: string | null;
+        memberTargetGroupId?: string | null;
         currentGroupId: string;
         sourceGroupType?: string | null;
         targetGroupType?: string | null;
       }
     >();
 
-    stableRelationships.forEach(relationship => {
-      if (!isAcceptedSiblingRelationship(relationship)) {
-        return;
-      }
+    if (relationshipTraversalMode !== 'right') {
+      stableRelationships.forEach(relationship => {
+        if (!isAcceptedSiblingRelationship(relationship)) {
+          return;
+        }
 
-      if (filterRight && (relationship.with_right ?? '') !== filterRight) {
-        return;
-      }
+        if (filterRight && (relationship.with_right ?? '') !== filterRight) {
+          return;
+        }
 
-      if (!relationship.group || !relationship.related_group) {
-        return;
-      }
+        if (!relationship.group || !relationship.related_group) {
+          return;
+        }
 
-      const sourceId = relationship.group.id;
-      const targetId = relationship.related_group.id;
-      const sourceRendered = renderedGroupIds.has(sourceId);
-      const targetRendered = renderedGroupIds.has(targetId);
+        const sourceId = relationship.group.id;
+        const targetId = relationship.related_group.id;
+        const sourceRendered = renderedGroupIds.has(sourceId);
+        const targetRendered = renderedGroupIds.has(targetId);
 
-      if (!sourceRendered && !targetRendered) {
-        return;
-      }
+        if (!sourceRendered && !targetRendered) {
+          return;
+        }
 
-      groupNameMap.set(sourceId, relationship.group.name ?? sourceId);
-      groupNameMap.set(targetId, relationship.related_group.name ?? targetId);
+        groupNameMap.set(sourceId, relationship.group.name ?? sourceId);
+        groupNameMap.set(targetId, relationship.related_group.name ?? targetId);
 
-      if (!sourceRendered) {
-        registerSiblingGroup(targetId, relationship.group);
-      }
+        if (!sourceRendered) {
+          registerSiblingGroup(targetId, relationship.group);
+        }
 
-      if (!targetRendered) {
-        registerSiblingGroup(sourceId, relationship.related_group);
-      }
+        if (!targetRendered) {
+          registerSiblingGroup(sourceId, relationship.related_group);
+        }
 
-      const [edgeSourceId, edgeTargetId] =
-        userGroupIds.has(sourceId) && !userGroupIds.has(targetId)
-          ? [sourceId, targetId]
-          : userGroupIds.has(targetId) && !userGroupIds.has(sourceId)
-            ? [targetId, sourceId]
-            : sourceId.localeCompare(targetId) <= 0
-              ? [sourceId, targetId]
-              : [targetId, sourceId];
-      const edgeKey = `${edgeSourceId}<->${edgeTargetId}`;
-      const relationshipContextGroupId = userGroupIds.has(edgeSourceId)
-        ? edgeSourceId
-        : userGroupIds.has(edgeTargetId)
-          ? edgeTargetId
-          : edgeSourceId;
-      let siblingEdgeEntry = siblingEdgeEntries.get(edgeKey);
-      if (!siblingEdgeEntry) {
-        siblingEdgeEntry = {
-          sourceId: edgeSourceId,
-          targetId: edgeTargetId,
-          rights: [],
-          relationshipKinds: [],
-          rightRelationshipKinds: {},
-          rightEdgeDirections: {},
-          membershipMode: relationship.membership_mode ?? null,
-          membershipCanonicalDirection: relationship.membership_direction ?? null,
-          currentGroupId: relationshipContextGroupId,
-          sourceGroupType: relationship.group.group_type ?? null,
-          targetGroupType: relationship.related_group.group_type ?? null,
-        };
-        siblingEdgeEntries.set(edgeKey, siblingEdgeEntry);
-      }
+        const [edgeSourceId, edgeTargetId] =
+          userGroupIds.has(sourceId) && !userGroupIds.has(targetId)
+            ? [sourceId, targetId]
+            : userGroupIds.has(targetId) && !userGroupIds.has(sourceId)
+              ? [targetId, sourceId]
+              : sourceId.localeCompare(targetId) <= 0
+                ? [sourceId, targetId]
+                : [targetId, sourceId];
+        const edgeKey = `${edgeSourceId}<->${edgeTargetId}`;
+        const relationshipContextGroupId = userGroupIds.has(edgeSourceId)
+          ? edgeSourceId
+          : userGroupIds.has(edgeTargetId)
+            ? edgeTargetId
+            : edgeSourceId;
+        let siblingEdgeEntry = siblingEdgeEntries.get(edgeKey);
+        if (!siblingEdgeEntry) {
+          siblingEdgeEntry = {
+            sourceId: edgeSourceId,
+            targetId: edgeTargetId,
+            rights: [],
+            relationshipKinds: [],
+            rightRelationshipKinds: {},
+            rightEdgeDirections: {},
+            membershipMode: relationship.membership_mode ?? null,
+            memberSourceGroupId: relationship.member_source_group_id ?? null,
+            memberTargetGroupId: relationship.member_target_group_id ?? null,
+            currentGroupId: relationshipContextGroupId,
+            sourceGroupType: relationship.group.group_type ?? null,
+            targetGroupType: relationship.related_group.group_type ?? null,
+          };
+          siblingEdgeEntries.set(edgeKey, siblingEdgeEntry);
+        }
 
-      const right = relationship.with_right ?? '';
-      if (right && !siblingEdgeEntry.rights.includes(right)) {
-        siblingEdgeEntry.rights.push(right);
-      }
+        const right = relationship.with_right ?? '';
+        if (right && !siblingEdgeEntry.rights.includes(right)) {
+          siblingEdgeEntry.rights.push(right);
+        }
 
-      const relationshipKind =
-        relationship.status == null ||
-        relationship.status === 'active' ||
-        relationship.status === 'accepted'
-          ? 'active'
-          : relationship.group_id === relationshipContextGroupId ||
-              relationship.related_group_id === relationshipContextGroupId
-            ? relationship.initiator_group_id === relationshipContextGroupId
-              ? 'outgoing'
-              : 'incoming'
-            : null;
+        const relationshipKind =
+          relationship.status === 'active'
+            ? 'active'
+            : relationship.group_id === relationshipContextGroupId ||
+                relationship.related_group_id === relationshipContextGroupId
+              ? relationship.initiator_group_id === relationshipContextGroupId
+                ? 'outgoing'
+                : 'incoming'
+              : null;
 
-      if (relationshipKind) {
-        addUniqueValue(siblingEdgeEntry.relationshipKinds, relationshipKind);
-      }
+        if (relationshipKind) {
+          addUniqueValue(siblingEdgeEntry.relationshipKinds, relationshipKind);
+        }
 
-      if (right) {
-        siblingEdgeEntry.rightRelationshipKinds[right] = mergeNetworkRightRelationshipKind(
-          siblingEdgeEntry.rightRelationshipKinds[right],
-          relationshipKind
-        ) as 'active' | 'incoming' | 'outgoing';
-      }
+        if (right) {
+          siblingEdgeEntry.rightRelationshipKinds[right] = mergeNetworkRightRelationshipKind(
+            siblingEdgeEntry.rightRelationshipKinds[right],
+            relationshipKind
+          ) as 'active' | 'incoming' | 'outgoing';
+        }
 
-      const rightDirection =
-        relationship.group_id === edgeSourceId && relationship.related_group_id === edgeTargetId
-          ? 'forward'
-          : relationship.group_id === edgeTargetId && relationship.related_group_id === edgeSourceId
-            ? 'backward'
-            : null;
+        const rightDirection =
+          relationship.group_id === edgeSourceId && relationship.related_group_id === edgeTargetId
+            ? 'forward'
+            : relationship.group_id === edgeTargetId &&
+                relationship.related_group_id === edgeSourceId
+              ? 'backward'
+              : null;
 
-      if (right && rightDirection) {
-        siblingEdgeEntry.rightEdgeDirections[right] = mergeNetworkEdgeRelationshipDirection(
-          siblingEdgeEntry.rightEdgeDirections[right],
-          rightDirection
-        );
-      }
+        if (right && rightDirection) {
+          siblingEdgeEntry.rightEdgeDirections[right] = mergeNetworkEdgeRelationshipDirection(
+            siblingEdgeEntry.rightEdgeDirections[right],
+            rightDirection
+          );
+        }
 
-      if (
-        siblingEdgeEntry.membershipMode === 'none' &&
-        relationship.membership_mode &&
-        relationship.membership_mode !== 'none'
-      ) {
-        siblingEdgeEntry.membershipMode = relationship.membership_mode;
-        siblingEdgeEntry.membershipCanonicalDirection = relationship.membership_direction ?? null;
-      }
-    });
+        if (
+          siblingEdgeEntry.membershipMode === 'none' &&
+          relationship.membership_mode &&
+          relationship.membership_mode !== 'none'
+        ) {
+          siblingEdgeEntry.membershipMode = relationship.membership_mode;
+          siblingEdgeEntry.memberSourceGroupId = relationship.member_source_group_id ?? null;
+          siblingEdgeEntry.memberTargetGroupId = relationship.member_target_group_id ?? null;
+        }
+      });
+    }
 
     if (!showIndirectOnly) {
       siblingGroupsByAnchor.forEach((siblingGroups, anchorId) => {
@@ -782,7 +822,8 @@ export function UserNetworkFlow({
           rightRelationshipKinds,
           rightEdgeDirections,
           membershipMode,
-          membershipCanonicalDirection,
+          memberSourceGroupId,
+          memberTargetGroupId,
           currentGroupId,
           sourceGroupType,
           targetGroupType,
@@ -809,7 +850,8 @@ export function UserNetworkFlow({
               relationshipKinds,
               rightRelationshipKinds,
               membershipMode,
-              membershipCanonicalDirection,
+              memberSourceGroupId,
+              memberTargetGroupId,
               rightEdgeDirections,
               relationshipDepth: 'direct',
               fallbackStrokeColor: isSiblingToSibling ? '#f59e0b' : '#a855f7',
@@ -843,6 +885,7 @@ export function UserNetworkFlow({
     userGroups,
     userGroupIds,
     relationshipDepthFilter,
+    relationshipTraversalMode,
     stableRelationships,
     onGroupClick,
   ]);
@@ -943,7 +986,9 @@ export function UserNetworkFlow({
   if (!userProfile) {
     return (
       <div className="bg-background flex h-full min-h-0 w-full items-center justify-center rounded-lg border">
-        <p className="text-muted-foreground">Loading user network...</p>
+        <p className="text-muted-foreground">
+          {translateText('generated.inline.0803_loading_user_network_053d7b1c')}
+        </p>
       </div>
     );
   }
@@ -970,7 +1015,7 @@ export function UserNetworkFlow({
       containerClassName="h-full min-h-0"
       panel={
         <NetworkControlPanel
-          title={title ?? t('common.network.userNetwork', 'User Network')}
+          title={title ?? t('common.network.userNetwork')}
           description={
             description ??
             t('common.network.userNetworkDescription', {
@@ -985,37 +1030,37 @@ export function UserNetworkFlow({
           legendItems={[
             {
               id: 'user',
-              label: t('common.network.user', 'User'),
+              label: t('common.network.user'),
               swatchClassName: 'h-4 w-4 rounded-full border-2 border-[#2196f3] bg-[#e3f2fd]',
             },
             createGroupNodeLegendItem({
               id: 'current-group',
-              label: t('common.network.currentGroup', 'Aktuelle Gruppe'),
+              label: t('common.network.currentGroup'),
               visualVariant: 'current',
             }),
             createGroupNodeLegendItem({
               id: 'parent-group',
-              label: t('common.network.parentGroup', 'Übergeordnete Gruppe'),
+              label: t('common.network.parentGroup'),
               visualVariant: 'parent',
             }),
             createGroupNodeLegendItem({
               id: 'child-group',
-              label: t('common.network.childGroup', 'Untergeordnete Gruppe'),
+              label: t('common.network.childGroup'),
               visualVariant: 'child',
             }),
             createGroupNodeLegendItem({
               id: 'sibling-group-open',
-              label: t('common.network.siblingGroupOpen', 'Geschwistergruppe offen'),
+              label: t('common.network.siblingGroupOpen'),
               visualVariant: 'sibling-open',
             }),
             createGroupNodeLegendItem({
               id: 'sibling-group-elected',
-              label: t('common.network.siblingGroupElected', 'Geschwistergruppe gewählt'),
+              label: t('common.network.siblingGroupElected'),
               visualVariant: 'sibling-elected',
             }),
             createGroupNodeLegendItem({
               id: 'sibling-group-parliament',
-              label: t('common.network.siblingGroupParliament', 'Geschwistergruppe Parlament'),
+              label: t('common.network.siblingGroupParliament'),
               visualVariant: 'sibling-parliament',
             }),
           ]}
@@ -1052,13 +1097,10 @@ export function UserNetworkFlow({
           connectionDirectionFilters={connectionDirectionFilters}
           relationshipStatusFilters={relationshipStatusFilters}
           showConnectionDirectionLegend
-          connectionDirectionLegendTitle={t(
-            'common.network.connectionDirections',
-            'Verbindungsrichtungen'
-          )}
-          bidirectionalConnectionLabel={t('common.network.bidirectional', 'Beidseitig')}
-          incomingConnectionLabel={t('common.network.incomingConnections', 'Eingehend')}
-          outgoingConnectionLabel={t('common.network.outgoingConnections', 'Ausgehend')}
+          connectionDirectionLegendTitle={t('common.network.connectionDirections')}
+          bidirectionalConnectionLabel={t('common.network.bidirectional')}
+          incomingConnectionLabel={t('common.network.incomingConnections')}
+          outgoingConnectionLabel={t('common.network.outgoingConnections')}
           filterRight={filterRight}
           filteredByPrefix={t('common.network.filteredBy')}
           showRightsLegend

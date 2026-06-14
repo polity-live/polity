@@ -25,21 +25,22 @@ export const docsPageTranslations = {
     title: 'Learn Polity from the user side',
     subtitle:
       'This documentation explains how people join spaces, coordinate work, make decisions, and follow outcomes across Polity without forcing you through implementation details first.',
-    primaryCta: 'Start with users',
-    secondaryCta: 'Understand roles and rights',
+    primaryCta: 'Start with sign-in',
+    secondaryCta: 'Understand creation flows',
     pathwaysTitle: 'Common pathways',
     pathways: {
       start:
-        'Set up your profile, discover relevant groups, and understand where you belong in the network.',
+        'Sign in, set up your profile, discover relevant groups, and understand where you belong in the network.',
       coordinate:
-        'Move between groups, events, messages, notifications, calendar, and todos to keep day-to-day collaboration moving.',
+        'Move between creation, groups, events, messages, notifications, calendar, todos, and documents to keep day-to-day collaboration moving.',
       decide:
-        'Use amendments, votes, elections, and the decision terminal to understand how proposals turn into visible outcomes.',
+        'Use amendments, agendas, change requests, votes, elections, and the decision terminal to understand how proposals turn into visible outcomes.',
       'follow-through':
-        'Track what changed, who needs to act next, and where a decision or amendment continues through connected groups.',
+        'Track what changed through timeline, search, subscriptions, and notifications, who needs to act next, and where work continues through connected spaces.',
     },
     featuredTitle: 'Featured guides',
-    featuredDescription: 'Start with the most important user journeys and system guides.',
+    featuredDescription:
+      'Start with sign-in, workspaces, creation paths, and the most important decision flows.',
     libraryTitle: 'Documentation library',
     libraryDescription: 'Browse the full set of user-facing feature guides by area of work.',
   },
@@ -67,6 +68,60 @@ export const docsPageTranslations = {
     },
   },
   topics: {
+    'auth-and-onboarding': {
+      navLabel: 'Sign-In & Onboarding',
+      title: 'Sign-In And Onboarding',
+      summary:
+        'Account creation, email verification, password recovery, and the first steps into the protected workspace.',
+      audience:
+        'New users, invited members, and anyone trying to understand how Polity moves from public pages into personal work.',
+      entry:
+        'Start here when you are using Polity for the first time or need to understand access problems.',
+      perspective:
+        'Onboarding determines whether Polity feels like a public information site or a personal workspace.',
+      outcome:
+        'After a successful entry flow, a user can maintain their profile, open relevant groups, and use protected features with the right context.',
+      actions: [
+        'Create an account, sign in, or complete the verification flow.',
+        'Use password and email flows when access needs to be restored.',
+        'After entry, review profile details, language, theme, and first relevant spaces.',
+      ],
+      concepts: [
+        'Public pages explain Polity, while protected routes unlock personal data and collaboration.',
+        'Supabase Auth controls identity, session state, and email-based access flows.',
+        'Onboarding connects technical sign-in with a usable presence in the network.',
+      ],
+      watchFor: [
+        'An unconfirmed or expired access flow can feel like a navigation issue.',
+        'The first successful login is only the start; profile and memberships make the workspace useful.',
+        'Invitations and existing memberships can influence where users land after sign-in.',
+      ],
+      states: [
+        'Users can be public, signed in, verified, incompletely set up, or unauthorized.',
+        'Onboarding succeeds when users are not only logged in, but know where their next action is.',
+      ],
+      diagram: {
+        title: 'From public entry to workspace',
+        description: 'The typical path from orientation into active use.',
+        steps: {
+          'choose-entry': {
+            title: 'Choose the entry path',
+            description:
+              'Users open sign-in, registration, invitation, or password recovery depending on the situation.',
+          },
+          'verify-account': {
+            title: 'Confirm access',
+            description:
+              'Email codes and session checks make sure the right person enters the workspace.',
+          },
+          'complete-profile': {
+            title: 'Prepare the workspace',
+            description:
+              'Profile details, settings, and first relevant spaces turn the account into a usable presence.',
+          },
+        },
+      },
+    },
     users: {
       navLabel: 'Users',
       title: 'Users',
@@ -222,6 +277,58 @@ export const docsPageTranslations = {
         },
       },
     },
+    agendas: {
+      navLabel: 'Agendas',
+      title: 'Agendas',
+      summary:
+        'Structured event flows with items, timing, linked proposals, decisions, and follow-up.',
+      audience:
+        'Organizers, facilitators, and participants who need to know what an event will handle and when.',
+      entry:
+        'Read this when an event is more than a date and concrete work moves through multiple items.',
+      perspective:
+        'Agendas turn events into a readable sequence where preparation, discussion, and decisions meet.',
+      outcome:
+        'A strong agenda helps participants prepare, recognize decision moments, and rediscover outcomes later.',
+      actions: [
+        'Create and order agenda items with timing, status, or type.',
+        'Link amendments, change requests, votes, or supporting material to relevant items.',
+        'Track which items are open, active, or completed during and after the event.',
+      ],
+      concepts: [
+        'Agenda items give an event operational order and shared attention.',
+        'An agenda item can carry discussion, presentation, voting, or preparation.',
+        'Links to votes and change requests show where formal decisions emerge.',
+      ],
+      watchFor: [
+        'Order, duration, and status affect how urgent an item feels.',
+        'Linked amendments or votes should remain reachable directly from the item.',
+        'After the event, the agenda is often the best route back into outcomes and follow-up.',
+      ],
+      states: [
+        'Agenda items can feel planned, active, completed, skipped, or forwarded.',
+        'Users read agendas both for preparation and as a record of the work that actually happened.',
+      ],
+      diagram: {
+        title: 'How an agenda structures work',
+        description: 'The path from planning into facilitation and outcome.',
+        steps: {
+          'structure-meeting': {
+            title: 'Structure the meeting',
+            description: 'Organizers define items, sequence, timing, and linked content.',
+          },
+          'run-items': {
+            title: 'Run the items',
+            description:
+              'Participants move through discussions, materials, votes, and open questions.',
+          },
+          'record-decisions': {
+            title: 'Record decisions',
+            description: 'Status, results, and follow-up work remain discoverable after the event.',
+          },
+        },
+      },
+    },
     amendments: {
       navLabel: 'Amendments',
       title: 'Amendments',
@@ -274,6 +381,122 @@ export const docsPageTranslations = {
         },
       },
     },
+    'documents-and-editor': {
+      navLabel: 'Documents & Editor',
+      title: 'Documents And Editor',
+      summary:
+        'Collaborative documents, rich-text editing, versions, presence, and editing modes for groups, users, blogs, and amendments.',
+      audience:
+        'Authors, collaborators, and group members who create, review, or publish text together.',
+      entry: 'Use this guide when writing, reviewing, and versioning are central to a workflow.',
+      perspective:
+        'The editor is the workspace where civic and organizational content moves from ideas into durable text.',
+      outcome:
+        'Good document work makes it clear who is working on the text, which version matters, and whether a change is direct, suggested, or view-only.',
+      actions: [
+        'Open, create, and edit group or user documents in the right context.',
+        'Switch between view, suggest, and edit modes when rights and workflow allow it.',
+        'Save versions, inspect earlier states, and understand collaboration through presence signals.',
+      ],
+      concepts: [
+        'Documents are standalone work surfaces and can also belong to groups, blogs, or amendments.',
+        'Editing modes make rights and review depth visible inside the text itself.',
+        'Versions help users trust that collaborative writing remains traceable.',
+      ],
+      watchFor: [
+        'Not everyone can edit directly; suggestions or view-only access may be the right mode.',
+        'Autosave and versions answer different user needs: current safety and historical traceability.',
+        'Document context determines whether text is private, group-scoped, or part of a formal amendment flow.',
+      ],
+      states: [
+        'A document can be empty, actively edited, suggested against, versioned, or read-only.',
+        'Users pay close attention to mode, save confidence, and visible collaboration from other people.',
+      ],
+      diagram: {
+        title: 'From document to reviewed version',
+        description: 'How users typically edit and protect documents.',
+        steps: {
+          'open-document': {
+            title: 'Open the document',
+            description:
+              'The context determines whether this is a group document, blog, profile text, or amendment.',
+          },
+          'edit-or-suggest': {
+            title: 'Edit or suggest',
+            description:
+              'Users work directly in the text or mark changes as reviewable suggestions.',
+          },
+          'save-version': {
+            title: 'Save a version',
+            description: 'Snapshots and history help explain or restore the current text later.',
+          },
+        },
+      },
+    },
+    'change-requests-and-discussions': {
+      navLabel: 'Change Requests & Discussions',
+      title: 'Change Requests And Discussions',
+      summary:
+        'Structured change proposals, comments, voting on suggestions, and traceable resolution of review work.',
+      audience:
+        'Collaborators, authors, reviewers, and groups that need to decide what happens to proposed text changes.',
+      entry: 'Read this when a proposal should trigger concrete text or workflow changes.',
+      perspective:
+        'Change requests give discussions an actionable shape: what should change, why, who supports it, and what happens next?',
+      outcome:
+        'A cleanly resolved change request reduces uncertainty because change, reasoning, discussion, and outcome stay visible together.',
+      actions: [
+        'Review proposed changes as a diff, preview, or comment context.',
+        'Open and answer discussions linked to specific text or proposal context.',
+        'Vote on change requests and see whether they are accepted, rejected, or still open.',
+      ],
+      concepts: [
+        'Change requests are the formal review channel between free discussion and direct text changes.',
+        'Comments explain context, while votes or status decide what happens to the proposal.',
+        'Automatic resolution can reduce coordination work when clear support or rejection is reached.',
+      ],
+      watchFor: [
+        'A comment is not yet a change; the change request links conversation to action.',
+        'Voting rights depend on the collaboration and role context.',
+        'After resolution, users need a clear signal that the text actually changed or did not change.',
+      ],
+      states: [
+        'A change request can be proposed, discussed, supported, accepted, rejected, or applied.',
+        'Discussions feel productive when they visibly lead to the next review or decision step.',
+      ],
+      diagram: {
+        title: 'How review work becomes decided',
+        description: 'A lane view from proposal through discussion into outcome.',
+        lanes: {
+          proposal: 'Proposal',
+          discussion: 'Discussion',
+          decision: 'Decision',
+        },
+        steps: {
+          'propose-change': {
+            title: 'Propose a change',
+            description: 'A user describes which text or workflow change should be reviewed.',
+          },
+          'review-diff': {
+            title: 'Review the diff',
+            description: 'Collaborators see additions, removals, and affected text in context.',
+          },
+          'discuss-context': {
+            title: 'Discuss context',
+            description:
+              'Comments clarify intent, risks, and alternatives before a decision is made.',
+          },
+          'vote-request': {
+            title: 'Vote on the request',
+            description: 'Eligible users support, reject, or abstain depending on the workflow.',
+          },
+          'apply-outcome': {
+            title: 'Apply the outcome',
+            description: 'The status shows whether the change was incorporated or not.',
+          },
+        },
+      },
+    },
     blogs: {
       navLabel: 'Blogs',
       title: 'Blogs',
@@ -320,6 +543,57 @@ export const docsPageTranslations = {
           discuss: {
             title: 'Discuss',
             description: 'Let readers react, share, and connect the post to ongoing work.',
+          },
+        },
+      },
+    },
+    statements: {
+      navLabel: 'Statements',
+      title: 'Statements',
+      summary:
+        'Short public or contextual positions that connect stance, argument, and discoverability across profiles, groups, and search.',
+      audience: 'Users, groups, and readers who want to publish or quickly understand a position.',
+      entry:
+        'Use this guide when a message should be shorter than a blog post but more durable than a comment.',
+      perspective:
+        'Statements give users a lightweight way to show stance and enter search or timeline contexts.',
+      outcome:
+        'A strong statement makes a position discoverable, quotable, and connected to a profile, hashtags, or related content.',
+      actions: [
+        'Create a public or visibility-scoped statement.',
+        'Rediscover statements through profile, search, timeline, or related content.',
+        'Use tags and context so others understand the statement correctly.',
+      ],
+      concepts: [
+        'Statements are shorter and more direct than blogs, but more durable than chat messages.',
+        'Visibility and tags decide whether a statement feels like a personal position or a broader contribution.',
+        'Related and search surfaces connect individual statements to larger topics.',
+      ],
+      watchFor: [
+        'Short statements need clear tags so they do not feel isolated.',
+        'Private or scoped statements should not be treated as public positions.',
+        'Statements can become entry points into profiles, discussions, or related content.',
+      ],
+      states: [
+        'A statement can be newly created, edited, visibility-scoped, or rediscovered through search.',
+        'Users judge statements by whether they are quickly understandable and findable in the right context.',
+      ],
+      diagram: {
+        title: 'How a statement gains context',
+        description: 'The path from a position into a discoverable statement.',
+        steps: {
+          'publish-position': {
+            title: 'Publish the position',
+            description: 'Users write a clear statement with appropriate visibility and tags.',
+          },
+          'connect-context': {
+            title: 'Connect context',
+            description: 'Profile, topic, group, or related content help others interpret it.',
+          },
+          'surface-in-search': {
+            title: 'Surface in search and timeline',
+            description:
+              'Others rediscover the statement and jump from it into the relevant context.',
           },
         },
       },
@@ -464,6 +738,59 @@ export const docsPageTranslations = {
           'follow-result': {
             title: 'Follow the result',
             description: 'Use the visible outcome to guide whatever action comes next.',
+          },
+        },
+      },
+    },
+    timeline: {
+      navLabel: 'Timeline',
+      title: 'Timeline',
+      summary:
+        'The personal overview for followed content, discovery, activity, and important decision events.',
+      audience:
+        'Anyone who wants to catch up quickly, discover public content, or move from signals back into work.',
+      entry: 'Start here when the platform becomes larger than individual group or event pages.',
+      perspective:
+        'Timeline is the pulse of the app: it shows what is moving, why it may matter, and where users can continue working.',
+      outcome:
+        'A strong timeline reduces manual checking, brings relevant work forward, and makes decisions visible at the right moment.',
+      actions: [
+        'Scan followed content, public discovery, and decision events in one feed.',
+        'Filter by type or relevance to stay oriented when many signals are active.',
+        'Jump from cards directly into groups, events, amendments, votes, or discussions.',
+      ],
+      concepts: [
+        'Following shows proximity, Explore shows discovery, and Decisions shows formal urgency.',
+        'Cards are entry points into native workflows, not replacements for detail pages.',
+        'Relevance comes from subscriptions, visibility, activity, and content type.',
+      ],
+      watchFor: [
+        'Users need recognizable reasons for why a piece of content appears.',
+        'Many similar cards make filters and clear type signals important.',
+        'Decision signals need to feel more urgent than general activity.',
+      ],
+      states: [
+        'Timeline can be empty, filtered, subscription-based, exploratory, or decision-focused.',
+        'Users move from scanning into inspection once a signal becomes important.',
+      ],
+      diagram: {
+        title: 'From following to action',
+        description: 'How timeline signals bring users back into relevant work.',
+        steps: {
+          'follow-sources': {
+            title: 'Follow sources',
+            description:
+              'Subscriptions, memberships, and visibility determine which content feels close.',
+          },
+          'scan-feed': {
+            title: 'Scan the feed',
+            description:
+              'Cards, filters, and decision states help important signals stand out quickly.',
+          },
+          'open-work': {
+            title: 'Open the work',
+            description:
+              'Users jump from the signal into the actual group, event, or decision workflow.',
           },
         },
       },
@@ -617,6 +944,58 @@ export const docsPageTranslations = {
         },
       },
     },
+    'pwa-and-notifications': {
+      navLabel: 'PWA & Push',
+      title: 'PWA And Push Notifications',
+      summary:
+        'Installable app behavior, browser notifications, and fast return paths into current work.',
+      audience:
+        'Users who use Polity regularly and want to notice important updates outside an open browser tab.',
+      entry: 'Use this guide when Polity should behave more like an app on the device.',
+      perspective:
+        'PWA and push make Polity more present without forcing users to manually check every space.',
+      outcome:
+        'When set up well, users can return faster, notice important alerts, and still keep control through notification settings.',
+      actions: [
+        'Install the app when the device or browser offers it.',
+        'Allow or decline browser notifications and understand the effect.',
+        'Use push or app entry points to return directly into relevant notification context.',
+      ],
+      concepts: [
+        'PWA installation affects access and device behavior, not permissions inside Polity.',
+        'Push notifications complement the internal notifications page.',
+        'User control matters because app presence without signal quality quickly becomes noise.',
+      ],
+      watchFor: [
+        'Browser and operating-system permissions can prevent push from appearing at all.',
+        'Not every internal notification should automatically become a push notification.',
+        'Install prompts should make work easier rather than feeling like marketing.',
+      ],
+      states: [
+        'A device can be not installable, installable, installed, push-capable, or push-blocked.',
+        'Users feel the value most when an alert returns them directly to the right task.',
+      ],
+      diagram: {
+        title: 'How Polity becomes closer like an app',
+        description: 'From install prompt to fast return into work.',
+        steps: {
+          'install-app': {
+            title: 'Install the app',
+            description: 'Users save Polity as an app-like entry point on a supported device.',
+          },
+          'allow-notifications': {
+            title: 'Allow notifications',
+            description:
+              'Browser and app settings decide whether important signals arrive outside the page.',
+          },
+          'return-fast': {
+            title: 'Return quickly',
+            description:
+              'A notification or app launch brings users back into the relevant workflow.',
+          },
+        },
+      },
+    },
     calendar: {
       navLabel: 'Calendar',
       title: 'Calendar',
@@ -713,6 +1092,268 @@ export const docsPageTranslations = {
             title: 'Close the loop',
             description:
               'Mark the work done and reduce uncertainty about what remains outstanding.',
+          },
+        },
+      },
+    },
+    'create-workflows': {
+      navLabel: 'Create',
+      title: 'Creation Workflows',
+      summary:
+        'The central entry point for creating groups, events, amendments, blog posts, statements, todos, payments, and agenda items.',
+      audience:
+        'Users starting new work and organizers who need to choose the right creation flow for their goal.',
+      entry:
+        'Start here when you are not searching for existing work, but creating something new in Polity.',
+      perspective:
+        'Creation flows translate intent into structured objects without immediately exposing every detail page.',
+      outcome:
+        'A successful creation flow creates the right object with visibility, context, and required fields, then moves users to the next useful workspace.',
+      actions: [
+        'Choose the right content type and complete its form step by step.',
+        'Add context such as group, event, visibility, responsible people, timing, or tags.',
+        'After creation, move to the detail page, list, or next action.',
+      ],
+      concepts: [
+        'Create is a shared surface for many entities, each with its own required fields.',
+        'Typeahead and search fields connect new content to existing context.',
+        'Visibility, rights, and relationships are often prepared during creation.',
+      ],
+      watchFor: [
+        'The wrong creation context can confuse permissions and discoverability later.',
+        'Some objects need minimal input, while others structure complex governance flows.',
+        'Users should know where to continue the work after saving.',
+      ],
+      states: [
+        'A creation flow can be empty, partially filled, invalid, saving, or complete.',
+        'Creation feels safe when steps are clear and the destination after saving is visible.',
+      ],
+      diagram: {
+        title: 'How new work begins',
+        description: 'The general path through the create surface.',
+        steps: {
+          'choose-type': {
+            title: 'Choose the type',
+            description:
+              'Users decide whether to create a group, event, amendment, statement, todo, or another object.',
+          },
+          'fill-context': {
+            title: 'Fill in context',
+            description:
+              'Form fields connect the new work to people, groups, timing, and visibility.',
+          },
+          'publish-item': {
+            title: 'Create the object',
+            description:
+              'After saving, Polity opens the next useful place for editing, managing, or tracking.',
+          },
+        },
+      },
+    },
+    'subscriptions-and-payments': {
+      navLabel: 'Subscriptions & Payments',
+      title: 'Subscriptions And Payments',
+      summary:
+        'Following users, groups, events, blogs, and amendments, plus support and Stripe-backed payment flows.',
+      audience: 'Users who want to follow updates or financially support the platform.',
+      entry:
+        'Use this guide when you want to understand why certain content appears in timeline and notifications.',
+      perspective:
+        'Subscriptions determine attention and proximity, while payments make support and billing transparent.',
+      outcome:
+        'Well-managed subscriptions and payments help users follow relevant work and contribute support without confusing it with membership.',
+      actions: [
+        'Follow users, groups, events, blogs, or amendments and remove subscriptions later.',
+        'Filter, search, and use your subscriptions as a personal map of interests.',
+        'Understand support or payment flows through checkout, portal, and status views.',
+      ],
+      concepts: [
+        'Subscribing means attention, not automatic membership or edit rights.',
+        'Subscriptions influence timeline, notifications, and rediscovery.',
+        'Payments and support contributions are separate from governance rights and should be read that way.',
+      ],
+      watchFor: [
+        'Users cannot always meaningfully subscribe to their own or private content.',
+        'Duplicate subscriptions should be prevented so signals remain trustworthy.',
+        'Payment status must stay clearly separate from participation rights.',
+      ],
+      states: [
+        'Content can be unsubscribed, subscribed, unfollowed, inaccessible, or active in a payment context.',
+        'Users need to know whether an update is visible because of membership, subscription, or payment.',
+      ],
+      diagram: {
+        title: 'From interest to ongoing attention',
+        description: 'How subscriptions and support shape user signals.',
+        steps: {
+          'follow-entity': {
+            title: 'Follow an entity',
+            description:
+              'Users subscribe to content or people that should stay relevant to their work.',
+          },
+          'manage-support': {
+            title: 'Manage support',
+            description:
+              'Payment and support flows show status, contribution, and billing options.',
+          },
+          'review-updates': {
+            title: 'Review updates',
+            description:
+              'Timeline, notifications, and profile views bring subscribed activity forward again.',
+          },
+        },
+      },
+    },
+    'ai-assistant': {
+      navLabel: 'AI Assistance',
+      title: 'AI Assistance',
+      summary:
+        'Aria, Kai, and AI-supported help for orientation, summarization, drafting, and context work.',
+      audience: 'Users who want to understand complex civic work faster or write more clearly.',
+      entry:
+        'Open this guide when AI should support Polity work without replacing human decisions.',
+      perspective:
+        'AI assistance works best as a companion for orientation and drafting, not as hidden authority.',
+      outcome:
+        'Good AI use saves time on summaries, wording, and navigation while users still review suggestions deliberately.',
+      actions: [
+        'Ask questions about Polity, current workflows, or text.',
+        'Review summaries, wording suggestions, or next steps.',
+        'Use your own provider keys or available models when the context allows it.',
+      ],
+      concepts: [
+        'AI output is a suggestion and needs human review, especially for governance text.',
+        'Aria and Kai explain features, while editor and chat flows can support concrete work.',
+        'Bring-your-own-key and shared models affect which AI functions are available.',
+      ],
+      watchFor: [
+        'AI must not bypass permissions or make decisions for users.',
+        'Sensitive content should only be used with appropriate model and key context.',
+        'Users should know whether text has been human-reviewed or only suggested.',
+      ],
+      states: [
+        'AI can be unconfigured, available, waiting, responding, or limited by missing keys.',
+        'The most important state is not the answer itself, but whether it was reviewed and usefully applied.',
+      ],
+      diagram: {
+        title: 'How AI supports controlled work',
+        description: 'The path from question to reviewed use.',
+        steps: {
+          'ask-context': {
+            title: 'Ask with context',
+            description: 'Users provide a question, text, or goal to the assistance flow.',
+          },
+          'review-suggestion': {
+            title: 'Review the suggestion',
+            description:
+              'The answer is checked for tone, accuracy, rights, and civic appropriateness.',
+          },
+          'apply-with-care': {
+            title: 'Apply deliberately',
+            description:
+              'Users use the help as a draft, summary, or orientation inside the real workflow.',
+          },
+        },
+      },
+    },
+    'pql-and-filters': {
+      navLabel: 'PQL & Filters',
+      title: 'PQL And Filters',
+      summary:
+        'Reusable filters, quick filters, saved queries, and typed rules for large lists and data-rich views.',
+      audience: 'Users who need to narrow many todos, payments, documents, or other entities.',
+      entry:
+        'Use this guide when simple search is not enough and repeatable filter logic is needed.',
+      perspective:
+        'PQL makes filtering a shared tool instead of treating every list as a separate special case.',
+      outcome:
+        'Good filters help users reduce large work sets to the relevant slice and reuse the same view later.',
+      actions: [
+        'Use quick filters to narrow common fields without complex input.',
+        'Combine custom rules with AND, OR, or IN logic.',
+        'Reopen, edit, and apply saved filters on the same feature surface.',
+      ],
+      concepts: [
+        'PQL describes filter logic structurally so UI and evaluation share the same meaning.',
+        'Field types determine which values and operators make sense.',
+        'Saved queries are personal or feature-specific work views.',
+      ],
+      watchFor: [
+        'Filters should not be so hidden that users forget why results are missing.',
+        'Complex rules need readable summaries and an easy reset path.',
+        'PQL should respect existing visibility rules and not expose data.',
+      ],
+      states: [
+        'A view can be unfiltered, quick-filtered, custom-filtered, or using a saved query.',
+        'Users trust filters when result count, active rules, and reset options are clear.',
+      ],
+      diagram: {
+        title: 'How PQL makes large lists manageable',
+        description: 'From quick narrowing to reusable query.',
+        steps: {
+          'start-filter': {
+            title: 'Start filtering',
+            description: 'Users choose a search term or field filter to narrow the set broadly.',
+          },
+          'combine-rules': {
+            title: 'Combine rules',
+            description: 'Multiple conditions form clear logic for more precise results.',
+          },
+          'reuse-query': {
+            title: 'Reuse the query',
+            description: 'Saved filters restore the same work view later.',
+          },
+        },
+      },
+    },
+    meetings: {
+      navLabel: 'Meetings',
+      title: 'Meetings',
+      summary:
+        'Personal scheduling and meeting views that connect user profiles with concrete conversation times.',
+      audience:
+        'Users who want to plan conversations with other people or find available time slots.',
+      entry: 'Read this when direct coordination does not need a formal event workflow.',
+      perspective:
+        'Meetings are the lightweight scheduling bridge between profile, calendar, and personal collaboration.',
+      outcome:
+        'A clear meeting flow reduces back-and-forth and turns contact interest into a concrete time.',
+      actions: [
+        'Open a user meeting page and inspect available slots.',
+        'Choose a suitable slot or understand existing meeting information.',
+        'Prepare the appointment with calendar and contact context.',
+      ],
+      concepts: [
+        'Meetings are person-centered and lighter than group or event workflows.',
+        'Availability, calendar context, and participant information determine whether a slot is useful.',
+        'A meeting can later lead into broader coordination or event planning.',
+      ],
+      watchFor: [
+        'Time zones and date selection must remain unambiguous.',
+        'Not every user needs to show public availability.',
+        'Meeting coordination should not be confused with formal event participation.',
+      ],
+      states: [
+        'A meeting context can show no slots, available slots, selected time, or confirmed details.',
+        'Users feel quality when they reach a clear time without a long message chain.',
+      ],
+      diagram: {
+        title: 'From profile to conversation',
+        description: 'How personal scheduling works.',
+        steps: {
+          'open-availability': {
+            title: 'Open availability',
+            description:
+              'Users start from a profile or meeting page with visible scheduling options.',
+          },
+          'choose-slot': {
+            title: 'Choose a slot',
+            description:
+              'A suitable time is selected using date, duration, and participant context.',
+          },
+          'meet-prepared': {
+            title: 'Meet prepared',
+            description:
+              'Calendar and profile context help continue the conversation productively.',
           },
         },
       },

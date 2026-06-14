@@ -1,8 +1,10 @@
-export { ModernTimeline } from './ui/ModernTimeline';
+export { ModernTimeline, Timeline } from './ui/ModernTimeline';
 export { MasonryGrid, MasonryGridEmpty } from './ui/MasonryGrid';
 export { TimelineModeToggle } from './ui/TimelineModeToggle';
 export { TimelineHeader } from './ui/TimelineHeader';
 export { TimelineFilterPanel } from './ui/TimelineFilterPanel';
+export { CivicTimelineMap } from './ui/CivicTimelineMap';
+export { CivicTimelineRail } from './ui/CivicTimelineRail';
 
 // Lazy Card Components (Code Splitting)
 export {
@@ -17,6 +19,7 @@ export {
 
 // Hooks
 export { useSubscriptionTimeline } from './hooks/useSubscriptionTimeline';
+export { useCivicTimeline, type UseCivicTimelineReturn } from './hooks/useCivicTimeline';
 export { useTimelineMode, type TimelineMode } from './hooks/useTimelineMode';
 export { useIsMobile, useBreakpoint, useResponsiveValue, BREAKPOINTS } from './hooks/useIsMobile';
 export {
@@ -33,7 +36,10 @@ export {
   type EngagementFilter,
   ALL_CONTENT_TYPES,
 } from './hooks/useTimelineFilters';
-export { useDecisionTerminal, type UseDecisionTerminalReturn } from '@/features/decision-terminal/hooks/useDecisionTerminal';
+export {
+  useDecisionTerminal,
+  type UseDecisionTerminalReturn,
+} from '@/features/decision-terminal/hooks/useDecisionTerminal';
 export {
   useSubscribedTimeline,
   type TimelineItem,
@@ -75,10 +81,15 @@ export * from '@/features/decision-terminal/logic/decision-status';
 export * from '@/features/decision-terminal/logic/trend-calculation';
 export * from './logic/content-reasons';
 export * from './logic/content-scoring';
+export * from './logic/civicTimeline';
 export * from './utils/public-content-query';
 export * from './utils/own-content-query';
 export * from './logic/video-thumbnail';
 export * from './logic/image-optimization';
 export * from './constants/accessibility';
-export { useScreenReaderAnnounce, useCardListKeyboardNav, usePrefersReducedMotion } from './hooks/useAccessibility';
+export {
+  useScreenReaderAnnounce,
+  useCardListKeyboardNav,
+  usePrefersReducedMotion,
+} from './hooks/useAccessibility';
 export { FocusRing, SkipToTimeline, TimelineRegion } from './ui/AccessibilityComponents';

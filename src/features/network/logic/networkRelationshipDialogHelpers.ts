@@ -2,7 +2,7 @@ import type {
   NetworkEdgeRelationshipDirection,
   NetworkRelationshipDialogData,
 } from '../types/networkEdge.types';
-import type { GroupRelationshipType } from '../types/network.types';
+import type { GroupRelationshipDirection, GroupRelationshipType } from '../types/network.types';
 
 export interface GroupRelationshipPreviewData {
   relationshipType: GroupRelationshipType;
@@ -13,7 +13,7 @@ export interface GroupRelationshipPreviewData {
   isIncomingPerspective: boolean;
 }
 
-export type GroupRelationshipDisplayDirection = 'incoming' | 'outgoing' | 'bidirectional';
+export type GroupRelationshipDisplayDirection = Exclude<GroupRelationshipDirection, 'none'>;
 
 function getGroupIdFromEdgeNodeId(value?: string) {
   if (!value) {
@@ -63,11 +63,7 @@ export function getRelationshipPreviewData(
   const sourceGroupId = getGroupIdFromEdgeNodeId(relationship.source);
   const targetGroupId = getGroupIdFromEdgeNodeId(relationship.target);
 
-  if (
-    relationship.currentGroupName &&
-    relationship.selectedGroupName &&
-    relationship.relationshipType !== 'membership'
-  ) {
+  if (relationship.currentGroupName && relationship.selectedGroupName) {
     return {
       relationshipType: relationship.relationshipType,
       currentGroupName: relationship.currentGroupName,
@@ -107,12 +103,16 @@ export function getRelationshipDirectionForPreview({
   isIncomingPerspective: boolean;
 }): GroupRelationshipDisplayDirection {
   if (edgeDirection === 'bidirectional') {
-    return 'bidirectional';
+    return 'mutual';
   }
 
   if (isIncomingPerspective) {
-    return edgeDirection === 'forward' ? 'incoming' : 'outgoing';
+    return edgeDirection === 'forward'
+      ? 'partner_has_right_in_current'
+      : 'current_has_right_in_partner';
   }
 
-  return edgeDirection === 'forward' ? 'outgoing' : 'incoming';
+  return edgeDirection === 'forward'
+    ? 'current_has_right_in_partner'
+    : 'partner_has_right_in_current';
 }

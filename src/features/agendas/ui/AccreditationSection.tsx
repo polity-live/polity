@@ -22,12 +22,8 @@ export function AccreditationSection({ eventId, agendaItemId }: AccreditationSec
   const { user } = useAuth();
   const userId = user?.id;
 
-  const {
-    accreditationsByAgendaItem,
-    isAccredited,
-    accreditedCount,
-    isLoading,
-  } = useAccreditationState({ eventId, agendaItemId, userId });
+  const { accreditationsByAgendaItem, isAccredited, accreditedCount, isLoading } =
+    useAccreditationState({ eventId, agendaItemId, userId });
 
   const { confirmAccreditation } = useAccreditationActions();
 
@@ -52,7 +48,7 @@ export function AccreditationSection({ eventId, agendaItemId }: AccreditationSec
       });
       setShowPasswordInput(false);
     } catch {
-      setPasswordError(t('common.accreditation.wrongPassword', 'Invalid password'));
+      setPasswordError(t('common.accreditation.wrongPassword'));
     } finally {
       setIsConfirming(false);
     }
@@ -74,7 +70,7 @@ export function AccreditationSection({ eventId, agendaItemId }: AccreditationSec
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-5 w-5" />
-            <CardTitle>{t('features.events.agenda.accreditation.title', 'Accreditation')}</CardTitle>
+            <CardTitle>{t('features.events.agenda.accreditation.title')}</CardTitle>
           </div>
           <Badge variant="secondary">
             <Users className="mr-1 h-3 w-3" />
@@ -88,7 +84,7 @@ export function AccreditationSection({ eventId, agendaItemId }: AccreditationSec
           <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 p-3 dark:border-green-800 dark:bg-green-950">
             <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
             <span className="font-medium text-green-700 dark:text-green-300">
-              {t('features.events.agenda.accreditation.confirmed', 'Your attendance is confirmed')}
+              {t('features.events.agenda.accreditation.confirmed')}
             </span>
           </div>
         ) : (
@@ -96,12 +92,12 @@ export function AccreditationSection({ eventId, agendaItemId }: AccreditationSec
             {!showPasswordInput ? (
               <Button onClick={handleConfirmClick} className="w-full">
                 <ShieldCheck className="mr-2 h-4 w-4" />
-                {t('features.events.agenda.accreditation.confirmAttendance', 'Confirm Attendance')}
+                {t('features.events.agenda.accreditation.confirmAttendance')}
               </Button>
             ) : (
               <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">
-                  {t('features.events.agenda.accreditation.enterPassword', 'Enter your 4-digit voting password to confirm attendance')}
+                <p className="text-muted-foreground text-sm">
+                  {t('features.events.agenda.accreditation.enterPassword')}
                 </p>
                 <VotePasswordInput
                   onSubmit={handlePasswordSubmit}
@@ -116,11 +112,11 @@ export function AccreditationSection({ eventId, agendaItemId }: AccreditationSec
         {/* List of accredited participants */}
         {accreditationsByAgendaItem.length > 0 && (
           <div className="space-y-2">
-            <p className="text-sm font-medium text-muted-foreground">
-              {t('features.events.agenda.accreditation.participants', 'Accredited Participants')}
+            <p className="text-muted-foreground text-sm font-medium">
+              {t('features.events.agenda.accreditation.participants')}
             </p>
             <div className="flex flex-wrap gap-2">
-              {accreditationsByAgendaItem.map((acc) => (
+              {accreditationsByAgendaItem.map(acc => (
                 <div
                   key={acc.id}
                   className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-sm"

@@ -17,6 +17,7 @@ interface AgendaVoteInput {
   closing_duration_seconds?: number | null;
   closing_end_time?: number | null;
   visibility: string;
+  ballot_visibility?: string | null;
   created_at: number;
   updated_at: number;
   choices?: readonly {
@@ -78,6 +79,7 @@ export function buildFinalVoteFromAgendaVote(
       closing_duration_seconds: vote.closing_duration_seconds ?? null,
       closing_end_time: vote.closing_end_time ?? null,
       visibility: vote.visibility,
+      ballot_visibility: vote.ballot_visibility ?? 'named',
       created_at: vote.created_at,
       updated_at: vote.updated_at,
       choices: vote.choices ?? [],

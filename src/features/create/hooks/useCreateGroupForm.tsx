@@ -1,7 +1,10 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import type { Value } from 'platejs';
 import { useNavigate } from '@tanstack/react-router';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { Label } from '@/features/shared/ui/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/features/shared/ui/ui/radio-group';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
@@ -22,7 +25,7 @@ import {
   GroupRelationshipRightSentenceList,
   type GroupRelationshipRight,
 } from '@/features/network/ui/GroupRelationshipFields';
-import { useNetworkLinkActions } from '@/zero/network';
+import { useGroupConnectionActions } from '@/zero/network';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
@@ -66,25 +69,25 @@ import type {
   CanonicalMembershipMode,
   GroupRelationshipDirection,
   GroupRelationshipType,
-  NetworkLinkComposerMembershipRuleValue,
-  NetworkLinkComposerTab,
-  NetworkLinkPreset,
+  GroupConnectionComposerMembershipRuleValue,
+  GroupConnectionComposerTab,
+  GroupConnectionPreset,
   RelativeMembershipDirection,
 } from '@/features/network/types/network.types';
 import {
   getCanonicalMembershipModeLabel,
-  getLegacySiblingMembershipMode,
-} from '@/features/network/logic/networkLinkDerived';
-import { NetworkLinkComposer } from '@/features/network/ui/NetworkLinkComposer';
-import { useNetworkLinkComposerPreflight } from '@/features/network/hooks/useNetworkLinkComposerPreflight';
+  getSiblingMembershipKind,
+} from '@/features/network/logic/groupConnectionDerived';
+import { GroupConnectionComposer } from '@/features/network/ui/GroupConnectionComposer';
+import { useGroupConnectionComposerPreflight } from '@/features/network/hooks/useGroupConnectionComposerPreflight';
 import {
-  applyNetworkLinkPreset,
-  buildCanonicalNetworkLinkPayload,
-  buildNetworkLinkComposerDefaults,
+  applyGroupConnectionPreset,
+  buildCanonicalGroupConnectionPayload,
+  buildGroupConnectionComposerDefaults,
   createEmptyMembershipRule,
-  hasConfiguredNetworkLink,
+  hasConfiguredGroupConnection,
   hasConfiguredMembership,
-} from '@/features/network/logic/networkLinkComposer';
+} from '@/features/network/logic/groupConnectionComposer';
 
 type GroupType = 'base' | 'hierarchical' | 'sibling';
 type RelationshipDirection = GroupRelationshipDirection;
@@ -95,7 +98,7 @@ interface LinkedGroup {
   groupName: string;
   type: LinkedGroupType;
   membershipDirection: RelativeMembershipDirection | null;
-  membershipRule: NetworkLinkComposerMembershipRuleValue;
+  membershipRule: GroupConnectionComposerMembershipRuleValue;
   membershipMode: CanonicalMembershipMode;
   roleId: string;
   sourceGroupIds: string[];
@@ -129,11 +132,11 @@ function getSelectedRights(rightDirections: Record<GroupRelationshipRight, Relat
   return RELATIONSHIP_RIGHTS.filter(right => rightDirections[right] !== 'none');
 }
 
-const CREATE_LINK_DEFAULT_PRESET: NetworkLinkPreset = 'child';
+const CREATE_LINK_DEFAULT_PRESET: GroupConnectionPreset = 'child';
 
 function cloneMembershipRule(
-  membershipRule: NetworkLinkComposerMembershipRuleValue | null | undefined
-): NetworkLinkComposerMembershipRuleValue {
+  membershipRule: GroupConnectionComposerMembershipRuleValue | null | undefined
+): GroupConnectionComposerMembershipRuleValue {
   const fallbackRule = createEmptyMembershipRule();
   return {
     membershipMode: membershipRule?.membershipMode ?? fallbackRule.membershipMode,
@@ -144,7 +147,7 @@ function cloneMembershipRule(
 
 function hasIncompleteMembershipRule(args: {
   membershipDirection: RelativeMembershipDirection | null;
-  membershipRule: NetworkLinkComposerMembershipRuleValue;
+  membershipRule: GroupConnectionComposerMembershipRuleValue;
 }) {
   if (
     !hasConfiguredMembership({
@@ -171,7 +174,7 @@ function toLinkedGroup(args: {
   groupName: string;
   type: LinkedGroupType;
   membershipDirection: RelativeMembershipDirection | null;
-  membershipRule: NetworkLinkComposerMembershipRuleValue;
+  membershipRule: GroupConnectionComposerMembershipRuleValue;
   rightDirections: Record<GroupRelationshipRight, RelationshipDirection>;
 }): LinkedGroup {
   const displayMembershipRule = cloneMembershipRule(args.membershipRule);
@@ -189,8 +192,8 @@ function toLinkedGroup(args: {
   };
 }
 
-function buildCreateLinkPresetDefaults(preset: NetworkLinkPreset = CREATE_LINK_DEFAULT_PRESET) {
-  const presetValue = applyNetworkLinkPreset(preset, buildNetworkLinkComposerDefaults());
+function buildCreateLinkPresetDefaults(preset: GroupConnectionPreset = CREATE_LINK_DEFAULT_PRESET) {
+  const presetValue = applyGroupConnectionPreset(preset, buildGroupConnectionComposerDefaults());
 
   return {
     type: presetValue.relationshipType as LinkedGroupType,
@@ -214,18 +217,18 @@ function getRelationshipBadgeClasses(type: LinkedGroup['type']) {
     : 'border-sky-300 bg-sky-50 text-sky-800';
 }
 
-function buildCanonicalNetworkLink(args: {
+function buildCanonicalGroupConnection(args: {
   currentGroupId: string;
   otherGroupId: string;
-  linkType: LinkedGroupType;
+  connectionType: LinkedGroupType;
   rightDirections: Record<GroupRelationshipRight, RelationshipDirection>;
   membershipDirection: RelativeMembershipDirection | null;
-  membershipRule: NetworkLinkComposerMembershipRuleValue;
+  membershipRule: GroupConnectionComposerMembershipRuleValue;
 }) {
-  return buildCanonicalNetworkLinkPayload({
+  return buildCanonicalGroupConnectionPayload({
     currentGroupId: args.currentGroupId,
     otherGroupId: args.otherGroupId,
-    relationshipType: args.linkType,
+    relationshipType: args.connectionType,
     rightDirections: args.rightDirections,
     membershipDirection: args.membershipDirection,
     membershipRule: cloneMembershipRule(args.membershipRule),
@@ -241,7 +244,7 @@ export function useCreateGroupForm(): CreateFormConfig {
   const { createGroup, createRole, inviteGuest, inviteMember } = useGroupActions();
   const { createEvent } = useEventActions();
   const commonActions = useCommonActions();
-  const { proposeNetworkLinkChange } = useNetworkLinkActions();
+  const { proposeGroupConnectionChange } = useGroupConnectionActions();
   const { groups: allGroups } = useAllGroups();
   const availableGroups = useMemo(
     () =>
@@ -288,8 +291,10 @@ export function useCreateGroupForm(): CreateFormConfig {
   const [linkRightDirections, setLinkRightDirections] = useState<
     Record<GroupRelationshipRight, RelationshipDirection>
   >(() => initialLinkPresetState.rightDirections);
-  const [linkComposerTab, setLinkComposerTab] = useState<NetworkLinkComposerTab>('preset');
-  const [linkPreset, setLinkPreset] = useState<NetworkLinkPreset>(initialLinkPresetState.preset);
+  const [linkComposerTab, setLinkComposerTab] = useState<GroupConnectionComposerTab>('preset');
+  const [linkPreset, setLinkPreset] = useState<GroupConnectionPreset>(
+    initialLinkPresetState.preset
+  );
 
   const { roles: selectedGroupRoles } = useGroupRoles(linkGroupId || groupId);
   const { roles: currentGroupRoles } = useGroupRoles(groupId);
@@ -302,7 +307,7 @@ export function useCreateGroupForm(): CreateFormConfig {
   const [eventStartTime, setEventStartTime] = useState('');
 
   const { allHashtags } = useCommonState({ loadAllHashtags: true });
-  const emailValidationMessage = t('common.validation.emailHint', 'Enter a valid email address.');
+  const emailValidationMessage = t('common.validation.emailHint');
   const emailIsValid = isValidOptionalEmailAddress(email);
   const radioGroupType = groupType === 'sibling' ? 'hierarchical' : groupType;
   const siblingLinks = linkedGroups.filter(link => link.type === 'sibling');
@@ -310,7 +315,7 @@ export function useCreateGroupForm(): CreateFormConfig {
   const activeLinkMembershipRule = cloneMembershipRule(linkMembershipRule);
   const siblingMembershipMode = activeLinkMembershipRule.membershipMode;
   const connectedRoleId = activeLinkMembershipRule.roleId;
-  const hasConfiguredLink = hasConfiguredNetworkLink({
+  const hasConfiguredConnection = hasConfiguredGroupConnection({
     rightDirections: linkRightDirections,
     membershipDirection: linkMembershipDirection,
     membershipRule: linkMembershipRule,
@@ -360,7 +365,7 @@ export function useCreateGroupForm(): CreateFormConfig {
     setDescription(richTextToPlainText(value));
   }, []);
 
-  const activeLinkConflictPreflight = useNetworkLinkComposerPreflight({
+  const activeLinkConflictPreflight = useGroupConnectionComposerPreflight({
     currentGroupId: groupId,
     initiatorGroupId: groupId,
     value: linkComposerValue,
@@ -434,9 +439,11 @@ export function useCreateGroupForm(): CreateFormConfig {
   );
 
   const handleAddLinkedGroup = useCallback(() => {
-    if (!linkGroupId || !hasConfiguredLink) {
+    if (!linkGroupId || !hasConfiguredConnection) {
       toast.error(
-        'Bitte waehle eine Gruppe und konfiguriere mindestens ein Recht oder eine Mitgliedschaftsregel.'
+        translateText(
+          'generated.inline.0328_bitte_waehle_eine_gruppe_und_konfiguriere_min_ef6be26f'
+        )
       );
       return;
     }
@@ -450,7 +457,11 @@ export function useCreateGroupForm(): CreateFormConfig {
     }
 
     if (hasIncompleteLinkMembershipRules) {
-      toast.error('Bitte vervollstaendige alle konfigurierten Mitgliedschaftsregeln.');
+      toast.error(
+        translateText(
+          'generated.inline.0329_bitte_vervollstaendige_alle_konfigurierten_mi_25b126d0'
+        )
+      );
       return;
     }
 
@@ -496,7 +507,7 @@ export function useCreateGroupForm(): CreateFormConfig {
   }, [
     activeLinkConflictPreflight.blocking,
     activeLinkConflictPreflight.response.summary,
-    hasConfiguredLink,
+    hasConfiguredConnection,
     hasIncompleteLinkMembershipRules,
     linkGroupId,
     linkMembershipDirection,
@@ -568,7 +579,9 @@ export function useCreateGroupForm(): CreateFormConfig {
         const guestRoleResult = createRole({
           id: guestRoleId,
           name: 'Guest',
-          description: 'Initial guest access created during group setup.',
+          description: translateText(
+            'generated.inline.0058_initial_guest_access_created_during_group_set_254a0aed'
+          ),
           scope: 'group',
           group_id: groupId,
           event_id: null,
@@ -599,33 +612,42 @@ export function useCreateGroupForm(): CreateFormConfig {
       // Create group relationships
       for (const link of linkedGroups) {
         await serverConfirmed(
-          proposeNetworkLinkChange({
+          proposeGroupConnectionChange({
             id: crypto.randomUUID(),
-            active_network_link_id: null,
+            active_connection_id: null,
             ...(() => {
-              const payload = buildCanonicalNetworkLink({
+              const payload = buildCanonicalGroupConnection({
                 currentGroupId: groupId,
                 otherGroupId: link.groupId,
-                linkType: link.type,
+                connectionType: link.type,
                 rightDirections: link.rightDirections,
                 membershipDirection: link.membershipDirection,
                 membershipRule: link.membershipRule,
               });
               return {
-                proposed_network_link_id: payload.id,
-                source_group_id: payload.source_group_id,
-                target_group_id: payload.target_group_id,
-                structural_relation: payload.structural_relation,
+                proposed_connection_id: payload.id,
+                group_a_id: payload.group_a_id,
+                group_b_id: payload.group_b_id,
+                desired_connection_type: payload.connection_type,
+                desired_parent_group_id: payload.parent_group_id,
+                desired_child_group_id: payload.child_group_id,
                 initiator_group_id: groupId,
-                desired_rights: payload.rights.map(right => ({
-                  id: right.id,
+                grants: payload.grants.map(right => ({
+                  id: crypto.randomUUID(),
+                  existing_grant_id: null,
+                  operation: 'upsert' as const,
                   right_key: right.right_key,
-                  direction: right.direction,
+                  holder_group_id: right.holder_group_id,
+                  scope_group_id: right.scope_group_id,
                 })),
-                desired_membership_direction: payload.membership_rule.membership_direction ?? null,
-                desired_membership_mode: payload.membership_rule.membership_mode,
-                desired_role_id: payload.membership_rule.role_id ?? null,
-                desired_source_group_ids: payload.membership_rule.source_group_ids ?? null,
+                membership_rule: payload.membership_rule
+                  ? {
+                      ...payload.membership_rule,
+                      id: crypto.randomUUID(),
+                      existing_membership_rule_id: null,
+                      operation: 'upsert' as const,
+                    }
+                  : null,
               };
             })(),
           })
@@ -666,15 +688,15 @@ export function useCreateGroupForm(): CreateFormConfig {
   });
 
   const groupTypeLabel =
-    resolvedGroupType === 'base'
+    resolvedGroupType === translateText('generated.inline.0037_base_1405df66')
       ? t('pages.create.group.groupTypes.base')
-      : resolvedGroupType === 'hierarchical'
+      : resolvedGroupType === translateText('generated.inline.0038_hierarchical_9876c412')
         ? t('pages.create.group.groupTypes.hierarchical')
-        : t('common.network.sibling', 'Geschwistergruppe');
+        : t('common.network.sibling');
   const visibilityLabel =
-    visibility === 'public'
+    visibility === translateText('generated.inline.0030_public_61c9b2b1')
       ? t('pages.create.common.public')
-      : visibility === 'authenticated'
+      : visibility === translateText('generated.inline.0031_authenticated_8fda38ce')
         ? t('pages.create.common.authenticated')
         : t('pages.create.common.private');
   const invitedUserNames = invitedUserIds
@@ -703,7 +725,7 @@ export function useCreateGroupForm(): CreateFormConfig {
       selectedGroupName: linkedGroup.groupName,
       siblingMembershipMode:
         linkedGroup.type === 'sibling'
-          ? (getLegacySiblingMembershipMode(linkedGroup.membershipMode) ?? undefined)
+          ? (getSiblingMembershipKind(linkedGroup.membershipMode) ?? undefined)
           : undefined,
       t,
     }),
@@ -720,10 +742,10 @@ export function useCreateGroupForm(): CreateFormConfig {
   );
   const selectableRolesByDirection = useMemo(
     () => ({
-      incoming: (selectedGroupRoles ?? []).filter(
+      partner_members_to_current: (selectedGroupRoles ?? []).filter(
         role => role.scope === 'group' && role.assignee_kind !== 'guest'
       ),
-      outgoing: (currentGroupRoles ?? []).filter(
+      current_members_to_partner: (currentGroupRoles ?? []).filter(
         role => role.scope === 'group' && role.assignee_kind !== 'guest'
       ),
     }),
@@ -847,15 +869,21 @@ export function useCreateGroupForm(): CreateFormConfig {
             <div className="space-y-6">
               <div className="space-y-4 rounded-lg border p-4">
                 <div className="space-y-1">
-                  <Label>Verbindungen zu anderen Gruppen</Label>
+                  <Label>
+                    {translateText(
+                      'generated.inline.0330_verbindungen_zu_anderen_gruppen_99ad40c5'
+                    )}
+                  </Label>
                   <p className="text-muted-foreground text-xs">
                     {groupType === 'base'
                       ? t('pages.create.group.tips.linkGroups')
-                      : 'Waehle zuerst eine Gruppe. Im Beziehungstyp entscheidest du dann, ob diese Gruppe uebergeordnet, untergeordnet oder eine Geschwistergruppe ist.'}
+                      : translateText(
+                          'generated.inline.0049_waehle_zuerst_eine_gruppe_im_beziehungstyp_en_e6ccef15'
+                        )}
                   </p>
                 </div>
 
-                <NetworkLinkComposer
+                <GroupConnectionComposer
                   activeTab={linkComposerTab}
                   onActiveTabChange={setLinkComposerTab}
                   value={linkComposerValue}
@@ -884,7 +912,7 @@ export function useCreateGroupForm(): CreateFormConfig {
                     onClick={handleAddLinkedGroup}
                     disabled={
                       !linkGroupId ||
-                      !hasConfiguredLink ||
+                      !hasConfiguredConnection ||
                       activeLinkConflictPreflight.isLoading ||
                       activeLinkConflictPreflight.blocking ||
                       hasIncompleteLinkMembershipRules
@@ -908,11 +936,13 @@ export function useCreateGroupForm(): CreateFormConfig {
                       setLinkPreset(resetState.preset);
                     }}
                   >
-                    Abbrechen
+                    {translateText('generated.inline.0331_abbrechen_07af7cb3')}
                   </Button>
                 </div>
                 {activeLinkConflictPreflight.isLoading ? (
-                  <div className="text-muted-foreground text-sm">Pruefe Konflikte...</div>
+                  <div className="text-muted-foreground text-sm">
+                    {translateText('generated.inline.0332_pruefe_konflikte_33f6ced2')}
+                  </div>
                 ) : null}
               </div>
 
@@ -936,7 +966,7 @@ export function useCreateGroupForm(): CreateFormConfig {
                           ? t('pages.create.group.parent')
                           : linkedGroup.type === 'child'
                             ? t('pages.create.group.child')
-                            : t('common.network.sibling', 'Geschwistergruppe')}
+                            : t('common.network.sibling')}
                       </Badge>
                       <Badge className="border-muted bg-muted/50 text-foreground text-xs hover:opacity-100">
                         {getCanonicalMembershipModeLabel(linkedGroup.membershipMode)}
@@ -951,7 +981,7 @@ export function useCreateGroupForm(): CreateFormConfig {
                               selectedGroupName: linkedGroup.groupName,
                               siblingMembershipMode:
                                 linkedGroup.type === 'sibling'
-                                  ? (getLegacySiblingMembershipMode(linkedGroup.membershipMode) ??
+                                  ? (getSiblingMembershipKind(linkedGroup.membershipMode) ??
                                     undefined)
                                   : undefined,
                               t,
@@ -1084,7 +1114,9 @@ export function useCreateGroupForm(): CreateFormConfig {
             <div className="space-y-4">
               <p className="text-muted-foreground text-xs">
                 {allowGuestInvites
-                  ? 'Diese Gruppe vergibt Mitgliedschaft automatisch. Du kannst hier stattdessen Gaeste mit einer Gastrolle einladen.'
+                  ? translateText(
+                      'generated.inline.0050_diese_gruppe_vergibt_mitgliedschaft_automatis_1a57fa5b'
+                    )
                   : t('pages.create.group.tips.inviteMembers')}
               </p>
               <UserSearchInput
@@ -1104,12 +1136,14 @@ export function useCreateGroupForm(): CreateFormConfig {
                   <CardTitle className="flex items-center gap-2 text-base">
                     <FileSpreadsheet className="h-4 w-4 text-emerald-700" />
                     {allowGuestInvites
-                      ? 'Gaeste per CSV vorbereiten'
+                      ? translateText('generated.inline.0051_gaeste_per_csv_vorbereiten_7af02b36')
                       : t('pages.create.group.csvGuideTitle')}
                   </CardTitle>
                   <CardDescription>
                     {allowGuestInvites
-                      ? 'Importiere Gaeste aus einer CSV mit Vor- und Nachname.'
+                      ? translateText(
+                          'generated.inline.0052_importiere_gaeste_aus_einer_csv_mit_vor_und_n_4c551db1'
+                        )
                       : t('pages.create.group.csvGuideDescription')}
                   </CardDescription>
                 </CardHeader>
@@ -1129,12 +1163,20 @@ export function useCreateGroupForm(): CreateFormConfig {
                           </TableHeader>
                           <TableBody>
                             <TableRow>
-                              <TableCell>Ada</TableCell>
-                              <TableCell>Lovelace</TableCell>
+                              <TableCell>
+                                {translateText('generated.inline.0333_ada_5c3cb098')}
+                              </TableCell>
+                              <TableCell>
+                                {translateText('generated.inline.0334_lovelace_57bd0d90')}
+                              </TableCell>
                             </TableRow>
                             <TableRow>
-                              <TableCell>Grace</TableCell>
-                              <TableCell>Hopper</TableCell>
+                              <TableCell>
+                                {translateText('generated.inline.0335_grace_01c95267')}
+                              </TableCell>
+                              <TableCell>
+                                {translateText('generated.inline.0336_hopper_1eb8e6de')}
+                              </TableCell>
                             </TableRow>
                           </TableBody>
                         </Table>
@@ -1153,9 +1195,9 @@ export function useCreateGroupForm(): CreateFormConfig {
                 >
                   <Upload className="h-4 w-4" />
                   {allowGuestInvites
-                    ? 'Gaeste importieren'
+                    ? translateText('generated.inline.0053_gaeste_importieren_b28ba907')
                     : t('pages.create.group.inviteMembersOptional')}{' '}
-                  (CSV)
+                  {translateText('generated.inline.0337_csv_bba7e432')}
                 </Label>
                 <input
                   id="csv-upload"
@@ -1282,7 +1324,9 @@ export function useCreateGroupForm(): CreateFormConfig {
               {invitedUserIds.length > 0 && (
                 <p className="text-muted-foreground text-sm">
                   {invitedUserIds.length}{' '}
-                  {allowGuestInvites ? 'Gaeste vorgemerkt' : t('pages.create.group.invited')}
+                  {allowGuestInvites
+                    ? translateText('generated.inline.0054_gaeste_vorgemerkt_9ea73a37')
+                    : t('pages.create.group.invited')}
                 </p>
               )}
             </div>
@@ -1406,7 +1450,7 @@ export function useCreateGroupForm(): CreateFormConfig {
                               {linkedGroup.relationshipLabel}
                             </p>
                             <p className="text-muted-foreground mt-1 text-xs">
-                              Mitgliedschaftsmodus:{' '}
+                              {translateText('generated.inline.0338_mitgliedschaftsmodus_f28df59b')}{' '}
                               {getCanonicalMembershipModeLabel(linkedGroup.membershipMode)}
                             </p>
                             {linkedGroup.rights.length > 0 ? (

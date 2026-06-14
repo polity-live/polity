@@ -40,7 +40,7 @@ export function NetworkTabs({
         ) : null}
         {showManageWorkflowsTab ? (
           <TabsTrigger value="manage-workflows">
-            {t('features.network.tabs.manageWorkflows', 'Manage Workflows')}
+            {t('features.network.tabs.manageWorkflows')}
           </TabsTrigger>
         ) : null}
       </TabsList>

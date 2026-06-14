@@ -86,11 +86,7 @@ export function AgendaItemTimelineCard({ agendaItem, className }: AgendaItemTime
         href={eventHref}
         subtitle={agendaItem.eventName ?? undefined}
         subtitleHref={eventHref}
-        badge={
-          <TimelineCardBadge
-            label={t('features.timeline.contentTypes.agendaItem', 'Agenda Item')}
-          />
-        }
+        badge={<TimelineCardBadge label={t('features.timeline.contentTypes.agendaItem')} />}
       />
 
       <TimelineCardContent className="space-y-3">

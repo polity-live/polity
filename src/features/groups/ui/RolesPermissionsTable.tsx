@@ -27,6 +27,7 @@ import { ACTION_RIGHTS } from '@/zero/rbac/constants';
 import { getActionRightSections } from '@/features/groups/logic/actionRightSections';
 import type { ParticipationRoleLike } from '@/features/shared/types/participation';
 import { RoleTag } from './RoleTag';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface RolesPermissionsTableProps<TRole extends ParticipationRoleLike> {
   roles: TRole[];
@@ -48,8 +49,10 @@ export function RolesPermissionsTable<TRole extends ParticipationRoleLike>({
   onTogglePermission,
   onReorderRoles,
   actionRights = ACTION_RIGHTS,
-  title = 'Role Permissions',
-  description = 'Manage roles and their action rights by capability area. Drag columns to reorder — left is least privileged, right is most privileged.',
+  title = translateText('generated.inline.0110_role_permissions_2dbfb26f'),
+  description = translateText(
+    'generated.inline.0111_manage_roles_and_their_action_rights_by_capab_84eb9c78'
+  ),
   isPermissionDisabled,
 }: RolesPermissionsTableProps<TRole>) {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -143,7 +146,9 @@ export function RolesPermissionsTable<TRole extends ParticipationRoleLike>({
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="min-w-[200px]">Action Right</TableHead>
+                        <TableHead className="min-w-[200px]">
+                          {translateText('generated.inline.0731_action_right_5c493b37')}
+                        </TableHead>
                         {roles.map((role, index) => (
                           <TableHead
                             key={role.id}
@@ -172,7 +177,9 @@ export function RolesPermissionsTable<TRole extends ParticipationRoleLike>({
                                 />
                               </div>
                               <span className="text-muted-foreground text-xs font-normal">
-                                {role.assignment_mode === 'elected' ? 'Election' : 'Assignment'}
+                                {role.assignment_mode === 'elected'
+                                  ? translateText('generated.inline.0112_election_217da2dc')
+                                  : translateText('generated.inline.0113_assignment_e55df441')}
                               </span>
                             </div>
                           </TableHead>
@@ -226,7 +233,9 @@ export function RolesPermissionsTable<TRole extends ParticipationRoleLike>({
           <div className="py-12 text-center">
             <Shield className="text-muted-foreground/50 mx-auto h-12 w-12" />
             <p className="text-muted-foreground mt-4">
-              No roles created yet. Create your first role in the details section.
+              {translateText(
+                'generated.inline.0732_no_roles_created_yet_create_your_first_role_i_71214f95'
+              )}
             </p>
           </div>
         )}

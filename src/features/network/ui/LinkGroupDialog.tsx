@@ -12,39 +12,58 @@ import {
   DialogTrigger,
 } from '@/features/shared/ui/ui/dialog';
 import { Button } from '@/features/shared/ui/ui/button';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { useGroupRoles, useGroupState } from '@/zero/groups/useGroupState';
-import { useNetworkLinkActions, useNetworkLinkState } from '@/zero/network';
+import { useGroupConnectionActions, useGroupConnectionState } from '@/zero/network';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import { toast } from 'sonner';
 import type {
+  CanonicalMembershipMode,
   GroupRelationshipType,
-  NetworkLinkComposerValue,
+  GroupConnectionComposerValue,
   NormalizedGroupRelationship,
 } from '../types/network.types';
 import {
-  applyNetworkLinkPreset,
+  applyGroupConnectionPreset,
   buildRelativeMembershipRuleFromCanonical,
-  buildCanonicalNetworkLinkPayload,
-  buildNetworkLinkComposerDefaults,
+  buildCanonicalGroupConnectionPayload,
+  buildGroupConnectionComposerDefaults,
   createInitialRelationshipDirections,
-  hasConfiguredNetworkLink,
+  hasConfiguredGroupConnection,
   getPresetForRelationshipType,
   getSelectedMembershipDirection,
   getSelectedRights,
-} from '../logic/networkLinkComposer';
+} from '../logic/groupConnectionComposer';
 import {
-  explodeNetworkLinkChangeRequestsToRelationships,
-  explodeNetworkLinksToRelationships,
-  getPrimaryLinkForPair,
-} from '../logic/networkLinkDerived';
+  buildRightDirectionsForConnection,
+  deriveNormalizedGroupConnectionRequestRows,
+  deriveNormalizedGroupRelationships,
+  getPrimaryConnectionForPair,
+} from '../logic/groupConnectionDerived';
 import type { GroupRelationshipRightDisplayStatus } from '../logic/networkRelationshipHelpers';
 import { buildExistingRightStatusesForDirection } from '../logic/networkRelationshipHelpers';
 import { matchesRelationshipSelection } from '../logic/groupRelationshipOrientation';
-import { useNetworkLinkComposer } from '../hooks/useNetworkLinkComposer';
-import { useNetworkLinkComposerPreflight } from '../hooks/useNetworkLinkComposerPreflight';
-import { NetworkLinkComposer } from './NetworkLinkComposer';
+import { useGroupConnectionComposer } from '../hooks/useGroupConnectionComposer';
+import { useGroupConnectionComposerPreflight } from '../hooks/useGroupConnectionComposerPreflight';
+import { GroupConnectionComposer } from './GroupConnectionComposer';
 import type { GroupRelationshipRight } from './GroupRelationshipFields';
+
+function isGroupRelationshipRight(value: string): value is GroupRelationshipRight {
+  return (
+    value === 'informationRight' ||
+    value === 'amendmentRight' ||
+    value === 'rightToSpeak' ||
+    value === 'activeVotingRight' ||
+    value === 'passiveVotingRight'
+  );
+}
+
+function isStoredMembershipMode(value: string): value is Exclude<CanonicalMembershipMode, 'none'> {
+  return value === 'all_members' || value === 'role_members' || value === 'selected_source_groups';
+}
 
 interface LinkGroupDialogProps {
   currentGroupId: string;
@@ -58,23 +77,25 @@ interface LinkGroupDialogProps {
 
 function getRequestRelationshipType(
   request: {
-    source_group_id: string;
-    target_group_id: string;
-    structural_relation: string;
+    group_a_id: string;
+    group_b_id: string;
+    desired_connection_type: string;
+    desired_parent_group_id?: string | null;
+    desired_child_group_id?: string | null;
   },
   currentGroupId: string
 ): GroupRelationshipType | null {
-  if (request.structural_relation === 'sibling') {
-    return request.source_group_id === currentGroupId || request.target_group_id === currentGroupId
+  if (request.desired_connection_type === 'peer') {
+    return request.group_a_id === currentGroupId || request.group_b_id === currentGroupId
       ? 'sibling'
       : null;
   }
 
-  if (request.source_group_id === currentGroupId) {
+  if (request.desired_parent_group_id === currentGroupId) {
     return 'parent';
   }
 
-  if (request.target_group_id === currentGroupId) {
+  if (request.desired_child_group_id === currentGroupId) {
     return 'child';
   }
 
@@ -86,16 +107,18 @@ function matchesRequestSelection(args: {
   otherGroupId: string;
   relationshipType: GroupRelationshipType;
   request: {
-    source_group_id: string;
-    target_group_id: string;
-    structural_relation: string;
+    group_a_id: string;
+    group_b_id: string;
+    desired_connection_type: string;
+    desired_parent_group_id?: string | null;
+    desired_child_group_id?: string | null;
   };
 }) {
   const touchesPair =
-    (args.request.source_group_id === args.currentGroupId &&
-      args.request.target_group_id === args.otherGroupId) ||
-    (args.request.source_group_id === args.otherGroupId &&
-      args.request.target_group_id === args.currentGroupId);
+    (args.request.group_a_id === args.currentGroupId &&
+      args.request.group_b_id === args.otherGroupId) ||
+    (args.request.group_a_id === args.otherGroupId &&
+      args.request.group_b_id === args.currentGroupId);
 
   if (!touchesPair) {
     return false;
@@ -114,7 +137,7 @@ export function LinkGroupDialog({
   allRelationships,
 }: LinkGroupDialogProps) {
   const { t } = useTranslation();
-  const { proposeNetworkLinkChange } = useNetworkLinkActions();
+  const { proposeGroupConnectionChange } = useGroupConnectionActions();
   const [open, setOpen] = useState(false);
   const initializedForOpenRef = useRef(false);
   const lastHydratedStateRef = useRef<string | null>(null);
@@ -127,49 +150,51 @@ export function LinkGroupDialog({
 
   const availableGroups = (availableGroupsRaw || []).filter(group => group.id !== currentGroupId);
 
-  const composer = useNetworkLinkComposer();
+  const composer = useGroupConnectionComposer();
   const { value, setValue, activeTab, setActiveTab, resetComposer } = composer;
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { roles: selectedGroupRoles } = useGroupRoles(value.selectedGroupId || currentGroupId);
   const { roles: currentGroupRoles } = useGroupRoles(currentGroupId);
-  const { pairLinks, pairLinksLoading, pairChangeRequests, pairChangeRequestsLoading } =
-    useNetworkLinkState({
-      groupAId: currentGroupId,
-      groupBId: value.selectedGroupId || currentGroupId,
-    });
+  const {
+    pairConnections,
+    pairConnectionsLoading,
+    pairConnectionRequests,
+    pairConnectionRequestsLoading,
+  } = useGroupConnectionState({
+    groupAId: currentGroupId,
+    groupBId: value.selectedGroupId || currentGroupId,
+  });
 
-  const relevantLinks = useMemo(
+  const relevantConnections = useMemo(
     () =>
-      pairLinks.filter(
+      pairConnections.filter(
         link =>
-          (link.source_group_id === currentGroupId &&
-            link.target_group_id === value.selectedGroupId) ||
-          (link.source_group_id === value.selectedGroupId &&
-            link.target_group_id === currentGroupId)
+          (link.group_a_id === currentGroupId && link.group_b_id === value.selectedGroupId) ||
+          (link.group_a_id === value.selectedGroupId && link.group_b_id === currentGroupId)
       ),
-    [currentGroupId, pairLinks, value.selectedGroupId]
+    [currentGroupId, pairConnections, value.selectedGroupId]
   );
   const pairRelationships = useMemo(
-    () => explodeNetworkLinksToRelationships(relevantLinks),
-    [relevantLinks]
+    () => deriveNormalizedGroupRelationships(relevantConnections),
+    [relevantConnections]
   );
   const pairRequestRelationships = useMemo(
-    () => explodeNetworkLinkChangeRequestsToRelationships(pairChangeRequests),
-    [pairChangeRequests]
+    () => deriveNormalizedGroupConnectionRequestRows(pairConnectionRequests),
+    [pairConnectionRequests]
   );
 
-  const currentPrimaryLink = useMemo(
+  const currentPrimaryConnection = useMemo(
     () =>
       value.selectedGroupId
-        ? getPrimaryLinkForPair({
+        ? getPrimaryConnectionForPair({
             currentGroupId,
             otherGroupId: value.selectedGroupId,
-            links: relevantLinks,
+            connections: relevantConnections,
             relationshipType: value.relationshipType,
           })
         : null,
-    [currentGroupId, relevantLinks, value.relationshipType, value.selectedGroupId]
+    [currentGroupId, relevantConnections, value.relationshipType, value.selectedGroupId]
   );
 
   const currentPrimaryRequest = useMemo(() => {
@@ -178,7 +203,7 @@ export function LinkGroupDialog({
     }
 
     return (
-      [...pairChangeRequests]
+      [...pairConnectionRequests]
         .filter(request =>
           matchesRequestSelection({
             currentGroupId,
@@ -189,7 +214,7 @@ export function LinkGroupDialog({
         )
         .sort((left, right) => (right.updated_at ?? 0) - (left.updated_at ?? 0))[0] ?? null
     );
-  }, [currentGroupId, pairChangeRequests, value.relationshipType, value.selectedGroupId]);
+  }, [currentGroupId, pairConnectionRequests, value.relationshipType, value.selectedGroupId]);
 
   const relevantRelationships = useMemo(() => {
     const relationships = allRelationships ?? [...pairRelationships, ...pairRequestRelationships];
@@ -235,38 +260,46 @@ export function LinkGroupDialog({
   const existingRightIdsByKey = useMemo(() => {
     const ids: Partial<Record<GroupRelationshipRight, string | undefined>> = {};
 
-    for (const right of currentPrimaryRequest?.desired_rights ?? []) {
+    for (const right of currentPrimaryRequest?.grant_requests ?? []) {
       ids[right.right_key as GroupRelationshipRight] = right.id;
     }
 
-    for (const right of currentPrimaryLink?.rights ?? []) {
+    for (const right of currentPrimaryConnection?.grants ?? []) {
       const rightKey = right.right_key as GroupRelationshipRight;
       ids[rightKey] = ids[rightKey] ?? right.id;
     }
 
     return ids;
-  }, [currentPrimaryLink?.rights, currentPrimaryRequest?.desired_rights]);
+  }, [currentPrimaryConnection?.grants, currentPrimaryRequest?.grant_requests]);
+
+  const existingGrantIdsByKeyAndHolder = useMemo(() => {
+    const ids: Record<string, string> = {};
+    for (const grant of currentPrimaryConnection?.grants ?? []) {
+      ids[`${grant.right_key}:${grant.holder_group_id}`] = grant.id;
+    }
+    return ids;
+  }, [currentPrimaryConnection?.grants]);
 
   const selectableRolesByDirection = useMemo(
     () => ({
-      incoming: selectedGroupRoles.filter(
+      partner_members_to_current: selectedGroupRoles.filter(
         role => role.scope === 'group' && role.assignee_kind !== 'guest'
       ),
-      outgoing: currentGroupRoles.filter(
+      current_members_to_partner: currentGroupRoles.filter(
         role => role.scope === 'group' && role.assignee_kind !== 'guest'
       ),
     }),
     [currentGroupRoles, selectedGroupRoles]
   );
 
-  const preflight = useNetworkLinkComposerPreflight({
+  const preflight = useGroupConnectionComposerPreflight({
     currentGroupId,
     initiatorGroupId: currentGroupId,
     value,
-    existingLinkId:
-      currentPrimaryLink?.id ?? currentPrimaryRequest?.proposed_network_link_id ?? null,
+    existingConnectionId:
+      currentPrimaryConnection?.id ?? currentPrimaryRequest?.proposed_connection_id ?? null,
     existingRightIdsByKey,
-    membershipRuleId: currentPrimaryLink?.membership_rule?.id ?? null,
+    membershipRuleId: currentPrimaryConnection?.membership_rule?.id ?? null,
     enabled: open && Boolean(value.selectedGroupId),
   });
 
@@ -282,14 +315,14 @@ export function LinkGroupDialog({
     }
 
     initializedForOpenRef.current = true;
-    const baseValue = buildNetworkLinkComposerDefaults();
+    const baseValue = buildGroupConnectionComposerDefaults();
     const relationshipType = initialRelationshipType ?? 'child';
     const preset = getPresetForRelationshipType({
       relationshipType,
       membershipDirection: baseValue.membershipDirection,
       membershipRule: baseValue.membershipRule,
     });
-    const nextValue: NetworkLinkComposerValue = applyNetworkLinkPreset(preset, {
+    const nextValue: GroupConnectionComposerValue = applyGroupConnectionPreset(preset, {
       ...baseValue,
       selectedGroupId: initialTargetGroupId ?? '',
       relationshipType,
@@ -299,7 +332,8 @@ export function LinkGroupDialog({
     if (initialRights?.length) {
       for (const right of initialRights) {
         if (right in nextValue.rightDirections) {
-          nextValue.rightDirections[right as keyof typeof nextValue.rightDirections] = 'outgoing';
+          nextValue.rightDirections[right as keyof typeof nextValue.rightDirections] =
+            'current_has_right_in_partner';
         }
       }
     }
@@ -323,7 +357,7 @@ export function LinkGroupDialog({
     const hydrationKey = [
       value.selectedGroupId,
       value.relationshipType,
-      currentPrimaryLink?.id ?? 'no-link',
+      currentPrimaryConnection?.id ?? 'no-connection',
       currentPrimaryRequest?.id ?? 'no-request',
     ].join(':');
 
@@ -332,7 +366,7 @@ export function LinkGroupDialog({
     }
 
     const nextValue = { ...value };
-    const source = currentPrimaryRequest ?? currentPrimaryLink;
+    const source = currentPrimaryRequest ?? currentPrimaryConnection;
 
     if (!source) {
       if (
@@ -344,82 +378,71 @@ export function LinkGroupDialog({
       return;
     }
 
-    if ('desired_rights' in source) {
-      const nextDirections = createInitialRelationshipDirections();
-      for (const right of source.desired_rights ?? []) {
-        nextDirections[right.right_key] =
-          right.direction === 'bidirectional'
-            ? 'bidirectional'
-            : source.source_group_id === currentGroupId
-              ? right.direction === 'forward'
-                ? 'outgoing'
-                : 'incoming'
-              : right.direction === 'forward'
-                ? 'incoming'
-                : 'outgoing';
+    const isRequest = 'grant_requests' in source;
+    const activeGrants = currentPrimaryConnection?.grants ?? [];
+    const grantsByKey = new Map<
+      string,
+      {
+        right_key: string;
+        holder_group_id: string;
+        scope_group_id: string;
+        status?: string | null;
       }
-
-      const membershipConfig = buildRelativeMembershipRuleFromCanonical({
-        currentGroupId,
-        source_group_id: source.source_group_id,
-        target_group_id: source.target_group_id,
-        membershipRule: {
-          membership_direction: source.desired_membership_direction ?? null,
-          membership_mode: source.desired_membership_mode,
-          role_id: source.desired_role_id ?? null,
-          source_group_ids: source.desired_source_group_ids ?? null,
-        },
-      });
-
-      setValue({
-        ...nextValue,
-        selectedGroupId: value.selectedGroupId,
-        relationshipType:
-          getRequestRelationshipType(source, currentGroupId) ?? value.relationshipType,
-        ...membershipConfig,
-        rightDirections: nextDirections,
-        preset: getPresetForRelationshipType({
-          relationshipType:
-            getRequestRelationshipType(source, currentGroupId) ?? value.relationshipType,
-          membershipDirection: membershipConfig.membershipDirection,
-          membershipRule: membershipConfig.membershipRule,
-        }),
-      });
-      lastHydratedStateRef.current = hydrationKey;
-      return;
+    >(
+      activeGrants.map(grant => [
+        `${grant.right_key}:${grant.holder_group_id}:${grant.scope_group_id}`,
+        grant,
+      ])
+    );
+    if (isRequest) {
+      for (const request of source.grant_requests ?? []) {
+        const key = `${request.right_key}:${request.holder_group_id}:${request.scope_group_id}`;
+        if (request.operation === 'remove') {
+          grantsByKey.delete(key);
+        } else {
+          grantsByKey.set(key, request);
+        }
+      }
     }
-
-    const nextDirections = createInitialRelationshipDirections();
-    for (const right of source.rights ?? []) {
-      nextDirections[right.right_key as GroupRelationshipRight] =
-        right.direction === 'bidirectional'
-          ? 'bidirectional'
-          : source.source_group_id === currentGroupId
-            ? right.direction === 'forward'
-              ? 'outgoing'
-              : 'incoming'
-            : right.direction === 'forward'
-              ? 'incoming'
-              : 'outgoing';
-    }
-
+    const nextDirections = buildRightDirectionsForConnection({
+      currentGroupId,
+      connection: { grants: isRequest ? [...grantsByKey.values()] : source.grants },
+      includePending: isRequest,
+    }) as typeof value.rightDirections;
+    const membershipRequests = isRequest ? (source.membership_rule_requests ?? []) : [];
+    const membershipRequest =
+      membershipRequests.length <= 1
+        ? (membershipRequests[0] ?? null)
+        : [...membershipRequests].sort(
+            (left, right) =>
+              (right.updated_at ?? right.created_at ?? 0) -
+              (left.updated_at ?? left.created_at ?? 0)
+          )[0];
+    const membershipRule = isRequest
+      ? membershipRequest?.operation === 'remove'
+        ? null
+        : (membershipRequest ?? currentPrimaryConnection?.membership_rule ?? null)
+      : source.membership_rule;
     const membershipConfig = buildRelativeMembershipRuleFromCanonical({
       currentGroupId,
-      source_group_id: source.source_group_id,
-      target_group_id: source.target_group_id,
-      membershipRule: source.membership_rule,
+      membershipRule,
     });
+    const relationshipType = isRequest
+      ? (getRequestRelationshipType(source, currentGroupId) ?? value.relationshipType)
+      : source.connection_type === 'peer'
+        ? 'sibling'
+        : source.parent_group_id === currentGroupId
+          ? 'parent'
+          : 'child';
 
     setValue({
       ...nextValue,
       selectedGroupId: value.selectedGroupId,
-      relationshipType:
-        getRequestRelationshipType(source, currentGroupId) ?? value.relationshipType,
+      relationshipType,
       ...membershipConfig,
       rightDirections: nextDirections,
       preset: getPresetForRelationshipType({
-        relationshipType:
-          getRequestRelationshipType(source, currentGroupId) ?? value.relationshipType,
+        relationshipType,
         membershipDirection: membershipConfig.membershipDirection,
         membershipRule: membershipConfig.membershipRule,
       }),
@@ -427,7 +450,7 @@ export function LinkGroupDialog({
     lastHydratedStateRef.current = hydrationKey;
   }, [
     currentGroupId,
-    currentPrimaryLink,
+    currentPrimaryConnection,
     currentPrimaryRequest,
     currentSelectionRelationships.length,
     open,
@@ -451,7 +474,7 @@ export function LinkGroupDialog({
       !selectedMembershipRule.roleId
     ) {
       toast.error(
-        selectedMembershipDirection === 'incoming'
+        selectedMembershipDirection === 'partner_members_to_current'
           ? 'Wähle eine Rolle für den eingehenden Mitgliedschaftsfluss.'
           : 'Wähle eine Rolle für den ausgehenden Mitgliedschaftsfluss.'
       );
@@ -463,7 +486,7 @@ export function LinkGroupDialog({
       selectedMembershipRule.sourceGroupIds.length === 0
     ) {
       toast.error(
-        selectedMembershipDirection === 'incoming'
+        selectedMembershipDirection === 'partner_members_to_current'
           ? 'Wähle mindestens eine Source-Gruppe für den eingehenden Mitgliedschaftsfluss.'
           : 'Wähle mindestens eine Source-Gruppe für den ausgehenden Mitgliedschaftsfluss.'
       );
@@ -471,18 +494,13 @@ export function LinkGroupDialog({
     }
 
     if (
-      !hasConfiguredNetworkLink({
+      !hasConfiguredGroupConnection({
         rightDirections: value.rightDirections,
         membershipDirection: value.membershipDirection,
         membershipRule: value.membershipRule,
       })
     ) {
-      toast.error(
-        t(
-          'common.network.selectRightsOrMembership',
-          'Wahle mindestens ein Recht oder konfiguriere die Mitgliedschaft.'
-        )
-      );
+      toast.error(t('common.network.selectRightsOrMembership'));
       return;
     }
 
@@ -492,38 +510,92 @@ export function LinkGroupDialog({
 
     setIsSubmitting(true);
     try {
-      const payload = buildCanonicalNetworkLinkPayload({
+      const payload = buildCanonicalGroupConnectionPayload({
         currentGroupId,
         otherGroupId: value.selectedGroupId,
         relationshipType: value.relationshipType,
         rightDirections: value.rightDirections,
         membershipDirection: value.membershipDirection,
         membershipRule: value.membershipRule,
-        linkId:
-          currentPrimaryLink?.id ?? currentPrimaryRequest?.proposed_network_link_id ?? undefined,
+        connectionId:
+          currentPrimaryConnection?.id ??
+          currentPrimaryRequest?.proposed_connection_id ??
+          undefined,
         existingRightIdsByKey,
-        membershipRuleId: currentPrimaryLink?.membership_rule?.id ?? undefined,
+        existingGrantIdsByKeyAndHolder,
+        membershipRuleId: currentPrimaryConnection?.membership_rule?.id ?? undefined,
         initiatorGroupId: currentGroupId,
         status: 'requested',
       });
 
-      const result = proposeNetworkLinkChange({
-        id: currentPrimaryRequest?.id ?? crypto.randomUUID(),
-        active_network_link_id: currentPrimaryLink?.id ?? null,
-        proposed_network_link_id: payload.id,
-        source_group_id: payload.source_group_id,
-        target_group_id: payload.target_group_id,
-        structural_relation: payload.structural_relation,
-        initiator_group_id: currentGroupId,
-        desired_rights: payload.rights.map(right => ({
-          id: right.id,
-          right_key: right.right_key,
-          direction: right.direction,
+      const desiredGrantKeys = new Set(
+        payload.grants.map(
+          grant => `${grant.right_key}:${grant.holder_group_id}:${grant.scope_group_id}`
+        )
+      );
+      const grants = [
+        ...payload.grants.map(grant => ({
+          id: crypto.randomUUID(),
+          existing_grant_id:
+            existingGrantIdsByKeyAndHolder[`${grant.right_key}:${grant.holder_group_id}`] ?? null,
+          operation: 'upsert' as const,
+          right_key: grant.right_key,
+          holder_group_id: grant.holder_group_id,
+          scope_group_id: grant.scope_group_id,
         })),
-        desired_membership_direction: payload.membership_rule.membership_direction ?? null,
-        desired_membership_mode: payload.membership_rule.membership_mode,
-        desired_role_id: payload.membership_rule.role_id ?? null,
-        desired_source_group_ids: payload.membership_rule.source_group_ids ?? null,
+        ...(currentPrimaryConnection?.grants ?? [])
+          .filter(
+            grant =>
+              isGroupRelationshipRight(grant.right_key) &&
+              !desiredGrantKeys.has(
+                `${grant.right_key}:${grant.holder_group_id}:${grant.scope_group_id}`
+              )
+          )
+          .map(grant => ({
+            id: crypto.randomUUID(),
+            existing_grant_id: grant.id,
+            operation: 'remove' as const,
+            right_key: grant.right_key as GroupRelationshipRight,
+            holder_group_id: grant.holder_group_id,
+            scope_group_id: grant.scope_group_id,
+          })),
+      ];
+      const existingMembershipRule = currentPrimaryConnection?.membership_rule ?? null;
+      const membershipRule = payload.membership_rule
+        ? {
+            ...payload.membership_rule,
+            id: crypto.randomUUID(),
+            existing_membership_rule_id: existingMembershipRule?.id ?? null,
+            operation: 'upsert' as const,
+          }
+        : existingMembershipRule && isStoredMembershipMode(existingMembershipRule.membership_mode)
+          ? {
+              id: crypto.randomUUID(),
+              existing_membership_rule_id: existingMembershipRule.id,
+              operation: 'remove' as const,
+              member_source_group_id: existingMembershipRule.member_source_group_id,
+              member_target_group_id: existingMembershipRule.member_target_group_id,
+              membership_mode: existingMembershipRule.membership_mode,
+              required_source_role_id: existingMembershipRule.required_source_role_id,
+              eligible_origin_group_ids:
+                existingMembershipRule.origins
+                  ?.map(origin => origin.eligible_origin_group_id)
+                  .filter((id): id is string => Boolean(id)) ?? [],
+            }
+          : null;
+
+      const result = proposeGroupConnectionChange({
+        id: currentPrimaryRequest?.id ?? crypto.randomUUID(),
+        active_connection_id: currentPrimaryConnection?.id ?? null,
+        proposed_connection_id: payload.id,
+        group_a_id: payload.group_a_id,
+        group_b_id: payload.group_b_id,
+        desired_connection_type: payload.connection_type,
+        desired_parent_group_id: payload.parent_group_id,
+        desired_child_group_id: payload.child_group_id,
+        initiator_group_id: currentGroupId,
+        grants,
+        membership_rule: membershipRule,
       });
       await serverConfirmed(result);
 
@@ -568,7 +640,7 @@ export function LinkGroupDialog({
         </DialogHeader>
 
         <div className="grid min-h-0 content-start gap-4 overflow-y-auto px-6 py-4">
-          <NetworkLinkComposer
+          <GroupConnectionComposer
             activeTab={activeTab}
             onActiveTabChange={setActiveTab}
             value={value}
@@ -586,7 +658,9 @@ export function LinkGroupDialog({
 
         <DialogFooter className="border-t px-6 py-4">
           {preflight.isLoading ? (
-            <div className="text-muted-foreground mr-auto text-sm">Prüfe Konflikte...</div>
+            <div className="text-muted-foreground mr-auto text-sm">
+              {translateText('generated.inline.0798_pr_fe_konflikte_f9c644cd')}
+            </div>
           ) : null}
           <Button variant="outline" onClick={() => setOpen(false)} disabled={isSubmitting}>
             {t('common.actions.cancel')}
@@ -597,8 +671,8 @@ export function LinkGroupDialog({
               !value.selectedGroupId ||
               isSubmitting ||
               groupStateLoading ||
-              pairLinksLoading ||
-              pairChangeRequestsLoading ||
+              pairConnectionsLoading ||
+              pairConnectionRequestsLoading ||
               preflight.isLoading ||
               preflight.blocking ||
               (() => {

@@ -37,6 +37,7 @@ import { EVENT_ACTION_RIGHTS } from '@/zero/rbac/constants';
 import { useDelegateAssemblyParticipantsComposition } from '../hooks/useDelegateAssemblyParticipantsComposition';
 import { useEventActions } from '@/zero/events/useEventActions';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 type EventParticipantRow = ReturnType<typeof useEventParticipantsData>['participants'][number];
 
@@ -409,11 +410,11 @@ export function EventParticipants({
   );
 
   if (isLoading) {
-    return <div>Loading event participants...</div>;
+    return <div>{translateText('generated.inline.0491_loading_event_participants_4216bb13')}</div>;
   }
 
   if (error || !event) {
-    return <div>Event not found.</div>;
+    return <div>{translateText('generated.inline.0492_event_not_found_0f7c1f48')}</div>;
   }
 
   return (
@@ -421,12 +422,14 @@ export function EventParticipants({
       <div className="mb-4 flex items-center justify-between">
         <Button variant="ghost" onClick={() => navigate({ to: '..' })}>
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back
+          {translateText('generated.inline.0493_back_b52b36b7')}
         </Button>
       </div>
 
       <div className="mb-6">
-        <h1 className="mb-2 text-3xl font-bold">Event Participants</h1>
+        <h1 className="mb-2 text-3xl font-bold">
+          {translateText('generated.inline.0441_event_participants_df407348')}
+        </h1>
         <p className="text-muted-foreground">{eventTitle}</p>
       </div>
 
@@ -434,7 +437,7 @@ export function EventParticipants({
         <EntitySearchBar
           searchQuery={participantSearchQuery}
           onSearchQueryChange={setParticipantSearchQuery}
-          placeholder="Search participants..."
+          placeholder={translateText('generated.inline.0494_search_participants_1b38c2ef')}
           className="mb-4"
         />
       ) : null}
@@ -442,8 +445,12 @@ export function EventParticipants({
       <MembershipTabs
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        membershipsByUserLabel="Participants by user"
-        membershipsByRoleLabel="Participants by role"
+        membershipsByUserLabel={translateText(
+          'generated.inline.0100_participants_by_user_99abf1d2'
+        )}
+        membershipsByRoleLabel={translateText(
+          'generated.inline.0101_participants_by_role_79dd6508'
+        )}
         tabBarAction={
           activeTab === 'guests' ? (
             <InviteMembersDialog
@@ -458,13 +465,19 @@ export function EventParticipants({
               onSelectedRoleIdsChange={setSelectedGuestRoleIds}
               onInvite={handleInviteGuests}
               isInviting={isInvitingGuests}
-              triggerLabel="Invite Guest"
-              dialogTitle="Invite Guests"
-              dialogDescription="Invite users as guests with guest roles for this event."
-              roleSectionTitle="Guest roles"
-              roleSectionDescription="Guest invitations must always include at least one guest role. The default guest invite role is preselected when available."
+              triggerLabel={translateText('generated.inline.0495_invite_guest_a2db715e')}
+              dialogTitle={translateText('generated.inline.0496_invite_guests_5bae717f')}
+              dialogDescription={translateText(
+                'generated.inline.0497_invite_users_as_guests_with_guest_roles_for_t_b6b9cdac'
+              )}
+              roleSectionTitle={translateText('generated.inline.0112_guest_roles_987ebdbe')}
+              roleSectionDescription={translateText(
+                'generated.inline.0498_guest_invitations_must_always_include_at_leas_407f8685'
+              )}
               defaultRoleFallbackName="Gast"
-              emptyRolesLabel="Create a guest role first before inviting guests."
+              emptyRolesLabel={translateText(
+                'generated.inline.0499_create_a_guest_role_first_before_inviting_gue_13882d1d'
+              )}
             />
           ) : activeTab !== 'roles' ? (
             <InviteMembersDialog
@@ -481,17 +494,21 @@ export function EventParticipants({
               isInviting={isInviting}
               disabled={assemblyEvent}
               disabledReason="For assembly events, official member invites are disabled here. Use the Guests tab to invite guests."
-              triggerLabel="Invite Participant"
-              dialogTitle="Invite Participants"
-              dialogDescription="Search and select users to invite to this event, then choose which roles they should start with."
-              roleSectionTitle="Participant roles"
+              triggerLabel={translateText('generated.inline.0500_invite_participant_7843ba08')}
+              dialogTitle={translateText('generated.inline.0501_invite_participants_aabb6cba')}
+              dialogDescription={translateText(
+                'generated.inline.0502_search_and_select_users_to_invite_to_this_eve_9e8bdab7'
+              )}
+              roleSectionTitle={translateText('generated.inline.0113_participant_roles_4e1d1173')}
               roleSectionDescription={
                 assemblyEvent
                   ? 'Assembly events only allow guest roles for invited participants. The default guest invite role is preselected.'
                   : 'Tick one or more roles for invited participants. The default invite role is preselected.'
               }
               defaultRoleFallbackName={assemblyEvent ? 'Gast' : 'Participant'}
-              emptyRolesLabel="Create an event role first before inviting participants."
+              emptyRolesLabel={translateText(
+                'generated.inline.0503_create_an_event_role_first_before_inviting_pa_a92494f3'
+              )}
             />
           ) : null
         }
@@ -505,17 +522,21 @@ export function EventParticipants({
               onReject={(membershipId, userId) =>
                 rejectParticipation(membershipId, userId, authUser?.id ?? undefined, eventTitle)
               }
-              title="Pending Participation Requests"
-              description="Review and approve participation requests"
-              fallbackRoleLabel="Participant"
+              title={translateText('generated.inline.0504_pending_participation_requests_3a5ff856')}
+              description={translateText(
+                'generated.inline.0505_review_and_approve_participation_requests_2cf88534'
+              )}
+              fallbackRoleLabel={translateText('generated.inline.0506_participant_a77366e9')}
             />
             <PendingInvitationsTable
               invitations={pendingInvitations}
               onWithdraw={(membershipId, userId) =>
                 rejectParticipation(membershipId, userId, authUser?.id ?? undefined, eventTitle)
               }
-              description="Users who have been invited to this event but have not accepted yet"
-              fallbackRoleLabel="Participant"
+              description={translateText(
+                'generated.inline.0507_users_who_have_been_invited_to_this_event_but_d947b292'
+              )}
+              fallbackRoleLabel={translateText('generated.inline.0506_participant_a77366e9')}
             />
             <ActiveMembersTable
               members={activeParticipantsForTables}
@@ -529,22 +550,34 @@ export function EventParticipants({
               onRemove={(membershipId, userId) =>
                 removeParticipant(membershipId, userId, authUser?.id ?? undefined, eventTitle)
               }
-              title="Active Participants"
-              description="Current event participants and organizers"
-              fallbackRoleLabel="Participant"
+              title={translateText('generated.inline.0508_active_participants_8e5af26b')}
+              description={translateText(
+                'generated.inline.0509_current_event_participants_and_organizers_cf1218e5'
+              )}
+              fallbackRoleLabel={translateText('generated.inline.0506_participant_a77366e9')}
               showProvenanceColumns={showComposition}
             />
             {showOfflineRoster ? (
               <OfflineRosterCard
-                title="All participants (incl. offline/hybrid participants)"
-                description="Some participants may attend or be represented without using the platform directly. This roster keeps those offline or hybrid participants visible for invitations, confirmations, vote caps, and final result aggregation."
+                title={translateText(
+                  'generated.inline.0510_all_participants_incl_offline_hybrid_particip_12560f8c'
+                )}
+                description={translateText(
+                  'generated.inline.0511_some_participants_may_attend_or_be_represente_f48d916e'
+                )}
                 rows={allParticipantRows}
                 connectedUserCandidates={connectedUserCandidates}
                 showManageButton
                 showProvenanceColumns={showComposition}
-                manageDialogTitle="Manage offline and hybrid participants"
-                manageDialogDescription="Add extra offline or hybrid participants for this event one by one or via CSV."
-                emptyStateLabel="No offline or hybrid participants have been added yet."
+                manageDialogTitle={translateText(
+                  'generated.inline.0512_manage_offline_and_hybrid_participants_32ec2f90'
+                )}
+                manageDialogDescription={translateText(
+                  'generated.inline.0513_add_extra_offline_or_hybrid_participants_for__6da70f71'
+                )}
+                emptyStateLabel={translateText(
+                  'generated.inline.0114_no_offline_or_hybrid_participants_have_been_a_3fda5da7'
+                )}
                 onCreate={(entry, correlationId) =>
                   serverConfirmed(
                     createOfflineParticipant({
@@ -635,11 +668,15 @@ export function EventParticipants({
             }}
             onRemoveRole={handleRemoveRoleFromParticipantTypeView}
             onSecondaryAction={handleOpenChangeRoleDialog}
-            secondaryActionLabel="Manage Roles"
+            secondaryActionLabel={translateText('generated.inline.0012_manage_roles_5f9b8531')}
             entityType="event"
-            countLabel="participants"
-            memberDescriptionFallback="Participants currently assigned to this role."
-            emptyStateLabel="No participants currently carry this role."
+            countLabel={translateText('generated.inline.0057_participants_a94a46cc')}
+            memberDescriptionFallback={translateText(
+              'generated.inline.0115_participants_currently_assigned_to_this_role_16e23493'
+            )}
+            emptyStateLabel={translateText(
+              'generated.inline.0116_no_participants_currently_carry_this_role_18087ba6'
+            )}
             showProvenanceColumns={showComposition}
           />
         }
@@ -693,8 +730,10 @@ export function EventParticipants({
                   eventTitle
                 );
               }}
-              title="Guest Participants"
-              description="Users with guest roles in this event, including guest requests and invitations."
+              title={translateText('generated.inline.0514_guest_participants_8d6eb693')}
+              description={translateText(
+                'generated.inline.0515_users_with_guest_roles_in_this_event_includin_77e18f41'
+              )}
             />
           </div>
         }
@@ -709,9 +748,11 @@ export function EventParticipants({
         membership={memberRightsMembership}
         onNavigateToUser={userId => navigate({ to: '/user/$id', params: { id: userId } })}
         entityType="event"
-        contextLabel="event"
-        fallbackRoleLabel="Participant"
-        emptyRightsLabel="No explicit action rights are currently assigned through this participant's roles."
+        contextLabel={translateText('generated.inline.0058_event_5006ed02')}
+        fallbackRoleLabel={translateText('generated.inline.0506_participant_a77366e9')}
+        emptyRightsLabel={translateText(
+          'generated.inline.0117_no_explicit_action_rights_are_currently_assig_eb5ab2a3'
+        )}
         actionRightsCatalog={EVENT_ACTION_RIGHTS}
       />
 
@@ -731,7 +772,7 @@ export function EventParticipants({
         }
         roles={[...accessRoles]}
         onConfirm={handleConfirmRoleChange}
-        title="Manage Participant Roles"
+        title={translateText('generated.inline.0516_manage_participant_roles_eddec16c')}
       />
     </div>
   );

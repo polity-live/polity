@@ -16,6 +16,7 @@ import {
   isTerminalStatus,
   EDITING_MODE_TRANSITIONS,
 } from '@/zero/rbac/workflow-constants';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface UseAmendmentWorkflowProps {
   amendmentId: string;
@@ -48,7 +49,11 @@ export function useAmendmentWorkflow({
       }
 
       if (isTerminalStatus(currentStatus)) {
-        toast.error('Amendment ist in einem finalen Status und kann nicht geändert werden.');
+        toast.error(
+          translateText(
+            'generated.inline.0141_amendment_ist_in_einem_finalen_status_und_kan_a6e57071'
+          )
+        );
         return false;
       }
 
@@ -83,7 +88,9 @@ export function useAmendmentWorkflow({
         return true;
       } catch (error) {
         console.error('Failed to transition workflow status:', error);
-        toast.error('Fehler beim Ändern des Workflow-Status');
+        toast.error(
+          translateText('generated.inline.0142_fehler_beim_ndern_des_workflow_status_0352a976')
+        );
         return false;
       } finally {
         setIsTransitioning(false);
@@ -98,7 +105,11 @@ export function useAmendmentWorkflow({
   const startInternalVoting = useCallback(
     async (intervalMinutes: number): Promise<string | null> => {
       if (currentStatus !== 'suggest_internal' && currentStatus !== 'vote_internal') {
-        toast.error('Internes Voting kann nur im Suggesting oder Voting Modus gestartet werden.');
+        toast.error(
+          translateText(
+            'generated.inline.0143_internes_voting_kann_nur_im_suggesting_oder_v_12f51dc6'
+          )
+        );
         return null;
       }
 
@@ -117,7 +128,7 @@ export function useAmendmentWorkflow({
           id: sessionId,
           amendment_id: amendmentId,
           agenda_item_id: null,
-          title: 'Internal Vote',
+          title: translateText('generated.inline.0015_internal_vote_1abb1046'),
           description: null,
           status: 'active',
           majority_type: null,
@@ -131,7 +142,11 @@ export function useAmendmentWorkflow({
         return sessionId;
       } catch (error) {
         console.error('Failed to start internal voting:', error);
-        toast.error('Fehler beim Starten der internen Abstimmung');
+        toast.error(
+          translateText(
+            'generated.inline.0144_fehler_beim_starten_der_internen_abstimmung_7834e018'
+          )
+        );
         return null;
       }
     },
@@ -147,7 +162,11 @@ export function useAmendmentWorkflow({
       const allowedPhases: EditingMode[] = ['edit', 'suggest_internal', 'vote_internal'];
 
       if (!allowedPhases.includes(currentStatus)) {
-        toast.error('Amendment kann nicht in diesem Status an ein Event weitergeleitet werden.');
+        toast.error(
+          translateText(
+            'generated.inline.0145_amendment_kann_nicht_in_diesem_status_an_ein__20c9ce4d'
+          )
+        );
         return false;
       }
 
@@ -158,11 +177,15 @@ export function useAmendmentWorkflow({
           event_id: eventId,
         });
 
-        toast.success('Amendment wurde an Event weitergeleitet');
+        toast.success(
+          translateText('generated.inline.0146_amendment_wurde_an_event_weitergeleitet_847cbe4b')
+        );
         return true;
       } catch (error) {
         console.error('Failed to submit to event:', error);
-        toast.error('Fehler beim Weiterleiten an Event');
+        toast.error(
+          translateText('generated.inline.0147_fehler_beim_weiterleiten_an_event_2eb0299d')
+        );
         return false;
       }
     },
@@ -176,11 +199,15 @@ export function useAmendmentWorkflow({
     try {
       // Note: supporter_groups is not a column on amendment table.
       // Group supporters are tracked via support_confirmation records.
-      toast.success('Gruppe als Supporter hinzugefügt');
+      toast.success(
+        translateText('generated.inline.0148_gruppe_als_supporter_hinzugef_gt_0e13f4b3')
+      );
       return true;
     } catch (error) {
       console.error('Failed to add group supporter:', error);
-      toast.error('Fehler beim Hinzufügen des Supporters');
+      toast.error(
+        translateText('generated.inline.0149_fehler_beim_hinzuf_gen_des_supporters_b044a449')
+      );
       return false;
     }
   }, []);
@@ -207,7 +234,9 @@ export function useAmendmentWorkflow({
         return true;
       } catch (error) {
         console.error('Failed to finalize amendment:', error);
-        toast.error('Fehler beim Finalisieren des Amendments');
+        toast.error(
+          translateText('generated.inline.0150_fehler_beim_finalisieren_des_amendments_c95f6157')
+        );
         return false;
       }
     },

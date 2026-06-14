@@ -6,6 +6,7 @@ import { useBlogActions } from '@/zero/blogs/useBlogActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export interface BlogFormData {
   title: string;
@@ -91,7 +92,7 @@ export function useBlogEditPage(blogId: string, actorId?: string) {
 
     try {
       if (!blog) {
-        toast.error('No blog data to update');
+        toast.error(translateText('generated.inline.0220_no_blog_data_to_update_2e040d48'));
         return;
       }
 
@@ -113,8 +114,12 @@ export function useBlogEditPage(blogId: string, actorId?: string) {
                 entityType: 'blog',
                 entityId: blogId,
                 actorId,
-                title: `${formData.title} image updated`,
-                description: 'A new image was uploaded to this blog post',
+                title: translateText('generated.inline.0034_title_image_updated_36acb476', {
+                  title: formData.title,
+                }),
+                description: translateText(
+                  'generated.inline.0035_a_new_image_was_uploaded_to_this_blog_post_c0b0e0ce'
+                ),
                 contentType: 'image',
               },
             });
@@ -133,7 +138,7 @@ export function useBlogEditPage(blogId: string, actorId?: string) {
         allHashtags ?? []
       );
 
-      toast.success('Blog updated successfully');
+      toast.success(translateText('generated.inline.0221_blog_updated_successfully_8a7cc27d'));
       if (blog?.group_id) {
         navigate({
           to: '/group/$id/blog/$entryId',
@@ -144,7 +149,7 @@ export function useBlogEditPage(blogId: string, actorId?: string) {
       }
     } catch (error) {
       console.error('Update error:', error);
-      toast.error('Failed to update blog');
+      toast.error(translateText('generated.inline.0222_failed_to_update_blog_68056f92'));
     } finally {
       setIsSubmitting(false);
     }

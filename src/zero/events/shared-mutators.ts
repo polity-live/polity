@@ -27,6 +27,7 @@ import {
   cancelMeetingBookingSchema,
 } from './schema';
 import { can } from '../rbac/can';
+import { requireAuthenticated } from '../rbac/authorize';
 
 function isAssemblyEventType(eventType: string | null | undefined) {
   return eventType === 'general_assembly' || eventType === 'delegate_assembly';
@@ -349,7 +350,13 @@ async function assertValidEventRoleDefaults(
 
 /** Shared mutators — run on both client and server. Server mutators may override these. */
 export const eventSharedMutators = {
-  create: defineMutator(eventCreateSchema, async ({ tx, ctx: { userID }, args }) => {
+  create: defineMutator(eventCreateSchema, async ({ tx, ctx, args }) => {
+    const { userID } = ctx;
+    requireAuthenticated(tx, ctx, { action: 'create', resource: 'events' });
+    if (args.group_id) {
+      await can(tx, ctx, { action: 'create', resource: 'events', groupId: args.group_id });
+    }
+
     const now = Date.now();
     const { invited_user_ids, debug_correlation_id, ...eventArgs } = args;
     void invited_user_ids;
@@ -391,7 +398,8 @@ export const eventSharedMutators = {
     });
   }),
 
-  update: defineMutator(eventUpdateSchema, async ({ tx, args }) => {
+  update: defineMutator(eventUpdateSchema, async ({ tx, ctx, args }) => {
+    await can(tx, ctx, { action: 'update', resource: 'events', eventId: args.id });
     const currentEvent = await tx.run(zql.event.where('id', args.id).one());
     const { debug_correlation_id, ...eventArgs } = args;
     void debug_correlation_id;
@@ -414,7 +422,9 @@ export const eventSharedMutators = {
     });
   }),
 
-  cancel: defineMutator(eventCancelSchema, async ({ tx, ctx: { userID }, args }) => {
+  cancel: defineMutator(eventCancelSchema, async ({ tx, ctx, args }) => {
+    const { userID } = ctx;
+    await can(tx, ctx, { action: 'delete', resource: 'events', eventId: args.id });
     const now = Date.now();
     await tx.mutate.event.update({
       id: args.id,
@@ -628,7 +638,12 @@ export const eventSharedMutators = {
   }),
 
   // Invite another user as participant (keeps provided user_id instead of ctx.userID)
-  inviteParticipant: defineMutator(eventParticipantCreateSchema, async ({ tx, args }) => {
+  inviteParticipant: defineMutator(eventParticipantCreateSchema, async ({ tx, ctx, args }) => {
+    await can(tx, ctx, {
+      action: 'manage_participants',
+      resource: 'events',
+      eventId: args.event_id,
+    });
     const now = Date.now();
     if (!args.user_id) {
       throw new Error('user_id is required when inviting an event participant');
@@ -671,11 +686,26 @@ export const eventSharedMutators = {
     }
   }),
 
-  leaveEvent: defineMutator(eventParticipantDeleteSchema, async ({ tx, args }) => {
+  leaveEvent: defineMutator(eventParticipantDeleteSchema, async ({ tx, ctx, args }) => {
+    if (tx.location !== 'client') {
+      const participant = await tx.run(zql.event_participant.where('id', args.id).one());
+      if (!participant) {
+        throw new Error('Participant not found');
+      }
+      if (participant.user_id !== ctx.userID) {
+        await can(tx, ctx, {
+          action: 'manage_participants',
+          resource: 'events',
+          eventId: participant.event_id,
+        });
+      }
+    }
+
     await tx.mutate.event_participant.delete({ id: args.id });
   }),
 
-  finalizeDelegates: defineMutator(z.object({ eventId: z.string() }), async ({ tx, args }) => {
+  finalizeDelegates: defineMutator(z.object({ eventId: z.string() }), async ({ tx, ctx, args }) => {
+    await can(tx, ctx, { action: 'manage_votes', resource: 'events', eventId: args.eventId });
     await tx.mutate.event.update({
       id: args.eventId,
       delegate_distribution_status: 'finalized',
@@ -709,6 +739,20 @@ export const eventSharedMutators = {
   updateParticipant: defineMutator(
     eventParticipantLegacyRoleUpdateSchema,
     async ({ tx, ctx, args }) => {
+      if (tx.location !== 'client') {
+        const participant = await tx.run(zql.event_participant.where('id', args.id).one());
+        if (!participant) {
+          throw new Error('Participant not found');
+        }
+        if (participant.user_id !== ctx.userID || args.role_id !== undefined) {
+          await can(tx, ctx, {
+            action: 'manage_participants',
+            resource: 'events',
+            eventId: participant.event_id,
+          });
+        }
+      }
+
       const { role_id, ...participantArgs } = args;
 
       if (Object.keys(participantArgs).length > 1) {
@@ -727,7 +771,12 @@ export const eventSharedMutators = {
   ),
 
   // Event role mutators
-  createRole: defineMutator(createEventRoleSchema, async ({ tx, args }) => {
+  createRole: defineMutator(createEventRoleSchema, async ({ tx, ctx, args }) => {
+    await can(tx, ctx, {
+      action: 'manage',
+      resource: 'events',
+      eventId: args.event_id,
+    });
     const now = Date.now();
     const existingRoles = await tx.run(
       zql.role.where('event_id', args.event_id).where('scope', 'event')
@@ -774,9 +823,10 @@ export const eventSharedMutators = {
     });
   }),
 
-  updateRole: defineMutator(updateEventRoleSchema, async ({ tx, args }) => {
+  updateRole: defineMutator(updateEventRoleSchema, async ({ tx, ctx, args }) => {
     const role = await tx.run(zql.role.where('id', args.id).one());
     if (role?.event_id) {
+      await can(tx, ctx, { action: 'manage', resource: 'events', eventId: role.event_id });
       const nextAssigneeKind = args.assignee_kind ?? role.assignee_kind ?? 'member';
       const nextDefaultRequestRole = args.default_request_role ?? role.default_request_role;
 
@@ -798,12 +848,24 @@ export const eventSharedMutators = {
     await tx.mutate.role.update(args);
   }),
 
-  deleteRole: defineMutator(deleteEventRoleSchema, async ({ tx, args }) => {
+  deleteRole: defineMutator(deleteEventRoleSchema, async ({ tx, ctx, args }) => {
+    if (tx.location !== 'client') {
+      const role = await tx.run(zql.role.where('id', args.id).one());
+      if (role?.event_id) {
+        await can(tx, ctx, { action: 'manage', resource: 'events', eventId: role.event_id });
+      }
+    }
+
     await tx.mutate.role.delete({ id: args.id });
   }),
 
   // Event Exception mutators
-  createException: defineMutator(eventExceptionCreateSchema, async ({ tx, args }) => {
+  createException: defineMutator(eventExceptionCreateSchema, async ({ tx, ctx, args }) => {
+    await can(tx, ctx, {
+      action: 'update',
+      resource: 'events',
+      eventId: args.parent_event_id,
+    });
     const now = Date.now();
     await tx.mutate.event_exception.insert({
       ...args,
@@ -812,19 +874,43 @@ export const eventSharedMutators = {
     });
   }),
 
-  updateException: defineMutator(eventExceptionUpdateSchema, async ({ tx, args }) => {
+  updateException: defineMutator(eventExceptionUpdateSchema, async ({ tx, ctx, args }) => {
+    if (tx.location !== 'client') {
+      const exception = await tx.run(zql.event_exception.where('id', args.id).one());
+      if (exception?.parent_event_id) {
+        await can(tx, ctx, {
+          action: 'update',
+          resource: 'events',
+          eventId: exception.parent_event_id,
+        });
+      }
+    }
+
     await tx.mutate.event_exception.update({
       ...args,
       updated_at: Date.now(),
     });
   }),
 
-  deleteException: defineMutator(eventExceptionDeleteSchema, async ({ tx, args }) => {
+  deleteException: defineMutator(eventExceptionDeleteSchema, async ({ tx, ctx, args }) => {
+    if (tx.location !== 'client') {
+      const exception = await tx.run(zql.event_exception.where('id', args.id).one());
+      if (exception?.parent_event_id) {
+        await can(tx, ctx, {
+          action: 'update',
+          resource: 'events',
+          eventId: exception.parent_event_id,
+        });
+      }
+    }
+
     await tx.mutate.event_exception.delete({ id: args.id });
   }),
 
   // Meeting booking mutators (meetings as events)
-  bookMeeting: defineMutator(bookMeetingSchema, async ({ tx, ctx: { userID }, args }) => {
+  bookMeeting: defineMutator(bookMeetingSchema, async ({ tx, ctx, args }) => {
+    const { userID } = ctx;
+    requireAuthenticated(tx, ctx, { action: 'create', resource: 'eventParticipants' });
     const now = Date.now();
     await tx.mutate.event_participant.insert({
       id: crypto.randomUUID(),
@@ -838,22 +924,21 @@ export const eventSharedMutators = {
     });
   }),
 
-  cancelMeetingBooking: defineMutator(
-    cancelMeetingBookingSchema,
-    async ({ tx, ctx: { userID }, args }) => {
-      // Find the participant entry for this user + event + instance
-      const participants = await tx.run(
-        zql.event_participant.where('event_id', args.event_id).where('user_id', userID)
-      );
-      const match = participants.find(p => {
-        if (args.instance_date === null || args.instance_date === undefined) {
-          return p.instance_date === null || p.instance_date === undefined || p.instance_date === 0;
-        }
-        return p.instance_date === args.instance_date;
-      });
-      if (match) {
-        await tx.mutate.event_participant.delete({ id: match.id });
+  cancelMeetingBooking: defineMutator(cancelMeetingBookingSchema, async ({ tx, ctx, args }) => {
+    const { userID } = ctx;
+    requireAuthenticated(tx, ctx, { action: 'delete', resource: 'eventParticipants' });
+    // Find the participant entry for this user + event + instance
+    const participants = await tx.run(
+      zql.event_participant.where('event_id', args.event_id).where('user_id', userID)
+    );
+    const match = participants.find(p => {
+      if (args.instance_date === null || args.instance_date === undefined) {
+        return p.instance_date === null || p.instance_date === undefined || p.instance_date === 0;
       }
+      return p.instance_date === args.instance_date;
+    });
+    if (match) {
+      await tx.mutate.event_participant.delete({ id: match.id });
     }
-  ),
+  }),
 };

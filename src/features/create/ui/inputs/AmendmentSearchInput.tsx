@@ -4,6 +4,7 @@ import { useAllAmendments } from '@/zero/events/useEventState';
 import { Label } from '@/features/shared/ui/ui/label';
 import { useMemo } from 'react';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface AmendmentSearchInputProps {
   value: string;
@@ -16,7 +17,7 @@ export function AmendmentSearchInput({
   value,
   onChange,
   label,
-  placeholder = 'Search for an amendment...',
+  placeholder = translateText('generated.inline.0040_search_for_an_amendment_5231be40'),
 }: AmendmentSearchInputProps) {
   const { amendments } = useAllAmendments();
 

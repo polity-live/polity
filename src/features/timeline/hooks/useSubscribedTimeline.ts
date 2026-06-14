@@ -43,6 +43,8 @@ export interface TimelineItem {
   location?: string;
   city?: string;
   postcode?: string;
+  latitude?: number | null;
+  longitude?: number | null;
   attendeeCount?: number;
   electionsCount?: number;
   amendmentsCount?: number;
@@ -162,6 +164,8 @@ export function useSubscribedTimeline(
           imageUrl: g.image_url ?? undefined,
           groupId: g.id,
           groupName: g.name || 'Unnamed Group',
+          latitude: g.latitude ?? undefined,
+          longitude: g.longitude ?? undefined,
           memberCount: g.member_count,
           eventCount: g.events?.length,
           amendmentCount: g.amendments?.length,
@@ -195,6 +199,8 @@ export function useSubscribedTimeline(
           startDate: e.start_date ? new Date(e.start_date) : undefined,
           endDate: e.end_date ? new Date(e.end_date) : undefined,
           location: e.location_name ?? undefined,
+          latitude: e.latitude ?? undefined,
+          longitude: e.longitude ?? undefined,
           attendeeCount: e.participants?.length,
           electionsCount: agendaItemsByEventId.get(e.id)?.filter(item => Boolean(item?.election))
             .length,

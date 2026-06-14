@@ -10,18 +10,30 @@ import type { NormalizedGroupRelationship } from '../../types/network.types';
 function rel(
   overrides: Partial<NormalizedGroupRelationship> & Pick<NormalizedGroupRelationship, 'id'>
 ): NormalizedGroupRelationship {
+  const groupId = overrides.group_id ?? 'parent';
+  const relatedGroupId = overrides.related_group_id ?? 'child';
   return {
     id: overrides.id,
-    group_id: overrides.group_id ?? 'parent',
-    related_group_id: overrides.related_group_id ?? 'child',
+    connection_id: overrides.connection_id ?? `connection:${overrides.id}`,
+    grant_id:
+      overrides.grant_id ?? (overrides.with_right === null ? null : `grant:${overrides.id}`),
+    group_id: groupId,
+    related_group_id: relatedGroupId,
     relationship_type: overrides.relationship_type ?? null,
+    connection_type: overrides.connection_type ?? 'hierarchy',
+    parent_group_id: overrides.parent_group_id ?? groupId,
+    child_group_id: overrides.child_group_id ?? relatedGroupId,
     with_right: 'with_right' in overrides ? (overrides.with_right ?? null) : 'passiveVotingRight',
     status: overrides.status ?? 'requested',
     initiator_group_id: overrides.initiator_group_id ?? null,
     created_at: overrides.created_at ?? 0,
+    member_source_group_id: overrides.member_source_group_id ?? null,
+    member_target_group_id: overrides.member_target_group_id ?? null,
     membership_mode: overrides.membership_mode ?? 'none',
-    group: overrides.group ?? undefined,
-    related_group: overrides.related_group ?? undefined,
+    required_source_role_id: overrides.required_source_role_id ?? null,
+    eligible_origin_group_ids: overrides.eligible_origin_group_ids ?? [],
+    group: overrides.group ?? null,
+    related_group: overrides.related_group ?? null,
   };
 }
 
@@ -114,6 +126,8 @@ describe('hierarchyLinkHelpers', () => {
         group_id: 'base-b',
         related_group_id: 'parent',
         relationship_type: 'parent',
+        parent_group_id: 'parent',
+        child_group_id: 'base-b',
       }),
     ];
 

@@ -32,8 +32,14 @@ import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useUserState } from '@/zero/users/useUserState';
 import { UserPlus, X, Loader2, Check } from 'lucide-react';
 import { toast } from 'sonner';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { notifyDocumentCollaboratorInvited, notifyBloggerInvited } from '@/features/notifications/utils/notification-helpers.ts';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
+import {
+  notifyDocumentCollaboratorInvited,
+  notifyBloggerInvited,
+} from '@/features/notifications/utils/notification-helpers.ts';
 import type { EditorEntityType } from '../types';
 
 interface InviteCollaboratorDialogProps {
@@ -173,18 +179,27 @@ export function InviteCollaboratorDialog({
           {selectedUsers.length > 0 && (
             <div className="mb-4 flex flex-wrap gap-2">
               {selectedUsers.map(userId => {
-                const user = users?.find((u) => u.id === userId);
+                const user = users?.find(u => u.id === userId);
                 if (!user) return null;
 
                 return (
                   <Badge key={userId} variant="secondary" className="flex items-center gap-1 pr-1">
                     <Avatar className="h-4 w-4">
-                      {user.avatar ? <AvatarImage src={user.avatar} alt={[user.first_name, user.last_name].filter(Boolean).join(' ')} /> : null}
+                      {user.avatar ? (
+                        <AvatarImage
+                          src={user.avatar}
+                          alt={[user.first_name, user.last_name].filter(Boolean).join(' ')}
+                        />
+                      ) : null}
                       <AvatarFallback className="text-[8px]">
                         {user.first_name?.[0]?.toUpperCase() || '?'}
                       </AvatarFallback>
                     </Avatar>
-                    <span>{[user.first_name, user.last_name].filter(Boolean).join(' ') || user.handle || 'User'}</span>
+                    <span>
+                      {[user.first_name, user.last_name].filter(Boolean).join(' ') ||
+                        user.handle ||
+                        translateText('generated.inline.0066_user_9f8a2389')}
+                    </span>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -209,13 +224,13 @@ export function InviteCollaboratorDialog({
             <CommandList>
               {isLoading ? (
                 <div className="flex items-center justify-center py-6">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
                 </div>
               ) : (
                 <>
                   <CommandEmpty>{t('features.editor.inviteDialog.noUsers')}</CommandEmpty>
                   <CommandGroup>
-                    {filteredUsers?.slice(0, 10).map((user) => {
+                    {filteredUsers?.slice(0, 10).map(user => {
                       const isSelected = selectedUsers.includes(user.id);
 
                       return (
@@ -228,7 +243,13 @@ export function InviteCollaboratorDialog({
                           <div className="flex flex-1 items-center gap-2">
                             <Avatar className="h-8 w-8">
                               {user.avatar ? (
-                                <AvatarImage src={user.avatar} alt={[user.first_name, user.last_name].filter(Boolean).join(' ') || ''} />
+                                <AvatarImage
+                                  src={user.avatar}
+                                  alt={
+                                    [user.first_name, user.last_name].filter(Boolean).join(' ') ||
+                                    ''
+                                  }
+                                />
                               ) : null}
                               <AvatarFallback>
                                 {user.first_name?.[0]?.toUpperCase() || '?'}
@@ -236,14 +257,16 @@ export function InviteCollaboratorDialog({
                             </Avatar>
                             <div>
                               <p className="text-sm font-medium">
-                                {[user.first_name, user.last_name].filter(Boolean).join(' ') || user.handle || 'User'}
+                                {[user.first_name, user.last_name].filter(Boolean).join(' ') ||
+                                  user.handle ||
+                                  translateText('generated.inline.0066_user_9f8a2389')}
                               </p>
                               {user.handle && (
-                                <p className="text-xs text-muted-foreground">@{user.handle}</p>
+                                <p className="text-muted-foreground text-xs">@{user.handle}</p>
                               )}
                             </div>
                           </div>
-                          {isSelected && <Check className="h-4 w-4 text-primary" />}
+                          {isSelected && <Check className="text-primary h-4 w-4" />}
                         </CommandItem>
                       );
                     })}

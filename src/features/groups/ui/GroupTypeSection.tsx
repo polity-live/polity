@@ -6,7 +6,10 @@ import {
   CardTitle,
 } from '@/features/shared/ui/ui/card';
 import { Badge } from '@/features/shared/ui/ui/badge';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import type { GroupType } from '../hooks/useGroupUpdate';
 
 interface GroupTypeSectionProps {
@@ -30,7 +33,9 @@ export function GroupTypeSection({ groupType }: GroupTypeSectionProps) {
             <p className="text-sm font-medium">{t('features.groups.editPage.groupType.label')}</p>
             <p className="text-muted-foreground text-sm">
               {isSibling
-                ? 'Diese Gruppe ist als Geschwistergruppe mit einer anderen Gruppe verbunden.'
+                ? translateText(
+                    'generated.inline.0098_diese_gruppe_ist_als_geschwistergruppe_mit_ei_1101075e'
+                  )
                 : isHierarchical
                   ? t('features.groups.editPage.groupType.hierarchicalDescription')
                   : t('features.groups.editPage.groupType.baseDescription')}
@@ -38,7 +43,7 @@ export function GroupTypeSection({ groupType }: GroupTypeSectionProps) {
           </div>
           <Badge variant={isSibling || isHierarchical ? 'default' : 'secondary'}>
             {isSibling
-              ? 'Geschwistergruppe'
+              ? translateText('generated.inline.0080_geschwistergruppe_1053d99c')
               : isHierarchical
                 ? t('components.badges.hierarchicalGroup')
                 : t('components.badges.baseGroup')}

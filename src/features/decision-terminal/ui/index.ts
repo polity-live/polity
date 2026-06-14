@@ -1,9 +1,14 @@
 // Decision Terminal Components
 export { DecisionTerminal, type DecisionTerminalProps } from './DecisionTerminal';
+export { DecisionDashboardGrid } from './DecisionDashboardGrid';
+export { DecisionDashboardHeader } from './DecisionDashboardHeader';
+export { DecisionVoteButton } from './DecisionVoteButton';
+export { DecisionVoteDialogController } from './DecisionVoteDialogController';
+export { DecisionWidgetContent } from './DecisionWidgetContent';
+export { DecisionWidgetFrame } from './DecisionWidgetFrame';
 export { TerminalHeader, type TerminalHeaderProps, type TerminalFilter } from './TerminalHeader';
 export { DecisionTable, type DecisionTableProps } from './DecisionTable';
 export { DecisionRow, type DecisionRowProps } from './DecisionRow';
-export { DecisionSidePanel, type DecisionSidePanelProps } from './DecisionSidePanel';
 export { MobileDecisionCard, type MobileDecisionCardProps } from './MobileDecisionCard';
 export {
   DecisionSummary,

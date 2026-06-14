@@ -9,7 +9,7 @@ import { getRelationshipTypeForGroup } from './groupRelationshipOrientation';
 export interface CurrentGroupRelationshipDisplay {
   partnerGroup: NetworkGroupEntity;
   relationshipType: GroupRelationshipType;
-  rightDirection: Exclude<GroupRelationshipDirection, 'none' | 'bidirectional'>;
+  rightDirection: Exclude<GroupRelationshipDirection, 'none' | 'mutual'>;
 }
 
 export function getRelationshipPartnerGroup(
@@ -30,13 +30,13 @@ export function getRelationshipPartnerGroup(
 export function getRequestRightDirectionForCurrentGroup(
   relationship: Pick<NormalizedGroupRelationship, 'group_id' | 'related_group_id'>,
   currentGroupId: string
-): Exclude<GroupRelationshipDirection, 'none' | 'bidirectional'> | null {
+): Exclude<GroupRelationshipDirection, 'none' | 'mutual'> | null {
   if (relationship.group_id === currentGroupId) {
-    return 'outgoing';
+    return 'current_has_right_in_partner';
   }
 
   if (relationship.related_group_id === currentGroupId) {
-    return 'incoming';
+    return 'partner_has_right_in_current';
   }
 
   return null;

@@ -18,6 +18,7 @@ import {
 } from '../logic/applyPqlFilter';
 import { buildPqlCodeFilter, parsePqlExpression } from '../logic/pqlQueryLanguage';
 import { PqlQueryEditor } from './PqlQueryEditor';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 function formatPlaceholderValue(value: string): string {
   return /^[A-Za-z0-9_.:-]+$/.test(value) ? value : JSON.stringify(value);
@@ -130,22 +131,29 @@ export function PqlFilterBuilderDialog<TItem, TFieldKey extends string>({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
-          <DialogTitle>{filter ? 'Edit custom filter' : 'Add custom filter'}</DialogTitle>
+          <DialogTitle>
+            {filter
+              ? translateText('generated.inline.0132_edit_custom_filter_bcef0a89')
+              : translateText('generated.inline.0133_add_custom_filter_9a08c207')}
+          </DialogTitle>
           <DialogDescription>
-            Write reusable PQL queries with typed suggestions for fields, operators, parentheses,
-            AND, OR, and IN.
+            {translateText(
+              'generated.inline.1088_write_reusable_pql_queries_with_typed_suggest_9dd2fd7f'
+            )}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="grid gap-4 md:grid-cols-[2fr_auto] md:items-end">
             <div className="space-y-2">
-              <Label htmlFor="pql-filter-label">Name</Label>
+              <Label htmlFor="pql-filter-label">
+                {translateText('generated.inline.1000_name_709a2322')}
+              </Label>
               <Input
                 id="pql-filter-label"
                 value={label}
                 onChange={event => setLabel(event.target.value)}
-                placeholder="Board work due soon"
+                placeholder={translateText('generated.inline.1089_board_work_due_soon_34c8753d')}
                 className={
                   isLabelValid
                     ? 'border-emerald-500 focus-visible:ring-emerald-500 dark:border-emerald-400'
@@ -155,12 +163,14 @@ export function PqlFilterBuilderDialog<TItem, TFieldKey extends string>({
             </div>
 
             <Badge variant="outline" className="h-10 justify-center px-3 font-mono text-xs">
-              PQL
+              {translateText('generated.inline.0141_pql_4ef7dac2')}
             </Badge>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="pql-filter-query">Query</Label>
+            <Label htmlFor="pql-filter-query">
+              {translateText('generated.inline.1090_query_a618b4be')}
+            </Label>
             <PqlQueryEditor
               fields={fields}
               value={query}
@@ -176,19 +186,23 @@ export function PqlFilterBuilderDialog<TItem, TFieldKey extends string>({
           </div>
 
           <div className="text-muted-foreground rounded-lg border border-dashed px-4 py-3 text-sm">
-            <p className="text-foreground font-medium">Syntax</p>
+            <p className="text-foreground font-medium">
+              {translateText('generated.inline.1091_syntax_17c7ba76')}
+            </p>
             <p className="mt-1 font-mono text-xs">
-              field == value AND (other_field IN (value1, value2) OR third_field IS SET)
+              {translateText(
+                'generated.inline.1092_field_value_and_other_field_in_value1_value2__8cf94dee'
+              )}
             </p>
           </div>
         </div>
 
         <DialogFooter>
           <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
-            Cancel
+            {translateText('generated.inline.0065_cancel_77dfd213')}
           </Button>
           <Button type="button" onClick={handleSave} disabled={!isValid}>
-            Save filter
+            {translateText('generated.inline.1093_save_filter_f7f579af')}
           </Button>
         </DialogFooter>
       </DialogContent>

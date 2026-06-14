@@ -1,10 +1,10 @@
 import {
   detectDuplicateHierarchyPaths,
   detectLinkConflicts,
+  type HierarchyRelationshipRow,
   type HierarchyDuplicatePathConflict,
 } from '@/features/groups/logic/hierarchy';
 import { isActiveGroupRelationshipStatus } from './networkRelationshipHelpers';
-import type { GroupRelationship as GroupRelationshipRow } from '@/zero/network/schema';
 import type { NormalizedGroupRelationship } from '../types/network.types';
 import { getHierarchyRelationshipPair } from './groupRelationshipOrientation';
 
@@ -30,7 +30,16 @@ export function isGroupLinkRelationship(
 export const isHierarchyLinkRelationship = isGroupLinkRelationship;
 
 function isActivePvrRelationship(
-  relationship: Pick<NormalizedGroupRelationship, 'status' | 'relationship_type'>
+  relationship: Pick<
+    NormalizedGroupRelationship,
+    | 'status'
+    | 'relationship_type'
+    | 'group_id'
+    | 'related_group_id'
+    | 'connection_type'
+    | 'parent_group_id'
+    | 'child_group_id'
+  >
 ): boolean {
   return (
     getHierarchyRelationshipPair(relationship) != null &&
@@ -38,16 +47,25 @@ function isActivePvrRelationship(
   );
 }
 
-function toRelationshipRow(rel: NormalizedGroupRelationship): GroupRelationshipRow {
+function toRelationshipRow(rel: NormalizedGroupRelationship): HierarchyRelationshipRow {
   return {
     id: rel.id,
     group_id: rel.group_id,
     related_group_id: rel.related_group_id,
-    relationship_type: rel.relationship_type ?? null,
+    relationship_type:
+      rel.relationship_type ??
+      (rel.connection_type === 'peer'
+        ? 'sibling'
+        : rel.parent_group_id === rel.group_id
+          ? 'parent'
+          : 'child'),
     with_right: rel.with_right ?? null,
     status: rel.status ?? null,
     initiator_group_id: rel.initiator_group_id ?? null,
     created_at: rel.created_at ?? 0,
+    connection_type: rel.connection_type,
+    parent_group_id: rel.parent_group_id,
+    child_group_id: rel.child_group_id,
   };
 }
 
@@ -58,7 +76,7 @@ function toRelationshipRow(rel: NormalizedGroupRelationship): GroupRelationshipR
 export function buildPvrRelationshipsForConflictCheck(
   allRelationships: NormalizedGroupRelationship[],
   simulateActiveRel?: NormalizedGroupRelationship
-): GroupRelationshipRow[] {
+): HierarchyRelationshipRow[] {
   const activeRows = dedupeHierarchyRows(
     allRelationships.filter(isActivePvrRelationship).map(toRelationshipRow)
   );
@@ -88,7 +106,7 @@ export function buildPvrRelationshipsForConflictCheck(
 function buildActiveParentChildLinksForConflictCheck(
   allRelationships: NormalizedGroupRelationship[],
   excludeRelationshipId?: string
-): GroupRelationshipRow[] {
+): HierarchyRelationshipRow[] {
   return dedupeHierarchyRows(
     allRelationships
       .filter(
@@ -101,8 +119,8 @@ function buildActiveParentChildLinksForConflictCheck(
   );
 }
 
-function dedupeHierarchyRows(rows: GroupRelationshipRow[]) {
-  const deduped = new Map<string, GroupRelationshipRow>();
+function dedupeHierarchyRows(rows: HierarchyRelationshipRow[]) {
+  const deduped = new Map<string, HierarchyRelationshipRow>();
 
   for (const row of rows) {
     const pair = getHierarchyRelationshipPair(row);

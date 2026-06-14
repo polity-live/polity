@@ -117,7 +117,7 @@ export function NavigationCommandDialog({
         {authenticated && userId && (
           <>
             <CommandSeparator />
-            <CommandGroup heading={t('navigation.commandDialog.groups.userNavigation', 'User Navigation')}>
+            <CommandGroup heading={t('navigation.commandDialog.groups.userNavigation')}>
               {navItemsAuthenticated(navigate)
                 .getUserSecondaryNavItems(userId, true)
                 .map((item: NavigationItem) => {

@@ -6,6 +6,7 @@ import { AIChatPlugin } from '@platejs/ai/react';
 import { useTranslation } from 'react-i18next';
 import {
   CalendarIcon,
+  ChartNoAxesCombinedIcon,
   ChevronRightIcon,
   Code2,
   Columns3Icon,
@@ -27,6 +28,8 @@ import { type TComboboxInputElement, KEYS } from 'platejs';
 import { PlateElement } from 'platejs/react';
 
 import { insertBlock, insertInlineElement } from '@/features/shared/ui/kit-platejs/transforms.ts';
+import { CHART_NODE_TYPE } from '@/features/charts/types';
+import { openChartDialog } from '@/features/charts/ui/ChartDialog';
 
 import {
   InlineCombobox,
@@ -37,6 +40,7 @@ import {
   InlineComboboxInput,
   InlineComboboxItem,
 } from '@/features/shared/ui/ui/inline-combobox.tsx';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface Group {
   group: string;
@@ -123,7 +127,7 @@ const groups: Group[] = [
         value: KEYS.blockquote,
       },
       {
-        description: 'Insert a highlighted block.',
+        description: translateText('generated.inline.0528_insert_a_highlighted_block_0dccdad4'),
         icon: <LightbulbIcon />,
         keywords: ['note'],
         value: KEYS.callout,
@@ -138,26 +142,35 @@ const groups: Group[] = [
   {
     group: 'advancedBlocks',
     items: [
-      {
-        icon: <TableOfContentsIcon />,
-        keywords: ['toc'],
-        value: KEYS.toc,
-      },
-      {
-        icon: <Columns3Icon />,
-        value: 'action_three_columns',
-      },
+      ...[
+        {
+          icon: <TableOfContentsIcon />,
+          keywords: ['toc'],
+          value: KEYS.toc,
+        },
+        {
+          icon: <Columns3Icon />,
+          value: 'action_three_columns',
+        },
+        {
+          focusEditor: false,
+          icon: <RadicalIcon />,
+          value: KEYS.equation,
+        },
+      ].map(item => ({
+        ...item,
+        onSelect: (editor: PlateEditor, value: string) => {
+          insertBlock(editor, value);
+        },
+      })),
       {
         focusEditor: false,
-        icon: <RadicalIcon />,
-        value: KEYS.equation,
+        icon: <ChartNoAxesCombinedIcon />,
+        keywords: ['graph', 'diagram', 'csv', 'eurostat'],
+        value: CHART_NODE_TYPE,
+        onSelect: () => openChartDialog(),
       },
-    ].map(item => ({
-      ...item,
-      onSelect: (editor, value) => {
-        insertBlock(editor, value);
-      },
-    })),
+    ],
   },
   {
     group: 'inline',
@@ -246,6 +259,7 @@ export function SlashInputElement(props: PlateElementProps<TComboboxInputElement
                   else if (value === KEYS.date) translatedLabel = t('plateJs.toolbar.date');
                   else if (value === KEYS.inlineEquation)
                     translatedLabel = t('plateJs.toolbar.inlineEquation');
+                  else if (value === CHART_NODE_TYPE) translatedLabel = t('plateJs.toolbar.chart');
 
                   return (
                     <InlineComboboxItem
@@ -257,7 +271,7 @@ export function SlashInputElement(props: PlateElementProps<TComboboxInputElement
                       group={group}
                       keywords={keywords}
                     >
-                      <div className="mr-2 text-muted-foreground">{icon}</div>
+                      <div className="text-muted-foreground mr-2">{icon}</div>
                       {translatedLabel ?? value}
                     </InlineComboboxItem>
                   );

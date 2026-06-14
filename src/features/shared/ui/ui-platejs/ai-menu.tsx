@@ -37,6 +37,7 @@ import { cn } from '@/features/shared/utils/utils.ts';
 import { useChat } from '@/features/shared/ui/kit-platejs/use-chat.ts';
 
 import { AIChatEditor } from './ai-chat-editor.tsx';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export function AIMenu() {
   const { t } = useTranslation();
@@ -523,7 +524,7 @@ export function AILoadingBar() {
         <PauseIcon className="h-4 w-4" />
         {t('plateJs.ai.menu.stop')}
         <kbd className="bg-border text-muted-foreground ml-1 rounded px-1 font-mono text-[10px] shadow-sm">
-          Esc
+          {translateText('generated.inline.1137_esc_1f7a4f9e')}
         </kbd>
       </Button>
     </div>

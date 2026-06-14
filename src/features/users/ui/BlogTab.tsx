@@ -1,6 +1,13 @@
 import React from 'react';
-import { useNavigate } from '@tanstack/react-router';
-import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/features/shared/ui/ui/card';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter,
+} from '@/features/shared/ui/ui/card';
+import { SmartLink } from '@/features/shared/ui/navigation/SmartLink.tsx';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export interface BlogsCardProps {
   blog: {
@@ -11,40 +18,63 @@ export interface BlogsCardProps {
     likes?: number; // Legacy support
     comments?: number;
     commentCount?: number;
-    group_id?: string | null;
-    user_id?: string | null;
   };
   gradientClass: string;
+  href?: string;
 }
 
-export const BlogsCard: React.FC<BlogsCardProps> = ({ blog, gradientClass }) => {
-  const navigate = useNavigate();
+export const BlogsCard: React.FC<BlogsCardProps> = ({ blog, gradientClass, href }) => {
+  const cardClassName = `overflow-hidden ${gradientClass} flex h-full flex-col transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg`;
 
-  const handleClick = () => {
-    if (blog.group_id) {
-      navigate({ to: '/group/$id/blog/$entryId', params: { id: blog.group_id!, entryId: blog.id } });
-    } else if (blog.user_id) {
-      navigate({ to: '/user/$id/blog/$entryId', params: { id: blog.user_id!, entryId: blog.id } });
-    }
-  };
+  if (href) {
+    return (
+      <Card asChild className={cardClassName}>
+        <SmartLink href={href} className="block cursor-pointer">
+          <CardHeader className="">
+            <CardTitle>{blog.title}</CardTitle>
+            <CardDescription>{blog.date}</CardDescription>
+          </CardHeader>
+          <CardFooter className="text-muted-foreground mt-auto flex items-center justify-between">
+            <span className="flex items-center">
+              <span className="text-orange-500">👍</span>
+              <span className="ml-1">
+                {blog.supporters}
+                {translateText('generated.inline.0180_supporters_dbb25078')}
+              </span>
+            </span>
+            <span className="flex items-center">
+              <span>💬</span>
+              <span className="ml-1">
+                {blog.comments}
+                {translateText('generated.inline.0181_comments_5b17a6c6')}
+              </span>
+            </span>
+          </CardFooter>
+        </SmartLink>
+      </Card>
+    );
+  }
 
   return (
-    <Card
-      onClick={handleClick}
-      className={`overflow-hidden ${gradientClass} flex h-full cursor-pointer flex-col transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg`}
-    >
+    <Card className={cardClassName}>
       <CardHeader className="">
         <CardTitle>{blog.title}</CardTitle>
         <CardDescription>{blog.date}</CardDescription>
       </CardHeader>
-      <CardFooter className="mt-auto flex items-center justify-between text-muted-foreground">
+      <CardFooter className="text-muted-foreground mt-auto flex items-center justify-between">
         <span className="flex items-center">
           <span className="text-orange-500">👍</span>
-          <span className="ml-1">{blog.supporters} supporters</span>
+          <span className="ml-1">
+            {blog.supporters}
+            {translateText('generated.inline.0180_supporters_dbb25078')}
+          </span>
         </span>
         <span className="flex items-center">
           <span>💬</span>
-          <span className="ml-1">{blog.comments} comments</span>
+          <span className="ml-1">
+            {blog.comments}
+            {translateText('generated.inline.0181_comments_5b17a6c6')}
+          </span>
         </span>
       </CardFooter>
     </Card>

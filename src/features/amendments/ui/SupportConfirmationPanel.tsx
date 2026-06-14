@@ -8,10 +8,19 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Badge } from '@/features/shared/ui/ui/badge';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { useSupportConfirmation } from '../hooks/useSupportConfirmation';
 import { VersionComparisonView } from './VersionComparisonView.tsx';
 import { CheckCircle, XCircle, GitCompare, Clock } from 'lucide-react';
@@ -35,7 +44,7 @@ export function SupportConfirmationPanel({ groupId }: SupportConfirmationPanelPr
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
+        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -43,7 +52,7 @@ export function SupportConfirmationPanel({ groupId }: SupportConfirmationPanelPr
   if (pendingConfirmations.length === 0) {
     return (
       <Card>
-        <CardContent className="py-8 text-center text-muted-foreground">
+        <CardContent className="text-muted-foreground py-8 text-center">
           <CheckCircle className="mx-auto mb-4 h-12 w-12 opacity-50" />
           <p>{t('features.amendments.supportConfirmation.noPending')}</p>
         </CardContent>
@@ -91,7 +100,8 @@ export function SupportConfirmationPanel({ groupId }: SupportConfirmationPanelPr
             <div className="flex items-start justify-between">
               <div>
                 <CardTitle className="text-lg">
-                  {confirmation.amendment?.title || 'Unknown Amendment'}
+                  {confirmation.amendment?.title ||
+                    translateText('generated.inline.0026_unknown_amendment_c9e89dc8')}
                 </CardTitle>
                 <CardDescription className="mt-1 flex items-center gap-2">
                   <Clock className="h-4 w-4" />
@@ -105,13 +115,14 @@ export function SupportConfirmationPanel({ groupId }: SupportConfirmationPanelPr
               </div>
               <Badge variant="outline">
                 {t('features.amendments.supportConfirmation.changeRequest')}:{' '}
-                {confirmation.amendment?.title || 'Change Request'}
+                {confirmation.amendment?.title ||
+                  translateText('generated.inline.0027_change_request_9c839351')}
               </Badge>
             </div>
           </CardHeader>
 
           <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               {t('features.amendments.supportConfirmation.description')}
             </p>
 
@@ -134,10 +145,8 @@ export function SupportConfirmationPanel({ groupId }: SupportConfirmationPanelPr
             {/* Version comparison */}
             {selectedConfirmation === confirmation.id && (
               <VersionComparisonView
-                originalVersion={''
-                }
-                currentVersion={(confirmation.amendment?.documents?.[0]?.content ?? '') as string
-                }
+                originalVersion={''}
+                currentVersion={(confirmation.amendment?.documents?.[0]?.content ?? '') as string}
                 changeRequest={undefined}
               />
             )}

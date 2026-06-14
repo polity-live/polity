@@ -15,12 +15,17 @@ import { useNavigate } from '@tanstack/react-router';
 import { EntityType } from '@/features/notifications/utils/notification-helpers.ts';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import { NotificationType } from '@/features/notifications/types/notification.types.ts';
-import { getNotificationNavigationTarget } from '@/features/notifications/logic/notificationHelpers.ts';
+import {
+  getNotificationNavigationHref,
+  getNotificationNavigationTarget,
+} from '@/features/notifications/logic/notificationHelpers.ts';
 import {
   getNotificationIcon,
   getNotificationColor,
 } from '@/features/notifications/utils/notificationConstants.ts';
 import { EntitySearchBar } from '@/features/shared/ui/ui/entity-search-bar.tsx';
+import { LinkSurface } from '@/features/shared/ui/navigation/LinkSurface.tsx';
+import { SmartLink, isPlainLeftClick } from '@/features/shared/ui/navigation/SmartLink.tsx';
 
 interface EntityNotificationsProps {
   entityId: string;
@@ -135,98 +140,134 @@ export function EntityNotifications({
     const iconColor = getNotificationColor(notification.type as NotificationType);
     const senderName = getUserName(notification.sender);
     const receiverName = getUserName(notification.related_user);
+    const notificationHref = getNotificationNavigationHref(notification);
+    const cardContent = (
+      <CardContent className="flex items-start gap-3 p-3">
+        {/* Notification Icon */}
+        <div
+          className={cn(
+            'bg-muted mt-0.5 rounded-full p-1.5',
+            !notification.is_read && 'bg-primary/10'
+          )}
+        >
+          <Icon className={cn('h-3.5 w-3.5', iconColor)} />
+        </div>
 
-    return (
-      <Card
-        className={cn(
-          'cursor-pointer transition-all hover:shadow-md',
-          !notification.is_read && 'border-l-primary bg-accent/50 border-l-4'
-        )}
-        onClick={() => handleNotificationClick(notification)}
-      >
-        <CardContent className="flex items-start gap-3 p-3">
-          {/* Notification Icon */}
-          <div
-            className={cn(
-              'bg-muted mt-0.5 rounded-full p-1.5',
-              !notification.is_read && 'bg-primary/10'
-            )}
-          >
-            <Icon className={cn('h-3.5 w-3.5', iconColor)} />
-          </div>
-
-          {/* Content */}
-          <div className="min-w-0 flex-1 space-y-0.5">
-            {/* Sender → Receiver line */}
-            {(notification.sender || notification.related_user) && (
-              <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
-                {notification.sender && (
-                  <>
-                    <Avatar
-                      className="hover:ring-primary h-5 w-5 shrink-0 cursor-pointer hover:ring-1"
-                      onClick={e => {
-                        e.stopPropagation();
-                        navigate({ to: `/user/${notification.sender?.id}` });
-                      }}
-                    >
+        {/* Content */}
+        <div className="min-w-0 flex-1 space-y-0.5">
+          {/* Sender → Receiver line */}
+          {(notification.sender || notification.related_user) && (
+            <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
+              {notification.sender && (
+                <>
+                  {notification.sender.id ? (
+                    <SmartLink href={`/user/${notification.sender.id}`} className="shrink-0">
+                      <Avatar className="hover:ring-primary h-5 w-5 hover:ring-1">
+                        <AvatarImage src={notification.sender?.avatar || undefined} />
+                        <AvatarFallback className="text-[10px]">
+                          {senderName?.[0]?.toUpperCase() || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                    </SmartLink>
+                  ) : (
+                    <Avatar className="h-5 w-5 shrink-0">
                       <AvatarImage src={notification.sender?.avatar || undefined} />
                       <AvatarFallback className="text-[10px]">
                         {senderName?.[0]?.toUpperCase() || 'U'}
                       </AvatarFallback>
                     </Avatar>
-                    <span
-                      className="hover:text-primary cursor-pointer truncate font-medium hover:underline"
-                      onClick={e => {
-                        e.stopPropagation();
-                        navigate({ to: `/user/${notification.sender?.id}` });
-                      }}
+                  )}
+                  {notification.sender.id ? (
+                    <SmartLink
+                      href={`/user/${notification.sender.id}`}
+                      className="hover:text-primary truncate font-medium hover:underline"
                     >
                       {senderName}
-                    </span>
-                  </>
-                )}
-                {notification.sender && notification.related_user && (
-                  <span className="shrink-0">→</span>
-                )}
-                {notification.related_user && (
-                  <>
-                    <span
-                      className="hover:text-primary cursor-pointer truncate font-medium hover:underline"
-                      onClick={e => {
-                        e.stopPropagation();
-                        navigate({ to: `/user/${notification.related_user?.id}` });
-                      }}
+                    </SmartLink>
+                  ) : (
+                    <span className="truncate font-medium">{senderName}</span>
+                  )}
+                </>
+              )}
+              {notification.sender && notification.related_user && (
+                <span className="shrink-0">→</span>
+              )}
+              {notification.related_user && (
+                <>
+                  {notification.related_user.id ? (
+                    <SmartLink
+                      href={`/user/${notification.related_user.id}`}
+                      className="hover:text-primary truncate font-medium hover:underline"
                     >
                       {receiverName}
-                    </span>
-                    <Avatar
-                      className="hover:ring-primary h-5 w-5 shrink-0 cursor-pointer hover:ring-1"
-                      onClick={e => {
-                        e.stopPropagation();
-                        navigate({ to: `/user/${notification.related_user?.id}` });
-                      }}
-                    >
+                    </SmartLink>
+                  ) : (
+                    <span className="truncate font-medium">{receiverName}</span>
+                  )}
+                  {notification.related_user.id ? (
+                    <SmartLink href={`/user/${notification.related_user.id}`} className="shrink-0">
+                      <Avatar className="hover:ring-primary h-5 w-5 hover:ring-1">
+                        <AvatarImage src={notification.related_user?.avatar || undefined} />
+                        <AvatarFallback className="text-[10px]">
+                          {receiverName?.[0]?.toUpperCase() || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                    </SmartLink>
+                  ) : (
+                    <Avatar className="h-5 w-5 shrink-0">
                       <AvatarImage src={notification.related_user?.avatar || undefined} />
                       <AvatarFallback className="text-[10px]">
                         {receiverName?.[0]?.toUpperCase() || 'U'}
                       </AvatarFallback>
                     </Avatar>
-                  </>
-                )}
-              </div>
-            )}
-            <div className="flex items-start justify-between gap-2">
-              <p className={cn('text-sm font-medium', !notification.is_read && 'font-semibold')}>
-                {notification.title}
-              </p>
-              {!notification.is_read && (
-                <Badge variant="default" className="h-2 w-2 rounded-full p-0" />
+                  )}
+                </>
               )}
             </div>
-            <p className="text-muted-foreground text-sm">{notification.message}</p>
-            <p className="text-muted-foreground text-xs">{formatTime(notification.created_at)}</p>
+          )}
+          <div className="flex items-start justify-between gap-2">
+            <p className={cn('text-sm font-medium', !notification.is_read && 'font-semibold')}>
+              {notification.title}
+            </p>
+            {!notification.is_read && (
+              <Badge variant="default" className="h-2 w-2 rounded-full p-0" />
+            )}
           </div>
-        </CardContent>
+          <p className="text-muted-foreground text-sm">{notification.message}</p>
+          <p className="text-muted-foreground text-xs">{formatTime(notification.created_at)}</p>
+        </div>
+      </CardContent>
+    );
+    const cardClassName = cn(
+      'cursor-pointer transition-all hover:shadow-md',
+      !notification.is_read && 'border-l-primary bg-accent/50 border-l-4'
+    );
+
+    if (notificationHref) {
+      return (
+        <Card className={cardClassName}>
+          <LinkSurface
+            href={notificationHref}
+            mode="overlay"
+            label={notification.title ?? 'Notification'}
+            onClick={event => {
+              if (!isPlainLeftClick(event)) {
+                return;
+              }
+
+              event.preventDefault();
+              void handleNotificationClick(notification);
+            }}
+          >
+            {cardContent}
+          </LinkSurface>
+        </Card>
+      );
+    }
+
+    return (
+      <Card className={cardClassName} onClick={() => handleNotificationClick(notification)}>
+        {cardContent}
       </Card>
     );
   };

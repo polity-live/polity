@@ -12,7 +12,10 @@ import {
   CardTitle,
 } from '@/features/shared/ui/ui/card';
 import { hasMinLength } from '@/features/shared/logic/inputValidation';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { MiniPlateEditor } from '@/features/shared/ui/form/MiniPlateEditor';
 import { ValidatedInputField } from '@/features/shared/ui/form/ValidatedInputField';
 import { Label } from '@/features/shared/ui/ui/label';
@@ -35,27 +38,33 @@ export function BasicInfoSection({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Basic Information</CardTitle>
-        <CardDescription>Public group information</CardDescription>
+        <CardTitle>{translateText('generated.inline.0658_basic_information_b0d5be39')}</CardTitle>
+        <CardDescription>
+          {translateText('generated.inline.0659_public_group_information_7e7a6fbc')}
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <ValidatedInputField
           id="name"
-          label="Group Name *"
+          label={translateText('generated.inline.0660_group_name_4e4d5191')}
           value={formData.name}
           onChange={onNameChange}
-          placeholder="Group name"
+          placeholder={translateText('generated.inline.0661_group_name_ebb7e14b')}
           validator={value => hasMinLength(value, 3)}
           hint={t('common.validation.nameHint')}
           required
         />
         <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
+          <Label htmlFor="description">
+            {translateText('generated.inline.0030_description_55f8ebc8')}
+          </Label>
           <MiniPlateEditor
             id="description"
             value={formData.descriptionContent}
             onChange={onDescriptionContentChange}
-            placeholder="Describe the group and its purpose..."
+            placeholder={translateText(
+              'generated.inline.0662_describe_the_group_and_its_purpose_04fd28f2'
+            )}
           />
         </div>
       </CardContent>

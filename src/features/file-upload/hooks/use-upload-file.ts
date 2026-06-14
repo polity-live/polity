@@ -3,6 +3,7 @@ import * as React from 'react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/client.ts';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 const supabase = createClient();
 
@@ -67,9 +68,7 @@ export function useUploadFile({
       onUploadProgress?.(100);
 
       // Get the public URL for the uploaded file
-      const { data: urlData } = supabase.storage
-        .from(STORAGE_BUCKET)
-        .getPublicUrl(path);
+      const { data: urlData } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
 
       const fileUrl = urlData.publicUrl;
 
@@ -89,7 +88,11 @@ export function useUploadFile({
       const errorMessage = getErrorMessage(error);
 
       const message =
-        errorMessage.length > 0 ? errorMessage : 'Something went wrong, please try again later.';
+        errorMessage.length > 0
+          ? errorMessage
+          : translateText(
+              'generated.inline.0059_something_went_wrong_please_try_again_later_e1b57ba6'
+            );
 
       toast.error(message);
 

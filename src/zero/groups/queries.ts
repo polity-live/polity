@@ -1,12 +1,39 @@
 import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
+import {
+  applyAmendmentQueryAccess,
+  applyBlogQueryAccess,
+  applyDocumentQueryAccess,
+  applyEventManagerQueryAccess,
+  applyEventQueryAccess,
+  applyGroupManagerQueryAccess,
+  applyGroupMembershipSelfOrManagerQueryAccess,
+  applyTodoQueryAccess,
+} from '../rbac/query-access';
 import { zql } from '../schema';
+
+function applyGroupAccess<T>(q: T, userID: string | undefined): T {
+  const query = q as any;
+
+  if (!userID || userID === 'anon') {
+    return query.where('visibility', 'public') as T;
+  }
+
+  return query.where(({ or, cmp, exists }: any) =>
+    or(
+      cmp('visibility', 'IN', ['public', 'authenticated']),
+      cmp('owner_id', userID),
+      exists('memberships', (membership: any) => membership.where('user_id', userID)),
+      exists('guest_accesses', (guestAccess: any) => guestAccess.where('user_id', userID))
+    )
+  ) as T;
+}
 
 export const groupQueries = {
   // ── Existing queries (unchanged) ──────────────────────────────────
 
-  byId: defineQuery(z.object({ id: z.string() }), ({ args: { id } }) =>
-    zql.group.where('id', id).one()
+  byId: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
+    applyGroupAccess(zql.group.where('id', id), userID).one()
   ),
 
   byUser: defineQuery(z.object({}), ({ ctx: { userID } }) =>
@@ -17,30 +44,49 @@ export const groupQueries = {
       .orderBy('created_at', 'desc')
   ),
 
-  search: defineQuery(z.object({ query: z.string() }), ({ args: { query } }) =>
-    zql.group.where('name', 'ILIKE', `%${query}%`).orderBy('name', 'asc')
+  search: defineQuery(z.object({ query: z.string() }), ({ args: { query }, ctx: { userID } }) =>
+    applyGroupAccess(zql.group.where('name', 'ILIKE', `%${query}%`), userID).orderBy('name', 'asc')
   ),
 
-  memberships: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
-    zql.group_membership
+  memberships: defineQuery(
+    z.object({ groupId: z.string() }),
+    ({ args: { groupId }, ctx: { userID } }) =>
+      applyGroupMembershipSelfOrManagerQueryAccess(zql.group_membership, userID)
+        .where('group_id', groupId)
+        .whereExists('group', group => applyGroupAccess(group, userID))
+        .related('membership_roles', q => q.related('role'))
+        .orderBy('created_at', 'desc')
+  ),
+
+  roles: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId }, ctx: { userID } }) =>
+    zql.role
       .where('group_id', groupId)
-      .related('membership_roles', q => q.related('role'))
-      .orderBy('created_at', 'desc')
+      .whereExists('group', group =>
+        applyGroupManagerQueryAccess(group, userID, 'manage_roles', ['groups', 'groupRoles'])
+      )
+      .orderBy('sort_order', 'asc')
   ),
 
-  roles: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
-    zql.role.where('group_id', groupId).orderBy('sort_order', 'asc')
+  scopedRoles: defineQuery(
+    z.object({ groupId: z.string() }),
+    ({ args: { groupId }, ctx: { userID } }) =>
+      zql.role
+        .where('group_id', groupId)
+        .whereExists('group', group =>
+          applyGroupManagerQueryAccess(group, userID, 'manage_roles', ['groups', 'groupRoles'])
+        )
+        .where('scope', 'group')
+        .orderBy('sort_order', 'asc')
   ),
 
-  scopedRoles: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
-    zql.role.where('group_id', groupId).where('scope', 'group').orderBy('sort_order', 'asc')
-  ),
-
-  membershipsByUser: defineQuery(z.object({ user_id: z.string() }), ({ args: { user_id } }) =>
-    zql.group_membership
-      .where('user_id', user_id)
-      .related('group', q => q.related('owner'))
-      .related('membership_roles', q => q.related('role'))
+  membershipsByUser: defineQuery(
+    z.object({ user_id: z.string() }),
+    ({ args: { user_id }, ctx: { userID } }) =>
+      zql.group_membership
+        .where('user_id', user_id)
+        .where('user_id', userID)
+        .related('group', q => q.related('owner'))
+        .related('membership_roles', q => q.related('role'))
   ),
 
   currentUserMembershipsWithGroups: defineQuery(z.object({}), ({ ctx: { userID } }) =>
@@ -58,29 +104,46 @@ export const groupQueries = {
       .related('membership_roles', q => q.related('role', rq => rq.related('action_rights')))
   ),
 
-  membershipsWithUsers: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
-    zql.group_membership
-      .where('group_id', groupId)
-      .related('group')
-      .related('user')
-      .related('source_group')
-      .related('membership_roles', q => q.related('role'))
+  membershipsWithUsers: defineQuery(
+    z.object({ groupId: z.string() }),
+    ({ args: { groupId }, ctx: { userID } }) =>
+      applyGroupMembershipSelfOrManagerQueryAccess(zql.group_membership, userID)
+        .where('group_id', groupId)
+        .whereExists('group', group => applyGroupAccess(group, userID))
+        .related('group')
+        .related('user')
+        .related('source_group')
+        .related('membership_roles', q => q.related('role'))
   ),
 
-  offlineMembersByGroup: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
-    zql.group_offline_member
-      .where('group_id', groupId)
-      .related('group')
-      .related('connected_user')
-      .related('created_by')
-      .orderBy('created_at', 'asc')
+  offlineMembersByGroup: defineQuery(
+    z.object({ groupId: z.string() }),
+    ({ args: { groupId }, ctx: { userID } }) =>
+      zql.group_offline_member
+        .where('group_id', groupId)
+        .whereExists('group', group =>
+          applyGroupManagerQueryAccess(group, userID, 'manage_members', [
+            'groups',
+            'groupMemberships',
+          ])
+        )
+        .related('group')
+        .related('connected_user')
+        .related('created_by')
+        .orderBy('created_at', 'asc')
   ),
 
   offlineMembersByGroupIds: defineQuery(
     z.object({ groupIds: z.array(z.string()) }),
-    ({ args: { groupIds } }) =>
+    ({ args: { groupIds }, ctx: { userID } }) =>
       zql.group_offline_member
         .where('group_id', 'IN', groupIds)
+        .whereExists('group', group =>
+          applyGroupManagerQueryAccess(group, userID, 'manage_members', [
+            'groups',
+            'groupMemberships',
+          ])
+        )
         .related('group')
         .related('connected_user')
         .related('created_by')
@@ -89,9 +152,15 @@ export const groupQueries = {
 
   offlineMembershipsWithRolesAndRights: defineQuery(
     z.object({ groupId: z.string() }),
-    ({ args: { groupId } }) =>
+    ({ args: { groupId }, ctx: { userID } }) =>
       zql.group_offline_membership
         .where('group_id', groupId)
+        .whereExists('group', group =>
+          applyGroupManagerQueryAccess(group, userID, 'manage_members', [
+            'groups',
+            'groupMemberships',
+          ])
+        )
         .related('group')
         .related('source_group')
         .related('group_offline_member', q =>
@@ -103,9 +172,15 @@ export const groupQueries = {
 
   offlineMembershipsWithRolesAndRightsByGroupIds: defineQuery(
     z.object({ groupIds: z.array(z.string()) }),
-    ({ args: { groupIds } }) =>
+    ({ args: { groupIds }, ctx: { userID } }) =>
       zql.group_offline_membership
         .where('group_id', 'IN', groupIds)
+        .whereExists('group', group =>
+          applyGroupManagerQueryAccess(group, userID, 'manage_members', [
+            'groups',
+            'groupMemberships',
+          ])
+        )
         .related('group')
         .related('source_group')
         .related('group_offline_member', q =>
@@ -118,49 +193,80 @@ export const groupQueries = {
   // ── New queries (extracted from hooks.ts) ─────────────────────────
 
   /** Deep-relational query powering the GroupWiki page */
-  wikiData: defineQuery(z.object({ id: z.string() }), ({ args: { id } }) =>
-    zql.group
-      .where('id', id)
+  wikiData: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
+    applyGroupAccess(zql.group.where('id', id), userID)
       .related('owner')
-      .related('network_links_as_source', q =>
+      .related('connections_as_group_a', q =>
         q
-          .related('target_group', tq =>
-            tq.related('memberships').related('events').related('amendments')
+          .related('group_b', tq =>
+            tq
+              .related('memberships', mq =>
+                applyGroupMembershipSelfOrManagerQueryAccess(mq, userID)
+              )
+              .related('events', event => applyEventQueryAccess(event, userID))
+              .related('amendments', amendment => applyAmendmentQueryAccess(amendment, userID))
           )
-          .related('rights', rq => rq.related('initiator_group'))
-          .related('membership_rule', mq => mq.related('role'))
+          .related('grants', rq => rq.related('initiator_group'))
+          .related('membership_rule', mq => mq.related('required_source_role').related('origins'))
       )
-      .related('network_links_as_target', q =>
+      .related('connections_as_group_b', q =>
         q
-          .related('source_group', sq =>
-            sq.related('memberships').related('events').related('amendments')
+          .related('group_a', sq =>
+            sq
+              .related('memberships', mq =>
+                applyGroupMembershipSelfOrManagerQueryAccess(mq, userID)
+              )
+              .related('events', event => applyEventQueryAccess(event, userID))
+              .related('amendments', amendment => applyAmendmentQueryAccess(amendment, userID))
           )
-          .related('rights', rq => rq.related('initiator_group'))
-          .related('membership_rule', mq => mq.related('role'))
+          .related('grants', rq => rq.related('initiator_group'))
+          .related('membership_rule', mq => mq.related('required_source_role').related('origins'))
       )
-      .related('events')
-      .related('amendments')
-      .related('offline_members', q => q.related('connected_user').related('created_by'))
+      .related('events', q => applyEventQueryAccess(q, userID))
+      .related('amendments', q => applyAmendmentQueryAccess(q, userID))
+      .related('offline_members', q =>
+        q
+          .whereExists('group', group =>
+            applyGroupManagerQueryAccess(group, userID, 'manage_members', [
+              'groups',
+              'groupMemberships',
+            ])
+          )
+          .related('connected_user')
+          .related('created_by')
+      )
       .related('memberships', q =>
-        q
+        applyGroupMembershipSelfOrManagerQueryAccess(q, userID)
           .related('user')
           .related('source_group')
           .related('membership_roles', mq => mq.related('role'))
       )
       .related('guest_accesses', q =>
-        q.related('user').related('guest_roles', gq => gq.related('role'))
+        q
+          .where('user_id', userID ?? '__anon__')
+          .related('user')
+          .related('guest_roles', gq => gq.related('role'))
       )
       .related('group_hashtags', q => q.related('hashtag'))
-      .related('roles', q => q.related('holder_history', q => q.related('user')))
-      .related('blogs', q => q.related('blog_hashtags', q => q.related('hashtag')))
+      .related('roles', q =>
+        q
+          .whereExists('group', group =>
+            applyGroupManagerQueryAccess(group, userID, 'manage_roles', ['groups', 'groupRoles'])
+          )
+          .related('holder_history', q => q.related('user'))
+      )
+      .related('blogs', q =>
+        applyBlogQueryAccess(q, userID).related('blog_hashtags', q => q.related('hashtag'))
+      )
   ),
 
   /** User's membership rows in a specific group, with role */
   userMembershipInGroup: defineQuery(
     z.object({ userId: z.string(), groupId: z.string() }),
-    ({ args: { userId, groupId } }) =>
+    ({ args: { userId, groupId }, ctx: { userID } }) =>
       zql.group_membership
         .where('user_id', userId)
+        .where('user_id', userID)
         .where('group_id', groupId)
         .related('group')
         .related('source_group')
@@ -170,9 +276,10 @@ export const groupQueries = {
   /** All membership rows for a group, with role (used alongside userMembershipInGroup) */
   allMembershipsInGroupWithRole: defineQuery(
     z.object({ groupId: z.string() }),
-    ({ args: { groupId } }) =>
-      zql.group_membership
+    ({ args: { groupId }, ctx: { userID } }) =>
+      applyGroupMembershipSelfOrManagerQueryAccess(zql.group_membership, userID)
         .where('group_id', groupId)
+        .whereExists('group', group => applyGroupAccess(group, userID))
         .related('group')
         .related('user')
         .related('source_group')
@@ -180,59 +287,97 @@ export const groupQueries = {
   ),
 
   /** Subscribers for a group with user and group relations */
-  subscribersByGroup: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
-    zql.subscriber.where('group_id', groupId).related('subscriber_user').related('group')
+  subscribersByGroup: defineQuery(
+    z.object({ groupId: z.string() }),
+    ({ args: { groupId }, ctx: { userID } }) =>
+      zql.subscriber
+        .where('group_id', groupId)
+        .where(({ or, cmp, exists }: any) =>
+          or(
+            cmp('subscriber_id', userID ?? '__anon__'),
+            exists('group', (group: any) =>
+              applyGroupManagerQueryAccess(group, userID, 'manage_members', [
+                'groups',
+                'groupMemberships',
+              ])
+            )
+          )
+        )
+        .whereExists('group', group => applyGroupAccess(group, userID))
+        .related('subscriber_user')
+        .related('group')
   ),
 
   /** All groups (no relations, no filter) */
-  all: defineQuery(z.object({}), () => zql.group),
+  all: defineQuery(z.object({}), ({ ctx: { userID } }) => applyGroupAccess(zql.group, userID)),
 
   /** All documents with collaborator→user relations (cross-domain convenience) */
-  allDocuments: defineQuery(z.object({}), () =>
-    zql.document.related('collaborators', q => q.related('user'))
+  allDocuments: defineQuery(z.object({}), ({ ctx: { userID } }) =>
+    applyDocumentQueryAccess(zql.document, userID).related('collaborators', q => q.related('user'))
   ),
 
   /** Group by ID with owner, conversations, memberships→user+role, roles→action_rights, events, amendments */
-  byIdFull: defineQuery(z.object({ id: z.string() }), ({ args: { id } }) =>
-    zql.group
-      .where('id', id)
+  byIdFull: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
+    applyGroupAccess(zql.group.where('id', id), userID)
       .related('owner')
-      .related('network_links_as_source', q =>
+      .related('connections_as_group_a', q =>
         q
-          .related('target_group')
-          .related('rights', rq => rq.related('initiator_group'))
-          .related('membership_rule', mq => mq.related('role'))
+          .related('group_b')
+          .related('grants', rq => rq.related('initiator_group'))
+          .related('membership_rule', mq => mq.related('required_source_role').related('origins'))
       )
-      .related('network_links_as_target', q =>
+      .related('connections_as_group_b', q =>
         q
-          .related('source_group')
-          .related('rights', rq => rq.related('initiator_group'))
-          .related('membership_rule', mq => mq.related('role'))
+          .related('group_a')
+          .related('grants', rq => rq.related('initiator_group'))
+          .related('membership_rule', mq => mq.related('required_source_role').related('origins'))
       )
-      .related('conversations', q => q.related('participants', q => q.related('user')))
-      .related('offline_members', q => q.related('connected_user').related('created_by'))
+      .related('conversations', q =>
+        q
+          .whereExists('participants', p => p.where('user_id', userID ?? '__anon__'))
+          .related('participants', q => q.where('user_id', userID ?? '__anon__').related('user'))
+      )
+      .related('offline_members', q =>
+        q
+          .whereExists('group', group =>
+            applyGroupManagerQueryAccess(group, userID, 'manage_members', [
+              'groups',
+              'groupMemberships',
+            ])
+          )
+          .related('connected_user')
+          .related('created_by')
+      )
       .related('memberships', q =>
-        q
+        applyGroupMembershipSelfOrManagerQueryAccess(q, userID)
           .related('user')
           .related('source_group')
           .related('membership_roles', mq => mq.related('role'))
       )
       .related('guest_accesses', q =>
         q
+          .where('user_id', userID ?? '__anon__')
           .related('user')
           .related('guest_roles', gq => gq.related('role', rq => rq.related('action_rights')))
       )
-      .related('roles', q => q.related('action_rights'))
-      .related('events')
-      .related('amendments')
+      .related('roles', q =>
+        q
+          .whereExists('group', group =>
+            applyGroupManagerQueryAccess(group, userID, 'manage_roles', ['groups', 'groupRoles'])
+          )
+          .related('action_rights')
+      )
+      .related('events', q => applyEventQueryAccess(q, userID))
+      .related('amendments', q => applyAmendmentQueryAccess(q, userID))
   ),
 
   /** Memberships for a group with user and role→action_rights (for membership tables) */
   membershipsWithRolesAndRights: defineQuery(
     z.object({ groupId: z.string() }),
-    ({ args: { groupId } }) =>
-      zql.group_membership
+    ({ args: { groupId }, ctx: { userID } }) =>
+      applyGroupMembershipSelfOrManagerQueryAccess(zql.group_membership, userID)
         .where('group_id', groupId)
+        .whereExists('group', group => applyGroupAccess(group, userID))
         .related('group')
         .related('user')
         .related('source_group')
@@ -242,9 +387,10 @@ export const groupQueries = {
   /** Memberships for several groups with user, source_group, and role→action_rights. */
   membershipsWithRolesAndRightsByGroupIds: defineQuery(
     z.object({ groupIds: z.array(z.string()) }),
-    ({ args: { groupIds } }) =>
-      zql.group_membership
+    ({ args: { groupIds }, ctx: { userID } }) =>
+      applyGroupMembershipSelfOrManagerQueryAccess(zql.group_membership, userID)
         .where('group_id', 'IN', groupIds)
+        .whereExists('group', group => applyGroupAccess(group, userID))
         .related('group')
         .related('user')
         .related('source_group')
@@ -254,9 +400,11 @@ export const groupQueries = {
   /** Guest accesses for a group with user and role→action_rights */
   guestAccessesWithRolesAndRights: defineQuery(
     z.object({ groupId: z.string() }),
-    ({ args: { groupId } }) =>
+    ({ args: { groupId }, ctx: { userID } }) =>
       zql.group_guest_access
         .where('group_id', groupId)
+        .where('user_id', userID ?? '__anon__')
+        .whereExists('group', group => applyGroupAccess(group, userID))
         .related('user')
         .related('guest_roles', q => q.related('role', rq => rq.related('action_rights')))
   ),
@@ -270,39 +418,53 @@ export const groupQueries = {
   ),
 
   /** Access roles scoped to a group with action_rights */
-  accessRolesWithRights: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
-    zql.role
-      .where('group_id', groupId)
-      .where('scope', 'group')
-      .related('action_rights')
-      .orderBy('sort_order', 'asc')
+  accessRolesWithRights: defineQuery(
+    z.object({ groupId: z.string() }),
+    ({ args: { groupId }, ctx: { userID } }) =>
+      zql.role
+        .where('group_id', groupId)
+        .whereExists('group', group =>
+          applyGroupManagerQueryAccess(group, userID, 'manage_roles', ['groups', 'groupRoles'])
+        )
+        .where('scope', 'group')
+        .related('action_rights')
+        .orderBy('sort_order', 'asc')
   ),
 
   /** Direct memberships across all groups (hierarchy exclusivity checks) */
-  directMemberships: defineQuery(z.object({}), () =>
-    zql.group_membership.where('source', 'direct').related('user')
+  directMemberships: defineQuery(z.object({}), ({ ctx: { userID } }) =>
+    applyGroupMembershipSelfOrManagerQueryAccess(zql.group_membership, userID)
+      .where('source', 'direct')
+      .whereExists('group', group => applyGroupAccess(group, userID))
+      .related('user')
   ),
 
   /** Amendments for a group with hashtags and creator */
-  amendmentsByGroup: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
-    zql.amendment_group_decision
-      .where('group_id', groupId)
-      .related('group')
-      .related('process_run')
-      .related('process_branch')
-      .related('process_step_run')
-      .related('amendment', q =>
-        q.related('amendment_hashtags', hq => hq.related('hashtag')).related('created_by')
-      )
-      .orderBy('updated_at', 'desc')
+  amendmentsByGroup: defineQuery(
+    z.object({ groupId: z.string() }),
+    ({ args: { groupId }, ctx: { userID } }) =>
+      zql.amendment_group_decision
+        .where('group_id', groupId)
+        .whereExists('group', group =>
+          applyGroupManagerQueryAccess(group, userID, 'manage', ['groups', 'amendments'])
+        )
+        .related('group')
+        .related('process_run')
+        .related('process_branch')
+        .related('process_step_run')
+        .related('amendment', q =>
+          q.related('amendment_hashtags', hq => hq.related('hashtag')).related('created_by')
+        )
+        .orderBy('updated_at', 'desc')
   ),
 
   /** Amendment process steps attached to a group's events */
   amendmentEventStepRunsByEventIds: defineQuery(
     z.object({ eventIds: z.array(z.string()) }),
-    ({ args: { eventIds } }) =>
+    ({ args: { eventIds }, ctx: { userID } }) =>
       zql.amendment_process_step_run
         .where('event_id', 'IN', eventIds)
+        .whereExists('event', event => applyEventManagerQueryAccess(event, userID))
         .related('event')
         .related('target_group')
         .related('process_run', q =>
@@ -314,74 +476,116 @@ export const groupQueries = {
   ),
 
   /** Amendments for a group with nested documents→collaborators→user (for group document lists) */
-  amendmentsWithDocuments: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
-    zql.amendment
-      .where('group_id', groupId)
-      .where('document_id', 'IS', null)
-      .related('documents', q => q.related('collaborators', cq => cq.related('user')))
+  amendmentsWithDocuments: defineQuery(
+    z.object({ groupId: z.string() }),
+    ({ args: { groupId }, ctx: { userID } }) =>
+      applyAmendmentQueryAccess(zql.amendment, userID)
+        .where('group_id', groupId)
+        .whereExists('group', group => applyGroupAccess(group, userID))
+        .where('document_id', 'IS', null)
+        .related('documents', q =>
+          applyDocumentQueryAccess(q, userID).related('collaborators', cq =>
+            cq.where('user_id', userID ?? '__anon__').related('user')
+          )
+        )
   ),
 
   /** Roles for a group with group, elections→agenda_item+candidates, and holder_history */
-  rolesFull: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
-    zql.role
-      .where('group_id', groupId)
-      .where('scope', 'group')
-      .related('group')
-      .related('action_rights')
-      .related('group_membership_roles', q =>
-        q.related('group_membership', mq =>
-          mq.where('status', 'active').related('user').orderBy('created_at', 'asc')
+  rolesFull: defineQuery(
+    z.object({ groupId: z.string() }),
+    ({ args: { groupId }, ctx: { userID } }) =>
+      zql.role
+        .where('group_id', groupId)
+        .whereExists('group', group =>
+          applyGroupManagerQueryAccess(group, userID, 'manage_roles', ['groups', 'groupRoles'])
         )
-      )
-      .related('elections', q =>
-        q
-          .related('agenda_item', a => a.related('event'))
-          .related('candidates', c => c.related('user'))
-      )
-      .related('holder_history', q => q.related('user'))
+        .where('scope', 'group')
+        .related('group')
+        .related('action_rights')
+        .related('group_membership_roles', q =>
+          q.related('group_membership', mq =>
+            mq.where('status', 'active').related('user').orderBy('created_at', 'asc')
+          )
+        )
+        .related('elections', q =>
+          q
+            .related('agenda_item', a => a.related('event'))
+            .related('candidates', c => c.related('user'))
+        )
+        .related('holder_history', q => q.related('user'))
   ),
 
   /** Todos for a group with creator, assignments→user, and group */
-  todosByGroup: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
-    zql.todo
-      .where('group_id', groupId)
-      .related('creator')
-      .related('assignments', q => q.related('user'))
-      .related('group')
+  todosByGroup: defineQuery(
+    z.object({ groupId: z.string() }),
+    ({ args: { groupId }, ctx: { userID } }) =>
+      applyTodoQueryAccess(zql.todo, userID)
+        .where('group_id', groupId)
+        .whereExists('group', group => applyGroupAccess(group, userID))
+        .related('creator')
+        .related('assignments', q => q.where('user_id', userID ?? '__anon__').related('user'))
+        .related('group')
   ),
 
   /** Links belonging to a group */
-  linksByGroup: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
-    zql.link.where('group_id', groupId)
+  linksByGroup: defineQuery(
+    z.object({ groupId: z.string() }),
+    ({ args: { groupId }, ctx: { userID } }) =>
+      zql.link
+        .where('group_id', groupId)
+        .whereExists('group', group => applyGroupAccess(group, userID))
   ),
 
   /** Payments where the group is the receiver */
-  paymentsReceivedByGroup: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
-    zql.payment
-      .where('receiver_group_id', groupId)
-      .related('receiver_group')
-      .related('payer_group')
-      .related('receiver_user')
-      .related('payer_user')
+  paymentsReceivedByGroup: defineQuery(
+    z.object({ groupId: z.string() }),
+    ({ args: { groupId }, ctx: { userID } }) =>
+      zql.payment
+        .where('receiver_group_id', groupId)
+        .whereExists('receiver_group', group =>
+          applyGroupManagerQueryAccess(group, userID, 'manage', ['groupPayments', 'payments'])
+        )
+        .related('receiver_group')
+        .related('payer_group')
+        .related('receiver_user')
+        .related('payer_user')
   ),
 
   /** Payments where the group is the payer */
-  paymentsPaidByGroup: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
-    zql.payment
-      .where('payer_group_id', groupId)
-      .related('receiver_group')
-      .related('payer_group')
-      .related('receiver_user')
-      .related('payer_user')
+  paymentsPaidByGroup: defineQuery(
+    z.object({ groupId: z.string() }),
+    ({ args: { groupId }, ctx: { userID } }) =>
+      zql.payment
+        .where('payer_group_id', groupId)
+        .whereExists('payer_group', group =>
+          applyGroupManagerQueryAccess(group, userID, 'manage', ['groupPayments', 'payments'])
+        )
+        .related('receiver_group')
+        .related('payer_group')
+        .related('receiver_user')
+        .related('payer_user')
   ),
 
   /** Active (status='active') memberships for a group with user data (for dialogs) */
-  activeMembersByGroup: defineQuery(z.object({ groupId: z.string() }), ({ args: { groupId } }) =>
-    zql.group_membership.where('group_id', groupId).where('status', 'active').related('user')
+  activeMembersByGroup: defineQuery(
+    z.object({ groupId: z.string() }),
+    ({ args: { groupId }, ctx: { userID } }) =>
+      applyGroupMembershipSelfOrManagerQueryAccess(zql.group_membership, userID)
+        .where('group_id', groupId)
+        .whereExists('group', group => applyGroupAccess(group, userID))
+        .where('status', 'active')
+        .related('user')
   ),
 
   /** All users limited to 20 (for user search / invite dialogs) */
-  allUsersLimited: defineQuery(z.object({}), () => zql.user.limit(20)),
+  allUsersLimited: defineQuery(z.object({}), ({ ctx: { userID } }) => {
+    if (!userID || userID === 'anon') return zql.user.where('visibility', 'public').limit(20);
+    return zql.user
+      .where(({ or, cmp }: any) =>
+        or(cmp('visibility', 'IN', ['public', 'authenticated']), cmp('id', userID))
+      )
+      .limit(20);
+  }),
 
   /** Public groups with optional limit */
   publicGroups: defineQuery(z.object({}), () => zql.group.where('visibility', 'public').limit(100)),
@@ -389,35 +593,37 @@ export const groupQueries = {
   /** User's group memberships with nested group→hashtags, events, amendments (for timeline) */
   userMembershipsWithGroupRelations: defineQuery(
     z.object({ userId: z.string() }),
-    ({ args: { userId } }) =>
-      zql.group_membership.where('user_id', userId).related('group', q =>
-        q
-          .related('group_hashtags', q => q.related('hashtag'))
-          .related('events')
-          .related('amendments')
-      )
+    ({ args: { userId }, ctx: { userID } }) =>
+      zql.group_membership
+        .where('user_id', userId)
+        .where('user_id', userID)
+        .related('group', q =>
+          q
+            .related('group_hashtags', q => q.related('hashtag'))
+            .related('events', q => applyEventQueryAccess(q, userID))
+            .related('amendments', q => applyAmendmentQueryAccess(q, userID))
+        )
   ),
 
   /** Single group by ID (no relations, for subscriber name lookups) */
-  byIdBasic: defineQuery(z.object({ id: z.string() }), ({ args: { id } }) =>
-    zql.group.where('id', id)
+  byIdBasic: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
+    applyGroupAccess(zql.group.where('id', id), userID)
   ),
 
   /** Single group by ID for network view (no relations) */
-  byIdForNetwork: defineQuery(z.object({ id: z.string() }), ({ args: { id } }) =>
-    zql.group
-      .where('id', id)
-      .related('network_links_as_source', q =>
+  byIdForNetwork: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
+    applyGroupAccess(zql.group.where('id', id), userID)
+      .related('connections_as_group_a', q =>
         q
-          .related('target_group')
-          .related('rights', rq => rq.related('initiator_group'))
-          .related('membership_rule', mq => mq.related('role'))
+          .related('group_b')
+          .related('grants', rq => rq.related('initiator_group'))
+          .related('membership_rule', mq => mq.related('required_source_role').related('origins'))
       )
-      .related('network_links_as_target', q =>
+      .related('connections_as_group_b', q =>
         q
-          .related('source_group')
-          .related('rights', rq => rq.related('initiator_group'))
-          .related('membership_rule', mq => mq.related('role'))
+          .related('group_a')
+          .related('grants', rq => rq.related('initiator_group'))
+          .related('membership_rule', mq => mq.related('required_source_role').related('origins'))
       )
   ),
 };

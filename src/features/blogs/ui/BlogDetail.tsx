@@ -29,7 +29,10 @@ import { VoteButtons, type VoteValue } from '@/features/shared/ui/voting';
 import { CommentThread } from '@/features/shared/ui/comments';
 import type { CommentData } from '@/features/shared/ui/comments';
 import { toast } from 'sonner';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { useBlogPermissions } from '../hooks/useBlogPermissions';
 import { usePermissions } from '@/zero/rbac/usePermissions';
 import { PlateEditor } from '@/features/shared/ui/kit-platejs/plate-editor';
@@ -141,7 +144,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
 
   const handleVote = async (voteValue: VoteValue) => {
     if (!user?.id) {
-      toast.error('Please log in to vote');
+      toast.error(translateText('generated.inline.0138_please_log_in_to_vote_59574e84'));
       return;
     }
     if (!blog) return;
@@ -176,7 +179,7 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
       }
     } catch (error) {
       console.error('Error voting:', error);
-      toast.error('Failed to vote');
+      toast.error(translateText('generated.inline.0140_failed_to_vote_68d9f4e2'));
     }
   };
 
@@ -213,10 +216,10 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
         downvotes: 0,
         user_id: user.id,
       });
-      toast.success('Comment posted successfully');
+      toast.success(translateText('generated.inline.0263_comment_posted_successfully_eb634c77'));
     } catch (error) {
       console.error('Error posting comment:', error);
-      toast.error('Failed to post comment');
+      toast.error(translateText('generated.inline.0264_failed_to_post_comment_9008b631'));
     }
   };
 
@@ -309,8 +312,11 @@ export function BlogDetail({ blogId }: BlogDetailProps) {
             </Avatar>
             <div className="text-left">
               <p className="text-sm font-medium">
-                {t ? t('components.labels.createdBy') : 'Created by'}{' '}
-                {[author.first_name, author.last_name].filter(Boolean).join(' ') || 'Unknown'}
+                {t
+                  ? t('components.labels.createdBy')
+                  : translateText('generated.inline.0037_created_by_5d73cc30')}{' '}
+                {[author.first_name, author.last_name].filter(Boolean).join(' ') ||
+                  translateText('generated.inline.0031_unknown_bc7819b3')}
               </p>
               {author.handle && <p className="text-muted-foreground text-xs">@{author.handle}</p>}
             </div>

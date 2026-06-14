@@ -138,7 +138,7 @@ function PureColorPicker({
   const { t } = useTranslation();
   return (
     <div className={cn('flex flex-col', className)} {...props}>
-      <ToolbarMenuGroup label={t('plateJs.toolbar.customColors', 'Custom Colors')}>
+      <ToolbarMenuGroup label={t('plateJs.toolbar.customColors')}>
         <ColorCustom
           color={color}
           className="px-2"
@@ -148,7 +148,7 @@ function PureColorPicker({
           updateCustomColor={updateCustomColor}
         />
       </ToolbarMenuGroup>
-      <ToolbarMenuGroup label={t('plateJs.toolbar.defaultColors', 'Default Colors')}>
+      <ToolbarMenuGroup label={t('plateJs.toolbar.defaultColors')}>
         <ColorDropdownMenuItems
           color={color}
           className="px-2"
@@ -160,7 +160,7 @@ function PureColorPicker({
         <ToolbarMenuGroup>
           <DropdownMenuItem className="p-2" onClick={clearColor}>
             <EraserIcon />
-            <span>{t('plateJs.toolbar.clear', 'Clear')}</span>
+            <span>{t('plateJs.toolbar.clear')}</span>
           </DropdownMenuItem>
         </ToolbarMenuGroup>
       )}
@@ -248,7 +248,7 @@ function ColorCustom({
               e.preventDefault();
             }}
           >
-            <span className="sr-only">{t('plateJs.toolbar.custom', 'Custom')}</span>
+            <span className="sr-only">{t('plateJs.toolbar.custom')}</span>
             <PlusIcon />
           </DropdownMenuItem>
         </ColorInput>

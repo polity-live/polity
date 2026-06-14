@@ -2,7 +2,10 @@ import { BlogTimelineCard } from '@/features/timeline/ui/cards/BlogTimelineCard'
 import { StatementTimelineCard } from '@/features/timeline/ui/cards/StatementTimelineCard';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Button } from '@/features/shared/ui/ui/button';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { Link } from '@tanstack/react-router';
 import { Search, BookOpen, MessageSquareText, Plus, Edit, Trash2 } from 'lucide-react';
 
@@ -70,8 +73,8 @@ export function BlogsAndStatementsView({
   const { t } = useTranslation();
 
   const filters: { value: ContentFilter; label: string }[] = [
-    { value: 'all', label: 'All' },
-    { value: 'blogs', label: 'Blogs' },
+    { value: 'all', label: translateText('generated.inline.0045_all_6a720856') },
+    { value: 'blogs', label: translateText('generated.inline.0030_blogs_5ef44397') },
     { value: 'statements', label: t('features.statements.title') },
   ];
 
@@ -85,7 +88,7 @@ export function BlogsAndStatementsView({
               <Link to="/create/blog-entry" search={{ groupId }}>
                 <Button size="sm">
                   <Plus className="mr-1 h-4 w-4" />
-                  Blog
+                  {translateText('generated.inline.0297_blog_0b9d2b23')}
                 </Button>
               </Link>
             ) : null}
@@ -93,7 +96,7 @@ export function BlogsAndStatementsView({
               <Link to="/create/statement" search={{ groupId }}>
                 <Button size="sm" variant="outline">
                   <Plus className="mr-1 h-4 w-4" />
-                  Statement
+                  {translateText('generated.inline.0298_statement_a72ca256')}
                 </Button>
               </Link>
             ) : null}
@@ -108,7 +111,7 @@ export function BlogsAndStatementsView({
           <Input
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Search..."
+            placeholder={translateText('generated.inline.0299_search_6d7a30a9')}
             className="pl-9"
           />
         </div>
@@ -132,7 +135,8 @@ export function BlogsAndStatementsView({
         <div className="space-y-3">
           {filter === 'all' && (
             <h2 className="flex items-center gap-2 text-lg font-semibold">
-              <BookOpen className="h-5 w-5" /> Blogs
+              <BookOpen className="h-5 w-5" />
+              {translateText('generated.inline.0300_blogs_5ef44397')}
             </h2>
           )}
           <div className="grid gap-4 sm:grid-cols-2">
@@ -227,7 +231,9 @@ export function BlogsAndStatementsView({
         filter !== 'blogs' &&
         statements.length === 0 && (
           <div className="py-12 text-center">
-            <p className="text-muted-foreground">No content yet.</p>
+            <p className="text-muted-foreground">
+              {translateText('generated.inline.0301_no_content_yet_f4efebd0')}
+            </p>
           </div>
         )}
     </div>

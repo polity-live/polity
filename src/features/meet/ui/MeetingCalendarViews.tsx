@@ -202,10 +202,7 @@ export function MeetingListView({
       selectedDate={selectedDate}
       getItemDate={instance => instance.startDate}
       getItemKey={instance => instance.id}
-      emptyText={t(
-        'features.calendar.dayView.noEvents',
-        'No meeting offers scheduled for this period'
-      )}
+      emptyText={t('features.calendar.dayView.noEvents')}
       renderItem={instance => (
         <MeetingInstanceCard
           instance={instance}

@@ -23,6 +23,7 @@ import {
 } from '@/features/shared/ui/ui/command.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/features/shared/ui/ui/popover.tsx';
 import { cn } from '@/features/shared/utils/utils.ts';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export function CodeBlockElement(props: PlateElementProps<TCodeBlockElement>) {
   const { editor, element } = props;
@@ -30,16 +31,16 @@ export function CodeBlockElement(props: PlateElementProps<TCodeBlockElement>) {
 
   return (
     <PlateElement
-      className="**:[.hljs-addition]:bg-[#f0fff4] **:[.hljs-addition]:text-[#22863a] **:[.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id,.hljs-variable]:text-[#005cc5] **:[.hljs-built_in,.hljs-symbol]:text-[#e36209] **:[.hljs-bullet]:text-[#735c0f] **:[.hljs-comment,.hljs-code,.hljs-formula]:text-[#6a737d] **:[.hljs-deletion]:bg-[#ffeef0] **:[.hljs-deletion]:text-[#b31d28] **:[.hljs-emphasis]:italic **:[.hljs-keyword,.hljs-doctag,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_]:text-[#d73a49] **:[.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo]:text-[#22863a] **:[.hljs-regexp,.hljs-string,.hljs-meta_.hljs-string]:text-[#032f62] **:[.hljs-section]:font-bold **:[.hljs-section]:text-[#005cc5] **:[.hljs-strong]:font-bold **:[.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_]:text-[#6f42c1] py-1"
+      className="py-1 **:[.hljs-addition]:bg-[#f0fff4] **:[.hljs-addition]:text-[#22863a] **:[.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id,.hljs-variable]:text-[#005cc5] **:[.hljs-built_in,.hljs-symbol]:text-[#e36209] **:[.hljs-bullet]:text-[#735c0f] **:[.hljs-comment,.hljs-code,.hljs-formula]:text-[#6a737d] **:[.hljs-deletion]:bg-[#ffeef0] **:[.hljs-deletion]:text-[#b31d28] **:[.hljs-emphasis]:italic **:[.hljs-keyword,.hljs-doctag,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_]:text-[#d73a49] **:[.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo]:text-[#22863a] **:[.hljs-regexp,.hljs-string,.hljs-meta_.hljs-string]:text-[#032f62] **:[.hljs-section]:font-bold **:[.hljs-section]:text-[#005cc5] **:[.hljs-strong]:font-bold **:[.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_]:text-[#6f42c1]"
       {...props}
     >
-      <div className="relative rounded-md bg-muted/50">
+      <div className="bg-muted/50 relative rounded-md">
         <pre className="overflow-x-auto p-8 pr-4 font-mono text-sm leading-[normal] [tab-size:2] print:break-inside-avoid">
           <code>{props.children}</code>
         </pre>
 
         <div
-          className="absolute right-1 top-1 z-10 flex select-none gap-0.5"
+          className="absolute top-1 right-1 z-10 flex gap-0.5 select-none"
           contentEditable={false}
         >
           {isLangSupported(element.lang) && (
@@ -48,9 +49,9 @@ export function CodeBlockElement(props: PlateElementProps<TCodeBlockElement>) {
               variant="ghost"
               className="size-6 text-xs"
               onClick={() => formatCodeBlock(editor, { element })}
-              title={t('plateJs.toolbar.formatCode', 'Format code')}
+              title={t('plateJs.toolbar.formatCode')}
             >
-              <BracesIcon className="!size-3.5 text-muted-foreground" />
+              <BracesIcon className="text-muted-foreground !size-3.5" />
             </Button>
           )}
 
@@ -59,7 +60,7 @@ export function CodeBlockElement(props: PlateElementProps<TCodeBlockElement>) {
           <CopyButton
             size="icon"
             variant="ghost"
-            className="size-6 gap-1 text-xs text-muted-foreground"
+            className="text-muted-foreground size-6 gap-1 text-xs"
             value={() => NodeApi.string(element)}
           />
         </div>
@@ -93,11 +94,12 @@ function CodeBlockCombobox() {
         <Button
           size="sm"
           variant="ghost"
-          className="h-6 select-none justify-between gap-1 px-2 text-xs text-muted-foreground"
+          className="text-muted-foreground h-6 justify-between gap-1 px-2 text-xs select-none"
           aria-expanded={open}
           role="combobox"
         >
-          {languages.find(language => language.value === value)?.label ?? 'Plain Text'}
+          {languages.find(language => language.value === value)?.label ??
+            translateText('generated.inline.0143_plain_text_bbb40a6f')}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0" onCloseAutoFocus={() => setSearchValue('')}>
@@ -106,9 +108,9 @@ function CodeBlockCombobox() {
             className="h-9"
             value={searchValue}
             onValueChange={value => setSearchValue(value)}
-            placeholder={t('plateJs.toolbar.searchLanguage', 'Search language...')}
+            placeholder={t('plateJs.toolbar.searchLanguage')}
           />
-          <CommandEmpty>{t('plateJs.toolbar.noLanguageFound', 'No language found.')}</CommandEmpty>
+          <CommandEmpty>{t('plateJs.toolbar.noLanguageFound')}</CommandEmpty>
 
           <CommandList className="h-[344px] overflow-y-auto">
             <CommandGroup>
@@ -155,7 +157,7 @@ function CopyButton({
       }}
       {...props}
     >
-      <span className="sr-only">Copy</span>
+      <span className="sr-only">{translateText('generated.inline.1145_copy_af74f7c5')}</span>
       {hasCopied ? <CheckIcon className="!size-3" /> : <CopyIcon className="!size-3" />}
     </Button>
   );

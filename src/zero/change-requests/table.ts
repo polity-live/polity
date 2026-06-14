@@ -1,4 +1,4 @@
-import { table, string, number } from '@rocicorp/zero'
+import { table, string, number } from '@rocicorp/zero';
 
 export const changeRequest = table('change_request')
   .columns({
@@ -12,6 +12,7 @@ export const changeRequest = table('change_request')
     source_type: string().optional(),
     source_id: string().optional(),
     source_title: string().optional(),
+    changed_character_count: number(),
     votes_for: number(),
     votes_against: number(),
     votes_abstain: number(),
@@ -22,4 +23,4 @@ export const changeRequest = table('change_request')
     created_at: number(),
     updated_at: number(),
   })
-  .primaryKey('id')
+  .primaryKey('id');

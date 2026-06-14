@@ -3,6 +3,7 @@ import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import { toast } from 'sonner';
 import { useAuth } from '@/providers/auth-provider';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 /**
  * Hook for group membership mutations
@@ -114,7 +115,7 @@ export function useGroupMutations(groupId: string) {
       return { success: true };
     } catch (error) {
       console.error('Failed to invite users:', error);
-      toast.error('Failed to invite users');
+      toast.error(translateText('generated.inline.0555_failed_to_invite_users_4ed1a03b'));
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -145,7 +146,7 @@ export function useGroupMutations(groupId: string) {
       return { success: true };
     } catch (error) {
       console.error('Failed to invite guests:', error);
-      toast.error('Failed to invite guests');
+      toast.error(translateText('generated.inline.0556_failed_to_invite_guests_95c747ba'));
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -156,11 +157,11 @@ export function useGroupMutations(groupId: string) {
     setIsLoading(true);
     try {
       await serverConfirmed(acceptGuestInvitation({ id: guestAccessId }));
-      toast.success('Guest request approved');
+      toast.success(translateText('generated.inline.0557_guest_request_approved_4163dbb6'));
       return { success: true };
     } catch (error) {
       console.error('Failed to approve guest access:', error);
-      toast.error('Failed to approve guest access');
+      toast.error(translateText('generated.inline.0558_failed_to_approve_guest_access_06fb9a9b'));
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -171,11 +172,11 @@ export function useGroupMutations(groupId: string) {
     setIsLoading(true);
     try {
       await serverConfirmed(revokeGuestAccess({ id: guestAccessId }));
-      toast.success('Guest access revoked');
+      toast.success(translateText('generated.inline.0559_guest_access_revoked_3c6108ee'));
       return { success: true };
     } catch (error) {
       console.error('Failed to revoke guest access:', error);
-      toast.error('Failed to revoke guest access');
+      toast.error(translateText('generated.inline.0560_failed_to_revoke_guest_access_6a0f5bb2'));
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -241,7 +242,7 @@ export function useGroupMutations(groupId: string) {
         actorUserId: senderId ?? null,
         membershipUserId: userId,
       });
-      toast.success('Membership approved');
+      toast.success(translateText('generated.inline.0561_membership_approved_d02f63d7'));
       return { success: true };
     } catch (error) {
       console.error('Client error', {
@@ -252,7 +253,7 @@ export function useGroupMutations(groupId: string) {
         membershipUserId: userId,
         error,
       });
-      toast.error('Failed to approve membership');
+      toast.error(translateText('generated.inline.0562_failed_to_approve_membership_564b6dff'));
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -311,7 +312,7 @@ export function useGroupMutations(groupId: string) {
         actorUserId: senderId ?? null,
         membershipUserId: userId,
       });
-      toast.success('Membership request rejected');
+      toast.success(translateText('generated.inline.0563_membership_request_rejected_d887e10e'));
       return { success: true };
     } catch (error) {
       console.error('Client error', {
@@ -322,7 +323,7 @@ export function useGroupMutations(groupId: string) {
         membershipUserId: userId,
         error,
       });
-      toast.error('Failed to reject membership');
+      toast.error(translateText('generated.inline.0564_failed_to_reject_membership_2c6cfce3'));
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -383,7 +384,7 @@ export function useGroupMutations(groupId: string) {
         actorUserId: senderId ?? null,
         membershipUserId: userId,
       });
-      toast.success('Member removed successfully');
+      toast.success(translateText('generated.inline.0565_member_removed_successfully_cf2f4ee1'));
       return { success: true };
     } catch (error) {
       console.error('Client error', {
@@ -394,7 +395,7 @@ export function useGroupMutations(groupId: string) {
         membershipUserId: userId,
         error,
       });
-      toast.error('Failed to remove member');
+      toast.error(translateText('generated.inline.0566_failed_to_remove_member_d02ff7dc'));
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -451,11 +452,11 @@ export function useGroupMutations(groupId: string) {
         })
       );
 
-      toast.success('Member role updated');
+      toast.success(translateText('generated.inline.0567_member_role_updated_4035f1b0'));
       return { success: true };
     } catch (error) {
       console.error('Failed to change member role:', error);
-      toast.error('Failed to change member role');
+      toast.error(translateText('generated.inline.0568_failed_to_change_member_role_cb8b1462'));
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -520,11 +521,11 @@ export function useGroupMutations(groupId: string) {
         });
       }
 
-      toast.success('Role created successfully');
+      toast.success(translateText('generated.inline.0235_role_created_successfully_150cd5c5'));
       return { success: true, roleId };
     } catch (error) {
       console.error('Failed to create role:', error);
-      toast.error('Failed to create role');
+      toast.error(translateText('generated.inline.0569_failed_to_create_role_6edfd75f'));
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -550,11 +551,11 @@ export function useGroupMutations(groupId: string) {
     try {
       await deleteRoleAction({ id: roleId });
 
-      toast.success('Role deleted successfully');
+      toast.success(translateText('generated.inline.0237_role_deleted_successfully_b714d57c'));
       return { success: true };
     } catch (error) {
       console.error('Failed to delete role:', error);
-      toast.error('Failed to delete role');
+      toast.error(translateText('generated.inline.0570_failed_to_delete_role_373bd307'));
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -581,11 +582,11 @@ export function useGroupMutations(groupId: string) {
         status: 'admin',
       });
 
-      toast.success('Member promoted to admin');
+      toast.success(translateText('generated.inline.0571_member_promoted_to_admin_fd9ef697'));
       return { success: true };
     } catch (error) {
       console.error('Failed to promote member:', error);
-      toast.error('Failed to promote member');
+      toast.error(translateText('generated.inline.0572_failed_to_promote_member_0c6fd2cc'));
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -612,11 +613,11 @@ export function useGroupMutations(groupId: string) {
         status: 'active',
       });
 
-      toast.success('Admin demoted to member');
+      toast.success(translateText('generated.inline.0573_admin_demoted_to_member_a4381148'));
       return { success: true };
     } catch (error) {
       console.error('Failed to demote admin:', error);
-      toast.error('Failed to demote admin');
+      toast.error(translateText('generated.inline.0574_failed_to_demote_admin_bf838d9d'));
       return { success: false, error };
     } finally {
       setIsLoading(false);

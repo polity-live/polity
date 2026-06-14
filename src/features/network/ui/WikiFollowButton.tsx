@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button } from '@/features/shared/ui/ui/button';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface WikiFollowButtonProps {
   following: boolean;
@@ -17,6 +18,8 @@ export const WikiFollowButton: React.FC<WikiFollowButtonProps> = ({
   className,
 }) => (
   <Button variant={following ? 'outline' : 'default'} onClick={onClick} className={className}>
-    {following ? 'Following' : 'Follow'}
+    {following
+      ? translateText('generated.inline.0117_following_90eeb100')
+      : translateText('generated.inline.0118_follow_66587a7a')}
   </Button>
 );

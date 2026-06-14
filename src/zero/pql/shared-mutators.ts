@@ -1,8 +1,17 @@
 import { defineMutator } from '@rocicorp/zero';
 import { createPqlFilterSchema, deletePqlFilterSchema, updatePqlFilterSchema } from './schema';
+import { can } from '../rbac/can';
+import { requireAuthenticated, requireOwner } from '../rbac/authorize';
+import { zql } from '../schema';
 
 export const pqlSharedMutators = {
-  create: defineMutator(createPqlFilterSchema, async ({ tx, ctx: { userID }, args }) => {
+  create: defineMutator(createPqlFilterSchema, async ({ tx, ctx, args }) => {
+    const { userID } = ctx;
+    requireAuthenticated(tx, ctx, { action: 'create', resource: 'pqlFilters' });
+    if (args.group_id) {
+      await can(tx, ctx, { action: 'view', resource: 'groups', groupId: args.group_id });
+    }
+
     const now = Date.now();
 
     await tx.mutate.pql_filter.insert({
@@ -14,7 +23,12 @@ export const pqlSharedMutators = {
     });
   }),
 
-  update: defineMutator(updatePqlFilterSchema, async ({ tx, args }) => {
+  update: defineMutator(updatePqlFilterSchema, async ({ tx, ctx, args }) => {
+    if (tx.location !== 'client') {
+      const row = await tx.run(zql.pql_filter.where('id', args.id).one());
+      requireOwner(tx, ctx, row?.user_id, { action: 'update', resource: 'pqlFilters' });
+    }
+
     const { id, ...fields } = args;
 
     await tx.mutate.pql_filter.update({
@@ -24,7 +38,12 @@ export const pqlSharedMutators = {
     });
   }),
 
-  delete: defineMutator(deletePqlFilterSchema, async ({ tx, args }) => {
+  delete: defineMutator(deletePqlFilterSchema, async ({ tx, ctx, args }) => {
+    if (tx.location !== 'client') {
+      const row = await tx.run(zql.pql_filter.where('id', args.id).one());
+      requireOwner(tx, ctx, row?.user_id, { action: 'delete', resource: 'pqlFilters' });
+    }
+
     await tx.mutate.pql_filter.delete({ id: args.id });
   }),
 };

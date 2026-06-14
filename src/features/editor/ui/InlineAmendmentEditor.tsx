@@ -8,15 +8,16 @@
  * Renders PlateEditor in suggest_event mode with the toolbar.
  */
 
-import { useMemo, useCallback, useState } from 'react';
+import { useMemo, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
 import { PlateEditor } from '@/features/shared/ui/kit-platejs/plate-editor';
 import { useEditor } from '../hooks/useEditor';
 import { useEditorOperations } from '../hooks/useEditorOperations';
 import { useSuggestionIdAssignment } from '@/features/documents/hooks/use-suggestion-id-assignment';
+import { countChangedCharactersForSuggestion } from '@/features/change-requests/utils/suggestion-extraction';
 import { SuggestionViewToggle } from './SuggestionViewToggle';
 import type { ResolvedSuggestion } from '@/features/shared/ui/ui-platejs/block-suggestion';
-import type { EditorUser, TDiscussion } from '../types';
+import type { EditorUser } from '../types';
 
 interface InlineAmendmentEditorProps {
   amendmentId: string;
@@ -39,7 +40,9 @@ export function InlineAmendmentEditor({
   agendaItemId,
   editingMode,
 }: InlineAmendmentEditorProps) {
-  const resolvedMode = (editingMode === 'vote_event' ? 'vote_event' : 'suggest_event') as 'suggest_event' | 'vote_event';
+  const resolvedMode = (editingMode === 'vote_event' ? 'vote_event' : 'suggest_event') as
+    | 'suggest_event'
+    | 'vote_event';
   const {
     entity,
     isLoading,
@@ -84,15 +87,24 @@ export function InlineAmendmentEditor({
   }, [currentUser]);
 
   const handleChangeRequestCreate = useCallback(
-    ({ crId, changeRequestEntityId }: { crId: string; discussionId: string; changeRequestEntityId: string }) => {
+    ({
+      crId,
+      discussionId,
+      changeRequestEntityId,
+    }: {
+      crId: string;
+      discussionId: string;
+      changeRequestEntityId: string;
+    }) => {
       if (!amendmentIdFromEntity) return;
       editorOps.handleSuggestionCreated({
         id: changeRequestEntityId,
         crId,
         amendmentId: amendmentIdFromEntity,
+        changedCharacterCount: countChangedCharactersForSuggestion(discussionId, content),
       });
     },
-    [amendmentIdFromEntity, editorOps],
+    [amendmentIdFromEntity, content, editorOps]
   );
 
   useSuggestionIdAssignment({
@@ -106,28 +118,56 @@ export function InlineAmendmentEditor({
     async (suggestion: ResolvedSuggestion) => {
       if (!contentEntityId || !userId || !content) return;
       const { updatedDiscussions } = await editorOps.handleSuggestionAccepted(
-        userId, content, discussions, suggestion, mode, amendmentIdFromEntity,
+        userId,
+        content,
+        discussions,
+        suggestion,
+        mode,
+        amendmentIdFromEntity
       );
       setDiscussions(updatedDiscussions);
     },
-    [contentEntityId, userId, content, discussions, mode, amendmentIdFromEntity, setDiscussions, editorOps],
+    [
+      contentEntityId,
+      userId,
+      content,
+      discussions,
+      mode,
+      amendmentIdFromEntity,
+      setDiscussions,
+      editorOps,
+    ]
   );
 
   const onSuggestionDeclined = useCallback(
     async (suggestion: ResolvedSuggestion) => {
       if (!contentEntityId || !userId || !content) return;
       const { updatedDiscussions } = await editorOps.handleSuggestionDeclined(
-        userId, content, discussions, suggestion, mode, amendmentIdFromEntity,
+        userId,
+        content,
+        discussions,
+        suggestion,
+        mode,
+        amendmentIdFromEntity
       );
       setDiscussions(updatedDiscussions);
     },
-    [contentEntityId, userId, content, discussions, mode, amendmentIdFromEntity, setDiscussions, editorOps],
+    [
+      contentEntityId,
+      userId,
+      content,
+      discussions,
+      mode,
+      amendmentIdFromEntity,
+      setDiscussions,
+      editorOps,
+    ]
   );
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
       </div>
     );
   }
@@ -143,7 +183,7 @@ export function InlineAmendmentEditor({
           onSelectedCrIdsChange={setSelectedCrIds}
         />
       )}
-      <div className="rounded-lg border bg-background">
+      <div className="bg-background rounded-lg border">
         <PlateEditor
           key={contentEntityId}
           value={content}

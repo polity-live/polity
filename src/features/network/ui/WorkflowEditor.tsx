@@ -302,42 +302,23 @@ export function WorkflowEditor({
     const messages: string[] = [];
 
     if (!draftName.trim()) {
-      messages.push(
-        t('features.network.workflows.validationMissingTitle', 'A workflow title is required.')
-      );
+      messages.push(t('features.network.workflows.validationMissingTitle'));
     }
 
     if (!draftStartGroupId) {
-      messages.push(
-        t(
-          'features.network.workflows.validationMissingStart',
-          'Choose the start group for the first transition.'
-        )
-      );
+      messages.push(t('features.network.workflows.validationMissingStart'));
     }
 
     if (draftSteps.length === 0) {
-      messages.push(
-        t('features.network.workflows.validationMissingSteps', 'Add at least one workflow step.')
-      );
+      messages.push(t('features.network.workflows.validationMissingSteps'));
     }
 
     if (!participantGroupIds.has(currentGroupId)) {
-      messages.push(
-        t(
-          'features.network.workflows.validationCurrentGroupRequired',
-          'The current group page must participate somewhere in the workflow.'
-        )
-      );
+      messages.push(t('features.network.workflows.validationCurrentGroupRequired'));
     }
 
     if (invalidTransitionIndexes.length > 0) {
-      messages.push(
-        t(
-          'features.network.workflows.validationDirectTransitions',
-          'Every transition must be a direct one-hop amendment-right step.'
-        )
-      );
+      messages.push(t('features.network.workflows.validationDirectTransitions'));
     }
 
     return messages;
@@ -362,9 +343,7 @@ export function WorkflowEditor({
 
     return {
       name:
-        draftName.trim() ||
-        editingWorkflow?.name ||
-        t('features.network.workflows.previewTitle', 'Draft workflow'),
+        draftName.trim() || editingWorkflow?.name || t('features.network.workflows.previewTitle'),
       description: draftDescription.trim() || null,
       startGroup: draftStartGroupId
         ? {
@@ -380,6 +359,7 @@ export function WorkflowEditor({
         label: step.label,
         group: step.group_id
           ? {
+              id: step.group_id,
               name: getGroupName(step.group_id, availableGroups),
             }
           : null,
@@ -479,28 +459,20 @@ export function WorkflowEditor({
         <DialogHeader className="border-b px-6 pt-6 pb-4">
           <DialogTitle>
             {editingWorkflow
-              ? t('features.network.workflows.edit', 'Edit Workflow')
-              : t('features.network.workflows.create', 'New Workflow')}
+              ? t('features.network.workflows.edit')
+              : t('features.network.workflows.create')}
           </DialogTitle>
-          <DialogDescription>
-            {t(
-              'features.network.workflows.editorDescription',
-              'Build the workflow as a chain of direct amendment-right transitions. The first source becomes the workflow start and the last target becomes the final goal.'
-            )}
-          </DialogDescription>
+          <DialogDescription>{t('features.network.workflows.editorDescription')}</DialogDescription>
         </DialogHeader>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
           <div className="space-y-5">
             <div className="space-y-2">
-              <Label>{t('common.name', 'Name')}</Label>
+              <Label>{t('common.name')}</Label>
               <Input
                 value={draftName}
                 onChange={event => setDraftName(event.target.value)}
-                placeholder={t(
-                  'features.network.workflows.namePlaceholder',
-                  'e.g. Parliamentary Reading Process'
-                )}
+                placeholder={t('features.network.workflows.namePlaceholder')}
               />
             </div>
 
@@ -512,7 +484,7 @@ export function WorkflowEditor({
             >
               <AccordionItem value="step-config" className="border-b-0">
                 <AccordionTrigger className="px-4">
-                  {t('features.network.workflows.stepConfig', 'Configure next step')}
+                  {t('features.network.workflows.stepConfig')}
                 </AccordionTrigger>
                 <AccordionContent className="space-y-4 px-4 pb-4">
                   <Tabs
@@ -521,17 +493,17 @@ export function WorkflowEditor({
                   >
                     <TabsList className="w-full">
                       <TabsTrigger value="type" className="flex-1">
-                        {t('features.network.workflows.byType', 'By type')}
+                        {t('features.network.workflows.byType')}
                       </TabsTrigger>
                       <TabsTrigger value="graph" className="flex-1">
-                        {t('features.network.workflows.byGraph', 'By graph')}
+                        {t('features.network.workflows.byGraph')}
                       </TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="type" className="space-y-4">
                       {draftSteps.length === 0 ? (
                         <div className="space-y-2">
-                          <Label>{t('features.network.workflows.startGroup', 'Start group')}</Label>
+                          <Label>{t('features.network.workflows.startGroup')}</Label>
                           <TypeaheadSearch
                             items={allGroupItems}
                             value={draftStartGroupId}
@@ -542,36 +514,25 @@ export function WorkflowEditor({
                                 setGraphSelectionMode('target');
                               }
                             }}
-                            placeholder={t(
-                              'features.network.workflows.selectStartGroup',
-                              'Select the first start group...'
-                            )}
+                            placeholder={t('features.network.workflows.selectStartGroup')}
                             showAllOnFocus
                           />
                         </div>
                       ) : (
                         <div className="space-y-2">
-                          <Label>
-                            {t('features.network.workflows.currentStart', 'Current start')}
-                          </Label>
+                          <Label>{t('features.network.workflows.currentStart')}</Label>
                           <div className="bg-muted/40 rounded-md border px-3 py-2 text-sm font-medium">
                             {getGroupName(pendingSourceGroupId, availableGroups)}
                           </div>
                           <p className="text-muted-foreground text-xs">
-                            {t(
-                              'features.network.workflows.currentStartHint',
-                              'The previous target automatically becomes the next start.'
-                            )}
+                            {t('features.network.workflows.currentStartHint')}
                           </p>
                         </div>
                       )}
 
                       <div className="space-y-2">
                         <p className="text-muted-foreground text-xs font-medium">
-                          {t(
-                            'features.network.workflows.byTypeGroupPicker',
-                            'Choose the next connected group'
-                          )}
+                          {t('features.network.workflows.byTypeGroupPicker')}
                         </p>
                         <TypeaheadSearch
                           items={pendingTargetItems}
@@ -579,10 +540,7 @@ export function WorkflowEditor({
                           onChange={(item: TypeaheadItem | null) =>
                             setPendingTargetGroupId(item?.id ?? '')
                           }
-                          placeholder={t(
-                            'features.network.workflows.searchConnectedGroup',
-                            'Search connected group...'
-                          )}
+                          placeholder={t('features.network.workflows.searchConnectedGroup')}
                           showAllOnFocus
                         />
                       </div>
@@ -598,7 +556,7 @@ export function WorkflowEditor({
                             onClick={() => setGraphSelectionMode('start')}
                           >
                             <MapPinned className="mr-2 h-4 w-4" />
-                            {t('features.network.workflows.pickStart', 'Pick start')}
+                            {t('features.network.workflows.pickStart')}
                           </Button>
                           <Button
                             type="button"
@@ -608,7 +566,7 @@ export function WorkflowEditor({
                             onClick={() => setGraphSelectionMode('target')}
                           >
                             <ArrowRight className="mr-2 h-4 w-4" />
-                            {t('features.network.workflows.pickTarget', 'Pick target')}
+                            {t('features.network.workflows.pickTarget')}
                           </Button>
                         </div>
                       ) : null}
@@ -617,30 +575,24 @@ export function WorkflowEditor({
                         <div className="grid gap-3 md:grid-cols-2">
                           <div className="rounded-md border px-3 py-2">
                             <p className="text-muted-foreground text-xs font-medium">
-                              {t('features.network.workflows.currentStart', 'Current start')}
+                              {t('features.network.workflows.currentStart')}
                             </p>
                             <p className="text-sm font-medium">
                               {draftSteps.length === 0 && graphSelectionMode === 'start'
-                                ? t(
-                                    'features.network.workflows.clickToChooseStart',
-                                    'Choose a start group from the graph'
-                                  )
+                                ? t('features.network.workflows.clickToChooseStart')
                                 : pendingSourceGroupId
                                   ? getGroupName(pendingSourceGroupId, availableGroups)
-                                  : t('features.network.workflows.notSelected', 'Not selected')}
+                                  : t('features.network.workflows.notSelected')}
                             </p>
                           </div>
                           <div className="rounded-md border px-3 py-2">
                             <p className="text-muted-foreground text-xs font-medium">
-                              {t('features.network.workflows.selectedTarget', 'Selected target')}
+                              {t('features.network.workflows.selectedTarget')}
                             </p>
                             <p className="text-sm font-medium">
                               {pendingTargetGroupId
                                 ? getGroupName(pendingTargetGroupId, availableGroups)
-                                : t(
-                                    'features.network.workflows.clickToChooseTarget',
-                                    'Click a connected group'
-                                  )}
+                                : t('features.network.workflows.clickToChooseTarget')}
                             </p>
                           </div>
                         </div>
@@ -648,20 +600,11 @@ export function WorkflowEditor({
                           <GroupNetworkFlow
                             groupId={graphRootGroupId}
                             filterRight="amendmentRight"
-                            title={t(
-                              'features.network.workflows.graphPickerTitle',
-                              'Workflow graph picker'
-                            )}
+                            title={t('features.network.workflows.graphPickerTitle')}
                             description={
                               draftSteps.length === 0 && graphSelectionMode === 'start'
-                                ? t(
-                                    'features.network.workflows.graphPickerStartDescription',
-                                    'Pick the first start group from the visible amendment-right graph.'
-                                  )
-                                : t(
-                                    'features.network.workflows.graphPickerTargetDescription',
-                                    'Pick the next direct amendment-right neighbor from the current start.'
-                                  )
+                                ? t('features.network.workflows.graphPickerStartDescription')
+                                : t('features.network.workflows.graphPickerTargetDescription')
                             }
                             onGroupClick={groupId => handleGraphGroupClick(groupId)}
                             showGroupDialogOnClick={false}
@@ -689,10 +632,7 @@ export function WorkflowEditor({
                       <p className="text-sm font-medium">
                         {pendingSourceGroupId
                           ? `${getGroupName(pendingSourceGroupId, availableGroups)}`
-                          : t(
-                              'features.network.workflows.selectStartFirst',
-                              'Choose the start group first'
-                            )}
+                          : t('features.network.workflows.selectStartFirst')}
                         {pendingTargetGroupId ? (
                           <>
                             <ArrowRight className="text-muted-foreground mx-2 inline h-3.5 w-3.5" />
@@ -701,10 +641,7 @@ export function WorkflowEditor({
                         ) : null}
                       </p>
                       <p className="text-muted-foreground text-xs">
-                        {t(
-                          'features.network.workflows.addStepHint',
-                          'After adding, the previous target becomes the next start automatically.'
-                        )}
+                        {t('features.network.workflows.addStepHint')}
                       </p>
                     </div>
                     <Button
@@ -713,7 +650,7 @@ export function WorkflowEditor({
                       disabled={!isPendingStepValid}
                     >
                       <Plus className="mr-2 h-4 w-4" />
-                      {t('features.network.workflows.addStep', 'Schritt hinzufügen')}
+                      {t('features.network.workflows.addStep')}
                     </Button>
                   </div>
                 </AccordionContent>
@@ -723,18 +660,15 @@ export function WorkflowEditor({
             <Accordion type="single" collapsible className="rounded-lg border">
               <AccordionItem value="workflow-settings" className="border-b-0">
                 <AccordionTrigger className="px-4">
-                  {t('features.network.workflows.workflowSettings', 'Workflow settings')}
+                  {t('features.network.workflows.workflowSettings')}
                 </AccordionTrigger>
                 <AccordionContent className="space-y-4 px-4 pb-4">
                   <div className="space-y-2">
-                    <Label>{t('common.description', 'Description')}</Label>
+                    <Label>{t('common.description')}</Label>
                     <Textarea
                       value={draftDescription}
                       onChange={event => setDraftDescription(event.target.value)}
-                      placeholder={t(
-                        'features.network.workflows.descriptionPlaceholder',
-                        'Describe the process this custom workflow should model...'
-                      )}
+                      placeholder={t('features.network.workflows.descriptionPlaceholder')}
                       className="min-h-[96px]"
                     />
                   </div>
@@ -742,10 +676,7 @@ export function WorkflowEditor({
                   <div className="flex items-center justify-between rounded-lg border px-4 py-3">
                     <div className="space-y-1">
                       <Label htmlFor="workflow-default-entry">
-                        {t(
-                          'features.network.workflows.defaultEntryLabel',
-                          'Default entry workflow'
-                        )}
+                        {t('features.network.workflows.defaultEntryLabel')}
                       </Label>
                       <p className="text-muted-foreground text-xs">
                         {finalTargetGroupId
@@ -753,10 +684,7 @@ export function WorkflowEditor({
                               'features.network.workflows.defaultEntryHintDynamic',
                               `Applies when another workflow hands off into ${getGroupName(finalTargetGroupId, availableGroups)} without naming a specific workflow.`
                             )
-                          : t(
-                              'features.network.workflows.defaultEntryHint',
-                              'Applies to the final target group once a final target exists.'
-                            )}
+                          : t('features.network.workflows.defaultEntryHint')}
                       </p>
                     </div>
                     <Switch
@@ -777,7 +705,7 @@ export function WorkflowEditor({
                 <div className="min-w-0 flex-1 space-y-3">
                   <div className="space-y-1">
                     <p className="text-sm font-medium">
-                      {t('features.network.workflows.currentFlow', 'Current workflow flow')}
+                      {t('features.network.workflows.currentFlow')}
                     </p>
                     <p className="text-muted-foreground text-xs">
                       {finalTargetGroupId
@@ -785,10 +713,7 @@ export function WorkflowEditor({
                             'features.network.workflows.currentFlowSummary',
                             `Start ${draftStartGroupId ? getGroupName(draftStartGroupId, availableGroups) : ''}, final target ${getGroupName(finalTargetGroupId, availableGroups)}.`
                           )
-                        : t(
-                            'features.network.workflows.currentFlowPending',
-                            'Add at least one step to define the final target.'
-                          )}
+                        : t('features.network.workflows.currentFlowPending')}
                     </p>
                   </div>
 
@@ -796,13 +721,13 @@ export function WorkflowEditor({
                     <CardContent className="space-y-3 p-4">
                       <div className="flex items-center gap-2 font-medium">
                         <Workflow className="h-4 w-4" />
-                        {t('features.network.workflows.summary', 'Workflow summary')}
+                        {t('features.network.workflows.summary')}
                       </div>
                       <div className="flex flex-wrap items-center gap-2 text-sm">
                         <Badge variant="secondary">
                           {draftStartGroupId
                             ? getGroupName(draftStartGroupId, availableGroups)
-                            : t('features.network.workflows.noStartSelected', 'No start selected')}
+                            : t('features.network.workflows.noStartSelected')}
                         </Badge>
                         {draftSteps.map((step, index) => (
                           <span
@@ -833,11 +758,11 @@ export function WorkflowEditor({
                 <TabsList className="self-start">
                   <TabsTrigger value="graph">
                     <Network className="mr-2 h-4 w-4" />
-                    {t('features.network.workflows.networkGraph', 'Network graph')}
+                    {t('features.network.workflows.networkGraph')}
                   </TabsTrigger>
                   <TabsTrigger value="list">
                     <List className="mr-2 h-4 w-4" />
-                    {t('features.network.workflows.list', 'List')}
+                    {t('features.network.workflows.list')}
                   </TabsTrigger>
                 </TabsList>
               </div>
@@ -847,13 +772,10 @@ export function WorkflowEditor({
                   <div className="bg-muted/10 flex h-[32rem] min-h-[32rem] items-center justify-center rounded-xl border border-dashed p-6 text-center">
                     <div className="space-y-2">
                       <p className="text-sm font-medium">
-                        {t('features.network.workflows.emptyPreviewTitle', 'No drafted flow yet')}
+                        {t('features.network.workflows.emptyPreviewTitle')}
                       </p>
                       <p className="text-muted-foreground text-sm">
-                        {t(
-                          'features.network.workflows.emptyPreviewDescription',
-                          'The graph starts empty and grows with each added step.'
-                        )}
+                        {t('features.network.workflows.emptyPreviewDescription')}
                       </p>
                     </div>
                   </div>
@@ -867,10 +789,7 @@ export function WorkflowEditor({
               <TabsContent value="list" className="mt-4 space-y-3">
                 {draftSteps.length === 0 ? (
                   <div className="text-muted-foreground rounded-lg border border-dashed p-6 text-sm">
-                    {t(
-                      'features.network.workflows.emptyDraft',
-                      'No workflow steps have been added yet.'
-                    )}
+                    {t('features.network.workflows.emptyDraft')}
                   </div>
                 ) : (
                   draftSteps.map((step, index) => {
@@ -896,7 +815,7 @@ export function WorkflowEditor({
                               </Badge>
                               {isInvalidTransition ? (
                                 <Badge variant="destructive">
-                                  {t('features.network.workflows.invalidStep', 'Invalid hop')}
+                                  {t('features.network.workflows.invalidStep')}
                                 </Badge>
                               ) : null}
                             </div>
@@ -933,9 +852,7 @@ export function WorkflowEditor({
 
                           <div className="grid gap-4 md:grid-cols-2">
                             <div className="space-y-2">
-                              <Label>
-                                {t('features.network.workflows.sourceGroup', 'Source group')}
-                              </Label>
+                              <Label>{t('features.network.workflows.sourceGroup')}</Label>
                               {index === 0 ? (
                                 <TypeaheadSearch
                                   items={allGroupItems}
@@ -943,25 +860,20 @@ export function WorkflowEditor({
                                   onChange={(item: TypeaheadItem | null) =>
                                     setDraftStartGroupId(item?.id ?? '')
                                   }
-                                  placeholder={t(
-                                    'features.network.workflows.selectStartGroup',
-                                    'Select the first start group...'
-                                  )}
+                                  placeholder={t('features.network.workflows.selectStartGroup')}
                                   showAllOnFocus
                                 />
                               ) : (
                                 <div className="bg-muted/40 rounded-md border px-3 py-2 text-sm font-medium">
                                   {sourceGroupId
                                     ? getGroupName(sourceGroupId, availableGroups)
-                                    : t('features.network.workflows.notSelected', 'Not selected')}
+                                    : t('features.network.workflows.notSelected')}
                                 </div>
                               )}
                             </div>
 
                             <div className="space-y-2">
-                              <Label>
-                                {t('features.network.workflows.targetGroup', 'Target group')}
-                              </Label>
+                              <Label>{t('features.network.workflows.targetGroup')}</Label>
                               <Select
                                 value={step.group_id}
                                 onValueChange={value => handleRowTargetChange(index, value)}
@@ -969,8 +881,7 @@ export function WorkflowEditor({
                                 <SelectTrigger>
                                   <SelectValue
                                     placeholder={t(
-                                      'features.network.workflows.listTargetPlaceholder',
-                                      'Choose target group...'
+                                      'features.network.workflows.listTargetPlaceholder'
                                     )}
                                   />
                                 </SelectTrigger>
@@ -991,10 +902,7 @@ export function WorkflowEditor({
                                 : getGroupName(step.group_id, availableGroups)}
                             </p>
                             <p className="text-muted-foreground mt-1 text-xs">
-                              {t(
-                                'features.network.workflows.listStepHint',
-                                'Reorder or delete steps here. The graph preview updates immediately.'
-                              )}
+                              {t('features.network.workflows.listStepHint')}
                             </p>
                           </div>
                         </CardContent>
@@ -1008,10 +916,7 @@ export function WorkflowEditor({
             {validationMessages.length > 0 ? (
               <div className="border-destructive/20 bg-destructive/5 space-y-2 rounded-lg border p-4">
                 <p className="text-destructive text-sm font-medium">
-                  {t(
-                    'features.network.workflows.validationTitle',
-                    'This workflow still needs attention before it can be saved:'
-                  )}
+                  {t('features.network.workflows.validationTitle')}
                 </p>
                 <ul className="text-destructive list-disc space-y-1 pl-5 text-sm">
                   {validationMessages.map(message => (
@@ -1025,12 +930,10 @@ export function WorkflowEditor({
 
         <DialogFooter className="border-t px-6 py-4">
           <Button variant="outline" onClick={onClose}>
-            {t('common.cancel', 'Cancel')}
+            {t('common.cancel')}
           </Button>
           <Button onClick={onSave} disabled={!canSave}>
-            {editingWorkflow
-              ? t('common.save', 'Save')
-              : t('features.network.workflows.create', 'New Workflow')}
+            {editingWorkflow ? t('common.save') : t('features.network.workflows.create')}
           </Button>
         </DialogFooter>
       </DialogContent>

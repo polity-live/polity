@@ -4,8 +4,8 @@ import { queries } from '../queries';
 import type { NetworkGroupLinkRow } from './queries';
 import {
   buildDerivedGroupNetworkMetaMap,
-  explodeNetworkLinksToRelationships,
-} from '@/features/network/logic/networkLinkDerived';
+  deriveNormalizedGroupRelationships,
+} from '@/features/network/logic/groupConnectionDerived';
 
 interface AmendmentStateOptions {
   amendmentId?: string;
@@ -235,7 +235,7 @@ export function useAmendmentState(options: AmendmentStateOptions = {}) {
 
   const derivedNetworkRelationships = useMemo(
     () =>
-      explodeNetworkLinksToRelationships(
+      deriveNormalizedGroupRelationships(
         (allGroupRelationships ?? []) as readonly NetworkGroupLinkRow[]
       ),
     [allGroupRelationships]
@@ -371,6 +371,7 @@ export function useAgendaItemForwardingContext(agendaItemId?: string) {
   );
 
   return {
+    agendaStepRuns: stepRuns ?? [],
     currentStepRun,
     nextStepRun,
     branchStepRuns,

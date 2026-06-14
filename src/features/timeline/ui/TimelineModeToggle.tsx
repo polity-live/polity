@@ -1,7 +1,10 @@
 'use client';
 
-import { Pin, Telescope, Monitor } from 'lucide-react';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { MapPinned, Monitor } from 'lucide-react';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { TimelineMode } from '../hooks/useTimelineMode';
@@ -31,9 +34,9 @@ const MODE_CONFIG: Record<
     hoverClass: string;
   }
 > = {
-  subscribed: {
-    icon: Pin,
-    labelKey: 'features.timeline.modes.following',
+  timeline: {
+    icon: MapPinned,
+    labelKey: 'features.timeline.modes.timeline',
     activeClass: 'bg-primary text-primary-foreground',
     hoverClass: 'hover:bg-primary/10',
   },
@@ -49,8 +52,8 @@ const MODE_CONFIG: Record<
  * TimelineModeToggle - Two-tab mode selector for timeline
  *
  * Displays tabs for:
- * - 📌 Following: Content from subscribed entities
- * - 🖥️ Decisions: Bloomberg-style terminal for votes/elections
+ * - Timeline: Map + time rail around the user
+ * - Decisions: Bloomberg-style terminal for votes/elections
  *
  * Features:
  * - Badge on Following showing unread count
@@ -67,20 +70,20 @@ export function TimelineModeToggle({
 }: TimelineModeToggleProps) {
   const { t } = useTranslation();
 
-  const modes: TimelineMode[] = ['subscribed', 'decisions'];
+  const modes: TimelineMode[] = ['timeline', 'decisions'];
 
   return (
     <div
-      className={cn('inline-flex items-center gap-1 rounded-lg border bg-muted/50 p-1', className)}
+      className={cn('bg-muted/50 inline-flex items-center gap-1 rounded-lg border p-1', className)}
       role="tablist"
-      aria-label="Timeline mode"
+      aria-label={translateText('generated.inline.1167_timeline_mode_8f6d2e57')}
     >
       {modes.map(m => {
         const config = MODE_CONFIG[m];
         const Icon = config.icon;
         const isActive = mode === m;
         const badgeCount =
-          m === 'subscribed' ? followingBadge : m === 'decisions' ? decisionsBadge : undefined;
+          m === 'timeline' ? followingBadge : m === 'decisions' ? decisionsBadge : undefined;
         const showBadge = badgeCount !== undefined && badgeCount > 0;
 
         return (
@@ -119,7 +122,7 @@ export function TimelineModeToggle({
               decisionsBadge !== undefined &&
               decisionsBadge > 0 &&
               !isActive && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-2 w-2">
+                <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
                 </span>

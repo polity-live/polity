@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS public.election (
   closing_duration_seconds INTEGER,
   closing_end_time TIMESTAMPTZ,
   visibility VARCHAR NOT NULL DEFAULT 'public',
+  ballot_visibility TEXT NOT NULL DEFAULT 'secret' CHECK (ballot_visibility IN ('named', 'secret')),
   election_mode TEXT NOT NULL DEFAULT 'single',
   seat_count INTEGER NOT NULL DEFAULT 1,
   max_votes INTEGER NOT NULL DEFAULT 1,

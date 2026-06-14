@@ -10,7 +10,10 @@
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Globe, Lock, Users } from 'lucide-react';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 
 interface Blogger {
   id: string;
@@ -83,13 +86,13 @@ export function BlogMetadata({
       {/* Bloggers list */}
       {showBloggers && bloggers.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm text-muted-foreground">
+          <span className="text-muted-foreground text-sm">
             {t('features.editor.metadata.bloggers')}:
           </span>
           {bloggers.map(blogger => (
             <div
               key={blogger.id}
-              className="flex items-center gap-1 rounded-full bg-muted px-2 py-1"
+              className="bg-muted flex items-center gap-1 rounded-full px-2 py-1"
             >
               <Avatar className="h-5 w-5">
                 {blogger.user?.avatar ? (
@@ -99,7 +102,9 @@ export function BlogMetadata({
                   {blogger.user?.name?.[0]?.toUpperCase() || '?'}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-xs">{blogger.user?.name || 'Unknown'}</span>
+              <span className="text-xs">
+                {blogger.user?.name || translateText('generated.inline.0031_unknown_bc7819b3')}
+              </span>
               {blogger.status && blogger.status === 'owner' && (
                 <Badge variant="outline" className="ml-1 h-4 px-1 text-[10px]">
                   {t('features.editor.metadata.owner')}

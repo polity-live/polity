@@ -12,6 +12,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { shouldDispatchNotification } from '@/features/notifications/logic/notificationTypeSettingMap';
 import type { NotificationSettings } from '@/features/notifications/types/notification-settings.types';
 import type { NotificationType } from '@/features/notifications/types/notification.types';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 // ── Dispatch pattern ─────────────────────────────────────────────────────────
 // On the client, a Zero-backed dispatch is injected at app startup.
@@ -374,8 +375,10 @@ export async function notifyGroupInvite(params: {
     onBehalfOfEntityType: 'group',
     onBehalfOfEntityId: params.groupId,
     type: 'group_invite',
-    title: 'Group Invitation',
-    message: `You've been invited to join ${params.groupName}`,
+    title: translateText('generated.inline.0201_group_invitation_3afe15fe'),
+    message: translateText('generated.inline.0202_you_ve_been_invited_to_join_groupname_c44a7ef2', {
+      groupName: params.groupName,
+    }),
     actionUrl: `/group/${params.groupId}/memberships`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -398,8 +401,11 @@ export async function notifyMembershipApproved(params: {
     onBehalfOfEntityType: 'group',
     onBehalfOfEntityId: params.groupId,
     type: 'membership_approved',
-    title: 'Membership Approved',
-    message: `Your request to join ${params.groupName} has been approved`,
+    title: translateText('generated.inline.0203_membership_approved_a127fbbf'),
+    message: translateText(
+      'generated.inline.0204_your_request_to_join_groupname_has_been_appro_8014ede6',
+      { groupName: params.groupName }
+    ),
     actionUrl: `/group/${params.groupId}`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -411,8 +417,11 @@ export async function notifyMembershipApproved(params: {
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
     type: 'membership_approved',
-    title: 'Membership Approved',
-    message: `A membership request in ${params.groupName} has been approved`,
+    title: translateText('generated.inline.0203_membership_approved_a127fbbf'),
+    message: translateText(
+      'generated.inline.0205_a_membership_request_in_groupname_has_been_ap_b9fe8010',
+      { groupName: params.groupName }
+    ),
     actionUrl: `/group/${params.groupId}/memberships`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -436,8 +445,11 @@ export async function notifyMembershipRejected(params: {
     onBehalfOfEntityType: 'group',
     onBehalfOfEntityId: params.groupId,
     type: 'membership_rejected',
-    title: 'Membership Request Rejected',
-    message: `Your request to join ${params.groupName} has been rejected`,
+    title: translateText('generated.inline.0206_membership_request_rejected_9fd79626'),
+    message: translateText(
+      'generated.inline.0207_your_request_to_join_groupname_has_been_rejec_27291915',
+      { groupName: params.groupName }
+    ),
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
   });
@@ -448,8 +460,11 @@ export async function notifyMembershipRejected(params: {
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
     type: 'membership_rejected',
-    title: 'Membership Request Rejected',
-    message: `A membership request in ${params.groupName} has been rejected`,
+    title: translateText('generated.inline.0206_membership_request_rejected_9fd79626'),
+    message: translateText(
+      'generated.inline.0208_a_membership_request_in_groupname_has_been_re_a1c26341',
+      { groupName: params.groupName }
+    ),
     actionUrl: `/group/${params.groupId}/memberships`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -474,8 +489,11 @@ export async function notifyMembershipRoleChanged(params: {
     onBehalfOfEntityType: 'group',
     onBehalfOfEntityId: params.groupId,
     type: 'membership_role_changed',
-    title: 'Role Changed',
-    message: `Your role in ${params.groupName} has been changed to ${params.newRole}`,
+    title: translateText('generated.inline.0209_role_changed_08011f35'),
+    message: translateText(
+      'generated.inline.0210_your_role_in_groupname_has_been_changed_to_ne_ba73b7a5',
+      { groupName: params.groupName, newRole: params.newRole }
+    ),
     actionUrl: `/group/${params.groupId}`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -487,8 +505,11 @@ export async function notifyMembershipRoleChanged(params: {
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
     type: 'membership_role_changed',
-    title: 'Role Changed',
-    message: `A member's role in ${params.groupName} has been changed`,
+    title: translateText('generated.inline.0209_role_changed_08011f35'),
+    message: translateText(
+      'generated.inline.0211_a_member_s_role_in_groupname_has_been_changed_b027577f',
+      { groupName: params.groupName }
+    ),
     actionUrl: `/group/${params.groupId}/memberships`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -512,8 +533,10 @@ export async function notifyMembershipRemoved(params: {
     onBehalfOfEntityType: 'group',
     onBehalfOfEntityId: params.groupId,
     type: 'member_removed',
-    title: 'Removed from Group',
-    message: `You have been removed from ${params.groupName}`,
+    title: translateText('generated.inline.0212_removed_from_group_b1e83b77'),
+    message: translateText('generated.inline.0213_you_have_been_removed_from_groupname_e50d8fca', {
+      groupName: params.groupName,
+    }),
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
   });
@@ -524,8 +547,11 @@ export async function notifyMembershipRemoved(params: {
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
     type: 'member_removed',
-    title: 'Member Removed',
-    message: `A member has been removed from ${params.groupName}`,
+    title: translateText('generated.inline.0214_member_removed_f9078b1f'),
+    message: translateText(
+      'generated.inline.0215_a_member_has_been_removed_from_groupname_7badeb49',
+      { groupName: params.groupName }
+    ),
     actionUrl: `/group/${params.groupId}/memberships`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -547,8 +573,11 @@ export async function notifyMembershipWithdrawn(params: {
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
     type: 'membership_withdrawn',
-    title: 'Member Left Group',
-    message: `${params.senderName} has left ${params.groupName}`,
+    title: translateText('generated.inline.0216_member_left_group_1978def2'),
+    message: translateText('generated.inline.0217_sendername_has_left_groupname_c75fe974', {
+      senderName: params.senderName,
+      groupName: params.groupName,
+    }),
     actionUrl: `/group/${params.groupId}/memberships`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -570,8 +599,11 @@ export async function notifyMembershipRequest(params: {
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
     type: 'membership_request',
-    title: 'Membership Request',
-    message: `${params.senderName} has requested to join ${params.groupName}`,
+    title: translateText('generated.inline.0218_membership_request_bbfcdecb'),
+    message: translateText(
+      'generated.inline.0219_sendername_has_requested_to_join_groupname_547b42e2',
+      { senderName: params.senderName, groupName: params.groupName }
+    ),
     actionUrl: `/group/${params.groupId}/memberships`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -594,8 +626,10 @@ export async function notifyEventInvite(params: {
     onBehalfOfEntityType: 'event',
     onBehalfOfEntityId: params.eventId,
     type: 'event_invite',
-    title: 'Event Invitation',
-    message: `You've been invited to ${params.eventTitle}`,
+    title: translateText('generated.inline.0220_event_invitation_1bdc1b8f'),
+    message: translateText('generated.inline.0221_you_ve_been_invited_to_eventtitle_ab9cba01', {
+      eventTitle: params.eventTitle,
+    }),
     actionUrl: `/user/${params.recipientUserId}/memberships`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
@@ -617,8 +651,11 @@ export async function notifyParticipationApproved(params: {
     onBehalfOfEntityType: 'event',
     onBehalfOfEntityId: params.eventId,
     type: 'participation_approved',
-    title: 'Participation Approved',
-    message: `Your request to participate in ${params.eventTitle} has been approved`,
+    title: translateText('generated.inline.0222_participation_approved_a6a048de'),
+    message: translateText(
+      'generated.inline.0223_your_request_to_participate_in_eventtitle_has_d76fd204',
+      { eventTitle: params.eventTitle }
+    ),
     actionUrl: `/event/${params.eventId}`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
@@ -640,8 +677,11 @@ export async function notifyParticipationRejected(params: {
     onBehalfOfEntityType: 'event',
     onBehalfOfEntityId: params.eventId,
     type: 'participation_rejected',
-    title: 'Participation Request Rejected',
-    message: `Your request to participate in ${params.eventTitle} has been rejected`,
+    title: translateText('generated.inline.0224_participation_request_rejected_7db189bc'),
+    message: translateText(
+      'generated.inline.0225_your_request_to_participate_in_eventtitle_has_8b2be205',
+      { eventTitle: params.eventTitle }
+    ),
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
   });
@@ -657,17 +697,36 @@ export async function notifyParticipationRoleChanged(params: {
   eventTitle: string;
   newRole: string;
 }) {
-  return createNotification({
+  await createNotification({
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     onBehalfOfEntityType: 'event',
     onBehalfOfEntityId: params.eventId,
     type: 'participation_role_changed',
-    title: 'Role Changed',
-    message: `Your role in ${params.eventTitle} has been changed to ${params.newRole}`,
+    title: translateText('generated.inline.0209_role_changed_08011f35'),
+    message: translateText(
+      'generated.inline.0226_your_role_in_eventtitle_has_been_changed_to_n_606aa63c',
+      { eventTitle: params.eventTitle, newRole: params.newRole }
+    ),
     actionUrl: `/event/${params.eventId}`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
+  });
+
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'event',
+    recipientEntityId: params.eventId,
+    type: 'participation_role_changed',
+    title: translateText('generated.inline.0209_role_changed_08011f35'),
+    message: translateText(
+      'generated.inline.0227_a_participant_s_role_in_eventtitle_has_been_c_c6fa953c',
+      { eventTitle: params.eventTitle, newRole: params.newRole }
+    ),
+    actionUrl: `/event/${params.eventId}/participants`,
+    relatedEntityType: 'event',
+    relatedEventId: params.eventId,
+    relatedUserId: params.recipientUserId,
   });
 }
 
@@ -686,8 +745,10 @@ export async function notifyParticipationRemoved(params: {
     onBehalfOfEntityType: 'event',
     onBehalfOfEntityId: params.eventId,
     type: 'participant_removed',
-    title: 'Removed from Event',
-    message: `You have been removed from ${params.eventTitle}`,
+    title: translateText('generated.inline.0228_removed_from_event_3aa364a1'),
+    message: translateText('generated.inline.0229_you_have_been_removed_from_eventtitle_5e3d926a', {
+      eventTitle: params.eventTitle,
+    }),
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
   });
@@ -707,8 +768,11 @@ export async function notifyParticipationWithdrawn(params: {
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
     type: 'participation_withdrawn',
-    title: 'Participant Withdrew',
-    message: `${params.senderName} has withdrawn from ${params.eventTitle}`,
+    title: translateText('generated.inline.0230_participant_withdrew_623502d5'),
+    message: translateText(
+      'generated.inline.0231_sendername_has_withdrawn_from_eventtitle_559e642a',
+      { senderName: params.senderName, eventTitle: params.eventTitle }
+    ),
     actionUrl: `/event/${params.eventId}/participants`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
@@ -730,8 +794,11 @@ export async function notifyParticipationRequest(params: {
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
     type: 'participation_request',
-    title: 'Participation Request',
-    message: `${params.senderName} has requested to participate in ${params.eventTitle}`,
+    title: translateText('generated.inline.0232_participation_request_3e078420'),
+    message: translateText(
+      'generated.inline.0233_sendername_has_requested_to_participate_in_ev_79bdde4c',
+      { senderName: params.senderName, eventTitle: params.eventTitle }
+    ),
     actionUrl: `/event/${params.eventId}/participants`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
@@ -756,8 +823,11 @@ export async function notifyGroupEventCreated(params: {
     onBehalfOfEntityType: 'group',
     onBehalfOfEntityId: params.groupId,
     type: 'group_new_event',
-    title: 'New Event',
-    message: `${params.groupName} has created a new event: ${params.eventTitle}`,
+    title: translateText('generated.inline.0234_new_event_6396b65c'),
+    message: translateText(
+      'generated.inline.0235_groupname_has_created_a_new_event_eventtitle_152b5c3d',
+      { groupName: params.groupName, eventTitle: params.eventTitle }
+    ),
     actionUrl: `/event/${params.eventId}`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
@@ -780,8 +850,11 @@ export async function notifyCollaborationInvite(params: {
     onBehalfOfEntityType: 'amendment',
     onBehalfOfEntityId: params.amendmentId,
     type: 'collaboration_invite',
-    title: 'Collaboration Invitation',
-    message: `You've been invited to collaborate on ${params.amendmentTitle}`,
+    title: translateText('generated.inline.0236_collaboration_invitation_de4beb09'),
+    message: translateText(
+      'generated.inline.0237_you_ve_been_invited_to_collaborate_on_amendme_b9f7b5f9',
+      { amendmentTitle: params.amendmentTitle }
+    ),
     actionUrl: `/amendment/${params.amendmentId}/collaborators`,
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
@@ -803,8 +876,11 @@ export async function notifyCollaborationApproved(params: {
     onBehalfOfEntityType: 'amendment',
     onBehalfOfEntityId: params.amendmentId,
     type: 'collaboration_approved',
-    title: 'Collaboration Approved',
-    message: `Your request to collaborate on ${params.amendmentTitle} has been approved`,
+    title: translateText('generated.inline.0238_collaboration_approved_d0f11ac2'),
+    message: translateText(
+      'generated.inline.0239_your_request_to_collaborate_on_amendmenttitle_f4979b73',
+      { amendmentTitle: params.amendmentTitle }
+    ),
     actionUrl: `/amendment/${params.amendmentId}`,
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
@@ -826,8 +902,11 @@ export async function notifyCollaborationRejected(params: {
     onBehalfOfEntityType: 'amendment',
     onBehalfOfEntityId: params.amendmentId,
     type: 'collaboration_rejected',
-    title: 'Collaboration Request Rejected',
-    message: `Your request to collaborate on ${params.amendmentTitle} has been rejected`,
+    title: translateText('generated.inline.0240_collaboration_request_rejected_82754325'),
+    message: translateText(
+      'generated.inline.0241_your_request_to_collaborate_on_amendmenttitle_8d14ccc9',
+      { amendmentTitle: params.amendmentTitle }
+    ),
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
   });
@@ -843,17 +922,120 @@ export async function notifyCollaborationRoleChanged(params: {
   amendmentTitle: string;
   newRole: string;
 }) {
-  return createNotification({
+  await createNotification({
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     onBehalfOfEntityType: 'amendment',
     onBehalfOfEntityId: params.amendmentId,
     type: 'collaboration_role_changed',
-    title: 'Role Changed',
-    message: `Your role in ${params.amendmentTitle} has been changed to ${params.newRole}`,
+    title: translateText('generated.inline.0209_role_changed_08011f35'),
+    message: translateText(
+      'generated.inline.0242_your_role_in_amendmenttitle_has_been_changed__e3006434',
+      { amendmentTitle: params.amendmentTitle, newRole: params.newRole }
+    ),
     actionUrl: `/amendment/${params.amendmentId}`,
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
+  });
+
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'amendment',
+    recipientEntityId: params.amendmentId,
+    type: 'collaboration_role_changed',
+    title: translateText('generated.inline.0209_role_changed_08011f35'),
+    message: translateText(
+      'generated.inline.0243_a_collaborator_s_role_in_amendmenttitle_has_b_2b1e9b8f',
+      { amendmentTitle: params.amendmentTitle, newRole: params.newRole }
+    ),
+    actionUrl: `/amendment/${params.amendmentId}/collaborators`,
+    relatedEntityType: 'amendment',
+    relatedAmendmentId: params.amendmentId,
+    relatedUserId: params.recipientUserId,
+  });
+}
+
+/**
+ * Send notification when a collaborator is promoted to amendment owner/author
+ */
+export async function notifyAmendmentOwnerPromoted(params: {
+  senderId: string;
+  recipientUserId: string;
+  amendmentId: string;
+  amendmentTitle: string;
+}) {
+  await createNotification({
+    senderId: params.senderId,
+    recipientUserId: params.recipientUserId,
+    onBehalfOfEntityType: 'amendment',
+    onBehalfOfEntityId: params.amendmentId,
+    type: 'amendment_owner_promoted',
+    title: translateText('generated.inline.0244_promoted_to_owner_949212e9'),
+    message: translateText(
+      'generated.inline.0245_you_have_been_promoted_to_owner_of_amendmentt_7a34239d',
+      { amendmentTitle: params.amendmentTitle }
+    ),
+    actionUrl: `/amendment/${params.amendmentId}`,
+    relatedEntityType: 'amendment',
+    relatedAmendmentId: params.amendmentId,
+  });
+
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'amendment',
+    recipientEntityId: params.amendmentId,
+    type: 'amendment_owner_promoted',
+    title: translateText('generated.inline.0246_owner_promoted_0b242b3c'),
+    message: translateText(
+      'generated.inline.0247_a_collaborator_has_been_promoted_to_owner_of__783c97f0',
+      { amendmentTitle: params.amendmentTitle }
+    ),
+    actionUrl: `/amendment/${params.amendmentId}/collaborators`,
+    relatedEntityType: 'amendment',
+    relatedAmendmentId: params.amendmentId,
+    relatedUserId: params.recipientUserId,
+  });
+}
+
+/**
+ * Send notification when an amendment owner/author is demoted
+ */
+export async function notifyAmendmentOwnerDemoted(params: {
+  senderId: string;
+  recipientUserId: string;
+  amendmentId: string;
+  amendmentTitle: string;
+}) {
+  await createNotification({
+    senderId: params.senderId,
+    recipientUserId: params.recipientUserId,
+    onBehalfOfEntityType: 'amendment',
+    onBehalfOfEntityId: params.amendmentId,
+    type: 'amendment_owner_demoted',
+    title: translateText('generated.inline.0248_demoted_from_owner_2022375c'),
+    message: translateText(
+      'generated.inline.0249_you_have_been_demoted_from_owner_of_amendment_5e6a84b9',
+      { amendmentTitle: params.amendmentTitle }
+    ),
+    actionUrl: `/amendment/${params.amendmentId}`,
+    relatedEntityType: 'amendment',
+    relatedAmendmentId: params.amendmentId,
+  });
+
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'amendment',
+    recipientEntityId: params.amendmentId,
+    type: 'amendment_owner_demoted',
+    title: translateText('generated.inline.0250_owner_demoted_cc125907'),
+    message: translateText(
+      'generated.inline.0251_a_collaborator_has_been_demoted_from_owner_of_bc931d6c',
+      { amendmentTitle: params.amendmentTitle }
+    ),
+    actionUrl: `/amendment/${params.amendmentId}/collaborators`,
+    relatedEntityType: 'amendment',
+    relatedAmendmentId: params.amendmentId,
+    relatedUserId: params.recipientUserId,
   });
 }
 
@@ -872,8 +1054,11 @@ export async function notifyCollaborationRemoved(params: {
     onBehalfOfEntityType: 'amendment',
     onBehalfOfEntityId: params.amendmentId,
     type: 'collaborator_removed',
-    title: 'Removed from Amendment',
-    message: `You have been removed from ${params.amendmentTitle}`,
+    title: translateText('generated.inline.0252_removed_from_amendment_7a038fd7'),
+    message: translateText(
+      'generated.inline.0253_you_have_been_removed_from_amendmenttitle_fbb763d7',
+      { amendmentTitle: params.amendmentTitle }
+    ),
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
   });
@@ -893,8 +1078,11 @@ export async function notifyCollaborationWithdrawn(params: {
     recipientEntityType: 'amendment',
     recipientEntityId: params.amendmentId,
     type: 'collaboration_withdrawn',
-    title: 'Collaborator Withdrew',
-    message: `${params.senderName} has withdrawn from ${params.amendmentTitle}`,
+    title: translateText('generated.inline.0254_collaborator_withdrew_0fc0e219'),
+    message: translateText(
+      'generated.inline.0255_sendername_has_withdrawn_from_amendmenttitle_e6cd3e0f',
+      { senderName: params.senderName, amendmentTitle: params.amendmentTitle }
+    ),
     actionUrl: `/amendment/${params.amendmentId}/collaborators`,
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
@@ -916,8 +1104,11 @@ export async function notifyCollaborationRequest(params: {
     recipientEntityType: 'amendment',
     recipientEntityId: params.amendmentId,
     type: 'collaboration_request',
-    title: 'Collaboration Request',
-    message: `${params.senderName} has requested to collaborate on ${params.amendmentTitle}`,
+    title: translateText('generated.inline.0256_collaboration_request_7b6c6e6a'),
+    message: translateText(
+      'generated.inline.0257_sendername_has_requested_to_collaborate_on_am_b7254455',
+      { senderName: params.senderName, amendmentTitle: params.amendmentTitle }
+    ),
     actionUrl: `/amendment/${params.amendmentId}/collaborators`,
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
@@ -938,17 +1129,36 @@ export async function notifyAdminPromoted(params: {
   groupId: string;
   groupName: string;
 }) {
-  return createNotification({
+  await createNotification({
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     onBehalfOfEntityType: 'group',
     onBehalfOfEntityId: params.groupId,
     type: 'group_admin_promoted',
-    title: 'Promoted to Admin',
-    message: `You have been promoted to admin in ${params.groupName}`,
+    title: translateText('generated.inline.0258_promoted_to_admin_764d40eb'),
+    message: translateText(
+      'generated.inline.0259_you_have_been_promoted_to_admin_in_groupname_08dd9e1d',
+      { groupName: params.groupName }
+    ),
     actionUrl: `/group/${params.groupId}`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
+  });
+
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'group',
+    recipientEntityId: params.groupId,
+    type: 'group_admin_promoted',
+    title: translateText('generated.inline.0260_admin_promoted_8f9557c7'),
+    message: translateText(
+      'generated.inline.0261_a_member_has_been_promoted_to_admin_in_groupn_1d9a2cef',
+      { groupName: params.groupName }
+    ),
+    actionUrl: `/group/${params.groupId}/memberships`,
+    relatedEntityType: 'group',
+    relatedGroupId: params.groupId,
+    relatedUserId: params.recipientUserId,
   });
 }
 
@@ -961,17 +1171,36 @@ export async function notifyAdminDemoted(params: {
   groupId: string;
   groupName: string;
 }) {
-  return createNotification({
+  await createNotification({
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     onBehalfOfEntityType: 'group',
     onBehalfOfEntityId: params.groupId,
     type: 'group_admin_demoted',
-    title: 'Demoted to Member',
-    message: `You have been demoted to member in ${params.groupName}`,
+    title: translateText('generated.inline.0262_demoted_to_member_e321df4a'),
+    message: translateText(
+      'generated.inline.0263_you_have_been_demoted_to_member_in_groupname_93ac4bb5',
+      { groupName: params.groupName }
+    ),
     actionUrl: `/group/${params.groupId}`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
+  });
+
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'group',
+    recipientEntityId: params.groupId,
+    type: 'group_admin_demoted',
+    title: translateText('generated.inline.0264_admin_demoted_a12ec36e'),
+    message: translateText(
+      'generated.inline.0265_an_admin_has_been_demoted_to_member_in_groupn_91d6a811',
+      { groupName: params.groupName }
+    ),
+    actionUrl: `/group/${params.groupId}/memberships`,
+    relatedEntityType: 'group',
+    relatedGroupId: params.groupId,
+    relatedUserId: params.recipientUserId,
   });
 }
 
@@ -989,8 +1218,11 @@ export async function notifyAccessRoleCreated(params: {
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
     type: 'group_access_role_created',
-    title: 'New Role Created',
-    message: `A new role "${params.roleName}" has been created in ${params.groupName}`,
+    title: translateText('generated.inline.0266_new_role_created_8d846bec'),
+    message: translateText(
+      'generated.inline.0267_a_new_role_rolename_has_been_created_in_group_a1a89e76',
+      { roleName: params.roleName, groupName: params.groupName }
+    ),
     actionUrl: `/group/${params.groupId}/memberships`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -1011,8 +1243,11 @@ export async function notifyAccessRoleDeleted(params: {
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
     type: 'group_access_role_deleted',
-    title: 'Role Deleted',
-    message: `The role "${params.roleName}" has been deleted from ${params.groupName}`,
+    title: translateText('generated.inline.0268_role_deleted_ac20674d'),
+    message: translateText(
+      'generated.inline.0269_the_role_rolename_has_been_deleted_from_group_62c600a1',
+      { roleName: params.roleName, groupName: params.groupName }
+    ),
     actionUrl: `/group/${params.groupId}/memberships`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -1033,8 +1268,11 @@ export async function notifyActionRightsChanged(params: {
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
     type: 'group_access_role_updated',
-    title: 'Role Permissions Updated',
-    message: `The permissions for "${params.roleName}" have been updated in ${params.groupName}`,
+    title: translateText('generated.inline.0270_role_permissions_updated_36c903a7'),
+    message: translateText(
+      'generated.inline.0271_the_permissions_for_rolename_have_been_update_2c7e86ae',
+      { roleName: params.roleName, groupName: params.groupName }
+    ),
     actionUrl: `/group/${params.groupId}/memberships`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -1059,8 +1297,11 @@ export async function notifyLinkAdded(params: {
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
     type: 'group_link_added',
-    title: 'New Link Added',
-    message: `A new link "${params.linkTitle}" has been added to ${params.groupName}`,
+    title: translateText('generated.inline.0272_new_link_added_e6a39ac7'),
+    message: translateText(
+      'generated.inline.0273_a_new_link_linktitle_has_been_added_to_groupn_6ab72143',
+      { linkTitle: params.linkTitle, groupName: params.groupName }
+    ),
     actionUrl: `/group/${params.groupId}`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -1081,8 +1322,11 @@ export async function notifyLinkRemoved(params: {
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
     type: 'group_link_removed',
-    title: 'Link Removed',
-    message: `The link "${params.linkTitle}" has been removed from ${params.groupName}`,
+    title: translateText('generated.inline.0274_link_removed_aa34aee2'),
+    message: translateText(
+      'generated.inline.0275_the_link_linktitle_has_been_removed_from_grou_46c055ec',
+      { linkTitle: params.linkTitle, groupName: params.groupName }
+    ),
     actionUrl: `/group/${params.groupId}`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -1103,8 +1347,11 @@ export async function notifyDocumentCreated(params: {
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
     type: 'group_document_added',
-    title: 'New Document Added',
-    message: `A new document "${params.documentTitle}" has been added to ${params.groupName}`,
+    title: translateText('generated.inline.0276_new_document_added_8dbc99d9'),
+    message: translateText(
+      'generated.inline.0277_a_new_document_documenttitle_has_been_added_t_ad348321',
+      { documentTitle: params.documentTitle, groupName: params.groupName }
+    ),
     actionUrl: `/group/${params.groupId}`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -1125,8 +1372,11 @@ export async function notifyDocumentDeleted(params: {
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
     type: 'group_document_removed',
-    title: 'Document Removed',
-    message: `The document "${params.documentTitle}" has been removed from ${params.groupName}`,
+    title: translateText('generated.inline.0278_document_removed_e41e9077'),
+    message: translateText(
+      'generated.inline.0279_the_document_documenttitle_has_been_removed_f_66e48723',
+      { documentTitle: params.documentTitle, groupName: params.groupName }
+    ),
     actionUrl: `/group/${params.groupId}`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -1146,8 +1396,11 @@ export async function notifyDocumentCollaboratorInvited(params: {
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     type: 'document_collaborator_invited',
-    title: 'Document Collaboration Invite',
-    message: `You've been invited to collaborate on "${params.documentTitle}"`,
+    title: translateText('generated.inline.0280_document_collaboration_invite_221ebe23'),
+    message: translateText(
+      'generated.inline.0281_you_ve_been_invited_to_collaborate_on_documen_6618794f',
+      { documentTitle: params.documentTitle }
+    ),
     actionUrl: `/editor/${params.documentId}`,
   });
 }
@@ -1166,8 +1419,11 @@ export async function notifyGroupNewSubscriber(params: {
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
     type: 'group_new_subscriber',
-    title: 'New Subscriber',
-    message: `${params.senderName} has subscribed to ${params.groupName}`,
+    title: translateText('generated.inline.0282_new_subscriber_325d57f5'),
+    message: translateText(
+      'generated.inline.0283_sendername_has_subscribed_to_groupname_04d8a8ee',
+      { senderName: params.senderName, groupName: params.groupName }
+    ),
     actionUrl: `/group/${params.groupId}`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -1195,8 +1451,11 @@ export async function notifyRoleCreated(params: {
     onBehalfOfEntityType: 'group',
     onBehalfOfEntityId: params.groupId,
     type: 'group_role_created',
-    title: 'New Role Created',
-    message: `A new role "${params.roleTitle}" has been created in ${params.groupName}`,
+    title: translateText('generated.inline.0266_new_role_created_8d846bec'),
+    message: translateText(
+      'generated.inline.0284_a_new_role_roletitle_has_been_created_in_grou_9e2be697',
+      { roleTitle: params.roleTitle, groupName: params.groupName }
+    ),
     actionUrl: `/group/${params.groupId}`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -1217,8 +1476,11 @@ export async function notifyGroupRoleCreated(params: {
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
     type: 'group_role_created',
-    title: 'New Role Created',
-    message: `A new role "${params.roleTitle}" has been created in ${params.groupName}`,
+    title: translateText('generated.inline.0266_new_role_created_8d846bec'),
+    message: translateText(
+      'generated.inline.0284_a_new_role_roletitle_has_been_created_in_grou_9e2be697',
+      { roleTitle: params.roleTitle, groupName: params.groupName }
+    ),
     actionUrl: `/group/${params.groupId}`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -1241,8 +1503,11 @@ export async function notifyRoleDeleted(params: {
     onBehalfOfEntityType: 'group',
     onBehalfOfEntityId: params.groupId,
     type: 'group_role_deleted',
-    title: 'Role Deleted',
-    message: `The role "${params.roleTitle}" has been deleted from ${params.groupName}`,
+    title: translateText('generated.inline.0268_role_deleted_ac20674d'),
+    message: translateText(
+      'generated.inline.0285_the_role_roletitle_has_been_deleted_from_grou_4e86ccb0',
+      { roleTitle: params.roleTitle, groupName: params.groupName }
+    ),
     actionUrl: `/group/${params.groupId}`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -1265,8 +1530,11 @@ export async function notifyRoleAssigned(params: {
     onBehalfOfEntityType: 'group',
     onBehalfOfEntityId: params.groupId,
     type: 'group_role_assigned',
-    title: 'Role Assigned',
-    message: `You have been assigned to the role "${params.roleTitle}" in ${params.groupName}`,
+    title: translateText('generated.inline.0286_role_assigned_57742acc'),
+    message: translateText(
+      'generated.inline.0287_you_have_been_assigned_to_the_role_roletitle__1fe02da1',
+      { roleTitle: params.roleTitle, groupName: params.groupName }
+    ),
     actionUrl: `/group/${params.groupId}`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -1289,8 +1557,11 @@ export async function notifyRoleVacated(params: {
     onBehalfOfEntityType: 'group',
     onBehalfOfEntityId: params.groupId,
     type: 'group_role_vacated',
-    title: 'Role Vacated',
-    message: `You have been removed from the role "${params.roleTitle}" in ${params.groupName}`,
+    title: translateText('generated.inline.0288_role_vacated_4cb5da04'),
+    message: translateText(
+      'generated.inline.0289_you_have_been_removed_from_the_role_roletitle_b27d4056',
+      { roleTitle: params.roleTitle, groupName: params.groupName }
+    ),
     actionUrl: `/group/${params.groupId}`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -1313,8 +1584,11 @@ export async function notifyElectionCreated(params: {
     onBehalfOfEntityType: 'group',
     onBehalfOfEntityId: params.groupId,
     type: 'group_election_created',
-    title: 'Election Created',
-    message: `An election has been created for "${params.roleTitle}" in ${params.groupName}`,
+    title: translateText('generated.inline.0290_election_created_b057dfe7'),
+    message: translateText(
+      'generated.inline.0291_an_election_has_been_created_for_roletitle_in_8480a7fe',
+      { roleTitle: params.roleTitle, groupName: params.groupName }
+    ),
     actionUrl: `/group/${params.groupId}`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -1340,9 +1614,16 @@ export async function notifyRelationshipRequested(params: {
     senderId: params.senderId,
     recipientEntityType: 'group',
     recipientEntityId: params.targetGroupId,
-    type: 'network_link_request',
-    title: 'Relationship Request',
-    message: `${params.sourceGroupName} has requested a ${params.relationshipType} relationship with ${params.targetGroupName}`,
+    type: 'group_connection_request',
+    title: translateText('generated.inline.0292_relationship_request_bf705eeb'),
+    message: translateText(
+      'generated.inline.0293_sourcegroupname_has_requested_a_relationshipt_3f6eebc2',
+      {
+        sourceGroupName: params.sourceGroupName,
+        relationshipType: params.relationshipType,
+        targetGroupName: params.targetGroupName,
+      }
+    ),
     actionUrl: `/group/${params.targetGroupId}/network`,
     relatedEntityType: 'group',
     relatedGroupId: params.sourceGroupId,
@@ -1363,9 +1644,12 @@ export async function notifyRelationshipApproved(params: {
     senderId: params.senderId,
     recipientEntityType: 'group',
     recipientEntityId: params.sourceGroupId,
-    type: 'network_link_approved',
-    title: 'Relationship Approved',
-    message: `${params.targetGroupName} has approved the relationship request`,
+    type: 'group_connection_approved',
+    title: translateText('generated.inline.0294_relationship_approved_6481e419'),
+    message: translateText(
+      'generated.inline.0295_targetgroupname_has_approved_the_relationship_34ae443b',
+      { targetGroupName: params.targetGroupName }
+    ),
     actionUrl: `/group/${params.sourceGroupId}/network`,
     relatedEntityType: 'group',
     relatedGroupId: params.targetGroupId,
@@ -1386,9 +1670,12 @@ export async function notifyRelationshipRejected(params: {
     senderId: params.senderId,
     recipientEntityType: 'group',
     recipientEntityId: params.sourceGroupId,
-    type: 'network_link_rejected',
-    title: 'Relationship Rejected',
-    message: `${params.targetGroupName} has rejected the relationship request`,
+    type: 'group_connection_rejected',
+    title: translateText('generated.inline.0296_relationship_rejected_d79d00f5'),
+    message: translateText(
+      'generated.inline.0297_targetgroupname_has_rejected_the_relationship_7e2ac392',
+      { targetGroupName: params.targetGroupName }
+    ),
     actionUrl: `/group/${params.sourceGroupId}/network`,
     relatedEntityType: 'group',
     relatedGroupId: params.targetGroupId,
@@ -1415,8 +1702,11 @@ export async function notifyTodoAssigned(params: {
     onBehalfOfEntityType: 'group',
     onBehalfOfEntityId: params.groupId,
     type: 'group_todo_assigned',
-    title: 'Task Assigned',
-    message: `You have been assigned "${params.todoTitle}" in ${params.groupName}`,
+    title: translateText('generated.inline.0298_task_assigned_e55fb748'),
+    message: translateText(
+      'generated.inline.0299_you_have_been_assigned_todotitle_in_groupname_11bf8f9d',
+      { todoTitle: params.todoTitle, groupName: params.groupName }
+    ),
     actionUrl: `/group/${params.groupId}/todos`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -1439,8 +1729,11 @@ export async function notifyTodoUpdated(params: {
     onBehalfOfEntityType: 'group',
     onBehalfOfEntityId: params.groupId,
     type: 'group_todo_updated',
-    title: 'Task Updated',
-    message: `The task "${params.todoTitle}" in ${params.groupName} has been updated`,
+    title: translateText('generated.inline.0300_task_updated_1da9a8df'),
+    message: translateText(
+      'generated.inline.0301_the_task_todotitle_in_groupname_has_been_upda_e4cfbf98',
+      { todoTitle: params.todoTitle, groupName: params.groupName }
+    ),
     actionUrl: `/group/${params.groupId}/todos`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -1463,8 +1756,11 @@ export async function notifyTodoDeleted(params: {
     onBehalfOfEntityType: 'group',
     onBehalfOfEntityId: params.groupId,
     type: 'group_todo_deleted',
-    title: 'Task Deleted',
-    message: `The task "${params.todoTitle}" in ${params.groupName} has been deleted`,
+    title: translateText('generated.inline.0302_task_deleted_5909bb84'),
+    message: translateText(
+      'generated.inline.0303_the_task_todotitle_in_groupname_has_been_dele_0bfe20e9',
+      { todoTitle: params.todoTitle, groupName: params.groupName }
+    ),
     actionUrl: `/group/${params.groupId}/todos`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -1489,8 +1785,11 @@ export async function notifyPaymentCreated(params: {
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
     type: 'group_payment_created',
-    title: 'Payment Created',
-    message: `A new payment "${params.paymentDescription}" has been created in ${params.groupName}`,
+    title: translateText('generated.inline.0304_payment_created_3909340c'),
+    message: translateText(
+      'generated.inline.0305_a_new_payment_paymentdescription_has_been_cre_41676a81',
+      { paymentDescription: params.paymentDescription, groupName: params.groupName }
+    ),
     actionUrl: `/group/${params.groupId}`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -1511,8 +1810,11 @@ export async function notifyPaymentDeleted(params: {
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
     type: 'group_payment_deleted',
-    title: 'Payment Deleted',
-    message: `The payment "${params.paymentDescription}" has been deleted from ${params.groupName}`,
+    title: translateText('generated.inline.0306_payment_deleted_3434c3ab'),
+    message: translateText(
+      'generated.inline.0307_the_payment_paymentdescription_has_been_delet_f66608dd',
+      { paymentDescription: params.paymentDescription, groupName: params.groupName }
+    ),
     actionUrl: `/group/${params.groupId}`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -1532,17 +1834,36 @@ export async function notifyOrganizerPromoted(params: {
   eventId: string;
   eventTitle: string;
 }) {
-  return createNotification({
+  await createNotification({
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     onBehalfOfEntityType: 'event',
     onBehalfOfEntityId: params.eventId,
     type: 'event_organizer_promoted',
-    title: 'Promoted to Organizer',
-    message: `You have been promoted to organizer in ${params.eventTitle}`,
+    title: translateText('generated.inline.0308_promoted_to_organizer_e3da9ef6'),
+    message: translateText(
+      'generated.inline.0309_you_have_been_promoted_to_organizer_in_eventt_ef413b4a',
+      { eventTitle: params.eventTitle }
+    ),
     actionUrl: `/event/${params.eventId}`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
+  });
+
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'event',
+    recipientEntityId: params.eventId,
+    type: 'event_organizer_promoted',
+    title: translateText('generated.inline.0310_organizer_promoted_7fd41cd1'),
+    message: translateText(
+      'generated.inline.0311_a_participant_has_been_promoted_to_organizer__cff7ef52',
+      { eventTitle: params.eventTitle }
+    ),
+    actionUrl: `/event/${params.eventId}/participants`,
+    relatedEntityType: 'event',
+    relatedEventId: params.eventId,
+    relatedUserId: params.recipientUserId,
   });
 }
 
@@ -1555,17 +1876,36 @@ export async function notifyOrganizerDemoted(params: {
   eventId: string;
   eventTitle: string;
 }) {
-  return createNotification({
+  await createNotification({
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     onBehalfOfEntityType: 'event',
     onBehalfOfEntityId: params.eventId,
     type: 'event_organizer_demoted',
-    title: 'Demoted from Organizer',
-    message: `You have been demoted from organizer in ${params.eventTitle}`,
+    title: translateText('generated.inline.0312_demoted_from_organizer_0dd7233d'),
+    message: translateText(
+      'generated.inline.0313_you_have_been_demoted_from_organizer_in_event_967565ae',
+      { eventTitle: params.eventTitle }
+    ),
     actionUrl: `/event/${params.eventId}`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
+  });
+
+  return createNotification({
+    senderId: params.senderId,
+    recipientEntityType: 'event',
+    recipientEntityId: params.eventId,
+    type: 'event_organizer_demoted',
+    title: translateText('generated.inline.0314_organizer_demoted_a9eca1ad'),
+    message: translateText(
+      'generated.inline.0315_an_organizer_has_been_demoted_in_eventtitle_ae372619',
+      { eventTitle: params.eventTitle }
+    ),
+    actionUrl: `/event/${params.eventId}/participants`,
+    relatedEntityType: 'event',
+    relatedEventId: params.eventId,
+    relatedUserId: params.recipientUserId,
   });
 }
 
@@ -1583,8 +1923,11 @@ export async function notifyAgendaItemCreated(params: {
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
     type: 'event_agenda_item_created',
-    title: 'Agenda Item Added',
-    message: `"${params.agendaItemTitle}" has been added to ${params.eventTitle}`,
+    title: translateText('generated.inline.0316_agenda_item_added_712c8f7b'),
+    message: translateText(
+      'generated.inline.0317_agendaitemtitle_has_been_added_to_eventtitle_71702300',
+      { agendaItemTitle: params.agendaItemTitle, eventTitle: params.eventTitle }
+    ),
     actionUrl: `/event/${params.eventId}`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
@@ -1605,8 +1948,11 @@ export async function notifyAgendaItemDeleted(params: {
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
     type: 'event_agenda_item_deleted',
-    title: 'Agenda Item Removed',
-    message: `"${params.agendaItemTitle}" has been removed from ${params.eventTitle}`,
+    title: translateText('generated.inline.0318_agenda_item_removed_4458fcac'),
+    message: translateText(
+      'generated.inline.0319_agendaitemtitle_has_been_removed_from_eventti_11c4de4d',
+      { agendaItemTitle: params.agendaItemTitle, eventTitle: params.eventTitle }
+    ),
     actionUrl: `/event/${params.eventId}`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
@@ -1631,8 +1977,11 @@ export async function notifyAgendaItemTransferred(params: {
     recipientEntityType: 'event',
     recipientEntityId: params.sourceEventId,
     type: 'event_agenda_item_transferred',
-    title: 'Agenda Item Moved',
-    message: `"${params.agendaItemTitle}" has been moved to ${params.targetEventTitle}`,
+    title: translateText('generated.inline.0320_agenda_item_moved_a7ce17c2'),
+    message: translateText(
+      'generated.inline.0321_agendaitemtitle_has_been_moved_to_targetevent_96ec27c3',
+      { agendaItemTitle: params.agendaItemTitle, targetEventTitle: params.targetEventTitle }
+    ),
     actionUrl: `/event/${params.targetEventId}/agenda`,
     relatedEntityType: 'event',
     relatedEventId: params.targetEventId,
@@ -1644,8 +1993,11 @@ export async function notifyAgendaItemTransferred(params: {
     recipientEntityType: 'event',
     recipientEntityId: params.targetEventId,
     type: 'event_agenda_item_transferred',
-    title: 'Agenda Item Added',
-    message: `"${params.agendaItemTitle}" has been moved from ${params.sourceEventTitle}`,
+    title: translateText('generated.inline.0316_agenda_item_added_712c8f7b'),
+    message: translateText(
+      'generated.inline.0322_agendaitemtitle_has_been_moved_from_sourceeve_fe2e151c',
+      { agendaItemTitle: params.agendaItemTitle, sourceEventTitle: params.sourceEventTitle }
+    ),
     actionUrl: `/event/${params.targetEventId}/agenda`,
     relatedEntityType: 'event',
     relatedEventId: params.sourceEventId,
@@ -1667,8 +2019,11 @@ export async function notifyScheduleChanged(params: {
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
     type: 'event_schedule_changed',
-    title: 'Schedule Changed',
-    message: `The schedule for ${params.eventTitle} has been updated`,
+    title: translateText('generated.inline.0323_schedule_changed_592f7245'),
+    message: translateText(
+      'generated.inline.0324_the_schedule_for_eventtitle_has_been_updated_1751533e',
+      { eventTitle: params.eventTitle }
+    ),
     actionUrl: `/event/${params.eventId}`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
@@ -1689,8 +2044,11 @@ export async function notifyCandidateAdded(params: {
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
     type: 'event_candidate_added',
-    title: 'Candidate Added',
-    message: `${params.candidateName} has been added as a candidate in ${params.eventTitle}`,
+    title: translateText('generated.inline.0325_candidate_added_95b4caba'),
+    message: translateText(
+      'generated.inline.0326_candidatename_has_been_added_as_a_candidate_i_73d1d5e0',
+      { candidateName: params.candidateName, eventTitle: params.eventTitle }
+    ),
     actionUrl: `/event/${params.eventId}`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
@@ -1711,8 +2069,11 @@ export async function notifyElectionStarted(params: {
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
     type: 'event_election_started',
-    title: 'Election Started',
-    message: `Voting has started for "${params.electionTitle}" in ${params.eventTitle}`,
+    title: translateText('generated.inline.0327_election_started_14c92cd2'),
+    message: translateText(
+      'generated.inline.0328_voting_has_started_for_electiontitle_in_event_dcb2f3c8',
+      { electionTitle: params.electionTitle, eventTitle: params.eventTitle }
+    ),
     actionUrl: `/event/${params.eventId}`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
@@ -1733,8 +2094,11 @@ export async function notifyElectionEnded(params: {
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
     type: 'event_election_ended',
-    title: 'Election Ended',
-    message: `Voting has ended for "${params.electionTitle}" in ${params.eventTitle}`,
+    title: translateText('generated.inline.0329_election_ended_25c3a9a2'),
+    message: translateText(
+      'generated.inline.0330_voting_has_ended_for_electiontitle_in_eventti_af6cdd32',
+      { electionTitle: params.electionTitle, eventTitle: params.eventTitle }
+    ),
     actionUrl: `/event/${params.eventId}`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
@@ -1755,8 +2119,11 @@ export async function notifyEventRoleCreated(params: {
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
     type: 'event_role_created',
-    title: 'Role Created',
-    message: `A new role "${params.roleTitle}" has been created in ${params.eventTitle}`,
+    title: translateText('generated.inline.0331_role_created_a7153118'),
+    message: translateText(
+      'generated.inline.0332_a_new_role_roletitle_has_been_created_in_even_a725e0ae',
+      { roleTitle: params.roleTitle, eventTitle: params.eventTitle }
+    ),
     actionUrl: `/event/${params.eventId}`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
@@ -1777,8 +2144,11 @@ export async function notifyEventRoleDeleted(params: {
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
     type: 'event_role_deleted',
-    title: 'Role Deleted',
-    message: `The role "${params.roleTitle}" has been deleted from ${params.eventTitle}`,
+    title: translateText('generated.inline.0268_role_deleted_ac20674d'),
+    message: translateText(
+      'generated.inline.0333_the_role_roletitle_has_been_deleted_from_even_aeaf5d1a',
+      { roleTitle: params.roleTitle, eventTitle: params.eventTitle }
+    ),
     actionUrl: `/event/${params.eventId}`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
@@ -1798,8 +2168,11 @@ export async function notifyDelegatesFinalized(params: {
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
     type: 'event_delegates_finalized',
-    title: 'Delegates Finalized',
-    message: `Delegates have been finalized for ${params.eventTitle}`,
+    title: translateText('generated.inline.0334_delegates_finalized_938f8195'),
+    message: translateText(
+      'generated.inline.0335_delegates_have_been_finalized_for_eventtitle_6f6905a5',
+      { eventTitle: params.eventTitle }
+    ),
     actionUrl: `/event/${params.eventId}`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
@@ -1821,8 +2194,11 @@ export async function notifyDelegateNominated(params: {
     onBehalfOfEntityType: 'event',
     onBehalfOfEntityId: params.eventId,
     type: 'event_delegate_nominated',
-    title: 'Delegate Nominated',
-    message: `You have been nominated as a delegate for ${params.eventTitle}`,
+    title: translateText('generated.inline.0336_delegate_nominated_22807be9'),
+    message: translateText(
+      'generated.inline.0337_you_have_been_nominated_as_a_delegate_for_eve_879cbe4b',
+      { eventTitle: params.eventTitle }
+    ),
     actionUrl: `/event/${params.eventId}`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
@@ -1846,8 +2222,15 @@ export async function notifyMeetingBooked(params: {
     onBehalfOfEntityType: params.eventId ? 'event' : undefined,
     onBehalfOfEntityId: params.eventId,
     type: 'event_meeting_booked',
-    title: 'Meeting Booked',
-    message: `${params.senderName} has booked a meeting with you${params.eventTitle ? ` for ${params.eventTitle}` : ''} at ${params.meetingTime}`,
+    title: translateText('generated.inline.0338_meeting_booked_4fcb2217'),
+    message: translateText(
+      'generated.inline.0339_sendername_has_booked_a_meeting_with_you_valu_365a4da6',
+      {
+        senderName: params.senderName,
+        valuec6f3: params.eventTitle ? ` for ${params.eventTitle}` : '',
+        meetingTime: params.meetingTime,
+      }
+    ),
     actionUrl: params.eventId ? `/event/${params.eventId}` : '/calendar',
     relatedEntityType: params.eventId ? 'event' : undefined,
     relatedEventId: params.eventId,
@@ -1871,8 +2254,15 @@ export async function notifyMeetingCancelled(params: {
     onBehalfOfEntityType: params.eventId ? 'event' : undefined,
     onBehalfOfEntityId: params.eventId,
     type: 'event_meeting_cancelled',
-    title: 'Meeting Cancelled',
-    message: `${params.senderName} has cancelled the meeting${params.eventTitle ? ` for ${params.eventTitle}` : ''} at ${params.meetingTime}`,
+    title: translateText('generated.inline.0340_meeting_cancelled_a5e050bf'),
+    message: translateText(
+      'generated.inline.0341_sendername_has_cancelled_the_meeting_valuec6f_c2ffbabf',
+      {
+        senderName: params.senderName,
+        valuec6f3: params.eventTitle ? ` for ${params.eventTitle}` : '',
+        meetingTime: params.meetingTime,
+      }
+    ),
     actionUrl: params.eventId ? `/event/${params.eventId}` : '/calendar',
     relatedEntityType: params.eventId ? 'event' : undefined,
     relatedEventId: params.eventId,
@@ -1894,8 +2284,11 @@ export async function notifySpeakerAdded(params: {
     onBehalfOfEntityType: 'event',
     onBehalfOfEntityId: params.eventId,
     type: 'event_speaker_added',
-    title: 'Added to Speaker List',
-    message: `You have been added to the speaker list for ${params.eventTitle}`,
+    title: translateText('generated.inline.0342_added_to_speaker_list_3ddeaeb0'),
+    message: translateText(
+      'generated.inline.0343_you_have_been_added_to_the_speaker_list_for_e_7fc2d58e',
+      { eventTitle: params.eventTitle }
+    ),
     actionUrl: `/event/${params.eventId}`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
@@ -1916,8 +2309,11 @@ export async function notifySpeakerListJoined(params: {
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
     type: 'event_speaker_added',
-    title: 'Speaker Joined',
-    message: `${params.senderName} has joined the speaker list for ${params.eventTitle}`,
+    title: translateText('generated.inline.0344_speaker_joined_3dafa9d3'),
+    message: translateText(
+      'generated.inline.0345_sendername_has_joined_the_speaker_list_for_ev_98195520',
+      { senderName: params.senderName, eventTitle: params.eventTitle }
+    ),
     actionUrl: `/event/${params.eventId}`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
@@ -1938,8 +2334,11 @@ export async function notifyEventNewSubscriber(params: {
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
     type: 'event_new_subscriber',
-    title: 'New Subscriber',
-    message: `${params.senderName} has subscribed to ${params.eventTitle}`,
+    title: translateText('generated.inline.0282_new_subscriber_325d57f5'),
+    message: translateText(
+      'generated.inline.0346_sendername_has_subscribed_to_eventtitle_3dc01439',
+      { senderName: params.senderName, eventTitle: params.eventTitle }
+    ),
     actionUrl: `/event/${params.eventId}`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
@@ -1967,8 +2366,11 @@ export async function notifyAgendaItemActivated(params: {
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
     type: 'agenda_item_activated',
-    title: 'Agenda Item Activated',
-    message: `${params.agendaItemTitle} is now active at ${params.eventTitle}`,
+    title: translateText('generated.inline.0347_agenda_item_activated_bc71111a'),
+    message: translateText(
+      'generated.inline.0348_agendaitemtitle_is_now_active_at_eventtitle_8da6468c',
+      { agendaItemTitle: params.agendaItemTitle, eventTitle: params.eventTitle }
+    ),
     actionUrl: `/event/${params.eventId}/stream`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
@@ -1991,8 +2393,14 @@ export async function notifyVotingPhaseStarted(params: {
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
     type: 'voting_phase_started',
-    title: 'Voting Has Begun',
-    message: `Voting for ${params.agendaItemTitle} has started${params.timeLimit ? ` (${Math.floor(params.timeLimit / 60)} minutes)` : ''}`,
+    title: translateText('generated.inline.0349_voting_has_begun_4b41f90b'),
+    message: translateText(
+      'generated.inline.0350_voting_for_agendaitemtitle_has_started_value5_7499d1f8',
+      {
+        agendaItemTitle: params.agendaItemTitle,
+        value50d6: params.timeLimit ? ` (${Math.floor(params.timeLimit / 60)} minutes)` : '',
+      }
+    ),
     actionUrl: `/event/${params.eventId}/stream`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
@@ -2014,8 +2422,11 @@ export async function notifyVotingPhaseEndingSoon(params: {
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
     type: 'voting_phase_ending_soon',
-    title: 'Voting Ending Soon',
-    message: `Voting for ${params.agendaItemTitle} ends in ${params.minutesRemaining} minutes`,
+    title: translateText('generated.inline.0351_voting_ending_soon_dc220907'),
+    message: translateText(
+      'generated.inline.0352_voting_for_agendaitemtitle_ends_in_minutesrem_311fa06c',
+      { agendaItemTitle: params.agendaItemTitle, minutesRemaining: params.minutesRemaining }
+    ),
     actionUrl: `/event/${params.eventId}/stream`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
@@ -2035,18 +2446,26 @@ export async function notifyVotingCompleted(params: {
   rejectVotes: number;
 }) {
   const resultText =
-    params.result === 'passed'
-      ? 'accepted'
-      : params.result === 'rejected'
-        ? 'rejected'
-        : 'resulted in a tie';
+    params.result === translateText('generated.inline.0126_passed_6a9f6c3f')
+      ? translateText('generated.inline.0127_accepted_51c817ab')
+      : params.result === translateText('generated.inline.0128_rejected_1f087a59')
+        ? translateText('generated.inline.0128_rejected_1f087a59')
+        : translateText('generated.inline.0129_resulted_in_a_tie_03c92e81');
   return createNotification({
     senderId: params.senderId,
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
     type: 'voting_completed',
-    title: 'Voting Completed',
-    message: `${params.agendaItemTitle} was ${resultText} (${params.acceptVotes} for, ${params.rejectVotes} against)`,
+    title: translateText('generated.inline.0353_voting_completed_bd48f8ed'),
+    message: translateText(
+      'generated.inline.0354_agendaitemtitle_was_resulttext_acceptvotes_fo_72aa7991',
+      {
+        agendaItemTitle: params.agendaItemTitle,
+        resultText: resultText,
+        acceptVotes: params.acceptVotes,
+        rejectVotes: params.rejectVotes,
+      }
+    ),
     actionUrl: `/event/${params.eventId}/agenda`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
@@ -2069,8 +2488,15 @@ export async function notifyAmendmentForwarded(params: {
     recipientEntityType: 'amendment',
     recipientEntityId: params.amendmentId,
     type: 'amendment_forwarded',
-    title: 'Amendment Forwarded',
-    message: `${params.amendmentTitle} has been forwarded from ${params.sourceEventTitle} to ${params.targetEventTitle}`,
+    title: translateText('generated.inline.0355_amendment_forwarded_2dce165c'),
+    message: translateText(
+      'generated.inline.0356_amendmenttitle_has_been_forwarded_from_source_cd3c0755',
+      {
+        amendmentTitle: params.amendmentTitle,
+        sourceEventTitle: params.sourceEventTitle,
+        targetEventTitle: params.targetEventTitle,
+      }
+    ),
     actionUrl: `/event/${params.targetEventId}/agenda`,
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
@@ -2093,8 +2519,11 @@ export async function notifyElectionResult(params: {
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
     type: 'election_result',
-    title: 'Election Result',
-    message: `${params.winnerName} has been elected as ${params.roleTitle}`,
+    title: translateText('generated.inline.0357_election_result_5743abde'),
+    message: translateText(
+      'generated.inline.0358_winnername_has_been_elected_as_roletitle_7a95dc81',
+      { winnerName: params.winnerName, roleTitle: params.roleTitle }
+    ),
     actionUrl: `/event/${params.eventId}/roles`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
@@ -2118,8 +2547,11 @@ export async function notifyRevoteScheduled(params: {
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
     type: 'revote_scheduled',
-    title: 'Revote Scheduled',
-    message: `A revote for ${params.roleTitle} has been scheduled for ${params.scheduledDate}`,
+    title: translateText('generated.inline.0359_revote_scheduled_48676dfd'),
+    message: translateText(
+      'generated.inline.0360_a_revote_for_roletitle_has_been_scheduled_for_4e61e14b',
+      { roleTitle: params.roleTitle, scheduledDate: params.scheduledDate }
+    ),
     actionUrl: params.eventId
       ? `/event/${params.eventId}/agenda`
       : `/group/${params.groupId}/memberships`,
@@ -2141,15 +2573,21 @@ export async function notifyEventCancelled(params: {
   reassignmentEventTitle?: string;
 }) {
   const message = params.reassignmentEventId
-    ? `${params.eventTitle} has been cancelled. Agenda items have been moved to ${params.reassignmentEventTitle}.`
-    : `${params.eventTitle} has been cancelled.${params.cancellationReason ? ` Reason: ${params.cancellationReason}` : ''}`;
+    ? translateText(
+        'generated.inline.0130_eventtitle_has_been_cancelled_agenda_items_ha_c60a9af6',
+        { eventTitle: params.eventTitle, reassignmentEventTitle: params.reassignmentEventTitle }
+      )
+    : translateText('generated.inline.0131_eventtitle_has_been_cancelled_value2029_a58bcd67', {
+        eventTitle: params.eventTitle,
+        value2029: params.cancellationReason ? ` Reason: ${params.cancellationReason}` : '',
+      });
 
   return createNotification({
     senderId: params.senderId,
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
     type: 'event_cancelled',
-    title: 'Event Cancelled',
+    title: translateText('generated.inline.0361_event_cancelled_b66d2550'),
     message,
     actionUrl: params.reassignmentEventId ? `/event/${params.reassignmentEventId}` : undefined,
     relatedEntityType: 'event',
@@ -2173,8 +2611,15 @@ export async function notifyAgendaItemsReassigned(params: {
     recipientEntityType: 'event',
     recipientEntityId: params.targetEventId,
     type: 'agenda_items_reassigned',
-    title: 'Agenda Items Reassigned',
-    message: `${params.itemCount} agenda item(s) from ${params.sourceEventTitle} have been added to ${params.targetEventTitle}`,
+    title: translateText('generated.inline.0362_agenda_items_reassigned_71934d73'),
+    message: translateText(
+      'generated.inline.0363_itemcount_agenda_item_s_from_sourceeventtitle_cc411e44',
+      {
+        itemCount: params.itemCount,
+        sourceEventTitle: params.sourceEventTitle,
+        targetEventTitle: params.targetEventTitle,
+      }
+    ),
     actionUrl: `/event/${params.targetEventId}/agenda`,
     relatedEntityType: 'event',
     relatedEventId: params.targetEventId,
@@ -2195,8 +2640,11 @@ export async function notifyAmendmentPathRecalculationRequired(params: {
     recipientEntityType: 'amendment',
     recipientEntityId: params.amendmentId,
     type: 'amendment_path_recalculation_required',
-    title: 'Path Recalculation Required',
-    message: `The path for ${params.amendmentTitle} needs to be recalculated. ${params.reason}`,
+    title: translateText('generated.inline.0364_path_recalculation_required_b6c14117'),
+    message: translateText(
+      'generated.inline.0365_the_path_for_amendmenttitle_needs_to_be_recal_e82e4050',
+      { amendmentTitle: params.amendmentTitle, reason: params.reason }
+    ),
     actionUrl: `/amendment/${params.amendmentId}/process`,
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
@@ -2226,8 +2674,11 @@ export async function notifySupportConfirmationRequired(params: {
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
     type: 'support_confirmation_required',
-    title: 'Support Confirmation Required',
-    message: `A change was accepted on ${params.amendmentTitle}. ${params.groupName} needs to confirm continued support.`,
+    title: translateText('generated.inline.0366_support_confirmation_required_cb700d6f'),
+    message: translateText(
+      'generated.inline.0367_a_change_was_accepted_on_amendmenttitle_group_f89d78b2',
+      { amendmentTitle: params.amendmentTitle, groupName: params.groupName }
+    ),
     actionUrl: params.eventId
       ? `/event/${params.eventId}/agenda`
       : `/amendment/${params.amendmentId}`,
@@ -2252,8 +2703,11 @@ export async function notifySupportConfirmed(params: {
     recipientEntityType: 'amendment',
     recipientEntityId: params.amendmentId,
     type: 'support_confirmed',
-    title: 'Support Confirmed',
-    message: `${params.groupName} has confirmed their support for ${params.amendmentTitle}`,
+    title: translateText('generated.inline.0368_support_confirmed_a88de2c8'),
+    message: translateText(
+      'generated.inline.0369_groupname_has_confirmed_their_support_for_ame_2c1855a7',
+      { groupName: params.groupName, amendmentTitle: params.amendmentTitle }
+    ),
     actionUrl: `/amendment/${params.amendmentId}`,
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
@@ -2276,8 +2730,11 @@ export async function notifySupportDeclined(params: {
     recipientEntityType: 'amendment',
     recipientEntityId: params.amendmentId,
     type: 'support_declined',
-    title: 'Support Declined',
-    message: `${params.groupName} has withdrawn their support for ${params.amendmentTitle}`,
+    title: translateText('generated.inline.0370_support_declined_2a207a91'),
+    message: translateText(
+      'generated.inline.0371_groupname_has_withdrawn_their_support_for_ame_b5e2a884',
+      { groupName: params.groupName, amendmentTitle: params.amendmentTitle }
+    ),
     actionUrl: `/amendment/${params.amendmentId}`,
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
@@ -2303,8 +2760,11 @@ export async function notifyWorkflowChanged(params: {
     recipientEntityType: 'amendment',
     recipientEntityId: params.amendmentId,
     type: 'amendment_workflow_changed',
-    title: 'Workflow Status Changed',
-    message: `The status of ${params.amendmentTitle} has changed to ${params.newStatus}`,
+    title: translateText('generated.inline.0372_workflow_status_changed_4185bb6a'),
+    message: translateText(
+      'generated.inline.0373_the_status_of_amendmenttitle_has_changed_to_n_fc1ed128',
+      { amendmentTitle: params.amendmentTitle, newStatus: params.newStatus }
+    ),
     actionUrl: `/amendment/${params.amendmentId}`,
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
@@ -2325,8 +2785,11 @@ export async function notifyPathAdvanced(params: {
     recipientEntityType: 'amendment',
     recipientEntityId: params.amendmentId,
     type: 'amendment_path_advanced',
-    title: 'Path Advanced',
-    message: `${params.amendmentTitle} has advanced to ${params.segmentName}`,
+    title: translateText('generated.inline.0374_path_advanced_7628ccaf'),
+    message: translateText(
+      'generated.inline.0375_amendmenttitle_has_advanced_to_segmentname_f9fba19c',
+      { amendmentTitle: params.amendmentTitle, segmentName: params.segmentName }
+    ),
     actionUrl: `/amendment/${params.amendmentId}`,
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
@@ -2348,8 +2811,11 @@ export async function notifyAmendmentCloned(params: {
     recipientEntityType: 'amendment',
     recipientEntityId: params.originalAmendmentId,
     type: 'amendment_cloned',
-    title: 'Amendment Cloned',
-    message: `${params.senderName} has cloned ${params.originalAmendmentTitle}`,
+    title: translateText('generated.inline.0376_amendment_cloned_a6235fba'),
+    message: translateText(
+      'generated.inline.0377_sendername_has_cloned_originalamendmenttitle_9e586236',
+      { senderName: params.senderName, originalAmendmentTitle: params.originalAmendmentTitle }
+    ),
     actionUrl: `/amendment/${params.newAmendmentId}`,
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.newAmendmentId,
@@ -2370,8 +2836,11 @@ export async function notifyGroupSupportAdded(params: {
     recipientEntityType: 'amendment',
     recipientEntityId: params.amendmentId,
     type: 'amendment_group_support',
-    title: 'Group Support Added',
-    message: `${params.groupName} has added support for ${params.amendmentTitle}`,
+    title: translateText('generated.inline.0378_group_support_added_2e4869c8'),
+    message: translateText(
+      'generated.inline.0379_groupname_has_added_support_for_amendmenttitl_8eaca2c3',
+      { groupName: params.groupName, amendmentTitle: params.amendmentTitle }
+    ),
     actionUrl: `/amendment/${params.amendmentId}`,
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
@@ -2392,8 +2861,11 @@ export async function notifyAmendmentCommentAdded(params: {
     recipientEntityType: 'amendment',
     recipientEntityId: params.amendmentId,
     type: 'amendment_comment_added',
-    title: 'New Comment',
-    message: `${params.senderName} commented on ${params.amendmentTitle}`,
+    title: translateText('generated.inline.0380_new_comment_392e915c'),
+    message: translateText(
+      'generated.inline.0381_sendername_commented_on_amendmenttitle_b366b64c',
+      { senderName: params.senderName, amendmentTitle: params.amendmentTitle }
+    ),
     actionUrl: `/amendment/${params.amendmentId}`,
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
@@ -2415,8 +2887,11 @@ export async function notifyChangeRequestCreated(params: {
     recipientEntityType: 'amendment',
     recipientEntityId: params.amendmentId,
     type: 'change_request_created',
-    title: 'Change Request Created',
-    message: `${params.senderName} has created a change request for ${params.amendmentTitle}`,
+    title: translateText('generated.inline.0382_change_request_created_93edbe54'),
+    message: translateText(
+      'generated.inline.0383_sendername_has_created_a_change_request_for_a_d95b5647',
+      { senderName: params.senderName, amendmentTitle: params.amendmentTitle }
+    ),
     actionUrl: `/amendment/${params.amendmentId}/change-requests`,
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
@@ -2439,8 +2914,11 @@ export async function notifyChangeRequestAccepted(params: {
     onBehalfOfEntityType: 'amendment',
     onBehalfOfEntityId: params.amendmentId,
     type: 'change_request_accepted',
-    title: 'Change Request Accepted',
-    message: `Your change request for ${params.amendmentTitle} has been accepted`,
+    title: translateText('generated.inline.0384_change_request_accepted_83f8e051'),
+    message: translateText(
+      'generated.inline.0385_your_change_request_for_amendmenttitle_has_be_5f1861a6',
+      { amendmentTitle: params.amendmentTitle }
+    ),
     actionUrl: `/amendment/${params.amendmentId}`,
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
@@ -2462,8 +2940,11 @@ export async function notifyChangeRequestRejected(params: {
     onBehalfOfEntityType: 'amendment',
     onBehalfOfEntityId: params.amendmentId,
     type: 'change_request_rejected',
-    title: 'Change Request Rejected',
-    message: `Your change request for ${params.amendmentTitle} has been rejected`,
+    title: translateText('generated.inline.0386_change_request_rejected_373339dd'),
+    message: translateText(
+      'generated.inline.0387_your_change_request_for_amendmenttitle_has_be_e25d5e42',
+      { amendmentTitle: params.amendmentTitle }
+    ),
     actionUrl: `/amendment/${params.amendmentId}`,
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
@@ -2488,8 +2969,15 @@ export async function notifyChangeRequestVoteCast(params: {
     onBehalfOfEntityType: 'amendment',
     onBehalfOfEntityId: params.amendmentId,
     type: 'change_request_vote_cast',
-    title: 'Vote Cast on Change Request',
-    message: `${params.senderName} voted "${params.voteType}" on your change request for ${params.amendmentTitle}`,
+    title: translateText('generated.inline.0388_vote_cast_on_change_request_760f929a'),
+    message: translateText(
+      'generated.inline.0389_sendername_voted_votetype_on_your_change_requ_40cf8f12',
+      {
+        senderName: params.senderName,
+        voteType: params.voteType,
+        amendmentTitle: params.amendmentTitle,
+      }
+    ),
     actionUrl: `/amendment/${params.amendmentId}/change-requests`,
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
@@ -2510,8 +2998,11 @@ export async function notifyVersionCreated(params: {
     recipientEntityType: 'amendment',
     recipientEntityId: params.amendmentId,
     type: 'amendment_version_created',
-    title: 'New Version Created',
-    message: `Version ${params.version} of ${params.amendmentTitle} has been created`,
+    title: translateText('generated.inline.0390_new_version_created_76d05ffb'),
+    message: translateText(
+      'generated.inline.0391_version_version_of_amendmenttitle_has_been_cr_4705187d',
+      { version: params.version, amendmentTitle: params.amendmentTitle }
+    ),
     actionUrl: `/amendment/${params.amendmentId}`,
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
@@ -2532,8 +3023,10 @@ export async function notifyVotingSessionStarted(params: {
     recipientEntityType: 'amendment',
     recipientEntityId: params.amendmentId,
     type: 'voting_session_started',
-    title: 'Voting Session Started',
-    message: `Voting has started for ${params.amendmentTitle}`,
+    title: translateText('generated.inline.0392_voting_session_started_91408a23'),
+    message: translateText('generated.inline.0393_voting_has_started_for_amendmenttitle_fe529a68', {
+      amendmentTitle: params.amendmentTitle,
+    }),
     actionUrl: params.eventId ? `/event/${params.eventId}` : `/amendment/${params.amendmentId}`,
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
@@ -2555,8 +3048,11 @@ export async function notifyVotingSessionCompleted(params: {
     recipientEntityType: 'amendment',
     recipientEntityId: params.amendmentId,
     type: 'voting_session_completed',
-    title: 'Voting Session Completed',
-    message: `Voting has completed for ${params.amendmentTitle}`,
+    title: translateText('generated.inline.0394_voting_session_completed_e1475ca2'),
+    message: translateText(
+      'generated.inline.0395_voting_has_completed_for_amendmenttitle_b4a46b3a',
+      { amendmentTitle: params.amendmentTitle }
+    ),
     actionUrl: params.eventId ? `/event/${params.eventId}` : `/amendment/${params.amendmentId}`,
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
@@ -2582,7 +3078,14 @@ export async function notifyAmendmentVoted(params: {
     onBehalfOfEntityId: params.amendmentId,
     type: 'amendment_vote_cast',
     title: params.voteType === 'upvote' ? 'Amendment Upvoted' : 'Amendment Downvoted',
-    message: `${params.senderName} has ${params.voteType}d ${params.amendmentTitle}`,
+    message: translateText(
+      'generated.inline.0396_sendername_has_votetype_d_amendmenttitle_8190a4fe',
+      {
+        senderName: params.senderName,
+        voteType: params.voteType,
+        amendmentTitle: params.amendmentTitle,
+      }
+    ),
     actionUrl: `/amendment/${params.amendmentId}`,
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
@@ -2603,8 +3106,11 @@ export async function notifyAmendmentNewSubscriber(params: {
     recipientEntityType: 'amendment',
     recipientEntityId: params.amendmentId,
     type: 'amendment_new_subscriber',
-    title: 'New Subscriber',
-    message: `${params.senderName} has subscribed to ${params.amendmentTitle}`,
+    title: translateText('generated.inline.0282_new_subscriber_325d57f5'),
+    message: translateText(
+      'generated.inline.0397_sendername_has_subscribed_to_amendmenttitle_98ae38ec',
+      { senderName: params.senderName, amendmentTitle: params.amendmentTitle }
+    ),
     actionUrl: `/amendment/${params.amendmentId}`,
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
@@ -2638,8 +3144,11 @@ export async function notifyBlogNewSubscriber(params: {
     recipientEntityType: 'blog',
     recipientEntityId: params.blogId,
     type: 'blog_new_subscriber',
-    title: 'New Subscriber',
-    message: `${params.senderName} has subscribed to ${params.blogTitle}`,
+    title: translateText('generated.inline.0282_new_subscriber_325d57f5'),
+    message: translateText(
+      'generated.inline.0398_sendername_has_subscribed_to_blogtitle_259cb884',
+      { senderName: params.senderName, blogTitle: params.blogTitle }
+    ),
     actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
@@ -2668,7 +3177,11 @@ export async function notifyBlogVoted(params: {
       onBehalfOfEntityId: params.blogId,
       type: 'blog_vote_cast',
       title: params.voteType === 'upvote' ? 'Blog Upvoted' : 'Blog Downvoted',
-      message: `${params.senderName} has ${params.voteType}d ${params.blogTitle}`,
+      message: translateText('generated.inline.0399_sendername_has_votetype_d_blogtitle_ebc5ed35', {
+        senderName: params.senderName,
+        voteType: params.voteType,
+        blogTitle: params.blogTitle,
+      }),
       actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId),
       relatedEntityType: 'blog',
       relatedBlogId: params.blogId,
@@ -2681,7 +3194,11 @@ export async function notifyBlogVoted(params: {
     recipientEntityId: params.blogId,
     type: 'blog_vote_cast',
     title: params.voteType === 'upvote' ? 'Blog Upvoted' : 'Blog Downvoted',
-    message: `${params.senderName} has ${params.voteType}d ${params.blogTitle}`,
+    message: translateText('generated.inline.0399_sendername_has_votetype_d_blogtitle_ebc5ed35', {
+      senderName: params.senderName,
+      voteType: params.voteType,
+      blogTitle: params.blogTitle,
+    }),
     actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
@@ -2708,8 +3225,10 @@ export async function notifyBloggerJoined(params: {
       onBehalfOfEntityType: 'blog',
       onBehalfOfEntityId: params.blogId,
       type: 'blog_writer_joined',
-      title: 'Writer Approved',
-      message: `You are now a writer for ${params.blogTitle}`,
+      title: translateText('generated.inline.0400_writer_approved_fe632d72'),
+      message: translateText('generated.inline.0401_you_are_now_a_writer_for_blogtitle_a9a89a7a', {
+        blogTitle: params.blogTitle,
+      }),
       actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId),
       relatedEntityType: 'blog',
       relatedBlogId: params.blogId,
@@ -2721,7 +3240,7 @@ export async function notifyBloggerJoined(params: {
     recipientEntityType: 'blog',
     recipientEntityId: params.blogId,
     type: 'blog_writer_joined',
-    title: 'Writer Joined',
+    title: translateText('generated.inline.0402_writer_joined_5b6593ed'),
     message: params.senderName
       ? `${params.senderName} has joined ${params.blogTitle} as a writer`
       : `A new writer has joined ${params.blogTitle}`,
@@ -2750,8 +3269,11 @@ export async function notifyBloggerRoleChanged(params: {
     onBehalfOfEntityType: 'blog',
     onBehalfOfEntityId: params.blogId,
     type: 'blog_role_changed',
-    title: 'Role Changed',
-    message: `Your role in ${params.blogTitle} has been changed to ${params.newRole}`,
+    title: translateText('generated.inline.0209_role_changed_08011f35'),
+    message: translateText(
+      'generated.inline.0403_your_role_in_blogtitle_has_been_changed_to_ne_84c8ab92',
+      { blogTitle: params.blogTitle, newRole: params.newRole }
+    ),
     actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
@@ -2762,8 +3284,11 @@ export async function notifyBloggerRoleChanged(params: {
     recipientEntityType: 'blog',
     recipientEntityId: params.blogId,
     type: 'blog_role_changed',
-    title: 'Role Changed',
-    message: `A writer's role in ${params.blogTitle} has been changed to ${params.newRole}`,
+    title: translateText('generated.inline.0209_role_changed_08011f35'),
+    message: translateText(
+      'generated.inline.0404_a_writer_s_role_in_blogtitle_has_been_changed_a7f65972',
+      { blogTitle: params.blogTitle, newRole: params.newRole }
+    ),
     actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId, '/bloggers'),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
@@ -2787,8 +3312,11 @@ export async function notifyBlogCommentAdded(params: {
     recipientEntityType: 'blog',
     recipientEntityId: params.blogId,
     type: 'blog_comment_added',
-    title: 'New Comment',
-    message: `${params.senderName} commented on ${params.blogTitle}`,
+    title: translateText('generated.inline.0380_new_comment_392e915c'),
+    message: translateText('generated.inline.0405_sendername_commented_on_blogtitle_eed590c0', {
+      senderName: params.senderName,
+      blogTitle: params.blogTitle,
+    }),
     actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
@@ -2812,8 +3340,11 @@ export async function notifyBlogWriterRequest(params: {
     recipientEntityType: 'blog',
     recipientEntityId: params.blogId,
     type: 'blog_writer_request',
-    title: 'Writer Request',
-    message: `${params.senderName} has requested to write for ${params.blogTitle}`,
+    title: translateText('generated.inline.0406_writer_request_d8665c58'),
+    message: translateText(
+      'generated.inline.0407_sendername_has_requested_to_write_for_blogtit_ae9447b5',
+      { senderName: params.senderName, blogTitle: params.blogTitle }
+    ),
     actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
@@ -2838,8 +3369,11 @@ export async function notifyBloggerInvited(params: {
     onBehalfOfEntityType: 'blog',
     onBehalfOfEntityId: params.blogId,
     type: 'blog_writer_invite',
-    title: 'Writer Invitation',
-    message: `You've been invited to write for ${params.blogTitle}`,
+    title: translateText('generated.inline.0408_writer_invitation_99c91770'),
+    message: translateText(
+      'generated.inline.0409_you_ve_been_invited_to_write_for_blogtitle_9d57fc29',
+      { blogTitle: params.blogTitle }
+    ),
     actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
@@ -2850,8 +3384,11 @@ export async function notifyBloggerInvited(params: {
     recipientEntityType: 'blog',
     recipientEntityId: params.blogId,
     type: 'blog_writer_invite',
-    title: 'Writer Invited',
-    message: `A writer invitation has been sent for ${params.blogTitle}`,
+    title: translateText('generated.inline.0410_writer_invited_62b6f8a4'),
+    message: translateText(
+      'generated.inline.0411_a_writer_invitation_has_been_sent_for_blogtit_5d25a285',
+      { blogTitle: params.blogTitle }
+    ),
     actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId, '/bloggers'),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
@@ -2876,8 +3413,10 @@ export async function notifyBloggerRemoved(params: {
     onBehalfOfEntityType: 'blog',
     onBehalfOfEntityId: params.blogId,
     type: 'blog_writer_removed',
-    title: 'Removed from Blog',
-    message: `You have been removed from ${params.blogTitle}`,
+    title: translateText('generated.inline.0412_removed_from_blog_007ce38f'),
+    message: translateText('generated.inline.0413_you_have_been_removed_from_blogtitle_265a2498', {
+      blogTitle: params.blogTitle,
+    }),
     actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
@@ -2888,8 +3427,11 @@ export async function notifyBloggerRemoved(params: {
     recipientEntityType: 'blog',
     recipientEntityId: params.blogId,
     type: 'blog_writer_removed',
-    title: 'Writer Removed',
-    message: `A writer has been removed from ${params.blogTitle}`,
+    title: translateText('generated.inline.0414_writer_removed_8255beaa'),
+    message: translateText(
+      'generated.inline.0415_a_writer_has_been_removed_from_blogtitle_331c7578',
+      { blogTitle: params.blogTitle }
+    ),
     actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId, '/bloggers'),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
@@ -2921,8 +3463,11 @@ export async function notifyBlogRoleCreated(params: {
     recipientEntityType: 'blog',
     recipientEntityId: params.blogId,
     type: 'blog_role_created',
-    title: 'New Role Created',
-    message: `A new role "${params.roleName}" has been created in ${params.blogTitle}`,
+    title: translateText('generated.inline.0266_new_role_created_8d846bec'),
+    message: translateText(
+      'generated.inline.0416_a_new_role_rolename_has_been_created_in_blogt_7fe34f7e',
+      { roleName: params.roleName, blogTitle: params.blogTitle }
+    ),
     actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId, '/bloggers'),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
@@ -2945,8 +3490,11 @@ export async function notifyBlogRoleDeleted(params: {
     recipientEntityType: 'blog',
     recipientEntityId: params.blogId,
     type: 'blog_role_deleted',
-    title: 'Role Deleted',
-    message: `The role "${params.roleName}" has been deleted from ${params.blogTitle}`,
+    title: translateText('generated.inline.0268_role_deleted_ac20674d'),
+    message: translateText(
+      'generated.inline.0417_the_role_rolename_has_been_deleted_from_blogt_1e1cb1e2',
+      { roleName: params.roleName, blogTitle: params.blogTitle }
+    ),
     actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId, '/bloggers'),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
@@ -2966,8 +3514,11 @@ export async function notifyBlogRoleUpdated(params: {
     recipientEntityType: 'blog',
     recipientEntityId: params.blogId,
     type: 'blog_role_changed',
-    title: 'Role Updated',
-    message: `The role "${params.roleName}" has been updated in ${params.blogTitle}`,
+    title: translateText('generated.inline.0418_role_updated_ede48dff'),
+    message: translateText(
+      'generated.inline.0419_the_role_rolename_has_been_updated_in_blogtit_e45a54a8',
+      { roleName: params.roleName, blogTitle: params.blogTitle }
+    ),
     actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId, '/bloggers'),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
@@ -2991,8 +3542,10 @@ export async function notifyStandaloneTodoAssigned(params: {
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     type: 'todo_assigned',
-    title: 'Task Assigned',
-    message: `You have been assigned "${params.todoTitle}"`,
+    title: translateText('generated.inline.0298_task_assigned_e55fb748'),
+    message: translateText('generated.inline.0420_you_have_been_assigned_todotitle_dbaf4438', {
+      todoTitle: params.todoTitle,
+    }),
     actionUrl: `/todos`,
   });
 }
@@ -3010,8 +3563,11 @@ export async function notifyTodoCompleted(params: {
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     type: 'todo_completed',
-    title: 'Task Completed',
-    message: `${params.senderName} has completed "${params.todoTitle}"`,
+    title: translateText('generated.inline.0421_task_completed_3ce609d4'),
+    message: translateText('generated.inline.0422_sendername_has_completed_todotitle_9e80794c', {
+      senderName: params.senderName,
+      todoTitle: params.todoTitle,
+    }),
     actionUrl: `/todos`,
   });
 }
@@ -3029,8 +3585,11 @@ export async function notifyStandaloneTodoDeleted(params: {
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     type: 'todo_deleted',
-    title: 'Task Deleted',
-    message: `${params.senderName} has deleted "${params.todoTitle}"`,
+    title: translateText('generated.inline.0302_task_deleted_5909bb84'),
+    message: translateText('generated.inline.0423_sendername_has_deleted_todotitle_d02cf6fe', {
+      senderName: params.senderName,
+      todoTitle: params.todoTitle,
+    }),
     actionUrl: `/todos`,
   });
 }
@@ -3048,8 +3607,11 @@ export async function notifyTodoDueSoon(params: {
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     type: 'todo_due_soon',
-    title: 'Task Due Soon',
-    message: `"${params.todoTitle}" is due in ${params.dueIn}`,
+    title: translateText('generated.inline.0424_task_due_soon_dd4ed377'),
+    message: translateText('generated.inline.0425_todotitle_is_due_in_duein_1da1e709', {
+      todoTitle: params.todoTitle,
+      dueIn: params.dueIn,
+    }),
     actionUrl: `/todos`,
   });
 }
@@ -3066,8 +3628,10 @@ export async function notifyTodoOverdue(params: {
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     type: 'todo_overdue',
-    title: 'Task Overdue',
-    message: `"${params.todoTitle}" is overdue`,
+    title: translateText('generated.inline.0426_task_overdue_a20686e7'),
+    message: translateText('generated.inline.0427_todotitle_is_overdue_000e6737', {
+      todoTitle: params.todoTitle,
+    }),
     actionUrl: `/todos`,
   });
 }
@@ -3088,8 +3652,10 @@ export async function notifyNewFollower(params: {
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     type: 'new_follower',
-    title: 'New Follower',
-    message: `${params.senderName} started following you`,
+    title: translateText('generated.inline.0428_new_follower_8b9e650c'),
+    message: translateText('generated.inline.0429_sendername_started_following_you_0ccde702', {
+      senderName: params.senderName,
+    }),
     actionUrl: `/user/${params.senderId}`,
     relatedUserId: params.senderId,
   });
@@ -3112,8 +3678,10 @@ export async function notifyDirectMessage(params: {
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     type: 'direct_message',
-    title: 'New Message',
-    message: `${params.senderName} sent you a message`,
+    title: translateText('generated.inline.0430_new_message_1c3b20d3'),
+    message: translateText('generated.inline.0431_sendername_sent_you_a_message_ad5147cb', {
+      senderName: params.senderName,
+    }),
     actionUrl: buildMessagesConversationActionUrl(params.conversationId),
     relatedUserId: params.senderId,
   });
@@ -3132,8 +3700,11 @@ export async function notifyConversationRequest(params: {
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     type: 'conversation_request',
-    title: 'Conversation Request',
-    message: `${params.senderName} wants to start a conversation with you`,
+    title: translateText('generated.inline.0432_conversation_request_cc212486'),
+    message: translateText(
+      'generated.inline.0433_sendername_wants_to_start_a_conversation_with_1cf59fd1',
+      { senderName: params.senderName }
+    ),
     actionUrl: buildMessagesConversationActionUrl(params.conversationId),
     relatedUserId: params.senderId,
   });
@@ -3152,8 +3723,11 @@ export async function notifyConversationAccepted(params: {
     senderId: params.senderId,
     recipientUserId: params.recipientUserId,
     type: 'conversation_accepted',
-    title: 'Conversation Accepted',
-    message: `${params.senderName} accepted your conversation request`,
+    title: translateText('generated.inline.0434_conversation_accepted_77e0a743'),
+    message: translateText(
+      'generated.inline.0435_sendername_accepted_your_conversation_request_fa9622dc',
+      { senderName: params.senderName }
+    ),
     actionUrl: buildMessagesConversationActionUrl(params.conversationId),
     relatedUserId: params.senderId,
   });
@@ -3180,8 +3754,11 @@ export async function notifyGroupInvitationAccepted(params: {
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
     type: 'group_invitation_accepted',
-    title: 'Invitation Accepted',
-    message: `${params.senderName} has accepted the invitation to join ${params.groupName}`,
+    title: translateText('generated.inline.0436_invitation_accepted_d822e43c'),
+    message: translateText(
+      'generated.inline.0437_sendername_has_accepted_the_invitation_to_joi_b52afbf5',
+      { senderName: params.senderName, groupName: params.groupName }
+    ),
     actionUrl: `/group/${params.groupId}/memberships`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -3203,8 +3780,11 @@ export async function notifyGroupInvitationDeclined(params: {
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
     type: 'group_invitation_declined',
-    title: 'Invitation Declined',
-    message: `${params.senderName} has declined the invitation to join ${params.groupName}`,
+    title: translateText('generated.inline.0438_invitation_declined_241a5042'),
+    message: translateText(
+      'generated.inline.0439_sendername_has_declined_the_invitation_to_joi_7a23112f',
+      { senderName: params.senderName, groupName: params.groupName }
+    ),
     actionUrl: `/group/${params.groupId}/memberships`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -3226,8 +3806,11 @@ export async function notifyGroupRequestWithdrawn(params: {
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
     type: 'group_request_withdrawn',
-    title: 'Request Withdrawn',
-    message: `${params.senderName} has withdrawn their request to join ${params.groupName}`,
+    title: translateText('generated.inline.0440_request_withdrawn_9f2d0e6d'),
+    message: translateText(
+      'generated.inline.0441_sendername_has_withdrawn_their_request_to_joi_2b63ef1c',
+      { senderName: params.senderName, groupName: params.groupName }
+    ),
     actionUrl: `/group/${params.groupId}/memberships`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -3251,8 +3834,11 @@ export async function notifyEventInvitationAccepted(params: {
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
     type: 'event_invitation_accepted',
-    title: 'Invitation Accepted',
-    message: `${params.senderName} has accepted the invitation to ${params.eventTitle}`,
+    title: translateText('generated.inline.0436_invitation_accepted_d822e43c'),
+    message: translateText(
+      'generated.inline.0442_sendername_has_accepted_the_invitation_to_eve_72fe46e9',
+      { senderName: params.senderName, eventTitle: params.eventTitle }
+    ),
     actionUrl: `/event/${params.eventId}/participants`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
@@ -3274,8 +3860,11 @@ export async function notifyEventInvitationDeclined(params: {
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
     type: 'event_invitation_declined',
-    title: 'Invitation Declined',
-    message: `${params.senderName} has declined the invitation to ${params.eventTitle}`,
+    title: translateText('generated.inline.0438_invitation_declined_241a5042'),
+    message: translateText(
+      'generated.inline.0443_sendername_has_declined_the_invitation_to_eve_62c07ce2',
+      { senderName: params.senderName, eventTitle: params.eventTitle }
+    ),
     actionUrl: `/event/${params.eventId}/participants`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
@@ -3297,8 +3886,11 @@ export async function notifyEventRequestWithdrawn(params: {
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
     type: 'event_request_withdrawn',
-    title: 'Request Withdrawn',
-    message: `${params.senderName} has withdrawn their request to participate in ${params.eventTitle}`,
+    title: translateText('generated.inline.0440_request_withdrawn_9f2d0e6d'),
+    message: translateText(
+      'generated.inline.0444_sendername_has_withdrawn_their_request_to_par_96ae53ff',
+      { senderName: params.senderName, eventTitle: params.eventTitle }
+    ),
     actionUrl: `/event/${params.eventId}/participants`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
@@ -3322,8 +3914,11 @@ export async function notifyCollaborationInvitationAccepted(params: {
     recipientEntityType: 'amendment',
     recipientEntityId: params.amendmentId,
     type: 'collaboration_invitation_accepted',
-    title: 'Invitation Accepted',
-    message: `${params.senderName} has accepted the invitation to collaborate on ${params.amendmentTitle}`,
+    title: translateText('generated.inline.0436_invitation_accepted_d822e43c'),
+    message: translateText(
+      'generated.inline.0445_sendername_has_accepted_the_invitation_to_col_6549ab0a',
+      { senderName: params.senderName, amendmentTitle: params.amendmentTitle }
+    ),
     actionUrl: `/amendment/${params.amendmentId}/collaborators`,
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
@@ -3345,8 +3940,11 @@ export async function notifyCollaborationInvitationDeclined(params: {
     recipientEntityType: 'amendment',
     recipientEntityId: params.amendmentId,
     type: 'collaboration_invitation_declined',
-    title: 'Invitation Declined',
-    message: `${params.senderName} has declined the invitation to collaborate on ${params.amendmentTitle}`,
+    title: translateText('generated.inline.0438_invitation_declined_241a5042'),
+    message: translateText(
+      'generated.inline.0446_sendername_has_declined_the_invitation_to_col_315c818f',
+      { senderName: params.senderName, amendmentTitle: params.amendmentTitle }
+    ),
     actionUrl: `/amendment/${params.amendmentId}/collaborators`,
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
@@ -3368,8 +3966,11 @@ export async function notifyCollaborationRequestWithdrawn(params: {
     recipientEntityType: 'amendment',
     recipientEntityId: params.amendmentId,
     type: 'collaboration_request_withdrawn',
-    title: 'Request Withdrawn',
-    message: `${params.senderName} has withdrawn their request to collaborate on ${params.amendmentTitle}`,
+    title: translateText('generated.inline.0440_request_withdrawn_9f2d0e6d'),
+    message: translateText(
+      'generated.inline.0447_sendername_has_withdrawn_their_request_to_col_2c7830b5',
+      { senderName: params.senderName, amendmentTitle: params.amendmentTitle }
+    ),
     actionUrl: `/amendment/${params.amendmentId}/collaborators`,
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
@@ -3395,8 +3996,11 @@ export async function notifyBlogInvitationAccepted(params: {
     recipientEntityType: 'blog',
     recipientEntityId: params.blogId,
     type: 'blog_invitation_accepted',
-    title: 'Invitation Accepted',
-    message: `${params.senderName} has accepted the invitation to write for ${params.blogTitle}`,
+    title: translateText('generated.inline.0436_invitation_accepted_d822e43c'),
+    message: translateText(
+      'generated.inline.0448_sendername_has_accepted_the_invitation_to_wri_bd6ea7ef',
+      { senderName: params.senderName, blogTitle: params.blogTitle }
+    ),
     actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId, '/bloggers'),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
@@ -3420,8 +4024,11 @@ export async function notifyBlogInvitationDeclined(params: {
     recipientEntityType: 'blog',
     recipientEntityId: params.blogId,
     type: 'blog_invitation_declined',
-    title: 'Invitation Declined',
-    message: `${params.senderName} has declined the invitation to write for ${params.blogTitle}`,
+    title: translateText('generated.inline.0438_invitation_declined_241a5042'),
+    message: translateText(
+      'generated.inline.0449_sendername_has_declined_the_invitation_to_wri_40ee476f',
+      { senderName: params.senderName, blogTitle: params.blogTitle }
+    ),
     actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId, '/bloggers'),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
@@ -3445,8 +4052,11 @@ export async function notifyBlogRequestWithdrawn(params: {
     recipientEntityType: 'blog',
     recipientEntityId: params.blogId,
     type: 'blog_request_withdrawn',
-    title: 'Request Withdrawn',
-    message: `${params.senderName} has withdrawn their request to write for ${params.blogTitle}`,
+    title: translateText('generated.inline.0440_request_withdrawn_9f2d0e6d'),
+    message: translateText(
+      'generated.inline.0450_sendername_has_withdrawn_their_request_to_wri_f8892c02',
+      { senderName: params.senderName, blogTitle: params.blogTitle }
+    ),
     actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId, '/bloggers'),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
@@ -3470,8 +4080,11 @@ export async function notifyBlogWriterLeft(params: {
     recipientEntityType: 'blog',
     recipientEntityId: params.blogId,
     type: 'blog_writer_left',
-    title: 'Writer Left',
-    message: `${params.senderName} has left ${params.blogTitle}`,
+    title: translateText('generated.inline.0451_writer_left_48f8f90a'),
+    message: translateText('generated.inline.0452_sendername_has_left_blogtitle_c39c4bdf', {
+      senderName: params.senderName,
+      blogTitle: params.blogTitle,
+    }),
     actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId, '/bloggers'),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
@@ -3496,8 +4109,10 @@ export async function notifyAmendmentProfileUpdated(params: {
     recipientEntityType: 'amendment',
     recipientEntityId: params.amendmentId,
     type: 'amendment_profile_updated',
-    title: 'Amendment Updated',
-    message: `${params.amendmentTitle} has been updated`,
+    title: translateText('generated.inline.0453_amendment_updated_494ef8bc'),
+    message: translateText('generated.inline.0454_amendmenttitle_has_been_updated_a54424c0', {
+      amendmentTitle: params.amendmentTitle,
+    }),
     actionUrl: `/amendment/${params.amendmentId}`,
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
@@ -3522,8 +4137,11 @@ export async function notifyAmendmentTargetSet(params: {
     recipientEntityType: 'amendment',
     recipientEntityId: params.amendmentId,
     type: 'amendment_target_set',
-    title: 'Target Set',
-    message: `${params.amendmentTitle} has been targeted at ${target}`,
+    title: translateText('generated.inline.0455_target_set_c7101ece'),
+    message: translateText(
+      'generated.inline.0456_amendmenttitle_has_been_targeted_at_target_c8b3c9d7',
+      { amendmentTitle: params.amendmentTitle, target: target }
+    ),
     actionUrl: `/amendment/${params.amendmentId}/process`,
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
@@ -3547,8 +4165,14 @@ export async function notifyAmendmentRejected(params: {
     recipientEntityType: 'amendment',
     recipientEntityId: params.amendmentId,
     type: 'amendment_rejected',
-    title: 'Amendment Rejected',
-    message: `${params.amendmentTitle} has been rejected${params.eventTitle ? ` at ${params.eventTitle}` : ''}`,
+    title: translateText('generated.inline.0457_amendment_rejected_082d510c'),
+    message: translateText(
+      'generated.inline.0458_amendmenttitle_has_been_rejected_value935e_79bef498',
+      {
+        amendmentTitle: params.amendmentTitle,
+        value935e: params.eventTitle ? ` at ${params.eventTitle}` : '',
+      }
+    ),
     actionUrl: `/amendment/${params.amendmentId}`,
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,
@@ -3571,8 +4195,10 @@ export async function notifyBlogUpdated(params: {
     recipientEntityType: 'blog',
     recipientEntityId: params.blogId,
     type: 'blog_updated',
-    title: 'Blog Updated',
-    message: `${params.blogTitle} has been updated`,
+    title: translateText('generated.inline.0459_blog_updated_e86c655d'),
+    message: translateText('generated.inline.0460_blogtitle_has_been_updated_ae7bafc8', {
+      blogTitle: params.blogTitle,
+    }),
     actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
@@ -3592,8 +4218,10 @@ export async function notifyBlogDeleted(params: {
     recipientEntityType: 'blog',
     recipientEntityId: params.blogId,
     type: 'blog_deleted',
-    title: 'Blog Deleted',
-    message: `${params.blogTitle} has been deleted`,
+    title: translateText('generated.inline.0461_blog_deleted_3a34f700'),
+    message: translateText('generated.inline.0462_blogtitle_has_been_deleted_23f060db', {
+      blogTitle: params.blogTitle,
+    }),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
   });
@@ -3614,8 +4242,10 @@ export async function notifyBlogPublished(params: {
     recipientEntityType: 'blog',
     recipientEntityId: params.blogId,
     type: 'blog_published',
-    title: 'Blog Published',
-    message: `${params.blogTitle} has been published`,
+    title: translateText('generated.inline.0463_blog_published_0101bd05'),
+    message: translateText('generated.inline.0464_blogtitle_has_been_published_2731324a', {
+      blogTitle: params.blogTitle,
+    }),
     actionUrl: buildBlogUrl(params.blogId, params.groupId, params.ownerId),
     relatedEntityType: 'blog',
     relatedBlogId: params.blogId,
@@ -3635,8 +4265,10 @@ export async function notifyGroupProfileUpdated(params: {
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
     type: 'group_profile_updated',
-    title: 'Group Updated',
-    message: `${params.groupName} has been updated`,
+    title: translateText('generated.inline.0465_group_updated_da5298de'),
+    message: translateText('generated.inline.0466_groupname_has_been_updated_de126c73', {
+      groupName: params.groupName,
+    }),
     actionUrl: `/group/${params.groupId}`,
     relatedEntityType: 'group',
     relatedGroupId: params.groupId,
@@ -3656,8 +4288,10 @@ export async function notifyEventProfileUpdated(params: {
     recipientEntityType: 'event',
     recipientEntityId: params.eventId,
     type: 'event_profile_updated',
-    title: 'Event Updated',
-    message: `${params.eventTitle} has been updated`,
+    title: translateText('generated.inline.0467_event_updated_55a0d58e'),
+    message: translateText('generated.inline.0468_eventtitle_has_been_updated_aea70752', {
+      eventTitle: params.eventTitle,
+    }),
     actionUrl: `/event/${params.eventId}`,
     relatedEntityType: 'event',
     relatedEventId: params.eventId,
@@ -3679,8 +4313,11 @@ export async function notifyGroupNewAmendment(params: {
     recipientEntityType: 'group',
     recipientEntityId: params.groupId,
     type: 'group_new_amendment',
-    title: 'New Amendment',
-    message: `A new amendment "${params.amendmentTitle}" has been linked to ${params.groupName}`,
+    title: translateText('generated.inline.0469_new_amendment_8b469d78'),
+    message: translateText(
+      'generated.inline.0470_a_new_amendment_amendmenttitle_has_been_linke_cc88882c',
+      { amendmentTitle: params.amendmentTitle, groupName: params.groupName }
+    ),
     actionUrl: `/amendment/${params.amendmentId}`,
     relatedEntityType: 'amendment',
     relatedAmendmentId: params.amendmentId,

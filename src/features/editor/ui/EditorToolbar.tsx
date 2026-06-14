@@ -26,6 +26,7 @@ import type {
   EditorPresencePeer,
   EditorCapabilities,
 } from '../types';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface EditorToolbarProps {
   /** Entity type for the editor */
@@ -142,15 +143,19 @@ export function EditorToolbar({
         {/* Online users indicator */}
         {showPresence && (
           <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">
-              {onlinePeers.length} {onlinePeers.length === 1 ? 'user' : 'users'} online
+            <Users className="text-muted-foreground h-4 w-4" />
+            <span className="text-muted-foreground text-sm">
+              {onlinePeers.length}{' '}
+              {onlinePeers.length === 1
+                ? translateText('generated.inline.0026_user_12dea96f')
+                : translateText('generated.inline.0027_users_5b7dcd14')}
+              {translateText('generated.inline.0035_online_2dbc2fd2')}
             </span>
             <div className="flex -space-x-2">
               {onlinePeers.slice(0, 5).map(peer => (
                 <Avatar
                   key={peer.peerId}
-                  className="h-6 w-6 border-2 border-background"
+                  className="border-background h-6 w-6 border-2"
                   title={peer.name}
                 >
                   {peer.avatar ? <AvatarImage src={peer.avatar} alt={peer.name} /> : null}
@@ -163,7 +168,7 @@ export function EditorToolbar({
                 </Avatar>
               ))}
               {onlinePeers.length > 5 && (
-                <Avatar className="h-6 w-6 border-2 border-background">
+                <Avatar className="border-background h-6 w-6 border-2">
                   <AvatarFallback className="text-xs">+{onlinePeers.length - 5}</AvatarFallback>
                 </Avatar>
               )}

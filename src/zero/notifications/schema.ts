@@ -1,5 +1,9 @@
-import { z } from 'zod'
-import { timestampSchema, nullableTimestampSchema, jsonBooleanRecordSchema, jsonBooleanOrStringRecordSchema } from '../shared/helpers'
+import { z } from 'zod';
+import {
+  timestampSchema,
+  jsonBooleanRecordSchema,
+  jsonBooleanOrStringRecordSchema,
+} from '../shared/helpers';
 
 // ============================================
 // Notification
@@ -33,14 +37,14 @@ const baseNotificationSchema = z.object({
   recipient_blog_id: z.string().nullable(),
   category: z.string().nullable(),
   created_at: timestampSchema,
-})
+});
 
-export const selectNotificationSchema = baseNotificationSchema
+export const selectNotificationSchema = baseNotificationSchema;
 export const createNotificationSchema = baseNotificationSchema
   .omit({ id: true, created_at: true, is_read: true })
-  .extend({ id: z.string() })
-export const markReadNotificationSchema = z.object({ id: z.string() })
-export const deleteNotificationSchema = z.object({ id: z.string() })
+  .extend({ id: z.string() });
+export const markReadNotificationSchema = z.object({ id: z.string() });
+export const deleteNotificationSchema = z.object({ id: z.string() });
 
 // ============================================
 // Push Subscription
@@ -54,13 +58,13 @@ const basePushSubscriptionSchema = z.object({
   user_agent: z.string().nullable(),
   created_at: timestampSchema,
   updated_at: timestampSchema,
-})
+});
 
-export const selectPushSubscriptionSchema = basePushSubscriptionSchema
+export const selectPushSubscriptionSchema = basePushSubscriptionSchema;
 export const createPushSubscriptionSchema = basePushSubscriptionSchema
   .omit({ id: true, user_id: true, created_at: true, updated_at: true })
-  .extend({ id: z.string() })
-export const deletePushSubscriptionSchema = z.object({ id: z.string() })
+  .extend({ id: z.string() });
+export const deletePushSubscriptionSchema = z.object({ id: z.string() });
 
 // ============================================
 // Notification Setting
@@ -78,12 +82,12 @@ const baseNotificationSettingSchema = z.object({
   timeline_settings: jsonBooleanOrStringRecordSchema.nullable(),
   created_at: timestampSchema,
   updated_at: timestampSchema,
-})
+});
 
-export const selectNotificationSettingSchema = baseNotificationSettingSchema
+export const selectNotificationSettingSchema = baseNotificationSettingSchema;
 export const createNotificationSettingSchema = baseNotificationSettingSchema
   .omit({ id: true, created_at: true, updated_at: true, user_id: true })
-  .extend({ id: z.string() })
+  .extend({ id: z.string() });
 export const updateNotificationSettingSchema = baseNotificationSettingSchema
   .pick({
     group_notifications: true,
@@ -96,14 +100,14 @@ export const updateNotificationSettingSchema = baseNotificationSettingSchema
     timeline_settings: true,
   })
   .partial()
-  .extend({ id: z.string() })
+  .extend({ id: z.string() });
 
 // ============================================
 // Inferred Types
 // ============================================
-export type Notification = z.infer<typeof selectNotificationSchema>
-export type PushSubscription = z.infer<typeof selectPushSubscriptionSchema>
-export type NotificationSetting = z.infer<typeof selectNotificationSettingSchema>
+export type Notification = z.infer<typeof selectNotificationSchema>;
+export type PushSubscription = z.infer<typeof selectPushSubscriptionSchema>;
+export type NotificationSetting = z.infer<typeof selectNotificationSettingSchema>;
 
 // ============================================
 // Notification Read (entity-level shared read tracking)
@@ -115,11 +119,11 @@ const baseNotificationReadSchema = z.object({
   entity_id: z.string(),
   read_by_user_id: z.string().nullable(),
   read_at: timestampSchema,
-})
+});
 
-export const selectNotificationReadSchema = baseNotificationReadSchema
+export const selectNotificationReadSchema = baseNotificationReadSchema;
 export const createNotificationReadSchema = baseNotificationReadSchema
-  .omit({ id: true, read_at: true })
-  .extend({ id: z.string() })
-export const deleteNotificationReadSchema = z.object({ id: z.string() })
-export type NotificationRead = z.infer<typeof selectNotificationReadSchema>
+  .omit({ id: true, read_at: true, read_by_user_id: true })
+  .extend({ id: z.string() });
+export const deleteNotificationReadSchema = z.object({ id: z.string() });
+export type NotificationRead = z.infer<typeof selectNotificationReadSchema>;

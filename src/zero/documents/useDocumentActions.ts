@@ -19,9 +19,7 @@ export function useDocumentActions() {
     (args: Parameters<typeof mutators.documents.create>[0]) => {
       const result = zero.mutate(mutators.documents.create(args));
       toast.success(t('features.documents.toasts.created'));
-      onServerError(result, () =>
-        toast.error(t('features.documents.toasts.createFailed', 'Failed to create document'))
-      );
+      onServerError(result, () => toast.error(t('features.documents.toasts.createFailed')));
       return result;
     },
     [zero]

@@ -16,6 +16,7 @@ import {
   InlineComboboxInput,
   InlineComboboxItem,
 } from '@/features/shared/ui/ui/inline-combobox.tsx';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export function EmojiInputElement(props: PlateElementProps) {
   const { children, editor, element } = props;
@@ -43,7 +44,11 @@ export function EmojiInputElement(props: PlateElementProps) {
         <InlineComboboxInput />
 
         <InlineComboboxContent>
-          {!isPending && <InlineComboboxEmpty>No results</InlineComboboxEmpty>}
+          {!isPending && (
+            <InlineComboboxEmpty>
+              {translateText('generated.inline.1147_no_results_b993b0c5')}
+            </InlineComboboxEmpty>
+          )}
 
           <InlineComboboxGroup>
             {filteredEmojis.map(emoji => (

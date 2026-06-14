@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/u
 import { Badge } from '@/features/shared/ui/ui/badge.tsx';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar.tsx';
 import { User as UserIcon } from 'lucide-react';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface UserSelectCardProps {
   user: {
@@ -27,13 +28,15 @@ export function UserSelectCard({ user }: UserSelectCardProps) {
           </Avatar>
           <div className="flex-1">
             <div className="flex items-start justify-between gap-2">
-              <CardTitle className="text-base">{user.name || 'Unnamed User'}</CardTitle>
+              <CardTitle className="text-base">
+                {user.name || translateText('generated.inline.0140_unnamed_user_7e1c1a5e')}
+              </CardTitle>
               <Badge variant="outline" className="flex-shrink-0">
                 <UserIcon className="mr-1 h-3 w-3" />
-                User
+                {translateText('generated.inline.0090_user_9f8a2389')}
               </Badge>
             </div>
-            <div className="text-xs text-muted-foreground">
+            <div className="text-muted-foreground text-xs">
               {user.handle ? `@${user.handle}` : user.contactEmail}
             </div>
           </div>
@@ -41,7 +44,7 @@ export function UserSelectCard({ user }: UserSelectCardProps) {
       </CardHeader>
       {user.bio && (
         <CardContent className="pt-0">
-          <p className="line-clamp-2 text-xs text-muted-foreground">{user.bio}</p>
+          <p className="text-muted-foreground line-clamp-2 text-xs">{user.bio}</p>
         </CardContent>
       )}
     </Card>

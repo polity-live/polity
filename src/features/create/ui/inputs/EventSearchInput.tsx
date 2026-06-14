@@ -4,6 +4,7 @@ import { useAllEvents } from '@/zero/events/useEventState';
 import { Label } from '@/features/shared/ui/ui/label';
 import { useMemo } from 'react';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface EventSearchInputProps {
   value: string;
@@ -18,7 +19,7 @@ export function EventSearchInput({
   value,
   onChange,
   label,
-  placeholder = 'Search for an event...',
+  placeholder = translateText('generated.inline.0042_search_for_an_event_2c0dc7bd'),
   filterByGroupId,
 }: EventSearchInputProps) {
   const { events } = useAllEvents();

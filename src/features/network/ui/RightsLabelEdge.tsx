@@ -1,5 +1,5 @@
 import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath, useReactFlow } from '@xyflow/react';
-import type { EdgeProps, XYPosition } from '@xyflow/react';
+import type { Edge, EdgeProps, XYPosition } from '@xyflow/react';
 import { X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { resolveInnerAutoEdgeAnchors } from '@/features/network/logic/networkEdgeHelpers';
@@ -8,6 +8,8 @@ import { useEdgeClickContext } from '@/features/network/ui/NetworkFlowBase';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { EditableRightsLabelEdgeData } from '@/features/network/types/networkEdge.types';
 import './RightsLabelEdge.css';
+
+type RightsLabelEdgeType = Edge<EditableRightsLabelEdgeData, 'rightsLabel'>;
 
 type EdgeDragState =
   | {
@@ -41,7 +43,7 @@ export function RightsLabelEdge({
   markerStart,
   markerEnd,
   data,
-}: EdgeProps<EditableRightsLabelEdgeData>) {
+}: EdgeProps<RightsLabelEdgeType>) {
   const { t } = useTranslation();
   const reactFlowInstance = useReactFlow();
   const onEdgeClick = useEdgeClickContext();
@@ -390,7 +392,7 @@ export function RightsLabelEdge({
               />
               <button
                 type="button"
-                aria-label={t('common.network.removeEdgeBendPoint', 'Remove bend point')}
+                aria-label={t('common.network.removeEdgeBendPoint')}
                 className="networkEdgeBendPointDeleteButton"
                 onMouseDown={event => {
                   event.preventDefault();

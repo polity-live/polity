@@ -80,7 +80,7 @@ describe('documentSharedMutators group RBAC', () => {
       id: 'amendment-1',
       group_id: 'group-1',
     });
-    canMock.mockRejectedValueOnce(error);
+    canMock.mockRejectedValue(error);
 
     await expect(
       documentSharedMutators.create.fn({
@@ -111,7 +111,7 @@ describe('documentSharedMutators group RBAC', () => {
         id: 'amendment-1',
         group_id: 'group-1',
       });
-    canMock.mockRejectedValueOnce(error);
+    canMock.mockRejectedValue(error);
 
     await expect(
       documentSharedMutators.updateContent.fn({
@@ -171,7 +171,7 @@ describe('documentSharedMutators group RBAC', () => {
         id: 'amendment-1',
         group_id: 'group-1',
       });
-    canMock.mockRejectedValueOnce(error);
+    canMock.mockRejectedValue(error);
 
     await expect(
       documentSharedMutators.createVersion.fn({
@@ -209,7 +209,7 @@ describe('documentSharedMutators group RBAC', () => {
         id: 'amendment-1',
         group_id: 'group-1',
       });
-    canMock.mockRejectedValueOnce(error);
+    canMock.mockRejectedValue(error);
 
     await expect(
       documentSharedMutators.addComment.fn({

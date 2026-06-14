@@ -6,6 +6,7 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import type { MembershipTab } from '../types/group.types';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface MembershipTabsProps {
   activeTab: MembershipTab;
@@ -13,6 +14,7 @@ interface MembershipTabsProps {
   membershipsByUserContent: React.ReactNode;
   membershipsByRoleContent: React.ReactNode;
   compositionContent?: React.ReactNode;
+  rightsAlignmentContent?: React.ReactNode;
   openAssignmentsContent?: React.ReactNode;
   guestsContent?: React.ReactNode;
   rolesContent: React.ReactNode;
@@ -20,12 +22,14 @@ interface MembershipTabsProps {
   showMembershipsByUser?: boolean;
   showMembershipsByRole?: boolean;
   showComposition?: boolean;
+  showRightsAlignment?: boolean;
   showOpenAssignments?: boolean;
   showGuests?: boolean;
   showRoles?: boolean;
   membershipsByUserLabel?: string;
   membershipsByRoleLabel?: string;
   compositionLabel?: string;
+  rightsAlignmentLabel?: string;
   openAssignmentsLabel?: string;
   guestsLabel?: string;
   rolesLabel?: string;
@@ -37,6 +41,7 @@ export function MembershipTabs({
   membershipsByUserContent,
   membershipsByRoleContent,
   compositionContent,
+  rightsAlignmentContent,
   openAssignmentsContent,
   guestsContent,
   rolesContent,
@@ -44,13 +49,15 @@ export function MembershipTabs({
   showMembershipsByUser = true,
   showMembershipsByRole = true,
   showComposition = false,
+  showRightsAlignment = false,
   showOpenAssignments = false,
   showGuests = true,
   showRoles = true,
-  membershipsByUserLabel = 'Memberships by user',
-  membershipsByRoleLabel = 'Memberships by role',
+  membershipsByUserLabel = translateText('generated.inline.0097_memberships_by_user_6e8b52a5'),
+  membershipsByRoleLabel = translateText('generated.inline.0098_memberships_by_role_b2e0e498'),
   compositionLabel = 'Zusammensetzung',
-  openAssignmentsLabel = 'Offene Aufträge',
+  rightsAlignmentLabel = translateText('generated.inline.0099_rights_alignment_3350d985'),
+  openAssignmentsLabel = translateText('generated.inline.0100_offene_auftr_ge_d99433e5'),
   guestsLabel = 'Guests',
   rolesLabel = 'Roles',
 }: MembershipTabsProps) {
@@ -70,6 +77,9 @@ export function MembershipTabs({
           ) : null}
           {showComposition ? (
             <TabsTrigger value="composition">{compositionLabel}</TabsTrigger>
+          ) : null}
+          {showRightsAlignment ? (
+            <TabsTrigger value="rightsAlignment">{rightsAlignmentLabel}</TabsTrigger>
           ) : null}
           {showOpenAssignments ? (
             <TabsTrigger value="openAssignments">{openAssignmentsLabel}</TabsTrigger>
@@ -95,6 +105,12 @@ export function MembershipTabs({
       {showComposition ? (
         <TabsContent value="composition" className="space-y-6">
           {compositionContent}
+        </TabsContent>
+      ) : null}
+
+      {showRightsAlignment ? (
+        <TabsContent value="rightsAlignment" className="space-y-6">
+          {rightsAlignmentContent}
         </TabsContent>
       ) : null}
 

@@ -14,6 +14,7 @@ import { History, User, Calendar, TrendingUp, UserX, Award, UserCheck, Clock } f
 import { format, formatDistanceStrict, formatDistanceToNow } from 'date-fns';
 
 import { useGroupRoles as useFacadeGroupRoles } from '@/zero/groups/useGroupState';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 type RoleRow = ReturnType<typeof useFacadeGroupRoles>['roles'][number];
 
@@ -119,11 +120,13 @@ export function RoleHolderHistoryDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <History className="h-5 w-5" />
-            Role History: {role?.title}
+            {translateText('generated.inline.1058_role_history_c082afdb')}
+            {role?.title}
           </DialogTitle>
           <DialogDescription>
-            Current holders appear as present, while past holders are grouped by the periods in
-            which they served.
+            {translateText(
+              'generated.inline.1059_current_holders_appear_as_present_while_past__b5cc6629'
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -131,7 +134,7 @@ export function RoleHolderHistoryDialog({
           {presentHolders.length > 0 ? (
             <div className="space-y-3">
               <h4 className="text-muted-foreground text-sm font-semibold tracking-wide uppercase">
-                Present
+                {translateText('generated.inline.1060_present_4e9f7a31')}
               </h4>
               <div className="grid gap-3 md:grid-cols-2">
                 {presentHolders.map(entry => {
@@ -149,13 +152,17 @@ export function RoleHolderHistoryDialog({
                             <div className="space-y-1">
                               <div className="flex flex-wrap items-center gap-2">
                                 <span className="font-semibold">{displayName}</span>
-                                <Badge className="bg-primary">Present</Badge>
+                                <Badge className="bg-primary">
+                                  {translateText('generated.inline.1060_present_4e9f7a31')}
+                                </Badge>
                                 {entry.source === 'membership' ? (
                                   <Badge
                                     variant="outline"
                                     className="border-cyan-300 bg-cyan-50 text-cyan-700"
                                   >
-                                    Membership role
+                                    {translateText(
+                                      'generated.inline.1061_membership_role_8da20220'
+                                    )}
                                   </Badge>
                                 ) : entry.reason ? (
                                   <Badge variant="outline" className={getReasonColor(entry.reason)}>
@@ -175,7 +182,7 @@ export function RoleHolderHistoryDialog({
                               <div className="flex items-center gap-1.5">
                                 <Calendar className="h-3.5 w-3.5" />
                                 <span>
-                                  Since{' '}
+                                  {translateText('generated.inline.1062_since_22a4ed66')}{' '}
                                   {entry.startDate
                                     ? format(new Date(entry.startDate), 'MMM d, yyyy')
                                     : 'N/A'}
@@ -205,7 +212,7 @@ export function RoleHolderHistoryDialog({
           {pastPeriods.length > 0 ? (
             <div className="space-y-3">
               <h4 className="text-muted-foreground text-sm font-semibold tracking-wide uppercase">
-                Past Periods
+                {translateText('generated.inline.1063_past_periods_02966b6c')}
               </h4>
               <div className="space-y-4">
                 {pastPeriods.map(period => (
@@ -220,7 +227,10 @@ export function RoleHolderHistoryDialog({
                           <div className="text-muted-foreground flex items-center gap-2 text-sm">
                             <Clock className="h-3.5 w-3.5" />
                             <span>{formatPeriodDuration(period.startDate, period.endDate)}</span>
-                            <Badge variant="outline">{period.entries.length} holders</Badge>
+                            <Badge variant="outline">
+                              {period.entries.length}
+                              {translateText('generated.inline.0134_holders_6f9351dc')}
+                            </Badge>
                           </div>
                         </div>
 
@@ -270,7 +280,9 @@ export function RoleHolderHistoryDialog({
             <div className="py-12 text-center">
               <History className="text-muted-foreground/50 mx-auto h-12 w-12" />
               <p className="text-muted-foreground mt-4">
-                No current or past holders were found for this role.
+                {translateText(
+                  'generated.inline.1064_no_current_or_past_holders_were_found_for_thi_68816dc1'
+                )}
               </p>
             </div>
           ) : null}

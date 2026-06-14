@@ -6,23 +6,23 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { NormalizedGroupRelationship } from '../../types/network.types';
 
 const useGroupStateMock = vi.fn();
-const useNetworkLinkStateMock = vi.fn();
-const explodeNetworkLinksToRelationshipsMock = vi.fn();
-const explodeNetworkLinkChangeRequestsToRelationshipsMock = vi.fn();
+const useGroupConnectionStateMock = vi.fn();
+const deriveNormalizedGroupRelationshipsMock = vi.fn();
+const deriveNormalizedGroupConnectionRequestRowsMock = vi.fn();
 
 vi.mock('@/zero/groups/useGroupState', () => ({
   useGroupState: (...args: unknown[]) => useGroupStateMock(...args),
 }));
 
 vi.mock('@/zero/network', () => ({
-  useNetworkLinkState: (...args: unknown[]) => useNetworkLinkStateMock(...args),
+  useGroupConnectionState: (...args: unknown[]) => useGroupConnectionStateMock(...args),
 }));
 
-vi.mock('../../logic/networkLinkDerived', () => ({
-  explodeNetworkLinksToRelationships: (...args: unknown[]) =>
-    explodeNetworkLinksToRelationshipsMock(...args),
-  explodeNetworkLinkChangeRequestsToRelationships: (...args: unknown[]) =>
-    explodeNetworkLinkChangeRequestsToRelationshipsMock(...args),
+vi.mock('../../logic/groupConnectionDerived', () => ({
+  deriveNormalizedGroupRelationships: (...args: unknown[]) =>
+    deriveNormalizedGroupRelationshipsMock(...args),
+  deriveNormalizedGroupConnectionRequestRows: (...args: unknown[]) =>
+    deriveNormalizedGroupConnectionRequestRowsMock(...args),
 }));
 
 import { useGroupNetwork } from '../useGroupNetwork';
@@ -37,35 +37,48 @@ function groupStub(id: string, name: string): NonNullable<NormalizedGroupRelatio
 function createRelationship(
   overrides: Partial<NormalizedGroupRelationship> & Pick<NormalizedGroupRelationship, 'id'>
 ): NormalizedGroupRelationship {
+  const groupId = overrides.group_id ?? 'group-a';
+  const relatedGroupId = overrides.related_group_id ?? 'group-b';
+  const relationshipType = overrides.relationship_type ?? 'child';
   return {
     id: overrides.id,
-    group_id: overrides.group_id ?? 'group-a',
-    related_group_id: overrides.related_group_id ?? 'group-b',
-    relationship_type: overrides.relationship_type ?? 'child',
+    connection_id: overrides.connection_id ?? `connection:${overrides.id}`,
+    grant_id:
+      overrides.grant_id ?? (overrides.with_right === null ? null : `grant:${overrides.id}`),
+    group_id: groupId,
+    related_group_id: relatedGroupId,
+    relationship_type: relationshipType,
+    connection_type: overrides.connection_type ?? 'hierarchy',
+    parent_group_id:
+      overrides.parent_group_id ?? (relationshipType === 'parent' ? relatedGroupId : groupId),
+    child_group_id:
+      overrides.child_group_id ?? (relationshipType === 'parent' ? groupId : relatedGroupId),
     with_right: 'with_right' in overrides ? (overrides.with_right ?? null) : 'informationRight',
     status: overrides.status ?? 'active',
     initiator_group_id: overrides.initiator_group_id ?? 'group-a',
     created_at: overrides.created_at ?? 1,
+    member_source_group_id: overrides.member_source_group_id ?? null,
+    member_target_group_id: overrides.member_target_group_id ?? null,
     membership_mode: overrides.membership_mode ?? 'none',
-    group: overrides.group ?? groupStub(overrides.group_id ?? 'group-a', 'Group A'),
-    related_group:
-      overrides.related_group ?? groupStub(overrides.related_group_id ?? 'group-b', 'Group B'),
-    network_link_request_id: overrides.network_link_request_id ?? null,
-    network_link_right_id: overrides.network_link_right_id ?? null,
-  } as NormalizedGroupRelationship;
+    required_source_role_id: overrides.required_source_role_id ?? null,
+    eligible_origin_group_ids: overrides.eligible_origin_group_ids ?? [],
+    group: overrides.group ?? groupStub(groupId, 'Group A'),
+    related_group: overrides.related_group ?? groupStub(relatedGroupId, 'Group B'),
+    connection_request_id: overrides.connection_request_id ?? null,
+  };
 }
 
 describe('useGroupNetwork', () => {
   beforeEach(() => {
     useGroupStateMock.mockReset();
-    useNetworkLinkStateMock.mockReset();
-    explodeNetworkLinksToRelationshipsMock.mockReset();
-    explodeNetworkLinkChangeRequestsToRelationshipsMock.mockReset();
+    useGroupConnectionStateMock.mockReset();
+    deriveNormalizedGroupRelationshipsMock.mockReset();
+    deriveNormalizedGroupConnectionRequestRowsMock.mockReset();
 
-    explodeNetworkLinksToRelationshipsMock.mockImplementation(
+    deriveNormalizedGroupRelationshipsMock.mockImplementation(
       (relationships: NormalizedGroupRelationship[]) => relationships
     );
-    explodeNetworkLinkChangeRequestsToRelationshipsMock.mockImplementation(
+    deriveNormalizedGroupConnectionRequestRowsMock.mockImplementation(
       (relationships: NormalizedGroupRelationship[]) => relationships
     );
   });
@@ -91,21 +104,21 @@ describe('useGroupNetwork', () => {
       related_group_id: 'group-d',
       related_group: groupStub('group-d', 'Group D'),
       status: 'requested',
-      network_link_request_id: 'request-1',
-      network_link_right_id: 'right-1',
+      connection_request_id: 'request-1',
+      grant_id: 'right-1',
     });
 
     useGroupStateMock.mockReturnValue({
       group: groupStub('group-a', 'Group A'),
       isLoading: false,
     });
-    useNetworkLinkStateMock.mockReturnValue({
-      groupLinks: [activeAB],
-      groupLinksLoading: false,
-      groupChangeRequests: [requestAD],
-      groupChangeRequestsLoading: false,
-      allLinks: [activeAB, activeBC],
-      allLinksLoading: false,
+    useGroupConnectionStateMock.mockReturnValue({
+      groupConnections: [activeAB],
+      groupConnectionsLoading: false,
+      groupConnectionRequests: [requestAD],
+      groupConnectionRequestsLoading: false,
+      allConnections: [activeAB, activeBC],
+      allConnectionsLoading: false,
     });
 
     const { result } = renderHook(() => useGroupNetwork('group-a'));

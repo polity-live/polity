@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pie, PieChart, ResponsiveContainer, Cell, Tooltip } from 'recharts';
 import { DIRECT_WITHOUT_PATH_LABEL } from '@/features/groups/logic/membershipComposition';
+import { ChartRenderer, CHART_PALETTE } from '@/features/charts/ui/ChartRenderer';
 import {
   Card,
   CardContent,
@@ -15,17 +15,6 @@ import type { MembershipCompositionBucket } from '../types/group.types';
 type CompositionDisplayMode = 'percent' | 'absolute';
 type CompositionMetric = 'members' | 'leadership';
 
-const CHART_COLORS = [
-  '#2563eb',
-  '#0d9488',
-  '#7c3aed',
-  '#ea580c',
-  '#db2777',
-  '#65a30d',
-  '#0891b2',
-  '#dc2626',
-];
-
 interface MembershipCompositionPanelProps {
   buckets: MembershipCompositionBucket[];
   isLoading?: boolean;
@@ -37,10 +26,7 @@ export function MembershipCompositionPanel({
 }: MembershipCompositionPanelProps) {
   const { t } = useTranslation();
   const [displayMode, setDisplayMode] = useState<CompositionDisplayMode>('percent');
-  const directWithoutPathLabel = t(
-    'features.groups.memberships.composition.directWithoutPath',
-    'Direct / no path'
-  );
+  const directWithoutPathLabel = t('features.groups.memberships.composition.directWithoutPath');
 
   const memberRows = useMemo(
     () =>
@@ -51,7 +37,7 @@ export function MembershipCompositionPanel({
           label: bucket.label === DIRECT_WITHOUT_PATH_LABEL ? directWithoutPathLabel : bucket.label,
           value: bucket.memberCount,
           percentage: bucket.memberPercentage,
-          fill: CHART_COLORS[index % CHART_COLORS.length],
+          fill: CHART_PALETTE[index % CHART_PALETTE.length],
         })),
     [buckets, directWithoutPathLabel]
   );
@@ -64,7 +50,7 @@ export function MembershipCompositionPanel({
           label: bucket.label === DIRECT_WITHOUT_PATH_LABEL ? directWithoutPathLabel : bucket.label,
           value: bucket.leadershipAssignmentCount,
           percentage: bucket.leadershipPercentage,
-          fill: CHART_COLORS[index % CHART_COLORS.length],
+          fill: CHART_PALETTE[index % CHART_PALETTE.length],
         })),
     [buckets, directWithoutPathLabel]
   );
@@ -74,13 +60,10 @@ export function MembershipCompositionPanel({
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-xl font-semibold">
-            {t('features.groups.memberships.composition.title', 'Composition')}
+            {t('features.groups.memberships.composition.title')}
           </h2>
           <p className="text-muted-foreground text-sm">
-            {t(
-              'features.groups.memberships.composition.description',
-              'Breakdown by subgroups. Leadership counts non-member role assignments.'
-            )}
+            {t('features.groups.memberships.composition.description')}
           </p>
         </div>
         <ToggleGroup
@@ -98,37 +81,25 @@ export function MembershipCompositionPanel({
             {t('features.groups.memberships.composition.modePercent', '%')}
           </ToggleGroupItem>
           <ToggleGroupItem value="absolute">
-            {t('features.groups.memberships.composition.modeAbsolute', 'Absolute')}
+            {t('features.groups.memberships.composition.modeAbsolute')}
           </ToggleGroupItem>
         </ToggleGroup>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
         <CompositionPieCard
-          title={t('features.groups.memberships.composition.membersTitle', 'Members')}
-          description={t(
-            'features.groups.memberships.composition.membersDescription',
-            'Share of subgroups across all active memberships.'
-          )}
-          emptyLabel={t(
-            'features.groups.memberships.composition.membersEmpty',
-            'No active members found.'
-          )}
+          title={t('features.groups.memberships.composition.membersTitle')}
+          description={t('features.groups.memberships.composition.membersDescription')}
+          emptyLabel={t('features.groups.memberships.composition.membersEmpty')}
           rows={memberRows}
           displayMode={displayMode}
           isLoading={isLoading}
           metric="members"
         />
         <CompositionPieCard
-          title={t('features.groups.memberships.composition.leadershipTitle', 'Leadership')}
-          description={t(
-            'features.groups.memberships.composition.leadershipDescription',
-            'Share of subgroups across all non-member role assignments.'
-          )}
-          emptyLabel={t(
-            'features.groups.memberships.composition.leadershipEmpty',
-            'No non-member role assignments found.'
-          )}
+          title={t('features.groups.memberships.composition.leadershipTitle')}
+          description={t('features.groups.memberships.composition.leadershipDescription')}
+          emptyLabel={t('features.groups.memberships.composition.leadershipEmpty')}
           rows={leadershipRows}
           displayMode={displayMode}
           isLoading={isLoading}
@@ -170,52 +141,24 @@ function CompositionPieCard({
       <CardContent>
         {isLoading ? (
           <p className="text-muted-foreground py-12 text-center text-sm">
-            {t('features.groups.memberships.composition.loading', 'Loading composition...')}
+            {t('features.groups.memberships.composition.loading')}
           </p>
         ) : rows.length === 0 ? (
           <p className="text-muted-foreground py-12 text-center text-sm">{emptyLabel}</p>
         ) : (
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-center">
-            <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={rows}
-                    dataKey="value"
-                    nameKey="label"
-                    innerRadius={70}
-                    outerRadius={106}
-                    paddingAngle={2}
-                  >
-                    {rows.map(row => (
-                      <Cell key={row.key} fill={row.fill} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value, _name, payload) => {
-                      const row = payload?.payload as
-                        | (MembershipCompositionBucket & {
-                            value: number;
-                            percentage: number;
-                            fill: string;
-                          })
-                        | undefined;
-
-                      if (!row) {
-                        return [String(value), title];
-                      }
-
-                      return [
-                        displayMode === 'absolute'
-                          ? row.value.toLocaleString()
-                          : `${row.percentage.toFixed(1)}%`,
-                        title,
-                      ];
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+            <ChartRenderer
+              chartType="pie"
+              points={rows.map(row => ({ x: row.label, value: row.value }))}
+              presentation={{ donut: true, showLegend: false }}
+              heightClassName="h-72"
+              valueFormatter={(value, point) => {
+                const row = rows.find(item => item.label === point.x);
+                return displayMode === 'absolute'
+                  ? value.toLocaleString()
+                  : `${(row?.percentage ?? 0).toFixed(1)}%`;
+              }}
+            />
 
             <div className="space-y-3">
               <p className="text-muted-foreground text-sm">
@@ -244,10 +187,7 @@ function CompositionPieCard({
               </ul>
               {metric === 'leadership' ? (
                 <p className="text-muted-foreground text-xs">
-                  {t(
-                    'features.groups.memberships.composition.leadershipFootnote',
-                    'Each non-member role is counted separately.'
-                  )}
+                  {t('features.groups.memberships.composition.leadershipFootnote')}
                 </p>
               ) : null}
             </div>

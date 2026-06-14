@@ -2,6 +2,7 @@ import { defineMutator } from '@rocicorp/zero';
 import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import { mutators } from '../mutators';
 import { zql } from '../schema';
+import { can } from '../rbac/can';
 import { fireNotification } from '../server-notify';
 import { eventTitle, recomputeEventCounters, recomputeEventEndDate } from '../server-helpers';
 import {
@@ -9,10 +10,54 @@ import {
   deleteAgendaItemSchema,
   updateAgendaItemSchema,
   createSpeakerListSchema,
+  updateAgendaItemChangeRequestSchema,
   initializeChangeRequestVotingSchema,
   processCRVoteResultSchema,
 } from './schema';
 import { applySuggestionToContent } from '@/features/change-requests/logic/applySuggestionToContent';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
+
+async function assertCurrentChangeRequestTimelineItem(
+  tx: Parameters<typeof mutators.agendas.updateAgendaItemChangeRequest.fn>[0]['tx'],
+  agendaItemChangeRequestId: string
+) {
+  const junction = await tx.run(
+    zql.agenda_item_change_request.where('id', agendaItemChangeRequestId).one()
+  );
+  if (!junction || junction.is_final_vote) {
+    return junction;
+  }
+
+  const timeline = await tx.run(
+    zql.agenda_item_change_request
+      .where('agenda_item_id', junction.agenda_item_id)
+      .orderBy('order_index', 'asc')
+  );
+  const firstIncomplete = timeline.find(item => !item.is_final_vote && item.status !== 'completed');
+
+  if (firstIncomplete?.id && firstIncomplete.id !== junction.id) {
+    throw new Error('Change requests must be voted in their configured order.');
+  }
+
+  return junction;
+}
+
+async function assertCanManageAgendaVoteFlow(
+  tx: Parameters<typeof mutators.agendas.updateAgendaItemChangeRequest.fn>[0]['tx'],
+  ctx: { readonly userID: string },
+  agendaItemId: string
+) {
+  const agendaItem = await tx.run(zql.agenda_item.where('id', agendaItemId).one());
+  if (!agendaItem?.event_id) {
+    throw new Error('Agenda item is not linked to an event.');
+  }
+
+  await can(tx, ctx, {
+    action: 'manage_votes',
+    resource: 'events',
+    eventId: agendaItem.event_id,
+  });
+}
 
 /** Server-only mutators — override the shared mutators with additional server-side logic (e.g. notifications). */
 export const agendaServerMutators = {
@@ -71,6 +116,23 @@ export const agendaServerMutators = {
     }
 
     if (args.status === 'in-progress' && oldItem.status !== 'in-progress' && oldItem.event_id) {
+      if (oldItem.type === 'implementation_review') {
+        const implementationTask = await tx.run(
+          zql.process_task
+            .where('agenda_item_id', args.id)
+            .where('task_type', 'implementation_evaluation')
+            .one()
+        );
+
+        if (implementationTask) {
+          await tx.mutate.amendment_process_run.update({
+            id: implementationTask.process_run_id,
+            implementation_status: 'evaluation_in_vote',
+            updated_at: Date.now(),
+          });
+        }
+      }
+
       const eTitle = await eventTitle(tx, oldItem.event_id);
       fireNotification('notifyAgendaItemActivated', {
         senderId: ctx.userID,
@@ -115,6 +177,17 @@ export const agendaServerMutators = {
     }
   }),
 
+  updateAgendaItemChangeRequest: defineMutator(
+    updateAgendaItemChangeRequestSchema,
+    async ({ tx, ctx, args }) => {
+      if (args.status === 'voting' || args.status === 'completed') {
+        await assertCurrentChangeRequestTimelineItem(tx, args.id);
+      }
+
+      await mutators.agendas.updateAgendaItemChangeRequest.fn({ tx, ctx, args });
+    }
+  ),
+
   /**
    * Initialize all change-request votes + final amendment vote for an agenda item.
    * Called server-side when an amendment transitions to `event_voting`.
@@ -127,15 +200,17 @@ export const agendaServerMutators = {
    */
   initializeChangeRequestVoting: defineMutator(
     initializeChangeRequestVotingSchema,
-    async ({ tx, args }) => {
+    async ({ tx, ctx, args }) => {
       const { amendment_id, agenda_item_id } = args;
       const now = Date.now();
+      await assertCanManageAgendaVoteFlow(tx, ctx, agenda_item_id);
 
       // 1. Fetch open change requests for this amendment
       const changeRequests = await tx.run(
         zql.change_request
           .where('amendment_id', amendment_id)
           .where('status', 'open')
+          .orderBy('changed_character_count', 'asc')
           .orderBy('created_at', 'asc')
       );
 
@@ -162,6 +237,7 @@ export const agendaServerMutators = {
           closing_duration_seconds: null,
           closing_end_time: null,
           visibility: 'public',
+          ballot_visibility: 'named',
           created_at: now,
           updated_at: now,
         });
@@ -190,22 +266,39 @@ export const agendaServerMutators = {
         return voteId;
       }
 
+      const existingLinks = await tx.run(
+        zql.agenda_item_change_request
+          .where('agenda_item_id', agenda_item_id)
+          .orderBy('order_index', 'asc')
+      );
+      const existingChangeRequestIds = new Set(
+        existingLinks.map(link => link.change_request_id).filter((id): id is string => Boolean(id))
+      );
+      let nextOrderIndex =
+        existingLinks.reduce((max, link) => Math.max(max, link.order_index ?? 0), -1) + 1;
+
       // 3. Create one vote per change request + junction records
-      for (let i = 0; i < changeRequests.length; i++) {
-        const cr = changeRequests[i];
-        const voteId = await createVoteWithChoicesAndVoters(cr.title ?? `Change Request ${i + 1}`);
+      for (const cr of changeRequests) {
+        if (existingChangeRequestIds.has(cr.id)) {
+          continue;
+        }
+
+        const voteId = await createVoteWithChoicesAndVoters(
+          cr.title ?? `Change Request ${nextOrderIndex + 1}`
+        );
 
         await tx.mutate.agenda_item_change_request.insert({
           id: crypto.randomUUID(),
           agenda_item_id,
           change_request_id: cr.id,
           vote_id: voteId,
-          order_index: i,
+          order_index: nextOrderIndex,
           is_final_vote: false,
           status: 'pending',
           created_at: now,
           updated_at: now,
         });
+        nextOrderIndex += 1;
       }
     }
   ),
@@ -228,12 +321,15 @@ export const agendaServerMutators = {
   processCRVoteResult: defineMutator(processCRVoteResultSchema, async ({ tx, ctx, args }) => {
     const { agenda_item_change_request_id, vote_result } = args;
     const now = Date.now();
+    await assertCurrentChangeRequestTimelineItem(tx, agenda_item_change_request_id);
 
     // 1. Fetch the junction record
     const junction = await tx.run(
       zql.agenda_item_change_request.where('id', agenda_item_change_request_id).one()
     );
     if (!junction) return;
+
+    await assertCanManageAgendaVoteFlow(tx, ctx, junction.agenda_item_id);
 
     // 2. If this is a per-CR vote (not the final amendment vote), process the suggestion
     if (junction.change_request_id) {
@@ -265,7 +361,10 @@ export const agendaServerMutators = {
 
           if (doc?.content && suggestionId) {
             const action = vote_result === 'passed' ? 'accept' : 'reject';
-            const crLabel = matchingDiscussion?.crId ?? cr.title ?? 'Change Request';
+            const crLabel =
+              matchingDiscussion?.crId ??
+              cr.title ??
+              translateText('generated.inline.0190_change_request_9c839351');
             const versionSummary =
               vote_result === 'passed'
                 ? `${crLabel} accepted by vote`

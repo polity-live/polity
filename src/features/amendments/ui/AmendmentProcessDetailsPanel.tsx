@@ -58,7 +58,7 @@ export function AmendmentProcessDetailsPanel({
         <CollapsibleTrigger className="hover:bg-muted/50 flex w-full items-center gap-2 px-4 py-3 text-sm font-medium transition-colors">
           {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           <ScrollText className="text-muted-foreground h-4 w-4" />
-          <span>{t('features.events.agenda.amendmentDetails', 'Amendment Details')}</span>
+          <span>{t('features.events.agenda.amendmentDetails')}</span>
           {amendment.editing_mode ? (
             <EditingModeBadge mode={amendment.editing_mode} variant="secondary" />
           ) : null}
@@ -68,7 +68,7 @@ export function AmendmentProcessDetailsPanel({
             className="text-primary ml-auto flex items-center gap-1 text-xs hover:underline"
             onClick={event => event.stopPropagation()}
           >
-            {t('features.events.agenda.viewAmendment', 'View Amendment')}
+            {t('features.events.agenda.viewAmendment')}
             <ExternalLink className="h-3 w-3" />
           </Link>
         </CollapsibleTrigger>
@@ -77,9 +77,7 @@ export function AmendmentProcessDetailsPanel({
           <div className="space-y-3 border-t px-4 py-3">
             {amendment.title ? (
               <div>
-                <p className="text-muted-foreground text-xs font-medium">
-                  {t('common.title', 'Title')}
-                </p>
+                <p className="text-muted-foreground text-xs font-medium">{t('common.title')}</p>
                 <Link
                   to="/amendment/$id"
                   params={{ id: amendment.id }}
@@ -93,7 +91,7 @@ export function AmendmentProcessDetailsPanel({
             {amendment.reason ? (
               <div>
                 <p className="text-muted-foreground text-xs font-medium">
-                  {t('features.amendments.reason', 'Reason')}
+                  {t('features.amendments.reason')}
                 </p>
                 <p className="text-sm whitespace-pre-wrap">{amendment.reason}</p>
               </div>
@@ -102,7 +100,7 @@ export function AmendmentProcessDetailsPanel({
             {amendment.preamble ? (
               <div>
                 <p className="text-muted-foreground text-xs font-medium">
-                  {t('features.amendments.preamble', 'Preamble')}
+                  {t('features.amendments.preamble')}
                 </p>
                 <p className="text-sm whitespace-pre-wrap">{amendment.preamble}</p>
               </div>
@@ -155,7 +153,7 @@ export function AmendmentProcessDetailsPanel({
             {pathVisualizationData && pathVisualizationData.length > 0 ? (
               <div className="space-y-2">
                 <p className="text-muted-foreground text-xs font-medium">
-                  {t('features.amendments.process.pathVisualization', 'Process flow')}
+                  {t('features.amendments.process.pathVisualization')}
                 </p>
                 <div className="h-[340px] rounded-lg border">
                   <AmendmentPathVisualization

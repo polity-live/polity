@@ -13,7 +13,11 @@ import {
   CarouselPrevious,
   type CarouselApi,
 } from '@/features/shared/ui/ui/carousel';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/features/shared/ui/ui/collapsible';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/features/shared/ui/ui/collapsible';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Mic, Plus, Users, CheckCircle2, Clock, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -140,7 +144,7 @@ export function AgendaSpeakerListSection({
 
   const renderRelativeTime = (speaker: (typeof speakerQueue)[number]) => {
     if (speaker.completed) {
-      return t('features.events.agenda.completedSpeaker', 'Completed');
+      return t('features.events.agenda.completedSpeaker');
     }
 
     if (speaker.isCurrent) {
@@ -148,7 +152,7 @@ export function AgendaSpeakerListSection({
     }
 
     if (speaker.msUntilStart <= 0) {
-      return t('features.events.agenda.upNext', 'Up next');
+      return t('features.events.agenda.upNext');
     }
 
     return formatDuration(speaker.msUntilStart);
@@ -156,14 +160,14 @@ export function AgendaSpeakerListSection({
 
   const renderTimingLabel = (speaker: (typeof speakerQueue)[number]) => {
     if (speaker.completed) {
-      return t('features.events.agenda.turnCompletedLabel', 'Turn completed');
+      return t('features.events.agenda.turnCompletedLabel');
     }
 
     if (speaker.isCurrent) {
-      return t('features.events.agenda.timeRemainingLabel', 'Time remaining');
+      return t('features.events.agenda.timeRemainingLabel');
     }
 
-    return t('features.events.agenda.turnStartsIn', 'Turn starts in');
+    return t('features.events.agenda.turnStartsIn');
   };
 
   return (
@@ -176,11 +180,17 @@ export function AgendaSpeakerListSection({
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Mic className="h-5 w-5" />
                   {t('features.events.agenda.speakerList')} ({speakers.length})
-                  {expanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                  {expanded ? (
+                    <ChevronUp className="text-muted-foreground h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="text-muted-foreground h-4 w-4" />
+                  )}
                 </CardTitle>
               </Button>
             </CollapsibleTrigger>
-            <Badge variant="outline">{t('features.events.agenda.speakerCount', { count: speakers.length }, '{{count}} speakers')}</Badge>
+            <Badge variant="outline">
+              {t('features.events.agenda.speakerCount', { count: speakers.length })}
+            </Badge>
           </div>
         </CardHeader>
 
@@ -188,17 +198,22 @@ export function AgendaSpeakerListSection({
           <CardContent className="space-y-4">
             {speakerQueue.length === 0 ? (
               <div className="rounded-lg border border-dashed p-8 text-center">
-                <Users className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">
+                <Users className="text-muted-foreground mx-auto mb-3 h-8 w-8" />
+                <p className="text-muted-foreground text-sm">
                   {t('features.events.agenda.speakerListEmpty')}
                 </p>
               </div>
             ) : (
               <div className="px-10">
-                <Carousel setApi={setCarouselApi} className="w-full" opts={{ align: 'start', dragFree: true }}>
+                <Carousel
+                  setApi={setCarouselApi}
+                  className="w-full"
+                  opts={{ align: 'start', dragFree: true }}
+                >
                   <CarouselContent className="-ml-3 md:-ml-4">
-                    {speakerQueue.map((speaker) => {
-                      const speakerName = speaker.user?.name || speaker.user?.email || t('common.unspecified');
+                    {speakerQueue.map(speaker => {
+                      const speakerName =
+                        speaker.user?.name || speaker.user?.email || t('common.unspecified');
                       return (
                         <CarouselItem
                           key={speaker.id}
@@ -209,7 +224,7 @@ export function AgendaSpeakerListSection({
                               'h-full border transition-colors',
                               speaker.isPast && 'opacity-60',
                               speaker.isCurrent && 'border-primary bg-primary/5',
-                              speaker.isCurrentUser && 'ring-2 ring-primary/25',
+                              speaker.isCurrentUser && 'ring-primary/25 ring-2'
                             )}
                           >
                             <CardContent className="flex h-full flex-col gap-4 p-5">
@@ -219,7 +234,7 @@ export function AgendaSpeakerListSection({
                                   params={{ id: speaker.user?.id ?? '' }}
                                   className="flex min-w-0 items-center gap-3"
                                 >
-                                  <Avatar className="h-14 w-14 border border-border/60">
+                                  <Avatar className="border-border/60 h-14 w-14 border">
                                     <AvatarImage src={speaker.user?.avatar} />
                                     <AvatarFallback>
                                       {speakerName[0]?.toUpperCase() || 'U'}
@@ -227,7 +242,9 @@ export function AgendaSpeakerListSection({
                                   </Avatar>
                                   <div className="min-w-0">
                                     <div className="flex flex-wrap items-center gap-2">
-                                      <p className="truncate font-medium hover:underline">{speakerName}</p>
+                                      <p className="truncate font-medium hover:underline">
+                                        {speakerName}
+                                      </p>
                                       {speaker.isCurrent && (
                                         <Badge variant="default">
                                           {t('features.events.agenda.currentSpeaker')}
@@ -239,8 +256,10 @@ export function AgendaSpeakerListSection({
                                         </Badge>
                                       )}
                                     </div>
-                                    <p className="text-sm text-muted-foreground">
-                                      {t('features.events.agenda.speakerPosition', { count: speaker.order }, 'Position {{count}}')}
+                                    <p className="text-muted-foreground text-sm">
+                                      {t('features.events.agenda.speakerPosition', {
+                                        count: speaker.order,
+                                      })}
                                     </p>
                                   </div>
                                 </Link>
@@ -258,29 +277,33 @@ export function AgendaSpeakerListSection({
                               </div>
 
                               <div className="mt-auto space-y-3">
-                                <div className="rounded-lg bg-muted/60 p-3">
+                                <div className="bg-muted/60 rounded-lg p-3">
                                   <div className="flex items-center justify-between gap-3 text-sm">
                                     <span className="text-muted-foreground">
                                       {renderTimingLabel(speaker)}
                                     </span>
-                                    <span className="font-medium">{renderRelativeTime(speaker)}</span>
+                                    <span className="font-medium">
+                                      {renderRelativeTime(speaker)}
+                                    </span>
                                   </div>
                                   <div className="mt-2 flex items-center justify-between gap-3 text-sm">
                                     <span className="text-muted-foreground">
-                                      {t('features.events.agenda.estimatedStartLabel', 'Estimated at')}
+                                      {t('features.events.agenda.estimatedStartLabel')}
                                     </span>
-                                    <span className="font-medium">{formatClockTime(speaker.estimatedStartTime)}</span>
+                                    <span className="font-medium">
+                                      {formatClockTime(speaker.estimatedStartTime)}
+                                    </span>
                                   </div>
                                 </div>
 
-                                <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
+                                <div className="text-muted-foreground flex items-center justify-between gap-3 text-sm">
                                   <span className="flex items-center gap-1">
                                     <Clock className="h-3.5 w-3.5" />
                                     {speaker.time} {t('common.minutes')}
                                   </span>
                                   {speaker.completed && (
                                     <Badge variant="outline">
-                                      {t('features.events.agenda.completedSpeaker', 'Completed')}
+                                      {t('features.events.agenda.completedSpeaker')}
                                     </Badge>
                                   )}
                                 </div>
@@ -298,35 +321,30 @@ export function AgendaSpeakerListSection({
             )}
 
             {showMembershipState ? (
-              <div className="rounded-lg border bg-primary/5 p-4">
+              <div className="bg-primary/5 rounded-lg border p-4">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div className="space-y-1">
                     <p className="font-medium">{t('features.events.agenda.alreadyOnList')}</p>
                     {userSpeaker ? (
                       <>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-muted-foreground text-sm">
                           {userSpeaker.isCurrent
-                            ? t(
-                                'features.events.agenda.userSpeakerCurrentSummary',
-                                { time: renderRelativeTime(userSpeaker) },
-                                'You are speaking now. {{time}} remaining.'
-                              )
-                            : t(
-                                'features.events.agenda.userSpeakerQueueSummary',
-                                {
-                                  position: userSpeaker.order,
-                                  time: renderRelativeTime(userSpeaker),
-                                },
-                                'Position {{position}}. {{time}} until your speech starts.'
-                              )}
+                            ? t('features.events.agenda.userSpeakerCurrentSummary', {
+                                time: renderRelativeTime(userSpeaker),
+                              })
+                            : t('features.events.agenda.userSpeakerQueueSummary', {
+                                position: userSpeaker.order,
+                                time: renderRelativeTime(userSpeaker),
+                              })}
                         </p>
-                        <p className="text-sm text-muted-foreground">
-                          {t('features.events.agenda.estimatedStartLabel', 'Estimated at')} {formatClockTime(userSpeaker.estimatedStartTime)}
+                        <p className="text-muted-foreground text-sm">
+                          {t('features.events.agenda.estimatedStartLabel')}{' '}
+                          {formatClockTime(userSpeaker.estimatedStartTime)}
                         </p>
                       </>
                     ) : (
-                      <p className="text-sm text-muted-foreground">
-                        {t('features.events.agenda.userSpeakerPendingSummary', 'Your speaker entry is active.')}
+                      <p className="text-muted-foreground text-sm">
+                        {t('features.events.agenda.userSpeakerPendingSummary')}
                       </p>
                     )}
                   </div>
@@ -340,7 +358,7 @@ export function AgendaSpeakerListSection({
                       <X className="mr-2 h-4 w-4" />
                       {isRemovingSpeaker
                         ? t('common.loading.default')
-                        : t('features.events.agenda.leaveSpeakerList', 'Leave Speaker List')}
+                        : t('features.events.agenda.leaveSpeakerList')}
                     </Button>
                   )}
                 </div>

@@ -152,7 +152,7 @@ export function ExportToolbarButton(props: DropdownMenuProps) {
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false} {...props}>
       <DropdownMenuTrigger asChild>
-        <ToolbarButton pressed={open} tooltip={t('plateJs.toolbar.export', 'Export')} isDropdown>
+        <ToolbarButton pressed={open} tooltip={t('plateJs.toolbar.export')} isDropdown>
           <ArrowDownToLineIcon className="size-4" />
         </ToolbarButton>
       </DropdownMenuTrigger>
@@ -160,16 +160,16 @@ export function ExportToolbarButton(props: DropdownMenuProps) {
       <DropdownMenuContent align="start">
         <DropdownMenuGroup>
           <DropdownMenuItem onSelect={exportToHtml}>
-            {t('plateJs.toolbar.exportAsHTML', 'Export as HTML')}
+            {t('plateJs.toolbar.exportAsHTML')}
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={exportToPdf}>
-            {t('plateJs.toolbar.exportAsPDF', 'Export as PDF')}
+            {t('plateJs.toolbar.exportAsPDF')}
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={exportToImage}>
-            {t('plateJs.toolbar.exportAsImage', 'Export as Image')}
+            {t('plateJs.toolbar.exportAsImage')}
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={exportToMarkdown}>
-            {t('plateJs.toolbar.exportAsMarkdown', 'Export as Markdown')}
+            {t('plateJs.toolbar.exportAsMarkdown')}
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>

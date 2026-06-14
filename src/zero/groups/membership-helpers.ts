@@ -15,10 +15,10 @@ import {
 } from './membership-source-constants';
 import {
   buildDerivedGroupNetworkMetaMap,
-  explodeNetworkLinksToRelationships,
+  deriveGroupRelationships,
   getDefaultDerivedGroupNetworkMeta,
 } from '../network/derived';
-import { getMembershipRuleConfig, hasActiveMembershipRules } from '../network/membershipRules';
+import { normalizeMembershipRule } from '../network/membershipRules';
 
 type ZeroTransactionLike = Pick<ZeroTransaction, 'run' | 'mutate'>;
 type ServerHelperTx = Parameters<typeof recomputeGroupCounters>[0];
@@ -65,47 +65,33 @@ export function filterHierarchyRelationships<
 }
 
 function getDirectionalMembershipContexts(
-  link: { source_group_id: string; target_group_id: string },
+  connection: { group_a_id: string; group_b_id: string },
   membershipRule:
     | {
-        membership_direction?: string | null;
+        member_source_group_id?: string | null;
+        member_target_group_id?: string | null;
         membership_mode?: string | null;
-        role_id?: string | null;
-        source_group_ids?: string[] | null;
+        required_source_role_id?: string | null;
+        eligible_origin_group_ids?: string[] | null;
       }
     | null
     | undefined
 ) {
-  if (!hasActiveMembershipRules(membershipRule)) {
+  const normalized = normalizeMembershipRule(membershipRule);
+  if (!normalized) {
     return [];
   }
 
-  const forward = getMembershipRuleConfig(membershipRule, 'forward');
-  const backward = getMembershipRuleConfig(membershipRule, 'backward');
-
   return [
-    ...(forward.membership_mode !== 'none'
-      ? [
-          {
-            recipientGroupId: link.target_group_id,
-            connectedGroupId: link.source_group_id,
-            membershipRule: forward,
-          },
-        ]
-      : []),
-    ...(backward.membership_mode !== 'none'
-      ? [
-          {
-            recipientGroupId: link.source_group_id,
-            connectedGroupId: link.target_group_id,
-            membershipRule: backward,
-          },
-        ]
-      : []),
+    {
+      recipientGroupId: normalized.member_target_group_id,
+      connectedGroupId: normalized.member_source_group_id,
+      membershipRule: normalized,
+    },
   ];
 }
 
-async function loadNetworkLinkContextForGroups(
+async function loadGroupConnectionContextForGroups(
   tx: ZeroTransactionLike,
   groupIds?: readonly string[]
 ) {
@@ -114,39 +100,47 @@ async function loadNetworkLinkContextForGroups(
     normalizedGroupIds.length > 0
       ? await tx.run(zql.group.where('id', 'IN', normalizedGroupIds))
       : await tx.run(zql.group);
-  const links =
+  const connections =
     normalizedGroupIds.length > 0
       ? await tx.run(
-          zql.network_link.where(({ cmp, or }) =>
+          zql.group_connection.where(({ cmp, or }) =>
             or(
-              cmp('source_group_id', 'IN', normalizedGroupIds),
-              cmp('target_group_id', 'IN', normalizedGroupIds)
+              cmp('group_a_id', 'IN', normalizedGroupIds),
+              cmp('group_b_id', 'IN', normalizedGroupIds)
             )
           )
         )
-      : await tx.run(zql.network_link);
-  const linkIds = links.map(link => link.id);
-  const [rights, rules] = await Promise.all([
-    linkIds.length > 0
-      ? tx.run(zql.network_link_right.where('network_link_id', 'IN', linkIds))
+      : await tx.run(zql.group_connection);
+  const connectionIds = connections.map(connection => connection.id);
+  const [grants, rules, origins] = await Promise.all([
+    connectionIds.length > 0
+      ? tx.run(zql.group_right_grant.where('connection_id', 'IN', connectionIds))
       : [],
-    linkIds.length > 0
-      ? tx.run(zql.network_link_membership_rule.where('network_link_id', 'IN', linkIds))
+    connectionIds.length > 0
+      ? tx.run(zql.group_membership_rule.where('connection_id', 'IN', connectionIds))
       : [],
+    tx.run(zql.group_membership_rule_origin),
   ]);
 
-  return { groups, links, rights, rules };
+  const rulesWithOrigins = rules.map(rule => ({
+    ...rule,
+    origins: origins.filter(origin => origin.membership_rule_id === rule.id),
+  }));
+  return { groups, connections, grants, rules: rulesWithOrigins };
 }
 
 export async function loadGroupsWithDerivedNetworkMeta(
   tx: ZeroTransactionLike,
   groupIds?: readonly string[]
 ) {
-  const { groups, links, rights, rules } = await loadNetworkLinkContextForGroups(tx, groupIds);
+  const { groups, connections, grants, rules } = await loadGroupConnectionContextForGroups(
+    tx,
+    groupIds
+  );
   const derivedMetaByGroupId = buildDerivedGroupNetworkMetaMap({
     groupIds: groups.map(group => group.id),
-    links,
-    rights,
+    connections,
+    grants,
     rules,
   });
 
@@ -174,16 +168,16 @@ export async function loadActiveHierarchyRelationships(
   tx: ZeroTransactionLike,
   groupsById: ReadonlyMap<string, { group_type?: string | null | undefined }>
 ) {
-  const [links, rights, rules] = await Promise.all([
-    tx.run(zql.network_link),
-    tx.run(zql.network_link_right),
-    tx.run(zql.network_link_membership_rule),
+  const [connections, grants, rules] = await Promise.all([
+    tx.run(zql.group_connection),
+    tx.run(zql.group_right_grant),
+    tx.run(zql.group_membership_rule),
   ]);
 
   return filterHierarchyRelationships(
-    explodeNetworkLinksToRelationships({
-      links,
-      rights,
+    deriveGroupRelationships({
+      connections,
+      grants,
       rules,
       includeInactive: false,
     }).filter(relationship => relationship.relationship_type !== 'sibling'),
@@ -282,8 +276,8 @@ async function getActiveUsersForGroupRole(
   );
 }
 
-function isActiveNetworkLinkStatus(status: string | null | undefined) {
-  return status == null || status === 'active' || status === 'accepted';
+function isActiveGroupConnectionStatus(status: string | null | undefined) {
+  return status === 'active';
 }
 
 function getNetworkMembershipSourceForMode(mode: string | null | undefined) {
@@ -299,27 +293,33 @@ function getNetworkMembershipSourceForMode(mode: string | null | undefined) {
   }
 }
 
-async function getDesiredNetworkLinkMembershipSources(tx: ZeroTransactionLike, groupId: string) {
-  const [links, rights, rules] = await Promise.all([
+async function getDesiredGroupConnectionMembershipSources(
+  tx: ZeroTransactionLike,
+  groupId: string
+) {
+  const [connections, rules, origins] = await Promise.all([
     tx.run(
-      zql.network_link.where(({ cmp, or }) =>
-        or(cmp('source_group_id', '=', groupId), cmp('target_group_id', '=', groupId))
+      zql.group_connection.where(({ cmp, or }) =>
+        or(cmp('group_a_id', '=', groupId), cmp('group_b_id', '=', groupId))
       )
     ),
-    tx.run(zql.network_link_right),
-    tx.run(zql.network_link_membership_rule),
+    tx.run(zql.group_membership_rule),
+    tx.run(zql.group_membership_rule_origin),
   ]);
 
-  const rightsByLinkId = new Map<string, (typeof rights)[number][]>();
-  for (const right of rights) {
-    const linkRights = rightsByLinkId.get(right.network_link_id) ?? [];
-    linkRights.push(right);
-    rightsByLinkId.set(right.network_link_id, linkRights);
-  }
-
-  const rulesByLinkId = new Map<string, (typeof rules)[number]>();
+  const rulesByConnectionId = new Map<
+    string,
+    (typeof rules)[number] & {
+      eligible_origin_group_ids: string[];
+    }
+  >();
   for (const rule of rules) {
-    rulesByLinkId.set(rule.network_link_id, rule);
+    rulesByConnectionId.set(rule.connection_id, {
+      ...rule,
+      eligible_origin_group_ids: origins
+        .filter(origin => origin.membership_rule_id === rule.id)
+        .map(origin => origin.eligible_origin_group_id),
+    });
   }
 
   const desiredMembershipSources = new Map<
@@ -330,22 +330,20 @@ async function getDesiredNetworkLinkMembershipSources(tx: ZeroTransactionLike, g
     }
   >();
 
-  const sortedLinks = [...links].sort((left, right) => left.created_at - right.created_at);
+  const sortedConnections = [...connections].sort(
+    (left, right) => left.created_at - right.created_at
+  );
 
-  for (const link of sortedLinks) {
-    const membershipRule = rulesByLinkId.get(link.id);
-    const directionalContexts = getDirectionalMembershipContexts(link, membershipRule).filter(
+  for (const connection of sortedConnections) {
+    const membershipRule = rulesByConnectionId.get(connection.id);
+    const directionalContexts = getDirectionalMembershipContexts(connection, membershipRule).filter(
       context => context.recipientGroupId === groupId
     );
     if (directionalContexts.length === 0) {
       continue;
     }
 
-    const linkRights = rightsByLinkId.get(link.id) ?? [];
-    const hasActiveRights =
-      isActiveNetworkLinkStatus(link.status) ||
-      linkRights.some(right => isActiveNetworkLinkStatus(right.status));
-    if (!hasActiveRights) {
+    if (!isActiveGroupConnectionStatus(connection.status)) {
       continue;
     }
 
@@ -373,14 +371,14 @@ async function getDesiredNetworkLinkMembershipSources(tx: ZeroTransactionLike, g
       }
 
       if (directionalContext.membershipRule.membership_mode === 'role_members') {
-        if (!directionalContext.membershipRule.role_id) {
+        if (!directionalContext.membershipRule.required_source_role_id) {
           continue;
         }
 
         const userIds = await getActiveUsersForGroupRole(
           tx,
           connectedGroupId,
-          directionalContext.membershipRule.role_id
+          directionalContext.membershipRule.required_source_role_id
         );
         for (const userId of userIds) {
           if (!desiredMembershipSources.has(userId)) {
@@ -394,7 +392,7 @@ async function getDesiredNetworkLinkMembershipSources(tx: ZeroTransactionLike, g
       }
 
       const selectedSourceGroupIds = [
-        ...new Set(directionalContext.membershipRule.source_group_ids ?? []),
+        ...new Set(directionalContext.membershipRule.eligible_origin_group_ids ?? []),
       ].filter(Boolean);
       if (selectedSourceGroupIds.length === 0) {
         continue;
@@ -566,7 +564,7 @@ export async function recomputeSiblingGroupMemberships(
 ) {
   const existingMemberships = await tx.run(zql.group_membership.where('group_id', groupId));
   const affectedUserIds = new Set(existingMemberships.map(membership => membership.user_id));
-  const desiredMembershipSources = await getDesiredNetworkLinkMembershipSources(tx, groupId);
+  const desiredMembershipSources = await getDesiredGroupConnectionMembershipSources(tx, groupId);
 
   for (const membership of existingMemberships) {
     if (!isSiblingAutomaticMembershipSource(membership.source)) {
@@ -612,13 +610,24 @@ export async function recomputeSiblingMembershipsForGroup(
   groupId: string,
   assignedById?: string | null
 ) {
-  const [links, rules] = await Promise.all([
-    tx.run(zql.network_link),
-    tx.run(zql.network_link_membership_rule),
+  const [connections, rules, origins] = await Promise.all([
+    tx.run(zql.group_connection),
+    tx.run(zql.group_membership_rule),
+    tx.run(zql.group_membership_rule_origin),
   ]);
-  const rulesByLinkId = new Map<string, (typeof rules)[number]>();
+  const rulesByConnectionId = new Map<
+    string,
+    (typeof rules)[number] & {
+      eligible_origin_group_ids: string[];
+    }
+  >();
   for (const rule of rules) {
-    rulesByLinkId.set(rule.network_link_id, rule);
+    rulesByConnectionId.set(rule.connection_id, {
+      ...rule,
+      eligible_origin_group_ids: origins
+        .filter(origin => origin.membership_rule_id === rule.id)
+        .map(origin => origin.eligible_origin_group_id),
+    });
   }
 
   const queue = [groupId];
@@ -635,13 +644,18 @@ export async function recomputeSiblingMembershipsForGroup(
 
     const recipientGroupIds = new Set<string>();
 
-    for (const link of links) {
-      const membershipRule = rulesByLinkId.get(link.id);
-      for (const directionalContext of getDirectionalMembershipContexts(link, membershipRule)) {
+    for (const connection of connections) {
+      const membershipRule = rulesByConnectionId.get(connection.id);
+      for (const directionalContext of getDirectionalMembershipContexts(
+        connection,
+        membershipRule
+      )) {
         if (
           directionalContext.recipientGroupId === currentGroupId ||
           directionalContext.connectedGroupId === currentGroupId ||
-          (directionalContext.membershipRule.source_group_ids ?? []).includes(currentGroupId)
+          (directionalContext.membershipRule.eligible_origin_group_ids ?? []).includes(
+            currentGroupId
+          )
         ) {
           recipientGroupIds.add(directionalContext.recipientGroupId);
         }

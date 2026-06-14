@@ -6,7 +6,10 @@ import { Card, CardContent } from '@/features/shared/ui/ui/card.tsx';
 import { Input } from '@/features/shared/ui/ui/input.tsx';
 import { Upload, X, Loader2 } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils.ts';
-import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client.ts';
 
@@ -59,8 +62,10 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   onFileUpload,
   onImageRemove,
   cleanupOnRemove = false,
-  label = 'User Image',
-  description = 'Upload a user image or provide a URL',
+  label = translateText('generated.inline.0060_user_image_f1658ae3'),
+  description = translateText(
+    'generated.inline.0061_upload_a_user_image_or_provide_a_url_c9e63df2'
+  ),
   className,
 }) => {
   const urlInputId = useId();
@@ -104,7 +109,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       onImageChange(imageUrl);
     } catch (error) {
       console.error('Image upload error:', error);
-      toast.error(t('common.actions.uploadImageFailed', 'Image upload failed'));
+      toast.error(t('common.actions.uploadImageFailed'));
     } finally {
       setIsUploading(false);
       setIsDragActive(false);
@@ -158,7 +163,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     }
 
     if (!file.type.startsWith('image/')) {
-      toast.error(t('common.actions.uploadImageTypesOnly', 'Please drop an image file.'));
+      toast.error(t('common.actions.uploadImageTypesOnly'));
       return;
     }
 
@@ -205,7 +210,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       clearImageSelection();
     } catch (error) {
       console.error('Image removal error:', error);
-      toast.error(t('common.actions.removeImageFailed', 'Failed to remove image'));
+      toast.error(t('common.actions.removeImageFailed'));
     } finally {
       setIsRemoving(false);
     }
@@ -225,7 +230,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
             <div className="relative">
               <img
                 src={currentImage}
-                alt="Preview"
+                alt={translateText('generated.inline.0520_preview_f1fbb2b4')}
                 data-testid="image-upload-preview"
                 className="h-48 w-full rounded-lg object-cover"
               />
@@ -271,12 +276,10 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
               <div className="space-y-1 text-sm">
                 <p className="text-foreground font-medium">
                   {isDragActive
-                    ? t('common.actions.dropImageHere', 'Drop your image here')
-                    : t('common.actions.dragImageHere', 'Drag an image or GIF here')}
+                    ? t('common.actions.dropImageHere')
+                    : t('common.actions.dragImageHere')}
                 </p>
-                <p className="text-muted-foreground">
-                  {t('common.actions.orClickToBrowse', 'or click the button to browse')}
-                </p>
+                <p className="text-muted-foreground">{t('common.actions.orClickToBrowse')}</p>
               </div>
               <Button
                 type="button"
@@ -288,7 +291,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
                 {isUploading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {t('common.actions.uploading', 'Uploading...')}
+                    {t('common.actions.uploading')}
                   </>
                 ) : (
                   <>

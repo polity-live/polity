@@ -16,8 +16,8 @@ import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { RIGHT_TYPES, type RightType } from '@/features/network/ui/RightFilters';
 import { richTextToPlainText, toRichTextValue } from '@/features/shared/logic/richText';
 import type { GroupFormData, GroupType, RelationshipDirection } from '../hooks/useGroupUpdate';
-import { useNetworkLinkState } from '@/zero/network';
-import { buildRightDirectionsForLink } from '@/features/network/logic/networkLinkDerived';
+import { useGroupConnectionState } from '@/zero/network';
+import { buildRightDirectionsForConnection } from '@/features/network/logic/groupConnectionDerived';
 import type { CanonicalMembershipMode } from '@/features/network/types/network.types';
 
 interface GroupEditProps {
@@ -28,7 +28,7 @@ export function GroupEdit({ groupId }: GroupEditProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { group, isLoading } = useGroupData(groupId);
-  const { groupLinks } = useNetworkLinkState({ groupId });
+  const { groupConnections } = useGroupConnectionState({ groupId });
   const { user } = useAuth();
   const connectedRelationshipDirections: Record<RightType, RelationshipDirection> = {
     informationRight: 'none',
@@ -39,14 +39,14 @@ export function GroupEdit({ groupId }: GroupEditProps) {
   };
 
   const connectedGroupId = group?.connected_group_id ?? null;
-  const primarySiblingLink =
+  const primarySiblingConnection =
     connectedGroupId == null
       ? null
-      : (groupLinks.find(
-          link =>
-            link.structural_relation === 'sibling' &&
-            ((link.source_group_id === groupId && link.target_group_id === connectedGroupId) ||
-              (link.source_group_id === connectedGroupId && link.target_group_id === groupId))
+      : (groupConnections.find(
+          connection =>
+            connection.connection_type === 'peer' &&
+            ((connection.group_a_id === groupId && connection.group_b_id === connectedGroupId) ||
+              (connection.group_a_id === connectedGroupId && connection.group_b_id === groupId))
         ) ?? null);
 
   const fallbackCanonicalMembershipMode = (
@@ -65,52 +65,22 @@ export function GroupEdit({ groupId }: GroupEditProps) {
   };
 
   const getRelativeSiblingMembershipDirection = () => {
-    if (!primarySiblingLink?.membership_rule?.membership_direction || !group) {
+    if (!primarySiblingConnection?.membership_rule || !group) {
       return null;
     }
 
-    const currentIsSource = primarySiblingLink.source_group_id === group.id;
-    if (currentIsSource) {
-      return primarySiblingLink.membership_rule.membership_direction === 'forward'
-        ? 'outgoing'
-        : 'incoming';
-    }
-
-    return primarySiblingLink.membership_rule.membership_direction === 'forward'
-      ? 'incoming'
-      : 'outgoing';
+    return primarySiblingConnection.membership_rule.member_source_group_id === group.id
+      ? 'current_members_to_partner'
+      : 'partner_members_to_current';
   };
 
-  if (primarySiblingLink) {
-    const derivedDirections = buildRightDirectionsForLink({
+  if (primarySiblingConnection) {
+    const derivedDirections = buildRightDirectionsForConnection({
       currentGroupId: groupId,
-      link: primarySiblingLink,
+      connection: primarySiblingConnection,
     });
     for (const right of RIGHT_TYPES) {
       connectedRelationshipDirections[right] = derivedDirections[right];
-    }
-  } else if (group?.group_type === 'sibling' && connectedGroupId) {
-    for (const right of RIGHT_TYPES) {
-      const hasOutgoing = (group.relationships_as_source ?? []).some(
-        relationship =>
-          relationship.relationship_type === 'sibling' &&
-          relationship.related_group_id === connectedGroupId &&
-          relationship.with_right === right
-      );
-      const hasIncoming = (group.relationships_as_target ?? []).some(
-        relationship =>
-          relationship.relationship_type === 'sibling' &&
-          relationship.group_id === connectedGroupId &&
-          relationship.with_right === right
-      );
-
-      connectedRelationshipDirections[right] = hasOutgoing
-        ? hasIncoming
-          ? 'bidirectional'
-          : 'outgoing'
-        : hasIncoming
-          ? 'incoming'
-          : 'none';
     }
   }
 
@@ -139,19 +109,23 @@ export function GroupEdit({ groupId }: GroupEditProps) {
         longitude: group.longitude ?? null,
         imageURL: group.image_url ?? '',
         connected_group_id: group.connected_group_id ?? null,
-        sibling_membership_direction: getRelativeSiblingMembershipDirection(),
+        siblingMembershipDirection: getRelativeSiblingMembershipDirection(),
         sibling_membership_mode:
-          (primarySiblingLink?.membership_rule
+          (primarySiblingConnection?.membership_rule
             ?.membership_mode as GroupFormData['sibling_membership_mode']) ??
           fallbackCanonicalMembershipMode(group.sibling_membership_mode) ??
           null,
         sibling_role_id:
-          primarySiblingLink?.membership_rule?.role_id ?? group.sibling_role_id ?? null,
+          primarySiblingConnection?.membership_rule?.required_source_role_id ??
+          group.sibling_role_id ??
+          null,
         parliament_source_group_ids:
-          primarySiblingLink?.membership_rule?.source_group_ids ??
+          primarySiblingConnection?.membership_rule?.origins
+            ?.map(origin => origin.eligible_origin_group_id)
+            .filter((id): id is string => Boolean(id)) ??
           (group.sibling_sources ?? []).map(sourceLink => sourceLink.source_group_id) ??
           [],
-        connected_relationship_directions: connectedRelationshipDirections,
+        connectedRelationshipDirections: connectedRelationshipDirections,
       } as Partial<GroupFormData>)
     : undefined;
 

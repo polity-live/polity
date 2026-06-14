@@ -28,12 +28,16 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/ava
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { Input } from '@/features/shared/ui/ui/input.tsx';
 import { cn } from '@/features/shared/utils/utils.ts';
-import { type TDiscussion, discussionPlugin } from '@/features/shared/ui/kit-platejs/discussion-kit.tsx';
+import {
+  type TDiscussion,
+  discussionPlugin,
+} from '@/features/shared/ui/kit-platejs/discussion-kit.tsx';
 import { suggestionPlugin } from '@/features/shared/ui/kit-platejs/suggestion-kit.tsx';
 import { useSuggestionCallbacks } from '@/features/shared/ui/kit-platejs/suggestion-callbacks-context.tsx';
 import { useModeContext } from '@/features/shared/ui/kit-platejs/mode-context.tsx';
 
 import { type TComment, Comment, CommentCreateForm, formatCommentDate } from './comment.tsx';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 // Import VoteControls interface to pass the required props
 export interface BlockSuggestionVoteProps {
@@ -134,7 +138,7 @@ export function BlockSuggestion({ element }: { element: TSuggestionElement }) {
   return (
     <div
       className={cn(
-        'border-brand/[0.8] z-1 pointer-events-none absolute inset-0 border-2 transition-opacity',
+        'border-brand/[0.8] pointer-events-none absolute inset-0 z-1 border-2 transition-opacity',
         isRemove && 'border-gray-300'
       )}
       contentEditable={false}
@@ -151,7 +155,9 @@ export function FilteredBlockSuggestion({ element }: { element: TSuggestionEleme
   const discussions = usePluginOption(discussionPlugin, 'discussions');
 
   const suggestionId = element.suggestion?.id;
-  const blockCrId = discussions?.find((d: { id: string; crId?: string }) => d.id === suggestionId)?.crId;
+  const blockCrId = discussions?.find(
+    (d: { id: string; crId?: string }) => d.id === suggestionId
+  )?.crId;
   const isFilteredOut = selectedCrIds != null && blockCrId != null && !selectedCrIds.has(blockCrId);
 
   if (isFilteredOut) return null;
@@ -178,7 +184,9 @@ export function BlockSuggestionCard({
   const currentUserId = usePluginOption(discussionPlugin, 'currentUserId');
 
   // Check if current user has already voted
-  const currentUserVote = suggestion.votes?.find((v: { voterId?: string }) => v.voterId === currentUserId);
+  const currentUserVote = suggestion.votes?.find(
+    (v: { voterId?: string }) => v.voterId === currentUserId
+  );
   const hasVoted = !!currentUserVote;
 
   const [editingTitle, setEditingTitle] = React.useState(false);
@@ -275,20 +283,20 @@ export function BlockSuggestionCard({
             <AvatarImage alt={userInfo?.name} src={userInfo?.avatarUrl} />
             <AvatarFallback>{userInfo?.name?.[0]}</AvatarFallback>
           </Avatar>
-          <h4 className="mx-2 text-sm font-semibold leading-none">{userInfo?.name}</h4>
-          <div className="text-xs leading-none text-muted-foreground/80">
+          <h4 className="mx-2 text-sm leading-none font-semibold">{userInfo?.name}</h4>
+          <div className="text-muted-foreground/80 text-xs leading-none">
             <span className="mr-1">{formatCommentDate(new Date(suggestion.createdAt))}</span>
           </div>
         </div>
 
         {/* Suggestion Title */}
-        <div className="mb-3 mt-2 flex items-center gap-2">
+        <div className="mt-2 mb-3 flex items-center gap-2">
           {editingTitle ? (
             <div className="flex flex-1 items-center gap-2">
               <Input
                 value={titleValue}
                 onChange={e => setTitleValue(e.target.value)}
-                placeholder="Enter suggestion title..."
+                placeholder={translateText('generated.inline.1140_enter_suggestion_title_cb611d14')}
                 className="h-8 text-sm"
                 autoFocus
                 onKeyDown={e => {
@@ -307,15 +315,16 @@ export function BlockSuggestionCard({
               </Button>
             </div>
           ) : (
-            <div className="flex flex-1 items-center gap-2 rounded-md bg-muted/30 px-3 py-2">
+            <div className="bg-muted/30 flex flex-1 items-center gap-2 rounded-md px-3 py-2">
               {/* Display suggestion ID if available */}
               {suggestion.crId && (
-                <span className="rounded bg-primary/10 px-2 py-1 font-mono text-xs text-primary">
+                <span className="bg-primary/10 text-primary rounded px-2 py-1 font-mono text-xs">
                   {suggestion.crId}
                 </span>
               )}
               <span className="text-sm font-semibold">
-                {suggestion.title || 'Untitled Suggestion'}
+                {suggestion.title ||
+                  translateText('generated.inline.0142_untitled_suggestion_5d70b979')}
               </span>
               <Button
                 size="sm"
@@ -329,13 +338,13 @@ export function BlockSuggestionCard({
           )}
         </div>
 
-        <div className="relative mb-4 mt-1 pl-[32px]">
+        <div className="relative mt-1 mb-4 pl-[32px]">
           <div className="flex flex-col gap-2">
             {suggestion.type === 'remove' && suggestion.text && (
               <React.Fragment>
                 {suggestionText2Array(suggestion.text).map((text, index) => (
                   <div key={index} className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-muted-foreground text-sm">
                       {t('plateJs.blockSuggestion.delete')}
                     </span>
 
@@ -351,7 +360,7 @@ export function BlockSuggestionCard({
               <React.Fragment>
                 {suggestionText2Array(suggestion.newText).map((text, index) => (
                   <div key={index} className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-muted-foreground text-sm">
                       {t('plateJs.blockSuggestion.add')}
                     </span>
 
@@ -379,7 +388,7 @@ export function BlockSuggestionCard({
                 {suggestionText2Array(suggestion.text).map((text, index) => (
                   <React.Fragment key={index}>
                     <div key={index} className="flex items-start gap-2">
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-muted-foreground text-sm">
                         {index === 0
                           ? t('plateJs.blockSuggestion.replace')
                           : t('plateJs.blockSuggestion.delete')}
@@ -395,7 +404,7 @@ export function BlockSuggestionCard({
 
             {suggestion.type === 'update' && (
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
+                <span className="text-muted-foreground text-sm">
                   {Object.keys(suggestion.properties).map(key => (
                     <span key={key}>
                       {t('plateJs.blockSuggestion.un')}
@@ -426,10 +435,10 @@ export function BlockSuggestionCard({
         ))}
 
         {hovering && currentMode !== 'vote_internal' && currentMode !== 'vote_event' && (
-          <div className="absolute right-4 top-4 flex gap-2">
+          <div className="absolute top-4 right-4 flex gap-2">
             <Button
               variant="ghost"
-              className="size-6 p-1 text-muted-foreground"
+              className="text-muted-foreground size-6 p-1"
               onClick={() => accept(suggestion)}
             >
               <CheckIcon className="size-4" />
@@ -437,7 +446,7 @@ export function BlockSuggestionCard({
 
             <Button
               variant="ghost"
-              className="size-6 p-1 text-muted-foreground"
+              className="text-muted-foreground size-6 p-1"
               onClick={() => reject(suggestion)}
             >
               <XIcon className="size-4" />
@@ -450,10 +459,12 @@ export function BlockSuggestionCard({
             {hasVoted ? (
               <div className="rounded-md border border-blue-500/30 bg-blue-500/5 p-4">
                 <p className="mb-2 text-sm font-semibold text-blue-700 dark:text-blue-400">
-                  {t('plateJs.blockSuggestion.voteRecorded', 'Your Vote Recorded')}
+                  {t('plateJs.blockSuggestion.voteRecorded')}
                 </p>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">You voted to:</span>
+                  <span className="text-muted-foreground text-sm">
+                    {translateText('generated.inline.1141_you_voted_to_0cd82e7e')}
+                  </span>
                   <span
                     className={`inline-flex items-center rounded-md px-3 py-1 text-sm font-semibold ${
                       currentUserVote?.vote === 'accept'
@@ -466,13 +477,13 @@ export function BlockSuggestionCard({
                     {currentUserVote?.vote === 'accept' && (
                       <>
                         <CheckIcon className="mr-1 h-4 w-4" />
-                        Accept
+                        {translateText('generated.inline.0121_accept_bb54db51')}
                       </>
                     )}
                     {currentUserVote?.vote === 'reject' && (
                       <>
                         <XIcon className="mr-1 h-4 w-4" />
-                        Reject
+                        {translateText('generated.inline.1142_reject_2b03b592')}
                       </>
                     )}
                     {currentUserVote?.vote === 'abstain' && 'Abstain'}
@@ -483,10 +494,12 @@ export function BlockSuggestionCard({
               <>
                 <div className="rounded-md border border-blue-500/30 bg-blue-500/5 p-3">
                   <p className="mb-1 text-sm font-semibold text-blue-700 dark:text-blue-400">
-                    {t('plateJs.blockSuggestion.voteRequired', 'Voting Required')}
+                    {t('plateJs.blockSuggestion.voteRequired')}
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    Cast your vote for this change request.
+                  <p className="text-muted-foreground text-xs">
+                    {translateText(
+                      'generated.inline.1143_cast_your_vote_for_this_change_request_25af64e8'
+                    )}
                   </p>
                 </div>
                 <div className="flex gap-2">
@@ -501,7 +514,7 @@ export function BlockSuggestionCard({
                     }}
                   >
                     <CheckIcon className="mr-2 h-4 w-4" />
-                    Accept
+                    {translateText('generated.inline.0121_accept_bb54db51')}
                   </Button>
                   <Button
                     size="sm"
@@ -514,7 +527,7 @@ export function BlockSuggestionCard({
                     }}
                   >
                     <XIcon className="mr-2 h-4 w-4" />
-                    Reject
+                    {translateText('generated.inline.1142_reject_2b03b592')}
                   </Button>
                   <Button
                     size="sm"
@@ -526,7 +539,7 @@ export function BlockSuggestionCard({
                       }
                     }}
                   >
-                    Abstain
+                    {translateText('generated.inline.1144_abstain_bc39d849')}
                   </Button>
                 </div>
               </>
@@ -537,7 +550,7 @@ export function BlockSuggestionCard({
         <CommentCreateForm discussionId={suggestion.suggestionId} />
       </div>
 
-      {!isLast && <div className="h-px w-full bg-muted" />}
+      {!isLast && <div className="bg-muted h-px w-full" />}
     </div>
   );
 }
@@ -792,7 +805,8 @@ export const useResolveSuggestion = (
         if (!discussion) {
           // Create new discussion with CR ID
           try {
-            const { getNextSuggestionIdFromDiscussions } = await import('@/features/shared/utils/suggestion-utils.ts');
+            const { getNextSuggestionIdFromDiscussions } =
+              await import('@/features/shared/utils/suggestion-utils.ts');
             const crId = getNextSuggestionIdFromDiscussions(updatedDiscussions);
 
             const newDiscussion: TDiscussion = {
@@ -812,7 +826,8 @@ export const useResolveSuggestion = (
         } else if (!discussion.crId) {
           // Discussion exists but doesn't have crId
           try {
-            const { getNextSuggestionIdFromDiscussions } = await import('@/features/shared/utils/suggestion-utils.ts');
+            const { getNextSuggestionIdFromDiscussions } =
+              await import('@/features/shared/utils/suggestion-utils.ts');
             const crId = getNextSuggestionIdFromDiscussions(updatedDiscussions);
 
             const index = updatedDiscussions.findIndex(d => d.id === discussionId);

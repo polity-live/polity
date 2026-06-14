@@ -72,10 +72,7 @@ export function MediaToolbar({
 
               <FloatingMediaPrimitive.UrlInput
                 className={inputVariants()}
-                placeholder={t(
-                  'plateJs.media.toolbar.embedLinkPlaceholder',
-                  'Paste the embed link...'
-                )}
+                placeholder={t('plateJs.media.toolbar.embedLinkPlaceholder')}
                 options={{ plugin }}
               />
             </div>
@@ -85,11 +82,11 @@ export function MediaToolbar({
             <FloatingMediaPrimitive.EditButton
               className={buttonVariants({ size: 'sm', variant: 'ghost' })}
             >
-              {t('plateJs.media.toolbar.editLink', 'Edit link')}
+              {t('plateJs.media.toolbar.editLink')}
             </FloatingMediaPrimitive.EditButton>
 
             <CaptionButton size="sm" variant="ghost">
-              {t('plateJs.media.toolbar.caption', 'Caption')}
+              {t('plateJs.media.toolbar.caption')}
             </CaptionButton>
 
             <Separator orientation="vertical" className="mx-1 h-6" />

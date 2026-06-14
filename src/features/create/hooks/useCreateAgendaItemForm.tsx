@@ -19,7 +19,10 @@ import {
   SelectValue,
 } from '@/features/shared/ui/ui/select';
 import { Badge } from '@/features/shared/ui/ui/badge';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import {
   useAllAmendments,
   useAllEvents,
@@ -57,6 +60,12 @@ import {
   type ElectionMode,
 } from '@/features/elections/logic/electionMode';
 import { ElectionModeInput } from '@/features/elections/ui/ElectionModeInput';
+import { BallotVisibilityInput } from '@/features/agendas/ui/BallotVisibilityInput';
+import {
+  defaultElectionBallotVisibility,
+  defaultVoteBallotVisibility,
+  type BallotVisibility,
+} from '@/zero/shared';
 
 type AgendaItemType = 'election' | 'vote' | 'speech' | 'discussion' | 'accreditation';
 type MajorityType = 'simple' | 'absolute' | 'two_thirds';
@@ -147,6 +156,9 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
   const [roleId, setRoleId] = useState('');
   const [majorityType, setMajorityType] = useState<MajorityType>('simple');
   const [timeLimit, setTimeLimit] = useState('');
+  const [ballotVisibility, setBallotVisibility] = useState<BallotVisibility>(
+    typeParam === 'election' ? defaultElectionBallotVisibility : defaultVoteBallotVisibility
+  );
   const [electionMode, setElectionMode] = useState<ElectionMode>(
     normalizeElectionMode(electionModeParam, 'single')
   );
@@ -183,6 +195,17 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
       setType('election');
     }
   }, [assignmentId, type]);
+
+  useEffect(() => {
+    if (type === 'election') {
+      setBallotVisibility(defaultElectionBallotVisibility);
+      return;
+    }
+
+    if (type === 'vote') {
+      setBallotVisibility(defaultVoteBallotVisibility);
+    }
+  }, [type]);
 
   useEffect(() => {
     if (!assignmentId && electionModeParam) {
@@ -326,6 +349,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
         closing_duration_seconds: null,
         closing_end_time: null,
         visibility: 'public',
+        ballot_visibility: ballotVisibility,
         agenda_item_id: agendaItemId,
         role_id: roleId || null,
         election_mode: resolvedElectionMode,
@@ -475,6 +499,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
           closing_duration_seconds: null,
           closing_end_time: null,
           visibility: 'public',
+          ballot_visibility: ballotVisibility,
           election_mode: 'list',
           seat_count: delegateSeatCount,
           max_votes: deriveElectionMaxVotes('list', delegateSeatCount),
@@ -533,6 +558,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
             closing_duration_seconds: null,
             closing_end_time: null,
             visibility: 'public',
+            ballot_visibility: ballotVisibility,
             election_mode: 'single',
             seat_count: 1,
             max_votes: 1,
@@ -557,17 +583,29 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
     }
 
     if (assignmentId && isAssignmentLoading) {
-      toast.error('Der Delegiertenauftrag wird noch geladen. Bitte versuche es gleich erneut.');
+      toast.error(
+        translateText(
+          'generated.inline.0302_der_delegiertenauftrag_wird_noch_geladen_bitt_da98e584'
+        )
+      );
       return;
     }
 
     if (assignmentLookupFailed) {
-      toast.error('Der Delegiertenauftrag konnte nicht gefunden werden.');
+      toast.error(
+        translateText(
+          'generated.inline.0303_der_delegiertenauftrag_konnte_nicht_gefunden__b1fb330a'
+        )
+      );
       return;
     }
 
     if (isElectionType && resolvedElectionMode === 'list' && resolvedSeatCount < 1) {
-      toast.error('Bitte gib mindestens eine zu vergebende Position an.');
+      toast.error(
+        translateText(
+          'generated.inline.0304_bitte_gib_mindestens_eine_zu_vergebende_posit_d79ad3b6'
+        )
+      );
       return;
     }
 
@@ -632,6 +670,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                 closing_duration_seconds: null,
                 closing_end_time: null,
                 visibility: 'public',
+                ballot_visibility: ballotVisibility,
                 agenda_item_id: agendaItemId,
                 amendment_id: amendmentId || null,
               })
@@ -686,7 +725,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
   const config = useMemo(
     (): CreateFormConfig => ({
       entityType: 'agenda_item',
-      title: 'pages.create.agendaItem.title',
+      title: translateText('generated.inline.0046_pages_create_agendaitem_title_c019a31a'),
       isSubmitting,
       onSubmit: handleSubmit,
       steps: [
@@ -698,25 +737,37 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
               {delegateAssignment ? (
                 <div className="bg-muted/30 rounded-2xl border p-4">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="outline">Delegiertenauftrag</Badge>
+                    <Badge variant="outline">
+                      {translateText('generated.inline.0305_delegiertenauftrag_5a165b38')}
+                    </Badge>
                     {assignmentModeLabel ? (
                       <Badge variant="secondary">{assignmentModeLabel}</Badge>
                     ) : null}
                     <Badge variant="secondary">
-                      {delegateSeatCount} {delegateSeatCount === 1 ? 'Delegierte' : 'Delegierte'}
+                      {delegateSeatCount}{' '}
+                      {delegateSeatCount === 1
+                        ? translateText('generated.inline.0041_delegierte_109dfa4c')
+                        : translateText('generated.inline.0041_delegierte_109dfa4c')}
                     </Badge>
                   </div>
                   <p className="text-muted-foreground mt-3 text-sm">
-                    Dieses Election-Agenda-Item meldet Delegierte automatisch an{' '}
-                    <strong>{delegateAssignment.targetEvent?.title || 'das Ziel-Event'}</strong>.
+                    {translateText(
+                      'generated.inline.0306_dieses_election_agenda_item_meldet_delegierte_3d499eb7'
+                    )}{' '}
+                    <strong>
+                      {delegateAssignment.targetEvent?.title ||
+                        translateText('generated.inline.0042_das_ziel_event_97f4ce5e')}
+                    </strong>
+                    .
                   </p>
                 </div>
               ) : null}
 
               {assignmentLookupFailed ? (
                 <div className="border-destructive/40 bg-destructive/5 text-destructive rounded-2xl border p-4 text-sm">
-                  Der verlinkte Delegiertenauftrag konnte nicht geladen werden. Bitte starte den
-                  Flow erneut aus dem Auftraege-Tab.
+                  {translateText(
+                    'generated.inline.0307_der_verlinkte_delegiertenauftrag_konnte_nicht_b7f62171'
+                  )}
                 </div>
               ) : null}
 
@@ -762,9 +813,13 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
             <div className="space-y-4">
               {delegateAssignment ? (
                 <div className="bg-muted/30 rounded-2xl border p-4">
-                  <p className="text-sm font-medium">Typ</p>
+                  <p className="text-sm font-medium">
+                    {translateText('generated.inline.0308_typ_edcaf9aa')}
+                  </p>
                   <p className="text-muted-foreground text-sm">
-                    Dieser Auftrag erstellt immer einen Tagesordnungspunkt vom Typ Election.
+                    {translateText(
+                      'generated.inline.0309_dieser_auftrag_erstellt_immer_einen_tagesordn_3d58b481'
+                    )}
                   </p>
                 </div>
               ) : (
@@ -798,7 +853,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
         ...(isElectionType || isVoteType
           ? [
               {
-                label: t('pages.create.agendaItem.votingSettings', 'Voting Settings'),
+                label: t('pages.create.agendaItem.votingSettings'),
                 isValid: () =>
                   !assignmentLookupFailed &&
                   (!isElectionType || resolvedElectionMode !== 'list' || resolvedSeatCount >= 1),
@@ -809,7 +864,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                         <ElectionModeInput
                           value={resolvedElectionMode}
                           onChange={mode => setElectionMode(mode)}
-                          label="Wahltyp"
+                          label={translateText('generated.inline.0310_wahltyp_05ffc3a6')}
                           hint={
                             delegateAssignment
                               ? 'Der Auftrag setzt die Zahl der zu vergebenden Sitze. Der Modus kann fuer diese Wahl noch angepasst werden.'
@@ -823,7 +878,9 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
 
                         {showSeatCountInput ? (
                           <CreateInputField
-                            label="Anzahl Positionen"
+                            label={translateText(
+                              'generated.inline.0311_anzahl_positionen_479e7595'
+                            )}
                             required
                             type="number"
                             min="1"
@@ -838,16 +895,21 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                           />
                         ) : delegateAssignment ? (
                           <div className="bg-muted/30 text-muted-foreground rounded-2xl border p-4 text-sm">
-                            Es werden automatisch {delegateSeatCount}{' '}
-                            {delegateSeatCount === 1 ? 'Einzelwahl' : 'Einzelwahlen'} fuer die aus
-                            dem Auftrag berechneten Delegiertensitze erstellt.
+                            {translateText('generated.inline.0312_es_werden_automatisch_1599e87a')}
+                            {delegateSeatCount}{' '}
+                            {delegateSeatCount === 1
+                              ? translateText('generated.inline.0043_einzelwahl_8c93376c')
+                              : translateText('generated.inline.0044_einzelwahlen_c5379380')}
+                            {translateText(
+                              'generated.inline.0313_fuer_die_aus_dem_auftrag_berechneten_delegier_67926bfc'
+                            )}
                           </div>
                         ) : null}
                       </>
                     ) : null}
 
                     <div className="space-y-2">
-                      <Label>{t('pages.create.agendaItem.majorityType', 'Majority Type')}</Label>
+                      <Label>{t('pages.create.agendaItem.majorityType')}</Label>
                       <Select
                         value={majorityType}
                         onValueChange={(value: string) => setMajorityType(value as MajorityType)}
@@ -857,27 +919,33 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="simple">
-                            {t('pages.create.agendaItem.majoritySimple', 'Simple Majority (>50%)')}
+                            {t('pages.create.agendaItem.majoritySimple')}
                           </SelectItem>
                           <SelectItem value="absolute">
-                            {t('pages.create.agendaItem.majorityAbsolute', 'Absolute Majority')}
+                            {t('pages.create.agendaItem.majorityAbsolute')}
                           </SelectItem>
                           <SelectItem value="two_thirds">
-                            {t(
-                              'pages.create.agendaItem.majorityTwoThirds',
-                              'Two-Thirds Majority (≥66.7%)'
-                            )}
+                            {t('pages.create.agendaItem.majorityTwoThirds')}
                           </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <CreateInputField
-                      label={t('pages.create.agendaItem.timeLimit', 'Time Limit (minutes)')}
+                      label={t('pages.create.agendaItem.timeLimit')}
                       type="number"
                       min="1"
-                      placeholder={t('pages.create.agendaItem.timeLimitPlaceholder', 'No limit')}
+                      placeholder={t('pages.create.agendaItem.timeLimitPlaceholder')}
                       value={timeLimit}
                       onValueChange={setTimeLimit}
+                    />
+                    <BallotVisibilityInput
+                      value={ballotVisibility}
+                      onChange={setBallotVisibility}
+                      hint={
+                        isElectionType
+                          ? 'Delegierten- und Personenwahlen sind standardmaessig geheim.'
+                          : 'Abstimmungen sind standardmaessig namentlich.'
+                      }
                     />
                   </div>
                 ),
@@ -922,17 +990,23 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
 
               {delegateAssignment ? (
                 <div className="bg-muted/30 rounded-2xl border p-4">
-                  <p className="text-sm font-medium">Ziel der Delegiertenwahl</p>
+                  <p className="text-sm font-medium">
+                    {translateText('generated.inline.0314_ziel_der_delegiertenwahl_b8a85d6c')}
+                  </p>
                   <p className="text-muted-foreground mt-1 text-sm">
-                    Gewaehlte Delegierte werden automatisch in{' '}
+                    {translateText(
+                      'generated.inline.0315_gewaehlte_delegierte_werden_automatisch_in_04270bde'
+                    )}{' '}
                     <strong>
-                      {delegateAssignment.targetEvent?.title || 'die Delegiertenversammlung'}
+                      {delegateAssignment.targetEvent?.title ||
+                        translateText('generated.inline.0045_die_delegiertenversammlung_9744e078')}
                     </strong>{' '}
-                    als Participants eingetragen.
+                    {translateText('generated.inline.0316_als_participants_eingetragen_3c697639')}
                   </p>
                   {sourceGroup?.name ? (
                     <p className="text-muted-foreground mt-2 text-sm">
-                      Herkunftsgruppe: <strong>{sourceGroup.name}</strong>
+                      {translateText('generated.inline.0317_herkunftsgruppe_18ef20d3')}
+                      <strong>{sourceGroup.name}</strong>
                     </p>
                   ) : null}
                 </div>
@@ -1004,7 +1078,9 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                     ...(delegateAssignment
                       ? [
                           {
-                            label: 'Delegiertenauftrag',
+                            label: translateText(
+                              'generated.inline.0047_delegiertenauftrag_5a165b38'
+                            ),
                             value:
                               delegateAssignment.targetEvent?.title || delegateAssignment.title,
                           },
@@ -1015,12 +1091,12 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                 ...(isElectionType || isVoteType
                   ? [
                       {
-                        title: t('pages.create.agendaItem.votingSettings', 'Voting Settings'),
+                        title: t('pages.create.agendaItem.votingSettings'),
                         fields: [
                           ...(isElectionType
                             ? [
                                 {
-                                  label: 'Wahltyp',
+                                  label: translateText('generated.inline.0048_wahltyp_05ffc3a6'),
                                   value: getElectionModeSummaryLabel(
                                     resolvedElectionMode,
                                     resolvedSeatCount
@@ -1029,7 +1105,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                               ]
                             : []),
                           {
-                            label: t('pages.create.agendaItem.majorityType', 'Majority Type'),
+                            label: t('pages.create.agendaItem.majorityType'),
                             value:
                               majorityType === 'two_thirds'
                                 ? '⅔ Majority'
@@ -1040,11 +1116,15 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
                           ...(timeLimit
                             ? [
                                 {
-                                  label: t('pages.create.agendaItem.timeLimit', 'Time Limit'),
+                                  label: t('pages.create.agendaItem.timeLimit'),
                                   value: `${timeLimit} min`,
                                 },
                               ]
                             : []),
+                          {
+                            label: translateText('generated.inline.0049_stimmabgabe_65b7d215'),
+                            value: ballotVisibility === 'secret' ? 'Geheim' : 'Namentlich',
+                          },
                         ],
                       },
                     ]
@@ -1059,6 +1139,7 @@ export function useCreateAgendaItemForm(): CreateFormConfig {
       agendaTypeLabel,
       amendmentId,
       assignmentLookupFailed,
+      ballotVisibility,
       assignmentModeLabel,
       delegateAssignment,
       delegateSeatCount,

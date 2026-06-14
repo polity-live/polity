@@ -16,8 +16,12 @@ import { Badge } from '@/features/shared/ui/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Loader2, ArrowLeft, FileText } from 'lucide-react';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { useSuggestionIdAssignment } from '@/features/documents/hooks/use-suggestion-id-assignment.ts';
+import { countChangedCharactersForSuggestion } from '@/features/change-requests/utils/suggestion-extraction';
 import { useEditor } from '../hooks/useEditor';
 import { useEditorPresence } from '../hooks/useEditorPresence';
 import { useEditorUsers } from '../hooks/useEditorUsers';
@@ -130,6 +134,7 @@ export function EditorView({
   const handleChangeRequestCreate = useCallback(
     ({
       crId,
+      discussionId,
       changeRequestEntityId,
     }: {
       crId: string;
@@ -147,9 +152,10 @@ export function EditorView({
         id: changeRequestEntityId,
         crId,
         amendmentId,
+        changedCharacterCount: countChangedCharactersForSuggestion(discussionId, content),
       });
     },
-    [amendmentId, editorOps]
+    [amendmentId, content, editorOps]
   );
 
   // Auto-assign suggestion IDs
@@ -266,10 +272,10 @@ export function EditorView({
       return (
         <Badge variant="outline" className="capitalize">
           {entity.visibility === 'public'
-            ? 'Public'
+            ? translateText('generated.inline.0063_public_dc5eb704')
             : entity.visibility === 'authenticated'
-              ? 'Authenticated'
-              : 'Private'}
+              ? translateText('generated.inline.0064_authenticated_c2be8376')
+              : translateText('generated.inline.0065_private_237dfa0a')}
         </Badge>
       );
     }
@@ -498,7 +504,9 @@ export function EditorView({
                         />
                       )}
                     </div>
-                    <span className="text-xs">{collab.user.name || 'Unknown'}</span>
+                    <span className="text-xs">
+                      {collab.user.name || translateText('generated.inline.0031_unknown_bc7819b3')}
+                    </span>
                   </div>
                 );
               })}

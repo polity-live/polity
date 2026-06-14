@@ -1,11 +1,11 @@
 'use client';
 
-import { ReactNode, MouseEvent } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import { ReactNode } from 'react';
 import { Link } from '@tanstack/react-router';
 import { cn } from '@/features/shared/utils/utils';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
+import { LinkSurface } from '@/features/shared/ui/navigation/LinkSurface.tsx';
 import { CARD_RADIUS, getCardShadowClasses } from '../../logic/gradient-assignment';
 import {
   ContentType,
@@ -20,17 +20,15 @@ export interface TimelineCardBaseProps {
   children: ReactNode;
   elevated?: boolean;
   onClick?: () => void;
-  /** URL to navigate to when card is clicked (supports left-click and right-click open in new tab) */
+  /** URL to navigate to when card is clicked (supports browser-native new-tab gestures) */
   href?: string;
 }
 
 /**
  * Base card wrapper for all timeline cards
  * Provides consistent styling, shadows, and hover effects
- * When href is provided, the card becomes clickable with:
- * - Left-click: Navigate using Next.js router
- * - Middle-click or Ctrl+click: Open in new tab
- * Uses div instead of Link to avoid nested anchor issues
+ * When href is provided, the card becomes a real anchor surface while preserving
+ * interactive descendants such as buttons and nested links.
  */
 export function TimelineCardBase({
   contentType,
@@ -40,11 +38,10 @@ export function TimelineCardBase({
   onClick,
   href,
 }: TimelineCardBaseProps) {
-  const navigate = useNavigate();
   const shadowClasses = getCardShadowClasses(elevated);
 
   const cardStyles = cn(
-    'block overflow-hidden border border-gray-100 dark:border-gray-800',
+    'flex min-h-0 flex-col overflow-hidden border border-gray-100 dark:border-gray-800',
     'bg-card text-card-foreground',
     CARD_RADIUS.card,
     shadowClasses,
@@ -54,53 +51,32 @@ export function TimelineCardBase({
     className
   );
 
-  const handleClick = (e: MouseEvent<HTMLDivElement>) => {
-    // If user clicked on an interactive element inside, don't navigate
-    const target = e.target as HTMLElement;
-    if (e.defaultPrevented) {
-      return;
-    }
-    const interactive = target.closest(
-      'a, button, [role="button"], input, select, textarea, label'
+  if (href) {
+    return (
+      <LinkSurface
+        href={href}
+        mode="overlay"
+        label={`Open ${contentType}`}
+        containerClassName={cardStyles}
+        contentClassName="flex min-h-0 flex-1 flex-col"
+      >
+        {children}
+      </LinkSurface>
     );
-    if (interactive && interactive !== e.currentTarget) {
-      return;
-    }
-
-    if (onClick) {
-      onClick();
-    }
-
-    if (href) {
-      // Ctrl+click or Cmd+click opens in new tab
-      if (e.ctrlKey || e.metaKey) {
-        window.open(href, '_blank');
-        return;
-      }
-
-      // Use TanStack Router navigation for standard left click
-      e.preventDefault();
-      navigate({ to: href });
-    }
-  };
+  }
 
   return (
     <div
       className={cardStyles}
-      onClick={handleClick}
-      role={href ? 'link' : onClick ? 'button' : undefined}
-      tabIndex={href || onClick ? 0 : undefined}
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
       onKeyDown={e => {
-        if (href && (e.key === 'Enter' || e.key === ' ')) {
-          e.preventDefault();
-          navigate({ to: href });
-        }
-        if (!href && onClick && (e.key === 'Enter' || e.key === ' ')) {
+        if (onClick && (e.key === 'Enter' || e.key === ' ')) {
           e.preventDefault();
           onClick();
         }
       }}
-      aria-label={href ? `Open ${contentType}` : undefined}
     >
       {children}
     </div>
@@ -140,12 +116,12 @@ export function TimelineCardHeader({
   const Icon = config.icon;
 
   return (
-    <div className={cn('p-4', gradient, className)}>
+    <div className={cn('shrink-0 p-4', gradient, className)} data-timeline-card-header>
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 flex-1 items-start gap-2">
           {showIcon && <Icon className={cn('mt-0.5 h-5 w-5 flex-shrink-0', config.accentColor)} />}
           <div className="min-w-0 flex-1">
-            <h3 className="truncate text-base font-semibold leading-tight">
+            <h3 className="truncate text-base leading-tight font-semibold">
               {href ? (
                 <Link to={href} onClick={e => e.stopPropagation()} className="hover:underline">
                   {title}
@@ -159,12 +135,12 @@ export function TimelineCardHeader({
                 <Link
                   to={subtitleHref}
                   onClick={e => e.stopPropagation()}
-                  className="mt-0.5 block truncate text-xs text-muted-foreground hover:text-foreground hover:underline"
+                  className="text-muted-foreground hover:text-foreground mt-0.5 block truncate text-xs hover:underline"
                 >
                   {subtitle}
                 </Link>
               ) : (
-                <p className="mt-0.5 truncate text-xs text-muted-foreground">{subtitle}</p>
+                <p className="text-muted-foreground mt-0.5 truncate text-xs">{subtitle}</p>
               ))}
           </div>
         </div>
@@ -184,7 +160,14 @@ export interface TimelineCardContentProps {
  * Content area for timeline cards
  */
 export function TimelineCardContent({ className, children }: TimelineCardContentProps) {
-  return <div className={cn('p-4 pt-3', className)}>{children}</div>;
+  return (
+    <div
+      className={cn('flex min-h-0 flex-1 flex-col p-4 pt-3', className)}
+      data-timeline-card-content
+    >
+      {children}
+    </div>
+  );
 }
 
 export interface TimelineCardActionsProps {
@@ -197,7 +180,13 @@ export interface TimelineCardActionsProps {
  */
 export function TimelineCardActions({ className, children }: TimelineCardActionsProps) {
   return (
-    <div className={cn('flex flex-wrap items-center gap-2 px-4 pb-4 pt-2', className)}>
+    <div
+      className={cn(
+        'border-border/70 bg-muted/30 mt-auto flex shrink-0 flex-wrap items-center gap-2 border-t px-4 py-3',
+        className
+      )}
+      data-timeline-card-actions
+    >
       {children}
     </div>
   );
@@ -240,11 +229,11 @@ export function TimelineCardActionButton({
 }
 
 export interface TimelineCardStatsProps {
-  stats: Array<{
+  stats: {
     icon?: LucideIcon;
     label: string;
     value: string | number;
-  }>;
+  }[];
   className?: string;
 }
 
@@ -253,7 +242,7 @@ export interface TimelineCardStatsProps {
  */
 export function TimelineCardStats({ stats, className }: TimelineCardStatsProps) {
   return (
-    <div className={cn('flex items-center gap-4 text-xs text-muted-foreground', className)}>
+    <div className={cn('text-muted-foreground flex items-center gap-4 text-xs', className)}>
       {stats.map((stat, index) => (
         <div key={index} className="flex items-center gap-1">
           {stat.icon && <stat.icon className="h-3.5 w-3.5" />}

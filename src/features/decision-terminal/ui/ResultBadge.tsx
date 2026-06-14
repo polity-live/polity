@@ -3,7 +3,10 @@
 import { cn } from '@/features/shared/utils/utils';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Check, X, Minus, Trophy } from 'lucide-react';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 
 export type ResultType = 'passed' | 'failed' | 'tied' | 'elected';
 
@@ -23,37 +26,35 @@ export function getResultConfig(result: ResultType) {
     case 'passed':
       return {
         labelKey: 'timeline.terminal.results.passed',
-        emoji: '🟢',
         Icon: Check,
-        colorClass: 'bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/30',
+        colorClass:
+          'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300',
       };
     case 'failed':
       return {
         labelKey: 'timeline.terminal.results.failed',
-        emoji: '🔴',
         Icon: X,
-        colorClass: 'bg-red-500/20 text-red-700 dark:text-red-400 border-red-500/30',
+        colorClass:
+          'border-red-200 bg-red-50 text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300',
       };
     case 'tied':
       return {
         labelKey: 'timeline.terminal.results.tied',
-        emoji: '⚪',
         Icon: Minus,
-        colorClass: 'bg-gray-500/20 text-gray-700 dark:text-gray-400 border-gray-500/30',
+        colorClass: 'border-border bg-muted text-muted-foreground',
       };
     case 'elected':
       return {
         labelKey: 'timeline.terminal.results.elected',
-        emoji: '🔵',
         Icon: Trophy,
-        colorClass: 'bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-500/30',
+        colorClass:
+          'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300',
       };
     default:
       return {
         labelKey: 'timeline.terminal.results.unspecified',
-        emoji: '⚪',
         Icon: Minus,
-        colorClass: 'bg-gray-500/20 text-gray-600 dark:text-gray-400 border-gray-500/30',
+        colorClass: 'border-border bg-muted text-muted-foreground',
       };
   }
 }
@@ -77,7 +78,7 @@ export function ResultBadge({
     <Badge
       variant="outline"
       className={cn(
-        'max-w-full font-mono text-xs font-bold uppercase tracking-wide',
+        'max-w-full rounded-md px-2 py-0.5 font-mono text-xs font-bold tracking-wide uppercase',
         config.colorClass,
         className
       )}
@@ -85,7 +86,9 @@ export function ResultBadge({
       {showIcon && <Icon className="mr-1 h-3 w-3" />}
       <span>{t(config.labelKey)}</span>
       {result === 'elected' && winnerName && (
-        <span className="ml-1 truncate font-normal normal-case" title={winnerName}>{winnerName}</span>
+        <span className="ml-1 truncate font-normal normal-case" title={winnerName}>
+          {winnerName}
+        </span>
       )}
       {percentage !== undefined && <span className="ml-1 font-normal">{percentage}%</span>}
     </Badge>
@@ -104,12 +107,19 @@ export function ResultCompact({
   winnerName?: string;
   className?: string;
 }) {
-  const config = getResultConfig(result);
-  const label = result === 'elected' && winnerName ? winnerName : result.toUpperCase();
+  const label =
+    result === translateText('generated.inline.0048_elected_7b1d05c6') && winnerName
+      ? winnerName
+      : result.toUpperCase();
 
   return (
-    <span className={cn('flex min-w-0 max-w-full items-center font-mono text-xs font-medium', className)} title={label}>
-      <span className="mr-1 shrink-0">{config.emoji}</span>
+    <span
+      className={cn(
+        'flex max-w-full min-w-0 items-center font-mono text-xs font-medium',
+        className
+      )}
+      title={label}
+    >
       <span className="min-w-0 truncate">{label}</span>
     </span>
   );

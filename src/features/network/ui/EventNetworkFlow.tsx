@@ -4,7 +4,7 @@ import React, { useCallback, useMemo, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useNodesState, useEdgesState, type Node, type Edge } from '@xyflow/react';
 import { useEventWithGroup } from '@/zero/events/useEventState';
-import { useNetworkLinkState } from '@/zero/network';
+import { useGroupConnectionState } from '@/zero/network';
 import { NetworkFlowBase } from '@/features/network/ui/NetworkFlowBase';
 import { type NetworkGroupEntity } from '../types/network.types';
 import { NetworkEntityDialog } from '@/features/network/ui/NetworkEntityDialog';
@@ -44,9 +44,12 @@ import {
 } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { usePermissions } from '@/zero/rbac';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import type { EditableRightsLabelEdgeData } from '../types/networkEdge.types';
-import { explodeNetworkLinksToRelationships } from '../logic/networkLinkDerived';
+import { deriveNormalizedGroupRelationships } from '../logic/groupConnectionDerived';
 
 interface EventNode extends Node {
   data: {
@@ -122,7 +125,7 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
     isInteractive,
   });
 
-  const allLabel = t('common.labels.all', 'All');
+  const allLabel = t('common.labels.all');
 
   const depthFilters = useMemo(
     () => [
@@ -182,14 +185,14 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
       },
       {
         id: 'incoming',
-        label: t('common.network.incomingConnections', 'Eingehend'),
+        label: t('common.network.incomingConnections'),
         active: connectionDirectionFilter === 'incoming',
         onToggle: () => setConnectionDirectionFilter('incoming'),
         activeClassName: NETWORK_FILTER_ACTIVE_CLASS_NAMES.blue,
       },
       {
         id: 'outgoing',
-        label: t('common.network.outgoingConnections', 'Ausgehend'),
+        label: t('common.network.outgoingConnections'),
         active: connectionDirectionFilter === 'outgoing',
         onToggle: () => setConnectionDirectionFilter('outgoing'),
         activeClassName: NETWORK_FILTER_ACTIVE_CLASS_NAMES.orange,
@@ -204,8 +207,11 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
   const group = event?.group;
   const canManageEvent = can('manage', 'events');
 
-  const { allLinks } = useNetworkLinkState();
-  const relationships = useMemo(() => explodeNetworkLinksToRelationships(allLinks), [allLinks]);
+  const { allConnections } = useGroupConnectionState();
+  const relationships = useMemo(
+    () => deriveNormalizedGroupRelationships(allConnections),
+    [allConnections]
+  );
 
   // Memoize relationships to prevent infinite loops
   const stableRelationships = useMemo(() => {
@@ -219,20 +225,25 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>This event is not associated with a group</CardTitle>
+          <CardTitle>
+            {translateText(
+              'generated.inline.0765_this_event_is_not_associated_with_a_group_f78c85d7'
+            )}
+          </CardTitle>
           <CardDescription>
-            Network visualization is only available for events that belong to a group. Associate
-            this event with a group in the settings page to enable the network view.
+            {translateText(
+              'generated.inline.0766_network_visualization_is_only_available_for_e_b07d6969'
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-3">
           {canManageEvent ? (
             <Button onClick={() => navigate({ to: `/event/${eventId}/settings` })}>
-              Zur Event-Einstellungen
+              {translateText('generated.inline.0767_zur_event_einstellungen_d28673fc')}
             </Button>
           ) : (
             <Button variant="outline" onClick={() => navigate({ to: `/event/${eventId}` })}>
-              Zurück zur Veranstaltung
+              {translateText('generated.inline.0768_zur_ck_zur_veranstaltung_163f275f')}
             </Button>
           )}
         </CardContent>
@@ -321,7 +332,7 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
       target: group.id,
       type: 'smoothstep',
       animated: false,
-      label: 'Hosted by',
+      label: translateText('generated.inline.0195_hosted_by_56531d01'),
       style: { stroke: '#66bb6a', strokeWidth: 2 },
       labelStyle: { fontSize: '10px', fontWeight: 'bold' },
       labelBgStyle: { fill: '#e8f5e9' },
@@ -377,7 +388,8 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
           relationshipKinds: parent.relationshipKinds,
           rightRelationshipKinds: parent.rightRelationshipKinds,
           membershipMode: parent.membershipMode ?? null,
-          membershipCanonicalDirection: parent.membershipCanonicalDirection ?? null,
+          memberSourceGroupId: parent.memberSourceGroupId ?? null,
+          memberTargetGroupId: parent.memberTargetGroupId ?? null,
           rightEdgeDirections,
           relationshipDepth: (parent.level ?? 1) === 1 ? 'direct' : 'indirect',
           fallbackStrokeColor: '#fbc02d',
@@ -442,7 +454,8 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
           relationshipKinds: child.relationshipKinds,
           rightRelationshipKinds: child.rightRelationshipKinds,
           membershipMode: child.membershipMode ?? null,
-          membershipCanonicalDirection: child.membershipCanonicalDirection ?? null,
+          memberSourceGroupId: child.memberSourceGroupId ?? null,
+          memberTargetGroupId: child.memberTargetGroupId ?? null,
           rightEdgeDirections,
           relationshipDepth: (child.level ?? 1) === 1 ? 'direct' : 'indirect',
           fallbackStrokeColor: '#4caf50',
@@ -576,7 +589,9 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
   if (!event) {
     return (
       <div className="bg-background flex h-full min-h-0 items-center justify-center rounded-lg border">
-        <p className="text-muted-foreground">Event not found</p>
+        <p className="text-muted-foreground">
+          {translateText('generated.inline.0474_event_not_found_231b810d')}
+        </p>
       </div>
     );
   }
@@ -585,19 +600,24 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
     return (
       <div className="bg-background flex h-full min-h-0 items-center justify-center rounded-lg border px-4">
         <div className="text-center">
-          <p className="text-muted-foreground">This event is not associated with a group</p>
+          <p className="text-muted-foreground">
+            {translateText(
+              'generated.inline.0765_this_event_is_not_associated_with_a_group_f78c85d7'
+            )}
+          </p>
           <p className="text-muted-foreground mt-2 text-sm">
-            Network visualization is only available for events that belong to a group. Associate
-            this event with a group in the settings page to enable the network view.
+            {translateText(
+              'generated.inline.0766_network_visualization_is_only_available_for_e_b07d6969'
+            )}
           </p>
           <div className="mt-4 flex justify-center gap-3">
             {canManageEvent ? (
               <Button onClick={() => navigate({ to: `/event/${eventId}/settings` })}>
-                Zur Event-Einstellungen
+                {translateText('generated.inline.0767_zur_event_einstellungen_d28673fc')}
               </Button>
             ) : (
               <Button variant="outline" onClick={() => navigate({ to: `/event/${eventId}` })}>
-                Zurück zur Veranstaltung
+                {translateText('generated.inline.0768_zur_ck_zur_veranstaltung_163f275f')}
               </Button>
             )}
           </div>
@@ -628,7 +648,7 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
       containerClassName="h-full min-h-0"
       panel={
         <NetworkControlPanel
-          title={t('common.network.eventNetwork', 'Event Network')}
+          title={t('common.network.eventNetwork')}
           description={t('common.network.eventNetworkDescription', {
             eventName: event.title ?? '',
             groupName: group.name ?? '',
@@ -641,22 +661,22 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
           legendItems={[
             {
               id: 'event-center',
-              label: t('common.network.eventCenter', 'Event (Center)'),
+              label: t('common.network.eventCenter'),
               swatchClassName: 'h-4 w-4 rounded border-2 border-[#66bb6a] bg-[#e8f5e9]',
             },
             createGroupNodeLegendItem({
               id: 'current-group',
-              label: t('common.network.currentGroup', 'Aktuelle Gruppe'),
+              label: t('common.network.currentGroup'),
               visualVariant: 'current',
             }),
             createGroupNodeLegendItem({
               id: 'parent-group',
-              label: t('common.network.parentGroup', 'Übergeordnete Gruppe'),
+              label: t('common.network.parentGroup'),
               visualVariant: 'parent',
             }),
             createGroupNodeLegendItem({
               id: 'child-group',
-              label: t('common.network.childGroup', 'Untergeordnete Gruppe'),
+              label: t('common.network.childGroup'),
               visualVariant: 'child',
             }),
           ]}
@@ -693,13 +713,10 @@ export function EventNetworkFlow({ eventId }: EventNetworkFlowProps) {
           connectionDirectionFilters={connectionDirectionFilters}
           relationshipStatusFilters={relationshipStatusFilters}
           showConnectionDirectionLegend
-          connectionDirectionLegendTitle={t(
-            'common.network.connectionDirections',
-            'Verbindungsrichtungen'
-          )}
-          bidirectionalConnectionLabel={t('common.network.bidirectional', 'Beidseitig')}
-          incomingConnectionLabel={t('common.network.incomingConnections', 'Eingehend')}
-          outgoingConnectionLabel={t('common.network.outgoingConnections', 'Ausgehend')}
+          connectionDirectionLegendTitle={t('common.network.connectionDirections')}
+          bidirectionalConnectionLabel={t('common.network.bidirectional')}
+          incomingConnectionLabel={t('common.network.incomingConnections')}
+          outgoingConnectionLabel={t('common.network.outgoingConnections')}
           showRightsLegend
         />
       }

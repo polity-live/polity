@@ -35,13 +35,7 @@ import { VisibilityInput } from '@/features/create/ui/inputs/VisibilityInput';
 import { MediaUpload } from '@/features/file-upload/ui/MediaUpload';
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 import { Link } from '@tanstack/react-router';
-import {
-  MessageSquare,
-  Trash2,
-  Pencil,
-  Users,
-  User,
-} from 'lucide-react';
+import { MessageSquare, Trash2, Pencil, Users, User } from 'lucide-react';
 import { formatDistanceToNow, differenceInMinutes, format } from 'date-fns';
 import { de, enUS } from 'date-fns/locale';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -57,7 +51,9 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
   const [editText, setEditText] = useState('');
   const [editImageUrl, setEditImageUrl] = useState('');
   const [editVideoUrl, setEditVideoUrl] = useState('');
-  const [editVisibility, setEditVisibility] = useState<'public' | 'authenticated' | 'private'>('public');
+  const [editVisibility, setEditVisibility] = useState<'public' | 'authenticated' | 'private'>(
+    'public'
+  );
   const [editSurveyQuestion, setEditSurveyQuestion] = useState('');
   const [editSurveyOptions, setEditSurveyOptions] = useState<string[]>(['', '']);
   const [editSurveyDuration, setEditSurveyDuration] = useState(24);
@@ -121,10 +117,9 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
   const author = statement.user;
   const group = statement.group;
   const hashtags = extractHashtagTags(statement.statement_hashtags);
-  const authorName =
-    author
-      ? `${author.first_name ?? ''} ${author.last_name ?? ''}`.trim() || author.handle || 'Unknown'
-      : 'Unknown';
+  const authorName = author
+    ? `${author.first_name ?? ''} ${author.last_name ?? ''}`.trim() || author.handle || 'Unknown'
+    : 'Unknown';
 
   const locale = t('locale') === 'de' ? de : enUS;
   const createdAt = statement.created_at ? new Date(statement.created_at) : null;
@@ -159,7 +154,7 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
                   <Link
                     to="/group/$id"
                     params={{ id: group.id }}
-                    className="font-semibold text-foreground hover:underline flex items-center gap-1"
+                    className="text-foreground flex items-center gap-1 font-semibold hover:underline"
                   >
                     <Avatar className="h-4 w-4 shrink-0">
                       <AvatarImage src={group.image_url ?? undefined} />
@@ -225,9 +220,12 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
               {/* Hashtags */}
               {hashtags.length > 0 && (
                 <div className="mb-3 flex flex-wrap gap-1">
-                  {hashtags.map((tag) => (
+                  {hashtags.map(tag => (
                     <Link key={tag} to="/search" search={{ hashtag: tag }}>
-                      <Badge variant="secondary" className="cursor-pointer text-xs hover:bg-secondary/80">
+                      <Badge
+                        variant="secondary"
+                        className="hover:bg-secondary/80 cursor-pointer text-xs"
+                      >
                         #{tag}
                       </Badge>
                     </Link>
@@ -260,12 +258,15 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
                           setEditText(statement.text ?? '');
                           setEditImageUrl(statement.image_url ?? '');
                           setEditVideoUrl(statement.video_url ?? '');
-                          setEditVisibility((statement.visibility ?? 'public') as 'public' | 'authenticated' | 'private');
+                          setEditVisibility(
+                            (statement.visibility ?? 'public') as
+                              | 'public'
+                              | 'authenticated'
+                              | 'private'
+                          );
                           setEditSurveyQuestion(survey?.question ?? '');
                           setEditSurveyOptions(
-                            survey?.options?.length
-                              ? survey.options.map((o) => o.label)
-                              : ['', '']
+                            survey?.options?.length ? survey.options.map(o => o.label) : ['', '']
                           );
                           setEditSurveyDuration(24);
                           handleEditOpen();
@@ -307,42 +308,51 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('features.statements.actions.deleteConfirmTitle', 'Delete statement?')}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {t('features.statements.actions.deleteConfirmTitle')}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              {t('features.statements.actions.deleteConfirmDescription', 'This action cannot be undone.')}
+              {t('features.statements.actions.deleteConfirmDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t('common.actions.cancel', 'Cancel')}</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.actions.cancel')}</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive text-white hover:bg-destructive/90"
+              className="bg-destructive hover:bg-destructive/90 text-white"
               onClick={async () => {
                 setDeleteOpen(false);
                 await handleDelete();
               }}
             >
-              {t('common.actions.delete', 'Delete')}
+              {t('common.actions.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       {/* Edit dialog */}
-      <Dialog open={isEditOpen} onOpenChange={(open) => { if (!open) handleEditClose(); }}>
+      <Dialog
+        open={isEditOpen}
+        onOpenChange={open => {
+          if (!open) handleEditClose();
+        }}
+      >
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{t('features.statements.actions.edit', 'Edit Statement')}</DialogTitle>
+            <DialogTitle>{t('features.statements.actions.edit')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>{t('features.statements.form.text', 'Text')}</Label>
+              <Label>{t('features.statements.form.text')}</Label>
               <Textarea
                 value={editText}
-                onChange={(e) => setEditText(e.target.value.slice(0, 280))}
+                onChange={e => setEditText(e.target.value.slice(0, 280))}
                 rows={4}
                 maxLength={280}
               />
-              <p className="text-xs text-muted-foreground text-right mt-1">{t('features.statements.charsRemaining', { count: 280 - editText.length })}</p>
+              <p className="text-muted-foreground mt-1 text-right text-xs">
+                {t('features.statements.charsRemaining', { count: 280 - editText.length })}
+              </p>
             </div>
 
             <MediaUpload
@@ -354,48 +364,47 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
               entityId={statementId}
             />
 
-            <VisibilityInput
-              value={editVisibility}
-              onChange={setEditVisibility}
-            />
+            <VisibilityInput value={editVisibility} onChange={setEditVisibility} />
 
             {/* Survey editing */}
             <div className="space-y-2 rounded-lg border p-4">
-              <Label className="text-base font-semibold">{t('features.statements.survey.addSurvey', 'Survey (optional)')}</Label>
+              <Label className="text-base font-semibold">
+                {t('features.statements.survey.addSurvey')}
+              </Label>
               <Input
                 value={editSurveyQuestion}
-                onChange={(e) => setEditSurveyQuestion(e.target.value)}
-                placeholder={t('features.statements.survey.question', 'Survey question')}
+                onChange={e => setEditSurveyQuestion(e.target.value)}
+                placeholder={t('features.statements.survey.question')}
               />
               {editSurveyOptions.map((opt, idx) => (
                 <Input
                   key={idx}
                   value={opt}
-                  onChange={(e) => {
+                  onChange={e => {
                     const newOpts = [...editSurveyOptions];
                     newOpts[idx] = e.target.value;
                     setEditSurveyOptions(newOpts);
                   }}
-                  placeholder={`${t('features.statements.survey.option', 'Option')} ${idx + 1}`}
+                  placeholder={`${t('features.statements.survey.option')} ${idx + 1}`}
                 />
               ))}
               {editSurveyOptions.length < 4 && (
                 <button
                   type="button"
-                  className="text-sm text-primary hover:underline"
+                  className="text-primary text-sm hover:underline"
                   onClick={() => setEditSurveyOptions([...editSurveyOptions, ''])}
                 >
-                  + {t('features.statements.survey.addOption', 'Add option')}
+                  + {t('features.statements.survey.addOption')}
                 </button>
               )}
               <div className="space-y-2">
-                <Label>{t('features.statements.survey.duration', 'Duration (hours)')}</Label>
+                <Label>{t('features.statements.survey.duration')}</Label>
                 <Input
                   type="number"
                   min={1}
                   max={168}
                   value={editSurveyDuration}
-                  onChange={(e) => setEditSurveyDuration(Number(e.target.value))}
+                  onChange={e => setEditSurveyDuration(Number(e.target.value))}
                 />
               </div>
               {survey && (
@@ -408,14 +417,14 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
                     setEditSurveyOptions(['', '']);
                   }}
                 >
-                  {t('features.statements.survey.remove', 'Remove Survey')}
+                  {t('features.statements.survey.remove')}
                 </Button>
               )}
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={handleEditClose}>
-              {t('common.actions.cancel', 'Cancel')}
+              {t('common.actions.cancel')}
             </Button>
             <Button
               disabled={!editText.trim()}
@@ -432,7 +441,7 @@ export function StatementDetail({ statementId }: StatementDetailProps) {
                 }
               }}
             >
-              {t('common.actions.save', 'Save')}
+              {t('common.actions.save')}
             </Button>
           </DialogFooter>
         </DialogContent>

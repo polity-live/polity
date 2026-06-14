@@ -30,6 +30,7 @@ import { PageWrapper } from '@/layout/page-wrapper';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { useCommonState, useCommonActions } from '@/zero/common';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export function CreateBlogForm() {
   const navigate = useNavigate();
@@ -65,7 +66,11 @@ export function CreateBlogForm() {
 
     try {
       if (!user?.id) {
-        toast.error('You must be logged in to create a blog post');
+        toast.error(
+          translateText(
+            'generated.inline.0272_you_must_be_logged_in_to_create_a_blog_post_eb3475fe'
+          )
+        );
         setIsSubmitting(false);
         return;
       }
@@ -107,7 +112,9 @@ export function CreateBlogForm() {
           {
             id: ownerRoleId,
             name: 'Owner',
-            description: 'Blog owner with full permissions',
+            description: translateText(
+              'generated.inline.0041_blog_owner_with_full_permissions_2ffcc97f'
+            ),
             scope: 'blog',
             group_id: null,
             event_id: null,
@@ -118,7 +125,9 @@ export function CreateBlogForm() {
           {
             id: writerRoleId,
             name: 'Writer',
-            description: 'Blog writer with edit access',
+            description: translateText(
+              'generated.inline.0042_blog_writer_with_edit_access_43b09221'
+            ),
             scope: 'blog',
             group_id: null,
             event_id: null,
@@ -188,17 +197,23 @@ export function CreateBlogForm() {
             entityType: 'blog',
             entityId: blogId,
             actorId: user.id,
-            title: `New blog post: ${formData.title}`,
-            description: 'A new blog post has been published',
+            title: translateText('generated.inline.0043_new_blog_post_title_f664b3ba', {
+              title: formData.title,
+            }),
+            description: translateText(
+              'generated.inline.0044_a_new_blog_post_has_been_published_055ff55e'
+            ),
           },
         });
       }
 
-      toast.success('Blog post created successfully!');
+      toast.success(translateText('generated.inline.0273_blog_post_created_successfully_b4732330'));
       navigate({ to: '/user/$id/blog/$entryId', params: { id: user.id, entryId: blogId } });
     } catch (error) {
       console.error('Failed to create blog post:', error);
-      toast.error('Failed to create blog post. Please try again.');
+      toast.error(
+        translateText('generated.inline.0274_failed_to_create_blog_post_please_try_again_df40668e')
+      );
       setIsSubmitting(false);
     }
   };
@@ -207,7 +222,9 @@ export function CreateBlogForm() {
     <PageWrapper className="flex min-h-screen items-center justify-center">
       <Card className="w-full max-w-2xl">
         <CardHeader>
-          <CardTitle>Create a New Blog Post</CardTitle>
+          <CardTitle>
+            {translateText('generated.inline.0275_create_a_new_blog_post_cb5b1e3f')}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <Carousel setApi={setCarouselApi} opts={{ watchDrag: false }}>
@@ -216,17 +233,21 @@ export function CreateBlogForm() {
               <CarouselItem>
                 <div className="space-y-4 p-4">
                   <div className="space-y-2">
-                    <Label htmlFor="blog-title">Title</Label>
+                    <Label htmlFor="blog-title">
+                      {translateText('generated.inline.0028_title_768e0c1c')}
+                    </Label>
                     <Input
                       id="blog-title"
-                      placeholder="Enter blog title"
+                      placeholder={translateText('generated.inline.0276_enter_blog_title_37b29848')}
                       value={formData.title}
                       onChange={e => setFormData({ ...formData, title: e.target.value })}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="blog-date">Date</Label>
+                    <Label htmlFor="blog-date">
+                      {translateText('generated.inline.0277_date_eb9a4bc1')}
+                    </Label>
                     <Input
                       id="blog-date"
                       type="date"
@@ -241,8 +262,10 @@ export function CreateBlogForm() {
                     cleanupOnRemove
                     entityType="blogs"
                     entityId={blogId}
-                    label="Cover Image"
-                    description="Upload a cover image for your blog post"
+                    label={translateText('generated.inline.0278_cover_image_dbc62fcb')}
+                    description={translateText(
+                      'generated.inline.0279_upload_a_cover_image_for_your_blog_post_91a4eeda'
+                    )}
                   />
                 </div>
               </CarouselItem>
@@ -261,7 +284,9 @@ export function CreateBlogForm() {
                       <HashtagEditor
                         value={formData.hashtags}
                         onChange={hashtags => setFormData({ ...formData, hashtags })}
-                        placeholder="Add hashtags (e.g., politics, community)"
+                        placeholder={translateText(
+                          'generated.inline.0280_add_hashtags_e_g_politics_community_f9cf31f0'
+                        )}
                       />
                     </div>
                   </TooltipProvider>
@@ -275,7 +300,7 @@ export function CreateBlogForm() {
                     <CardHeader>
                       <div className="mb-2 flex items-center justify-between">
                         <Badge variant="default" className="text-xs">
-                          Blog Post
+                          {translateText('generated.inline.0281_blog_post_6c8d4a5b')}
                         </Badge>
                         <Badge variant="outline" className="text-xs">
                           {formData.visibility}
@@ -291,13 +316,16 @@ export function CreateBlogForm() {
                         </div>
                       )}
                       <CardTitle className="text-lg">
-                        {formData.title || 'Untitled Blog Post'}
+                        {formData.title ||
+                          translateText('generated.inline.0038_untitled_blog_post_e14c152e')}
                       </CardTitle>
                       <CardDescription>{formData.date}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <div className="flex items-center gap-2 text-sm">
-                        <strong>Visibility:</strong>
+                        <strong>
+                          {translateText('generated.inline.0282_visibility_bb42ff6a')}
+                        </strong>
                         <span className="text-muted-foreground">{formData.visibility}</span>
                       </div>
                     </CardContent>
@@ -327,7 +355,7 @@ export function CreateBlogForm() {
             onClick={() => carouselApi?.scrollPrev()}
             disabled={currentStep === 0}
           >
-            Previous
+            {translateText('generated.inline.0046_previous_50f94286')}
           </Button>
           {currentStep < 2 ? (
             <Button
@@ -335,11 +363,13 @@ export function CreateBlogForm() {
               onClick={() => carouselApi?.scrollNext()}
               disabled={currentStep === 0 && !formData.title}
             >
-              Next
+              {translateText('generated.inline.0047_next_bc981983')}
             </Button>
           ) : (
             <Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
-              {isSubmitting ? 'Creating...' : 'Create Blog Post'}
+              {isSubmitting
+                ? translateText('generated.inline.0013_creating_28ea7667')
+                : translateText('generated.inline.0039_create_blog_post_94626f08')}
             </Button>
           )}
         </CardFooter>

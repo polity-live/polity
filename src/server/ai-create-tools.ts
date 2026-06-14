@@ -20,11 +20,23 @@ import {
 import { mutators } from '@/zero/mutators';
 import { serverMutators } from '@/zero/server-mutators';
 import { zql } from '@/zero/schema';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 const visibilitySchema = z.enum(['public', 'authenticated', 'private']);
 const groupTypeSchema = z.enum(['base', 'hierarchical', 'sibling']);
-const siblingMembershipModeSchema = z.enum(['open', 'elected', 'parliament']);
-const relationshipDirectionSchema = z.enum(['none', 'outgoing', 'incoming', 'bidirectional']);
+const groupMembershipModeSchema = z.enum([
+  'none',
+  'all_members',
+  'role_members',
+  'selected_source_groups',
+]);
+const membershipFlowSchema = z.enum(['current_members_to_partner', 'partner_members_to_current']);
+const relationshipDirectionSchema = z.enum([
+  'none',
+  'current_has_right_in_partner',
+  'partner_has_right_in_current',
+  'mutual',
+]);
 const eventTypeSchema = z.enum(['delegate_assembly', 'general_assembly', 'open', 'on_invite']);
 const locationTypeSchema = z.enum(['physical', 'online']);
 const todoPrioritySchema = z.enum(['low', 'medium', 'high']);
@@ -42,10 +54,12 @@ const paymentTypeSchema = z.enum([
 const agendaItemTypeSchema = z.enum(['election', 'vote', 'speech', 'discussion', 'accreditation']);
 const majorityTypeSchema = z.enum(['simple', 'absolute', 'two_thirds']);
 
-const groupReferenceDescription =
-  'Use an accessible group UUID or the exact group name. If the user wants a group context and neither is known, ask a follow-up before calling this tool.';
-const eventReferenceDescription =
-  'Use an accessible event UUID or the exact event title. If the user wants an event context and neither is known, ask a follow-up before calling this tool.';
+const groupReferenceDescription = translateText(
+  'generated.inline.0185_use_an_accessible_group_uuid_or_the_exact_gro_27923581'
+);
+const eventReferenceDescription = translateText(
+  'generated.inline.0186_use_an_accessible_event_uuid_or_the_exact_eve_3dd2504d'
+);
 
 interface ToolItemSummary {
   entityType: string;
@@ -755,16 +769,18 @@ export function buildAiCreateTools(userId: string) {
 
   return {
     create_group: tool({
-      description:
-        'Create a real Polity group. Only use this when the user explicitly wants to create a group and the required fields are known.',
+      description: translateText(
+        'generated.inline.0615_create_a_real_polity_group_only_use_this_when_566bf6f0'
+      ),
       parameters: z.object({
         name: z.string().trim().min(1),
         description: z.string().trim().optional(),
         groupType: groupTypeSchema.default('base'),
         connectedGroupId: z.string().trim().optional().describe(groupReferenceDescription),
-        siblingMembershipMode: siblingMembershipModeSchema.optional(),
-        connectedRoleId: z.string().trim().optional(),
-        parliamentSourceGroupIds: z.array(z.string().trim().min(1)).default([]),
+        membershipMode: groupMembershipModeSchema.default('none'),
+        membershipFlow: membershipFlowSchema.optional(),
+        requiredSourceRoleId: z.string().trim().optional(),
+        eligibleOriginGroupIds: z.array(z.string().trim().min(1)).default([]),
         relationshipRights: z
           .object({
             informationRight: relationshipDirectionSchema.default('none'),
@@ -806,9 +822,10 @@ export function buildAiCreateTools(userId: string) {
         description,
         groupType,
         connectedGroupId,
-        siblingMembershipMode,
-        connectedRoleId,
-        parliamentSourceGroupIds,
+        membershipMode,
+        membershipFlow,
+        requiredSourceRoleId,
+        eligibleOriginGroupIds,
         relationshipRights,
         visibility,
         email,
@@ -831,8 +848,8 @@ export function buildAiCreateTools(userId: string) {
           invitedUserId => invitedUserId !== userId
         );
         let resolvedConnectedGroupId: string | null = null;
-        let resolvedConnectedRoleId: string | null = null;
-        let resolvedParliamentSourceGroupIds: string[] = [];
+        let resolvedRequiredSourceRoleId: string | null = null;
+        let resolvedEligibleOriginGroupIds: string[] = [];
 
         await executeZeroTransaction(zeroContext, async (tx, ctx) => {
           if (groupType === 'sibling') {
@@ -840,27 +857,29 @@ export function buildAiCreateTools(userId: string) {
               throw new Error('connectedGroupId is required for sibling groups.');
             }
 
-            if (!siblingMembershipMode) {
-              throw new Error('siblingMembershipMode is required for sibling groups.');
-            }
-
             const connectedGroup = await assertGroupAccess(tx, userId, connectedGroupId);
             resolvedConnectedGroupId = connectedGroup.id;
 
-            if (siblingMembershipMode === 'elected') {
-              if (!connectedRoleId) {
-                throw new Error('connectedRoleId is required for elected sibling groups.');
+            if (membershipMode !== 'none' && !membershipFlow) {
+              throw new Error('membershipFlow is required when a membership rule is configured.');
+            }
+
+            if (membershipMode === 'role_members') {
+              if (!requiredSourceRoleId) {
+                throw new Error('requiredSourceRoleId is required for role_members.');
               }
-              resolvedConnectedRoleId = (
-                await assertGroupRoleReference(tx, connectedGroup.id, connectedRoleId)
+              const roleSourceGroupId =
+                membershipFlow === 'current_members_to_partner' ? groupId : connectedGroup.id;
+              resolvedRequiredSourceRoleId = (
+                await assertGroupRoleReference(tx, roleSourceGroupId, requiredSourceRoleId)
               ).id;
             }
 
-            if (siblingMembershipMode === 'parliament') {
-              resolvedParliamentSourceGroupIds = [];
-              for (const sourceGroupReference of normalizeStringList(parliamentSourceGroupIds)) {
+            if (membershipMode === 'selected_source_groups') {
+              resolvedEligibleOriginGroupIds = [];
+              for (const sourceGroupReference of normalizeStringList(eligibleOriginGroupIds)) {
                 const sourceGroup = await assertGroupAccess(tx, userId, sourceGroupReference);
-                resolvedParliamentSourceGroupIds.push(sourceGroup.id);
+                resolvedEligibleOriginGroupIds.push(sourceGroup.id);
               }
             }
           }
@@ -899,7 +918,7 @@ export function buildAiCreateTools(userId: string) {
 
           await linkEntityHashtags(tx, 'group', groupId, hashtags);
 
-          if (groupType !== 'sibling' || siblingMembershipMode === 'open') {
+          if (groupType !== 'sibling' || membershipMode === 'none') {
             for (const invitedUserId of normalizedInviteUserIds) {
               await runZeroMutator(
                 tx,
@@ -916,64 +935,68 @@ export function buildAiCreateTools(userId: string) {
           }
 
           if (groupType === 'sibling' && resolvedConnectedGroupId) {
-            const rights = Object.entries(relationshipRights).flatMap(([right, direction]) => {
+            const partnerGroupId = resolvedConnectedGroupId;
+            const grants = Object.entries(relationshipRights).flatMap(([right, direction]) => {
               if (direction === 'none') {
                 return [];
               }
 
-              const canonicalDirection =
-                direction === 'bidirectional'
-                  ? 'bidirectional'
-                  : direction === 'outgoing'
-                    ? 'forward'
-                    : 'backward';
+              const directions =
+                direction === 'mutual'
+                  ? (['current_has_right_in_partner', 'partner_has_right_in_current'] as const)
+                  : [direction];
 
-              return [
-                {
-                  right_key: right as
-                    | 'informationRight'
-                    | 'amendmentRight'
-                    | 'rightToSpeak'
-                    | 'activeVotingRight'
-                    | 'passiveVotingRight',
-                  direction: canonicalDirection as 'forward' | 'backward' | 'bidirectional',
-                  status: 'requested' as const,
-                  initiator_group_id: groupId,
-                },
-              ];
+              return directions.map(grantDirection => ({
+                id: crypto.randomUUID(),
+                existing_grant_id: null,
+                operation: 'upsert' as const,
+                right_key: right as
+                  | 'informationRight'
+                  | 'amendmentRight'
+                  | 'rightToSpeak'
+                  | 'activeVotingRight'
+                  | 'passiveVotingRight',
+                holder_group_id:
+                  grantDirection === 'current_has_right_in_partner' ? groupId : partnerGroupId,
+                scope_group_id:
+                  grantDirection === 'current_has_right_in_partner' ? partnerGroupId : groupId,
+              }));
             });
+            const [groupAId, groupBId] = [groupId, partnerGroupId].sort();
+            const memberSourceGroupId =
+              membershipFlow === 'current_members_to_partner' ? groupId : partnerGroupId;
+            const memberTargetGroupId =
+              membershipFlow === 'current_members_to_partner' ? partnerGroupId : groupId;
 
-            if (rights.length > 0) {
-              await runZeroMutator(
-                tx,
-                serverMutators.network.createNetworkLink({
-                  id: crypto.randomUUID(),
-                  source_group_id: groupId,
-                  target_group_id: resolvedConnectedGroupId,
-                  structural_relation: 'sibling',
-                  status: 'requested',
-                  rights,
-                  membership_rule: {
-                    membership_direction:
-                      siblingMembershipMode === 'elected' || siblingMembershipMode === 'parliament'
-                        ? 'backward'
-                        : null,
-                    membership_mode:
-                      siblingMembershipMode === 'elected'
-                        ? 'role_members'
-                        : siblingMembershipMode === 'parliament'
-                          ? 'selected_source_groups'
-                          : 'none',
-                    role_id: siblingMembershipMode === 'elected' ? resolvedConnectedRoleId : null,
-                    source_group_ids:
-                      siblingMembershipMode === 'parliament'
-                        ? resolvedParliamentSourceGroupIds
-                        : null,
-                  },
-                }),
-                ctx
-              );
-            }
+            await runZeroMutator(
+              tx,
+              serverMutators.network.proposeGroupConnectionChange({
+                id: crypto.randomUUID(),
+                active_connection_id: null,
+                proposed_connection_id: crypto.randomUUID(),
+                group_a_id: groupAId,
+                group_b_id: groupBId,
+                desired_connection_type: 'peer',
+                desired_parent_group_id: null,
+                desired_child_group_id: null,
+                initiator_group_id: groupId,
+                grants,
+                membership_rule:
+                  membershipMode !== 'none' && membershipFlow
+                    ? {
+                        id: crypto.randomUUID(),
+                        existing_membership_rule_id: null,
+                        operation: 'upsert',
+                        member_source_group_id: memberSourceGroupId,
+                        member_target_group_id: memberTargetGroupId,
+                        membership_mode: membershipMode,
+                        required_source_role_id: resolvedRequiredSourceRoleId,
+                        eligible_origin_group_ids: resolvedEligibleOriginGroupIds,
+                      }
+                    : null,
+              }),
+              ctx
+            );
           }
 
           if (constitutionalEvent?.title) {
@@ -1018,8 +1041,9 @@ export function buildAiCreateTools(userId: string) {
     }),
 
     create_event: tool({
-      description:
-        'Create a real Polity event. If the user wants the event inside a group, provide the group UUID or exact group name first. Ask a follow-up before calling this tool when that reference is missing.',
+      description: translateText(
+        'generated.inline.0616_create_a_real_polity_event_if_the_user_wants__5aef4dda'
+      ),
       parameters: z.object({
         title: z.string().trim().min(1),
         description: z.string().trim().optional(),
@@ -1148,8 +1172,9 @@ export function buildAiCreateTools(userId: string) {
     }),
 
     create_amendment: tool({
-      description:
-        'Create a real Polity amendment. If the amendment belongs to a group or event, provide the group/event UUID or exact group/event name first. Ask a follow-up before calling this tool when that reference is missing.',
+      description: translateText(
+        'generated.inline.0617_create_a_real_polity_amendment_if_the_amendme_639231cd'
+      ),
       parameters: z.object({
         title: z.string().trim().min(1),
         code: z.string().trim().optional(),
@@ -1291,7 +1316,9 @@ export function buildAiCreateTools(userId: string) {
                     id: agendaItemId,
                     event_id: resolvedSegmentEventId,
                     amendment_id: amendmentId,
-                    title: `Amendment: ${title}`,
+                    title: translateText('generated.inline.0618_amendment_title_b8a8a16f', {
+                      title: title,
+                    }),
                     description: reason?.trim() || '',
                     type: 'amendment',
                     status: 'pending',
@@ -1316,7 +1343,9 @@ export function buildAiCreateTools(userId: string) {
                     id: crypto.randomUUID(),
                     agenda_item_id: agendaItemId,
                     amendment_id: amendmentId,
-                    title: `Amendment: ${title}`,
+                    title: translateText('generated.inline.0618_amendment_title_b8a8a16f', {
+                      title: title,
+                    }),
                     description: reason?.trim() || null,
                     status: 'indicative',
                     majority_type: 'relative',
@@ -1378,8 +1407,9 @@ export function buildAiCreateTools(userId: string) {
     }),
 
     create_blog_entry: tool({
-      description:
-        'Create a real Polity blog entry. Only use this when the user explicitly wants to create a blog entry and the required fields are known.',
+      description: translateText(
+        'generated.inline.0619_create_a_real_polity_blog_entry_only_use_this_5c1ab8c3'
+      ),
       parameters: z.object({
         title: z.string().trim().min(1),
         date: z.string().trim().optional(),
@@ -1428,7 +1458,9 @@ export function buildAiCreateTools(userId: string) {
             [
               {
                 name: 'Owner',
-                description: 'Blog owner with full permissions',
+                description: translateText(
+                  'generated.inline.0041_blog_owner_with_full_permissions_2ffcc97f'
+                ),
                 permissions: [
                   { resource: 'blogs', action: 'manage' },
                   { resource: 'blogBloggers', action: 'manage' },
@@ -1436,7 +1468,9 @@ export function buildAiCreateTools(userId: string) {
               },
               {
                 name: 'Writer',
-                description: 'Blog writer with edit access',
+                description: translateText(
+                  'generated.inline.0042_blog_writer_with_edit_access_43b09221'
+                ),
                 permissions: [{ resource: 'blogs', action: 'update' }],
               },
             ],
@@ -1488,8 +1522,9 @@ export function buildAiCreateTools(userId: string) {
     }),
 
     create_todo: tool({
-      description:
-        'Create a real Polity todo. Only use this when the user explicitly wants to create a todo and the required fields are known.',
+      description: translateText(
+        'generated.inline.0620_create_a_real_polity_todo_only_use_this_when__94618ff3'
+      ),
       parameters: z.object({
         title: z.string().trim().min(1),
         description: z.string().trim().optional(),
@@ -1601,8 +1636,9 @@ export function buildAiCreateTools(userId: string) {
     }),
 
     create_statement: tool({
-      description:
-        'Create a real Polity statement. Only use this when the user explicitly wants to create a statement and the required fields are known.',
+      description: translateText(
+        'generated.inline.0621_create_a_real_polity_statement_only_use_this__93f2d1c4'
+      ),
       parameters: z.object({
         text: z.string().trim().min(1).max(280),
         groupId: z.string().trim().min(1).optional().describe(groupReferenceDescription),
@@ -1710,8 +1746,9 @@ export function buildAiCreateTools(userId: string) {
     }),
 
     create_payment: tool({
-      description:
-        'Create a real Polity payment. Only use this when the user explicitly wants to create a payment and the required fields are known.',
+      description: translateText(
+        'generated.inline.0622_create_a_real_polity_payment_only_use_this_wh_b0a4119b'
+      ),
       parameters: z.object({
         groupId: z.string().trim().min(1).describe(groupReferenceDescription),
         direction: paymentDirectionSchema.default('income'),
@@ -1818,8 +1855,9 @@ export function buildAiCreateTools(userId: string) {
     }),
 
     create_agenda_item: tool({
-      description:
-        'Create a real Polity agenda item. Only use this when the user explicitly wants to create an agenda item and the required fields are known.',
+      description: translateText(
+        'generated.inline.0623_create_a_real_polity_agenda_item_only_use_thi_46f29630'
+      ),
       parameters: z.object({
         eventId: z.string().trim().min(1).describe(eventReferenceDescription),
         title: z.string().trim().min(1),
@@ -1976,8 +2014,9 @@ export function buildAiCreateTools(userId: string) {
     }),
 
     create_election_candidate: tool({
-      description:
-        'Create a real Polity election candidate entry for the current user. Only use this when the user explicitly wants to stand as a candidate and the election is known.',
+      description: translateText(
+        'generated.inline.0624_create_a_real_polity_election_candidate_entry_ee7cb9cb'
+      ),
       parameters: z.object({
         electionId: z.string().trim().min(1),
         statement: z.string().trim().optional(),

@@ -42,6 +42,7 @@ import {
 } from '@/features/shared/ui/ui/alert-dialog';
 import { Trash2, UserCheck, Plus, Edit2 } from 'lucide-react';
 import { useEventRoles } from '../hooks/useEventPositions';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export function EventPositions({ eventId }: { eventId: string }) {
   const { event, roles, dialogs, form, actions } = useEventRoles(eventId);
@@ -49,9 +50,14 @@ export function EventPositions({ eventId }: { eventId: string }) {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">Manage Event Roles</h1>
+        <h1 className="text-3xl font-bold">
+          {translateText('generated.inline.1034_manage_event_roles_50c33e07')}
+        </h1>
         <p className="text-muted-foreground mt-2">
-          {event?.title || 'Event'} - Create and manage scoped roles for this event
+          {event?.title || translateText('generated.inline.0023_event_ad8919ac')}
+          {translateText(
+            'generated.inline.1035_create_and_manage_scoped_roles_for_this_event_591495d1'
+          )}
         </p>
       </div>
 
@@ -61,33 +67,45 @@ export function EventPositions({ eventId }: { eventId: string }) {
           <DialogTrigger asChild>
             <Button onClick={form.reset}>
               <Plus className="mr-2 h-4 w-4" />
-              Add Role
+              {translateText('generated.inline.0125_add_role_82d0afcc')}
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
-              <DialogTitle>Create New Role</DialogTitle>
+              <DialogTitle>
+                {translateText('generated.inline.1036_create_new_role_a195fa09')}
+              </DialogTitle>
               <DialogDescription>
-                Create a scoped role for this event (e.g., Session Chair, Counting Committee).
+                {translateText(
+                  'generated.inline.1037_create_a_scoped_role_for_this_event_e_g_sessi_073b1c46'
+                )}
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="title">Role Title *</Label>
+                <Label htmlFor="title">
+                  {translateText('generated.inline.1038_role_title_b96976bb')}
+                </Label>
                 <Input
                   id="title"
-                  placeholder="e.g., Session Chair, Counting Committee"
+                  placeholder={translateText(
+                    'generated.inline.1039_e_g_session_chair_counting_committee_3f5b97dd'
+                  )}
                   value={form.title}
                   onChange={e => form.setTitle(e.target.value)}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Description (Optional)</Label>
+                <Label htmlFor="description">
+                  {translateText('generated.inline.0130_description_optional_f1da5c02')}
+                </Label>
                 <Textarea
                   id="description"
-                  placeholder="Describe the responsibilities of this role"
+                  placeholder={translateText(
+                    'generated.inline.1040_describe_the_responsibilities_of_this_role_13d141c1'
+                  )}
                   value={form.description}
                   onChange={e => form.setDescription(e.target.value)}
                   rows={3}
@@ -95,7 +113,9 @@ export function EventPositions({ eventId }: { eventId: string }) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="capacity">Number of Holders *</Label>
+                <Label htmlFor="capacity">
+                  {translateText('generated.inline.1041_number_of_holders_994d4b41')}
+                </Label>
                 <Input
                   id="capacity"
                   type="number"
@@ -105,7 +125,9 @@ export function EventPositions({ eventId }: { eventId: string }) {
                   onChange={e => form.setCapacity(e.target.value)}
                 />
                 <p className="text-muted-foreground text-xs">
-                  How many participants can hold this position
+                  {translateText(
+                    'generated.inline.1042_how_many_participants_can_hold_this_position_4ca1e969'
+                  )}
                 </p>
               </div>
 
@@ -116,17 +138,19 @@ export function EventPositions({ eventId }: { eventId: string }) {
                   onCheckedChange={checked => form.setCreateElection(checked as boolean)}
                 />
                 <Label htmlFor="create-election" className="cursor-pointer text-sm font-normal">
-                  Create election agenda item at the beginning of the event
+                  {translateText(
+                    'generated.inline.1043_create_election_agenda_item_at_the_beginning__0526faed'
+                  )}
                 </Label>
               </div>
             </div>
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => dialogs.add.setOpen(false)}>
-                Cancel
+                {translateText('generated.inline.0065_cancel_77dfd213')}
               </Button>
               <Button type="button" onClick={actions.add}>
-                Create Role
+                {translateText('generated.inline.0132_create_role_5bea05a8')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -137,26 +161,36 @@ export function EventPositions({ eventId }: { eventId: string }) {
       <Dialog open={dialogs.edit.open} onOpenChange={dialogs.edit.setOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Edit Role</DialogTitle>
-            <DialogDescription>Update the role details.</DialogDescription>
+            <DialogTitle>{translateText('generated.inline.1044_edit_role_b075b676')}</DialogTitle>
+            <DialogDescription>
+              {translateText('generated.inline.1045_update_the_role_details_f8b0defc')}
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-title">Role Title *</Label>
+              <Label htmlFor="edit-title">
+                {translateText('generated.inline.1038_role_title_b96976bb')}
+              </Label>
               <Input
                 id="edit-title"
-                placeholder="e.g., Session Chair, Counting Committee"
+                placeholder={translateText(
+                  'generated.inline.1039_e_g_session_chair_counting_committee_3f5b97dd'
+                )}
                 value={form.title}
                 onChange={e => form.setTitle(e.target.value)}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-description">Description (Optional)</Label>
+              <Label htmlFor="edit-description">
+                {translateText('generated.inline.0130_description_optional_f1da5c02')}
+              </Label>
               <Textarea
                 id="edit-description"
-                placeholder="Describe the responsibilities of this role"
+                placeholder={translateText(
+                  'generated.inline.1040_describe_the_responsibilities_of_this_role_13d141c1'
+                )}
                 value={form.description}
                 onChange={e => form.setDescription(e.target.value)}
                 rows={3}
@@ -164,7 +198,9 @@ export function EventPositions({ eventId }: { eventId: string }) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-capacity">Number of Holders *</Label>
+              <Label htmlFor="edit-capacity">
+                {translateText('generated.inline.1041_number_of_holders_994d4b41')}
+              </Label>
               <Input
                 id="edit-capacity"
                 type="number"
@@ -174,7 +210,9 @@ export function EventPositions({ eventId }: { eventId: string }) {
                 onChange={e => form.setCapacity(e.target.value)}
               />
               <p className="text-muted-foreground text-xs">
-                How many participants can hold this position
+                {translateText(
+                  'generated.inline.1042_how_many_participants_can_hold_this_position_4ca1e969'
+                )}
               </p>
             </div>
 
@@ -185,17 +223,19 @@ export function EventPositions({ eventId }: { eventId: string }) {
                 onCheckedChange={checked => form.setCreateElection(checked as boolean)}
               />
               <Label htmlFor="edit-create-election" className="cursor-pointer text-sm font-normal">
-                Create election agenda item at the beginning of the event
+                {translateText(
+                  'generated.inline.1043_create_election_agenda_item_at_the_beginning__0526faed'
+                )}
               </Label>
             </div>
           </div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => dialogs.edit.setOpen(false)}>
-              Cancel
+              {translateText('generated.inline.0065_cancel_77dfd213')}
             </Button>
             <Button type="button" onClick={actions.edit}>
-              Save Changes
+              {translateText('generated.inline.1046_save_changes_fa2984b3')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -206,10 +246,13 @@ export function EventPositions({ eventId }: { eventId: string }) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <UserCheck className="h-5 w-5" />
-            Event Roles ({roles.length})
+            {translateText('generated.inline.1047_event_roles_f6f34fc1')}
+            {roles.length})
           </CardTitle>
           <CardDescription>
-            Roles for this event with their holders and election settings
+            {translateText(
+              'generated.inline.1048_roles_for_this_event_with_their_holders_and_e_dbd572b9'
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -217,18 +260,24 @@ export function EventPositions({ eventId }: { eventId: string }) {
             <div className="py-12 text-center">
               <UserCheck className="text-muted-foreground/50 mx-auto h-12 w-12" />
               <p className="text-muted-foreground mt-4">
-                No roles created yet. Click 'Add Role' to create your first role.
+                {translateText(
+                  'generated.inline.1049_no_roles_created_yet_click_add_role_to_create_359b779d'
+                )}
               </p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Capacity</TableHead>
-                  <TableHead>Current Holders</TableHead>
-                  <TableHead>Election</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{translateText('generated.inline.0091_role_c3f104d1')}</TableHead>
+                  <TableHead>{translateText('generated.inline.1050_capacity_45bd908d')}</TableHead>
+                  <TableHead>
+                    {translateText('generated.inline.1051_current_holders_71f3c4c3')}
+                  </TableHead>
+                  <TableHead>{translateText('generated.inline.1052_election_217da2dc')}</TableHead>
+                  <TableHead className="text-right">
+                    {translateText('generated.inline.0093_actions_c3cd636a')}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -283,17 +332,21 @@ export function EventPositions({ eventId }: { eventId: string }) {
                             )}
                           </div>
                         ) : (
-                          <span className="text-muted-foreground text-sm">No holders yet</span>
+                          <span className="text-muted-foreground text-sm">
+                            {translateText('generated.inline.1053_no_holders_yet_40094d22')}
+                          </span>
                         )}
                       </TableCell>
                       <TableCell>
                         {hasElection ? (
                           <Badge variant="secondary">
                             <UserCheck className="mr-1 h-3 w-3" />
-                            Election
+                            {translateText('generated.inline.1052_election_217da2dc')}
                           </Badge>
                         ) : (
-                          <span className="text-muted-foreground text-sm">Manual</span>
+                          <span className="text-muted-foreground text-sm">
+                            {translateText('generated.inline.1054_manual_4e836fdc')}
+                          </span>
                         )}
                       </TableCell>
                       <TableCell className="text-right">
@@ -309,19 +362,28 @@ export function EventPositions({ eventId }: { eventId: string }) {
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
-                                <AlertDialogTitle>Delete Role</AlertDialogTitle>
+                                <AlertDialogTitle>
+                                  {translateText('generated.inline.1055_delete_role_af587987')}
+                                </AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Are you sure you want to delete '{role.title}'? This action cannot
-                                  be undone.
+                                  {translateText(
+                                    'generated.inline.1056_are_you_sure_you_want_to_delete_727effd6'
+                                  )}
+                                  {role.title}
+                                  {translateText(
+                                    'generated.inline.1057_this_action_cannot_be_undone_03284dff'
+                                  )}
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogCancel>
+                                  {translateText('generated.inline.0065_cancel_77dfd213')}
+                                </AlertDialogCancel>
                                 <AlertDialogAction
                                   onClick={() => actions.delete(role.id)}
                                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                 >
-                                  Delete
+                                  {translateText('generated.inline.0537_delete_f6fdbe48')}
                                 </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>

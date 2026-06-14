@@ -6,6 +6,9 @@ interface RelationshipLike {
   group_id: string;
   related_group_id: string;
   relationship_type?: string | null;
+  connection_type?: string | null;
+  parent_group_id?: string | null;
+  child_group_id?: string | null;
 }
 
 export interface HierarchyRelationshipPair {
@@ -22,8 +25,15 @@ export function isHierarchyRelationshipType(
 export function getHierarchyRelationshipPair(
   relationship: RelationshipLike
 ): HierarchyRelationshipPair | null {
-  if (relationship.relationship_type === 'sibling') {
+  if (relationship.connection_type === 'peer' || relationship.relationship_type === 'sibling') {
     return null;
+  }
+
+  if (relationship.parent_group_id && relationship.child_group_id) {
+    return {
+      parentGroupId: relationship.parent_group_id,
+      childGroupId: relationship.child_group_id,
+    };
   }
 
   if (relationship.relationship_type === 'parent') {

@@ -1,18 +1,18 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useUserSubscriptions } from '@/features/payments/hooks/useUserSubscriptions'
-import { useSubscriptionsFilters } from '@/features/payments/hooks/useSubscriptionsFilters'
-import { SubscriptionTypeFilters } from '@/features/payments/ui/SubscriptionTypeFilters'
-import { SubscriptionsTable } from '@/features/payments/ui/SubscriptionsTable'
-import { EntitySearchBar } from '@/features/shared/ui/ui/entity-search-bar'
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
+import { createFileRoute } from '@tanstack/react-router';
+import { useUserSubscriptions } from '@/features/payments/hooks/useUserSubscriptions';
+import { useSubscriptionsFilters } from '@/features/payments/hooks/useSubscriptionsFilters';
+import { SubscriptionTypeFilters } from '@/features/payments/ui/SubscriptionTypeFilters';
+import { SubscriptionsTable } from '@/features/payments/ui/SubscriptionsTable';
+import { EntitySearchBar } from '@/features/shared/ui/ui/entity-search-bar';
 
 export const Route = createFileRoute('/_authed/user/$id/subscriptions')({
   component: UserSubscriptionsPage,
-})
+});
 
 function UserSubscriptionsPage() {
-  const { id } = Route.useParams()
-  const navigate = useNavigate()
-  const { subscriptions, subscribers, unsubscribe } = useUserSubscriptions(id)
+  const { id } = Route.useParams();
+  const { subscriptions, subscribers, unsubscribe } = useUserSubscriptions(id);
   const {
     searchQuery,
     setSearchQuery,
@@ -20,16 +20,18 @@ function UserSubscriptionsPage() {
     setFilterType,
     filteredSubscriptions,
     subscriptionCounts,
-  } = useSubscriptionsFilters({ subscriptions, subscribers })
-  const hasActiveFilters = searchQuery.trim().length > 0 || filterType !== 'all'
+  } = useSubscriptionsFilters({ subscriptions, subscribers });
+  const hasActiveFilters = searchQuery.trim().length > 0 || filterType !== 'all';
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Subscriptions</h1>
+      <h1 className="text-3xl font-bold">
+        {translateText('generated.inline.1271_subscriptions_5697fd85')}
+      </h1>
       <EntitySearchBar
         searchQuery={searchQuery}
         onSearchQueryChange={setSearchQuery}
-        placeholder="Search subscriptions..."
+        placeholder={translateText('generated.inline.1272_search_subscriptions_54112067')}
       />
       <SubscriptionTypeFilters
         filterType={filterType}
@@ -39,21 +41,20 @@ function UserSubscriptionsPage() {
       <SubscriptionsTable
         subscriptions={filteredSubscriptions}
         onUnsubscribe={unsubscribe}
-        onNavigateToUser={(uid: string) => navigate({ to: '/user/$id', params: { id: uid } })}
-        onNavigateToGroup={(gid: string) => navigate({ to: '/group/$id', params: { id: gid } })}
-        onNavigateToAmendment={(aid: string) => navigate({ to: '/amendment/$id', params: { id: aid } })}
-        onNavigateToEvent={(eid: string) => navigate({ to: '/event/$id', params: { id: eid } })}
-        emptyMessage={
-          hasActiveFilters ? 'No subscriptions match the current filters.' : undefined
-        }
-        onNavigateToBlog={(bid: string, groupId?: string | null) => {
-          if (groupId) {
-            navigate({ to: '/group/$id/blog/$entryId', params: { id: groupId, entryId: bid } })
-          } else {
-            navigate({ to: '/user/$id/blog/$entryId', params: { id, entryId: bid } })
+        getSubscriptionHref={subscription => {
+          if (subscription.user?.id) return `/user/${subscription.user.id}`;
+          if (subscription.group?.id) return `/group/${subscription.group.id}`;
+          if (subscription.amendment?.id) return `/amendment/${subscription.amendment.id}`;
+          if (subscription.event?.id) return `/event/${subscription.event.id}`;
+          if (subscription.blog?.id) {
+            return subscription.blog.group_id
+              ? `/group/${subscription.blog.group_id}/blog/${subscription.blog.id}`
+              : `/user/${id}/blog/${subscription.blog.id}`;
           }
+          return null;
         }}
+        emptyMessage={hasActiveFilters ? 'No subscriptions match the current filters.' : undefined}
       />
     </div>
-  )
+  );
 }

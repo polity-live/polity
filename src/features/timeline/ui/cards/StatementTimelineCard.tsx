@@ -13,6 +13,7 @@ import {
   TimelineCardActions,
   TimelineCardBadge,
 } from './TimelineCardBase';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface SurveyOptionPreview {
   label: string;
@@ -47,15 +48,12 @@ export interface StatementTimelineCardProps {
   className?: string;
 }
 
-export function StatementTimelineCard({
-  statement,
-  className,
-}: StatementTimelineCardProps) {
+export function StatementTimelineCard({ statement, className }: StatementTimelineCardProps) {
   const hasMedia = !!(statement.imageUrl || statement.videoUrl);
   const rawOptions = statement.surveyOptions ?? [];
   // Normalize: options can be strings or { label, voteCount } objects
-  const surveyOptions: SurveyOptionPreview[] = rawOptions.map((opt) =>
-    typeof opt === 'string' ? { label: opt, voteCount: 0 } : opt,
+  const surveyOptions: SurveyOptionPreview[] = rawOptions.map(opt =>
+    typeof opt === 'string' ? { label: opt, voteCount: 0 } : opt
   );
   const hasSurvey = !!(statement.surveyQuestion && surveyOptions.length > 0);
   const surveyTotalVotes = hasSurvey ? surveyOptions.reduce((s, o) => s + o.voteCount, 0) : 0;
@@ -65,7 +63,7 @@ export function StatementTimelineCard({
 
   // Title: survey question or first 100 chars of content
   const displayTitle = hasSurvey
-    ? statement.surveyQuestion!
+    ? (statement.surveyQuestion ?? '')
     : statement.content?.substring(0, 100) + ((statement.content?.length ?? 0) > 100 ? '…' : '');
 
   // Stats
@@ -73,19 +71,19 @@ export function StatementTimelineCard({
     {
       icon: score >= 0 ? ThumbsUp : ThumbsDown,
       value: score >= 0 ? `+${score}` : `${score}`,
-      label: 'Score',
+      label: translateText('generated.inline.0531_score_489f4877'),
     },
     {
       icon: MessageSquare,
       value: statement.commentCount ?? 0,
-      label: 'Comments',
+      label: translateText('generated.inline.0532_comments_fce06e20'),
     },
     ...(hasSurvey
       ? [
           {
             icon: BarChart3,
             value: surveyTotalVotes,
-            label: 'Votes',
+            label: translateText('generated.inline.0181_votes_b66c4b27'),
           },
         ]
       : []),
@@ -102,13 +100,12 @@ export function StatementTimelineCard({
         title={displayTitle}
         href={`/statement/${statement.id}`}
         subtitle={statement.groupName ?? statement.authorName}
-        subtitleHref={
-          statement.groupId
-            ? `/group/${statement.groupId}`
-            : undefined
-        }
+        subtitleHref={statement.groupId ? `/group/${statement.groupId}` : undefined}
         badge={
-          <TimelineCardBadge label="Statement" icon={Quote} />
+          <TimelineCardBadge
+            label={translateText('generated.inline.0298_statement_a72ca256')}
+            icon={Quote}
+          />
         }
       >
         {/* Central media display */}
@@ -116,11 +113,7 @@ export function StatementTimelineCard({
           <div className="mt-3 flex justify-center">
             <div className="h-32 w-full overflow-hidden rounded-xl bg-black/10">
               {statement.imageUrl ? (
-                <img
-                  src={statement.imageUrl}
-                  alt=""
-                  className="h-full w-full object-cover"
-                />
+                <img src={statement.imageUrl} alt="" className="h-full w-full object-cover" />
               ) : (
                 <div className="flex h-full w-full items-center justify-center">
                   <Video className="h-8 w-8 text-indigo-200" />
@@ -134,7 +127,8 @@ export function StatementTimelineCard({
         {hasSurvey && (
           <div className="mt-3 space-y-1.5 px-1">
             {surveyOptions.slice(0, 4).map((opt, i) => {
-              const percent = surveyTotalVotes > 0 ? Math.round((opt.voteCount / surveyTotalVotes) * 100) : 0;
+              const percent =
+                surveyTotalVotes > 0 ? Math.round((opt.voteCount / surveyTotalVotes) * 100) : 0;
               return (
                 <div key={i} className="space-y-0.5">
                   <div className="flex items-center justify-between text-xs text-white/90">
@@ -152,7 +146,8 @@ export function StatementTimelineCard({
             })}
             {surveyOptions.length > 4 && (
               <p className="text-center text-xs text-white/60">
-                +{surveyOptions.length - 4} more
+                +{surveyOptions.length - 4}
+                {translateText('generated.inline.0142_more_e7c95b4c')}
               </p>
             )}
           </div>
@@ -160,45 +155,47 @@ export function StatementTimelineCard({
       </TimelineCardHeader>
 
       <TimelineCardContent>
-        {/* Description excerpt (only for text-only statements, title already shows the content) */}
-        {!hasMedia && !hasSurvey && statement.content && statement.content.length > 100 && (
-          <p className="mb-3 line-clamp-2 text-sm text-muted-foreground">
-            {statement.content.substring(100, 250)}
-          </p>
-        )}
+        <div className="mt-auto space-y-3">
+          {/* Description excerpt (only for text-only statements, title already shows the content) */}
+          {!hasMedia && !hasSurvey && statement.content && statement.content.length > 100 && (
+            <p className="text-muted-foreground line-clamp-2 text-sm">
+              {statement.content.substring(100, 250)}
+            </p>
+          )}
 
-        {/* Hashtags */}
-        {statement.hashtags && statement.hashtags.length > 0 && (
-          <div className="mb-3" onClick={e => e.preventDefault()}>
-            <HashtagDisplay
-              hashtags={statement.hashtags.slice(0, 3)}
-              centered={false}
-              badgeClassName={cn(
-                'border bg-white/70 dark:bg-gray-900/60',
-                statementStyle.borderColor,
-                statementStyle.accentColor
-              )}
-            />
+          {/* Hashtags */}
+          {statement.hashtags && statement.hashtags.length > 0 && (
+            <div onClick={e => e.preventDefault()}>
+              <HashtagDisplay
+                hashtags={statement.hashtags.slice(0, 3)}
+                centered={false}
+                badgeClassName={cn(
+                  'border bg-white/70 dark:bg-gray-900/60',
+                  statementStyle.borderColor,
+                  statementStyle.accentColor
+                )}
+              />
+            </div>
+          )}
+
+          {/* Stats Bar with Tooltips */}
+          <div className="text-muted-foreground flex items-center gap-4 text-xs">
+            {stats.map((stat, index) => (
+              <Tooltip key={index}>
+                <TooltipTrigger asChild>
+                  <div className="flex cursor-help items-center gap-1">
+                    <stat.icon className="h-3.5 w-3.5" />
+                    <span className="font-medium">{stat.value}</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    {stat.value} {stat.label}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            ))}
           </div>
-        )}
-
-        {/* Stats Bar with Tooltips */}
-        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-          {stats.map((stat, index) => (
-            <Tooltip key={index}>
-              <TooltipTrigger asChild>
-                <div className="flex cursor-help items-center gap-1">
-                  <stat.icon className="h-3.5 w-3.5" />
-                  <span className="font-medium">{stat.value}</span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>
-                  {stat.value} {stat.label}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          ))}
         </div>
       </TimelineCardContent>
 

@@ -3,6 +3,7 @@ import { cn } from '@/features/shared/utils/utils';
 import { extractHashtagTags } from '@/zero/common/hashtagHelpers';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { BookOpen, MessageSquare, ThumbsUp, Calendar } from 'lucide-react';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface GroupBlogCardProps {
   blog: {
@@ -14,7 +15,10 @@ interface GroupBlogCardProps {
     downvotes?: number;
     commentCount?: number;
     blog_hashtags?: { hashtag?: { tag?: string | null } | null }[];
-    bloggers?: { user?: { first_name?: string; last_name?: string; handle?: string } | null; status?: string }[];
+    bloggers?: {
+      user?: { first_name?: string; last_name?: string; handle?: string } | null;
+      status?: string;
+    }[];
   };
   groupId: string;
   className?: string;
@@ -23,7 +27,7 @@ interface GroupBlogCardProps {
 export function GroupBlogCard({ blog, groupId, className }: GroupBlogCardProps) {
   const score = (blog.upvotes ?? 0) - (blog.downvotes ?? 0);
   const tags = extractHashtagTags(blog.blog_hashtags);
-  const author = blog.bloggers?.find((b) => b.status === 'owner')?.user || blog.bloggers?.[0]?.user;
+  const author = blog.bloggers?.find(b => b.status === 'owner')?.user || blog.bloggers?.[0]?.user;
   const authorName = author
     ? `${author.first_name ?? ''} ${author.last_name ?? ''}`.trim() || author.handle || ''
     : '';
@@ -32,14 +36,13 @@ export function GroupBlogCard({ blog, groupId, className }: GroupBlogCardProps) 
     <Link
       to="/group/$id/blog/$entryId"
       params={{ id: groupId, entryId: blog.id }}
-      className={cn(
-        'hover:bg-muted/50 block rounded-lg border p-4 transition-colors',
-        className,
-      )}
+      className={cn('hover:bg-muted/50 block rounded-lg border p-4 transition-colors', className)}
     >
       <div className="mb-1 flex items-center gap-2">
         <BookOpen className="text-muted-foreground h-4 w-4" />
-        <h3 className="line-clamp-2 text-base font-semibold">{blog.title || 'Untitled'}</h3>
+        <h3 className="line-clamp-2 text-base font-semibold">
+          {blog.title || translateText('generated.inline.0093_untitled_621521f9')}
+        </h3>
       </div>
 
       {blog.description && (
@@ -48,7 +51,7 @@ export function GroupBlogCard({ blog, groupId, className }: GroupBlogCardProps) 
 
       {tags.length > 0 && (
         <div className="mb-2 flex flex-wrap gap-1">
-          {tags.map((tag) => (
+          {tags.map(tag => (
             <Badge key={tag} variant="secondary" className="text-xs">
               #{tag}
             </Badge>

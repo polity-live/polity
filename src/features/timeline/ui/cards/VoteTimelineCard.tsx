@@ -1,6 +1,6 @@
 'use client';
 
-import { Vote, ThumbsUp, ThumbsDown, Clock, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Clock, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
@@ -124,7 +124,7 @@ export function VoteTimelineCard({ vote, className }: VoteTimelineCardProps) {
   return (
     <TimelineCardBase
       contentType="vote"
-      className={cn(statusConfig.pulse && 'ring-2 ring-red-500 ring-opacity-50', className)}
+      className={cn(statusConfig.pulse && 'ring-opacity-50 ring-2 ring-red-500', className)}
       href={agendaHref || fallbackHref}
     >
       <TimelineCardHeader
@@ -171,123 +171,129 @@ export function VoteTimelineCard({ vote, className }: VoteTimelineCardProps) {
       <TimelineCardContent>
         {/* Amendment Title (card click handles navigation) */}
         <p className="mb-2 line-clamp-2 text-sm font-medium">
-          <Link to={agendaHref || fallbackHref} onClick={e => e.stopPropagation()} className="hover:underline">
+          <Link
+            to={agendaHref || fallbackHref}
+            onClick={e => e.stopPropagation()}
+            className="hover:underline"
+          >
             {vote.amendmentTitle}
           </Link>
         </p>
 
-        {vote.question && (
-          <p className="mb-3 line-clamp-2 text-sm text-muted-foreground">{vote.question}</p>
-        )}
-
-        {/* Vote Progress Bar */}
-        <div className="mb-3 space-y-2">
-          {/* Indication results (show only if in indication phase OR if showing both) */}
-          {(vote.isIndicationPhase || showBothResults) && hasIndication && (
-            <div>
-              <div className="mb-1 flex items-center justify-between text-xs">
-                <span className="flex items-center gap-1 text-muted-foreground">
-                  {t('features.timeline.cards.indication', { defaultValue: 'Indication' })} *
-                </span>
-                <span className="text-muted-foreground">{vote.indicationSupportPercentage}%</span>
-              </div>
-              <Progress
-                value={vote.indicationSupportPercentage}
-                className="h-2 opacity-60 [&>div]:bg-blue-400"
-              />
-            </div>
+        <div className="mt-auto space-y-3">
+          {vote.question && (
+            <p className="text-muted-foreground line-clamp-2 text-sm">{vote.question}</p>
           )}
 
-          {/* Actual results (hide if in indication phase only) */}
-          {!vote.isIndicationPhase && (
-            <div>
-              <div className="mb-1 flex items-center justify-between text-xs">
-                <span className="flex items-center gap-1">
-                  <span className="text-muted-foreground">
-                    {showBothResults
-                      ? t('features.timeline.cards.actual', { defaultValue: 'Actual' })
-                      : t('features.timeline.cards.support')}
+          {/* Vote Progress Bar */}
+          <div className="space-y-2">
+            {/* Indication results (show only if in indication phase OR if showing both) */}
+            {(vote.isIndicationPhase || showBothResults) && hasIndication && (
+              <div>
+                <div className="mb-1 flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground flex items-center gap-1">
+                    {t('features.timeline.cards.indication', { defaultValue: 'Indication' })} *
                   </span>
-                  {vote.trend && vote.trendPercentage && (
-                    <span
-                      className={cn(
-                        'flex items-center gap-0.5 text-xs font-medium',
-                        vote.trend === 'up' && 'text-green-600',
-                        vote.trend === 'down' && 'text-red-600',
-                        vote.trend === 'stable' && 'text-gray-500'
-                      )}
-                    >
-                      <TrendIcon className="h-3 w-3" />
-                      {vote.trend !== 'stable' && `${vote.trendPercentage}%`}
+                  <span className="text-muted-foreground">{vote.indicationSupportPercentage}%</span>
+                </div>
+                <Progress
+                  value={vote.indicationSupportPercentage}
+                  className="h-2 opacity-60 [&>div]:bg-blue-400"
+                />
+              </div>
+            )}
+
+            {/* Actual results (hide if in indication phase only) */}
+            {!vote.isIndicationPhase && (
+              <div>
+                <div className="mb-1 flex items-center justify-between text-xs">
+                  <span className="flex items-center gap-1">
+                    <span className="text-muted-foreground">
+                      {showBothResults
+                        ? t('features.timeline.cards.actual', { defaultValue: 'Actual' })
+                        : t('features.timeline.cards.support')}
                     </span>
-                  )}
-                </span>
-                <span
+                    {vote.trend && vote.trendPercentage && (
+                      <span
+                        className={cn(
+                          'flex items-center gap-0.5 text-xs font-medium',
+                          vote.trend === 'up' && 'text-green-600',
+                          vote.trend === 'down' && 'text-red-600',
+                          vote.trend === 'stable' && 'text-gray-500'
+                        )}
+                      >
+                        <TrendIcon className="h-3 w-3" />
+                        {vote.trend !== 'stable' && `${vote.trendPercentage}%`}
+                      </span>
+                    )}
+                  </span>
+                  <span
+                    className={cn(
+                      'font-medium',
+                      vote.supportPercentage >= 50 ? 'text-green-600' : 'text-red-600'
+                    )}
+                  >
+                    {vote.supportPercentage}%
+                  </span>
+                </div>
+                <Progress
+                  value={vote.supportPercentage}
                   className={cn(
-                    'font-medium',
-                    vote.supportPercentage >= 50 ? 'text-green-600' : 'text-red-600'
+                    'h-2.5',
+                    vote.status === 'passed' && '[&>div]:bg-green-500',
+                    vote.status === 'failed' && '[&>div]:bg-red-500'
                   )}
-                >
-                  {vote.supportPercentage}%
-                </span>
+                />
               </div>
-              <Progress
-                value={vote.supportPercentage}
-                className={cn(
-                  'h-2.5',
-                  vote.status === 'passed' && '[&>div]:bg-green-500',
-                  vote.status === 'failed' && '[&>div]:bg-red-500'
-                )}
-              />
-            </div>
-          )}
-        </div>
-
-        {/* Vote Stats */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <div className="flex items-center gap-3">
-            {/* Show indication counts if in indication phase */}
-            {vote.isIndicationPhase && hasIndication ? (
-              <>
-                <span className="flex items-center gap-1">
-                  <ThumbsUp className="h-3 w-3 text-blue-500" />
-                  {vote.indicationSupportCount} *
-                </span>
-                <span className="flex items-center gap-1">
-                  <ThumbsDown className="h-3 w-3 text-blue-400" />
-                  {vote.indicationOpposeCount} *
-                </span>
-                {vote.indicationAbstainCount !== undefined && (
-                  <span className="flex items-center gap-1">
-                    <Minus className="h-3 w-3 text-blue-300" />
-                    {vote.indicationAbstainCount} *
-                  </span>
-                )}
-              </>
-            ) : (
-              <>
-                <span className="flex items-center gap-1">
-                  <ThumbsUp className="h-3 w-3 text-green-600" />
-                  {vote.supportCount}
-                </span>
-                <span className="flex items-center gap-1">
-                  <ThumbsDown className="h-3 w-3 text-red-600" />
-                  {vote.opposeCount}
-                </span>
-                {vote.abstainCount !== undefined && (
-                  <span className="flex items-center gap-1">
-                    <Minus className="h-3 w-3" />
-                    {vote.abstainCount}
-                  </span>
-                )}
-              </>
             )}
           </div>
-          {turnout !== undefined && (
-            <span>
-              {turnout}% {t('features.timeline.cards.turnout')}
-            </span>
-          )}
+
+          {/* Vote Stats */}
+          <div className="text-muted-foreground flex items-center justify-between text-xs">
+            <div className="flex items-center gap-3">
+              {/* Show indication counts if in indication phase */}
+              {vote.isIndicationPhase && hasIndication ? (
+                <>
+                  <span className="flex items-center gap-1">
+                    <ThumbsUp className="h-3 w-3 text-blue-500" />
+                    {vote.indicationSupportCount} *
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <ThumbsDown className="h-3 w-3 text-blue-400" />
+                    {vote.indicationOpposeCount} *
+                  </span>
+                  {vote.indicationAbstainCount !== undefined && (
+                    <span className="flex items-center gap-1">
+                      <Minus className="h-3 w-3 text-blue-300" />
+                      {vote.indicationAbstainCount} *
+                    </span>
+                  )}
+                </>
+              ) : (
+                <>
+                  <span className="flex items-center gap-1">
+                    <ThumbsUp className="h-3 w-3 text-green-600" />
+                    {vote.supportCount}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <ThumbsDown className="h-3 w-3 text-red-600" />
+                    {vote.opposeCount}
+                  </span>
+                  {vote.abstainCount !== undefined && (
+                    <span className="flex items-center gap-1">
+                      <Minus className="h-3 w-3" />
+                      {vote.abstainCount}
+                    </span>
+                  )}
+                </>
+              )}
+            </div>
+            {turnout !== undefined && (
+              <span>
+                {turnout}% {t('features.timeline.cards.turnout')}
+              </span>
+            )}
+          </div>
         </div>
       </TimelineCardContent>
 

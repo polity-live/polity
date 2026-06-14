@@ -5,11 +5,25 @@
  * so every function is easy to unit-test without a database.
  */
 
-import type { GroupRelationship as GroupRelationshipRow } from '@/zero/network/schema';
 import type { GroupMembership as GroupMembershipRow } from '@/zero/groups/schema';
 import { getHierarchyRelationshipPair } from '@/features/network/logic/groupRelationshipOrientation';
 
 // ── Types (minimal shapes expected from Zero query results) ─────────
+export interface HierarchyRelationshipRow {
+  id: string;
+  group_id: string;
+  related_group_id: string;
+  relationship_type: 'parent' | 'child' | 'sibling' | null;
+  with_right?: string | null;
+  status: string | null;
+  initiator_group_id?: string | null;
+  created_at?: number;
+  connection_type?: 'hierarchy' | 'peer' | null;
+  parent_group_id?: string | null;
+  child_group_id?: string | null;
+}
+
+type GroupRelationshipRow = HierarchyRelationshipRow;
 type GroupTypeLookup = ReadonlyMap<string, { group_type?: string | null | undefined }>;
 type MembershipConflictRow = Pick<GroupMembershipRow, 'group_id' | 'user_id' | 'source' | 'status'>;
 
@@ -230,7 +244,7 @@ export function resolveChildBaseGroups(
 }
 
 function isActiveRelationshipStatus(status: string | null | undefined): boolean {
-  return status == null || status === 'active' || status === 'accepted';
+  return status === 'active';
 }
 
 function isActiveDirectMembership(

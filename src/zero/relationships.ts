@@ -79,10 +79,14 @@ import { eventDelegate, groupDelegateAllocation } from './delegates/table';
 // Network
 import {
   follow,
-  networkLink,
-  networkLinkRight,
-  networkLinkMembershipRule,
-  networkLinkChangeRequest,
+  groupConnection,
+  groupRightGrant,
+  groupMembershipRule,
+  groupMembershipRuleOrigin,
+  groupConnectionRequest,
+  groupRightGrantRequest,
+  groupMembershipRuleRequest,
+  groupMembershipRuleRequestOrigin,
   subscriber,
   groupWorkflow,
   groupWorkflowStep,
@@ -92,6 +96,7 @@ import {
 import { todo, todoAssignment } from './todos/table';
 // Messages
 import { conversation, conversationParticipant, message } from './messages/table';
+import { searchDocument, searchDocumentAcl, searchDocumentTopic } from './search-documents/table';
 // Notifications
 import {
   notification,
@@ -120,6 +125,12 @@ import { calendarSubscription } from './calendar-subscriptions/table';
 import { votingPassword } from './voting-password/table';
 // Accreditation
 import { accreditation } from './accreditation/table';
+import {
+  chartProjection,
+  chartProjectionPoint,
+  eurostatDataset,
+  eurostatObservation,
+} from './eurostat/table';
 // Common
 import {
   hashtag,
@@ -406,15 +417,15 @@ export const groupRelationships = relationships(group, ({ one, many }) => ({
     destSchema: groupGuestAccess,
     destField: ['group_id'],
   }),
-  network_links_as_source: many({
+  connections_as_group_a: many({
     sourceField: ['id'],
-    destSchema: networkLink,
-    destField: ['source_group_id'],
+    destSchema: groupConnection,
+    destField: ['group_a_id'],
   }),
-  network_links_as_target: many({
+  connections_as_group_b: many({
     sourceField: ['id'],
-    destSchema: networkLink,
-    destField: ['target_group_id'],
+    destSchema: groupConnection,
+    destField: ['group_b_id'],
   }),
   roles: many({ sourceField: ['id'], destSchema: role, destField: ['group_id'] }),
   events: many({ sourceField: ['id'], destSchema: event, destField: ['group_id'] }),
@@ -565,33 +576,37 @@ export const groupGuestRoleRelationships = relationships(groupGuestRole, ({ one 
   assigned_by: one({ sourceField: ['assigned_by_id'], destSchema: user, destField: ['id'] }),
 }));
 
-export const networkLinkRelationships = relationships(networkLink, ({ one, many }) => ({
-  source_group: one({ sourceField: ['source_group_id'], destSchema: group, destField: ['id'] }),
-  target_group: one({ sourceField: ['target_group_id'], destSchema: group, destField: ['id'] }),
+export const groupConnectionRelationships = relationships(groupConnection, ({ one, many }) => ({
+  group_a: one({ sourceField: ['group_a_id'], destSchema: group, destField: ['id'] }),
+  group_b: one({ sourceField: ['group_b_id'], destSchema: group, destField: ['id'] }),
+  parent_group: one({ sourceField: ['parent_group_id'], destSchema: group, destField: ['id'] }),
+  child_group: one({ sourceField: ['child_group_id'], destSchema: group, destField: ['id'] }),
   created_by: one({ sourceField: ['created_by_id'], destSchema: user, destField: ['id'] }),
-  rights: many({
+  grants: many({
     sourceField: ['id'],
-    destSchema: networkLinkRight,
-    destField: ['network_link_id'],
+    destSchema: groupRightGrant,
+    destField: ['connection_id'],
   }),
   membership_rule: one({
     sourceField: ['id'],
-    destSchema: networkLinkMembershipRule,
-    destField: ['network_link_id'],
+    destSchema: groupMembershipRule,
+    destField: ['connection_id'],
   }),
   change_requests: many({
     sourceField: ['id'],
-    destSchema: networkLinkChangeRequest,
-    destField: ['active_network_link_id'],
+    destSchema: groupConnectionRequest,
+    destField: ['active_connection_id'],
   }),
 }));
 
-export const networkLinkRightRelationships = relationships(networkLinkRight, ({ one }) => ({
-  network_link: one({
-    sourceField: ['network_link_id'],
-    destSchema: networkLink,
+export const groupRightGrantRelationships = relationships(groupRightGrant, ({ one }) => ({
+  connection: one({
+    sourceField: ['connection_id'],
+    destSchema: groupConnection,
     destField: ['id'],
   }),
+  holder_group: one({ sourceField: ['holder_group_id'], destSchema: group, destField: ['id'] }),
+  scope_group: one({ sourceField: ['scope_group_id'], destSchema: group, destField: ['id'] }),
   initiator_group: one({
     sourceField: ['initiator_group_id'],
     destSchema: group,
@@ -599,33 +614,68 @@ export const networkLinkRightRelationships = relationships(networkLinkRight, ({ 
   }),
 }));
 
-export const networkLinkMembershipRuleRelationships = relationships(
-  networkLinkMembershipRule,
-  ({ one }) => ({
-    network_link: one({
-      sourceField: ['network_link_id'],
-      destSchema: networkLink,
+export const groupMembershipRuleRelationships = relationships(
+  groupMembershipRule,
+  ({ one, many }) => ({
+    connection: one({
+      sourceField: ['connection_id'],
+      destSchema: groupConnection,
       destField: ['id'],
     }),
-    role: one({ sourceField: ['role_id'], destSchema: role, destField: ['id'] }),
-  })
-);
-
-export const networkLinkChangeRequestRelationships = relationships(
-  networkLinkChangeRequest,
-  ({ one }) => ({
-    active_network_link: one({
-      sourceField: ['active_network_link_id'],
-      destSchema: networkLink,
-      destField: ['id'],
-    }),
-    source_group: one({
-      sourceField: ['source_group_id'],
+    member_source_group: one({
+      sourceField: ['member_source_group_id'],
       destSchema: group,
       destField: ['id'],
     }),
-    target_group: one({
-      sourceField: ['target_group_id'],
+    member_target_group: one({
+      sourceField: ['member_target_group_id'],
+      destSchema: group,
+      destField: ['id'],
+    }),
+    required_source_role: one({
+      sourceField: ['required_source_role_id'],
+      destSchema: role,
+      destField: ['id'],
+    }),
+    origins: many({
+      sourceField: ['id'],
+      destSchema: groupMembershipRuleOrigin,
+      destField: ['membership_rule_id'],
+    }),
+  })
+);
+
+export const groupMembershipRuleOriginRelationships = relationships(
+  groupMembershipRuleOrigin,
+  ({ one }) => ({
+    membership_rule: one({
+      sourceField: ['membership_rule_id'],
+      destSchema: groupMembershipRule,
+      destField: ['id'],
+    }),
+    eligible_origin_group: one({
+      sourceField: ['eligible_origin_group_id'],
+      destSchema: group,
+      destField: ['id'],
+    }),
+  })
+);
+
+export const groupConnectionRequestRelationships = relationships(
+  groupConnectionRequest,
+  ({ one, many }) => ({
+    active_connection: one({
+      sourceField: ['active_connection_id'],
+      destSchema: groupConnection,
+      destField: ['id'],
+    }),
+    group_a: one({
+      sourceField: ['group_a_id'],
+      destSchema: group,
+      destField: ['id'],
+    }),
+    group_b: one({
+      sourceField: ['group_b_id'],
       destSchema: group,
       destField: ['id'],
     }),
@@ -634,9 +684,69 @@ export const networkLinkChangeRequestRelationships = relationships(
       destSchema: group,
       destField: ['id'],
     }),
-    desired_role: one({
-      sourceField: ['desired_role_id'],
+    grant_requests: many({
+      sourceField: ['id'],
+      destSchema: groupRightGrantRequest,
+      destField: ['connection_request_id'],
+    }),
+    membership_rule_requests: many({
+      sourceField: ['id'],
+      destSchema: groupMembershipRuleRequest,
+      destField: ['connection_request_id'],
+    }),
+  })
+);
+
+export const groupRightGrantRequestRelationships = relationships(
+  groupRightGrantRequest,
+  ({ one }) => ({
+    connection_request: one({
+      sourceField: ['connection_request_id'],
+      destSchema: groupConnectionRequest,
+      destField: ['id'],
+    }),
+    holder_group: one({ sourceField: ['holder_group_id'], destSchema: group, destField: ['id'] }),
+    scope_group: one({ sourceField: ['scope_group_id'], destSchema: group, destField: ['id'] }),
+    initiator_group: one({
+      sourceField: ['initiator_group_id'],
+      destSchema: group,
+      destField: ['id'],
+    }),
+  })
+);
+
+export const groupMembershipRuleRequestRelationships = relationships(
+  groupMembershipRuleRequest,
+  ({ one, many }) => ({
+    connection_request: one({
+      sourceField: ['connection_request_id'],
+      destSchema: groupConnectionRequest,
+      destField: ['id'],
+    }),
+    required_source_role: one({
+      sourceField: ['required_source_role_id'],
       destSchema: role,
+      destField: ['id'],
+    }),
+    origins: many({
+      sourceField: ['id'],
+      destSchema: groupMembershipRuleRequestOrigin,
+      destField: ['membership_rule_request_id'],
+    }),
+  })
+);
+
+export const groupMembershipRuleRequestOriginRelationships = relationships(
+  groupMembershipRuleRequestOrigin,
+  ({ one }) => ({
+    membership_rule_request: one({
+      sourceField: ['membership_rule_request_id'],
+      destSchema: groupMembershipRuleRequest,
+      destField: ['id'],
+    }),
+    eligible_origin_group: one({
+      sourceField: ['eligible_origin_group_id'],
+      destSchema: group,
       destField: ['id'],
     }),
   })
@@ -645,6 +755,12 @@ export const networkLinkChangeRequestRelationships = relationships(
 export const roleRelationships = relationships(role, helpers => ({
   group: helpers.one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
   event: helpers.one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
+  amendment: helpers.one({
+    sourceField: ['amendment_id'],
+    destSchema: amendment,
+    destField: ['id'],
+  }),
+  blog: helpers.one({ sourceField: ['blog_id'], destSchema: blog, destField: ['id'] }),
   group_membership_roles: helpers.many({
     sourceField: ['id'],
     destSchema: groupMembershipRole,
@@ -817,6 +933,11 @@ export const amendmentRelationships = relationships(amendment, ({ one, many }) =
   group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
   event: one({ sourceField: ['event_id'], destSchema: event, destField: ['id'] }),
   clone_source: one({ sourceField: ['clone_source_id'], destSchema: amendment, destField: ['id'] }),
+  origin_amendment: one({
+    sourceField: ['origin_amendment_id'],
+    destSchema: amendment,
+    destField: ['id'],
+  }),
   document: one({ sourceField: ['document_id'], destSchema: document, destField: ['id'] }),
   current_process_run: one({
     sourceField: ['current_process_run_id'],
@@ -1213,6 +1334,8 @@ export const documentRelationships = relationships(document, ({ one, many }) => 
 
 export const documentVersionRelationships = relationships(documentVersion, ({ one }) => ({
   document: one({ sourceField: ['document_id'], destSchema: document, destField: ['id'] }),
+  amendment: one({ sourceField: ['amendment_id'], destSchema: amendment, destField: ['id'] }),
+  blog: one({ sourceField: ['blog_id'], destSchema: blog, destField: ['id'] }),
   author: one({ sourceField: ['author_id'], destSchema: user, destField: ['id'] }),
 }));
 
@@ -1228,6 +1351,7 @@ export const documentCursorRelationships = relationships(documentCursor, ({ one 
 
 export const threadRelationships = relationships(thread, ({ one, many }) => ({
   document: one({ sourceField: ['document_id'], destSchema: document, destField: ['id'] }),
+  amendment: one({ sourceField: ['amendment_id'], destSchema: amendment, destField: ['id'] }),
   statement: one({ sourceField: ['statement_id'], destSchema: statement, destField: ['id'] }),
   blog: one({ sourceField: ['blog_id'], destSchema: blog, destField: ['id'] }),
   user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
@@ -1483,6 +1607,41 @@ export const messageRelationships = relationships(message, ({ one }) => ({
     destField: ['id'],
   }),
   sender: one({ sourceField: ['sender_id'], destSchema: user, destField: ['id'] }),
+}));
+
+// ============================================
+// Search document relationships
+// ============================================
+export const searchDocumentRelationships = relationships(searchDocument, ({ one, many }) => ({
+  owner: one({ sourceField: ['owner_user_id'], destSchema: user, destField: ['id'] }),
+  group: one({ sourceField: ['group_id'], destSchema: group, destField: ['id'] }),
+  topics: many({
+    sourceField: ['id'],
+    destSchema: searchDocumentTopic,
+    destField: ['document_id'],
+  }),
+  acl: many({
+    sourceField: ['id'],
+    destSchema: searchDocumentAcl,
+    destField: ['document_id'],
+  }),
+}));
+
+export const searchDocumentTopicRelationships = relationships(searchDocumentTopic, ({ one }) => ({
+  document: one({
+    sourceField: ['document_id'],
+    destSchema: searchDocument,
+    destField: ['id'],
+  }),
+}));
+
+export const searchDocumentAclRelationships = relationships(searchDocumentAcl, ({ one }) => ({
+  document: one({
+    sourceField: ['document_id'],
+    destSchema: searchDocument,
+    destField: ['id'],
+  }),
+  user: one({ sourceField: ['user_id'], destSchema: user, destField: ['id'] }),
 }));
 
 // ============================================
@@ -1958,6 +2117,51 @@ export const accreditationRelationships = relationships(accreditation, ({ one })
 }));
 
 // ============================================
+// Eurostat relationships
+// ============================================
+export const eurostatDatasetRelationships = relationships(eurostatDataset, ({ many }) => ({
+  observations: many({
+    sourceField: ['id'],
+    destSchema: eurostatObservation,
+    destField: ['dataset_id'],
+  }),
+  projections: many({
+    sourceField: ['id'],
+    destSchema: chartProjection,
+    destField: ['dataset_id'],
+  }),
+}));
+
+export const eurostatObservationRelationships = relationships(eurostatObservation, ({ one }) => ({
+  dataset: one({
+    sourceField: ['dataset_id'],
+    destSchema: eurostatDataset,
+    destField: ['id'],
+  }),
+}));
+
+export const chartProjectionRelationships = relationships(chartProjection, ({ one, many }) => ({
+  dataset: one({
+    sourceField: ['dataset_id'],
+    destSchema: eurostatDataset,
+    destField: ['id'],
+  }),
+  points: many({
+    sourceField: ['id'],
+    destSchema: chartProjectionPoint,
+    destField: ['projection_id'],
+  }),
+}));
+
+export const chartProjectionPointRelationships = relationships(chartProjectionPoint, ({ one }) => ({
+  projection: one({
+    sourceField: ['projection_id'],
+    destSchema: chartProjection,
+    destField: ['id'],
+  }),
+}));
+
+// ============================================
 // All relationships array for schema assembly
 // ============================================
 export const allRelationships = [
@@ -1977,10 +2181,14 @@ export const allRelationships = [
   groupOfflineMembershipRoleRelationships,
   groupGuestAccessRelationships,
   groupGuestRoleRelationships,
-  networkLinkRelationships,
-  networkLinkRightRelationships,
-  networkLinkMembershipRuleRelationships,
-  networkLinkChangeRequestRelationships,
+  groupConnectionRelationships,
+  groupRightGrantRelationships,
+  groupMembershipRuleRelationships,
+  groupMembershipRuleOriginRelationships,
+  groupConnectionRequestRelationships,
+  groupRightGrantRequestRelationships,
+  groupMembershipRuleRequestRelationships,
+  groupMembershipRuleRequestOriginRelationships,
   roleRelationships,
   actionRightRelationships,
   roleHolderHistoryRelationships,
@@ -2034,6 +2242,10 @@ export const allRelationships = [
   conversationRelationships,
   conversationParticipantRelationships,
   messageRelationships,
+  // Search Documents
+  searchDocumentRelationships,
+  searchDocumentTopicRelationships,
+  searchDocumentAclRelationships,
   // Notifications
   notificationRelationships,
   pushSubscriptionRelationships,
@@ -2082,6 +2294,11 @@ export const allRelationships = [
   votingPasswordRelationships,
   // Accreditation
   accreditationRelationships,
+  // Eurostat
+  eurostatDatasetRelationships,
+  eurostatObservationRelationships,
+  chartProjectionRelationships,
+  chartProjectionPointRelationships,
   // Workflows
   groupWorkflowRelationships,
   groupWorkflowStepRelationships,

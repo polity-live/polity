@@ -12,6 +12,7 @@ import { Loader2, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { stripeSubscriptionStatusFn } from '@/server/stripe-subscription-status';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface SubscriptionStatusProps {
   userId: string;
@@ -77,8 +78,12 @@ export function SubscriptionStatus({ userId }: SubscriptionStatusProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Subscription Status</CardTitle>
-          <CardDescription>Loading subscription information...</CardDescription>
+          <CardTitle>
+            {translateText('generated.inline.1001_subscription_status_aa5794ad')}
+          </CardTitle>
+          <CardDescription>
+            {translateText('generated.inline.1002_loading_subscription_information_0dde4df6')}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
@@ -93,10 +98,14 @@ export function SubscriptionStatus({ userId }: SubscriptionStatusProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Subscription Status</CardTitle>
+          <CardTitle>
+            {translateText('generated.inline.1001_subscription_status_aa5794ad')}
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-red-500">Failed to load subscription data</p>
+          <p className="text-sm text-red-500">
+            {translateText('generated.inline.1003_failed_to_load_subscription_data_86573459')}
+          </p>
         </CardContent>
       </Card>
     );
@@ -106,12 +115,20 @@ export function SubscriptionStatus({ userId }: SubscriptionStatusProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Subscription Status</CardTitle>
-          <CardDescription>You don't have an active subscription yet</CardDescription>
+          <CardTitle>
+            {translateText('generated.inline.1001_subscription_status_aa5794ad')}
+          </CardTitle>
+          <CardDescription>
+            {translateText(
+              'generated.inline.1004_you_don_t_have_an_active_subscription_yet_e382e0f7'
+            )}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground text-sm">
-            Subscribe to support the platform and get access to exclusive features!
+            {translateText(
+              'generated.inline.1005_subscribe_to_support_the_platform_and_get_acc_ec89484d'
+            )}
           </p>
         </CardContent>
       </Card>
@@ -127,12 +144,27 @@ export function SubscriptionStatus({ userId }: SubscriptionStatusProps) {
       string,
       { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }
     > = {
-      active: { label: 'Active', variant: 'default' },
-      canceled: { label: 'Canceled', variant: 'destructive' },
-      past_due: { label: 'Past Due', variant: 'destructive' },
-      unpaid: { label: 'Unpaid', variant: 'destructive' },
-      incomplete: { label: 'Incomplete', variant: 'outline' },
-      trialing: { label: 'Trial', variant: 'secondary' },
+      active: { label: translateText('generated.inline.0471_active_a733b809'), variant: 'default' },
+      canceled: {
+        label: translateText('generated.inline.0472_canceled_f840ac65'),
+        variant: 'destructive',
+      },
+      past_due: {
+        label: translateText('generated.inline.0473_past_due_7c15f3b7'),
+        variant: 'destructive',
+      },
+      unpaid: {
+        label: translateText('generated.inline.0474_unpaid_50cc12f6'),
+        variant: 'destructive',
+      },
+      incomplete: {
+        label: translateText('generated.inline.0475_incomplete_387fd1bb'),
+        variant: 'outline',
+      },
+      trialing: {
+        label: translateText('generated.inline.0476_trial_5f7537cf'),
+        variant: 'secondary',
+      },
     };
 
     const config = statusMap[status] || { label: status, variant: 'outline' };
@@ -167,8 +199,12 @@ export function SubscriptionStatus({ userId }: SubscriptionStatusProps) {
       <Card>
         <CardHeader>
           <div>
-            <CardTitle>Current Subscription</CardTitle>
-            <CardDescription>Manage your subscription and billing</CardDescription>
+            <CardTitle>
+              {translateText('generated.inline.1006_current_subscription_23045b61')}
+            </CardTitle>
+            <CardDescription>
+              {translateText('generated.inline.1007_manage_your_subscription_and_billing_c805d8e9')}
+            </CardDescription>
           </div>
         </CardHeader>
         <CardContent>
@@ -183,7 +219,7 @@ export function SubscriptionStatus({ userId }: SubscriptionStatusProps) {
                     </span>
                   </p>
                   <p className="text-muted-foreground text-sm">
-                    Next billing:{' '}
+                    {translateText('generated.inline.1008_next_billing_f789f53e')}{' '}
                     {new Date(activeSubscription.currentPeriodEnd).toLocaleDateString()}
                   </p>
                 </div>
@@ -192,7 +228,9 @@ export function SubscriptionStatus({ userId }: SubscriptionStatusProps) {
               {activeSubscription.cancelAtPeriodEnd && (
                 <div className="rounded-lg bg-yellow-50 p-3 dark:bg-yellow-950/20">
                   <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                    Your subscription will cancel on{' '}
+                    {translateText(
+                      'generated.inline.1009_your_subscription_will_cancel_on_7b0839a4'
+                    )}{' '}
                     {new Date(activeSubscription.currentPeriodEnd).toLocaleDateString()}
                   </p>
                 </div>
@@ -201,15 +239,20 @@ export function SubscriptionStatus({ userId }: SubscriptionStatusProps) {
           ) : subscriptions.length > 0 ? (
             <div className="space-y-2">
               <div className="text-muted-foreground text-sm">
-                You previously had a subscription that is now{' '}
+                {translateText(
+                  'generated.inline.1010_you_previously_had_a_subscription_that_is_now_09847690'
+                )}{' '}
                 {getStatusBadge(subscriptions[0].status)}
               </div>
               <p className="text-muted-foreground text-xs">
-                Last active: {new Date(subscriptions[0].createdAt).toLocaleDateString()}
+                {translateText('generated.inline.1011_last_active_dfc4865f')}
+                {new Date(subscriptions[0].createdAt).toLocaleDateString()}
               </p>
             </div>
           ) : (
-            <p className="text-muted-foreground text-sm">No subscription found</p>
+            <p className="text-muted-foreground text-sm">
+              {translateText('generated.inline.1012_no_subscription_found_1654b473')}
+            </p>
           )}
         </CardContent>
       </Card>
@@ -218,8 +261,10 @@ export function SubscriptionStatus({ userId }: SubscriptionStatusProps) {
       {payments.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Payment History</CardTitle>
-            <CardDescription>Your recent payments and invoices</CardDescription>
+            <CardTitle>{translateText('generated.inline.1013_payment_history_cfeba031')}</CardTitle>
+            <CardDescription>
+              {translateText('generated.inline.1014_your_recent_payments_and_invoices_a9bb5e16')}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -262,8 +307,12 @@ export function SubscriptionStatus({ userId }: SubscriptionStatusProps) {
       {subscriptions.length > 1 && (
         <Card>
           <CardHeader>
-            <CardTitle>Subscription History</CardTitle>
-            <CardDescription>All your previous subscriptions</CardDescription>
+            <CardTitle>
+              {translateText('generated.inline.1015_subscription_history_89afcab4')}
+            </CardTitle>
+            <CardDescription>
+              {translateText('generated.inline.1016_all_your_previous_subscriptions_66527c55')}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -281,7 +330,7 @@ export function SubscriptionStatus({ userId }: SubscriptionStatusProps) {
                       {new Date(subscription.createdAt).toLocaleDateString()} -{' '}
                       {subscription.canceledAt
                         ? new Date(subscription.canceledAt).toLocaleDateString()
-                        : 'Present'}
+                        : translateText('generated.inline.0130_present_4e9f7a31')}
                     </p>
                   </div>
                   {getStatusBadge(subscription.status)}

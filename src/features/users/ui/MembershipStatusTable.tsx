@@ -16,6 +16,7 @@ import {
 } from '@/features/shared/ui/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { TableTag } from '@/features/shared/ui/ui/table-tag';
+import { SmartLink } from '@/features/shared/ui/navigation/SmartLink.tsx';
 import { Check, X, Trash2, LucideIcon } from 'lucide-react';
 import { richTextToPlainText } from '@/features/shared/logic/richText';
 import type { FilterableRecord } from '../hooks/useUserMembershipsFilters';
@@ -26,6 +27,7 @@ import type { BloggersByUserRow } from '@/zero/blogs/queries';
 import { useGroupConflictPreflight } from '@/features/groups/hooks/useGroupConflictPreflight';
 import type { GroupConflictMembershipPreflight } from '@/features/groups/logic/groupConflictPreflight';
 import { GroupConflictDialog } from '@/features/groups/ui/GroupConflictPanel';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 type EntityKey = 'group' | 'event' | 'amendment' | 'blog';
 
@@ -50,7 +52,7 @@ interface MembershipStatusTableProps {
   onDecline?: (id: string) => void;
   onLeave?: (id: string) => void;
   onWithdraw?: (id: string) => void;
-  onNavigate?: (id: string) => void;
+  getEntityHref?: (entity: DisplayEntity | null, item: FilterableRecord) => string | null;
   getAcceptPreflightInput?: (
     item: FilterableRecord
   ) => GroupConflictMembershipPreflight | null | undefined;
@@ -78,19 +80,19 @@ function InvitationActions({
     <div className="flex justify-end gap-2">
       <Button variant="default" size="sm" disabled={blocking} onClick={() => onAccept?.(item.id)}>
         <Check className="mr-1 h-4 w-4" />
-        Accept
+        {translateText('generated.inline.0121_accept_bb54db51')}
       </Button>
       {blocking ? (
         <GroupConflictDialog
           response={response}
-          triggerLabel="Warum?"
+          triggerLabel={translateText('generated.inline.0693_warum_194dad5c')}
           triggerVariant="ghost"
-          title="Warum ist diese Annahme blockiert?"
+          title={translateText('generated.inline.1195_warum_ist_diese_annahme_blockiert_1fd1c7d1')}
         />
       ) : null}
       <Button variant="outline" size="sm" onClick={() => onDecline?.(item.id)}>
         <X className="mr-1 h-4 w-4" />
-        Decline
+        {translateText('generated.inline.0122_decline_b59cf9ed')}
       </Button>
     </div>
   );
@@ -108,7 +110,7 @@ export function MembershipStatusTable({
   onDecline,
   onLeave,
   onWithdraw,
-  onNavigate,
+  getEntityHref,
   getAcceptPreflightInput,
 }: MembershipStatusTableProps) {
   if (items.length === 0 && statusType === 'active') {
@@ -122,7 +124,11 @@ export function MembershipStatusTable({
           <CardDescription>{description}</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground py-8 text-center">No {statusType} items found</p>
+          <p className="text-muted-foreground py-8 text-center">
+            {translateText('generated.inline.0609_no_816c52fd')}
+            {statusType}
+            {translateText('generated.inline.1196_items_found_b7242dc8')}
+          </p>
         </CardContent>
       </Card>
     );
@@ -155,6 +161,23 @@ export function MembershipStatusTable({
     return entity.image_url ?? undefined;
   };
 
+  const buildDefaultEntityHref = (entity: DisplayEntity | null): string | null => {
+    if (!entity?.id) {
+      return null;
+    }
+
+    switch (entityKey) {
+      case 'group':
+        return `/group/${entity.id}`;
+      case 'event':
+        return `/event/${entity.id}`;
+      case 'amendment':
+        return `/amendment/${entity.id}`;
+      case 'blog':
+        return null;
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -169,17 +192,25 @@ export function MembershipStatusTable({
           <TableHeader>
             <TableRow>
               <TableHead>{entityKey.charAt(0).toUpperCase() + entityKey.slice(1)}</TableHead>
-              {statusType === 'active' && <TableHead>Role</TableHead>}
-              {statusType === 'invited' && <TableHead>Role</TableHead>}
-              {statusType === 'requested' && <TableHead>Role</TableHead>}
+              {statusType === 'active' && (
+                <TableHead>{translateText('generated.inline.0091_role_c3f104d1')}</TableHead>
+              )}
+              {statusType === 'invited' && (
+                <TableHead>{translateText('generated.inline.0091_role_c3f104d1')}</TableHead>
+              )}
+              {statusType === 'requested' && (
+                <TableHead>{translateText('generated.inline.0091_role_c3f104d1')}</TableHead>
+              )}
               <TableHead>
                 {statusType === 'invited'
-                  ? 'Invited'
+                  ? translateText('generated.inline.0146_invited_53469df1')
                   : statusType === 'requested'
-                    ? 'Requested'
-                    : 'Joined'}
+                    ? translateText('generated.inline.0147_requested_c26bf60f')
+                    : translateText('generated.inline.0148_joined_43a1c626')}
               </TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="text-right">
+                {translateText('generated.inline.0093_actions_c3cd636a')}
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -192,33 +223,42 @@ export function MembershipStatusTable({
                 ? new Date(item.created_at).toLocaleDateString()
                 : 'N/A';
               const entityDescription =
-                statusType === 'active' ? richTextToPlainText(entity?.description) : '';
+                statusType === translateText('generated.inline.0045_active_2bb6b986')
+                  ? richTextToPlainText(entity?.description)
+                  : '';
+              const entityHref = getEntityHref?.(entity, item) ?? buildDefaultEntityHref(entity);
+              const entityContent = (
+                <>
+                  <Avatar className="h-10 w-10">
+                    {entityImage && <AvatarImage src={entityImage} alt={entityName} />}
+                    <AvatarFallback>
+                      <FallbackIcon className="h-5 w-5" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <div className="font-medium">{entityName}</div>
+                    {entityDescription && (
+                      <div className="text-muted-foreground line-clamp-1 text-sm">
+                        {entityDescription}
+                      </div>
+                    )}
+                  </div>
+                </>
+              );
 
               return (
                 <TableRow key={item.id}>
                   <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar
-                        className="h-10 w-10 cursor-pointer"
-                        onClick={() => entity && onNavigate?.(entity.id)}
+                    {entityHref ? (
+                      <SmartLink
+                        href={entityHref}
+                        className="flex items-center gap-3 hover:underline"
                       >
-                        {entityImage && <AvatarImage src={entityImage} alt={entityName} />}
-                        <AvatarFallback>
-                          <FallbackIcon className="h-5 w-5" />
-                        </AvatarFallback>
-                      </Avatar>
-                      <div
-                        className="cursor-pointer hover:underline"
-                        onClick={() => entity && onNavigate?.(entity.id)}
-                      >
-                        <div className="font-medium">{entityName}</div>
-                        {entityDescription && (
-                          <div className="text-muted-foreground line-clamp-1 text-sm">
-                            {entityDescription}
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                        {entityContent}
+                      </SmartLink>
+                    ) : (
+                      <div className="flex items-center gap-3">{entityContent}</div>
+                    )}
                   </TableCell>
                   {(statusType === 'active' ||
                     statusType === 'invited' ||
@@ -240,13 +280,17 @@ export function MembershipStatusTable({
                     {statusType === 'active' && (
                       <Button variant="ghost" size="sm" onClick={() => onLeave?.(item.id)}>
                         <Trash2 className="h-4 w-4" />
-                        <span className="ml-2">Leave</span>
+                        <span className="ml-2">
+                          {translateText('generated.inline.1197_leave_7e3520a9')}
+                        </span>
                       </Button>
                     )}
                     {statusType === 'requested' && (
                       <Button variant="ghost" size="sm" onClick={() => onWithdraw?.(item.id)}>
                         <Trash2 className="h-4 w-4" />
-                        <span className="ml-2">Withdraw Request</span>
+                        <span className="ml-2">
+                          {translateText('generated.inline.1198_withdraw_request_898cc3e4')}
+                        </span>
                       </Button>
                     )}
                   </TableCell>

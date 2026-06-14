@@ -68,9 +68,9 @@ export const NOTIFICATION_TYPE_TO_SETTING: Partial<Record<NotificationType, Sett
   group_payment_deleted: { category: 'groupNotifications', key: 'paymentNotifications' },
 
   // Relationships
-  network_link_request: { category: 'groupNotifications', key: 'newRelationships' },
-  network_link_approved: { category: 'groupNotifications', key: 'newRelationships' },
-  network_link_rejected: { category: 'groupNotifications', key: 'newRelationships' },
+  group_connection_request: { category: 'groupNotifications', key: 'newRelationships' },
+  group_connection_approved: { category: 'groupNotifications', key: 'newRelationships' },
+  group_connection_rejected: { category: 'groupNotifications', key: 'newRelationships' },
 
   // Roles & Elections
   group_role_created: { category: 'groupNotifications', key: 'newRoles' },

@@ -155,13 +155,11 @@ export function useWorkflowEditor(groupId: string) {
         });
 
         await serverConfirmed(result);
-        toast.success(t('features.network.toasts.workflowSaved', 'Workflow saved'));
+        toast.success(t('features.network.toasts.workflowSaved'));
         closeEditor();
       } catch (error) {
         toast.error(
-          error instanceof Error
-            ? error.message
-            : t('features.network.toasts.workflowSaveFailed', 'Failed to save workflow')
+          error instanceof Error ? error.message : t('features.network.toasts.workflowSaveFailed')
         );
       }
     },

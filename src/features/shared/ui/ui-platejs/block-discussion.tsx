@@ -34,7 +34,10 @@ import {
   PopoverTrigger,
 } from '@/features/shared/ui/ui/popover.tsx';
 import { commentPlugin } from '@/features/shared/ui/kit-platejs/comment-kit.tsx';
-import { type TDiscussion, discussionPlugin } from '@/features/shared/ui/kit-platejs/discussion-kit.tsx';
+import {
+  type TDiscussion,
+  discussionPlugin,
+} from '@/features/shared/ui/kit-platejs/discussion-kit.tsx';
 import { suggestionPlugin } from '@/features/shared/ui/kit-platejs/suggestion-kit.tsx';
 import { useModeContext } from '@/features/shared/ui/kit-platejs/mode-context.tsx';
 
@@ -44,6 +47,7 @@ import {
   useResolveSuggestion,
 } from './block-suggestion.tsx';
 import { Comment, CommentCreateForm } from './comment.tsx';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export const BlockDiscussion: RenderNodeWrapper<AnyPluginConfig> = props => {
   const { editor, element } = props;
@@ -187,7 +191,7 @@ const BlockCommentContent = ({
         )}
 
         <PopoverContent
-          className="max-h-[min(50dvh,calc(-24px+var(--radix-popper-available-height)))] w-[380px] min-w-[130px] max-w-[calc(100vw-24px)] overflow-y-auto p-0 data-[state=closed]:opacity-0"
+          className="max-h-[min(50dvh,calc(-24px+var(--radix-popper-available-height)))] w-[380px] max-w-[calc(100vw-24px)] min-w-[130px] overflow-y-auto p-0 data-[state=closed]:opacity-0"
           onCloseAutoFocus={e => e.preventDefault()}
           onOpenAutoFocus={e => e.preventDefault()}
           align="center"
@@ -237,7 +241,7 @@ const BlockCommentContent = ({
             <PopoverTrigger asChild>
               <Button
                 variant="ghost"
-                className="ml-1 mt-1 flex h-6 gap-1 !px-1.5 py-0 text-muted-foreground/80 hover:text-muted-foreground/80 data-[active=true]:bg-muted"
+                className="text-muted-foreground/80 hover:text-muted-foreground/80 data-[active=true]:bg-muted mt-1 ml-1 flex h-6 gap-1 !px-1.5 py-0"
                 data-active={open}
                 contentEditable={false}
               >
@@ -298,7 +302,7 @@ function BlockComment({ discussion, isLast }: { discussion: TDiscussion; isLast:
               <Input
                 value={titleValue}
                 onChange={e => setTitleValue(e.target.value)}
-                placeholder="Enter discussion title..."
+                placeholder={translateText('generated.inline.1138_enter_discussion_title_9e501e2d')}
                 className="h-8 text-sm"
                 autoFocus
                 onKeyDown={e => {
@@ -317,9 +321,10 @@ function BlockComment({ discussion, isLast }: { discussion: TDiscussion; isLast:
               </Button>
             </div>
           ) : (
-            <div className="flex flex-1 items-center gap-2 rounded-md bg-muted/30 px-3 py-2">
+            <div className="bg-muted/30 flex flex-1 items-center gap-2 rounded-md px-3 py-2">
               <span className="text-sm font-semibold">
-                {discussion.title || 'Untitled Discussion'}
+                {discussion.title ||
+                  translateText('generated.inline.0141_untitled_discussion_496c6e50')}
               </span>
               <Button
                 size="sm"
@@ -335,8 +340,10 @@ function BlockComment({ discussion, isLast }: { discussion: TDiscussion; isLast:
 
         {/* Document Title Display */}
         {documentTitle && (
-          <div className="mb-3 flex items-center gap-2 rounded-md bg-muted/50 px-3 py-2">
-            <span className="text-xs font-medium text-muted-foreground">Document:</span>
+          <div className="bg-muted/50 mb-3 flex items-center gap-2 rounded-md px-3 py-2">
+            <span className="text-muted-foreground text-xs font-medium">
+              {translateText('generated.inline.1139_document_29abfbf3')}
+            </span>
             <span className="text-xs font-semibold">{documentTitle}</span>
           </div>
         )}
@@ -356,7 +363,7 @@ function BlockComment({ discussion, isLast }: { discussion: TDiscussion; isLast:
         <CommentCreateForm discussionId={discussion.id} />
       </div>
 
-      {!isLast && <div className="h-px w-full bg-muted" />}
+      {!isLast && <div className="bg-muted h-px w-full" />}
     </React.Fragment>
   );
 }

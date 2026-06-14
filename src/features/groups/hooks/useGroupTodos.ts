@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useGroupTodos as useFacadeGroupTodos } from '@/zero/groups/useGroupState';
 import { useTodoActions } from '@/zero/todos/useTodoActions';
 import { toast } from 'sonner';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export function useGroupTodos(groupId: string, userId?: string) {
   const [isLoading, setIsLoading] = useState(false);
@@ -28,7 +29,7 @@ export function useGroupTodos(groupId: string, userId?: string) {
     groupName?: string;
   }) => {
     if (!userId) {
-      toast.error('You must be logged in');
+      toast.error(translateText('generated.inline.0159_you_must_be_logged_in_702ab856'));
       return { success: false };
     }
 
@@ -60,11 +61,11 @@ export function useGroupTodos(groupId: string, userId?: string) {
         user_id: userId,
       });
 
-      toast.success('Todo added successfully!');
+      toast.success(translateText('generated.inline.0579_todo_added_successfully_49ebeed5'));
       return { success: true, todoId };
     } catch (error) {
       console.error('Failed to add todo:', error);
-      toast.error('Failed to add todo');
+      toast.error(translateText('generated.inline.0580_failed_to_add_todo_9a94c939'));
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -90,11 +91,11 @@ export function useGroupTodos(groupId: string, userId?: string) {
         completed_at: newStatus === 'completed' ? Date.now() : undefined,
       });
 
-      toast.success('Status updated!');
+      toast.success(translateText('generated.inline.0581_status_updated_78f091e0'));
       return { success: true };
     } catch (error) {
       console.error('Failed to update status:', error);
-      toast.error('Failed to update status');
+      toast.error(translateText('generated.inline.0582_failed_to_update_status_5e3403e7'));
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -122,11 +123,11 @@ export function useGroupTodos(groupId: string, userId?: string) {
     try {
       await deleteTodoAction(todoId);
 
-      toast.success('Todo deleted successfully!');
+      toast.success(translateText('generated.inline.0583_todo_deleted_successfully_632e007b'));
       return { success: true };
     } catch (error) {
       console.error('Failed to delete todo:', error);
-      toast.error('Failed to delete todo');
+      toast.error(translateText('generated.inline.0584_failed_to_delete_todo_34ca221d'));
       return { success: false, error };
     } finally {
       setIsLoading(false);

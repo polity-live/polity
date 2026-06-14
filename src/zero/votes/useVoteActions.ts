@@ -1,7 +1,10 @@
 import { useCallback } from 'react';
 import { useZero } from '@rocicorp/zero/react';
 import { gatedToast as toast } from '@/features/notifications/utils/gated-toast';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { mutators } from '../mutators';
 import { onServerError, serverConfirmed } from '../mutate-with-server-check';
 
@@ -145,7 +148,9 @@ export function useVoteActions() {
   const upsertOfflineTally = useCallback(
     (args: Parameters<typeof mutators.votes.upsertOfflineTally>[0]) => {
       const result = zero.mutate(mutators.votes.upsertOfflineTally(args));
-      onServerError(result, () => toast.error('Failed to save offline tally'));
+      onServerError(result, () =>
+        toast.error(translateText('generated.inline.0049_failed_to_save_offline_tally_82b59509'))
+      );
       return serverConfirmed(result);
     },
     [zero]

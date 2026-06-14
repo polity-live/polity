@@ -292,87 +292,91 @@ export function AmendmentTimelineCard({
       </TimelineCardHeader>
 
       <TimelineCardContent>
-        {amendmentDescription && (
-          <p className="text-muted-foreground mb-3 line-clamp-3 text-sm">{amendmentDescription}</p>
-        )}
+        <div className="mt-auto space-y-3">
+          {amendmentDescription && (
+            <p className="text-muted-foreground line-clamp-3 text-sm">{amendmentDescription}</p>
+          )}
 
-        {/* Hashtags */}
-        {amendment.hashtags && amendment.hashtags.length > 0 && (
-          <div className="mb-3" onClick={e => e.stopPropagation()}>
-            <HashtagDisplay
-              hashtags={amendment.hashtags.slice(0, 3)}
-              centered={false}
-              badgeClassName={`border bg-white/70 dark:bg-gray-900/60 ${amendmentStyle.borderColor} ${amendmentStyle.accentColor}`}
-            />
-          </div>
-        )}
-
-        {/* Vote Progress Bar */}
-        {(isVoting || isCompleted) && amendment.supportPercentage !== undefined && (
-          <div className="mb-3">
-            <div className="mb-1 flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">{t('features.timeline.cards.support')}</span>
-              <span
-                className={cn(
-                  'font-medium',
-                  amendment.supportPercentage >= 50 ? 'text-green-600' : 'text-red-600'
-                )}
-              >
-                {amendment.supportPercentage}%
-              </span>
+          {/* Hashtags */}
+          {amendment.hashtags && amendment.hashtags.length > 0 && (
+            <div onClick={e => e.stopPropagation()}>
+              <HashtagDisplay
+                hashtags={amendment.hashtags.slice(0, 3)}
+                centered={false}
+                badgeClassName={`border bg-white/70 dark:bg-gray-900/60 ${amendmentStyle.borderColor} ${amendmentStyle.accentColor}`}
+              />
             </div>
-            <Progress
-              value={amendment.supportPercentage}
-              className={cn(
-                'h-2',
-                (amendment.status === 'passed' ||
-                  amendment.status === 'accepted' ||
-                  amendment.status === 'approved') &&
-                  '[&>div]:bg-green-500',
-                amendment.status === 'rejected' && '[&>div]:bg-red-500'
+          )}
+
+          {/* Vote Progress Bar */}
+          {(isVoting || isCompleted) && amendment.supportPercentage !== undefined && (
+            <div>
+              <div className="mb-1 flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">
+                  {t('features.timeline.cards.support')}
+                </span>
+                <span
+                  className={cn(
+                    'font-medium',
+                    amendment.supportPercentage >= 50 ? 'text-green-600' : 'text-red-600'
+                  )}
+                >
+                  {amendment.supportPercentage}%
+                </span>
+              </div>
+              <Progress
+                value={amendment.supportPercentage}
+                className={cn(
+                  'h-2',
+                  (amendment.status === 'passed' ||
+                    amendment.status === 'accepted' ||
+                    amendment.status === 'approved') &&
+                    '[&>div]:bg-green-500',
+                  amendment.status === 'rejected' && '[&>div]:bg-red-500'
+                )}
+              />
+            </div>
+          )}
+
+          {/* Stats Bar with Tooltips */}
+          {stats.length > 0 && (
+            <div className="text-muted-foreground flex items-center gap-4 text-xs">
+              {stats.map((stat, index) => (
+                <Tooltip key={index}>
+                  <TooltipTrigger asChild>
+                    <div className="flex cursor-help items-center gap-1">
+                      <stat.icon className="h-3.5 w-3.5" />
+                      <span className="font-medium">{stat.value}</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      {stat.value} {stat.label}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+            </div>
+          )}
+
+          {/* Vote Counts (for voting mode) */}
+          {(isVoting || isCompleted) && (
+            <div className="text-muted-foreground flex items-center gap-4 text-xs">
+              {amendment.supportCount !== undefined && (
+                <div className="flex items-center gap-1">
+                  <ThumbsUp className="h-3.5 w-3.5 text-green-600" />
+                  <span>{amendment.supportCount}</span>
+                </div>
               )}
-            />
-          </div>
-        )}
-
-        {/* Stats Bar with Tooltips */}
-        {stats.length > 0 && (
-          <div className="text-muted-foreground mb-3 flex items-center gap-4 text-xs">
-            {stats.map((stat, index) => (
-              <Tooltip key={index}>
-                <TooltipTrigger asChild>
-                  <div className="flex cursor-help items-center gap-1">
-                    <stat.icon className="h-3.5 w-3.5" />
-                    <span className="font-medium">{stat.value}</span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>
-                    {stat.value} {stat.label}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            ))}
-          </div>
-        )}
-
-        {/* Vote Counts (for voting mode) */}
-        {(isVoting || isCompleted) && (
-          <div className="text-muted-foreground flex items-center gap-4 text-xs">
-            {amendment.supportCount !== undefined && (
-              <div className="flex items-center gap-1">
-                <ThumbsUp className="h-3.5 w-3.5 text-green-600" />
-                <span>{amendment.supportCount}</span>
-              </div>
-            )}
-            {amendment.opposeCount !== undefined && (
-              <div className="flex items-center gap-1">
-                <ThumbsDown className="h-3.5 w-3.5 text-red-600" />
-                <span>{amendment.opposeCount}</span>
-              </div>
-            )}
-          </div>
-        )}
+              {amendment.opposeCount !== undefined && (
+                <div className="flex items-center gap-1">
+                  <ThumbsDown className="h-3.5 w-3.5 text-red-600" />
+                  <span>{amendment.opposeCount}</span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </TimelineCardContent>
 
       <TimelineCardActions>

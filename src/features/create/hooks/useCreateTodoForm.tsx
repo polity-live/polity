@@ -5,7 +5,10 @@ import { useGroupById, useGroupState } from '@/zero/groups/useGroupState';
 import { useUserState } from '@/zero/users/useUserState';
 import { useTodoMutations } from '@/features/todos/hooks/useTodoMutations';
 import { getUserDisplayName } from '@/features/search/utils/searchUtils';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { toast } from 'sonner';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
 import { PriorityInput } from '../ui/inputs/PriorityInput';
@@ -102,10 +105,10 @@ export function useCreateTodoForm(): CreateFormConfig {
     })
     .filter(Boolean);
   const visibilityLabel = groupId
-    ? t('pages.create.todo.groupVisibilityLabel', 'Group')
-    : visibility === 'public'
+    ? t('pages.create.todo.groupVisibilityLabel')
+    : visibility === translateText('generated.inline.0030_public_61c9b2b1')
       ? t('pages.create.common.public')
-      : visibility === 'authenticated'
+      : visibility === translateText('generated.inline.0031_authenticated_8fda38ce')
         ? t('pages.create.common.authenticated')
         : t('pages.create.common.private');
 
@@ -155,10 +158,7 @@ export function useCreateTodoForm(): CreateFormConfig {
             <div className="space-y-4">
               <CreateTypeaheadField
                 label={t('pages.create.common.group')}
-                hint={t(
-                  'pages.create.todo.groupHint',
-                  'Optionally link this task to one of your groups.'
-                )}
+                hint={t('pages.create.todo.groupHint')}
                 entityTypes={['group']}
                 value={groupId || undefined}
                 onChange={item => {
@@ -225,10 +225,7 @@ export function useCreateTodoForm(): CreateFormConfig {
               />
               {groupId ? (
                 <div className="bg-muted/40 text-muted-foreground rounded-md border px-3 py-2 text-sm">
-                  {t(
-                    'pages.create.todo.groupVisibilityHint',
-                    'This task will be visible to the selected group.'
-                  )}
+                  {t('pages.create.todo.groupVisibilityHint')}
                 </div>
               ) : (
                 <VisibilityInput value={visibility} onChange={setVisibility} />

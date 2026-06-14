@@ -150,8 +150,8 @@ function applyVisibleRights(edge: Edge, visibleRights: string[]): Edge | null {
   return {
     ...edge,
     animated: animatedFlowDirection !== null,
-    markerStart: hasForwardDirection ? (edge.markerStart ?? edge.markerEnd) : undefined,
-    markerEnd: hasBackwardDirection ? (edge.markerEnd ?? edge.markerStart) : undefined,
+    markerStart: hasBackwardDirection ? (edge.markerStart ?? edge.markerEnd) : undefined,
+    markerEnd: hasForwardDirection ? (edge.markerEnd ?? edge.markerStart) : undefined,
     style: {
       ...edge.style,
       stroke: getVisibleRelationshipStrokeColor({
@@ -159,7 +159,7 @@ function applyVisibleRights(edge: Edge, visibleRights: string[]): Edge | null {
         connectionDirection: visibleConnectionDirection,
         rightEdgeDirections: visibleRightEdgeDirections,
       }),
-      animationDirection: animatedFlowDirection === 'forward' ? 'reverse' : undefined,
+      animationDirection: animatedFlowDirection === 'backward' ? 'reverse' : undefined,
     },
     data: {
       ...edgeData,

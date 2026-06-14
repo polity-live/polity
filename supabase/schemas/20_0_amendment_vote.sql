@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS public.vote (
   closing_duration_seconds INTEGER,
   closing_end_time TIMESTAMPTZ,
   visibility VARCHAR NOT NULL DEFAULT 'public',
+  ballot_visibility TEXT NOT NULL DEFAULT 'named' CHECK (ballot_visibility IN ('named', 'secret')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -76,7 +77,7 @@ ALTER TABLE public.indicative_voter_participation ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.indicative_voter_participation FOR ALL TO service_role USING (true);
 
 -- Indicative choice decision (the actual choice in indicative round)
--- voter_participation_id is nullable: NULL = secret vote (no link to who voted)
+-- voter_participation_id is nullable for secret ballots (no link to who voted)
 CREATE TABLE IF NOT EXISTS public.indicative_choice_decision (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   vote_id UUID NOT NULL REFERENCES public.vote (id) ON DELETE CASCADE,
@@ -108,7 +109,7 @@ ALTER TABLE public.final_voter_participation ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.final_voter_participation FOR ALL TO service_role USING (true);
 
 -- Final choice decision (the actual choice in final round)
--- voter_participation_id is nullable: NULL = secret vote (no link to who voted)
+-- voter_participation_id is nullable for secret ballots (no link to who voted)
 CREATE TABLE IF NOT EXISTS public.final_choice_decision (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   vote_id UUID NOT NULL REFERENCES public.vote (id) ON DELETE CASCADE,

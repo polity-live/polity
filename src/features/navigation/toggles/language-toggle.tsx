@@ -10,7 +10,10 @@ import {
 } from '@/features/shared/ui/ui/dropdown-menu.tsx';
 import { cn } from '@/features/shared/utils/utils.ts';
 import { toast } from 'sonner';
-import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import type { Language } from '@/features/shared/global-state/language.store.tsx';
 import type { Size } from '@/features/navigation/types/navigation.types.tsx';
 import { useState } from 'react';
@@ -124,7 +127,9 @@ export function LanguageToggle({
             }}
           >
             <span className="text-base">🇺🇸</span>
-            <span className="text-sm">English</span>
+            <span className="text-sm">
+              {translateText('generated.inline.0755_english_649df08a')}
+            </span>
           </Button>
           <Button
             variant={language === 'de' ? 'default' : 'ghost'}
@@ -136,7 +141,9 @@ export function LanguageToggle({
             }}
           >
             <span className="text-base">🇩🇪</span>
-            <span className="text-sm">Deutsch</span>
+            <span className="text-sm">
+              {translateText('generated.inline.0756_deutsch_a6a77092')}
+            </span>
           </Button>
         </div>
       </PopoverContent>

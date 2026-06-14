@@ -25,7 +25,10 @@ import {
   Play,
   ShieldCheck,
 } from 'lucide-react';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { AgendaNavigationControls } from './AgendaNavigationControls';
 import { AgendaElectionSection } from './AgendaElectionSection';
 import { AgendaVoteSection } from './AgendaVoteSection';
@@ -259,7 +262,10 @@ export function EventStreamSection({
             >
               <div className="flex items-center gap-3">
                 <div className="bg-primary text-primary-foreground relative flex h-10 w-10 items-center justify-center rounded-lg shadow-md">
-                  {getAgendaItemIcon(currentAgendaItem.type ?? 'discussion')}
+                  {getAgendaItemIcon(
+                    currentAgendaItem.type ??
+                      translateText('generated.inline.0011_discussion_c255751d')
+                  )}
                   <div className="absolute -top-1 -right-1 flex h-4 w-4 animate-pulse items-center justify-center rounded-full bg-green-500 text-white">
                     <Play className="h-2 w-2 fill-white" />
                   </div>
@@ -412,7 +418,9 @@ export function EventStreamSection({
                       size="sm"
                     >
                       <X className="mr-2 h-4 w-4" />
-                      {removingSpeaker === userSpeaker.id ? 'Removing...' : 'Remove Yourself'}
+                      {removingSpeaker === userSpeaker.id
+                        ? translateText('generated.inline.0015_removing_2a76d431')
+                        : translateText('generated.inline.0016_remove_yourself_fa3b0e30')}
                     </Button>
                   ) : (
                     <Button
@@ -421,7 +429,9 @@ export function EventStreamSection({
                       size="sm"
                     >
                       <Plus className="mr-2 h-4 w-4" />
-                      {addingSpeaker ? 'Adding...' : 'Add Yourself'}
+                      {addingSpeaker
+                        ? translateText('generated.inline.0017_adding_268c06a2')
+                        : translateText('generated.inline.0018_add_yourself_71fba1c3')}
                     </Button>
                   )}
                 </div>
@@ -430,7 +440,9 @@ export function EventStreamSection({
                   {speakerList.length === 0 ? (
                     <div className="py-8 text-center">
                       <User className="text-muted-foreground mx-auto mb-3 h-10 w-10" />
-                      <p className="text-muted-foreground text-sm">No speakers yet</p>
+                      <p className="text-muted-foreground text-sm">
+                        {translateText('generated.inline.0054_no_speakers_yet_47546d9a')}
+                      </p>
                     </div>
                   ) : (
                     <div className="relative">
@@ -508,14 +520,15 @@ export function EventStreamSection({
                                   </h4>
                                   {isCurrentUser && (
                                     <Badge variant="secondary" className="mt-1">
-                                      You
+                                      {translateText('generated.inline.0055_you_905cb326')}
                                     </Badge>
                                   )}
                                 </div>
                                 <div className="flex justify-center">
                                   <Badge variant="secondary" className="px-3 py-1 text-sm">
                                     <Clock className="mr-1.5 h-3 w-3" />
-                                    {formatTime(speakerTime)} ({speaker.time} min)
+                                    {formatTime(speakerTime)} ({speaker.time}
+                                    {translateText('generated.inline.0056_min_c5cceefd')}
                                   </Badge>
                                 </div>
                                 {speaker.completed && (
@@ -524,7 +537,7 @@ export function EventStreamSection({
                                       variant="outline"
                                       className="bg-green-100 dark:bg-green-900"
                                     >
-                                      Completed
+                                      {translateText('generated.inline.0057_completed_1798b3ba')}
                                     </Badge>
                                   </div>
                                 )}

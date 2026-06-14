@@ -14,6 +14,8 @@ import { usePermissions } from '@/zero/rbac';
 import { toast } from 'sonner';
 import { computeVoteResult, type MajorityType, type VoteResult } from '../logic/computeVoteResult';
 import { computeEligibleVoters, type EligibleVoter } from '../logic/computeEligibleVoters';
+import { isNamedBallot } from '@/zero/shared';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export type VotingPhase = 'introduction' | 'voting' | 'completed';
 export type VotingType = 'amendment' | 'election' | 'change_request';
@@ -201,7 +203,11 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
   const startIntroductionPhase = useCallback(
     async (params: StartVotingParams): Promise<string> => {
       if (!user || !canManageVoting) {
-        toast.error('You do not have permission to manage voting');
+        toast.error(
+          translateText(
+            'generated.inline.1233_you_do_not_have_permission_to_manage_voting_42c9604c'
+          )
+        );
         throw new Error('Permission denied');
       }
 
@@ -221,6 +227,7 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
           closing_duration_seconds: null,
           closing_end_time: null,
           visibility: 'public',
+          ballot_visibility: 'named',
         });
 
         await updateAgendaItem({
@@ -228,11 +235,11 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
           voting_phase: 'introduction',
         });
 
-        toast.success('Introduction phase started');
+        toast.success(translateText('generated.inline.1234_introduction_phase_started_f4f4b34e'));
         return voteId;
       } catch (error) {
         console.error('Error starting introduction phase:', error);
-        toast.error('Failed to start voting');
+        toast.error(translateText('generated.inline.1235_failed_to_start_voting_1ae965cd'));
         throw error;
       } finally {
         setIsLoading(false);
@@ -246,7 +253,11 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
       void _timeLimit;
 
       if (!user || !canManageVoting) {
-        toast.error('You do not have permission to manage voting');
+        toast.error(
+          translateText(
+            'generated.inline.1233_you_do_not_have_permission_to_manage_voting_42c9604c'
+          )
+        );
         return;
       }
 
@@ -257,10 +268,10 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
           voting_phase: 'voting',
         });
 
-        toast.success('Voting has begun');
+        toast.success(translateText('generated.inline.1236_voting_has_begun_d509e54a'));
       } catch (error) {
         console.error('Error starting voting phase:', error);
-        toast.error('Failed to start voting');
+        toast.error(translateText('generated.inline.1235_failed_to_start_voting_1ae965cd'));
         throw error;
       } finally {
         setIsLoading(false);
@@ -301,7 +312,7 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
         toast.success(`Voting completed: ${result}`);
       } catch (error) {
         console.error('Error closing voting:', error);
-        toast.error('Failed to close voting');
+        toast.error(translateText('generated.inline.1237_failed_to_close_voting_ebe1b4ae'));
         throw error;
       } finally {
         setIsLoading(false);
@@ -323,22 +334,22 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
   const castVote = useCallback(
     async (sessionId: string, vote: VoteValue) => {
       if (!user) {
-        toast.error('You must be logged in to vote');
+        toast.error(translateText('generated.inline.1238_you_must_be_logged_in_to_vote_7346ffd8'));
         return;
       }
 
       if (!canVote) {
-        toast.error('You do not have voting rights');
+        toast.error(translateText('generated.inline.1239_you_do_not_have_voting_rights_5b8bfdf4'));
         return;
       }
 
       if (hasUserVoted) {
-        toast.error('You have already voted');
+        toast.error(translateText('generated.inline.1240_you_have_already_voted_e135d7f4'));
         return;
       }
 
       if (currentSession?.phase !== 'voting') {
-        toast.error('Voting is not currently active');
+        toast.error(translateText('generated.inline.1241_voting_is_not_currently_active_75aab5db'));
         return;
       }
 
@@ -348,14 +359,16 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
         const agendaItem = event?.agenda_items?.find(ai => ai.id === sessionId);
         const voteRecord = agendaItem?.votes?.[0];
         if (!voteRecord) {
-          toast.error('No vote found for this agenda item');
+          toast.error(
+            translateText('generated.inline.1242_no_vote_found_for_this_agenda_item_a003a32f')
+          );
           return;
         }
 
         // Find the matching choice for the vote value
         const choice = voteRecord.choices?.find(c => c.label === vote);
         if (!choice) {
-          toast.error('Invalid vote choice');
+          toast.error(translateText('generated.inline.1243_invalid_vote_choice_cb71ec11'));
           return;
         }
 
@@ -373,15 +386,17 @@ export function useEventVoting(eventId: string, agendaItemId?: string): UseEvent
               id: decisionId,
               vote_id: voteRecord.id,
               choice_id: choice.id,
-              voter_participation_id: participationId,
+              voter_participation_id: isNamedBallot(voteRecord.ballot_visibility)
+                ? participationId
+                : null,
             },
           ]
         );
 
-        toast.success('Vote cast successfully');
+        toast.success(translateText('generated.inline.1244_vote_cast_successfully_2d80d997'));
       } catch (error) {
         console.error('Error casting vote:', error);
-        toast.error('Failed to cast vote');
+        toast.error(translateText('generated.inline.1245_failed_to_cast_vote_0b719004'));
         throw error;
       } finally {
         setIsLoading(false);

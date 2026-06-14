@@ -3,6 +3,7 @@ import type { TComment } from '@/features/shared/ui/ui-platejs/comment.tsx';
 import { createPlatePlugin } from 'platejs/react';
 
 import { BlockDiscussion } from '@/features/shared/ui/ui-platejs/block-discussion.tsx';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export interface TDiscussion {
   id: string;
@@ -24,7 +25,7 @@ export interface TDiscussion {
 const discussionsData: TDiscussion[] = [
   {
     id: 'discussion1',
-    title: 'Feedback on Comments Feature',
+    title: translateText('generated.inline.0513_feedback_on_comments_feature_ba7d6c70'),
     comments: [
       {
         id: 'comment1',
@@ -68,7 +69,7 @@ const discussionsData: TDiscussion[] = [
   },
   {
     id: 'discussion2',
-    title: 'Overlapping Annotations Demo',
+    title: translateText('generated.inline.0514_overlapping_annotations_demo_fc377894'),
     comments: [
       {
         id: 'comment1',

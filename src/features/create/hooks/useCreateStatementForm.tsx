@@ -5,7 +5,10 @@ import { useStatementMutations } from '@/features/statements/hooks/useStatementM
 import { useCommonActions } from '@/zero/common/useCommonActions';
 import { useCommonState } from '@/zero/common/useCommonState';
 import { useGroupById, useGroupState } from '@/zero/groups/useGroupState';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { Label } from '@/features/shared/ui/ui/label';
 import { VisibilityInput } from '../ui/inputs/VisibilityInput';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
@@ -65,9 +68,9 @@ export function useCreateStatementForm(): CreateFormConfig {
 
   const hasSurvey = surveyQuestion.trim() && surveyOptions.filter(o => o.trim()).length >= 2;
   const visibilityLabel =
-    visibility === 'public'
+    visibility === translateText('generated.inline.0030_public_61c9b2b1')
       ? t('pages.create.common.public')
-      : visibility === 'authenticated'
+      : visibility === translateText('generated.inline.0031_authenticated_8fda38ce')
         ? t('pages.create.common.authenticated')
         : t('pages.create.common.private');
 
@@ -169,7 +172,7 @@ export function useCreateStatementForm(): CreateFormConfig {
                 </p>
               </div>
               <CreateTypeaheadField
-                label={t('pages.create.statement.attachTo', 'Attach to group (optional)')}
+                label={t('pages.create.statement.attachTo')}
                 entityTypes={['group']}
                 value={groupId ?? undefined}
                 onChange={item => {
@@ -178,14 +181,14 @@ export function useCreateStatementForm(): CreateFormConfig {
                   setGroupName(item?.label ?? '');
                   syncGroupSearch(nextGroupId);
                 }}
-                placeholder={t('pages.create.statement.groupPlaceholder', 'Search groups...')}
+                placeholder={t('pages.create.statement.groupPlaceholder')}
                 filterFn={item => memberGroupIds.has(item.id)}
               />
             </div>
           ),
         },
         {
-          label: t('features.statements.survey.addSurvey', 'Media & Survey'),
+          label: t('features.statements.survey.addSurvey'),
           isValid: () => true,
           optional: true,
           content: (
@@ -197,38 +200,32 @@ export function useCreateStatementForm(): CreateFormConfig {
                 onVideoChange={(url: string) => setVideoUrl(url)}
                 entityType="statements"
                 entityId={statementId}
-                imageLabel={t('pages.create.statement.imageUrl', 'Image (optional)')}
-                imageDescription={t(
-                  'pages.create.statement.imageDescription',
-                  'Upload an image for this statement'
-                )}
-                videoLabel={t('pages.create.statement.videoUrl', 'Video (optional)')}
-                videoDescription={t(
-                  'pages.create.statement.videoDescription',
-                  'Upload a video for this statement'
-                )}
+                imageLabel={t('pages.create.statement.imageUrl')}
+                imageDescription={t('pages.create.statement.imageDescription')}
+                videoLabel={t('pages.create.statement.videoUrl')}
+                videoDescription={t('pages.create.statement.videoDescription')}
               />
               <div className="space-y-2 rounded-lg border p-4">
                 <Label className="text-base font-semibold">
-                  {t('features.statements.survey.addSurvey', 'Add Survey (optional)')}
+                  {t('features.statements.survey.addSurvey')}
                 </Label>
                 <CreateInputField
-                  label={t('features.statements.survey.question', 'Survey question')}
+                  label={t('features.statements.survey.question')}
                   value={surveyQuestion}
                   onValueChange={setSurveyQuestion}
-                  placeholder={t('features.statements.survey.question', 'Survey question')}
+                  placeholder={t('features.statements.survey.question')}
                 />
                 {surveyOptions.map((opt, idx) => (
                   <CreateInputField
                     key={idx}
-                    label={`${t('features.statements.survey.option', 'Option')} ${idx + 1}`}
+                    label={`${t('features.statements.survey.option')} ${idx + 1}`}
                     value={opt}
                     onValueChange={value => {
                       const newOpts = [...surveyOptions];
                       newOpts[idx] = value;
                       setSurveyOptions(newOpts);
                     }}
-                    placeholder={`${t('features.statements.survey.option', 'Option')} ${idx + 1}`}
+                    placeholder={`${t('features.statements.survey.option')} ${idx + 1}`}
                   />
                 ))}
                 {surveyOptions.length < 4 && (
@@ -237,12 +234,12 @@ export function useCreateStatementForm(): CreateFormConfig {
                     className="text-primary text-sm hover:underline"
                     onClick={() => setSurveyOptions([...surveyOptions, ''])}
                   >
-                    + Add option
+                    {translateText('generated.inline.0339_add_option_39780ac3')}
                   </button>
                 )}
                 <div className="space-y-2">
                   <CreateInputField
-                    label={t('features.statements.survey.duration', 'Duration (hours)')}
+                    label={t('features.statements.survey.duration')}
                     type="number"
                     min={1}
                     max={168}
@@ -255,14 +252,14 @@ export function useCreateStatementForm(): CreateFormConfig {
           ),
         },
         {
-          label: t('pages.create.statement.hashtagsLabel', 'Hashtags'),
+          label: t('pages.create.statement.hashtagsLabel'),
           isValid: () => true,
           optional: true,
           content: (
             <HashtagEditor
               value={hashtags}
               onChange={setHashtags}
-              placeholder={t('pages.create.statement.hashtagPlaceholder', 'Add hashtags...')}
+              placeholder={t('pages.create.statement.hashtagPlaceholder')}
             />
           ),
         },
@@ -292,13 +289,13 @@ export function useCreateStatementForm(): CreateFormConfig {
                   title: t('pages.create.statement.textLabel'),
                   fields: [
                     ...(groupName
-                      ? [{ label: t('pages.create.statement.attachTo', 'Group'), value: groupName }]
+                      ? [{ label: t('pages.create.statement.attachTo'), value: groupName }]
                       : []),
                     { label: t('pages.create.common.visibility'), value: visibilityLabel },
                     ...(imageUrl
                       ? [
                           {
-                            label: t('pages.create.statement.imageUrl', 'Image'),
+                            label: t('pages.create.statement.imageUrl'),
                             value: 'Attached',
                           },
                         ]
@@ -306,7 +303,7 @@ export function useCreateStatementForm(): CreateFormConfig {
                     ...(videoUrl
                       ? [
                           {
-                            label: t('pages.create.statement.videoUrl', 'Video'),
+                            label: t('pages.create.statement.videoUrl'),
                             value: 'Attached',
                           },
                         ]
@@ -316,18 +313,18 @@ export function useCreateStatementForm(): CreateFormConfig {
                 ...(hasSurvey
                   ? [
                       {
-                        title: t('features.statements.survey.addSurvey', 'Survey'),
+                        title: t('features.statements.survey.addSurvey'),
                         fields: [
                           {
-                            label: t('features.statements.survey.question', 'Survey question'),
+                            label: t('features.statements.survey.question'),
                             value: surveyQuestion,
                           },
                           {
-                            label: t('features.statements.survey.duration', 'Duration (hours)'),
+                            label: t('features.statements.survey.duration'),
                             value: String(surveyDurationHours),
                           },
                           {
-                            label: t('features.statements.survey.option', 'Options'),
+                            label: t('features.statements.survey.option'),
                             value: (
                               <SummaryPillList
                                 items={surveyOptions.filter(option => option.trim())}

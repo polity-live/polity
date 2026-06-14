@@ -9,6 +9,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface UseDocumentMutationsResult {
   createDocument: (title: string, groupId: string, userId: string) => Promise<string | null>;
@@ -54,7 +55,7 @@ export function useDocumentMutations(_groupId: string): UseDocumentMutationsResu
     void _adminUserIds;
 
     if (!title.trim()) {
-      toast.error('Please enter a document title');
+      toast.error(translateText('generated.inline.0399_please_enter_a_document_title_0f6a0dd5'));
       return null;
     }
 
@@ -114,7 +115,7 @@ export function useDocumentMutations(_groupId: string): UseDocumentMutationsResu
         visibility: 'group',
       });
 
-      toast.success('Document created successfully');
+      toast.success(translateText('generated.inline.0400_document_created_successfully_730aa2a8'));
 
       // Navigate to the new document
       navigate({ to: `/group/${groupId}/editor/${docId}` });
@@ -122,7 +123,7 @@ export function useDocumentMutations(_groupId: string): UseDocumentMutationsResu
       return docId;
     } catch (error) {
       console.error('Failed to create document:', error);
-      toast.error('Failed to create document');
+      toast.error(translateText('generated.inline.0401_failed_to_create_document_c9b3aacf'));
       return null;
     } finally {
       setIsCreating(false);
@@ -149,11 +150,11 @@ export function useDocumentMutations(_groupId: string): UseDocumentMutationsResu
     try {
       await deleteDocAction(documentId);
 
-      toast.success('Document deleted successfully');
+      toast.success(translateText('generated.inline.0402_document_deleted_successfully_1e20dc3e'));
       return true;
     } catch (error) {
       console.error('Failed to delete document:', error);
-      toast.error('Failed to delete document');
+      toast.error(translateText('generated.inline.0403_failed_to_delete_document_8d53b1b5'));
       return false;
     } finally {
       setIsDeleting(false);

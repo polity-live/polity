@@ -13,6 +13,7 @@ import {
 import type { PqlFieldDefinition } from '@/features/pql/logic/applyPqlFilter';
 import type { GroupPaymentRow } from '@/zero/groups/queries';
 import type { ChartData, FinancialSummary } from '../types/group.types';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 type PaymentFieldKey =
   | 'label'
@@ -164,14 +165,14 @@ export function PaymentsSection({
     () => [
       {
         key: 'label',
-        label: 'Label',
+        label: translateText('generated.inline.0167_label_74341e3c'),
         kind: 'text',
         operators: ['contains', 'eq'],
         getValue: payment => payment.label,
       },
       {
         key: 'type',
-        label: 'Type',
+        label: translateText('generated.inline.0168_type_3deb7456'),
         kind: 'enum',
         operators: ['eq', 'in'],
         options: Object.entries(PAYMENT_TYPE_LABELS).map(([value, label]) => ({ value, label })),
@@ -179,25 +180,25 @@ export function PaymentsSection({
       },
       {
         key: 'amount',
-        label: 'Amount',
+        label: translateText('generated.inline.0169_amount_43dc8532'),
         kind: 'number',
         operators: ['eq', 'gt', 'gte', 'lt', 'lte'],
         getValue: payment => payment.amount,
       },
       {
         key: 'direction',
-        label: 'Direction',
+        label: translateText('generated.inline.0170_direction_fd8e45ba'),
         kind: 'enum',
         operators: ['eq', 'in'],
         options: [
-          { value: 'income', label: 'Income' },
-          { value: 'expense', label: 'Expense' },
+          { value: 'income', label: translateText('generated.inline.0171_income_1c89b1f2') },
+          { value: 'expense', label: translateText('generated.inline.0172_expense_a0db8e68') },
         ],
         getValue: payment => getPaymentDirection(payment, groupId),
       },
       {
         key: 'counterparty_keys',
-        label: 'Counterparty',
+        label: translateText('generated.inline.0173_counterparty_97b2be49'),
         kind: 'entity',
         operators: ['in'],
         options: counterpartyOptions,
@@ -208,7 +209,7 @@ export function PaymentsSection({
       },
       {
         key: 'created_at',
-        label: 'Created',
+        label: translateText('generated.inline.0089_created_accf40c8'),
         kind: 'date',
         operators: ['gt', 'gte', 'lt', 'lte'],
         getValue: payment => payment.created_at,
@@ -219,8 +220,8 @@ export function PaymentsSection({
 
   const quickFilters = useMemo<readonly PqlQuickFilterDefinition<PaymentFieldKey>[]>(
     () => [
-      { fieldKey: 'direction', label: 'Direction' },
-      { fieldKey: 'type', label: 'Type' },
+      { fieldKey: 'direction', label: translateText('generated.inline.0170_direction_fd8e45ba') },
+      { fieldKey: 'type', label: translateText('generated.inline.0168_type_3deb7456') },
     ],
     []
   );
@@ -267,7 +268,7 @@ export function PaymentsSection({
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>Payments</CardTitle>
+          <CardTitle>{translateText('generated.inline.0696_payments_44357ae5')}</CardTitle>
           {canManagePayments ? (
             <div className="flex gap-2">
               <Button asChild size="sm">
@@ -280,7 +281,7 @@ export function PaymentsSection({
                   }}
                 >
                   <Plus className="h-4 w-4" />
-                  Add Income
+                  {translateText('generated.inline.0697_add_income_12e52754')}
                 </Link>
               </Button>
               <Button asChild size="sm">
@@ -293,7 +294,7 @@ export function PaymentsSection({
                   }}
                 >
                   <Plus className="h-4 w-4" />
-                  Add Expense
+                  {translateText('generated.inline.0698_add_expense_f53d122b')}
                 </Link>
               </Button>
             </div>
@@ -304,19 +305,25 @@ export function PaymentsSection({
         {/* Summary */}
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
-            <p className="text-muted-foreground text-sm">Income</p>
+            <p className="text-muted-foreground text-sm">
+              {translateText('generated.inline.0699_income_1c89b1f2')}
+            </p>
             <p className="text-xl font-semibold text-green-600 dark:text-green-400">
               ${summary.income.toFixed(2)}
             </p>
           </div>
           <div>
-            <p className="text-muted-foreground text-sm">Expenditure</p>
+            <p className="text-muted-foreground text-sm">
+              {translateText('generated.inline.0700_expenditure_e2cfc2e3')}
+            </p>
             <p className="text-xl font-semibold text-red-600 dark:text-red-400">
               ${summary.expenditure.toFixed(2)}
             </p>
           </div>
           <div>
-            <p className="text-muted-foreground text-sm">Balance</p>
+            <p className="text-muted-foreground text-sm">
+              {translateText('generated.inline.0701_balance_90eef613')}
+            </p>
             <p className={`text-xl font-semibold ${balanceClass}`}>${summary.balance.toFixed(2)}</p>
           </div>
         </div>
@@ -325,10 +332,12 @@ export function PaymentsSection({
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div>
             <p className="text-muted-foreground mb-2 text-center text-sm font-medium">
-              Income Breakdown
+              {translateText('generated.inline.0702_income_breakdown_cf3d2816')}
             </p>
             {incomeData.length === 0 ? (
-              <p className="text-muted-foreground py-8 text-center text-sm">No income recorded</p>
+              <p className="text-muted-foreground py-8 text-center text-sm">
+                {translateText('generated.inline.0703_no_income_recorded_04873bb9')}
+              </p>
             ) : (
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
@@ -346,11 +355,11 @@ export function PaymentsSection({
 
           <div>
             <p className="text-muted-foreground mb-2 text-center text-sm font-medium">
-              Expenditure Breakdown
+              {translateText('generated.inline.0704_expenditure_breakdown_a520fca9')}
             </p>
             {expenditureData.length === 0 ? (
               <p className="text-muted-foreground py-8 text-center text-sm">
-                No expenditure recorded
+                {translateText('generated.inline.0705_no_expenditure_recorded_e2eb7262')}
               </p>
             ) : (
               <ResponsiveContainer width="100%" height={220}>
@@ -371,9 +380,14 @@ export function PaymentsSection({
         <div>
           <div className="mb-4 flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium">Transactions</p>
+              <p className="text-sm font-medium">
+                {translateText('generated.inline.0706_transactions_1e3281a9')}
+              </p>
               <p className="text-muted-foreground text-sm">
-                {filteredItems.length} of {payments.length} payments shown
+                {filteredItems.length}
+                {translateText('generated.inline.0101_of_de04fa0e')}
+                {payments.length}
+                {translateText('generated.inline.0707_payments_shown_32ea2140')}
               </p>
             </div>
           </div>
@@ -382,7 +396,9 @@ export function PaymentsSection({
             fields={fields}
             searchQuery={searchQuery}
             onSearchQueryChange={setSearchQuery}
-            searchPlaceholder="Search payments, counterparties, or types..."
+            searchPlaceholder={translateText(
+              'generated.inline.0708_search_payments_counterparties_or_types_b2fab485'
+            )}
             quickFilters={quickFilters}
             quickFilterValues={quickFilterValues}
             onQuickFilterValuesChange={setQuickFilterValues}
@@ -398,8 +414,10 @@ export function PaymentsSection({
           {filteredItems.length === 0 ? (
             <p className="text-muted-foreground rounded-lg border border-dashed px-4 py-8 text-center text-sm">
               {hasActiveFilters
-                ? 'No payments match the current search and filters.'
-                : 'No payments recorded yet.'}
+                ? translateText(
+                    'generated.inline.0104_no_payments_match_the_current_search_and_filt_337a7d4e'
+                  )
+                : translateText('generated.inline.0105_no_payments_recorded_yet_15fc7dc7')}
             </p>
           ) : (
             <div className="space-y-3">
@@ -422,7 +440,9 @@ export function PaymentsSection({
                           {payment.label || getPaymentTypeLabel(payment.type)}
                         </span>
                         <Badge variant={direction === 'income' ? 'default' : 'secondary'}>
-                          {direction === 'income' ? 'Income' : 'Expense'}
+                          {direction === 'income'
+                            ? translateText('generated.inline.0084_income_1c89b1f2')
+                            : translateText('generated.inline.0085_expense_a0db8e68')}
                         </Badge>
                         <Badge variant="outline">{getPaymentTypeLabel(payment.type)}</Badge>
                       </div>

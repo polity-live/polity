@@ -1,7 +1,7 @@
 import { type Transaction } from '@rocicorp/zero';
 import type { Schema } from '../schema';
 import { zql } from '../schema';
-import { explodeNetworkLinksToRelationships } from './derived';
+import { deriveGroupRelationships } from './derived';
 
 type ZeroTransaction = Transaction<Schema>;
 type WorkflowStatus = 'pending_approval' | 'active' | 'rejected' | 'archived';
@@ -40,15 +40,15 @@ function getDerivedFinalGroupId(steps: readonly WorkflowDraftStepInput[]) {
 }
 
 async function loadActiveAmendmentRelationships(tx: ZeroTransaction) {
-  const [links, rights, rules] = await Promise.all([
-    tx.run(zql.network_link),
-    tx.run(zql.network_link_right),
-    tx.run(zql.network_link_membership_rule),
+  const [connections, grants, rules] = await Promise.all([
+    tx.run(zql.group_connection),
+    tx.run(zql.group_right_grant),
+    tx.run(zql.group_membership_rule),
   ]);
 
-  return explodeNetworkLinksToRelationships({
-    links,
-    rights,
+  return deriveGroupRelationships({
+    connections,
+    grants,
     rules,
     includeInactive: false,
   }).filter(relationship => relationship.with_right === 'amendmentRight');

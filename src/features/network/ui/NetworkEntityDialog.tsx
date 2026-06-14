@@ -24,8 +24,8 @@ import {
 } from '../logic/networkRelationshipDialogHelpers';
 import {
   getCanonicalMembershipModeLabel,
-  getLegacySiblingMembershipMode,
-} from '../logic/networkLinkDerived';
+  getSiblingMembershipKind,
+} from '../logic/groupConnectionDerived';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import type { EventByGroupRow } from '@/zero/events/useEventState';
@@ -86,10 +86,8 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
   };
 
   const getRelationshipSentence = (relationship: NetworkRelationshipDialogData) => {
-    const sourceName =
-      relationship.sourceName ?? relationship.source ?? t('common.labels.source', 'Source');
-    const targetName =
-      relationship.targetName ?? relationship.target ?? t('common.labels.target', 'Target');
+    const sourceName = relationship.sourceName ?? relationship.source ?? t('common.labels.source');
+    const targetName = relationship.targetName ?? relationship.target ?? t('common.labels.target');
 
     switch (relationship.relationshipType) {
       case 'parent':
@@ -147,7 +145,7 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
     entity.type === 'relationship' ? getRelationshipPreviewData(entity.data) : null;
   const siblingMembershipMode =
     entity.type === 'relationship' && relationshipPreviewData?.relationshipType === 'sibling'
-      ? (getLegacySiblingMembershipMode(entity.data.membershipMode) ?? undefined)
+      ? (getSiblingMembershipKind(entity.data.membershipMode) ?? undefined)
       : undefined;
 
   return (
@@ -278,7 +276,7 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
 
               {entity.data.membershipMode && relationshipPreviewData ? (
                 <GroupRelationshipMembershipModeSummary
-                  label={t('common.network.membershipModeLabel', 'Membership mode')}
+                  label={t('common.network.membershipModeLabel')}
                   membershipMode={entity.data.membershipMode}
                   membershipDirection={entity.data.membershipDirection}
                   currentGroupName={relationshipPreviewData.currentGroupName}
@@ -290,7 +288,7 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
                 <div className="rounded-lg border p-4">
                   <div className="space-y-1">
                     <p className="text-muted-foreground text-sm font-medium">
-                      {t('common.network.membershipModeLabel', 'Membership mode')}
+                      {t('common.network.membershipModeLabel')}
                     </p>
                     <p className="text-lg font-semibold">
                       {getCanonicalMembershipModeLabel(entity.data.membershipMode)}
@@ -338,10 +336,7 @@ export function NetworkEntityDialog({ open, onOpenChange, entity }: NetworkEntit
                     <GroupRelationshipRightsSummary
                       label={t('common.network.selectRights')}
                       selectedRights={entity.data.rights as GroupRelationshipRight[]}
-                      helperText={t(
-                        'common.network.directionDetails',
-                        'Richtung der einzelnen Rechte'
-                      )}
+                      helperText={t('common.network.directionDetails')}
                       existingRightStatuses={getExistingRightStatuses(entity.data)}
                       rightDirections={
                         Object.fromEntries(

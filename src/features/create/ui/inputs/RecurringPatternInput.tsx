@@ -174,7 +174,7 @@ export function RecurringPatternInput({
                     size="sm"
                     onClick={() => onEndDateChange('')}
                   >
-                    {t('common.clear', 'Clear')}
+                    {t('common.clear')}
                   </Button>
                 ) : null}
               </div>

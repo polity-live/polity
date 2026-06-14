@@ -1,5 +1,6 @@
 import { defineMutator } from '@rocicorp/zero';
 import { can } from '../rbac/can';
+import { requireAuthenticated } from '../rbac/authorize';
 import { zql } from '../schema';
 import {
   groupCreateSchema,
@@ -40,7 +41,7 @@ import {
 } from './membership-helpers';
 import { ensureOfflineDirectMembership } from './offline-membership-helpers';
 
-const GUEST_ONLY_SIBLING_MEMBERSHIP_MODES = new Set([
+const GUEST_ONLY_SIBLING_MEMBERSHIP_MODES: ReadonlySet<string> = new Set([
   'all_members',
   'role_members',
   'selected_source_groups',
@@ -50,10 +51,11 @@ function requiresGuestAccessFlow(group: {
   group_type?: string | null;
   primary_sibling_membership_mode?: string | null;
 }) {
+  const primarySiblingMembershipMode = group.primary_sibling_membership_mode;
   return (
     group.group_type === 'sibling' &&
-    Boolean(group.primary_sibling_membership_mode) &&
-    GUEST_ONLY_SIBLING_MEMBERSHIP_MODES.has(group.primary_sibling_membership_mode)
+    typeof primarySiblingMembershipMode === 'string' &&
+    GUEST_ONLY_SIBLING_MEMBERSHIP_MODES.has(primarySiblingMembershipMode)
   );
 }
 
@@ -178,6 +180,32 @@ async function loadRole(tx: Parameters<typeof can>[0], roleId: string) {
     throw new Error('Role not found');
   }
   return role;
+}
+
+async function authorizeRoleHolderHistoryMutation(
+  tx: Parameters<typeof can>[0],
+  ctx: Parameters<typeof can>[1],
+  roleId: string
+) {
+  if (tx.location === 'client') return;
+
+  const role = await loadRole(tx, roleId);
+  await authorizeScopedRoleMutation(tx, ctx, role);
+}
+
+async function authorizeExistingRoleHolderHistoryMutation(
+  tx: Parameters<typeof can>[0],
+  ctx: Parameters<typeof can>[1],
+  historyId: string
+) {
+  if (tx.location === 'client') return;
+
+  const history = await tx.run(zql.role_holder_history.where('id', historyId).one());
+  if (!history) {
+    throw new Error('Role holder history not found');
+  }
+
+  await authorizeRoleHolderHistoryMutation(tx, ctx, history.role_id);
 }
 
 async function assertRolesAssignableToMembers(
@@ -713,7 +741,9 @@ async function assertUniqueConnectedOfflineUserWithinGroup(
 
 /** Shared mutators — run on both client and server. Server mutators may override these. */
 export const groupSharedMutators = {
-  create: defineMutator(groupCreateSchema, async ({ tx, ctx: { userID }, args }) => {
+  create: defineMutator(groupCreateSchema, async ({ tx, ctx, args }) => {
+    const { userID } = ctx;
+    requireAuthenticated(tx, ctx, { action: 'create', resource: 'groups' });
     const now = Date.now();
 
     await tx.mutate.group.insert({
@@ -869,7 +899,9 @@ export const groupSharedMutators = {
     }
   ),
 
-  joinGroup: defineMutator(groupMembershipCreateSchema, async ({ tx, ctx: { userID }, args }) => {
+  joinGroup: defineMutator(groupMembershipCreateSchema, async ({ tx, ctx, args }) => {
+    const { userID } = ctx;
+    requireAuthenticated(tx, ctx, { action: 'create', resource: 'groupMemberships' });
     await assertCanDirectlyMutateOfficialMembership(tx, args.group_id, userID);
 
     const now = Date.now();
@@ -901,82 +933,88 @@ export const groupSharedMutators = {
     }
   }),
 
-  requestGuestAccess: defineMutator(
-    groupGuestAccessCreateSchema,
-    async ({ tx, ctx: { userID }, args }) => {
-      const group = await loadGroupWithDerivedNetworkMeta(tx, args.group_id);
-      if (!group) {
-        throw new Error('Group not found');
-      }
-      if (!requiresGuestAccessFlow(group)) {
-        throw new Error('This group uses official memberships for join requests.');
-      }
+  requestGuestAccess: defineMutator(groupGuestAccessCreateSchema, async ({ tx, ctx, args }) => {
+    const { userID } = ctx;
+    requireAuthenticated(tx, ctx, { action: 'create', resource: 'groupMemberships' });
+    const group = await loadGroupWithDerivedNetworkMeta(tx, args.group_id);
+    if (!group) {
+      throw new Error('Group not found');
+    }
+    if (!requiresGuestAccessFlow(group)) {
+      throw new Error('This group uses official memberships for join requests.');
+    }
 
-      const existingMembership = await tx.run(
-        zql.group_membership.where('group_id', args.group_id).where('user_id', userID).one()
-      );
-      if (existingMembership) {
-        throw new Error('You already have a membership record for this group.');
-      }
+    const existingMembership = await tx.run(
+      zql.group_membership.where('group_id', args.group_id).where('user_id', userID).one()
+    );
+    if (existingMembership) {
+      throw new Error('You already have a membership record for this group.');
+    }
 
-      const desiredRoleId = await resolveDefaultGuestRoleId(
-        tx,
-        args.group_id,
-        'requested',
-        args.role_ids?.[0] ?? null
-      );
+    const desiredRoleId = await resolveDefaultGuestRoleId(
+      tx,
+      args.group_id,
+      'requested',
+      args.role_ids?.[0] ?? null
+    );
 
-      const existingGuestAccess = await tx.run(
-        zql.group_guest_access.where('group_id', args.group_id).where('user_id', userID).one()
-      );
+    const existingGuestAccess = await tx.run(
+      zql.group_guest_access.where('group_id', args.group_id).where('user_id', userID).one()
+    );
 
-      if (existingGuestAccess?.status === 'active') {
-        throw new Error('You already have guest access to this group.');
-      }
+    if (existingGuestAccess?.status === 'active') {
+      throw new Error('You already have guest access to this group.');
+    }
 
-      if (existingGuestAccess) {
-        await tx.mutate.group_guest_access.update({
-          id: existingGuestAccess.id,
-          status: 'requested',
-          invited_by_id: null,
-          updated_at: Date.now(),
-        });
-
-        if (desiredRoleId) {
-          await syncGroupGuestRoles(tx, {
-            group_guest_access_id: existingGuestAccess.id,
-            role_ids: [desiredRoleId],
-            assigned_by_id: null,
-          });
-        }
-        return;
-      }
-
-      const now = Date.now();
-      await tx.mutate.group_guest_access.insert({
-        id: args.id,
-        group_id: args.group_id,
-        user_id: userID,
+    if (existingGuestAccess) {
+      await tx.mutate.group_guest_access.update({
+        id: existingGuestAccess.id,
         status: 'requested',
         invited_by_id: null,
-        created_at: now,
-        updated_at: now,
+        updated_at: Date.now(),
       });
 
       if (desiredRoleId) {
         await syncGroupGuestRoles(tx, {
-          group_guest_access_id: args.id,
+          group_guest_access_id: existingGuestAccess.id,
           role_ids: [desiredRoleId],
           assigned_by_id: null,
         });
       }
+      return;
     }
-  ),
 
-  leaveGroup: defineMutator(groupMembershipDeleteSchema, async ({ tx, args }) => {
+    const now = Date.now();
+    await tx.mutate.group_guest_access.insert({
+      id: args.id,
+      group_id: args.group_id,
+      user_id: userID,
+      status: 'requested',
+      invited_by_id: null,
+      created_at: now,
+      updated_at: now,
+    });
+
+    if (desiredRoleId) {
+      await syncGroupGuestRoles(tx, {
+        group_guest_access_id: args.id,
+        role_ids: [desiredRoleId],
+        assigned_by_id: null,
+      });
+    }
+  }),
+
+  leaveGroup: defineMutator(groupMembershipDeleteSchema, async ({ tx, ctx, args }) => {
     const membership = await tx.run(zql.group_membership.where('id', args.id).one());
     if (membership && !isManualGroupMembershipSource(membership.source)) {
       throw new Error('Only direct memberships can be changed manually.');
+    }
+    if (membership && membership.user_id !== ctx.userID) {
+      await can(tx, ctx, {
+        action: 'manage',
+        resource: 'groupMemberships',
+        groupId: membership.group_id,
+      });
     }
     await tx.mutate.group_membership.delete({ id: args.id });
   }),
@@ -1017,10 +1055,17 @@ export const groupSharedMutators = {
     }
   }),
 
-  acceptInvitation: defineMutator(z.object({ id: z.string() }), async ({ tx, args }) => {
+  acceptInvitation: defineMutator(z.object({ id: z.string() }), async ({ tx, ctx, args }) => {
     const membership = await tx.run(zql.group_membership.where('id', args.id).one());
     if (!membership) {
       throw new Error('Membership not found');
+    }
+    if (membership.user_id !== ctx.userID) {
+      await can(tx, ctx, {
+        action: 'manage',
+        resource: 'groupMemberships',
+        groupId: membership.group_id,
+      });
     }
     if (!isManualGroupMembershipSource(membership.source)) {
       throw new Error('Automatic memberships cannot be accepted manually.');
@@ -1256,7 +1301,8 @@ export const groupSharedMutators = {
     const role = await tx.run(zql.role.where('id', args.id).one());
     if (role) {
       await authorizeScopedRoleMutation(tx, ctx, role);
-      const nextAssigneeKind = args.assignee_kind ?? role.assignee_kind;
+      const nextAssigneeKind =
+        (args.assignee_kind ?? role.assignee_kind) === 'guest' ? 'guest' : 'member';
       const nextDefaultRequestRole = args.default_request_role ?? role.default_request_role;
       const nextDefaultInviteRole = args.default_invite_role ?? role.default_invite_role;
       if (role.group_id) {
@@ -1309,15 +1355,25 @@ export const groupSharedMutators = {
   }),
 
   // Role holder history mutators
-  createRoleHolderHistory: defineMutator(roleHolderHistoryCreateSchema, async ({ tx, args }) => {
-    const now = Date.now();
-    await tx.mutate.role_holder_history.insert({
-      ...args,
-      created_at: now,
-    });
-  }),
+  createRoleHolderHistory: defineMutator(
+    roleHolderHistoryCreateSchema,
+    async ({ tx, ctx, args }) => {
+      await authorizeRoleHolderHistoryMutation(tx, ctx, args.role_id);
 
-  updateRoleHolderHistory: defineMutator(roleHolderHistoryUpdateSchema, async ({ tx, args }) => {
-    await tx.mutate.role_holder_history.update(args);
-  }),
+      const now = Date.now();
+      await tx.mutate.role_holder_history.insert({
+        ...args,
+        created_at: now,
+      });
+    }
+  ),
+
+  updateRoleHolderHistory: defineMutator(
+    roleHolderHistoryUpdateSchema,
+    async ({ tx, ctx, args }) => {
+      await authorizeExistingRoleHolderHistoryMutation(tx, ctx, args.id);
+
+      await tx.mutate.role_holder_history.update(args);
+    }
+  ),
 };

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 /** Local mock group type for the zustand store — not derived from zero */
 interface MockGroup {
@@ -20,7 +21,9 @@ const MOCK_GROUPS: MockGroup[] = [
     name: 'Constitutional Reform Network',
     members: 1243,
     role: 'Member',
-    description: 'Working to modernize constitutional frameworks across Europe',
+    description: translateText(
+      'generated.inline.0499_working_to_modernize_constitutional_framework_f4944394'
+    ),
     tags: ['constitution', 'reform', 'policy', 'governance'],
     amendments: 8,
     events: 12,
@@ -31,7 +34,9 @@ const MOCK_GROUPS: MockGroup[] = [
     name: 'Democracy Innovations Lab',
     members: 567,
     role: 'Member',
-    description: 'Researching new forms of democratic participation',
+    description: translateText(
+      'generated.inline.0500_researching_new_forms_of_democratic_participa_6dadc5b3'
+    ),
     tags: ['democracy', 'innovation', 'research', 'participation'],
     amendments: 3,
     events: 5,
@@ -42,7 +47,9 @@ const MOCK_GROUPS: MockGroup[] = [
     name: 'Judicial Independence Initiative',
     members: 389,
     role: 'Member',
-    description: 'Advocating for stronger protections for courts worldwide',
+    description: translateText(
+      'generated.inline.0501_advocating_for_stronger_protections_for_court_48f037ff'
+    ),
     tags: ['judiciary', 'independence', 'advocacy', 'courts'],
     amendments: 4,
     events: 2,
@@ -53,7 +60,9 @@ const MOCK_GROUPS: MockGroup[] = [
     name: 'Climate Action Coalition',
     members: 2156,
     role: 'Member',
-    description: 'Pushing for immediate climate policy reforms',
+    description: translateText(
+      'generated.inline.0502_pushing_for_immediate_climate_policy_reforms_d21eecd6'
+    ),
     tags: ['climate', 'environment', 'sustainability', 'policy'],
     amendments: 15,
     events: 23,
@@ -64,7 +73,9 @@ const MOCK_GROUPS: MockGroup[] = [
     name: 'Digital Rights Forum',
     members: 892,
     role: 'Member',
-    description: 'Protecting digital privacy and freedom online',
+    description: translateText(
+      'generated.inline.0503_protecting_digital_privacy_and_freedom_online_000c617c'
+    ),
     tags: ['digital', 'privacy', 'technology', 'rights'],
     amendments: 6,
     events: 8,
@@ -75,7 +86,9 @@ const MOCK_GROUPS: MockGroup[] = [
     name: 'Education Reform Alliance',
     members: 1445,
     role: 'Member',
-    description: 'Advocating for modern education systems',
+    description: translateText(
+      'generated.inline.0504_advocating_for_modern_education_systems_f6e2472b'
+    ),
     tags: ['education', 'reform', 'schools', 'policy'],
     amendments: 9,
     events: 14,
@@ -136,7 +149,9 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
       const matchesTags =
         selectedTags.length === 0 ||
         selectedTags.every(selectedTag =>
-          group.tags?.some((groupTag: string) => groupTag.toLowerCase().includes(selectedTag.toLowerCase()))
+          group.tags?.some((groupTag: string) =>
+            groupTag.toLowerCase().includes(selectedTag.toLowerCase())
+          )
         );
 
       return matchesSearch && matchesTags;

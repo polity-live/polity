@@ -3,6 +3,7 @@ import { useBlogState } from '@/zero/blogs/useBlogState';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
 import { useAuth } from '@/providers/auth-provider';
 import { toast } from 'sonner';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 /**
  * Hook to handle blog subscription functionality
@@ -76,7 +77,9 @@ export function useSubscribeBlog(targetBlogId?: string) {
         event_id: null,
         blog_id: targetBlogId,
       });
-      toast.success('Successfully subscribed to blog');
+      toast.success(
+        translateText('generated.inline.0223_successfully_subscribed_to_blog_4377e4d5')
+      );
     } catch (error) {
       // Revert optimistic update
       optimisticTargetRef.current = null;
@@ -84,7 +87,9 @@ export function useSubscribeBlog(targetBlogId?: string) {
       setIsSubscribed(false);
       setSubscriberCount(prev => prev - 1);
       console.error('Failed to subscribe to blog:', error);
-      toast.error('Failed to subscribe to blog. Please try again.');
+      toast.error(
+        translateText('generated.inline.0224_failed_to_subscribe_to_blog_please_try_again_8f89bbc2')
+      );
     } finally {
       setIsLoading(false);
     }
@@ -116,14 +121,20 @@ export function useSubscribeBlog(targetBlogId?: string) {
     try {
       await Promise.all(subsToDelete.map(sub => unsubscribeFromBlog(sub.id)));
       createdSubscriptionIdRef.current = null;
-      toast.success('Successfully unsubscribed from blog');
+      toast.success(
+        translateText('generated.inline.0225_successfully_unsubscribed_from_blog_6bcfcb00')
+      );
     } catch (error) {
       // Revert optimistic update
       optimisticTargetRef.current = null;
       setIsSubscribed(true);
       setSubscriberCount(prev => prev + subsToDelete.length);
       console.error('Failed to unsubscribe from blog:', error);
-      toast.error('Failed to unsubscribe from blog. Please try again.');
+      toast.error(
+        translateText(
+          'generated.inline.0226_failed_to_unsubscribe_from_blog_please_try_ag_13af4c37'
+        )
+      );
     } finally {
       setIsLoading(false);
     }

@@ -1,40 +1,33 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect } from 'react';
+import { toast } from 'sonner';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import { Badge } from '@/features/shared/ui/ui/badge.tsx';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/features/shared/ui/ui/alert-dialog.tsx';
+
+const ALPHA_WARNING_TOAST_ID = 'alpha-warning';
 
 export function AlphaWarningDialog() {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(true);
 
-  return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <div className="flex items-center gap-2">
-            <AlertDialogTitle>{t('common.alphaWarning.title')}</AlertDialogTitle>
-            <Badge className="border-0 bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400 font-bold text-slate-950 shadow-sm">
-              0.3
-            </Badge>
-          </div>
-          <AlertDialogDescription>{t('common.alphaWarning.description')}</AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogAction onClick={() => setOpen(false)}>
-            {t('common.alphaWarning.confirm')}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
+  useEffect(() => {
+    toast.warning(
+      <span className="flex items-center gap-2">
+        <span>{t('common.alphaWarning.title')}</span>
+        <Badge className="border-0 bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400 font-bold text-slate-950 shadow-sm">
+          0.3
+        </Badge>
+      </span>,
+      {
+        id: ALPHA_WARNING_TOAST_ID,
+        description: t('common.alphaWarning.description'),
+        action: {
+          label: t('common.alphaWarning.confirm'),
+          onClick: () => toast.dismiss(ALPHA_WARNING_TOAST_ID),
+        },
+      }
+    );
+  }, [t]);
+
+  return null;
 }

@@ -1,28 +1,35 @@
 import type { IconName } from '@/features/navigation/nav-items/icon-map.tsx';
 
 export type DocsTopicSlug =
+  | 'auth-and-onboarding'
   | 'users'
   | 'groups'
   | 'events'
+  | 'agendas'
   | 'amendments'
+  | 'documents-and-editor'
+  | 'change-requests-and-discussions'
   | 'blogs'
+  | 'statements'
   | 'elections'
   | 'votes'
   | 'decision-terminal'
+  | 'timeline'
   | 'search'
   | 'messages'
   | 'notifications'
+  | 'pwa-and-notifications'
   | 'calendar'
   | 'todos'
+  | 'create-workflows'
+  | 'subscriptions-and-payments'
+  | 'ai-assistant'
+  | 'pql-and-filters'
+  | 'meetings'
   | 'roles-and-rights'
   | 'networks-and-forwarding';
 
-export type DocsCategory =
-  | 'people'
-  | 'collaboration'
-  | 'governance'
-  | 'coordination'
-  | 'systems';
+export type DocsCategory = 'people' | 'collaboration' | 'governance' | 'coordination' | 'systems';
 
 export type DocsSignalTone =
   | 'entry'

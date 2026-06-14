@@ -27,7 +27,10 @@ import {
 import { toast } from 'sonner';
 import { Input } from '@/features/shared/ui/ui/input.tsx';
 import { ConversationSelectorDialog } from './ConversationSelectorDialog.tsx';
-import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import type { SearchContentItem } from '@/features/search/types/search.types';
 
 type SharePlatform =
@@ -77,56 +80,56 @@ export function ShareButton({
   const sharePlatforms: SharePlatform[] = [
     {
       key: 'whatsapp',
-      label: 'WhatsApp',
+      label: translateText('generated.inline.0505_whatsapp_b336fc55'),
       Icon: MessageSquare,
       iconClassName: 'text-green-500',
       href: `https://wa.me/?text=${encodedTitle}%20${encodedUrl}`,
     },
     {
       key: 'twitter',
-      label: 'X (Twitter)',
+      label: translateText('generated.inline.0506_x_twitter_9ae44c18'),
       Icon: Twitter,
       iconClassName: 'text-gray-800 dark:text-gray-300',
       href: `https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`,
     },
     {
       key: 'facebook',
-      label: 'Facebook',
+      label: translateText('generated.inline.0507_facebook_82da67b2'),
       Icon: Facebook,
       iconClassName: 'text-blue-600',
       href: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
     },
     {
       key: 'linkedin',
-      label: 'LinkedIn',
+      label: translateText('generated.inline.0508_linkedin_6b6390a4'),
       Icon: Linkedin,
       iconClassName: 'text-sky-700',
       href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
     },
     {
       key: 'instagram',
-      label: 'Instagram',
+      label: translateText('generated.inline.0509_instagram_5721bbef'),
       Icon: Instagram,
       iconClassName: 'text-pink-500',
       manualOnly: true,
     },
     {
       key: 'snapchat',
-      label: 'Snapchat',
+      label: translateText('generated.inline.0510_snapchat_ba4ed635'),
       Icon: Ghost,
       iconClassName: 'text-yellow-400',
       manualOnly: true,
     },
     {
       key: 'tiktok',
-      label: 'TikTok',
+      label: translateText('generated.inline.0511_tiktok_fc49f156'),
       Icon: Music2,
       iconClassName: 'text-zinc-900 dark:text-zinc-100',
       manualOnly: true,
     },
     {
       key: 'youtube',
-      label: 'YouTube',
+      label: translateText('generated.inline.0512_youtube_558865a1'),
       Icon: Youtube,
       iconClassName: 'text-red-600',
       manualOnly: true,
@@ -179,7 +182,7 @@ export function ShareButton({
               className="cursor-pointer"
             >
               <Send className="text-primary mr-2 h-4 w-4" />
-              <span>Polity</span>
+              <span>{translateText('generated.inline.1101_polity_f147ffe2')}</span>
             </DropdownMenuItem>
 
             <DropdownMenuSeparator />

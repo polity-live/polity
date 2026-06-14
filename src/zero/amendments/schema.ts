@@ -21,6 +21,7 @@ const baseAmendmentSchema = z.object({
   group_id: z.string().nullable(),
   event_id: z.string().nullable(),
   clone_source_id: z.string().nullable(),
+  origin_amendment_id: z.string().nullable(),
   document_id: z.string().nullable(),
   supporters: z.number(),
   supporters_required: z.number().nullable(),
@@ -69,6 +70,7 @@ export const createAmendmentSchema = baseAmendmentSchema
   .extend({
     id: z.string(),
     current_process_run_id: z.string().nullable().optional(),
+    origin_amendment_id: z.string().nullable().optional(),
   });
 
 export const updateAmendmentSchema = baseAmendmentSchema
@@ -91,6 +93,7 @@ export const updateAmendmentSchema = baseAmendmentSchema
     discussions: true,
     code: true,
     clone_source_id: true,
+    origin_amendment_id: true,
     document_id: true,
     image_url: true,
     supporters: true,

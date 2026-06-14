@@ -13,7 +13,7 @@ import {
   SIBLING_ELECTED_MEMBERSHIP_SOURCE,
   SIBLING_PARLIAMENT_MEMBERSHIP_SOURCE,
 } from './membership-source-constants';
-import { getMembershipRuleConfig, hasActiveMembershipRules } from '../network/membershipRules';
+import { normalizeMembershipRule } from '../network/membershipRules';
 
 type ZeroTransactionLike = Pick<ZeroTransaction, 'run' | 'mutate'>;
 
@@ -35,43 +35,29 @@ function normalizeSourceGroupId(sourceGroupId: string | null | undefined) {
 }
 
 function getDirectionalMembershipContexts(
-  link: { source_group_id: string; target_group_id: string },
+  connection: { group_a_id: string; group_b_id: string },
   membershipRule:
     | {
-        membership_direction?: string | null;
+        member_source_group_id?: string | null;
+        member_target_group_id?: string | null;
         membership_mode?: string | null;
-        role_id?: string | null;
-        source_group_ids?: string[] | null;
+        required_source_role_id?: string | null;
+        eligible_origin_group_ids?: string[] | null;
       }
     | null
     | undefined
 ) {
-  if (!hasActiveMembershipRules(membershipRule)) {
+  const normalized = normalizeMembershipRule(membershipRule);
+  if (!normalized) {
     return [];
   }
 
-  const forward = getMembershipRuleConfig(membershipRule, 'forward');
-  const backward = getMembershipRuleConfig(membershipRule, 'backward');
-
   return [
-    ...(forward.membership_mode !== 'none'
-      ? [
-          {
-            recipientGroupId: link.target_group_id,
-            connectedGroupId: link.source_group_id,
-            membershipRule: forward,
-          },
-        ]
-      : []),
-    ...(backward.membership_mode !== 'none'
-      ? [
-          {
-            recipientGroupId: link.source_group_id,
-            connectedGroupId: link.target_group_id,
-            membershipRule: backward,
-          },
-        ]
-      : []),
+    {
+      recipientGroupId: normalized.member_target_group_id,
+      connectedGroupId: normalized.member_source_group_id,
+      membershipRule: normalized,
+    },
   ];
 }
 
@@ -173,8 +159,8 @@ async function getActiveOfflineMembersForGroupRole(
   );
 }
 
-function isActiveNetworkLinkStatus(status: string | null | undefined) {
-  return status == null || status === 'active' || status === 'accepted';
+function isActiveGroupConnectionStatus(status: string | null | undefined) {
+  return status === 'active';
 }
 
 function getNetworkMembershipSourceForMode(mode: string | null | undefined) {
@@ -320,30 +306,33 @@ async function upsertAutomaticSiblingOfflineMembership(
   });
 }
 
-async function getDesiredOfflineNetworkLinkMembershipSources(
+async function getDesiredOfflineGroupConnectionMembershipSources(
   tx: ZeroTransactionLike,
   groupId: string
 ) {
-  const [links, rights, rules] = await Promise.all([
+  const [connections, rules, origins] = await Promise.all([
     tx.run(
-      zql.network_link.where(({ cmp, or }) =>
-        or(cmp('source_group_id', '=', groupId), cmp('target_group_id', '=', groupId))
+      zql.group_connection.where(({ cmp, or }) =>
+        or(cmp('group_a_id', '=', groupId), cmp('group_b_id', '=', groupId))
       )
     ),
-    tx.run(zql.network_link_right),
-    tx.run(zql.network_link_membership_rule),
+    tx.run(zql.group_membership_rule),
+    tx.run(zql.group_membership_rule_origin),
   ]);
 
-  const rightsByLinkId = new Map<string, (typeof rights)[number][]>();
-  for (const right of rights) {
-    const linkRights = rightsByLinkId.get(right.network_link_id) ?? [];
-    linkRights.push(right);
-    rightsByLinkId.set(right.network_link_id, linkRights);
-  }
-
-  const rulesByLinkId = new Map<string, (typeof rules)[number]>();
+  const rulesByConnectionId = new Map<
+    string,
+    (typeof rules)[number] & {
+      eligible_origin_group_ids: string[];
+    }
+  >();
   for (const rule of rules) {
-    rulesByLinkId.set(rule.network_link_id, rule);
+    rulesByConnectionId.set(rule.connection_id, {
+      ...rule,
+      eligible_origin_group_ids: origins
+        .filter(origin => origin.membership_rule_id === rule.id)
+        .map(origin => origin.eligible_origin_group_id),
+    });
   }
 
   const desiredMembershipSources = new Map<
@@ -357,21 +346,19 @@ async function getDesiredOfflineNetworkLinkMembershipSources(
     }
   >();
 
-  const sortedLinks = [...links].sort((left, right) => left.created_at - right.created_at);
-  for (const link of sortedLinks) {
-    const membershipRule = rulesByLinkId.get(link.id);
-    const directionalContexts = getDirectionalMembershipContexts(link, membershipRule).filter(
+  const sortedConnections = [...connections].sort(
+    (left, right) => left.created_at - right.created_at
+  );
+  for (const connection of sortedConnections) {
+    const membershipRule = rulesByConnectionId.get(connection.id);
+    const directionalContexts = getDirectionalMembershipContexts(connection, membershipRule).filter(
       context => context.recipientGroupId === groupId
     );
     if (directionalContexts.length === 0) {
       continue;
     }
 
-    const linkRights = rightsByLinkId.get(link.id) ?? [];
-    const hasActiveRights =
-      isActiveNetworkLinkStatus(link.status) ||
-      linkRights.some(right => isActiveNetworkLinkStatus(right.status));
-    if (!hasActiveRights) {
+    if (!isActiveGroupConnectionStatus(connection.status)) {
       continue;
     }
 
@@ -402,14 +389,14 @@ async function getDesiredOfflineNetworkLinkMembershipSources(
       }
 
       if (directionalContext.membershipRule.membership_mode === 'role_members') {
-        if (!directionalContext.membershipRule.role_id) {
+        if (!directionalContext.membershipRule.required_source_role_id) {
           continue;
         }
 
         const memberships = await getActiveOfflineMembersForGroupRole(
           tx,
           connectedGroupId,
-          directionalContext.membershipRule.role_id
+          directionalContext.membershipRule.required_source_role_id
         );
         for (const membership of memberships) {
           if (!desiredMembershipSources.has(membership.group_offline_member_id)) {
@@ -423,7 +410,7 @@ async function getDesiredOfflineNetworkLinkMembershipSources(
       }
 
       const selectedSourceGroupIds = [
-        ...new Set(directionalContext.membershipRule.source_group_ids ?? []),
+        ...new Set(directionalContext.membershipRule.eligible_origin_group_ids ?? []),
       ].filter(Boolean);
       if (selectedSourceGroupIds.length === 0) {
         continue;
@@ -498,7 +485,10 @@ export async function recomputeOfflineSiblingGroupMemberships(
   groupId: string
 ) {
   const existingMemberships = await tx.run(zql.group_offline_membership.where('group_id', groupId));
-  const desiredMembershipSources = await getDesiredOfflineNetworkLinkMembershipSources(tx, groupId);
+  const desiredMembershipSources = await getDesiredOfflineGroupConnectionMembershipSources(
+    tx,
+    groupId
+  );
 
   for (const membership of existingMemberships) {
     if (!isAutomaticOfflineMembershipSource(membership.source)) {
@@ -536,13 +526,24 @@ export async function recomputeOfflineSiblingMembershipsForGroup(
   tx: ZeroTransactionLike,
   groupId: string
 ) {
-  const [links, rules] = await Promise.all([
-    tx.run(zql.network_link),
-    tx.run(zql.network_link_membership_rule),
+  const [connections, rules, origins] = await Promise.all([
+    tx.run(zql.group_connection),
+    tx.run(zql.group_membership_rule),
+    tx.run(zql.group_membership_rule_origin),
   ]);
-  const rulesByLinkId = new Map<string, (typeof rules)[number]>();
+  const rulesByConnectionId = new Map<
+    string,
+    (typeof rules)[number] & {
+      eligible_origin_group_ids: string[];
+    }
+  >();
   for (const rule of rules) {
-    rulesByLinkId.set(rule.network_link_id, rule);
+    rulesByConnectionId.set(rule.connection_id, {
+      ...rule,
+      eligible_origin_group_ids: origins
+        .filter(origin => origin.membership_rule_id === rule.id)
+        .map(origin => origin.eligible_origin_group_id),
+    });
   }
 
   const queue = [groupId];
@@ -558,13 +559,18 @@ export async function recomputeOfflineSiblingMembershipsForGroup(
     visitedGroups.add(currentGroupId);
 
     const siblingGroupIds = new Set<string>();
-    for (const link of links) {
-      const membershipRule = rulesByLinkId.get(link.id);
-      for (const directionalContext of getDirectionalMembershipContexts(link, membershipRule)) {
+    for (const connection of connections) {
+      const membershipRule = rulesByConnectionId.get(connection.id);
+      for (const directionalContext of getDirectionalMembershipContexts(
+        connection,
+        membershipRule
+      )) {
         if (
           directionalContext.recipientGroupId === currentGroupId ||
           directionalContext.connectedGroupId === currentGroupId ||
-          (directionalContext.membershipRule.source_group_ids ?? []).includes(currentGroupId)
+          (directionalContext.membershipRule.eligible_origin_group_ids ?? []).includes(
+            currentGroupId
+          )
         ) {
           siblingGroupIds.add(directionalContext.recipientGroupId);
         }

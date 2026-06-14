@@ -11,6 +11,7 @@ import type {
   PreferenceLanguage,
   PreferenceNavigationView,
   GroupNetworkLayout,
+  DecisionTerminalDashboardConfig,
 } from './schema';
 import {
   resetPersistedNetworkLayouts,
@@ -34,6 +35,7 @@ export function usePreferenceActions() {
       language?: PreferenceLanguage;
       navigation_view?: PreferenceNavigationView;
       group_network_layouts?: Record<string, GroupNetworkLayout>;
+      decision_terminal_dashboard?: DecisionTerminalDashboardConfig;
     }) => {
       // Don't attempt mutations while preference data is still loading —
       // preference may appear null even though a row exists on the server,
@@ -57,6 +59,7 @@ export function usePreferenceActions() {
             language: fields.language ?? 'en',
             navigation_view: fields.navigation_view ?? 'asButtonList',
             group_network_layouts: fields.group_network_layouts ?? {},
+            decision_terminal_dashboard: fields.decision_terminal_dashboard,
           })
         );
         onServerError(result, msg => console.error('Preference create failed:', msg));
@@ -95,13 +98,12 @@ export function usePreferenceActions() {
   );
 
   const saveNetworkLayout = useCallback(
-    (scopeKey: string, layout: GroupNetworkLayout, legacyScopeKeys: readonly string[] = []) => {
+    (scopeKey: string, layout: GroupNetworkLayout) => {
       upsertPreference({
         group_network_layouts: savePersistedNetworkLayouts({
           layouts: groupNetworkLayouts,
           scopeKey,
           layout,
-          legacyScopeKeys,
         }),
       });
       toast.success(t('common.network.layoutSaved'));
@@ -110,11 +112,10 @@ export function usePreferenceActions() {
   );
 
   const resetNetworkLayout = useCallback(
-    (scopeKey: string, legacyScopeKeys: readonly string[] = []) => {
+    (scopeKey: string) => {
       const nextLayouts = resetPersistedNetworkLayouts({
         layouts: groupNetworkLayouts,
         scopeKey,
-        legacyScopeKeys,
       });
       upsertPreference({ group_network_layouts: nextLayouts });
       toast.success(t('common.network.layoutReset'));
@@ -124,16 +125,23 @@ export function usePreferenceActions() {
 
   const saveGroupNetworkLayout = useCallback(
     (groupId: string, layout: GroupNetworkLayout) => {
-      saveNetworkLayout(`group:${groupId}`, layout, [groupId]);
+      saveNetworkLayout(`group:${groupId}`, layout);
     },
     [saveNetworkLayout]
   );
 
   const resetGroupNetworkLayout = useCallback(
     (groupId: string) => {
-      resetNetworkLayout(`group:${groupId}`, [groupId]);
+      resetNetworkLayout(`group:${groupId}`);
     },
     [resetNetworkLayout]
+  );
+
+  const saveDecisionTerminalDashboard = useCallback(
+    (dashboard: DecisionTerminalDashboardConfig) => {
+      upsertPreference({ decision_terminal_dashboard: dashboard });
+    },
+    [upsertPreference]
   );
 
   return {
@@ -145,5 +153,6 @@ export function usePreferenceActions() {
     resetNetworkLayout,
     saveGroupNetworkLayout,
     resetGroupNetworkLayout,
+    saveDecisionTerminalDashboard,
   };
 }

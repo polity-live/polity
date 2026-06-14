@@ -26,7 +26,7 @@ describe('groupRelationshipsByGroup', () => {
         related_group: { id: 'child-a', name: 'Child A' },
       },
       {
-        status: 'accepted',
+        status: 'active',
         with_right: 'amendmentRight',
         related_group: { id: 'child-a', name: 'Child A' },
       },
@@ -50,7 +50,7 @@ describe('groupRelationshipsByGroup', () => {
     ]);
   });
 
-  it('returns only active parent groups, including legacy null statuses', () => {
+  it('returns only active parent groups', () => {
     const relationships = [
       {
         status: null,
@@ -70,10 +70,6 @@ describe('groupRelationshipsByGroup', () => {
     ];
 
     expect(groupRelationshipsByGroup(relationships, 'parent')).toEqual([
-      {
-        group: { id: 'parent-a', name: 'Parent A' },
-        rights: ['passiveVotingRight'],
-      },
       {
         group: { id: 'parent-b', name: 'Parent B' },
         rights: ['rightToSpeak'],

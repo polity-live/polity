@@ -4,6 +4,7 @@
  * Displays pending membership requests for group admins to approve or reject.
  */
 
+import { useMemo } from 'react';
 import { Link } from '@tanstack/react-router';
 import {
   Card,
@@ -14,14 +15,7 @@ import {
 } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/features/shared/ui/ui/table';
+import { DataTable, type ColumnDef } from '@/features/shared/ui/data-table';
 import { Check, Trash2, Users } from 'lucide-react';
 import { getMembershipDisplayRoles } from '../logic/buildMembershipRightsSummary';
 import type { ParticipationLike } from '@/features/shared/types/participation';
@@ -29,6 +23,7 @@ import { RoleTag } from './RoleTag';
 import { useGroupConflictPreflight } from '../hooks/useGroupConflictPreflight';
 import type { GroupConflictMembershipPreflight } from '../logic/groupConflictPreflight';
 import { GroupConflictDialog } from './GroupConflictPanel';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface PendingRequestsTableProps<TParticipation extends ParticipationLike> {
   requests: TParticipation[];
@@ -85,9 +80,9 @@ function PendingRequestActionCell<TParticipation extends ParticipationLike>({
       {blocking ? (
         <GroupConflictDialog
           response={response}
-          triggerLabel="Warum?"
+          triggerLabel={translateText('generated.inline.0693_warum_194dad5c')}
           triggerVariant="ghost"
-          title="Warum ist diese Freigabe blockiert?"
+          title={translateText('generated.inline.0709_warum_ist_diese_freigabe_blockiert_29129791')}
         />
       ) : null}
       <Button
@@ -108,14 +103,127 @@ export function PendingRequestsTable<TParticipation extends ParticipationLike>({
   onApprove,
   onReject,
   getApprovePreflightInput,
-  title = 'Pending Join Requests',
-  description = 'Review and approve membership requests',
-  roleColumnLabel = 'Requested Role',
+  title = translateText('generated.inline.0106_pending_join_requests_306b38df'),
+  description = translateText(
+    'generated.inline.0107_review_and_approve_membership_requests_d79e0a71'
+  ),
+  roleColumnLabel = translateText('generated.inline.0108_requested_role_599518e7'),
   dateColumnLabel = 'Requested',
   fallbackRoleLabel = 'Member',
   primaryActionLabel = 'Accept',
   secondaryActionLabel = 'Remove',
 }: PendingRequestsTableProps<TParticipation>) {
+  const columns = useMemo<ColumnDef<TParticipation>[]>(
+    () => [
+      {
+        id: 'user',
+        header: translateText('generated.inline.0090_user_9f8a2389'),
+        accessorFn: membership =>
+          [membership.user?.first_name, membership.user?.last_name].filter(Boolean).join(' ') ||
+          'Unknown User',
+        cell: ({ row }) => {
+          const membership = row.original;
+          const user = membership.user;
+          const userName =
+            [user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'Unknown User';
+          const userAvatar = user?.avatar || '';
+          const userHandle = user?.handle || '';
+          const avatar = (
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={userAvatar} alt={userName} />
+              <AvatarFallback>
+                {userName
+                  .split(' ')
+                  .map((n: string) => n[0])
+                  .join('')
+                  .toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+          );
+          const userContent = (
+            <>
+              {avatar}
+              <div>
+                <div className="font-medium">{userName}</div>
+                {userHandle ? (
+                  <div className="text-muted-foreground text-sm">@{userHandle}</div>
+                ) : null}
+              </div>
+            </>
+          );
+
+          return user?.id ? (
+            <Link to="/user/$id" params={{ id: user.id }} className="group flex items-center gap-3">
+              {userContent}
+            </Link>
+          ) : (
+            <div className="flex items-center gap-3">{userContent}</div>
+          );
+        },
+      },
+      {
+        id: 'role',
+        header: roleColumnLabel,
+        cell: ({ row }) => {
+          const membership = row.original;
+          const requestedRoles = getMembershipDisplayRoles(membership);
+
+          return (
+            <div className="flex flex-wrap gap-2">
+              {requestedRoles.length > 0 ? (
+                requestedRoles.map(role => (
+                  <RoleTag key={role.id} roleId={role.id} roleName={role.name || 'Role'} />
+                ))
+              ) : (
+                <RoleTag fallbackKey={`request-${membership.id}`}>{fallbackRoleLabel}</RoleTag>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        id: 'createdAt',
+        header: dateColumnLabel,
+        accessorFn: membership => membership.created_at ?? '',
+        cell: ({ row }) => {
+          const createdAt = row.original.created_at
+            ? new Date(row.original.created_at).toLocaleDateString()
+            : 'N/A';
+
+          return <span className="text-muted-foreground">{createdAt}</span>;
+        },
+      },
+      {
+        id: 'actions',
+        header: () => (
+          <span className="block text-right">
+            {translateText('generated.inline.0093_actions_c3cd636a')}
+          </span>
+        ),
+        cell: ({ row }) => (
+          <PendingRequestActionCell
+            membership={row.original}
+            onApprove={onApprove}
+            onReject={onReject}
+            getApprovePreflightInput={getApprovePreflightInput}
+            primaryActionLabel={primaryActionLabel}
+            secondaryActionLabel={secondaryActionLabel}
+          />
+        ),
+      },
+    ],
+    [
+      dateColumnLabel,
+      fallbackRoleLabel,
+      getApprovePreflightInput,
+      onApprove,
+      onReject,
+      primaryActionLabel,
+      roleColumnLabel,
+      secondaryActionLabel,
+    ]
+  );
+
   if (requests.length === 0) {
     return null;
   }
@@ -130,103 +238,13 @@ export function PendingRequestsTable<TParticipation extends ParticipationLike>({
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>User</TableHead>
-              <TableHead>{roleColumnLabel}</TableHead>
-              <TableHead>{dateColumnLabel}</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {requests.map(membership => {
-              const user = membership.user;
-              const userName =
-                [user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'Unknown User';
-              const userAvatar = user?.avatar || '';
-              const userHandle = user?.handle || '';
-              const requestedRoles = getMembershipDisplayRoles(membership);
-              const createdAt = membership.created_at
-                ? new Date(membership.created_at).toLocaleDateString()
-                : 'N/A';
-
-              return (
-                <TableRow key={membership.id}>
-                  <TableCell>
-                    {user?.id ? (
-                      <Link
-                        to="/user/$id"
-                        params={{ id: user.id }}
-                        className="group flex items-center gap-3"
-                      >
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={userAvatar} alt={userName} />
-                          <AvatarFallback>
-                            {userName
-                              .split(' ')
-                              .map((n: string) => n[0])
-                              .join('')
-                              .toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="group-hover:underline">
-                          <div className="font-medium">{userName}</div>
-                          {userHandle && (
-                            <div className="text-muted-foreground text-sm">@{userHandle}</div>
-                          )}
-                        </div>
-                      </Link>
-                    ) : (
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={userAvatar} alt={userName} />
-                          <AvatarFallback>
-                            {userName
-                              .split(' ')
-                              .map((n: string) => n[0])
-                              .join('')
-                              .toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="font-medium">{userName}</div>
-                          {userHandle && (
-                            <div className="text-muted-foreground text-sm">@{userHandle}</div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-2">
-                      {requestedRoles.length > 0 ? (
-                        requestedRoles.map(role => (
-                          <RoleTag key={role.id} roleId={role.id} roleName={role.name || 'Role'} />
-                        ))
-                      ) : (
-                        <RoleTag fallbackKey={`request-${membership.id}`}>
-                          {fallbackRoleLabel}
-                        </RoleTag>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{createdAt}</TableCell>
-                  <TableCell className="text-right">
-                    <PendingRequestActionCell
-                      membership={membership}
-                      onApprove={onApprove}
-                      onReject={onReject}
-                      getApprovePreflightInput={getApprovePreflightInput}
-                      primaryActionLabel={primaryActionLabel}
-                      secondaryActionLabel={secondaryActionLabel}
-                    />
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+        <DataTable
+          columns={columns}
+          data={requests}
+          getRowId={membership => membership.id}
+          enablePagination={false}
+          tableClassName="[&_td:last-child]:text-right"
+        />
       </CardContent>
     </Card>
   );

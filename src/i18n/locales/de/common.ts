@@ -81,6 +81,7 @@ export const commonTranslations = {
     uploading: 'Wird hochgeladen...',
     actions: 'Aktionen',
     clear: 'Löschen',
+    later: 'Später',
   },
   validation: {
     firstNameHint: 'Gib mindestens 2 Zeichen für den Vornamen ein.',
@@ -318,11 +319,11 @@ export const commonTranslations = {
     relationshipSaveError: 'Fehler beim Speichern der Beziehungen.',
     saving: 'Speichern...',
     saveChanges: 'Änderungen speichern',
-    directionOutgoingLabel: 'Diese Gruppe vergibt das Recht an die andere Gruppe',
-    directionIncomingLabel: 'Diese Gruppe hat das Recht in der anderen Gruppe',
+    directionOutgoingLabel: 'Diese Gruppe hat das Recht in der anderen Gruppe',
+    directionIncomingLabel: 'Die andere Gruppe hat das Recht in dieser Gruppe',
     directionBidirectionalLabel: 'Diese Gruppe und die andere Gruppe haben das Recht gegenseitig',
     directionHas: 'hat',
-    directionGrants: 'vergibt',
+    directionGrants: 'hat',
     directionCan: 'darf',
     directionCanPlural: 'dürfen',
     directionReceive: 'erhält',
@@ -344,8 +345,8 @@ export const commonTranslations = {
       'wird aus Gruppen abgeleitet, die passives Wahlrecht in',
     siblingMembershipExplanationParliamentAfterSource: 'haben.',
     currentGroupHasRightIn: '{{currentGroupName}} hat {{rightLabel}} in {{selectedGroupName}}',
-    currentGroupGrantsRightTo:
-      '{{currentGroupName}} vergibt {{rightLabel}} an {{selectedGroupName}}',
+    selectedGroupHasRightInCurrentGroup:
+      '{{selectedGroupName}} hat {{rightLabel}} in {{currentGroupName}}',
     groupsMutuallyShareRight:
       '{{currentGroupName}} und {{selectedGroupName}} haben gegenseitig {{rightLabel}}',
     rightInfo: 'Informationsrecht',

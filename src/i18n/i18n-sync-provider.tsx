@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Fragment, useEffect } from 'react';
 import { useLanguageStore } from '@/features/shared/global-state/language.store.tsx';
 import i18n from '@/i18n/i18n.ts';
 
@@ -35,5 +35,5 @@ export function I18nSyncProvider({ children }: { children: React.ReactNode }) {
     };
   }, [language, setLanguage]);
 
-  return <>{children}</>;
+  return <Fragment key={language}>{children}</Fragment>;
 }

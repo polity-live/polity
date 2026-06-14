@@ -3,10 +3,11 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { Textarea } from '@/features/shared/ui/ui/textarea';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { Reply, ArrowUp, ArrowDown, User, Clock } from 'lucide-react';
+import { Reply, ArrowUp, ArrowDown, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { calculateScore } from '@/features/votes/utils/voting-utils';
 import type { CommentWithReplies } from '../utils/comment-tree';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface CommentTreeProps {
   comment: CommentWithReplies;
@@ -19,7 +20,7 @@ interface CommentTreeProps {
     threadId: string,
     text: string,
     userId: string,
-    parentCommentId?: string,
+    parentCommentId?: string
   ) => Promise<string>;
   onVoteComment: (
     commentId: string,
@@ -27,11 +28,20 @@ interface CommentTreeProps {
     currentVote: { id: string; vote: number | null } | undefined,
     currentUpvotes: number,
     currentDownvotes: number,
-    userId?: string,
+    userId?: string
   ) => Promise<void>;
 }
 
-export function CommentTree({ comment, threadId, userId, amendmentId, amendmentTitle, senderName, onCreateComment, onVoteComment }: CommentTreeProps) {
+export function CommentTree({
+  comment,
+  threadId,
+  userId,
+  amendmentId,
+  amendmentTitle,
+  senderName,
+  onCreateComment,
+  onVoteComment,
+}: CommentTreeProps) {
   const [isReplying, setIsReplying] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,7 +53,7 @@ export function CommentTree({ comment, threadId, userId, amendmentId, amendmentT
 
   const handleVote = async (voteValue: number) => {
     if (!userId) {
-      toast.error('Please log in to vote');
+      toast.error(translateText('generated.inline.0138_please_log_in_to_vote_59574e84'));
       return;
     }
 
@@ -58,7 +68,7 @@ export function CommentTree({ comment, threadId, userId, amendmentId, amendmentT
       );
     } catch (error) {
       console.error('Error voting:', error);
-      toast.error('Failed to vote');
+      toast.error(translateText('generated.inline.0140_failed_to_vote_68d9f4e2'));
     }
   };
 
@@ -67,12 +77,7 @@ export function CommentTree({ comment, threadId, userId, amendmentId, amendmentT
 
     setIsSubmitting(true);
     try {
-      await onCreateComment(
-        threadId,
-        replyText,
-        userId,
-        comment.id,
-      );
+      await onCreateComment(threadId, replyText, userId, comment.id);
       setReplyText('');
       setIsReplying(false);
     } catch (error) {
@@ -115,15 +120,19 @@ export function CommentTree({ comment, threadId, userId, amendmentId, amendmentT
             {/* Comment content */}
             <div className="flex-1">
               <div className="mb-3 flex items-start justify-between">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="text-muted-foreground flex items-center gap-2 text-sm">
                   <Avatar className="h-6 w-6">
                     <AvatarImage src={comment.user?.avatar ?? undefined} />
-                    <AvatarFallback>{comment.user?.first_name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
+                    <AvatarFallback>
+                      {comment.user?.first_name?.[0]?.toUpperCase() || 'U'}
+                    </AvatarFallback>
                   </Avatar>
-                  <span>{[comment.user?.first_name, comment.user?.last_name].filter(Boolean).join(' ') || 'Anonymous'}</span>
-                  {comment.user?.handle && (
-                    <span className="text-xs">@{comment.user.handle}</span>
-                  )}
+                  <span>
+                    {[comment.user?.first_name, comment.user?.last_name]
+                      .filter(Boolean)
+                      .join(' ') || translateText('generated.inline.0056_anonymous_9bed5104')}
+                  </span>
+                  {comment.user?.handle && <span className="text-xs">@{comment.user.handle}</span>}
                   <span>•</span>
                   <Clock className="h-4 w-4" />
                   <span>{new Date(comment.created_at).toLocaleDateString()}</span>
@@ -132,23 +141,23 @@ export function CommentTree({ comment, threadId, userId, amendmentId, amendmentT
               <p className="mb-3 whitespace-pre-wrap">{comment.content}</p>
               <Button variant="ghost" size="sm" onClick={() => setIsReplying(!isReplying)}>
                 <Reply className="mr-2 h-4 w-4" />
-                Reply
+                {translateText('generated.inline.0377_reply_6c2bb735')}
               </Button>
 
               {isReplying && (
                 <div className="mt-4 space-y-2">
                   <Textarea
-                    placeholder="Write your reply..."
+                    placeholder={translateText('generated.inline.0378_write_your_reply_fa39b3d9')}
                     value={replyText}
                     onChange={e => setReplyText(e.target.value)}
                     rows={3}
                   />
                   <div className="flex gap-2">
                     <Button onClick={handleReply} disabled={isSubmitting || !replyText.trim()}>
-                      Post Reply
+                      {translateText('generated.inline.0379_post_reply_bb8ad002')}
                     </Button>
                     <Button variant="outline" onClick={() => setIsReplying(false)}>
-                      Cancel
+                      {translateText('generated.inline.0065_cancel_77dfd213')}
                     </Button>
                   </div>
                 </div>
@@ -160,7 +169,7 @@ export function CommentTree({ comment, threadId, userId, amendmentId, amendmentT
 
       {/* Nested Replies */}
       {comment.replies && comment.replies.length > 0 && (
-        <div className="ml-8 space-y-3 border-l-2 border-muted pl-4">
+        <div className="border-muted ml-8 space-y-3 border-l-2 pl-4">
           {comment.replies.map(reply => (
             <CommentTree
               key={reply.id}

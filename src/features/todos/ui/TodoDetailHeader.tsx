@@ -1,6 +1,7 @@
 import { Button } from '@/features/shared/ui/ui/button';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Edit, Save, X } from 'lucide-react';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface TodoDetailHeaderProps {
   isEditing: boolean;
@@ -31,7 +32,7 @@ export function TodoDetailHeader({
             value={formTitle}
             onChange={e => onTitleChange?.(e.target.value)}
             className="text-2xl font-bold"
-            placeholder="Todo title"
+            placeholder={translateText('generated.inline.1172_todo_title_c5e8306a')}
           />
         ) : (
           <h1 className="text-3xl font-bold">{title}</h1>
@@ -42,17 +43,17 @@ export function TodoDetailHeader({
           <>
             <Button onClick={onSave} disabled={isSaving} size="sm">
               <Save className="mr-2 h-4 w-4" />
-              Save
+              {translateText('generated.inline.0269_save_efc007a3')}
             </Button>
             <Button onClick={onCancel} variant="outline" size="sm" disabled={isSaving}>
               <X className="mr-2 h-4 w-4" />
-              Cancel
+              {translateText('generated.inline.0065_cancel_77dfd213')}
             </Button>
           </>
         ) : (
           <Button onClick={onEdit} variant="outline" size="sm">
             <Edit className="mr-2 h-4 w-4" />
-            Edit
+            {translateText('generated.inline.0729_edit_5301648d')}
           </Button>
         )}
       </div>

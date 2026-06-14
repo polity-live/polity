@@ -7,7 +7,10 @@ import { X, Video, Loader2 } from 'lucide-react';
 import { cn } from '@/features/shared/utils/utils.ts';
 import { useUploadFile } from '@/features/file-upload/hooks/use-upload-file.ts';
 import { toast } from 'sonner';
-import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 
 interface VideoUploadProps {
   currentVideo?: string;
@@ -23,7 +26,7 @@ export const VideoUpload: React.FC<VideoUploadProps> = ({
   currentThumbnail,
   onVideoChange,
   label = 'Video',
-  description = 'Upload a video file',
+  description = translateText('generated.inline.0062_upload_a_video_file_53bfeca8'),
   className,
 }) => {
   const { t } = useTranslation();
@@ -37,14 +40,18 @@ export const VideoUpload: React.FC<VideoUploadProps> = ({
     if (file) {
       // Check if it's a video file
       if (!file.type.startsWith('video/')) {
-        toast.error('Please select a valid video file');
+        toast.error(
+          translateText('generated.inline.0523_please_select_a_valid_video_file_1459ebac')
+        );
         return;
       }
 
       // Check file size (limit to 100MB)
       const maxSize = 100 * 1024 * 1024; // 100MB
       if (file.size > maxSize) {
-        toast.error('Video file size must be less than 100MB');
+        toast.error(
+          translateText('generated.inline.0524_video_file_size_must_be_less_than_100mb_7ca8a681')
+        );
         return;
       }
 
@@ -55,11 +62,13 @@ export const VideoUpload: React.FC<VideoUploadProps> = ({
           setPreviewUrl(uploadResult.url);
           setVideoUrl(uploadResult.url);
           onVideoChange(uploadResult.url);
-          toast.success('Video uploaded successfully');
+          toast.success(
+            translateText('generated.inline.0525_video_uploaded_successfully_d74ca369')
+          );
         }
       } catch (error) {
         console.error('Error uploading video:', error);
-        toast.error('Failed to upload video');
+        toast.error(translateText('generated.inline.0526_failed_to_upload_video_c3009772'));
       }
     }
   };
@@ -106,13 +115,15 @@ export const VideoUpload: React.FC<VideoUploadProps> = ({
                   }
                 }}
               >
-                Your browser does not support the video tag.
+                {translateText(
+                  'generated.inline.0527_your_browser_does_not_support_the_video_tag_05b27e33'
+                )}
               </video>
               <Button
                 type="button"
                 variant="destructive"
                 size="icon"
-                className="absolute right-2 top-2"
+                className="absolute top-2 right-2"
                 onClick={handleRemoveVideo}
                 disabled={isUploading}
               >
@@ -160,7 +171,7 @@ export const VideoUpload: React.FC<VideoUploadProps> = ({
               value={videoUrl}
               onChange={e => handleUrlChange(e.target.value)}
               placeholder="https://example.com/video.mp4"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
               disabled={isUploading}
             />
           </div>

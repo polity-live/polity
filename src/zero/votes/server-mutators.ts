@@ -84,6 +84,84 @@ async function assertOfflineVoteTallyWithinCap(
   }
 }
 
+type VoteTx = Parameters<typeof mutators.votes.updateVote.fn>[0]['tx'];
+
+function isFinalizingVoteStatus(status?: string | null) {
+  return status === 'final' || status === 'final_vote' || status === 'closed';
+}
+
+async function assertCurrentCRVoteOrder(
+  tx: VoteTx,
+  agendaItemChangeRequest: {
+    id: string;
+    agenda_item_id: string;
+    is_final_vote: boolean;
+  }
+) {
+  if (agendaItemChangeRequest.is_final_vote) {
+    return;
+  }
+
+  const timeline = await tx.run(
+    zql.agenda_item_change_request
+      .where('agenda_item_id', agendaItemChangeRequest.agenda_item_id)
+      .orderBy('order_index', 'asc')
+  );
+  const firstIncomplete = timeline.find(item => !item.is_final_vote && item.status !== 'completed');
+
+  if (firstIncomplete?.id && firstIncomplete.id !== agendaItemChangeRequest.id) {
+    throw new Error('Change requests must be voted in their configured order.');
+  }
+}
+
+async function assertNoOpenChangeRequestsBeforeFinalVote(
+  tx: VoteTx,
+  vote: {
+    id: string;
+    agenda_item_id?: string | null;
+    amendment_id?: string | null;
+  }
+) {
+  if (!vote.agenda_item_id) {
+    return { isChangeRequestVote: false };
+  }
+
+  const timelineLink = await tx.run(zql.agenda_item_change_request.where('vote_id', vote.id).one());
+
+  if (timelineLink) {
+    await assertCurrentCRVoteOrder(tx, timelineLink);
+    return { isChangeRequestVote: true };
+  }
+
+  const stepRuns = await tx.run(
+    zql.amendment_process_step_run.where('agenda_item_id', vote.agenda_item_id)
+  );
+  if (stepRuns.some(step => step.step_kind === 'merge_vote')) {
+    return { isChangeRequestVote: false };
+  }
+
+  const pendingTimelineItems = await tx.run(
+    zql.agenda_item_change_request.where('agenda_item_id', vote.agenda_item_id)
+  );
+  const hasIncompleteTimelineItem = pendingTimelineItems.some(
+    item => !item.is_final_vote && item.status !== 'completed'
+  );
+  if (hasIncompleteTimelineItem) {
+    throw new Error('All change request votes must be completed before the final vote.');
+  }
+
+  if (vote.amendment_id) {
+    const openChangeRequests = await tx.run(
+      zql.change_request.where('amendment_id', vote.amendment_id).where('status', 'open')
+    );
+    if (openChangeRequests.length > 0) {
+      throw new Error('All open change requests must be voted before the final vote.');
+    }
+  }
+
+  return { isChangeRequestVote: false };
+}
+
 /** Server-only mutators — override shared mutators with additional server-side logic. */
 export const voteServerMutators = {
   createVote: defineMutator(createVoteSchema, async ({ tx, ctx, args }) => {
@@ -99,10 +177,19 @@ export const voteServerMutators = {
 
   updateVote: defineMutator(updateVoteSchema, async ({ tx, ctx, args }) => {
     const oldVote = await tx.run(zql.vote.where('id', args.id).one());
+    const voteContext =
+      oldVote && !isFinalizingVoteStatus(oldVote.status) && isFinalizingVoteStatus(args.status)
+        ? await assertNoOpenChangeRequestsBeforeFinalVote(tx, oldVote)
+        : { isChangeRequestVote: false };
 
     await mutators.votes.updateVote.fn({ tx, ctx, args });
 
-    if (oldVote?.status !== 'closed' && args.status === 'closed' && oldVote?.agenda_item_id) {
+    if (
+      !voteContext.isChangeRequestVote &&
+      oldVote?.status !== 'closed' &&
+      args.status === 'closed' &&
+      oldVote?.agenda_item_id
+    ) {
       const resolution = await resolveAmendmentProcessVote(tx, {
         agenda_item_id: oldVote.agenda_item_id,
       });

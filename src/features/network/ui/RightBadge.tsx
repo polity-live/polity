@@ -2,7 +2,10 @@ import { Badge } from '@/features/shared/ui/ui/badge';
 import { cn } from '@/features/shared/utils/utils';
 import { getRightLabel, RIGHT_GRADIENTS, type RightType } from '@/features/network/ui/RightFilters';
 import { ArrowDownLeft, ArrowUpRight } from 'lucide-react';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import type { NetworkRelationshipKind } from '@/features/network/logic/networkRelationshipHelpers';
 
 type RightRequestKind = Extract<NetworkRelationshipKind, 'incoming' | 'outgoing'>;
@@ -23,9 +26,9 @@ export function RightBadge({
   const { t } = useTranslation();
   const label = getRightLabel(right, (key, fallback) => t(key) || fallback || key);
   const requestStatusLabel =
-    requestKind === 'incoming'
+    requestKind === translateText('generated.inline.0124_incoming_2ff8dd80')
       ? t('common.network.incomingRequest')
-      : requestKind === 'outgoing'
+      : requestKind === translateText('generated.inline.0125_outgoing_708a91a8')
         ? t('common.network.outgoingRequest')
         : null;
   const RequestIcon = requestKind === 'incoming' ? ArrowDownLeft : ArrowUpRight;

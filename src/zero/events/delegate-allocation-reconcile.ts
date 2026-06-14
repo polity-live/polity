@@ -18,7 +18,7 @@ import {
 import { mutators } from '../mutators';
 import {
   buildDerivedGroupNetworkMetaMap,
-  explodeNetworkLinksToRelationships,
+  deriveGroupRelationships,
   type DerivedNetworkRelationshipRow,
 } from '../network/derived';
 import { zql } from '../schema';
@@ -88,27 +88,38 @@ function isActiveMembership(membership: NormalizedMembership) {
 }
 
 async function loadNetworkRelationships(tx: EventServerTx) {
-  const [groups, links, rights, rules] = await Promise.all([
+  const [groups, connections, grants, rules, origins] = await Promise.all([
     tx.run(zql.group),
-    tx.run(zql.network_link),
-    tx.run(zql.network_link_right),
-    tx.run(zql.network_link_membership_rule),
+    tx.run(zql.group_connection),
+    tx.run(zql.group_right_grant),
+    tx.run(zql.group_membership_rule),
+    tx.run(zql.group_membership_rule_origin),
   ]);
+  const originsByRuleId = new Map<string, { eligible_origin_group_id: string }[]>();
+  for (const origin of origins) {
+    const entries = originsByRuleId.get(origin.membership_rule_id) ?? [];
+    entries.push({ eligible_origin_group_id: origin.eligible_origin_group_id });
+    originsByRuleId.set(origin.membership_rule_id, entries);
+  }
+  const rulesWithOrigins = rules.map(rule => ({
+    ...rule,
+    origins: originsByRuleId.get(rule.id) ?? [],
+  }));
 
   const derivedMetaByGroupId = buildDerivedGroupNetworkMetaMap({
     groupIds: groups.map(group => group.id),
-    links,
-    rights,
-    rules,
+    connections,
+    grants,
+    rules: rulesWithOrigins,
   });
   const groupsById = new Map(
     groups.map(group => [group.id, { ...group, ...(derivedMetaByGroupId.get(group.id) ?? {}) }])
   );
 
-  return explodeNetworkLinksToRelationships({
-    links,
-    rights,
-    rules,
+  return deriveGroupRelationships({
+    connections,
+    grants,
+    rules: rulesWithOrigins,
     includeInactive: true,
   }).map(relationship => ({
     ...relationship,
@@ -154,7 +165,8 @@ function collectPathsFromBaseToRoot(args: {
     const pair = getHierarchyRelationshipPair(relationship);
     if (
       !pair ||
-      relationship.with_right !== 'passiveVotingRight' ||
+      relationship.connection_type !== 'hierarchy' ||
+      relationship.grant_id !== null ||
       relationship.status !== 'active'
     ) {
       continue;

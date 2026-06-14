@@ -271,12 +271,7 @@ export function GroupConflictDialog({
   const { t } = useTranslation();
 
   const resolvedTitle = title ?? t('features.groups.conflicts.dialog.title');
-  const resolvedDescription =
-    description ??
-    t(
-      'features.groups.conflicts.dialog.description',
-      'Hier siehst du, warum die Aktion blockiert ist und wie der Konflikt aufgeloest werden kann.'
-    );
+  const resolvedDescription = description ?? t('features.groups.conflicts.dialog.description');
   const resolvedTriggerLabel = triggerLabel ?? t('features.groups.conflicts.dialog.triggerLabel');
 
   if (!response || response.conflicts.length === 0) {

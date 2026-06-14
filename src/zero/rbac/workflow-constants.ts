@@ -1,3 +1,4 @@
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 /**
  * Amendment Editing Mode Constants
  *
@@ -10,14 +11,14 @@
  * the amendment lifecycle and the editor behaviour.
  */
 export type EditingMode =
-  | 'edit'              // Collaborators can directly edit
-  | 'view'              // Read-only mode
-  | 'suggest_internal'  // Collaborators create suggestions
-  | 'suggest_event'     // Event participants create suggestions
-  | 'vote_internal'     // Collaborators vote on suggestions
-  | 'vote_event'        // Event votes on suggestions sequentially
-  | 'passed'            // Final approval reached
-  | 'rejected';         // Rejected at some point in process
+  | 'edit' // Collaborators can directly edit
+  | 'view' // Read-only mode
+  | 'suggest_internal' // Collaborators create suggestions
+  | 'suggest_event' // Event participants create suggestions
+  | 'vote_internal' // Collaborators vote on suggestions
+  | 'vote_event' // Event votes on suggestions sequentially
+  | 'passed' // Final approval reached
+  | 'rejected'; // Rejected at some point in process
 
 /** @deprecated Use EditingMode instead */
 export type WorkflowStatus = EditingMode;
@@ -25,11 +26,7 @@ export type WorkflowStatus = EditingMode;
 /**
  * Amendment general status (legacy compatibility)
  */
-export type AmendmentStatus =
-  | 'draft'
-  | 'in_progress'
-  | 'passed'
-  | 'rejected';
+export type AmendmentStatus = 'draft' | 'in_progress' | 'passed' | 'rejected';
 
 /**
  * Voting session types
@@ -57,7 +54,7 @@ export const EDITING_MODE_TRANSITIONS: Record<EditingMode, EditingMode[]> = {
   suggest_event: ['vote_event', 'view', 'rejected'],
   vote_internal: ['edit', 'view', 'suggest_internal', 'suggest_event', 'vote_event'],
   vote_event: ['suggest_event', 'passed', 'rejected'],
-  passed: [],   // Terminal state
+  passed: [], // Terminal state
   rejected: [], // Terminal state
 };
 
@@ -82,10 +79,7 @@ export const COLLABORATOR_SELECTABLE_STATUSES = SELECTABLE_MODES;
 /**
  * Event-phase editing modes
  */
-export const EVENT_MODES: EditingMode[] = [
-  'suggest_event',
-  'vote_event',
-];
+export const EVENT_MODES: EditingMode[] = ['suggest_event', 'vote_event'];
 
 /** @deprecated Use EVENT_MODES instead */
 export const EVENT_CONTROLLED_STATUSES = EVENT_MODES;
@@ -111,50 +105,60 @@ export const EDITING_MODE_METADATA: Record<
   }
 > = {
   edit: {
-    label: 'Bearbeiten',
-    description: 'Alle Collaborators können direkt bearbeiten',
+    label: translateText('generated.inline.0740_bearbeiten_104f3bfd'),
+    description: translateText(
+      'generated.inline.0741_alle_collaborators_k_nnen_direkt_bearbeiten_84c06ce2'
+    ),
     color: 'bg-blue-500',
     icon: 'Edit',
   },
   view: {
-    label: 'Ansicht',
-    description: 'Nur-Lesen Modus',
+    label: translateText('generated.inline.0742_ansicht_5c388792'),
+    description: translateText('generated.inline.0743_nur_lesen_modus_054b6937'),
     color: 'bg-gray-500',
     icon: 'Eye',
   },
   suggest_internal: {
-    label: 'Vorschläge Intern',
-    description: 'Collaborators können Vorschläge einreichen',
+    label: translateText('generated.inline.0744_vorschl_ge_intern_cb3e8f05'),
+    description: translateText(
+      'generated.inline.0745_collaborators_k_nnen_vorschl_ge_einreichen_7f0ea119'
+    ),
     color: 'bg-purple-500',
     icon: 'MessageSquare',
   },
   suggest_event: {
-    label: 'Event Vorschläge',
-    description: 'Event-Teilnehmer können Vorschläge einreichen',
+    label: translateText('generated.inline.0746_event_vorschl_ge_687919fd'),
+    description: translateText(
+      'generated.inline.0747_event_teilnehmer_k_nnen_vorschl_ge_einreichen_b811936d'
+    ),
     color: 'bg-teal-500',
     icon: 'Calendar',
   },
   vote_internal: {
-    label: 'Interne Abstimmung',
-    description: 'Abstimmung unter Collaborators (zeitbasiert)',
+    label: translateText('generated.inline.0748_interne_abstimmung_a0face84'),
+    description: translateText(
+      'generated.inline.0749_abstimmung_unter_collaborators_zeitbasiert_41f561b1'
+    ),
     color: 'bg-orange-500',
     icon: 'Vote',
   },
   vote_event: {
-    label: 'Event Abstimmung',
-    description: 'Event stimmt sequentiell über Änderungen ab',
+    label: translateText('generated.inline.0750_event_abstimmung_96225579'),
+    description: translateText(
+      'generated.inline.0751_event_stimmt_sequentiell_ber_nderungen_ab_d1aa6df6'
+    ),
     color: 'bg-red-500',
     icon: 'Gavel',
   },
   passed: {
-    label: 'Angenommen',
-    description: 'Amendment wurde angenommen',
+    label: translateText('generated.inline.0752_angenommen_187cf380'),
+    description: translateText('generated.inline.0753_amendment_wurde_angenommen_ee1c7af2'),
     color: 'bg-green-500',
     icon: 'CheckCircle',
   },
   rejected: {
-    label: 'Abgelehnt',
-    description: 'Amendment wurde abgelehnt',
+    label: translateText('generated.inline.0754_abgelehnt_110d6fe7'),
+    description: translateText('generated.inline.0755_amendment_wurde_abgelehnt_6d6cc595'),
     color: 'bg-red-700',
     icon: 'XCircle',
   },
@@ -192,10 +196,7 @@ export function normalizeEditingMode(raw: string | null | undefined): EditingMod
 /**
  * Validate if an editing mode transition is allowed
  */
-export function canTransitionTo(
-  currentMode: EditingMode,
-  targetMode: EditingMode
-): boolean {
+export function canTransitionTo(currentMode: EditingMode, targetMode: EditingMode): boolean {
   const allowed = EDITING_MODE_TRANSITIONS[currentMode];
   return allowed.includes(targetMode);
 }

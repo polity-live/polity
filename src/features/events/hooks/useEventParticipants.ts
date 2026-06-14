@@ -7,28 +7,90 @@ import { useEventAccessRoles } from '@/zero/events/useEventState';
 import { useAuth } from '@/providers/auth-provider';
 import { useEventData } from './useEventData';
 import { useEventMutations } from './useEventMutations';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 // Define available action rights for events
 export const ACTION_RIGHTS = [
-  { resource: 'events', action: 'view', label: 'View Event' },
-  { resource: 'events', action: 'update', label: 'Update Event' },
-  { resource: 'events', action: 'delete', label: 'Delete Event' },
-  { resource: 'events', action: 'manage', label: 'Manage Event' },
-  { resource: 'events', action: 'manage_participants', label: 'Manage Participants' },
-  { resource: 'events', action: 'manage_speakers', label: 'Manage Speakers' },
-  { resource: 'events', action: 'manage_votes', label: 'Manage Votes' },
-  { resource: 'events', action: 'active_voting', label: 'Active Voting Rights' },
+  {
+    resource: 'events',
+    action: 'view',
+    label: translateText('generated.inline.0094_view_event_9ea3a72c'),
+  },
+  {
+    resource: 'events',
+    action: 'update',
+    label: translateText('generated.inline.0095_update_event_a2295718'),
+  },
+  {
+    resource: 'events',
+    action: 'delete',
+    label: translateText('generated.inline.0096_delete_event_d45effe5'),
+  },
+  {
+    resource: 'events',
+    action: 'manage',
+    label: translateText('generated.inline.0097_manage_event_643f3eef'),
+  },
+  {
+    resource: 'events',
+    action: 'manage_participants',
+    label: translateText('generated.inline.0098_manage_participants_16e85d0e'),
+  },
+  {
+    resource: 'events',
+    action: 'manage_speakers',
+    label: translateText('generated.inline.0099_manage_speakers_7c299ed7'),
+  },
+  {
+    resource: 'events',
+    action: 'manage_votes',
+    label: translateText('generated.inline.0100_manage_votes_48682559'),
+  },
+  {
+    resource: 'events',
+    action: 'speak',
+    label: translateText('generated.inline.0101_speak_in_events_47b45d28'),
+  },
+  {
+    resource: 'events',
+    action: 'active_voting',
+    label: translateText('generated.inline.0102_active_voting_rights_c85cd127'),
+  },
   {
     resource: 'events',
     action: 'passive_voting',
-    label: 'Passive Voting Rights (Can Be Candidate)',
+    label: translateText('generated.inline.0103_passive_voting_rights_can_be_candidate_c6e8a741'),
   },
-  { resource: 'agendaItems', action: 'view', label: 'View Agenda Items' },
-  { resource: 'agendaItems', action: 'create', label: 'Create Agenda Items' },
-  { resource: 'agendaItems', action: 'update', label: 'Update Agenda Items' },
-  { resource: 'agendaItems', action: 'delete', label: 'Delete Agenda Items' },
-  { resource: 'agendaItems', action: 'manage', label: 'Manage Agenda' },
-  { resource: 'notifications', action: 'manageNotifications', label: 'Manage Notifications' },
+  {
+    resource: 'agendaItems',
+    action: 'view',
+    label: translateText('generated.inline.0104_view_agenda_items_aa984b00'),
+  },
+  {
+    resource: 'agendaItems',
+    action: 'create',
+    label: translateText('generated.inline.0105_create_agenda_items_89252d81'),
+  },
+  {
+    resource: 'agendaItems',
+    action: 'update',
+    label: translateText('generated.inline.0106_update_agenda_items_88802540'),
+  },
+  {
+    resource: 'agendaItems',
+    action: 'delete',
+    label: translateText('generated.inline.0107_delete_agenda_items_b774cfce'),
+  },
+  {
+    resource: 'agendaItems',
+    action: 'manage',
+    label: translateText('generated.inline.0108_manage_agenda_38983d6b'),
+  },
+  {
+    resource: 'notifications',
+    action: 'manageNotifications',
+    label: translateText('generated.inline.0040_manage_notifications_32133a0a'),
+  },
 ];
 
 export function useEventParticipants(eventId: string) {
@@ -163,7 +225,7 @@ export function useEventParticipants(eventId: string) {
   // Role management handlers
   const handleAddRole = async () => {
     if (!newRoleName.trim()) {
-      toast.error('Role name is required');
+      toast.error(translateText('generated.inline.0234_role_name_is_required_6193b4dd'));
       return;
     }
 
@@ -181,24 +243,28 @@ export function useEventParticipants(eventId: string) {
         blog_id: null,
       });
 
-      toast.success('Role created successfully');
+      toast.success(translateText('generated.inline.0235_role_created_successfully_150cd5c5'));
 
       setNewRoleName('');
       setNewRoleDescription('');
       setAddRoleDialogOpen(false);
     } catch (error) {
       console.error('Failed to create role:', error);
-      toast.error('Failed to create role. Please try again.');
+      toast.error(
+        translateText('generated.inline.0236_failed_to_create_role_please_try_again_7383aeaf')
+      );
     }
   };
 
   const handleRemoveRole = async (roleId: string) => {
     try {
       await deleteRole({ id: roleId });
-      toast.success('Role removed successfully');
+      toast.success(translateText('generated.inline.0463_role_removed_successfully_2812ce44'));
     } catch (error) {
       console.error('Failed to remove role:', error);
-      toast.error('Failed to remove role. Please try again.');
+      toast.error(
+        translateText('generated.inline.0464_failed_to_remove_role_please_try_again_68f512d7')
+      );
     }
   };
 
@@ -232,7 +298,9 @@ export function useEventParticipants(eventId: string) {
       }
     } catch (error) {
       console.error('Failed to toggle action right:', error);
-      toast.error('Failed to update permission. Please try again.');
+      toast.error(
+        translateText('generated.inline.0465_failed_to_update_permission_please_try_again_c9f90034')
+      );
     }
   };
 

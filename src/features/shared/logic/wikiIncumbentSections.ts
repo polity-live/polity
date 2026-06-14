@@ -1,3 +1,4 @@
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 export interface WikiIncumbentPersonCard {
   kind: 'person';
   id: string;
@@ -47,8 +48,11 @@ export function buildWikiIncumbentCarouselSections(
 ): WikiIncumbentCarouselSection[] {
   const {
     featuredMinAssigneeCount = 3,
-    lowCountTitle = 'More roles & incumbents',
-    lowCountDescription = `Roles with fewer than ${featuredMinAssigneeCount} active incumbents, including vacant seats.`,
+    lowCountTitle = translateText('generated.inline.0144_more_roles_incumbents_bfe90f5e'),
+    lowCountDescription = translateText(
+      'generated.inline.0145_roles_with_fewer_than_featuredminassigneecoun_f21c6b17',
+      { featuredMinAssigneeCount: featuredMinAssigneeCount }
+    ),
   } = options;
 
   const featuredSections: WikiIncumbentCarouselSection[] = [];

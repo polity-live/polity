@@ -1,6 +1,7 @@
 import { Button } from '@/features/shared/ui/ui/button';
 import { UserPlus, UserMinus, Clock, Check } from 'lucide-react';
 import { CollaborationStatus } from '../hooks/useAmendmentCollaboration';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface AmendmentCollaborationButtonProps {
   status: CollaborationStatus | null;
@@ -26,7 +27,7 @@ export function AmendmentCollaborationButton({
     return (
       <Button onClick={onAcceptInvitation} disabled={isLoading} variant="default">
         <Check className="mr-2 h-4 w-4" />
-        Accept Invitation
+        {translateText('generated.inline.0165_accept_invitation_f41d2aa6')}
       </Button>
     );
   }
@@ -35,7 +36,7 @@ export function AmendmentCollaborationButton({
     return (
       <Button onClick={onLeave} disabled={isLoading} variant="outline">
         <Clock className="mr-2 h-4 w-4" />
-        Request Pending
+        {translateText('generated.inline.0166_request_pending_cdab22cf')}
       </Button>
     );
   }
@@ -44,7 +45,7 @@ export function AmendmentCollaborationButton({
     return (
       <Button onClick={onLeave} disabled={isLoading} variant="outline">
         <UserMinus className="mr-2 h-4 w-4" />
-        Leave Collaboration
+        {translateText('generated.inline.0167_leave_collaboration_183024a6')}
       </Button>
     );
   }
@@ -52,7 +53,7 @@ export function AmendmentCollaborationButton({
   return (
     <Button onClick={onRequestCollaboration} disabled={isLoading}>
       <UserPlus className="mr-2 h-4 w-4" />
-      Request to Collaborate
+      {translateText('generated.inline.0168_request_to_collaborate_4d4f2e47')}
     </Button>
   );
 }

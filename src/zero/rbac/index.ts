@@ -43,6 +43,43 @@ export type { PermissionData, PermissionScope } from './check';
 export { can } from './can';
 export type { PermissionCheck } from './can';
 
+export {
+  canReadVisibility,
+  denyPublicApiMutation,
+  isAuthenticatedUser,
+  isClientTx,
+  requireActorMatches,
+  requireAuthenticated,
+  requireOwner,
+  requireSelf,
+} from './authorize';
+export {
+  applyAgendaItemQueryAccess,
+  applyAccreditationQueryAccess,
+  applyAmendmentQueryAccess,
+  applyBlogQueryAccess,
+  applyDocumentQueryAccess,
+  applyElectionElectorOrManagerQueryAccess,
+  applyElectionManagerQueryAccess,
+  applyElectionQueryAccess,
+  applyEventManagerQueryAccess,
+  applyEventParticipantOrManagerQueryAccess,
+  applyEventQueryAccess,
+  applyGroupQueryAccess,
+  applyGroupManagerQueryAccess,
+  applyGroupMembershipSelfOrManagerQueryAccess,
+  applyStatementQueryAccess,
+  applyTodoQueryAccess,
+  applyUserQueryAccess,
+  applyVoteManagerQueryAccess,
+  applyVoteQueryAccess,
+  applyVoteVoterOrManagerQueryAccess,
+  denyAllRows,
+  isAuthenticatedUserId,
+  requireQueryUser,
+} from './query-access';
+export type { AuthContext } from './authorize';
+
 // Typed permission error
 export { PermissionError, isPermissionError } from './errors';
 

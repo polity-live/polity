@@ -1,7 +1,10 @@
 import { useCallback } from 'react';
 import { useZero } from '@rocicorp/zero/react';
 import { gatedToast as toast } from '@/features/notifications/utils/gated-toast';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { mutators } from '../mutators';
 import { onServerError } from '../mutate-with-server-check';
 
@@ -45,8 +48,12 @@ export function useEventActions() {
   const createOfflineParticipant = useCallback(
     (args: Parameters<typeof mutators.events.createOfflineParticipant>[0]) => {
       const result = zero.mutate(mutators.events.createOfflineParticipant(args));
-      toast.success('Offline participant added');
-      onServerError(result, () => toast.error('Failed to add offline participant'));
+      toast.success(translateText('generated.inline.1273_offline_participant_added_2faf79cd'));
+      onServerError(result, () =>
+        toast.error(
+          translateText('generated.inline.1274_failed_to_add_offline_participant_268b41fe')
+        )
+      );
       return result;
     },
     [zero]
@@ -55,7 +62,11 @@ export function useEventActions() {
   const updateOfflineParticipant = useCallback(
     (args: Parameters<typeof mutators.events.updateOfflineParticipant>[0]) => {
       const result = zero.mutate(mutators.events.updateOfflineParticipant(args));
-      onServerError(result, () => toast.error('Failed to update offline participant'));
+      onServerError(result, () =>
+        toast.error(
+          translateText('generated.inline.1275_failed_to_update_offline_participant_0ec2531a')
+        )
+      );
       return result;
     },
     [zero]
@@ -64,8 +75,12 @@ export function useEventActions() {
   const deleteOfflineParticipant = useCallback(
     (args: Parameters<typeof mutators.events.deleteOfflineParticipant>[0]) => {
       const result = zero.mutate(mutators.events.deleteOfflineParticipant(args));
-      toast.success('Offline participant removed');
-      onServerError(result, () => toast.error('Failed to remove offline participant'));
+      toast.success(translateText('generated.inline.1276_offline_participant_removed_4b7615af'));
+      onServerError(result, () =>
+        toast.error(
+          translateText('generated.inline.1277_failed_to_remove_offline_participant_c1409b6f')
+        )
+      );
       return result;
     },
     [zero]
@@ -74,8 +89,12 @@ export function useEventActions() {
   const importOfflineParticipants = useCallback(
     (args: Parameters<typeof mutators.events.importOfflineParticipants>[0]) => {
       const result = zero.mutate(mutators.events.importOfflineParticipants(args));
-      toast.success('Offline participants imported');
-      onServerError(result, () => toast.error('Failed to import offline participants'));
+      toast.success(translateText('generated.inline.1278_offline_participants_imported_732491c1'));
+      onServerError(result, () =>
+        toast.error(
+          translateText('generated.inline.1279_failed_to_import_offline_participants_0f41e206')
+        )
+      );
       return result;
     },
     [zero]

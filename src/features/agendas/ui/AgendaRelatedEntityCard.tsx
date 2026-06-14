@@ -70,7 +70,7 @@ export function AgendaRelatedAmendmentCard({
       ? [
           {
             icon: GitPullRequest,
-            label: t('features.timeline.cards.amendment.changeRequests', 'change requests'),
+            label: t('features.timeline.cards.amendment.changeRequests'),
             value: amendment.change_requests.length,
           },
         ]
@@ -101,7 +101,7 @@ export function AgendaRelatedAmendmentCard({
         subtitleHref={amendment.group?.id ? `/group/${amendment.group.id}` : undefined}
         badge={
           <TimelineCardBadge
-            label={t('features.timeline.contentTypes.amendment', 'Amendment')}
+            label={t('features.timeline.contentTypes.amendment')}
             icon={ScrollText}
           />
         }
@@ -131,7 +131,7 @@ export function AgendaRelatedRoleCard({
   className?: string;
 }) {
   const { t } = useTranslation();
-  const title = hasText(role.title) ? role.title : t('features.events.agenda.role', 'Role');
+  const title = hasText(role.title) ? role.title : t('features.events.agenda.role');
   const groupName = role.group?.name?.trim() || undefined;
 
   return (
@@ -141,9 +141,7 @@ export function AgendaRelatedRoleCard({
         title={title}
         subtitle={groupName}
         subtitleHref={role.group?.id ? `/group/${role.group.id}` : undefined}
-        badge={
-          <TimelineCardBadge label={t('features.events.agenda.role', 'Role')} icon={Building2} />
-        }
+        badge={<TimelineCardBadge label={t('features.events.agenda.role')} icon={Building2} />}
       >
         {hasText(role.term) && (
           <div className="mt-2 flex flex-wrap gap-2">
@@ -159,7 +157,7 @@ export function AgendaRelatedRoleCard({
           <p className="text-muted-foreground line-clamp-3 text-sm">{role.description}</p>
         ) : (
           <p className="text-muted-foreground text-sm">
-            {t('features.events.agenda.electionFor', 'Election for')} {title}
+            {t('features.events.agenda.electionFor')} {title}
           </p>
         )}
       </TimelineCardContent>

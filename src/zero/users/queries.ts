@@ -1,85 +1,149 @@
 import { defineQuery, type QueryRowType } from '@rocicorp/zero';
 import { z } from 'zod';
+import {
+  applyAmendmentQueryAccess,
+  applyBlogQueryAccess,
+  applyEventQueryAccess,
+  applyGroupMembershipSelfOrManagerQueryAccess,
+  applyGroupQueryAccess,
+  applyStatementQueryAccess,
+  applyUserQueryAccess,
+  applyVoteQueryAccess,
+} from '../rbac/query-access';
 import { zql } from '../schema';
+
+function applyUserAccess<T>(q: T, userID: string | undefined): T {
+  return applyUserQueryAccess(q, userID);
+}
 
 export const userQueries = {
   current: defineQuery(z.object({}), ({ ctx: { userID } }) => zql.user.where('id', userID).one()),
 
-  byId: defineQuery(z.object({ id: z.string() }), ({ args: { id } }) =>
-    zql.user.where('id', id).one()
+  byId: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
+    applyUserAccess(zql.user.where('id', id), userID).one()
   ),
 
-  byHandle: defineQuery(z.object({ handle: z.string() }), ({ args: { handle } }) =>
-    zql.user.where('handle', handle).one()
+  byHandle: defineQuery(z.object({ handle: z.string() }), ({ args: { handle }, ctx: { userID } }) =>
+    applyUserAccess(zql.user.where('handle', handle), userID).one()
   ),
 
-  search: defineQuery(z.object({ query: z.string() }), ({ args: { query } }) =>
-    zql.user.where('handle', 'ILIKE', `%${query}%`).orderBy('handle', 'asc')
+  search: defineQuery(z.object({ query: z.string() }), ({ args: { query }, ctx: { userID } }) =>
+    applyUserAccess(zql.user.where('handle', 'ILIKE', `%${query}%`), userID).orderBy(
+      'handle',
+      'asc'
+    )
   ),
 
   publicUsers: defineQuery(z.object({}), () => zql.user.where('visibility', 'public')),
 
-  followers: defineQuery(z.object({ userId: z.string() }), ({ args: { userId } }) =>
-    zql.follow.where('followee_id', userId).orderBy('created_at', 'desc')
+  followers: defineQuery(
+    z.object({ userId: z.string() }),
+    ({ args: { userId }, ctx: { userID } }) =>
+      zql.follow
+        .where('followee_id', userId)
+        .whereExists('followee', user => applyUserAccess(user, userID))
+        .whereExists('follower', user => applyUserAccess(user, userID))
+        .related('follower', user => applyUserAccess(user, userID))
+        .orderBy('created_at', 'desc')
   ),
 
-  following: defineQuery(z.object({ userId: z.string() }), ({ args: { userId } }) =>
-    zql.follow.where('follower_id', userId).orderBy('created_at', 'desc')
+  following: defineQuery(
+    z.object({ userId: z.string() }),
+    ({ args: { userId }, ctx: { userID } }) =>
+      zql.follow
+        .where('follower_id', userId)
+        .whereExists('follower', user => applyUserAccess(user, userID))
+        .whereExists('followee', user => applyUserAccess(user, userID))
+        .related('followee', user => applyUserAccess(user, userID))
+        .orderBy('created_at', 'desc')
   ),
 
-  fullProfile: defineQuery(z.object({ id: z.string() }), ({ args: { id } }) =>
-    zql.user
-      .where('id', id)
+  fullProfile: defineQuery(z.object({ id: z.string() }), ({ args: { id }, ctx: { userID } }) =>
+    applyUserAccess(zql.user.where('id', id), userID)
       .related('statements', q =>
-        q
+        applyStatementQueryAccess(q, userID)
           .related('group')
           .related('statement_hashtags', q2 => q2.related('hashtag'))
-          .related('support_votes')
-          .related('surveys', q2 => q2.related('options', q3 => q3.related('votes')))
+          .related('support_votes', q2 => q2.where('user_id', userID ?? '__anon__'))
+          .related('surveys', q2 =>
+            q2.related('options', q3 =>
+              q3.related('votes', q4 => q4.where('user_id', userID ?? '__anon__'))
+            )
+          )
       )
       .related('group_memberships', q =>
-        q
+        applyGroupMembershipSelfOrManagerQueryAccess(q, userID)
+          .whereExists('group', group => applyGroupQueryAccess(group, userID))
           .related('group', q =>
-            q
-              .related('events')
-              .related('amendments')
+            applyGroupQueryAccess(q, userID)
+              .related('events', event => applyEventQueryAccess(event, userID))
+              .related('amendments', amendment => applyAmendmentQueryAccess(amendment, userID))
               .related('group_hashtags', q => q.related('hashtag'))
           )
-          .related('membership_roles', mq => mq.related('role', rq => rq.related('action_rights')))
+          .related('membership_roles', mq =>
+            (id === userID ? mq : mq.where('id', '__private__')).related('role', rq =>
+              rq.related('action_rights')
+            )
+          )
       )
       .related('blogger_relations', q =>
         q
-          .related('blog', q => q.related('blog_hashtags', q => q.related('hashtag')))
-          .related('role', q => q.related('action_rights'))
+          .whereExists('blog', blog => applyBlogQueryAccess(blog, userID))
+          .related('blog', q =>
+            applyBlogQueryAccess(q, userID).related('blog_hashtags', q => q.related('hashtag'))
+          )
+          .related('role', q =>
+            (id === userID ? q : q.where('id', '__private__')).related('action_rights')
+          )
       )
       .related('user_hashtags', q => q.related('hashtag'))
       .related('amendment_collaborations', q =>
-        q.related('amendment', q =>
-          q.related('group').related('amendment_hashtags', q => q.related('hashtag'))
+        q
+          .where('user_id', userID ?? '__anon__')
+          .whereExists('amendment', amendment => applyAmendmentQueryAccess(amendment, userID))
+          .related('amendment', q =>
+            applyAmendmentQueryAccess(q, userID)
+              .related('group', group => applyGroupQueryAccess(group, userID))
+              .related('amendment_hashtags', q => q.related('hashtag'))
+              .related('collaborators', q => q.where('user_id', userID ?? '__anon__'))
+              .related('change_requests', q => q.where('user_id', userID ?? '__anon__'))
+              .related('vote_entries', q => applyVoteQueryAccess(q, userID))
+          )
+      )
+  ),
+
+  allUsers: defineQuery(z.object({}), ({ ctx: { userID } }) => applyUserAccess(zql.user, userID)),
+
+  byIds: defineQuery(z.object({ ids: z.array(z.string()) }), ({ args: { ids }, ctx: { userID } }) =>
+    applyUserAccess(zql.user.where('id', 'IN', ids), userID)
+  ),
+
+  withGroupMemberships: defineQuery(
+    z.object({ id: z.string() }),
+    ({ args: { id }, ctx: { userID } }) =>
+      applyUserAccess(zql.user.where('id', id), userID).related('group_memberships', q =>
+        applyGroupMembershipSelfOrManagerQueryAccess(q, userID)
+          .whereExists('group', group => applyGroupQueryAccess(group, userID))
+          .related('group', group => applyGroupQueryAccess(group, userID))
+          .related('membership_roles', mq =>
+            (id === userID ? mq : mq.where('id', '__private__')).related('role')
+          )
+      )
+  ),
+
+  searchableUsers: defineQuery(z.object({}), ({ ctx: { userID } }) =>
+    applyUserAccess(zql.user, userID)
+      .related('user_hashtags', q => q.related('hashtag'))
+      .related('group_memberships', q =>
+        applyGroupMembershipSelfOrManagerQueryAccess(q, userID).whereExists('group', group =>
+          applyGroupQueryAccess(group, userID)
         )
       )
-  ),
-
-  allUsers: defineQuery(z.object({}), () => zql.user),
-
-  byIds: defineQuery(z.object({ ids: z.array(z.string()) }), ({ args: { ids } }) =>
-    zql.user.where('id', 'IN', ids)
-  ),
-
-  withGroupMemberships: defineQuery(z.object({ id: z.string() }), ({ args: { id } }) =>
-    zql.user
-      .where('id', id)
-      .related('group_memberships', q =>
-        q.related('group').related('membership_roles', mq => mq.related('role'))
+      .related('amendment_collaborations', q =>
+        q
+          .where('user_id', userID ?? '__anon__')
+          .whereExists('amendment', amendment => applyAmendmentQueryAccess(amendment, userID))
       )
-  ),
-
-  searchableUsers: defineQuery(z.object({}), () =>
-    zql.user
-      .where('visibility', 'IN', ['public', 'authenticated'])
-      .related('user_hashtags', q => q.related('hashtag'))
-      .related('group_memberships')
-      .related('amendment_collaborations')
   ),
 };
 

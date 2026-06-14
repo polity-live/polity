@@ -79,7 +79,12 @@ import {
   BorderRightIcon,
   BorderTopIcon,
 } from './table-icons.tsx';
-import { Toolbar, ToolbarButton, ToolbarGroup, ToolbarMenuGroup } from '@/features/shared/ui/ui/toolbar.tsx';
+import {
+  Toolbar,
+  ToolbarButton,
+  ToolbarGroup,
+  ToolbarMenuGroup,
+} from '@/features/shared/ui/ui/toolbar.tsx';
 export const TableElement = withHOC(
   TableProvider,
   function TableElement({ children, ...props }: PlateElementProps<TTableElement>) {
@@ -100,7 +105,7 @@ export const TableElement = withHOC(
         <div className="group/table relative w-fit">
           <table
             className={cn(
-              'ml-px mr-0 table h-px table-fixed border-collapse',
+              'mr-0 ml-px table h-px table-fixed border-collapse',
               isSelectingCell && 'selection:bg-transparent'
             )}
             {...tableProps}
@@ -142,21 +147,19 @@ function TableFloatingToolbar({ children, ...props }: React.ComponentProps<typeo
         {...props}
       >
         <Toolbar
-          className="scrollbar-hide flex w-auto max-w-[80vw] flex-row overflow-x-auto rounded-md border bg-popover p-1 shadow-md print:hidden"
+          className="scrollbar-hide bg-popover flex w-auto max-w-[80vw] flex-row overflow-x-auto rounded-md border p-1 shadow-md print:hidden"
           contentEditable={false}
         >
           <ToolbarGroup>
             {' '}
-            <ColorDropdownMenu
-              tooltip={t('plateJs.toolbar.table.backgroundColor', 'Background color')}
-            >
+            <ColorDropdownMenu tooltip={t('plateJs.toolbar.table.backgroundColor')}>
               <PaintBucketIcon />
             </ColorDropdownMenu>
             {canMerge && (
               <ToolbarButton
                 onClick={() => tf.table.merge()}
                 onMouseDown={e => e.preventDefault()}
-                tooltip={t('plateJs.toolbar.table.mergeCells', 'Merge cells')}
+                tooltip={t('plateJs.toolbar.table.mergeCells')}
               >
                 <CombineIcon />
               </ToolbarButton>
@@ -165,14 +168,14 @@ function TableFloatingToolbar({ children, ...props }: React.ComponentProps<typeo
               <ToolbarButton
                 onClick={() => tf.table.split()}
                 onMouseDown={e => e.preventDefault()}
-                tooltip={t('plateJs.toolbar.table.splitCell', 'Split cell')}
+                tooltip={t('plateJs.toolbar.table.splitCell')}
               >
                 <SquareSplitHorizontalIcon />
               </ToolbarButton>
             )}
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
-                <ToolbarButton tooltip={t('plateJs.toolbar.table.borders', 'Cell borders')}>
+                <ToolbarButton tooltip={t('plateJs.toolbar.table.bordersMenu')}>
                   <Grid2X2Icon />
                 </ToolbarButton>
               </DropdownMenuTrigger>
@@ -184,10 +187,7 @@ function TableFloatingToolbar({ children, ...props }: React.ComponentProps<typeo
             {collapsedInside && (
               <ToolbarGroup>
                 {' '}
-                <ToolbarButton
-                  tooltip={t('plateJs.toolbar.table.deleteTable', 'Delete table')}
-                  {...buttonProps}
-                >
+                <ToolbarButton tooltip={t('plateJs.toolbar.table.deleteTable')} {...buttonProps}>
                   <Trash2Icon />
                 </ToolbarButton>
               </ToolbarGroup>
@@ -201,7 +201,7 @@ function TableFloatingToolbar({ children, ...props }: React.ComponentProps<typeo
                   tf.insert.tableRow({ before: true });
                 }}
                 onMouseDown={e => e.preventDefault()}
-                tooltip={t('plateJs.toolbar.table.insertRowBefore', 'Insert row before')}
+                tooltip={t('plateJs.toolbar.table.insertRowBefore')}
               >
                 <ArrowUp />
               </ToolbarButton>
@@ -210,7 +210,7 @@ function TableFloatingToolbar({ children, ...props }: React.ComponentProps<typeo
                   tf.insert.tableRow();
                 }}
                 onMouseDown={e => e.preventDefault()}
-                tooltip={t('plateJs.toolbar.table.insertRowAfter', 'Insert row after')}
+                tooltip={t('plateJs.toolbar.table.insertRowAfter')}
               >
                 <ArrowDown />
               </ToolbarButton>
@@ -219,7 +219,7 @@ function TableFloatingToolbar({ children, ...props }: React.ComponentProps<typeo
                   tf.remove.tableRow();
                 }}
                 onMouseDown={e => e.preventDefault()}
-                tooltip={t('plateJs.toolbar.table.deleteRow', 'Delete row')}
+                tooltip={t('plateJs.toolbar.table.deleteRow')}
               >
                 <XIcon />
               </ToolbarButton>
@@ -233,7 +233,7 @@ function TableFloatingToolbar({ children, ...props }: React.ComponentProps<typeo
                   tf.insert.tableColumn({ before: true });
                 }}
                 onMouseDown={e => e.preventDefault()}
-                tooltip={t('plateJs.toolbar.table.insertColumnBefore', 'Insert column before')}
+                tooltip={t('plateJs.toolbar.table.insertColumnBefore')}
               >
                 <ArrowLeft />
               </ToolbarButton>
@@ -242,7 +242,7 @@ function TableFloatingToolbar({ children, ...props }: React.ComponentProps<typeo
                   tf.insert.tableColumn();
                 }}
                 onMouseDown={e => e.preventDefault()}
-                tooltip={t('plateJs.toolbar.table.insertColumnAfter', 'Insert column after')}
+                tooltip={t('plateJs.toolbar.table.insertColumnAfter')}
               >
                 <ArrowRight />
               </ToolbarButton>
@@ -251,7 +251,7 @@ function TableFloatingToolbar({ children, ...props }: React.ComponentProps<typeo
                   tf.remove.tableColumn();
                 }}
                 onMouseDown={e => e.preventDefault()}
-                tooltip={t('plateJs.toolbar.table.deleteColumn', 'Delete column')}
+                tooltip={t('plateJs.toolbar.table.deleteColumn')}
               >
                 <XIcon />
               </ToolbarButton>
@@ -296,28 +296,28 @@ function TableBordersDropdownMenuContent(
           onCheckedChange={getOnSelectTableBorder('top')}
         >
           <BorderTopIcon />
-          <div>{t('plateJs.toolbar.table.borders.top', 'Top Border')}</div>
+          <div>{t('plateJs.toolbar.table.borders.top')}</div>
         </DropdownMenuCheckboxItem>
         <DropdownMenuCheckboxItem
           checked={hasRightBorder}
           onCheckedChange={getOnSelectTableBorder('right')}
         >
           <BorderRightIcon />
-          <div>{t('plateJs.toolbar.table.borders.right', 'Right Border')}</div>
+          <div>{t('plateJs.toolbar.table.borders.right')}</div>
         </DropdownMenuCheckboxItem>
         <DropdownMenuCheckboxItem
           checked={hasBottomBorder}
           onCheckedChange={getOnSelectTableBorder('bottom')}
         >
           <BorderBottomIcon />
-          <div>{t('plateJs.toolbar.table.borders.bottom', 'Bottom Border')}</div>
+          <div>{t('plateJs.toolbar.table.borders.bottom')}</div>
         </DropdownMenuCheckboxItem>
         <DropdownMenuCheckboxItem
           checked={hasLeftBorder}
           onCheckedChange={getOnSelectTableBorder('left')}
         >
           <BorderLeftIcon />
-          <div>{t('plateJs.toolbar.table.borders.left', 'Left Border')}</div>
+          <div>{t('plateJs.toolbar.table.borders.left')}</div>
         </DropdownMenuCheckboxItem>
       </DropdownMenuGroup>
 
@@ -327,14 +327,14 @@ function TableBordersDropdownMenuContent(
           onCheckedChange={getOnSelectTableBorder('none')}
         >
           <BorderNoneIcon />
-          <div>{t('plateJs.toolbar.table.borders.none', 'No Border')}</div>
+          <div>{t('plateJs.toolbar.table.borders.none')}</div>
         </DropdownMenuCheckboxItem>
         <DropdownMenuCheckboxItem
           checked={hasOuterBorders}
           onCheckedChange={getOnSelectTableBorder('outer')}
         >
           <BorderAllIcon />
-          <div>{t('plateJs.toolbar.table.borders.outside', 'Outside Borders')}</div>
+          <div>{t('plateJs.toolbar.table.borders.outside')}</div>
         </DropdownMenuCheckboxItem>
       </DropdownMenuGroup>
     </DropdownMenuContent>
@@ -371,7 +371,7 @@ function ColorDropdownMenu({ children, tooltip }: { children: React.ReactNode; t
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="start">
-        <ToolbarMenuGroup label={t('plateJs.toolbar.colors', 'Colors')}>
+        <ToolbarMenuGroup label={t('plateJs.toolbar.colors')}>
           <ColorDropdownMenuItems
             className="px-2"
             colors={DEFAULT_COLORS}
@@ -381,7 +381,7 @@ function ColorDropdownMenu({ children, tooltip }: { children: React.ReactNode; t
         <DropdownMenuGroup>
           <DropdownMenuItem className="p-2" onClick={onClearColor}>
             <EraserIcon />
-            <span>{t('plateJs.toolbar.clear', 'Clear')}</span>
+            <span>{t('plateJs.toolbar.clear')}</span>
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>
@@ -443,9 +443,9 @@ function RowDragHandle({ dragRef }: { dragRef: React.Ref<HTMLButtonElement> }) {
       ref={dragRef}
       variant="outline"
       className={cn(
-        'z-51 absolute left-0 top-1/2 h-6 w-4 -translate-y-1/2 p-0 focus-visible:ring-0 focus-visible:ring-offset-0',
+        'absolute top-1/2 left-0 z-51 h-6 w-4 -translate-y-1/2 p-0 focus-visible:ring-0 focus-visible:ring-offset-0',
         'cursor-grab active:cursor-grabbing',
-        'group-has-data-[resizing="true"]/row:opacity-0 opacity-0 transition-opacity duration-100 group-hover/row:opacity-100'
+        'opacity-0 transition-opacity duration-100 group-hover/row:opacity-100 group-has-data-[resizing="true"]/row:opacity-0'
       )}
       onClick={() => {
         editor.tf.select(element);
@@ -501,16 +501,16 @@ export function TableCellElement({
       {...props}
       as={isHeader ? 'th' : 'td'}
       className={cn(
-        'h-full overflow-visible border-none bg-background p-0',
+        'bg-background h-full overflow-visible border-none p-0',
         element.background ? 'bg-(--cellBackground)' : 'bg-background',
         isHeader && 'text-left *:m-0',
         'before:size-full',
         selected && 'before:bg-brand/5 before:z-10',
-        "before:absolute before:box-border before:select-none before:content-['']",
-        borders.bottom?.size && `before:border-b before:border-b-border`,
-        borders.right?.size && `before:border-r before:border-r-border`,
-        borders.left?.size && `before:border-l before:border-l-border`,
-        borders.top?.size && `before:border-t before:border-t-border`
+        "before:absolute before:box-border before:content-[''] before:select-none",
+        borders.bottom?.size && `before:border-b-border before:border-b`,
+        borders.right?.size && `before:border-r-border before:border-r`,
+        borders.left?.size && `before:border-l-border before:border-l`,
+        borders.top?.size && `before:border-t-border before:border-t`
       )}
       style={
         {
@@ -539,31 +539,33 @@ export function TableCellElement({
             <>
               <ResizeHandle
                 {...rightProps}
-                className="-right-1 -top-2 h-[calc(100%_+_8px)] w-2"
+                className="-top-2 -right-1 h-[calc(100%_+_8px)] w-2"
                 data-col={colIndex}
               />
               <ResizeHandle {...bottomProps} className="-bottom-1 h-2" />
               {!hiddenLeft && (
                 <ResizeHandle
                   {...leftProps}
-                  className="-left-1 top-0 w-2"
+                  className="top-0 -left-1 w-2"
                   data-resizer-left={colIndex === 0 ? 'true' : undefined}
                 />
               )}
 
               <div
                 className={cn(
-                  'absolute top-0 z-30 hidden h-full w-1 bg-ring',
+                  'bg-ring absolute top-0 z-30 hidden h-full w-1',
                   'right-[-1.5px]',
-                  columnResizeVariants({ colIndex: colIndex as 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 })
+                  columnResizeVariants({
+                    colIndex: colIndex as 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10,
+                  })
                 )}
               />
               {colIndex === 0 && (
                 <div
                   className={cn(
-                    'absolute top-0 z-30 h-full w-1 bg-ring',
+                    'bg-ring absolute top-0 z-30 h-full w-1',
                     'left-[-1.5px]',
-                    'hidden animate-in fade-in group-has-[[data-resizer-left]:hover]/table:block group-has-[[data-resizer-left][data-resizing="true"]]/table:block'
+                    'animate-in fade-in hidden group-has-[[data-resizer-left]:hover]/table:block group-has-[[data-resizer-left][data-resizing="true"]]/table:block'
                   )}
                 />
               )}

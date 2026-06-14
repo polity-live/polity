@@ -1,14 +1,15 @@
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Textarea } from '@/features/shared/ui/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { ArrowUp, ArrowDown, User, Clock, MessageSquare } from 'lucide-react';
+import { ArrowUp, ArrowDown, Clock, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { calculateScore } from '@/features/votes/utils/voting-utils';
 import { CommentTree } from './CommentTree';
 import type { Thread } from '../hooks/useDiscussions';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface ThreadCardProps {
   thread: Thread;
@@ -20,7 +21,7 @@ interface ThreadCardProps {
     threadId: string,
     text: string,
     userId: string,
-    parentCommentId?: string,
+    parentCommentId?: string
   ) => Promise<string>;
   onVoteThread: (
     threadId: string,
@@ -28,7 +29,7 @@ interface ThreadCardProps {
     currentVote: { id: string; vote?: number | null } | undefined,
     currentUpvotes: number,
     currentDownvotes: number,
-    userId?: string,
+    userId?: string
   ) => Promise<void>;
   onVoteComment: (
     commentId: string,
@@ -36,11 +37,20 @@ interface ThreadCardProps {
     currentVote: { id: string; vote: number | null } | undefined,
     currentUpvotes: number,
     currentDownvotes: number,
-    userId?: string,
+    userId?: string
   ) => Promise<void>;
 }
 
-export function ThreadCard({ thread, userId, amendmentId, amendmentTitle, senderName, onCreateComment, onVoteThread, onVoteComment }: ThreadCardProps) {
+export function ThreadCard({
+  thread,
+  userId,
+  amendmentId,
+  amendmentTitle,
+  senderName,
+  onCreateComment,
+  onVoteThread,
+  onVoteComment,
+}: ThreadCardProps) {
   const [isCommenting, setIsCommenting] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -54,7 +64,7 @@ export function ThreadCard({ thread, userId, amendmentId, amendmentTitle, sender
 
   const handleVote = async (voteValue: number) => {
     if (!userId) {
-      toast.error('Please log in to vote');
+      toast.error(translateText('generated.inline.0138_please_log_in_to_vote_59574e84'));
       return;
     }
 
@@ -69,7 +79,7 @@ export function ThreadCard({ thread, userId, amendmentId, amendmentTitle, sender
       );
     } catch (error) {
       console.error('Error voting:', error);
-      toast.error('Failed to vote');
+      toast.error(translateText('generated.inline.0140_failed_to_vote_68d9f4e2'));
     }
   };
 
@@ -78,12 +88,7 @@ export function ThreadCard({ thread, userId, amendmentId, amendmentTitle, sender
 
     setIsSubmitting(true);
     try {
-      await onCreateComment(
-        thread.id,
-        commentText,
-        userId,
-        undefined,
-      );
+      await onCreateComment(thread.id, commentText, userId, undefined);
       setCommentText('');
       setIsCommenting(false);
     } catch (error) {
@@ -126,20 +131,27 @@ export function ThreadCard({ thread, userId, amendmentId, amendmentTitle, sender
           <div className="flex flex-1 items-start justify-between">
             <div className="flex-1">
               <CardTitle className="mb-2">{thread.content}</CardTitle>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <div className="text-muted-foreground flex items-center gap-4 text-sm">
                 <div className="flex items-center gap-2">
                   <Avatar className="h-6 w-6">
                     <AvatarImage src={thread.user?.avatar ?? undefined} />
-                    <AvatarFallback>{thread.user?.first_name?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
+                    <AvatarFallback>
+                      {thread.user?.first_name?.[0]?.toUpperCase() || 'U'}
+                    </AvatarFallback>
                   </Avatar>
-                  <span>{[thread.user?.first_name, thread.user?.last_name].filter(Boolean).join(' ') || 'Anonymous'}</span>
+                  <span>
+                    {[thread.user?.first_name, thread.user?.last_name].filter(Boolean).join(' ') ||
+                      translateText('generated.inline.0056_anonymous_9bed5104')}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4" />
                   <span>{new Date(thread.created_at).toLocaleDateString()}</span>
                 </div>
                 <Badge variant="outline">
-                  {sortedComments.length} comment{sortedComments.length !== 1 ? 's' : ''}
+                  {sortedComments.length}
+                  {translateText('generated.inline.0050_comment_118a9989')}
+                  {sortedComments.length !== 1 ? 's' : ''}
                 </Badge>
               </div>
             </div>
@@ -164,8 +176,10 @@ export function ThreadCard({ thread, userId, amendmentId, amendmentTitle, sender
           ))}
 
           {sortedComments.length === 0 && !isCommenting && (
-            <p className="text-center text-sm text-muted-foreground">
-              No comments yet. Be the first to comment!
+            <p className="text-muted-foreground text-center text-sm">
+              {translateText(
+                'generated.inline.0395_no_comments_yet_be_the_first_to_comment_ba5c0dff'
+              )}
             </p>
           )}
 
@@ -173,24 +187,24 @@ export function ThreadCard({ thread, userId, amendmentId, amendmentTitle, sender
           {!isCommenting && (
             <Button variant="outline" onClick={() => setIsCommenting(true)} className="w-full">
               <MessageSquare className="mr-2 h-4 w-4" />
-              Add Comment
+              {translateText('generated.inline.0396_add_comment_d89450c8')}
             </Button>
           )}
 
           {isCommenting && (
             <div className="space-y-2 rounded-lg border p-4">
               <Textarea
-                placeholder="Write your comment..."
+                placeholder={translateText('generated.inline.0397_write_your_comment_b1d820b5')}
                 value={commentText}
                 onChange={e => setCommentText(e.target.value)}
                 rows={3}
               />
               <div className="flex gap-2">
                 <Button onClick={handleAddComment} disabled={isSubmitting || !commentText.trim()}>
-                  Post Comment
+                  {translateText('generated.inline.0398_post_comment_54cc0b90')}
                 </Button>
                 <Button variant="outline" onClick={() => setIsCommenting(false)}>
-                  Cancel
+                  {translateText('generated.inline.0065_cancel_77dfd213')}
                 </Button>
               </div>
             </div>

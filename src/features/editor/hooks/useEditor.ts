@@ -61,6 +61,7 @@ import type {
   TDiscussion,
 } from '../types';
 import { DEFAULT_CAPABILITIES, DEFAULT_EDITOR_CONTENT } from '../types';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 /**
  * Options for the useEditor hook
@@ -366,7 +367,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
           }
         } catch (error) {
           console.error('Failed to save title:', error);
-          toast.error('Failed to save title');
+          toast.error(translateText('generated.inline.0415_failed_to_save_title_8dd73295'));
         } finally {
           setIsSavingTitle(false);
         }
@@ -463,7 +464,7 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
         toast.success(`Mode changed to ${newMode}`);
       } catch (error) {
         console.error('Failed to change mode:', error);
-        toast.error('Failed to change mode');
+        toast.error(translateText('generated.inline.0416_failed_to_change_mode_324234e0'));
       }
     },
     [
@@ -507,10 +508,12 @@ export function useEditor(options: UseEditorOptions): EditorState & EditorAction
         setContentState(versionContent);
         lastSaveTime.current = Date.now();
         lastRemoteUpdate.current = Date.now();
-        toast.success('Version restored successfully');
+        toast.success(
+          translateText('generated.inline.0417_version_restored_successfully_482a4dad')
+        );
       } catch (error) {
         console.error('Failed to restore version:', error);
-        toast.error('Failed to restore version');
+        toast.error(translateText('generated.inline.0418_failed_to_restore_version_2a2ef8d8'));
       }
     },
     [entityType, contentEntityId, userId, zero, readOnly]

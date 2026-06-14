@@ -1,5 +1,7 @@
 import type { I18nLocale } from '../en/enTranslation';
 
+import { mergeTranslations } from '@/i18n/merge-translations.ts';
+
 import { commonTranslations } from './common';
 import { navigationTranslations } from './navigation';
 import { agendasTranslations } from './features/agendas';
@@ -31,11 +33,12 @@ import { userTranslations } from './features/users';
 import { votesTranslations } from './features/votes';
 import { landingSectionTranslations } from './pages/home/landing';
 import { componentsTranslations } from './components';
+import { generatedTranslations } from './generated';
 import { plateJsTranslations } from './plateJs';
 import { pagesTranslations } from './pages';
 
 // Using I18nLocale type to ensure compatibility with English translations
-const deTranslation: I18nLocale = {
+const baseDeTranslation = {
   // Common/shared translations
   common: commonTranslations,
   loading: commonTranslations.loading,
@@ -104,6 +107,8 @@ const deTranslation: I18nLocale = {
   // Legacy compatibility - map old keys to new structure
   home: pagesTranslations.home,
   timeline: timelineTranslations,
-};
+} as const;
+
+const deTranslation: I18nLocale = mergeTranslations(baseDeTranslation, generatedTranslations);
 
 export default deTranslation;

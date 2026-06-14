@@ -12,6 +12,7 @@ import {
   toRichTextValue,
   toZeroRichTextValue,
 } from '@/features/shared/logic/richText';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 // Co-located types
 export interface UserProfileFormData {
@@ -177,7 +178,7 @@ export function useUserProfileForm({
 
     try {
       if (!user) {
-        toast.error('No user data to update');
+        toast.error(translateText('generated.inline.1181_no_user_data_to_update_33da5c6a'));
         return;
       }
 
@@ -220,7 +221,7 @@ export function useUserProfileForm({
         }
       }
     } catch (error) {
-      toast.error('Failed to update user');
+      toast.error(translateText('generated.inline.1182_failed_to_update_user_8743e9c1'));
       console.error('Update error:', error);
     } finally {
       setIsSubmitting(false);

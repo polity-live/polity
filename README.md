@@ -163,6 +163,11 @@ npm run deploy -- --skip-vercel     # Skip Vercel deploy
 
 The script enforces that you are on the `master` or `deploy` branch.
 
+> **Zero schema changes:** After applying migrations that add or change synced tables
+> (including the Eurostat snapshot and chart projection tables), restart or redeploy
+> `zero-cache` before deploying the frontend. The full deploy script already applies
+> Supabase migrations before the Fly.io deployment.
+
 ### First-time setup
 
 #### 1. Install CLIs

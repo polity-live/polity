@@ -13,7 +13,12 @@ import { PlateElement, useEditorMounted, withHOC } from 'platejs/react';
 import { cn } from '@/features/shared/utils/utils.ts';
 
 import { Caption, CaptionTextarea } from './caption.tsx';
-import { mediaResizeHandleVariants, Resizable, ResizeHandle } from '@/features/shared/ui/ui/resize-handle.tsx';
+import {
+  mediaResizeHandleVariants,
+  Resizable,
+  ResizeHandle,
+} from '@/features/shared/ui/ui/resize-handle.tsx';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export const VideoElement = withHOC(
   ResizableProvider,
@@ -66,7 +71,7 @@ export const VideoElement = withHOC(
                 <div ref={handleRef}>
                   <LiteYouTubeEmbed
                     id={embed.id}
-                    title="youtube"
+                    title={translateText('generated.inline.0170_youtube_d5244a33')}
                     wrapperClass={cn(
                       'aspect-video rounded-sm',
                       'relative block cursor-pointer bg-black bg-cover bg-center [contain:content]',
@@ -96,7 +101,10 @@ export const VideoElement = withHOC(
           </Resizable>
 
           <Caption style={{ width }} align={align}>
-            <CaptionTextarea readOnly={readOnly} placeholder="Write a caption..." />
+            <CaptionTextarea
+              readOnly={readOnly}
+              placeholder={translateText('generated.inline.1149_write_a_caption_2f0f0557')}
+            />
           </Caption>
         </figure>
         {props.children}

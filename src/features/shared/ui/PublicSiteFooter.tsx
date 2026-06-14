@@ -1,5 +1,8 @@
 import { Link } from '@tanstack/react-router';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 
 const legalLinkKeys = [
   {
@@ -30,20 +33,25 @@ export function PublicSiteFooter() {
             <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-950 shadow-sm ring-1 ring-zinc-950/10">
               <img
                 src="/apple-touch-icon.png"
-                alt="Polity logo"
+                alt={translateText('generated.inline.1100_polity_logo_bd879dd4')}
                 width={36}
                 height={36}
                 className="h-9 w-9 rounded-xl"
               />
             </span>
-            <span className="text-lg font-semibold tracking-tight">Polity</span>
+            <span className="text-lg font-semibold tracking-tight">
+              {translateText('generated.inline.1101_polity_f147ffe2')}
+            </span>
           </Link>
           <p className="text-muted-foreground mt-3 text-sm leading-6">
             {t('pages.home.hero.subtitle')}
           </p>
         </div>
 
-        <nav aria-label="Legal pages" className="flex flex-col gap-3 sm:items-end">
+        <nav
+          aria-label={translateText('generated.inline.1124_legal_pages_7be0da13')}
+          className="flex flex-col gap-3 sm:items-end"
+        >
           <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">
             {legalLinkKeys.map(link => (
               <Link
@@ -55,7 +63,9 @@ export function PublicSiteFooter() {
               </Link>
             ))}
           </div>
-          <p className="text-muted-foreground text-xs">Polity</p>
+          <p className="text-muted-foreground text-xs">
+            {translateText('generated.inline.1101_polity_f147ffe2')}
+          </p>
         </nav>
       </div>
     </footer>

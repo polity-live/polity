@@ -19,6 +19,7 @@ import {
 } from '../logic/applyPqlFilter';
 import type { PqlQuickFilterDefinition, PqlQuickFilterValues } from '../hooks/usePqlCollection';
 import { PqlFilterBuilderDialog } from './PqlFilterBuilderDialog';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 function getOptionLabel<TItem, TFieldKey extends string>(
   field: PqlFieldDefinition<TItem, TFieldKey> | undefined,
@@ -76,7 +77,10 @@ export function PqlToolbar<TItem, TFieldKey extends string>({
     const values = quickFilterValues[quickFilter.fieldKey] ?? [];
     return values.map(value => ({
       id: `${quickFilter.fieldKey}-${value}`,
-      label: `${quickFilter.label ?? field?.label ?? quickFilter.fieldKey}: ${getOptionLabel(field, value)}`,
+      label: translateText('generated.inline.0484_fieldkey_valueb7f0_786b99ae', {
+        fieldKey: quickFilter.label ?? field?.label ?? quickFilter.fieldKey,
+        valueb7f0: getOptionLabel(field, value),
+      }),
       onClear: () => onQuickFilterToggle(quickFilter.fieldKey, value),
     }));
   });
@@ -142,7 +146,9 @@ export function PqlToolbar<TItem, TFieldKey extends string>({
                     variant="ghost"
                     className="flex w-full items-center justify-between rounded-lg px-4 py-3"
                   >
-                    <span className="font-medium">Field filters</span>
+                    <span className="font-medium">
+                      {translateText('generated.inline.1095_field_filters_8d9ccc52')}
+                    </span>
                     <div className="flex items-center gap-2">
                       <Badge variant="outline">{activeQuickBadges.length}</Badge>
                       <ChevronDown
@@ -175,11 +181,13 @@ export function PqlToolbar<TItem, TFieldKey extends string>({
                                 size="sm"
                                 onClick={() => onQuickFilterClear(quickFilter.fieldKey)}
                               >
-                                Clear
+                                {translateText('generated.inline.1096_clear_719ea396')}
                               </Button>
                             ) : null}
                           </div>
-                          {(quickFilter.inputKind ?? 'buttons') === 'typeahead' ? (
+                          {(quickFilter.inputKind ??
+                            translateText('generated.inline.0143_buttons_23396acb')) ===
+                          'typeahead' ? (
                             quickFilter.multiple ? (
                               <TypeaheadSearch
                                 items={quickFilter.typeaheadItems ?? []}
@@ -267,7 +275,9 @@ export function PqlToolbar<TItem, TFieldKey extends string>({
                   variant="ghost"
                   className="flex w-full items-center justify-between rounded-lg px-4 py-3"
                 >
-                  <span className="font-medium">Custom filters</span>
+                  <span className="font-medium">
+                    {translateText('generated.inline.1097_custom_filters_3be34e01')}
+                  </span>
                   <div className="flex items-center gap-2">
                     <Badge variant="outline">{savedFilters.length}</Badge>
                     <ChevronDown
@@ -290,14 +300,15 @@ export function PqlToolbar<TItem, TFieldKey extends string>({
                     }}
                   >
                     <Plus className="mr-2 h-4 w-4" />
-                    Add custom filter
+                    {translateText('generated.inline.1098_add_custom_filter_9a08c207')}
                   </Button>
                 </div>
 
                 {savedFilters.length === 0 ? (
                   <p className="text-muted-foreground rounded-lg border border-dashed px-4 py-8 text-center text-sm">
-                    Save reusable PQL filters here. Suggestions support fields, operators, IN, AND,
-                    OR, and parentheses.
+                    {translateText(
+                      'generated.inline.1099_save_reusable_pql_filters_here_suggestions_su_d54a75af'
+                    )}
                   </p>
                 ) : (
                   <div className="space-y-3">
@@ -316,7 +327,9 @@ export function PqlToolbar<TItem, TFieldKey extends string>({
                             <div className="flex items-center gap-2">
                               <span className="font-medium">{filter.label}</span>
                               <Badge variant={isActive ? 'default' : 'outline'}>
-                                {isActive ? 'Active' : 'Inactive'}
+                                {isActive
+                                  ? translateText('generated.inline.0126_active_a733b809')
+                                  : translateText('generated.inline.0134_inactive_09af574c')}
                               </Badge>
                             </div>
                             <p className="text-muted-foreground mt-1 font-mono text-xs break-words">
@@ -331,7 +344,9 @@ export function PqlToolbar<TItem, TFieldKey extends string>({
                               size="sm"
                               onClick={() => onCustomFilterToggle(filter.id)}
                             >
-                              {isActive ? 'Applied' : 'Apply'}
+                              {isActive
+                                ? translateText('generated.inline.0135_applied_a3e4a569')
+                                : translateText('generated.inline.0136_apply_cfea419c')}
                             </Button>
                             <Button
                               type="button"

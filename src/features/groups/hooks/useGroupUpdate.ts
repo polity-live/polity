@@ -13,7 +13,7 @@ import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
 import { useMessageActions } from '@/zero/messages/useMessageActions';
 import { useMessageState } from '@/zero/messages/useMessageState';
-import { useNetworkLinkActions, useNetworkLinkState } from '@/zero/network';
+import { useGroupConnectionActions, useGroupConnectionState } from '@/zero/network';
 import { type Visibility } from '@/features/auth/logic/checkEntityAccess';
 import { RIGHT_TYPES, type RightType } from '@/features/network/ui/RightFilters';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
@@ -25,11 +25,18 @@ import {
 } from '@/features/shared/logic/richText';
 import type {
   CanonicalMembershipMode,
+  GroupRelationshipDirection,
   RelativeMembershipDirection,
 } from '@/features/network/types/network.types';
+import {
+  canonicalGroupPair,
+  getExpandedRightDirections,
+  getRightGrantEndpoints,
+} from '@/features/network/logic/groupConnectionComposer';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export type GroupType = 'base' | 'hierarchical' | 'sibling';
-export type RelationshipDirection = 'none' | 'outgoing' | 'incoming' | 'bidirectional';
+export type RelationshipDirection = GroupRelationshipDirection;
 
 const INITIAL_CONNECTED_RELATIONSHIP_DIRECTIONS: Record<RightType, RelationshipDirection> = {
   informationRight: 'none',
@@ -65,26 +72,11 @@ export interface GroupFormData {
   tiktok: string;
   hashtags: string[];
   connected_group_id?: string | null;
-  sibling_membership_direction?: RelativeMembershipDirection | null;
+  siblingMembershipDirection?: RelativeMembershipDirection | null;
   sibling_membership_mode?: CanonicalMembershipMode | null;
   sibling_role_id?: string | null;
   parliament_source_group_ids?: string[];
-  connected_relationship_directions: Record<RightType, RelationshipDirection>;
-}
-
-type NetworkLinkRightStatus = 'active' | 'requested' | 'pending' | 'rejected';
-type NetworkLinkDirection = 'forward' | 'backward' | 'bidirectional';
-
-function toNetworkLinkRightStatus(status: string | null | undefined): NetworkLinkRightStatus {
-  switch (status) {
-    case 'active':
-    case 'requested':
-    case 'pending':
-    case 'rejected':
-      return status;
-    default:
-      return 'requested';
-  }
+  connectedRelationshipDirections: Record<RightType, RelationshipDirection>;
 }
 
 interface UseGroupUpdateResult {
@@ -124,11 +116,11 @@ const initialFormState: GroupFormData = {
   tiktok: '',
   hashtags: [],
   connected_group_id: null,
-  sibling_membership_direction: null,
+  siblingMembershipDirection: null,
   sibling_membership_mode: null,
   sibling_role_id: null,
   parliament_source_group_ids: [],
-  connected_relationship_directions: INITIAL_CONNECTED_RELATIONSHIP_DIRECTIONS,
+  connectedRelationshipDirections: INITIAL_CONNECTED_RELATIONSHIP_DIRECTIONS,
 };
 
 /**
@@ -153,12 +145,12 @@ export function useGroupUpdate(
 ): UseGroupUpdateResult {
   const navigate = useNavigate();
   const { createGroup, updateGroup } = useGroupActions();
-  const { createNetworkLink, updateNetworkLink, deleteNetworkLink } = useNetworkLinkActions();
+  const { proposeGroupConnectionChange, deleteGroupConnection } = useGroupConnectionActions();
   const isCreating = !initialData;
   const commonActions = useCommonActions();
   const { updateConversation } = useMessageActions();
   const { groupConversation } = useMessageState({ groupId });
-  const { groupLinks } = useNetworkLinkState({ groupId });
+  const { groupConnections, groupConnectionRequests } = useGroupConnectionState({ groupId });
   const { groupHashtags, allHashtags } = useCommonState({
     group_id: groupId,
     loadAllHashtags: true,
@@ -217,11 +209,11 @@ export function useGroupUpdate(
         tiktok: initialData.tiktok || '',
         hashtags: initialData.hashtags || existingTags,
         connected_group_id: initialData.connected_group_id ?? null,
-        sibling_membership_direction: initialData.sibling_membership_direction ?? null,
+        siblingMembershipDirection: initialData.siblingMembershipDirection ?? null,
         sibling_membership_mode: initialData.sibling_membership_mode ?? null,
         sibling_role_id: initialData.sibling_role_id ?? null,
         parliament_source_group_ids: initialData.parliament_source_group_ids ?? [],
-        connected_relationship_directions: initialData.connected_relationship_directions ?? {
+        connectedRelationshipDirections: initialData.connectedRelationshipDirections ?? {
           ...INITIAL_CONNECTED_RELATIONSHIP_DIRECTIONS,
         },
       };
@@ -290,11 +282,11 @@ export function useGroupUpdate(
         tiktok: initialData.tiktok || '',
         hashtags: existingTags,
         connected_group_id: initialData.connected_group_id ?? null,
-        sibling_membership_direction: initialData.sibling_membership_direction ?? null,
+        siblingMembershipDirection: initialData.siblingMembershipDirection ?? null,
         sibling_membership_mode: initialData.sibling_membership_mode ?? null,
         sibling_role_id: initialData.sibling_role_id ?? null,
         parliament_source_group_ids: initialData.parliament_source_group_ids ?? [],
-        connected_relationship_directions: initialData.connected_relationship_directions ?? {
+        connectedRelationshipDirections: initialData.connectedRelationshipDirections ?? {
           ...INITIAL_CONNECTED_RELATIONSHIP_DIRECTIONS,
         },
       };
@@ -307,101 +299,142 @@ export function useGroupUpdate(
   const syncConnectedSiblingRelationships = async () => {
     const nextConnectedGroupId = formData.connected_group_id ?? null;
     const previousConnectedGroupId = initialData?.connected_group_id ?? null;
-    const existingLink = groupLinks.find(link => {
-      if (link.structural_relation !== 'sibling') {
-        return false;
-      }
+    const findPeerConnection = (connectedGroupId: string | null) =>
+      groupConnections.find(connection => {
+        if (!connectedGroupId || connection.connection_type !== 'peer') {
+          return false;
+        }
 
-      const candidateGroupIds = [previousConnectedGroupId, nextConnectedGroupId].filter(
-        (connectedGroupId): connectedGroupId is string => Boolean(connectedGroupId)
-      );
+        return (
+          (connection.group_a_id === groupId && connection.group_b_id === connectedGroupId) ||
+          (connection.group_a_id === connectedGroupId && connection.group_b_id === groupId)
+        );
+      });
+    const previousConnection = findPeerConnection(previousConnectedGroupId);
+    const existingConnection = findPeerConnection(nextConnectedGroupId);
+    const partnerChanged =
+      previousConnectedGroupId != null && previousConnectedGroupId !== nextConnectedGroupId;
 
-      return candidateGroupIds.some(
-        connectedGroupId =>
-          (link.source_group_id === groupId && link.target_group_id === connectedGroupId) ||
-          (link.source_group_id === connectedGroupId && link.target_group_id === groupId)
-      );
-    });
+    if (partnerChanged && previousConnection) {
+      await serverConfirmed(deleteGroupConnection({ id: previousConnection.id }));
+    }
 
-    const rights = RIGHT_TYPES.flatMap(right => {
-      const direction = formData.connected_relationship_directions[right];
-      if (direction === 'none') {
-        return [];
-      }
-
-      const canonicalDirection =
-        direction === 'bidirectional'
-          ? 'bidirectional'
-          : direction === 'outgoing'
-            ? 'forward'
-            : 'backward';
-
-      return [
-        {
-          id: existingLink?.rights?.find(existingRight => existingRight.right_key === right)?.id,
-          right_key: right,
-          direction: canonicalDirection as NetworkLinkDirection,
-          status: toNetworkLinkRightStatus(
-            existingLink?.rights?.find(existingRight => existingRight.right_key === right)?.status
-          ),
-          initiator_group_id: groupId,
-        },
-      ];
-    });
-
-    if (!nextConnectedGroupId || rights.length === 0) {
-      if (existingLink) {
-        await serverConfirmed(deleteNetworkLink({ id: existingLink.id }));
+    if (!nextConnectedGroupId) {
+      if (!partnerChanged && previousConnection) {
+        await serverConfirmed(deleteGroupConnection({ id: previousConnection.id }));
       }
       return;
     }
 
-    const backwardMembershipRule = {
-      membership_mode: (formData.sibling_membership_mode ?? 'none') as CanonicalMembershipMode,
-      membership_direction:
-        formData.sibling_membership_mode == null || formData.sibling_membership_mode === 'none'
-          ? null
-          : formData.sibling_membership_direction === 'outgoing'
-            ? ('forward' as const)
-            : formData.sibling_membership_direction === 'incoming'
-              ? ('backward' as const)
-              : null,
-      role_id:
-        formData.sibling_membership_mode === 'role_members'
-          ? (formData.sibling_role_id ?? null)
-          : null,
-      source_group_ids:
-        formData.sibling_membership_mode === 'selected_source_groups'
-          ? (formData.parliament_source_group_ids ?? [])
-          : null,
-    };
-    const membershipRule = {
-      id: existingLink?.membership_rule?.id,
-      membership_mode: backwardMembershipRule.membership_mode,
-      membership_direction: backwardMembershipRule.membership_direction,
-      role_id: backwardMembershipRule.role_id,
-      source_group_ids: backwardMembershipRule.source_group_ids,
-    };
+    const desiredGrants = RIGHT_TYPES.flatMap(right => {
+      const direction = formData.connectedRelationshipDirections[right];
+      return getExpandedRightDirections(direction).map(selectedDirection => ({
+        right_key: right,
+        ...getRightGrantEndpoints(selectedDirection, groupId, nextConnectedGroupId),
+      }));
+    });
 
-    const result = existingLink
-      ? updateNetworkLink({
-          id: existingLink.id,
-          source_group_id: groupId,
-          target_group_id: nextConnectedGroupId,
-          structural_relation: 'sibling',
-          status: 'requested',
-          rights,
-          membership_rule: membershipRule,
-        })
-      : createNetworkLink({
+    const existingGrantIds = new Map(
+      (existingConnection?.grants ?? []).map(grant => [
+        `${grant.right_key}:${grant.holder_group_id}:${grant.scope_group_id}`,
+        grant.id,
+      ])
+    );
+    const desiredGrantKeys = new Set(
+      desiredGrants.map(
+        grant => `${grant.right_key}:${grant.holder_group_id}:${grant.scope_group_id}`
+      )
+    );
+    const grants = [
+      ...desiredGrants.map(grant => ({
+        id: crypto.randomUUID(),
+        existing_grant_id:
+          existingGrantIds.get(
+            `${grant.right_key}:${grant.holder_group_id}:${grant.scope_group_id}`
+          ) ?? null,
+        operation: 'upsert' as const,
+        ...grant,
+      })),
+      ...(existingConnection?.grants ?? [])
+        .filter(
+          grant =>
+            !desiredGrantKeys.has(
+              `${grant.right_key}:${grant.holder_group_id}:${grant.scope_group_id}`
+            )
+        )
+        .map(grant => ({
           id: crypto.randomUUID(),
-          source_group_id: groupId,
-          target_group_id: nextConnectedGroupId,
-          structural_relation: 'sibling',
-          status: 'requested',
-          rights,
-          membership_rule: membershipRule,
-        });
+          existing_grant_id: grant.id,
+          operation: 'remove' as const,
+          right_key: grant.right_key as RightType,
+          holder_group_id: grant.holder_group_id,
+          scope_group_id: grant.scope_group_id,
+        })),
+    ];
+    const membershipMode = formData.sibling_membership_mode;
+    const hasMembership =
+      membershipMode != null &&
+      membershipMode !== 'none' &&
+      formData.siblingMembershipDirection != null;
+    const memberSourceGroupId =
+      formData.siblingMembershipDirection === 'current_members_to_partner'
+        ? groupId
+        : nextConnectedGroupId;
+    const memberTargetGroupId =
+      formData.siblingMembershipDirection === 'current_members_to_partner'
+        ? nextConnectedGroupId
+        : groupId;
+    const existingMembershipRule = existingConnection?.membership_rule ?? null;
+    const membershipRule = hasMembership
+      ? {
+          id: crypto.randomUUID(),
+          existing_membership_rule_id: existingMembershipRule?.id ?? null,
+          operation: 'upsert' as const,
+          member_source_group_id: memberSourceGroupId,
+          member_target_group_id: memberTargetGroupId,
+          membership_mode: membershipMode,
+          required_source_role_id:
+            membershipMode === 'role_members' ? (formData.sibling_role_id ?? null) : null,
+          eligible_origin_group_ids:
+            membershipMode === 'selected_source_groups'
+              ? (formData.parliament_source_group_ids ?? [])
+              : [],
+        }
+      : existingMembershipRule
+        ? {
+            id: crypto.randomUUID(),
+            existing_membership_rule_id: existingMembershipRule.id,
+            operation: 'remove' as const,
+            member_source_group_id: existingMembershipRule.member_source_group_id,
+            member_target_group_id: existingMembershipRule.member_target_group_id,
+            membership_mode: existingMembershipRule.membership_mode as Exclude<
+              CanonicalMembershipMode,
+              'none'
+            >,
+            required_source_role_id: existingMembershipRule.required_source_role_id,
+            eligible_origin_group_ids:
+              existingMembershipRule.origins
+                ?.map(origin => origin.eligible_origin_group_id)
+                .filter((id): id is string => Boolean(id)) ?? [],
+          }
+        : null;
+    const pair = canonicalGroupPair(groupId, nextConnectedGroupId);
+    const existingRequest = groupConnectionRequests.find(
+      request => request.group_a_id === pair.group_a_id && request.group_b_id === pair.group_b_id
+    );
+    const connectionId = existingConnection?.id ?? crypto.randomUUID();
+    const result = proposeGroupConnectionChange({
+      id: existingRequest?.id ?? crypto.randomUUID(),
+      active_connection_id: existingConnection?.id ?? null,
+      proposed_connection_id: connectionId,
+      ...pair,
+      desired_connection_type: 'peer',
+      desired_parent_group_id: null,
+      desired_child_group_id: null,
+      initiator_group_id: groupId,
+      grants,
+      membership_rule: membershipRule,
+    });
 
     await serverConfirmed(result);
   };
@@ -415,7 +448,7 @@ export function useGroupUpdate(
     }
 
     if (!formData.name.trim()) {
-      toast.error('Group name is required');
+      toast.error(translateText('generated.inline.0585_group_name_is_required_122d4408'));
       return;
     }
 
@@ -516,10 +549,10 @@ export function useGroupUpdate(
         allHashtags ?? []
       );
 
-      toast.success('Group updated successfully');
+      toast.success(translateText('generated.inline.0586_group_updated_successfully_131579a7'));
       navigate({ to: `/group/${groupId}` });
     } catch (error) {
-      toast.error('Failed to update group');
+      toast.error(translateText('generated.inline.0587_failed_to_update_group_185c81aa'));
       console.error('Update error:', error);
     } finally {
       setIsSubmitting(false);

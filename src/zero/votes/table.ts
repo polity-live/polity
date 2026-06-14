@@ -15,6 +15,7 @@ export const vote = table('vote')
     closing_duration_seconds: number().optional(),
     closing_end_time: number().optional(),
     visibility: string(),
+    ballot_visibility: string(),
     created_at: number(),
     updated_at: number(),
   })

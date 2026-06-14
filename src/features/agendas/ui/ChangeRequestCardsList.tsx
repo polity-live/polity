@@ -264,9 +264,7 @@ export function ChangeRequestCardsList({
             )}
           >
             <CheckCircle2 className="h-4 w-4" />
-            <span className="font-medium">
-              {t('features.agendas.crTimeline.votingActive', 'Change Request Voting Active')}
-            </span>
+            <span className="font-medium">{t('features.agendas.crTimeline.votingActive')}</span>
             <Badge variant="outline" className="ml-auto text-xs">
               vote_event
             </Badge>
@@ -280,12 +278,9 @@ export function ChangeRequestCardsList({
           >
             <AlertTriangle className="h-4 w-4" />
             <span>
-              {t('features.agendas.crTimeline.modeInfo', 'Mode')}:{' '}
+              {t('features.agendas.crTimeline.modeInfo')}:{' '}
               <strong>{getEditingModeLabel(editingMode)}</strong>.{' '}
-              {t(
-                'features.agendas.crTimeline.setToVoteEvent',
-                'Set to vote_event to start voting on change requests.'
-              )}
+              {t('features.agendas.crTimeline.setToVoteEvent')}
             </span>
           </div>
         )}
@@ -294,9 +289,7 @@ export function ChangeRequestCardsList({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Vote className="h-5 w-5" />
-            <CardTitle className="text-base">
-              {t('features.agendas.crTimeline.title', 'Change Request Timeline')}
-            </CardTitle>
+            <CardTitle className="text-base">{t('features.agendas.crTimeline.title')}</CardTitle>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="outline">
@@ -305,7 +298,7 @@ export function ChangeRequestCardsList({
             </Badge>
             {isTimelineComplete && (
               <Badge variant="default" className="bg-green-600">
-                {t('features.agendas.crTimeline.allCompleted', 'All Completed')}
+                {t('features.agendas.crTimeline.allCompleted')}
               </Badge>
             )}
           </div>
@@ -342,19 +335,19 @@ export function ChangeRequestCardsList({
         <Tabs value={activeTab} onValueChange={value => setActiveTab(value as TabValue)}>
           <TabsList>
             <TabsTrigger value="all" className="gap-1.5">
-              {t('features.agendas.crTimeline.tabAll', 'All')}
+              {t('features.agendas.crTimeline.tabAll')}
               <Badge variant="secondary" className="ml-0.5 text-xs">
                 {searchedItems.length}
               </Badge>
             </TabsTrigger>
             <TabsTrigger value="open" className="gap-1.5">
-              {t('features.agendas.crTimeline.tabOpen', 'Open')}
+              {t('features.agendas.crTimeline.tabOpen')}
               <Badge variant="secondary" className="ml-0.5 text-xs">
                 {categorized.open.length}
               </Badge>
             </TabsTrigger>
             <TabsTrigger value="accepted" className="gap-1.5">
-              {t('features.agendas.crTimeline.tabAccepted', 'Accepted')}
+              {t('features.agendas.crTimeline.tabAccepted')}
               <Badge
                 variant="outline"
                 className="ml-0.5 border-green-500/30 bg-green-500/10 text-xs text-green-700 dark:text-green-400"
@@ -363,7 +356,7 @@ export function ChangeRequestCardsList({
               </Badge>
             </TabsTrigger>
             <TabsTrigger value="rejected" className="gap-1.5">
-              {t('features.agendas.crTimeline.tabRejected', 'Rejected')}
+              {t('features.agendas.crTimeline.tabRejected')}
               <Badge variant="secondary" className="ml-0.5 text-xs">
                 {categorized.rejected.length}
               </Badge>
@@ -376,10 +369,7 @@ export function ChangeRequestCardsList({
           <div className="relative">
             <Search className="text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4" />
             <Input
-              placeholder={t(
-                'features.agendas.crTimeline.searchPlaceholder',
-                'Search change requests…'
-              )}
+              placeholder={t('features.agendas.crTimeline.searchPlaceholder')}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="h-9 pl-9 text-sm"
@@ -396,11 +386,8 @@ export function ChangeRequestCardsList({
               <FileEdit className="text-muted-foreground mx-auto mb-3 h-10 w-10" />
               <p className="text-muted-foreground text-sm">
                 {activeTab === 'all'
-                  ? t('features.agendas.crTimeline.noCRs', 'No change requests')
-                  : t(
-                      'features.agendas.crTimeline.noItemsInTab',
-                      'No change requests in this category'
-                    )}
+                  ? t('features.agendas.crTimeline.noCRs')
+                  : t('features.agendas.crTimeline.noItemsInTab')}
               </p>
             </div>
           ) : (

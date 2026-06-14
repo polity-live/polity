@@ -8,6 +8,7 @@ import { formatTime } from '../logic/messageUtils';
 import { hasRenderableContextCards, isAssistantErrorContext } from '../logic/contextAttachments';
 import { AiContextCards } from './AiContextCards';
 import type { AiAttachmentEntity } from '@/lib/ai/schemas';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface MessageBubbleProps {
   message: Message;
@@ -20,7 +21,9 @@ export function MessageBubble({
   isOwnMessage,
   resolveAttachmentCardData,
 }: MessageBubbleProps) {
-  const contextLabel = isAssistantUser(message.sender?.id ?? '') ? 'output' : 'input';
+  const contextLabel = isAssistantUser(message.sender?.id ?? '')
+    ? translateText('generated.inline.0115_output_1029d676')
+    : translateText('generated.inline.0112_input_140f86aa');
   const hasContent = Boolean(message.content?.trim());
   const isAssistantError = isAssistantErrorContext(message.context_json);
   const hidePolityLinkPreviews =

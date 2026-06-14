@@ -119,6 +119,9 @@ export const eventsTranslations = {
     by: 'By {{name}}',
     unspecified: 'not specified',
     itemActivated: 'Agenda Item Activated',
+    startReminderTitle: 'Start overdue agenda item',
+    startReminderDescription:
+      'The next agenda item is overdue. Start it now to keep the live stream and badges in sync.',
     // Context card
     scheduledFor: 'Scheduled for',
     startedAt: 'Started at',

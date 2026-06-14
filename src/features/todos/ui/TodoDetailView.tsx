@@ -6,6 +6,7 @@ import { Todo, TodoStatus, TodoPriority } from '../types/todo.types';
 import { formatTodoDate, formatTodoDateTime, isOverdue } from '../utils/todoFormatters';
 import { TodoStatusIcon } from './TodoStatusIcon';
 import { TodoPriorityBadge, TodoPriorityIcon } from './TodoPriorityBadge';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface TodoDetailViewProps {
   todo: Todo;
@@ -19,7 +20,9 @@ export function TodoDetailView({ todo }: TodoDetailViewProps) {
       {/* Status and Priority */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="mb-2 block text-sm font-medium">Status</label>
+          <label className="mb-2 block text-sm font-medium">
+            {translateText('generated.inline.0688_status_bae7d5be')}
+          </label>
           <div className="flex items-center gap-2">
             <TodoStatusIcon status={(todo.status ?? 'pending') as TodoStatus} />
             <span className="capitalize">{(todo.status ?? '').replace('_', ' ')}</span>
@@ -27,7 +30,9 @@ export function TodoDetailView({ todo }: TodoDetailViewProps) {
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium">Priority</label>
+          <label className="mb-2 block text-sm font-medium">
+            {translateText('generated.inline.0637_priority_886cbff9')}
+          </label>
           <div className="flex items-center gap-2">
             <TodoPriorityIcon priority={(todo.priority ?? 'medium') as TodoPriority} />
             <TodoPriorityBadge priority={(todo.priority ?? 'medium') as TodoPriority} />
@@ -37,37 +42,46 @@ export function TodoDetailView({ todo }: TodoDetailViewProps) {
 
       {/* Description */}
       <div>
-        <label className="mb-2 block text-sm font-medium">Description</label>
-        <p className="text-sm text-muted-foreground">
-          {todo.description || 'No description provided'}
+        <label className="mb-2 block text-sm font-medium">
+          {translateText('generated.inline.0030_description_55f8ebc8')}
+        </label>
+        <p className="text-muted-foreground text-sm">
+          {todo.description ||
+            translateText('generated.inline.0145_no_description_provided_2145e21d')}
         </p>
       </div>
 
       {/* Due Date */}
       <div>
-        <label className="mb-2 block text-sm font-medium">Due Date</label>
+        <label className="mb-2 block text-sm font-medium">
+          {translateText('generated.inline.1171_due_date_a1b308ec')}
+        </label>
         {todo.due_date ? (
           <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <span className={todoIsOverdue ? 'font-medium text-destructive' : ''}>
+            <Calendar className="text-muted-foreground h-4 w-4" />
+            <span className={todoIsOverdue ? 'text-destructive font-medium' : ''}>
               {formatTodoDate(todo.due_date)}
             </span>
             {todoIsOverdue && (
               <Badge variant="destructive" className="ml-2">
                 <AlertTriangle className="mr-1 h-3 w-3" />
-                Overdue
+                {translateText('generated.inline.1173_overdue_07217c77')}
               </Badge>
             )}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">No due date set</p>
+          <p className="text-muted-foreground text-sm">
+            {translateText('generated.inline.1174_no_due_date_set_7ae77ef5')}
+          </p>
         )}
       </div>
 
       {/* Creator */}
       {todo.creator && (
         <div>
-          <label className="mb-2 block text-sm font-medium">Created By</label>
+          <label className="mb-2 block text-sm font-medium">
+            {translateText('generated.inline.1175_created_by_43de2bcd')}
+          </label>
           <Link
             to="/user/$id"
             params={{ id: todo.creator.id }}
@@ -77,7 +91,10 @@ export function TodoDetailView({ todo }: TodoDetailViewProps) {
               <AvatarImage src={todo.creator.avatar ?? undefined} />
               <AvatarFallback>{todo.creator.email?.[0]?.toUpperCase() || '?'}</AvatarFallback>
             </Avatar>
-            <span>{todo.creator.email?.split('@')[0] || 'Unknown'}</span>
+            <span>
+              {todo.creator.email?.split('@')[0] ||
+                translateText('generated.inline.0031_unknown_bc7819b3')}
+            </span>
           </Link>
         </div>
       )}
@@ -87,7 +104,7 @@ export function TodoDetailView({ todo }: TodoDetailViewProps) {
         <div>
           <label className="mb-2 block text-sm font-medium">
             <Users className="mr-2 inline h-4 w-4" />
-            Assigned To
+            {translateText('generated.inline.1176_assigned_to_d00c2e68')}
           </label>
           <div className="space-y-2">
             {todo.assignments.map((assignment, idx) => (
@@ -103,7 +120,10 @@ export function TodoDetailView({ todo }: TodoDetailViewProps) {
                     {assignment.user?.email?.[0]?.toUpperCase() || '?'}
                   </AvatarFallback>
                 </Avatar>
-                <span>{assignment.user?.email?.split('@')[0] || 'Unknown'}</span>
+                <span>
+                  {assignment.user?.email?.split('@')[0] ||
+                    translateText('generated.inline.0031_unknown_bc7819b3')}
+                </span>
               </Link>
             ))}
           </div>
@@ -115,7 +135,7 @@ export function TodoDetailView({ todo }: TodoDetailViewProps) {
         <div>
           <label className="mb-2 block text-sm font-medium">
             <Building2 className="mr-2 inline h-4 w-4" />
-            Group
+            {translateText('generated.inline.0608_group_171a0606')}
           </label>
           <Link
             to="/group/$id"
@@ -136,7 +156,7 @@ export function TodoDetailView({ todo }: TodoDetailViewProps) {
         <div>
           <label className="mb-2 block text-sm font-medium">
             <Tag className="mr-2 inline h-4 w-4" />
-            Tags
+            {translateText('generated.inline.1177_tags_848eed0f')}
           </label>
           <div className="flex flex-wrap gap-2">
             {todo.tags.map((tag, idx) => (
@@ -149,12 +169,21 @@ export function TodoDetailView({ todo }: TodoDetailViewProps) {
       )}
 
       {/* Metadata */}
-      <div className="border-t pt-4 text-xs text-muted-foreground">
+      <div className="text-muted-foreground border-t pt-4 text-xs">
         <div className="grid grid-cols-2 gap-2">
-          <div>Created: {todo.created_at ? formatTodoDateTime(todo.created_at) : 'N/A'}</div>
-          <div>Updated: {todo.updated_at ? formatTodoDateTime(todo.updated_at) : 'N/A'}</div>
+          <div>
+            {translateText('generated.inline.0084_created_0c78dab1')}
+            {todo.created_at ? formatTodoDateTime(todo.created_at) : 'N/A'}
+          </div>
+          <div>
+            {translateText('generated.inline.0413_updated_702cad2f')}
+            {todo.updated_at ? formatTodoDateTime(todo.updated_at) : 'N/A'}
+          </div>
           {todo.completed_at && (
-            <div className="col-span-2">Completed: {formatTodoDateTime(todo.completed_at)}</div>
+            <div className="col-span-2">
+              {translateText('generated.inline.1178_completed_208409ff')}
+              {formatTodoDateTime(todo.completed_at)}
+            </div>
           )}
         </div>
       </div>

@@ -9,6 +9,7 @@ import { useGroupRoles as useFacadeGroupRoles } from '@/zero/groups/useGroupStat
 import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import { useElectionActions } from '@/zero/elections/useElectionActions';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export function useGroupRoles(groupId: string) {
   const { roles: rolesData, isLoading } = useFacadeGroupRoles(groupId);
@@ -48,18 +49,20 @@ export function useGroupRoles(groupId: string) {
 
   const createRoleRecord = async () => {
     if (!title.trim()) {
-      toast.error('Role title is required');
+      toast.error(translateText('generated.inline.1023_role_title_is_required_887ec72a'));
       return { success: false };
     }
 
     const termNum = parseInt(term, 10);
     if (isNaN(termNum) || termNum < 1) {
-      toast.error('Term must be at least 1 year');
+      toast.error(translateText('generated.inline.1025_term_must_be_at_least_1_year_3d20cd04'));
       return { success: false };
     }
 
     if (!firstTermStart) {
-      toast.error('First term start date is required');
+      toast.error(
+        translateText('generated.inline.1026_first_term_start_date_is_required_33c983ab')
+      );
       return { success: false };
     }
 
@@ -67,7 +70,7 @@ export function useGroupRoles(groupId: string) {
     const hasRecurringTerm = termNum > 0;
     resetForm();
     setAddDialogOpen(false);
-    toast.success('Role created successfully');
+    toast.success(translateText('generated.inline.0235_role_created_successfully_150cd5c5'));
 
     try {
       const roleId = crypto.randomUUID();
@@ -101,8 +104,12 @@ export function useGroupRoles(groupId: string) {
 
         await createElectionAction({
           id: electionId,
-          title: `Election for ${roleTitle}`,
-          description: `Vote for the ${roleTitle} role`,
+          title: translateText('generated.inline.0477_election_for_roletitle_d3112083', {
+            roleTitle: roleTitle,
+          }),
+          description: translateText('generated.inline.0478_vote_for_the_roletitle_role_94eaf56d', {
+            roleTitle: roleTitle,
+          }),
           majority_type: 'simple',
           status: 'pending',
           visibility: 'public',
@@ -116,7 +123,9 @@ export function useGroupRoles(groupId: string) {
 
         await createAgendaItemAction({
           id: agendaItemId,
-          title: `Election: ${roleTitle}`,
+          title: translateText('generated.inline.0479_election_roletitle_1a9feb2f', {
+            roleTitle: roleTitle,
+          }),
           description: '',
           type: 'election',
           status: 'pending',
@@ -139,25 +148,29 @@ export function useGroupRoles(groupId: string) {
       return { success: true, roleId };
     } catch (error) {
       console.error('Failed to create role:', error);
-      toast.error('Failed to create role. Please try again.');
+      toast.error(
+        translateText('generated.inline.0236_failed_to_create_role_please_try_again_7383aeaf')
+      );
       return { success: false, error };
     }
   };
 
   const updateRoleRecord = async () => {
     if (!editingRole || !title.trim()) {
-      toast.error('Role title is required');
+      toast.error(translateText('generated.inline.1023_role_title_is_required_887ec72a'));
       return { success: false };
     }
 
     const termNum = parseInt(term, 10);
     if (isNaN(termNum) || termNum < 1) {
-      toast.error('Term must be at least 1 year');
+      toast.error(translateText('generated.inline.1025_term_must_be_at_least_1_year_3d20cd04'));
       return { success: false };
     }
 
     if (!firstTermStart) {
-      toast.error('First term start date is required');
+      toast.error(
+        translateText('generated.inline.1026_first_term_start_date_is_required_33c983ab')
+      );
       return { success: false };
     }
 
@@ -165,7 +178,7 @@ export function useGroupRoles(groupId: string) {
     resetForm();
     setEditingRole(null);
     setEditDialogOpen(false);
-    toast.success('Role updated successfully');
+    toast.success(translateText('generated.inline.0588_role_updated_successfully_87ea8999'));
 
     try {
       await updateRoleAction({
@@ -183,13 +196,15 @@ export function useGroupRoles(groupId: string) {
       return { success: true };
     } catch (error) {
       console.error('Failed to update role:', error);
-      toast.error('Failed to update role. Please try again.');
+      toast.error(
+        translateText('generated.inline.0589_failed_to_update_role_please_try_again_215d1ee3')
+      );
       return { success: false, error };
     }
   };
 
   const deleteRoleRecord = async (roleId: string) => {
-    toast.success('Role deleted successfully');
+    toast.success(translateText('generated.inline.0237_role_deleted_successfully_b714d57c'));
 
     try {
       await deleteRoleAction({ id: roleId });
@@ -197,7 +212,9 @@ export function useGroupRoles(groupId: string) {
       return { success: true };
     } catch (error) {
       console.error('Failed to delete role:', error);
-      toast.error('Failed to delete role. Please try again.');
+      toast.error(
+        translateText('generated.inline.0238_failed_to_delete_role_please_try_again_fe4624de')
+      );
       return { success: false, error };
     }
   };
@@ -211,7 +228,7 @@ export function useGroupRoles(groupId: string) {
     userId: string,
     reason: 'elected' | 'appointed' = 'appointed'
   ) => {
-    toast.success('Holder assigned successfully');
+    toast.success(translateText('generated.inline.1027_holder_assigned_successfully_a9dc4f5b'));
 
     try {
       const now = Date.now();
@@ -244,7 +261,9 @@ export function useGroupRoles(groupId: string) {
       return { success: true };
     } catch (error) {
       console.error('Failed to assign holder:', error);
-      toast.error('Failed to assign holder. Please try again.');
+      toast.error(
+        translateText('generated.inline.1028_failed_to_assign_holder_please_try_again_6c55b091')
+      );
       return { success: false, error };
     }
   };
@@ -265,12 +284,14 @@ export function useGroupRoles(groupId: string) {
       const currentHistoryEntry = role?.holder_history?.find(h => !h.end_date);
       if (!currentHistoryEntry) {
         toast.error(
-          'This assignee comes from an active member role. Change it from the members tab.'
+          translateText(
+            'generated.inline.1029_this_assignee_comes_from_an_active_member_rol_fcfbcffe'
+          )
         );
         return { success: false };
       }
 
-      toast.success('Holder removed successfully');
+      toast.success(translateText('generated.inline.1030_holder_removed_successfully_07da569a'));
 
       if (currentHistoryEntry) {
         await updateHistoryAction({
@@ -283,7 +304,9 @@ export function useGroupRoles(groupId: string) {
       return { success: true };
     } catch (error) {
       console.error('Failed to remove holder:', error);
-      toast.error('Failed to remove holder. Please try again.');
+      toast.error(
+        translateText('generated.inline.1031_failed_to_remove_holder_please_try_again_df985f00')
+      );
       return { success: false, error };
     }
   };
@@ -295,7 +318,7 @@ export function useGroupRoles(groupId: string) {
     try {
       const role = roles.find(candidateRole => candidateRole.id === roleId);
       if (!role) {
-        toast.error('Role not found');
+        toast.error(translateText('generated.inline.0476_role_not_found_70623637'));
         return { success: false };
       }
 
@@ -304,8 +327,12 @@ export function useGroupRoles(groupId: string) {
 
       await createElectionAction({
         id: electionId,
-        title: `Election for ${role.title}`,
-        description: `Vote for the ${role.title} role`,
+        title: translateText('generated.inline.0480_election_for_title_b235e013', {
+          title: role.title,
+        }),
+        description: translateText('generated.inline.0481_vote_for_the_title_role_e737ad4a', {
+          title: role.title,
+        }),
         majority_type: 'simple',
         status: 'pending',
         visibility: 'public',
@@ -319,7 +346,9 @@ export function useGroupRoles(groupId: string) {
 
       await createAgendaItemAction({
         id: agendaItemId,
-        title: `Election: ${role.title}`,
+        title: translateText('generated.inline.0482_election_title_7bdbc8e7', {
+          title: role.title,
+        }),
         description: '',
         type: 'election',
         status: 'pending',
@@ -338,11 +367,13 @@ export function useGroupRoles(groupId: string) {
         voting_phase: null,
       });
 
-      toast.success('Election created successfully');
+      toast.success(translateText('generated.inline.1032_election_created_successfully_72d95954'));
       return { success: true, electionId };
     } catch (error) {
       console.error('Failed to create election:', error);
-      toast.error('Failed to create election. Please try again.');
+      toast.error(
+        translateText('generated.inline.1033_failed_to_create_election_please_try_again_5184661c')
+      );
       return { success: false, error };
     }
   };

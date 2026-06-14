@@ -17,7 +17,7 @@ export function RedoToolbarButton(props: React.ComponentProps<typeof ToolbarButt
       disabled={disabled}
       onClick={() => editor.redo()}
       onMouseDown={e => e.preventDefault()}
-      tooltip={t('plateJs.toolbar.redo', 'Redo')}
+      tooltip={t('plateJs.toolbar.redo')}
     >
       <Redo2Icon />
     </ToolbarButton>
@@ -35,7 +35,7 @@ export function UndoToolbarButton(props: React.ComponentProps<typeof ToolbarButt
       disabled={disabled}
       onClick={() => editor.undo()}
       onMouseDown={e => e.preventDefault()}
-      tooltip={t('plateJs.toolbar.undo', 'Undo')}
+      tooltip={t('plateJs.toolbar.undo')}
     >
       <Undo2Icon />
     </ToolbarButton>

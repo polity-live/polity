@@ -9,6 +9,7 @@ import {
   type PqlQueryIssue,
   type PqlSuggestion,
 } from '../logic/pqlQueryLanguage';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface PqlQueryEditorProps<TItem, TFieldKey extends string> {
   fields: readonly PqlFieldDefinition<TItem, TFieldKey>[];
@@ -215,14 +216,16 @@ export function PqlQueryEditor<TItem, TFieldKey extends string>({
         ))}
         {fields.length > visibleFields.length ? (
           <Badge variant="outline" className="font-mono text-xs">
-            +{fields.length - visibleFields.length} more
+            +{fields.length - visibleFields.length}
+            {translateText('generated.inline.0142_more_e7c95b4c')}
           </Badge>
         ) : null}
       </div>
 
       <p className="text-muted-foreground text-xs">
-        Suggestions support fields, ==, !=, &lt;, &gt;, &lt;=, &gt;=, IN, CONTAINS, AND, OR, (), and
-        IS SET.
+        {translateText(
+          'generated.inline.1094_suggestions_support_fields_in_contains_and_or_72aca790'
+        )}
       </p>
 
       {issues.length > 0 ? (

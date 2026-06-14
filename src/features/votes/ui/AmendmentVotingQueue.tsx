@@ -11,7 +11,6 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
-  GripVertical,
   FileText,
   ThumbsUp,
   ThumbsDown,
@@ -19,9 +18,10 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useChangeRequestVoting } from '../hooks/useChangeRequestVoting';
-import { VoteButtons } from './VoteButtons';
-import { VotingPhaseIndicator } from './VotingPhaseIndicator';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 
 interface ChangeRequest {
   id: string;
@@ -46,14 +46,14 @@ interface VoteSession {
   votingStartTime: number;
   votingEndTime: number;
   currentChangeRequestIndex?: number;
-  votes?: Array<{
+  votes?: {
     id: string;
     vote: string;
     voter: {
       id: string;
       name?: string;
     };
-  }>;
+  }[];
 }
 
 interface AmendmentVotingQueueProps {
@@ -94,7 +94,8 @@ function ChangeRequestItem({
   const totalVotes = voteResults
     ? voteResults.accept + voteResults.reject + voteResults.abstain
     : 0;
-  const acceptPercentage = totalVotes > 0 ? (voteResults!.accept / totalVotes) * 100 : 0;
+  const acceptPercentage =
+    voteResults && totalVotes > 0 ? (voteResults.accept / totalVotes) * 100 : 0;
 
   return (
     <div
@@ -137,7 +138,7 @@ function ChangeRequestItem({
               <h4 className="font-semibold">{changeRequest.title}</h4>
               {isActive && (
                 <Badge variant="default" className="bg-blue-500">
-                  Aktuelle Abstimmung
+                  {translateText('generated.inline.1246_aktuelle_abstimmung_bf7b15bd')}
                 </Badge>
               )}
               {isCompleted && voteResults && (
@@ -148,28 +149,37 @@ function ChangeRequestItem({
                   {acceptPercentage > 50 ? (
                     <>
                       <CheckCircle2 className="mr-1 h-3 w-3" />
-                      Angenommen
+                      {translateText('generated.inline.1247_angenommen_187cf380')}
                     </>
                   ) : (
                     <>
                       <XCircle className="mr-1 h-3 w-3" />
-                      Abgelehnt
+                      {translateText('generated.inline.1248_abgelehnt_110d6fe7')}
                     </>
                   )}
                 </Badge>
               )}
             </div>
-            <Badge variant="outline">{changeRequest.characterCount || 0} Zeichen geändert</Badge>
+            <Badge variant="outline">
+              {changeRequest.characterCount || 0}
+              {translateText('generated.inline.1249_zeichen_ge_ndert_2bb3e4a3')}
+            </Badge>
           </div>
 
-          <p className="text-sm text-muted-foreground">{changeRequest.description}</p>
+          <p className="text-muted-foreground text-sm">{changeRequest.description}</p>
 
           {changeRequest.creator && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>Vorgeschlagen von {changeRequest.creator.name || 'Unbekannt'}</span>
+            <div className="text-muted-foreground flex items-center gap-2 text-xs">
+              <span>
+                {translateText('generated.inline.1250_vorgeschlagen_von_eb4cafd3')}
+                {changeRequest.creator.name ||
+                  translateText('generated.inline.0028_unbekannt_d0b00a9f')}
+              </span>
               {changeRequest.source && (
                 <Badge variant="outline" className="text-xs">
-                  {changeRequest.source === 'collaborator' ? 'Collaborator' : 'Event-Teilnehmer'}
+                  {changeRequest.source === 'collaborator'
+                    ? translateText('generated.inline.0157_collaborator_794b34c1')
+                    : translateText('generated.inline.0158_event_teilnehmer_c24630ba')}
                 </Badge>
               )}
             </div>
@@ -178,13 +188,25 @@ function ChangeRequestItem({
           {isCompleted && voteResults && (
             <div className="space-y-1 pt-2">
               <div className="flex items-center justify-between text-xs">
-                <span>Zustimmung: {voteResults.accept}</span>
-                <span>Ablehnung: {voteResults.reject}</span>
-                <span>Enthaltung: {voteResults.abstain}</span>
+                <span>
+                  {translateText('generated.inline.1251_zustimmung_74668f14')}
+                  {voteResults.accept}
+                </span>
+                <span>
+                  {translateText('generated.inline.1252_ablehnung_11faeacf')}
+                  {voteResults.reject}
+                </span>
+                <span>
+                  {translateText('generated.inline.1253_enthaltung_76de9169')}
+                  {voteResults.abstain}
+                </span>
               </div>
               <Progress value={acceptPercentage} className="h-2" />
-              <p className="text-xs text-muted-foreground">
-                {acceptPercentage.toFixed(1)}% Zustimmung ({totalVotes} Stimmen)
+              <p className="text-muted-foreground text-xs">
+                {acceptPercentage.toFixed(1)}
+                {translateText('generated.inline.1254_zustimmung_b883f2af')}
+                {totalVotes}
+                {translateText('generated.inline.1255_stimmen_fd8199c1')}
               </p>
             </div>
           )}
@@ -211,11 +233,9 @@ export function AmendmentVotingQueue({
   // Integrate with useChangeRequestVoting for proper voting management
   const {
     currentChangeRequest,
-    pendingChangeRequests: hookPendingCRs,
     voteResults: currentVoteResults,
     hasVoted,
     castVote,
-    moveToNextChangeRequest,
     isLoading: votingLoading,
   } = useChangeRequestVoting({
     eventId,
@@ -269,7 +289,9 @@ export function AmendmentVotingQueue({
 
   const updateVotingOrder = async (newOrder: ChangeRequest[]) => {
     setLocalChangeRequests(newOrder);
-    toast.success('Abstimmungsreihenfolge aktualisiert');
+    toast.success(
+      translateText('generated.inline.1256_abstimmungsreihenfolge_aktualisiert_4e6d6850')
+    );
   };
 
   return (
@@ -278,12 +300,13 @@ export function AmendmentVotingQueue({
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Abstimmungs-Warteschlange
+            {translateText('generated.inline.1257_abstimmungs_warteschlange_81e93825')}
           </CardTitle>
           {currentSession?.status === 'active' && (
             <Badge variant="default" className="gap-1">
               <Clock className="h-3 w-3" />
-              {minutesRemaining}:{secondsRemaining.toString().padStart(2, '0')} verbleibend
+              {minutesRemaining}:{secondsRemaining.toString().padStart(2, '0')}
+              {translateText('generated.inline.0184_verbleibend_6ffd5c42')}
             </Badge>
           )}
         </div>
@@ -293,10 +316,13 @@ export function AmendmentVotingQueue({
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span className="font-medium">
-              Fortschritt: {currentIndex + 1} / {totalRequests + 1}
+              {translateText('generated.inline.1258_fortschritt_3f32e7c1')}
+              {currentIndex + 1} / {totalRequests + 1}
             </span>
             <span className="text-muted-foreground">
-              {currentIndex < totalRequests ? 'Vorschläge' : 'Finale Abstimmung'}
+              {currentIndex < totalRequests
+                ? translateText('generated.inline.0159_vorschl_ge_7f907c67')
+                : translateText('generated.inline.0160_finale_abstimmung_ba186955')}
             </span>
           </div>
           <Progress value={progress} className="h-2" />
@@ -305,8 +331,15 @@ export function AmendmentVotingQueue({
         {/* Change Requests Queue */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold">Vorschläge ({totalRequests})</h3>
-            {isOrganizer && <p className="text-xs text-muted-foreground">↑↓ zum Neuordnen</p>}
+            <h3 className="text-sm font-semibold">
+              {translateText('generated.inline.1259_vorschl_ge_8f142a45')}
+              {totalRequests})
+            </h3>
+            {isOrganizer && (
+              <p className="text-muted-foreground text-xs">
+                {translateText('generated.inline.1260_zum_neuordnen_63249e46')}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -334,18 +367,16 @@ export function AmendmentVotingQueue({
 
         {/* Current Vote Section */}
         {currentChangeRequest && currentSession?.status === 'active' && (
-          <div className="space-y-4 rounded-lg border-2 border-primary bg-primary/5 p-4">
+          <div className="border-primary bg-primary/5 space-y-4 rounded-lg border-2 p-4">
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="font-semibold">
-                  {t('features.events.voting.castYourVote', 'Cast Your Vote')}
-                </h4>
-                <p className="text-sm text-muted-foreground">{currentChangeRequest.title}</p>
+                <h4 className="font-semibold">{t('features.events.voting.castYourVote')}</h4>
+                <p className="text-muted-foreground text-sm">{currentChangeRequest.title}</p>
               </div>
               {hasVoted && (
                 <Badge variant="outline" className="bg-green-50">
                   <CheckCircle2 className="mr-1 h-3 w-3" />
-                  {t('features.events.voting.voted', 'Voted')}
+                  {t('features.events.voting.voted')}
                 </Badge>
               )}
             </div>
@@ -378,7 +409,7 @@ export function AmendmentVotingQueue({
                   className="flex-1 border-green-500 text-green-600 hover:bg-green-50"
                 >
                   <ThumbsUp className="mr-2 h-4 w-4" />
-                  {t('features.events.voting.accept', 'Accept')}
+                  {t('features.events.voting.accept')}
                 </Button>
                 <Button
                   onClick={() => castVote('reject')}
@@ -387,7 +418,7 @@ export function AmendmentVotingQueue({
                   className="flex-1 border-red-500 text-red-600 hover:bg-red-50"
                 >
                   <ThumbsDown className="mr-2 h-4 w-4" />
-                  {t('features.events.voting.reject', 'Reject')}
+                  {t('features.events.voting.reject')}
                 </Button>
                 <Button
                   onClick={() => castVote('abstain')}
@@ -396,7 +427,7 @@ export function AmendmentVotingQueue({
                   className="flex-1"
                 >
                   <Minus className="mr-2 h-4 w-4" />
-                  {t('features.events.voting.abstain', 'Abstain')}
+                  {t('features.events.voting.abstain')}
                 </Button>
               </div>
             )}
@@ -414,14 +445,18 @@ export function AmendmentVotingQueue({
           >
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="font-semibold">Finale Textabstimmung</h4>
-                <p className="text-sm text-muted-foreground">
-                  Abstimmung über den gesamten Amendment-Text
+                <h4 className="font-semibold">
+                  {translateText('generated.inline.1261_finale_textabstimmung_0385a475')}
+                </h4>
+                <p className="text-muted-foreground text-sm">
+                  {translateText(
+                    'generated.inline.1262_abstimmung_ber_den_gesamten_amendment_text_53856d8c'
+                  )}
                 </p>
               </div>
               {currentSession?.status === 'active' && (
                 <Badge variant="default" className="bg-green-500">
-                  Aktuelle Abstimmung
+                  {translateText('generated.inline.1246_aktuelle_abstimmung_bf7b15bd')}
                 </Badge>
               )}
             </div>
@@ -434,12 +469,12 @@ export function AmendmentVotingQueue({
             {currentIndex < totalRequests ? (
               <Button onClick={onAdvanceToNext} className="flex-1">
                 <ArrowDown className="mr-2 h-4 w-4" />
-                Nächster Vorschlag
+                {translateText('generated.inline.1263_n_chster_vorschlag_17267465')}
               </Button>
             ) : (
               <Button onClick={onComplete} variant="default" className="flex-1 bg-green-600">
                 <CheckCircle2 className="mr-2 h-4 w-4" />
-                Abstimmung Abschließen
+                {translateText('generated.inline.1264_abstimmung_abschlie_en_4133d62a')}
               </Button>
             )}
           </div>

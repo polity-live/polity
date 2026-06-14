@@ -14,8 +14,8 @@ import {
   type MembershipProvenanceFields,
   type MembershipWithCompositionSource,
 } from '../logic/membershipComposition';
-import type { NetworkLinkListRow } from '@/zero/network/queries';
-import { explodeNetworkLinksToRelationships } from '@/features/network/logic/networkLinkDerived';
+import type { GroupConnectionListRow } from '@/zero/network/queries';
+import { deriveNormalizedGroupRelationships } from '@/features/network/logic/groupConnectionDerived';
 
 interface GroupMembershipRoleLinkLike {
   role?: GroupAccessRoleWithRightsRow | null;
@@ -71,7 +71,7 @@ export function useGroupMembershipComposition<TMembership extends MembershipWith
   }, [group?.group_type, memberships, showComposition]);
 
   const [relationshipLinks, relationshipsResult] = useQuery(
-    showComposition ? queries.network.allNetworkLinks({}) : undefined
+    showComposition ? queries.network.allGroupConnections({}) : undefined
   );
   const [rootMembershipsData, rootMembershipsResult] = useQuery(
     showComposition && sourceGroupIds.length > 0
@@ -96,8 +96,8 @@ export function useGroupMembershipComposition<TMembership extends MembershipWith
     return resolveMembershipProvenance({
       group,
       memberships,
-      relationships: explodeNetworkLinksToRelationships(
-        (relationshipLinks ?? []) as readonly NetworkLinkListRow[]
+      relationships: deriveNormalizedGroupRelationships(
+        (relationshipLinks ?? []) as readonly GroupConnectionListRow[]
       ),
       rootMemberships,
     }) as (TMembership & MembershipProvenanceFields)[];

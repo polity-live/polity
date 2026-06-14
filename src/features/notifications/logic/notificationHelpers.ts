@@ -14,6 +14,19 @@ export type NotificationNavigationTarget =
   | { kind: 'messages'; search: MessageNavigationSearch }
   | { kind: 'route'; to: string };
 
+function buildMessagesHref(search: MessageNavigationSearch): string {
+  const params = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(search)) {
+    if (value) {
+      params.set(key, value);
+    }
+  }
+
+  const query = params.toString();
+  return query ? `/messages?${query}` : '/messages';
+}
+
 /**
  * Constructs a display name from a user's first/last name fields.
  */
@@ -116,6 +129,61 @@ export function getNotificationNavigationTarget(
       kind: 'route',
       to: notification.action_url,
     };
+  }
+
+  return null;
+}
+
+export function getNotificationNavigationHref(notification: Notification): string | null {
+  const navigationTarget = getNotificationNavigationTarget(notification);
+
+  if (navigationTarget?.kind === 'messages') {
+    return buildMessagesHref(navigationTarget.search);
+  }
+
+  if (navigationTarget?.kind === 'route') {
+    return navigationTarget.to;
+  }
+
+  if (notification.related_entity_type) {
+    switch (notification.related_entity_type) {
+      case 'group':
+        return notification.related_group?.id ? `/group/${notification.related_group.id}` : null;
+      case 'event':
+        return notification.related_event?.id ? `/event/${notification.related_event.id}` : null;
+      case 'user':
+        return notification.related_user?.id ? `/user/${notification.related_user.id}` : null;
+      case 'message':
+        return '/messages';
+      case 'blog':
+        if (!notification.related_blog?.id) {
+          return null;
+        }
+
+        if (notification.on_behalf_of_group?.id) {
+          return `/group/${notification.on_behalf_of_group.id}/blog/${notification.related_blog.id}`;
+        }
+
+        if (notification.related_user?.id) {
+          return `/user/${notification.related_user.id}/blog/${notification.related_blog.id}`;
+        }
+
+        if (notification.sender?.id) {
+          return `/user/${notification.sender.id}/blog/${notification.related_blog.id}`;
+        }
+
+        return null;
+      case 'amendment':
+        return notification.related_amendment?.id
+          ? `/amendment/${notification.related_amendment.id}`
+          : null;
+      default:
+        return null;
+    }
+  }
+
+  if (notification.related_user_id) {
+    return `/user/${notification.related_user_id}`;
   }
 
   return null;

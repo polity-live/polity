@@ -18,6 +18,7 @@ import {
   DialogTrigger,
 } from '@/features/shared/ui/ui/dialog';
 import { Plus } from 'lucide-react';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface AddLinkDialogProps {
   isOpen: boolean;
@@ -41,40 +42,52 @@ export function AddLinkDialog({ isOpen, onOpenChange, onSubmit }: AddLinkDialogP
       <DialogTrigger asChild>
         <Button size="sm">
           <Plus className="mr-2 h-4 w-4" />
-          Add Link
+          {translateText('generated.inline.0761_add_link_2cf006b1')}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Add New Link</DialogTitle>
-            <DialogDescription>Add a link to this group's resources.</DialogDescription>
+            <DialogTitle>
+              {translateText('generated.inline.0762_add_new_link_5122d31f')}
+            </DialogTitle>
+            <DialogDescription>
+              {translateText('generated.inline.0763_add_a_link_to_this_group_s_resources_239da38d')}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="link-label">Label</Label>
+              <Label htmlFor="link-label">
+                {translateText('generated.inline.0535_label_74341e3c')}
+              </Label>
               <Input
                 id="link-label"
-                placeholder="Website, Social Media, etc."
+                placeholder={translateText(
+                  'generated.inline.0764_website_social_media_etc_a52f7d5f'
+                )}
                 value={label}
-                onChange={(e) => setLabel(e.target.value)}
+                onChange={e => setLabel(e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="link-url">URL</Label>
+              <Label htmlFor="link-url">
+                {translateText('generated.inline.0028_url_0e2d9b07')}
+              </Label>
               <Input
                 id="link-url"
                 type="url"
                 placeholder="https://example.com"
                 value={url}
-                onChange={(e) => setUrl(e.target.value)}
+                onChange={e => setUrl(e.target.value)}
                 required
               />
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit">Add Link</Button>
+            <Button type="submit">
+              {translateText('generated.inline.0761_add_link_2cf006b1')}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

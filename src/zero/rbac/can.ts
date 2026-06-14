@@ -45,6 +45,7 @@ export interface PermissionCheck {
   groupId?: string | null;
   eventId?: string | null;
   blogId?: string | null;
+  amendmentId?: string | null;
 }
 
 // ============================================================================
@@ -75,8 +76,14 @@ export async function can(
   const groupId = check.groupId ?? undefined;
   const eventId = check.eventId ?? undefined;
   const blogId = check.blogId ?? undefined;
+  const amendmentId = check.amendmentId ?? undefined;
 
-  const allowed = checkPermission(data, { groupId, eventId, blogId }, check.action, check.resource);
+  const allowed = checkPermission(
+    data,
+    { groupId, eventId, blogId, amendment: data.amendment },
+    check.action,
+    check.resource
+  );
 
   if (!allowed) {
     const scopeLabel = groupId
@@ -85,7 +92,9 @@ export async function can(
         ? `event:${eventId}`
         : blogId
           ? `blog:${blogId}`
-          : undefined;
+          : amendmentId
+            ? `amendment:${amendmentId}`
+            : undefined;
     throw new PermissionError(check.action, check.resource, scopeLabel);
   }
 }
@@ -113,6 +122,10 @@ async function loadPermissionData(
 
   if (check.blogId) {
     data.bloggerRelations = await loadBloggerRelations(tx, userId, check.blogId);
+  }
+
+  if (check.amendmentId) {
+    data.amendment = await loadAmendment(tx, check.amendmentId);
   }
 
   return data;
@@ -207,6 +220,40 @@ async function loadBloggerRelations(tx: Transaction<Schema>, userId: string, blo
         }
       : undefined,
   }));
+}
+
+async function loadAmendment(tx: Transaction<Schema>, amendmentId: string) {
+  const amendment = await tx.run(
+    zql.amendment
+      .where('id', amendmentId)
+      .related('created_by')
+      .related('collaborators', q =>
+        q.related('user').related('role', rq => rq.related('action_rights'))
+      )
+      .one()
+  );
+
+  if (!amendment) return undefined;
+
+  return {
+    id: amendment.id,
+    owner: amendment.created_by_id ? { id: amendment.created_by_id } : undefined,
+    user: amendment.created_by_id ? { id: amendment.created_by_id } : undefined,
+    group: amendment.group_id ? { id: amendment.group_id } : undefined,
+    amendmentRoleCollaborators: amendment.collaborators?.map(collaborator => ({
+      id: collaborator.id,
+      user: collaborator.user_id ? { id: collaborator.user_id } : undefined,
+      role: collaborator.role
+        ? {
+            id: collaborator.role.id,
+            name: collaborator.role.name ?? '',
+            description: collaborator.role.description ?? undefined,
+            scope: (collaborator.role.scope ?? 'amendment') as Role['scope'],
+            actionRights: mapActionRights(collaborator.role.action_rights),
+          }
+        : undefined,
+    })),
+  };
 }
 
 function mapActionRights(raw: readonly ActionRightRow[] | undefined): ActionRight[] {

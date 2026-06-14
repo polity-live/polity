@@ -10,6 +10,7 @@ import {
 import { getSession } from '@/lib/supabase/server';
 import { executeZeroRead } from '@/server/zero-mutate';
 import { zql } from '@/zero/schema';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 const entityRouteAccessSchema = z
   .object({
@@ -23,7 +24,9 @@ const entityRouteAccessSchema = z
       (value.parentType == null && value.parentId == null) ||
       (value.parentType != null && value.parentId != null),
     {
-      message: 'parentType and parentId must be provided together',
+      message: translateText(
+        'generated.inline.0653_parenttype_and_parentid_must_be_provided_toge_3662ca4b'
+      ),
       path: ['parentId'],
     }
   );

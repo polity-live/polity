@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import type { DropdownMenuProps } from '@radix-ui/react-dropdown-menu';
+import type { TFunction } from 'i18next';
 
 import { PlaceholderPlugin } from '@platejs/media/react';
 import { AudioLinesIcon, FileUpIcon, FilmIcon, ImageIcon, LinkIcon } from 'lucide-react';
@@ -35,30 +36,30 @@ import {
   ToolbarSplitButtonSecondary,
 } from '@/features/shared/ui/ui/toolbar.tsx';
 
-const getMediaConfig = (t: (key: string, fallback: string) => string) => ({
+const getMediaConfig = (t: TFunction) => ({
   [KEYS.audio]: {
     accept: ['audio/*'],
     icon: <AudioLinesIcon className="size-4" />,
-    title: t('plateJs.toolbar.insertAudio', 'Insert Audio'),
-    tooltip: t('plateJs.toolbar.audio', 'Audio'),
+    title: t('plateJs.toolbar.insertAudio'),
+    tooltip: t('plateJs.toolbar.audio'),
   },
   [KEYS.file]: {
     accept: ['*'],
     icon: <FileUpIcon className="size-4" />,
-    title: t('plateJs.toolbar.insertFile', 'Insert File'),
-    tooltip: t('plateJs.toolbar.file', 'File'),
+    title: t('plateJs.toolbar.insertFile'),
+    tooltip: t('plateJs.toolbar.file'),
   },
   [KEYS.img]: {
     accept: ['image/*'],
     icon: <ImageIcon className="size-4" />,
-    title: t('plateJs.toolbar.insertImage', 'Insert Image'),
-    tooltip: t('plateJs.toolbar.image', 'Image'),
+    title: t('plateJs.toolbar.insertImage'),
+    tooltip: t('plateJs.toolbar.image'),
   },
   [KEYS.video]: {
     accept: ['video/*'],
     icon: <FilmIcon className="size-4" />,
-    title: t('plateJs.toolbar.insertVideo', 'Insert Video'),
-    tooltip: t('plateJs.toolbar.video', 'Video'),
+    title: t('plateJs.toolbar.insertVideo'),
+    tooltip: t('plateJs.toolbar.video'),
   },
 });
 
@@ -107,11 +108,11 @@ export function MediaToolbarButton({
             <DropdownMenuGroup>
               <DropdownMenuItem onSelect={() => openFilePicker()}>
                 {currentConfig.icon}
-                {t('plateJs.toolbar.uploadFromComputer', 'Upload from computer')}
+                {t('plateJs.toolbar.uploadFromComputer')}
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => setDialogOpen(true)}>
                 <LinkIcon />
-                {t('plateJs.toolbar.insertViaURL', 'Insert via URL')}
+                {t('plateJs.toolbar.insertViaURL')}
               </DropdownMenuItem>
             </DropdownMenuGroup>
           </DropdownMenuContent>
@@ -150,7 +151,7 @@ function MediaUrlDialogContent({
   const { t } = useTranslation();
 
   const embedMedia = React.useCallback(() => {
-    if (!isUrl(url)) return toast.error(t('plateJs.errors.invalidUrl', 'Invalid URL'));
+    if (!isUrl(url)) return toast.error(t('plateJs.errors.invalidUrl'));
 
     setOpen(false);
     editor.tf.insertNodes({
@@ -187,14 +188,14 @@ function MediaUrlDialogContent({
         />
       </AlertDialogDescription>{' '}
       <AlertDialogFooter>
-        <AlertDialogCancel>{t('plateJs.toolbar.cancel', 'Cancel')}</AlertDialogCancel>
+        <AlertDialogCancel>{t('plateJs.toolbar.cancel')}</AlertDialogCancel>
         <AlertDialogAction
           onClick={e => {
             e.preventDefault();
             embedMedia();
           }}
         >
-          {t('plateJs.toolbar.accept', 'Accept')}
+          {t('plateJs.toolbar.accept')}
         </AlertDialogAction>
       </AlertDialogFooter>
     </>

@@ -9,31 +9,27 @@ import { getPersistedNetworkLayout } from '@/features/network/logic/networkLayou
 
 interface UsePersistedNetworkLayoutArgs {
   scopeKey: string;
-  legacyScopeKeys?: readonly string[];
 }
 
-export function usePersistedNetworkLayout({
-  scopeKey,
-  legacyScopeKeys = [],
-}: UsePersistedNetworkLayoutArgs) {
+export function usePersistedNetworkLayout({ scopeKey }: UsePersistedNetworkLayoutArgs) {
   const { groupNetworkLayouts, isLoading } = usePreferenceState();
   const { saveNetworkLayout, resetNetworkLayout } = usePreferenceActions();
 
   const savedLayout = useMemo(() => {
-    const layout = getPersistedNetworkLayout(groupNetworkLayouts, scopeKey, legacyScopeKeys);
+    const layout = getPersistedNetworkLayout(groupNetworkLayouts, scopeKey);
     return layout ? normalizeGroupNetworkLayout(layout) : null;
-  }, [groupNetworkLayouts, legacyScopeKeys, scopeKey]);
+  }, [groupNetworkLayouts, scopeKey]);
 
   const persistLayout = useCallback(
     (layout: GroupNetworkLayout) => {
-      saveNetworkLayout(scopeKey, normalizeGroupNetworkLayout(layout), legacyScopeKeys);
+      saveNetworkLayout(scopeKey, normalizeGroupNetworkLayout(layout));
     },
-    [legacyScopeKeys, saveNetworkLayout, scopeKey]
+    [saveNetworkLayout, scopeKey]
   );
 
   const resetLayout = useCallback(() => {
-    resetNetworkLayout(scopeKey, legacyScopeKeys);
-  }, [legacyScopeKeys, resetNetworkLayout, scopeKey]);
+    resetNetworkLayout(scopeKey);
+  }, [resetNetworkLayout, scopeKey]);
 
   return {
     savedLayout,

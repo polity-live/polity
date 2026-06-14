@@ -3,6 +3,7 @@ import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import { useUserActions } from '@/zero/users/useUserActions';
 import { useCommonActions } from '@/zero/common/useCommonActions';
 import { createTimelineEvent } from '@/features/timeline/utils/createTimelineEvent';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 /**
  * Hook for user update mutations
@@ -55,7 +56,10 @@ export function useUserMutations() {
 
       return { success: true };
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update profile';
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : translateText('generated.inline.0174_failed_to_update_profile_bc8dc9b4');
       setError(errorMessage);
       console.error('Failed to update profile:', err);
       return { success: false, error: errorMessage };
@@ -82,15 +86,20 @@ export function useUserMutations() {
           entityType: 'user',
           entityId: userId,
           actorId: userId,
-          title: 'Avatar updated',
-          description: 'User uploaded a new profile image',
+          title: translateText('generated.inline.0547_avatar_updated_46e014bb'),
+          description: translateText(
+            'generated.inline.0548_user_uploaded_a_new_profile_image_6d8365b5'
+          ),
           contentType: 'image',
           status: {},
         },
       });
       return { success: true };
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update avatar';
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : translateText('generated.inline.0175_failed_to_update_avatar_ecd69081');
       setError(errorMessage);
       console.error('Failed to link avatar:', err);
       return { success: false, error: errorMessage };
@@ -196,7 +205,10 @@ export function useUserMutations() {
 
       return { success: true };
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update profile';
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : translateText('generated.inline.0174_failed_to_update_profile_bc8dc9b4');
       setError(errorMessage);
       console.error('Failed to update complete profile:', err);
       return { success: false, error: errorMessage };

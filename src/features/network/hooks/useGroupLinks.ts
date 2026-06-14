@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useGroupLinks as useFacadeGroupLinks } from '@/zero/groups/useGroupState';
 import { toast } from 'sonner';
 import { useCommonActions } from '@/zero/common/useCommonActions';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export function useGroupLinks(groupId: string) {
   const [isLoading, setIsLoading] = useState(false);
@@ -25,11 +26,11 @@ export function useGroupLinks(groupId: string) {
         event_id: null,
       });
 
-      toast.success('Link added successfully!');
+      toast.success(translateText('generated.inline.0757_link_added_successfully_d2837d5b'));
       return { success: true, linkId };
     } catch (error) {
       console.error('Failed to add link:', error);
-      toast.error('Failed to add link');
+      toast.error(translateText('generated.inline.0758_failed_to_add_link_202f4443'));
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -41,11 +42,11 @@ export function useGroupLinks(groupId: string) {
     try {
       await deleteLinkAction({ id: linkId });
 
-      toast.success('Link deleted successfully!');
+      toast.success(translateText('generated.inline.0759_link_deleted_successfully_6135a6f8'));
       return { success: true };
     } catch (error) {
       console.error('Failed to delete link:', error);
-      toast.error('Failed to delete link');
+      toast.error(translateText('generated.inline.0760_failed_to_delete_link_e0419b8b'));
       return { success: false, error };
     } finally {
       setIsLoading(false);

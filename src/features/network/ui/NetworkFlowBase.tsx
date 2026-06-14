@@ -1,6 +1,14 @@
 'use client';
 
-import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
+import {
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  type ComponentProps,
+} from 'react';
 import {
   ReactFlow,
   Controls,
@@ -38,6 +46,8 @@ interface NetworkFlowBaseProps<T extends Node = Node> {
   onInteractiveChange?: (interactive: boolean) => void;
   children?: ReactNode;
   containerClassName?: string;
+  miniMapProps?: ComponentProps<typeof MiniMap>;
+  showMiniMap?: boolean;
 }
 
 export function NetworkFlowBase<T extends Node = Node>({
@@ -55,6 +65,8 @@ export function NetworkFlowBase<T extends Node = Node>({
   onInteractiveChange,
   children,
   containerClassName = 'h-[32rem] min-h-[24rem]',
+  miniMapProps,
+  showMiniMap = true,
 }: NetworkFlowBaseProps<T>) {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -161,7 +173,7 @@ export function NetworkFlowBase<T extends Node = Node>({
               {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
             </ControlButton>
           </Controls>
-          <MiniMap zoomable pannable />
+          {showMiniMap && <MiniMap zoomable pannable {...miniMapProps} />}
           <Background color="#aaa" gap={16} />
         </ReactFlow>
         {children}

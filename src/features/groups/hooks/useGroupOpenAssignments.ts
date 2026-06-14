@@ -7,6 +7,12 @@ import { toast } from 'sonner';
 import { normalizeDelegateElectionMode } from '@/features/elections/logic/electionMode';
 import { attachProcessTaskToEvent } from '@/features/amendments/logic/attachProcessTaskToEvent';
 import {
+  buildCreateEventSearchFromProcessTask,
+  getProcessTaskSchedulingWindow,
+  getSchedulingWindowDisplayLabel,
+  isEventWithinSchedulingWindow,
+} from '@/features/amendments/logic/processTaskEventScheduling';
+import {
   buildOpenAssignments,
   getRemainingSeatCount,
   type GroupOpenAssignment,
@@ -17,6 +23,7 @@ import { queries } from '@/zero/queries';
 import { useGroupEventsForCalendar } from '@/zero/events/useEventState';
 import { useGroupById, useGroupRoles } from '@/zero/groups/useGroupState';
 import { mutators } from '@/zero/mutators';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export type DelegateElectionMode = 'single' | 'list';
 
@@ -108,9 +115,9 @@ function localizeOpenAssignment(
   const amendmentTitle =
     assignment.amendment?.title ||
     metadata?.amendmentTitle ||
-    t('features.groups.memberships.openAssignments.generated.amendmentFallback', 'Amendment');
+    t('features.groups.memberships.openAssignments.generated.amendmentFallback');
   const groupName =
-    metadata?.groupName || t('features.groups.memberships.openAssignments.thisGroup', 'this group');
+    metadata?.groupName || t('features.groups.memberships.openAssignments.thisGroup');
 
   const shouldReplaceTitle =
     !assignment.title ||
@@ -294,7 +301,11 @@ export function useGroupOpenAssignments(groupId: string) {
         election => election.agenda_item?.event?.id === eventId
       );
       if (alreadyLinked) {
-        toast.info('Diese Rolle ist bereits mit der gewaehlten Veranstaltung verknuepft.');
+        toast.info(
+          translateText(
+            'generated.inline.0575_diese_rolle_ist_bereits_mit_der_gewaehlten_ve_66bef2d2'
+          )
+        );
         return;
       }
 
@@ -309,7 +320,9 @@ export function useGroupOpenAssignments(groupId: string) {
           zero.mutate(
             mutators.agendas.createAgendaItem({
               id: agendaItemId,
-              title: `Wahl: ${roleTitle}`,
+              title: translateText('generated.inline.0135_wahl_roletitle_81c91130', {
+                roleTitle: roleTitle,
+              }),
               description: role.description ?? '',
               type: 'election',
               status: 'pending',
@@ -336,7 +349,9 @@ export function useGroupOpenAssignments(groupId: string) {
               id: electionId,
               agenda_item_id: agendaItemId,
               role_id: role.id,
-              title: `Wahl fuer ${roleTitle}`,
+              title: translateText('generated.inline.0136_wahl_fuer_roletitle_084baa2e', {
+                roleTitle: roleTitle,
+              }),
               description: role.description ?? `Wahl fuer ${roleTitle}`,
               status: 'pending',
               majority_type: 'simple',
@@ -349,7 +364,11 @@ export function useGroupOpenAssignments(groupId: string) {
           )
         );
 
-        toast.success('Der Auftrag wurde an die Veranstaltung angehaengt.');
+        toast.success(
+          translateText(
+            'generated.inline.0576_der_auftrag_wurde_an_die_veranstaltung_angeha_c4f0ffe1'
+          )
+        );
       } finally {
         setIsScheduling(false);
       }
@@ -372,7 +391,11 @@ export function useGroupOpenAssignments(groupId: string) {
         throw new Error('Bitte zuerst eine gueltige Veranstaltung auswaehlen.');
       }
       if (remainingSeatCount <= 0 || (assignment.seatCount ?? 0) <= 0) {
-        toast.info('Fuer diesen Auftrag muessen gerade keine weiteren Sitze geplant werden.');
+        toast.info(
+          translateText(
+            'generated.inline.0577_fuer_diesen_auftrag_muessen_gerade_keine_weit_55edda6f'
+          )
+        );
         return;
       }
 
@@ -406,6 +429,32 @@ export function useGroupOpenAssignments(groupId: string) {
         throw new Error('Bitte zuerst eine gueltige Veranstaltung auswaehlen.');
       }
 
+      const schedulingWindow = getProcessTaskSchedulingWindow({
+        due_at: task.due_at ?? null,
+        metadata: task.metadata,
+      });
+      if (!isEventWithinSchedulingWindow(event, schedulingWindow)) {
+        const createEventSearch = buildCreateEventSearchFromProcessTask({
+          task: {
+            id: task.id,
+            group_id: task.group_id ?? groupId,
+            process_run_id: task.process_run_id ?? null,
+            step_run_id: task.step_run_id ?? null,
+            due_at: task.due_at ?? null,
+            metadata: task.metadata,
+          },
+          groupId,
+        });
+        throw new Error(
+          getSchedulingWindowDisplayLabel({
+            minStartDate: createEventSearch.minStartDate ?? null,
+            minStartTime: createEventSearch.minStartTime ?? null,
+            maxStartDate: createEventSearch.maxStartDate ?? null,
+            maxStartTime: createEventSearch.maxStartTime ?? null,
+          }) ?? 'Dieses Event liegt ausserhalb des erlaubten Zeitfensters fuer den Auftrag.'
+        );
+      }
+
       const amendmentTitle =
         task.process_run?.amendment?.title ??
         task.support_confirmation?.amendment?.title ??
@@ -420,12 +469,16 @@ export function useGroupOpenAssignments(groupId: string) {
           completeProcessTaskWithEvent,
         });
 
-        toast.success('Der Prozessauftrag wurde an die Veranstaltung angehaengt.');
+        toast.success(
+          translateText(
+            'generated.inline.0578_der_prozessauftrag_wurde_an_die_veranstaltung_a211094c'
+          )
+        );
       } finally {
         setIsScheduling(false);
       }
     },
-    [availableEvents, completeProcessTaskWithEvent, processTasks]
+    [availableEvents, completeProcessTaskWithEvent, groupId, processTasks]
   );
 
   return {

@@ -3,6 +3,7 @@ import { useRolesWithGroups } from '@/zero/events/useEventState';
 import { useMemo } from 'react';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
 import { CreateTypeaheadField } from '../CreateFields';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface RoleSearchInputProps {
   value: string;
@@ -22,7 +23,7 @@ export function RoleSearchInput({
   onChange,
   label,
   hint,
-  placeholder = 'Search for a role...',
+  placeholder = translateText('generated.inline.0043_search_for_a_role_8a23a3a3'),
   groupIds,
   required,
 }: RoleSearchInputProps) {

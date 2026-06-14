@@ -1,8 +1,8 @@
 import { useId, useState, type ComponentProps } from 'react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { Label } from '@/features/shared/ui/ui/label';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Textarea } from '@/features/shared/ui/ui/textarea';
+import { FormFieldShell } from '@/features/shared/ui/form';
 import { TypeaheadSearch } from '@/features/shared/ui/typeahead';
 import type {
   TypeaheadMultiProps,
@@ -79,15 +79,13 @@ function useCreateFieldState(
   const isValid = (hasInteracted || hasValue) && hasValue && !validationError;
   const fallbackHint =
     hint ??
-    (required
-      ? t('pages.create.common.requiredHint', 'Required.')
-      : t('pages.create.common.optionalHint', 'Optional.'));
+    (required ? t('pages.create.common.requiredHint') : t('pages.create.common.optionalHint'));
   const hintText = isInvalid
     ? Boolean(required) && !hasValue
-      ? t('pages.create.common.requiredHint', 'Required.')
+      ? t('pages.create.common.requiredHint')
       : (validationError ?? fallbackHint)
     : isValid && !hint
-      ? t('pages.create.common.validHint', 'Looks good.')
+      ? t('pages.create.common.validHint')
       : fallbackHint;
 
   return {
@@ -123,36 +121,40 @@ export function CreateInputField({
   );
 
   return (
-    <div className={cn('space-y-2', containerClassName)}>
-      {label ? (
-        <Label htmlFor={inputId} className={labelClassName}>
-          {label}
-          {required ? <span className="text-destructive"> *</span> : null}
-        </Label>
-      ) : null}
-      <Input
-        {...inputProps}
-        id={inputId}
-        value={normalizeValue(value)}
-        onChange={event => {
-          markInteracted();
-          onValueChange(event.target.value);
-        }}
-        onBlur={event => {
-          markInteracted();
-          onBlur?.(event);
-        }}
-        aria-invalid={isInvalid || undefined}
-        data-valid={isValid ? 'true' : undefined}
-        className={cn(
-          isValid && 'focus-visible:ring-emerald-500/20 dark:focus-visible:ring-emerald-500/30',
-          className
-        )}
-      />
-      <p className={cn('text-xs', hintClassName ?? getHintToneClass(isInvalid, isValid))}>
-        {hintText}
-      </p>
-    </div>
+    <FormFieldShell
+      id={inputId}
+      label={label}
+      required={required}
+      description={isInvalid ? undefined : hintText}
+      error={isInvalid ? hintText : undefined}
+      className={containerClassName}
+      labelClassName={labelClassName}
+      descriptionClassName={cn('text-xs', hintClassName ?? getHintToneClass(isInvalid, isValid))}
+      errorClassName={cn('text-xs', hintClassName)}
+    >
+      {({ id, describedBy }) => (
+        <Input
+          {...inputProps}
+          id={id}
+          value={normalizeValue(value)}
+          aria-describedby={describedBy}
+          onChange={event => {
+            markInteracted();
+            onValueChange(event.target.value);
+          }}
+          onBlur={event => {
+            markInteracted();
+            onBlur?.(event);
+          }}
+          aria-invalid={isInvalid || undefined}
+          data-valid={isValid ? 'true' : undefined}
+          className={cn(
+            isValid && 'focus-visible:ring-emerald-500/20 dark:focus-visible:ring-emerald-500/30',
+            className
+          )}
+        />
+      )}
+    </FormFieldShell>
   );
 }
 
@@ -181,39 +183,43 @@ export function CreateTextareaField({
   );
 
   return (
-    <div className={cn('space-y-2', containerClassName)}>
-      {label ? (
-        <Label htmlFor={textareaId} className={labelClassName}>
-          {label}
-          {required ? <span className="text-destructive"> *</span> : null}
-        </Label>
-      ) : null}
-      <Textarea
-        {...textareaProps}
-        id={textareaId}
-        value={normalizeValue(value)}
-        onChange={event => {
-          markInteracted();
-          onValueChange(event.target.value);
-        }}
-        onBlur={event => {
-          markInteracted();
-          onBlur?.(event);
-        }}
-        aria-invalid={isInvalid || undefined}
-        data-valid={isValid ? 'true' : undefined}
-        className={cn(
-          isInvalid &&
-            'border-destructive focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40',
-          isValid &&
-            'border-emerald-500 focus-visible:ring-emerald-500/20 dark:border-emerald-400 dark:focus-visible:ring-emerald-500/30',
-          className
-        )}
-      />
-      <p className={cn('text-xs', hintClassName ?? getHintToneClass(isInvalid, isValid))}>
-        {hintText}
-      </p>
-    </div>
+    <FormFieldShell
+      id={textareaId}
+      label={label}
+      required={required}
+      description={isInvalid ? undefined : hintText}
+      error={isInvalid ? hintText : undefined}
+      className={containerClassName}
+      labelClassName={labelClassName}
+      descriptionClassName={cn('text-xs', hintClassName ?? getHintToneClass(isInvalid, isValid))}
+      errorClassName={cn('text-xs', hintClassName)}
+    >
+      {({ id, describedBy }) => (
+        <Textarea
+          {...textareaProps}
+          id={id}
+          value={normalizeValue(value)}
+          aria-describedby={describedBy}
+          onChange={event => {
+            markInteracted();
+            onValueChange(event.target.value);
+          }}
+          onBlur={event => {
+            markInteracted();
+            onBlur?.(event);
+          }}
+          aria-invalid={isInvalid || undefined}
+          data-valid={isValid ? 'true' : undefined}
+          className={cn(
+            isInvalid &&
+              'border-destructive focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40',
+            isValid &&
+              'border-emerald-500 focus-visible:ring-emerald-500/20 dark:border-emerald-400 dark:focus-visible:ring-emerald-500/30',
+            className
+          )}
+        />
+      )}
+    </FormFieldShell>
   );
 }
 
@@ -242,66 +248,68 @@ export function CreateTypeaheadField({
   );
 
   return (
-    <div className={cn('space-y-2', containerClassName)}>
-      {label ? (
-        <Label className={labelClassName}>
-          {label}
-          {required ? <span className="text-destructive"> *</span> : null}
-        </Label>
-      ) : null}
-      {multiple
-        ? (() => {
-            const multiProps = typeaheadProps as Omit<
-              TypeaheadMultiProps,
-              'label' | 'className' | 'onInteract'
-            >;
+    <FormFieldShell
+      label={label}
+      required={required}
+      description={isInvalid ? undefined : hintText}
+      error={isInvalid ? hintText : undefined}
+      className={containerClassName}
+      labelClassName={labelClassName}
+      descriptionClassName={cn('text-xs', hintClassName ?? getHintToneClass(isInvalid, isValid))}
+      errorClassName={cn('text-xs', hintClassName)}
+    >
+      {() =>
+        multiple
+          ? (() => {
+              const multiProps = typeaheadProps as Omit<
+                TypeaheadMultiProps,
+                'label' | 'className' | 'onInteract'
+              >;
 
-            return (
-              <TypeaheadSearch
-                {...multiProps}
-                multiple
-                onInteract={markInteracted}
-                onValuesChange={nextIds => {
-                  markInteracted();
-                  multiProps.onValuesChange(nextIds);
-                }}
-                className={cn(
-                  isInvalid &&
-                    '[&_[data-slot=input]]:border-destructive [&_[data-slot=input]]:focus-visible:ring-destructive/20 dark:[&_[data-slot=input]]:focus-visible:ring-destructive/40 [&_[data-slot=typeahead-selected]]:border-destructive [&_[data-slot=typeahead-selected-list]]:border-destructive',
-                  isValid &&
-                    '[&_[data-slot=input]]:border-emerald-500 [&_[data-slot=input]]:focus-visible:ring-emerald-500/20 dark:[&_[data-slot=input]]:border-emerald-400 dark:[&_[data-slot=input]]:focus-visible:ring-emerald-500/30 [&_[data-slot=typeahead-selected]]:border-emerald-500 dark:[&_[data-slot=typeahead-selected]]:border-emerald-400',
-                  className
-                )}
-              />
-            );
-          })()
-        : (() => {
-            const singleProps = typeaheadProps as Omit<
-              TypeaheadSingleProps,
-              'label' | 'className' | 'onInteract'
-            >;
+              return (
+                <TypeaheadSearch
+                  {...multiProps}
+                  multiple
+                  onInteract={markInteracted}
+                  onValuesChange={nextIds => {
+                    markInteracted();
+                    multiProps.onValuesChange(nextIds);
+                  }}
+                  className={cn(
+                    isInvalid &&
+                      '[&_[data-slot=input]]:border-destructive [&_[data-slot=input]]:focus-visible:ring-destructive/20 dark:[&_[data-slot=input]]:focus-visible:ring-destructive/40 [&_[data-slot=typeahead-selected]]:border-destructive [&_[data-slot=typeahead-selected-list]]:border-destructive',
+                    isValid &&
+                      '[&_[data-slot=input]]:border-emerald-500 [&_[data-slot=input]]:focus-visible:ring-emerald-500/20 dark:[&_[data-slot=input]]:border-emerald-400 dark:[&_[data-slot=input]]:focus-visible:ring-emerald-500/30 [&_[data-slot=typeahead-selected]]:border-emerald-500 dark:[&_[data-slot=typeahead-selected]]:border-emerald-400',
+                    className
+                  )}
+                />
+              );
+            })()
+          : (() => {
+              const singleProps = typeaheadProps as Omit<
+                TypeaheadSingleProps,
+                'label' | 'className' | 'onInteract'
+              >;
 
-            return (
-              <TypeaheadSearch
-                {...singleProps}
-                onInteract={markInteracted}
-                onChange={item => {
-                  markInteracted();
-                  singleProps.onChange(item);
-                }}
-                className={cn(
-                  isInvalid &&
-                    '[&_[data-slot=input]]:border-destructive [&_[data-slot=input]]:focus-visible:ring-destructive/20 dark:[&_[data-slot=input]]:focus-visible:ring-destructive/40 [&_[data-slot=typeahead-selected]]:border-destructive',
-                  isValid &&
-                    '[&_[data-slot=input]]:border-emerald-500 [&_[data-slot=input]]:focus-visible:ring-emerald-500/20 dark:[&_[data-slot=input]]:border-emerald-400 dark:[&_[data-slot=input]]:focus-visible:ring-emerald-500/30 [&_[data-slot=typeahead-selected]]:border-emerald-500 dark:[&_[data-slot=typeahead-selected]]:border-emerald-400',
-                  className
-                )}
-              />
-            );
-          })()}
-      <p className={cn('text-xs', hintClassName ?? getHintToneClass(isInvalid, isValid))}>
-        {hintText}
-      </p>
-    </div>
+              return (
+                <TypeaheadSearch
+                  {...singleProps}
+                  onInteract={markInteracted}
+                  onChange={item => {
+                    markInteracted();
+                    singleProps.onChange(item);
+                  }}
+                  className={cn(
+                    isInvalid &&
+                      '[&_[data-slot=input]]:border-destructive [&_[data-slot=input]]:focus-visible:ring-destructive/20 dark:[&_[data-slot=input]]:focus-visible:ring-destructive/40 [&_[data-slot=typeahead-selected]]:border-destructive',
+                    isValid &&
+                      '[&_[data-slot=input]]:border-emerald-500 [&_[data-slot=input]]:focus-visible:ring-emerald-500/20 dark:[&_[data-slot=input]]:border-emerald-400 dark:[&_[data-slot=input]]:focus-visible:ring-emerald-500/30 [&_[data-slot=typeahead-selected]]:border-emerald-500 dark:[&_[data-slot=typeahead-selected]]:border-emerald-400',
+                    className
+                  )}
+                />
+              );
+            })()
+      }
+    </FormFieldShell>
   );
 }

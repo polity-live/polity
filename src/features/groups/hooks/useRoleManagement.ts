@@ -7,6 +7,7 @@ import { useGroupActions } from '@/zero/groups/useGroupActions';
 import { toast } from 'sonner';
 import { roleEditorFormToMutationWithOptions } from '../logic/roleFormHelpers';
 import type { RoleEditorFormState } from '../types/group.types';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export function useRoleManagement(
   groupId: string,
@@ -23,7 +24,7 @@ export function useRoleManagement(
 
   const addRole = async (form: RoleEditorFormState, nextSortOrder = 0) => {
     if (!form.name.trim()) {
-      toast.error('Role name is required');
+      toast.error(translateText('generated.inline.0234_role_name_is_required_6193b4dd'));
       return { success: false };
     }
 
@@ -60,12 +61,14 @@ export function useRoleManagement(
         sort_order: nextSortOrder,
       });
 
-      toast.success('Role created successfully');
+      toast.success(translateText('generated.inline.0235_role_created_successfully_150cd5c5'));
 
       return { success: true, roleId };
     } catch (error) {
       console.error('Failed to create role:', error);
-      toast.error('Failed to create role. Please try again.');
+      toast.error(
+        translateText('generated.inline.0236_failed_to_create_role_please_try_again_7383aeaf')
+      );
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -74,7 +77,7 @@ export function useRoleManagement(
 
   const updateRole = async (roleId: string, form: RoleEditorFormState) => {
     if (!form.name.trim()) {
-      toast.error('Role name is required');
+      toast.error(translateText('generated.inline.0234_role_name_is_required_6193b4dd'));
       return { success: false };
     }
 
@@ -104,11 +107,13 @@ export function useRoleManagement(
         default_invite_role: roleFields.default_invite_role,
       });
 
-      toast.success('Role updated successfully');
+      toast.success(translateText('generated.inline.0588_role_updated_successfully_87ea8999'));
       return { success: true };
     } catch (error) {
       console.error('Failed to update role:', error);
-      toast.error('Failed to update role. Please try again.');
+      toast.error(
+        translateText('generated.inline.0589_failed_to_update_role_please_try_again_215d1ee3')
+      );
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -121,11 +126,11 @@ export function useRoleManagement(
       for (let i = 0; i < orderedRoleIds.length; i++) {
         await updateRoleAction({ id: orderedRoleIds[i], sort_order: i });
       }
-      toast.success('Role order updated');
+      toast.success(translateText('generated.inline.0475_role_order_updated_4d399d91'));
       return { success: true };
     } catch (error) {
       console.error('Failed to reorder roles:', error);
-      toast.error('Failed to update role order.');
+      toast.error(translateText('generated.inline.0590_failed_to_update_role_order_9c527021'));
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -136,11 +141,13 @@ export function useRoleManagement(
     setIsLoading(true);
     try {
       await deleteRoleAction({ id: roleId });
-      toast.success('Role removed successfully');
+      toast.success(translateText('generated.inline.0463_role_removed_successfully_2812ce44'));
       return { success: true };
     } catch (error) {
       console.error('Failed to remove role:', error);
-      toast.error('Failed to remove role. Please try again.');
+      toast.error(
+        translateText('generated.inline.0464_failed_to_remove_role_please_try_again_68f512d7')
+      );
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -182,7 +189,9 @@ export function useRoleManagement(
       return { success: true };
     } catch (error) {
       console.error('Failed to toggle action right:', error);
-      toast.error('Failed to update permission. Please try again.');
+      toast.error(
+        translateText('generated.inline.0465_failed_to_update_permission_please_try_again_c9f90034')
+      );
       return { success: false, error };
     } finally {
       setIsLoading(false);

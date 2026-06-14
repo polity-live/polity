@@ -5,8 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/u
 import { Button } from '@/features/shared/ui/ui/button';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
-import { Vote, UserPlus, CheckCircle2, Crown, User, Loader2 } from 'lucide-react';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { Vote, UserPlus, CheckCircle2, Crown, User, Loader2, Expand } from 'lucide-react';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 import { VoteResultsDisplay, type VoteBarOption } from '@/features/vote-cast/ui/VoteResultsDisplay';
 import { VoteResultSentence } from '@/features/vote-cast/ui/VoteResultSentence';
@@ -52,6 +55,7 @@ interface AgendaElectionSectionProps {
   winnerVoteSharePercent?: number;
   attendanceMode?: 'online' | 'hybrid' | 'offline' | null;
   offlineTallies?: readonly ElectionOfflineTallyLike[];
+  onOpenNamedResults?: () => void;
   className?: string;
 }
 
@@ -168,6 +172,7 @@ export function AgendaElectionSection({
   winnerVoteSharePercent,
   attendanceMode = 'online',
   offlineTallies = [],
+  onOpenNamedResults,
   className,
 }: AgendaElectionSectionProps) {
   const { t } = useTranslation();
@@ -206,6 +211,9 @@ export function AgendaElectionSection({
     });
   }, [candidateStats, electionMode, isClosed, seatCount]);
 
+  const isInteractive = Boolean(onOpenNamedResults);
+  const ResultsWrapper = isInteractive ? 'button' : 'div';
+
   return (
     <Card className={cn(className)}>
       <CardHeader>
@@ -228,6 +236,12 @@ export function AgendaElectionSection({
                 {getElectionModeSummaryLabel(electionMode, seatCount)}
               </Badge>
             ) : null}
+            {isInteractive ? (
+              <Badge variant="secondary" className="gap-1">
+                <Expand className="h-3 w-3" />
+                {translateText('generated.inline.0013_namentlich_8d49da42')}
+              </Badge>
+            ) : null}
             <Badge variant="outline">{roleName}</Badge>
           </div>
         </div>
@@ -236,121 +250,142 @@ export function AgendaElectionSection({
       <CardContent className="space-y-6">
         {electionStatus === 'runoff_required' ? (
           <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-900 dark:text-amber-100">
-            Gleichstand am letzten Sitz. Fuer diese Wahl ist eine Stichwahl erforderlich.
+            {translateText(
+              'generated.inline.0014_gleichstand_am_letzten_sitz_fuer_diese_wahl_i_2e1eafc5'
+            )}
           </div>
         ) : null}
 
-        {/* Result sentence when voting is closed */}
-        {isClosed && winnerName && (
-          <VoteResultSentence
-            type="election"
-            result={winnerName ? 'passed' : 'tie'}
-            winnerName={winnerName}
-            roleName={roleName}
-            voteSharePercent={winnerVoteSharePercent}
-            isFinal
-          />
-        )}
+        <ResultsWrapper
+          {...(isInteractive
+            ? {
+                type: 'button' as const,
+                onClick: onOpenNamedResults,
+                className:
+                  'w-full space-y-6 text-left transition-opacity hover:opacity-95 focus-visible:outline-none',
+              }
+            : { className: 'space-y-6' })}
+        >
+          {isClosed && winnerName ? (
+            <VoteResultSentence
+              type="election"
+              result={winnerName ? 'passed' : 'tie'}
+              winnerName={winnerName}
+              roleName={roleName}
+              voteSharePercent={winnerVoteSharePercent}
+              isFinal
+            />
+          ) : null}
 
-        {/* Vote count header */}
-        <div className="text-muted-foreground flex items-center justify-between text-sm">
-          <span>
-            {isIndicationPhase
-              ? `${totalIndicative} ${t('features.events.agenda.indicationVotes')}`
-              : `${totalFinal} ${t('features.events.agenda.votes')}`}
-          </span>
-          {isIndicationPhase && (
-            <Badge variant="secondary" className="text-xs">
-              * {t('features.events.agenda.indicationOnly')}
-            </Badge>
-          )}
-        </div>
-
-        {/* Candidates List */}
-        {visibleCandidates.length === 0 ? (
-          <div className="rounded-lg border border-dashed p-6 text-center">
-            <User className="text-muted-foreground mx-auto mb-2 h-8 w-8" />
-            <p className="text-muted-foreground">{t('features.events.agenda.noCandidates')}</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {visibleCandidates.map(candidate => {
-              const stats = candidateStats.find(s => s.candidate.id === candidate.id);
-              const isLeading = winningCandidateIds.includes(candidate.id);
-              const isSelected = userSelectedCandidateIds.includes(candidate.id);
-              const displayName = getCandidateDisplayName(candidate);
-
-              return (
-                <div
-                  key={candidate.id}
-                  className={cn(
-                    'rounded-lg border p-4 transition-colors',
-                    isSelected && 'border-primary bg-primary/5',
-                    isLeading && isClosed && 'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/30'
-                  )}
-                >
-                  <div className="mb-3 flex items-center gap-3">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={candidate.user?.avatar ?? undefined} alt={displayName} />
-                      <AvatarFallback>{displayName.charAt(0).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{displayName}</span>
-                        <Badge
-                          variant={candidate.status === 'accepted' ? 'default' : 'secondary'}
-                          className="text-xs"
-                        >
-                          {candidate.status === 'accepted'
-                            ? t('features.events.agenda.candidateAccepted')
-                            : t('features.events.agenda.candidateNominated')}
-                        </Badge>
-                        {isLeading && isClosed && <Crown className="h-4 w-4 text-yellow-500" />}
-                        {isSelected && <CheckCircle2 className="text-primary h-4 w-4" />}
-                      </div>
-                      {candidate.user?.email && displayName !== candidate.user.email && (
-                        <span className="text-muted-foreground text-sm">
-                          {candidate.user.email}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Vote bar */}
-                  {stats && (
-                    <VoteResultsDisplay
-                      options={[
-                        buildCandidateOption(
-                          candidate.id,
-                          displayName,
-                          stats.indicativeCount,
-                          stats.indicativePercentage,
-                          stats.finalCount,
-                          stats.finalPercentage
-                        ),
-                      ]}
-                      phase={isIndicationPhase ? 'indication' : isClosed ? 'closed' : 'final_vote'}
-                      totalFinal={totalFinal}
-                      totalIndication={totalIndicative}
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* User's current vote indicator */}
-        {userHasVoted && (
-          <div className="flex items-center justify-center gap-2 text-sm">
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
-            <span className="text-muted-foreground">
+          <div className="text-muted-foreground flex items-center justify-between text-sm">
+            <span>
               {isIndicationPhase
-                ? t('features.events.agenda.yourIndication')
-                : t('features.events.agenda.yourVote')}
+                ? `${totalIndicative} ${t('features.events.agenda.indicationVotes')}`
+                : `${totalFinal} ${t('features.events.agenda.votes')}`}
             </span>
+            <div className="flex items-center gap-2">
+              {isIndicationPhase ? (
+                <Badge variant="secondary" className="text-xs">
+                  * {t('features.events.agenda.indicationOnly')}
+                </Badge>
+              ) : null}
+              {isInteractive ? (
+                <Badge variant="outline" className="text-xs">
+                  {translateText('generated.inline.0015_klick_fuer_einzelansicht_9d7ff135')}
+                </Badge>
+              ) : null}
+            </div>
           </div>
-        )}
+
+          {visibleCandidates.length === 0 ? (
+            <div className="rounded-lg border border-dashed p-6 text-center">
+              <User className="text-muted-foreground mx-auto mb-2 h-8 w-8" />
+              <p className="text-muted-foreground">{t('features.events.agenda.noCandidates')}</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {visibleCandidates.map(candidate => {
+                const stats = candidateStats.find(s => s.candidate.id === candidate.id);
+                const isLeading = winningCandidateIds.includes(candidate.id);
+                const isSelected = userSelectedCandidateIds.includes(candidate.id);
+                const displayName = getCandidateDisplayName(candidate);
+
+                return (
+                  <div
+                    key={candidate.id}
+                    className={cn(
+                      'rounded-lg border p-4 transition-colors',
+                      isSelected && 'border-primary bg-primary/5',
+                      isLeading &&
+                        isClosed &&
+                        'border-yellow-500 bg-yellow-50 dark:bg-yellow-950/30'
+                    )}
+                  >
+                    <div className="mb-3 flex items-center gap-3">
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage src={candidate.user?.avatar ?? undefined} alt={displayName} />
+                        <AvatarFallback>{displayName.charAt(0).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{displayName}</span>
+                          <Badge
+                            variant={candidate.status === 'accepted' ? 'default' : 'secondary'}
+                            className="text-xs"
+                          >
+                            {candidate.status === 'accepted'
+                              ? t('features.events.agenda.candidateAccepted')
+                              : t('features.events.agenda.candidateNominated')}
+                          </Badge>
+                          {isLeading && isClosed ? (
+                            <Crown className="h-4 w-4 text-yellow-500" />
+                          ) : null}
+                          {isSelected ? <CheckCircle2 className="text-primary h-4 w-4" /> : null}
+                        </div>
+                        {candidate.user?.email && displayName !== candidate.user.email ? (
+                          <span className="text-muted-foreground text-sm">
+                            {candidate.user.email}
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    {stats ? (
+                      <VoteResultsDisplay
+                        options={[
+                          buildCandidateOption(
+                            candidate.id,
+                            displayName,
+                            stats.indicativeCount,
+                            stats.indicativePercentage,
+                            stats.finalCount,
+                            stats.finalPercentage
+                          ),
+                        ]}
+                        phase={
+                          isIndicationPhase ? 'indication' : isClosed ? 'closed' : 'final_vote'
+                        }
+                        totalFinal={totalFinal}
+                        totalIndication={totalIndicative}
+                      />
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {userHasVoted ? (
+            <div className="flex items-center justify-center gap-2 text-sm">
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+              <span className="text-muted-foreground">
+                {isIndicationPhase
+                  ? t('features.events.agenda.yourIndication')
+                  : t('features.events.agenda.yourVote')}
+              </span>
+            </div>
+          ) : null}
+        </ResultsWrapper>
 
         {/* Become Candidate Button */}
         {!isClosed && canBeCandidate && !isUserCandidate && (

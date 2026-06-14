@@ -1,3 +1,4 @@
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 /**
  * @deprecated Mock data file for Storybook stories.
  * Shape no longer matches production types (UserProfile).
@@ -8,14 +9,14 @@ export const USER = {
   name: 'Sarah Johnson',
   firstName: 'Sarah',
   lastName: 'Johnson',
-  subtitle: 'Constitutional Law Expert',
+  subtitle: translateText('generated.inline.0549_constitutional_law_expert_395f8319'),
   avatar: 'https://i.pravatar.cc/150?u=sarah',
   stats: [
-    { label: 'Amendments', value: 143 },
-    { label: 'Followers', value: 2.5, unit: 'k' },
-    { label: 'Following', value: 328 },
-    { label: 'Network', value: 78 },
-    { label: 'Reputation', value: 4.8 },
+    { label: translateText('generated.inline.0179_amendments_90086687'), value: 143 },
+    { label: translateText('generated.inline.0550_followers_78eaabf4'), value: 2.5, unit: 'k' },
+    { label: translateText('generated.inline.0551_following_90eeb100'), value: 328 },
+    { label: translateText('generated.inline.0552_network_53ebc572'), value: 78 },
+    { label: translateText('generated.inline.0553_reputation_5f21606b'), value: 4.8 },
   ],
   socialMedia: {
     whatsapp: 'https://wa.me/123456789',
@@ -69,17 +70,22 @@ export const USER = {
   blogs: [
     {
       id: '1',
-      title: 'Reimagining Parliamentary Oversight',
+      title: translateText('generated.inline.0554_reimagining_parliamentary_oversight_da64769f'),
       date: 'Mar 15, 2023',
       commentCount: 47,
     },
     {
       id: '2',
-      title: "The Case for Citizens' Assemblies",
+      title: translateText('generated.inline.0555_the_case_for_citizens_assemblies_a691a9b3'),
       date: 'Feb 2, 2023',
       commentCount: 83,
     },
-    { id: '3', title: 'Digital Constitutionalism', date: 'Jan 10, 2023', commentCount: 32 },
+    {
+      id: '3',
+      title: translateText('generated.inline.0556_digital_constitutionalism_083250c9'),
+      date: 'Jan 10, 2023',
+      commentCount: 32,
+    },
   ],
   groups: [
     {
@@ -87,7 +93,9 @@ export const USER = {
       name: 'Constitutional Reform Network',
       members: 1243,
       role: 'Founder',
-      description: 'Working to modernize constitutional frameworks across Europe',
+      description: translateText(
+        'generated.inline.0499_working_to_modernize_constitutional_framework_f4944394'
+      ),
       tags: ['constitution', 'reform', 'policy', 'governance'],
       amendments: 8,
       events: 12,
@@ -98,7 +106,9 @@ export const USER = {
       name: 'Democracy Innovations Lab',
       members: 567,
       role: 'Member',
-      description: 'Researching new forms of democratic participation',
+      description: translateText(
+        'generated.inline.0500_researching_new_forms_of_democratic_participa_6dadc5b3'
+      ),
       tags: ['democracy', 'innovation', 'research', 'participation'],
       amendments: 3,
       events: 5,
@@ -109,7 +119,9 @@ export const USER = {
       name: 'Judicial Independence Initiative',
       members: 389,
       role: 'Advisor',
-      description: 'Advocating for stronger protections for courts worldwide',
+      description: translateText(
+        'generated.inline.0501_advocating_for_stronger_protections_for_court_48f037ff'
+      ),
       tags: ['judiciary', 'independence', 'advocacy', 'courts'],
       amendments: 4,
       events: 2,
@@ -120,8 +132,10 @@ export const USER = {
     {
       id: 1,
       code: 'CON-27',
-      title: 'Article 27 Reform Proposal',
-      subtitle: 'Increasing judicial diversity through appointment reform',
+      title: translateText('generated.inline.0557_article_27_reform_proposal_b211b6d7'),
+      subtitle: translateText(
+        'generated.inline.0558_increasing_judicial_diversity_through_appoint_f2e6f0e5'
+      ),
       status: 'Under Review',
       supporters: 1243,
       date: 'Apr 5, 2023',
@@ -130,8 +144,10 @@ export const USER = {
     {
       id: 2,
       code: 'ELC-14',
-      title: 'Electoral System Amendment',
-      subtitle: 'Moving from first-past-the-post to proportional representation',
+      title: translateText('generated.inline.0559_electoral_system_amendment_eb38d14f'),
+      subtitle: translateText(
+        'generated.inline.0560_moving_from_first_past_the_post_to_proportion_b94d2781'
+      ),
       status: 'Passed',
       supporters: 2789,
       date: 'Dec 15, 2022',
@@ -140,8 +156,10 @@ export const USER = {
     {
       id: 3,
       code: 'JUD-08',
-      title: 'Judicial Appointment Procedure',
-      subtitle: 'New transparent process for selecting constitutional judges',
+      title: translateText('generated.inline.0561_judicial_appointment_procedure_3f121267'),
+      subtitle: translateText(
+        'generated.inline.0562_new_transparent_process_for_selecting_constit_646ad4de'
+      ),
       status: 'Drafting',
       supporters: 342,
       date: 'May 3, 2023',
@@ -150,8 +168,10 @@ export const USER = {
     {
       id: 4,
       code: 'TRM-52',
-      title: 'Term Limits for Justices',
-      subtitle: 'Proposal for 12-year term limits for Supreme Court justices',
+      title: translateText('generated.inline.0563_term_limits_for_justices_891dfce1'),
+      subtitle: translateText(
+        'generated.inline.0564_proposal_for_12_year_term_limits_for_supreme__34ee06ad'
+      ),
       status: 'Rejected',
       supporters: 1876,
       date: 'Jan 22, 2023',

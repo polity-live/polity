@@ -5,7 +5,7 @@ import {
   toWorkflowVisualizationWorkflow,
 } from '../workflowVisualizationHelpers';
 
-function buildWorkflow(id: string, overrides: Record<string, unknown> = {}) {
+function buildWorkflow(id: string, overrides: Record<string, unknown> = {}): any {
   return {
     id,
     name: `Workflow ${id}`,

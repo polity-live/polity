@@ -103,83 +103,85 @@ export function UserTimelineCard({
           </div>
         </div>
 
-        {/* Bio */}
-        {user.bio && <p className="text-muted-foreground mb-3 line-clamp-3 text-sm">{user.bio}</p>}
+        <div className="mt-auto space-y-3">
+          {/* Bio */}
+          {user.bio && <p className="text-muted-foreground line-clamp-3 text-sm">{user.bio}</p>}
 
-        {/* Hashtags */}
-        {user.hashtags && user.hashtags.length > 0 && (
-          <div className="mb-3" onClick={e => e.preventDefault()}>
-            <HashtagDisplay
-              hashtags={user.hashtags.slice(0, 3)}
-              centered={false}
-              badgeClassName={`border bg-white/70 dark:bg-gray-900/60 ${amendmentStyle.borderColor} ${amendmentStyle.accentColor}`}
-            />
-          </div>
-        )}
-
-        {/* Meta info */}
-        <div className="text-muted-foreground flex flex-wrap gap-3 text-xs">
-          {location && (
-            <div className="flex items-center gap-1">
-              <MapPin className="h-3 w-3" />
-              <span>{location}</span>
+          {/* Hashtags */}
+          {user.hashtags && user.hashtags.length > 0 && (
+            <div onClick={e => e.preventDefault()}>
+              <HashtagDisplay
+                hashtags={user.hashtags.slice(0, 3)}
+                centered={false}
+                badgeClassName={`border bg-white/70 dark:bg-gray-900/60 ${amendmentStyle.borderColor} ${amendmentStyle.accentColor}`}
+              />
             </div>
           )}
-          {user.groupCount !== undefined && user.groupCount > 0 && (
-            <div className="flex items-center gap-1">
-              <Users className="h-3 w-3" />
-              <span>
-                {user.groupCount} {t('features.timeline.cards.groups')}
-              </span>
-            </div>
-          )}
-        </div>
 
-        {/* Stats Bar with Tooltips */}
-        <div className="text-muted-foreground mt-3 flex items-center gap-4 text-xs">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex cursor-help items-center gap-1">
-                <Bell className="h-3.5 w-3.5" />
-                <span className="font-medium">{subscription.subscriberCount ?? 0}</span>
+          {/* Meta info */}
+          <div className="text-muted-foreground flex flex-wrap gap-3 text-xs">
+            {location && (
+              <div className="flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                <span>{location}</span>
               </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>
-                {subscription.subscriberCount ?? 0} {t('features.timeline.cards.subscribers')}
-              </p>
-            </TooltipContent>
-          </Tooltip>
-          {user.groupCount !== undefined && user.groupCount > 0 && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex cursor-help items-center gap-1">
-                  <Users className="h-3.5 w-3.5" />
-                  <span className="font-medium">{user.groupCount}</span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>
+            )}
+            {user.groupCount !== undefined && user.groupCount > 0 && (
+              <div className="flex items-center gap-1">
+                <Users className="h-3 w-3" />
+                <span>
                   {user.groupCount} {t('features.timeline.cards.groups')}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          )}
-          {user.amendmentCount !== undefined && user.amendmentCount > 0 && (
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Stats Bar with Tooltips */}
+          <div className="text-muted-foreground flex items-center gap-4 text-xs">
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="flex cursor-help items-center gap-1">
-                  <Star className="h-3.5 w-3.5" />
-                  <span className="font-medium">{user.amendmentCount}</span>
+                  <Bell className="h-3.5 w-3.5" />
+                  <span className="font-medium">{subscription.subscriberCount ?? 0}</span>
                 </div>
               </TooltipTrigger>
               <TooltipContent>
                 <p>
-                  {user.amendmentCount} {t('features.timeline.contentTypes.amendment')}
+                  {subscription.subscriberCount ?? 0} {t('features.timeline.cards.subscribers')}
                 </p>
               </TooltipContent>
             </Tooltip>
-          )}
+            {user.groupCount !== undefined && user.groupCount > 0 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex cursor-help items-center gap-1">
+                    <Users className="h-3.5 w-3.5" />
+                    <span className="font-medium">{user.groupCount}</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    {user.groupCount} {t('features.timeline.cards.groups')}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+            {user.amendmentCount !== undefined && user.amendmentCount > 0 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex cursor-help items-center gap-1">
+                    <Star className="h-3.5 w-3.5" />
+                    <span className="font-medium">{user.amendmentCount}</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    {user.amendmentCount} {t('features.timeline.contentTypes.amendment')}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
         </div>
       </TimelineCardContent>
 

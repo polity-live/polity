@@ -57,22 +57,22 @@ export function AmendmentGroups({ groupedAmendments, groupName, groupId }: Amend
     {
       key: 'accepted',
       items: groupedAmendments.accepted,
-      label: t('features.groups.common.status.acceptedApproved', 'Accepted / Approved'),
+      label: t('features.groups.common.status.acceptedApproved'),
     },
     {
       key: 'pending',
       items: groupedAmendments.pending,
-      label: t('features.groups.common.status.pending', 'Pending'),
+      label: t('features.groups.common.status.pending'),
     },
     {
       key: 'rejected',
       items: groupedAmendments.rejected,
-      label: t('features.groups.common.status.rejected', 'Rejected'),
+      label: t('features.groups.common.status.rejected'),
     },
     {
       key: 'withdrawn',
       items: groupedAmendments.withdrawn,
-      label: t('features.groups.common.status.withdrawn', 'Withdrawn'),
+      label: t('features.groups.common.status.withdrawn'),
     },
   ];
 

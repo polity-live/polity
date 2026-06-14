@@ -70,7 +70,7 @@ function getAgendaTypeConfig(type: AgendaItemType, t: ReturnType<typeof useTrans
       };
     case 'accreditation':
       return {
-        label: t('features.events.agenda.typeAccreditation', 'Accreditation'),
+        label: t('features.events.agenda.typeAccreditation'),
         icon: ShieldCheck,
         colorClass: 'border-teal-500/30 bg-teal-500/15 text-teal-700 dark:text-teal-400',
       };

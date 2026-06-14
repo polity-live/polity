@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/features/shared/utils/utils';
 import { Vote, Award } from 'lucide-react';
@@ -13,8 +14,6 @@ import type { DecisionItem } from './types';
 
 export interface DecisionRowProps {
   decision: DecisionItem;
-  onClick: () => void;
-  isSelected?: boolean;
 }
 
 function getElectionBarData(decision: DecisionItem) {
@@ -37,17 +36,61 @@ function getElectionBarData(decision: DecisionItem) {
   };
 }
 
+function hasHref(href?: string | null): href is string {
+  return Boolean(href && href !== '#');
+}
+
+function DecisionLink({
+  href,
+  children,
+  className,
+}: {
+  href?: string | null;
+  children: ReactNode;
+  className?: string;
+}) {
+  if (!hasHref(href)) {
+    return <span className={className}>{children}</span>;
+  }
+
+  return (
+    <a href={href} className={cn('hover:text-primary hover:underline', className)}>
+      {children}
+    </a>
+  );
+}
+
+function DecisionContextLinks({ decision }: { decision: DecisionItem }) {
+  return (
+    <div className="text-muted-foreground mt-0.5 flex min-w-0 flex-wrap gap-x-2 gap-y-0.5 font-mono text-[10px]">
+      {decision.entity ? (
+        <DecisionLink href={decision.entity.href} className="truncate">
+          {decision.entity.name}
+        </DecisionLink>
+      ) : null}
+      {decision.agendaItem ? (
+        <DecisionLink href={decision.agendaItem.href} className="truncate">
+          {decision.agendaItem.name}
+        </DecisionLink>
+      ) : null}
+      {decision.summary ? (
+        <span className="line-clamp-1 normal-case">{decision.summary}</span>
+      ) : null}
+    </div>
+  );
+}
+
 /**
  * Single row in the Decision Table
  * Shows ID, title, body, time, status, and trend
  * Includes flash effect when values change significantly
  */
-export function DecisionRow({ decision, onClick, isSelected }: DecisionRowProps) {
+export function DecisionRow({ decision }: DecisionRowProps) {
   const { t } = useTranslation();
   const [isFlashing, setIsFlashing] = useState(false);
   const prevTrendRef = useRef(decision.trend.percentage);
   const electionBarData = getElectionBarData(decision);
-  const gridColumnsClass = 'grid-cols-[70px_minmax(0,0.9fr)_140px_100px_112px_180px_80px]';
+  const gridColumnsClass = 'grid-cols-[70px_minmax(0,0.9fr)_120px_92px_104px_170px_72px]';
 
   // Flash effect when trend changes significantly (> 2%)
   useEffect(() => {
@@ -66,36 +109,37 @@ export function DecisionRow({ decision, onClick, isSelected }: DecisionRowProps)
   return (
     <div
       className={cn(
-        'grid cursor-pointer gap-2 px-4 py-3 transition-colors',
+        'grid gap-2 px-2 py-1.5 transition-colors',
         gridColumnsClass,
         'hover:bg-muted/50',
-        isSelected && 'bg-muted',
         isFlashing && 'animate-flash-yellow'
       )}
-      onClick={onClick}
       role="row"
-      tabIndex={0}
-      onKeyDown={e => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onClick();
-        }
-      }}
+      data-testid={decision.type === 'vote' ? 'vote-row' : 'election-row'}
+      data-vote-id={decision.type === 'vote' ? decision.sourceId : undefined}
+      data-election-id={decision.type === 'election' ? decision.sourceId : undefined}
     >
       {/* ID */}
       <div className="flex items-center gap-1">
         <Icon className="text-muted-foreground h-3.5 w-3.5" />
-        <span className="font-mono text-xs font-medium">{decision.id}</span>
+        <DecisionLink href={decision.href} className="font-mono text-[11px] font-medium">
+          {decision.id}
+        </DecisionLink>
       </div>
 
       {/* Title */}
-      <div className="flex items-center">
-        <span className="truncate text-sm font-medium">{decision.title}</span>
+      <div className="min-w-0">
+        <DecisionLink href={decision.href} className="block truncate text-xs font-medium">
+          {decision.title}
+        </DecisionLink>
+        <DecisionContextLinks decision={decision} />
       </div>
 
       {/* Body/Category */}
       <div className="flex items-center">
-        <span className="text-muted-foreground truncate text-xs">{decision.body}</span>
+        <span className="text-muted-foreground truncate font-mono text-[10px] tracking-[0.8px] uppercase">
+          {decision.body}
+        </span>
       </div>
 
       {/* Time */}
@@ -106,13 +150,13 @@ export function DecisionRow({ decision, onClick, isSelected }: DecisionRowProps)
           <CountdownTimer
             endsAt={decision.startsAt}
             compact
-            compactLabel={t('timeline.terminal.startsIn', 'Starts in')}
+            compactLabel={t('timeline.terminal.startsIn')}
           />
         ) : (
           <CountdownTimer
             endsAt={decision.endsAt}
             compact
-            compactLabel={t('timeline.terminal.closesIn', 'Closes in')}
+            compactLabel={t('timeline.terminal.closesIn')}
           />
         )}
       </div>
@@ -134,13 +178,13 @@ export function DecisionRow({ decision, onClick, isSelected }: DecisionRowProps)
         {decision.type === 'election' && electionBarData ? (
           <div className="flex w-full items-center gap-2 overflow-hidden">
             {decision.isIndicationPhase && (
-              <span className="shrink-0 text-[10px] text-blue-500">
-                {t('timeline.terminal.indication', 'Ind')}
+              <span className="text-primary shrink-0 font-mono text-[9px] font-semibold uppercase">
+                {t('timeline.terminal.indication')}
               </span>
             )}
             {!decision.isIndicationPhase && electionBarData.candidates.some(c => c.value > 0) && (
-              <span className="shrink-0 text-[9px] text-blue-400">
-                {t('timeline.terminal.indication', 'Ind')} →
+              <span className="text-muted-foreground shrink-0 font-mono text-[9px] uppercase">
+                {t('timeline.terminal.indication')} →
               </span>
             )}
             <CandidateBarCompact
@@ -154,12 +198,12 @@ export function DecisionRow({ decision, onClick, isSelected }: DecisionRowProps)
         ) : decision.votes ? (
           <div className="flex w-full items-center gap-2 overflow-hidden">
             {decision.isIndicationPhase && decision.indicationVotes ? (
-              <span className="shrink-0 text-[10px] text-blue-500">
-                {t('timeline.terminal.indication', 'Ind')}
+              <span className="text-primary shrink-0 font-mono text-[9px] font-semibold uppercase">
+                {t('timeline.terminal.indication')}
               </span>
             ) : decision.indicationVotes && !decision.isIndicationPhase ? (
-              <span className="shrink-0 text-[9px] text-blue-400">
-                {t('timeline.terminal.indication', 'Ind')} →
+              <span className="text-muted-foreground shrink-0 font-mono text-[9px] uppercase">
+                {t('timeline.terminal.indication')} →
               </span>
             ) : null}
             <VoteBarCompact
@@ -181,7 +225,7 @@ export function DecisionRow({ decision, onClick, isSelected }: DecisionRowProps)
             </span>
           </div>
         ) : (
-          <span className="text-muted-foreground text-xs">—</span>
+          <span className="text-muted-foreground text-xs">-</span>
         )}
       </div>
 

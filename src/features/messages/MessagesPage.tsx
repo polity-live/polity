@@ -54,6 +54,10 @@ export default function MessagesPage() {
           <MessageView
             className="h-full"
             conversation={mp.selectedConversation}
+            messages={mp.selectedMessages}
+            hasMoreOlderMessages={mp.hasMoreOlderMessages}
+            onLoadOlderMessages={mp.loadOlderMessages}
+            onAtEndChange={mp.setIsSelectedConversationAtEnd}
             currentUserId={mp.currentUserId}
             isConversationUserOnline={mp.selectedConversationUserOnline}
             onBack={() => mp.setSelectedConversationId(null)}

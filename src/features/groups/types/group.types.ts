@@ -58,6 +58,7 @@ export type MembershipTab =
   | 'membershipsByUser'
   | 'membershipsByRole'
   | 'composition'
+  | 'rightsAlignment'
   | 'openAssignments'
   | 'guests'
   | 'roles';

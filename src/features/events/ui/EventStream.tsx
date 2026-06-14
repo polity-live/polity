@@ -28,7 +28,10 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useEventStream } from '../hooks/useEventStream';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { AgendaNavigationControls } from '@/features/agendas/ui/AgendaNavigationControls';
 import { AgendaElectionSection } from '@/features/agendas/ui/AgendaElectionSection';
 import { AgendaVoteSection } from '@/features/agendas/ui/AgendaVoteSection';
@@ -306,7 +309,10 @@ export function EventStream({ eventId }: { eventId: string }) {
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-4">
                 <div className="bg-primary text-primary-foreground relative flex h-14 w-14 items-center justify-center rounded-lg shadow-md">
-                  {getAgendaItemIcon(currentAgendaItem.type ?? 'discussion')}
+                  {getAgendaItemIcon(
+                    currentAgendaItem.type ??
+                      translateText('generated.inline.0011_discussion_c255751d')
+                  )}
                   <div className="absolute -top-1 -right-1 flex h-5 w-5 animate-pulse items-center justify-center rounded-full bg-green-500 text-white">
                     <Play className="h-3 w-3 fill-white" />
                   </div>
@@ -430,7 +436,9 @@ export function EventStream({ eventId }: { eventId: string }) {
                   size="lg"
                 >
                   <X className="mr-2 h-5 w-5" />
-                  {removingSpeaker === userSpeaker.id ? 'Removing...' : 'Remove Yourself'}
+                  {removingSpeaker === userSpeaker.id
+                    ? translateText('generated.inline.0015_removing_2a76d431')
+                    : translateText('generated.inline.0016_remove_yourself_fa3b0e30')}
                 </Button>
               ) : (
                 <Button
@@ -439,7 +447,9 @@ export function EventStream({ eventId }: { eventId: string }) {
                   size="lg"
                 >
                   <Plus className="mr-2 h-5 w-5" />
-                  {addingSpeaker ? 'Adding...' : 'Add Yourself'}
+                  {addingSpeaker
+                    ? translateText('generated.inline.0017_adding_268c06a2')
+                    : translateText('generated.inline.0018_add_yourself_71fba1c3')}
                 </Button>
               )}
             </div>
@@ -449,9 +459,13 @@ export function EventStream({ eventId }: { eventId: string }) {
               {speakerList.length === 0 ? (
                 <div className="py-12 text-center">
                   <User className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
-                  <p className="text-muted-foreground text-lg">No speakers yet</p>
+                  <p className="text-muted-foreground text-lg">
+                    {translateText('generated.inline.0054_no_speakers_yet_47546d9a')}
+                  </p>
                   <p className="text-muted-foreground mt-2 text-sm">
-                    Be the first to add yourself to the speakers list
+                    {translateText(
+                      'generated.inline.0519_be_the_first_to_add_yourself_to_the_speakers__dd223a89'
+                    )}
                   </p>
                 </div>
               ) : (
@@ -533,7 +547,7 @@ export function EventStream({ eventId }: { eventId: string }) {
                               </h3>
                               {isCurrentUser && (
                                 <Badge variant="secondary" className="mt-1">
-                                  You
+                                  {translateText('generated.inline.0055_you_905cb326')}
                                 </Badge>
                               )}
                             </div>
@@ -552,7 +566,8 @@ export function EventStream({ eventId }: { eventId: string }) {
                             <div className="flex justify-center">
                               <Badge variant="secondary" className="px-4 py-2 text-base">
                                 <Clock className="mr-2 h-4 w-4" />
-                                {formatTime(speakerTime)} ({speaker.time} min)
+                                {formatTime(speakerTime)} ({speaker.time}
+                                {translateText('generated.inline.0056_min_c5cceefd')}
                               </Badge>
                             </div>
 
@@ -560,7 +575,7 @@ export function EventStream({ eventId }: { eventId: string }) {
                             {speaker.completed && (
                               <div className="flex justify-center">
                                 <Badge variant="outline" className="bg-green-100 dark:bg-green-900">
-                                  Completed
+                                  {translateText('generated.inline.0057_completed_1798b3ba')}
                                 </Badge>
                               </div>
                             )}

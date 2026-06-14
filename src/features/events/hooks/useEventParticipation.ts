@@ -3,6 +3,7 @@ import { useAuth } from '@/providers/auth-provider';
 import { toast } from 'sonner';
 import { useEventActions } from '@/zero/events/useEventActions';
 import { useEventById, useEventParticipantsQuery } from '@/zero/events/useEventState';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export type ParticipationStatus =
   | 'invited'
@@ -71,18 +72,24 @@ export function useEventParticipation(eventId: string) {
     // Check participation eligibility based on event type
     if (eventType === 'delegate_assembly') {
       if (!isConfirmedDelegate) {
-        toast.error('Only confirmed delegates can participate in this delegate assembly');
+        toast.error(
+          translateText(
+            'generated.inline.0466_only_confirmed_delegates_can_participate_in_t_18a6a4d3'
+          )
+        );
         return;
       }
     } else if (eventType === 'general_assembly') {
       if (!isGroupMember) {
         toast.error(
-          'Only members of the associated group can participate in this general assembly'
+          translateText(
+            'generated.inline.0467_only_members_of_the_associated_group_can_part_03a2dedc'
+          )
         );
         return;
       }
     } else if (eventType === 'on_invite') {
-      toast.error('This event is by invitation only');
+      toast.error(translateText('generated.inline.0468_this_event_is_by_invitation_only_904d226e'));
       return;
     }
     // For 'open', everyone can request participation
@@ -99,12 +106,18 @@ export function useEventParticipation(eventId: string) {
         visibility: event?.visibility ?? 'public',
       });
 
-      toast.success('Participation request sent successfully');
+      toast.success(
+        translateText('generated.inline.0469_participation_request_sent_successfully_239ea238')
+      );
     } catch (error) {
       console.error('Failed to request participation:', error);
       console.error('Event ID:', eventId);
       console.error('User ID:', user?.id);
-      toast.error('Failed to request participation. Please try again.');
+      toast.error(
+        translateText(
+          'generated.inline.0470_failed_to_request_participation_please_try_ag_3f5ea838'
+        )
+      );
     } finally {
       setIsLoading(false);
     }
@@ -117,10 +130,12 @@ export function useEventParticipation(eventId: string) {
     setIsLoading(true);
     try {
       await doLeaveEvent({ id: participation.id });
-      toast.success('Successfully left the event');
+      toast.success(translateText('generated.inline.0471_successfully_left_the_event_a2c899b8'));
     } catch (error) {
       console.error('Failed to leave event:', error);
-      toast.error('Failed to leave event. Please try again.');
+      toast.error(
+        translateText('generated.inline.0472_failed_to_leave_event_please_try_again_8ea27458')
+      );
     } finally {
       setIsLoading(false);
     }
@@ -136,10 +151,12 @@ export function useEventParticipation(eventId: string) {
         id: participation.id,
         status: 'active',
       });
-      toast.success('Successfully joined the event');
+      toast.success(translateText('generated.inline.0473_successfully_joined_the_event_f7687c9c'));
     } catch (error) {
       console.error('Failed to accept invitation:', error);
-      toast.error('Failed to accept invitation. Please try again.');
+      toast.error(
+        translateText('generated.inline.0137_failed_to_accept_invitation_please_try_again_9c80b3af')
+      );
     } finally {
       setIsLoading(false);
     }

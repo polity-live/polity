@@ -140,7 +140,7 @@ export function NumberedListToolbarButton() {
                 })
               }
             >
-              {t('plateJs.toolbar.listTypes.decimal', 'Decimal (1, 2, 3)')}
+              {t('plateJs.toolbar.listTypes.decimal')}
             </DropdownMenuItem>
             <DropdownMenuItem
               onSelect={() =>
@@ -149,7 +149,7 @@ export function NumberedListToolbarButton() {
                 })
               }
             >
-              {t('plateJs.toolbar.listTypes.lowerAlpha', 'Lower Alpha (a, b, c)')}
+              {t('plateJs.toolbar.listTypes.lowerAlpha')}
             </DropdownMenuItem>
             <DropdownMenuItem
               onSelect={() =>
@@ -158,7 +158,7 @@ export function NumberedListToolbarButton() {
                 })
               }
             >
-              {t('plateJs.toolbar.listTypes.upperAlpha', 'Upper Alpha (A, B, C)')}
+              {t('plateJs.toolbar.listTypes.upperAlpha')}
             </DropdownMenuItem>
             <DropdownMenuItem
               onSelect={() =>
@@ -167,7 +167,7 @@ export function NumberedListToolbarButton() {
                 })
               }
             >
-              {t('plateJs.toolbar.listTypes.lowerRoman', 'Lower Roman (i, ii, iii)')}
+              {t('plateJs.toolbar.listTypes.lowerRoman')}
             </DropdownMenuItem>
             <DropdownMenuItem
               onSelect={() =>
@@ -176,7 +176,7 @@ export function NumberedListToolbarButton() {
                 })
               }
             >
-              {t('plateJs.toolbar.listTypes.upperRoman', 'Upper Roman (I, II, III)')}
+              {t('plateJs.toolbar.listTypes.upperRoman')}
             </DropdownMenuItem>
           </DropdownMenuGroup>
         </DropdownMenuContent>
@@ -191,11 +191,7 @@ export function TodoListToolbarButton(props: React.ComponentProps<typeof Toolbar
   const { t } = useTranslation();
 
   return (
-    <ToolbarButton
-      {...props}
-      {...buttonProps}
-      tooltip={t('plateJs.toolbar.todoList', 'To-do list')}
-    >
+    <ToolbarButton {...props} {...buttonProps} tooltip={t('plateJs.toolbar.todoList')}>
       <ListTodoIcon />
     </ToolbarButton>
   );

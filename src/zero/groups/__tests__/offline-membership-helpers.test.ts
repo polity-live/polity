@@ -65,24 +65,25 @@ describe('offline-membership-helpers', () => {
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([
         {
-          id: 'link-1',
-          source_group_id: 'connected-1',
-          target_group_id: 'sibling-1',
+          id: 'connection-1',
+          group_a_id: 'connected-1',
+          group_b_id: 'sibling-1',
+          connection_type: 'peer',
           status: 'active',
           created_at: 1,
         },
       ])
-      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([
         {
           id: 'rule-1',
-          network_link_id: 'link-1',
-          membership_direction: 'forward',
+          connection_id: 'connection-1',
+          member_source_group_id: 'connected-1',
+          member_target_group_id: 'sibling-1',
           membership_mode: 'role_members',
-          role_id: 'role-admin',
-          source_group_ids: null,
+          required_source_role_id: 'role-admin',
         },
       ])
+      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([
         {
           id: 'connected-membership-1',
@@ -109,24 +110,25 @@ describe('offline-membership-helpers', () => {
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([
         {
-          id: 'link-1',
-          source_group_id: 'connected-1',
-          target_group_id: 'sibling-1',
+          id: 'connection-1',
+          group_a_id: 'connected-1',
+          group_b_id: 'sibling-1',
+          connection_type: 'peer',
           status: 'active',
           created_at: 1,
         },
       ])
-      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([
         {
           id: 'rule-1',
-          network_link_id: 'link-1',
-          membership_direction: 'forward',
+          connection_id: 'connection-1',
+          member_source_group_id: 'connected-1',
+          member_target_group_id: 'sibling-1',
           membership_mode: 'role_members',
-          role_id: 'role-admin',
-          source_group_ids: null,
+          required_source_role_id: 'role-admin',
         },
       ])
+      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([
         {
           id: 'connected-membership-1',

@@ -1,3 +1,4 @@
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 export type PqlScalar = string | number | boolean;
 
 export type PqlValue = PqlScalar | Date | null | undefined;
@@ -425,7 +426,14 @@ export function countPqlRules<TFieldKey extends string>(
       return count + 1;
     }
 
-    return count + countPqlRules({ id: 'nested', label: 'nested', expression: child });
+    return (
+      count +
+      countPqlRules({
+        id: 'nested',
+        label: translateText('generated.inline.0136_nested_b4b3e0a2'),
+        expression: child,
+      })
+    );
   }, 0);
 }
 

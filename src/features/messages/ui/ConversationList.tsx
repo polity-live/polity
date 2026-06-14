@@ -1,3 +1,5 @@
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { useRef } from 'react';
 import { Card, CardHeader } from '@/features/shared/ui/ui/card';
 import { Separator } from '@/features/shared/ui/ui/separator';
 import { Input } from '@/features/shared/ui/ui/input';
@@ -42,12 +44,20 @@ export function ConversationList({
   className,
 }: ConversationListProps) {
   const { t } = useTranslation();
+  const scrollRef = useRef<HTMLDivElement>(null);
   const filterButtons: ConversationFilter[] = ['all', 'direct', 'group', 'event', 'ai'];
   const filterGradients: Partial<Record<ConversationFilter, string>> = {
     direct: SEARCH_CARD_GRADIENTS.user,
     group: SEARCH_CARD_GRADIENTS.group,
     event: SEARCH_CARD_GRADIENTS.event,
   };
+  const rowVirtualizer = useVirtualizer({
+    count: conversations.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 92,
+    overscan: 8,
+    getItemKey: index => conversations[index]?.id ?? index,
+  });
 
   return (
     <Card
@@ -66,8 +76,8 @@ export function ConversationList({
               variant="outline"
               className="rounded-full"
               onClick={onNewConversationClick}
-              aria-label={t('features.messages.compose.startNewChat', 'Start a new chat')}
-              title={t('features.messages.compose.startNewChat', 'Start a new chat')}
+              aria-label={t('features.messages.compose.startNewChat')}
+              title={t('features.messages.compose.startNewChat')}
             >
               <MessageCircle className="h-5 w-5" />
             </Button>
@@ -76,8 +86,8 @@ export function ConversationList({
               variant="default"
               className="rounded-full"
               onClick={onNewAiConversationClick}
-              aria-label={t('features.messages.compose.startNewAi', 'Start a new AI conversation')}
-              title={t('features.messages.compose.startNewAi', 'Start a new AI conversation')}
+              aria-label={t('features.messages.compose.startNewAi')}
+              title={t('features.messages.compose.startNewAi')}
             >
               <Bot className="h-5 w-5" />
             </Button>
@@ -125,8 +135,8 @@ export function ConversationList({
         </div>
       </CardHeader>
       <Separator />
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="space-y-1 p-4">
+      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
+        <div className="p-4">
           {conversations.length === 0 ? (
             <div className="py-8 text-center">
               <p className="text-muted-foreground">
@@ -136,17 +146,38 @@ export function ConversationList({
               </p>
             </div>
           ) : (
-            conversations.map(conversation => (
-              <ConversationItem
-                key={conversation.id}
-                conversation={conversation}
-                currentUserId={currentUserId}
-                isOnline={conversationOnlineStatus[conversation.id] ?? false}
-                isSelected={selectedConversationId === conversation.id}
-                onSelect={onSelectConversation}
-                onDelete={onDeleteConversationClick}
-              />
-            ))
+            <div
+              className="relative"
+              style={{
+                height: rowVirtualizer.getTotalSize(),
+              }}
+            >
+              {rowVirtualizer.getVirtualItems().map(virtualItem => {
+                const conversation = conversations[virtualItem.index];
+                if (!conversation) return null;
+
+                return (
+                  <div
+                    key={virtualItem.key}
+                    data-index={virtualItem.index}
+                    ref={rowVirtualizer.measureElement}
+                    className="absolute top-0 left-0 w-full pb-1"
+                    style={{
+                      transform: `translateY(${virtualItem.start}px)`,
+                    }}
+                  >
+                    <ConversationItem
+                      conversation={conversation}
+                      currentUserId={currentUserId}
+                      isOnline={conversationOnlineStatus[conversation.id] ?? false}
+                      isSelected={selectedConversationId === conversation.id}
+                      onSelect={onSelectConversation}
+                      onDelete={onDeleteConversationClick}
+                    />
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
       </div>

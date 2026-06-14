@@ -33,6 +33,7 @@ import { useAllEvents, useAllAmendments, useRolesWithGroups } from '@/zero/event
 import { useAuth } from '@/providers/auth-provider';
 import { toast } from 'sonner';
 import { PageWrapper } from '@/layout/page-wrapper';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export function CreateAgendaItemForm() {
   const navigate = useNavigate();
@@ -82,13 +83,21 @@ export function CreateAgendaItemForm() {
 
     try {
       if (!user?.id) {
-        toast.error('You must be logged in to create an agenda item');
+        toast.error(
+          translateText(
+            'generated.inline.0021_you_must_be_logged_in_to_create_an_agenda_ite_959a22b0'
+          )
+        );
         setIsSubmitting(false);
         return;
       }
 
       if (!formData.eventId) {
-        toast.error('Please select an event for this agenda item');
+        toast.error(
+          translateText(
+            'generated.inline.0022_please_select_an_event_for_this_agenda_item_e6169d47'
+          )
+        );
         setIsSubmitting(false);
         return;
       }
@@ -167,11 +176,17 @@ export function CreateAgendaItemForm() {
 
       await Promise.resolve(); // mutations already committed above
 
-      toast.success('Agenda item created successfully!');
+      toast.success(
+        translateText('generated.inline.0023_agenda_item_created_successfully_4eb7ae08')
+      );
       navigate({ to: `/event/${formData.eventId}/agenda` });
     } catch (error) {
       console.error('Failed to create agenda item:', error);
-      toast.error('Failed to create agenda item. Please try again.');
+      toast.error(
+        translateText(
+          'generated.inline.0024_failed_to_create_agenda_item_please_try_again_b0524017'
+        )
+      );
       setIsSubmitting(false);
     }
   };
@@ -180,7 +195,9 @@ export function CreateAgendaItemForm() {
     <PageWrapper className="flex min-h-screen items-center justify-center">
       <Card className="w-full max-w-2xl">
         <CardHeader>
-          <CardTitle>Create a New Agenda Item</CardTitle>
+          <CardTitle>
+            {translateText('generated.inline.0025_create_a_new_agenda_item_b0be8c15')}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <Carousel setApi={setCarouselApi} opts={{ watchDrag: false }}>
@@ -189,7 +206,9 @@ export function CreateAgendaItemForm() {
               <CarouselItem>
                 <div className="space-y-4 p-4">
                   <div className="space-y-2">
-                    <Label htmlFor="agenda-event">Event</Label>
+                    <Label htmlFor="agenda-event">
+                      {translateText('generated.inline.0026_event_ad8919ac')}
+                    </Label>
                     <TypeaheadSearch
                       items={toTypeaheadItems(
                         userEvents,
@@ -206,24 +225,34 @@ export function CreateAgendaItemForm() {
                       onChange={(item: TypeaheadItem | null) =>
                         setFormData({ ...formData, eventId: item?.id ?? '' })
                       }
-                      placeholder="Search for an event..."
+                      placeholder={translateText(
+                        'generated.inline.0027_search_for_an_event_2c0dc7bd'
+                      )}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="agenda-title">Title</Label>
+                    <Label htmlFor="agenda-title">
+                      {translateText('generated.inline.0028_title_768e0c1c')}
+                    </Label>
                     <Input
                       id="agenda-title"
-                      placeholder="Enter agenda item title"
+                      placeholder={translateText(
+                        'generated.inline.0029_enter_agenda_item_title_2e1f5120'
+                      )}
                       value={formData.title}
                       onChange={e => setFormData({ ...formData, title: e.target.value })}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="agenda-description">Description</Label>
+                    <Label htmlFor="agenda-description">
+                      {translateText('generated.inline.0030_description_55f8ebc8')}
+                    </Label>
                     <Textarea
                       id="agenda-description"
-                      placeholder="Describe this agenda item (optional)"
+                      placeholder={translateText(
+                        'generated.inline.0031_describe_this_agenda_item_optional_7065a335'
+                      )}
                       value={formData.description}
                       onChange={e => setFormData({ ...formData, description: e.target.value })}
                       rows={3}
@@ -243,7 +272,9 @@ export function CreateAgendaItemForm() {
                   </TooltipProvider>
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
-                      <Label htmlFor="agenda-order">Order</Label>
+                      <Label htmlFor="agenda-order">
+                        {translateText('generated.inline.0032_order_1d75774c')}
+                      </Label>
                       <Input
                         id="agenda-order"
                         type="number"
@@ -257,12 +288,14 @@ export function CreateAgendaItemForm() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="agenda-duration">Duration (minutes)</Label>
+                      <Label htmlFor="agenda-duration">
+                        {translateText('generated.inline.0033_duration_minutes_10c3d1ca')}
+                      </Label>
                       <Input
                         id="agenda-duration"
                         type="number"
                         min="1"
-                        placeholder="Optional"
+                        placeholder={translateText('generated.inline.0034_optional_0c6c4102')}
                         value={formData.duration}
                         onChange={e => setFormData({ ...formData, duration: e.target.value })}
                       />
@@ -276,7 +309,9 @@ export function CreateAgendaItemForm() {
                 <div className="space-y-4 p-4">
                   {formData.type === 'vote' && (
                     <div className="space-y-2">
-                      <Label htmlFor="agenda-amendment">Amendment (optional)</Label>
+                      <Label htmlFor="agenda-amendment">
+                        {translateText('generated.inline.0035_amendment_optional_c6a38580')}
+                      </Label>
                       <TypeaheadSearch
                         items={toTypeaheadItems(
                           userAmendments,
@@ -290,13 +325,17 @@ export function CreateAgendaItemForm() {
                         onChange={(item: TypeaheadItem | null) =>
                           setFormData({ ...formData, amendmentId: item?.id ?? '' })
                         }
-                        placeholder="Search for an amendment..."
+                        placeholder={translateText(
+                          'generated.inline.0036_search_for_an_amendment_5231be40'
+                        )}
                       />
                     </div>
                   )}
                   {formData.type === 'election' && (
                     <div className="space-y-2">
-                      <Label htmlFor="agenda-role">Elective role (optional)</Label>
+                      <Label htmlFor="agenda-role">
+                        {translateText('generated.inline.0037_elective_role_optional_5a97b6c3')}
+                      </Label>
                       <TypeaheadSearch
                         items={toTypeaheadItems(
                           userRoles,
@@ -308,13 +347,17 @@ export function CreateAgendaItemForm() {
                         onChange={(item: TypeaheadItem | null) =>
                           setFormData({ ...formData, roleId: item?.id ?? '' })
                         }
-                        placeholder="Search for an elective role..."
+                        placeholder={translateText(
+                          'generated.inline.0038_search_for_an_elective_role_f4433fda'
+                        )}
                       />
                     </div>
                   )}
                   {formData.type !== 'vote' && formData.type !== 'election' && (
                     <div className="text-muted-foreground py-8 text-center">
-                      No additional configuration needed for this agenda item type.
+                      {translateText(
+                        'generated.inline.0039_no_additional_configuration_needed_for_this_a_9a7e9135'
+                      )}
                     </div>
                   )}
                 </div>
@@ -327,14 +370,15 @@ export function CreateAgendaItemForm() {
                     <CardHeader>
                       <div className="mb-2 flex items-center justify-between">
                         <Badge variant="default" className="text-xs">
-                          Agenda Item
+                          {translateText('generated.inline.0040_agenda_item_0a13737b')}
                         </Badge>
                         <Badge variant="secondary" className="text-xs">
                           {formData.type}
                         </Badge>
                       </div>
                       <CardTitle className="text-lg">
-                        {formData.title || 'Untitled Agenda Item'}
+                        {formData.title ||
+                          translateText('generated.inline.0011_untitled_agenda_item_fcb0e488')}
                       </CardTitle>
                       {formData.description && (
                         <CardDescription>{formData.description}</CardDescription>
@@ -342,24 +386,32 @@ export function CreateAgendaItemForm() {
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <div className="flex items-center gap-2 text-sm">
-                        <strong>Event:</strong>
+                        <strong>{translateText('generated.inline.0041_event_e1d18730')}</strong>
                         <span className="text-muted-foreground">
-                          {userEvents.find(e => e.id === formData.eventId)?.title || 'Not selected'}
+                          {userEvents.find(e => e.id === formData.eventId)?.title ||
+                            translateText('generated.inline.0012_not_selected_183079f3')}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
-                        <strong>Order:</strong>
+                        <strong>{translateText('generated.inline.0042_order_3c124cca')}</strong>
                         <span className="text-muted-foreground">#{formData.order}</span>
                       </div>
                       {formData.duration && (
                         <div className="flex items-center gap-2 text-sm">
-                          <strong>Duration:</strong>
-                          <span className="text-muted-foreground">{formData.duration} minutes</span>
+                          <strong>
+                            {translateText('generated.inline.0043_duration_9693aeaa')}
+                          </strong>
+                          <span className="text-muted-foreground">
+                            {formData.duration}
+                            {translateText('generated.inline.0006_minutes_be2e2bb6')}
+                          </span>
                         </div>
                       )}
                       {formData.amendmentId && (
                         <div className="flex items-center gap-2 text-sm">
-                          <strong>Amendment:</strong>
+                          <strong>
+                            {translateText('generated.inline.0044_amendment_e0b72231')}
+                          </strong>
                           <span className="text-muted-foreground">
                             {userAmendments.find(a => a.id === formData.amendmentId)?.title}
                           </span>
@@ -367,7 +419,7 @@ export function CreateAgendaItemForm() {
                       )}
                       {formData.roleId && (
                         <div className="flex items-center gap-2 text-sm">
-                          <strong>Role:</strong>
+                          <strong>{translateText('generated.inline.0045_role_61e4c27b')}</strong>
                           <span className="text-muted-foreground">
                             {userRoles.find(role => role.id === formData.roleId)?.title}
                           </span>
@@ -400,7 +452,7 @@ export function CreateAgendaItemForm() {
             onClick={() => carouselApi?.scrollPrev()}
             disabled={currentStep === 0}
           >
-            Previous
+            {translateText('generated.inline.0046_previous_50f94286')}
           </Button>
           {currentStep < 3 ? (
             <Button
@@ -408,11 +460,13 @@ export function CreateAgendaItemForm() {
               onClick={() => carouselApi?.scrollNext()}
               disabled={currentStep === 0 && !formData.title}
             >
-              Next
+              {translateText('generated.inline.0047_next_bc981983')}
             </Button>
           ) : (
             <Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
-              {isSubmitting ? 'Creating...' : 'Create Agenda Item'}
+              {isSubmitting
+                ? translateText('generated.inline.0013_creating_28ea7667')
+                : translateText('generated.inline.0014_create_agenda_item_8fa636c7')}
             </Button>
           )}
         </CardFooter>

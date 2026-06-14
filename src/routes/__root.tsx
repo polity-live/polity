@@ -5,6 +5,7 @@ import { ZeroAppProvider } from '@/providers/zero-provider';
 import { AppShell } from '@/layout/app-shell';
 import { NotFound } from '@/features/shared/ui/ui/not-found';
 import stylesAssetHref from '../styles.css?url';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 const stylesHref = import.meta.env.DEV ? '/_build/src/styles.css' : stylesAssetHref;
 
@@ -19,7 +20,7 @@ export const Route = createRootRoute({
         name: 'google-site-verification',
         content: 'nIqXCPvlgZ-T0vUb9DimlNa8oLmNZbj5VLIYfN_s08g',
       },
-      { title: 'Polity' },
+      { title: translateText('generated.inline.0614_polity_f147ffe2') },
     ],
     links: [
       { rel: 'stylesheet', href: stylesHref },

@@ -1,6 +1,11 @@
 'use client';
 
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/features/shared/ui/ui/tooltip';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 
@@ -46,13 +51,13 @@ function BarRow({
     <Tooltip>
       <TooltipTrigger asChild>
         <div className="flex items-center gap-2">
-          <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-muted">
+          <div className="bg-muted h-2.5 flex-1 overflow-hidden rounded-full">
             <div
               className={cn('h-full transition-all', barClass)}
               style={{ width: `${percent}%` }}
             />
           </div>
-          <span className="min-w-[60px] text-right text-xs text-muted-foreground">
+          <span className="text-muted-foreground min-w-[60px] text-right text-xs">
             {count} ({percent.toFixed(0)}%){suffix}
           </span>
         </div>
@@ -79,7 +84,7 @@ export function GroupedVoteResultBar({
   return (
     <TooltipProvider>
       <div className={cn('space-y-4', className)}>
-        {options.map((option) => (
+        {options.map(option => (
           <div key={option.key} className="space-y-1.5">
             {/* Option label */}
             <div className="flex items-center gap-1.5 text-sm font-medium">
@@ -96,7 +101,7 @@ export function GroupedVoteResultBar({
                     isIndicationPhase ? 'text-muted-foreground/70' : 'text-muted-foreground'
                   )}
                 >
-                  {t('features.events.agenda.actualShort', 'Final')}
+                  {t('features.events.agenda.actualShort')}
                 </span>
                 <div className="flex-1">
                   <BarRow
@@ -104,7 +109,7 @@ export function GroupedVoteResultBar({
                     count={option.finalCount}
                     total={totalFinal}
                     barClass={option.color}
-                    tooltipLabel={t('features.events.agenda.actual', 'Final')}
+                    tooltipLabel={t('features.events.agenda.actual')}
                   />
                 </div>
               </div>
@@ -117,7 +122,7 @@ export function GroupedVoteResultBar({
                       : 'text-muted-foreground'
                   )}
                 >
-                  {t('features.events.agenda.indicationShort', 'Indic.')}
+                  {t('features.events.agenda.indicationShort')}
                 </span>
                 <div className="flex-1">
                   <BarRow
@@ -126,7 +131,7 @@ export function GroupedVoteResultBar({
                     total={totalIndication}
                     barClass={option.lightColor}
                     suffix=" *"
-                    tooltipLabel={t('features.events.agenda.indication', 'Indication')}
+                    tooltipLabel={t('features.events.agenda.indication')}
                   />
                 </div>
               </div>
@@ -134,8 +139,8 @@ export function GroupedVoteResultBar({
           </div>
         ))}
         {totalFinal === 0 && totalIndication === 0 && (
-          <div className="text-xs text-muted-foreground">
-            {t('features.events.agenda.noVotesYet', 'No votes yet')}
+          <div className="text-muted-foreground text-xs">
+            {t('features.events.agenda.noVotesYet')}
           </div>
         )}
       </div>

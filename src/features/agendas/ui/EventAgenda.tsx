@@ -31,16 +31,6 @@ import {
 } from '@/features/shared/ui/ui/collapsible';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/features/shared/ui/ui/alert-dialog';
-import {
   Calendar,
   Vote,
   Gavel,
@@ -57,8 +47,12 @@ import {
   Info,
   GripVertical,
 } from 'lucide-react';
+import { toast as sonnerToast } from 'sonner';
 import { gatedToast as toast } from '@/features/notifications/utils/gated-toast';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 import { TimelineItem } from '@/features/agendas/ui/TimelineItem.tsx';
 import { AgendaItemContextCard } from './AgendaItemContextCard';
@@ -176,7 +170,7 @@ function normalizeSearchToken(value: string | null | undefined): string {
 }
 
 function getAgendaDisplayType(type?: string | null): AgendaItemType {
-  if (type === 'amendment') {
+  if (type === 'amendment' || type === 'implementation_review' || type === 'support_confirmation') {
     return 'vote';
   }
 
@@ -237,7 +231,6 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   const [offlineTallyPasswordError, setOfflineTallyPasswordError] = useState<string | null>(null);
   const [offlineTallySubmitError, setOfflineTallySubmitError] = useState<string | null>(null);
   const [isOfflineTallySubmitting, setIsOfflineTallySubmitting] = useState(false);
-  const [overdueStartModalOpen, setOverdueStartModalOpen] = useState(false);
   const [dismissedOverdueAgendaItemId, setDismissedOverdueAgendaItemId] = useState<string | null>(
     null
   );
@@ -423,17 +416,42 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   }, [agendaItems, agendaNav.startableAgendaItem, canManageAgenda, liveAgendaItem]);
 
   useEffect(() => {
-    if (!overdueStartCandidate) {
-      setOverdueStartModalOpen(false);
+    if (!overdueStartCandidate || dismissedOverdueAgendaItemId === overdueStartCandidate.id) {
       return;
     }
 
-    if (dismissedOverdueAgendaItemId === overdueStartCandidate.id) {
-      return;
-    }
+    const toastId = `agenda-start-reminder-${overdueStartCandidate.id}`;
+    const markReminderDismissed = () => {
+      setDismissedOverdueAgendaItemId(current =>
+        current === overdueStartCandidate.id ? current : overdueStartCandidate.id
+      );
+    };
+    const dismissReminder = () => {
+      markReminderDismissed();
+      sonnerToast.dismiss(toastId);
+    };
 
-    setOverdueStartModalOpen(true);
-  }, [overdueStartCandidate, dismissedOverdueAgendaItemId]);
+    sonnerToast.warning(t('features.events.agenda.startReminderTitle'), {
+      id: toastId,
+      description: overdueStartCandidate.title
+        ? `${t('features.events.agenda.startReminderDescription')} (${overdueStartCandidate.title})`
+        : t('features.events.agenda.startReminderDescription'),
+      duration: 15000,
+      action: {
+        label: t('features.events.navigation.start'),
+        onClick: () => {
+          dismissReminder();
+          void agendaNav.startFirstPendingItem();
+        },
+      },
+      cancel: {
+        label: t('common.actions.later'),
+        onClick: dismissReminder,
+      },
+      onAutoClose: markReminderDismissed,
+      onDismiss: markReminderDismissed,
+    });
+  }, [agendaNav.startFirstPendingItem, overdueStartCandidate, dismissedOverdueAgendaItemId, t]);
 
   const streamSpeakerListData = useMemo(() => {
     return (streamAgendaItem?.speaker_list || []).map(speaker => ({
@@ -537,12 +555,11 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   const selectedCRTitle = useMemo(() => {
     if (!activeCRToolbarItem) return streamAgendaItem?.title ?? undefined;
     if (activeCRToolbarItem.is_final_vote) {
-      return t('features.agendas.crTimeline.acceptAmendment', 'Accept amendment as modified');
+      return t('features.agendas.crTimeline.acceptAmendment');
     }
 
     return (
-      activeCRToolbarItem.change_request?.title ||
-      t('features.agendas.crTimeline.changeRequest', 'Change Request')
+      activeCRToolbarItem.change_request?.title || t('features.agendas.crTimeline.changeRequest')
     );
   }, [activeCRToolbarItem, streamAgendaItem?.title, t]);
   const selectedCRChoices = useMemo(
@@ -697,28 +714,28 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   ]);
   const startVoteTooltip = isCRToolbarActive
     ? isSelectedCRFinalVote
-      ? t('features.events.agenda.actions.startFinalVote', 'Start Final Vote')
-      : t('features.agendas.crTimeline.startVote', 'Start Change Request Vote')
+      ? t('features.events.agenda.actions.startFinalVote')
+      : t('features.agendas.crTimeline.startVote')
     : undefined;
   const startFinalVoteTooltip = isCRToolbarActive
     ? isSelectedCRFinalVote
-      ? t('features.events.agenda.actions.startFinalVote', 'Start Final Vote')
-      : t('features.agendas.crTimeline.startFinal', 'Start Change Request Final Vote')
+      ? t('features.events.agenda.actions.startFinalVote')
+      : t('features.agendas.crTimeline.startFinal')
     : undefined;
   const closeVoteTooltip = isCRToolbarActive
     ? isSelectedCRFinalVote
-      ? t('features.events.agenda.actions.closeFinalVote', 'Close Final Vote')
-      : t('features.agendas.crTimeline.closeVoting', 'Close Change Request Vote')
+      ? t('features.events.agenda.actions.closeFinalVote')
+      : t('features.agendas.crTimeline.closeVoting')
     : undefined;
   const castIndicativeVoteTooltip = isCRToolbarActive
     ? isSelectedCRFinalVote
-      ? t('features.events.agenda.actions.castIndicativeVote', 'Cast Indication')
-      : t('features.agendas.crTimeline.castIndicative', 'Cast Change Request Indication')
+      ? t('features.events.agenda.actions.castIndicativeVote')
+      : t('features.agendas.crTimeline.castIndicative')
     : undefined;
   const castFinalVoteTooltip = isCRToolbarActive
     ? isSelectedCRFinalVote
-      ? t('features.events.agenda.actions.castFinalVote', 'Cast Final Vote')
-      : t('features.agendas.crTimeline.castFinal', 'Cast Change Request Final Vote')
+      ? t('features.events.agenda.actions.castFinalVote')
+      : t('features.agendas.crTimeline.castFinal')
     : undefined;
 
   const indicativeSelections = useMemo(
@@ -984,7 +1001,10 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
         toast.success(getOfflineTallySuccessMessage(toolbarOfflineTallyPhase));
         handleOfflineTallyDialogOpenChange(false);
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Failed to save offline tally';
+        const message =
+          error instanceof Error
+            ? error.message
+            : translateText('generated.inline.0007_failed_to_save_offline_tally_82b59509');
         const isPasswordError =
           message === 'Invalid voting password.' ||
           message === 'No voting password set. Please set your voting PIN first.';
@@ -995,11 +1015,11 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
           setOfflineTallySubmitError(message);
         }
 
-        toast.error('Failed to save offline tally', {
+        toast.error(translateText('generated.inline.0049_failed_to_save_offline_tally_82b59509'), {
           description: message,
           action: message.includes('Offline election totals exceed the current cap')
             ? {
-                label: 'Open participants',
+                label: translateText('generated.inline.0004_open_participants_22616da9'),
                 onClick: () =>
                   navigate({
                     to: '/event/$id/participants',
@@ -1036,7 +1056,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
 
       await addSpeaker({
         id: crypto.randomUUID(),
-        title: 'Speaker',
+        title: translateText('generated.inline.0001_speaker_7c23b0d9'),
         time: 3,
         completed: false,
         order_index: maxOrder + 1,
@@ -1076,7 +1096,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
       toast.success(t('features.events.agenda.markCompleted'));
     } catch (error) {
       console.error('Error marking speaker completed:', error);
-      toast.error('Fehler beim Markieren');
+      toast.error(translateText('generated.inline.0050_fehler_beim_markieren_61f5cb2c'));
     } finally {
       setMarkingSpeakerComplete(null);
     }
@@ -1106,7 +1126,10 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
   const normalizedSearchQuery = normalizeSearchToken(searchQuery);
   const filteredAgendaItems = orderedAgendaItems.filter(item => {
     const topNumber = topNumberByAgendaItemId.get(item.id);
-    const topLabel = typeof topNumber === 'number' ? `top-${topNumber}` : '';
+    const topLabel =
+      typeof topNumber === translateText('generated.inline.0008_number_53b0a1b2')
+        ? `top-${topNumber}`
+        : '';
     const topLabelCompact = typeof topNumber === 'number' ? `top${topNumber}` : '';
     const normalizedTopLabel = normalizeSearchToken(topLabel);
 
@@ -1182,7 +1205,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     ) {
       return (
         <AgendaCountdownPill
-          label={t('features.events.agenda.endsIn', 'Ends in')}
+          label={t('features.events.agenda.endsIn')}
           endsAt={new Date(agendaItem.calculated_end_time)}
           tone="active"
         />
@@ -1192,7 +1215,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
     if (agendaItem.calculated_start_time && agendaItem.calculated_start_time > Date.now()) {
       return (
         <AgendaCountdownPill
-          label={t('features.events.stream.startsIn', 'Starts in')}
+          label={t('features.events.stream.startsIn')}
           endsAt={new Date(agendaItem.calculated_start_time)}
           tone="start"
         />
@@ -1356,8 +1379,8 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
         size="icon"
         className="h-8 w-8 cursor-grab active:cursor-grabbing"
         draggable
-        aria-label={t('features.events.agenda.dragToReorder', 'Drag to reorder')}
-        title={t('features.events.agenda.dragToReorder', 'Drag to reorder')}
+        aria-label={t('features.events.agenda.dragToReorder')}
+        title={t('features.events.agenda.dragToReorder')}
         onMouseDown={event => event.stopPropagation()}
         onClick={event => {
           event.preventDefault();
@@ -1509,7 +1532,9 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
             : actionBarHook.handleVoteClick
         }
         disableVoteButton={!isCRToolbarActive && disableVoteButton}
-        disabledVoteTooltip="Offline votes are entered via tallies."
+        disabledVoteTooltip={translateText(
+          'generated.inline.0005_offline_votes_are_entered_via_tallies_0ab8a792'
+        )}
         showOfflineTallyButton={!isCRToolbarActive && showOfflineTallyButton}
         onOfflineTallyClick={
           !isCRToolbarActive && showOfflineTallyButton ? handleOpenOfflineTallyDialog : undefined
@@ -1555,7 +1580,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                 <div className="flex items-center gap-2">
                   <Radio className="h-5 w-5 text-red-500" />
                   <CardTitle className="text-lg">
-                    {t('features.events.stream.liveStream', 'Live Stream')}
+                    {t('features.events.stream.liveStream')}
                   </CardTitle>
                   {streamIsLive && (
                     <Badge variant="default" className="animate-pulse">
@@ -1576,9 +1601,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
               {!streamAgendaItem ? (
                 <div className="text-muted-foreground flex items-center gap-3 rounded-lg border border-dashed p-4">
                   <Info className="h-5 w-5 flex-shrink-0" />
-                  <p className="text-sm">
-                    {t('features.events.stream.noActiveItem', 'No active agenda item')}
-                  </p>
+                  <p className="text-sm">{t('features.events.stream.noActiveItem')}</p>
                 </div>
               ) : (
                 <div className="space-y-6">
@@ -1608,7 +1631,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                             />
                             {!streamIsLive && eventStartTimestamp != null ? (
                               <AgendaCountdownPill
-                                label={t('features.events.stream.startsIn', 'Starts in')}
+                                label={t('features.events.stream.startsIn')}
                                 endsAt={new Date(eventStartTimestamp)}
                                 tone="start"
                               />
@@ -1619,7 +1642,8 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                             {streamAgendaItem.duration && (
                               <span className="flex items-center gap-1">
                                 <Clock className="h-3 w-3" />
-                                {streamAgendaItem.duration} min
+                                {streamAgendaItem.duration}
+                                {translateText('generated.inline.0009_min_b6c935d4')}
                               </span>
                             )}
                             {!isEventStarted && eventStartTimestamp != null && (
@@ -1650,7 +1674,7 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
                                 <iframe
                                   className="h-full w-full"
                                   src={`https://www.youtube.com/embed/${encodeURIComponent(videoId)}?autoplay=0&rel=0&modestbranding=1`}
-                                  title={t('features.events.stream.liveStream', 'Live Stream')}
+                                  title={t('features.events.stream.liveStream')}
                                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                   allowFullScreen
                                 />
@@ -1950,17 +1974,9 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
           {scheduledButUnconfirmedAgendaItems.length > 0 ? (
             <Card className="border-dashed">
               <CardHeader>
-                <CardTitle>
-                  {t(
-                    'features.events.agenda.scheduledButUnconfirmedTitle',
-                    'Scheduled but not confirmed agenda items'
-                  )}
-                </CardTitle>
+                <CardTitle>{t('features.events.agenda.scheduledButUnconfirmedTitle')}</CardTitle>
                 <CardDescription>
-                  {t(
-                    'features.events.agenda.scheduledButUnconfirmedDescription',
-                    'Agenda vote items already scheduled for this event that still depend on approval in a previous event.'
-                  )}
+                  {t('features.events.agenda.scheduledButUnconfirmedDescription')}
                 </CardDescription>
               </CardHeader>
               <CardContent>{renderAgendaItemsList(scheduledButUnconfirmedAgendaItems)}</CardContent>
@@ -1968,47 +1984,6 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
           ) : null}
         </div>
       )}
-
-      {/* Transfer Dialog */}
-      <AlertDialog
-        open={overdueStartModalOpen}
-        onOpenChange={open => {
-          if (!open && overdueStartCandidate) {
-            setDismissedOverdueAgendaItemId(overdueStartCandidate.id);
-          }
-          setOverdueStartModalOpen(open);
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t('features.events.agenda.startReminderTitle', 'Start overdue agenda item')}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t(
-                'features.events.agenda.startReminderDescription',
-                'The next agenda item is overdue. Start it now to keep the live stream and badges in sync.'
-              )}
-              {overdueStartCandidate?.title ? ` (${overdueStartCandidate.title})` : ''}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t('common.actions.later', 'Later')}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={async event => {
-                event.preventDefault();
-                await agendaNav.startFirstPendingItem();
-                if (overdueStartCandidate) {
-                  setDismissedOverdueAgendaItemId(overdueStartCandidate.id);
-                }
-                setOverdueStartModalOpen(false);
-              }}
-            >
-              {t('features.events.navigation.start', 'Start')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <VoteCastDialog
         open={actionBarHook.voteDialogOpen}
@@ -2055,7 +2030,10 @@ export function EventAgenda({ eventId }: EventAgendaProps) {
           try {
             await verifyVotingPassword(password);
           } catch (err) {
-            const message = err instanceof Error ? err.message : 'Verification failed';
+            const message =
+              err instanceof Error
+                ? err.message
+                : translateText('generated.inline.0010_verification_failed_e10d7e51');
             setPasswordError(message);
             throw err;
           } finally {

@@ -1,176 +1,261 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
-import { Button } from '@/features/shared/ui/ui/button';
+import { useMemo } from 'react';
+import type { LucideIcon } from 'lucide-react';
+import { BookOpen, Calendar, Scale, Trash2, User, Users } from 'lucide-react';
+import type { ColumnDef } from '@tanstack/react-table';
+
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/features/shared/ui/ui/table';
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
+import { Button } from '@/features/shared/ui/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { TableTag } from '@/features/shared/ui/ui/table-tag';
-import { Trash2, User, Users, Scale, Calendar, BookOpen } from 'lucide-react';
+import { SmartLink } from '@/features/shared/ui/navigation/SmartLink.tsx';
+import { DataTable } from '@/features/shared/ui/data-table';
 import type { SearchCardGradientEntity } from '@/features/shared/utils/search-card-gradients';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
-import { useCommonState } from '@/zero/common/useCommonState';
+interface SubscriptionUser {
+  id?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  avatar?: string | null;
+}
 
-type SubscriptionRow = NonNullable<ReturnType<typeof useCommonState>['userSubscriptions']>[number];
+interface SubscriptionEntity {
+  id?: string | null;
+  name?: string | null;
+  title?: string | null;
+  image_url?: string | null;
+  group_id?: string | null;
+}
+
+interface SubscriptionRow {
+  id: string;
+  created_at?: string | number | Date | null;
+  user?: SubscriptionUser | null;
+  group?: SubscriptionEntity | null;
+  amendment?: SubscriptionEntity | null;
+  event?: SubscriptionEntity | null;
+  blog?: SubscriptionEntity | null;
+}
+
+interface SubscriptionEntityInfo {
+  name: string;
+  type: string;
+  icon: LucideIcon;
+  avatar?: string | null;
+  entityType: SearchCardGradientEntity;
+}
+
+interface SubscriptionTableRow {
+  subscription: SubscriptionRow;
+  entityInfo: SubscriptionEntityInfo;
+  entityHref: string | null;
+}
 
 interface SubscriptionsTableProps {
   subscriptions: SubscriptionRow[];
   onUnsubscribe: (id: string) => void;
-  onNavigateToUser: (id: string) => void;
-  onNavigateToGroup: (id: string) => void;
-  onNavigateToAmendment: (id: string) => void;
-  onNavigateToEvent: (id: string) => void;
-  onNavigateToBlog: (id: string, groupId?: string | null) => void;
+  getSubscriptionHref: (subscription: SubscriptionRow) => string | null;
   emptyMessage?: string;
+}
+
+function getEntityInfo(subscription: SubscriptionRow): SubscriptionEntityInfo | null {
+  if (subscription.user) {
+    const user = subscription.user;
+
+    return {
+      name: [user.first_name, user.last_name].filter(Boolean).join(' ') || 'Unknown User',
+      type: 'User',
+      icon: User,
+      avatar: user.avatar,
+      entityType: 'user',
+    };
+  }
+
+  if (subscription.group) {
+    return {
+      name: subscription.group.name || 'Unknown Group',
+      type: 'Group',
+      icon: Users,
+      avatar: subscription.group.image_url,
+      entityType: 'group',
+    };
+  }
+
+  if (subscription.amendment) {
+    return {
+      name: subscription.amendment.title || 'Unknown Amendment',
+      type: 'Amendment',
+      icon: Scale,
+      avatar: subscription.amendment.image_url,
+      entityType: 'amendment',
+    };
+  }
+
+  if (subscription.event) {
+    return {
+      name: subscription.event.title || 'Unknown Event',
+      type: 'Event',
+      icon: Calendar,
+      avatar: subscription.event.image_url,
+      entityType: 'event',
+    };
+  }
+
+  if (subscription.blog) {
+    return {
+      name: subscription.blog.title || 'Unknown Blog',
+      type: 'Blog',
+      icon: BookOpen,
+      avatar: subscription.blog.image_url,
+      entityType: 'blog',
+    };
+  }
+
+  return null;
 }
 
 export function SubscriptionsTable({
   subscriptions,
   onUnsubscribe,
-  onNavigateToUser,
-  onNavigateToGroup,
-  onNavigateToAmendment,
-  onNavigateToEvent,
-  onNavigateToBlog,
+  getSubscriptionHref,
   emptyMessage,
 }: SubscriptionsTableProps) {
-  const getEntityInfo = (subscription: SubscriptionRow) => {
-    if (subscription.user) {
-      const u = subscription.user;
-      return {
-        name: [u.first_name, u.last_name].filter(Boolean).join(' ') || 'Unknown User',
-        type: 'User',
-        icon: User,
-        avatar: u.avatar,
-        entityType: 'user' as const,
-        onNavigate: () => onNavigateToUser(u.id),
-      };
-    } else if (subscription.group) {
-      const g = subscription.group;
-      return {
-        name: g.name || 'Unknown Group',
-        type: 'Group',
-        icon: Users,
-        avatar: g.image_url,
-        entityType: 'group' as const,
-        onNavigate: () => onNavigateToGroup(g.id),
-      };
-    } else if (subscription.amendment) {
-      const a = subscription.amendment;
-      return {
-        name: a.title || 'Unknown Amendment',
-        type: 'Amendment',
-        icon: Scale,
-        avatar: a.image_url,
-        entityType: 'amendment' as const,
-        onNavigate: () => onNavigateToAmendment(a.id),
-      };
-    } else if (subscription.event) {
-      const e = subscription.event;
-      return {
-        name: e.title || 'Unknown Event',
-        type: 'Event',
-        icon: Calendar,
-        avatar: e.image_url,
-        entityType: 'event' as const,
-        onNavigate: () => onNavigateToEvent(e.id),
-      };
-    } else if (subscription.blog) {
-      const b = subscription.blog;
-      return {
-        name: b.title || 'Unknown Blog',
-        type: 'Blog',
-        icon: BookOpen,
-        avatar: b.image_url,
-        entityType: 'blog' as const,
-        onNavigate: () => onNavigateToBlog(b.id, b.group_id),
-      };
-    }
-    return null;
-  };
+  const rows = useMemo<SubscriptionTableRow[]>(
+    () =>
+      subscriptions.flatMap(subscription => {
+        const entityInfo = getEntityInfo(subscription);
 
-  if (subscriptions.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>My Subscriptions</CardTitle>
-          <CardDescription>Entities you're subscribed to</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="py-8 text-center text-muted-foreground">
-            {emptyMessage ||
-              'No subscriptions found. Start following users, groups, amendments, events, or blogs to see them here.'}
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
+        if (!entityInfo) return [];
+
+        return [
+          {
+            subscription,
+            entityInfo,
+            entityHref: getSubscriptionHref(subscription),
+          },
+        ];
+      }),
+    [getSubscriptionHref, subscriptions]
+  );
+
+  const columns = useMemo<ColumnDef<SubscriptionTableRow>[]>(
+    () => [
+      {
+        accessorKey: 'entityInfo.name',
+        header: translateText('generated.inline.1000_name_709a2322'),
+        cell: ({ row }) => {
+          const { avatar, icon: Icon, name } = row.original.entityInfo;
+          const nameCellContent = (
+            <>
+              <Avatar className="h-10 w-10">
+                {avatar ? <AvatarImage src={avatar} alt={name} /> : null}
+                <AvatarFallback>
+                  <Icon className="h-5 w-5" />
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <div className="font-medium">{name}</div>
+              </div>
+            </>
+          );
+
+          if (!row.original.entityHref) {
+            return <div className="flex items-center gap-3">{nameCellContent}</div>;
+          }
+
+          return (
+            <SmartLink
+              href={row.original.entityHref}
+              className="flex items-center gap-3 hover:underline"
+            >
+              {nameCellContent}
+            </SmartLink>
+          );
+        },
+      },
+      {
+        accessorKey: 'entityInfo.type',
+        header: translateText('generated.inline.0599_type_3deb7456'),
+        cell: ({ row }) => (
+          <TableTag entityType={row.original.entityInfo.entityType}>
+            {row.original.entityInfo.type}
+          </TableTag>
+        ),
+      },
+      {
+        accessorKey: 'subscription.created_at',
+        header: translateText('generated.inline.0983_subscribed_dd1242a8'),
+        cell: ({ row }) => (
+          <span className="text-muted-foreground">
+            {row.original.subscription.created_at
+              ? new Date(row.original.subscription.created_at).toLocaleDateString()
+              : 'N/A'}
+          </span>
+        ),
+      },
+      {
+        id: 'actions',
+        header: () => (
+          <span className="block text-right">
+            {translateText('generated.inline.0093_actions_c3cd636a')}
+          </span>
+        ),
+        cell: ({ row }) => (
+          <div className="flex justify-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onUnsubscribe(row.original.subscription.id)}
+            >
+              <Trash2 className="h-4 w-4" />
+              <span className="ml-2">
+                {translateText('generated.inline.0169_unsubscribe_834cc0ee')}
+              </span>
+            </Button>
+          </div>
+        ),
+        enableSorting: false,
+      },
+    ],
+    [onUnsubscribe]
+  );
+
+  const isEmpty = rows.length === 0;
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>My Subscriptions ({subscriptions.length})</CardTitle>
-        <CardDescription>Entities you're subscribed to</CardDescription>
+        <CardTitle>
+          {isEmpty
+            ? translateText('generated.inline.0997_my_subscriptions_075a188d')
+            : `${translateText('generated.inline.0999_my_subscriptions_a1f3e400')}${rows.length})`}
+        </CardTitle>
+        <CardDescription>
+          {translateText('generated.inline.0998_entities_you_re_subscribed_to_409792e3')}
+        </CardDescription>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Subscribed</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {subscriptions.map(subscription => {
-              const entityInfo = getEntityInfo(subscription);
-              if (!entityInfo) return null;
-
-              const { name, type, icon: Icon, avatar, entityType, onNavigate } = entityInfo;
-              const createdAt = subscription.created_at
-                ? new Date(subscription.created_at).toLocaleDateString()
-                : 'N/A';
-
-              return (
-                <TableRow key={subscription.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10 cursor-pointer" onClick={onNavigate}>
-                        {avatar && <AvatarImage src={avatar} alt={name} />}
-                        <AvatarFallback>
-                          <Icon className="h-5 w-5" />
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="cursor-pointer hover:underline" onClick={onNavigate}>
-                        <div className="font-medium">{name}</div>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <TableTag entityType={entityType}>{type}</TableTag>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{createdAt}</TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onUnsubscribe(subscription.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      <span className="ml-2">Unsubscribe</span>
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+        <DataTable
+          columns={columns}
+          data={rows}
+          getRowId={row => row.subscription.id}
+          emptyTitle={
+            emptyMessage ||
+            translateText(
+              'generated.inline.0129_no_subscriptions_found_start_following_users__12823014'
+            )
+          }
+          enablePagination={false}
+        />
       </CardContent>
     </Card>
   );
 }
+
+export type { SubscriptionRow };

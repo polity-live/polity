@@ -35,6 +35,15 @@ import {
   deleteAmendmentSupportVoteSchema,
 } from '../votes/schema';
 import { zql } from '../schema';
+import { denyPublicApiMutation } from '../rbac/authorize';
+
+function denyPublicAmendmentProcessMutation(
+  tx: Parameters<typeof denyPublicApiMutation>[0],
+  action: Parameters<typeof denyPublicApiMutation>[1]['action'],
+  scope: string
+) {
+  denyPublicApiMutation(tx, { action, resource: 'amendments', scope });
+}
 
 /** Shared mutators — run on both client and server. Server mutators may override these. */
 export const amendmentSharedMutators = {
@@ -42,6 +51,7 @@ export const amendmentSharedMutators = {
     const now = Date.now();
     await tx.mutate.amendment.insert({
       ...args,
+      origin_amendment_id: args.origin_amendment_id ?? args.clone_source_id ?? args.id,
       created_by_id: userID,
       supporters: 0,
       subscriber_count: 0,
@@ -89,6 +99,7 @@ export const amendmentSharedMutators = {
       await tx.mutate.change_request.insert({
         ...args,
         user_id: userID,
+        changed_character_count: args.changed_character_count ?? 0,
         votes_for: 0,
         votes_against: 0,
         votes_abstain: 0,
@@ -132,6 +143,7 @@ export const amendmentSharedMutators = {
 
   // Amendment Path mutators
   createPath: defineMutator(createAmendmentPathSchema, async ({ tx, args }) => {
+    denyPublicAmendmentProcessMutation(tx, 'create', 'amendment-process-path');
     const now = Date.now();
     await tx.mutate.amendment_path.insert({
       ...args,
@@ -141,11 +153,13 @@ export const amendmentSharedMutators = {
   }),
 
   deletePath: defineMutator(deleteAmendmentPathSchema, async ({ tx, args }) => {
+    denyPublicAmendmentProcessMutation(tx, 'delete', 'amendment-process-path');
     await tx.mutate.amendment_path.delete({ id: args.id });
   }),
 
   // Amendment Path Segment mutators
   createPathSegment: defineMutator(createAmendmentPathSegmentSchema, async ({ tx, args }) => {
+    denyPublicAmendmentProcessMutation(tx, 'create', 'amendment-path-segment');
     const now = Date.now();
     await tx.mutate.amendment_path_segment.insert({
       ...args,
@@ -156,6 +170,7 @@ export const amendmentSharedMutators = {
   }),
 
   deletePathSegment: defineMutator(deleteAmendmentPathSegmentSchema, async ({ tx, args }) => {
+    denyPublicAmendmentProcessMutation(tx, 'delete', 'amendment-path-segment');
     await tx.mutate.amendment_path_segment.delete({ id: args.id });
   }),
 
@@ -163,6 +178,7 @@ export const amendmentSharedMutators = {
   createSupportConfirmation: defineMutator(
     createSupportConfirmationSchema,
     async ({ tx, args }) => {
+      denyPublicAmendmentProcessMutation(tx, 'create', 'support-confirmation');
       const now = Date.now();
       await tx.mutate.support_confirmation.insert({
         ...args,
@@ -177,11 +193,13 @@ export const amendmentSharedMutators = {
   updateSupportConfirmation: defineMutator(
     updateSupportConfirmationSchema,
     async ({ tx, args }) => {
+      denyPublicAmendmentProcessMutation(tx, 'update', 'support-confirmation');
       await tx.mutate.support_confirmation.update(args);
     }
   ),
 
   upsertGroupDecision: defineMutator(upsertAmendmentGroupDecisionSchema, async ({ tx, args }) => {
+    denyPublicAmendmentProcessMutation(tx, 'update', 'amendment-group-decision');
     const now = Date.now();
     const existing = await tx.run(
       zql.amendment_group_decision
@@ -219,11 +237,13 @@ export const amendmentSharedMutators = {
   }),
 
   deleteGroupDecision: defineMutator(deleteAmendmentGroupDecisionSchema, async ({ tx, args }) => {
+    denyPublicAmendmentProcessMutation(tx, 'delete', 'amendment-group-decision');
     await tx.mutate.amendment_group_decision.delete({ id: args.id });
   }),
 
   // Workflow runtime mutators
   createProcessRun: defineMutator(createAmendmentProcessRunSchema, async ({ tx, ctx, args }) => {
+    denyPublicAmendmentProcessMutation(tx, 'create', 'amendment-process-run');
     const now = Date.now();
     await tx.mutate.amendment_process_run.insert({
       ...args,
@@ -245,6 +265,7 @@ export const amendmentSharedMutators = {
   }),
 
   updateProcessRun: defineMutator(updateAmendmentProcessRunSchema, async ({ tx, args }) => {
+    denyPublicAmendmentProcessMutation(tx, 'update', 'amendment-process-run');
     await tx.mutate.amendment_process_run.update({
       ...args,
       updated_at: Date.now(),
@@ -252,10 +273,12 @@ export const amendmentSharedMutators = {
   }),
 
   deleteProcessRun: defineMutator(deleteProcessRuntimeRecordSchema, async ({ tx, args }) => {
+    denyPublicAmendmentProcessMutation(tx, 'delete', 'amendment-process-run');
     await tx.mutate.amendment_process_run.delete({ id: args.id });
   }),
 
   createProcessBranch: defineMutator(createAmendmentProcessBranchSchema, async ({ tx, args }) => {
+    denyPublicAmendmentProcessMutation(tx, 'create', 'amendment-process-branch');
     const now = Date.now();
     await tx.mutate.amendment_process_branch.insert({
       ...args,
@@ -271,6 +294,7 @@ export const amendmentSharedMutators = {
   }),
 
   updateProcessBranch: defineMutator(updateAmendmentProcessBranchSchema, async ({ tx, args }) => {
+    denyPublicAmendmentProcessMutation(tx, 'update', 'amendment-process-branch');
     await tx.mutate.amendment_process_branch.update({
       ...args,
       updated_at: Date.now(),
@@ -278,10 +302,12 @@ export const amendmentSharedMutators = {
   }),
 
   deleteProcessBranch: defineMutator(deleteProcessRuntimeRecordSchema, async ({ tx, args }) => {
+    denyPublicAmendmentProcessMutation(tx, 'delete', 'amendment-process-branch');
     await tx.mutate.amendment_process_branch.delete({ id: args.id });
   }),
 
   createProcessStepRun: defineMutator(createAmendmentProcessStepRunSchema, async ({ tx, args }) => {
+    denyPublicAmendmentProcessMutation(tx, 'create', 'amendment-process-step-run');
     const now = Date.now();
     await tx.mutate.amendment_process_step_run.insert({
       ...args,
@@ -304,6 +330,7 @@ export const amendmentSharedMutators = {
   }),
 
   updateProcessStepRun: defineMutator(updateAmendmentProcessStepRunSchema, async ({ tx, args }) => {
+    denyPublicAmendmentProcessMutation(tx, 'update', 'amendment-process-step-run');
     await tx.mutate.amendment_process_step_run.update({
       ...args,
       updated_at: Date.now(),
@@ -311,10 +338,12 @@ export const amendmentSharedMutators = {
   }),
 
   deleteProcessStepRun: defineMutator(deleteProcessRuntimeRecordSchema, async ({ tx, args }) => {
+    denyPublicAmendmentProcessMutation(tx, 'delete', 'amendment-process-step-run');
     await tx.mutate.amendment_process_step_run.delete({ id: args.id });
   }),
 
   createProcessTask: defineMutator(createProcessTaskSchema, async ({ tx, args }) => {
+    denyPublicAmendmentProcessMutation(tx, 'create', 'process-task');
     const now = Date.now();
     await tx.mutate.process_task.insert({
       ...args,
@@ -336,6 +365,7 @@ export const amendmentSharedMutators = {
   }),
 
   updateProcessTask: defineMutator(updateProcessTaskSchema, async ({ tx, args }) => {
+    denyPublicAmendmentProcessMutation(tx, 'update', 'process-task');
     await tx.mutate.process_task.update({
       ...args,
       updated_at: Date.now(),
@@ -343,6 +373,7 @@ export const amendmentSharedMutators = {
   }),
 
   deleteProcessTask: defineMutator(deleteProcessRuntimeRecordSchema, async ({ tx, args }) => {
+    denyPublicAmendmentProcessMutation(tx, 'delete', 'process-task');
     await tx.mutate.process_task.delete({ id: args.id });
   }),
 

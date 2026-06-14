@@ -299,44 +299,46 @@ export function EventTimelineCard({
       </TimelineCardHeader>
 
       <TimelineCardContent>
-        {eventDescription && (
-          <p className="text-muted-foreground mb-3 line-clamp-2 text-sm">{eventDescription}</p>
-        )}
+        <div className="mt-auto space-y-3">
+          {eventDescription && (
+            <p className="text-muted-foreground line-clamp-2 text-sm">{eventDescription}</p>
+          )}
 
-        {/* Hashtags */}
-        {event.hashtags && event.hashtags.length > 0 && (
-          <div className="mb-3" onClick={e => e.preventDefault()}>
-            <HashtagDisplay
-              hashtags={event.hashtags.slice(0, 3)}
-              centered={false}
-              badgeClassName={cn(
-                'border bg-white/70 dark:bg-gray-900/60',
-                eventStyle.borderColor,
-                eventStyle.accentColor
-              )}
-            />
+          {/* Hashtags */}
+          {event.hashtags && event.hashtags.length > 0 && (
+            <div onClick={e => e.preventDefault()}>
+              <HashtagDisplay
+                hashtags={event.hashtags.slice(0, 3)}
+                centered={false}
+                badgeClassName={cn(
+                  'border bg-white/70 dark:bg-gray-900/60',
+                  eventStyle.borderColor,
+                  eventStyle.accentColor
+                )}
+              />
+            </div>
+          )}
+
+          {/* Location handled in header */}
+
+          {/* Stats Bar with Tooltips */}
+          <div className="text-muted-foreground flex items-center gap-4 text-xs">
+            {stats.map((stat, index) => (
+              <Tooltip key={index}>
+                <TooltipTrigger asChild>
+                  <div className="flex cursor-help items-center gap-1">
+                    <stat.icon className="h-3.5 w-3.5" />
+                    <span className="font-medium">{stat.value}</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    {stat.value} {stat.label}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            ))}
           </div>
-        )}
-
-        {/* Location handled in header */}
-
-        {/* Stats Bar with Tooltips */}
-        <div className="text-muted-foreground flex items-center gap-4 text-xs">
-          {stats.map((stat, index) => (
-            <Tooltip key={index}>
-              <TooltipTrigger asChild>
-                <div className="flex cursor-help items-center gap-1">
-                  <stat.icon className="h-3.5 w-3.5" />
-                  <span className="font-medium">{stat.value}</span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>
-                  {stat.value} {stat.label}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          ))}
         </div>
       </TimelineCardContent>
 

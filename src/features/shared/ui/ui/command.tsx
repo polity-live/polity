@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog.tsx';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 function Command({ className, ...props }: React.ComponentProps<typeof CommandPrimitive>) {
   return (
@@ -25,8 +26,8 @@ function Command({ className, ...props }: React.ComponentProps<typeof CommandPri
 }
 
 function CommandDialog({
-  title = 'Command Palette',
-  description = 'Search for a command to run...',
+  title = translateText('generated.inline.0156_command_palette_5843727a'),
+  description = translateText('generated.inline.0157_search_for_a_command_to_run_4a3cc275'),
   children,
   className,
   showCloseButton = true,

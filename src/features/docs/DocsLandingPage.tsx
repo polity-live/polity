@@ -29,12 +29,12 @@ export function DocsLandingPage() {
               </div>
               <div className="flex flex-wrap gap-3">
                 <Button asChild size="lg">
-                  <Link to="/docs/$topic" params={{ topic: 'users' }}>
+                  <Link to="/docs/$topic" params={{ topic: 'auth-and-onboarding' }}>
                     {t('pages.docs.overview.primaryCta')}
                   </Link>
                 </Button>
                 <Button asChild variant="outline" size="lg">
-                  <Link to="/docs/$topic" params={{ topic: 'roles-and-rights' }}>
+                  <Link to="/docs/$topic" params={{ topic: 'create-workflows' }}>
                     {t('pages.docs.overview.secondaryCta')}
                   </Link>
                 </Button>

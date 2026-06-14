@@ -11,6 +11,7 @@ import {
   roleToEditorForm,
 } from '@/features/groups/logic/roleFormHelpers';
 import type { RoleEditorFormState } from '@/features/groups/types/group.types';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 function isAssemblyEventType(eventType: string | null | undefined) {
   return eventType === 'general_assembly' || eventType === 'delegate_assembly';
@@ -55,12 +56,12 @@ export function useEventRoleManagement(eventId: string) {
 
   const addRole = async () => {
     if (!event) {
-      toast.error('Event not found');
+      toast.error(translateText('generated.inline.0474_event_not_found_231b810d'));
       return;
     }
 
     if (!newRoleForm.name.trim()) {
-      toast.error('Role name is required');
+      toast.error(translateText('generated.inline.0234_role_name_is_required_6193b4dd'));
       return;
     }
 
@@ -103,7 +104,7 @@ export function useEventRoleManagement(eventId: string) {
   const saveEditedRole = async () => {
     if (!editingRoleId) return;
     if (!editRoleForm.name.trim()) {
-      toast.error('Role name is required');
+      toast.error(translateText('generated.inline.0234_role_name_is_required_6193b4dd'));
       return;
     }
 
@@ -166,13 +167,13 @@ export function useEventRoleManagement(eventId: string) {
     for (let index = 0; index < orderedRoleIds.length; index++) {
       await updateRole({ id: orderedRoleIds[index], sort_order: index });
     }
-    toast.success('Role order updated');
+    toast.success(translateText('generated.inline.0475_role_order_updated_4d399d91'));
   };
 
   const createElectionForRole = async (roleId: string) => {
     const role = rolesWithRights.find(candidateRole => candidateRole.id === roleId);
     if (!role) {
-      toast.error('Role not found');
+      toast.error(translateText('generated.inline.0476_role_not_found_70623637'));
       return;
     }
 
@@ -181,7 +182,9 @@ export function useEventRoleManagement(eventId: string) {
 
     await createAgendaItem({
       id: agendaItemId,
-      title: `Election: ${role.title || role.name || 'Role'}`,
+      title: translateText('generated.inline.0109_election_value6a1b_d06db811', {
+        value6a1b: role.title || role.name || 'Role',
+      }),
       description: '',
       type: 'election',
       status: 'pending',
@@ -202,8 +205,12 @@ export function useEventRoleManagement(eventId: string) {
 
     await createElection({
       id: electionId,
-      title: `Election for ${role.title || role.name || 'Role'}`,
-      description: `Vote for the ${role.title || role.name || 'role'}`,
+      title: translateText('generated.inline.0110_election_for_value6a1b_f7382ef9', {
+        value6a1b: role.title || role.name || 'Role',
+      }),
+      description: translateText('generated.inline.0111_vote_for_the_value8446_1262ec2b', {
+        value8446: role.title || role.name || 'role',
+      }),
       majority_type: 'simple',
       status: 'pending',
       visibility: 'public',

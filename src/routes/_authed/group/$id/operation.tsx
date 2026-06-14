@@ -11,6 +11,7 @@ import { TodosSection } from '@/features/groups/ui/TodosSection';
 import { GroupDocumentsList } from '@/features/documents/ui/GroupDocumentsList';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { usePermissions } from '@/zero/rbac';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export const Route = createFileRoute('/_authed/group/$id/operation')({
   component: GroupOperationPage,
@@ -175,7 +176,7 @@ function AuthorizedGroupOperationPage({
       {canViewDocuments ? (
         <Card>
           <CardHeader>
-            <CardTitle>Documents</CardTitle>
+            <CardTitle>{translateText('generated.inline.1268_documents_687c8286')}</CardTitle>
           </CardHeader>
           <CardContent>
             <GroupDocumentsList

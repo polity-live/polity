@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { useEventActions } from '@/zero/events/useEventActions';
 import { useEventRolesData } from '@/zero/events/useEventState';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export function useEventRoles(eventId: string) {
   const { createRole, updateRole, deleteRole } = useEventActions();
@@ -28,20 +29,20 @@ export function useEventRoles(eventId: string) {
 
   const handleAddRole = async () => {
     if (!title.trim()) {
-      toast.error('Role title is required');
+      toast.error(translateText('generated.inline.1023_role_title_is_required_887ec72a'));
       return;
     }
 
     const capacityNum = parseInt(capacity, 10);
     if (isNaN(capacityNum) || capacityNum < 1) {
-      toast.error('Capacity must be at least 1');
+      toast.error(translateText('generated.inline.1024_capacity_must_be_at_least_1_5849bcc5'));
       return;
     }
 
     // Optimistic update: close dialog and show success immediately
     resetForm();
     setAddDialogOpen(false);
-    toast.success('Role created successfully');
+    toast.success(translateText('generated.inline.0235_role_created_successfully_150cd5c5'));
 
     try {
       const roleId = crypto.randomUUID();
@@ -55,19 +56,21 @@ export function useEventRoles(eventId: string) {
       });
     } catch (error) {
       console.error('Failed to create role:', error);
-      toast.error('Failed to create role. Please try again.');
+      toast.error(
+        translateText('generated.inline.0236_failed_to_create_role_please_try_again_7383aeaf')
+      );
     }
   };
 
   const handleEditRole = async () => {
     if (!editingRole || !title.trim()) {
-      toast.error('Role title is required');
+      toast.error(translateText('generated.inline.1023_role_title_is_required_887ec72a'));
       return;
     }
 
     const capacityNum = parseInt(capacity, 10);
     if (isNaN(capacityNum) || capacityNum < 1) {
-      toast.error('Capacity must be at least 1');
+      toast.error(translateText('generated.inline.1024_capacity_must_be_at_least_1_5849bcc5'));
       return;
     }
 
@@ -75,7 +78,7 @@ export function useEventRoles(eventId: string) {
     resetForm();
     setEditingRole(null);
     setEditDialogOpen(false);
-    toast.success('Role updated successfully');
+    toast.success(translateText('generated.inline.0588_role_updated_successfully_87ea8999'));
 
     try {
       await updateRole({
@@ -85,19 +88,23 @@ export function useEventRoles(eventId: string) {
       });
     } catch (error) {
       console.error('Failed to update role:', error);
-      toast.error('Failed to update role. Please try again.');
+      toast.error(
+        translateText('generated.inline.0589_failed_to_update_role_please_try_again_215d1ee3')
+      );
     }
   };
 
   const handleDeleteRole = async (roleId: string) => {
     // Optimistic update: show success immediately
-    toast.success('Role deleted successfully');
+    toast.success(translateText('generated.inline.0237_role_deleted_successfully_b714d57c'));
 
     try {
       await deleteRole({ id: roleId });
     } catch (error) {
       console.error('Failed to delete role:', error);
-      toast.error('Failed to delete role. Please try again.');
+      toast.error(
+        translateText('generated.inline.0238_failed_to_delete_role_please_try_again_fe4624de')
+      );
     }
   };
 

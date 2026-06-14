@@ -70,7 +70,7 @@ export function ImportToolbarButton(props: DropdownMenuProps) {
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false} {...props}>
       <DropdownMenuTrigger asChild>
-        <ToolbarButton pressed={open} tooltip={t('plateJs.toolbar.import', 'Import')} isDropdown>
+        <ToolbarButton pressed={open} tooltip={t('plateJs.toolbar.import')} isDropdown>
           <ArrowUpToLineIcon className="size-4" />
         </ToolbarButton>
       </DropdownMenuTrigger>
@@ -82,7 +82,7 @@ export function ImportToolbarButton(props: DropdownMenuProps) {
               openHtmlFilePicker();
             }}
           >
-            {t('plateJs.toolbar.importFromHTML', 'Import from HTML')}
+            {t('plateJs.toolbar.importFromHTML')}
           </DropdownMenuItem>
 
           <DropdownMenuItem
@@ -90,7 +90,7 @@ export function ImportToolbarButton(props: DropdownMenuProps) {
               openMdFilePicker();
             }}
           >
-            {t('plateJs.toolbar.importFromMarkdown', 'Import from Markdown')}
+            {t('plateJs.toolbar.importFromMarkdown')}
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>

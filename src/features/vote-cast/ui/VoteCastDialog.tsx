@@ -12,7 +12,10 @@ import {
 import { Button } from '@/features/shared/ui/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Vote, CheckCircle2, Circle, Loader2 } from 'lucide-react';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 import { VotePasswordInput } from './VotePasswordInput';
 import { VotePhaseBadge } from './VotePhaseBadge';
@@ -182,8 +185,8 @@ export function VoteCastDialog({
           <DialogTitle className="flex items-center gap-2">
             <Vote className="h-5 w-5" />
             {step === 'password'
-              ? t('features.events.voting.confirmWithPassword', 'Confirm with PIN')
-              : t('features.events.voting.castVote', 'Cast Vote')}
+              ? t('features.events.voting.confirmWithPassword')
+              : t('features.events.voting.castVote')}
           </DialogTitle>
           <DialogDescription asChild>
             <div className="text-muted-foreground flex items-center gap-2 text-sm">
@@ -210,9 +213,15 @@ export function VoteCastDialog({
                     {isListElection ? (
                       <>
                         <p>
-                          {assignedVoteCount} von {maxVotes} Stimmen vergeben
+                          {assignedVoteCount}
+                          {translateText('generated.inline.0183_von_445584ed')}
+                          {maxVotes}
+                          {translateText('generated.inline.1231_stimmen_vergeben_6192649c')}
                         </p>
-                        <p>{remainingVoteCount} Stimmen offen</p>
+                        <p>
+                          {remainingVoteCount}
+                          {translateText('generated.inline.1232_stimmen_offen_628de92d')}
+                        </p>
                       </>
                     ) : (
                       <p>
@@ -299,7 +308,7 @@ export function VoteCastDialog({
         {step === 'choice' && hasSelection && (
           <div className="bg-muted/30 rounded-lg border p-3">
             <p className="text-muted-foreground mb-2 text-sm font-medium">
-              {t('features.events.voting.yourChoice', 'Your choice')}:
+              {t('features.events.voting.yourChoice')}:
             </p>
             {isElection && selectedCandidates.length > 0 ? (
               <div className="space-y-2">

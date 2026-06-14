@@ -10,6 +10,7 @@ import {
 } from '@/features/shared/logic/typeaheadHelpers';
 import { cn } from '@/features/shared/utils/utils';
 import { TypeaheadResultCard } from './TypeaheadResultCard';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface TypeaheadDropdownProps {
   results: readonly TypeaheadItem[];
@@ -40,7 +41,7 @@ export function TypeaheadDropdown({
           className
         )}
       >
-        Loading...
+        {translateText('generated.inline.0219_loading_b04ba49f')}
       </div>
     );
   }
@@ -53,7 +54,7 @@ export function TypeaheadDropdown({
           className
         )}
       >
-        No results found
+        {translateText('generated.inline.1125_no_results_found_658e79f9')}
       </div>
     );
   }

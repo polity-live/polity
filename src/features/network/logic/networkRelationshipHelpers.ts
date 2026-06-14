@@ -1,6 +1,5 @@
 import type {
   CanonicalMembershipMode,
-  CanonicalNetworkMembershipDirection,
   GroupRelationshipType,
   NormalizedGroupRelationship,
   RelativeMembershipDirection,
@@ -8,10 +7,12 @@ import type {
 } from '../types/network.types';
 import {
   getHierarchyRelationshipPair,
+  getRelationshipTypeForGroup,
   matchesRelationshipSelection,
 } from './groupRelationshipOrientation';
 
 export type NetworkRelationshipKind = 'active' | 'incoming' | 'outgoing';
+export type RelationshipTraversalMode = 'structure' | 'right';
 
 function shouldReplaceMembershipMode(
   existingMode: CanonicalMembershipMode | null | undefined,
@@ -29,7 +30,7 @@ function shouldReplaceMembershipMode(
 }
 
 export function isActiveGroupRelationshipStatus(status: string | null | undefined): boolean {
-  return status == null || status === 'active' || status === 'accepted';
+  return status === 'active';
 }
 
 export function isRequestGroupRelationshipStatus(status: string | null | undefined): boolean {
@@ -193,39 +194,23 @@ function mergeRightRelationshipKind(
 export function getRelativeMembershipDirectionForRelationship(args: {
   relationship: Pick<
     NormalizedGroupRelationship,
-    'group_id' | 'related_group_id' | 'membership_direction' | 'relationship_direction'
+    'member_source_group_id' | 'member_target_group_id'
   >;
   currentGroupId: string;
 }): RelativeMembershipDirection | null {
-  const canonicalDirection = args.relationship.membership_direction;
-  const relationshipDirection = args.relationship.relationship_direction;
-
-  if (
-    canonicalDirection == null ||
-    (canonicalDirection !== 'forward' && canonicalDirection !== 'backward') ||
-    (relationshipDirection !== 'forward' && relationshipDirection !== 'backward')
-  ) {
+  const sourceGroupId = args.relationship.member_source_group_id;
+  const targetGroupId = args.relationship.member_target_group_id;
+  if (!sourceGroupId || !targetGroupId) {
     return null;
   }
-
-  const sourceGroupId =
-    relationshipDirection === 'forward'
-      ? args.relationship.group_id
-      : args.relationship.related_group_id;
-  const targetGroupId =
-    relationshipDirection === 'forward'
-      ? args.relationship.related_group_id
-      : args.relationship.group_id;
 
   if (args.currentGroupId !== sourceGroupId && args.currentGroupId !== targetGroupId) {
     return null;
   }
 
-  if (args.currentGroupId === sourceGroupId) {
-    return canonicalDirection === 'forward' ? 'outgoing' : 'incoming';
-  }
-
-  return canonicalDirection === 'forward' ? 'incoming' : 'outgoing';
+  return args.currentGroupId === sourceGroupId
+    ? 'current_members_to_partner'
+    : 'partner_members_to_current';
 }
 
 function applyRelationshipToEntry(
@@ -254,9 +239,14 @@ function applyRelationshipToEntry(
     entry.rightRelationshipKinds[rightValue] = mergedRightKind;
   }
 
+  if (!entry.sourceRelationshipType && relationship.relationship_type) {
+    entry.sourceRelationshipType = relationship.relationship_type;
+  }
+
   if (shouldReplaceMembershipMode(entry.membershipMode, relationship.membership_mode)) {
     entry.membershipMode = relationship.membership_mode;
-    entry.membershipCanonicalDirection = relationship.membership_direction ?? null;
+    entry.memberSourceGroupId = relationship.member_source_group_id ?? null;
+    entry.memberTargetGroupId = relationship.member_target_group_id ?? null;
     entry.membershipDirection = getRelativeMembershipDirectionForRelationship({
       relationship,
       currentGroupId,
@@ -269,8 +259,10 @@ export interface RelationshipEntry {
   rights: string[];
   relationshipKinds: NetworkRelationshipKind[];
   rightRelationshipKinds: Record<string, NetworkRelationshipKind>;
+  sourceRelationshipType?: GroupRelationshipType | null;
   membershipMode?: CanonicalMembershipMode | null;
-  membershipCanonicalDirection?: CanonicalNetworkMembershipDirection | null;
+  memberSourceGroupId?: string | null;
+  memberTargetGroupId?: string | null;
   membershipDirection?: RelativeMembershipDirection | null;
   level?: number;
   childId?: string;
@@ -363,8 +355,10 @@ function createHierarchyEntry(
     rights: [],
     relationshipKinds: [],
     rightRelationshipKinds: {},
+    sourceRelationshipType: null,
     membershipMode: null,
-    membershipCanonicalDirection: null,
+    memberSourceGroupId: null,
+    memberTargetGroupId: null,
     membershipDirection: null,
     level: placement.level,
     childId: placement.branch === 'parent' ? placement.hierarchyConnectionId : undefined,
@@ -385,8 +379,10 @@ function createSiblingAttachmentEntry(
     rights: [],
     relationshipKinds: [],
     rightRelationshipKinds: {},
+    sourceRelationshipType: null,
     membershipMode: null,
-    membershipCanonicalDirection: null,
+    memberSourceGroupId: null,
+    memberTargetGroupId: null,
     membershipDirection: null,
     level: placement.level,
     anchorId: placement.anchorId,
@@ -406,6 +402,100 @@ function pushTraversalStep(
   }
 }
 
+function createEmptyRelationshipEntry(
+  group: NetworkGroupEntity,
+  extra?: Partial<
+    Pick<RelationshipEntry, 'level' | 'childId' | 'parentId' | 'sourceRelationshipType'>
+  >
+): RelationshipEntry {
+  return {
+    group,
+    rights: [],
+    relationshipKinds: [],
+    rightRelationshipKinds: {},
+    sourceRelationshipType: extra?.sourceRelationshipType ?? null,
+    membershipMode: null,
+    memberSourceGroupId: null,
+    memberTargetGroupId: null,
+    membershipDirection: null,
+    level: extra?.level,
+    childId: extra?.childId,
+    parentId: extra?.parentId,
+  };
+}
+
+function getRightScopePlacement(relationship: NormalizedGroupRelationship): {
+  branch: 'parent' | 'child';
+  sourceRelationshipType: GroupRelationshipType | null;
+} {
+  const holderRelationshipType =
+    getRelationshipTypeForGroup(relationship, relationship.group_id) ??
+    relationship.relationship_type ??
+    null;
+  const scopeRelationshipType = getRelationshipTypeForGroup(
+    relationship,
+    relationship.related_group_id
+  );
+
+  return {
+    branch: scopeRelationshipType === 'parent' ? 'parent' : 'child',
+    sourceRelationshipType: holderRelationshipType,
+  };
+}
+
+function upsertRightScopeEntry({
+  parentsMap,
+  childrenMap,
+  relationship,
+  scopeEntity,
+  holderGroupId,
+  currentGroupId,
+  level,
+}: {
+  parentsMap: Map<string, RelationshipEntry>;
+  childrenMap: Map<string, RelationshipEntry>;
+  relationship: NormalizedGroupRelationship;
+  scopeEntity: NetworkGroupEntity;
+  holderGroupId: string;
+  currentGroupId: string;
+  level?: number;
+}) {
+  const placement = getRightScopePlacement(relationship);
+  const targetMap = placement.branch === 'parent' ? parentsMap : childrenMap;
+  const existingEntry = targetMap.get(scopeEntity.id);
+
+  if (!existingEntry) {
+    targetMap.set(
+      scopeEntity.id,
+      createEmptyRelationshipEntry(scopeEntity, {
+        level,
+        childId: placement.branch === 'parent' ? holderGroupId : undefined,
+        parentId: placement.branch === 'child' ? holderGroupId : undefined,
+        sourceRelationshipType: placement.sourceRelationshipType,
+      })
+    );
+  }
+
+  const entry = targetMap.get(scopeEntity.id);
+  if (!entry) {
+    return null;
+  }
+
+  applyRelationshipToEntry(entry, relationship, currentGroupId);
+
+  if (level !== undefined) {
+    entry.level = entry.level ?? level;
+  }
+
+  if (placement.branch === 'parent') {
+    entry.childId = entry.childId ?? holderGroupId;
+  } else {
+    entry.parentId = entry.parentId ?? holderGroupId;
+  }
+
+  return entry;
+}
+
 /**
  * Build direct (one-level) parent/child relationships for a target group.
  */
@@ -413,13 +503,35 @@ export function buildDirectRelationships(
   relationships: NormalizedGroupRelationship[],
   targetGroupId: string,
   filterRight?: string,
-  currentGroupId: string = targetGroupId
+  currentGroupId: string = targetGroupId,
+  traversalMode: RelationshipTraversalMode = 'structure'
 ): RelationshipResult {
   const parentsMap = new Map<string, RelationshipEntry>();
   const childrenMap = new Map<string, RelationshipEntry>();
 
   relationships.forEach(rel => {
     if (filterRight && (rel.with_right ?? '') !== filterRight) {
+      return;
+    }
+
+    if (traversalMode === 'right') {
+      if (!rel.with_right || !rel.grant_id || rel.group_id !== targetGroupId) {
+        return;
+      }
+
+      const scopeEntity = getRelationshipGroupEntity(rel, rel.related_group_id);
+      if (!scopeEntity) {
+        return;
+      }
+
+      upsertRightScopeEntry({
+        parentsMap,
+        childrenMap,
+        relationship: rel,
+        scopeEntity,
+        holderGroupId: targetGroupId,
+        currentGroupId,
+      });
       return;
     }
 
@@ -441,7 +553,8 @@ export function buildDirectRelationships(
           relationshipKinds: [],
           rightRelationshipKinds: {},
           membershipMode: null,
-          membershipCanonicalDirection: null,
+          memberSourceGroupId: null,
+          memberTargetGroupId: null,
           membershipDirection: null,
         });
       }
@@ -464,7 +577,8 @@ export function buildDirectRelationships(
           relationshipKinds: [],
           rightRelationshipKinds: {},
           membershipMode: null,
-          membershipCanonicalDirection: null,
+          memberSourceGroupId: null,
+          memberTargetGroupId: null,
           membershipDirection: null,
         });
       }
@@ -488,7 +602,8 @@ export function buildIndirectRelationships(
   relationships: NormalizedGroupRelationship[],
   targetGroupId: string,
   filterRight?: string,
-  currentGroupId: string = targetGroupId
+  currentGroupId: string = targetGroupId,
+  traversalMode: RelationshipTraversalMode = 'structure'
 ): RelationshipResult {
   const parentsMap = new Map<string, RelationshipEntry>();
   const childrenMap = new Map<string, RelationshipEntry>();
@@ -497,8 +612,80 @@ export function buildIndirectRelationships(
     relationships,
     targetGroupId,
     filterRight,
-    currentGroupId
+    currentGroupId,
+    traversalMode
   );
+
+  if (traversalMode === 'right') {
+    const cloneRightEntry = (entry: RelationshipEntry, branch: 'parent' | 'child') => ({
+      group: entry.group,
+      rights: [...entry.rights],
+      relationshipKinds: [...entry.relationshipKinds],
+      rightRelationshipKinds: { ...entry.rightRelationshipKinds },
+      sourceRelationshipType: entry.sourceRelationshipType ?? null,
+      membershipMode: entry.membershipMode ?? null,
+      memberSourceGroupId: entry.memberSourceGroupId ?? null,
+      memberTargetGroupId: entry.memberTargetGroupId ?? null,
+      membershipDirection: entry.membershipDirection ?? null,
+      level: 1,
+      childId: branch === 'parent' ? targetGroupId : undefined,
+      parentId: branch === 'child' ? targetGroupId : undefined,
+    });
+
+    directRels.parents.forEach(parent => {
+      parentsMap.set(parent.group.id, cloneRightEntry(parent, 'parent'));
+    });
+
+    directRels.children.forEach(child => {
+      childrenMap.set(child.group.id, cloneRightEntry(child, 'child'));
+    });
+
+    const directEntries = [
+      ...directRels.parents.map(entry => ({ entry, branch: 'parent' as const })),
+      ...directRels.children.map(entry => ({ entry, branch: 'child' as const })),
+    ];
+
+    directEntries.forEach(({ entry }) => {
+      entry.rights.forEach(right => {
+        const visited = new Set<string>([targetGroupId, entry.group.id]);
+
+        const findScopesForRight = (holderId: string, level: number) => {
+          relationships.forEach(rel => {
+            if ((rel.with_right ?? '') !== right) return;
+            if (!rel.grant_id || rel.group_id !== holderId || visited.has(rel.related_group_id)) {
+              return;
+            }
+
+            const scopeEntity = getRelationshipGroupEntity(rel, rel.related_group_id);
+            if (!scopeEntity) {
+              return;
+            }
+
+            visited.add(scopeEntity.id);
+
+            upsertRightScopeEntry({
+              parentsMap,
+              childrenMap,
+              relationship: rel,
+              scopeEntity,
+              holderGroupId: holderId,
+              currentGroupId,
+              level,
+            });
+
+            findScopesForRight(scopeEntity.id, level + 1);
+          });
+        };
+
+        findScopesForRight(entry.group.id, 2);
+      });
+    });
+
+    return {
+      parents: Array.from(parentsMap.values()),
+      children: Array.from(childrenMap.values()),
+    };
+  }
 
   // For parents: Add direct parents first (level 1), then follow chains for each right type
   directRels.parents.forEach(parent => {
@@ -507,8 +694,10 @@ export function buildIndirectRelationships(
       rights: [...parent.rights],
       relationshipKinds: [...parent.relationshipKinds],
       rightRelationshipKinds: { ...parent.rightRelationshipKinds },
+      sourceRelationshipType: parent.sourceRelationshipType ?? null,
       membershipMode: parent.membershipMode ?? null,
-      membershipCanonicalDirection: parent.membershipCanonicalDirection ?? null,
+      memberSourceGroupId: parent.memberSourceGroupId ?? null,
+      memberTargetGroupId: parent.memberTargetGroupId ?? null,
       membershipDirection: parent.membershipDirection ?? null,
       level: 1,
       childId: targetGroupId,
@@ -542,7 +731,8 @@ export function buildIndirectRelationships(
                 relationshipKinds: [],
                 rightRelationshipKinds: {},
                 membershipMode: null,
-                membershipCanonicalDirection: null,
+                memberSourceGroupId: null,
+                memberTargetGroupId: null,
                 membershipDirection: null,
                 level,
                 childId: id,
@@ -571,8 +761,10 @@ export function buildIndirectRelationships(
       rights: [...child.rights],
       relationshipKinds: [...child.relationshipKinds],
       rightRelationshipKinds: { ...child.rightRelationshipKinds },
+      sourceRelationshipType: child.sourceRelationshipType ?? null,
       membershipMode: child.membershipMode ?? null,
-      membershipCanonicalDirection: child.membershipCanonicalDirection ?? null,
+      memberSourceGroupId: child.memberSourceGroupId ?? null,
+      memberTargetGroupId: child.memberTargetGroupId ?? null,
       membershipDirection: child.membershipDirection ?? null,
       level: 1,
       parentId: targetGroupId,
@@ -606,7 +798,8 @@ export function buildIndirectRelationships(
                 relationshipKinds: [],
                 rightRelationshipKinds: {},
                 membershipMode: null,
-                membershipCanonicalDirection: null,
+                memberSourceGroupId: null,
+                memberTargetGroupId: null,
                 membershipDirection: null,
                 level,
                 parentId: currentParentId,
@@ -642,12 +835,43 @@ export function buildMixedRelationshipGraph(
   relationships: NormalizedGroupRelationship[],
   targetGroupId: string,
   filterRight?: string,
-  currentGroupId: string = targetGroupId
+  currentGroupId: string = targetGroupId,
+  traversalMode: RelationshipTraversalMode = 'structure'
 ): MixedRelationshipResult {
   const adjacency = new Map<string, TraversalStep[]>();
 
   relationships.forEach(relationship => {
     if (filterRight && (relationship.with_right ?? '') !== filterRight) {
+      return;
+    }
+
+    if (traversalMode === 'right') {
+      if (
+        !relationship.with_right ||
+        !relationship.grant_id ||
+        !isActiveGroupRelationshipStatus(relationship.status) ||
+        !relationship.group ||
+        !relationship.related_group
+      ) {
+        return;
+      }
+
+      const scopeRelationshipType = getRelationshipTypeForGroup(
+        relationship,
+        relationship.related_group.id
+      );
+
+      pushTraversalStep(adjacency, relationship.group.id, {
+        nextGroupId: relationship.related_group.id,
+        nextGroup: relationship.related_group,
+        relationship,
+        stepType:
+          scopeRelationshipType === 'parent'
+            ? 'parent'
+            : scopeRelationshipType === 'sibling'
+              ? 'sibling'
+              : 'child',
+      });
       return;
     }
 

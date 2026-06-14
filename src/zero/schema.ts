@@ -39,6 +39,7 @@ import { document, documentVersion, documentCollaborator, documentCursor } from 
 import { agendaItem, speakerList, agendaItemChangeRequest } from './agendas/table';
 import { todo, todoAssignment } from './todos/table';
 import { conversation, conversationParticipant, message } from './messages/table';
+import { searchDocument, searchDocumentAcl, searchDocumentTopic } from './search-documents/table';
 import {
   notification,
   pushSubscription,
@@ -97,10 +98,14 @@ import { thread, comment } from './discussions/table';
 import { eventDelegate, groupDelegateAllocation } from './delegates/table';
 import {
   follow,
-  networkLink,
-  networkLinkRight,
-  networkLinkMembershipRule,
-  networkLinkChangeRequest,
+  groupConnection,
+  groupRightGrant,
+  groupMembershipRule,
+  groupMembershipRuleOrigin,
+  groupConnectionRequest,
+  groupRightGrantRequest,
+  groupMembershipRuleRequest,
+  groupMembershipRuleRequestOrigin,
   subscriber,
   groupWorkflow,
   groupWorkflowStep,
@@ -114,6 +119,12 @@ import { calendarSubscription } from './calendar-subscriptions/table';
 import { votingPassword } from './voting-password/table';
 // Accreditation
 import { accreditation } from './accreditation/table';
+import {
+  chartProjection,
+  chartProjectionPoint,
+  eurostatDataset,
+  eurostatObservation,
+} from './eurostat/table';
 
 // Relationship imports
 import { allRelationships } from './relationships';
@@ -199,10 +210,14 @@ export const schema = createSchema({
     groupDelegateAllocation,
     // Network
     follow,
-    networkLink,
-    networkLinkRight,
-    networkLinkMembershipRule,
-    networkLinkChangeRequest,
+    groupConnection,
+    groupRightGrant,
+    groupMembershipRule,
+    groupMembershipRuleOrigin,
+    groupConnectionRequest,
+    groupRightGrantRequest,
+    groupMembershipRuleRequest,
+    groupMembershipRuleRequestOrigin,
     subscriber,
     groupWorkflow,
     groupWorkflowStep,
@@ -214,6 +229,10 @@ export const schema = createSchema({
     conversation,
     conversationParticipant,
     message,
+    // Search Documents
+    searchDocument,
+    searchDocumentTopic,
+    searchDocumentAcl,
     // Notifications
     notification,
     pushSubscription,
@@ -256,6 +275,11 @@ export const schema = createSchema({
     votingPassword,
     // Accreditation
     accreditation,
+    // Eurostat and chart projections
+    eurostatDataset,
+    eurostatObservation,
+    chartProjection,
+    chartProjectionPoint,
   ],
   relationships: allRelationships,
 });
@@ -281,9 +305,9 @@ export type GroupMembershipRole = Row<Schema['tables']['group_membership_role']>
 export type GroupOfflineMembershipRole = Row<Schema['tables']['group_offline_membership_role']>;
 export type GroupGuestAccess = Row<Schema['tables']['group_guest_access']>;
 export type GroupGuestRole = Row<Schema['tables']['group_guest_role']>;
-export type NetworkLink = Row<Schema['tables']['network_link']>;
-export type NetworkLinkRight = Row<Schema['tables']['network_link_right']>;
-export type NetworkLinkMembershipRule = Row<Schema['tables']['network_link_membership_rule']>;
+export type GroupConnection = Row<Schema['tables']['group_connection']>;
+export type GroupRightGrant = Row<Schema['tables']['group_right_grant']>;
+export type GroupMembershipRule = Row<Schema['tables']['group_membership_rule']>;
 export type Role = Row<Schema['tables']['role']>;
 export type RoleHolderHistory = Row<Schema['tables']['role_holder_history']>;
 export type ActionRight = Row<Schema['tables']['action_right']>;
@@ -356,6 +380,11 @@ export type Conversation = Row<Schema['tables']['conversation']>;
 export type ConversationParticipant = Row<Schema['tables']['conversation_participant']>;
 export type Message = Row<Schema['tables']['message']>;
 
+// Search Documents
+export type SearchDocument = Row<Schema['tables']['search_document']>;
+export type SearchDocumentTopic = Row<Schema['tables']['search_document_topic']>;
+export type SearchDocumentAcl = Row<Schema['tables']['search_document_acl']>;
+
 // Notifications
 export type Notification = Row<Schema['tables']['notification']>;
 export type PushSubscription = Row<Schema['tables']['push_subscription']>;
@@ -391,6 +420,12 @@ export type VotingPasswordRow = Row<Schema['tables']['voting_password']>;
 
 // Accreditation
 export type AccreditationRow = Row<Schema['tables']['accreditation']>;
+
+// Eurostat
+export type EurostatDataset = Row<Schema['tables']['eurostat_dataset']>;
+export type EurostatObservation = Row<Schema['tables']['eurostat_observation']>;
+export type ChartProjection = Row<Schema['tables']['chart_projection']>;
+export type ChartProjectionPoint = Row<Schema['tables']['chart_projection_point']>;
 
 // Workflows
 export type GroupWorkflowRow = Row<Schema['tables']['group_workflow']>;

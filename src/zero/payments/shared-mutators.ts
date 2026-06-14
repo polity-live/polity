@@ -1,5 +1,6 @@
 import { defineMutator } from '@rocicorp/zero';
 import { can } from '../rbac/can';
+import { denyPublicApiMutation, requireOwner } from '../rbac/authorize';
 import { isPermissionError } from '../rbac/errors';
 import { zql } from '../schema';
 import {
@@ -50,7 +51,9 @@ async function authorizeGroupPaymentManage(
 /** Shared mutators — run on both client and server. Server mutators may override these. */
 export const paymentSharedMutators = {
   // Create a stripe customer record
-  createCustomer: defineMutator(createStripeCustomerSchema, async ({ tx, args }) => {
+  createCustomer: defineMutator(createStripeCustomerSchema, async ({ tx, ctx, args }) => {
+    requireOwner(tx, ctx, args.user_id, { action: 'create', resource: 'payments' });
+
     const now = Date.now();
     await tx.mutate.stripe_customer.insert({
       ...args,
@@ -60,7 +63,15 @@ export const paymentSharedMutators = {
   }),
 
   // Update subscription details
-  updateSubscription: defineMutator(updateStripeSubscriptionSchema, async ({ tx, args }) => {
+  updateSubscription: defineMutator(updateStripeSubscriptionSchema, async ({ tx, ctx, args }) => {
+    if (tx.location !== 'client') {
+      const subscription = await tx.run(zql.stripe_subscription.where('id', args.id).one());
+      const customer = subscription
+        ? await tx.run(zql.stripe_customer.where('id', subscription.customer_id).one())
+        : null;
+      requireOwner(tx, ctx, customer?.user_id, { action: 'update', resource: 'payments' });
+    }
+
     await tx.mutate.stripe_subscription.update({
       ...args,
       updated_at: Date.now(),
@@ -70,6 +81,8 @@ export const paymentSharedMutators = {
   // Record a stripe payment
   // NOTE: server-only mutator — should be called from server context only
   recordPayment: defineMutator(createStripePaymentSchema, async ({ tx, args }) => {
+    denyPublicApiMutation(tx, { action: 'create', resource: 'payments', scope: 'stripe-webhook' });
+
     const now = Date.now();
     await tx.mutate.stripe_payment.insert({
       ...args,

@@ -13,6 +13,7 @@ import {
 } from '@/features/shared/ui/ui/dialog';
 import { File, Upload, X } from 'lucide-react';
 import { useUploadFile } from '@/features/file-upload/hooks/use-upload-file.ts';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface CreateThreadDialogProps {
   amendmentId: string;
@@ -26,15 +27,13 @@ interface CreateThreadDialogProps {
     title: string,
     description: string,
     userId: string,
-    fileId?: string,
+    fileId?: string
   ) => Promise<string>;
 }
 
 export function CreateThreadDialog({
   amendmentId,
   userId,
-  amendmentTitle,
-  senderName,
   open,
   onOpenChange,
   onCreateThread,
@@ -62,13 +61,7 @@ export function CreateThreadDialog({
       }
 
       // Create thread
-      await onCreateThread(
-        amendmentId,
-        title,
-        description,
-        userId,
-        uploadedFileId || undefined,
-      );
+      await onCreateThread(amendmentId, title, description, userId, uploadedFileId || undefined);
 
       setTitle('');
       setDescription('');
@@ -85,31 +78,43 @@ export function CreateThreadDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create New Discussion Thread</DialogTitle>
-          <DialogDescription>Start a new discussion about this amendment</DialogDescription>
+          <DialogTitle>
+            {translateText('generated.inline.0380_create_new_discussion_thread_bcf180d6')}
+          </DialogTitle>
+          <DialogDescription>
+            {translateText(
+              'generated.inline.0381_start_a_new_discussion_about_this_amendment_ac4916e8'
+            )}
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <Label htmlFor="title">Title</Label>
+            <Label htmlFor="title">{translateText('generated.inline.0028_title_768e0c1c')}</Label>
             <Input
               id="title"
-              placeholder="Enter thread title..."
+              placeholder={translateText('generated.inline.0382_enter_thread_title_14bd46df')}
               value={title}
               onChange={e => setTitle(e.target.value)}
             />
           </div>
           <div>
-            <Label htmlFor="description">Description (Optional)</Label>
+            <Label htmlFor="description">
+              {translateText('generated.inline.0130_description_optional_f1da5c02')}
+            </Label>
             <Textarea
               id="description"
-              placeholder="Describe what this thread is about..."
+              placeholder={translateText(
+                'generated.inline.0383_describe_what_this_thread_is_about_133a420c'
+              )}
               value={description}
               onChange={e => setDescription(e.target.value)}
               rows={4}
             />
           </div>
           <div>
-            <Label htmlFor="file">Attachment (Optional)</Label>
+            <Label htmlFor="file">
+              {translateText('generated.inline.0384_attachment_optional_fe28692b')}
+            </Label>
             <div className="mt-2">
               {selectedFile ? (
                 <div className="flex items-center justify-between rounded-lg border p-3">
@@ -129,7 +134,9 @@ export function CreateThreadDialog({
               ) : (
                 <label className="hover:bg-muted flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed p-4">
                   <Upload className="h-5 w-5" />
-                  <span>Choose file to attach</span>
+                  <span>
+                    {translateText('generated.inline.0385_choose_file_to_attach_b555434d')}
+                  </span>
                   <input
                     type="file"
                     className="hidden"
@@ -145,10 +152,14 @@ export function CreateThreadDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {translateText('generated.inline.0065_cancel_77dfd213')}
           </Button>
           <Button onClick={handleSubmit} disabled={isSubmitting || isUploading || !title.trim()}>
-            {isUploading ? 'Uploading...' : isSubmitting ? 'Creating...' : 'Create Thread'}
+            {isUploading
+              ? translateText('generated.inline.0057_uploading_070e328e')
+              : isSubmitting
+                ? translateText('generated.inline.0013_creating_28ea7667')
+                : translateText('generated.inline.0058_create_thread_ea3fa33f')}
           </Button>
         </DialogFooter>
       </DialogContent>

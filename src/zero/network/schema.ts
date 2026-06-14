@@ -1,13 +1,6 @@
 import { z } from 'zod';
-import { timestampSchema, jsonStringArraySchema } from '../shared/helpers';
+import { timestampSchema } from '../shared/helpers';
 import type { DerivedNetworkRelationshipRow } from './derived';
-
-const networkLinkMembershipRuleDirectionConfigSchema = z.object({
-  membership_direction: z.enum(['forward', 'backward']).nullable(),
-  membership_mode: z.enum(['none', 'all_members', 'role_members', 'selected_source_groups']),
-  role_id: z.string().nullable(),
-  source_group_ids: jsonStringArraySchema.nullable(),
-});
 
 // ============================================
 // Follow Schemas
@@ -27,149 +20,166 @@ export const followCreateSchema = followBaseSchema
 export const followDeleteSchema = z.object({ id: z.string() });
 
 // ============================================
-// Network Link Schemas
+// Group graph schemas
 // ============================================
 
-export const networkLinkRightKeySchema = z.enum([
+export const groupRightKeySchema = z.enum([
   'informationRight',
   'amendmentRight',
   'rightToSpeak',
   'activeVotingRight',
   'passiveVotingRight',
 ]);
-
-export const networkLinkDirectionSchema = z.enum(['forward', 'backward', 'bidirectional']);
-export const networkLinkRelationSchema = z.enum(['parent_child', 'sibling']);
-export const networkLinkMembershipModeSchema = z.enum([
-  'none',
+export const groupConnectionTypeSchema = z.enum(['hierarchy', 'peer']);
+export const groupMembershipModeSchema = z.enum([
   'all_members',
   'role_members',
   'selected_source_groups',
 ]);
-export const networkLinkMembershipDirectionSchema = z.enum(['forward', 'backward']);
-export const networkLinkStatusSchema = z.enum(['active', 'requested', 'pending', 'rejected']);
-export const networkLinkMembershipRuleSnapshotSchema =
-  networkLinkMembershipRuleDirectionConfigSchema;
+export const groupConnectionStatusSchema = z.enum(['active', 'pending', 'rejected']);
+export const groupRequestItemStatusSchema = z.enum(['pending', 'approved', 'rejected']);
+export const groupRequestStatusSchema = z.enum([
+  'pending',
+  'partially_approved',
+  'approved',
+  'rejected',
+]);
 export const workflowStatusSchema = z.enum(['pending_approval', 'active', 'rejected', 'archived']);
 export const workflowApprovalStatusSchema = z.enum(['pending', 'accepted', 'rejected']);
 
-const networkLinkBaseSchema = z.object({
+const groupConnectionBaseSchema = z.object({
   id: z.string(),
-  source_group_id: z.string(),
-  target_group_id: z.string(),
-  structural_relation: networkLinkRelationSchema,
+  group_a_id: z.string(),
+  group_b_id: z.string(),
+  connection_type: groupConnectionTypeSchema,
+  parent_group_id: z.string().nullable(),
+  child_group_id: z.string().nullable(),
   status: z.string(),
   created_by_id: z.string().nullable(),
   created_at: timestampSchema,
   updated_at: timestampSchema,
 });
 
-const networkLinkRightBaseSchema = z.object({
+const groupRightGrantBaseSchema = z.object({
   id: z.string(),
-  network_link_id: z.string(),
-  right_key: networkLinkRightKeySchema,
-  direction: networkLinkDirectionSchema,
-  status: networkLinkStatusSchema,
+  connection_id: z.string(),
+  right_key: groupRightKeySchema,
+  holder_group_id: z.string(),
+  scope_group_id: z.string(),
+  status: groupConnectionStatusSchema,
   initiator_group_id: z.string().nullable(),
   created_at: timestampSchema,
   updated_at: timestampSchema,
 });
 
-const networkLinkMembershipRuleBaseSchema = z.object({
+const groupMembershipRuleBaseSchema = z.object({
   id: z.string(),
-  network_link_id: z.string(),
-  membership_direction: networkLinkMembershipDirectionSchema.nullable(),
-  membership_mode: networkLinkMembershipModeSchema,
-  role_id: z.string().nullable(),
-  source_group_ids: jsonStringArraySchema.nullable(),
+  connection_id: z.string(),
+  member_source_group_id: z.string(),
+  member_target_group_id: z.string(),
+  membership_mode: groupMembershipModeSchema,
+  required_source_role_id: z.string().nullable(),
   created_at: timestampSchema,
   updated_at: timestampSchema,
 });
 
-const networkLinkMembershipRuleMutationSchema = z.object({
+const groupMembershipRuleMutationSchema = z.object({
   id: z.string().optional(),
-  membership_direction: networkLinkMembershipDirectionSchema.nullable().optional(),
-  membership_mode: networkLinkMembershipModeSchema.optional(),
-  role_id: z.string().nullable().optional(),
-  source_group_ids: jsonStringArraySchema.nullable().optional(),
+  member_source_group_id: z.string(),
+  member_target_group_id: z.string(),
+  membership_mode: groupMembershipModeSchema,
+  required_source_role_id: z.string().nullable(),
+  eligible_origin_group_ids: z.array(z.string()).default([]),
 });
 
-const networkLinkChangeRequestRightSnapshotSchema = z.object({
+const groupRightGrantMutationSchema = z.object({
   id: z.string(),
-  right_key: networkLinkRightKeySchema,
-  direction: networkLinkDirectionSchema,
+  existing_grant_id: z.string().nullable().optional(),
+  operation: z.enum(['upsert', 'remove']).default('upsert'),
+  right_key: groupRightKeySchema,
+  holder_group_id: z.string(),
+  scope_group_id: z.string(),
 });
 
-const networkLinkChangeRequestBaseSchema = z.object({
+const groupConnectionRequestBaseSchema = z.object({
   id: z.string(),
-  active_network_link_id: z.string().nullable(),
-  proposed_network_link_id: z.string(),
-  source_group_id: z.string(),
-  target_group_id: z.string(),
-  structural_relation: networkLinkRelationSchema,
-  status: networkLinkStatusSchema,
+  active_connection_id: z.string().nullable(),
+  proposed_connection_id: z.string(),
+  group_a_id: z.string(),
+  group_b_id: z.string(),
+  desired_connection_type: groupConnectionTypeSchema,
+  desired_parent_group_id: z.string().nullable(),
+  desired_child_group_id: z.string().nullable(),
+  structure_status: z.enum(['pending', 'approved', 'rejected']),
+  status: groupRequestStatusSchema,
   initiator_group_id: z.string(),
-  desired_rights: z.array(networkLinkChangeRequestRightSnapshotSchema),
-  desired_membership_direction: networkLinkMembershipDirectionSchema.nullable(),
-  desired_membership_mode: networkLinkMembershipModeSchema,
-  desired_role_id: z.string().nullable(),
-  desired_source_group_ids: jsonStringArraySchema.nullable(),
   created_at: timestampSchema,
   updated_at: timestampSchema,
 });
 
-export const networkLinkSelectSchema = networkLinkBaseSchema;
-export const networkLinkRightSelectSchema = networkLinkRightBaseSchema;
-export const networkLinkMembershipRuleSelectSchema = networkLinkMembershipRuleBaseSchema;
-export const networkLinkChangeRequestSelectSchema = networkLinkChangeRequestBaseSchema;
+export const groupConnectionSelectSchema = groupConnectionBaseSchema;
+export const groupRightGrantSelectSchema = groupRightGrantBaseSchema;
+export const groupMembershipRuleSelectSchema = groupMembershipRuleBaseSchema;
+export const groupConnectionRequestSelectSchema = groupConnectionRequestBaseSchema;
 
-export const createNetworkLinkSchema = networkLinkBaseSchema
+export const createGroupConnectionSchema = groupConnectionBaseSchema
   .omit({ id: true, created_at: true, updated_at: true, created_by_id: true })
   .extend({
     id: z.string(),
-    rights: z.array(
-      networkLinkRightBaseSchema
-        .omit({ id: true, network_link_id: true, created_at: true, updated_at: true })
+    grants: z.array(
+      groupRightGrantBaseSchema
+        .omit({ id: true, connection_id: true, created_at: true, updated_at: true })
         .extend({ id: z.string().optional() })
     ),
-    membership_rule: networkLinkMembershipRuleMutationSchema,
+    membership_rule: groupMembershipRuleMutationSchema.nullable(),
   });
 
-export const updateNetworkLinkSchema = networkLinkBaseSchema
+export const updateGroupConnectionSchema = groupConnectionBaseSchema
   .pick({
-    source_group_id: true,
-    target_group_id: true,
-    structural_relation: true,
+    group_a_id: true,
+    group_b_id: true,
+    connection_type: true,
+    parent_group_id: true,
+    child_group_id: true,
     status: true,
   })
   .partial()
   .extend({
     id: z.string(),
-    rights: z
+    grants: z
       .array(
-        networkLinkRightBaseSchema
-          .omit({ network_link_id: true, created_at: true, updated_at: true })
+        groupRightGrantBaseSchema
+          .omit({ connection_id: true, created_at: true, updated_at: true })
           .extend({ id: z.string().optional() })
       )
       .optional(),
-    membership_rule: networkLinkMembershipRuleMutationSchema.optional(),
+    membership_rule: groupMembershipRuleMutationSchema.nullable().optional(),
   });
 
-export const deleteNetworkLinkSchema = z.object({ id: z.string() });
+export const deleteGroupConnectionSchema = z.object({ id: z.string() });
 
-export const proposeNetworkLinkChangeSchema = networkLinkChangeRequestBaseSchema
-  .omit({ created_at: true, updated_at: true, status: true })
+export const proposeGroupConnectionChangeSchema = groupConnectionRequestBaseSchema
+  .omit({ created_at: true, updated_at: true, status: true, structure_status: true })
   .extend({
-    status: networkLinkStatusSchema.optional(),
+    grants: z.array(groupRightGrantMutationSchema),
+    membership_rule: groupMembershipRuleMutationSchema
+      .extend({
+        existing_membership_rule_id: z.string().nullable().optional(),
+        operation: z.enum(['upsert', 'remove']).default('upsert'),
+      })
+      .nullable(),
   });
 
-export const approveNetworkLinkChangeRequestSchema = z.object({
+export const approveGroupConnectionRequestSchema = z.object({
   id: z.string(),
-  right_ids: z.array(z.string()).optional(),
+  grant_request_ids: z.array(z.string()).optional(),
+  approve_membership: z.boolean().optional(),
 });
-export const rejectNetworkLinkChangeRequestSchema = z.object({
+export const rejectGroupConnectionRequestSchema = z.object({
   id: z.string(),
-  right_ids: z.array(z.string()).optional(),
+  grant_request_ids: z.array(z.string()).optional(),
+  reject_membership: z.boolean().optional(),
+  reject_structure: z.boolean().optional(),
 });
 
 // ============================================
@@ -353,13 +363,10 @@ export const rejectWorkflowApprovalSchema = z.object({
 
 export type Follow = z.infer<typeof followSelectSchema>;
 export type GroupRelationship = DerivedNetworkRelationshipRow;
-export type NetworkLink = z.infer<typeof networkLinkSelectSchema>;
-export type NetworkLinkRight = z.infer<typeof networkLinkRightSelectSchema>;
-export type NetworkLinkMembershipRule = z.infer<typeof networkLinkMembershipRuleSelectSchema>;
-export type NetworkLinkMembershipRuleSnapshot = z.infer<
-  typeof networkLinkMembershipRuleSnapshotSchema
->;
-export type NetworkLinkChangeRequest = z.infer<typeof networkLinkChangeRequestSelectSchema>;
+export type GroupConnection = z.infer<typeof groupConnectionSelectSchema>;
+export type GroupRightGrant = z.infer<typeof groupRightGrantSelectSchema>;
+export type GroupMembershipRule = z.infer<typeof groupMembershipRuleSelectSchema>;
+export type GroupConnectionRequest = z.infer<typeof groupConnectionRequestSelectSchema>;
 export type Subscriber = z.infer<typeof selectSubscriberSchema>;
 export type GroupWorkflow = z.infer<typeof groupWorkflowSelectSchema>;
 export type GroupWorkflowStep = z.infer<typeof groupWorkflowStepSelectSchema>;

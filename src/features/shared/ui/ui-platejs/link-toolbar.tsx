@@ -88,24 +88,24 @@ export function LinkFloatingToolbar({ state }: { state?: LinkFloatingToolbarStat
   const input = (
     <div className="flex w-[330px] flex-col" {...inputProps}>
       <div className="flex items-center">
-        <div className="flex items-center pl-2 pr-1 text-muted-foreground">
+        <div className="text-muted-foreground flex items-center pr-1 pl-2">
           <Link className="size-4" />
         </div>
 
         <FloatingLinkUrlInput
           className={inputVariants()}
-          placeholder={t('plateJs.toolbar.pasteLink', 'Paste link')}
+          placeholder={t('plateJs.toolbar.pasteLink')}
           data-plate-focus
         />
       </div>
       <Separator className="my-1" />
       <div className="flex items-center">
-        <div className="flex items-center pl-2 pr-1 text-muted-foreground">
+        <div className="text-muted-foreground flex items-center pr-1 pl-2">
           <Text className="size-4" />
         </div>
         <input
           className={inputVariants()}
-          placeholder={t('plateJs.toolbar.textToDisplay', 'Text to display')}
+          placeholder={t('plateJs.toolbar.textToDisplay')}
           data-plate-focus
           {...textInputProps}
         />
@@ -122,7 +122,7 @@ export function LinkFloatingToolbar({ state }: { state?: LinkFloatingToolbarStat
         type="button"
         {...editButtonProps}
       >
-        {t('plateJs.toolbar.editLink', 'Edit link')}
+        {t('plateJs.toolbar.editLink')}
       </button>
 
       <Separator orientation="vertical" />
@@ -139,18 +139,28 @@ export function LinkFloatingToolbar({ state }: { state?: LinkFloatingToolbarStat
         type="button"
         {...unlinkButtonProps}
       >
-        <Unlink width={18} aria-label={t('plateJs.toolbar.unlink', 'Unlink')} />
+        <Unlink width={18} aria-label={t('plateJs.toolbar.unlink')} />
       </button>
     </div>
   );
 
   return (
     <>
-      <div ref={insertRef} className={popoverVariants()} {...insertProps} style={insertProps.style as React.CSSProperties}>
+      <div
+        ref={insertRef}
+        className={popoverVariants()}
+        {...insertProps}
+        style={insertProps.style as React.CSSProperties}
+      >
         {input}
       </div>
 
-      <div ref={editRef} className={popoverVariants()} {...editProps} style={editProps.style as React.CSSProperties}>
+      <div
+        ref={editRef}
+        className={popoverVariants()}
+        {...editProps}
+        style={editProps.style as React.CSSProperties}
+      >
         {editContent}
       </div>
     </>
@@ -183,7 +193,7 @@ function LinkOpenButton() {
       onMouseOver={e => {
         e.stopPropagation();
       }}
-      aria-label={t('plateJs.toolbar.openInNewTab', 'Open link in a new tab')}
+      aria-label={t('plateJs.toolbar.openInNewTab')}
       target="_blank"
     >
       <ExternalLink width={18} />

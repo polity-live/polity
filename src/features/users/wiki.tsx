@@ -14,7 +14,10 @@ import { StatsBar } from '@/features/shared/ui/ui/StatsBar';
 import { ActionBar } from '@/features/shared/ui/ui/ActionBar';
 import { SubscribeButton } from '@/features/shared/ui/action-buttons';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { useMemo } from 'react';
 import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
 import { AccessDenied } from '@/features/auth/ui/AccessDenied';
@@ -127,7 +130,9 @@ export function UserWiki(_props: UserWikiProps) {
       {isLoading && (
         <div>
           <div className="flex items-center justify-center py-12">
-            <div className="text-muted-foreground text-lg">Loading user...</div>
+            <div className="text-muted-foreground text-lg">
+              {translateText('generated.inline.1227_loading_user_b8bf4d1c')}
+            </div>
           </div>
         </div>
       )}
@@ -135,7 +140,10 @@ export function UserWiki(_props: UserWikiProps) {
       {error && (
         <div>
           <div className="flex items-center justify-center py-12">
-            <div className="text-lg text-red-500">Error loading user: {error}</div>
+            <div className="text-lg text-red-500">
+              {translateText('generated.inline.1228_error_loading_user_e23bf06c')}
+              {error}
+            </div>
           </div>
         </div>
       )}
@@ -144,8 +152,12 @@ export function UserWiki(_props: UserWikiProps) {
         <div>
           <div className="flex flex-col items-center justify-center py-12">
             <div className="text-center">
-              <h2 className="mb-2 text-2xl font-semibold">User Not Found</h2>
-              <p className="text-muted-foreground">This user hasn't been created yet.</p>
+              <h2 className="mb-2 text-2xl font-semibold">
+                {translateText('generated.inline.1229_user_not_found_9acd6234')}
+              </h2>
+              <p className="text-muted-foreground">
+                {translateText('generated.inline.1230_this_user_hasn_t_been_created_yet_b3697b01')}
+              </p>
             </div>
           </div>
         </div>

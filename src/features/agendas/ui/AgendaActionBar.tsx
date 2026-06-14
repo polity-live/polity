@@ -23,7 +23,10 @@ import {
   FileEdit,
   PencilLine,
 } from 'lucide-react';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { ToolbarButton } from '@/features/shared/ui/ui/toolbar';
 import { FixedAgendaToolbar } from './FixedAgendaToolbar';
 import { cn } from '@/features/shared/utils/utils';
@@ -179,9 +182,8 @@ export function AgendaActionBar({
   const nextDisabled =
     !hasNextItem || !canMoveToNextItem || Boolean(navigationLoading) || !currentAgendaItem;
   const defaultVoteTooltip = isFinalVotePhase
-    ? castFinalVoteTooltip || t('features.events.agenda.actions.castFinalVote', 'Cast Final Vote')
-    : castIndicativeVoteTooltip ||
-      t('features.events.agenda.actions.castIndicativeVote', 'Cast Indication');
+    ? castFinalVoteTooltip || t('features.events.agenda.actions.castFinalVote')
+    : castIndicativeVoteTooltip || t('features.events.agenda.actions.castIndicativeVote');
   const voteTooltip = disableVoteButton
     ? disabledVoteTooltip || defaultVoteTooltip
     : defaultVoteTooltip;
@@ -281,7 +283,7 @@ export function AgendaActionBar({
         ) : null}
         {canManageAgenda && onPreviousChangeRequest ? (
           <ToolbarButton
-            tooltip={t('features.agendas.crTimeline.previous', 'Previous Change Request')}
+            tooltip={t('features.agendas.crTimeline.previous')}
             onClick={onPreviousChangeRequest}
             disabled={!hasPreviousChangeRequest}
           >
@@ -290,7 +292,7 @@ export function AgendaActionBar({
         ) : null}
         {canManageAgenda && onNextChangeRequest ? (
           <ToolbarButton
-            tooltip={t('features.agendas.crTimeline.next', 'Next Change Request')}
+            tooltip={t('features.agendas.crTimeline.next')}
             onClick={onNextChangeRequest}
             disabled={!hasNextChangeRequest}
           >
@@ -302,9 +304,7 @@ export function AgendaActionBar({
       <div className="flex items-center justify-center gap-1">
         {canManageAgenda && isVotable && !isClosed && isPendingVote && onStartVote ? (
           <ToolbarButton
-            tooltip={
-              startVoteTooltip || t('features.events.agenda.actions.startVote', 'Start Vote')
-            }
+            tooltip={startVoteTooltip || t('features.events.agenda.actions.startVote')}
             onClick={onStartVote}
           >
             <Play />
@@ -312,10 +312,7 @@ export function AgendaActionBar({
         ) : null}
         {showStartFinalVoteButton ? (
           <ToolbarButton
-            tooltip={
-              startFinalVoteTooltip ||
-              t('features.events.agenda.actions.startFinalVote', 'Start Final Vote')
-            }
+            tooltip={startFinalVoteTooltip || t('features.events.agenda.actions.startFinalVote')}
             onClick={onStartFinalVote}
           >
             <Gavel />
@@ -323,10 +320,7 @@ export function AgendaActionBar({
         ) : null}
         {canManageAgenda && isVotable && !isClosed && isFinalVotePhase && onCloseFinalVote ? (
           <ToolbarButton
-            tooltip={
-              closeVoteTooltip ||
-              t('features.events.agenda.actions.closeFinalVote', 'Close Final Vote')
-            }
+            tooltip={closeVoteTooltip || t('features.events.agenda.actions.closeFinalVote')}
             onClick={onCloseFinalVote}
           >
             <CheckCircle2 />
@@ -334,7 +328,7 @@ export function AgendaActionBar({
         ) : null}
         {currentAgendaItem && !isUserInSpeakerList && onJoinSpeakerList ? (
           <ToolbarButton
-            tooltip={t('features.events.agenda.actions.joinSpeakerList', 'Join Speaker List')}
+            tooltip={t('features.events.agenda.actions.joinSpeakerList')}
             onClick={onJoinSpeakerList}
             disabled={speakerLoading}
           >
@@ -343,7 +337,7 @@ export function AgendaActionBar({
         ) : null}
         {currentAgendaItem && isUserInSpeakerList && onLeaveSpeakerList ? (
           <ToolbarButton
-            tooltip={t('features.events.agenda.actions.leaveSpeakerList', 'Leave Speaker List')}
+            tooltip={t('features.events.agenda.actions.leaveSpeakerList')}
             onClick={onLeaveSpeakerList}
             disabled={speakerLoading}
           >
@@ -352,7 +346,7 @@ export function AgendaActionBar({
         ) : null}
         {isElection && canBeCandidate && !isUserCandidate && onBecomeCandidate ? (
           <ToolbarButton
-            tooltip={t('features.events.agenda.actions.becomeCandidate', 'Become Candidate')}
+            tooltip={t('features.events.agenda.actions.becomeCandidate')}
             onClick={onBecomeCandidate}
             disabled={candidateLoading}
           >
@@ -361,7 +355,7 @@ export function AgendaActionBar({
         ) : null}
         {isElection && canBeCandidate && isUserCandidate && onWithdrawCandidacy ? (
           <ToolbarButton
-            tooltip={t('features.events.agenda.actions.withdrawCandidacy', 'Withdraw Candidacy')}
+            tooltip={t('features.events.agenda.actions.withdrawCandidacy')}
             onClick={onWithdrawCandidacy}
             disabled={candidateLoading}
           >
@@ -382,7 +376,7 @@ export function AgendaActionBar({
             )}
           >
             {voteLoading ? <Loader2 className="animate-spin" /> : <Vote />}
-            <span>Vote</span>
+            <span>{translateText('generated.inline.0011_vote_64f87291')}</span>
             {disableVoteButton ? <CircleHelp className="h-4 w-4" /> : null}
           </ToolbarButton>
         ) : null}
@@ -394,7 +388,7 @@ export function AgendaActionBar({
             className="border border-sky-300 px-3 text-sky-700"
           >
             {offlineTallyMode === 'edit' ? <PencilLine /> : <FileEdit />}
-            <span>Enter Tally</span>
+            <span>{translateText('generated.inline.0012_enter_tally_70132614')}</span>
           </ToolbarButton>
         ) : null}
       </div>
@@ -402,7 +396,7 @@ export function AgendaActionBar({
       <div className="flex min-w-0 flex-1 items-center justify-end gap-1 overflow-x-auto">
         {onPreviousItem ? (
           <ToolbarButton
-            tooltip={t('features.events.navigation.previous', 'Previous')}
+            tooltip={t('features.events.navigation.previous')}
             onClick={onPreviousItem}
             disabled={!hasPreviousItem || navigationLoading}
           >
@@ -417,12 +411,14 @@ export function AgendaActionBar({
             className="max-w-[220px] justify-start truncate px-3"
             title={currentItemTitle || currentItemLabel || undefined}
           >
-            <span className="truncate">{currentItemLabel || 'TOP'}</span>
+            <span className="truncate">
+              {currentItemLabel || translateText('generated.inline.0004_top_b48813fa')}
+            </span>
           </ToolbarButton>
         ) : null}
         {showStartButton ? (
           <ToolbarButton
-            tooltip={t('features.events.navigation.start', 'Start')}
+            tooltip={t('features.events.navigation.start')}
             onClick={onStartItem}
             disabled={startDisabled}
             className="border border-emerald-300 text-emerald-700"
@@ -432,7 +428,7 @@ export function AgendaActionBar({
         ) : null}
         {currentAgendaItem && isCurrentItemActive && onCompleteItem ? (
           <ToolbarButton
-            tooltip={t('features.events.navigation.complete', 'Complete')}
+            tooltip={t('features.events.navigation.complete')}
             onClick={onCompleteItem}
             disabled={completeDisabled}
             className={cn(
@@ -446,7 +442,7 @@ export function AgendaActionBar({
         ) : null}
         {onNextItem ? (
           <ToolbarButton
-            tooltip={t('features.events.navigation.next', 'Next')}
+            tooltip={t('features.events.navigation.next')}
             onClick={onNextItem}
             disabled={nextDisabled}
           >

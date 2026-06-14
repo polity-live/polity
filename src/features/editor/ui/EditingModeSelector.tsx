@@ -11,7 +11,10 @@ import {
 } from '@/features/shared/ui/ui/dropdown-menu';
 import { MessageSquare, Vote, ChevronDown } from 'lucide-react';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 
 interface EditingModeSelectorProps {
   amendmentId: string;
@@ -21,22 +24,19 @@ interface EditingModeSelectorProps {
 const modes = [
   {
     value: 'suggest_event' as const,
-    label: 'Event Suggesting',
+    label: translateText('generated.inline.0090_event_suggesting_6e3bb22b'),
     icon: MessageSquare,
     color: 'bg-purple-500',
   },
   {
     value: 'vote_event' as const,
-    label: 'Event Voting',
+    label: translateText('generated.inline.0091_event_voting_4b62fa3e'),
     icon: Vote,
     color: 'bg-orange-500',
   },
 ];
 
-export function EditingModeSelector({
-  amendmentId,
-  currentMode,
-}: EditingModeSelectorProps) {
+export function EditingModeSelector({ amendmentId, currentMode }: EditingModeSelectorProps) {
   const { t } = useTranslation();
   const { updateEditingMode } = useAmendmentActions();
 
@@ -80,7 +80,7 @@ export function EditingModeSelector({
                     <span className="text-sm font-medium">{mode.label}</span>
                     {isActive && (
                       <Badge variant="secondary" className="text-xs">
-                        {t('features.amendments.modeSelector.active', 'Active')}
+                        {t('features.amendments.modeSelector.active')}
                       </Badge>
                     )}
                   </div>

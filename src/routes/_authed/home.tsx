@@ -1,14 +1,9 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { ModernTimeline } from '@/features/timeline'
+import { createFileRoute } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/_authed/home')({
-  component: HomePage,
-})
+  component: RouteComponent,
+});
 
-function HomePage() {
-  return (
-    <div>
-      <ModernTimeline />
-    </div>
-  )
+function RouteComponent() {
+  return <div>Hello "/_authed/home"!</div>;
 }

@@ -92,4 +92,8 @@ export type {
   Link,
   TimelineEvent,
   Reaction,
+  EurostatDataset,
+  EurostatObservation,
+  ChartProjection,
+  ChartProjectionPoint,
 } from './schema';

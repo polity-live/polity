@@ -24,7 +24,10 @@ import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/features/shared/ui/ui/tabs';
 import { useEventUpdate } from '../hooks/useEventUpdate';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { CancelEventDialog } from './CancelEventDialog';
 import { usePermissions } from '@/zero/rbac';
 import { useState, useRef, useMemo } from 'react';
@@ -85,15 +88,15 @@ export function EventEdit({ eventId, mode = 'edit', defaultTab }: EventEditProps
     house_number: formData.houseNumber,
   });
   const visibilityLabel =
-    formData.visibility === 'public'
+    formData.visibility === translateText('generated.inline.0030_public_61c9b2b1')
       ? t('pages.create.common.public')
-      : formData.visibility === 'authenticated'
+      : formData.visibility === translateText('generated.inline.0031_authenticated_8fda38ce')
         ? t('pages.create.common.authenticated')
         : t('pages.create.common.private');
   const attendanceModeLabel =
-    formData.attendanceMode === 'online'
+    formData.attendanceMode === translateText('generated.inline.0035_online_2dbc2fd2')
       ? 'Online'
-      : formData.attendanceMode === 'hybrid'
+      : formData.attendanceMode === translateText('generated.inline.0036_hybrid_e2ac482d')
         ? 'Hybrid'
         : 'Offline';
   const timeSeriesValidationMessage =
@@ -275,7 +278,7 @@ export function EventEdit({ eventId, mode = 'edit', defaultTab }: EventEditProps
               {t('pages.event.settingsTabs.timeSeries')}
             </TabsTrigger>
             <TabsTrigger value="event-type" className="flex-1 rounded-lg sm:flex-none">
-              Eventtyp
+              {translateText('generated.inline.0486_eventtyp_662805d4')}
             </TabsTrigger>
           </TabsList>
 
@@ -364,7 +367,7 @@ export function EventEdit({ eventId, mode = 'edit', defaultTab }: EventEditProps
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Attendance Mode</Label>
+                  <Label>{translateText('generated.inline.0327_attendance_mode_507f30a9')}</Label>
                   <div className="flex flex-wrap gap-2">
                     {(['online', 'hybrid', 'offline'] as const).map(modeOption => (
                       <Button
@@ -374,10 +377,10 @@ export function EventEdit({ eventId, mode = 'edit', defaultTab }: EventEditProps
                         onClick={() => updateField('attendanceMode', modeOption)}
                       >
                         {modeOption === 'online'
-                          ? 'Online'
+                          ? translateText('generated.inline.0046_online_c3e839df')
                           : modeOption === 'hybrid'
-                            ? 'Hybrid'
-                            : 'Offline'}
+                            ? translateText('generated.inline.0047_hybrid_8e01f6bc')
+                            : translateText('generated.inline.0048_offline_e01fa717')}
                       </Button>
                     ))}
                   </div>
@@ -526,21 +529,21 @@ export function EventEdit({ eventId, mode = 'edit', defaultTab }: EventEditProps
                   deadlines={[
                     {
                       id: 'registrationDeadline',
-                      label: t('features.events.deadlines.registration', 'Registration Deadline'),
+                      label: t('features.events.deadlines.registration'),
                       value: formData.registrationDeadline,
                       onChange: value => updateField('registrationDeadline', value),
                       hint: t('common.validation.dateTimeHint'),
                     },
                     {
                       id: 'amendmentDeadline',
-                      label: t('features.events.deadlines.amendment', 'Amendment Deadline'),
+                      label: t('features.events.deadlines.amendment'),
                       value: formData.amendmentDeadline,
                       onChange: value => updateField('amendmentDeadline', value),
                       hint: t('common.validation.dateTimeHint'),
                     },
                     {
                       id: 'candidacyDeadline',
-                      label: t('features.events.deadlines.candidacy', 'Candidacy Deadline'),
+                      label: t('features.events.deadlines.candidacy'),
                       value: formData.candidacyDeadline,
                       onChange: value => updateField('candidacyDeadline', value),
                       hint: t('common.validation.dateTimeHint'),
@@ -554,9 +557,11 @@ export function EventEdit({ eventId, mode = 'edit', defaultTab }: EventEditProps
           <TabsContent value="event-type" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Eventtyp</CardTitle>
+                <CardTitle>{translateText('generated.inline.0486_eventtyp_662805d4')}</CardTitle>
                 <CardDescription>
-                  Review the fixed event type and adjust the settings that belong to it.
+                  {translateText(
+                    'generated.inline.0487_review_the_fixed_event_type_and_adjust_the_se_265b2487'
+                  )}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -573,8 +578,9 @@ export function EventEdit({ eventId, mode = 'edit', defaultTab }: EventEditProps
 
                 {event?.event_type === 'general_assembly' ? (
                   <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-sm">
-                    All active members of the linked group are invited automatically. When
-                    membership changes, invitations and participations stay in sync.
+                    {translateText(
+                      'generated.inline.0488_all_active_members_of_the_linked_group_are_in_768156c8'
+                    )}
                   </div>
                 ) : null}
 
@@ -601,8 +607,10 @@ export function EventEdit({ eventId, mode = 'edit', defaultTab }: EventEditProps
                     <ElectionModeInput
                       value={formData.delegateElectionMode}
                       onChange={value => updateField('delegateElectionMode', value)}
-                      label="Delegiertenwahl"
-                      hint="Lege fest, ob Untergruppen ihre Delegierten standardmaessig per Listenwahl oder per Einzelwahl bestimmen."
+                      label={translateText('generated.inline.0325_delegiertenwahl_f860c1a3')}
+                      hint={translateText(
+                        'generated.inline.0489_lege_fest_ob_untergruppen_ihre_delegierten_st_274a60f4'
+                      )}
                       descriptions={{
                         list: 'Eine Listenwahl mit mehreren Stimmen fuer die zu vergebenden Positionen.',
                         single: 'Je Delegiertensitz wird eine eigene Einzelwahl angelegt.',
@@ -611,7 +619,9 @@ export function EventEdit({ eventId, mode = 'edit', defaultTab }: EventEditProps
                     <ValidatedInputField
                       id="delegatesNominationDeadline"
                       type="datetime-local"
-                      label="Delegierten-Nominierungsfrist"
+                      label={translateText(
+                        'generated.inline.0490_delegierten_nominierungsfrist_e9b338fa'
+                      )}
                       value={formData.delegatesNominationDeadline}
                       onChange={value => updateField('delegatesNominationDeadline', value)}
                       hint={t('common.validation.dateTimeHint')}
@@ -643,7 +653,7 @@ export function EventEdit({ eventId, mode = 'edit', defaultTab }: EventEditProps
               disabled={isSubmitting}
             >
               <XCircle className="mr-2 h-4 w-4" />
-              {t('features.events.cancel.cancelEvent', 'Cancel Event')}
+              {t('features.events.cancel.cancelEvent')}
             </Button>
           )}
 

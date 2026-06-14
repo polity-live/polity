@@ -13,8 +13,14 @@ export const paymentQueries = {
     zql.stripe_customer.where('user_id', userID).related('subscriptions').one()
   ),
 
-  subscriptionStatusByUser: defineQuery(z.object({ userId: z.string() }), ({ args: { userId } }) =>
-    zql.stripe_customer.where('user_id', userId).related('subscriptions').one()
+  subscriptionStatusByUser: defineQuery(
+    z.object({ userId: z.string() }),
+    ({ args: { userId }, ctx: { userID } }) =>
+      zql.stripe_customer
+        .where('user_id', userId)
+        .where('user_id', userID)
+        .related('subscriptions')
+        .one()
   ),
 };
 

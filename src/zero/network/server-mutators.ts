@@ -1,14 +1,26 @@
 import { defineMutator } from '@rocicorp/zero';
 import { mutators } from '../mutators';
+import { can } from '../rbac/can';
 import { zql } from '../schema';
 import {
-  createNetworkLinkSchema,
-  deleteNetworkLinkSchema,
-  proposeNetworkLinkChangeSchema,
-  approveNetworkLinkChangeRequestSchema,
-  rejectNetworkLinkChangeRequestSchema,
-  updateNetworkLinkSchema,
+  approveGroupConnectionRequestSchema,
+  createGroupConnectionSchema,
+  deleteGroupConnectionSchema,
+  proposeGroupConnectionChangeSchema,
+  rejectGroupConnectionRequestSchema,
+  updateGroupConnectionSchema,
 } from './schema';
+import {
+  approveGroupConnectionRequest,
+  deleteGroupConnectionAndRequests,
+  proposeGroupConnectionChange,
+  rejectGroupConnectionRequest,
+} from './mutator-helpers';
+import {
+  assertConnectionEndpoints,
+  assertHierarchyGraphIsUnambiguous,
+  type GroupConnectionShape,
+} from './connectionValidation';
 import {
   buildGroupsById,
   reconcileHierarchyForBaseGroup,
@@ -17,14 +29,7 @@ import {
 } from '../groups/membership-helpers';
 import { reconcileDelegateAllocationsForGroups } from '../events/delegate-allocation-reconcile';
 import { reconcileGeneralAssemblyParticipantsForGroups } from '../events/assembly-reconcile';
-import { assertNoBlockingGroupConflicts } from '@/server/group-conflict-validation';
-import {
-  approveNetworkLinkChangeRequest as approveNetworkLinkChangeRequestInternal,
-  deleteNetworkLinkAndRequests as deleteNetworkLinkAndRequestsInternal,
-  proposeNetworkLinkChange as proposeNetworkLinkChangeInternal,
-  rejectNetworkLinkChangeRequest as rejectNetworkLinkChangeRequestInternal,
-} from './mutator-helpers';
-import { normalizeMembershipRules, toLegacyMembershipRuleFields } from './membershipRules';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 const GUEST_ONLY_SIBLING_MEMBERSHIP_MODES = new Set([
   'all_members',
@@ -32,64 +37,44 @@ const GUEST_ONLY_SIBLING_MEMBERSHIP_MODES = new Set([
   'selected_source_groups',
 ]);
 
-function buildConflictMembershipPayload(
-  membershipRule:
-    | {
-        membership_direction?: 'forward' | 'backward' | null;
-        membership_mode?: 'none' | 'all_members' | 'role_members' | 'selected_source_groups';
-        role_id?: string | null;
-        source_group_ids?: string[] | null;
-      }
-    | null
-    | undefined
-) {
-  return {
-    membership_rule: toLegacyMembershipRuleFields(normalizeMembershipRules(membershipRule)),
-  };
-}
-
 function requiresGuestAccessFlow(group: {
   group_type?: string | null;
   primary_sibling_membership_mode?: string | null;
 }) {
-  const primarySiblingMembershipMode = group.primary_sibling_membership_mode;
   return (
     group.group_type === 'sibling' &&
-    primarySiblingMembershipMode != null &&
-    GUEST_ONLY_SIBLING_MEMBERSHIP_MODES.has(primarySiblingMembershipMode)
+    group.primary_sibling_membership_mode != null &&
+    GUEST_ONLY_SIBLING_MEMBERSHIP_MODES.has(group.primary_sibling_membership_mode)
   );
 }
 
-async function reconcileGroupRoleDefaultsForMembershipMode(
-  tx: Parameters<typeof mutators.network.createNetworkLink.fn>[0]['tx'],
-  groupId: string
-) {
+async function reconcileGroupRoleDefaultsForMembershipMode(tx: any, groupId: string) {
   const group = await loadGroupWithDerivedNetworkMeta(tx, groupId);
   if (!group) {
     return;
   }
-
   const roles = await tx.run(
     zql.role.where('group_id', groupId).where('scope', 'group').orderBy('sort_order', 'asc')
   );
-  const memberRoles = roles.filter(role => role.assignee_kind !== 'guest');
-  const guestRoles = roles.filter(role => role.assignee_kind === 'guest');
+  const memberRoles = roles.filter((role: any) => role.assignee_kind !== 'guest');
+  const guestRoles = roles.filter((role: any) => role.assignee_kind === 'guest');
   const guestOnlyFlow = requiresGuestAccessFlow(group);
   const now = Date.now();
 
   if (guestOnlyFlow) {
     let preferredGuestRole =
-      guestRoles.find(role => role.default_request_role || role.default_invite_role) ??
-      guestRoles.find(role => role.name === 'Guest') ??
+      guestRoles.find((role: any) => role.default_request_role || role.default_invite_role) ??
+      guestRoles.find((role: any) => role.name === 'Guest') ??
       guestRoles[0] ??
       null;
-
     if (!preferredGuestRole) {
-      const guestRoleId = crypto.randomUUID();
+      const id = crypto.randomUUID();
       await tx.mutate.role.insert({
-        id: guestRoleId,
+        id,
         name: 'Guest',
-        description: 'Default guest access role for sibling membership groups.',
+        description: translateText(
+          'generated.inline.0684_default_guest_access_role_for_connected_membe_b9c68590'
+        ),
         scope: 'group',
         group_id: groupId,
         event_id: null,
@@ -111,309 +96,341 @@ async function reconcileGroupRoleDefaultsForMembershipMode(
         sort_order: -1,
         created_at: now,
       });
-      preferredGuestRole = {
-        id: guestRoleId,
-        assignee_kind: 'guest',
-        default_request_role: true,
-        default_invite_role: true,
-      } as (typeof roles)[number];
+      preferredGuestRole = { id };
     }
-
     for (const role of roles) {
-      const shouldBeDefault = role.id === preferredGuestRole.id;
-      if (
-        role.default_request_role !== shouldBeDefault ||
-        role.default_invite_role !== shouldBeDefault
-      ) {
+      const selected = role.id === preferredGuestRole.id;
+      if (role.default_request_role !== selected || role.default_invite_role !== selected) {
         await tx.mutate.role.update({
           id: role.id,
-          default_request_role: shouldBeDefault,
-          default_invite_role: shouldBeDefault,
+          default_request_role: selected,
+          default_invite_role: selected,
         });
       }
     }
-
     return;
   }
 
-  const memberDefaultRole =
-    memberRoles.find(role => role.default_request_role || role.default_invite_role) ??
-    memberRoles.find(role => role.name === 'Member') ??
+  const preferredMemberRole =
+    memberRoles.find((role: any) => role.default_request_role || role.default_invite_role) ??
+    memberRoles.find((role: any) => role.name === 'Member') ??
     memberRoles[0] ??
     null;
-
-  for (const guestRole of guestRoles) {
-    if (guestRole.default_request_role || guestRole.default_invite_role) {
+  for (const role of guestRoles) {
+    if (role.default_request_role || role.default_invite_role) {
       await tx.mutate.role.update({
-        id: guestRole.id,
+        id: role.id,
         default_request_role: false,
         default_invite_role: false,
       });
     }
   }
-
-  if (!memberDefaultRole) {
+  if (!preferredMemberRole) {
     return;
   }
-
-  for (const memberRole of memberRoles) {
-    const shouldBeDefault = memberRole.id === memberDefaultRole.id;
-    if (
-      memberRole.default_request_role !== shouldBeDefault ||
-      memberRole.default_invite_role !== shouldBeDefault
-    ) {
+  for (const role of memberRoles) {
+    const selected = role.id === preferredMemberRole.id;
+    if (role.default_request_role !== selected || role.default_invite_role !== selected) {
       await tx.mutate.role.update({
-        id: memberRole.id,
-        default_request_role: shouldBeDefault,
-        default_invite_role: shouldBeDefault,
+        id: role.id,
+        default_request_role: selected,
+        default_invite_role: selected,
       });
     }
   }
 }
 
-async function reconcileNetworkSideEffects(
-  tx: Parameters<typeof mutators.network.createNetworkLink.fn>[0]['tx'],
+async function reconcileConnectionSideEffects(
+  tx: any,
   assignedById: string,
   groupIds: readonly (string | null | undefined)[]
 ) {
-  const affectedGroupIds = [
-    ...new Set(groupIds.filter((groupId): groupId is string => Boolean(groupId))),
-  ];
-  if (affectedGroupIds.length === 0) {
+  const affected = [...new Set(groupIds.filter((id): id is string => Boolean(id)))];
+  if (affected.length === 0) {
     return;
   }
-
   const groupsById = await buildGroupsById(tx);
-  const allGroups = [...groupsById.values()];
-  const allGroupIds = allGroups.map(group => group.id);
-  const baseGroupIds = allGroups
-    .filter(group => group.group_type === 'base')
-    .map(group => group.id);
-
-  for (const baseGroupId of baseGroupIds) {
-    await reconcileHierarchyForBaseGroup(tx, baseGroupId, assignedById);
+  const groups = [...groupsById.values()];
+  const allGroupIds = groups.map(group => group.id);
+  for (const group of groups) {
+    if (group.group_type === 'base') {
+      await reconcileHierarchyForBaseGroup(tx, group.id, assignedById);
+    }
   }
-
-  for (const currentGroupId of allGroupIds) {
-    await recomputeSiblingGroupMemberships(tx, currentGroupId, assignedById);
-    await reconcileGroupRoleDefaultsForMembershipMode(tx, currentGroupId);
+  for (const groupId of allGroupIds) {
+    await recomputeSiblingGroupMemberships(tx, groupId, assignedById);
+    await reconcileGroupRoleDefaultsForMembershipMode(tx, groupId);
   }
-
   await reconcileGeneralAssemblyParticipantsForGroups(tx, allGroupIds, assignedById);
   await reconcileDelegateAllocationsForGroups(tx, allGroupIds);
 }
 
+async function assertPayload(
+  tx: any,
+  args: {
+    id: string;
+    group_a_id: string;
+    group_b_id: string;
+    connection_type: 'hierarchy' | 'peer';
+    parent_group_id?: string | null;
+    child_group_id?: string | null;
+    grants?: readonly { holder_group_id: string; scope_group_id: string }[];
+    membership_rule?: {
+      member_source_group_id: string;
+      member_target_group_id: string;
+      membership_mode: string;
+      required_source_role_id?: string | null;
+      eligible_origin_group_ids?: readonly string[];
+    } | null;
+  }
+) {
+  const connection: GroupConnectionShape = {
+    id: args.id,
+    group_a_id: args.group_a_id,
+    group_b_id: args.group_b_id,
+    connection_type: args.connection_type,
+    parent_group_id: args.parent_group_id ?? null,
+    child_group_id: args.child_group_id ?? null,
+  };
+  assertConnectionEndpoints({
+    connection,
+    grants: args.grants,
+    membershipRule: args.membership_rule,
+  });
+
+  if (args.membership_rule?.required_source_role_id) {
+    const role = await tx.run(
+      zql.role.where('id', args.membership_rule.required_source_role_id).one()
+    );
+    if (!role || role.group_id !== args.membership_rule.member_source_group_id) {
+      throw new Error('The required membership role must belong to the member source group.');
+    }
+  }
+
+  const existingConnections = await tx.run(zql.group_connection);
+  assertHierarchyGraphIsUnambiguous([
+    ...existingConnections.filter((item: any) => item.id !== args.id),
+    { ...connection, status: 'active' },
+  ]);
+}
+
+async function assertCanManageGroupRelationship(
+  tx: Parameters<typeof can>[0],
+  ctx: Parameters<typeof can>[1],
+  groupId: string | null | undefined
+) {
+  if (!groupId) return;
+  await can(tx, ctx, {
+    action: 'manage',
+    resource: 'groupRelationships',
+    groupId,
+  });
+}
+
+async function assertCanManageConnection(
+  tx: Parameters<typeof can>[0],
+  ctx: Parameters<typeof can>[1],
+  connection: {
+    group_a_id?: string | null;
+    group_b_id?: string | null;
+    parent_group_id?: string | null;
+    child_group_id?: string | null;
+  }
+) {
+  const groupIds = new Set(
+    [
+      connection.group_a_id,
+      connection.group_b_id,
+      connection.parent_group_id,
+      connection.child_group_id,
+    ].filter(Boolean)
+  );
+
+  for (const groupId of groupIds) {
+    await assertCanManageGroupRelationship(tx, ctx, groupId);
+  }
+}
+
 export const networkServerMutators = {
-  createNetworkLink: defineMutator(createNetworkLinkSchema, async ({ tx, ctx, args }) => {
-    await assertNoBlockingGroupConflicts(tx, ctx, {
-      kind: 'network_link_upsert',
-      link_id: args.id,
-      source_group_id: args.source_group_id,
-      target_group_id: args.target_group_id,
-      structural_relation: args.structural_relation,
-      rights: args.rights.map(right => ({
-        id: right.id,
-        right_key: right.right_key,
-        direction: right.direction,
-        status: right.status,
-        initiator_group_id: right.initiator_group_id ?? null,
-      })),
-      ...buildConflictMembershipPayload(args.membership_rule),
+  createGroupConnection: defineMutator(createGroupConnectionSchema, async ({ tx, ctx, args }) => {
+    await assertPayload(tx, {
+      ...args,
+      grants: args.grants,
+      membership_rule: args.membership_rule,
     });
-
-    await mutators.network.createNetworkLink.fn({ tx, ctx, args });
-    await reconcileNetworkSideEffects(tx, ctx.userID, [args.source_group_id, args.target_group_id]);
+    await mutators.network.createGroupConnection.fn({ tx, ctx, args });
+    await reconcileConnectionSideEffects(tx, ctx.userID, [args.group_a_id, args.group_b_id]);
   }),
 
-  updateNetworkLink: defineMutator(updateNetworkLinkSchema, async ({ tx, ctx, args }) => {
-    const existingLink = await tx.run(zql.network_link.where('id', args.id).one());
-    if (!existingLink) {
-      await mutators.network.updateNetworkLink.fn({ tx, ctx, args });
-      return;
+  updateGroupConnection: defineMutator(updateGroupConnectionSchema, async ({ tx, ctx, args }) => {
+    const existing = await tx.run(zql.group_connection.where('id', args.id).one());
+    if (!existing) {
+      throw new Error('Group connection not found');
     }
-
-    const existingRights = await tx.run(zql.network_link_right.where('network_link_id', args.id));
-    const nextRights =
-      args.rights?.map(right => ({
-        id: right.id,
-        right_key: right.right_key,
-        direction: right.direction,
-        status: right.status,
-        initiator_group_id: right.initiator_group_id ?? null,
-      })) ??
-      existingRights.map(right => ({
-        id: right.id,
-        right_key: right.right_key,
-        direction: right.direction as 'forward' | 'backward' | 'bidirectional',
-        status: right.status,
-        initiator_group_id: right.initiator_group_id ?? null,
-      }));
-
-    await assertNoBlockingGroupConflicts(tx, ctx, {
-      kind: 'network_link_upsert',
-      link_id: args.id,
-      source_group_id: args.source_group_id ?? existingLink.source_group_id,
-      target_group_id: args.target_group_id ?? existingLink.target_group_id,
-      structural_relation: (args.structural_relation ?? existingLink.structural_relation) as
-        | 'parent_child'
-        | 'sibling',
-      rights: nextRights.map(right => ({
-        id: right.id,
-        right_key: right.right_key as
-          | 'informationRight'
-          | 'amendmentRight'
-          | 'rightToSpeak'
-          | 'activeVotingRight'
-          | 'passiveVotingRight',
-        direction: right.direction as 'forward' | 'backward' | 'bidirectional',
-        status: right.status as 'active' | 'requested' | 'pending' | 'rejected',
-        initiator_group_id: right.initiator_group_id ?? null,
-      })),
-      ...buildConflictMembershipPayload(
-        (args.membership_rule ??
-          (await tx.run(
-            zql.network_link_membership_rule.where('network_link_id', args.id).one()
-          ))) as
-          | {
-              membership_direction?: 'forward' | 'backward' | null;
-              membership_mode?: 'none' | 'all_members' | 'role_members' | 'selected_source_groups';
-              role_id?: string | null;
-              source_group_ids?: string[] | null;
-            }
-          | undefined
-      ),
+    const grants =
+      args.grants ?? (await tx.run(zql.group_right_grant.where('connection_id', args.id)));
+    const membershipRule =
+      args.membership_rule === undefined
+        ? await tx.run(zql.group_membership_rule.where('connection_id', args.id).one())
+        : args.membership_rule;
+    if (existing.connection_type !== 'hierarchy' && existing.connection_type !== 'peer') {
+      throw new Error('Unsupported group connection type');
+    }
+    await assertPayload(tx, {
+      id: args.id,
+      group_a_id: args.group_a_id ?? existing.group_a_id,
+      group_b_id: args.group_b_id ?? existing.group_b_id,
+      connection_type: args.connection_type ?? existing.connection_type,
+      parent_group_id: args.parent_group_id ?? existing.parent_group_id,
+      child_group_id: args.child_group_id ?? existing.child_group_id,
+      grants,
+      membership_rule: membershipRule,
     });
-
-    await mutators.network.updateNetworkLink.fn({ tx, ctx, args });
-    await reconcileNetworkSideEffects(tx, ctx.userID, [
-      existingLink.source_group_id,
-      existingLink.target_group_id,
-      args.source_group_id ?? null,
-      args.target_group_id ?? null,
+    await mutators.network.updateGroupConnection.fn({ tx, ctx, args });
+    await reconcileConnectionSideEffects(tx, ctx.userID, [
+      existing.group_a_id,
+      existing.group_b_id,
+      args.group_a_id,
+      args.group_b_id,
     ]);
   }),
 
-  deleteNetworkLink: defineMutator(deleteNetworkLinkSchema, async ({ tx, ctx, args }) => {
-    const existingLink = await tx.run(zql.network_link.where('id', args.id).one());
-    await deleteNetworkLinkAndRequestsInternal(tx, args.id);
-
-    if (!existingLink) {
-      return;
+  deleteGroupConnection: defineMutator(deleteGroupConnectionSchema, async ({ tx, ctx, args }) => {
+    const existing = await tx.run(zql.group_connection.where('id', args.id).one());
+    if (existing) {
+      await assertCanManageConnection(tx, ctx, existing);
     }
 
-    await reconcileNetworkSideEffects(tx, ctx.userID, [
-      existingLink.source_group_id,
-      existingLink.target_group_id,
-    ]);
-  }),
-
-  proposeNetworkLinkChange: defineMutator(
-    proposeNetworkLinkChangeSchema,
-    async ({ tx, ctx, args }) => {
-      await assertNoBlockingGroupConflicts(tx, ctx, {
-        kind: 'network_link_upsert',
-        link_id: args.active_network_link_id ?? args.proposed_network_link_id,
-        source_group_id: args.source_group_id,
-        target_group_id: args.target_group_id,
-        structural_relation: args.structural_relation,
-        rights: args.desired_rights.map(right => ({
-          id: right.id,
-          right_key: right.right_key,
-          direction: right.direction,
-          status: 'active',
-          initiator_group_id: args.initiator_group_id,
-        })),
-        ...buildConflictMembershipPayload({
-          membership_direction: args.desired_membership_direction ?? null,
-          membership_mode: args.desired_membership_mode,
-          role_id: args.desired_role_id ?? null,
-          source_group_ids: args.desired_source_group_ids ?? null,
-        }),
-      });
-
-      const existingLink = args.active_network_link_id
-        ? await tx.run(zql.network_link.where('id', args.active_network_link_id).one())
-        : null;
-      await proposeNetworkLinkChangeInternal(tx, args);
-      await reconcileNetworkSideEffects(tx, ctx.userID, [
-        existingLink?.source_group_id ?? null,
-        existingLink?.target_group_id ?? null,
+    await deleteGroupConnectionAndRequests(tx, args.id);
+    if (existing) {
+      await reconcileConnectionSideEffects(tx, ctx.userID, [
+        existing.group_a_id,
+        existing.group_b_id,
       ]);
+    }
+  }),
+
+  proposeGroupConnectionChange: defineMutator(
+    proposeGroupConnectionChangeSchema,
+    async ({ tx, ctx, args }) => {
+      await assertCanManageGroupRelationship(tx, ctx, args.initiator_group_id);
+
+      await assertPayload(tx, {
+        id: args.active_connection_id ?? args.proposed_connection_id,
+        group_a_id: args.group_a_id,
+        group_b_id: args.group_b_id,
+        connection_type: args.desired_connection_type,
+        parent_group_id: args.desired_parent_group_id,
+        child_group_id: args.desired_child_group_id,
+        grants: args.grants.filter(item => item.operation === 'upsert'),
+        membership_rule: args.membership_rule?.operation === 'upsert' ? args.membership_rule : null,
+      });
+      await proposeGroupConnectionChange(tx, args);
+      await reconcileConnectionSideEffects(tx, ctx.userID, [args.group_a_id, args.group_b_id]);
     }
   ),
 
-  approveNetworkLinkChangeRequest: defineMutator(
-    approveNetworkLinkChangeRequestSchema,
+  approveGroupConnectionRequest: defineMutator(
+    approveGroupConnectionRequestSchema,
     async ({ tx, ctx, args }) => {
-      const request = await tx.run(zql.network_link_change_request.where('id', args.id).one());
+      const request = await tx.run(zql.group_connection_request.where('id', args.id).one());
       if (!request) {
-        const missingRequest = await approveNetworkLinkChangeRequestInternal(
-          tx,
-          args.id,
-          args.right_ids
-        );
-        await reconcileNetworkSideEffects(tx, ctx.userID, [
-          missingRequest.active_network_link_id ?? null,
-          missingRequest.source_group_id,
-          missingRequest.target_group_id,
-        ]);
-        return;
+        throw new Error('Group connection request not found');
       }
-
-      const requestedRightIds = args.right_ids ? new Set(args.right_ids) : null;
-      const approvedRights = (request.desired_rights ?? []).filter(
-        desiredRight => requestedRightIds == null || requestedRightIds.has(desiredRight.id)
-      );
-
-      await assertNoBlockingGroupConflicts(tx, ctx, {
-        kind: 'network_link_upsert',
-        link_id: request.active_network_link_id ?? request.proposed_network_link_id,
-        source_group_id: request.source_group_id,
-        target_group_id: request.target_group_id,
-        structural_relation: request.structural_relation as 'parent_child' | 'sibling',
-        rights: approvedRights.map(right => ({
-          id: right.id,
-          right_key: right.right_key,
-          direction: right.direction,
-          status: 'active',
-          initiator_group_id: request.initiator_group_id,
-        })),
-        ...buildConflictMembershipPayload({
-          membership_direction: (request.desired_membership_direction ?? null) as
-            | 'forward'
-            | 'backward'
-            | null,
-          membership_mode: request.desired_membership_mode as
-            | 'none'
-            | 'all_members'
-            | 'role_members'
-            | 'selected_source_groups',
-          role_id: request.desired_role_id ?? null,
-          source_group_ids: request.desired_source_group_ids ?? null,
-        }),
+      await assertCanManageConnection(tx, ctx, {
+        group_a_id: request.group_a_id,
+        group_b_id: request.group_b_id,
+        parent_group_id: request.desired_parent_group_id,
+        child_group_id: request.desired_child_group_id,
       });
 
-      const approvedRequest = await approveNetworkLinkChangeRequestInternal(
+      const grantRequests = await tx.run(
+        zql.group_right_grant_request.where('connection_request_id', args.id)
+      );
+      const membershipRequests = await tx.run(
+        zql.group_membership_rule_request.where('connection_request_id', args.id)
+      );
+      const membershipRequest =
+        [...membershipRequests].sort(
+          (left, right) =>
+            (right.updated_at ?? right.created_at ?? 0) - (left.updated_at ?? left.created_at ?? 0)
+        )[0] ?? null;
+      const origins = membershipRequest
+        ? await tx.run(
+            zql.group_membership_rule_request_origin.where(
+              'membership_rule_request_id',
+              membershipRequest.id
+            )
+          )
+        : [];
+      if (
+        request.desired_connection_type !== 'hierarchy' &&
+        request.desired_connection_type !== 'peer'
+      ) {
+        throw new Error('Unsupported requested group connection type');
+      }
+      const requestedMembership =
+        membershipRequest?.operation === 'upsert' &&
+        membershipRequest.member_source_group_id &&
+        membershipRequest.member_target_group_id &&
+        membershipRequest.membership_mode
+          ? {
+              member_source_group_id: membershipRequest.member_source_group_id,
+              member_target_group_id: membershipRequest.member_target_group_id,
+              membership_mode: membershipRequest.membership_mode,
+              required_source_role_id: membershipRequest.required_source_role_id,
+              eligible_origin_group_ids: origins.map(
+                (origin: any) => origin.eligible_origin_group_id
+              ),
+            }
+          : null;
+      await assertPayload(tx, {
+        id: request.active_connection_id ?? request.proposed_connection_id,
+        group_a_id: request.group_a_id,
+        group_b_id: request.group_b_id,
+        connection_type: request.desired_connection_type,
+        parent_group_id: request.desired_parent_group_id,
+        child_group_id: request.desired_child_group_id,
+        grants: grantRequests.filter((item: any) => item.operation === 'upsert'),
+        membership_rule: requestedMembership,
+      });
+      await approveGroupConnectionRequest(
         tx,
         args.id,
-        args.right_ids
+        args.grant_request_ids,
+        args.approve_membership
       );
-      await reconcileNetworkSideEffects(tx, ctx.userID, [
-        approvedRequest.active_network_link_id ?? null,
-        approvedRequest.source_group_id,
-        approvedRequest.target_group_id,
+      await reconcileConnectionSideEffects(tx, ctx.userID, [
+        request.group_a_id,
+        request.group_b_id,
       ]);
     }
   ),
 
-  rejectNetworkLinkChangeRequest: defineMutator(
-    rejectNetworkLinkChangeRequestSchema,
+  rejectGroupConnectionRequest: defineMutator(
+    rejectGroupConnectionRequestSchema,
     async ({ tx, ctx, args }) => {
-      const request = await rejectNetworkLinkChangeRequestInternal(tx, args.id, args.right_ids);
-      await reconcileNetworkSideEffects(tx, ctx.userID, [
-        request.active_network_link_id ?? null,
-        request.source_group_id,
-        request.target_group_id,
+      const existingRequest = await tx.run(zql.group_connection_request.where('id', args.id).one());
+      if (!existingRequest) {
+        throw new Error('Group connection request not found');
+      }
+      await assertCanManageConnection(tx, ctx, {
+        group_a_id: existingRequest.group_a_id,
+        group_b_id: existingRequest.group_b_id,
+        parent_group_id: existingRequest.desired_parent_group_id,
+        child_group_id: existingRequest.desired_child_group_id,
+      });
+
+      const request = await rejectGroupConnectionRequest(
+        tx,
+        args.id,
+        args.grant_request_ids,
+        args.reject_membership,
+        args.reject_structure
+      );
+      await reconcileConnectionSideEffects(tx, ctx.userID, [
+        request.group_a_id,
+        request.group_b_id,
       ]);
     }
   ),

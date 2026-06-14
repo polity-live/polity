@@ -1,13 +1,18 @@
 import { useMemo, useState } from 'react';
 import type { Value } from 'platejs';
 import { createSlateEditor } from 'platejs';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/features/shared/ui/ui/collapsible';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/features/shared/ui/ui/collapsible';
 import { Button } from '@/features/shared/ui/ui/button';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { EditorStatic } from '@/features/shared/ui/ui-platejs/editor-static';
 import { BaseEditorKit } from '@/features/shared/ui/kit-platejs/editor-base-kit';
 import { filterDocumentToSuggestions } from '../logic/filterDocumentToSingleSuggestion';
 import { InlineAmendmentEditor } from '@/features/editor/ui/InlineAmendmentEditor';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface CREditorPreviewProps {
   documentContent: Value;
@@ -31,13 +36,11 @@ export function CREditorPreview({
   agendaItemId,
 }: CREditorPreviewProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const isInteractive = (editingMode === 'suggest_event' || editingMode === 'vote_event') && !!amendmentId;
+  const isInteractive =
+    (editingMode === 'suggest_event' || editingMode === 'vote_event') && !!amendmentId;
 
   // Stabilize the Set identity for memo deps by serializing to a sorted string
-  const suggestionIdsKey = useMemo(
-    () => [...suggestionIds].sort().join(','),
-    [suggestionIds],
-  );
+  const suggestionIdsKey = useMemo(() => [...suggestionIds].sort().join(','), [suggestionIds]);
 
   const editor = useMemo(() => {
     if (!isOpen || isInteractive) return null;
@@ -48,15 +51,14 @@ export function CREditorPreview({
       plugins: BaseEditorKit,
       value: filteredContent,
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, isInteractive, documentContent, suggestionIdsKey]);
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <CollapsibleTrigger asChild>
-        <Button variant="ghost" size="sm" className="gap-1 text-xs text-muted-foreground">
+        <Button variant="ghost" size="sm" className="text-muted-foreground gap-1 text-xs">
           {isOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-          Document Preview
+          {translateText('generated.inline.0288_document_preview_88c64603')}
         </Button>
       </CollapsibleTrigger>
       <CollapsibleContent>
@@ -71,7 +73,7 @@ export function CREditorPreview({
           </div>
         ) : (
           editor && (
-            <div className="mt-2 rounded-lg border bg-muted/30 p-4">
+            <div className="bg-muted/30 mt-2 rounded-lg border p-4">
               <EditorStatic editor={editor} variant="none" />
             </div>
           )

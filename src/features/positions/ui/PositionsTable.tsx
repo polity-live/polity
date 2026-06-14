@@ -37,6 +37,7 @@ import { useState } from 'react';
 import { format } from 'date-fns';
 
 import { useGroupRoles as useFacadeGroupRoles } from '@/zero/groups/useGroupState';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 type PositionRowBase = ReturnType<typeof useFacadeGroupRoles>['roles'][number];
 
@@ -134,10 +135,12 @@ export function PositionsTable({
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Briefcase className="h-5 w-5" />
-                Incumbents
+                {translateText('generated.inline.1065_incumbents_256492e4')}
               </CardTitle>
               <CardDescription>
-                Manage role holders, fill vacancies, and track elections
+                {translateText(
+                  'generated.inline.1066_manage_role_holders_fill_vacancies_and_track__692d43c1'
+                )}
               </CardDescription>
             </div>
             {canManage && addPositionButton ? addPositionButton : null}
@@ -149,11 +152,21 @@ export function PositionsTable({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Current Incumbent</TableHead>
-                    <TableHead>Term Info</TableHead>
-                    <TableHead>Elections</TableHead>
-                    {canManage && <TableHead className="text-right">Actions</TableHead>}
+                    <TableHead>{translateText('generated.inline.0091_role_c3f104d1')}</TableHead>
+                    <TableHead>
+                      {translateText('generated.inline.1067_current_incumbent_6ee2d999')}
+                    </TableHead>
+                    <TableHead>
+                      {translateText('generated.inline.1068_term_info_e9e7244e')}
+                    </TableHead>
+                    <TableHead>
+                      {translateText('generated.inline.0852_elections_7213288b')}
+                    </TableHead>
+                    {canManage && (
+                      <TableHead className="text-right">
+                        {translateText('generated.inline.0093_actions_c3cd636a')}
+                      </TableHead>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -201,7 +214,9 @@ export function PositionsTable({
                                 )}
                                 {position.currentHolder.source === 'membership' && (
                                   <div className="text-muted-foreground text-xs">
-                                    Assigned through active membership
+                                    {translateText(
+                                      'generated.inline.1069_assigned_through_active_membership_4a4709b9'
+                                    )}
                                   </div>
                                 )}
                               </div>
@@ -209,7 +224,9 @@ export function PositionsTable({
                           ) : (
                             <div className="text-muted-foreground flex items-center gap-2">
                               <User className="h-4 w-4" />
-                              <span className="text-sm">Vacant</span>
+                              <span className="text-sm">
+                                {translateText('generated.inline.1070_vacant_1966f967')}
+                              </span>
                             </div>
                           )}
                         </TableCell>
@@ -218,18 +235,20 @@ export function PositionsTable({
                             <div className="flex items-center gap-1 text-sm">
                               <Calendar className="h-3 w-3" />
                               <span>
-                                {position.term ?? '—'} year
+                                {position.term ?? '—'}
+                                {translateText('generated.inline.0135_year_4ff0b153')}
                                 {Number(position.term ?? 0) > 1 ? 's' : ''}
                               </span>
                             </div>
                             {termEnd && (
                               <div className="flex flex-col gap-1">
                                 <div className="text-muted-foreground text-xs">
-                                  Ends: {format(termEnd, 'MMM d, yyyy')}
+                                  {translateText('generated.inline.1071_ends_06e9778f')}
+                                  {format(termEnd, 'MMM d, yyyy')}
                                 </div>
                                 {isExpired && (
                                   <Badge variant="destructive" className="w-fit">
-                                    Expired
+                                    {translateText('generated.inline.1072_expired_a689a999')}
                                   </Badge>
                                 )}
                                 {isExpiring && !isExpired && (
@@ -237,7 +256,7 @@ export function PositionsTable({
                                     variant="outline"
                                     className="w-fit border-orange-500 text-orange-500"
                                   >
-                                    Expiring Soon
+                                    {translateText('generated.inline.1073_expiring_soon_50b61e0c')}
                                   </Badge>
                                 )}
                               </div>
@@ -249,11 +268,14 @@ export function PositionsTable({
                             {activeElections.length > 0 ? (
                               <Badge variant="secondary" className="gap-1">
                                 <Vote className="h-3 w-3" />
-                                {activeElections.length} Active
+                                {activeElections.length}
+                                {translateText('generated.inline.1074_active_a733b809')}
                               </Badge>
                             ) : (
                               <span className="text-muted-foreground text-sm">
-                                No active elections
+                                {translateText(
+                                  'generated.inline.1075_no_active_elections_c0f7abb8'
+                                )}
                               </span>
                             )}
                           </div>
@@ -265,7 +287,7 @@ export function PositionsTable({
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => onViewHistory(position)}
-                                title="View History"
+                                title={translateText('generated.inline.0726_view_history_8bc3b1ed')}
                               >
                                 <History className="h-4 w-4" />
                               </Button>
@@ -275,7 +297,9 @@ export function PositionsTable({
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => handleRemoveHolderClick(position)}
-                                    title="Remove Holder"
+                                    title={translateText(
+                                      'generated.inline.1076_remove_holder_af2745c3'
+                                    )}
                                   >
                                     <UserPlus className="h-4 w-4 text-orange-500" />
                                   </Button>
@@ -299,7 +323,9 @@ export function PositionsTable({
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => onCreateElection(position.id)}
-                                title="Create Election"
+                                title={translateText(
+                                  'generated.inline.0728_create_election_678ef240'
+                                )}
                               >
                                 <Vote className="h-4 w-4" />
                               </Button>
@@ -307,7 +333,9 @@ export function PositionsTable({
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => onEdit(position)}
-                                title="Edit Position"
+                                title={translateText(
+                                  'generated.inline.1077_edit_position_90312b49'
+                                )}
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
@@ -315,7 +343,9 @@ export function PositionsTable({
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleDeleteClick(position)}
-                                title="Delete Position"
+                                title={translateText(
+                                  'generated.inline.1078_delete_position_92ae3714'
+                                )}
                               >
                                 <Trash2 className="text-destructive h-4 w-4" />
                               </Button>
@@ -332,7 +362,9 @@ export function PositionsTable({
             <div className="py-12 text-center">
               <Briefcase className="text-muted-foreground/50 mx-auto h-12 w-12" />
               <p className="text-muted-foreground mt-4">
-                No roles are ready for incumbent tracking yet.
+                {translateText(
+                  'generated.inline.1079_no_roles_are_ready_for_incumbent_tracking_yet_96f38b80'
+                )}
               </p>
             </div>
           )}
@@ -343,24 +375,31 @@ export function PositionsTable({
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Position?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {translateText('generated.inline.1080_delete_position_46102c79')}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{selectedPosition?.title}"? This action cannot be
-              undone.
+              {translateText('generated.inline.1081_are_you_sure_you_want_to_delete_de36321b')}
+              {selectedPosition?.title}
+              {translateText('generated.inline.1082_this_action_cannot_be_undone_66ac3236')}
               {selectedPosition?.currentHolder && (
                 <span className="mt-2 block font-semibold text-orange-600">
-                  Warning: This position currently has a holder assigned.
+                  {translateText(
+                    'generated.inline.1083_warning_this_position_currently_has_a_holder__e51c603a'
+                  )}
                 </span>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>
+              {translateText('generated.inline.0065_cancel_77dfd213')}
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
               className="bg-destructive text-destructive-foreground"
             >
-              Delete
+              {translateText('generated.inline.0537_delete_f6fdbe48')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -370,17 +409,26 @@ export function PositionsTable({
       <AlertDialog open={removeHolderConfirmOpen} onOpenChange={setRemoveHolderConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove Current Holder?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {translateText('generated.inline.1084_remove_current_holder_839c0b5a')}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to remove{' '}
+              {translateText('generated.inline.1085_are_you_sure_you_want_to_remove_39db6fb2')}{' '}
               {selectedPosition?.currentHolder?.fullName || selectedPosition?.currentHolder?.handle}{' '}
-              from "{selectedPosition?.title}"? This will mark the position as vacant and record the
-              removal in the position history.
+              {translateText('generated.inline.1086_from_5cf0eba6')}
+              {selectedPosition?.title}
+              {translateText(
+                'generated.inline.1087_this_will_mark_the_position_as_vacant_and_rec_f27ecae5'
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRemoveHolderConfirm}>Remove Holder</AlertDialogAction>
+            <AlertDialogCancel>
+              {translateText('generated.inline.0065_cancel_77dfd213')}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleRemoveHolderConfirm}>
+              {translateText('generated.inline.1076_remove_holder_af2745c3')}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

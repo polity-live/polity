@@ -29,47 +29,35 @@ export function FloatingToolbarButtons() {
       {!readOnly && (
         <>
           <ToolbarGroup>
-            <AIToolbarButton tooltip={t('plateJs.toolbar.aiCommands', 'AI commands')}>
+            <AIToolbarButton tooltip={t('plateJs.toolbar.aiCommands')}>
               <WandSparklesIcon />
-              {t('plateJs.toolbar.askAI', 'Ask AI')}
+              {t('plateJs.toolbar.askAI')}
             </AIToolbarButton>
           </ToolbarGroup>
 
           <ToolbarGroup>
             <TurnIntoToolbarButton />
 
-            <MarkToolbarButton
-              nodeType={KEYS.bold}
-              tooltip={t('plateJs.toolbar.bold', 'Bold (⌘+B)')}
-            >
+            <MarkToolbarButton nodeType={KEYS.bold} tooltip={t('plateJs.toolbar.bold')}>
               <BoldIcon />
             </MarkToolbarButton>
 
-            <MarkToolbarButton
-              nodeType={KEYS.italic}
-              tooltip={t('plateJs.toolbar.italic', 'Italic (⌘+I)')}
-            >
+            <MarkToolbarButton nodeType={KEYS.italic} tooltip={t('plateJs.toolbar.italic')}>
               <ItalicIcon />
             </MarkToolbarButton>
 
-            <MarkToolbarButton
-              nodeType={KEYS.underline}
-              tooltip={t('plateJs.toolbar.underline', 'Underline (⌘+U)')}
-            >
+            <MarkToolbarButton nodeType={KEYS.underline} tooltip={t('plateJs.toolbar.underline')}>
               <UnderlineIcon />
             </MarkToolbarButton>
 
             <MarkToolbarButton
               nodeType={KEYS.strikethrough}
-              tooltip={t('plateJs.toolbar.strikethrough', 'Strikethrough (⌘+⇧+M)')}
+              tooltip={t('plateJs.toolbar.strikethrough')}
             >
               <StrikethroughIcon />
             </MarkToolbarButton>
 
-            <MarkToolbarButton
-              nodeType={KEYS.code}
-              tooltip={t('plateJs.toolbar.code', 'Code (⌘+E)')}
-            >
+            <MarkToolbarButton nodeType={KEYS.code} tooltip={t('plateJs.toolbar.code')}>
               <Code2Icon />
             </MarkToolbarButton>
 

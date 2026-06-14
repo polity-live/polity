@@ -5,7 +5,6 @@
  */
 
 import { useMemo } from 'react';
-import { useNavigate } from '@tanstack/react-router';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { PqlToolbar } from '@/features/pql/ui/PqlToolbar';
 import { usePqlCollection } from '@/features/pql/hooks/usePqlCollection';
@@ -15,6 +14,7 @@ import { useGroupDocuments } from '../hooks/useGroupDocuments';
 import { useDocumentMutations } from '../hooks/useDocumentMutations';
 import { GroupDocumentCard } from './GroupDocumentCard';
 import { CreateDocumentDialog } from './CreateDocumentDialog';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface GroupDocumentsListProps {
   groupId: string;
@@ -56,7 +56,6 @@ export function GroupDocumentsList({
   storageKey = `group-${groupId}-documents`,
   canManageDocuments = true,
 }: GroupDocumentsListProps) {
-  const navigate = useNavigate();
   const { documents, isLoading } = useGroupDocuments(groupId);
   const { createDocument, isCreating } = useDocumentMutations(groupId);
 
@@ -87,14 +86,14 @@ export function GroupDocumentsList({
     () => [
       {
         key: 'title',
-        label: 'Title',
+        label: translateText('generated.inline.0086_title_768e0c1c'),
         kind: 'text',
         operators: ['contains', 'eq'],
         getValue: document => document.title,
       },
       {
         key: 'collaborator_keys',
-        label: 'Collaborator',
+        label: translateText('generated.inline.0087_collaborator_794b34c1'),
         kind: 'entity',
         operators: ['in'],
         options: collaboratorOptions,
@@ -105,14 +104,14 @@ export function GroupDocumentsList({
       },
       {
         key: 'updated_at',
-        label: 'Updated',
+        label: translateText('generated.inline.0088_updated_f2f8570d'),
         kind: 'date',
         operators: ['gt', 'gte', 'lt', 'lte'],
         getValue: document => document.updated_at,
       },
       {
         key: 'created_at',
-        label: 'Created',
+        label: translateText('generated.inline.0089_created_accf40c8'),
         kind: 'date',
         operators: ['gt', 'gte', 'lt', 'lte'],
         getValue: document => document.created_at,
@@ -153,10 +152,6 @@ export function GroupDocumentsList({
     sortItems: sortDocuments,
   });
 
-  const handleOpenDocument = (docId: string) => {
-    navigate({ to: `/group/${groupId}/editor/${docId}` });
-  };
-
   const handleCreateDocument = async (title: string) => {
     if (!userId) return;
     await createDocument(title, groupId, userId);
@@ -190,8 +185,10 @@ export function GroupDocumentsList({
             <FileText className="text-muted-foreground mb-4 h-16 w-16" />
             <p className="text-muted-foreground mb-4 text-lg">
               {canManageDocuments
-                ? 'No documents yet. Create your first document to get started.'
-                : 'No documents available yet.'}
+                ? translateText(
+                    'generated.inline.0060_no_documents_yet_create_your_first_document_t_bb860ef3'
+                  )
+                : translateText('generated.inline.0061_no_documents_available_yet_02bcc505')}
             </p>
             {canManageDocuments ? (
               <CreateDocumentDialog
@@ -224,7 +221,9 @@ export function GroupDocumentsList({
         fields={fields}
         searchQuery={searchQuery}
         onSearchQueryChange={setSearchQuery}
-        searchPlaceholder="Search documents and collaborators..."
+        searchPlaceholder={translateText(
+          'generated.inline.0414_search_documents_and_collaborators_20b3fc11'
+        )}
         quickFilters={[]}
         quickFilterValues={quickFilterValues}
         onQuickFilterValuesChange={setQuickFilterValues}
@@ -243,10 +242,14 @@ export function GroupDocumentsList({
             <FileText className="text-muted-foreground mb-4 h-16 w-16" />
             <p className="text-muted-foreground mb-2 text-lg">
               {hasActiveFilters
-                ? 'No documents match the current search and filters.'
+                ? translateText(
+                    'generated.inline.0062_no_documents_match_the_current_search_and_fil_9fe5ffdc'
+                  )
                 : canManageDocuments
-                  ? 'No documents yet. Create your first document to get started.'
-                  : 'No documents available yet.'}
+                  ? translateText(
+                      'generated.inline.0060_no_documents_yet_create_your_first_document_t_bb860ef3'
+                    )
+                  : translateText('generated.inline.0061_no_documents_available_yet_02bcc505')}
             </p>
           </CardContent>
         </Card>
@@ -256,8 +259,7 @@ export function GroupDocumentsList({
             <GroupDocumentCard
               key={doc.id}
               document={doc}
-              userId={userId}
-              onClick={() => handleOpenDocument(doc.id)}
+              href={`/group/${groupId}/editor/${doc.id}`}
             />
           ))}
         </div>

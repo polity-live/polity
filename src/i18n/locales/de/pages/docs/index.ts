@@ -25,21 +25,22 @@ export const docsPageTranslations = {
     title: 'Polity aus der Nutzerperspektive verstehen',
     subtitle:
       'Diese Dokumentation erklärt, wie Menschen in Polity Räume betreten, Arbeit koordinieren, Entscheidungen treffen und Ergebnisse verfolgen, ohne zuerst in technische Details gezwungen zu werden.',
-    primaryCta: 'Mit Benutzern beginnen',
-    secondaryCta: 'Rollen und Rechte verstehen',
+    primaryCta: 'Mit Anmeldung beginnen',
+    secondaryCta: 'Erstellungswege verstehen',
     pathwaysTitle: 'Typische Wege',
     pathways: {
       start:
-        'Richten Sie Ihr Profil ein, entdecken Sie relevante Gruppen und verstehen Sie, wo Sie im Netzwerk stehen.',
+        'Melden Sie sich an, richten Sie Ihr Profil ein, entdecken Sie relevante Gruppen und verstehen Sie, wo Sie im Netzwerk stehen.',
       coordinate:
-        'Bewegen Sie sich zwischen Gruppen, Veranstaltungen, Nachrichten, Benachrichtigungen, Kalender und Aufgaben, um tägliche Zusammenarbeit in Gang zu halten.',
+        'Bewegen Sie sich zwischen Erstellung, Gruppen, Veranstaltungen, Nachrichten, Benachrichtigungen, Kalender, Aufgaben und Dokumenten, um tägliche Zusammenarbeit in Gang zu halten.',
       decide:
-        'Nutzen Sie Amendments, Abstimmungen, Wahlen und das Decision Terminal, um zu sehen, wie aus Vorschlägen sichtbare Ergebnisse werden.',
+        'Nutzen Sie Amendments, Tagesordnungen, Change Requests, Abstimmungen, Wahlen und das Decision Terminal, um zu sehen, wie aus Vorschlägen sichtbare Ergebnisse werden.',
       'follow-through':
-        'Verfolgen Sie, was sich geändert hat, wer als Nächstes handeln muss und wo eine Entscheidung oder ein Amendment in verbundenen Gruppen weiterläuft.',
+        'Verfolgen Sie über Timeline, Suche, Abonnements und Benachrichtigungen, was sich geändert hat, wer als Nächstes handeln muss und wo Arbeit in verbundenen Räumen weiterläuft.',
     },
     featuredTitle: 'Empfohlene Leitfäden',
-    featuredDescription: 'Beginnen Sie mit den wichtigsten Nutzerwegen und Systemübersichten.',
+    featuredDescription:
+      'Beginnen Sie mit Anmeldung, Arbeitsräumen, Erstellungswegen und den wichtigsten Entscheidungsflüssen.',
     libraryTitle: 'Dokumentationsbibliothek',
     libraryDescription:
       'Durchsuchen Sie die vollständigen, nutzerorientierten Leitfäden nach Arbeitsbereich.',
@@ -68,6 +69,60 @@ export const docsPageTranslations = {
     },
   },
   topics: {
+    'auth-and-onboarding': {
+      navLabel: 'Anmeldung & Einstieg',
+      title: 'Anmeldung und Einstieg',
+      summary:
+        'Kontoerstellung, E-Mail-Verifizierung, Passwort-Zurücksetzung und die ersten Schritte in den geschützten Arbeitsbereich.',
+      audience:
+        'Neue Nutzer, eingeladene Mitglieder und alle, die verstehen möchten, wie Polity vom öffentlichen Bereich in den persönlichen Arbeitsraum führt.',
+      entry:
+        'Beginnen Sie hier, wenn Sie Polity zum ersten Mal nutzen oder Probleme beim Einstieg einordnen möchten.',
+      perspective:
+        'Der Einstieg entscheidet, ob Polity sich wie eine offene Informationsseite oder wie ein persönlicher Arbeitsraum anfühlt.',
+      outcome:
+        'Nach einem erfolgreichen Einstieg kann ein Nutzer sein Profil pflegen, relevante Gruppen öffnen und alle geschützten Funktionen mit passendem Kontext nutzen.',
+      actions: [
+        'Ein Konto erstellen, sich anmelden oder den Verifizierungsfluss abschließen.',
+        'Passwort- und E-Mail-Flows nutzen, wenn der Zugang wiederhergestellt werden muss.',
+        'Nach dem Einstieg Profil, Sprache, Theme und erste relevante Räume prüfen.',
+      ],
+      concepts: [
+        'Öffentliche Seiten erklären Polity, während geschützte Routen persönliche Daten und Zusammenarbeit öffnen.',
+        'Supabase Auth steuert Identität, Sitzung und E-Mail-basierte Zugangsflüsse.',
+        'Onboarding verbindet technische Anmeldung mit dem Aufbau einer nutzbaren Präsenz im Netzwerk.',
+      ],
+      watchFor: [
+        'Ein noch nicht bestätigter oder abgelaufener Zugang fühlt sich oft wie ein Navigationsproblem an.',
+        'Der erste erfolgreiche Login ist nur der Anfang; Profil und Mitgliedschaften machen den Arbeitsraum nützlich.',
+        'Einladungen und bestehende Mitgliedschaften können beeinflussen, wo Nutzer nach der Anmeldung landen.',
+      ],
+      states: [
+        'Nutzer können öffentlich, angemeldet, verifiziert, unvollständig eingerichtet oder unberechtigt sein.',
+        'Der Einstieg ist gelungen, wenn Nutzer nicht nur eingeloggt sind, sondern wissen, wo ihre nächste Handlung liegt.',
+      ],
+      diagram: {
+        title: 'Vom öffentlichen Einstieg zum Arbeitsraum',
+        description: 'Der typische Weg von der Orientierung zur aktiven Nutzung.',
+        steps: {
+          'choose-entry': {
+            title: 'Einstieg wählen',
+            description:
+              'Nutzer öffnen Anmeldung, Registrierung, Einladung oder Passwort-Wiederherstellung je nach Situation.',
+          },
+          'verify-account': {
+            title: 'Zugang bestätigen',
+            description:
+              'E-Mail-Codes und Sitzungsprüfung stellen sicher, dass der richtige Nutzer den Arbeitsraum betritt.',
+          },
+          'complete-profile': {
+            title: 'Arbeitsraum vorbereiten',
+            description:
+              'Profil, Einstellungen und erste relevante Räume machen aus dem Konto eine nutzbare Präsenz.',
+          },
+        },
+      },
+    },
     users: {
       navLabel: 'Benutzer',
       title: 'Benutzer',
@@ -229,6 +284,60 @@ export const docsPageTranslations = {
         },
       },
     },
+    agendas: {
+      navLabel: 'Tagesordnungen',
+      title: 'Tagesordnungen',
+      summary:
+        'Strukturierte Veranstaltungsabläufe mit Punkten, Timing, verknüpften Vorschlägen, Entscheidungen und Nachbereitung.',
+      audience:
+        'Organisatoren, Moderatoren und Teilnehmer, die wissen müssen, was in einem Event wann behandelt wird.',
+      entry:
+        'Lesen Sie dies, wenn eine Veranstaltung mehr ist als ein Termin und konkrete Arbeit durch mehrere Punkte führt.',
+      perspective:
+        'Tagesordnungen verwandeln Veranstaltungen in einen nachvollziehbaren Ablauf, in dem Vorbereitung, Diskussion und Entscheidung zusammenfinden.',
+      outcome:
+        'Eine gute Tagesordnung hilft Teilnehmenden, vorbereitet zu sein, Entscheidungen im richtigen Moment zu erkennen und Ergebnisse später wiederzufinden.',
+      actions: [
+        'Tagesordnungspunkte erstellen, sortieren und mit Zeit, Status oder Typ versehen.',
+        'Amendments, Change Requests, Abstimmungen oder Material an relevante Punkte knüpfen.',
+        'Während und nach dem Event verfolgen, welche Punkte offen, aktiv oder abgeschlossen sind.',
+      ],
+      concepts: [
+        'Agenda-Punkte geben einem Event operative Reihenfolge und gemeinsame Aufmerksamkeit.',
+        'Ein Tagesordnungspunkt kann Diskussion, Präsentation, Abstimmung oder Vorbereitung tragen.',
+        'Die Verbindung zu Votes und Change Requests macht sichtbar, wo formale Entscheidungen entstehen.',
+      ],
+      watchFor: [
+        'Reihenfolge, Dauer und Status beeinflussen, wie Nutzer Dringlichkeit wahrnehmen.',
+        'Verknüpfte Amendments oder Votes sollten direkt aus dem Punkt heraus erreichbar bleiben.',
+        'Nach dem Event ist die Tagesordnung oft der beste Einstieg in Ergebnis- und Nacharbeitskontext.',
+      ],
+      states: [
+        'Agenda-Punkte können geplant, aktiv, abgeschlossen, übersprungen oder weitergeleitet wirken.',
+        'Nutzer lesen Tagesordnungen sowohl zur Vorbereitung als auch als Protokoll der tatsächlichen Arbeit.',
+      ],
+      diagram: {
+        title: 'Wie eine Tagesordnung Arbeit ordnet',
+        description: 'Der Ablauf von Planung zu Durchführung und Ergebnis.',
+        steps: {
+          'structure-meeting': {
+            title: 'Meeting strukturieren',
+            description:
+              'Organisatoren legen Punkte, Reihenfolge, Timing und verknüpfte Inhalte fest.',
+          },
+          'run-items': {
+            title: 'Punkte durchführen',
+            description:
+              'Teilnehmende bewegen sich durch Diskussionen, Materialien, Abstimmungen und offene Fragen.',
+          },
+          'record-decisions': {
+            title: 'Entscheidungen festhalten',
+            description:
+              'Status, Resultate und Anschlussarbeit bleiben nach der Veranstaltung auffindbar.',
+          },
+        },
+      },
+    },
     amendments: {
       navLabel: 'Amendments',
       title: 'Amendments',
@@ -278,6 +387,128 @@ export const docsPageTranslations = {
             title: 'Weiterleiten oder abstimmen',
             description:
               'Das Amendment lokal zur Entscheidung bringen oder durch das Netzwerk weiterführen.',
+          },
+        },
+      },
+    },
+    'documents-and-editor': {
+      navLabel: 'Dokumente & Editor',
+      title: 'Dokumente und Editor',
+      summary:
+        'Kollaborative Dokumente, Rich-Text-Bearbeitung, Versionen, Präsenz und Bearbeitungsmodi für Gruppen, Nutzer, Blogs und Amendments.',
+      audience:
+        'Autorinnen, Mitwirkende und Gruppenmitglieder, die Texte gemeinsam erstellen, prüfen oder veröffentlichen.',
+      entry:
+        'Nutzen Sie diesen Leitfaden, wenn Schreiben, Prüfen und Versionieren im Mittelpunkt eines Workflows stehen.',
+      perspective:
+        'Der Editor ist die Arbeitsfläche, auf der politische und organisatorische Inhalte von Ideen zu belastbaren Texten werden.',
+      outcome:
+        'Gute Dokumentarbeit macht sichtbar, wer am Text arbeitet, welche Version gilt und ob eine Änderung direkt, als Vorschlag oder nur lesend behandelt wird.',
+      actions: [
+        'Gruppen- und Nutzerdokumente öffnen, erstellen und im passenden Kontext bearbeiten.',
+        'Zwischen Ansichts-, Vorschlags- und Bearbeitungsmodus wechseln, wenn Rechte und Workflow es erlauben.',
+        'Versionen speichern, frühere Stände prüfen und Zusammenarbeit über Präsenzsignale einordnen.',
+      ],
+      concepts: [
+        'Dokumente sind eigenständige Arbeitsflächen und zugleich Bestandteil von Gruppen, Blogs oder Amendments.',
+        'Bearbeitungsmodi machen Rechte und gewünschte Review-Tiefe im Text selbst spürbar.',
+        'Versionen geben Nutzern Vertrauen, dass gemeinsames Schreiben nachvollziehbar bleibt.',
+      ],
+      watchFor: [
+        'Nicht jede Person darf direkt bearbeiten; manchmal sind Vorschläge oder reine Ansicht der richtige Modus.',
+        'Autosave und Versionen lösen unterschiedliche Nutzerfragen: aktuelle Sicherheit und historische Nachvollziehbarkeit.',
+        'Dokumentkontext entscheidet, ob ein Text privat, gruppenbezogen oder Teil eines formalen Amendment-Flusses ist.',
+      ],
+      states: [
+        'Ein Dokument kann leer, in Bearbeitung, mit Vorschlägen versehen, versioniert oder nur lesbar sein.',
+        'Nutzer achten besonders auf Modus, Speichersicherheit und sichtbare Mitarbeit anderer Personen.',
+      ],
+      diagram: {
+        title: 'Vom Dokument zur geprüften Fassung',
+        description: 'Wie Nutzer Dokumente typischerweise bearbeiten und absichern.',
+        steps: {
+          'open-document': {
+            title: 'Dokument öffnen',
+            description:
+              'Der Kontext bestimmt, ob es sich um ein Gruppendokument, Blog, Profiltext oder Amendment handelt.',
+          },
+          'edit-or-suggest': {
+            title: 'Bearbeiten oder vorschlagen',
+            description:
+              'Nutzer arbeiten direkt am Text oder markieren Änderungen als prüfbare Vorschläge.',
+          },
+          'save-version': {
+            title: 'Version sichern',
+            description:
+              'Zwischenstände und Historie helfen, den aktuellen Text später zu erklären oder wiederherzustellen.',
+          },
+        },
+      },
+    },
+    'change-requests-and-discussions': {
+      navLabel: 'Change Requests & Diskussionen',
+      title: 'Change Requests und Diskussionen',
+      summary:
+        'Strukturierte Änderungsanträge, Kommentare, Abstimmung über Vorschläge und nachvollziehbare Auflösung von Review-Arbeit.',
+      audience:
+        'Mitwirkende, Autoren, Prüfer und Gruppen, die Textänderungen nicht nur besprechen, sondern entscheiden müssen.',
+      entry:
+        'Lesen Sie dies, wenn ein Vorschlag konkrete Änderungen am Text oder Ablauf auslösen soll.',
+      perspective:
+        'Change Requests geben Diskussionen eine handhabbare Form: Was soll sich ändern, warum, wer unterstützt es und was passiert danach?',
+      outcome:
+        'Ein sauber gelöster Change Request reduziert Unsicherheit, weil Änderung, Begründung, Diskussion und Ergebnis zusammen sichtbar bleiben.',
+      actions: [
+        'Vorgeschlagene Änderungen als Difference, Vorschau oder Kommentarzusammenhang prüfen.',
+        'Diskussionen eröffnen, beantworten und mit konkreten Textstellen oder Vorschlägen verbinden.',
+        'Über Change Requests abstimmen und nachvollziehen, ob sie angenommen, abgelehnt oder weiter offen sind.',
+      ],
+      concepts: [
+        'Change Requests sind der formale Review-Kanal zwischen freier Diskussion und direkter Textänderung.',
+        'Kommentare erklären Kontext, während Stimmen oder Status entscheiden, was mit dem Vorschlag passiert.',
+        'Automatische Auflösung kann Nutzer entlasten, wenn klare Mehrheiten oder Einstimmigkeit erreicht sind.',
+      ],
+      watchFor: [
+        'Ein Kommentar ist noch keine Änderung; der Change Request verbindet Gespräch mit Handlungsoption.',
+        'Abstimmungsrechte hängen vom jeweiligen Kollaborations- und Rollenkontext ab.',
+        'Nutzer brauchen nach der Auflösung ein klares Signal, ob der Text tatsächlich verändert wurde.',
+      ],
+      states: [
+        'Ein Change Request kann vorgeschlagen, diskutiert, unterstützt, angenommen, abgelehnt oder angewendet sein.',
+        'Diskussionen fühlen sich produktiv an, wenn sie sichtbar zum nächsten Review- oder Entscheidungsschritt führen.',
+      ],
+      diagram: {
+        title: 'Wie Review-Arbeit entschieden wird',
+        description: 'Eine Spuransicht von Vorschlag über Diskussion bis Ergebnis.',
+        lanes: {
+          proposal: 'Vorschlag',
+          discussion: 'Diskussion',
+          decision: 'Entscheidung',
+        },
+        steps: {
+          'propose-change': {
+            title: 'Änderung vorschlagen',
+            description:
+              'Ein Nutzer beschreibt, welche Text- oder Ablaufänderung geprüft werden soll.',
+          },
+          'review-diff': {
+            title: 'Diff prüfen',
+            description:
+              'Mitwirkende sehen Ergänzungen, Streichungen und betroffene Stellen im Kontext.',
+          },
+          'discuss-context': {
+            title: 'Kontext diskutieren',
+            description:
+              'Kommentare klären Absicht, Risiken und Alternativen, bevor entschieden wird.',
+          },
+          'vote-request': {
+            title: 'Über Vorschlag abstimmen',
+            description:
+              'Berechtigte Nutzer unterstützen, lehnen ab oder enthalten sich je nach Workflow.',
+          },
+          'apply-outcome': {
+            title: 'Ergebnis anwenden',
+            description: 'Der Status macht sichtbar, ob die Änderung übernommen wurde oder nicht.',
           },
         },
       },
@@ -332,6 +563,59 @@ export const docsPageTranslations = {
             title: 'Diskutieren',
             description:
               'Lassen Sie Leser reagieren, teilen und den Beitrag mit laufender Arbeit verbinden.',
+          },
+        },
+      },
+    },
+    statements: {
+      navLabel: 'Statements',
+      title: 'Statements',
+      summary:
+        'Kurze öffentliche oder kontextbezogene Positionen, die Haltung, Argumente und Auffindbarkeit über Profile, Gruppen und Suche verbinden.',
+      audience:
+        'Nutzer, Gruppen und Leser, die Positionen sichtbar machen oder schnell erfassen möchten.',
+      entry:
+        'Nutzen Sie diesen Leitfaden, wenn eine Aussage kompakter sein soll als ein Blogbeitrag, aber mehr Kontext braucht als ein Kommentar.',
+      perspective:
+        'Statements geben Nutzern eine leichte Form, Haltung zu zeigen und in Such- oder Timeline-Kontexte einzutreten.',
+      outcome:
+        'Ein gutes Statement macht eine Position auffindbar, zitierbar und mit Profil, Hashtags oder verwandten Inhalten verbunden.',
+      actions: [
+        'Ein öffentliches oder eingeschränkt sichtbares Statement erstellen.',
+        'Statements über Profil, Suche, Timeline oder verwandte Inhalte wiederfinden.',
+        'Tags und Kontext nutzen, damit andere die Aussage richtig einordnen können.',
+      ],
+      concepts: [
+        'Statements sind kürzer und direkter als Blogs, aber dauerhafter als Chat-Nachrichten.',
+        'Sichtbarkeit und Tags entscheiden, ob ein Statement als persönliche Position oder breiter Beitrag wirkt.',
+        'Related- und Suchflächen verbinden einzelne Aussagen mit größeren Themen.',
+      ],
+      watchFor: [
+        'Kurze Aussagen brauchen klare Tags, damit sie nicht isoliert wirken.',
+        'Private oder eingeschränkte Statements dürfen nicht wie öffentliche Positionen behandelt werden.',
+        'Statements können Einstiegspunkte in Profile, Diskussionen oder verwandte Inhalte sein.',
+      ],
+      states: [
+        'Ein Statement kann frisch erstellt, bearbeitet, sichtbar eingeschränkt oder über Suche wiederentdeckt sein.',
+        'Nutzer bewerten Statements daran, ob sie schnell verständlich und im richtigen Kontext auffindbar sind.',
+      ],
+      diagram: {
+        title: 'Wie ein Statement Kontext gewinnt',
+        description: 'Der Weg von einer Position zur auffindbaren Aussage.',
+        steps: {
+          'publish-position': {
+            title: 'Position veröffentlichen',
+            description:
+              'Nutzer formulieren eine klare Aussage mit passender Sichtbarkeit und Tags.',
+          },
+          'connect-context': {
+            title: 'Kontext verbinden',
+            description: 'Profil, Thema, Gruppe oder verwandte Inhalte helfen beim Einordnen.',
+          },
+          'surface-in-search': {
+            title: 'In Suche und Timeline auftauchen',
+            description:
+              'Andere finden die Aussage wieder und springen von dort in den passenden Kontext.',
           },
         },
       },
@@ -487,6 +771,60 @@ export const docsPageTranslations = {
           'follow-result': {
             title: 'Ergebnis verfolgen',
             description: 'Nutzen Sie das sichtbare Ergebnis, um die nächste Handlung zu steuern.',
+          },
+        },
+      },
+    },
+    timeline: {
+      navLabel: 'Timeline',
+      title: 'Timeline',
+      summary:
+        'Der persönliche Überblick über abonnierte Inhalte, Entdeckung, Aktivität und wichtige Entscheidungsereignisse.',
+      audience:
+        'Alle, die schnell aufholen, neue öffentliche Inhalte entdecken oder aus Signalen zurück in Arbeit springen möchten.',
+      entry:
+        'Beginnen Sie hier, wenn die Plattform größer wird als einzelne Gruppen- oder Eventseiten.',
+      perspective:
+        'Die Timeline ist der Puls der App: Sie zeigt, was sich bewegt, warum es relevant sein könnte und wo Nutzer weiterarbeiten können.',
+      outcome:
+        'Eine gute Timeline reduziert Suchaufwand, bringt relevante Arbeit nach vorne und macht Entscheidungen im richtigen Moment sichtbar.',
+      actions: [
+        'Abonnierte Inhalte, öffentliche Entdeckungen und Entscheidungsereignisse in einem Feed scannen.',
+        'Nach Typen oder Relevanz filtern, um bei vielen Signalen nicht den Überblick zu verlieren.',
+        'Aus Karten direkt in Gruppen, Events, Amendments, Votes oder Diskussionen springen.',
+      ],
+      concepts: [
+        'Following zeigt Nähe, Explore zeigt Entdeckung und Decisions zeigt formale Dringlichkeit.',
+        'Karten sind Einstiegspunkte in native Workflows, nicht Ersatz für Detailseiten.',
+        'Relevanz entsteht aus Abonnements, Sichtbarkeit, Aktivität und Inhaltstypen.',
+      ],
+      watchFor: [
+        'Nutzer brauchen erkennbare Gründe, warum ein Inhalt angezeigt wird.',
+        'Zu viele gleichartige Karten machen Filter und klare Typ-Signale wichtig.',
+        'Decision-Signale müssen sich dringender anfühlen als allgemeine Aktivität.',
+      ],
+      states: [
+        'Die Timeline kann leer, gefiltert, abonnementsbasiert, explorativ oder entscheidungsorientiert sein.',
+        'Nutzer wechseln zwischen Scannen und Detailprüfung, sobald ein Signal wichtig wird.',
+      ],
+      diagram: {
+        title: 'Vom Folgen zur Handlung',
+        description: 'Wie Timeline-Signale Nutzer zurück in relevante Arbeit bringen.',
+        steps: {
+          'follow-sources': {
+            title: 'Quellen folgen',
+            description:
+              'Abonnements, Mitgliedschaften und Sichtbarkeit bestimmen, welche Inhalte nah wirken.',
+          },
+          'scan-feed': {
+            title: 'Feed scannen',
+            description:
+              'Karten, Filter und Entscheidungszustände helfen, Wichtiges schnell zu erkennen.',
+          },
+          'open-work': {
+            title: 'Arbeit öffnen',
+            description:
+              'Nutzer springen aus dem Signal in den eigentlichen Gruppen-, Event- oder Entscheidungsworkflow.',
           },
         },
       },
@@ -648,6 +986,60 @@ export const docsPageTranslations = {
         },
       },
     },
+    'pwa-and-notifications': {
+      navLabel: 'PWA & Push',
+      title: 'PWA und Push-Benachrichtigungen',
+      summary:
+        'Installierbare App-Oberfläche, Browser-Benachrichtigungen und schnelle Rückwege in aktuelle Arbeit.',
+      audience:
+        'Nutzer, die Polity regelmäßig verwenden und wichtige Updates auch außerhalb des offenen Browser-Tabs bemerken möchten.',
+      entry:
+        'Nutzen Sie diesen Leitfaden, wenn Polity sich wie eine App auf dem Gerät verhalten soll.',
+      perspective:
+        'PWA und Push machen Polity präsenter, ohne dass Nutzer ständig alle Räume manuell öffnen müssen.',
+      outcome:
+        'Richtig eingerichtet können Nutzer schneller zurückkehren, wichtige Hinweise sehen und trotzdem über Benachrichtigungseinstellungen Kontrolle behalten.',
+      actions: [
+        'Die App installieren, wenn das Gerät oder der Browser es anbietet.',
+        'Browser-Benachrichtigungen aktivieren oder ablehnen und die Wirkung verstehen.',
+        'Über Push- oder App-Einstieg direkt in relevante Benachrichtigungskontexte zurückkehren.',
+      ],
+      concepts: [
+        'PWA-Installation betrifft Zugriff und Verhalten auf dem Gerät, nicht Berechtigungen innerhalb von Polity.',
+        'Push-Benachrichtigungen ergänzen die interne Benachrichtigungsseite.',
+        'Nutzerkontrolle bleibt wichtig, weil App-Präsenz ohne gute Signalqualität schnell störend wird.',
+      ],
+      watchFor: [
+        'Browser- und Betriebssystemrechte können verhindern, dass Push überhaupt sichtbar wird.',
+        'Nicht jede interne Benachrichtigung sollte automatisch als Push erscheinen.',
+        'Installationshinweise sollten Arbeit erleichtern und nicht als Marketingfläche wirken.',
+      ],
+      states: [
+        'Ein Gerät kann nicht installierbar, installierbar, installiert, push-fähig oder push-blockiert sein.',
+        'Nutzer spüren den Wert vor allem dann, wenn ein Hinweis sie direkt in die richtige Aufgabe zurückführt.',
+      ],
+      diagram: {
+        title: 'Wie Polity als App näher rückt',
+        description: 'Vom Installationsangebot zur schnellen Rückkehr in Arbeit.',
+        steps: {
+          'install-app': {
+            title: 'App installieren',
+            description:
+              'Nutzer speichern Polity als App-ähnlichen Einstieg auf einem unterstützten Gerät.',
+          },
+          'allow-notifications': {
+            title: 'Hinweise erlauben',
+            description:
+              'Browser- und App-Einstellungen bestimmen, ob wichtige Signale außerhalb der Seite ankommen.',
+          },
+          'return-fast': {
+            title: 'Schnell zurückkehren',
+            description:
+              'Ein Hinweis oder App-Start bringt Nutzer wieder in den passenden Workflow.',
+          },
+        },
+      },
+    },
     calendar: {
       navLabel: 'Kalender',
       title: 'Kalender',
@@ -749,6 +1141,270 @@ export const docsPageTranslations = {
             title: 'Kreislauf schließen',
             description:
               'Markieren Sie die Arbeit als erledigt und verringern Sie Unsicherheit darüber, was noch offen ist.',
+          },
+        },
+      },
+    },
+    'create-workflows': {
+      navLabel: 'Erstellen',
+      title: 'Erstellungs-Workflows',
+      summary:
+        'Der zentrale Einstieg zum Anlegen von Gruppen, Events, Amendments, Blogbeiträgen, Statements, Aufgaben, Zahlungen und Tagesordnungspunkten.',
+      audience:
+        'Nutzer, die neue Arbeit starten, und Organisatoren, die wissen möchten, welcher Create-Flow zu welchem Ziel passt.',
+      entry:
+        'Beginnen Sie hier, wenn Sie nicht suchen, sondern etwas Neues in Polity erzeugen möchten.',
+      perspective:
+        'Die Create-Flows übersetzen Absichten in strukturierte Objekte, ohne Nutzer sofort mit allen Detailseiten zu konfrontieren.',
+      outcome:
+        'Ein gelungener Erstellungsflow legt das richtige Objekt mit Sichtbarkeit, Kontext und Pflichtfeldern an und führt Nutzer in den nächsten passenden Arbeitsraum.',
+      actions: [
+        'Den passenden Inhaltstyp wählen und dessen Formular Schritt für Schritt ausfüllen.',
+        'Kontext wie Gruppe, Event, Sichtbarkeit, Verantwortliche, Zeit oder Tags hinzufügen.',
+        'Nach dem Erstellen zur Detailseite, Liste oder weiterführenden Aktion wechseln.',
+      ],
+      concepts: [
+        'Create ist eine gemeinsame Oberfläche für viele Entitäten mit jeweils eigenen Pflichtfeldern.',
+        'Typeahead- und Suchfelder helfen, neue Inhalte direkt mit bestehendem Kontext zu verbinden.',
+        'Sichtbarkeit, Rechte und Beziehungen werden oft schon beim Erstellen vorbereitet.',
+      ],
+      watchFor: [
+        'Ein falscher Kontext beim Erstellen kann später Berechtigungen und Auffindbarkeit verwirren.',
+        'Manche Objekte brauchen minimale Angaben, andere strukturieren komplexe Governance-Flows.',
+        'Nutzer sollten nach dem Speichern wissen, wo sie die begonnene Arbeit fortsetzen.',
+      ],
+      states: [
+        'Ein Create-Flow kann leer, teilweise ausgefüllt, validierungsfehlerhaft, speichernd oder abgeschlossen sein.',
+        'Erstellung fühlt sich sicher an, wenn Zwischenschritte klar sind und der Zielort nach dem Speichern sichtbar ist.',
+      ],
+      diagram: {
+        title: 'Wie neue Arbeit entsteht',
+        description: 'Der allgemeine Weg durch die Create-Oberfläche.',
+        steps: {
+          'choose-type': {
+            title: 'Typ wählen',
+            description:
+              'Nutzer entscheiden, ob sie Gruppe, Event, Amendment, Statement, Aufgabe oder ein anderes Objekt anlegen.',
+          },
+          'fill-context': {
+            title: 'Kontext ausfüllen',
+            description:
+              'Formularfelder verbinden die neue Arbeit mit Menschen, Gruppen, Zeitpunkten und Sichtbarkeit.',
+          },
+          'publish-item': {
+            title: 'Objekt erstellen',
+            description:
+              'Nach dem Speichern öffnet Polity den passenden nächsten Ort für Bearbeitung, Verwaltung oder Verfolgung.',
+          },
+        },
+      },
+    },
+    'subscriptions-and-payments': {
+      navLabel: 'Abos & Zahlungen',
+      title: 'Abonnements und Zahlungen',
+      summary:
+        'Folgen von Nutzern, Gruppen, Events, Blogs und Amendments sowie Unterstützungs- und Stripe-basierte Zahlungsflüsse.',
+      audience: 'Nutzer, die Updates verfolgen oder die Plattform finanziell unterstützen möchten.',
+      entry:
+        'Nutzen Sie diesen Leitfaden, wenn Sie verstehen möchten, warum bestimmte Inhalte in Timeline und Benachrichtigungen auftauchen.',
+      perspective:
+        'Abonnements bestimmen Nähe und Aufmerksamkeit, während Zahlungen Unterstützung und Abrechnung transparent machen.',
+      outcome:
+        'Gut verwaltete Abonnements und Zahlungen helfen Nutzern, relevante Arbeit zu verfolgen und Unterstützung ohne Verwechslung mit Mitgliedschaft zu leisten.',
+      actions: [
+        'Nutzern, Gruppen, Events, Blogs oder Amendments folgen und Abonnements wieder entfernen.',
+        'Eigene Abonnements filtern, durchsuchen und als persönliche Interessenkarte nutzen.',
+        'Unterstützungs- oder Zahlungsflüsse über Checkout, Portal und Statusanzeigen nachvollziehen.',
+      ],
+      concepts: [
+        'Abonnieren ist Aufmerksamkeit, nicht automatisch Mitgliedschaft oder Bearbeitungsrecht.',
+        'Subscriptions beeinflussen Timeline, Benachrichtigungen und Wiederauffindbarkeit.',
+        'Payments und Support-Beiträge laufen getrennt von Governance-Rechten und sollten so verstanden werden.',
+      ],
+      watchFor: [
+        'Nutzer können eigenen oder privaten Inhalten nicht immer sinnvoll folgen.',
+        'Doppelte Abonnements sollten verhindert werden, damit Signale vertrauenswürdig bleiben.',
+        'Zahlungsstatus muss klar von inhaltlicher Teilnahme getrennt bleiben.',
+      ],
+      states: [
+        'Ein Inhalt kann nicht abonniert, abonniert, entfolgt, nicht zugänglich oder zahlungsbezogen aktiv sein.',
+        'Für Nutzer ist wichtig, ob ein Update wegen Mitgliedschaft, Abonnement oder Zahlung sichtbar wurde.',
+      ],
+      diagram: {
+        title: 'Von Interesse zu fortlaufender Aufmerksamkeit',
+        description: 'Wie Abonnements und Support Nutzersignale prägen.',
+        steps: {
+          'follow-entity': {
+            title: 'Entität folgen',
+            description:
+              'Nutzer abonnieren Inhalte oder Personen, die für ihre Arbeit relevant bleiben sollen.',
+          },
+          'manage-support': {
+            title: 'Unterstützung verwalten',
+            description:
+              'Zahlungs- und Support-Flüsse zeigen Status, Beitrag und Abrechnungsoptionen.',
+          },
+          'review-updates': {
+            title: 'Updates prüfen',
+            description:
+              'Timeline, Benachrichtigungen und Profilansichten bringen abonnierte Aktivität wieder nach vorne.',
+          },
+        },
+      },
+    },
+    'ai-assistant': {
+      navLabel: 'AI-Assistenz',
+      title: 'AI-Assistenz',
+      summary:
+        'Aria, Kai und KI-gestützte Hilfen für Orientierung, Zusammenfassung, Schreibunterstützung und Kontextarbeit.',
+      audience:
+        'Nutzer, die komplexe demokratische Arbeit schneller verstehen oder klarer formulieren möchten.',
+      entry:
+        'Öffnen Sie diesen Leitfaden, wenn KI in Polity unterstützen soll, ohne den menschlichen Entscheidungsprozess zu ersetzen.',
+      perspective:
+        'Die AI-Assistenz wirkt am besten als Begleiter für Orientierung und Entwurf, nicht als unsichtbare Autorität.',
+      outcome:
+        'Gute KI-Nutzung spart Zeit bei Zusammenfassung, Formulierung und Navigation, während Nutzer Vorschläge bewusst prüfen.',
+      actions: [
+        'Fragen zu Polity, aktuellen Workflows oder Texten stellen.',
+        'Zusammenfassungen, Formulierungsvorschläge oder nächste Schritte prüfen.',
+        'Eigene Anbieter-Schlüssel oder verfügbare Modelle nutzen, wenn der Kontext es erlaubt.',
+      ],
+      concepts: [
+        'KI-Ausgaben sind Vorschläge und brauchen menschliche Prüfung, besonders bei Governance-Texten.',
+        'Aria und Kai erklären Funktionen, während Editor- und Chat-Flows konkrete Arbeit unterstützen können.',
+        'Bring-your-own-key und gemeinsame Modelle beeinflussen, welche KI-Funktionen verfügbar sind.',
+      ],
+      watchFor: [
+        'KI darf keine Berechtigungen umgehen oder Entscheidungen für Nutzer treffen.',
+        'Vertrauliche Inhalte sollten nur mit passendem Modell- und Schlüsselkontext verwendet werden.',
+        'Nutzer sollten erkennen, ob ein Text von Menschen geprüft oder nur vorgeschlagen wurde.',
+      ],
+      states: [
+        'KI kann nicht konfiguriert, verfügbar, wartend, antwortend oder durch fehlende Schlüssel begrenzt sein.',
+        'Der wichtigste Zustand ist nicht die Antwort selbst, sondern ob sie geprüft und sinnvoll übernommen wurde.',
+      ],
+      diagram: {
+        title: 'Wie KI kontrolliert unterstützt',
+        description: 'Der Weg von Frage zu geprüfter Übernahme.',
+        steps: {
+          'ask-context': {
+            title: 'Kontext fragen',
+            description: 'Nutzer geben eine Frage, einen Text oder ein Ziel in den Assistenzfluss.',
+          },
+          'review-suggestion': {
+            title: 'Vorschlag prüfen',
+            description:
+              'Die Antwort wird auf Ton, Genauigkeit, Rechte und politische Angemessenheit geprüft.',
+          },
+          'apply-with-care': {
+            title: 'Bewusst übernehmen',
+            description:
+              'Nutzer verwenden die Hilfe als Entwurf, Zusammenfassung oder Orientierung im eigentlichen Workflow.',
+          },
+        },
+      },
+    },
+    'pql-and-filters': {
+      navLabel: 'PQL & Filter',
+      title: 'PQL und Filter',
+      summary:
+        'Wiederverwendbare Filter, Schnellfilter, gespeicherte Abfragen und typisierte Regeln für große Listen und datenreiche Ansichten.',
+      audience:
+        'Nutzer, die viele Aufgaben, Zahlungen, Dokumente oder andere Entitäten eingrenzen müssen.',
+      entry:
+        'Nutzen Sie diesen Leitfaden, wenn einfache Suche nicht mehr reicht und wiederholbare Filterlogik gebraucht wird.',
+      perspective:
+        'PQL macht Filter zu einem gemeinsamen Werkzeug, statt jede Liste mit eigenen Sonderregeln zu behandeln.',
+      outcome:
+        'Gute Filter helfen Nutzern, große Arbeitsmengen schnell auf den relevanten Ausschnitt zu reduzieren und denselben Blick später wiederzuverwenden.',
+      actions: [
+        'Schnellfilter nutzen, um häufige Felder ohne komplexe Eingabe einzuschränken.',
+        'Benutzerdefinierte Regeln mit UND-, ODER- oder IN-Logik kombinieren.',
+        'Gespeicherte Filter erneut öffnen, bearbeiten und auf dieselbe Feature-Fläche anwenden.',
+      ],
+      concepts: [
+        'PQL beschreibt Filterlogik strukturiert, damit UI und Auswertung dieselbe Bedeutung teilen.',
+        'Feldtypen bestimmen, welche Werte und Operatoren sinnvoll sind.',
+        'Gespeicherte Abfragen sind persönliche oder funktionsbezogene Arbeitsansichten.',
+      ],
+      watchFor: [
+        'Filter dürfen nicht so versteckt sein, dass Nutzer vergessen, warum Ergebnisse fehlen.',
+        'Komplexe Regeln brauchen lesbare Zusammenfassungen und einfache Rücksetzung.',
+        'PQL sollte bestehende Sichtbarkeitsregeln respektieren und keine Daten freilegen.',
+      ],
+      states: [
+        'Eine Ansicht kann ungefiltert, schnell gefiltert, benutzerdefiniert gefiltert oder mit gespeicherter Abfrage aktiv sein.',
+        'Nutzer vertrauen Filtern, wenn Ergebnisanzahl, aktive Regeln und Rücksetzoption klar erkennbar sind.',
+      ],
+      diagram: {
+        title: 'Wie PQL große Listen beherrschbar macht',
+        description: 'Vom schnellen Eingrenzen zur wiederverwendbaren Abfrage.',
+        steps: {
+          'start-filter': {
+            title: 'Filter starten',
+            description:
+              'Nutzer wählen Suchbegriff oder Feldfilter, um die Menge grob einzugrenzen.',
+          },
+          'combine-rules': {
+            title: 'Regeln kombinieren',
+            description: 'Mehrere Bedingungen bilden eine klare Logik für genauere Ergebnisse.',
+          },
+          'reuse-query': {
+            title: 'Abfrage wiederverwenden',
+            description: 'Gespeicherte Filter stellen denselben Arbeitsblick später wieder her.',
+          },
+        },
+      },
+    },
+    meetings: {
+      navLabel: 'Meetings',
+      title: 'Meetings',
+      summary:
+        'Persönliche Terminfindung und Meeting-Ansichten, die Nutzerprofile mit konkreten Gesprächszeiten verbinden.',
+      audience:
+        'Nutzer, die Gespräche mit anderen Personen planen oder verfügbare Zeitfenster finden möchten.',
+      entry: 'Lesen Sie dies, wenn direkte Koordination nicht über ein formales Event laufen muss.',
+      perspective:
+        'Meetings sind die leichte Terminbrücke zwischen Profil, Kalender und persönlicher Zusammenarbeit.',
+      outcome:
+        'Ein klarer Meeting-Flow reduziert Abstimmungsaufwand und macht aus Kontaktinteresse einen konkreten Termin.',
+      actions: [
+        'Die Meeting-Seite eines Nutzers öffnen und verfügbare Zeitfenster prüfen.',
+        'Einen passenden Slot auswählen oder bestehende Meeting-Informationen nachvollziehen.',
+        'Den Termin mit Kalender- und Kontaktkontext vorbereiten.',
+      ],
+      concepts: [
+        'Meetings sind personenbezogen und leichtergewichtig als Gruppen- oder Eventworkflows.',
+        'Verfügbarkeit, Kalenderkontext und Teilnehmerinformationen bestimmen, ob ein Slot sinnvoll ist.',
+        'Ein Meeting kann später in größere Koordination oder Eventplanung übergehen.',
+      ],
+      watchFor: [
+        'Zeitzonen und Datumsauswahl müssen eindeutig bleiben.',
+        'Nicht jeder Nutzer muss öffentliche Verfügbarkeit zeigen.',
+        'Meeting-Koordination sollte nicht mit formaler Teilnahme an Events verwechselt werden.',
+      ],
+      states: [
+        'Ein Meeting-Kontext kann keine Slots, verfügbare Slots, ausgewählte Zeit oder bestätigte Details zeigen.',
+        'Nutzer spüren Qualität daran, ob sie ohne lange Nachrichtenkette zu einem klaren Termin kommen.',
+      ],
+      diagram: {
+        title: 'Vom Profil zum Gespräch',
+        description: 'Wie persönliche Terminfindung abläuft.',
+        steps: {
+          'open-availability': {
+            title: 'Verfügbarkeit öffnen',
+            description:
+              'Nutzer starten auf einer Profil- oder Meeting-Seite mit sichtbaren Terminoptionen.',
+          },
+          'choose-slot': {
+            title: 'Slot wählen',
+            description:
+              'Ein passender Zeitpunkt wird anhand von Datum, Dauer und Teilnehmerkontext gewählt.',
+          },
+          'meet-prepared': {
+            title: 'Vorbereitet treffen',
+            description: 'Kalender- und Profilkontext helfen, das Gespräch sinnvoll fortzuführen.',
           },
         },
       },

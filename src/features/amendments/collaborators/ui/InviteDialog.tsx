@@ -19,6 +19,7 @@ import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItem
 import { toast } from 'sonner';
 import { useUserSearch } from '../hooks/useUserSearch';
 import type { Collaborator, Role } from '../hooks/useCollaborators';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface InviteDialogProps {
   amendmentId: string;
@@ -63,7 +64,7 @@ export function InviteDialog({
     // Find the Collaborator role
     const collaboratorRole = roles.find(r => r.name === 'Collaborator');
     if (!collaboratorRole) {
-      toast.error('Collaborator role not found');
+      toast.error(translateText('generated.inline.0108_collaborator_role_not_found_4f7a7cfe'));
       return;
     }
 
@@ -86,15 +87,18 @@ export function InviteDialog({
       <DialogTrigger asChild>
         <Button>
           <UserPlus className="mr-2 h-4 w-4" />
-          Invite Collaborator
+          {translateText('generated.inline.0109_invite_collaborator_aea80de5')}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Invite Collaborators</DialogTitle>
+          <DialogTitle>
+            {translateText('generated.inline.0110_invite_collaborators_b801b9cc')}
+          </DialogTitle>
           <DialogDescription>
-            Search and select users to invite to collaborate on this amendment. They will receive an
-            invitation to join.
+            {translateText(
+              'generated.inline.0111_search_and_select_users_to_invite_to_collabor_eeb25776'
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -109,7 +113,9 @@ export function InviteDialog({
               multiple
               values={selectedUsers}
               onValuesChange={setSelectedUsers}
-              placeholder="Search by name, handle, or email..."
+              placeholder={translateText(
+                'generated.inline.0112_search_by_name_handle_or_email_9cdde6ce'
+              )}
               disablePortal
             />
           )}
@@ -121,18 +127,19 @@ export function InviteDialog({
             onClick={() => setInviteDialogOpen(false)}
             disabled={isInviting}
           >
-            Cancel
+            {translateText('generated.inline.0065_cancel_77dfd213')}
           </Button>
           <Button onClick={handleInviteUsers} disabled={selectedUsers.length === 0 || isInviting}>
             {isInviting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Inviting...
+                {translateText('generated.inline.0113_inviting_dc7a6e8b')}
               </>
             ) : (
               <>
                 <UserPlus className="mr-2 h-4 w-4" />
-                Invite {selectedUsers.length > 0 ? `(${selectedUsers.length})` : ''}
+                {translateText('generated.inline.0114_invite_b136609f')}
+                {selectedUsers.length > 0 ? `(${selectedUsers.length})` : ''}
               </>
             )}
           </Button>

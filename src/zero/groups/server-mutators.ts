@@ -123,6 +123,55 @@ async function syncGroupMembershipRoleLinks(
   }
 }
 
+function sameStringSet(a: readonly string[], b: readonly string[]) {
+  if (a.length !== b.length) return false;
+  const bSet = new Set(b);
+  return a.every(value => bSet.has(value));
+}
+
+async function groupMembershipRoleIds(
+  tx: Parameters<typeof mutators.groups.create.fn>[0]['tx'],
+  membershipId: string
+) {
+  const links = await tx.run(zql.group_membership_role.where('group_membership_id', membershipId));
+  return links.map(link => link.role_id).filter(Boolean);
+}
+
+async function roleSummary(
+  tx: Parameters<typeof mutators.groups.create.fn>[0]['tx'],
+  roleIds: readonly string[],
+  fallback = 'Default'
+) {
+  if (roleIds.length === 0) return fallback;
+  const roles = await Promise.all(roleIds.map(roleId => roleName(tx, roleId)));
+  return roles.map(role => role.name).join(', ');
+}
+
+async function notifyActiveMembershipRoleChange(
+  tx: Parameters<typeof mutators.groups.create.fn>[0]['tx'],
+  actorUserId: string,
+  membership: { id: string; group_id: string; user_id: string; status?: string | null },
+  previousRoleIds: readonly string[]
+) {
+  if (!isActiveGroupStatus(membership.status)) return;
+
+  const nextRoleIds = await groupMembershipRoleIds(tx, membership.id);
+  if (sameStringSet(previousRoleIds, nextRoleIds)) return;
+
+  const [gName, newRole] = await Promise.all([
+    groupName(tx, membership.group_id),
+    roleSummary(tx, nextRoleIds),
+  ]);
+
+  fireNotification('notifyMembershipRoleChanged', {
+    senderId: actorUserId,
+    recipientUserId: membership.user_id,
+    groupId: membership.group_id,
+    groupName: gName,
+    newRole,
+  });
+}
+
 async function loadBlogRoleNotificationContext(
   tx: Parameters<typeof mutators.groups.create.fn>[0]['tx'],
   blogId: string
@@ -597,12 +646,17 @@ export const groupServerMutators = {
     const membership = await tx.run(
       zql.group_membership.where('id', args.group_membership_id).one()
     );
+    const previousRoleIds = membership
+      ? await groupMembershipRoleIds(tx, args.group_membership_id)
+      : [];
 
     await mutators.groups.addMembershipRole.fn({ tx, ctx, args });
 
     if (!membership) {
       return;
     }
+
+    await notifyActiveMembershipRoleChange(tx, ctx.userID, membership, previousRoleIds);
 
     const expandedAffectedGroupIds = await expandAffectedGroupsWithSiblingMemberships(
       tx,
@@ -618,12 +672,17 @@ export const groupServerMutators = {
       const membership = await tx.run(
         zql.group_membership.where('id', args.group_membership_id).one()
       );
+      const previousRoleIds = membership
+        ? await groupMembershipRoleIds(tx, args.group_membership_id)
+        : [];
 
       await mutators.groups.removeMembershipRole.fn({ tx, ctx, args });
 
       if (!membership) {
         return;
       }
+
+      await notifyActiveMembershipRoleChange(tx, ctx.userID, membership, previousRoleIds);
 
       const expandedAffectedGroupIds = await expandAffectedGroupsWithSiblingMemberships(
         tx,
@@ -638,12 +697,17 @@ export const groupServerMutators = {
     const membership = await tx.run(
       zql.group_membership.where('id', args.group_membership_id).one()
     );
+    const previousRoleIds = membership
+      ? await groupMembershipRoleIds(tx, args.group_membership_id)
+      : [];
 
     await mutators.groups.syncMembershipRoles.fn({ tx, ctx, args });
 
     if (!membership) {
       return;
     }
+
+    await notifyActiveMembershipRoleChange(tx, ctx.userID, membership, previousRoleIds);
 
     const expandedAffectedGroupIds = await expandAffectedGroupsWithSiblingMemberships(
       tx,

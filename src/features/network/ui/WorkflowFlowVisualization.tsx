@@ -5,7 +5,6 @@ import { Node, Edge, useNodesState, useEdgesState, MarkerType } from '@xyflow/re
 import { NetworkFlowBase } from '@/features/network/ui/NetworkFlowBase';
 import { NetworkControlPanel } from '@/features/network/ui/NetworkControlPanel';
 import { sortWorkflowSteps } from '../logic/workflowHelpers';
-import type { WorkflowWithStepsRow } from '@/zero/network/queries';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { CheckCircle2, Clock3 } from 'lucide-react';
 
@@ -17,10 +16,16 @@ interface WorkflowNode extends Node {
   };
 }
 
-type WorkflowFlowVisualizationStep = Pick<
-  WorkflowWithStepsRow['steps'][number],
-  'id' | 'order_index' | 'label' | 'group_id' | 'group'
->;
+interface WorkflowFlowVisualizationStep {
+  id: string;
+  order_index: number;
+  label: string | null;
+  group_id: string;
+  group: {
+    id: string;
+    name: string | null;
+  } | null;
+}
 
 interface WorkflowFlowVisualizationStartGroup {
   id: string;
@@ -143,9 +148,7 @@ export function WorkflowFlowVisualization({ workflow }: WorkflowFlowVisualizatio
 
   if (sortedSteps.length === 0) {
     return (
-      <p className="text-muted-foreground text-sm">
-        {t('features.network.workflows.noSteps', 'No steps to visualize.')}
-      </p>
+      <p className="text-muted-foreground text-sm">{t('features.network.workflows.noSteps')}</p>
     );
   }
 
@@ -163,40 +166,34 @@ export function WorkflowFlowVisualization({ workflow }: WorkflowFlowVisualizatio
       containerClassName="h-full min-h-0"
       panel={
         <NetworkControlPanel
-          title={workflow.name ?? t('features.network.workflows.title', 'Workflow')}
+          title={workflow.name ?? t('features.network.workflows.title')}
           description={workflow.description ?? undefined}
           panelCollapsed={panelCollapsed}
           onPanelCollapsedChange={setPanelCollapsed}
           legendCollapsed={legendCollapsed}
           onLegendCollapsedChange={setLegendCollapsed}
-          legendTitle={t('common.network.legend', 'Legend')}
+          legendTitle={t('common.network.legend')}
           legendItems={[
             {
               id: 'start-step',
-              label: t('features.network.workflows.legendStart', 'Start step'),
+              label: t('features.network.workflows.legendStart'),
               swatchClassName: 'h-4 w-4 rounded border border-[#a5d6a7] bg-[#c8e6c9]',
             },
             {
               id: 'intermediate-step',
-              label: t('features.network.workflows.legendIntermediate', 'Intermediate step'),
+              label: t('features.network.workflows.legendIntermediate'),
               swatchClassName: 'h-4 w-4 rounded border border-[#90caf9] bg-[#bbdefb]',
             },
             {
               id: 'end-step',
-              label: t('features.network.workflows.legendEnd', 'End step'),
+              label: t('features.network.workflows.legendEnd'),
               swatchClassName: 'h-4 w-4 rounded border border-[#ffcc80] bg-[#ffe0b2]',
             },
             {
               id: 'workflow-approval-state',
               label: isAcceptedByAllGroups
-                ? t(
-                    'features.network.workflows.legendAccepted',
-                    'Accepted by all participating groups'
-                  )
-                : t(
-                    'features.network.workflows.legendPending',
-                    'Still awaiting participating-group approvals'
-                  ),
+                ? t('features.network.workflows.legendAccepted')
+                : t('features.network.workflows.legendPending'),
               swatch: isAcceptedByAllGroups ? (
                 <CheckCircle2 className="h-4 w-4 text-emerald-600" />
               ) : (

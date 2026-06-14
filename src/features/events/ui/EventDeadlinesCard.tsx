@@ -8,6 +8,8 @@ interface DeadlineItem {
   timestamp: number | null | undefined;
 }
 
+type ActiveDeadlineItem = DeadlineItem & { timestamp: number };
+
 interface EventDeadlinesCardProps {
   registrationDeadline?: number | null;
   amendmentDeadline?: number | null;
@@ -41,6 +43,10 @@ function getTimeRemaining(timestamp: number): { text: string; isPast: boolean } 
   return { text: `${hours}h ${minutes}m`, isPast };
 }
 
+function hasDeadlineTimestamp(deadline: DeadlineItem): deadline is ActiveDeadlineItem {
+  return deadline.timestamp != null;
+}
+
 export function EventDeadlinesCard({
   registrationDeadline,
   amendmentDeadline,
@@ -50,18 +56,18 @@ export function EventDeadlinesCard({
 
   const deadlines: DeadlineItem[] = [
     {
-      label: t('features.events.deadlines.registration', 'Registration Deadline'),
+      label: t('features.events.deadlines.registration'),
       timestamp: registrationDeadline,
     },
     {
-      label: t('features.events.deadlines.amendment', 'Amendment Deadline'),
+      label: t('features.events.deadlines.amendment'),
       timestamp: amendmentDeadline,
     },
     {
-      label: t('features.events.deadlines.candidacy', 'Candidacy Deadline'),
+      label: t('features.events.deadlines.candidacy'),
       timestamp: candidacyDeadline,
     },
-  ].filter(d => d.timestamp != null);
+  ].filter(hasDeadlineTimestamp);
 
   if (deadlines.length === 0) return null;
 
@@ -70,12 +76,12 @@ export function EventDeadlinesCard({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <CalendarClock className="h-5 w-5" />
-          {t('features.events.deadlines.title', 'Deadlines')}
+          {t('features.events.deadlines.title')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         {deadlines.map(deadline => {
-          const remaining = getTimeRemaining(deadline.timestamp!);
+          const remaining = getTimeRemaining(deadline.timestamp);
           return (
             <div
               key={deadline.label}
@@ -83,8 +89,8 @@ export function EventDeadlinesCard({
             >
               <div className="space-y-1">
                 <p className="text-sm font-medium">{deadline.label}</p>
-                <p className="text-xs text-muted-foreground">
-                  {formatDeadlineDate(deadline.timestamp!)}
+                <p className="text-muted-foreground text-xs">
+                  {formatDeadlineDate(deadline.timestamp)}
                 </p>
               </div>
               <Badge
@@ -92,9 +98,7 @@ export function EventDeadlinesCard({
                 className="flex items-center gap-1"
               >
                 <Clock className="h-3 w-3" />
-                {remaining.isPast
-                  ? t('features.events.deadlines.expired', 'Expired')
-                  : remaining.text}
+                {remaining.isPast ? t('features.events.deadlines.expired') : remaining.text}
               </Badge>
             </div>
           );

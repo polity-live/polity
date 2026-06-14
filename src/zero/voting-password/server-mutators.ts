@@ -1,4 +1,5 @@
 import { defineMutator } from '@rocicorp/zero';
+import { requireAuthenticated } from '../rbac/authorize';
 import { zql } from '../schema';
 import { setVotingPasswordSchema, verifyVotingPasswordSchema } from './schema';
 
@@ -50,49 +51,55 @@ export async function verifyPassword(password: string, stored: string): Promise<
  * The server replaces the placeholder hash with a real PBKDF2 hash.
  */
 export const votingPasswordServerMutators = {
-  setVotingPassword: defineMutator(
-    setVotingPasswordSchema,
-    async ({ tx, ctx: { userID }, args }) => {
-      const passwordHash = await hashPassword(args.password);
-      const now = Date.now();
+  setVotingPassword: defineMutator(setVotingPasswordSchema, async ({ tx, ctx, args }) => {
+    requireAuthenticated(tx, ctx, {
+      action: 'update',
+      resource: '$users',
+      scope: 'voting-password',
+    });
+    const { userID } = ctx;
+    const passwordHash = await hashPassword(args.password);
+    const now = Date.now();
 
-      const existing = await tx.run(zql.voting_password.where('user_id', userID).one());
+    const existing = await tx.run(zql.voting_password.where('user_id', userID).one());
 
-      if (existing) {
-        await tx.mutate.voting_password.update({
-          id: existing.id,
-          password_hash: passwordHash,
-          updated_at: now,
-        });
-      } else {
-        await tx.mutate.voting_password.insert({
-          id: crypto.randomUUID(),
-          user_id: userID,
-          password_hash: passwordHash,
-          created_at: now,
-          updated_at: now,
-        });
-      }
-    }
-  ),
-
-  // Verify a voting password — throws if invalid, stamps last_verified_at on success.
-  verifyVotingPassword: defineMutator(
-    verifyVotingPasswordSchema,
-    async ({ tx, ctx: { userID }, args }) => {
-      const record = await tx.run(zql.voting_password.where('user_id', userID).one());
-      if (!record) {
-        throw new Error('No voting password set. Please set your voting PIN first.');
-      }
-      const isValid = await verifyPassword(args.password, record.password_hash);
-      if (!isValid) {
-        throw new Error('Invalid voting password.');
-      }
-      // Stamp the time so cast server-mutators can enforce recency.
+    if (existing) {
       await tx.mutate.voting_password.update({
-        id: record.id,
-        last_verified_at: Date.now(),
+        id: existing.id,
+        password_hash: passwordHash,
+        updated_at: now,
+      });
+    } else {
+      await tx.mutate.voting_password.insert({
+        id: crypto.randomUUID(),
+        user_id: userID,
+        password_hash: passwordHash,
+        created_at: now,
+        updated_at: now,
       });
     }
-  ),
+  }),
+
+  // Verify a voting password — throws if invalid, stamps last_verified_at on success.
+  verifyVotingPassword: defineMutator(verifyVotingPasswordSchema, async ({ tx, ctx, args }) => {
+    requireAuthenticated(tx, ctx, {
+      action: 'update',
+      resource: '$users',
+      scope: 'voting-password',
+    });
+    const { userID } = ctx;
+    const record = await tx.run(zql.voting_password.where('user_id', userID).one());
+    if (!record) {
+      throw new Error('No voting password set. Please set your voting PIN first.');
+    }
+    const isValid = await verifyPassword(args.password, record.password_hash);
+    if (!isValid) {
+      throw new Error('Invalid voting password.');
+    }
+    // Stamp the time so cast server-mutators can enforce recency.
+    await tx.mutate.voting_password.update({
+      id: record.id,
+      last_verified_at: Date.now(),
+    });
+  }),
 };

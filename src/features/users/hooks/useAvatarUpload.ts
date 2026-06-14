@@ -1,6 +1,7 @@
 import { toast } from 'sonner';
 import { useUserActions } from '@/zero/users/useUserActions';
 import { createClient } from '@/lib/supabase/client';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 // Co-located types
 export interface UseAvatarUploadOptions {
@@ -44,7 +45,7 @@ export function useAvatarUpload({
       onSuccess?.(avatarUrl);
       return avatarUrl;
     } catch (error) {
-      toast.error('Failed to upload avatar');
+      toast.error(translateText('generated.inline.1180_failed_to_upload_avatar_65dabbbc'));
       console.error('Avatar upload error:', error);
       throw error;
     }

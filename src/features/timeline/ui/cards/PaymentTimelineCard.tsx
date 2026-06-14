@@ -82,7 +82,7 @@ export function PaymentTimelineCard({ payment, className }: PaymentTimelineCardP
         href={paymentHref}
         subtitle={payment.groupName ?? undefined}
         subtitleHref={paymentHref}
-        badge={<TimelineCardBadge label={t('features.timeline.contentTypes.payment', 'Payment')} />}
+        badge={<TimelineCardBadge label={t('features.timeline.contentTypes.payment')} />}
       />
 
       <TimelineCardContent className="space-y-3">
@@ -120,9 +120,7 @@ export function PaymentTimelineCard({ payment, className }: PaymentTimelineCardP
                 ) : (
                   <ArrowUpRight className="mr-1 h-3 w-3" />
                 )}
-                {isIncome
-                  ? t('pages.create.payment.income', 'Income')
-                  : t('pages.create.payment.expense', 'Expense')}
+                {isIncome ? t('pages.create.payment.income') : t('pages.create.payment.expense')}
               </Badge>
             )}
 

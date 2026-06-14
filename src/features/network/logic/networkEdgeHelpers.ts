@@ -13,7 +13,7 @@ import type {
 } from '../types/networkEdge.types';
 import type {
   CanonicalMembershipMode,
-  CanonicalNetworkMembershipDirection,
+  GroupRelationshipDirection,
   GroupRelationshipType,
   NormalizedGroupRelationship,
   RelativeMembershipDirection,
@@ -42,7 +42,7 @@ interface CreateNetworkRelationshipEdgeDataArgs {
   currentGroupName?: string | null;
   selectedGroupId?: string;
   selectedGroupName?: string | null;
-  rightDisplayDirections?: Record<string, NetworkConnectionDirection>;
+  rightDisplayDirections?: Record<string, GroupRelationshipDirection>;
   anchorStrategy?: NetworkEdgeAnchorStrategy;
   useInnerVerticalAnchors?: boolean;
   bendPoints?: import('../types/networkEdge.types').NetworkEdgeBendPoint[];
@@ -62,7 +62,8 @@ interface ResolveNetworkRelationshipPreviewContextArgs {
   sourceGroupName: string | null;
   targetGroupName: string | null;
   rightEdgeDirections?: Record<string, NetworkEdgeRelationshipDirection>;
-  membershipCanonicalDirection?: CanonicalNetworkMembershipDirection | null;
+  memberSourceGroupId?: string | null;
+  memberTargetGroupId?: string | null;
 }
 
 interface BuildNetworkRelationshipEdgeArgs {
@@ -76,7 +77,8 @@ interface BuildNetworkRelationshipEdgeArgs {
   relationshipKinds?: NetworkRelationshipKind[];
   rightRelationshipKinds?: Record<string, NetworkRelationshipKind>;
   membershipMode?: CanonicalMembershipMode | null;
-  membershipCanonicalDirection?: CanonicalNetworkMembershipDirection | null;
+  memberSourceGroupId?: string | null;
+  memberTargetGroupId?: string | null;
   rightEdgeDirections?: Record<string, NetworkEdgeRelationshipDirection>;
   relationshipDepth?: NetworkRelationshipDepth;
   fallbackStrokeColor: string;
@@ -372,6 +374,49 @@ export function buildCurrentPerspectiveRightDisplayDirections({
   sourceId: string;
   targetId: string;
   rightEdgeDirections?: Record<string, NetworkEdgeRelationshipDirection>;
+}): Record<string, GroupRelationshipDirection> | undefined {
+  if (!rightEdgeDirections) {
+    return undefined;
+  }
+
+  const currentIsSource = currentNodeId === sourceId;
+  const currentIsTarget = currentNodeId === targetId;
+
+  if (!currentIsSource && !currentIsTarget) {
+    return undefined;
+  }
+
+  return Object.fromEntries(
+    Object.entries(rightEdgeDirections).map(([right, direction]) => {
+      if (direction === 'bidirectional') {
+        return [right, 'mutual'];
+      }
+
+      if (currentIsSource) {
+        return [
+          right,
+          direction === 'forward' ? 'current_has_right_in_partner' : 'partner_has_right_in_current',
+        ];
+      }
+
+      return [
+        right,
+        direction === 'forward' ? 'partner_has_right_in_current' : 'current_has_right_in_partner',
+      ];
+    })
+  ) as Record<string, GroupRelationshipDirection>;
+}
+
+export function buildCurrentPerspectiveRightConnectionDirections({
+  currentNodeId,
+  sourceId,
+  targetId,
+  rightEdgeDirections,
+}: {
+  currentNodeId: string;
+  sourceId: string;
+  targetId: string;
+  rightEdgeDirections?: Record<string, NetworkEdgeRelationshipDirection>;
 }): Record<string, NetworkConnectionDirection> | undefined {
   if (!rightEdgeDirections) {
     return undefined;
@@ -425,7 +470,11 @@ function getPreviewRelationshipType(args: {
     return 'sibling';
   }
 
-  return args.currentGroupId === args.sourceGroupId ? 'parent' : 'child';
+  if (args.currentGroupId === args.sourceGroupId) {
+    return args.structuralType;
+  }
+
+  return args.structuralType === 'parent' ? 'child' : 'parent';
 }
 
 export function resolveNetworkRelationshipPreviewContext(
@@ -445,10 +494,8 @@ export function resolveNetworkRelationshipPreviewContext(
       resolvedCurrentGroupId = args.sourceGroupId;
     } else if (visibleFlowDirection === 'backward') {
       resolvedCurrentGroupId = args.targetGroupId;
-    } else if (args.membershipCanonicalDirection === 'forward') {
-      resolvedCurrentGroupId = args.sourceGroupId;
-    } else if (args.membershipCanonicalDirection === 'backward') {
-      resolvedCurrentGroupId = args.targetGroupId;
+    } else if (args.memberSourceGroupId) {
+      resolvedCurrentGroupId = args.memberSourceGroupId;
     }
   }
 
@@ -478,20 +525,17 @@ export function resolveNetworkRelationshipPreviewContext(
 
 export function getNetworkPreviewMembershipDirection(args: {
   currentGroupId: string;
-  sourceGroupId: string;
-  targetGroupId: string;
-  membershipCanonicalDirection?: CanonicalNetworkMembershipDirection | null;
+  memberSourceGroupId?: string | null;
+  memberTargetGroupId?: string | null;
 }) {
-  if (!args.membershipCanonicalDirection) {
+  if (!args.memberSourceGroupId || !args.memberTargetGroupId) {
     return null;
   }
 
   return getRelativeMembershipDirectionForRelationship({
     relationship: {
-      group_id: args.sourceGroupId,
-      related_group_id: args.targetGroupId,
-      membership_direction: args.membershipCanonicalDirection,
-      relationship_direction: 'forward',
+      member_source_group_id: args.memberSourceGroupId,
+      member_target_group_id: args.memberTargetGroupId,
     },
     currentGroupId: args.currentGroupId,
   });
@@ -556,9 +600,9 @@ export function buildHierarchyRightEdgeDirections(
 
     const nextDirection =
       relationship.group_id === parentGroupId && relationship.related_group_id === childGroupId
-        ? 'backward'
+        ? 'forward'
         : relationship.group_id === childGroupId && relationship.related_group_id === parentGroupId
-          ? 'forward'
+          ? 'backward'
           : null;
 
     if (!nextDirection) {
@@ -588,13 +632,13 @@ export function buildRelationshipEdgeMarkers(
   const hasForwardDirection = directionValues.some(isForwardDirection);
 
   return {
-    markerStart: hasForwardDirection
+    markerStart: hasBackwardDirection
       ? {
           type: MarkerType.ArrowClosed,
           color: strokeColor,
         }
       : undefined,
-    markerEnd: hasBackwardDirection
+    markerEnd: hasForwardDirection
       ? {
           type: MarkerType.ArrowClosed,
           color: strokeColor,
@@ -614,7 +658,8 @@ export function buildNetworkRelationshipEdge({
   relationshipKinds = [],
   rightRelationshipKinds = {},
   membershipMode,
-  membershipCanonicalDirection,
+  memberSourceGroupId,
+  memberTargetGroupId,
   rightEdgeDirections,
   relationshipDepth = 'direct',
   fallbackStrokeColor,
@@ -640,13 +685,14 @@ export function buildNetworkRelationshipEdge({
     sourceGroupName: sourceName,
     targetGroupName: targetName,
     rightEdgeDirections,
-    membershipCanonicalDirection,
+    memberSourceGroupId,
+    memberTargetGroupId,
   });
   const pageCurrentGroupId = currentGroupId ?? graphRootGroupId ?? previewContext.currentGroupId;
   const visibleFlowDirection = getVisibleFlowDirection(rightEdgeDirections);
   const animatedFlowDirection = getAnimatedFlowDirection(visibleFlowDirection);
   const pageRightConnectionDirections =
-    buildCurrentPerspectiveRightDisplayDirections({
+    buildCurrentPerspectiveRightConnectionDirections({
       currentNodeId: pageCurrentGroupId,
       sourceId: sourceGroupId,
       targetId: targetGroupId,
@@ -669,7 +715,7 @@ export function buildNetworkRelationshipEdge({
       stroke: resolvedStrokeColor,
       strokeWidth: 2,
       strokeDasharray,
-      animationDirection: animatedFlowDirection === 'forward' ? 'reverse' : undefined,
+      animationDirection: animatedFlowDirection === 'backward' ? 'reverse' : undefined,
     },
     ...edgeMarkers,
     data: createNetworkRelationshipEdgeData({
@@ -680,9 +726,8 @@ export function buildNetworkRelationshipEdge({
       membershipMode,
       membershipDirection: getNetworkPreviewMembershipDirection({
         currentGroupId: previewContext.currentGroupId,
-        sourceGroupId,
-        targetGroupId,
-        membershipCanonicalDirection,
+        memberSourceGroupId,
+        memberTargetGroupId,
       }),
       rightEdgeDirections,
       visibleFlowDirection,
@@ -765,8 +810,8 @@ function buildRelationshipStatusLabel(
     .filter(kind => kind === 'incoming' || kind === 'outgoing')
     .map(kind =>
       kind === 'incoming'
-        ? t('common.network.incomingRequest', 'Incoming request')
-        : t('common.network.outgoingRequest', 'Outgoing request')
+        ? t('common.network.incomingRequest')
+        : t('common.network.outgoingRequest')
     );
 
   return requestLabels.join(', ') || fallbackLabel;
@@ -818,7 +863,8 @@ export function buildNetworkRelationshipDialogData(
         ? edgeData.membershipMode
         : undefined,
     membershipDirection:
-      edgeData?.membershipDirection === 'incoming' || edgeData?.membershipDirection === 'outgoing'
+      edgeData?.membershipDirection === 'current_members_to_partner' ||
+      edgeData?.membershipDirection === 'partner_members_to_current'
         ? edgeData.membershipDirection
         : undefined,
     rightEdgeDirections: filterRecordToVisibleRights(
@@ -845,7 +891,7 @@ export function buildNetworkRelationshipDialogData(
     rightDisplayDirections: filterRecordToVisibleRights(
       edgeData?.rightDisplayDirections,
       visibleRights
-    ) as Record<string, NetworkConnectionDirection> | undefined,
+    ) as Record<string, GroupRelationshipDirection> | undefined,
     label: buildRelationshipStatusLabel(
       relationshipKinds,
       typeof edge.label === 'string' ? edge.label : null,

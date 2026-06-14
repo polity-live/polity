@@ -3,7 +3,10 @@ import { useNavigate } from '@tanstack/react-router';
 import { useAuth } from '@/providers/auth-provider';
 import { useElectionActions } from '@/zero/elections/useElectionActions';
 import { useElectionState } from '@/zero/elections/useElectionState';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { toast } from 'sonner';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
 import { ElectionSearchInput } from '../ui/inputs/ElectionSearchInput';
@@ -52,7 +55,7 @@ export function useCreateElectionCandidateForm(): CreateFormConfig {
   const config = useMemo(
     (): CreateFormConfig => ({
       entityType: 'election',
-      title: 'pages.create.electionCandidate.title',
+      title: translateText('generated.inline.0056_pages_create_electioncandidate_title_b1daefe6'),
       isSubmitting,
       onSubmit: handleSubmit,
       steps: [

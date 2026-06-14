@@ -34,6 +34,10 @@ export interface TimelineHeaderProps {
   decisionsBadge?: number;
   /** Callback to open settings */
   onSettingsClick?: () => void;
+  /** Whether to show the sort dropdown */
+  showSort?: boolean;
+  /** Optional short context line below the title */
+  subtitle?: string;
   /** Additional CSS classes */
   className?: string;
 }
@@ -67,6 +71,8 @@ export function TimelineHeader({
   followingBadge,
   decisionsBadge,
   onSettingsClick,
+  showSort = true,
+  subtitle,
   className,
 }: TimelineHeaderProps) {
   const { t } = useTranslation();
@@ -76,9 +82,12 @@ export function TimelineHeader({
     <div className={cn('space-y-4', className)}>
       {/* Title row */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">
-          {t('features.timeline.header.title', { defaultValue: 'Your Political Ecosystem' })}
-        </h1>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">
+            {t('features.timeline.header.title', { defaultValue: 'Timeline' })}
+          </h1>
+          {subtitle && <p className="text-muted-foreground mt-1 text-sm">{subtitle}</p>}
+        </div>
 
         {/* Settings button */}
         {onSettingsClick && (
@@ -119,7 +128,7 @@ export function TimelineHeader({
           )}
 
           {/* Sort dropdown - hidden in Decisions mode (has its own sorting) */}
-          {!isDecisionsMode && (
+          {!isDecisionsMode && showSort && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">

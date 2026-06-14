@@ -3,7 +3,10 @@ import * as React from 'react';
 import { type Value, type TElement } from 'platejs';
 import { Plate, usePlateEditor } from 'platejs/react';
 
-import { EditorKit } from '@/features/shared/ui/kit-platejs/editor-kit.tsx';
+import {
+  EditorKit,
+  EditorKitWithoutFixedToolbar,
+} from '@/features/shared/ui/kit-platejs/editor-kit.tsx';
 import { discussionPlugin } from '@/features/shared/ui/kit-platejs/discussion-kit.tsx';
 import { suggestionPlugin } from '@/features/shared/ui/kit-platejs/suggestion-kit.tsx';
 import { SettingsDialog } from '@/features/shared/ui/kit-platejs/settings-dialog.tsx';
@@ -45,6 +48,7 @@ interface PlateEditorProps {
   onModeChange?: (mode: EditorMode) => void; // Mode change callback
   isOwnerOrCollaborator?: boolean; // Whether user can change modes
   readOnly?: boolean;
+  showFixedToolbar?: boolean;
   selectedCrIds?: Set<string> | null; // Filter suggestions to selected CRs
   onSelectedCrIdsChange?: (crIds: Set<string> | null) => void;
   /** Remote cursor sync props */
@@ -83,6 +87,7 @@ export function PlateEditor({
   onModeChange,
   isOwnerOrCollaborator = true,
   readOnly = false,
+  showFixedToolbar = true,
   selectedCrIds,
   onSelectedCrIdsChange,
   remoteCursors,
@@ -105,10 +110,11 @@ export function PlateEditor({
   // in a ref above, and subsequent controlled updates go through the effect below.
   const editorConfig = React.useMemo(() => {
     const baseValue = initialValueRef.current;
+    const plugins = showFixedToolbar ? EditorKit : EditorKitWithoutFixedToolbar;
 
     if (currentUser && users) {
       return {
-        plugins: EditorKit,
+        plugins,
         value: baseValue,
         override: {
           plugins: {
@@ -127,10 +133,10 @@ export function PlateEditor({
     }
 
     return {
-      plugins: EditorKit,
+      plugins,
       value: baseValue,
     };
-  }, [isControlled, initialValue, currentUser, users, documentTitle, documentId]);
+  }, [isControlled, initialValue, currentUser, users, documentTitle, documentId, showFixedToolbar]);
 
   const editor = usePlateEditor(editorConfig);
 

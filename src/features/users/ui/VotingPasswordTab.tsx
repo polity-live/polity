@@ -5,7 +5,13 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
 import { Badge } from '@/features/shared/ui/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
 import { CheckCircle2, AlertCircle, Loader2, KeyRound } from 'lucide-react';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { useVotingPasswordActions } from '@/zero/voting-password/useVotingPasswordActions';
@@ -40,7 +46,8 @@ export function VotingPasswordTab({ userId }: VotingPasswordTabProps) {
   const debouncedPassword = useDebounce(password);
   const debouncedConfirmPassword = useDebounce(confirmPassword);
   const passwordIsValid = /^\d{4}$/.test(password);
-  const passwordsAreMatching = password.length > 0 && confirmPassword.length > 0 && password === confirmPassword;
+  const passwordsAreMatching =
+    password.length > 0 && confirmPassword.length > 0 && password === confirmPassword;
 
   const isValid = password.length === 4 && passwordIsValid && passwordsAreMatching;
   const showPasswordError =
@@ -50,7 +57,11 @@ export function VotingPasswordTab({ userId }: VotingPasswordTabProps) {
   const showConfirmPasswordError =
     confirmPasswordTouched &&
     debouncedConfirmPassword.length > 0 &&
-    !(debouncedPassword.length > 0 && debouncedConfirmPassword.length > 0 && debouncedPassword === debouncedConfirmPassword);
+    !(
+      debouncedPassword.length > 0 &&
+      debouncedConfirmPassword.length > 0 &&
+      debouncedPassword === debouncedConfirmPassword
+    );
   const showConfirmPasswordSuccess =
     confirmPasswordTouched &&
     debouncedPassword.length > 0 &&
@@ -85,12 +96,12 @@ export function VotingPasswordTab({ userId }: VotingPasswordTabProps) {
     setConfirmPasswordTouched(true);
 
     if (!passwordsAreMatching) {
-      setError(t('pages.user.votingPassword.mismatch', 'Passwords do not match'));
+      setError(t('pages.user.votingPassword.mismatch'));
       return;
     }
 
     if (!passwordIsValid) {
-      setError(t('pages.user.votingPassword.invalidFormat', 'Must be exactly 4 digits'));
+      setError(t('pages.user.votingPassword.invalidFormat'));
       return;
     }
 
@@ -115,7 +126,7 @@ export function VotingPasswordTab({ userId }: VotingPasswordTabProps) {
       setDialogError(
         submitError instanceof Error
           ? submitError.message
-          : t('pages.user.votingPassword.saveFailed', 'Failed to save voting password'),
+          : t('pages.user.votingPassword.saveFailed')
       );
     } finally {
       setIsSubmitting(false);
@@ -124,39 +135,34 @@ export function VotingPasswordTab({ userId }: VotingPasswordTabProps) {
 
   return (
     <div className="space-y-6">
-      <Card className="border-destructive ring-[3px] ring-destructive/20 dark:ring-destructive/40">
+      <Card className="border-destructive ring-destructive/20 dark:ring-destructive/40 ring-[3px]">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <KeyRound className="h-5 w-5" />
-              <CardTitle>{t('pages.user.votingPassword.title', 'Voting Password')}</CardTitle>
+              <CardTitle>{t('pages.user.votingPassword.title')}</CardTitle>
             </div>
             {!stateLoading && (
               <Badge variant={hasVotingPassword ? 'default' : 'secondary'}>
                 {hasVotingPassword ? (
                   <span className="flex items-center gap-1">
                     <CheckCircle2 className="h-3 w-3" />
-                    {t('pages.user.votingPassword.set', 'Set')}
+                    {t('pages.user.votingPassword.set')}
                   </span>
                 ) : (
                   <span className="flex items-center gap-1">
                     <AlertCircle className="h-3 w-3" />
-                    {t('pages.user.votingPassword.notSet', 'Not Set')}
+                    {t('pages.user.votingPassword.notSet')}
                   </span>
                 )}
               </Badge>
             )}
           </div>
-          <CardDescription>
-            {t(
-              'pages.user.votingPassword.description',
-              'Your 4-digit voting password is required to confirm votes during elections and ballot votes. Keep it secure.',
-            )}
-          </CardDescription>
+          <CardDescription>{t('pages.user.votingPassword.description')}</CardDescription>
         </CardHeader>
         <CardContent>
           {requiresInitialPassword ? (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               {t('pages.user.votingPassword.initialPasswordRequired')}
             </p>
           ) : (
@@ -164,8 +170,8 @@ export function VotingPasswordTab({ userId }: VotingPasswordTabProps) {
               <div className="space-y-2">
                 <Label htmlFor="voting-password">
                   {hasVotingPassword
-                    ? t('pages.user.votingPassword.newPassword', 'New Voting Password')
-                    : t('pages.user.votingPassword.setPassword', 'Set Voting Password')}
+                    ? t('pages.user.votingPassword.newPassword')
+                    : t('pages.user.votingPassword.setPassword')}
                 </Label>
                 <Input
                   id="voting-password"
@@ -175,7 +181,7 @@ export function VotingPasswordTab({ userId }: VotingPasswordTabProps) {
                   pattern="\d{4}"
                   placeholder="••••"
                   value={password}
-                  onChange={(e) => {
+                  onChange={e => {
                     const val = e.target.value.replace(/\D/g, '').slice(0, 4);
                     setPassword(val);
                     setPasswordTouched(true);
@@ -189,7 +195,7 @@ export function VotingPasswordTab({ userId }: VotingPasswordTabProps) {
                 />
                 <p
                   className={cn(
-                    'text-xs text-muted-foreground',
+                    'text-muted-foreground text-xs',
                     showPasswordError && 'text-destructive',
                     showPasswordSuccess && 'text-emerald-600 dark:text-emerald-400'
                   )}
@@ -199,7 +205,7 @@ export function VotingPasswordTab({ userId }: VotingPasswordTabProps) {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirm-voting-password">
-                  {t('pages.user.votingPassword.confirmPassword', 'Confirm Voting Password')}
+                  {t('pages.user.votingPassword.confirmPassword')}
                 </Label>
                 <Input
                   id="confirm-voting-password"
@@ -209,7 +215,7 @@ export function VotingPasswordTab({ userId }: VotingPasswordTabProps) {
                   pattern="\d{4}"
                   placeholder="••••"
                   value={confirmPassword}
-                  onChange={(e) => {
+                  onChange={e => {
                     const val = e.target.value.replace(/\D/g, '').slice(0, 4);
                     setConfirmPassword(val);
                     setConfirmPasswordTouched(true);
@@ -223,7 +229,7 @@ export function VotingPasswordTab({ userId }: VotingPasswordTabProps) {
                 />
                 <p
                   className={cn(
-                    'text-xs text-muted-foreground',
+                    'text-muted-foreground text-xs',
                     showConfirmPasswordError && 'text-destructive',
                     showConfirmPasswordSuccess && 'text-emerald-600 dark:text-emerald-400'
                   )}
@@ -232,17 +238,13 @@ export function VotingPasswordTab({ userId }: VotingPasswordTabProps) {
                 </p>
               </div>
 
-              {error && (
-                <p className="text-sm text-destructive">{error}</p>
-              )}
+              {error && <p className="text-destructive text-sm">{error}</p>}
 
               <Button type="submit" disabled={!isValid || isSubmitting || authStateLoading}>
-                {isSubmitting ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : null}
+                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 {hasVotingPassword
-                  ? t('pages.user.votingPassword.update', 'Update Password')
-                  : t('pages.user.votingPassword.save', 'Save Password')}
+                  ? t('pages.user.votingPassword.update')
+                  : t('pages.user.votingPassword.save')}
               </Button>
             </form>
           )}

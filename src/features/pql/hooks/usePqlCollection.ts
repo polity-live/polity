@@ -14,6 +14,7 @@ import {
 } from '../logic/applyPqlFilter';
 import { parsePqlExpression } from '../logic/pqlQueryLanguage';
 import type { TypeaheadItem } from '@/features/shared/logic/typeaheadHelpers';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 type PqlSearchValue = string | readonly string[] | null | undefined;
 
@@ -199,7 +200,7 @@ export function usePqlCollection<TItem, TFieldKey extends string>({
 
     return {
       id: 'quick-filters',
-      label: 'Field filters',
+      label: translateText('generated.inline.0483_field_filters_8d9ccc52'),
       combinator: 'and',
       rules,
     };

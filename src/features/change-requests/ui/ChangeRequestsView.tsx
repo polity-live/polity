@@ -7,11 +7,15 @@ import { ArrowLeft, FileEdit } from 'lucide-react';
 import { AgendaCRVoteTimeline } from '@/features/agendas/ui/AgendaCRVoteTimeline';
 import { ChangeRequestCardsList } from '@/features/agendas/ui/ChangeRequestCardsList';
 import type { ChangeRequestDiffData } from '@/features/agendas/ui/ChangeRequestTimelineCard';
-import { createMockCRTimelineItems, type CRSummary } from '@/features/agendas/logic/createMockCRTimelineItems';
+import {
+  createMockCRTimelineItems,
+  type CRSummary,
+} from '@/features/agendas/logic/createMockCRTimelineItems';
 import { useAgendaItemByAmendment } from '@/zero/agendas/useAgendaState';
 import type { TDiscussion } from '@/features/editor/types';
 import type { ChangeRequestTimelineRow } from '@/zero/agendas/queries';
 import { useChangeRequests } from '../hooks/useChangeRequests';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface ChangeRequestsViewProps {
   amendmentId: string;
@@ -30,23 +34,26 @@ export function ChangeRequestsView({ amendmentId, userId }: ChangeRequestsViewPr
 
   // Check if this amendment has an agenda item with CR voting timeline
   const { agendaItemId } = useAgendaItemByAmendment(amendmentId);
-  const isInVotingStage = amendment?.editing_mode === 'vote_event' || amendment?.editing_mode === 'vote_internal';
+  const isInVotingStage =
+    amendment?.editing_mode === 'vote_event' || amendment?.editing_mode === 'vote_internal';
 
   const allChangeRequests = useMemo(
     () => [...openChangeRequests, ...approvedChangeRequests, ...declinedChangeRequests],
-    [openChangeRequests, approvedChangeRequests, declinedChangeRequests],
+    [openChangeRequests, approvedChangeRequests, declinedChangeRequests]
   );
 
   // Convert ChangeRequest[] → CRSummary[] → mock timeline items
   const crSummaries = useMemo<CRSummary[]>(
     () =>
-      allChangeRequests.map((cr) => ({
+      allChangeRequests.map(cr => ({
         id: cr.id,
         crId: cr.crId,
         title: cr.title || cr.crId,
         description: cr.description || '',
         status: cr.resolution
-          ? (cr.resolution === 'approved' || cr.resolution === 'accepted' ? 'approved' : 'declined')
+          ? cr.resolution === 'approved' || cr.resolution === 'accepted'
+            ? 'approved'
+            : 'declined'
           : cr.status,
         type: cr.type,
         text: cr.text,
@@ -55,12 +62,12 @@ export function ChangeRequestsView({ amendmentId, userId }: ChangeRequestsViewPr
         newProperties: cr.newProperties as Record<string, string>,
         justification: cr.justification,
       })),
-    [allChangeRequests],
+    [allChangeRequests]
   );
 
   const mockTimelineItems = useMemo(
     () => createMockCRTimelineItems(crSummaries) as unknown as ChangeRequestTimelineRow[],
-    [crSummaries],
+    [crSummaries]
   );
 
   // Build diffMap: keyed by cr.id (= change_request_id in mock items)
@@ -83,8 +90,8 @@ export function ChangeRequestsView({ amendmentId, userId }: ChangeRequestsViewPr
   const discussions = useMemo<TDiscussion[]>(
     () =>
       allChangeRequests
-        .filter((cr) => !!cr.crId)
-        .map((cr) => ({
+        .filter(cr => !!cr.crId)
+        .map(cr => ({
           id: cr.id,
           crId: cr.crId,
           title: cr.title || cr.crId,
@@ -93,7 +100,7 @@ export function ChangeRequestsView({ amendmentId, userId }: ChangeRequestsViewPr
           createdAt: new Date(cr.createdAt),
           isResolved: cr.isResolved,
         })),
-    [allChangeRequests],
+    [allChangeRequests]
   );
 
   const documentContent = document?.content as Value | undefined;
@@ -101,7 +108,9 @@ export function ChangeRequestsView({ amendmentId, userId }: ChangeRequestsViewPr
   if (isLoading) {
     return (
       <PageWrapper>
-        <div className="py-12 text-center">Loading change requests...</div>
+        <div className="py-12 text-center">
+          {translateText('generated.inline.0283_loading_change_requests_83649539')}
+        </div>
       </PageWrapper>
     );
   }
@@ -110,9 +119,13 @@ export function ChangeRequestsView({ amendmentId, userId }: ChangeRequestsViewPr
     return (
       <PageWrapper>
         <div className="py-12 text-center">
-          <h1 className="mb-4 text-2xl font-bold">Amendment Not Found</h1>
+          <h1 className="mb-4 text-2xl font-bold">
+            {translateText('generated.inline.0066_amendment_not_found_3cea3d4d')}
+          </h1>
           <p className="text-muted-foreground">
-            The amendment you're looking for doesn't exist or has been removed.
+            {translateText(
+              'generated.inline.0067_the_amendment_you_re_looking_for_doesn_t_exis_f871134d'
+            )}
           </p>
         </div>
       </PageWrapper>
@@ -126,7 +139,7 @@ export function ChangeRequestsView({ amendmentId, userId }: ChangeRequestsViewPr
         <Link to="/amendment/$id" params={{ id: amendmentId }}>
           <Button variant="ghost" size="sm">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Amendment
+            {translateText('generated.inline.0284_back_to_amendment_7273f2de')}
           </Button>
         </Link>
       </div>
@@ -135,22 +148,23 @@ export function ChangeRequestsView({ amendmentId, userId }: ChangeRequestsViewPr
       <div className="mb-8">
         <div className="mb-4 flex items-center gap-3">
           <FileEdit className="h-8 w-8" />
-          <h1 className="text-4xl font-bold">Change Requests</h1>
+          <h1 className="text-4xl font-bold">
+            {translateText('generated.inline.0285_change_requests_af9a9fa4')}
+          </h1>
         </div>
         <p className="text-muted-foreground">
           {openChangeRequests.length} open, {approvedChangeRequests.length} approved,{' '}
-          {declinedChangeRequests.length} declined change request
-          {allChangeRequests.length !== 1 ? 's' : ''} for this amendment
+          {declinedChangeRequests.length}
+          {translateText('generated.inline.0286_declined_change_request_c80f316b')}
+          {allChangeRequests.length !== 1 ? 's' : ''}
+          {translateText('generated.inline.0287_for_this_amendment_659b8c41')}
         </p>
       </div>
 
       {/* CR Voting Timeline — shown when amendment is in a voting stage */}
       {isInVotingStage && agendaItemId && (
         <div className="mb-8">
-          <AgendaCRVoteTimeline
-            agendaItemId={agendaItemId}
-            userId={userId}
-          />
+          <AgendaCRVoteTimeline agendaItemId={agendaItemId} userId={userId} />
         </div>
       )}
 

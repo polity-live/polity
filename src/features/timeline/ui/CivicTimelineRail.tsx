@@ -1,0 +1,261 @@
+'use client';
+
+import { ArrowUpRight, Clock3, MapPin, Radio, Sparkles } from 'lucide-react';
+import { Badge } from '@/features/shared/ui/ui/badge';
+import { Button } from '@/features/shared/ui/ui/button';
+import { Skeleton } from '@/features/shared/ui/ui/skeleton';
+import { useTranslation } from '@/features/shared/hooks/use-translation';
+import { cn } from '@/features/shared/utils/utils';
+import { CONTENT_TYPE_CONFIG } from '../constants/content-type-config';
+import {
+  formatDistanceKm,
+  type CivicTimelineItem,
+  type CivicTimelineReason,
+  type CivicTimelineSection,
+} from '../logic/civicTimeline';
+
+interface CivicTimelineRailProps {
+  sections: CivicTimelineSection[];
+  activeItemId?: string | null;
+  isLoading?: boolean;
+  onActiveItemChange?: (itemId: string | null) => void;
+  onItemSelect?: (item: CivicTimelineItem) => void;
+}
+
+const REASON_LABELS: Record<CivicTimelineReason, string> = {
+  subscribed: 'features.timeline.around.reasons.subscribed',
+  member_context: 'features.timeline.around.reasons.memberContext',
+  near_you: 'features.timeline.around.reasons.nearYou',
+  active_now: 'features.timeline.around.reasons.activeNow',
+  popular_nearby: 'features.timeline.around.reasons.popularNearby',
+  public_discovery: 'features.timeline.around.reasons.publicDiscovery',
+  urgent_decision: 'features.timeline.around.reasons.urgentDecision',
+};
+
+const REASON_FALLBACKS: Record<CivicTimelineReason, string> = {
+  subscribed: 'Following',
+  member_context: 'Connected',
+  near_you: 'Near you',
+  active_now: 'Active now',
+  popular_nearby: 'Popular nearby',
+  public_discovery: 'Discover',
+  urgent_decision: 'Urgent',
+};
+
+function formatDateTime(value: Date) {
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(value);
+}
+
+function getItemTime(item: CivicTimelineItem) {
+  return item.startDate ?? item.timestamp;
+}
+
+function getTypeIcon(item: CivicTimelineItem) {
+  return CONTENT_TYPE_CONFIG[item.type]?.icon ?? Radio;
+}
+
+function TimelineSkeleton() {
+  return (
+    <div className="space-y-3">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <div key={index} className="rounded-lg border p-4">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-9 w-9 rounded-md" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-3 w-1/2" />
+            </div>
+          </div>
+          <Skeleton className="mt-4 h-3 w-full" />
+          <Skeleton className="mt-2 h-3 w-4/5" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function CivicTimelineRail({
+  sections,
+  activeItemId,
+  isLoading = false,
+  onActiveItemChange,
+  onItemSelect,
+}: CivicTimelineRailProps) {
+  const { t } = useTranslation();
+
+  if (isLoading && sections.length === 0) {
+    return <TimelineSkeleton />;
+  }
+
+  if (sections.length === 0) {
+    return (
+      <div className="flex min-h-64 items-center justify-center rounded-lg border border-dashed px-4 text-center">
+        <div>
+          <Sparkles className="text-muted-foreground mx-auto mb-3 h-8 w-8" />
+          <h3 className="font-semibold">
+            {t('features.timeline.empty.title', { defaultValue: 'No activity yet' })}
+          </h3>
+          <p className="text-muted-foreground mt-1 max-w-md text-sm">
+            {t('features.timeline.around.empty', {
+              defaultValue: 'When civic activity appears around you, it will show up here.',
+            })}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-7" data-testid="civic-timeline-rail">
+      {sections.map(section => (
+        <section key={section.id} aria-labelledby={`timeline-section-${section.id}`}>
+          <div className="mb-3 flex items-center gap-2">
+            <h2
+              id={`timeline-section-${section.id}`}
+              className="text-muted-foreground text-sm font-semibold uppercase"
+            >
+              {t(section.labelKey)}
+            </h2>
+            <div className="bg-border h-px flex-1" />
+          </div>
+
+          <div className="before:bg-border relative space-y-3 pl-4 before:absolute before:top-2 before:bottom-2 before:left-[3px] before:w-px">
+            {section.items.map(item => {
+              const Icon = getTypeIcon(item);
+              const isActive = activeItemId === item.id;
+              const reasonLabel = t(REASON_LABELS[item.reason], {
+                defaultValue: REASON_FALLBACKS[item.reason],
+              });
+              const distanceLabel = formatDistanceKm(item.distanceKm);
+
+              return (
+                <article
+                  key={item.id}
+                  data-timeline-item-id={item.id}
+                  className={cn(
+                    'bg-background relative rounded-lg border p-4 shadow-sm transition-colors',
+                    isActive && 'border-primary bg-primary/5'
+                  )}
+                  onMouseEnter={() => onActiveItemChange?.(item.id)}
+                  onMouseLeave={() => onActiveItemChange?.(null)}
+                  onFocus={() => onActiveItemChange?.(item.id)}
+                  onClick={() => onActiveItemChange?.(item.id)}
+                >
+                  <span
+                    className={cn(
+                      'border-background absolute top-6 -left-[18px] h-2.5 w-2.5 rounded-full border-2',
+                      item.reason === 'urgent_decision'
+                        ? 'bg-red-600'
+                        : item.isDiscover
+                          ? 'bg-blue-600'
+                          : 'bg-emerald-600'
+                    )}
+                  />
+
+                  <div className="flex gap-3">
+                    <div
+                      className={cn(
+                        'bg-muted/40 flex h-10 w-10 shrink-0 items-center justify-center rounded-md border',
+                        CONTENT_TYPE_CONFIG[item.type]?.accentColor
+                      )}
+                    >
+                      <Icon className="h-5 w-5" />
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge
+                          variant={item.reason === 'urgent_decision' ? 'destructive' : 'secondary'}
+                          className="rounded-md"
+                        >
+                          {reasonLabel}
+                        </Badge>
+                        <span className="text-muted-foreground inline-flex items-center gap-1 text-xs">
+                          <Clock3 className="h-3.5 w-3.5" />
+                          {formatDateTime(getItemTime(item))}
+                        </span>
+                        {distanceLabel && (
+                          <span className="text-muted-foreground inline-flex items-center gap-1 text-xs">
+                            <MapPin className="h-3.5 w-3.5" />
+                            {distanceLabel}
+                          </span>
+                        )}
+                      </div>
+
+                      <h3 className="mt-2 text-base leading-snug font-semibold">
+                        <a
+                          href={item.href}
+                          onClick={() => onItemSelect?.(item)}
+                          className="hover:underline"
+                        >
+                          {item.title}
+                        </a>
+                      </h3>
+
+                      {(item.sourceName || item.locationLabel) && (
+                        <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                          {item.sourceName && (
+                            <a
+                              href={item.sourceHref ?? item.href}
+                              className="hover:text-foreground hover:underline"
+                            >
+                              {item.sourceName}
+                            </a>
+                          )}
+                          {item.locationLabel && (
+                            <span className="inline-flex items-center gap-1">
+                              <MapPin className="h-3.5 w-3.5" />
+                              {item.locationLabel}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {item.description && (
+                        <p className="text-muted-foreground mt-2 line-clamp-2 text-sm">
+                          {item.description}
+                        </p>
+                      )}
+
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        {item.status && (
+                          <Badge variant="outline" className="rounded-md">
+                            {item.status.replace(/[_-]/g, ' ')}
+                          </Badge>
+                        )}
+                        {item.statsLabel && (
+                          <Badge variant="outline" className="rounded-md">
+                            {item.statsLabel}
+                          </Badge>
+                        )}
+                        {(item.tags ?? []).slice(0, 3).map(tag => (
+                          <Badge key={tag} variant="outline" className="rounded-md font-normal">
+                            #{tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+
+                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" asChild>
+                      <a
+                        href={item.href}
+                        aria-label={
+                          item.primaryActionLabel ?? t('features.timeline.cards.viewDetails')
+                        }
+                      >
+                        <ArrowUpRight className="h-4 w-4" />
+                      </a>
+                    </Button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      ))}
+    </div>
+  );
+}

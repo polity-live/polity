@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { buildContactLinkHref } from '@/features/shared/logic/contactLinkHelpers';
 import { SocialItem } from './SocialItem';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export interface SocialMediaLinks {
   website?: string;
@@ -35,7 +36,7 @@ export const SocialBar: React.FC<SocialBarProps> = ({ socialMedia }) => {
     {
       key: 'website',
       href: buildContactLinkHref('website', socialMedia.website),
-      label: 'Website',
+      label: translateText('generated.inline.0573_website_2e8a57cc'),
       icon: <Globe size={24} />,
       className:
         'text-cyan-600 transition-transform duration-200 hover:scale-110 hover:text-cyan-700',
@@ -43,7 +44,7 @@ export const SocialBar: React.FC<SocialBarProps> = ({ socialMedia }) => {
     {
       key: 'youtube',
       href: buildContactLinkHref('youtube', socialMedia.youtube),
-      label: 'YouTube',
+      label: translateText('generated.inline.0512_youtube_558865a1'),
       icon: <Youtube size={24} />,
       className:
         'text-red-600 transition-transform duration-200 hover:scale-110 hover:text-red-700',
@@ -51,7 +52,7 @@ export const SocialBar: React.FC<SocialBarProps> = ({ socialMedia }) => {
     {
       key: 'linkedin',
       href: buildContactLinkHref('linkedin', socialMedia.linkedin),
-      label: 'LinkedIn',
+      label: translateText('generated.inline.0508_linkedin_6b6390a4'),
       icon: <Linkedin size={24} />,
       className:
         'text-sky-700 transition-transform duration-200 hover:scale-110 hover:text-sky-800',
@@ -59,7 +60,7 @@ export const SocialBar: React.FC<SocialBarProps> = ({ socialMedia }) => {
     {
       key: 'whatsapp',
       href: buildContactLinkHref('whatsapp', socialMedia.whatsapp),
-      label: 'WhatsApp',
+      label: translateText('generated.inline.0505_whatsapp_b336fc55'),
       icon: <MessageSquare size={24} />,
       className:
         'text-green-500 transition-transform duration-200 hover:scale-110 hover:text-green-600',
@@ -67,7 +68,7 @@ export const SocialBar: React.FC<SocialBarProps> = ({ socialMedia }) => {
     {
       key: 'instagram',
       href: buildContactLinkHref('instagram', socialMedia.instagram),
-      label: 'Instagram',
+      label: translateText('generated.inline.0509_instagram_5721bbef'),
       icon: <Instagram size={24} />,
       className:
         'text-pink-500 transition-transform duration-200 hover:scale-110 hover:text-pink-600',
@@ -75,7 +76,7 @@ export const SocialBar: React.FC<SocialBarProps> = ({ socialMedia }) => {
     {
       key: 'twitter',
       href: buildContactLinkHref('twitter', socialMedia.twitter),
-      label: 'X (Twitter)',
+      label: translateText('generated.inline.0506_x_twitter_9ae44c18'),
       icon: <Twitter size={24} />,
       className:
         'text-gray-800 transition-transform duration-200 hover:scale-110 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-400',
@@ -83,7 +84,7 @@ export const SocialBar: React.FC<SocialBarProps> = ({ socialMedia }) => {
     {
       key: 'facebook',
       href: buildContactLinkHref('facebook', socialMedia.facebook),
-      label: 'Facebook',
+      label: translateText('generated.inline.0507_facebook_82da67b2'),
       icon: <Facebook size={24} />,
       className:
         'text-blue-600 transition-transform duration-200 hover:scale-110 hover:text-blue-700',
@@ -91,7 +92,7 @@ export const SocialBar: React.FC<SocialBarProps> = ({ socialMedia }) => {
     {
       key: 'snapchat',
       href: buildContactLinkHref('snapchat', socialMedia.snapchat),
-      label: 'Snapchat',
+      label: translateText('generated.inline.0510_snapchat_ba4ed635'),
       icon: <Ghost size={24} />,
       className:
         'text-yellow-400 transition-transform duration-200 hover:scale-110 hover:text-yellow-500',
@@ -99,7 +100,7 @@ export const SocialBar: React.FC<SocialBarProps> = ({ socialMedia }) => {
     {
       key: 'tiktok',
       href: buildContactLinkHref('tiktok', socialMedia.tiktok),
-      label: 'TikTok',
+      label: translateText('generated.inline.0511_tiktok_fc49f156'),
       icon: <Music2 size={24} />,
       className:
         'text-zinc-900 transition-transform duration-200 hover:scale-110 hover:text-zinc-700 dark:text-zinc-100 dark:hover:text-zinc-300',

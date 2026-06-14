@@ -13,7 +13,6 @@ import {
   CheckSquare,
   ExternalLink,
 } from 'lucide-react';
-import { Link } from '@tanstack/react-router';
 import { useUserState } from '@/zero/users/useUserState.ts';
 import { useGroupState } from '@/zero/groups/useGroupState.ts';
 import { useEventState } from '@/zero/events/useEventState.ts';
@@ -24,6 +23,7 @@ import { useTodoState } from '@/zero/todos/useTodoState.ts';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import { normalizeMessagePreviewText } from '../logic/normalizeMessagePreviewText';
 import { isPolityLink, parsePolityUrl, type PolityLinkEntityType } from '../utils/url-utils';
+import { SmartLink } from '@/features/shared/ui/navigation/SmartLink.tsx';
 
 interface LinkPreviewProps {
   url: string;
@@ -38,8 +38,8 @@ export function LinkPreview({ url, className = '' }: LinkPreviewProps) {
   if (!polityLink) {
     // Generic external link preview
     return (
-      <Link to={url} target="_blank" rel="noopener noreferrer">
-        <Card className={`hover:bg-accent ${className}`}>
+      <Card asChild className={`hover:bg-accent ${className}`}>
+        <SmartLink href={url} target="_blank" rel="noopener noreferrer">
           <CardContent className="flex items-center gap-3 p-3">
             <div className="bg-muted flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg">
               <ExternalLink className="text-muted-foreground h-5 w-5" />
@@ -51,8 +51,8 @@ export function LinkPreview({ url, className = '' }: LinkPreviewProps) {
               </p>
             </div>
           </CardContent>
-        </Card>
-      </Link>
+        </SmartLink>
+      </Card>
     );
   }
 
@@ -98,8 +98,8 @@ function UserPreview({ userId, className }: { userId: string; className?: string
   const userBio = normalizeMessagePreviewText(user.bio);
 
   return (
-    <Link to="/user/$id" params={{ id: userId }}>
-      <Card className={`hover:bg-accent border-l-4 border-l-blue-500 ${className}`}>
+    <Card asChild className={`hover:bg-accent border-l-4 border-l-blue-500 ${className}`}>
+      <SmartLink href={`/user/${userId}`}>
         <CardContent className="flex items-center gap-3 p-3">
           <User className="h-5 w-5 flex-shrink-0 text-blue-500" />
           <Avatar className="h-10 w-10 flex-shrink-0">
@@ -122,8 +122,8 @@ function UserPreview({ userId, className }: { userId: string; className?: string
             {t('components.linkPreview.user')}
           </Badge>
         </CardContent>
-      </Card>
-    </Link>
+      </SmartLink>
+    </Card>
   );
 }
 
@@ -138,8 +138,8 @@ function GroupPreview({ groupId, className }: { groupId: string; className?: str
   const groupDescription = normalizeMessagePreviewText(group.description);
 
   return (
-    <Link to="/group/$id" params={{ id: groupId }}>
-      <Card className={`hover:bg-accent border-l-4 border-l-purple-500 ${className}`}>
+    <Card asChild className={`hover:bg-accent border-l-4 border-l-purple-500 ${className}`}>
+      <SmartLink href={`/group/${groupId}`}>
         <CardContent className="flex items-center gap-3 p-3">
           <Users className="h-5 w-5 flex-shrink-0 text-purple-500" />
           <Avatar className="h-10 w-10 flex-shrink-0">
@@ -159,8 +159,8 @@ function GroupPreview({ groupId, className }: { groupId: string; className?: str
             {t('components.linkPreview.group')}
           </Badge>
         </CardContent>
-      </Card>
-    </Link>
+      </SmartLink>
+    </Card>
   );
 }
 
@@ -173,8 +173,8 @@ function EventPreview({ eventId, className }: { eventId: string; className?: str
   }
 
   return (
-    <Link to="/event/$id" params={{ id: eventId }}>
-      <Card className={`hover:bg-accent border-l-4 border-l-green-500 ${className}`}>
+    <Card asChild className={`hover:bg-accent border-l-4 border-l-green-500 ${className}`}>
+      <SmartLink href={`/event/${eventId}`}>
         <CardContent className="flex items-center gap-3 p-3">
           <Calendar className="h-5 w-5 flex-shrink-0 text-green-500" />
           <div className="min-w-0 flex-1">
@@ -192,8 +192,8 @@ function EventPreview({ eventId, className }: { eventId: string; className?: str
             {t('components.linkPreview.event')}
           </Badge>
         </CardContent>
-      </Card>
-    </Link>
+      </SmartLink>
+    </Card>
   );
 }
 
@@ -208,8 +208,8 @@ function AmendmentPreview({ amendmentId, className }: { amendmentId: string; cla
   const amendmentReason = normalizeMessagePreviewText(amendment.reason);
 
   return (
-    <Link to="/amendment/$id" params={{ id: amendmentId }}>
-      <Card className={`hover:bg-accent border-l-4 border-l-orange-500 ${className}`}>
+    <Card asChild className={`hover:bg-accent border-l-4 border-l-orange-500 ${className}`}>
+      <SmartLink href={`/amendment/${amendmentId}`}>
         <CardContent className="flex items-center gap-3 p-3">
           <FileText className="h-5 w-5 flex-shrink-0 text-orange-500" />
           <div className="min-w-0 flex-1">
@@ -229,8 +229,8 @@ function AmendmentPreview({ amendmentId, className }: { amendmentId: string; cla
             {t('components.linkPreview.amendment')}
           </Badge>
         </CardContent>
-      </Card>
-    </Link>
+      </SmartLink>
+    </Card>
   );
 }
 
@@ -249,8 +249,8 @@ function BlogPreview({ blogId, className }: { blogId: string; className?: string
     : `/user/${blogOwner?.id || ''}/blog/${blogId}`;
 
   return (
-    <Link to={blogViewUrl}>
-      <Card className={`hover:bg-accent border-l-4 border-l-pink-500 ${className}`}>
+    <Card asChild className={`hover:bg-accent border-l-4 border-l-pink-500 ${className}`}>
+      <SmartLink href={blogViewUrl}>
         <CardContent className="flex items-center gap-3 p-3">
           <MessageSquare className="h-5 w-5 flex-shrink-0 text-pink-500" />
           <div className="min-w-0 flex-1">
@@ -269,8 +269,8 @@ function BlogPreview({ blogId, className }: { blogId: string; className?: string
             {t('components.linkPreview.blog')}
           </Badge>
         </CardContent>
-      </Card>
-    </Link>
+      </SmartLink>
+    </Card>
   );
 }
 
@@ -289,8 +289,8 @@ function StatementPreview({ statementId, className }: { statementId: string; cla
   const statementText = normalizeMessagePreviewText(statement.text);
 
   return (
-    <Link to="/statement/$id" params={{ id: statementId }}>
-      <Card className={`hover:bg-accent border-l-4 border-l-cyan-500 ${className}`}>
+    <Card asChild className={`hover:bg-accent border-l-4 border-l-cyan-500 ${className}`}>
+      <SmartLink href={`/statement/${statementId}`}>
         <CardContent className="flex items-center gap-3 p-3">
           <FileText className="h-5 w-5 flex-shrink-0 text-cyan-500" />
           <div className="min-w-0 flex-1">
@@ -300,8 +300,8 @@ function StatementPreview({ statementId, className }: { statementId: string; cla
             {t('components.linkPreview.statement')}
           </Badge>
         </CardContent>
-      </Card>
-    </Link>
+      </SmartLink>
+    </Card>
   );
 }
 
@@ -316,8 +316,8 @@ function TodoPreview({ todoId, className }: { todoId: string; className?: string
   const todoDescription = normalizeMessagePreviewText(todo.description);
 
   return (
-    <Link to="/todos/$id" params={{ id: todoId }}>
-      <Card className={`hover:bg-accent border-l-4 border-l-indigo-500 ${className}`}>
+    <Card asChild className={`hover:bg-accent border-l-4 border-l-indigo-500 ${className}`}>
+      <SmartLink href={`/todos/${todoId}`}>
         <CardContent className="flex items-center gap-3 p-3">
           <CheckSquare className="h-5 w-5 flex-shrink-0 text-indigo-500" />
           <div className="min-w-0 flex-1">
@@ -338,8 +338,8 @@ function TodoPreview({ todoId, className }: { todoId: string; className?: string
             {t('components.linkPreview.todo')}
           </Badge>
         </CardContent>
-      </Card>
-    </Link>
+      </SmartLink>
+    </Card>
   );
 }
 

@@ -15,6 +15,7 @@ import {
   getContentTypeGradient,
 } from '@/features/timeline/constants/content-type-config';
 import { getHashtagGradient } from '@/features/timeline/logic/gradient-assignment';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export interface ReviewCardField {
   label: string;
@@ -202,9 +203,14 @@ function ReviewMediaBlock({ media, title }: { media: ReviewMediaPreview; title: 
                 <PlayCircle className="h-4 w-4" />
               </div>
               <div>
-                <p className="text-sm font-semibold">Video attached</p>
+                <p className="text-sm font-semibold">
+                  {translateText('generated.inline.1129_video_attached_c26a2e47')}
+                </p>
                 <p className="text-muted-foreground text-xs">
-                  {media.videoLabel ?? 'Review the selected video link before creating.'}
+                  {media.videoLabel ??
+                    translateText(
+                      'generated.inline.0139_review_the_selected_video_link_before_creatin_b64dc912'
+                    )}
                 </p>
               </div>
             </div>
@@ -345,7 +351,9 @@ export function CreateReviewCard({
           <section className="border-border/70 bg-background/75 text-muted-foreground rounded-2xl border border-dashed p-4 text-sm">
             <div className="flex items-center gap-2">
               <ImageIcon className="h-4 w-4" />
-              <span>No review details available yet.</span>
+              <span>
+                {translateText('generated.inline.1130_no_review_details_available_yet_36acfcc2')}
+              </span>
             </div>
           </section>
         )}

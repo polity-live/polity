@@ -24,10 +24,8 @@ export function useWorkflowActions() {
   const createWorkflow = useCallback(
     (args: Parameters<typeof mutators.network.createWorkflow>[0]) => {
       const result = zero.mutate(mutators.network.createWorkflow(args));
-      toast.success(t('features.network.toasts.workflowCreated', 'Workflow created'));
-      onServerError(result, () =>
-        toast.error(t('features.network.toasts.workflowCreateFailed', 'Failed to create workflow'))
-      );
+      toast.success(t('features.network.toasts.workflowCreated'));
+      onServerError(result, () => toast.error(t('features.network.toasts.workflowCreateFailed')));
       return result;
     },
     [zero, t]
@@ -36,9 +34,7 @@ export function useWorkflowActions() {
   const updateWorkflow = useCallback(
     (args: Parameters<typeof mutators.network.updateWorkflow>[0]) => {
       const result = zero.mutate(mutators.network.updateWorkflow(args));
-      onServerError(result, () =>
-        toast.error(t('features.network.toasts.workflowUpdateFailed', 'Failed to update workflow'))
-      );
+      onServerError(result, () => toast.error(t('features.network.toasts.workflowUpdateFailed')));
       return result;
     },
     [zero, t]
@@ -47,10 +43,8 @@ export function useWorkflowActions() {
   const deleteWorkflow = useCallback(
     (id: string) => {
       const result = zero.mutate(mutators.network.deleteWorkflow({ id }));
-      toast.success(t('features.network.toasts.workflowDeleted', 'Workflow deleted'));
-      onServerError(result, () =>
-        toast.error(t('features.network.toasts.workflowDeleteFailed', 'Failed to delete workflow'))
-      );
+      toast.success(t('features.network.toasts.workflowDeleted'));
+      onServerError(result, () => toast.error(t('features.network.toasts.workflowDeleteFailed')));
       return result;
     },
     [zero, t]
@@ -59,9 +53,7 @@ export function useWorkflowActions() {
   const createWorkflowStep = useCallback(
     (args: Parameters<typeof mutators.network.createWorkflowStep>[0]) => {
       const result = zero.mutate(mutators.network.createWorkflowStep(args));
-      onServerError(result, () =>
-        toast.error(t('features.network.toasts.stepCreateFailed', 'Failed to add step'))
-      );
+      onServerError(result, () => toast.error(t('features.network.toasts.stepCreateFailed')));
       return result;
     },
     [zero, t]
@@ -70,9 +62,7 @@ export function useWorkflowActions() {
   const updateWorkflowStep = useCallback(
     (args: Parameters<typeof mutators.network.updateWorkflowStep>[0]) => {
       const result = zero.mutate(mutators.network.updateWorkflowStep(args));
-      onServerError(result, () =>
-        toast.error(t('features.network.toasts.stepUpdateFailed', 'Failed to update step'))
-      );
+      onServerError(result, () => toast.error(t('features.network.toasts.stepUpdateFailed')));
       return result;
     },
     [zero, t]
@@ -81,9 +71,7 @@ export function useWorkflowActions() {
   const deleteWorkflowStep = useCallback(
     (id: string) => {
       const result = zero.mutate(mutators.network.deleteWorkflowStep({ id }));
-      onServerError(result, () =>
-        toast.error(t('features.network.toasts.stepDeleteFailed', 'Failed to remove step'))
-      );
+      onServerError(result, () => toast.error(t('features.network.toasts.stepDeleteFailed')));
       return result;
     },
     [zero, t]
@@ -94,11 +82,9 @@ export function useWorkflowActions() {
       const result = zero.mutate(
         mutators.network.approveWorkflowApproval({ approval_id: approvalId })
       );
-      toast.success(t('features.network.toasts.workflowApprovalAccepted', 'Workflow approved'));
+      toast.success(t('features.network.toasts.workflowApprovalAccepted'));
       onServerError(result, () =>
-        toast.error(
-          t('features.network.toasts.workflowApprovalAcceptFailed', 'Failed to approve workflow')
-        )
+        toast.error(t('features.network.toasts.workflowApprovalAcceptFailed'))
       );
       return result;
     },
@@ -110,11 +96,9 @@ export function useWorkflowActions() {
       const result = zero.mutate(
         mutators.network.rejectWorkflowApproval({ approval_id: approvalId })
       );
-      toast.success(t('features.network.toasts.workflowApprovalRejected', 'Workflow rejected'));
+      toast.success(t('features.network.toasts.workflowApprovalRejected'));
       onServerError(result, () =>
-        toast.error(
-          t('features.network.toasts.workflowApprovalRejectFailed', 'Failed to reject workflow')
-        )
+        toast.error(t('features.network.toasts.workflowApprovalRejectFailed'))
       );
       return result;
     },

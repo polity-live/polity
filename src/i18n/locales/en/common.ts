@@ -80,6 +80,7 @@ export const commonTranslations = {
     uploading: 'Uploading...',
     actions: 'Actions',
     clear: 'Clear',
+    later: 'Later',
   },
   validation: {
     firstNameHint: 'Enter at least 2 characters for the first name.',
@@ -305,11 +306,11 @@ export const commonTranslations = {
     relationshipSaveError: 'Error saving relationships.',
     saving: 'Saving...',
     saveChanges: 'Save changes',
-    directionOutgoingLabel: 'This group grants the right to the other group',
-    directionIncomingLabel: 'This group has the right in the other group',
+    directionOutgoingLabel: 'This group has the right in the other group',
+    directionIncomingLabel: 'The other group has the right in this group',
     directionBidirectionalLabel: 'This group and the other group share the right mutually',
     directionHas: 'has',
-    directionGrants: 'grants',
+    directionGrants: 'has',
     directionCan: 'can',
     directionCanPlural: 'can',
     directionReceive: 'receives',
@@ -331,8 +332,8 @@ export const commonTranslations = {
       'is derived from groups that have passive voting rights in',
     siblingMembershipExplanationParliamentAfterSource: '.',
     currentGroupHasRightIn: '{{currentGroupName}} has {{rightLabel}} in {{selectedGroupName}}',
-    currentGroupGrantsRightTo:
-      '{{currentGroupName}} grants {{rightLabel}} to {{selectedGroupName}}',
+    selectedGroupHasRightInCurrentGroup:
+      '{{selectedGroupName}} has {{rightLabel}} in {{currentGroupName}}',
     groupsMutuallyShareRight:
       '{{currentGroupName}} and {{selectedGroupName}} share {{rightLabel}} mutually',
     rightInfo: 'Information Right',

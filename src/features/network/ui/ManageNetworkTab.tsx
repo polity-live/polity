@@ -38,14 +38,17 @@ import {
 import { LinkGroupDialog } from './LinkGroupDialog';
 import { Pencil, Trash2, Clock } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { useHierarchyLinkConflicts } from '../hooks/useHierarchyLinkConflicts';
 import { HierarchyConflictDialog } from './HierarchyConflictDialog';
-import { NetworkLinkStatusCell } from './NetworkLinkStatusCell';
+import { GroupConnectionStatusCell } from './GroupConnectionStatusCell';
 import {
   getCanonicalMembershipModeLabel,
-  getLegacySiblingMembershipMode,
-} from '../logic/networkLinkDerived';
+  getSiblingMembershipKind,
+} from '../logic/groupConnectionDerived';
 import type {
   CanonicalMembershipMode,
   GroupRelationshipFilter,
@@ -151,14 +154,8 @@ export function ManageNetworkTab({
   }, [activePartnerGroupId, resolvePartnerUsers]);
 
   const currentGroupTagName = groupName || '';
-  const incomingRequestCount = incomingRequests.reduce(
-    (total, entry) => total + entry.rels.length,
-    0
-  );
-  const outgoingRequestCount = outgoingRequests.reduce(
-    (total, entry) => total + entry.rels.length,
-    0
-  );
+  const incomingRequestCount = incomingRequests.length;
+  const outgoingRequestCount = outgoingRequests.length;
 
   const normalizeSiblingMembershipMode = (
     mode: string | null | undefined
@@ -179,7 +176,7 @@ export function ManageNetworkTab({
     membershipMode?: CanonicalMembershipMode | null
   ): SiblingMembershipMode | null => {
     const canonicalSiblingMembershipMode = normalizeSiblingMembershipMode(
-      getLegacySiblingMembershipMode(membershipMode)
+      getSiblingMembershipKind(membershipMode)
     );
     const currentSiblingMembershipMode = normalizeSiblingMembershipMode(
       currentGroupSiblingMembershipMode
@@ -222,7 +219,8 @@ export function ManageNetworkTab({
   const renderRequestDescription = (
     partnerGroup: GroupedRelationshipRequest['group'],
     type: GroupedRelationshipRequest['type'],
-    membershipMode?: CanonicalMembershipMode | null
+    membershipMode?: CanonicalMembershipMode | null,
+    hasRights = true
   ) => (
     <div className="flex flex-wrap items-center gap-2 leading-tight">
       <GroupRelationshipTypePreview
@@ -238,7 +236,9 @@ export function ManageNetworkTab({
         selectedGroupId={partnerGroup.id}
       />
       {renderMembershipBadge(membershipMode)}
-      <span>{t('common.network.withRights')}</span>
+      <span>
+        {hasRights ? t('common.network.withRights') : t('common.network.structureMembershipChange')}
+      </span>
     </div>
   );
 
@@ -275,7 +275,7 @@ export function ManageNetworkTab({
     },
     {
       value: 'sibling',
-      label: t('common.network.thisGroupAsSibling', 'Diese Gruppe als Geschwistergruppe'),
+      label: t('common.network.thisGroupAsSibling'),
       activeClassName:
         'border-0 bg-gradient-to-r from-fuchsia-500 to-amber-500 text-white hover:opacity-90',
     },
@@ -297,9 +297,7 @@ export function ManageNetworkTab({
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>
-            {t('common.network.deleteRequestTitle', 'Anfrage löschen?')}
-          </AlertDialogTitle>
+          <AlertDialogTitle>{t('common.network.deleteRequestTitle')}</AlertDialogTitle>
           <AlertDialogDescription>
             {t('common.network.deleteRequestDescription', {
               groupName: partnerGroupName,
@@ -317,6 +315,12 @@ export function ManageNetworkTab({
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+  );
+
+  const renderRequestFallbackRelationshipCell = () => (
+    <div className="flex flex-wrap items-center gap-2">
+      <Badge variant="outline">{t('common.network.structureMembershipChange')}</Badge>
+    </div>
   );
 
   return (
@@ -391,7 +395,12 @@ export function ManageNetworkTab({
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">{req.group.name}</CardTitle>
                   <CardDescription>
-                    {renderRequestDescription(req.group, req.type, req.membershipMode)}
+                    {renderRequestDescription(
+                      req.group,
+                      req.type,
+                      req.membershipMode,
+                      req.rightRels.length > 0
+                    )}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -410,7 +419,99 @@ export function ManageNetworkTab({
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {req.rels.map(rel => {
+                      {req.rightRels.length === 0 && req.structureRel
+                        ? (() => {
+                            const rel = req.structureRel;
+                            const hasHierarchyCheck = isLinkCheckApplicable(rel);
+                            const canLink = req.allRels.every(item => canActivateLink(item));
+                            const otherGroupName = req.group.name ?? t('common.unspecified');
+                            const display = getCurrentGroupRelationshipDisplay(rel, groupId);
+
+                            return (
+                              <TableRow key={rel.id}>
+                                <TableCell>{renderRequestFallbackRelationshipCell()}</TableCell>
+                                <TableCell>
+                                  <Badge variant="outline">
+                                    {t('common.network.structureMembership')}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  {rel.created_at
+                                    ? new Date(rel.created_at).toLocaleDateString()
+                                    : '-'}
+                                </TableCell>
+                                <TableCell>
+                                  <GroupConnectionStatusCell
+                                    canLink={canLink}
+                                    hasHierarchyCheck={hasHierarchyCheck}
+                                    onWarningClick={
+                                      canManageRelationships
+                                        ? () =>
+                                            openManageDialog(
+                                              req.allRels,
+                                              otherGroupName,
+                                              req.group.id
+                                            )
+                                        : undefined
+                                    }
+                                  />
+                                </TableCell>
+                                {canManageRelationships ? (
+                                  <TableCell className="text-right">
+                                    <div className="flex items-center justify-end gap-1">
+                                      {canLink ? (
+                                        <Button
+                                          size="sm"
+                                          variant="default"
+                                          onClick={() => onAcceptRequest(req.allRels)}
+                                        >
+                                          {t('common.actions.confirm')}
+                                        </Button>
+                                      ) : (
+                                        <Button
+                                          size="sm"
+                                          variant="default"
+                                          onClick={() =>
+                                            openManageDialog(
+                                              req.allRels,
+                                              otherGroupName,
+                                              req.group.id
+                                            )
+                                          }
+                                        >
+                                          {t('common.network.manage')}
+                                        </Button>
+                                      )}
+                                      {display ? (
+                                        <LinkGroupDialog
+                                          currentGroupId={groupId}
+                                          currentGroupName={groupName}
+                                          initialTargetGroupId={display.partnerGroup.id}
+                                          initialRelationshipType={display.relationshipType}
+                                          initialRights={[]}
+                                          trigger={
+                                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                              <Pencil className="h-4 w-4" />
+                                              <span className="sr-only">
+                                                {t('common.network.editRelationship')}
+                                              </span>
+                                            </Button>
+                                          }
+                                          allRelationships={allRelationships}
+                                        />
+                                      ) : null}
+                                      {renderRequestDeleteAction({
+                                        partnerGroupName: otherGroupName,
+                                        onDelete: () => onRejectRequest(req.allRels),
+                                      })}
+                                    </div>
+                                  </TableCell>
+                                ) : null}
+                              </TableRow>
+                            );
+                          })()
+                        : null}
+                      {req.rightRels.map(rel => {
                         const hasHierarchyCheck = isLinkCheckApplicable(rel);
                         const canLink = canActivateLink(rel);
                         const otherGroupName = req.group.name ?? t('common.unspecified');
@@ -443,7 +544,7 @@ export function ManageNetworkTab({
                               {rel.created_at ? new Date(rel.created_at).toLocaleDateString() : '-'}
                             </TableCell>
                             <TableCell>
-                              <NetworkLinkStatusCell
+                              <GroupConnectionStatusCell
                                 canLink={canLink}
                                 hasHierarchyCheck={hasHierarchyCheck}
                                 onWarningClick={
@@ -524,7 +625,12 @@ export function ManageNetworkTab({
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">{req.group.name}</CardTitle>
                   <CardDescription>
-                    {renderRequestDescription(req.group, req.type, req.membershipMode)}
+                    {renderRequestDescription(
+                      req.group,
+                      req.type,
+                      req.membershipMode,
+                      req.rightRels.length > 0
+                    )}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -542,7 +648,58 @@ export function ManageNetworkTab({
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {req.rels.map(rel => {
+                      {req.rightRels.length === 0 && req.structureRel
+                        ? (() => {
+                            const rel = req.structureRel;
+                            const display = getCurrentGroupRelationshipDisplay(rel, groupId);
+                            const otherGroupName = req.group.name ?? t('common.unspecified');
+
+                            return (
+                              <TableRow key={rel.id}>
+                                <TableCell>{renderRequestFallbackRelationshipCell()}</TableCell>
+                                <TableCell>
+                                  <Badge variant="outline">
+                                    {t('common.network.structureMembership')}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  {rel.created_at
+                                    ? new Date(rel.created_at).toLocaleDateString()
+                                    : '-'}
+                                </TableCell>
+                                {canManageRelationships ? (
+                                  <TableCell className="text-right">
+                                    <div className="flex items-center justify-end gap-1">
+                                      {display ? (
+                                        <LinkGroupDialog
+                                          currentGroupId={groupId}
+                                          currentGroupName={groupName}
+                                          initialTargetGroupId={display.partnerGroup.id}
+                                          initialRelationshipType={display.relationshipType}
+                                          initialRights={[]}
+                                          trigger={
+                                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                              <Pencil className="h-4 w-4" />
+                                              <span className="sr-only">
+                                                {t('common.network.editRelationship')}
+                                              </span>
+                                            </Button>
+                                          }
+                                          allRelationships={allRelationships}
+                                        />
+                                      ) : null}
+                                      {renderRequestDeleteAction({
+                                        partnerGroupName: otherGroupName,
+                                        onDelete: () => onRejectRequest(req.allRels),
+                                      })}
+                                    </div>
+                                  </TableCell>
+                                ) : null}
+                              </TableRow>
+                            );
+                          })()
+                        : null}
+                      {req.rightRels.map(rel => {
                         const display = getCurrentGroupRelationshipDisplay(rel, groupId);
                         const right =
                           rel.with_right && isRightType(rel.with_right) ? rel.with_right : null;
@@ -692,7 +849,11 @@ export function ManageNetworkTab({
                               trigger={
                                 <Button variant="ghost" size="icon" className="h-8 w-8">
                                   <Pencil className="h-4 w-4" />
-                                  <span className="sr-only">Edit relationship</span>
+                                  <span className="sr-only">
+                                    {translateText(
+                                      'generated.inline.0801_edit_relationship_e03de7d7'
+                                    )}
+                                  </span>
                                 </Button>
                               }
                               allRelationships={allRelationships}
@@ -701,7 +862,11 @@ export function ManageNetworkTab({
                               <AlertDialogTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-8 w-8">
                                   <Trash2 className="h-4 w-4" />
-                                  <span className="sr-only">Delete relationship</span>
+                                  <span className="sr-only">
+                                    {translateText(
+                                      'generated.inline.0802_delete_relationship_98af16bc'
+                                    )}
+                                  </span>
                                 </Button>
                               </AlertDialogTrigger>
                               <AlertDialogContent>

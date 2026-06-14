@@ -7,6 +7,7 @@ export {
   themeEnum,
   languageEnum,
   navigationViewEnum,
+  decisionTerminalDashboardConfigSchema,
   type UserPreference,
   type CreateFormStyle,
   type Theme,
@@ -15,6 +16,14 @@ export {
   type NetworkLayoutPosition,
   type GroupNetworkLayout,
   type GroupNetworkLayouts,
+  type DecisionTerminalWidgetType,
+  type DecisionTerminalWidgetDisplayMode,
+  type DecisionTerminalWidgetSort,
+  type DecisionTerminalWidgetVisibility,
+  type DecisionTerminalWidgetFilters,
+  type DecisionTerminalWidgetConfig,
+  type DecisionTerminalGridLayoutItem,
+  type DecisionTerminalDashboardConfig,
 } from './schema';
 export { preferenceQueries } from './queries';
 export { preferenceSharedMutators } from './shared-mutators';

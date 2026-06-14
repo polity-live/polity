@@ -274,8 +274,7 @@ export function MessageInput({ conversation, currentUserId, onSendMessage }: Mes
           {attachments.isUploadingAttachments && attachments.uploadingAttachmentName && (
             <Badge variant="secondary" className="gap-1 text-xs">
               <LoaderCircle className="h-3 w-3 animate-spin" />
-              {t('features.messages.compose.uploading', 'Uploading')}:
-              {attachments.uploadingAttachmentName}
+              {t('features.messages.compose.uploading')}:{attachments.uploadingAttachmentName}
             </Badge>
           )}
 
@@ -334,7 +333,7 @@ export function MessageInput({ conversation, currentUserId, onSendMessage }: Mes
                     {attachmentTypeSuggestions.length > 0 && (
                       <>
                         <p className="text-muted-foreground px-2 py-1 text-xs font-medium">
-                          {t('features.messages.ai.attachTypes', 'Context types')}
+                          {t('features.messages.ai.attachTypes')}
                         </p>
                         {attachmentTypeSuggestions.map(option => (
                           <button
@@ -358,7 +357,7 @@ export function MessageInput({ conversation, currentUserId, onSendMessage }: Mes
                     {attachmentSuggestions.length > 0 && (
                       <>
                         <p className="text-muted-foreground px-2 py-1 text-xs font-medium">
-                          {t('features.messages.ai.attachments', 'Attach context')}
+                          {t('features.messages.ai.attachments')}
                         </p>
                         {attachmentSuggestions.map(option => (
                           <button
@@ -394,10 +393,7 @@ export function MessageInput({ conversation, currentUserId, onSendMessage }: Mes
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
               <AtSign className="h-3.5 w-3.5" />
-              {t(
-                'features.messages.compose.attachmentHelperText',
-                'Use @ to attach Polity entities.'
-              )}
+              {t('features.messages.compose.attachmentHelperText')}
             </p>
 
             <div className="flex items-center gap-2">
@@ -417,7 +413,7 @@ export function MessageInput({ conversation, currentUserId, onSendMessage }: Mes
                 size="icon"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={attachments.isUploadingAttachments}
-                title={t('features.messages.compose.uploadFiles', 'Upload documents and images')}
+                title={t('features.messages.compose.uploadFiles')}
               >
                 {attachments.isUploadingAttachments ? (
                   <LoaderCircle className="h-4 w-4 animate-spin" />

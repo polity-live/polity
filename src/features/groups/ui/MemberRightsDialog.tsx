@@ -27,6 +27,7 @@ import {
 import type { ActionRightOption } from '@/features/groups/types/group.types';
 import type { SearchCardGradientEntity } from '@/features/shared/utils/search-card-gradients';
 import type { ParticipationLike } from '@/features/shared/types/participation';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface MemberRightsDialogProps<TParticipation extends ParticipationLike> {
   isOpen: boolean;
@@ -57,19 +58,18 @@ export function MemberRightsDialog<TParticipation extends ParticipationLike>({
 }: MemberRightsDialogProps<TParticipation>) {
   const { t } = useTranslation();
   const resolvedContextLabel =
-    contextLabel ?? t('components.memberRightsDialog.context.group', 'group');
-  const resolvedFallbackRoleLabel =
-    fallbackRoleLabel ?? t('components.memberRightsDialog.memberFallback', 'Member');
-  const resolvedProfileButtonLabel =
-    profileButtonLabel ?? t('components.memberRightsDialog.openProfile', 'Open Profile');
-  const resolvedCloseButtonLabel =
-    closeButtonLabel ?? t('components.memberRightsDialog.close', 'Close');
-  const resolvedEmptyRightsLabel =
-    emptyRightsLabel ??
+    contextLabel ??
     t(
-      'components.memberRightsDialog.emptyRights',
-      "No explicit action rights are currently assigned through this member's roles."
+      'components.memberRightsDialog.context.group',
+      translateText('generated.inline.0096_group_64292b1c')
     );
+  const resolvedFallbackRoleLabel =
+    fallbackRoleLabel ?? t('components.memberRightsDialog.memberFallback');
+  const resolvedProfileButtonLabel =
+    profileButtonLabel ?? t('components.memberRightsDialog.openProfile');
+  const resolvedCloseButtonLabel = closeButtonLabel ?? t('components.memberRightsDialog.close');
+  const resolvedEmptyRightsLabel =
+    emptyRightsLabel ?? t('components.memberRightsDialog.emptyRights');
   const rightsSummary = useMemo(
     () => (membership ? buildMembershipRightsSummary(membership, actionRightsCatalog) : []),
     [actionRightsCatalog, membership]
@@ -81,8 +81,8 @@ export function MemberRightsDialog<TParticipation extends ParticipationLike>({
 
   const memberName = membership
     ? [membership.user?.first_name, membership.user?.last_name].filter(Boolean).join(' ') ||
-      t('components.memberRightsDialog.unknownUser', 'Unknown User')
-    : t('components.memberRightsDialog.unknownUser', 'Unknown User');
+      t('components.memberRightsDialog.unknownUser')
+    : t('components.memberRightsDialog.unknownUser');
   const roleSummary = membership ? getMembershipRoleSummary(membership) : resolvedFallbackRoleLabel;
   const profileUserId = membership?.user?.id ?? null;
 
@@ -103,13 +103,13 @@ export function MemberRightsDialog<TParticipation extends ParticipationLike>({
         <div className="space-y-4">
           <div className="border-border/70 from-background via-background to-muted/30 rounded-2xl border bg-gradient-to-br p-4">
             <div className="text-sm font-medium">
-              {t('components.memberRightsDialog.assignedRoles', 'Assigned roles')}
+              {t('components.memberRightsDialog.assignedRoles')}
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
               {displayRoles.length > 0 ? (
                 displayRoles.map(role => (
                   <TableTag key={role.id} entityType={entityType}>
-                    {role.name || t('components.memberRightsDialog.roleFallback', 'Role')}
+                    {role.name || t('components.memberRightsDialog.roleFallback')}
                   </TableTag>
                 ))
               ) : (
@@ -130,11 +130,9 @@ export function MemberRightsDialog<TParticipation extends ParticipationLike>({
               <TableHeader>
                 <TableRow>
                   <TableHead className="min-w-[220px]">
-                    {t('components.memberRightsDialog.effectiveRight', 'Effective Right')}
+                    {t('components.memberRightsDialog.effectiveRight')}
                   </TableHead>
-                  <TableHead>
-                    {t('components.memberRightsDialog.grantedBy', 'Granted By')}
-                  </TableHead>
+                  <TableHead>{t('components.memberRightsDialog.grantedBy')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

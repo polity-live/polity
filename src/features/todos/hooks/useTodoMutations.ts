@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTodoActions } from '@/zero/todos/useTodoActions';
 import { useCommonActions } from '@/zero/common/useCommonActions';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 /**
  * Orchestration hook for todo mutations.
@@ -61,7 +62,9 @@ export function useTodoMutations() {
           entity_type: 'todo',
           entity_id: todoId,
           actor_id: todoData.ownerId,
-          title: `New task: ${todoData.title}`,
+          title: translateText('generated.inline.0542_new_task_title_67129685', {
+            title: todoData.title,
+          }),
           description: todoData.description?.substring(0, 100) ?? '',
           metadata: null,
           image_url: '',
@@ -116,8 +119,12 @@ export function useTodoMutations() {
           entity_type: 'todo',
           entity_id: todoId,
           actor_id: options.senderId,
-          title: `Task completed: ${options.todoTitle || 'Task'}`,
-          description: 'A task has been marked as completed',
+          title: translateText('generated.inline.0543_task_completed_value1131_41e5a93d', {
+            value1131: options.todoTitle || 'Task',
+          }),
+          description: translateText(
+            'generated.inline.0544_a_task_has_been_marked_as_completed_89df782a'
+          ),
           metadata: null,
           image_url: '',
           video_url: '',

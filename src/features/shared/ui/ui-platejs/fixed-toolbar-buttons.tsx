@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 
 import { AIToolbarButton } from './ai-toolbar-button.tsx';
 import { AlignToolbarButton } from './align-toolbar-button.tsx';
+import { ChartToolbarButton } from './chart-toolbar-button.tsx';
 import { CommentToolbarButton } from './comment-toolbar-button.tsx';
 import { EmojiToolbarButton } from './emoji-toolbar-button.tsx';
 import { ExportToolbarButton } from './export-toolbar-button.tsx';
@@ -59,10 +60,7 @@ export function FixedToolbarButtons({
   return (
     <div className={cn('flex w-full min-w-max items-center', className)}>
       <ToolbarGroup>
-        <MarkToolbarButton
-          nodeType={KEYS.highlight}
-          tooltip={t('plateJs.toolbar.highlight', 'Highlight')}
-        >
+        <MarkToolbarButton nodeType={KEYS.highlight} tooltip={t('plateJs.toolbar.highlight')}>
           <HighlighterIcon />
         </MarkToolbarButton>
         <CommentToolbarButton />
@@ -86,7 +84,7 @@ export function FixedToolbarButtons({
           </ToolbarGroup>
 
           <ToolbarGroup>
-            <AIToolbarButton tooltip={t('plateJs.toolbar.aiCommands', 'AI commands')}>
+            <AIToolbarButton tooltip={t('plateJs.toolbar.aiCommands')}>
               <WandSparklesIcon />
             </AIToolbarButton>
           </ToolbarGroup>
@@ -106,51 +104,36 @@ export function FixedToolbarButtons({
           </ToolbarGroup>
 
           <ToolbarGroup>
-            <MarkToolbarButton
-              nodeType={KEYS.bold}
-              tooltip={t('plateJs.toolbar.bold', 'Bold (⌘+B)')}
-            >
+            <MarkToolbarButton nodeType={KEYS.bold} tooltip={t('plateJs.toolbar.bold')}>
               <BoldIcon />
             </MarkToolbarButton>
 
-            <MarkToolbarButton
-              nodeType={KEYS.italic}
-              tooltip={t('plateJs.toolbar.italic', 'Italic (⌘+I)')}
-            >
+            <MarkToolbarButton nodeType={KEYS.italic} tooltip={t('plateJs.toolbar.italic')}>
               <ItalicIcon />
             </MarkToolbarButton>
 
-            <MarkToolbarButton
-              nodeType={KEYS.underline}
-              tooltip={t('plateJs.toolbar.underline', 'Underline (⌘+U)')}
-            >
+            <MarkToolbarButton nodeType={KEYS.underline} tooltip={t('plateJs.toolbar.underline')}>
               <UnderlineIcon />
             </MarkToolbarButton>
 
             <MarkToolbarButton
               nodeType={KEYS.strikethrough}
-              tooltip={t('plateJs.toolbar.strikethrough', 'Strikethrough (⌘+⇧+M)')}
+              tooltip={t('plateJs.toolbar.strikethrough')}
             >
               <StrikethroughIcon />
             </MarkToolbarButton>
 
-            <MarkToolbarButton
-              nodeType={KEYS.code}
-              tooltip={t('plateJs.toolbar.code', 'Code (⌘+E)')}
-            >
+            <MarkToolbarButton nodeType={KEYS.code} tooltip={t('plateJs.toolbar.code')}>
               <Code2Icon />
             </MarkToolbarButton>
 
-            <FontColorToolbarButton
-              nodeType={KEYS.color}
-              tooltip={t('plateJs.toolbar.textColor', 'Text color')}
-            >
+            <FontColorToolbarButton nodeType={KEYS.color} tooltip={t('plateJs.toolbar.textColor')}>
               <BaselineIcon />
             </FontColorToolbarButton>
 
             <FontColorToolbarButton
               nodeType={KEYS.backgroundColor}
-              tooltip={t('plateJs.toolbar.backgroundColor', 'Background color')}
+              tooltip={t('plateJs.toolbar.backgroundColor')}
             >
               <PaintBucketIcon />
             </FontColorToolbarButton>
@@ -168,6 +151,7 @@ export function FixedToolbarButtons({
           <ToolbarGroup>
             <LinkToolbarButton />
             <TableToolbarButton />
+            <ChartToolbarButton />
             <EmojiToolbarButton />
           </ToolbarGroup>
 

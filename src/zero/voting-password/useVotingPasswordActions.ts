@@ -32,10 +32,8 @@ export function useVotingPasswordActions() {
         await serverConfirmed(result);
       } catch (error) {
         const message =
-          error instanceof Error
-            ? error.message
-            : t('common.votingPassword.verifyFailed', 'Incorrect password');
-        toast.error(message || t('common.votingPassword.verifyFailed', 'Incorrect password'));
+          error instanceof Error ? error.message : t('common.votingPassword.verifyFailed');
+        toast.error(message || t('common.votingPassword.verifyFailed'));
         throw error;
       }
     },

@@ -20,11 +20,14 @@ import { SubscribeButton, MembershipButton } from '@/features/shared/ui/action-b
 import { SocialBar } from '@/features/users/ui/SocialBar';
 import { InfoTabs } from '@/features/shared/ui/wiki/InfoTabs.tsx';
 import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCard';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { ShareButton } from '@/features/shared/ui/action-buttons/ShareButton.tsx';
 import { useGroupWikiPage } from '@/features/groups/hooks/useGroupWikiPage';
 import { SiblingMembershipModeDescription } from '@/features/network/ui/GroupRelationshipFields';
-import { getCanonicalMembershipModeLabel } from '@/features/network/logic/networkLinkDerived';
+import { getCanonicalMembershipModeLabel } from '@/features/network/logic/groupConnectionDerived';
 import { buildGroupWikiIncumbentSections } from '@/features/groups/logic/buildGroupWikiIncumbentSections';
 import {
   countAcceptedMemberships,
@@ -78,9 +81,13 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
     return (
       <div>
         <div className="py-12 text-center">
-          <h1 className="mb-4 text-2xl font-bold">Group Not Found</h1>
+          <h1 className="mb-4 text-2xl font-bold">
+            {translateText('generated.inline.0544_group_not_found_3e51f77a')}
+          </h1>
           <p className="text-muted-foreground">
-            The group you're looking for doesn't exist or has been removed.
+            {translateText(
+              'generated.inline.0545_the_group_you_re_looking_for_doesn_t_exist_or_4cf69159'
+            )}
           </p>
         </div>
       </div>
@@ -127,7 +134,7 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
           )}
           <Badge variant="outline" className="text-sm">
             {isSibling
-              ? 'Geschwistergruppe'
+              ? translateText('generated.inline.0080_geschwistergruppe_1053d99c')
               : isHierarchical
                 ? t('components.badges.hierarchicalGroup')
                 : t('components.badges.baseGroup')}
@@ -264,8 +271,10 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
 
       {incumbentSections.length > 0 && (
         <WikiIncumbentPanel
-          title="Roles & Incumbents"
-          description="Assigned and elected roles with their active incumbents in this group"
+          title={translateText('generated.inline.0431_roles_incumbents_07f9ca00')}
+          description={translateText(
+            'generated.inline.0546_assigned_and_elected_roles_with_their_active__a609ec72'
+          )}
           sections={incumbentSections}
         />
       )}
@@ -273,15 +282,17 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
       {connectedGroup ? (
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Verbundene Gruppe</CardTitle>
+            <CardTitle>
+              {translateText('generated.inline.0547_verbundene_gruppe_2d1da077')}
+            </CardTitle>
             <CardDescription>
               {group.sibling_membership_mode === 'elected'
-                ? 'Gewaehlte Geschwistergruppe'
+                ? translateText('generated.inline.0081_gewaehlte_geschwistergruppe_fb3714e2')
                 : group.sibling_membership_mode === 'parliament'
-                  ? 'Parlamentsgruppe'
+                  ? translateText('generated.inline.0082_parlamentsgruppe_76cbe42e')
                   : primarySiblingMembershipMode === 'none'
-                    ? 'Offene Geschwistergruppe'
-                    : 'Geschwistergruppe'}
+                    ? translateText('generated.inline.0083_offene_geschwistergruppe_33bc5bda')
+                    : translateText('generated.inline.0080_geschwistergruppe_1053d99c')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -318,9 +329,13 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
       {parliamentSourceGroups.length > 0 ? (
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Parlamentsquellen</CardTitle>
+            <CardTitle>
+              {translateText('generated.inline.0548_parlamentsquellen_eefe6cad')}
+            </CardTitle>
             <CardDescription>
-              Diese Gruppen speisen die Mitglieder dieser Parlamentsgruppe.
+              {translateText(
+                'generated.inline.0549_diese_gruppen_speisen_die_mitglieder_dieser_p_6bf90be9'
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -348,9 +363,13 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Network className="h-5 w-5" />
-              Geschwistergruppen
+              {translateText('generated.inline.0550_geschwistergruppen_69f740ec')}
             </CardTitle>
-            <CardDescription>Direkt verbundene Geschwistergruppen dieser Gruppe.</CardDescription>
+            <CardDescription>
+              {translateText(
+                'generated.inline.0551_direkt_verbundene_geschwistergruppen_dieser_g_405521f2'
+              )}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
@@ -441,9 +460,11 @@ export function GroupWiki({ groupId }: GroupWikiProps) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BookOpen className="h-5 w-5" />
-              Blog Posts
+              {translateText('generated.inline.0552_blog_posts_9a088442')}
             </CardTitle>
-            <CardDescription>Recent posts from this group</CardDescription>
+            <CardDescription>
+              {translateText('generated.inline.0553_recent_posts_from_this_group_fb8d3df3')}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

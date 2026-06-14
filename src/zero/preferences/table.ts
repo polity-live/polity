@@ -1,5 +1,5 @@
 import { table, string, number, json } from '@rocicorp/zero';
-import type { GroupNetworkLayouts } from './schema';
+import type { DecisionTerminalDashboardConfig, GroupNetworkLayouts } from './schema';
 
 export const userPreference = table('user_preference')
   .columns({
@@ -10,6 +10,7 @@ export const userPreference = table('user_preference')
     language: string(),
     navigation_view: string(),
     group_network_layouts: json<GroupNetworkLayouts>(),
+    decision_terminal_dashboard: json<DecisionTerminalDashboardConfig>().optional(),
     created_at: number(),
     updated_at: number(),
   })

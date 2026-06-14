@@ -2,6 +2,7 @@
 
 import { cn } from '@/features/shared/utils/utils';
 import { Badge } from '@/features/shared/ui/ui/badge';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export type DecisionStatus =
   | 'open'
@@ -25,65 +26,72 @@ export function getStatusConfig(status: DecisionStatus) {
   switch (status) {
     case 'open':
       return {
-        label: 'OPEN',
-        emoji: '🟢',
-        colorClass: 'bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/30',
+        label: translateText('generated.inline.0074_open_cf9b7706'),
+        dotClass: 'bg-emerald-500',
+        colorClass:
+          'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300',
         pulseClass: '',
       };
     case 'closing_soon':
       return {
-        label: 'CLOSING',
-        emoji: '🟡',
-        colorClass: 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 border-yellow-500/30',
+        label: translateText('generated.inline.0075_closing_76a032e9'),
+        dotClass: 'bg-amber-500',
+        colorClass:
+          'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300',
         pulseClass: '',
       };
     case 'last_hour':
       return {
-        label: 'LAST HOUR',
-        emoji: '🟠',
-        colorClass: 'bg-orange-500/20 text-orange-700 dark:text-orange-400 border-orange-500/30',
+        label: translateText('generated.inline.0076_last_hour_1e84a813'),
+        dotClass: 'bg-amber-500',
+        colorClass:
+          'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300',
         pulseClass: '',
       };
     case 'final_minutes':
       return {
-        label: 'FINAL',
-        emoji: '🔴',
-        colorClass: 'bg-red-500/20 text-red-700 dark:text-red-400 border-red-500/30',
+        label: translateText('generated.inline.0077_final_672b22cc'),
+        dotClass: 'bg-red-500',
+        colorClass:
+          'border-red-200 bg-red-50 text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300',
         pulseClass: 'animate-pulse',
       };
     case 'passed':
       return {
-        label: 'PASSED',
-        emoji: '✅',
-        colorClass: 'bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/30',
+        label: translateText('generated.inline.0078_passed_271d60f4'),
+        dotClass: 'bg-emerald-500',
+        colorClass:
+          'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300',
         pulseClass: '',
       };
     case 'failed':
       return {
-        label: 'FAILED',
-        emoji: '❌',
-        colorClass: 'bg-red-500/20 text-red-700 dark:text-red-400 border-red-500/30',
+        label: translateText('generated.inline.0079_failed_09fef5d8'),
+        dotClass: 'bg-red-500',
+        colorClass:
+          'border-red-200 bg-red-50 text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300',
         pulseClass: '',
       };
     case 'tied':
       return {
-        label: 'TIED',
-        emoji: '⚪',
-        colorClass: 'bg-gray-500/20 text-gray-700 dark:text-gray-400 border-gray-500/30',
+        label: translateText('generated.inline.0080_tied_2e9807f6'),
+        dotClass: 'bg-muted-foreground',
+        colorClass: 'border-border bg-muted text-muted-foreground',
         pulseClass: '',
       };
     case 'elected':
       return {
-        label: 'ELECTED',
-        emoji: '🏆',
-        colorClass: 'bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-500/30',
+        label: translateText('generated.inline.0081_elected_27d35d1d'),
+        dotClass: 'bg-emerald-500',
+        colorClass:
+          'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300',
         pulseClass: '',
       };
     default:
       return {
-        label: 'UNKNOWN',
-        emoji: '⚪',
-        colorClass: 'bg-gray-500/20 text-gray-600 dark:text-gray-400 border-gray-500/30',
+        label: translateText('generated.inline.0082_unknown_bc7819b3'),
+        dotClass: 'bg-muted-foreground',
+        colorClass: 'border-border bg-muted text-muted-foreground',
         pulseClass: '',
       };
   }
@@ -100,13 +108,14 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
     <Badge
       variant="outline"
       className={cn(
-        'font-mono text-xs font-bold uppercase tracking-wide',
+        'font-mono text-xs font-bold tracking-wide uppercase',
+        'rounded-md px-2 py-0.5',
         config.colorClass,
         config.pulseClass,
         className
       )}
     >
-      <span className="mr-1">{config.emoji}</span>
+      <span className={cn('mr-1 h-1.5 w-1.5', config.dotClass)} />
       {config.label}
     </Badge>
   );
@@ -120,10 +129,13 @@ export function StatusDot({ status, className }: { status: DecisionStatus; class
 
   return (
     <span
-      className={cn('inline-flex items-center justify-center', config.pulseClass, className)}
+      className={cn(
+        'border-background inline-flex h-2 w-2 items-center justify-center rounded-full border',
+        config.dotClass,
+        config.pulseClass,
+        className
+      )}
       title={config.label}
-    >
-      {config.emoji}
-    </span>
+    />
   );
 }

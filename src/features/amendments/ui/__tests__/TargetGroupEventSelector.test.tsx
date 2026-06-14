@@ -45,43 +45,45 @@ const amendmentMemberships = [
 const amendmentRelationships = [
   {
     id: 'rel-start-mid',
-    network_link_id: 'link-start-mid',
-    network_link_right_id: 'right-start-mid',
+    connection_id: 'connection-start-mid',
+    grant_id: 'grant-start-mid',
     group_id: 'group-start',
     related_group_id: 'group-mid',
-    relationship_type: 'parent',
-    structural_relation: 'parent_child',
+    relationship_type: 'child',
+    connection_type: 'hierarchy',
+    parent_group_id: 'group-mid',
+    child_group_id: 'group-start',
     with_right: 'amendmentRight',
-    status: 'accepted',
+    status: 'active',
     initiator_group_id: null,
     created_at: Date.now(),
-    membership_mode: 'all_members',
-    membership_direction: null,
-    membership_role_id: null,
-    membership_source_group_ids: null,
-    relationship_direction: 'backward',
-    right_direction: 'backward',
+    member_source_group_id: null,
+    member_target_group_id: null,
+    membership_mode: 'none',
+    required_source_role_id: null,
+    eligible_origin_group_ids: [],
     group: { id: 'group-start', name: 'Budget Circle' },
     related_group: { id: 'group-mid', name: 'Regional Council' },
   },
   {
     id: 'rel-mid-target',
-    network_link_id: 'link-mid-target',
-    network_link_right_id: 'right-mid-target',
+    connection_id: 'connection-mid-target',
+    grant_id: 'grant-mid-target',
     group_id: 'group-mid',
     related_group_id: 'group-target',
-    relationship_type: 'parent',
-    structural_relation: 'parent_child',
+    relationship_type: 'child',
+    connection_type: 'hierarchy',
+    parent_group_id: 'group-target',
+    child_group_id: 'group-mid',
     with_right: 'amendmentRight',
-    status: 'accepted',
+    status: 'active',
     initiator_group_id: null,
     created_at: Date.now(),
-    membership_mode: 'all_members',
-    membership_direction: null,
-    membership_role_id: null,
-    membership_source_group_ids: null,
-    relationship_direction: 'backward',
-    right_direction: 'backward',
+    member_source_group_id: null,
+    member_target_group_id: null,
+    membership_mode: 'none',
+    required_source_role_id: null,
+    eligible_origin_group_ids: [],
     group: { id: 'group-mid', name: 'Regional Council' },
     related_group: { id: 'group-target', name: 'Parliament' },
   },
@@ -283,6 +285,43 @@ describe('TargetGroupEventSelector', () => {
         })
       )
     );
+  });
+
+  it('does not offer reverse targets when the selected start group is the final scope', async () => {
+    amendmentMemberships.push({
+      id: 'membership-target',
+      status: 'active',
+      user: { id: 'user-1' },
+      group: { id: 'group-target' },
+      membership_roles: [],
+    });
+
+    try {
+      render(
+        <TargetGroupEventSelector
+          userId="user-1"
+          onSelect={vi.fn()}
+          allowGroupWithoutEvent
+          allowSourceGroupAsTarget
+          disablePortal
+          selectedSourceGroupId="group-target"
+        />
+      );
+
+      const targetSearchInput = await screen.findByPlaceholderText('Zielgruppe suchen...');
+
+      fireEvent.focus(targetSearchInput);
+      fireEvent.change(targetSearchInput, { target: { value: 'Region' } });
+      await waitFor(() => expect(hasButtonText('Regional Council')).toBe(false));
+
+      fireEvent.change(targetSearchInput, { target: { value: 'Budget' } });
+      await waitFor(() => expect(hasButtonText('Budget Circle')).toBe(false));
+
+      fireEvent.change(targetSearchInput, { target: { value: 'Parlia' } });
+      await waitFor(() => expect(hasButtonText('Parliament')).toBe(true));
+    } finally {
+      amendmentMemberships.pop();
+    }
   });
 
   it('selects the start group from the graph, reroots, and keeps the target typeahead in sync', async () => {

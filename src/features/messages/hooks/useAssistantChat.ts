@@ -4,7 +4,10 @@ import { DEFAULT_AI_SKILLS } from '@/features/assistant/logic/defaultAiSkills';
 import { buildAiModelKey, getPreferredDefaultAiModelKey } from '@/lib/ai/models';
 import { DEFAULT_AI_TOOLS, type AiToolName } from '@/lib/ai/defaultAiTools';
 import type { AiChatAttachment, AiProvider, AiReasoningEffort } from '@/lib/ai/schemas';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { useAuth } from '@/providers/auth-provider';
 import { useAiActions } from '@/zero/ai/useAiActions';
 import { useAiState } from '@/zero/ai/useAiState';
@@ -285,7 +288,7 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
       setModels(payload.models ?? []);
     } catch (error) {
       console.error('Failed to load AI catalog:', error);
-      toast.error('Failed to load AI models');
+      toast.error(translateText('generated.inline.0734_failed_to_load_ai_models_9302850d'));
       setModels([]);
     } finally {
       setIsCatalogLoading(false);
@@ -450,32 +453,17 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
   const sendAssistantMessage = useCallback(
     async (content: string, options?: SendAssistantMessageOptions): Promise<boolean> => {
       if (!currentUserId) {
-        toast.error(
-          t(
-            'features.messages.ai.authRequired',
-            'You need to be signed in to chat with Aria & Kai.'
-          )
-        );
+        toast.error(t('features.messages.ai.authRequired'));
         return false;
       }
 
       if (!session?.access_token) {
-        toast.error(
-          t(
-            'features.messages.ai.sessionMissing',
-            'Your session has expired. Please sign in again.'
-          )
-        );
+        toast.error(t('features.messages.ai.sessionMissing'));
         return false;
       }
 
       if (!selectedModel) {
-        toast.error(
-          t(
-            'features.messages.ai.modelRequired',
-            'Choose an AI model first. Free OpenRouter models appear automatically when configured.'
-          )
-        );
+        toast.error(t('features.messages.ai.modelRequired'));
         return false;
       }
 
@@ -618,9 +606,7 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
               break;
             }
             case 'error': {
-              streamErrorMessage =
-                streamEvent.message ??
-                t('features.messages.ai.sendFailed', 'Failed to get a response from Aria & Kai.');
+              streamErrorMessage = streamEvent.message ?? t('features.messages.ai.sendFailed');
               setIsCompressing(false);
               setIsThinking(false);
               setIsToolCalling(false);
@@ -675,7 +661,7 @@ export function useAssistantChat(conversation: Conversation, currentUserId?: str
         const errorMessage =
           error instanceof Error && error.message.trim()
             ? error.message
-            : t('features.messages.ai.sendFailed', 'Failed to get a response from Aria & Kai.');
+            : t('features.messages.ai.sendFailed');
         setStreamingText('');
         setAwaitingPersistenceText(null);
         setIsCompressing(false);

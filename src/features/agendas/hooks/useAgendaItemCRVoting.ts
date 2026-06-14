@@ -9,6 +9,8 @@ import {
   type MajorityType,
   type VoteResult,
 } from '@/features/vote-cast/logic/computeVoteResults';
+import { isNamedBallot } from '@/zero/shared';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export type CRVotePhase = 'indicative' | 'final_vote' | 'closed';
 
@@ -146,7 +148,9 @@ export function useAgendaItemCRVoting(agendaItemId: string, userId?: string) {
           userId,
           voteId: item.vote?.id,
         });
-        toast.error('Cannot cast vote: missing user or vote data');
+        toast.error(
+          translateText('generated.inline.0001_cannot_cast_vote_missing_user_or_vote_data_32ecb2cb')
+        );
         return;
       }
       let voterId = getUserVoter(item)?.id;
@@ -171,7 +175,9 @@ export function useAgendaItemCRVoting(agendaItemId: string, userId?: string) {
           id: crypto.randomUUID(),
           vote_id: item.vote.id,
           choice_id: choiceId,
-          voter_participation_id: item.vote.visibility === 'public' ? participationId : null,
+          voter_participation_id: isNamedBallot(item.vote.ballot_visibility)
+            ? participationId
+            : null,
         },
       ];
 
@@ -187,7 +193,7 @@ export function useAgendaItemCRVoting(agendaItemId: string, userId?: string) {
   // Check if all CR votes (non-final) are completed
   const allCRsProcessed = useMemo(() => {
     const crItems = crTimeline.filter(item => !item.is_final_vote);
-    return crItems.length > 0 && crItems.every(item => item.status === 'completed');
+    return crItems.every(item => item.status === 'completed');
   }, [crTimeline]);
 
   // Check if timeline is complete (all items including final vote are completed)

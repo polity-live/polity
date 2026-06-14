@@ -1,5 +1,5 @@
 import { cn } from '@/features/shared/utils/utils';
-import { Play } from 'lucide-react';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface StatementMediaDisplayProps {
   imageUrl?: string | null;
@@ -11,7 +11,7 @@ interface StatementMediaDisplayProps {
 export function StatementMediaDisplay({
   imageUrl,
   videoUrl,
-  alt = 'Statement media',
+  alt = translateText('generated.inline.0171_statement_media_7c323153'),
   className,
 }: StatementMediaDisplayProps) {
   if (!imageUrl && !videoUrl) return null;
@@ -19,21 +19,11 @@ export function StatementMediaDisplay({
   return (
     <div className={cn('overflow-hidden rounded-lg', className)}>
       {videoUrl ? (
-        <video
-          src={videoUrl}
-          poster={imageUrl ?? undefined}
-          controls
-          className="w-full rounded-lg"
-        >
+        <video src={videoUrl} poster={imageUrl ?? undefined} controls className="w-full rounded-lg">
           <track kind="captions" />
         </video>
       ) : imageUrl ? (
-        <img
-          src={imageUrl}
-          alt={alt}
-          className="w-full rounded-lg object-cover"
-          loading="lazy"
-        />
+        <img src={imageUrl} alt={alt} className="w-full rounded-lg object-cover" loading="lazy" />
       ) : null}
     </div>
   );

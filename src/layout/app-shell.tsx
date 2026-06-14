@@ -23,6 +23,7 @@ import { useZeroReady } from '@/providers/zero-provider.tsx';
 import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
 import {
   createDocsSecondaryNavItems,
+  createLandingSecondaryNavItems,
   createNavItemsUnauthenticated,
 } from '@/features/navigation/nav-items/nav-items-unauthenticated.tsx';
 import { usePreferenceSync } from '@/zero/preferences/usePreferenceSync.ts';
@@ -57,11 +58,15 @@ function UnauthenticatedShell({ children }: { children: ReactNode }) {
 
   const navigationItems = useMemo(() => createNavItemsUnauthenticated(navigate, t), [navigate, t]);
   const secondaryNavItems = useMemo(() => {
-    if (!pathname.startsWith('/docs')) {
-      return null;
+    if (isLandingPath(pathname)) {
+      return createLandingSecondaryNavItems(navigate, t);
     }
 
-    return createDocsSecondaryNavItems(navigate, t);
+    if (pathname.startsWith('/docs')) {
+      return createDocsSecondaryNavItems(navigate, t);
+    }
+
+    return null;
   }, [navigate, pathname, t]);
   const isMobile = screenType === 'mobile' || (screenType === 'automatic' && isMobileScreen);
   const isSecondaryNavVisible =
@@ -114,6 +119,15 @@ function UnauthenticatedShell({ children }: { children: ReactNode }) {
         <AlphaWarningDialog />
       </div>
     </I18nSyncProvider>
+  );
+}
+
+function isLandingPath(pathname: string): boolean {
+  return (
+    pathname === '/' ||
+    pathname === '/features' ||
+    pathname === '/solutions' ||
+    pathname === '/imprint'
   );
 }
 

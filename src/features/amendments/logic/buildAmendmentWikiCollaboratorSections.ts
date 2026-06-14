@@ -2,6 +2,7 @@ import {
   buildWikiIncumbentCarouselSections,
   type WikiIncumbentRoleCards,
 } from '@/features/shared/logic/wikiIncumbentSections';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export function buildAmendmentWikiCollaboratorSections(
   roles: readonly AmendmentRoleLike[],
@@ -15,7 +16,8 @@ export function buildAmendmentWikiCollaboratorSections(
   );
 
   const normalizedRoles: WikiIncumbentRoleCards[] = visibleRoles.map(role => {
-    const title = role.name?.trim() || 'Untitled role';
+    const title =
+      role.name?.trim() || translateText('generated.inline.0017_untitled_role_216c6117');
     const description = role.description?.trim() || null;
     const assignees = activeCollaborators
       .filter(collaborator => collaborator.role_id === role.id)
@@ -87,7 +89,7 @@ export function buildAmendmentWikiCollaboratorSections(
   if (unassignedCollaborators.length > 0 || normalizedRoles.length === 0) {
     normalizedRoles.unshift({
       id: 'unassigned-collaborators',
-      title: 'Collaborators',
+      title: translateText('generated.inline.0020_collaborators_6eb695e5'),
       description: null,
       assigneeCount: unassignedCollaborators.length,
       cards:

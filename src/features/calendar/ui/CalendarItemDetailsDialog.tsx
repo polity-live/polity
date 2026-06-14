@@ -1,7 +1,10 @@
 import { Link } from '@tanstack/react-router';
 import { Calendar, Clock, MapPin, Users, Video } from 'lucide-react';
 import { getBaseEventId } from '@/features/calendar/logic/eventIdUtils';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
 import {
@@ -64,7 +67,8 @@ export function CalendarItemDetailsDialog({
 
   const locale = toLocale(language);
   const eventHref = item.isMeeting ? undefined : `/event/${getBaseEventId(item.id)}`;
-  const participantCount = item.bookingCount ?? item.attendeeCount ?? (item.max_bookings ? 0 : undefined);
+  const participantCount =
+    item.bookingCount ?? item.attendeeCount ?? (item.max_bookings ? 0 : undefined);
   const participantLabel =
     participantCount === undefined
       ? null
@@ -106,17 +110,17 @@ export function CalendarItemDetailsDialog({
           <div className="space-y-4 pb-1">
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-lg border p-3">
-                <div className="mb-1 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <div className="text-muted-foreground mb-1 flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
                   <Calendar className="h-3.5 w-3.5" />
-                  {t('features.events.detail.date', 'Date')}
+                  {t('features.events.detail.date')}
                 </div>
                 <p className="text-sm font-medium">{formatDate(item.start_date, locale)}</p>
               </div>
 
               <div className="rounded-lg border p-3">
-                <div className="mb-1 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <div className="text-muted-foreground mb-1 flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
                   <Clock className="h-3.5 w-3.5" />
-                  {t('features.events.detail.time', 'Time')}
+                  {t('features.events.detail.time')}
                 </div>
                 <p className="text-sm font-medium">{formatTimeRange(item, locale)}</p>
               </div>
@@ -124,8 +128,8 @@ export function CalendarItemDetailsDialog({
 
             {item.organizerName && (
               <div className="rounded-lg border p-3">
-                <div className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  {t('features.events.detail.organizer', 'Organizer')}
+                <div className="text-muted-foreground mb-1 text-xs font-medium tracking-wide uppercase">
+                  {t('features.events.detail.organizer')}
                 </div>
                 <p className="text-sm font-medium">{item.organizerName}</p>
               </div>
@@ -133,9 +137,9 @@ export function CalendarItemDetailsDialog({
 
             {item.location && (
               <div className="rounded-lg border p-3">
-                <div className="mb-1 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <div className="text-muted-foreground mb-1 flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
                   <MapPin className="h-3.5 w-3.5" />
-                  {t('features.events.detail.location', 'Location')}
+                  {t('features.events.detail.location')}
                 </div>
                 <p className="text-sm font-medium">{item.location}</p>
               </div>
@@ -143,15 +147,15 @@ export function CalendarItemDetailsDialog({
 
             {onlineUrl && (
               <div className="rounded-lg border p-3">
-                <div className="mb-1 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <div className="text-muted-foreground mb-1 flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
                   <Video className="h-3.5 w-3.5" />
-                  URL
+                  {translateText('generated.inline.0028_url_0e2d9b07')}
                 </div>
                 <a
                   href={onlineUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="break-all text-sm font-medium text-primary underline-offset-4 hover:underline"
+                  className="text-primary text-sm font-medium break-all underline-offset-4 hover:underline"
                 >
                   {onlineUrl}
                 </a>
@@ -160,9 +164,9 @@ export function CalendarItemDetailsDialog({
 
             {participantValue && (
               <div className="rounded-lg border p-3">
-                <div className="mb-1 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <div className="text-muted-foreground mb-1 flex items-center gap-2 text-xs font-medium tracking-wide uppercase">
                   <Users className="h-3.5 w-3.5" />
-                  {t('features.events.detail.participants', 'Participants')}
+                  {t('features.events.detail.participants')}
                 </div>
                 <p className="text-sm font-medium">{participantValue}</p>
               </div>
@@ -170,10 +174,10 @@ export function CalendarItemDetailsDialog({
 
             {item.description && (
               <div className="rounded-lg border p-3">
-                <div className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  {t('features.events.detail.description', 'Description')}
+                <div className="text-muted-foreground mb-1 text-xs font-medium tracking-wide uppercase">
+                  {t('features.events.detail.description')}
                 </div>
-                <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm whitespace-pre-wrap">
                   {item.description}
                 </p>
               </div>
@@ -193,11 +197,11 @@ export function CalendarItemDetailsDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {t('common.close', 'Close')}
+            {t('common.close')}
           </Button>
           {eventHref && (
             <Button asChild>
-              <Link to={eventHref}>{t('features.calendar.details.openEventWiki', 'Open event wiki')}</Link>
+              <Link to={eventHref}>{t('features.calendar.details.openEventWiki')}</Link>
             </Button>
           )}
         </DialogFooter>

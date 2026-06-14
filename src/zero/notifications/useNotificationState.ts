@@ -174,11 +174,13 @@ export function useNotificationState(options?: {
       ...normalizedBlogNotifications,
     ];
     const seen = new Set<string>();
-    return all.filter(n => {
-      if (seen.has(n.id)) return false;
-      seen.add(n.id);
-      return true;
-    });
+    return all
+      .filter(n => {
+        if (seen.has(n.id)) return false;
+        seen.add(n.id);
+        return true;
+      })
+      .sort((a, b) => Number(b.created_at ?? 0) - Number(a.created_at ?? 0));
   }, [
     includeUserNotifications,
     normalizedAmendmentNotifications,

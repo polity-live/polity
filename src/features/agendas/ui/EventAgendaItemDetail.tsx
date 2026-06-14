@@ -17,6 +17,10 @@ import { useAgendaActionBar } from '../hooks/useAgendaActionBar';
 import { useAgendaNavigation } from '../hooks/useAgendaNavigation';
 import { VoteCastDialog } from '@/features/vote-cast/ui/VoteCastDialog';
 import { ChangeRequestCardsList } from './ChangeRequestCardsList';
+import {
+  MergeVariantComparisonPanel,
+  type MergeVariantCandidate,
+} from './MergeVariantComparisonPanel';
 import { AccreditationSection } from './AccreditationSection';
 import { usePermissions } from '@/zero/rbac';
 import { useVotingPasswordActions } from '@/zero/voting-password/useVotingPasswordActions';
@@ -28,7 +32,10 @@ import { gatedToast as toast } from '@/features/notifications/utils/gated-toast'
 import type { Value } from 'platejs';
 import type { TDiscussion } from '@/features/editor/types';
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { useAgendaItemCRVoting, getVotePhase } from '../hooks/useAgendaItemCRVoting';
 import { extractAmendmentCRSummaries } from '../logic/extractAmendmentCRSummaries';
 import { createMockCRTimelineItems } from '../logic/createMockCRTimelineItems';
@@ -53,6 +60,13 @@ import {
   resolveOfflineTallyPhase,
   shouldShowOfflineTallyToolbarButton,
 } from '../logic/offlineTallyToolbar';
+import {
+  buildNamedElectionResultsModel,
+  buildNamedVoteResultsModel,
+} from '../logic/buildNamedBallotResults';
+import { NamedBallotResultsDialog } from './NamedBallotResultsDialog';
+import { useDelegateAssemblyParticipantsComposition } from '@/features/events/hooks/useDelegateAssemblyParticipantsComposition';
+import { isNamedBallot } from '@/zero/shared';
 
 function getEffectiveVotingPhase(status?: string | null, fallback?: string | null): string | null {
   const normalizePhase = (value?: string | null) => {
@@ -161,6 +175,7 @@ export function EventAgendaItemDetail({
   const [offlineTallyPasswordError, setOfflineTallyPasswordError] = useState<string | null>(null);
   const [offlineTallySubmitError, setOfflineTallySubmitError] = useState<string | null>(null);
   const [isOfflineTallySubmitting, setIsOfflineTallySubmitting] = useState(false);
+  const [namedResultsTarget, setNamedResultsTarget] = useState<'election' | 'vote' | null>(null);
   const effectiveVotingPhase = getEffectiveVotingPhase(
     election?.status ?? vote?.status,
     agendaItem?.voting_phase ?? null
@@ -442,12 +457,12 @@ export function EventAgendaItemDetail({
   const selectedCRTitle = useMemo(() => {
     if (!selectedCRToolbarItem) return agendaItem?.title ?? undefined;
     if (selectedCRToolbarItem.is_final_vote) {
-      return t('features.agendas.crTimeline.acceptAmendment', 'Accept amendment as modified');
+      return t('features.agendas.crTimeline.acceptAmendment');
     }
 
     return (
       selectedCRToolbarItem.change_request?.title ||
-      `${t('features.agendas.crTimeline.changeRequest', 'Change Request')} ${selectedCRToolbarIndex + 1}`
+      `${t('features.agendas.crTimeline.changeRequest')} ${selectedCRToolbarIndex + 1}`
     );
   }, [agendaItem?.title, selectedCRToolbarItem, selectedCRToolbarIndex, t]);
 
@@ -500,6 +515,27 @@ export function EventAgendaItemDetail({
     isSelectedCRFinalVote,
     vote,
   ]);
+  const mergeVariantCandidates = useMemo<MergeVariantCandidate[]>(() => {
+    const agendaStepRuns = forwardingContext.agendaStepRuns ?? [];
+    if (!agendaStepRuns.some(step => step.step_kind === 'merge_vote')) {
+      return [];
+    }
+
+    return [...agendaStepRuns]
+      .sort((left, right) => (left.branch?.created_at ?? 0) - (right.branch?.created_at ?? 0))
+      .map((step, index) => ({
+        id: step.branch_id ?? step.id,
+        label: translateText('generated.inline.0006_antrag_valuee0eb_4b6d330e', {
+          valuee0eb: index + 1,
+        }),
+        groupName: step.target_group?.name ?? step.branch?.title ?? null,
+        content:
+          step.branch?.document_version?.content ??
+          step.process_run?.amendment?.document?.content ??
+          agendaItem?.amendment?.document?.content ??
+          null,
+      }));
+  }, [agendaItem?.amendment?.document?.content, forwardingContext.agendaStepRuns]);
   const detailGroupTypeById = useMemo(
     () => buildAmendmentPathGroupTypeById(forwardingContext.branchStepRuns),
     [forwardingContext.branchStepRuns]
@@ -647,32 +683,32 @@ export function EventAgendaItemDetail({
 
   const startVoteTooltip = isCRToolbarActive
     ? isSelectedCRFinalVote
-      ? t('features.events.agenda.actions.startFinalVote', 'Start Final Vote')
-      : t('features.agendas.crTimeline.startVote', 'Start Change Request Vote')
+      ? t('features.events.agenda.actions.startFinalVote')
+      : t('features.agendas.crTimeline.startVote')
     : undefined;
 
   const startFinalVoteTooltip = isCRToolbarActive
     ? isSelectedCRFinalVote
-      ? t('features.events.agenda.actions.startFinalVote', 'Start Final Vote')
-      : t('features.agendas.crTimeline.startFinal', 'Start Change Request Final Vote')
+      ? t('features.events.agenda.actions.startFinalVote')
+      : t('features.agendas.crTimeline.startFinal')
     : undefined;
 
   const closeVoteTooltip = isCRToolbarActive
     ? isSelectedCRFinalVote
-      ? t('features.events.agenda.actions.closeFinalVote', 'Close Final Vote')
-      : t('features.agendas.crTimeline.closeVoting', 'Close Change Request Vote')
+      ? t('features.events.agenda.actions.closeFinalVote')
+      : t('features.agendas.crTimeline.closeVoting')
     : undefined;
 
   const castIndicativeVoteTooltip = isCRToolbarActive
     ? isSelectedCRFinalVote
-      ? t('features.events.agenda.actions.castIndicativeVote', 'Cast Indication')
-      : t('features.agendas.crTimeline.castIndicative', 'Cast Change Request Indication')
+      ? t('features.events.agenda.actions.castIndicativeVote')
+      : t('features.agendas.crTimeline.castIndicative')
     : undefined;
 
   const castFinalVoteTooltip = isCRToolbarActive
     ? isSelectedCRFinalVote
-      ? t('features.events.agenda.actions.castFinalVote', 'Cast Final Vote')
-      : t('features.agendas.crTimeline.castFinal', 'Cast Change Request Final Vote')
+      ? t('features.events.agenda.actions.castFinalVote')
+      : t('features.agendas.crTimeline.castFinal')
     : undefined;
 
   // Handler: Mark speaker as completed
@@ -702,7 +738,7 @@ export function EventAgendaItemDetail({
       toast.success(t('features.events.agenda.markCompleted'));
     } catch (error) {
       console.error('Error marking speaker completed:', error);
-      toast.error('Fehler beim Markieren');
+      toast.error(translateText('generated.inline.0050_fehler_beim_markieren_61f5cb2c'));
     } finally {
       setMarkingSpeakerComplete(null);
     }
@@ -733,6 +769,28 @@ export function EventAgendaItemDetail({
 
   const isUserInSpeakerList = speakerListData.some(
     speaker => speaker.user?.id === user?.id && !speaker.completed
+  );
+  const activeRosterParticipants = useMemo(
+    () =>
+      (rosterEvent?.participants ?? []).filter(participant =>
+        ['active', 'member', 'admin', 'confirmed'].includes(participant.status ?? '')
+      ),
+    [rosterEvent?.participants]
+  );
+  const { isDelegateAssembly, participantsWithProvenance } =
+    useDelegateAssemblyParticipantsComposition(rosterEvent, activeRosterParticipants);
+  const eligibleParticipantsForNamedResults = useMemo(
+    () => (isDelegateAssembly ? participantsWithProvenance : activeRosterParticipants),
+    [activeRosterParticipants, isDelegateAssembly, participantsWithProvenance]
+  );
+  const confirmedOfflineParticipants = useMemo(
+    () =>
+      (rosterEvent?.offline_participants ?? []).filter(
+        participant =>
+          participant.attendance_status === 'confirmed' &&
+          participant.participation_channel === 'offline'
+      ),
+    [rosterEvent?.offline_participants]
   );
 
   // Derive election/vote data for section components
@@ -823,6 +881,65 @@ export function EventAgendaItemDetail({
       )
       .filter(Boolean);
   }, [userVoter, vote]);
+  const namedElectionResults = useMemo(
+    () =>
+      election
+        ? buildNamedElectionResultsModel({
+            election,
+            eligibleParticipants: eligibleParticipantsForNamedResults,
+            confirmedOfflineParticipants,
+            groupedBySourceGroup: isDelegateAssembly,
+          })
+        : null,
+    [
+      confirmedOfflineParticipants,
+      election,
+      eligibleParticipantsForNamedResults,
+      isDelegateAssembly,
+    ]
+  );
+  const namedVoteResults = useMemo(
+    () =>
+      vote
+        ? buildNamedVoteResultsModel({
+            vote,
+            eligibleParticipants: eligibleParticipantsForNamedResults,
+            confirmedOfflineParticipants,
+            groupedBySourceGroup: isDelegateAssembly,
+          })
+        : null,
+    [confirmedOfflineParticipants, eligibleParticipantsForNamedResults, isDelegateAssembly, vote]
+  );
+  const namedResultsDialogConfig = useMemo(() => {
+    if (namedResultsTarget === 'election' && election && namedElectionResults) {
+      return {
+        title: election.title ?? agendaItem?.title ?? 'Namentliche Wahl',
+        description: translateText(
+          'generated.inline.0007_live_einzelansicht_der_aktuellen_wahlentschei_a187c0ee'
+        ),
+        model: namedElectionResults,
+      };
+    }
+
+    if (namedResultsTarget === 'vote' && vote && namedVoteResults) {
+      return {
+        title: vote.title ?? agendaItem?.title ?? 'Namentliche Abstimmung',
+        description: translateText(
+          'generated.inline.0008_live_einzelansicht_der_aktuellen_abstimmungse_5779107f'
+        ),
+        model: namedVoteResults,
+      };
+    }
+
+    return null;
+  }, [
+    agendaItem?.title,
+    election,
+    namedElectionResults,
+    namedResultsTarget,
+    namedVoteResults,
+    vote,
+  ]);
 
   const offlineTallyEntity = useMemo(() => {
     if (!offlineTallyPhase) {
@@ -964,7 +1081,10 @@ export function EventAgendaItemDetail({
         toast.success(getOfflineTallySuccessMessage(offlineTallyPhase));
         handleOfflineTallyDialogOpenChange(false);
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Failed to save offline tally';
+        const message =
+          error instanceof Error
+            ? error.message
+            : translateText('generated.inline.0007_failed_to_save_offline_tally_82b59509');
         const isPasswordError =
           message === 'Invalid voting password.' ||
           message === 'No voting password set. Please set your voting PIN first.';
@@ -975,13 +1095,13 @@ export function EventAgendaItemDetail({
           setOfflineTallySubmitError(message);
         }
 
-        toast.error('Failed to save offline tally', {
+        toast.error(translateText('generated.inline.0049_failed_to_save_offline_tally_82b59509'), {
           description: message,
           action:
             message.includes('Offline election totals exceed the current cap') ||
             message.includes('Offline vote totals cannot exceed')
               ? {
-                  label: 'Open participants',
+                  label: translateText('generated.inline.0004_open_participants_22616da9'),
                   onClick: () =>
                     navigate({
                       to: '/event/$id/participants',
@@ -1020,14 +1140,18 @@ export function EventAgendaItemDetail({
       <Card>
         <CardContent className="p-6 text-center">
           <AlertCircle className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
-          <h2 className="mb-2 text-2xl font-bold">Tagesordnungspunkt nicht gefunden</h2>
+          <h2 className="mb-2 text-2xl font-bold">
+            {translateText('generated.inline.0051_tagesordnungspunkt_nicht_gefunden_6faf6631')}
+          </h2>
           <p className="text-muted-foreground mb-4">
-            Der gesuchte Tagesordnungspunkt existiert nicht oder wurde gelöscht.
+            {translateText(
+              'generated.inline.0052_der_gesuchte_tagesordnungspunkt_existiert_nic_234c07d7'
+            )}
           </p>
           <Button asChild>
             <Link to="/event/$id/agenda" params={{ id: eventId }}>
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Zurück zur Tagesordnung
+              {translateText('generated.inline.0053_zur_ck_zur_tagesordnung_c45114ea')}
             </Link>
           </Button>
         </CardContent>
@@ -1129,7 +1253,9 @@ export function EventAgendaItemDetail({
             : actionBarHook.handleVoteClick
         }
         disableVoteButton={!isCRToolbarActive && disableVoteButton}
-        disabledVoteTooltip="Offline votes are entered via tallies."
+        disabledVoteTooltip={translateText(
+          'generated.inline.0005_offline_votes_are_entered_via_tallies_0ab8a792'
+        )}
         showOfflineTallyButton={!isCRToolbarActive && showOfflineTallyButton}
         onOfflineTallyClick={
           !isCRToolbarActive && showOfflineTallyButton ? handleOpenOfflineTallyDialog : undefined
@@ -1161,6 +1287,18 @@ export function EventAgendaItemDetail({
         passwordError={offlineTallyPasswordError}
         submitError={offlineTallySubmitError}
         onSubmit={handleSubmitOfflineTally}
+      />
+
+      <NamedBallotResultsDialog
+        open={namedResultsTarget !== null}
+        onOpenChange={open => {
+          if (!open) {
+            setNamedResultsTarget(null);
+          }
+        }}
+        title={namedResultsDialogConfig?.title ?? 'Namentliche Ergebnisse'}
+        description={namedResultsDialogConfig?.description ?? ''}
+        model={namedResultsDialogConfig?.model ?? null}
       />
 
       {/* Vote Cast Dialog (with password support) */}
@@ -1209,7 +1347,10 @@ export function EventAgendaItemDetail({
           try {
             await verifyVotingPassword(password);
           } catch (err) {
-            const message = err instanceof Error ? err.message : 'Verification failed';
+            const message =
+              err instanceof Error
+                ? err.message
+                : translateText('generated.inline.0010_verification_failed_e10d7e51');
             setPasswordError(message);
             throw err;
           } finally {
@@ -1278,6 +1419,8 @@ export function EventAgendaItemDetail({
       />
 
       {delegateTargetEvent ? <EventSearchCard event={delegateTargetEvent} /> : null}
+
+      <MergeVariantComparisonPanel candidates={mergeVariantCandidates} />
 
       {/* Section 2: Speaker List */}
       <AgendaSpeakerListSection
@@ -1350,6 +1493,11 @@ export function EventAgendaItemDetail({
             isCandidateLoading={actionBarHook.candidateLoading}
             onBecomeCandidate={actionBarHook.handleBecomeCandidate}
             onWithdrawCandidacy={actionBarHook.handleWithdrawCandidacy}
+            onOpenNamedResults={
+              isNamedBallot(election.ballot_visibility)
+                ? () => setNamedResultsTarget('election')
+                : undefined
+            }
           />
         </div>
       )}
@@ -1372,6 +1520,11 @@ export function EventAgendaItemDetail({
             totalEligibleVoters={(vote.voters?.length ?? 0) + confirmedOfflineParticipantCount}
             canManageOfflineResults={canManageAgenda}
             offlineEligibleCount={confirmedOfflineParticipantCount}
+            onOpenNamedResults={
+              isNamedBallot(vote.ballot_visibility)
+                ? () => setNamedResultsTarget('vote')
+                : undefined
+            }
           />
         </div>
       )}

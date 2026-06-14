@@ -14,6 +14,7 @@ import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useDocumentState } from '@/zero/documents/useDocumentState';
 import type { EditorEntityType, EditorMode, TDiscussion } from '../types';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface SuggestionRef {
   id?: string;
@@ -75,7 +76,12 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
   );
 
   const handleSuggestionCreated = useCallback(
-    async (params: { id: string; crId: string; amendmentId: string }) => {
+    async (params: {
+      id: string;
+      crId: string;
+      amendmentId: string;
+      changedCharacterCount?: number;
+    }) => {
       console.log('[useEditorOperations] handleSuggestionCreated called:', params);
       try {
         await createChangeRequest({
@@ -88,6 +94,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
           source_id: null,
           source_title: null,
           reason: null,
+          changed_character_count: params.changedCharacterCount ?? 0,
           voting_status: 'open',
           voting_deadline: null,
           voting_majority_type: null,
@@ -112,13 +119,17 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
     ): Promise<{ updatedDiscussions: TDiscussion[] }> => {
       if (editingMode === 'vote_internal' || editingMode === 'vote_event') {
         toast.error(
-          'This document is in voting mode. Changes must be approved by vote on the Change Requests page.'
+          translateText(
+            'generated.inline.0419_this_document_is_in_voting_mode_changes_must__dc2a16a9'
+          )
         );
         return { updatedDiscussions: discussions };
       }
 
       try {
-        const versionTitle = suggestion?.crId ? `${suggestion.crId} accepted` : undefined;
+        const versionTitle = suggestion?.crId
+          ? translateText('generated.inline.0053_crid_accepted_a55aa162', { crId: suggestion.crId })
+          : undefined;
 
         await createVersionForEntity(content, 'suggestion_accepted', versionTitle);
 
@@ -152,6 +163,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
               source_id: null,
               source_title: null,
               reason: null,
+              changed_character_count: 0,
               voting_status: 'completed',
               voting_deadline: null,
               voting_majority_type: null,
@@ -163,7 +175,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
         return { updatedDiscussions };
       } catch (error) {
         console.error('Failed to accept suggestion:', error);
-        toast.error('Failed to accept suggestion');
+        toast.error(translateText('generated.inline.0420_failed_to_accept_suggestion_1cf50bc4'));
         return { updatedDiscussions: discussions };
       }
     },
@@ -181,13 +193,17 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
     ): Promise<{ updatedDiscussions: TDiscussion[] }> => {
       if (editingMode === 'vote_internal' || editingMode === 'vote_event') {
         toast.error(
-          'This document is in voting mode. Changes must be declined by vote on the Change Requests page.'
+          translateText(
+            'generated.inline.0421_this_document_is_in_voting_mode_changes_must__66a233c7'
+          )
         );
         return { updatedDiscussions: discussions };
       }
 
       try {
-        const versionTitle = suggestion?.crId ? `${suggestion.crId} declined` : undefined;
+        const versionTitle = suggestion?.crId
+          ? translateText('generated.inline.0054_crid_declined_2252b75e', { crId: suggestion.crId })
+          : undefined;
 
         await createVersionForEntity(content, 'suggestion_declined', versionTitle);
 
@@ -222,6 +238,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
                 source_id: null,
                 source_title: null,
                 reason: null,
+                changed_character_count: 0,
                 voting_status: 'completed',
                 voting_deadline: null,
                 voting_majority_type: null,
@@ -234,7 +251,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
         return { updatedDiscussions };
       } catch (error) {
         console.error('Failed to decline suggestion:', error);
-        toast.error('Failed to decline suggestion');
+        toast.error(translateText('generated.inline.0422_failed_to_decline_suggestion_b404c243'));
         return { updatedDiscussions: discussions };
       }
     },
@@ -255,7 +272,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
         );
 
         if (!discussion) {
-          toast.error('Suggestion not found');
+          toast.error(translateText('generated.inline.0423_suggestion_not_found_26722c9c'));
           return;
         }
 
@@ -274,6 +291,7 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
             source_id: null,
             source_title: null,
             reason: null,
+            changed_character_count: 0,
             voting_status: 'open',
             voting_deadline: null,
             voting_majority_type: null,
@@ -289,10 +307,10 @@ export function useEditorOperations(entityType: EditorEntityType, entityId: stri
           vote: voteType,
         });
 
-        toast.success('Vote recorded');
+        toast.success(translateText('generated.inline.0424_vote_recorded_871f8900'));
       } catch (error) {
         console.error('Failed to vote on suggestion:', error);
-        toast.error('Failed to record vote');
+        toast.error(translateText('generated.inline.0425_failed_to_record_vote_46deda26'));
       }
     },
     [createChangeRequest, voteOnChangeRequest]

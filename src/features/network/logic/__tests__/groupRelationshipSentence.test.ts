@@ -14,8 +14,8 @@ const messages: Record<string, string> = {
   'common.unspecified': 'Unbekannt',
   'common.network.currentGroupHasRightIn':
     '{{currentGroupName}} hat {{rightLabel}} in {{selectedGroupName}}',
-  'common.network.currentGroupGrantsRightTo':
-    '{{currentGroupName}} vergibt {{rightLabel}} an {{selectedGroupName}}',
+  'common.network.selectedGroupHasRightInCurrentGroup':
+    '{{selectedGroupName}} hat {{rightLabel}} in {{currentGroupName}}',
   'common.network.groupsMutuallyShareRight':
     '{{currentGroupName}} und {{selectedGroupName}} haben gegenseitig {{rightLabel}}',
 };
@@ -44,7 +44,7 @@ describe('groupRelationshipSentence', () => {
   it('renders incoming rights from the current group perspective', () => {
     expect(
       getGroupRelationshipRightSentenceText({
-        direction: 'incoming',
+        direction: 'current_has_right_in_partner',
         rightLabel: 'Informationsrecht',
         currentGroupName: 'Basistest99',
         selectedGroupName: 'Hierarchie99',
@@ -53,22 +53,22 @@ describe('groupRelationshipSentence', () => {
     ).toBe('Diese Gruppe (Basistest99) hat Informationsrecht in Hierarchie99');
   });
 
-  it('renders outgoing rights as granted to the other group', () => {
+  it('renders partner-held rights as right in the current group', () => {
     expect(
       getGroupRelationshipRightSentenceText({
-        direction: 'outgoing',
+        direction: 'partner_has_right_in_current',
         rightLabel: 'Antragsrecht',
         currentGroupName: 'Basistest99',
         selectedGroupName: 'Hierarchie99',
         t,
       })
-    ).toBe('Diese Gruppe (Basistest99) vergibt Antragsrecht an Hierarchie99');
+    ).toBe('Hierarchie99 hat Antragsrecht in diese Gruppe (Basistest99)');
   });
 
-  it('renders bidirectional rights as mutual sharing', () => {
+  it('renders mutual rights as mutual sharing', () => {
     expect(
       getGroupRelationshipRightSentenceText({
-        direction: 'bidirectional',
+        direction: 'mutual',
         rightLabel: 'Informationsrecht',
         currentGroupName: 'Basistest99',
         selectedGroupName: 'Hierarchie99',

@@ -89,7 +89,12 @@ CREATE TABLE IF NOT EXISTS public.notification_read (
   entity_id UUID NOT NULL,
   read_by_user_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
   read_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (notification_id, entity_type, entity_id)
+  CONSTRAINT notification_read_per_user_key UNIQUE (
+    notification_id,
+    entity_type,
+    entity_id,
+    read_by_user_id
+  )
 );
 
 CREATE INDEX idx_notification_read_entity ON public.notification_read (entity_type, entity_id);

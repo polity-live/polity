@@ -6,6 +6,7 @@ import type {
   PreferenceLanguage,
   PreferenceNavigationView,
   GroupNetworkLayouts,
+  DecisionTerminalDashboardConfig,
 } from './schema';
 
 /**
@@ -30,6 +31,10 @@ export function usePreferenceState() {
   const groupNetworkLayouts: GroupNetworkLayouts =
     (preference?.group_network_layouts as GroupNetworkLayouts | undefined) ?? {};
 
+  const decisionTerminalDashboard =
+    (preference?.decision_terminal_dashboard as DecisionTerminalDashboardConfig | undefined) ??
+    null;
+
   return {
     preference,
     createFormStyle,
@@ -37,6 +42,7 @@ export function usePreferenceState() {
     language,
     navigationView,
     groupNetworkLayouts,
+    decisionTerminalDashboard,
     isLoading,
   };
 }

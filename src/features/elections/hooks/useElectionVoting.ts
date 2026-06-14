@@ -16,6 +16,7 @@ import {
   computeRoleScheduledRevoteDate,
   scheduleRoleRevote,
 } from '@/features/votes/utils/revote-scheduling';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface UseElectionVotingOptions {
   eventId: string;
@@ -198,8 +199,10 @@ export function useElectionVoting({
         metadata: { electionId, winnerId: result.winner.id },
         tags: [],
         stats: {},
-        title: 'Election Completed',
-        description: `Winner: ${result.winner.name || result.winner.id}`,
+        title: translateText('generated.inline.0092_election_completed_efe44735'),
+        description: translateText('generated.inline.0093_winner_id_99630916', {
+          id: result.winner.name || result.winner.id,
+        }),
         image_url: '',
         video_url: '',
         video_thumbnail_url: '',

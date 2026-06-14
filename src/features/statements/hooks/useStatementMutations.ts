@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useStatementActions } from '@/zero/statements/useStatementActions';
 import { useCommonActions } from '@/zero/common/useCommonActions';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 /**
  * Hook for statement mutations with cross-domain orchestration (timeline events).
@@ -57,7 +58,7 @@ export function useStatementMutations() {
           entity_type: 'statement',
           entity_id: statementId,
           actor_id: userId,
-          title: 'New statement posted',
+          title: translateText('generated.inline.0529_new_statement_posted_06a106be'),
           description: text ? text.substring(0, 100) + (text.length > 100 ? '...' : '') : '',
           content_type: 'statement',
           metadata: {},
@@ -118,7 +119,7 @@ export function useStatementMutations() {
           entity_type: 'statement',
           entity_id: statementId,
           actor_id: userId,
-          title: 'Statement updated',
+          title: translateText('generated.inline.0530_statement_updated_939da7bf'),
           description: text ? text.substring(0, 100) + (text.length > 100 ? '...' : '') : '',
           content_type: 'statement',
           metadata: {},

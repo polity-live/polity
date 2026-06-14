@@ -2,7 +2,10 @@
 
 import { format, isToday, isTomorrow } from 'date-fns';
 import { Clock, ExternalLink, MapPin, Trash2, Users, Video } from 'lucide-react';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Button } from '@/features/shared/ui/ui/button';
@@ -134,7 +137,7 @@ export function MeetupTimelineCard({
           isBookable,
           isFull,
         }),
-        className,
+        className
       )}
       onClick={onSelect}
       href={href}
@@ -162,14 +165,14 @@ export function MeetupTimelineCard({
           <div
             className={cn(
               'flex flex-col items-center rounded-xl bg-white/80 px-4 py-2 shadow-sm dark:bg-gray-900/80',
-              isPast && 'opacity-60',
+              isPast && 'opacity-60'
             )}
           >
-            <span className="text-xs font-medium uppercase text-muted-foreground">
+            <span className="text-muted-foreground text-xs font-medium uppercase">
               {format(startDate, 'MMM').toUpperCase()}
             </span>
-            <span className="text-2xl font-bold leading-none">{format(startDate, 'd')}</span>
-            <span className="mt-0.5 text-xs text-muted-foreground">{format(startDate, 'p')}</span>
+            <span className="text-2xl leading-none font-bold">{format(startDate, 'd')}</span>
+            <span className="text-muted-foreground mt-0.5 text-xs">{format(startDate, 'p')}</span>
             {dateLabel && (
               <Badge variant="secondary" className="mt-1 text-xs">
                 {dateLabel}
@@ -178,7 +181,7 @@ export function MeetupTimelineCard({
           </div>
         </div>
 
-        <div className="mt-3 space-y-1.5 text-xs text-muted-foreground">
+        <div className="text-muted-foreground mt-3 space-y-1.5 text-xs">
           <div className="flex items-center justify-center gap-1.5">
             <Clock className="h-3.5 w-3.5 flex-shrink-0" />
             <span>
@@ -196,7 +199,9 @@ export function MeetupTimelineCard({
           {meetup.onlineUrl && (
             <div className="flex items-center justify-center gap-1.5">
               <Video className="h-3.5 w-3.5 flex-shrink-0" />
-              <span>Online meeting available</span>
+              <span>
+                {translateText('generated.inline.1160_online_meeting_available_b96908b1')}
+              </span>
             </div>
           )}
         </div>
@@ -204,7 +209,7 @@ export function MeetupTimelineCard({
 
       <TimelineCardContent>
         {meetup.description && (
-          <p className="mb-3 line-clamp-2 text-sm text-muted-foreground">{meetup.description}</p>
+          <p className="text-muted-foreground mb-3 line-clamp-2 text-sm">{meetup.description}</p>
         )}
 
         <div className="mb-3 flex flex-wrap gap-2">
@@ -224,10 +229,14 @@ export function MeetupTimelineCard({
               {t('features.calendar.meeting.available')}
             </Badge>
           )}
-          {isPast && <Badge variant="secondary">Past</Badge>}
+          {isPast && (
+            <Badge variant="secondary">
+              {translateText('generated.inline.1161_past_405c12fb')}
+            </Badge>
+          )}
         </div>
 
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="text-muted-foreground flex items-center gap-2 text-sm">
           <Users className="h-4 w-4" />
           <span>
             {participantLabel}
@@ -239,7 +248,7 @@ export function MeetupTimelineCard({
           <div className="mt-3 flex items-center gap-2">
             <div className="flex -space-x-2">
               {participants.slice(0, 5).map(participant => (
-                <Avatar key={participant.id} className="h-7 w-7 border-2 border-background">
+                <Avatar key={participant.id} className="border-background h-7 w-7 border-2">
                   <AvatarImage src={participant.avatar ?? undefined} />
                   <AvatarFallback className="text-xs">
                     {participant.name?.[0]?.toUpperCase() || 'U'}
@@ -256,11 +265,11 @@ export function MeetupTimelineCard({
               href={meetup.onlineUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm text-primary underline-offset-4 hover:underline"
+              className="text-primary inline-flex items-center gap-1.5 text-sm underline-offset-4 hover:underline"
               onClick={event => event.stopPropagation()}
             >
               <Video className="h-4 w-4" />
-              Open online meeting link
+              {translateText('generated.inline.1162_open_online_meeting_link_ec74dc3b')}
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
           </div>
@@ -271,12 +280,12 @@ export function MeetupTimelineCard({
         <TimelineCardActions>
           {canBook && (
             <Button size="sm" onClick={onBook}>
-              Book meeting
+              {translateText('generated.inline.1163_book_meeting_1b8711e4')}
             </Button>
           )}
           {canCancel && (
             <Button size="sm" variant="outline" onClick={onCancel}>
-              Cancel booking
+              {translateText('generated.inline.1164_cancel_booking_c6085eb5')}
             </Button>
           )}
           {canDelete && (

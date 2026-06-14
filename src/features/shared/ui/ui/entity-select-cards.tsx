@@ -10,6 +10,7 @@ import {
 import { Badge } from '@/features/shared/ui/ui/badge.tsx';
 import { EditingModeBadge } from '@/features/shared/ui/ui/editing-mode.tsx';
 import { Calendar, Users, MapPin, Scale, FileText } from 'lucide-react';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface SelectableEvent {
   title?: string | null;
@@ -72,7 +73,7 @@ export function EventSelectCard({ event }: { event: SelectableEvent }) {
           <CardTitle className="text-base">{event.title}</CardTitle>
           <Badge variant="outline" className="flex-shrink-0">
             <Calendar className="mr-1 h-3 w-3" />
-            Event
+            {translateText('generated.inline.0026_event_ad8919ac')}
           </Badge>
         </div>
         {event.startDate && (
@@ -112,7 +113,7 @@ export function GroupSelectCard({ group }: { group: SelectableGroup }) {
           <CardTitle className="text-base">{group.name}</CardTitle>
           <Badge variant="outline" className="flex-shrink-0">
             <Users className="mr-1 h-3 w-3" />
-            Group
+            {translateText('generated.inline.0608_group_171a0606')}
           </Badge>
         </div>
         {group.description && (
@@ -122,7 +123,9 @@ export function GroupSelectCard({ group }: { group: SelectableGroup }) {
       {group.memberCount && (
         <CardContent className="pt-0">
           <div className="text-muted-foreground text-xs">
-            {group.memberCount} member{group.memberCount !== 1 ? 's' : ''}
+            {group.memberCount}
+            {translateText('generated.inline.0159_member_6467baa3')}
+            {group.memberCount !== 1 ? 's' : ''}
           </div>
         </CardContent>
       )}
@@ -139,7 +142,7 @@ export function AmendmentSelectCard({ amendment }: { amendment: SelectableAmendm
           <CardTitle className="text-base">{amendment.title}</CardTitle>
           <Badge variant="outline" className="flex-shrink-0">
             <Scale className="mr-1 h-3 w-3" />
-            Amendment
+            {translateText('generated.inline.1133_amendment_664ccfae')}
           </Badge>
         </div>
         {amendment.subtitle && (
@@ -163,7 +166,7 @@ export function ElectionSelectCard({ election }: { election: SelectableElection 
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-base">{election.title}</CardTitle>
           <Badge variant="outline" className="flex-shrink-0">
-            Election
+            {translateText('generated.inline.1052_election_217da2dc')}
           </Badge>
         </div>
         {election.description && (
@@ -189,7 +192,7 @@ export function RoleSelectCard({ role }: { role: SelectableRole }) {
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-base">{role.title}</CardTitle>
           <Badge variant="outline" className="flex-shrink-0">
-            Role
+            {translateText('generated.inline.0091_role_c3f104d1')}
           </Badge>
         </div>
         {role.description && (
@@ -204,7 +207,12 @@ export function RoleSelectCard({ role }: { role: SelectableRole }) {
               <span>{role.group.name}</span>
             </div>
           )}
-          {role.term && <span>{role.term} months</span>}
+          {role.term && (
+            <span>
+              {role.term}
+              {translateText('generated.inline.0160_months_f1494311')}
+            </span>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -224,7 +232,7 @@ export function AmendmentVoteSelectCard({
           <CardTitle className="text-base">{amendmentVote.title}</CardTitle>
           <Badge variant="outline" className="flex-shrink-0">
             <FileText className="mr-1 h-3 w-3" />
-            Vote
+            {translateText('generated.inline.0011_vote_64f87291')}
           </Badge>
         </div>
         {amendmentVote.description && (

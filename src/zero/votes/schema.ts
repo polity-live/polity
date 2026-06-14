@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { timestampSchema, nullableTimestampSchema } from '../shared/helpers';
+import {
+  ballotVisibilitySchema,
+  defaultVoteBallotVisibility,
+  timestampSchema,
+  nullableTimestampSchema,
+} from '../shared';
 
 // ============================================
 // Vote
@@ -17,6 +22,7 @@ const baseVoteSchema = z.object({
   closing_duration_seconds: z.number().nullable(),
   closing_end_time: nullableTimestampSchema,
   visibility: z.string(),
+  ballot_visibility: ballotVisibilitySchema,
   created_at: timestampSchema,
   updated_at: timestampSchema,
 });
@@ -40,6 +46,9 @@ const defaultVoteVisibilitySchema = z
   .string()
   .optional()
   .transform(value => value ?? 'public');
+const defaultVoteBallotVisibilitySchema = ballotVisibilitySchema
+  .optional()
+  .transform(value => value ?? defaultVoteBallotVisibility);
 
 export const selectVoteSchema = baseVoteSchema;
 export const createVoteSchema = baseVoteSchema
@@ -51,6 +60,7 @@ export const createVoteSchema = baseVoteSchema
     majority_type: true,
     closing_type: true,
     visibility: true,
+    ballot_visibility: true,
   })
   .extend({
     id: z.string(),
@@ -58,6 +68,7 @@ export const createVoteSchema = baseVoteSchema
     majority_type: defaultVoteMajorityTypeSchema,
     closing_type: defaultVoteClosingTypeSchema,
     visibility: defaultVoteVisibilitySchema,
+    ballot_visibility: defaultVoteBallotVisibilitySchema,
   });
 export const updateVoteSchema = baseVoteSchema
   .pick({
@@ -69,6 +80,7 @@ export const updateVoteSchema = baseVoteSchema
     closing_duration_seconds: true,
     closing_end_time: true,
     visibility: true,
+    ballot_visibility: true,
   })
   .partial()
   .extend({ id: z.string() });

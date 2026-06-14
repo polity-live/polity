@@ -1,6 +1,7 @@
 import { Calendar } from 'lucide-react';
 import { MembershipStatusTable } from './MembershipStatusTable';
 import type { MembershipsByStatus } from '../hooks/useUserMembershipsFilters';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface EventParticipationsTabProps {
   participationsByStatus: MembershipsByStatus;
@@ -8,7 +9,6 @@ interface EventParticipationsTabProps {
   onDeclineInvitation: (id: string) => void;
   onLeave: (id: string) => void;
   onWithdrawRequest: (id: string) => void;
-  onNavigate: (id: string) => void;
 }
 
 export function EventParticipationsTab({
@@ -17,13 +17,14 @@ export function EventParticipationsTab({
   onDeclineInvitation,
   onLeave,
   onWithdrawRequest,
-  onNavigate,
 }: EventParticipationsTabProps) {
   return (
     <div className="space-y-6">
       <MembershipStatusTable
         title={`Pending Invitations (${participationsByStatus.invited.length})`}
-        description="Event invitations you've received"
+        description={translateText(
+          'generated.inline.1189_event_invitations_you_ve_received_984bbca0'
+        )}
         icon={Calendar}
         items={participationsByStatus.invited}
         statusType="invited"
@@ -31,31 +32,32 @@ export function EventParticipationsTab({
         fallbackIcon={Calendar}
         onAccept={onAcceptInvitation}
         onDecline={onDeclineInvitation}
-        onNavigate={onNavigate}
       />
 
       <MembershipStatusTable
         title={`Active Participations (${participationsByStatus.active.length})`}
-        description="Events you're currently participating in"
+        description={translateText(
+          'generated.inline.1190_events_you_re_currently_participating_in_709d8ac2'
+        )}
         icon={Calendar}
         items={participationsByStatus.active}
         statusType="active"
         entityKey="event"
         fallbackIcon={Calendar}
         onLeave={onLeave}
-        onNavigate={onNavigate}
       />
 
       <MembershipStatusTable
         title={`Pending Requests (${participationsByStatus.requested.length})`}
-        description="Your pending requests to join events"
+        description={translateText(
+          'generated.inline.1191_your_pending_requests_to_join_events_935cc392'
+        )}
         icon={Calendar}
         items={participationsByStatus.requested}
         statusType="requested"
         entityKey="event"
         fallbackIcon={Calendar}
         onWithdraw={onWithdrawRequest}
-        onNavigate={onNavigate}
       />
     </div>
   );

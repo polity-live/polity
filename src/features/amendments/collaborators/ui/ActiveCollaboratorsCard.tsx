@@ -28,13 +28,14 @@ import {
 } from '@/features/shared/ui/ui/select';
 import { getTableTagSurfaceClassName } from '@/features/shared/ui/ui/table-tag';
 import { cn } from '@/features/shared/utils/utils';
+import { SmartLink } from '@/features/shared/ui/navigation/SmartLink.tsx';
 import { Users, Shield, Trash2 } from 'lucide-react';
 import type { Collaborator, Role } from '../hooks/useCollaborators';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface ActiveCollaboratorsCardProps {
   collaborators: Collaborator[];
   roles: Role[];
-  onNavigateToUser: (userId: string) => void;
   onChangeRole: (collaboratorId: string, newRoleId: string) => Promise<void>;
   onPromoteToAdmin: (collaboratorId: string, roles: Role[]) => Promise<void>;
   onDemoteToMember: (collaboratorId: string, roles: Role[]) => Promise<void>;
@@ -44,7 +45,6 @@ interface ActiveCollaboratorsCardProps {
 export function ActiveCollaboratorsCard({
   collaborators,
   roles,
-  onNavigateToUser,
   onChangeRole,
   onPromoteToAdmin,
   onDemoteToMember,
@@ -55,21 +55,30 @@ export function ActiveCollaboratorsCard({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Users className="h-5 w-5" />
-          Active Collaborators ({collaborators.length})
+          {translateText('generated.inline.0087_active_collaborators_7b4089f1')}
+          {collaborators.length})
         </CardTitle>
-        <CardDescription>Current amendment collaborators and administrators</CardDescription>
+        <CardDescription>
+          {translateText(
+            'generated.inline.0088_current_amendment_collaborators_and_administr_a73f4579'
+          )}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {collaborators.length === 0 ? (
-          <p className="text-muted-foreground py-8 text-center">No active collaborators found</p>
+          <p className="text-muted-foreground py-8 text-center">
+            {translateText('generated.inline.0089_no_active_collaborators_found_25e117c5')}
+          </p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Joined</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{translateText('generated.inline.0090_user_9f8a2389')}</TableHead>
+                <TableHead>{translateText('generated.inline.0091_role_c3f104d1')}</TableHead>
+                <TableHead>{translateText('generated.inline.0092_joined_43a1c626')}</TableHead>
+                <TableHead className="text-right">
+                  {translateText('generated.inline.0093_actions_c3cd636a')}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -86,34 +95,41 @@ export function ActiveCollaboratorsCard({
                 const createdAt = collaboration.created_at
                   ? new Date(collaboration.created_at).toLocaleDateString()
                   : 'N/A';
+                const userHref = user?.id ? `/user/${user.id}` : null;
+                const userCellContent = (
+                  <>
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={userAvatar} alt={userName} />
+                      <AvatarFallback>
+                        {userName
+                          .split(' ')
+                          .map((n: string) => n[0])
+                          .join('')
+                          .toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="font-medium">{userName}</div>
+                      {userHandle && (
+                        <div className="text-muted-foreground text-sm">@{userHandle}</div>
+                      )}
+                    </div>
+                  </>
+                );
 
                 return (
                   <TableRow key={collaboration.id}>
                     <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar
-                          className="h-10 w-10 cursor-pointer"
-                          onClick={() => user && onNavigateToUser(user.id)}
+                      {userHref ? (
+                        <SmartLink
+                          href={userHref}
+                          className="flex items-center gap-3 hover:underline"
                         >
-                          <AvatarImage src={userAvatar} alt={userName} />
-                          <AvatarFallback>
-                            {userName
-                              .split(' ')
-                              .map((n: string) => n[0])
-                              .join('')
-                              .toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div
-                          className="cursor-pointer hover:underline"
-                          onClick={() => user && onNavigateToUser(user.id)}
-                        >
-                          <div className="font-medium">{userName}</div>
-                          {userHandle && (
-                            <div className="text-muted-foreground text-sm">@{userHandle}</div>
-                          )}
-                        </div>
-                      </div>
+                          {userCellContent}
+                        </SmartLink>
+                      ) : (
+                        <div className="flex items-center gap-3">{userCellContent}</div>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Select
@@ -144,7 +160,7 @@ export function ActiveCollaboratorsCard({
                             onClick={() => onPromoteToAdmin(collaboration.id, roles)}
                           >
                             <Shield className="mr-1 h-4 w-4" />
-                            Promote to Author
+                            {translateText('generated.inline.0094_promote_to_author_88d1b3f9')}
                           </Button>
                         )}
                         {roleName === 'Author' && (
@@ -153,7 +169,7 @@ export function ActiveCollaboratorsCard({
                             size="sm"
                             onClick={() => onDemoteToMember(collaboration.id, roles)}
                           >
-                            Demote to Collaborator
+                            {translateText('generated.inline.0095_demote_to_collaborator_f2101f10')}
                           </Button>
                         )}
                         <Button
@@ -162,7 +178,9 @@ export function ActiveCollaboratorsCard({
                           onClick={() => onRemoveCollaborator(collaboration.id)}
                         >
                           <Trash2 className="h-4 w-4" />
-                          <span className="ml-2">Remove</span>
+                          <span className="ml-2">
+                            {translateText('generated.inline.0096_remove_e963907d')}
+                          </span>
                         </Button>
                       </div>
                     </TableCell>

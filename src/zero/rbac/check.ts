@@ -31,6 +31,7 @@ export interface PermissionData {
   guestAccesses?: GuestAccess[];
   participations?: Participation[];
   bloggerRelations?: BloggerRelation[];
+  amendment?: Amendment;
   ownedGroupIds?: string[];
 }
 
@@ -76,6 +77,10 @@ export function checkPermission(
   }
 
   if (scope.blogId && hasBlogPermission(data.bloggerRelations, scope.blogId, resource, action)) {
+    return true;
+  }
+
+  if (data.amendment && hasAmendmentPermission(data.amendment, data.userId, resource, action)) {
     return true;
   }
 
@@ -212,11 +217,18 @@ function hasAmendmentPermission(
   resource: ResourceType,
   action: ActionType
 ): boolean {
+  if (isAmendmentAuthor(amendment, userId)) {
+    return true;
+  }
+
   if (amendment?.amendmentRoleCollaborators) {
     const collaborator = amendment.amendmentRoleCollaborators.find(c => c.user?.id === userId);
     if (collaborator?.role?.actionRights) {
       return collaborator.role.actionRights.some(
-        right => right.resource === resource && checkWithInheritance(right.action, action)
+        right =>
+          right.resource === resource &&
+          checkWithInheritance(right.action, action) &&
+          (!right.amendment?.id || right.amendment.id === amendment.id)
       );
     }
   }

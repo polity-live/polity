@@ -10,6 +10,7 @@ import { type AiAttachmentEntity, type AiChatAttachment } from '@/lib/ai/schemas
 import { executeZeroRead, type ZeroTransaction } from '@/server/zero-mutate';
 import { zql } from '@/zero/schema';
 import { buildAiCreateTools } from './ai-create-tools';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 const SEARCH_ENTITY_TYPES = [
   'user',
@@ -64,48 +65,66 @@ const createFlowMetadata: Record<
   }
 > = {
   group: {
-    title: 'Gruppe erstellen',
-    description: 'Öffnet den Gruppen-Flow im Create-Bereich.',
+    title: translateText('generated.inline.0596_gruppe_erstellen_0b899239'),
+    description: translateText(
+      'generated.inline.0632_ffnet_den_gruppen_flow_im_create_bereich_7ff1dac5'
+    ),
     route: '/create/group',
   },
   event: {
-    title: 'Event erstellen',
-    description: 'Öffnet den Event-Flow im Create-Bereich.',
+    title: translateText('generated.inline.0598_event_erstellen_de6406f8'),
+    description: translateText(
+      'generated.inline.0633_ffnet_den_event_flow_im_create_bereich_ec7e5039'
+    ),
     route: '/create/event',
   },
   amendment: {
-    title: 'Änderungsantrag erstellen',
-    description: 'Öffnet den Amendment-Flow im Create-Bereich.',
+    title: translateText('generated.inline.0634_nderungsantrag_erstellen_03731c1e'),
+    description: translateText(
+      'generated.inline.0635_ffnet_den_amendment_flow_im_create_bereich_c3ae7d5e'
+    ),
     route: '/create/amendment',
   },
   'blog-entry': {
-    title: 'Blogeintrag erstellen',
-    description: 'Öffnet den Blog-Entry-Flow im Create-Bereich.',
+    title: translateText('generated.inline.0602_blogeintrag_erstellen_68a9822b'),
+    description: translateText(
+      'generated.inline.0636_ffnet_den_blog_entry_flow_im_create_bereich_d7967488'
+    ),
     route: '/create/blog-entry',
   },
   todo: {
-    title: 'Todo erstellen',
-    description: 'Öffnet den Todo-Flow im Create-Bereich.',
+    title: translateText('generated.inline.0604_todo_erstellen_867691bd'),
+    description: translateText(
+      'generated.inline.0637_ffnet_den_todo_flow_im_create_bereich_dc52c505'
+    ),
     route: '/create/todo',
   },
   statement: {
-    title: 'Statement erstellen',
-    description: 'Öffnet den Statement-Flow im Create-Bereich.',
+    title: translateText('generated.inline.0606_statement_erstellen_6bbac81c'),
+    description: translateText(
+      'generated.inline.0638_ffnet_den_statement_flow_im_create_bereich_3a58104f'
+    ),
     route: '/create/statement',
   },
   payment: {
-    title: 'Zahlung erfassen',
-    description: 'Öffnet den Payment-Flow im Create-Bereich.',
+    title: translateText('generated.inline.0639_zahlung_erfassen_2f753f11'),
+    description: translateText(
+      'generated.inline.0640_ffnet_den_payment_flow_im_create_bereich_d0f3ed00'
+    ),
     route: '/create/payment',
   },
   'agenda-item': {
-    title: 'Agenda-Punkt erstellen',
-    description: 'Öffnet den Agenda-Item-Flow im Create-Bereich.',
+    title: translateText('generated.inline.0610_agenda_punkt_erstellen_108bf657'),
+    description: translateText(
+      'generated.inline.0641_ffnet_den_agenda_item_flow_im_create_bereich_f2d7b7b1'
+    ),
     route: '/create/agenda-item',
   },
   'election-candidate': {
-    title: 'Kandidatur erstellen',
-    description: 'Öffnet den Election-Candidate-Flow im Create-Bereich.',
+    title: translateText('generated.inline.0612_kandidatur_erstellen_ee2830d6'),
+    description: translateText(
+      'generated.inline.0642_ffnet_den_election_candidate_flow_im_create_b_0e828af7'
+    ),
     route: '/create/election-candidate',
   },
 };
@@ -549,7 +568,7 @@ function buildBlogAttachment(row: BlogAttachmentRow): AiChatAttachment {
 }
 
 function buildAmendmentAttachment(row: AmendmentAttachmentRow): AiChatAttachment {
-  const title = row.title || 'Änderungsantrag';
+  const title = row.title || translateText('generated.inline.0189_nderungsantrag_16c2b7bf');
   const description = (row.reason || row.preamble)?.trim() || null;
   const updatedAt = toOptionalDate(row.updated_at);
 
@@ -1583,8 +1602,9 @@ export function buildAiTools(userId: string) {
     ...buildAiCreateTools(userId),
 
     find_my_todos: tool({
-      description:
-        "Find the current user's own todos from the todos page, including created and assigned items.",
+      description: translateText(
+        'generated.inline.0643_find_the_current_user_s_own_todos_from_the_to_b7da1691'
+      ),
       parameters: z.object({
         status: z
           .enum(['pending', 'in_progress', 'completed', 'cancelled'])
@@ -1603,7 +1623,9 @@ export function buildAiTools(userId: string) {
     }),
 
     find_my_calendar: tool({
-      description: "Find the current user's calendar events, similar to the calendar page.",
+      description: translateText(
+        'generated.inline.0644_find_the_current_user_s_calendar_events_simil_bca8cd75'
+      ),
       parameters: z.object({
         timeframe: z.enum(['upcoming', 'past', 'all']).default('upcoming'),
         limit: z.number().int().min(1).max(12).optional(),
@@ -1619,8 +1641,9 @@ export function buildAiTools(userId: string) {
     }),
 
     find_my_groups: tool({
-      description:
-        "Find the current user's groups where they have an assigned role, similar to the groups they actively belong to.",
+      description: translateText(
+        'generated.inline.0645_find_the_current_user_s_groups_where_they_hav_30902b45'
+      ),
       parameters: z.object({
         query: z.string().trim().min(1).optional(),
         limit: z.number().int().min(1).max(12).optional(),
@@ -1636,8 +1659,9 @@ export function buildAiTools(userId: string) {
     }),
 
     find_my_amendments: tool({
-      description:
-        "Find the current user's amendments where they have an assigned role, including authored or collaborator amendments.",
+      description: translateText(
+        'generated.inline.0646_find_the_current_user_s_amendments_where_they_452b78e7'
+      ),
       parameters: z.object({
         query: z.string().trim().min(1).optional(),
         limit: z.number().int().min(1).max(12).optional(),
@@ -1653,8 +1677,9 @@ export function buildAiTools(userId: string) {
     }),
 
     find_my_role_events: tool({
-      description:
-        "Find the current user's events where they have an assigned role, useful for resolving event IDs before linking or creating related entries.",
+      description: translateText(
+        'generated.inline.0647_find_the_current_user_s_events_where_they_hav_c150d211'
+      ),
       parameters: z.object({
         query: z.string().trim().min(1).optional(),
         limit: z.number().int().min(1).max(12).optional(),
@@ -1670,8 +1695,9 @@ export function buildAiTools(userId: string) {
     }),
 
     find_my_blogs: tool({
-      description:
-        "Find the current user's blogs where they have an assigned role, useful for resolving blog IDs before linking or creating related entries.",
+      description: translateText(
+        'generated.inline.0648_find_the_current_user_s_blogs_where_they_have_20345b7a'
+      ),
       parameters: z.object({
         query: z.string().trim().min(1).optional(),
         limit: z.number().int().min(1).max(12).optional(),
@@ -1687,8 +1713,9 @@ export function buildAiTools(userId: string) {
     }),
 
     search_polity_entities: tool({
-      description:
-        'Search across main Polity entities such as users, groups, statements, blogs, amendments, events, todos, elections, and votes.',
+      description: translateText(
+        'generated.inline.0649_search_across_main_polity_entities_such_as_us_20899de1'
+      ),
       parameters: z.object({
         query: z.string().trim().min(1),
         entityTypes: z.array(searchEntityTypeSchema).default([...SEARCH_ENTITY_TYPES]),
@@ -1737,8 +1764,9 @@ export function buildAiTools(userId: string) {
     }),
 
     find_group_resources: tool({
-      description:
-        'Find payments, todos, links, amendments, events, blogs, and files for a specific group.',
+      description: translateText(
+        'generated.inline.0650_find_payments_todos_links_amendments_events_b_6f648ebb'
+      ),
       parameters: z.object({
         groupId: z.string().trim().min(1),
         resourceTypes: z.array(groupResourceTypeSchema).default([...GROUP_RESOURCE_TYPES]),
@@ -1756,7 +1784,9 @@ export function buildAiTools(userId: string) {
     }),
 
     find_event_resources: tool({
-      description: 'Find agenda items, amendments, elections, and votes for a specific event.',
+      description: translateText(
+        'generated.inline.0651_find_agenda_items_amendments_elections_and_vo_61e5ad2b'
+      ),
       parameters: z.object({
         eventId: z.string().trim().min(1),
         resourceTypes: z.array(eventResourceTypeSchema).default([...EVENT_RESOURCE_TYPES]),
@@ -1774,8 +1804,9 @@ export function buildAiTools(userId: string) {
     }),
 
     open_create_flow: tool({
-      description:
-        'Open one of the existing Polity create flows and return the exact route the user should use.',
+      description: translateText(
+        'generated.inline.0652_open_one_of_the_existing_polity_create_flows__cecbfcc1'
+      ),
       parameters: z.object({
         flow: createFlowTypeSchema,
         eventId: z.string().trim().min(1).optional(),

@@ -33,7 +33,10 @@ export function useSearchURL() {
 
   const parsedTopics = useMemo(() => {
     const fromTopics = topicsParam
-      ? topicsParam.split(',').map(topic => topic.trim()).filter(Boolean)
+      ? topicsParam
+          .split(',')
+          .map(topic => topic.trim())
+          .filter(Boolean)
       : [];
     // When ?hashtag=politics arrives, inject it into topics if not already present
     if (hashtagParam && !fromTopics.includes(hashtagParam)) {
@@ -69,7 +72,9 @@ export function useSearchURL() {
   // Update URL when search parameters change
   const updateURL = (updates: Record<string, string>) => {
     const params = new URLSearchParams(
-      Object.entries(searchParams).filter(([, v]) => v != null).map(([k, v]) => [k, String(v)])
+      Object.entries(searchParams)
+        .filter(([, v]) => v != null)
+        .map(([k, v]) => [k, String(v)])
     );
     Object.entries(updates).forEach(([key, value]) => {
       if (value) {
@@ -93,7 +98,7 @@ export function useSearchURL() {
         engagement: engagement !== 'all' ? engagement : '',
         sort: sortBy !== 'recent' ? sortBy : '',
       });
-    }, 300); // 300ms debounce
+    }, 250);
 
     return () => clearTimeout(timer);
   }, [searchQuery, contentTypes, dateRange, topics, engagement, sortBy]);

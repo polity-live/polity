@@ -10,6 +10,7 @@ import {
   BarChart3,
   Image as ImageIcon,
 } from 'lucide-react';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface StatementCardProps {
   statement: {
@@ -21,7 +22,13 @@ interface StatementCardProps {
     downvotes?: number;
     comment_count?: number;
     created_at?: number;
-    user?: { id?: string; first_name?: string; last_name?: string; handle?: string; avatar_url?: string } | null;
+    user?: {
+      id?: string;
+      first_name?: string;
+      last_name?: string;
+      handle?: string;
+      avatar_url?: string;
+    } | null;
     group?: { id?: string; name?: string } | null;
     statement_hashtags?: { hashtag?: { tag?: string | null } | null }[];
     statement_survey?: { id?: string }[];
@@ -43,10 +50,7 @@ export function StatementCard({ statement, className }: StatementCardProps) {
     <Link
       to="/statement/$id"
       params={{ id: statement.id }}
-      className={cn(
-        'hover:bg-muted/50 block rounded-lg border p-4 transition-colors',
-        className,
-      )}
+      className={cn('hover:bg-muted/50 block rounded-lg border p-4 transition-colors', className)}
     >
       {/* Top row: author + group */}
       <div className="text-muted-foreground mb-1 flex items-center gap-1.5 text-xs">
@@ -68,7 +72,7 @@ export function StatementCard({ statement, className }: StatementCardProps) {
       {/* Hashtags */}
       {tags.length > 0 && (
         <div className="mb-2 flex flex-wrap gap-1">
-          {tags.map((tag) => (
+          {tags.map(tag => (
             <Badge key={tag} variant="secondary" className="text-xs">
               #{tag}
             </Badge>
@@ -90,7 +94,7 @@ export function StatementCard({ statement, className }: StatementCardProps) {
         {hasSurvey && (
           <span className="flex items-center gap-0.5">
             <BarChart3 className="h-3.5 w-3.5" />
-            Survey
+            {translateText('generated.inline.1155_survey_29c3140d')}
           </span>
         )}
         {hasMedia && <ImageIcon className="h-3.5 w-3.5" />}

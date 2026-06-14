@@ -1,4 +1,5 @@
 import type { DropdownMenuProps } from '@radix-ui/react-dropdown-menu';
+import type { TFunction } from 'i18next';
 import type { TElement } from 'platejs';
 
 import { DropdownMenuItemIndicator } from '@radix-ui/react-dropdown-menu';
@@ -32,70 +33,70 @@ import { ToolbarButton, ToolbarMenuGroup } from '@/features/shared/ui/ui/toolbar
 import { useMemo, useState } from 'react';
 
 // Create base items without translations
-const createTurnIntoItems = (t: (key: string, fallback: string) => string) => [
+const createTurnIntoItems = (t: TFunction) => [
   {
     icon: <PilcrowIcon />,
     keywords: ['paragraph'],
-    label: t('plateJs.text', 'Text'),
+    label: t('plateJs.text'),
     value: KEYS.p,
   },
   {
     icon: <Heading1Icon />,
     keywords: ['title', 'h1'],
-    label: t('plateJs.headings.heading1', 'Heading 1'),
+    label: t('plateJs.headings.heading1'),
     value: 'h1',
   },
   {
     icon: <Heading2Icon />,
     keywords: ['subtitle', 'h2'],
-    label: t('plateJs.headings.heading2', 'Heading 2'),
+    label: t('plateJs.headings.heading2'),
     value: 'h2',
   },
   {
     icon: <Heading3Icon />,
     keywords: ['subtitle', 'h3'],
-    label: t('plateJs.headings.heading3', 'Heading 3'),
+    label: t('plateJs.headings.heading3'),
     value: 'h3',
   },
   {
     icon: <ListIcon />,
     keywords: ['unordered', 'ul', '-'],
-    label: t('plateJs.lists.bulleted', 'Bulleted list'),
+    label: t('plateJs.lists.bulleted'),
     value: KEYS.ul,
   },
   {
     icon: <ListOrderedIcon />,
     keywords: ['ordered', 'ol', '1'],
-    label: t('plateJs.lists.numbered', 'Numbered list'),
+    label: t('plateJs.lists.numbered'),
     value: KEYS.ol,
   },
   {
     icon: <SquareIcon />,
     keywords: ['checklist', 'task', 'checkbox', '[]'],
-    label: t('plateJs.lists.todo', 'To-do list'),
+    label: t('plateJs.lists.todo'),
     value: KEYS.listTodo,
   },
   {
     icon: <ChevronRightIcon />,
     keywords: ['collapsible', 'expandable'],
-    label: t('plateJs.lists.toggle', 'Toggle list'),
+    label: t('plateJs.lists.toggle'),
     value: KEYS.toggle,
   },
   {
     icon: <FileCodeIcon />,
     keywords: ['```'],
-    label: t('plateJs.code', 'Code'),
+    label: t('plateJs.code'),
     value: KEYS.codeBlock,
   },
   {
     icon: <QuoteIcon />,
     keywords: ['citation', 'blockquote', '>'],
-    label: t('plateJs.quote', 'Quote'),
+    label: t('plateJs.quote'),
     value: KEYS.blockquote,
   },
   {
     icon: <Columns3Icon />,
-    label: t('plateJs.layout.threeColumns', '3 columns'),
+    label: t('plateJs.layout.threeColumns'),
     value: 'action_three_columns',
   },
 ];
@@ -127,7 +128,7 @@ export function TurnIntoToolbarButton(props: DropdownMenuProps) {
         <ToolbarButton
           className="min-w-[125px]"
           pressed={open}
-          tooltip={t('plateJs.toolbar.turnInto', 'Turn into')}
+          tooltip={t('plateJs.toolbar.turnInto')}
           isDropdown
         >
           {selectedItem.label}
@@ -147,7 +148,7 @@ export function TurnIntoToolbarButton(props: DropdownMenuProps) {
           onValueChange={type => {
             setBlockType(editor, type);
           }}
-          label={t('plateJs.toolbar.turnInto', 'Turn into')}
+          label={t('plateJs.toolbar.turnInto')}
         >
           {turnIntoItems.map(({ icon, label, value: itemValue }) => (
             <DropdownMenuRadioItem

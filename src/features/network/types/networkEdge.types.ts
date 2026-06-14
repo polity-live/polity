@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import type { NetworkRelationshipKind } from '../logic/networkRelationshipHelpers';
 import type {
   CanonicalMembershipMode,
+  GroupRelationshipDirection,
   GroupRelationshipType,
   RelativeMembershipDirection,
 } from './network.types';
@@ -49,7 +50,7 @@ export interface EditableRightsLabelEdgeData extends Record<string, unknown> {
   currentGroupName?: string | null;
   selectedGroupId?: string;
   selectedGroupName?: string | null;
-  rightDisplayDirections?: Record<string, NetworkConnectionDirection>;
+  rightDisplayDirections?: Record<string, GroupRelationshipDirection>;
   anchorStrategy?: NetworkEdgeAnchorStrategy;
   useInnerVerticalAnchors?: boolean;
   bendPoints?: NetworkEdgeBendPoint[];
@@ -78,6 +79,6 @@ export interface NetworkRelationshipDialogData {
   currentGroupName?: string | null;
   selectedGroupId?: string;
   selectedGroupName?: string | null;
-  rightDisplayDirections?: Record<string, NetworkConnectionDirection>;
+  rightDisplayDirections?: Record<string, GroupRelationshipDirection>;
   label?: string | null | ReactNode;
 }

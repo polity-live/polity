@@ -4,6 +4,7 @@ import { RolesPermissionsTable } from '@/features/groups/ui/RolesPermissionsTabl
 import { emptyRoleEditorForm } from '@/features/groups/logic/roleFormHelpers';
 import { EVENT_ACTION_RIGHTS } from '@/zero/rbac/constants';
 import { useEventRoleManagement } from '@/features/events/hooks/useEventRoleManagement';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export function EventRoles({ eventId }: { eventId: string }) {
   const {
@@ -55,9 +56,11 @@ export function EventRoles({ eventId }: { eventId: string }) {
             onSubmit={() => void addRole()}
             scope="event"
             eventType={event?.event_type ?? null}
-            title="Add Event Role"
-            description="Create an event role with the same defaults and permissions workflow you use for group roles."
-            submitLabel="Create Role"
+            title={translateText('generated.inline.1102_add_event_role_f0d02170')}
+            description={translateText(
+              'generated.inline.1103_create_an_event_role_with_the_same_defaults_a_d1110ed5'
+            )}
+            submitLabel={translateText('generated.inline.0132_create_role_5bea05a8')}
           />
         }
         scope="event"
@@ -66,8 +69,10 @@ export function EventRoles({ eventId }: { eventId: string }) {
       <RolesPermissionsTable
         roles={[...accessRoles]}
         actionRights={EVENT_ACTION_RIGHTS}
-        title="Event Permissions"
-        description="Manage event-specific permissions by role. Drag columns to reorder — left is least privileged, right is most privileged."
+        title={translateText('generated.inline.1104_event_permissions_4796a43a')}
+        description={translateText(
+          'generated.inline.1105_manage_event_specific_permissions_by_role_dra_26291034'
+        )}
         onTogglePermission={(roleId, resource, action, currentlyHas) =>
           void togglePermission(roleId, resource, action, currentlyHas)
         }
@@ -86,8 +91,10 @@ export function EventRoles({ eventId }: { eventId: string }) {
         scope="event"
         eventType={event?.event_type ?? null}
         title={editingRole?.name ? `Edit ${editingRole.name}` : 'Edit Event Role'}
-        description="Adjust assignment mode, visibility, defaults, and participant permissions for this event role."
-        submitLabel="Save Role"
+        description={translateText(
+          'generated.inline.1106_adjust_assignment_mode_visibility_defaults_an_5b1c8b7d'
+        )}
+        submitLabel={translateText('generated.inline.1107_save_role_2f46bd88')}
         trigger={null}
       />
     </>

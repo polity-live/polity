@@ -1,6 +1,9 @@
 import { Check } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Label } from '@/features/shared/ui/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/features/shared/ui/ui/select';
@@ -13,7 +16,7 @@ import {
   type SiblingMembershipMode,
   type TranslateFn,
 } from '../logic/groupRelationshipSentence';
-import { getCanonicalMembershipModeLabel } from '../logic/networkLinkDerived';
+import { getCanonicalMembershipModeLabel } from '../logic/groupConnectionDerived';
 import type { GroupRelationshipRightDisplayStatus } from '../logic/networkRelationshipHelpers';
 import type {
   CanonicalMembershipMode,
@@ -70,15 +73,15 @@ export function getGroupRelationshipDirectionOptions(
 ): GroupRelationshipDirectionOption[] {
   return [
     {
-      value: 'outgoing',
+      value: 'current_has_right_in_partner',
       label: t('common.network.directionOutgoingLabel'),
     },
     {
-      value: 'incoming',
+      value: 'partner_has_right_in_current',
       label: t('common.network.directionIncomingLabel'),
     },
     {
-      value: 'bidirectional',
+      value: 'mutual',
       label: t('common.network.directionBidirectionalLabel'),
     },
   ];
@@ -154,7 +157,7 @@ export function getGroupRelationshipTypeLabel(
     return t('common.network.child');
   }
 
-  return t('common.network.sibling', 'Geschwistergruppe');
+  return t('common.network.sibling');
 }
 
 export function getGroupRelationshipRightLabel(right: GroupRelationshipRight, t: TranslateFn) {
@@ -296,7 +299,10 @@ export function GroupRelationshipNameTag({
   const badge = (
     <Badge
       variant="outline"
-      className={cn('max-w-full text-[11px] font-semibold', getGroupTagClasses(kind))}
+      className={cn(
+        translateText('generated.inline.0116_max_w_full_text_11px_font_semibold_c328bdd2'),
+        getGroupTagClasses(kind)
+      )}
     >
       <span className="truncate">{displayName}</span>
     </Badge>
@@ -450,17 +456,17 @@ export function GroupRelationshipMembershipModeDescription({
     />
   );
 
-  const sourceTag = direction === 'incoming' ? selectedTag : currentTag;
-  const targetTag = direction === 'incoming' ? currentTag : selectedTag;
+  const sourceTag = direction === 'partner_members_to_current' ? selectedTag : currentTag;
+  const targetTag = direction === 'partner_members_to_current' ? currentTag : selectedTag;
 
   if (membershipMode === 'all_members') {
     return (
       <div className={cn('flex flex-wrap items-center gap-1.5 leading-relaxed', className)}>
-        <span>Alle aktiven Mitglieder von</span>
+        <span>{translateText('generated.inline.0788_alle_aktiven_mitglieder_von_f860cd6f')}</span>
         {sourceTag}
-        <span>werden in</span>
+        <span>{translateText('generated.inline.0789_werden_in_96b98a79')}</span>
         {targetTag}
-        <span>übernommen.</span>
+        <span>{translateText('generated.inline.0790_bernommen_edf81839')}</span>
       </div>
     );
   }
@@ -468,11 +474,15 @@ export function GroupRelationshipMembershipModeDescription({
   if (membershipMode === 'role_members') {
     return (
       <div className={cn('flex flex-wrap items-center gap-1.5 leading-relaxed', className)}>
-        <span>Nur Mitglieder mit der gewählten Rolle in</span>
+        <span>
+          {translateText(
+            'generated.inline.0791_nur_mitglieder_mit_der_gew_hlten_rolle_in_82006765'
+          )}
+        </span>
         {sourceTag}
-        <span>werden in</span>
+        <span>{translateText('generated.inline.0789_werden_in_96b98a79')}</span>
         {targetTag}
-        <span>übernommen.</span>
+        <span>{translateText('generated.inline.0790_bernommen_edf81839')}</span>
       </div>
     );
   }
@@ -480,22 +490,26 @@ export function GroupRelationshipMembershipModeDescription({
   if (membershipMode === 'selected_source_groups') {
     return (
       <div className={cn('flex flex-wrap items-center gap-1.5 leading-relaxed', className)}>
-        <span>Nur Mitglieder aus den gewählten Source-Gruppen für</span>
+        <span>
+          {translateText(
+            'generated.inline.0792_nur_mitglieder_aus_den_gew_hlten_source_grupp_b86ab3d3'
+          )}
+        </span>
         {sourceTag}
-        <span>werden in</span>
+        <span>{translateText('generated.inline.0789_werden_in_96b98a79')}</span>
         {targetTag}
-        <span>übernommen.</span>
+        <span>{translateText('generated.inline.0790_bernommen_edf81839')}</span>
       </div>
     );
   }
 
   return (
     <div className={cn('flex flex-wrap items-center gap-1.5 leading-relaxed', className)}>
-      <span>Mitglieder von</span>
+      <span>{translateText('generated.inline.0793_mitglieder_von_1bf6d7fb')}</span>
       {sourceTag}
-      <span>werden nicht automatisch in</span>
+      <span>{translateText('generated.inline.0794_werden_nicht_automatisch_in_7bcc7b9c')}</span>
       {targetTag}
-      <span>übernommen.</span>
+      <span>{translateText('generated.inline.0790_bernommen_edf81839')}</span>
     </div>
   );
 }
@@ -553,7 +567,7 @@ export function SiblingMembershipModeDescription({
     return (
       <div className={cn('flex flex-wrap items-center gap-1.5 leading-relaxed', className)}>
         <span className="text-xs">
-          {t('common.network.siblingMembershipExplanationOpenBeforeSource', 'Mitglieder von')}
+          {t('common.network.siblingMembershipExplanationOpenBeforeSource')}
         </span>
         {selectedTag}
         <span className="text-xs">
@@ -561,7 +575,7 @@ export function SiblingMembershipModeDescription({
         </span>
         {currentTag}
         <span className="text-xs">
-          {t('common.network.siblingMembershipExplanationOpenAfterTarget', 'selbst beitreten.')}
+          {t('common.network.siblingMembershipExplanationOpenAfterTarget')}
         </span>
       </div>
     );
@@ -571,17 +585,11 @@ export function SiblingMembershipModeDescription({
     return (
       <div className={cn('flex flex-wrap items-center gap-1.5 leading-relaxed', className)}>
         <span className="text-xs">
-          {t(
-            'common.network.siblingMembershipExplanationElectedBeforeSource',
-            'Eine Gruppenrolle in'
-          )}
+          {t('common.network.siblingMembershipExplanationElectedBeforeSource')}
         </span>
         {selectedTag}
         <span className="text-xs">
-          {t(
-            'common.network.siblingMembershipExplanationElectedBetweenGroups',
-            'erzeugt die Mitgliedschaft in'
-          )}
+          {t('common.network.siblingMembershipExplanationElectedBetweenGroups')}
         </span>
         {currentTag}
         <span className="text-xs">
@@ -594,17 +602,11 @@ export function SiblingMembershipModeDescription({
   return (
     <div className={cn('flex flex-wrap items-center gap-1.5 leading-relaxed', className)}>
       <span className="text-xs">
-        {t(
-          'common.network.siblingMembershipExplanationParliamentBeforeTarget',
-          'Mitgliedschaft in'
-        )}
+        {t('common.network.siblingMembershipExplanationParliamentBeforeTarget')}
       </span>
       {currentTag}
       <span className="text-xs">
-        {t(
-          'common.network.siblingMembershipExplanationParliamentBetweenGroups',
-          'wird aus Gruppen abgeleitet, die passives Wahlrecht in'
-        )}
+        {t('common.network.siblingMembershipExplanationParliamentBetweenGroups')}
       </span>
       {selectedTag}
       <span className={cn('text-xs', /^[.,;:!?]/.test(parliamentAfterSource) && '-ml-1')}>
@@ -660,11 +662,19 @@ function RelationshipTypeOptionContent({
   if (relationshipType === 'parent') {
     return (
       <div className="flex flex-wrap items-center gap-1.5 leading-relaxed">
-        <span className="text-xs">Die aktuelle Gruppe</span>
+        <span className="text-xs">
+          {translateText('generated.inline.0772_die_aktuelle_gruppe_d7fbaf59')}
+        </span>
         {currentTag}
-        <span className="text-xs">ist übergeordnet, die gewählte Partnergruppe</span>
+        <span className="text-xs">
+          {translateText(
+            'generated.inline.0773_ist_bergeordnet_die_gew_hlte_partnergruppe_4d9d2a93'
+          )}
+        </span>
         {selectedTag}
-        <span className="text-xs">ist untergeordnet.</span>
+        <span className="text-xs">
+          {translateText('generated.inline.0771_ist_untergeordnet_9610f87b')}
+        </span>
       </div>
     );
   }
@@ -672,11 +682,17 @@ function RelationshipTypeOptionContent({
   if (relationshipType === 'child') {
     return (
       <div className="flex flex-wrap items-center gap-1.5 leading-relaxed">
-        <span className="text-xs">Die gewählte Partnergruppe</span>
+        <span className="text-xs">
+          {translateText('generated.inline.0795_die_gew_hlte_partnergruppe_1a260d6d')}
+        </span>
         {selectedTag}
-        <span className="text-xs">ist übergeordnet, die aktuelle Gruppe</span>
+        <span className="text-xs">
+          {translateText('generated.inline.0770_ist_bergeordnet_die_aktuelle_gruppe_36b12d80')}
+        </span>
         {currentTag}
-        <span className="text-xs">ist untergeordnet.</span>
+        <span className="text-xs">
+          {translateText('generated.inline.0771_ist_untergeordnet_9610f87b')}
+        </span>
       </div>
     );
   }
@@ -684,13 +700,18 @@ function RelationshipTypeOptionContent({
   const siblingType = getSiblingMembershipModeLabel(siblingMembershipMode, t);
   return (
     <div className="flex flex-wrap items-center gap-1.5 leading-relaxed">
-      <span className="text-xs">Die aktuelle Gruppe</span>
+      <span className="text-xs">
+        {translateText('generated.inline.0772_die_aktuelle_gruppe_d7fbaf59')}
+      </span>
       {currentTag}
-      <span className="text-xs">und die gewählte Partnergruppe</span>
+      <span className="text-xs">
+        {translateText('generated.inline.0774_und_die_gew_hlte_partnergruppe_a51207fb')}
+      </span>
       {selectedTag}
       <span className="text-xs">
-        sind
-        {siblingType ? ` ${siblingType.toLowerCase()}` : ''} Geschwistergruppen.
+        {translateText('generated.inline.0117_sind_7377a06f')}
+        {siblingType ? ` ${siblingType.toLowerCase()}` : ''}
+        {translateText('generated.inline.0796_geschwistergruppen_7f9c060b')}
       </span>
     </div>
   );
@@ -909,14 +930,14 @@ export function GroupRelationshipDirectionSentence({
     t,
   });
 
-  if (direction === 'incoming') {
+  if (direction === 'partner_has_right_in_current') {
     return (
       <div className="flex flex-wrap items-center gap-1.5 leading-tight">
         <GroupRelationshipNameTag
-          name={safeCurrentGroupName}
-          kind="current"
+          name={safeSelectedGroupName}
+          kind="selected"
           caseStyle="sentence-start"
-          groupId={currentGroupId}
+          groupId={selectedGroupId}
           displayMode="name-only"
           linkGroups={linkGroups}
         />
@@ -924,10 +945,10 @@ export function GroupRelationshipDirectionSentence({
         <RightSentenceEmphasis right={right} />
         <span className="text-xs">{t('common.network.directionIn')}</span>
         <GroupRelationshipNameTag
-          name={safeSelectedGroupName}
-          kind="selected"
+          name={safeCurrentGroupName}
+          kind="current"
           caseStyle="embedded"
-          groupId={selectedGroupId}
+          groupId={currentGroupId}
           displayMode="name-only"
           linkGroups={linkGroups}
         />
@@ -936,7 +957,7 @@ export function GroupRelationshipDirectionSentence({
     );
   }
 
-  if (direction === 'bidirectional') {
+  if (direction === 'mutual') {
     return (
       <div className="flex flex-wrap items-center gap-1.5 leading-tight">
         <GroupRelationshipNameTag
@@ -973,9 +994,9 @@ export function GroupRelationshipDirectionSentence({
         displayMode="name-only"
         linkGroups={linkGroups}
       />
-      <span className="text-xs">{t('common.network.directionGrants')}</span>
+      <span className="text-xs">{t('common.network.directionHas')}</span>
       <RightSentenceEmphasis right={right} />
-      <span className="text-xs">{t('common.network.directionTo')}</span>
+      <span className="text-xs">{t('common.network.directionIn')}</span>
       <GroupRelationshipNameTag
         name={safeSelectedGroupName}
         kind="selected"
@@ -1137,7 +1158,7 @@ export function GroupRelationshipRightsSummary({
           const direction: SelectableGroupRelationshipDirection =
             configuredDirection && configuredDirection !== 'none'
               ? configuredDirection
-              : 'outgoing';
+              : 'current_has_right_in_partner';
 
           return (
             <div key={option.value} className="rounded-lg border p-3">
@@ -1207,7 +1228,7 @@ export function GroupRelationshipRightsSelector({
           const selectedDirection: SelectableGroupRelationshipDirection =
             configuredDirection && configuredDirection !== 'none'
               ? configuredDirection
-              : 'outgoing';
+              : 'current_has_right_in_partner';
 
           return (
             <div

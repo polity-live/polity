@@ -39,7 +39,7 @@ vi.mock('@/features/shared/hooks/use-translation', () => ({
         'common.network.rightAmendmentDesc': 'Recht, Anträge zu stellen',
         'common.network.directionHas': 'hat',
         'common.network.directionIn': 'in',
-        'common.network.directionGrants': 'vergibt',
+        'common.network.directionGrants': 'hat',
         'common.network.directionTo': 'an',
         'common.network.currentGroupAsParentOf':
           '{{currentGroupName}} als übergeordnete Gruppe von {{selectedGroupName}}',
@@ -91,12 +91,12 @@ describe('NetworkEntityDialog', () => {
             rightRelationshipKinds: { amendmentRight: 'active' },
             relationshipType: 'parent',
             membershipMode: 'all_members',
-            membershipDirection: 'incoming',
+            membershipDirection: 'partner_members_to_current',
             currentGroupId: 'group-current',
             currentGroupName: 'C1',
             selectedGroupId: 'group-partner',
             selectedGroupName: 'B1',
-            rightDisplayDirections: { amendmentRight: 'outgoing' },
+            rightDisplayDirections: { amendmentRight: 'current_has_right_in_partner' },
           },
         }}
       />
@@ -130,12 +130,12 @@ describe('NetworkEntityDialog', () => {
             rightRelationshipKinds: { amendmentRight: 'active' },
             relationshipType: 'child',
             membershipMode: 'all_members',
-            membershipDirection: 'outgoing',
+            membershipDirection: 'current_members_to_partner',
             currentGroupId: 'group-b2',
             currentGroupName: 'B2',
             selectedGroupId: 'group-h1',
             selectedGroupName: 'H1',
-            rightDisplayDirections: { amendmentRight: 'incoming' },
+            rightDisplayDirections: { amendmentRight: 'partner_has_right_in_current' },
           },
         }}
       />
@@ -165,13 +165,13 @@ describe('NetworkEntityDialog', () => {
             rightRelationshipKinds: { amendmentRight: 'active' },
             relationshipType: 'child',
             membershipMode: 'all_members',
-            membershipDirection: 'incoming',
+            membershipDirection: 'current_members_to_partner',
             currentGroupId: 'group-tb3',
             currentGroupName: 'TB3',
             selectedGroupId: 'group-th3',
             selectedGroupName: 'TH3',
             rightEdgeDirections: { amendmentRight: 'backward' },
-            rightDisplayDirections: { amendmentRight: 'incoming' },
+            rightDisplayDirections: { amendmentRight: 'partner_has_right_in_current' },
           },
         }}
       />

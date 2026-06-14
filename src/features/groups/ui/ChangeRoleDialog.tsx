@@ -34,6 +34,7 @@ import {
 import { ChevronDown, ShieldCheck } from 'lucide-react';
 import { buildRightsSummaryForRoles, sortGroupRoles } from '../logic/buildMembershipRightsSummary';
 import type { ParticipationRoleLike } from '@/features/shared/types/participation';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface ChangeRoleDialogProps<TRole extends ParticipationRoleLike> {
   isOpen: boolean;
@@ -57,12 +58,14 @@ export function ChangeRoleDialog<TRole extends ParticipationRoleLike>({
   currentRoles,
   roles,
   onConfirm,
-  title = 'Manage Roles',
-  emptyRolesLabel = 'No roles available.',
-  noSelectedRolesLabel = 'No roles selected',
-  emptyRightsLabel = 'No explicit action rights are assigned through the currently selected roles.',
+  title = translateText('generated.inline.0077_manage_roles_5f9b8531'),
+  emptyRolesLabel = translateText('generated.inline.0078_no_roles_available_ba017ee7'),
+  noSelectedRolesLabel = translateText('generated.inline.0079_no_roles_selected_3f84503b'),
+  emptyRightsLabel = translateText(
+    'generated.inline.0080_no_explicit_action_rights_are_assigned_throug_a897bc09'
+  ),
   cancelLabel = 'Cancel',
-  submitLabel = 'Save Roles',
+  submitLabel = translateText('generated.inline.0081_save_roles_61bdd2b8'),
 }: ChangeRoleDialogProps<TRole>) {
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
   const [rightsOpen, setRightsOpen] = useState(true);
@@ -118,11 +121,13 @@ export function ChangeRoleDialog<TRole extends ParticipationRoleLike>({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
-            Select all roles that should apply to <span className="font-medium">{memberName}</span>.
+            {translateText('generated.inline.0663_select_all_roles_that_should_apply_to_4fca25fe')}
+            <span className="font-medium">{memberName}</span>.
             {currentRoleNames && (
               <>
                 {' '}
-                Current roles: <span className="font-medium">{currentRoleNames}</span>.
+                {translateText('generated.inline.0664_current_roles_48ba4d9c')}
+                <span className="font-medium">{currentRoleNames}</span>.
               </>
             )}
           </DialogDescription>
@@ -170,12 +175,15 @@ export function ChangeRoleDialog<TRole extends ParticipationRoleLike>({
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 text-sm font-semibold">
                       <ShieldCheck className="h-4 w-4" />
-                      Effective Action Rights
+                      {translateText('generated.inline.0665_effective_action_rights_9ecdee26')}
                     </div>
                     <p className="text-muted-foreground text-sm">
-                      {rightsSummary.length} rights from{' '}
-                      {selectedRoleNames || noSelectedRolesLabel.toLowerCase()}. Source details
-                      update as you change the role selection.
+                      {rightsSummary.length}
+                      {translateText('generated.inline.0666_rights_from_64a77ee2')}{' '}
+                      {selectedRoleNames || noSelectedRolesLabel.toLowerCase()}
+                      {translateText(
+                        'generated.inline.0667_source_details_update_as_you_change_the_role__ae8c3148'
+                      )}
                     </p>
                   </div>
                   <ChevronDown
@@ -187,7 +195,9 @@ export function ChangeRoleDialog<TRole extends ParticipationRoleLike>({
               <CollapsibleContent className="border-border/70 border-t px-4 py-4">
                 <div className="space-y-4">
                   <div className="border-border/70 bg-background/70 rounded-2xl border p-4">
-                    <div className="text-sm font-medium">Selected roles</div>
+                    <div className="text-sm font-medium">
+                      {translateText('generated.inline.0668_selected_roles_71890009')}
+                    </div>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {selectedRoles.length > 0 ? (
                         selectedRoles.map(role => (
@@ -196,7 +206,7 @@ export function ChangeRoleDialog<TRole extends ParticipationRoleLike>({
                             variant="secondary"
                             className="rounded-full px-3 py-1"
                           >
-                            {role.name || 'Role'}
+                            {role.name || translateText('generated.inline.0092_role_c3f104d1')}
                           </Badge>
                         ))
                       ) : (
@@ -211,8 +221,12 @@ export function ChangeRoleDialog<TRole extends ParticipationRoleLike>({
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="min-w-[220px]">Effective Right</TableHead>
-                          <TableHead>Granted By</TableHead>
+                          <TableHead className="min-w-[220px]">
+                            {translateText('generated.inline.0669_effective_right_706cda84')}
+                          </TableHead>
+                          <TableHead>
+                            {translateText('generated.inline.0670_granted_by_9db3801b')}
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -238,7 +252,8 @@ export function ChangeRoleDialog<TRole extends ParticipationRoleLike>({
                                       {!source.isDirect ? (
                                         <span className="text-muted-foreground">
                                           {' '}
-                                          via {source.viaLabel}
+                                          {translateText('generated.inline.0082_via_a19e070e')}
+                                          {source.viaLabel}
                                         </span>
                                       ) : null}
                                       {source.isDirect ? (
@@ -246,14 +261,14 @@ export function ChangeRoleDialog<TRole extends ParticipationRoleLike>({
                                           variant="outline"
                                           className="ml-2 border-emerald-500/50 text-emerald-700 dark:text-emerald-300"
                                         >
-                                          direct
+                                          {translateText('generated.inline.0083_direct_24a1733c')}
                                         </Badge>
                                       ) : (
                                         <Badge
                                           variant="outline"
                                           className="ml-2 border-sky-500/50 text-sky-700 dark:text-sky-300"
                                         >
-                                          implied
+                                          {translateText('generated.inline.0084_implied_b0cc834f')}
                                         </Badge>
                                       )}
                                     </div>

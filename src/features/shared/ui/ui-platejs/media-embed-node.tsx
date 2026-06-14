@@ -14,7 +14,11 @@ import { cn } from '@/features/shared/utils/utils.ts';
 
 import { Caption, CaptionTextarea } from './caption.tsx';
 import { MediaToolbar } from './media-toolbar.tsx';
-import { mediaResizeHandleVariants, Resizable, ResizeHandle } from '@/features/shared/ui/ui/resize-handle.tsx';
+import {
+  mediaResizeHandleVariants,
+  Resizable,
+  ResizeHandle,
+} from '@/features/shared/ui/ui/resize-handle.tsx';
 
 export const MediaEmbedElement = withHOC(
   ResizableProvider,
@@ -87,9 +91,9 @@ export const MediaEmbedElement = withHOC(
                     {embed?.url && (
                       <iframe
                         className={cn(
-                          'absolute left-0 top-0 size-full rounded-sm',
+                          'absolute top-0 left-0 size-full rounded-sm',
                           isVideo && 'border-0',
-                          focused && selected && 'ring-2 ring-ring ring-offset-2'
+                          focused && selected && 'ring-ring ring-2 ring-offset-2'
                         )}
                         title={t('plateJs.media.embed', 'embed')}
                         src={embed.url}
@@ -106,7 +110,7 @@ export const MediaEmbedElement = withHOC(
                     '[&_.react-tweet-theme]:my-0',
                     !readOnly &&
                       selected &&
-                      '[&_.react-tweet-theme]:ring-2 [&_.react-tweet-theme]:ring-ring [&_.react-tweet-theme]:ring-offset-2'
+                      '[&_.react-tweet-theme]:ring-ring [&_.react-tweet-theme]:ring-2 [&_.react-tweet-theme]:ring-offset-2'
                   )}
                 >
                   <Tweet id={embed.id} />
@@ -120,9 +124,7 @@ export const MediaEmbedElement = withHOC(
             </Resizable>
 
             <Caption style={{ width }} align={align}>
-              <CaptionTextarea
-                placeholder={t('plateJs.media.writeCaption', 'Write a caption...')}
-              />
+              <CaptionTextarea placeholder={t('plateJs.media.writeCaption')} />
             </Caption>
           </figure>
 

@@ -19,7 +19,10 @@ import {
 import { Edit, Eye, MessageSquare, Vote, ChevronDown } from 'lucide-react';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
 import { toast } from 'sonner';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 
 import type { EditorMode } from '@/features/editor/types';
 
@@ -98,7 +101,10 @@ export function ModeSelector({
       <DropdownMenuTrigger asChild>
         <Button variant="outline" className="gap-2">
           <Icon className="h-4 w-4" />
-          <span className="font-semibold">{currentModeConfig.label} Mode</span>
+          <span className="font-semibold">
+            {currentModeConfig.label}
+            {translateText('generated.inline.0171_mode_a7b93d21')}
+          </span>
           <ChevronDown className="h-4 w-4 opacity-50" />
         </Button>
       </DropdownMenuTrigger>
@@ -106,7 +112,7 @@ export function ModeSelector({
         <DropdownMenuLabel>
           {t('features.amendments.modeSelector.title')}
           {!isOwnerOrCollaborator && (
-            <span className="ml-2 text-xs font-normal text-muted-foreground">
+            <span className="text-muted-foreground ml-2 text-xs font-normal">
               {t('features.amendments.modeSelector.viewOnly')}
             </span>
           )}
@@ -138,7 +144,7 @@ export function ModeSelector({
                       </Badge>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground">{mode.description}</p>
+                  <p className="text-muted-foreground text-xs">{mode.description}</p>
                 </div>
               </div>
             </DropdownMenuItem>

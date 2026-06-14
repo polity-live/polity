@@ -95,11 +95,8 @@ export function UserProfileEditForm({
               currentImage={formData.avatar}
               onImageChange={url => onFieldChange('avatar', url)}
               onFileUpload={onAvatarUpload}
-              label={t('pages.user.settingsForm.avatar.title', 'Profile image')}
-              description={t(
-                'pages.user.settingsForm.avatar.description',
-                'Upload a profile image or provide a URL.'
-              )}
+              label={t('pages.user.settingsForm.avatar.title')}
+              description={t('pages.user.settingsForm.avatar.description')}
             />
 
             <BasicInformationSection

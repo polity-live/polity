@@ -5,6 +5,7 @@ import { RadicalIcon } from 'lucide-react';
 import { SlateElement } from 'platejs';
 
 import { cn } from '@/features/shared/utils/utils.ts';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export function EquationElementStatic(props: SlateElementProps<TEquationElement>) {
   const { element } = props;
@@ -28,7 +29,7 @@ export function EquationElementStatic(props: SlateElementProps<TEquationElement>
     <SlateElement className="my-1" {...props}>
       <div
         className={cn(
-          'group flex select-none items-center justify-center rounded-sm hover:bg-primary/10 data-[selected=true]:bg-primary/10',
+          'group hover:bg-primary/10 data-[selected=true]:bg-primary/10 flex items-center justify-center rounded-sm select-none',
           element.texExpression.length === 0 ? 'bg-muted p-3 pr-9' : 'px-2 py-1'
         )}
       >
@@ -39,9 +40,9 @@ export function EquationElementStatic(props: SlateElementProps<TEquationElement>
             }}
           />
         ) : (
-          <div className="flex h-7 w-full items-center gap-2 whitespace-nowrap text-sm text-muted-foreground">
-            <RadicalIcon className="size-6 text-muted-foreground/80" />
-            <div>Add a Tex equation</div>
+          <div className="text-muted-foreground flex h-7 w-full items-center gap-2 text-sm whitespace-nowrap">
+            <RadicalIcon className="text-muted-foreground/80 size-6" />
+            <div>{translateText('generated.inline.1148_add_a_tex_equation_d6e12899')}</div>
           </div>
         )}
       </div>
@@ -69,11 +70,11 @@ export function InlineEquationElementStatic(props: SlateElementProps<TEquationEl
   return (
     <SlateElement
       {...props}
-      className="inline-block select-none rounded-sm [&_.katex-display]:my-0"
+      className="inline-block rounded-sm select-none [&_.katex-display]:my-0"
     >
       <div
         className={cn(
-          'after:z-1 after:absolute after:inset-0 after:-left-1 after:-top-0.5 after:h-[calc(100%)+4px] after:w-[calc(100%+8px)] after:rounded-sm after:content-[""]',
+          'after:absolute after:inset-0 after:-top-0.5 after:-left-1 after:z-1 after:h-[calc(100%)+4px] after:w-[calc(100%+8px)] after:rounded-sm after:content-[""]',
           'h-6',
           props.element.texExpression.length === 0 &&
             'text-muted-foreground after:bg-neutral-500/10'

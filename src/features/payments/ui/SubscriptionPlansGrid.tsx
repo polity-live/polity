@@ -9,6 +9,7 @@ import {
 import { Button } from '@/features/shared/ui/ui/button';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Loader2 } from 'lucide-react';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 const PRICE_IDS = {
   running: import.meta.env.VITE_STRIPE_PRICE_RUNNING || '',
@@ -65,9 +66,13 @@ export function SubscriptionPlansGrid({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Subscribe to Support Polity</CardTitle>
+        <CardTitle>
+          {translateText('generated.inline.0984_subscribe_to_support_polity_a1be637e')}
+        </CardTitle>
         <CardDescription>
-          Help us keep the platform running and growing with a monthly contribution
+          {translateText(
+            'generated.inline.0985_help_us_keep_the_platform_running_and_growing_ee0bbacc'
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -80,17 +85,21 @@ export function SubscriptionPlansGrid({
           >
             <div className="mb-2">
               <div className="mb-1 flex items-center justify-between">
-                <h3 className="font-semibold">Free</h3>
+                <h3 className="font-semibold">
+                  {translateText('generated.inline.0752_free_75f52718')}
+                </h3>
                 {activeAmount === 0 && (
                   <span className="text-emerald-foreground rounded-full bg-emerald-500 px-2 py-0.5 text-xs">
-                    Current
+                    {translateText('generated.inline.0986_current_4fc0e2bc')}
                   </span>
                 )}
               </div>
               <p className="text-2xl font-bold">€0</p>
               <p className="text-muted-foreground text-xs">/month</p>
             </div>
-            <p className="text-muted-foreground mb-4 text-sm">Full access to all features</p>
+            <p className="text-muted-foreground mb-4 text-sm">
+              {translateText('generated.inline.0987_full_access_to_all_features_8315d07d')}
+            </p>
             <Button
               type="button"
               variant={activeAmount === 0 ? 'default' : 'outline'}
@@ -102,12 +111,12 @@ export function SubscriptionPlansGrid({
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
+                  {translateText('generated.inline.0988_processing_272bc02e')}
                 </>
               ) : activeAmount === 0 ? (
-                'Active'
+                translateText('generated.inline.0126_active_a733b809')
               ) : (
-                'Switch to Free'
+                translateText('generated.inline.0127_switch_to_free_5a577638')
               )}
             </Button>
           </div>
@@ -120,10 +129,12 @@ export function SubscriptionPlansGrid({
           >
             <div className="mb-2">
               <div className="mb-1 flex items-center justify-between">
-                <h3 className="font-semibold">Running Costs</h3>
+                <h3 className="font-semibold">
+                  {translateText('generated.inline.0989_running_costs_53720f67')}
+                </h3>
                 {isPlanActive(200) && (
                   <span className="text-emerald-foreground rounded-full bg-emerald-500 px-2 py-0.5 text-xs">
-                    Current
+                    {translateText('generated.inline.0986_current_4fc0e2bc')}
                   </span>
                 )}
               </div>
@@ -131,7 +142,9 @@ export function SubscriptionPlansGrid({
               <p className="text-muted-foreground text-xs">/month</p>
             </div>
             <p className="text-muted-foreground mb-4 text-sm">
-              Cover server costs and infrastructure
+              {translateText(
+                'generated.inline.0990_cover_server_costs_and_infrastructure_862c080e'
+              )}
             </p>
             <Button
               type="button"
@@ -144,12 +157,12 @@ export function SubscriptionPlansGrid({
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
+                  {translateText('generated.inline.0988_processing_272bc02e')}
                 </>
               ) : isPlanActive(200) ? (
-                'Active'
+                translateText('generated.inline.0126_active_a733b809')
               ) : (
-                'Subscribe'
+                translateText('generated.inline.0128_subscribe_d6981f74')
               )}
             </Button>
           </div>
@@ -164,21 +177,25 @@ export function SubscriptionPlansGrid({
           >
             <div className="mb-2">
               <div className="mb-1 flex items-center justify-between">
-                <h3 className="font-semibold">Development</h3>
+                <h3 className="font-semibold">
+                  {translateText('generated.inline.0991_development_4c17aadf')}
+                </h3>
                 {isPlanActive(1000) ? (
                   <span className="text-emerald-foreground rounded-full bg-emerald-500 px-2 py-0.5 text-xs">
-                    Current
+                    {translateText('generated.inline.0986_current_4fc0e2bc')}
                   </span>
                 ) : (
                   <span className="bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-xs">
-                    Popular
+                    {translateText('generated.inline.0992_popular_9bc2c5b3')}
                   </span>
                 )}
               </div>
               <p className="text-2xl font-bold">€10</p>
               <p className="text-muted-foreground text-xs">/month</p>
             </div>
-            <p className="text-muted-foreground mb-4 text-sm">Fund new features and improvements</p>
+            <p className="text-muted-foreground mb-4 text-sm">
+              {translateText('generated.inline.0993_fund_new_features_and_improvements_d23cf557')}
+            </p>
             <Button
               type="button"
               size="sm"
@@ -190,12 +207,12 @@ export function SubscriptionPlansGrid({
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
+                  {translateText('generated.inline.0988_processing_272bc02e')}
                 </>
               ) : isPlanActive(1000) ? (
-                'Active'
+                translateText('generated.inline.0126_active_a733b809')
               ) : (
-                'Subscribe'
+                translateText('generated.inline.0128_subscribe_d6981f74')
               )}
             </Button>
           </div>
@@ -208,10 +225,12 @@ export function SubscriptionPlansGrid({
           >
             <div className="mb-2">
               <div className="mb-1 flex items-center justify-between">
-                <h3 className="font-semibold">Your Choice</h3>
+                <h3 className="font-semibold">
+                  {translateText('generated.inline.0994_your_choice_668515a1')}
+                </h3>
                 {hasCustomPlan && (
                   <span className="text-emerald-foreground rounded-full bg-emerald-500 px-2 py-0.5 text-xs">
-                    Current
+                    {translateText('generated.inline.0986_current_4fc0e2bc')}
                   </span>
                 )}
               </div>
@@ -240,7 +259,9 @@ export function SubscriptionPlansGrid({
               <p className="text-muted-foreground text-xs">/month</p>
             </div>
             <p className="text-muted-foreground mb-4 text-sm">
-              Voluntary amount to support the platform
+              {translateText(
+                'generated.inline.0995_voluntary_amount_to_support_the_platform_b35bab29'
+              )}
             </p>
             <Button
               type="button"
@@ -253,12 +274,12 @@ export function SubscriptionPlansGrid({
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
+                  {translateText('generated.inline.0988_processing_272bc02e')}
                 </>
               ) : hasCustomPlan ? (
-                'Active'
+                translateText('generated.inline.0126_active_a733b809')
               ) : (
-                'Subscribe'
+                translateText('generated.inline.0128_subscribe_d6981f74')
               )}
             </Button>
           </div>
@@ -266,8 +287,9 @@ export function SubscriptionPlansGrid({
 
         <div className="bg-muted rounded-lg p-3">
           <p className="text-muted-foreground text-xs">
-            💡 All features remain free. Your contribution helps us keep the platform running and
-            build new features for everyone.
+            {translateText(
+              'generated.inline.0996_all_features_remain_free_your_contribution_he_4b402e38'
+            )}
           </p>
         </div>
       </CardContent>

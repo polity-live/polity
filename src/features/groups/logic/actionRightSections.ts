@@ -1,4 +1,5 @@
 import { ACTION_RIGHTS } from '@/zero/rbac/constants';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export interface ActionRightDefinition {
   resource: string;
@@ -16,14 +17,16 @@ export interface ActionRightSection {
 const ACTION_RIGHT_SECTION_DEFINITIONS = [
   {
     id: 'operations',
-    title: 'Operations',
-    description: 'Documents, links, payments, and todos.',
+    title: translateText('generated.inline.0137_operations_a1fdaa6b'),
+    description: translateText('generated.inline.0138_documents_links_payments_and_todos_29ac0bfa'),
     resources: ['groupDocuments', 'groupLinks', 'groupPayments', 'groupTodos'],
   },
   {
     id: 'group-management',
-    title: 'Group Management',
-    description: 'Members, roles, relationships, messages, notifications, and settings.',
+    title: translateText('generated.inline.0139_group_management_0c4c01a0'),
+    description: translateText(
+      'generated.inline.0140_members_roles_relationships_messages_notifica_749cf2d7'
+    ),
     resources: [
       'groupMemberships',
       'groupNotifications',
@@ -36,14 +39,18 @@ const ACTION_RIGHT_SECTION_DEFINITIONS = [
   },
   {
     id: 'event-agenda',
-    title: 'Event & Agenda',
-    description: 'Events, elections, speakers, voting, and agenda items.',
+    title: translateText('generated.inline.0141_event_agenda_527e2d32'),
+    description: translateText(
+      'generated.inline.0142_events_elections_speakers_voting_and_agenda_i_3438ebec'
+    ),
     resources: ['agendaItems', 'events', 'elections'],
   },
   {
     id: 'content-moderation',
-    title: 'Content & Moderation',
-    description: 'Amendments, blogs, and comment moderation.',
+    title: translateText('generated.inline.0143_content_moderation_a3ccd2c9'),
+    description: translateText(
+      'generated.inline.0144_amendments_blogs_and_comment_moderation_8ffddcf4'
+    ),
     resources: ['amendments', 'blogs', 'comments'],
   },
 ] as const;
@@ -67,8 +74,10 @@ export function getActionRightSections(
   if (otherRights.length > 0) {
     sections.push({
       id: 'other',
-      title: 'Other',
-      description: 'Additional action rights that are not yet grouped into a dedicated section.',
+      title: translateText('generated.inline.0145_other_6e6a6f20'),
+      description: translateText(
+        'generated.inline.0146_additional_action_rights_that_are_not_yet_gro_5ab2beb4'
+      ),
       rights: otherRights,
     });
   }

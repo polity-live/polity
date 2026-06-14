@@ -12,7 +12,10 @@ import {
 } from '@/features/network/ui/RightFilters';
 import { NETWORK_CONNECTION_DIRECTION_COLORS } from '@/features/network/logic/networkEdgeHelpers';
 import { cn } from '@/features/shared/utils/utils';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 
 export interface NetworkLegendItem {
   id: string;
@@ -95,9 +98,9 @@ export function NetworkControlPanel({
   legendItems,
   legendTitle = 'Legend',
   showGroupTypeLegend = false,
-  baseGroupLabel = '◉ Base group',
-  hierarchicalGroupLabel = '🏛 Hierarchical group',
-  siblingGroupLabel = '◎ Sibling group',
+  baseGroupLabel = translateText('generated.inline.0118_base_group_51212428'),
+  hierarchicalGroupLabel = translateText('generated.inline.0119_hierarchical_group_9bdd8876'),
+  siblingGroupLabel = translateText('generated.inline.0120_sibling_group_ab012d49'),
   showDisplayControls = true,
   showInteractiveToggle = true,
   depthFilters,
@@ -107,8 +110,8 @@ export function NetworkControlPanel({
   onInteractiveChange,
   directLabel = 'Direct',
   indirectLabel = 'Indirect',
-  lockLabel = 'Lock Editor',
-  unlockLabel = 'Unlock Editor',
+  lockLabel = translateText('generated.inline.0121_lock_editor_357aaa55'),
+  unlockLabel = translateText('generated.inline.0122_unlock_editor_b60d9fb1'),
   showRightsFilter = false,
   selectedRights,
   onToggleRight,
@@ -116,7 +119,9 @@ export function NetworkControlPanel({
   filteredByPrefix = 'Filtered by',
   showRightsLegend = false,
   showConnectionDirectionLegend = false,
-  connectionDirectionLegendTitle = 'Connection direction',
+  connectionDirectionLegendTitle = translateText(
+    'generated.inline.0123_connection_direction_701f52c9'
+  ),
   bidirectionalConnectionLabel = 'Bidirectional',
   incomingConnectionLabel = 'Incoming',
   outgoingConnectionLabel = 'Outgoing',

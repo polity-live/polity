@@ -32,6 +32,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/ava
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/features/shared/utils/utils';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface RoleWithHistory {
   id: string;
@@ -90,12 +91,16 @@ export function AssignHolderDialog({
     e.preventDefault();
 
     if (isElectedRole) {
-      toast.error('Elected roles must be filled through an election');
+      toast.error(
+        translateText(
+          'generated.inline.0644_elected_roles_must_be_filled_through_an_elect_e1448a79'
+        )
+      );
       return;
     }
 
     if (!selectedUserId) {
-      toast.error('Please select a member');
+      toast.error(translateText('generated.inline.0645_please_select_a_member_d3309803'));
       return;
     }
 
@@ -111,20 +116,32 @@ export function AssignHolderDialog({
       <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-[500px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Assign Incumbent</DialogTitle>
+            <DialogTitle>
+              {translateText('generated.inline.0646_assign_incumbent_d397e41f')}
+            </DialogTitle>
             <DialogDescription>
               {isElectedRole
-                ? `"${role?.title}" is an elected role and must be filled through an election.`
+                ? translateText(
+                    'generated.inline.0074_title_is_an_elected_role_and_must_be_filled_t_7c021fe4',
+                    { title: role?.title }
+                  )
                 : currentHolder
-                  ? `Replace the current holder of "${role?.title}" with a new member.`
-                  : `Assign a member to the "${role?.title}" role.`}
+                  ? translateText(
+                      'generated.inline.0075_replace_the_current_holder_of_title_with_a_ne_371157b0',
+                      { title: role?.title }
+                    )
+                  : translateText(
+                      'generated.inline.0076_assign_a_member_to_the_title_role_5e150f05',
+                      { title: role?.title }
+                    )}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             {isElectedRole && (
               <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
-                Start or complete an election to assign this incumbent. Direct assignment is
-                disabled for elected roles.
+                {translateText(
+                  'generated.inline.0647_start_or_complete_an_election_to_assign_this__b960eee5'
+                )}
               </div>
             )}
             {currentHolder && (
@@ -138,9 +155,12 @@ export function AssignHolderDialog({
                   </Avatar>
                   <div className="flex-1">
                     <div className="text-sm font-medium">
-                      Current: {currentHolder.first_name || currentHolder.handle}
+                      {translateText('generated.inline.0648_current_19889c90')}
+                      {currentHolder.first_name || currentHolder.handle}
                     </div>
-                    <div className="text-muted-foreground text-xs">Will be replaced</div>
+                    <div className="text-muted-foreground text-xs">
+                      {translateText('generated.inline.0649_will_be_replaced_07522d9b')}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -148,7 +168,8 @@ export function AssignHolderDialog({
 
             <div className="space-y-2">
               <Label htmlFor="holder-select">
-                Select Member <span className="text-destructive">*</span>
+                {translateText('generated.inline.0650_select_member_09555414')}
+                <span className="text-destructive">*</span>
               </Label>
               <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger asChild>
@@ -173,7 +194,9 @@ export function AssignHolderDialog({
                         <span>{selectedMember.user.first_name || selectedMember.user.handle}</span>
                       </div>
                     ) : (
-                      <span className="text-muted-foreground">Select a member...</span>
+                      <span className="text-muted-foreground">
+                        {translateText('generated.inline.0651_select_a_member_e6903be4')}
+                      </span>
                     )}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
@@ -181,12 +204,14 @@ export function AssignHolderDialog({
                 <PopoverContent className="w-[460px] p-0">
                   <Command>
                     <CommandInput
-                      placeholder="Search members..."
+                      placeholder={translateText('generated.inline.0652_search_members_c698311c')}
                       value={searchQuery}
                       onValueChange={setSearchQuery}
                     />
                     <CommandList>
-                      <CommandEmpty>No members found.</CommandEmpty>
+                      <CommandEmpty>
+                        {translateText('generated.inline.0653_no_members_found_c02a8c65')}
+                      </CommandEmpty>
                       <CommandGroup>
                         {filteredMembers.map(membership => {
                           const user = membership.user;
@@ -233,7 +258,9 @@ export function AssignHolderDialog({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="assignment-reason">Assignment Reason</Label>
+              <Label htmlFor="assignment-reason">
+                {translateText('generated.inline.0654_assignment_reason_74518646')}
+              </Label>
               <Select
                 value={reason}
                 onValueChange={value => setReason(value as 'elected' | 'appointed')}
@@ -243,21 +270,33 @@ export function AssignHolderDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="appointed">Appointed</SelectItem>
-                  <SelectItem value="elected">Elected</SelectItem>
+                  <SelectItem value="appointed">
+                    {translateText('generated.inline.0655_appointed_9f51a760')}
+                  </SelectItem>
+                  <SelectItem value="elected">
+                    {translateText('generated.inline.0656_elected_27d35d1d')}
+                  </SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-muted-foreground text-xs">
-                This will be recorded in the role's history
+                {translateText(
+                  'generated.inline.0657_this_will_be_recorded_in_the_role_s_history_2bd38069'
+                )}
               </p>
             </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              {isElectedRole ? 'Close' : 'Cancel'}
+              {isElectedRole
+                ? translateText('generated.inline.0088_close_bbfa773e')
+                : translateText('generated.inline.0089_cancel_77dfd213')}
             </Button>
             {!isElectedRole && (
-              <Button type="submit">{currentHolder ? 'Replace Holder' : 'Assign Holder'}</Button>
+              <Button type="submit">
+                {currentHolder
+                  ? translateText('generated.inline.0090_replace_holder_da55b9f7')
+                  : translateText('generated.inline.0091_assign_holder_2a88e099')}
+              </Button>
             )}
           </DialogFooter>
         </form>

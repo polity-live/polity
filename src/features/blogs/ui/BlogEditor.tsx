@@ -9,6 +9,7 @@ import { Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { useBlogState } from '@/zero/blogs/useBlogState';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface BlogEditorProps {
   blogId: string;
@@ -34,7 +35,9 @@ export function BlogEditor({ blogId }: BlogEditorProps) {
         id: blogId,
         content,
       });
-      toast.success('Blog content saved successfully');
+      toast.success(
+        translateText('generated.inline.0265_blog_content_saved_successfully_53103bde')
+      );
     } catch (error) {
       console.error('Error saving blog content:', error);
     } finally {
@@ -45,8 +48,10 @@ export function BlogEditor({ blogId }: BlogEditorProps) {
   if (!blog) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-muted-foreground">Loading blog editor...</p>
+        <Loader2 className="text-primary h-8 w-8 animate-spin" />
+        <p className="text-muted-foreground">
+          {translateText('generated.inline.0266_loading_blog_editor_00ccfa0b')}
+        </p>
       </div>
     );
   }
@@ -54,17 +59,19 @@ export function BlogEditor({ blogId }: BlogEditorProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Blog Editor</h1>
+        <h1 className="text-3xl font-bold">
+          {translateText('generated.inline.0267_blog_editor_b05a0e7d')}
+        </h1>
         <Button onClick={handleSave} disabled={isSaving}>
           {isSaving ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
+              {translateText('generated.inline.0268_saving_ae7e8875')}
             </>
           ) : (
             <>
               <Save className="mr-2 h-4 w-4" />
-              Save
+              {translateText('generated.inline.0269_save_efc007a3')}
             </>
           )}
         </Button>
@@ -76,12 +83,16 @@ export function BlogEditor({ blogId }: BlogEditorProps) {
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            <Label htmlFor="content">Blog Content</Label>
+            <Label htmlFor="content">
+              {translateText('generated.inline.0270_blog_content_75727b2c')}
+            </Label>
             <Textarea
               id="content"
               value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Write your blog content here..."
+              onChange={e => setContent(e.target.value)}
+              placeholder={translateText(
+                'generated.inline.0271_write_your_blog_content_here_580320ae'
+              )}
               rows={20}
               className="font-mono"
             />

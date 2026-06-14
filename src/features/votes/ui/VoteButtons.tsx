@@ -47,12 +47,12 @@ export function VoteButtons({
           {userVote === 'accept' && <Check className="mr-2 h-4 w-4" />}
           {userVote === 'reject' && <X className="mr-2 h-4 w-4" />}
           {userVote === 'abstain' && <Minus className="mr-2 h-4 w-4" />}
-          {t('features.events.voting.yourVote', 'Your Vote')}:{' '}
+          {t('features.events.voting.yourVote')}:{' '}
           {userVote === 'accept'
-            ? t('features.events.voting.accept', 'Accept')
+            ? t('features.events.voting.accept')
             : userVote === 'reject'
-              ? t('features.events.voting.reject', 'Reject')
-              : t('features.events.voting.abstain', 'Abstain')}
+              ? t('features.events.voting.reject')
+              : t('features.events.voting.abstain')}
         </Badge>
       </div>
     );
@@ -61,8 +61,8 @@ export function VoteButtons({
   // Don't show if user can't vote
   if (!canVote) {
     return (
-      <div className="text-center text-sm text-muted-foreground">
-        {t('features.events.voting.noVotingRights', 'You do not have voting rights')}
+      <div className="text-muted-foreground text-center text-sm">
+        {t('features.events.voting.noVotingRights')}
       </div>
     );
   }
@@ -83,7 +83,7 @@ export function VoteButtons({
         ) : (
           <Check className="mr-2 h-4 w-4" />
         )}
-        {t('features.events.voting.accept', 'Accept')}
+        {t('features.events.voting.accept')}
       </Button>
 
       <Button
@@ -97,7 +97,7 @@ export function VoteButtons({
         ) : (
           <X className="mr-2 h-4 w-4" />
         )}
-        {t('features.events.voting.reject', 'Reject')}
+        {t('features.events.voting.reject')}
       </Button>
 
       <Button
@@ -111,7 +111,7 @@ export function VoteButtons({
         ) : (
           <Minus className="mr-2 h-4 w-4" />
         )}
-        {t('features.events.voting.abstain', 'Abstain')}
+        {t('features.events.voting.abstain')}
       </Button>
     </div>
   );

@@ -1,10 +1,19 @@
 import { Button } from '@/features/shared/ui/ui/button.tsx';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card.tsx';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card.tsx';
 import { Badge } from '@/features/shared/ui/ui/badge.tsx';
 import { ThemeToggle } from '@/features/navigation/toggles/theme-toggle.tsx';
 import { Search } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import type { NavigationType, ScreenType } from '@/features/navigation/types/navigation.types.tsx';
 import { useScreenStore } from '@/features/shared/global-state/screen.store.tsx';
 
@@ -78,7 +87,7 @@ export default function NavigationDemo({
                 {t('navigationDemo.screenType.automatic')}
               </Button>
             </div>
-            <div className="mt-2 flex items-center text-sm text-muted-foreground">
+            <div className="text-muted-foreground mt-2 flex items-center text-sm">
               <Badge variant="outline" className="mr-2">
                 {screenType}
               </Badge>
@@ -90,11 +99,11 @@ export default function NavigationDemo({
             <div>
               <Button
                 variant="outline"
-                className="w-full justify-start text-sm text-muted-foreground"
+                className="text-muted-foreground w-full justify-start text-sm"
               >
                 <Search className="mr-2 h-4 w-4" />
                 <span>{t('navigationDemo.commandPalette.placeholder')}</span>
-                <kbd className="pointer-events-none ml-auto inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+                <kbd className="bg-muted text-muted-foreground pointer-events-none ml-auto inline-flex h-5 items-center gap-1 rounded border px-1.5 font-mono text-[10px] font-medium opacity-100 select-none">
                   <span className="text-xs">⌘</span>K
                 </kbd>
               </Button>
@@ -104,7 +113,7 @@ export default function NavigationDemo({
             <h3 className="mb-3 text-lg font-medium">{t('navigationDemo.themeSettings.title')}</h3>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   {t('navigationDemo.themeSettings.description')}
                 </p>
               </div>
@@ -137,7 +146,10 @@ export default function NavigationDemo({
           <div className="border-t pt-4">
             <h3 className="mb-3 text-lg font-medium">{t('navigationDemo.currentConfig.title')}</h3>
             <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary">{t('navigationDemo.currentConfig.state')}: asButton</Badge>
+              <Badge variant="secondary">
+                {t('navigationDemo.currentConfig.state')}
+                {translateText('generated.inline.0754_asbutton_0e7e9874')}
+              </Badge>
               <Badge variant="secondary">
                 {t('navigationDemo.currentConfig.priority')}: {priority}
               </Badge>
@@ -148,7 +160,7 @@ export default function NavigationDemo({
           </div>
           <div className="border-t pt-4">
             <h3 className="mb-3 text-lg font-medium">{t('navigationDemo.stateSwitcher.title')}</h3>
-            <div className="space-y-2 text-sm text-muted-foreground">
+            <div className="text-muted-foreground space-y-2 text-sm">
               <p>
                 <strong>{t('navigationDemo.stateSwitcher.asButton.title')}</strong>
                 {t('navigationDemo.stateSwitcher.asButton.description')}
@@ -176,7 +188,7 @@ export default function NavigationDemo({
               <CardDescription>{t('navigationDemo.sampleContent.description')}</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 {t('navigationDemo.sampleContent.content')}
               </p>
             </CardContent>

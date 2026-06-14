@@ -63,25 +63,19 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
   showProvenanceColumns = false,
 }: ActiveMembersTableProps<TMembership>) {
   const { t } = useTranslation();
-  const directWithoutPathLabel = t(
-    'features.groups.memberships.composition.directWithoutPath',
-    'Direct / no path'
-  );
-  const resolvedTitle =
-    title ?? t('components.membershipTables.activeMembersTitle', 'Active Members');
+  const directWithoutPathLabel = t('features.groups.memberships.composition.directWithoutPath');
+  const resolvedTitle = title ?? t('components.membershipTables.activeMembersTitle');
   const resolvedDescription =
-    description ??
-    t('components.membershipTables.activeMembersDescription', 'Current members and administrators');
+    description ?? t('components.membershipTables.activeMembersDescription');
   const resolvedFallbackRoleLabel =
-    fallbackRoleLabel ?? t('components.membershipTables.memberFallback', 'Member');
-  const resolvedManageRolesLabel =
-    manageRolesLabel ?? t('components.membershipTables.manageRoles', 'Manage Roles');
-  const resolvedRemoveLabel = removeLabel ?? t('components.membershipTables.remove', 'Remove');
-  const userColumnLabel = t('components.membershipTables.user', 'User');
-  const roleColumnLabel = t('components.membershipTables.role', 'Role');
-  const joinedColumnLabel = t('components.membershipTables.joined', 'Joined');
-  const actionsColumnLabel = t('components.membershipTables.actions', 'Actions');
-  const rightsLabel = t('components.membershipTables.rights', 'Rights');
+    fallbackRoleLabel ?? t('components.membershipTables.memberFallback');
+  const resolvedManageRolesLabel = manageRolesLabel ?? t('components.membershipTables.manageRoles');
+  const resolvedRemoveLabel = removeLabel ?? t('components.membershipTables.remove');
+  const userColumnLabel = t('components.membershipTables.user');
+  const roleColumnLabel = t('components.membershipTables.role');
+  const joinedColumnLabel = t('components.membershipTables.joined');
+  const actionsColumnLabel = t('components.membershipTables.actions');
+  const rightsLabel = t('components.membershipTables.rights');
   const notAvailableLabel = t('components.membershipTables.notAvailable', 'N/A');
 
   const renderProvenanceGroupTag = (membership: TMembership, column: 'partGroup' | 'baseGroup') => {
@@ -121,7 +115,7 @@ export function ActiveMembersTable<TMembership extends ParticipationLike>({
       <CardContent>
         {members.length === 0 ? (
           <p className="text-muted-foreground py-8 text-center">
-            {t('components.membershipTables.noActiveMembers', 'No active members found')}
+            {t('components.membershipTables.noActiveMembers')}
           </p>
         ) : (
           <div className="border-border/70 overflow-x-auto rounded-2xl border">

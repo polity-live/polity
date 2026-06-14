@@ -41,7 +41,12 @@ export function toWorkflowVisualizationWorkflow(
       order_index: step.order_index,
       label: step.label,
       group_id: step.group_id,
-      group: step.group,
+      group: step.group
+        ? {
+            id: step.group.id,
+            name: step.group.name,
+          }
+        : null,
     })),
   };
 }

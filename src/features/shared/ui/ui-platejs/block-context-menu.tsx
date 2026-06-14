@@ -108,7 +108,7 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
               setValue('askAI');
             }}
           >
-            {t('plateJs.blockContextMenu.askAI', 'Ask AI')}
+            {t('plateJs.blockContextMenu.askAI')}
           </ContextMenuItem>
           <ContextMenuItem
             onClick={() => {
@@ -116,36 +116,34 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
               editor.tf.focus();
             }}
           >
-            {t('plateJs.blockContextMenu.delete', 'Delete')}
+            {t('plateJs.blockContextMenu.delete')}
           </ContextMenuItem>
           <ContextMenuItem
             onClick={() => {
               editor.getTransforms(BlockSelectionPlugin).blockSelection.duplicate();
             }}
           >
-            {t('plateJs.blockContextMenu.duplicate', 'Duplicate')}
+            {t('plateJs.blockContextMenu.duplicate')}
             {/* <ContextMenuShortcut>⌘ + D</ContextMenuShortcut> */}
           </ContextMenuItem>
           <ContextMenuSub>
-            <ContextMenuSubTrigger>
-              {t('plateJs.blockContextMenu.turnInto', 'Turn into')}
-            </ContextMenuSubTrigger>
+            <ContextMenuSubTrigger>{t('plateJs.blockContextMenu.turnInto')}</ContextMenuSubTrigger>
             <ContextMenuSubContent className="w-48">
               <ContextMenuItem onClick={() => handleTurnInto(KEYS.p)}>
-                {t('plateJs.blockContextMenu.paragraph', 'Paragraph')}
+                {t('plateJs.blockContextMenu.paragraph')}
               </ContextMenuItem>
 
               <ContextMenuItem onClick={() => handleTurnInto(KEYS.h1)}>
                 {t('plateJs.headings.heading1')}
               </ContextMenuItem>
               <ContextMenuItem onClick={() => handleTurnInto(KEYS.h2)}>
-                {t('plateJs.blockContextMenu.heading2', 'Heading 2')}
+                {t('plateJs.blockContextMenu.heading2')}
               </ContextMenuItem>
               <ContextMenuItem onClick={() => handleTurnInto(KEYS.h3)}>
-                {t('plateJs.blockContextMenu.heading3', 'Heading 3')}
+                {t('plateJs.blockContextMenu.heading3')}
               </ContextMenuItem>
               <ContextMenuItem onClick={() => handleTurnInto(KEYS.blockquote)}>
-                {t('plateJs.blockContextMenu.blockquote', 'Blockquote')}
+                {t('plateJs.blockContextMenu.blockquote')}
               </ContextMenuItem>
             </ContextMenuSubContent>
           </ContextMenuSub>
@@ -155,26 +153,24 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
           <ContextMenuItem
             onClick={() => editor.getTransforms(BlockSelectionPlugin).blockSelection.setIndent(1)}
           >
-            {t('plateJs.blockContextMenu.indent', 'Indent')}
+            {t('plateJs.blockContextMenu.indent')}
           </ContextMenuItem>
           <ContextMenuItem
             onClick={() => editor.getTransforms(BlockSelectionPlugin).blockSelection.setIndent(-1)}
           >
-            {t('plateJs.blockContextMenu.outdent', 'Outdent')}
+            {t('plateJs.blockContextMenu.outdent')}
           </ContextMenuItem>
           <ContextMenuSub>
-            <ContextMenuSubTrigger>
-              {t('plateJs.blockContextMenu.align', 'Align')}
-            </ContextMenuSubTrigger>
+            <ContextMenuSubTrigger>{t('plateJs.blockContextMenu.align')}</ContextMenuSubTrigger>
             <ContextMenuSubContent className="w-48">
               <ContextMenuItem onClick={() => handleAlign('left')}>
-                {t('plateJs.blockContextMenu.alignLeft', 'Left')}
+                {t('plateJs.blockContextMenu.alignLeft')}
               </ContextMenuItem>
               <ContextMenuItem onClick={() => handleAlign('center')}>
-                {t('plateJs.blockContextMenu.alignCenter', 'Center')}
+                {t('plateJs.blockContextMenu.alignCenter')}
               </ContextMenuItem>
               <ContextMenuItem onClick={() => handleAlign('right')}>
-                {t('plateJs.blockContextMenu.alignRight', 'Right')}
+                {t('plateJs.blockContextMenu.alignRight')}
               </ContextMenuItem>
             </ContextMenuSubContent>
           </ContextMenuSub>

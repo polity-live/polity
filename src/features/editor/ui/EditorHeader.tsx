@@ -10,7 +10,10 @@ import { Input } from '@/features/shared/ui/ui/input';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/features/shared/ui/ui/avatar';
 import { Loader2, Eye, Pencil, Users } from 'lucide-react';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import type { EditorPresencePeer } from '../types';
 
 interface EditorHeaderProps {
@@ -81,7 +84,11 @@ export function EditorHeader({
         <div className="flex items-center gap-2">
           <Users className="text-muted-foreground h-4 w-4" />
           <span className="text-muted-foreground text-sm">
-            {onlinePeers.length} {onlinePeers.length === 1 ? 'user' : 'users'} online
+            {onlinePeers.length}{' '}
+            {onlinePeers.length === 1
+              ? translateText('generated.inline.0026_user_12dea96f')
+              : translateText('generated.inline.0027_users_5b7dcd14')}
+            {translateText('generated.inline.0035_online_2dbc2fd2')}
           </span>
           <div className="flex -space-x-2">
             {onlinePeers.slice(0, 5).map(peer => (

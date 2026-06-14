@@ -178,9 +178,7 @@ export function useAmendmentActions() {
   const updateSupportVote = useCallback(
     (args: Parameters<typeof mutators.amendments.updateSupportVote>[0]) => {
       const result = zero.mutate(mutators.amendments.updateSupportVote(args));
-      onServerError(result, () =>
-        toast.error(t('common.voteToasts.voteUpdateFailed', 'Failed to update vote'))
-      );
+      onServerError(result, () => toast.error(t('common.voteToasts.voteUpdateFailed')));
     },
     [zero]
   );
@@ -188,9 +186,7 @@ export function useAmendmentActions() {
   const deleteSupportVote = useCallback(
     (id: string) => {
       const result = zero.mutate(mutators.amendments.deleteSupportVote({ id }));
-      onServerError(result, () =>
-        toast.error(t('common.voteToasts.voteDeleteFailed', 'Failed to delete vote'))
-      );
+      onServerError(result, () => toast.error(t('common.voteToasts.voteDeleteFailed')));
     },
     [zero]
   );
@@ -239,9 +235,7 @@ export function useAmendmentActions() {
     (args: Parameters<typeof mutators.amendments.initializeProcessPath>[0]) => {
       const result = zero.mutate(mutators.amendments.initializeProcessPath(args));
       onServerError(result, () =>
-        toast.error(
-          t('features.amendments.toasts.processRunCreateFailed', 'Failed to initialize process')
-        )
+        toast.error(t('features.amendments.toasts.processRunCreateFailed'))
       );
       return serverConfirmed(result);
     },
@@ -252,9 +246,7 @@ export function useAmendmentActions() {
     (args: Parameters<typeof mutators.amendments.resolveProcessVote>[0]) => {
       const result = zero.mutate(mutators.amendments.resolveProcessVote(args));
       onServerError(result, () =>
-        toast.error(
-          t('features.amendments.toasts.processStepUpdateFailed', 'Failed to resolve process vote')
-        )
+        toast.error(t('features.amendments.toasts.processStepUpdateFailed'))
       );
       return serverConfirmed(result);
     },
@@ -265,12 +257,7 @@ export function useAmendmentActions() {
     (args: Parameters<typeof mutators.amendments.completeProcessTaskWithEvent>[0]) => {
       const result = zero.mutate(mutators.amendments.completeProcessTaskWithEvent(args));
       onServerError(result, () =>
-        toast.error(
-          t(
-            'features.amendments.toasts.processTaskUpdateFailed',
-            'Failed to attach process task to event'
-          )
-        )
+        toast.error(t('features.amendments.toasts.processTaskUpdateFailed'))
       );
       return serverConfirmed(result);
     },
@@ -309,9 +296,7 @@ export function useAmendmentActions() {
   const createPath = useCallback(
     (args: Parameters<typeof mutators.amendments.createPath>[0]) => {
       const result = zero.mutate(mutators.amendments.createPath(args));
-      onServerError(result, () =>
-        toast.error(t('features.amendments.toasts.pathCreateFailed', 'Failed to create path'))
-      );
+      onServerError(result, () => toast.error(t('features.amendments.toasts.pathCreateFailed')));
       return serverConfirmed(result);
     },
     [zero]
@@ -320,9 +305,7 @@ export function useAmendmentActions() {
   const deletePath = useCallback(
     (args: Parameters<typeof mutators.amendments.deletePath>[0]) => {
       const result = zero.mutate(mutators.amendments.deletePath(args));
-      onServerError(result, () =>
-        toast.error(t('features.amendments.toasts.pathDeleteFailed', 'Failed to delete path'))
-      );
+      onServerError(result, () => toast.error(t('features.amendments.toasts.pathDeleteFailed')));
       return serverConfirmed(result);
     },
     [zero]
@@ -332,9 +315,7 @@ export function useAmendmentActions() {
     (args: Parameters<typeof mutators.amendments.createPathSegment>[0]) => {
       const result = zero.mutate(mutators.amendments.createPathSegment(args));
       onServerError(result, () =>
-        toast.error(
-          t('features.amendments.toasts.pathSegmentCreateFailed', 'Failed to create path segment')
-        )
+        toast.error(t('features.amendments.toasts.pathSegmentCreateFailed'))
       );
       return serverConfirmed(result);
     },
@@ -345,9 +326,7 @@ export function useAmendmentActions() {
     (args: Parameters<typeof mutators.amendments.deletePathSegment>[0]) => {
       const result = zero.mutate(mutators.amendments.deletePathSegment(args));
       onServerError(result, () =>
-        toast.error(
-          t('features.amendments.toasts.pathSegmentDeleteFailed', 'Failed to delete path segment')
-        )
+        toast.error(t('features.amendments.toasts.pathSegmentDeleteFailed'))
       );
       return serverConfirmed(result);
     },
@@ -358,9 +337,7 @@ export function useAmendmentActions() {
     (args: Parameters<typeof mutators.amendments.createProcessRun>[0]) => {
       const result = zero.mutate(mutators.amendments.createProcessRun(args));
       onServerError(result, () =>
-        toast.error(
-          t('features.amendments.toasts.processRunCreateFailed', 'Failed to create process run')
-        )
+        toast.error(t('features.amendments.toasts.processRunCreateFailed'))
       );
       return serverConfirmed(result);
     },
@@ -371,9 +348,7 @@ export function useAmendmentActions() {
     (args: Parameters<typeof mutators.amendments.updateProcessRun>[0]) => {
       const result = zero.mutate(mutators.amendments.updateProcessRun(args));
       onServerError(result, () =>
-        toast.error(
-          t('features.amendments.toasts.processRunUpdateFailed', 'Failed to update process run')
-        )
+        toast.error(t('features.amendments.toasts.processRunUpdateFailed'))
       );
       return serverConfirmed(result);
     },
@@ -384,9 +359,7 @@ export function useAmendmentActions() {
     (id: string) => {
       const result = zero.mutate(mutators.amendments.deleteProcessRun({ id }));
       onServerError(result, () =>
-        toast.error(
-          t('features.amendments.toasts.processRunDeleteFailed', 'Failed to delete process run')
-        )
+        toast.error(t('features.amendments.toasts.processRunDeleteFailed'))
       );
       return serverConfirmed(result);
     },
@@ -397,12 +370,7 @@ export function useAmendmentActions() {
     (args: Parameters<typeof mutators.amendments.createProcessBranch>[0]) => {
       const result = zero.mutate(mutators.amendments.createProcessBranch(args));
       onServerError(result, () =>
-        toast.error(
-          t(
-            'features.amendments.toasts.processBranchCreateFailed',
-            'Failed to create process branch'
-          )
-        )
+        toast.error(t('features.amendments.toasts.processBranchCreateFailed'))
       );
       return serverConfirmed(result);
     },
@@ -413,12 +381,7 @@ export function useAmendmentActions() {
     (args: Parameters<typeof mutators.amendments.updateProcessBranch>[0]) => {
       const result = zero.mutate(mutators.amendments.updateProcessBranch(args));
       onServerError(result, () =>
-        toast.error(
-          t(
-            'features.amendments.toasts.processBranchUpdateFailed',
-            'Failed to update process branch'
-          )
-        )
+        toast.error(t('features.amendments.toasts.processBranchUpdateFailed'))
       );
       return serverConfirmed(result);
     },
@@ -429,12 +392,7 @@ export function useAmendmentActions() {
     (id: string) => {
       const result = zero.mutate(mutators.amendments.deleteProcessBranch({ id }));
       onServerError(result, () =>
-        toast.error(
-          t(
-            'features.amendments.toasts.processBranchDeleteFailed',
-            'Failed to delete process branch'
-          )
-        )
+        toast.error(t('features.amendments.toasts.processBranchDeleteFailed'))
       );
       return serverConfirmed(result);
     },
@@ -445,9 +403,7 @@ export function useAmendmentActions() {
     (args: Parameters<typeof mutators.amendments.createProcessStepRun>[0]) => {
       const result = zero.mutate(mutators.amendments.createProcessStepRun(args));
       onServerError(result, () =>
-        toast.error(
-          t('features.amendments.toasts.processStepCreateFailed', 'Failed to create process step')
-        )
+        toast.error(t('features.amendments.toasts.processStepCreateFailed'))
       );
       return serverConfirmed(result);
     },
@@ -458,9 +414,7 @@ export function useAmendmentActions() {
     (args: Parameters<typeof mutators.amendments.updateProcessStepRun>[0]) => {
       const result = zero.mutate(mutators.amendments.updateProcessStepRun(args));
       onServerError(result, () =>
-        toast.error(
-          t('features.amendments.toasts.processStepUpdateFailed', 'Failed to update process step')
-        )
+        toast.error(t('features.amendments.toasts.processStepUpdateFailed'))
       );
       return serverConfirmed(result);
     },
@@ -471,9 +425,7 @@ export function useAmendmentActions() {
     (id: string) => {
       const result = zero.mutate(mutators.amendments.deleteProcessStepRun({ id }));
       onServerError(result, () =>
-        toast.error(
-          t('features.amendments.toasts.processStepDeleteFailed', 'Failed to delete process step')
-        )
+        toast.error(t('features.amendments.toasts.processStepDeleteFailed'))
       );
       return serverConfirmed(result);
     },
@@ -484,9 +436,7 @@ export function useAmendmentActions() {
     (args: Parameters<typeof mutators.amendments.createProcessTask>[0]) => {
       const result = zero.mutate(mutators.amendments.createProcessTask(args));
       onServerError(result, () =>
-        toast.error(
-          t('features.amendments.toasts.processTaskCreateFailed', 'Failed to create process task')
-        )
+        toast.error(t('features.amendments.toasts.processTaskCreateFailed'))
       );
       return serverConfirmed(result);
     },
@@ -497,9 +447,7 @@ export function useAmendmentActions() {
     (args: Parameters<typeof mutators.amendments.updateProcessTask>[0]) => {
       const result = zero.mutate(mutators.amendments.updateProcessTask(args));
       onServerError(result, () =>
-        toast.error(
-          t('features.amendments.toasts.processTaskUpdateFailed', 'Failed to update process task')
-        )
+        toast.error(t('features.amendments.toasts.processTaskUpdateFailed'))
       );
       return serverConfirmed(result);
     },
@@ -510,9 +458,7 @@ export function useAmendmentActions() {
     (id: string) => {
       const result = zero.mutate(mutators.amendments.deleteProcessTask({ id }));
       onServerError(result, () =>
-        toast.error(
-          t('features.amendments.toasts.processTaskDeleteFailed', 'Failed to delete process task')
-        )
+        toast.error(t('features.amendments.toasts.processTaskDeleteFailed'))
       );
       return serverConfirmed(result);
     },

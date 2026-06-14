@@ -7,15 +7,27 @@ import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import { useSubscribeAmendment } from './useSubscribeAmendment';
 import { useAmendmentCollaboration } from './useAmendmentCollaboration';
 import { useCloneAmendment } from './useCloneAmendment';
+import { deriveVoteState, AMENDMENT_STATUS_COLORS } from '../logic/amendmentHelpers';
 import {
-  deriveVoteState,
-  getSupportStatus,
-  AMENDMENT_STATUS_COLORS,
-} from '../logic/amendmentHelpers';
+  deriveImplementationDisplayStatus,
+  formatImplementationEvaluationDate,
+  formatImplementationEvaluationSummary,
+  getImplementationEvaluationModeLabel,
+  getImplementationReviewOutcomeLabel,
+  normalizeAmendmentProcessStatus,
+  normalizeImplementationEvaluationMode,
+  normalizeImplementationEvaluationStatus,
+  resolveImplementationReviewVoteOutcome,
+} from '../logic/implementationEvaluation';
+import {
+  deriveSupporterDirectoryItems,
+  deriveSupporterMapItems,
+  type SupporterMapItem,
+} from '../logic/supporterDirectory';
 import { notifyAmendmentVoted } from '@/features/notifications/utils/notification-helpers.ts';
 import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
 import type { VoteValue } from '@/features/shared/ui/voting/VoteButtons';
-import type { SupporterMapItem } from '../ui/SupporterLocalityMap';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export function useAmendmentWikiPage(amendmentId: string) {
   const navigate = useNavigate();
@@ -74,21 +86,55 @@ export function useAmendmentWikiPage(amendmentId: string) {
 
   // Derived data
   const collaborators = amendment?.collaborators || [];
-  const supportingGroups = amendment?.support_confirmations || [];
   const supportConfirmations = amendment?.support_confirmations || [];
+  const supporterDirectoryItems = useMemo(
+    () =>
+      deriveSupporterDirectoryItems({
+        groupDecisions: amendment?.group_decisions,
+        supportConfirmations,
+      }),
+    [amendment?.group_decisions, supportConfirmations]
+  );
+  const supportingGroupCount = supporterDirectoryItems.length;
   const clones = facadeResult.clones ?? [];
   const clonedFrom = amendment?.clone_source;
-  const totalSupportingMembers = supportingGroups.reduce(
-    (sum: number, confirmation) => sum + Math.max(0, confirmation.group?.member_count ?? 0),
+  const totalSupportingMembers = supporterDirectoryItems.reduce(
+    (sum: number, supporter) => sum + supporter.memberCount,
     0
   );
   const targetCollaborator = undefined as { imageURL?: string; name?: string } | undefined;
   const currentProcessRun = amendment?.current_process_run ?? null;
   const targetGroup = currentProcessRun?.selected_target_group ?? amendment?.group;
-  const implementationStatus = currentProcessRun?.implementation_status ?? null;
+  const evaluationMode = normalizeImplementationEvaluationMode(
+    currentProcessRun?.evaluation_mode ?? null
+  );
+  const processStatus = normalizeAmendmentProcessStatus(currentProcessRun?.status ?? null);
+  const implementationStatus = normalizeImplementationEvaluationStatus(
+    currentProcessRun?.implementation_status ?? null
+  );
   const evaluationTask =
     currentProcessRun?.tasks?.find(task => task.task_type === 'implementation_evaluation') ?? null;
+  const evaluationAgendaItem = evaluationTask?.agenda_item ?? null;
+  const evaluationEvent = evaluationTask?.event ?? null;
+  const evaluationVote = evaluationAgendaItem?.votes?.[0] ?? null;
   const evaluationDueDate = evaluationTask?.due_at ?? currentProcessRun?.evaluation_date ?? null;
+  const evaluationModeLabel = getImplementationEvaluationModeLabel(evaluationMode);
+  const evaluationConfigurationSummary = formatImplementationEvaluationSummary({
+    mode: evaluationMode,
+    fixedDate:
+      evaluationMode === 'fixed_date' ? (currentProcessRun?.evaluation_date ?? null) : null,
+    offsetMonths: currentProcessRun?.evaluation_offset_months ?? null,
+    offsetYears: currentProcessRun?.evaluation_offset_years ?? null,
+  });
+  const evaluationDueDateLabel = formatImplementationEvaluationDate(evaluationDueDate);
+  const implementationDisplayStatus = deriveImplementationDisplayStatus({
+    processStatus,
+    implementationStatus,
+  });
+  const evaluationVoteOutcome = resolveImplementationReviewVoteOutcome(evaluationVote);
+  const evaluationVoteOutcomeLabel = getImplementationReviewOutcomeLabel(evaluationVoteOutcome);
+  const hasImplementationEvaluation =
+    Boolean(evaluationMode) || Boolean(implementationStatus) || Boolean(evaluationDueDate);
 
   const isAdmin = collaborationData.status === 'admin';
 
@@ -111,11 +157,11 @@ export function useAmendmentWikiPage(amendmentId: string) {
 
   const handleVote = async (voteValue: VoteValue) => {
     if (!user?.id) {
-      toast.error('Please log in to vote');
+      toast.error(translateText('generated.inline.0138_please_log_in_to_vote_59574e84'));
       return;
     }
     if (!amendment) {
-      toast.error('Amendment not found');
+      toast.error(translateText('generated.inline.0139_amendment_not_found_19292116'));
       return;
     }
 
@@ -148,38 +194,13 @@ export function useAmendmentWikiPage(amendmentId: string) {
       }
     } catch (error) {
       console.error('Error voting:', error);
-      toast.error('Failed to vote');
+      toast.error(translateText('generated.inline.0140_failed_to_vote_68d9f4e2'));
     }
   };
 
-  const getSupportStatusForGroup = (groupId: string) =>
-    getSupportStatus(
-      groupId,
-      supportConfirmations.map(sc => ({
-        group: sc.group_id ? { id: sc.group_id } : undefined,
-        status: sc.status ?? undefined,
-      }))
-    );
-
   const supporterMapItems = useMemo<SupporterMapItem[]>(
-    () =>
-      supportingGroups
-        .filter(
-          confirmation =>
-            confirmation.group?.id &&
-            confirmation.group?.latitude != null &&
-            confirmation.group?.longitude != null &&
-            !['declined', 'withdrawn'].includes(getSupportStatusForGroup(confirmation.group.id))
-        )
-        .map(confirmation => ({
-          id: confirmation.group?.id ?? confirmation.id,
-          name: confirmation.group?.name ?? 'Unbenannte Gruppe',
-          latitude: confirmation.group?.latitude ?? 0,
-          longitude: confirmation.group?.longitude ?? 0,
-          groupHref: `/group/${confirmation.group?.id}`,
-          decisionHref: `/amendment/${amendmentId}`,
-        })),
-    [amendmentId, supportingGroups]
+    () => deriveSupporterMapItems(supporterDirectoryItems),
+    [supporterDirectoryItems]
   );
 
   // Visibility access check
@@ -209,15 +230,27 @@ export function useAmendmentWikiPage(amendmentId: string) {
     isLoading: facadeResult.isLoading,
     isAdmin,
     collaborators,
-    supportingGroups,
+    supporterDirectoryItems,
+    supportingGroupCount,
     clones,
     clonedFrom,
     totalSupportingMembers,
     targetCollaborator,
     targetGroup,
     currentProcessRun,
+    evaluationMode,
+    evaluationModeLabel,
+    evaluationConfigurationSummary,
     implementationStatus,
+    implementationDisplayStatus,
+    evaluationTask,
+    evaluationEvent,
+    evaluationAgendaItem,
+    evaluationVoteOutcome,
+    evaluationVoteOutcomeLabel,
     evaluationDueDate,
+    evaluationDueDateLabel,
+    hasImplementationEvaluation,
     supporterMapItems,
 
     // Vote
@@ -230,7 +263,6 @@ export function useAmendmentWikiPage(amendmentId: string) {
     usersData,
 
     // Helpers
-    getSupportStatus: getSupportStatusForGroup,
     statusColors: AMENDMENT_STATUS_COLORS,
   };
 }

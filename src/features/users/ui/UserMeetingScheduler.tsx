@@ -42,6 +42,7 @@ import {
   MeetingMonthView,
   MeetingWeekView,
 } from '@/features/meet/ui/MeetingCalendarViews';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface UserMeetingSchedulerProps {
   userId: string;
@@ -178,7 +179,9 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-muted-foreground text-lg">Loading meetings...</div>
+        <div className="text-muted-foreground text-lg">
+          {translateText('generated.inline.1205_loading_meetings_cc9cc88a')}
+        </div>
       </div>
     );
   }
@@ -207,7 +210,7 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
           isOwner ? (
             <Button onClick={openCreateEventFlow}>
               <Plus className="mr-2 h-4 w-4" />
-              Offer a meeting
+              {translateText('generated.inline.1206_offer_a_meeting_815bf49a')}
             </Button>
           ) : undefined
         }
@@ -215,8 +218,16 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
 
       <p className="text-muted-foreground mb-8 max-w-3xl">
         {isOwner
-          ? 'Create meeting offers that other people can discover now and book later.'
-          : `Browse the meeting offers ${owner?.first_name || 'this user'} has published and book an available time that fits.`}
+          ? translateText(
+              'generated.inline.0149_create_meeting_offers_that_other_people_can_d_8fecf2f5'
+            )
+          : translateText(
+              'generated.inline.0182_browse_the_meeting_offers_valuee1a5_has_publi_1575f449',
+              {
+                valuee1a5:
+                  owner?.first_name || translateText('generated.inline.0150_this_user_a0fbee4e'),
+              }
+            )}
       </p>
 
       {view === 'list' && (
@@ -252,9 +263,15 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
       {/* Tabs: Manage Meetings / Bookings */}
       <Tabs defaultValue={isOwner ? 'manage' : 'bookings'} className="mt-6 space-y-6">
         <TabsList>
-          {isOwner && <TabsTrigger value="manage">Meeting Offers</TabsTrigger>}
+          {isOwner && (
+            <TabsTrigger value="manage">
+              {translateText('generated.inline.1207_meeting_offers_86d14c14')}
+            </TabsTrigger>
+          )}
           <TabsTrigger value="bookings">
-            {isOwner ? 'Booked With You' : 'My Booked Meetings'}
+            {isOwner
+              ? translateText('generated.inline.0151_booked_with_you_0111015e')
+              : translateText('generated.inline.0152_my_booked_meetings_ecb1cc54')}
           </TabsTrigger>
         </TabsList>
 
@@ -262,9 +279,13 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
           <TabsContent value="manage" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>All Meeting Offers</CardTitle>
+                <CardTitle>
+                  {translateText('generated.inline.1208_all_meeting_offers_ae7b767d')}
+                </CardTitle>
                 <CardDescription>
-                  Review the meetings you are offering for other people to book.
+                  {translateText(
+                    'generated.inline.1209_review_the_meetings_you_are_offering_for_othe_ed7d259e'
+                  )}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -272,7 +293,7 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
                   <div className="mb-4">
                     <Button onClick={openCreateEventFlow}>
                       <Plus className="mr-2 h-4 w-4" />
-                      Offer a Meeting
+                      {translateText('generated.inline.1210_offer_a_meeting_3aa52ce6')}
                     </Button>
                   </div>
                 )}
@@ -299,11 +320,19 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
         <TabsContent value="bookings" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>{isOwner ? 'Bookings on Your Offers' : 'My Booked Meetings'}</CardTitle>
+              <CardTitle>
+                {isOwner
+                  ? translateText('generated.inline.0153_bookings_on_your_offers_5cb3760c')
+                  : translateText('generated.inline.0152_my_booked_meetings_ecb1cc54')}
+              </CardTitle>
               <CardDescription>
                 {isOwner
-                  ? 'See which people have already booked the meeting offers you published.'
-                  : 'Review the meetings you have booked from this schedule.'}
+                  ? translateText(
+                      'generated.inline.0154_see_which_people_have_already_booked_the_meet_dc4cb80f'
+                    )
+                  : translateText(
+                      'generated.inline.0155_review_the_meetings_you_have_booked_from_this_fa2b6402'
+                    )}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -322,7 +351,7 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
                   ))
                 ) : (
                   <p className="text-muted-foreground py-8 text-center text-sm">
-                    No booked meetings yet
+                    {translateText('generated.inline.1211_no_booked_meetings_yet_a0644b3d')}
                   </p>
                 )}
               </div>
@@ -335,9 +364,14 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
       <Dialog open={isBookingDialogOpen} onOpenChange={setIsBookingDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Book Meeting Offer</DialogTitle>
+            <DialogTitle>
+              {translateText('generated.inline.1212_book_meeting_offer_114d8cc1')}
+            </DialogTitle>
             <DialogDescription>
-              Confirm your booking for the offered meeting {selectedInstance?.title}
+              {translateText(
+                'generated.inline.1213_confirm_your_booking_for_the_offered_meeting_ad8187df'
+              )}
+              {selectedInstance?.title}
             </DialogDescription>
           </DialogHeader>
           {selectedInstance && (
@@ -368,13 +402,14 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
                       className="text-primary inline-flex items-center gap-1 text-sm underline-offset-4 hover:underline"
                     >
                       <Video className="h-4 w-4" />
-                      Open online meeting link
+                      {translateText('generated.inline.1162_open_online_meeting_link_ec74dc3b')}
                       <ExternalLink className="h-3.5 w-3.5" />
                     </a>
                   )}
                   {selectedInstance.bookingCount > 0 && (
                     <div className="text-muted-foreground text-sm">
-                      {selectedInstance.bookingCount} / {selectedInstance.maxBookings} spots taken
+                      {selectedInstance.bookingCount} / {selectedInstance.maxBookings}
+                      {translateText('generated.inline.1214_spots_taken_5f65673d')}
                     </div>
                   )}
                 </div>
@@ -383,7 +418,7 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsBookingDialogOpen(false)}>
-              Cancel
+              {translateText('generated.inline.0065_cancel_77dfd213')}
             </Button>
             <Button
               onClick={() => selectedInstance && handleBookMeeting(selectedInstance)}
@@ -393,7 +428,7 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
                 selectedInstance.bookingCount >= selectedInstance.maxBookings
               }
             >
-              Confirm Booking
+              {translateText('generated.inline.1215_confirm_booking_eb9e1e0e')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -402,11 +437,17 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
       <Dialog open={isEditDialogOpen} onOpenChange={handleEditDialogOpenChange}>
         <DialogContent className="!flex !max-h-[calc(100vh-2rem)] !max-w-2xl !flex-col !overflow-hidden sm:!max-w-2xl">
           <DialogHeader className="border-b px-6 pt-6 pr-14 pb-4">
-            <DialogTitle>Edit Meeting Offer</DialogTitle>
+            <DialogTitle>
+              {translateText('generated.inline.1216_edit_meeting_offer_cbc09a1f')}
+            </DialogTitle>
             <DialogDescription>
-              Update this meeting offer and save your changes.
+              {translateText(
+                'generated.inline.1217_update_this_meeting_offer_and_save_your_chang_c7ead161'
+              )}
               {editingRecurringSeries
-                ? ' Changes to time, title, and location apply to the whole recurring offer.'
+                ? translateText(
+                    'generated.inline.0156_changes_to_time_title_and_location_apply_to_t_7b584001'
+                  )
                 : ''}
             </DialogDescription>
           </DialogHeader>
@@ -414,7 +455,7 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
           <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
             <div className="space-y-4 pb-2">
               <div className="space-y-2">
-                <Label>Meeting Type</Label>
+                <Label>{translateText('generated.inline.1218_meeting_type_a3a5c802')}</Label>
                 <div className="flex gap-2">
                   <Button
                     type="button"
@@ -422,7 +463,7 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
                     className="flex-1"
                     onClick={() => setEditType('one-on-one')}
                   >
-                    1-on-1 offer
+                    {translateText('generated.inline.1219_1_on_1_offer_747789b9')}
                   </Button>
                   <Button
                     type="button"
@@ -431,13 +472,15 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
                     onClick={() => setEditType('public-meeting')}
                   >
                     <Users className="mr-2 h-4 w-4" />
-                    Public session
+                    {translateText('generated.inline.1220_public_session_ecb9bdca')}
                   </Button>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="edit-meeting-title">Title</Label>
+                <Label htmlFor="edit-meeting-title">
+                  {translateText('generated.inline.0028_title_768e0c1c')}
+                </Label>
                 <Input
                   id="edit-meeting-title"
                   value={editTitle}
@@ -447,7 +490,9 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="edit-meeting-description">Description</Label>
+                <Label htmlFor="edit-meeting-description">
+                  {translateText('generated.inline.0030_description_55f8ebc8')}
+                </Label>
                 <Textarea
                   id="edit-meeting-description"
                   value={editDescription}
@@ -458,7 +503,9 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-meeting-location">Location</Label>
+                  <Label htmlFor="edit-meeting-location">
+                    {translateText('generated.inline.1221_location_d219c681')}
+                  </Label>
                   <Input
                     id="edit-meeting-location"
                     value={editLocation}
@@ -466,7 +513,9 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-meeting-location-url">Online Meeting URL</Label>
+                  <Label htmlFor="edit-meeting-location-url">
+                    {translateText('generated.inline.1222_online_meeting_url_cd6a1657')}
+                  </Label>
                   <Input
                     id="edit-meeting-location-url"
                     type="url"
@@ -478,7 +527,9 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
 
               {editType === 'public-meeting' && (
                 <div className="space-y-2">
-                  <Label htmlFor="edit-max-bookings">Max Participants</Label>
+                  <Label htmlFor="edit-max-bookings">
+                    {translateText('generated.inline.1223_max_participants_fe3a4998')}
+                  </Label>
                   <Input
                     id="edit-max-bookings"
                     type="number"
@@ -491,7 +542,7 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
               )}
 
               <div className="space-y-2">
-                <Label>Date</Label>
+                <Label>{translateText('generated.inline.0277_date_eb9a4bc1')}</Label>
                 <Calendar
                   mode="single"
                   selected={editDate}
@@ -503,7 +554,9 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-meeting-time">Start Time</Label>
+                  <Label htmlFor="edit-meeting-time">
+                    {translateText('generated.inline.1224_start_time_41c1074d')}
+                  </Label>
                   <Input
                     id="edit-meeting-time"
                     type="time"
@@ -512,7 +565,9 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-meeting-duration">Duration (min)</Label>
+                  <Label htmlFor="edit-meeting-duration">
+                    {translateText('generated.inline.1225_duration_min_b9d7d9c7')}
+                  </Label>
                   <Input
                     id="edit-meeting-duration"
                     type="number"
@@ -534,10 +589,10 @@ export function UserMeetingScheduler({ userId }: UserMeetingSchedulerProps) {
                   handleEditDialogOpenChange(false);
                 }}
               >
-                Cancel
+                {translateText('generated.inline.0065_cancel_77dfd213')}
               </Button>
               <Button onClick={handleSubmitEdit} disabled={!canSaveMeeting}>
-                Save Meeting
+                {translateText('generated.inline.1226_save_meeting_78284a44')}
               </Button>
             </DialogFooter>
           </div>

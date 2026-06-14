@@ -12,6 +12,7 @@ import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
 import type { SupportConfirmationRow } from '@/zero/amendments/queries';
 import { mutators } from '@/zero/mutators';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface UseSupportConfirmationResult {
   pendingConfirmations: SupportConfirmationRow[];
@@ -40,13 +41,13 @@ export function useSupportConfirmation(groupId?: string): UseSupportConfirmation
   const confirmSupport = useCallback(
     async (confirmationId: string) => {
       if (!user) {
-        toast.error('You must be logged in');
+        toast.error(translateText('generated.inline.0159_you_must_be_logged_in_702ab856'));
         return;
       }
 
       const confirmation = pendingConfirmations.find(c => c.id === confirmationId);
       if (!confirmation) {
-        toast.error('Confirmation not found');
+        toast.error(translateText('generated.inline.0160_confirmation_not_found_98db8f71'));
         return;
       }
 
@@ -58,10 +59,10 @@ export function useSupportConfirmation(groupId?: string): UseSupportConfirmation
           confirmed_at: Date.now(),
         });
 
-        toast.success('Support confirmed');
+        toast.success(translateText('generated.inline.0161_support_confirmed_9a48851e'));
       } catch (error) {
         console.error('Error confirming support:', error);
-        toast.error('Failed to confirm support');
+        toast.error(translateText('generated.inline.0162_failed_to_confirm_support_deffd413'));
         throw error;
       } finally {
         setIsLoading(false);
@@ -73,13 +74,13 @@ export function useSupportConfirmation(groupId?: string): UseSupportConfirmation
   const declineSupport = useCallback(
     async (confirmationId: string) => {
       if (!user) {
-        toast.error('You must be logged in');
+        toast.error(translateText('generated.inline.0159_you_must_be_logged_in_702ab856'));
         return;
       }
 
       const confirmation = pendingConfirmations.find(c => c.id === confirmationId);
       if (!confirmation) {
-        toast.error('Confirmation not found');
+        toast.error(translateText('generated.inline.0160_confirmation_not_found_98db8f71'));
         return;
       }
 
@@ -92,10 +93,10 @@ export function useSupportConfirmation(groupId?: string): UseSupportConfirmation
         });
 
         // Known limitation: Zero has no unlink operation. Supporter removal requires direct record deletion.
-        toast.success('Support declined');
+        toast.success(translateText('generated.inline.0163_support_declined_10a02268'));
       } catch (error) {
         console.error('Error declining support:', error);
-        toast.error('Failed to decline support');
+        toast.error(translateText('generated.inline.0164_failed_to_decline_support_6fb6e4aa'));
         throw error;
       } finally {
         setIsLoading(false);
@@ -159,7 +160,9 @@ export async function triggerSupporterConfirmation(
     await mutate(
       mutators.agendas.createAgendaItem({
         id: agendaItemId,
-        title: `Support Confirmation: ${amendmentTitle || 'Amendment'}`,
+        title: translateText('generated.inline.0017_support_confirmation_value2d94_314c8fde', {
+          value2d94: amendmentTitle || 'Amendment',
+        }),
         type: 'support_confirmation',
         status: 'scheduled',
         amendment_id: amendmentId,
@@ -203,11 +206,14 @@ export async function createConfirmationAgendaItem(
   await mutate(
     mutators.agendas.createAgendaItem({
       id: agendaItemId,
-      title: `Support Confirmation: ${amendmentTitle}`,
+      title: translateText('generated.inline.0018_support_confirmation_amendmenttitle_27308ec0', {
+        amendmentTitle: amendmentTitle,
+      }),
       type: 'support_confirmation',
       status: 'scheduled',
-      description:
-        'Vote to confirm or decline continued support for this amendment after recent changes.',
+      description: translateText(
+        'generated.inline.0019_vote_to_confirm_or_decline_continued_support__f391ad7a'
+      ),
       event_id: eventId,
       amendment_id: null,
       forwarding_status: '',

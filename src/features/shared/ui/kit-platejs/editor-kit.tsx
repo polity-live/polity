@@ -9,6 +9,7 @@ import { BasicMarksKit } from '@/features/shared/ui/kit-platejs/basic-marks-kit.
 import { BlockMenuKit } from '@/features/shared/ui/kit-platejs/block-menu-kit.tsx';
 import { BlockPlaceholderKit } from '@/features/shared/ui/kit-platejs/block-placeholder-kit.tsx';
 import { CalloutKit } from '@/features/shared/ui/kit-platejs/callout-kit.tsx';
+import { ChartKit } from '@/features/shared/ui/kit-platejs/chart-kit.tsx';
 import { CodeBlockKit } from '@/features/shared/ui/kit-platejs/code-block-kit.tsx';
 import { ColumnKit } from '@/features/shared/ui/kit-platejs/column-kit.tsx';
 import { CommentKit } from '@/features/shared/ui/kit-platejs/comment-kit.tsx';
@@ -47,6 +48,7 @@ export const EditorKit = [
   ...ToggleKit,
   ...TocKit,
   ...MediaKit,
+  ...ChartKit,
   ...CalloutKit,
   ...ColumnKit,
   ...MathKit,
@@ -87,6 +89,10 @@ export const EditorKit = [
   ...FixedToolbarKit,
   ...FloatingToolbarKit,
 ];
+
+export const EditorKitWithoutFixedToolbar = EditorKit.filter(
+  plugin => plugin.key !== 'fixed-toolbar'
+);
 
 export type MyEditor = TPlateEditor<Value, (typeof EditorKit)[number]>;
 

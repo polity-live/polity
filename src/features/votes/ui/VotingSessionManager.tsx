@@ -4,7 +4,11 @@ import { useState } from 'react';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
 import { Badge } from '@/features/shared/ui/ui/badge';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/features/shared/ui/ui/collapsible';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/features/shared/ui/ui/collapsible';
 import { Progress } from '@/features/shared/ui/ui/progress';
 import { Input } from '@/features/shared/ui/ui/input';
 import { Label } from '@/features/shared/ui/ui/label';
@@ -15,7 +19,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/features/shared/ui/ui/select';
-import { Clock, Users, Play, Square, CheckCircle2, Loader2, Timer, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  Clock,
+  Users,
+  Play,
+  Square,
+  CheckCircle2,
+  Loader2,
+  Timer,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
 import { useEventVoting, type MajorityType, type VotingType } from '../hooks/useEventVoting';
 import { formatTimeRemaining, getMajorityTypeText } from '@/features/shared/utils/voting-utils';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
@@ -31,14 +45,12 @@ interface VotingSessionManagerProps {
 export function VotingSessionManager({
   eventId,
   agendaItemId,
-  agendaItemTitle,
   votingType,
   targetEntityId,
 }: VotingSessionManagerProps) {
   const { t } = useTranslation();
   const {
     currentSession,
-    eligibleVoters,
     votedCount,
     totalVoters,
     canManageVoting,
@@ -90,8 +102,12 @@ export function VotingSessionManager({
                 <Button variant="ghost" className="h-auto p-0 hover:bg-transparent">
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Play className="h-5 w-5" />
-                    {t('features.events.voting.startVoting', 'Start Voting')}
-                    {expanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                    {t('features.events.voting.startVoting')}
+                    {expanded ? (
+                      <ChevronUp className="text-muted-foreground h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="text-muted-foreground h-4 w-4" />
+                    )}
                   </CardTitle>
                 </Button>
               </CollapsibleTrigger>
@@ -99,56 +115,59 @@ export function VotingSessionManager({
           </CardHeader>
           <CollapsibleContent>
             <CardContent className="space-y-4">
-          <div>
-            <Label>{t('features.events.voting.majorityType', 'Majority Type')}</Label>
-            <Select value={majorityType} onValueChange={v => setMajorityType(v as MajorityType)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="simple">
-                  {t('features.events.voting.simpleMajority', 'Simple Majority')}
-                </SelectItem>
-                <SelectItem value="absolute">
-                  {t('features.events.voting.absoluteMajority', 'Absolute Majority')}
-                </SelectItem>
-                <SelectItem value="two_thirds">
-                  {t('features.events.voting.twoThirdsMajority', 'Two-Thirds Majority')}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+              <div>
+                <Label>{t('features.events.voting.majorityType')}</Label>
+                <Select
+                  value={majorityType}
+                  onValueChange={v => setMajorityType(v as MajorityType)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="simple">
+                      {t('features.events.voting.simpleMajority')}
+                    </SelectItem>
+                    <SelectItem value="absolute">
+                      {t('features.events.voting.absoluteMajority')}
+                    </SelectItem>
+                    <SelectItem value="two_thirds">
+                      {t('features.events.voting.twoThirdsMajority')}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div>
-            <Label>{t('features.events.voting.timeLimit', 'Time Limit (seconds)')}</Label>
-            <Input
-              type="number"
-              value={timeLimit}
-              onChange={e => setTimeLimit(parseInt(e.target.value) || 300)}
-              min={30}
-              max={3600}
-            />
-          </div>
+              <div>
+                <Label>{t('features.events.voting.timeLimit')}</Label>
+                <Input
+                  type="number"
+                  value={timeLimit}
+                  onChange={e => setTimeLimit(parseInt(e.target.value) || 300)}
+                  min={30}
+                  max={3600}
+                />
+              </div>
 
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Users className="h-4 w-4" />
-            <span>
-              {totalVoters} {t('features.events.voting.eligibleVoters', 'eligible voters')}
-            </span>
-          </div>
+              <div className="text-muted-foreground flex items-center gap-2 text-sm">
+                <Users className="h-4 w-4" />
+                <span>
+                  {totalVoters} {t('features.events.voting.eligibleVoters')}
+                </span>
+              </div>
 
-          <Button
-            onClick={handleStartIntroduction}
-            disabled={isLoading || totalVoters === 0}
-            className="w-full"
-          >
-            {isLoading ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Play className="mr-2 h-4 w-4" />
-            )}
-            {t('features.events.voting.startIntroduction', 'Start Introduction Phase')}
-          </Button>
+              <Button
+                onClick={handleStartIntroduction}
+                disabled={isLoading || totalVoters === 0}
+                className="w-full"
+              >
+                {isLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Play className="mr-2 h-4 w-4" />
+                )}
+                {t('features.events.voting.startIntroduction')}
+              </Button>
             </CardContent>
           </CollapsibleContent>
         </Card>
@@ -168,25 +187,29 @@ export function VotingSessionManager({
             <CollapsibleTrigger asChild>
               <Button variant="ghost" className="h-auto p-0 hover:bg-transparent">
                 <CardTitle className="flex items-center gap-2 text-lg">
-            {currentSession.phase === 'introduction' && (
-              <>
-                <Play className="h-5 w-5 text-yellow-500" />
-                {t('features.events.voting.introduction', 'Introduction Phase')}
-              </>
-            )}
-            {currentSession.phase === 'voting' && (
-              <>
-                <Timer className="h-5 w-5 animate-pulse text-primary" />
-                {t('features.events.voting.votingActive', 'Voting Active')}
-              </>
-            )}
-            {currentSession.phase === 'completed' && (
-              <>
-                <CheckCircle2 className="h-5 w-5 text-green-500" />
-                {t('features.events.voting.completed', 'Completed')}
-              </>
-            )}
-                  {expanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                  {currentSession.phase === 'introduction' && (
+                    <>
+                      <Play className="h-5 w-5 text-yellow-500" />
+                      {t('features.events.voting.introduction')}
+                    </>
+                  )}
+                  {currentSession.phase === 'voting' && (
+                    <>
+                      <Timer className="text-primary h-5 w-5 animate-pulse" />
+                      {t('features.events.voting.votingActive')}
+                    </>
+                  )}
+                  {currentSession.phase === 'completed' && (
+                    <>
+                      <CheckCircle2 className="h-5 w-5 text-green-500" />
+                      {t('features.events.voting.completed')}
+                    </>
+                  )}
+                  {expanded ? (
+                    <ChevronUp className="text-muted-foreground h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="text-muted-foreground h-4 w-4" />
+                  )}
                 </CardTitle>
               </Button>
             </CollapsibleTrigger>
@@ -197,106 +220,106 @@ export function VotingSessionManager({
         </CardHeader>
         <CollapsibleContent>
           <CardContent className="space-y-4">
-        {/* Timer for voting phase */}
-        {currentSession.phase === 'voting' && timeRemaining !== null && (
-          <div className="flex items-center justify-center gap-2 font-mono text-2xl">
-            <Clock className="h-6 w-6" />
-            <span className={timeRemaining < 60 ? 'text-red-500' : ''}>
-              {formatTimeRemaining(timeRemaining)}
-            </span>
-          </div>
-        )}
-
-        {/* Voting progress */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">
-              {t('features.events.voting.votesReceived', 'Votes Received')}
-            </span>
-            <span className="font-medium">
-              {votedCount} / {totalVoters}
-            </span>
-          </div>
-          <Progress value={votingProgress} className="h-2" />
-        </div>
-
-        {/* Vote results (show after voting) */}
-        {(currentSession.phase === 'voting' || currentSession.phase === 'completed') && (
-          <div className="grid grid-cols-3 gap-2 text-center">
-            <div className="rounded bg-green-100 p-2 dark:bg-green-900/30">
-              <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                {voteResults.accept}
+            {/* Timer for voting phase */}
+            {currentSession.phase === 'voting' && timeRemaining !== null && (
+              <div className="flex items-center justify-center gap-2 font-mono text-2xl">
+                <Clock className="h-6 w-6" />
+                <span className={timeRemaining < 60 ? 'text-red-500' : ''}>
+                  {formatTimeRemaining(timeRemaining)}
+                </span>
               </div>
-              <div className="text-xs text-muted-foreground">
-                {t('features.events.voting.accept', 'Accept')}
-              </div>
-            </div>
-            <div className="rounded bg-red-100 p-2 dark:bg-red-900/30">
-              <div className="text-2xl font-bold text-red-600 dark:text-red-400">
-                {voteResults.reject}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {t('features.events.voting.reject', 'Reject')}
-              </div>
-            </div>
-            <div className="rounded bg-gray-100 p-2 dark:bg-gray-800">
-              <div className="text-2xl font-bold text-gray-600 dark:text-gray-400">
-                {voteResults.abstain}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {t('features.events.voting.abstain', 'Abstain')}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Result badge */}
-        {currentSession.phase === 'completed' && currentSession.result && (
-          <div className="flex justify-center">
-            <Badge
-              variant={currentSession.result === 'passed' ? 'default' : 'destructive'}
-              className="px-4 py-2 text-lg"
-            >
-              {currentSession.result === 'passed'
-                ? t('features.events.voting.passed', 'Passed')
-                : currentSession.result === 'rejected'
-                  ? t('features.events.voting.rejected', 'Rejected')
-                  : t('features.events.voting.tie', 'Tie')}
-            </Badge>
-          </div>
-        )}
-
-        {/* Control buttons for managers */}
-        {canManageVoting && (
-          <div className="flex gap-2">
-            {currentSession.phase === 'introduction' && (
-              <Button onClick={handleStartVoting} disabled={isLoading} className="flex-1">
-                {isLoading ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Play className="mr-2 h-4 w-4" />
-                )}
-                {t('features.events.voting.startVoting', 'Start Voting')}
-              </Button>
             )}
 
-            {currentSession.phase === 'voting' && (
-              <Button
-                variant="destructive"
-                onClick={handleCloseVoting}
-                disabled={isLoading}
-                className="flex-1"
-              >
-                {isLoading ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Square className="mr-2 h-4 w-4" />
-                )}
-                {t('features.events.voting.closeVoting', 'Close Voting')}
-              </Button>
+            {/* Voting progress */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">
+                  {t('features.events.voting.votesReceived')}
+                </span>
+                <span className="font-medium">
+                  {votedCount} / {totalVoters}
+                </span>
+              </div>
+              <Progress value={votingProgress} className="h-2" />
+            </div>
+
+            {/* Vote results (show after voting) */}
+            {(currentSession.phase === 'voting' || currentSession.phase === 'completed') && (
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="rounded bg-green-100 p-2 dark:bg-green-900/30">
+                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                    {voteResults.accept}
+                  </div>
+                  <div className="text-muted-foreground text-xs">
+                    {t('features.events.voting.accept')}
+                  </div>
+                </div>
+                <div className="rounded bg-red-100 p-2 dark:bg-red-900/30">
+                  <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+                    {voteResults.reject}
+                  </div>
+                  <div className="text-muted-foreground text-xs">
+                    {t('features.events.voting.reject')}
+                  </div>
+                </div>
+                <div className="rounded bg-gray-100 p-2 dark:bg-gray-800">
+                  <div className="text-2xl font-bold text-gray-600 dark:text-gray-400">
+                    {voteResults.abstain}
+                  </div>
+                  <div className="text-muted-foreground text-xs">
+                    {t('features.events.voting.abstain')}
+                  </div>
+                </div>
+              </div>
             )}
-          </div>
-        )}
+
+            {/* Result badge */}
+            {currentSession.phase === 'completed' && currentSession.result && (
+              <div className="flex justify-center">
+                <Badge
+                  variant={currentSession.result === 'passed' ? 'default' : 'destructive'}
+                  className="px-4 py-2 text-lg"
+                >
+                  {currentSession.result === 'passed'
+                    ? t('features.events.voting.passed')
+                    : currentSession.result === 'rejected'
+                      ? t('features.events.voting.rejected')
+                      : t('features.events.voting.tie')}
+                </Badge>
+              </div>
+            )}
+
+            {/* Control buttons for managers */}
+            {canManageVoting && (
+              <div className="flex gap-2">
+                {currentSession.phase === 'introduction' && (
+                  <Button onClick={handleStartVoting} disabled={isLoading} className="flex-1">
+                    {isLoading ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Play className="mr-2 h-4 w-4" />
+                    )}
+                    {t('features.events.voting.startVoting')}
+                  </Button>
+                )}
+
+                {currentSession.phase === 'voting' && (
+                  <Button
+                    variant="destructive"
+                    onClick={handleCloseVoting}
+                    disabled={isLoading}
+                    className="flex-1"
+                  >
+                    {isLoading ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Square className="mr-2 h-4 w-4" />
+                    )}
+                    {t('features.events.voting.closeVoting')}
+                  </Button>
+                )}
+              </div>
+            )}
           </CardContent>
         </CollapsibleContent>
       </Card>

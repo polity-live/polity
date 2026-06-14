@@ -28,6 +28,7 @@ import type {
   WikiIncumbentPersonCard,
   WikiIncumbentVacancyCard,
 } from '@/features/shared/logic/wikiIncumbentSections';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface WikiIncumbentPanelProps {
   title: string;
@@ -127,7 +128,10 @@ function PersonCard({
         className="focus-visible:ring-primary absolute inset-0 z-10 rounded-[inherit] focus-visible:ring-2 focus-visible:outline-none"
         aria-label={`Open profile for ${card.name}`}
       >
-        <span className="sr-only">Open profile for {card.name}</span>
+        <span className="sr-only">
+          {translateText('generated.inline.1152_open_profile_for_68af0481')}
+          {card.name}
+        </span>
       </Link>
       <div className="pointer-events-none relative z-20 flex h-full flex-col gap-6 p-5">
         <div className="flex justify-end">
@@ -194,8 +198,12 @@ function VacancyCard({
             <User className="text-muted-foreground h-10 w-10" />
           </div>
           <div className="mt-4 space-y-1">
-            <p className="text-foreground text-xl font-semibold">Vacant</p>
-            <p className="text-muted-foreground text-sm">No active incumbent assigned yet.</p>
+            <p className="text-foreground text-xl font-semibold">
+              {translateText('generated.inline.1070_vacant_1966f967')}
+            </p>
+            <p className="text-muted-foreground text-sm">
+              {translateText('generated.inline.1153_no_active_incumbent_assigned_yet_dd93531b')}
+            </p>
           </div>
         </div>
 
@@ -231,7 +239,10 @@ function RoleDescriptionButton({
               className="text-muted-foreground hover:text-foreground pointer-events-auto h-7 w-7 rounded-full"
             >
               <CircleHelp className="h-4 w-4" />
-              <span className="sr-only">Show role description for {title}</span>
+              <span className="sr-only">
+                {translateText('generated.inline.1154_show_role_description_for_a227cdaf')}
+                {title}
+              </span>
             </Button>
           </PopoverTrigger>
         </TooltipTrigger>

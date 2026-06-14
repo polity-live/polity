@@ -33,6 +33,7 @@ import { Plus, Trash2, Users } from 'lucide-react';
 import { RolesPermissionsTable } from '@/features/groups/ui/RolesPermissionsTable';
 import { RoleTag } from '@/features/groups/ui/RoleTag';
 import type { Role } from '../hooks/useCollaborators';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface RolesManagementCardProps {
   amendmentId: string;
@@ -103,45 +104,55 @@ export function RolesManagementCard({
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
-                Roles List
+                {translateText('generated.inline.0123_roles_list_11a0593d')}
               </CardTitle>
               <CardDescription>
-                Add and manage collaborator roles for this amendment.
+                {translateText(
+                  'generated.inline.0124_add_and_manage_collaborator_roles_for_this_am_fd3611c6'
+                )}
               </CardDescription>
             </div>
             <Dialog open={addRoleDialogOpen} onOpenChange={setAddRoleDialogOpen}>
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="mr-2 h-4 w-4" />
-                  Add Role
+                  {translateText('generated.inline.0125_add_role_82d0afcc')}
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Add New Role</DialogTitle>
+                  <DialogTitle>
+                    {translateText('generated.inline.0126_add_new_role_241eb33f')}
+                  </DialogTitle>
                   <DialogDescription>
-                    Create a new role with custom permissions for this amendment.
+                    {translateText(
+                      'generated.inline.0127_create_a_new_role_with_custom_permissions_for_39fc44c1'
+                    )}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
                     <label htmlFor="role-name" className="text-sm font-medium">
-                      Role Name
+                      {translateText('generated.inline.0128_role_name_a8b23a08')}
                     </label>
                     <Input
                       id="role-name"
-                      placeholder="e.g., Editor, Reviewer, Contributor"
+                      placeholder={translateText(
+                        'generated.inline.0129_e_g_editor_reviewer_contributor_e1cf8527'
+                      )}
                       value={newRoleName}
                       onChange={e => setNewRoleName(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
                     <label htmlFor="role-description" className="text-sm font-medium">
-                      Description (Optional)
+                      {translateText('generated.inline.0130_description_optional_f1da5c02')}
                     </label>
                     <Input
                       id="role-description"
-                      placeholder="Describe this role's purpose"
+                      placeholder={translateText(
+                        'generated.inline.0131_describe_this_role_s_purpose_16c2c88f'
+                      )}
                       value={newRoleDescription}
                       onChange={e => setNewRoleDescription(e.target.value)}
                     />
@@ -153,10 +164,10 @@ export function RolesManagementCard({
                     variant="outline"
                     onClick={() => setAddRoleDialogOpen(false)}
                   >
-                    Cancel
+                    {translateText('generated.inline.0065_cancel_77dfd213')}
                   </Button>
                   <Button type="button" onClick={handleAddRole}>
-                    Create Role
+                    {translateText('generated.inline.0132_create_role_5bea05a8')}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -169,10 +180,14 @@ export function RolesManagementCard({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Rights</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{translateText('generated.inline.0091_role_c3f104d1')}</TableHead>
+                    <TableHead>
+                      {translateText('generated.inline.0030_description_55f8ebc8')}
+                    </TableHead>
+                    <TableHead>{translateText('generated.inline.0133_rights_db94ff6b')}</TableHead>
+                    <TableHead className="text-right">
+                      {translateText('generated.inline.0093_actions_c3cd636a')}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -182,10 +197,12 @@ export function RolesManagementCard({
                         <RoleTag roleId={role.id} roleName={role.name || 'Role'} />
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm">
-                        {role.description || 'No description'}
+                        {role.description ||
+                          translateText('generated.inline.0025_no_description_f354c94f')}
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm">
-                        {role.action_rights?.length ?? 0} rights
+                        {role.action_rights?.length ?? 0}
+                        {translateText('generated.inline.0016_rights_1407cb23')}
                       </TableCell>
                       <TableCell className="text-right">
                         {role.scope === 'amendment' ? (
@@ -195,7 +212,7 @@ export function RolesManagementCard({
                             onClick={() => handleRemoveRole(role.id)}
                           >
                             <Trash2 className="text-destructive mr-1 h-4 w-4" />
-                            Remove
+                            {translateText('generated.inline.0096_remove_e963907d')}
                           </Button>
                         ) : null}
                       </TableCell>
@@ -208,7 +225,9 @@ export function RolesManagementCard({
             <div className="py-12 text-center">
               <Users className="text-muted-foreground/50 mx-auto h-12 w-12" />
               <p className="text-muted-foreground mt-4">
-                No roles created yet. Click "Add Role" to create your first role.
+                {translateText(
+                  'generated.inline.0134_no_roles_created_yet_click_add_role_to_create_5594310d'
+                )}
               </p>
             </div>
           )}

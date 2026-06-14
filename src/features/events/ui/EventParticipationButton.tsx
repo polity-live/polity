@@ -1,6 +1,7 @@
 import { Button } from '@/features/shared/ui/ui/button';
 import { UserPlus, UserMinus, Clock, Check } from 'lucide-react';
 import { ParticipationStatus } from '../hooks/useEventParticipation';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface EventParticipationButtonProps {
   status: ParticipationStatus | null;
@@ -26,7 +27,7 @@ export function EventParticipationButton({
     return (
       <Button onClick={onAcceptInvitation} disabled={isLoading} variant="default">
         <Check className="mr-2 h-4 w-4" />
-        Accept Invitation
+        {translateText('generated.inline.0165_accept_invitation_f41d2aa6')}
       </Button>
     );
   }
@@ -35,7 +36,7 @@ export function EventParticipationButton({
     return (
       <Button onClick={onLeave} disabled={isLoading} variant="outline">
         <Clock className="mr-2 h-4 w-4" />
-        Request Pending
+        {translateText('generated.inline.0166_request_pending_cdab22cf')}
       </Button>
     );
   }
@@ -44,7 +45,7 @@ export function EventParticipationButton({
     return (
       <Button onClick={onLeave} disabled={isLoading} variant="outline">
         <UserMinus className="mr-2 h-4 w-4" />
-        Leave Event
+        {translateText('generated.inline.0517_leave_event_dd3851a6')}
       </Button>
     );
   }
@@ -52,7 +53,7 @@ export function EventParticipationButton({
   return (
     <Button onClick={onRequestParticipation} disabled={isLoading}>
       <UserPlus className="mr-2 h-4 w-4" />
-      Request to Participate
+      {translateText('generated.inline.0518_request_to_participate_6a191730')}
     </Button>
   );
 }

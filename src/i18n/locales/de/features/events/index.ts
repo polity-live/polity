@@ -119,6 +119,9 @@ export const eventsTranslations = {
     by: 'Von {{name}}',
     unspecified: 'nicht angegeben',
     itemActivated: 'Tagesordnungspunkt aktiviert',
+    startReminderTitle: 'Überfälligen Tagesordnungspunkt starten',
+    startReminderDescription:
+      'Der nächste Tagesordnungspunkt ist überfällig. Starte ihn jetzt, damit Live-Stream und Badges synchron bleiben.',
     // Context card
     scheduledFor: 'Geplant für',
     startedAt: 'Gestartet um',

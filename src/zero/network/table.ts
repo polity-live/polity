@@ -1,5 +1,4 @@
-import { table, string, number, boolean, json } from '@rocicorp/zero';
-import type { NetworkLinkRightSnapshot } from './request-types';
+import { table, string, number, boolean } from '@rocicorp/zero';
 
 export const follow = table('follow')
   .columns({
@@ -10,12 +9,14 @@ export const follow = table('follow')
   })
   .primaryKey('id');
 
-export const networkLink = table('network_link')
+export const groupConnection = table('group_connection')
   .columns({
     id: string(),
-    source_group_id: string(),
-    target_group_id: string(),
-    structural_relation: string(),
+    group_a_id: string(),
+    group_b_id: string(),
+    connection_type: string(),
+    parent_group_id: string().optional(),
+    child_group_id: string().optional(),
     status: string(),
     created_by_id: string().optional(),
     created_at: number(),
@@ -23,12 +24,13 @@ export const networkLink = table('network_link')
   })
   .primaryKey('id');
 
-export const networkLinkRight = table('network_link_right')
+export const groupRightGrant = table('group_right_grant')
   .columns({
     id: string(),
-    network_link_id: string(),
+    connection_id: string(),
     right_key: string(),
-    direction: string(),
+    holder_group_id: string(),
+    scope_group_id: string(),
     status: string(),
     initiator_group_id: string().optional(),
     created_at: number(),
@@ -36,36 +38,84 @@ export const networkLinkRight = table('network_link_right')
   })
   .primaryKey('id');
 
-export const networkLinkMembershipRule = table('network_link_membership_rule')
+export const groupMembershipRule = table('group_membership_rule')
   .columns({
     id: string(),
-    network_link_id: string(),
-    membership_direction: string().optional(),
+    connection_id: string(),
+    member_source_group_id: string(),
+    member_target_group_id: string(),
     membership_mode: string(),
-    role_id: string().optional(),
-    source_group_ids: json<string[]>().optional(),
+    required_source_role_id: string().optional(),
     created_at: number(),
     updated_at: number(),
   })
   .primaryKey('id');
 
-export const networkLinkChangeRequest = table('network_link_change_request')
+export const groupMembershipRuleOrigin = table('group_membership_rule_origin')
   .columns({
     id: string(),
-    active_network_link_id: string().optional(),
-    proposed_network_link_id: string(),
-    source_group_id: string(),
-    target_group_id: string(),
-    structural_relation: string(),
+    membership_rule_id: string(),
+    eligible_origin_group_id: string(),
+    created_at: number(),
+  })
+  .primaryKey('id');
+
+export const groupConnectionRequest = table('group_connection_request')
+  .columns({
+    id: string(),
+    active_connection_id: string().optional(),
+    proposed_connection_id: string(),
+    group_a_id: string(),
+    group_b_id: string(),
+    desired_connection_type: string(),
+    desired_parent_group_id: string().optional(),
+    desired_child_group_id: string().optional(),
+    structure_status: string(),
     status: string(),
     initiator_group_id: string(),
-    desired_rights: json<readonly NetworkLinkRightSnapshot[]>(),
-    desired_membership_direction: string().optional(),
-    desired_membership_mode: string(),
-    desired_role_id: string().optional(),
-    desired_source_group_ids: json<string[]>().optional(),
     created_at: number(),
     updated_at: number(),
+  })
+  .primaryKey('id');
+
+export const groupRightGrantRequest = table('group_right_grant_request')
+  .columns({
+    id: string(),
+    connection_request_id: string(),
+    existing_grant_id: string().optional(),
+    operation: string(),
+    right_key: string(),
+    holder_group_id: string(),
+    scope_group_id: string(),
+    status: string(),
+    initiator_group_id: string(),
+    created_at: number(),
+    updated_at: number(),
+  })
+  .primaryKey('id');
+
+export const groupMembershipRuleRequest = table('group_membership_rule_request')
+  .columns({
+    id: string(),
+    connection_request_id: string(),
+    existing_membership_rule_id: string().optional(),
+    operation: string(),
+    member_source_group_id: string().optional(),
+    member_target_group_id: string().optional(),
+    membership_mode: string().optional(),
+    required_source_role_id: string().optional(),
+    status: string(),
+    created_at: number(),
+    updated_at: number(),
+  })
+  .primaryKey('id');
+
+export const groupMembershipRuleRequestOrigin = table('group_membership_rule_request_origin')
+  .columns({
+    id: string(),
+    membership_rule_request_id: string(),
+    eligible_origin_group_id: string(),
+    created_at: number(),
   })
   .primaryKey('id');
 

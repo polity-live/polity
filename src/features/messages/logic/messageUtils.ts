@@ -10,6 +10,7 @@ interface UnreadMessageLike {
 
 interface UnreadParticipantLike {
   last_read_at?: number | null;
+  unread_count?: number | null;
   user_id?: string | null;
   user?: {
     id?: string | null;
@@ -126,6 +127,11 @@ export const getUnreadMessageCount = (
   conversation: UnreadConversationLike,
   currentUserId?: string
 ) => {
+  const participant = getCurrentParticipant(conversation, currentUserId);
+  if (typeof participant?.unread_count === 'number') {
+    return participant.unread_count;
+  }
+
   return conversation.messages.filter(msg => !msg.is_read && msg.sender?.id !== currentUserId)
     .length;
 };

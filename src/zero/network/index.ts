@@ -1,10 +1,14 @@
 // Table
 export {
   follow,
-  networkLink,
-  networkLinkRight,
-  networkLinkMembershipRule,
-  networkLinkChangeRequest,
+  groupConnection,
+  groupRightGrant,
+  groupMembershipRule,
+  groupMembershipRuleOrigin,
+  groupConnectionRequest,
+  groupRightGrantRequest,
+  groupMembershipRuleRequest,
+  groupMembershipRuleRequestOrigin,
   subscriber,
   groupWorkflow,
   groupWorkflowStep,
@@ -16,16 +20,16 @@ export {
   followSelectSchema,
   followCreateSchema,
   followDeleteSchema,
-  networkLinkSelectSchema,
-  networkLinkRightSelectSchema,
-  networkLinkMembershipRuleSelectSchema,
-  networkLinkChangeRequestSelectSchema,
-  createNetworkLinkSchema,
-  updateNetworkLinkSchema,
-  deleteNetworkLinkSchema,
-  proposeNetworkLinkChangeSchema,
-  approveNetworkLinkChangeRequestSchema,
-  rejectNetworkLinkChangeRequestSchema,
+  groupConnectionSelectSchema,
+  groupRightGrantSelectSchema,
+  groupMembershipRuleSelectSchema,
+  groupConnectionRequestSelectSchema,
+  createGroupConnectionSchema,
+  updateGroupConnectionSchema,
+  deleteGroupConnectionSchema,
+  proposeGroupConnectionChangeSchema,
+  approveGroupConnectionRequestSchema,
+  rejectGroupConnectionRequestSchema,
   selectSubscriberSchema,
   createSubscriberSchema,
   deleteSubscriberSchema,
@@ -43,10 +47,10 @@ export {
   rejectWorkflowApprovalSchema,
   type Follow,
   type GroupRelationship,
-  type NetworkLink,
-  type NetworkLinkRight,
-  type NetworkLinkMembershipRule,
-  type NetworkLinkChangeRequest,
+  type GroupConnection,
+  type GroupRightGrant,
+  type GroupMembershipRule,
+  type GroupConnectionRequest,
   type Subscriber,
   type GroupWorkflow,
   type GroupWorkflowStep,
@@ -56,10 +60,10 @@ export {
 // Queries
 export {
   networkQueries,
-  type NetworkLinkListRow,
-  type NetworkLinkPairRow,
-  type NetworkLinkChangeRequestListRow,
-  type NetworkLinkChangeRequestPairRow,
+  type GroupConnectionListRow,
+  type GroupConnectionPairRow,
+  type GroupConnectionRequestListRow,
+  type GroupConnectionRequestPairRow,
   type WorkflowWithStepsRow,
   type WorkflowStepRow,
   type WorkflowApprovalByGroupRow,
@@ -67,9 +71,10 @@ export {
 
 // Mutators
 export { networkSharedMutators } from './shared-mutators';
+export { findReachableGroupsByRight, findRightPaths } from './rightTraversal';
 
 // Hooks
 export { useWorkflowState } from './useWorkflowState';
 export { useWorkflowActions } from './useWorkflowActions';
-export { useNetworkLinkState } from './useNetworkLinkState';
-export { useNetworkLinkActions } from './useNetworkLinkActions';
+export { useGroupConnectionState } from './useGroupConnectionState';
+export { useGroupConnectionActions } from './useGroupConnectionActions';

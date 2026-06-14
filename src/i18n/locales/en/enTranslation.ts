@@ -1,5 +1,7 @@
 import type { DeepReplace } from '@/i18n/i18n.types.ts';
 
+import { mergeTranslations } from '@/i18n/merge-translations.ts';
+
 import { commonTranslations } from './common';
 import { navigationTranslations } from './navigation';
 import { agendasTranslations } from './features/agendas';
@@ -31,10 +33,11 @@ import { userTranslations } from './features/users';
 import { votesTranslations } from './features/votes';
 import { landingSectionTranslations } from './pages/home/landing';
 import { componentsTranslations } from './components';
+import { generatedTranslations } from './generated';
 import { plateJsTranslations } from './plateJs';
 import { pagesTranslations } from './pages';
 
-const enTranslation = {
+const baseEnTranslation = {
   // Common/shared translations
   common: commonTranslations,
   loading: commonTranslations.loading,
@@ -104,7 +107,9 @@ const enTranslation = {
   // These ensure backwards compatibility with existing code
   home: pagesTranslations.home,
   timeline: timelineTranslations,
-};
+} as const;
+
+const enTranslation = mergeTranslations(baseEnTranslation, generatedTranslations);
 
 export default enTranslation;
 

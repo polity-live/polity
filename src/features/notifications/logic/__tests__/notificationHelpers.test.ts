@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { Notification } from '../../types/notification.types';
-import { getNotificationNavigationTarget } from '../notificationHelpers';
+import {
+  filterAccessibleNotifications,
+  getNotificationNavigationTarget,
+} from '../notificationHelpers';
 
 function createNotification(overrides: Partial<Notification> = {}): Notification {
   return {
@@ -34,6 +37,10 @@ function createNotification(overrides: Partial<Notification> = {}): Notification
     created_at: Date.now(),
     ...overrides,
   } as Notification;
+}
+
+function notificationOverrides(overrides: unknown): Partial<Notification> {
+  return overrides as Partial<Notification>;
 }
 
 describe('getNotificationNavigationTarget', () => {
@@ -86,5 +93,92 @@ describe('getNotificationNavigationTarget', () => {
       kind: 'route',
       to: '/group/group-1/memberships',
     });
+  });
+});
+
+describe('filterAccessibleNotifications', () => {
+  it('keeps direct personal notifications for the current user', () => {
+    const result = filterAccessibleNotifications(
+      [
+        createNotification(
+          notificationOverrides({
+            recipient: { id: 'user-1' },
+          })
+        ),
+        createNotification(
+          notificationOverrides({
+            id: 'notif-2',
+            recipient: { id: 'user-2' },
+          })
+        ),
+      ],
+      'user-1'
+    );
+
+    expect(result.map(notification => notification.id)).toEqual(['notif-1']);
+  });
+
+  it('keeps group entity notifications when the user has notification rights', () => {
+    const result = filterAccessibleNotifications(
+      [
+        createNotification(
+          notificationOverrides({
+            recipient_group: {
+              memberships: [
+                {
+                  membership_roles: [
+                    {
+                      role: {
+                        action_rights: [
+                          {
+                            resource: 'groupNotifications',
+                            action: 'viewNotifications',
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+          })
+        ),
+      ],
+      'user-1'
+    );
+
+    expect(result).toHaveLength(1);
+  });
+
+  it('filters entity notifications when the user lacks notification rights', () => {
+    const result = filterAccessibleNotifications(
+      [
+        createNotification(
+          notificationOverrides({
+            recipient_event: {
+              participants: [
+                {
+                  participant_roles: [
+                    {
+                      role: {
+                        action_rights: [
+                          {
+                            resource: 'events',
+                            action: 'view',
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+          })
+        ),
+      ],
+      'user-1'
+    );
+
+    expect(result).toEqual([]);
   });
 });

@@ -127,6 +127,6 @@ export function calculateTurnout(votedCount: number, totalMembers: number): numb
 /**
  * Check if quorum is reached
  */
-export function isQuorumReached(turnout: number, requiredQuorum: number = 50): boolean {
+export function isQuorumReached(turnout: number, requiredQuorum = 50): boolean {
   return turnout >= requiredQuorum;
 }

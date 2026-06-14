@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const useGroupNetworkMock = vi.fn();
 const useGroupDataMock = vi.fn();
-const useNetworkLinkActionsMock = vi.fn();
+const useGroupConnectionActionsMock = vi.fn();
 const useWorkflowActionsMock = vi.fn();
 const useAllGroupsMock = vi.fn();
 const useAuthMock = vi.fn();
@@ -23,7 +23,7 @@ vi.mock('@/features/groups/hooks/useGroupData', () => ({
 }));
 
 vi.mock('@/zero/network', () => ({
-  useNetworkLinkActions: (...args: unknown[]) => useNetworkLinkActionsMock(...args),
+  useGroupConnectionActions: (...args: unknown[]) => useGroupConnectionActionsMock(...args),
   useWorkflowActions: (...args: unknown[]) => useWorkflowActionsMock(...args),
 }));
 
@@ -56,21 +56,26 @@ import { useNetworkPage } from '../useNetworkPage';
 function createRelationship(overrides: Record<string, unknown> = {}) {
   return {
     id: 'rel-1',
-    network_link_id: 'link-1',
-    network_link_right_id: 'right-1',
-    network_link_request_id: 'request-1',
+    connection_id: 'connection-1',
+    grant_id: 'right-1',
+    connection_request_id: 'request-1',
     group_id: 'group-a',
     related_group_id: 'group-b',
     relationship_type: 'parent',
-    structural_relation: 'parent_child',
+    connection_type: 'hierarchy',
+    parent_group_id: 'group-a',
+    child_group_id: 'group-b',
     with_right: 'informationRight',
     status: 'requested',
     initiator_group_id: 'group-a',
     created_at: 1,
+    member_source_group_id: null,
+    member_target_group_id: null,
     membership_mode: 'none',
+    required_source_role_id: null,
+    eligible_origin_group_ids: [],
     group: null,
     related_group: null,
-    right_direction: 'forward',
     ...overrides,
   };
 }
@@ -91,7 +96,7 @@ function createWorkflow(id: string, overrides: Record<string, unknown> = {}) {
 beforeEach(() => {
   useGroupNetworkMock.mockReset();
   useGroupDataMock.mockReset();
-  useNetworkLinkActionsMock.mockReset();
+  useGroupConnectionActionsMock.mockReset();
   useWorkflowActionsMock.mockReset();
   useAllGroupsMock.mockReset();
   useAuthMock.mockReset();
@@ -110,16 +115,16 @@ beforeEach(() => {
     incomingRequests: [],
     outgoingRequests: [],
     allRelationships: [],
-    groupLinks: [],
+    groupConnections: [],
     isLoading: false,
   });
   useGroupDataMock.mockReturnValue({
     group: { id: 'group-1', name: 'Current Group' },
   });
-  useNetworkLinkActionsMock.mockReturnValue({
-    approveNetworkLinkChangeRequest: vi.fn(),
-    rejectNetworkLinkChangeRequest: vi.fn(),
-    deleteNetworkLink: vi.fn(),
+  useGroupConnectionActionsMock.mockReturnValue({
+    approveGroupConnectionRequest: vi.fn(),
+    rejectGroupConnectionRequest: vi.fn(),
+    deleteGroupConnection: vi.fn(),
   });
   useAllGroupsMock.mockReturnValue({ groups: [] });
   useAuthMock.mockReturnValue({ user: null });
@@ -203,11 +208,11 @@ describe('useNetworkPage request actions', () => {
   });
 
   it('approves only the selected right ids for each request', async () => {
-    const approveNetworkLinkChangeRequest = vi.fn(() => 'approve-result');
-    useNetworkLinkActionsMock.mockReturnValue({
-      approveNetworkLinkChangeRequest,
-      rejectNetworkLinkChangeRequest: vi.fn(),
-      deleteNetworkLink: vi.fn(),
+    const approveGroupConnectionRequest = vi.fn(() => 'approve-result');
+    useGroupConnectionActionsMock.mockReturnValue({
+      approveGroupConnectionRequest,
+      rejectGroupConnectionRequest: vi.fn(),
+      deleteGroupConnection: vi.fn(),
     });
 
     const { result } = renderHook(() => useNetworkPage('group-1'));
@@ -216,31 +221,32 @@ describe('useNetworkPage request actions', () => {
       await result.current.handleAcceptRequest([
         createRelationship({
           id: 'rel-1',
-          network_link_request_id: 'request-1',
-          network_link_right_id: 'right-1',
+          connection_request_id: 'request-1',
+          grant_id: 'right-1',
         }),
         createRelationship({
           id: 'rel-2',
-          network_link_request_id: 'request-1',
-          network_link_right_id: 'right-2',
+          connection_request_id: 'request-1',
+          grant_id: 'right-2',
           with_right: 'amendmentRight',
         }),
       ] as never);
     });
 
-    expect(approveNetworkLinkChangeRequest).toHaveBeenCalledWith({
+    expect(approveGroupConnectionRequest).toHaveBeenCalledWith({
       id: 'request-1',
-      right_ids: ['right-1', 'right-2'],
+      grant_request_ids: ['right-1', 'right-2'],
+      approve_membership: false,
     });
     expect(serverConfirmedMock).toHaveBeenCalledWith('approve-result');
   });
 
   it('rejects only the selected right ids for each request', async () => {
-    const rejectNetworkLinkChangeRequest = vi.fn(() => 'reject-result');
-    useNetworkLinkActionsMock.mockReturnValue({
-      approveNetworkLinkChangeRequest: vi.fn(),
-      rejectNetworkLinkChangeRequest,
-      deleteNetworkLink: vi.fn(),
+    const rejectGroupConnectionRequest = vi.fn(() => 'reject-result');
+    useGroupConnectionActionsMock.mockReturnValue({
+      approveGroupConnectionRequest: vi.fn(),
+      rejectGroupConnectionRequest,
+      deleteGroupConnection: vi.fn(),
     });
 
     const { result } = renderHook(() => useNetworkPage('group-1'));
@@ -249,17 +255,83 @@ describe('useNetworkPage request actions', () => {
       await result.current.handleRejectRequest([
         createRelationship({
           id: 'rel-1',
-          network_link_request_id: 'request-1',
-          network_link_right_id: 'right-1',
+          connection_request_id: 'request-1',
+          grant_id: 'right-1',
         }),
       ] as never);
     });
 
-    expect(rejectNetworkLinkChangeRequest).toHaveBeenCalledWith({
+    expect(rejectGroupConnectionRequest).toHaveBeenCalledWith({
       id: 'request-1',
-      right_ids: ['right-1'],
+      grant_request_ids: ['right-1'],
+      reject_membership: false,
+      reject_structure: false,
     });
     expect(serverConfirmedMock).toHaveBeenCalledWith('reject-result');
+  });
+
+  it('groups structure and right request rows under one outgoing request', () => {
+    const currentGroup = { id: 'group-1', name: 'Current Group' };
+    const partnerGroup = { id: 'group-2', name: 'Partner Group' };
+    const structureRel = createRelationship({
+      id: 'request-1:structure',
+      connection_request_id: 'request-1',
+      grant_id: null,
+      group_id: 'group-1',
+      related_group_id: 'group-2',
+      parent_group_id: 'group-1',
+      child_group_id: 'group-2',
+      with_right: null,
+      initiator_group_id: 'group-1',
+      member_source_group_id: 'group-2',
+      member_target_group_id: 'group-1',
+      membership_mode: 'all_members',
+      group: currentGroup,
+      related_group: partnerGroup,
+    });
+    const grantRel = createRelationship({
+      id: 'grant-request-1',
+      connection_request_id: 'request-1',
+      grant_id: 'grant-request-1',
+      group_id: 'group-1',
+      related_group_id: 'group-2',
+      parent_group_id: 'group-1',
+      child_group_id: 'group-2',
+      with_right: 'amendmentRight',
+      initiator_group_id: 'group-1',
+      member_source_group_id: 'group-2',
+      member_target_group_id: 'group-1',
+      membership_mode: 'all_members',
+      group: currentGroup,
+      related_group: partnerGroup,
+    });
+
+    useGroupNetworkMock.mockReturnValue({
+      networkData: { parents: [], children: [], siblings: [] },
+      showIndirect: false,
+      setShowIndirect: vi.fn(),
+      selectedRights: new Set(),
+      toggleRight: vi.fn(),
+      activeRelationships: [],
+      incomingRequests: [],
+      outgoingRequests: [structureRel, grantRel],
+      allRelationships: [structureRel, grantRel],
+      groupConnections: [],
+      isLoading: false,
+    });
+
+    const { result } = renderHook(() => useNetworkPage('group-1'));
+
+    expect(result.current.outgoingRequestCount).toBe(1);
+    expect(result.current.filteredOutgoing).toHaveLength(1);
+    expect(result.current.filteredOutgoing[0]).toMatchObject({
+      requestId: 'request-1',
+      allRels: [structureRel, grantRel],
+      rightRels: [grantRel],
+      structureRel,
+      rels: [grantRel],
+      membershipMode: 'all_members',
+    });
   });
 
   it('derives workflow buckets from participant approvals instead of final ownership only', () => {

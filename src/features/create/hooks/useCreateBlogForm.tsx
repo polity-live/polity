@@ -4,7 +4,10 @@ import { useAuth } from '@/providers/auth-provider';
 import { useBlogActions } from '@/zero/blogs/useBlogActions';
 import { useCommonState, useCommonActions } from '@/zero/common';
 import { useGroupById, useGroupState } from '@/zero/groups/useGroupState';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { toast } from 'sonner';
 import { VisibilityInput } from '../ui/inputs/VisibilityInput';
 import { HashtagEditor } from '@/features/shared/ui/ui/hashtag-editor';
@@ -49,9 +52,9 @@ export function useCreateBlogForm(): CreateFormConfig {
   const { group } = useGroupById(groupId ?? undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const visibilityLabel =
-    visibility === 'public'
+    visibility === translateText('generated.inline.0030_public_61c9b2b1')
       ? t('pages.create.common.public')
-      : visibility === 'authenticated'
+      : visibility === translateText('generated.inline.0031_authenticated_8fda38ce')
         ? t('pages.create.common.authenticated')
         : t('pages.create.common.private');
 
@@ -116,7 +119,9 @@ export function useCreateBlogForm(): CreateFormConfig {
           {
             id: ownerRoleId,
             name: 'Owner',
-            description: 'Blog owner with full permissions',
+            description: translateText(
+              'generated.inline.0041_blog_owner_with_full_permissions_2ffcc97f'
+            ),
             scope: 'blog',
             group_id: null,
             event_id: null,
@@ -127,7 +132,9 @@ export function useCreateBlogForm(): CreateFormConfig {
           {
             id: writerRoleId,
             name: 'Writer',
-            description: 'Blog writer with edit access',
+            description: translateText(
+              'generated.inline.0042_blog_writer_with_edit_access_43b09221'
+            ),
             scope: 'blog',
             group_id: null,
             event_id: null,
@@ -195,8 +202,12 @@ export function useCreateBlogForm(): CreateFormConfig {
             entityType: 'blog',
             entityId: blogId,
             actorId: user.id,
-            title: `New blog post: ${title.trim()}`,
-            description: 'A new blog post has been published',
+            title: translateText('generated.inline.0055_new_blog_post_value2775_8f2fb838', {
+              value2775: title.trim(),
+            }),
+            description: translateText(
+              'generated.inline.0044_a_new_blog_post_has_been_published_055ff55e'
+            ),
           },
         });
       }
@@ -250,7 +261,7 @@ export function useCreateBlogForm(): CreateFormConfig {
                 description={t('pages.create.blog.coverImageDescription')}
               />
               <CreateTypeaheadField
-                label={t('pages.create.blog.attachTo', 'Attach to group (optional)')}
+                label={t('pages.create.blog.attachTo')}
                 entityTypes={['group']}
                 value={groupId ?? undefined}
                 onChange={item => {
@@ -259,7 +270,7 @@ export function useCreateBlogForm(): CreateFormConfig {
                   setGroupName(item?.label ?? '');
                   syncGroupSearch(nextGroupId);
                 }}
-                placeholder={t('pages.create.blog.groupPlaceholder', 'Search groups...')}
+                placeholder={t('pages.create.blog.groupPlaceholder')}
                 filterFn={item => memberGroupIds.has(item.id)}
               />
             </div>
@@ -301,7 +312,7 @@ export function useCreateBlogForm(): CreateFormConfig {
                     ...(groupName
                       ? [
                           {
-                            label: t('pages.create.blog.attachTo', 'Attach to group'),
+                            label: t('pages.create.blog.attachTo'),
                             value: groupName,
                           },
                         ]

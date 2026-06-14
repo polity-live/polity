@@ -1,86 +1,56 @@
 import { describe, expect, it } from 'vitest';
 
 import { groupConflictPreflightSchema } from '@/features/groups/logic/groupConflictPreflight';
-import { buildDraftNetworkLinkRelationships } from '../group-conflict-validation';
 
-describe('group conflict network link preflight', () => {
-  it('accepts membership-only upserts', () => {
+describe('group conflict group connection preflight', () => {
+  it('accepts membership-only group connection upserts', () => {
     const parsed = groupConflictPreflightSchema.safeParse({
-      kind: 'network_link_upsert',
-      source_group_id: 'group-a',
-      target_group_id: 'group-b',
-      structural_relation: 'parent_child',
-      rights: [],
+      kind: 'group_connection_upsert',
+      group_a_id: 'group-a',
+      group_b_id: 'group-b',
+      connection_type: 'hierarchy',
+      parent_group_id: 'group-b',
+      child_group_id: 'group-a',
+      grants: [],
       membership_rule: {
-        membership_direction: 'forward',
+        member_source_group_id: 'group-a',
+        member_target_group_id: 'group-b',
         membership_mode: 'all_members',
-        role_id: null,
-        source_group_ids: null,
+        required_source_role_id: null,
+        eligible_origin_group_ids: [],
       },
     });
 
     expect(parsed.success).toBe(true);
   });
 
-  it('rejects empty network-link upserts that have neither rights nor membership', () => {
+  it('accepts structure-only group connection upserts', () => {
     const parsed = groupConflictPreflightSchema.safeParse({
-      kind: 'network_link_upsert',
-      source_group_id: 'group-a',
-      target_group_id: 'group-b',
-      structural_relation: 'parent_child',
-      rights: [],
-      membership_rule: {
-        membership_mode: 'none',
-        role_id: null,
-        source_group_ids: null,
-      },
+      kind: 'group_connection_upsert',
+      group_a_id: 'group-a',
+      group_b_id: 'group-b',
+      connection_type: 'hierarchy',
+      parent_group_id: 'group-b',
+      child_group_id: 'group-a',
+      grants: [],
+      membership_rule: null,
+    });
+
+    expect(parsed.success).toBe(true);
+  });
+
+  it('rejects self-connections', () => {
+    const parsed = groupConflictPreflightSchema.safeParse({
+      kind: 'group_connection_upsert',
+      group_a_id: 'group-a',
+      group_b_id: 'group-a',
+      connection_type: 'peer',
+      parent_group_id: null,
+      child_group_id: null,
+      grants: [],
+      membership_rule: null,
     });
 
     expect(parsed.success).toBe(false);
-  });
-
-  it('builds structural draft rows for membership-only upserts', () => {
-    const rows = buildDraftNetworkLinkRelationships({
-      kind: 'network_link_upsert',
-      link_id: 'link-1',
-      source_group_id: 'group-a',
-      target_group_id: 'group-b',
-      structural_relation: 'parent_child',
-      rights: [],
-      membership_rule: {
-        membership_direction: 'forward',
-        membership_mode: 'all_members',
-        role_id: null,
-        source_group_ids: null,
-      },
-    });
-
-    expect(
-      rows.map(row => ({
-        id: row.id,
-        relationship_type: row.relationship_type,
-        group_id: row.group_id,
-        related_group_id: row.related_group_id,
-        with_right: row.with_right,
-        membership_mode: row.membership_mode,
-      }))
-    ).toEqual([
-      {
-        id: 'link-1:structural:forward',
-        relationship_type: 'child',
-        group_id: 'group-a',
-        related_group_id: 'group-b',
-        with_right: null,
-        membership_mode: 'all_members',
-      },
-      {
-        id: 'link-1:structural:backward',
-        relationship_type: 'parent',
-        group_id: 'group-b',
-        related_group_id: 'group-a',
-        with_right: null,
-        membership_mode: 'all_members',
-      },
-    ]);
   });
 });

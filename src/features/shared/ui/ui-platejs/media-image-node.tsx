@@ -12,7 +12,12 @@ import { cn } from '@/features/shared/utils/utils.ts';
 
 import { Caption, CaptionTextarea } from './caption.tsx';
 import { MediaToolbar } from './media-toolbar.tsx';
-import { mediaResizeHandleVariants, Resizable, ResizeHandle } from '@/features/shared/ui/ui/resize-handle.tsx';
+import {
+  mediaResizeHandleVariants,
+  Resizable,
+  ResizeHandle,
+} from '@/features/shared/ui/ui/resize-handle.tsx';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export const ImageElement = withHOC(
   ResizableProvider,
@@ -44,7 +49,7 @@ export const ImageElement = withHOC(
                 className={cn(
                   'block w-full max-w-full cursor-pointer object-cover px-0',
                   'rounded-sm',
-                  focused && selected && 'ring-2 ring-ring ring-offset-2',
+                  focused && selected && 'ring-ring ring-2 ring-offset-2',
                   isDragging && 'opacity-50'
                 )}
                 alt={(props.attributes as Record<string, string>).alt}
@@ -63,7 +68,7 @@ export const ImageElement = withHOC(
                 onFocus={e => {
                   e.preventDefault();
                 }}
-                placeholder="Write a caption..."
+                placeholder={translateText('generated.inline.1149_write_a_caption_2f0f0557')}
               />
             </Caption>
           </figure>

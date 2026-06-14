@@ -94,7 +94,7 @@ export function BlogTimelineCard({ blog, className }: BlogTimelineCardProps) {
     <TimelineCardBase contentType="blog" className={className} href={blogUrl}>
       {/* Cover Image or Gradient Header */}
       {blog.coverImageUrl ? (
-        <div className="relative aspect-video">
+        <div className="relative aspect-video shrink-0" data-timeline-card-media>
           <img
             src={blog.coverImageUrl}
             alt={blog.title}
@@ -113,7 +113,7 @@ export function BlogTimelineCard({ blog, className }: BlogTimelineCardProps) {
           </div>
         </div>
       ) : (
-        <div className={cn('p-4', gradient)}>
+        <div className={cn('shrink-0 p-4', gradient)}>
           <div className="mb-2 flex items-start gap-2">
             <BookOpen className="mt-0.5 h-5 w-5 flex-shrink-0 text-teal-600 dark:text-teal-400" />
             <TimelineCardBadge label={t('features.timeline.contentTypes.blog')} icon={BookOpen} />
@@ -136,73 +136,75 @@ export function BlogTimelineCard({ blog, className }: BlogTimelineCardProps) {
           </h3>
         )}
 
-        {/* Excerpt */}
-        {blog.excerpt && (
-          <p className="text-muted-foreground mb-3 line-clamp-3 text-sm">{blog.excerpt}</p>
-        )}
+        <div className="mt-auto space-y-3">
+          {/* Excerpt */}
+          {blog.excerpt && (
+            <p className="text-muted-foreground line-clamp-3 text-sm">{blog.excerpt}</p>
+          )}
 
-        {/* Hashtags */}
-        {blog.hashtags && blog.hashtags.length > 0 && (
-          <div className="mb-3" onClick={e => e.preventDefault()}>
-            <HashtagDisplay
-              hashtags={blog.hashtags.slice(0, 3)}
-              centered={false}
-              badgeClassName={`border bg-white/70 dark:bg-gray-900/60 ${blogStyle.borderColor} ${blogStyle.accentColor}`}
-            />
-          </div>
-        )}
-
-        {/* Author Info */}
-        <div className="mb-2 flex items-center gap-2">
-          <Avatar className="h-6 w-6">
-            <AvatarImage src={blog.authorAvatar} alt={blog.authorName} />
-            <AvatarFallback>
-              <User className="h-3 w-3" />
-            </AvatarFallback>
-          </Avatar>
-          <span className="text-muted-foreground text-xs">
-            {t('features.timeline.cards.by')} {blog.authorName}
-          </span>
-        </div>
-
-        {/* Reading Time */}
-        {blog.readingTimeMinutes && (
-          <div className="text-muted-foreground mb-2 flex items-center gap-1.5 text-xs">
-            <Clock className="h-3.5 w-3.5" />
-            <span>{formatReadingTime(blog.readingTimeMinutes)}</span>
-          </div>
-        )}
-
-        {/* Reading Progress */}
-        {blog.readProgress !== undefined && blog.readProgress > 0 && (
-          <div className="mb-2">
-            <div className="mb-1 flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">
-                {t('features.timeline.cards.readProgress')}
-              </span>
-              <span className="font-medium">{blog.readProgress}%</span>
+          {/* Hashtags */}
+          {blog.hashtags && blog.hashtags.length > 0 && (
+            <div onClick={e => e.preventDefault()}>
+              <HashtagDisplay
+                hashtags={blog.hashtags.slice(0, 3)}
+                centered={false}
+                badgeClassName={`border bg-white/70 dark:bg-gray-900/60 ${blogStyle.borderColor} ${blogStyle.accentColor}`}
+              />
             </div>
-            <Progress value={blog.readProgress} className="h-1" />
-          </div>
-        )}
+          )}
 
-        {/* Stats Bar with Tooltips */}
-        <div className="text-muted-foreground flex items-center gap-4 text-xs">
-          {stats.map((stat, index) => (
-            <Tooltip key={index}>
-              <TooltipTrigger asChild>
-                <div className="flex cursor-help items-center gap-1">
-                  <stat.icon className="h-3.5 w-3.5" />
-                  <span className="font-medium">{stat.value}</span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>
-                  {stat.value} {stat.label}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          ))}
+          {/* Author Info */}
+          <div className="flex items-center gap-2">
+            <Avatar className="h-6 w-6">
+              <AvatarImage src={blog.authorAvatar} alt={blog.authorName} />
+              <AvatarFallback>
+                <User className="h-3 w-3" />
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-muted-foreground text-xs">
+              {t('features.timeline.cards.by')} {blog.authorName}
+            </span>
+          </div>
+
+          {/* Reading Time */}
+          {blog.readingTimeMinutes && (
+            <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
+              <Clock className="h-3.5 w-3.5" />
+              <span>{formatReadingTime(blog.readingTimeMinutes)}</span>
+            </div>
+          )}
+
+          {/* Reading Progress */}
+          {blog.readProgress !== undefined && blog.readProgress > 0 && (
+            <div>
+              <div className="mb-1 flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">
+                  {t('features.timeline.cards.readProgress')}
+                </span>
+                <span className="font-medium">{blog.readProgress}%</span>
+              </div>
+              <Progress value={blog.readProgress} className="h-1" />
+            </div>
+          )}
+
+          {/* Stats Bar with Tooltips */}
+          <div className="text-muted-foreground flex items-center gap-4 text-xs">
+            {stats.map((stat, index) => (
+              <Tooltip key={index}>
+                <TooltipTrigger asChild>
+                  <div className="flex cursor-help items-center gap-1">
+                    <stat.icon className="h-3.5 w-3.5" />
+                    <span className="font-medium">{stat.value}</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    {stat.value} {stat.label}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            ))}
+          </div>
         </div>
       </TimelineCardContent>
 

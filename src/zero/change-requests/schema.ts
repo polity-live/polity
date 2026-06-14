@@ -1,5 +1,5 @@
-import { z } from 'zod'
-import { timestampSchema, nullableTimestampSchema } from '../shared/helpers'
+import { z } from 'zod';
+import { timestampSchema, nullableTimestampSchema } from '../shared/helpers';
 
 // ============================================
 // Change Request Schemas
@@ -16,6 +16,7 @@ const baseChangeRequestSchema = z.object({
   source_type: z.string().nullable(),
   source_id: z.string().nullable(),
   source_title: z.string().nullable(),
+  changed_character_count: z.number(),
   votes_for: z.number(),
   votes_against: z.number(),
   votes_abstain: z.number(),
@@ -25,21 +26,40 @@ const baseChangeRequestSchema = z.object({
   quorum_required: z.number().nullable(),
   created_at: timestampSchema,
   updated_at: timestampSchema,
-})
+});
 
-export const selectChangeRequestSchema = baseChangeRequestSchema
+export const selectChangeRequestSchema = baseChangeRequestSchema;
 
 export const createChangeRequestSchema = baseChangeRequestSchema
-  .omit({ id: true, created_at: true, updated_at: true, user_id: true, votes_for: true, votes_against: true, votes_abstain: true })
-  .extend({ id: z.string() })
+  .omit({
+    id: true,
+    created_at: true,
+    updated_at: true,
+    user_id: true,
+    votes_for: true,
+    votes_against: true,
+    votes_abstain: true,
+    changed_character_count: true,
+  })
+  .extend({ id: z.string(), changed_character_count: z.number().optional() });
 
 export const updateChangeRequestSchema = baseChangeRequestSchema
-  .pick({ title: true, description: true, status: true, reason: true, voting_status: true, votes_for: true, votes_against: true, votes_abstain: true })
+  .pick({
+    title: true,
+    description: true,
+    status: true,
+    reason: true,
+    voting_status: true,
+    votes_for: true,
+    votes_against: true,
+    votes_abstain: true,
+    changed_character_count: true,
+  })
   .partial()
-  .extend({ id: z.string() })
+  .extend({ id: z.string() });
 
 // ============================================
 // Inferred Types
 // ============================================
 
-export type ChangeRequest = z.infer<typeof selectChangeRequestSchema>
+export type ChangeRequest = z.infer<typeof selectChangeRequestSchema>;

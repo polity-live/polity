@@ -6,6 +6,7 @@ import {
   type PqlOperator,
   type PqlScalar,
 } from './applyPqlFilter';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 type PqlTokenType =
   | 'word'
@@ -849,7 +850,11 @@ export function getPqlSuggestions<TItem, TFieldKey extends string>(
     const operatorSuggestions = field.operators.map(operator => {
       const token = getOperatorLabel(operator);
       const insertText =
-        operator === 'in' ? 'IN (' : operator === 'is_set' ? 'IS SET ' : `${token} `;
+        operator === translateText('generated.inline.0137_in_af10ef20')
+          ? translateText('generated.inline.0138_in_d9850243')
+          : operator === 'is_set'
+            ? translateText('generated.inline.0139_is_set_20c41b90')
+            : `${token} `;
 
       return {
         label: token,
@@ -874,7 +879,7 @@ export function getPqlSuggestions<TItem, TFieldKey extends string>(
 
   if (context.state === 'EXPECT_SET') {
     suggestions.push({
-      label: 'SET',
+      label: translateText('generated.inline.0140_set_55c5d810'),
       insertText: 'SET ',
       kind: 'operator',
       replaceStart: context.partialStart,

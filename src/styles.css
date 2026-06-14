@@ -60,6 +60,14 @@ code {
   --sidebar-ring: oklch(0.871 0.006 286.286);
   --brand: oklch(0.623 0.214 259.815);
   --highlight: oklch(0.852 0.199 91.936);
+  --surface: color-mix(in oklch, var(--background) 94%, var(--muted) 6%);
+  --surface-raised: color-mix(in oklch, var(--card) 96%, var(--background) 4%);
+  --surface-muted: color-mix(in oklch, var(--muted) 72%, var(--background) 28%);
+  --radius-panel: 0.5rem;
+  --field-height: 2.25rem;
+  --dialog-content-max-height: calc(100vh - 2rem);
+  --table-row-height: 3.25rem;
+  --shadow-panel: 0 1px 2px rgb(0 0 0 / 0.06);
   --scrollbar-track: color-mix(in oklch, var(--background) 88%, var(--brand) 12%);
   --scrollbar-thumb: color-mix(in oklch, var(--brand) 62%, var(--card) 38%);
   --scrollbar-thumb-hover: color-mix(in oklch, var(--highlight) 28%, var(--brand) 72%);
@@ -102,6 +110,14 @@ code {
   --sidebar-ring: oklch(0.442 0.017 285.786);
   --brand: oklch(0.707 0.165 254.624);
   --highlight: oklch(0.852 0.199 91.936);
+  --surface: color-mix(in oklch, var(--background) 88%, var(--muted) 12%);
+  --surface-raised: color-mix(in oklch, var(--card) 88%, var(--muted) 12%);
+  --surface-muted: color-mix(in oklch, var(--muted) 84%, var(--background) 16%);
+  --radius-panel: 0.5rem;
+  --field-height: 2.25rem;
+  --dialog-content-max-height: calc(100vh - 2rem);
+  --table-row-height: 3.25rem;
+  --shadow-panel: 0 1px 2px rgb(0 0 0 / 0.22);
   --scrollbar-track: color-mix(in oklch, var(--background) 82%, var(--brand) 18%);
   --scrollbar-thumb: color-mix(in oklch, var(--brand) 68%, var(--muted) 32%);
   --scrollbar-thumb-hover: color-mix(in oklch, var(--highlight) 34%, var(--brand) 66%);
@@ -148,6 +164,9 @@ code {
   --color-sidebar-ring: var(--sidebar-ring);
   --color-highlight: var(--highlight);
   --color-brand: var(--brand);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-muted: var(--surface-muted);
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
   --animate-spin-slow: spin-slow 3s linear infinite;
@@ -237,6 +256,22 @@ code {
   }
 }
 
+@layer components {
+  .polity-panel {
+    border-radius: var(--radius-panel);
+    background: var(--surface-raised);
+    box-shadow: var(--shadow-panel);
+  }
+
+  .polity-soft-surface {
+    background: var(--surface);
+  }
+
+  .polity-table-row {
+    min-height: var(--table-row-height);
+  }
+}
+
 /* Hide scrollbar for webkit browsers */
 .scrollbar-hide {
   -ms-overflow-style: none; /* IE and Edge */
@@ -249,4 +284,60 @@ code {
 
 .leaflet-container img.leaflet-tile {
   mix-blend-mode: normal;
+}
+
+.decision-terminal-grid-shell {
+  isolation: isolate;
+}
+
+.decision-terminal-grid {
+  position: relative;
+  min-height: 100%;
+}
+
+.decision-terminal-grid .react-grid-item {
+  background: transparent;
+}
+
+.decision-terminal-grid .react-grid-item.react-draggable-dragging,
+.decision-terminal-grid .react-grid-item.resizing {
+  z-index: 4;
+}
+
+.decision-terminal-grid .react-grid-item.react-draggable-dragging > section,
+.decision-terminal-grid .react-grid-item.resizing > section {
+  border-color: color-mix(in oklch, var(--brand) 55%, var(--border) 45%);
+  box-shadow: 0 18px 36px rgb(15 23 42 / 0.18);
+}
+
+.decision-terminal-grid .react-grid-item.react-grid-placeholder {
+  background: color-mix(in oklch, var(--brand) 24%, transparent);
+  border: 1px dashed color-mix(in oklch, var(--brand) 62%, transparent);
+  border-radius: 6px;
+  opacity: 1;
+}
+
+.decision-terminal-grid .react-grid-item > .react-resizable-handle {
+  opacity: 1;
+  touch-action: none;
+}
+
+.decision-terminal-resize-handle {
+  border: 1px solid color-mix(in oklch, var(--brand) 65%, var(--background) 35%);
+  background: color-mix(in oklch, var(--background) 82%, var(--brand) 18%);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.16);
+}
+
+.decision-terminal-grid
+  .react-grid-item
+  > .decision-terminal-resize-handle.react-resizable-handle-se {
+  right: 6px;
+  bottom: 6px;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px 2px 6px 2px;
+}
+
+.decision-terminal-resize-handle::after {
+  border-color: color-mix(in oklch, var(--brand) 70%, var(--foreground) 30%);
 }

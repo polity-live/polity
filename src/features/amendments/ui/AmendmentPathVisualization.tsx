@@ -3,11 +3,20 @@
 import { useEffect } from 'react';
 import { Node, Edge, useNodesState, useEdgesState, MarkerType } from '@xyflow/react';
 import { NetworkFlowBase, Panel } from '@/features/network/ui/NetworkFlowBase';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/features/shared/ui/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/features/shared/ui/ui/card';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Calendar, ArrowRight, Target } from 'lucide-react';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 
 interface AmendmentPathVisualizationProps {
   amendmentId: string;
@@ -32,7 +41,9 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
 
   // Generate visualization nodes and edges
   useEffect(() => {
-    const segments = [...(amendment?.paths?.[0]?.segments || [])].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
+    const segments = [...(amendment?.paths?.[0]?.segments || [])].sort(
+      (a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)
+    );
 
     if (!segments || segments.length === 0) {
       setNodes([]);
@@ -82,7 +93,7 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
           target: `path-node-${index + 1}`,
           type: 'smoothstep',
           animated: true,
-          label: 'amendmentRight',
+          label: translateText('generated.inline.0021_amendmentright_eba6c724'),
           style: { stroke: '#66bb6a', strokeWidth: 2 },
           labelStyle: {
             fill: '#2e7d32',
@@ -117,7 +128,9 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">{t('features.amendments.process.loading')}</p>
+          <p className="text-muted-foreground text-sm">
+            {t('features.amendments.process.loading')}
+          </p>
         </CardContent>
       </Card>
     );
@@ -131,10 +144,12 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
             <Target className="h-5 w-5" />
             {t('features.amendments.pathVisualization.title')}
           </CardTitle>
-          <CardDescription>{t('features.amendments.pathVisualization.noTargetSet')}</CardDescription>
+          <CardDescription>
+            {t('features.amendments.pathVisualization.noTargetSet')}
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             {t('features.amendments.pathVisualization.visitProcessTab')}
           </p>
         </CardContent>
@@ -150,17 +165,25 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
             <Target className="h-5 w-5" />
             {t('features.amendments.pathVisualization.title')}
           </CardTitle>
-          <CardDescription>{t('features.amendments.pathVisualization.pathCalculating')}</CardDescription>
+          <CardDescription>
+            {t('features.amendments.pathVisualization.pathCalculating')}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3 text-sm">
             <p className="font-semibold">{t('features.amendments.process.target')}:</p>
             <div className="ml-4">
               <p>
-                <span className="text-muted-foreground">{t('features.amendments.process.targetGroup')}:</span> {amendment.group?.name}
+                <span className="text-muted-foreground">
+                  {t('features.amendments.process.targetGroup')}:
+                </span>{' '}
+                {amendment.group?.name}
               </p>
               <p>
-                <span className="text-muted-foreground">{t('features.amendments.process.event')}:</span> {amendment.event?.title}
+                <span className="text-muted-foreground">
+                  {t('features.amendments.process.event')}:
+                </span>{' '}
+                {amendment.event?.title}
               </p>
             </div>
           </div>
@@ -178,25 +201,31 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
             {t('features.amendments.pathVisualization.title')}
           </CardTitle>
           <CardDescription>
-            {t('features.amendments.pathVisualization.shortestPath', { count: pathSegments.length })}
+            {t('features.amendments.pathVisualization.shortestPath', {
+              count: pathSegments.length,
+            })}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {/* Target information */}
-          <div className="mb-4 rounded-lg border bg-muted/50 p-4">
+          <div className="bg-muted/50 mb-4 rounded-lg border p-4">
             <div className="grid gap-3 text-sm md:grid-cols-2">
               <div>
-                <div className="font-semibold text-muted-foreground">{t('features.amendments.process.targetGroup')}</div>
+                <div className="text-muted-foreground font-semibold">
+                  {t('features.amendments.process.targetGroup')}
+                </div>
                 <div className="mt-1">{amendment.group?.name}</div>
               </div>
               <div>
-                <div className="font-semibold text-muted-foreground">{t('features.amendments.process.targetEvent')}</div>
+                <div className="text-muted-foreground font-semibold">
+                  {t('features.amendments.process.targetEvent')}
+                </div>
                 <div className="mt-1 flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
                   {amendment.event?.title}
                 </div>
                 {amendment.event?.start_date && (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     {new Date(amendment.event?.start_date).toLocaleDateString('en-US', {
                       weekday: 'long',
                       month: 'long',
@@ -210,7 +239,7 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
           </div>
 
           {/* Path visualization */}
-          <div className="h-[250px] overflow-hidden rounded-lg border bg-background">
+          <div className="bg-background h-[250px] overflow-hidden rounded-lg border">
             <NetworkFlowBase
               nodes={nodes}
               edges={edges}
@@ -219,7 +248,7 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
               panel={
                 <Panel
                   position="top-right"
-                  className="rounded bg-white p-3 shadow dark:bg-background"
+                  className="dark:bg-background rounded bg-white p-3 shadow"
                 >
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center gap-2">
@@ -244,26 +273,30 @@ export function AmendmentPathVisualization({ amendmentId }: AmendmentPathVisuali
           <div className="mt-6 space-y-3">
             {pathSegments?.map((segment, index) => (
               <div key={segment.group_id || index} className="flex items-start gap-3">
-                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+                <div className="bg-primary text-primary-foreground flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold">
                   {index + 1}
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <h4 className="font-semibold">{segment.group_id || t('common.unspecified')}</h4>
-                    {index === 0 && <Badge variant="secondary">{t('features.amendments.pathVisualization.start')}</Badge>}
+                    {index === 0 && (
+                      <Badge variant="secondary">
+                        {t('features.amendments.pathVisualization.start')}
+                      </Badge>
+                    )}
                     {index === pathSegments.length - 1 && (
                       <Badge variant="destructive">{t('features.amendments.process.target')}</Badge>
                     )}
                   </div>
                   {segment.event_id && (
-                    <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="text-muted-foreground mt-2 flex items-center gap-2 text-sm">
                       <Calendar className="h-4 w-4" />
                       <span>{segment.event_id}</span>
                     </div>
                   )}
                 </div>
                 {index < pathSegments.length - 1 && (
-                  <ArrowRight className="mt-2 h-5 w-5 flex-shrink-0 text-muted-foreground" />
+                  <ArrowRight className="text-muted-foreground mt-2 h-5 w-5 flex-shrink-0" />
                 )}
               </div>
             ))}

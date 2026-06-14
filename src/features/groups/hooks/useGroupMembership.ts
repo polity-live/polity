@@ -5,7 +5,10 @@ import { useGroupState, useUserMembershipInGroup } from '@/zero/groups/useGroupS
 import { mutators } from '@/zero/mutators';
 import { serverConfirmed } from '@/zero/mutate-with-server-check';
 import { useAuth } from '@/providers/auth-provider';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { useGroupConflictPreflight } from './useGroupConflictPreflight';
 import { toast } from 'sonner';
 import { queries } from '@/zero/queries';
@@ -247,7 +250,9 @@ export function useGroupMembership(groupId: string) {
       await serverConfirmed(result);
 
       if (effectiveStatus === 'requested') {
-        toast.success('Request successfully withdrawn.');
+        toast.success(
+          translateText('generated.inline.0554_request_successfully_withdrawn_d63ad8e3')
+        );
       } else {
         toast.success(t('features.groups.toasts.left'));
       }

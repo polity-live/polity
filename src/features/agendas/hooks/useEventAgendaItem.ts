@@ -9,6 +9,8 @@ import { useVoteState } from '@/zero/votes/useVoteState';
 import { useVoteActions } from '@/zero/votes/useVoteActions';
 import { useAgendaItemDetail } from '@/zero/events/useEventState';
 import { useAgendaItemForwardingContext } from '@/zero/amendments';
+import { isNamedBallot } from '@/zero/shared';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export function useEventAgendaItem(eventId: string, agendaItemId: string) {
   const navigate = useNavigate();
@@ -80,7 +82,9 @@ export function useEventAgendaItem(eventId: string, agendaItemId: string) {
         id: crypto.randomUUID(),
         election_id: election.id,
         candidate_id: candidateId,
-        elector_participation_id: election.visibility === 'public' ? participationId : null,
+        elector_participation_id: isNamedBallot(election.ballot_visibility)
+          ? participationId
+          : null,
       }));
 
       if (isIndicative) {
@@ -114,7 +118,7 @@ export function useEventAgendaItem(eventId: string, agendaItemId: string) {
           id: crypto.randomUUID(),
           vote_id: vote.id,
           choice_id: choiceId,
-          voter_participation_id: vote.visibility === 'public' ? participationId : null,
+          voter_participation_id: isNamedBallot(vote.ballot_visibility) ? participationId : null,
         },
       ];
 
@@ -157,7 +161,7 @@ export function useEventAgendaItem(eventId: string, agendaItemId: string) {
       const speakerId = crypto.randomUUID();
       await addSpeaker({
         id: speakerId,
-        title: 'Speaker',
+        title: translateText('generated.inline.0001_speaker_7c23b0d9'),
         time: 3,
         completed: false,
         order_index: maxOrder + 1,

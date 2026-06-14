@@ -34,11 +34,7 @@ export function LineHeightToolbarButton(props: DropdownMenuProps) {
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false} {...props}>
       <DropdownMenuTrigger asChild>
-        <ToolbarButton
-          pressed={open}
-          tooltip={t('plateJs.toolbar.lineHeight', 'Line height')}
-          isDropdown
-        >
+        <ToolbarButton pressed={open} tooltip={t('plateJs.toolbar.lineHeight')} isDropdown>
           <WrapText />
         </ToolbarButton>
       </DropdownMenuTrigger>

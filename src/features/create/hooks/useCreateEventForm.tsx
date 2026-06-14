@@ -3,7 +3,10 @@ import { useQuery } from '@rocicorp/zero/react';
 import type { Value } from 'platejs';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { toast } from 'sonner';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { Button } from '@/features/shared/ui/ui/button';
 import { Label } from '@/features/shared/ui/ui/label';
 import { ImageUpload } from '@/features/file-upload/ui/ImageUpload.tsx';
@@ -147,16 +150,25 @@ export function useCreateEventForm(): CreateFormConfig {
       ? t('pages.create.event.meetingFormats.publicMeeting')
       : t('pages.create.event.meetingFormats.oneOnOne');
   const delegateAllocationLabel =
-    delegateConfig.allocationMode === 'ratio'
+    delegateConfig.allocationMode === translateText('generated.inline.0032_ratio_4b6339ba')
       ? `1:${delegateConfig.delegateRatio}`
-      : `${delegateConfig.totalDelegates} total`;
-  const delegateElectionModeLabel = delegateElectionMode === 'list' ? 'Listenwahl' : 'Einzelwahl';
+      : translateText('generated.inline.0033_totaldelegates_total_f6e325f1', {
+          totalDelegates: delegateConfig.totalDelegates,
+        });
+  const delegateElectionModeLabel =
+    delegateElectionMode === translateText('generated.inline.0034_list_38b62be4')
+      ? 'Listenwahl'
+      : 'Einzelwahl';
   const locationTypeLabel =
-    attendanceMode === 'online' ? 'Online' : attendanceMode === 'hybrid' ? 'Hybrid' : 'Offline';
+    attendanceMode === translateText('generated.inline.0035_online_2dbc2fd2')
+      ? 'Online'
+      : attendanceMode === translateText('generated.inline.0036_hybrid_e2ac482d')
+        ? 'Hybrid'
+        : 'Offline';
   const visibilityLabel =
-    effectiveVisibility === 'public'
+    effectiveVisibility === translateText('generated.inline.0030_public_61c9b2b1')
       ? t('pages.create.common.public')
-      : effectiveVisibility === 'authenticated'
+      : effectiveVisibility === translateText('generated.inline.0031_authenticated_8fda38ce')
         ? t('pages.create.common.authenticated')
         : t('pages.create.common.private');
   const recurrenceRule = isRecurring
@@ -275,7 +287,9 @@ export function useCreateEventForm(): CreateFormConfig {
           )))
     ) {
       toast.error(
-        'Delegiertenversammlungen koennen nur fuer hierarchische Gruppen oder sibling Gruppen mit Parlament/gewaehlt erstellt werden.'
+        translateText(
+          'generated.inline.0324_delegiertenversammlungen_koennen_nur_fuer_hie_dc8b32df'
+        )
       );
       return;
     }
@@ -386,21 +400,23 @@ export function useCreateEventForm(): CreateFormConfig {
           return false;
         }
 
-        if (task.id === directProcessTaskId) {
-          return true;
-        }
-
-        if (task.task_type !== 'schedule_event') {
-          return false;
-        }
-
-        return isEventWithinSchedulingWindow(
+        const withinSchedulingWindow = isEventWithinSchedulingWindow(
           createdEvent,
           getProcessTaskSchedulingWindow({
             due_at: task.due_at ?? null,
             metadata: task.metadata,
           })
         );
+
+        if (task.id === directProcessTaskId) {
+          return withinSchedulingWindow;
+        }
+
+        if (task.task_type !== 'schedule_event') {
+          return false;
+        }
+
+        return withinSchedulingWindow;
       });
 
       const attachedTaskIds = new Set<string>();
@@ -569,8 +585,10 @@ export function useCreateEventForm(): CreateFormConfig {
                     <ElectionModeInput
                       value={delegateElectionMode}
                       onChange={setDelegateElectionMode}
-                      label="Delegiertenwahl"
-                      hint="Dieser Modus wird als Default fuer Untergruppen-Auftraege und vorbefuellte Delegiertenwahlen verwendet."
+                      label={translateText('generated.inline.0325_delegiertenwahl_f860c1a3')}
+                      hint={translateText(
+                        'generated.inline.0326_dieser_modus_wird_als_default_fuer_untergrupp_c5a2f055'
+                      )}
                       descriptions={{
                         list: 'Untergruppen vergeben mehrere Stimmen in einer Listenwahl.',
                         single: 'Untergruppen legen pro Delegiertensitz eine eigene Wahl an.',
@@ -645,7 +663,7 @@ export function useCreateEventForm(): CreateFormConfig {
           content: (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Attendance Mode</Label>
+                <Label>{translateText('generated.inline.0327_attendance_mode_507f30a9')}</Label>
                 <div className="flex flex-wrap gap-2">
                   {(['online', 'hybrid', 'offline'] as const).map(mode => (
                     <Button
@@ -654,7 +672,11 @@ export function useCreateEventForm(): CreateFormConfig {
                       variant={attendanceMode === mode ? 'default' : 'outline'}
                       onClick={() => setAttendanceMode(mode)}
                     >
-                      {mode === 'online' ? 'Online' : mode === 'hybrid' ? 'Hybrid' : 'Offline'}
+                      {mode === 'online'
+                        ? translateText('generated.inline.0046_online_c3e839df')
+                        : mode === 'hybrid'
+                          ? translateText('generated.inline.0047_hybrid_8e01f6bc')
+                          : translateText('generated.inline.0048_offline_e01fa717')}
                     </Button>
                   ))}
                 </div>
@@ -821,7 +843,7 @@ export function useCreateEventForm(): CreateFormConfig {
                             value: delegateAllocationLabel,
                           },
                           {
-                            label: 'Delegiertenwahl',
+                            label: translateText('generated.inline.0057_delegiertenwahl_f860c1a3'),
                             value: delegateElectionModeLabel,
                           },
                         ]

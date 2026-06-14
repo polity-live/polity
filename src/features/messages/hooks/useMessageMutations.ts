@@ -9,6 +9,7 @@ import {
   notifyConversationRequest,
   notifyConversationAccepted,
 } from '@/features/notifications/utils/notification-helpers.ts';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export function useMessageMutations() {
   const actions = useMessageActions();
@@ -64,7 +65,7 @@ export function useMessageMutations() {
       return { success: true, messageId };
     } catch (error) {
       console.error('Failed to send message:', error);
-      toast.error('Failed to send message');
+      toast.error(translateText('generated.inline.0735_failed_to_send_message_dd854823'));
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -91,7 +92,7 @@ export function useMessageMutations() {
       return { success: true, messageId };
     } catch (error) {
       console.error('Failed to send assistant message:', error);
-      toast.error('Failed to send assistant message');
+      toast.error(translateText('generated.inline.0736_failed_to_send_assistant_message_dfc6e0f4'));
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -167,11 +168,11 @@ export function useMessageMutations() {
       } catch {
         /* notification delivery is best-effort */
       }
-      toast.success('Conversation created');
+      toast.success(translateText('generated.inline.0737_conversation_created_dab567d8'));
       return { success: true, conversationId };
     } catch (error) {
       console.error('Failed to create conversation:', error);
-      toast.error('Failed to create conversation');
+      toast.error(translateText('generated.inline.0738_failed_to_create_conversation_262c227b'));
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -221,11 +222,11 @@ export function useMessageMutations() {
         deleted_at: 0,
       });
 
-      toast.success('AI conversation created');
+      toast.success(translateText('generated.inline.0739_ai_conversation_created_9ea58896'));
       return { success: true, conversationId };
     } catch (error) {
       console.error('Failed to create AI conversation:', error);
-      toast.error('Failed to create AI conversation');
+      toast.error(translateText('generated.inline.0740_failed_to_create_ai_conversation_5e33d409'));
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -239,11 +240,11 @@ export function useMessageMutations() {
     setIsLoading(true);
     try {
       await actions.deleteMessage({ id: messageId });
-      toast.success('Message deleted');
+      toast.success(translateText('generated.inline.0741_message_deleted_3271a770'));
       return { success: true };
     } catch (error) {
       console.error('Failed to delete message:', error);
-      toast.error('Failed to delete message');
+      toast.error(translateText('generated.inline.0742_failed_to_delete_message_4e4266ff'));
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -309,11 +310,11 @@ export function useMessageMutations() {
       } catch {
         /* notification delivery is best-effort */
       }
-      toast.success('Conversation accepted');
+      toast.success(translateText('generated.inline.0743_conversation_accepted_575bee56'));
       return { success: true };
     } catch (error) {
       console.error('Failed to accept conversation:', error);
-      toast.error('Failed to accept conversation');
+      toast.error(translateText('generated.inline.0744_failed_to_accept_conversation_6e87255f'));
       return { success: false, error };
     }
   };
@@ -327,11 +328,11 @@ export function useMessageMutations() {
         await actions.removeParticipant({ id: p.id });
       }
       await actions.deleteConversation({ id: conversation.id });
-      toast.success('Conversation rejected');
+      toast.success(translateText('generated.inline.0745_conversation_rejected_12876dbb'));
       return { success: true };
     } catch (error) {
       console.error('Failed to reject conversation:', error);
-      toast.error('Failed to reject conversation');
+      toast.error(translateText('generated.inline.0746_failed_to_reject_conversation_2f236793'));
       return { success: false, error };
     }
   };
@@ -345,11 +346,11 @@ export function useMessageMutations() {
         await actions.removeParticipant({ id: p.id });
       }
       await actions.deleteConversation({ id: conversation.id });
-      toast.success('Conversation deleted');
+      toast.success(translateText('generated.inline.0747_conversation_deleted_798eb3c2'));
       return { success: true };
     } catch (error) {
       console.error('Failed to delete conversation:', error);
-      toast.error('Failed to delete conversation');
+      toast.error(translateText('generated.inline.0748_failed_to_delete_conversation_61f9456d'));
       return { success: false, error };
     }
   };
@@ -363,7 +364,7 @@ export function useMessageMutations() {
       return { success: true };
     } catch (error) {
       console.error('Failed to toggle pin:', error);
-      toast.error('Failed to toggle pin');
+      toast.error(translateText('generated.inline.0749_failed_to_toggle_pin_bd700a53'));
       return { success: false, error };
     }
   };
@@ -377,7 +378,7 @@ export function useMessageMutations() {
       return { success: true };
     } catch (error) {
       console.error('Failed to update conversation name:', error);
-      toast.error('Failed to update conversation');
+      toast.error(translateText('generated.inline.0750_failed_to_update_conversation_4dc375ea'));
       return { success: false, error };
     }
   };

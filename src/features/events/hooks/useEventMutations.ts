@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { useEventActions } from '@/zero/events/useEventActions';
 import type { EventUpdateInput } from '@/zero/events/schema';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 /**
  * Hook for event mutations
@@ -10,6 +11,7 @@ export function useEventMutations(eventId: string) {
   const {
     inviteParticipant,
     updateParticipant,
+    syncParticipantRoles,
     leaveEvent,
     updateEvent: doUpdateEvent,
   } = useEventActions();
@@ -53,7 +55,7 @@ export function useEventMutations(eventId: string) {
       return { success: true };
     } catch (error) {
       console.error('Failed to invite participants:', error);
-      toast.error('Failed to invite participants');
+      toast.error(translateText('generated.inline.0452_failed_to_invite_participants_98a87f1c'));
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -80,11 +82,11 @@ export function useEventMutations(eventId: string) {
         status: 'active',
       });
 
-      toast.success('Participation approved');
+      toast.success(translateText('generated.inline.0453_participation_approved_2d1f7f60'));
       return { success: true };
     } catch (error) {
       console.error('Failed to approve participation:', error);
-      toast.error('Failed to approve participation');
+      toast.error(translateText('generated.inline.0454_failed_to_approve_participation_eb726123'));
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -110,11 +112,11 @@ export function useEventMutations(eventId: string) {
         id: participationId,
       });
 
-      toast.success('Participation request rejected');
+      toast.success(translateText('generated.inline.0455_participation_request_rejected_3d4d3f9f'));
       return { success: true };
     } catch (error) {
       console.error('Failed to reject participation:', error);
-      toast.error('Failed to reject participation');
+      toast.error(translateText('generated.inline.0456_failed_to_reject_participation_187c3be5'));
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -140,11 +142,13 @@ export function useEventMutations(eventId: string) {
         id: participationId,
       });
 
-      toast.success('Participant removed successfully');
+      toast.success(
+        translateText('generated.inline.0457_participant_removed_successfully_4704450f')
+      );
       return { success: true };
     } catch (error) {
       console.error('Failed to remove participant:', error);
-      toast.error('Failed to remove participant');
+      toast.error(translateText('generated.inline.0458_failed_to_remove_participant_eb460372'));
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -195,11 +199,13 @@ export function useEventMutations(eventId: string) {
         assigned_by_id: senderId ?? null,
       });
 
-      toast.success('Participant role updated');
+      toast.success(translateText('generated.inline.0459_participant_role_updated_4697982e'));
       return { success: true };
     } catch (error) {
       console.error('Failed to change participant role:', error);
-      toast.error('Failed to change participant role');
+      toast.error(
+        translateText('generated.inline.0460_failed_to_change_participant_role_008475f2')
+      );
       return { success: false, error };
     } finally {
       setIsLoading(false);
@@ -228,11 +234,11 @@ export function useEventMutations(eventId: string) {
         ...updates,
       });
 
-      toast.success('Event updated successfully');
+      toast.success(translateText('generated.inline.0461_event_updated_successfully_bc659249'));
       return { success: true };
     } catch (error) {
       console.error('Failed to update event:', error);
-      toast.error('Failed to update event');
+      toast.error(translateText('generated.inline.0462_failed_to_update_event_db303d38'));
       return { success: false, error };
     } finally {
       setIsLoading(false);

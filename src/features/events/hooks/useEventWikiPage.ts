@@ -9,6 +9,7 @@ import { useSubscribeEvent } from './useSubscribeEvent';
 import { useEventParticipation } from './useEventParticipation';
 import { computeAgendaStats } from '@/features/agendas/logic/computeAgendaStats';
 import { checkEntityAccess } from '@/features/auth/logic/checkEntityAccess';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export function useEventWikiPage(eventId: string) {
   const navigate = useNavigate();
@@ -61,7 +62,9 @@ export function useEventWikiPage(eventId: string) {
     try {
       const existingCandidacy = getUserCandidacy(selectedElection);
       if (existingCandidacy) {
-        toast.error('Sie sind bereits Kandidat für diese Wahl');
+        toast.error(
+          translateText('generated.inline.0479_sie_sind_bereits_kandidat_f_r_diese_wahl_48adad8d')
+        );
         setConfirmDialogOpen(false);
         setIsSubmitting(false);
         return;
@@ -86,12 +89,20 @@ export function useEventWikiPage(eventId: string) {
         status: 'nominated',
       });
 
-      toast.success('Sie wurden erfolgreich als Kandidat hinzugefügt!');
+      toast.success(
+        translateText(
+          'generated.inline.0480_sie_wurden_erfolgreich_als_kandidat_hinzugef__d99fe7a6'
+        )
+      );
       setConfirmDialogOpen(false);
       setSelectedElection(null);
     } catch (error) {
       console.error('Failed to add candidate:', error);
-      toast.error('Fehler beim Hinzufügen des Kandidaten. Bitte versuchen Sie es erneut.');
+      toast.error(
+        translateText(
+          'generated.inline.0481_fehler_beim_hinzuf_gen_des_kandidaten_bitte_v_14c00c58'
+        )
+      );
     } finally {
       setIsSubmitting(false);
     }

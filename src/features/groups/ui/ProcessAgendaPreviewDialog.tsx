@@ -23,6 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/features/shared/ui/ui/dialog';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface ProcessAgendaPreviewDialogProps {
   open: boolean;
@@ -122,7 +123,11 @@ function getAgendaDisplayType(step: {
     return step.agendaItemType;
   }
 
-  if (step.agendaItemType === 'amendment') {
+  if (
+    step.agendaItemType === 'amendment' ||
+    step.agendaItemType === 'implementation_review' ||
+    step.agendaItemType === 'support_confirmation'
+  ) {
     return 'vote';
   }
 
@@ -153,7 +158,9 @@ function buildStepTargetGroupName(step: StepRunLike, fallbackTargetGroupName: st
       ? step.target_group.name
       : null;
   const workflowLabel =
-    'workflow_step' in step && step.workflow_step && 'label' in step.workflow_step
+    'workflow_step' in step &&
+    step.workflow_step &&
+    translateText('generated.inline.0109_label_64c65374') in step.workflow_step
       ? step.workflow_step.label
       : null;
 
@@ -384,9 +391,13 @@ export function ProcessAgendaPreviewDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-5xl">
         <DialogHeader>
-          <DialogTitle>Neue Agenda items anzeigen</DialogTitle>
+          <DialogTitle>
+            {translateText('generated.inline.0710_neue_agenda_items_anzeigen_bf362c2d')}
+          </DialogTitle>
           <DialogDescription>
-            Timeline-Vorschau der Agenda items aus diesem Antragsprozess.
+            {translateText(
+              'generated.inline.0711_timeline_vorschau_der_agenda_items_aus_diesem_af15f8d0'
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -394,8 +405,9 @@ export function ProcessAgendaPreviewDialog({
           <div className="text-muted-foreground flex items-start gap-3 rounded-xl border border-dashed p-4 text-sm">
             <Info className="mt-0.5 h-4 w-4 flex-shrink-0" />
             <span>
-              Fuer diesen Antragsprozess gibt es aktuell keine geplanten oder noch nicht
-              bestaetigten Agenda items.
+              {translateText(
+                'generated.inline.0712_fuer_diesen_antragsprozess_gibt_es_aktuell_ke_c0f5f0b1'
+              )}
             </span>
           </div>
         ) : (
@@ -403,9 +415,13 @@ export function ProcessAgendaPreviewDialog({
             {scheduledItems.length > 0 ? (
               <div className="space-y-4">
                 <div className="space-y-1">
-                  <h3 className="text-lg font-semibold">Scheduled</h3>
+                  <h3 className="text-lg font-semibold">
+                    {translateText('generated.inline.0713_scheduled_1cd1bdad')}
+                  </h3>
                   <p className="text-muted-foreground text-sm">
-                    Agenda items, deren vorheriger Prozessschritt bereits positiv bestaetigt wurde.
+                    {translateText(
+                      'generated.inline.0714_agenda_items_deren_vorheriger_prozessschritt__6beb4ad4'
+                    )}
                   </p>
                 </div>
 
@@ -420,9 +436,13 @@ export function ProcessAgendaPreviewDialog({
             {scheduledButNotConfirmedItems.length > 0 ? (
               <Card className="border-dashed">
                 <CardHeader>
-                  <CardTitle>Scheduled but not confirmed</CardTitle>
+                  <CardTitle>
+                    {translateText('generated.inline.0715_scheduled_but_not_confirmed_512467ae')}
+                  </CardTitle>
                   <CardDescription>
-                    Agenda items, deren darunter liegende Abstimmung noch aussteht.
+                    {translateText(
+                      'generated.inline.0716_agenda_items_deren_darunter_liegende_abstimmu_2875f6bf'
+                    )}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

@@ -1,5 +1,7 @@
 import { defineMutator } from '@rocicorp/zero';
 import { can } from '../rbac/can';
+import { requireAuthenticated, requireOwner } from '../rbac/authorize';
+import { PermissionError, isPermissionError } from '../rbac/errors';
 import { zql } from '../schema';
 import {
   createDocumentSchema,
@@ -55,29 +57,162 @@ async function authorizeDocumentGroupManage(
 ) {
   const scope = await loadDocumentScope(tx, documentId);
 
-  if (scope.groupId) {
-    await can(tx, ctx, {
-      action: 'manage',
-      resource: 'groupDocuments',
-      groupId: scope.groupId,
-    });
+  if (scope.document.amendment_id) {
+    try {
+      await can(tx, ctx, {
+        action: 'update',
+        resource: 'documents',
+        amendmentId: scope.document.amendment_id,
+      });
+      return scope;
+    } catch (error) {
+      if (!isPermissionError(error) || !scope.groupId) {
+        throw error;
+      }
+
+      await can(tx, ctx, {
+        action: 'manage',
+        resource: 'groupDocuments',
+        groupId: scope.groupId,
+      });
+      return scope;
+    }
+  }
+
+  requireAuthenticated(tx, ctx, { action: 'update', resource: 'documents' });
+  const collaborator = await tx.run(
+    zql.document_collaborator
+      .where('document_id', documentId)
+      .where('user_id', ctx.userID)
+      .where('status', 'active')
+      .one()
+  );
+  if (!collaborator) {
+    throw new PermissionError('update', 'documents', `document:${documentId}`);
   }
 
   return scope;
 }
 
-async function authorizeDocumentScopeByThread(
+async function authorizeDocumentCreateForAmendment(
   tx: Parameters<typeof can>[0],
   ctx: Parameters<typeof can>[1],
+  amendmentId: string | null | undefined
+) {
+  if (tx.location === 'client') return;
+
+  if (!amendmentId) {
+    requireAuthenticated(tx, ctx, { action: 'create', resource: 'documents' });
+    return;
+  }
+
+  const amendment = await tx.run(zql.amendment.where('id', amendmentId).one());
+  if (!amendment) {
+    throw new Error('Amendment not found');
+  }
+
+  try {
+    await can(tx, ctx, {
+      action: 'update',
+      resource: 'documents',
+      amendmentId,
+    });
+  } catch (error) {
+    if (!isPermissionError(error) || !amendment.group_id) {
+      throw error;
+    }
+
+    await can(tx, ctx, {
+      action: 'manage',
+      resource: 'groupDocuments',
+      groupId: amendment.group_id,
+    });
+  }
+}
+
+async function authorizeThreadParentAccess(
+  tx: Parameters<typeof can>[0],
+  ctx: Parameters<typeof can>[1],
+  thread: NonNullable<Awaited<ReturnType<typeof authorizeDocumentScopeByThread>>>,
+  action: 'create' | 'update' | 'delete' | 'view' = 'view'
+) {
+  if (tx.location === 'client') return;
+
+  if (thread.document_id) {
+    await authorizeDocumentGroupManage(tx, ctx, thread.document_id);
+    return;
+  }
+
+  if (thread.amendment_id) {
+    await can(tx, ctx, { action, resource: 'threads', amendmentId: thread.amendment_id });
+    return;
+  }
+
+  if (thread.blog_id) {
+    await can(tx, ctx, {
+      action: action === 'view' ? 'view' : 'update',
+      resource: 'blogs',
+      blogId: thread.blog_id,
+    });
+    return;
+  }
+
+  if (thread.statement_id) {
+    const statement = await tx.run(zql.statement.where('id', thread.statement_id).one());
+    requireOwner(tx, ctx, statement?.user_id, { action: 'update', resource: 'statements' });
+    return;
+  }
+
+  throw new PermissionError(action, 'threads', `thread:${thread.id}`);
+}
+
+async function authorizeThreadAuthorOrParentManage(
+  tx: Parameters<typeof can>[0],
+  ctx: Parameters<typeof can>[1],
+  threadId: string,
+  action: 'update' | 'delete'
+) {
+  if (tx.location === 'client') return;
+
+  const thread = await authorizeDocumentScopeByThread(tx, ctx, threadId);
+  if (thread.user_id === ctx.userID) {
+    requireOwner(tx, ctx, thread.user_id, { action, resource: 'threads' });
+    return;
+  }
+
+  await authorizeThreadParentAccess(tx, ctx, thread, action);
+}
+
+async function authorizeCommentAuthorOrParentManage(
+  tx: Parameters<typeof can>[0],
+  ctx: Parameters<typeof can>[1],
+  commentId: string,
+  action: 'update' | 'delete'
+) {
+  if (tx.location === 'client') return;
+
+  const comment = await tx.run(zql.comment.where('id', commentId).one());
+  if (!comment) {
+    throw new Error('Comment not found');
+  }
+
+  if (comment.user_id === ctx.userID) {
+    requireOwner(tx, ctx, comment.user_id, { action, resource: 'comments' });
+    return;
+  }
+
+  const thread = await authorizeDocumentScopeByThread(tx, ctx, comment.thread_id);
+  await authorizeThreadParentAccess(tx, ctx, thread, action);
+}
+
+async function authorizeDocumentScopeByThread(
+  tx: Parameters<typeof can>[0],
+  _ctx: Parameters<typeof can>[1],
   threadId: string
 ) {
   const thread = await tx.run(zql.thread.where('id', threadId).one());
   if (!thread) {
     throw new Error('Thread not found');
-  }
-
-  if (thread.document_id) {
-    await authorizeDocumentGroupManage(tx, ctx, thread.document_id);
   }
 
   return thread;
@@ -101,20 +236,7 @@ async function authorizeDocumentScopeByComment(
 export const documentSharedMutators = {
   // Create a document
   create: defineMutator(createDocumentSchema, async ({ tx, ctx, args }) => {
-    if (tx.location !== 'client' && args.amendment_id) {
-      const amendment = await tx.run(zql.amendment.where('id', args.amendment_id).one());
-      if (!amendment) {
-        throw new Error('Amendment not found');
-      }
-
-      if (amendment.group_id) {
-        await can(tx, ctx, {
-          action: 'manage',
-          resource: 'groupDocuments',
-          groupId: amendment.group_id,
-        });
-      }
-    }
+    await authorizeDocumentCreateForAmendment(tx, ctx, args.amendment_id);
 
     const now = Date.now();
     await tx.mutate.document.insert({
@@ -189,8 +311,23 @@ export const documentSharedMutators = {
   }),
 
   createThread: defineMutator(createThreadSchema, async ({ tx, ctx, args }) => {
-    if (tx.location !== 'client' && args.document_id) {
-      await authorizeDocumentGroupManage(tx, ctx, args.document_id);
+    if (tx.location !== 'client') {
+      if (args.document_id) {
+        await authorizeDocumentGroupManage(tx, ctx, args.document_id);
+      } else if (args.amendment_id) {
+        await can(tx, ctx, {
+          action: 'create',
+          resource: 'threads',
+          amendmentId: args.amendment_id,
+        });
+      } else if (args.blog_id) {
+        await can(tx, ctx, { action: 'view', resource: 'blogs', blogId: args.blog_id });
+      } else if (args.statement_id) {
+        const statement = await tx.run(zql.statement.where('id', args.statement_id).one());
+        requireOwner(tx, ctx, statement?.user_id, { action: 'update', resource: 'statements' });
+      } else {
+        throw new PermissionError('create', 'threads', 'missing parent');
+      }
     }
 
     const now = Date.now();
@@ -206,7 +343,8 @@ export const documentSharedMutators = {
 
   addComment: defineMutator(createCommentSchema, async ({ tx, ctx, args }) => {
     if (tx.location !== 'client') {
-      await authorizeDocumentScopeByThread(tx, ctx, args.thread_id);
+      const thread = await authorizeDocumentScopeByThread(tx, ctx, args.thread_id);
+      await authorizeThreadParentAccess(tx, ctx, thread, 'create');
     }
 
     const now = Date.now();
@@ -222,7 +360,8 @@ export const documentSharedMutators = {
 
   voteThread: defineMutator(createThreadVoteSchema, async ({ tx, ctx, args }) => {
     if (tx.location !== 'client') {
-      await authorizeDocumentScopeByThread(tx, ctx, args.thread_id);
+      const thread = await authorizeDocumentScopeByThread(tx, ctx, args.thread_id);
+      await authorizeThreadParentAccess(tx, ctx, thread, 'view');
     }
 
     const now = Date.now();
@@ -235,7 +374,9 @@ export const documentSharedMutators = {
 
   voteComment: defineMutator(createCommentVoteSchema, async ({ tx, ctx, args }) => {
     if (tx.location !== 'client') {
-      await authorizeDocumentScopeByComment(tx, ctx, args.comment_id);
+      const comment = await authorizeDocumentScopeByComment(tx, ctx, args.comment_id);
+      const thread = await authorizeDocumentScopeByThread(tx, ctx, comment.thread_id);
+      await authorizeThreadParentAccess(tx, ctx, thread, 'view');
     }
 
     const now = Date.now();
@@ -295,7 +436,7 @@ export const documentSharedMutators = {
         throw new Error('Comment vote not found');
       }
 
-      await authorizeDocumentScopeByComment(tx, ctx, commentVote.comment_id);
+      requireOwner(tx, ctx, commentVote.user_id, { action: 'update', resource: 'commentVotes' });
     }
 
     await tx.mutate.comment_vote.update(args);
@@ -309,7 +450,7 @@ export const documentSharedMutators = {
         throw new Error('Comment vote not found');
       }
 
-      await authorizeDocumentScopeByComment(tx, ctx, commentVote.comment_id);
+      requireOwner(tx, ctx, commentVote.user_id, { action: 'delete', resource: 'commentVotes' });
     }
 
     await tx.mutate.comment_vote.delete({ id: args.id });
@@ -323,7 +464,7 @@ export const documentSharedMutators = {
         throw new Error('Thread vote not found');
       }
 
-      await authorizeDocumentScopeByThread(tx, ctx, threadVote.thread_id);
+      requireOwner(tx, ctx, threadVote.user_id, { action: 'update', resource: 'threads' });
     }
 
     await tx.mutate.thread_vote.update(args);
@@ -337,7 +478,7 @@ export const documentSharedMutators = {
         throw new Error('Thread vote not found');
       }
 
-      await authorizeDocumentScopeByThread(tx, ctx, threadVote.thread_id);
+      requireOwner(tx, ctx, threadVote.user_id, { action: 'delete', resource: 'threads' });
     }
 
     await tx.mutate.thread_vote.delete({ id: args.id });
@@ -345,9 +486,7 @@ export const documentSharedMutators = {
 
   // Update a thread (vote counts)
   updateThread: defineMutator(updateThreadSchema, async ({ tx, ctx, args }) => {
-    if (tx.location !== 'client') {
-      await authorizeDocumentScopeByThread(tx, ctx, args.id);
-    }
+    await authorizeThreadAuthorOrParentManage(tx, ctx, args.id, 'update');
 
     await tx.mutate.thread.update({
       ...args,
@@ -357,9 +496,7 @@ export const documentSharedMutators = {
 
   // Update a comment (vote counts)
   updateComment: defineMutator(updateCommentSchema, async ({ tx, ctx, args }) => {
-    if (tx.location !== 'client') {
-      await authorizeDocumentScopeByComment(tx, ctx, args.id);
-    }
+    await authorizeCommentAuthorOrParentManage(tx, ctx, args.id, 'update');
 
     await tx.mutate.comment.update({
       ...args,

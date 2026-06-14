@@ -19,6 +19,7 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Check, Trash2, UserRoundCheck } from 'lucide-react';
 import { RoleTag } from './RoleTag';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface GuestAccessRoleLike {
   id?: string | null;
@@ -89,8 +90,10 @@ export function GuestsTable<TGuestAccess extends GuestAccessLike>({
   guests,
   onApprove,
   onRevoke,
-  title = 'Guest Access',
-  description = 'Users with guest roles and access rights',
+  title = translateText('generated.inline.0085_guest_access_44eeebf7'),
+  description = translateText(
+    'generated.inline.0086_users_with_guest_roles_and_access_rights_6ef79881'
+  ),
 }: GuestsTableProps<TGuestAccess>) {
   return (
     <Card className="border-border/70 from-background to-muted/20 mb-6 bg-gradient-to-b">
@@ -103,16 +106,20 @@ export function GuestsTable<TGuestAccess extends GuestAccessLike>({
       </CardHeader>
       <CardContent>
         {guests.length === 0 ? (
-          <p className="text-muted-foreground py-8 text-center">No guests yet</p>
+          <p className="text-muted-foreground py-8 text-center">
+            {translateText('generated.inline.0687_no_guests_yet_a19e5185')}
+          </p>
         ) : (
           <div className="border-border/70 overflow-x-auto rounded-2xl border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Roles</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{translateText('generated.inline.0090_user_9f8a2389')}</TableHead>
+                  <TableHead>{translateText('generated.inline.0688_status_bae7d5be')}</TableHead>
+                  <TableHead>{translateText('generated.inline.0689_roles_47dcc27d')}</TableHead>
+                  <TableHead className="text-right">
+                    {translateText('generated.inline.0093_actions_c3cd636a')}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -185,7 +192,9 @@ export function GuestsTable<TGuestAccess extends GuestAccessLike>({
                               />
                             ))
                           ) : (
-                            <RoleTag fallbackKey={`guest-${guest.id}`}>No guest role</RoleTag>
+                            <RoleTag fallbackKey={`guest-${guest.id}`}>
+                              {translateText('generated.inline.0690_no_guest_role_0a807d70')}
+                            </RoleTag>
                           )}
                         </div>
                       </TableCell>
@@ -194,14 +203,16 @@ export function GuestsTable<TGuestAccess extends GuestAccessLike>({
                           {guest.status === 'requested' && onApprove ? (
                             <Button variant="default" size="sm" onClick={() => onApprove(guest.id)}>
                               <Check className="mr-1 h-4 w-4" />
-                              Approve
+                              {translateText('generated.inline.0691_approve_7b2c7f14')}
                             </Button>
                           ) : null}
                           {onRevoke ? (
                             <Button variant="ghost" size="sm" onClick={() => onRevoke(guest.id)}>
                               <Trash2 className="h-4 w-4" />
                               <span className="ml-2">
-                                {guest.status === 'requested' ? 'Reject' : 'Revoke'}
+                                {guest.status === 'requested'
+                                  ? translateText('generated.inline.0099_reject_2b03b592')
+                                  : translateText('generated.inline.0100_revoke_0be72075')}
                               </span>
                             </Button>
                           ) : null}

@@ -1,6 +1,7 @@
 import { cn } from '@/features/shared/utils/utils';
 import { ArrowBigUp, ArrowBigDown } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export type VoteValue = 1 | 0 | -1;
 
@@ -39,27 +40,25 @@ export function VoteButtons({
 
   return (
     <div
-      className={cn(
-        'flex items-center gap-0.5',
-        isVertical ? 'flex-col' : 'flex-row',
-        className,
-      )}
+      className={cn('flex items-center gap-0.5', isVertical ? 'flex-col' : 'flex-row', className)}
     >
       <Button
         variant="ghost"
         size="icon"
         className={cn(s.btn, userVote === 1 && 'text-orange-500')}
         onClick={handleUp}
-        aria-label="Upvote"
+        aria-label={translateText('generated.inline.1150_upvote_c52661f1')}
       >
         <ArrowBigUp className={cn(s.icon, userVote === 1 && 'fill-current')} />
       </Button>
 
-      <span className={cn(
-        'text-sm font-semibold tabular-nums select-none',
-        score > 0 && 'text-orange-500',
-        score < 0 && 'text-blue-500',
-      )}>
+      <span
+        className={cn(
+          'text-sm font-semibold tabular-nums select-none',
+          score > 0 && 'text-orange-500',
+          score < 0 && 'text-blue-500'
+        )}
+      >
         {score}
       </span>
 
@@ -68,7 +67,7 @@ export function VoteButtons({
         size="icon"
         className={cn(s.btn, userVote === -1 && 'text-blue-500')}
         onClick={handleDown}
-        aria-label="Downvote"
+        aria-label={translateText('generated.inline.1151_downvote_fef514a0')}
       >
         <ArrowBigDown className={cn(s.icon, userVote === -1 && 'fill-current')} />
       </Button>

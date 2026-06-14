@@ -1,12 +1,16 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { cn } from '@/features/shared/utils/utils';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
-import { TerminalHeader, type TerminalFilter, type VisibilityFilter } from './TerminalHeader';
-import { DecisionTable } from './DecisionTable';
-import { DecisionSidePanel } from './DecisionSidePanel';
-import { MobileDecisionCard } from './MobileDecisionCard';
+import { usePreferenceActions, usePreferenceState } from '@/zero/preferences';
+import type { DecisionTerminalDashboardConfig } from '@/zero/preferences';
+import {
+  createDefaultDecisionTerminalDashboardConfig,
+  normalizeDecisionTerminalDashboardConfig,
+} from '../logic/dashboard-config';
+import { DecisionDashboardGrid } from './DecisionDashboardGrid';
+import { DecisionDashboardHeader } from './DecisionDashboardHeader';
+import { DecisionVoteDialogController } from './DecisionVoteDialogController';
 import type { DecisionItem } from './types';
 
 export interface DecisionTerminalProps {
@@ -16,182 +20,83 @@ export interface DecisionTerminalProps {
 }
 
 /**
- * Decision Terminal - Bloomberg-style view for active votes and elections
- * Shows all open decisions with real-time updates, countdowns, and trends
+ * Decision Terminal - always-on draggable and resizable grid for active decisions.
  */
 export function DecisionTerminal({
   decisions,
   isLoading = false,
   className,
 }: DecisionTerminalProps) {
-  const [activeFilter, setActiveFilter] = useState<TerminalFilter>('live');
-  const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilter>('all');
+  const { decisionTerminalDashboard, isLoading: preferencesLoading } = usePreferenceState();
+  const { saveDecisionTerminalDashboard } = usePreferenceActions();
+  const [dashboardConfig, setDashboardConfig] = useState<DecisionTerminalDashboardConfig>(() =>
+    createDefaultDecisionTerminalDashboardConfig()
+  );
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedDecision, setSelectedDecision] = useState<DecisionItem | null>(null);
+  const [voteTarget, setVoteTarget] = useState<DecisionItem | null>(null);
+  const [voteDialogOpen, setVoteDialogOpen] = useState(false);
 
-  // Filter decisions based on active filter, visibility, and search
-  const filteredDecisions = useMemo(() => {
-    let filtered = [...decisions];
+  useEffect(() => {
+    setDashboardConfig(normalizeDecisionTerminalDashboardConfig(decisionTerminalDashboard));
+  }, [decisionTerminalDashboard]);
 
-    // Apply time filter
-    switch (activeFilter) {
-      case 'live':
-        filtered = filtered.filter(d => !d.isClosed && !d.isOpeningSoon);
-        break;
-      case 'opening_soon':
-        filtered = filtered.filter(d => !d.isClosed && d.isOpeningSoon);
-        break;
-      case 'recently_closed':
-        filtered = filtered.filter(d => d.isClosed && d.isRecentlyClosed);
-        break;
-      case 'all':
-      default:
-        break;
-    }
+  const urgentCount = decisions.filter(
+    d => !d.isClosed && (d.isUrgent || d.status === 'final_minutes')
+  ).length;
+  const activeCount = decisions.filter(d => !d.isClosed && !d.isOpeningSoon).length;
 
-    // Apply visibility filter
-    switch (visibilityFilter) {
-      case 'public':
-        filtered = filtered.filter(d => d.visibility === 'public');
-        break;
-      case 'authenticated':
-        filtered = filtered.filter(d => d.visibility === 'authenticated');
-        break;
-      case 'private':
-        filtered = filtered.filter(d => d.visibility === 'private');
-        break;
-      case 'all':
-      default:
-        break;
-    }
+  const persistConfig = useCallback(
+    (nextConfig: DecisionTerminalDashboardConfig) => {
+      setDashboardConfig(nextConfig);
+      saveDecisionTerminalDashboard(nextConfig);
+    },
+    [saveDecisionTerminalDashboard]
+  );
 
-    // Apply search
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        d =>
-          d.title.toLowerCase().includes(query) ||
-          d.body.toLowerCase().includes(query) ||
-          d.id.toLowerCase().includes(query)
-      );
-    }
+  const handleVoteDecision = useCallback((decision: DecisionItem) => {
+    setVoteTarget(decision);
+    setVoteDialogOpen(true);
+  }, []);
 
-    return filtered;
-  }, [decisions, activeFilter, visibilityFilter, searchQuery]);
-
-  // Calculate counts
-  const urgentCount = decisions.filter(d => !d.isClosed && d.isUrgent).length;
-  const activeCount = decisions.filter(d => !d.isClosed).length;
-
-  // Handle row click
-  const handleRowClick = (decision: DecisionItem) => {
-    setSelectedDecision(decision);
-  };
-
-  // Close side panel
-  const handleCloseSidePanel = () => {
-    setSelectedDecision(null);
-  };
+  const handleResetLayout = useCallback(() => {
+    persistConfig(createDefaultDecisionTerminalDashboardConfig());
+  }, [persistConfig]);
 
   return (
     <div
       className={cn(
-        'flex h-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-card dark:border-gray-700',
+        'bg-card flex h-full min-h-[640px] flex-col overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700',
         className
       )}
+      data-testid="decision-terminal"
     >
-      {/* Terminal Header */}
-      <TerminalHeader
-        activeFilter={activeFilter}
-        onFilterChange={setActiveFilter}
-        visibilityFilter={visibilityFilter}
-        onVisibilityFilterChange={setVisibilityFilter}
+      <DecisionDashboardHeader
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        onResetLayout={handleResetLayout}
         urgentCount={urgentCount}
         activeCount={activeCount}
       />
 
-      {/* Main content area */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Table (desktop) or Cards (mobile) */}
-        <div className="flex-1 overflow-auto">
-          {isLoading ? (
-            <TerminalLoadingSkeleton />
-          ) : filteredDecisions.length === 0 ? (
-            <TerminalEmptyState filter={activeFilter} />
-          ) : (
-            <>
-              {/* Desktop: Table view */}
-              <div className="hidden lg:block">
-                <DecisionTable
-                  decisions={filteredDecisions}
-                  onRowClick={handleRowClick}
-                  selectedId={selectedDecision?.id}
-                />
-              </div>
-
-              {/* Mobile: Card view */}
-              <div className="block space-y-3 p-4 lg:hidden">
-                {filteredDecisions.map(decision => (
-                  <MobileDecisionCard
-                    key={decision.id}
-                    decision={decision}
-                    onClick={() => handleRowClick(decision)}
-                  />
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Side panel for details */}
-        {selectedDecision && (
-          <DecisionSidePanel decision={selectedDecision} onClose={handleCloseSidePanel} />
-        )}
+      <div className="bg-muted/20 flex-1 overflow-auto">
+        <DecisionDashboardGrid
+          config={dashboardConfig}
+          decisions={decisions}
+          isLoading={isLoading || preferencesLoading}
+          searchQuery={searchQuery}
+          onConfigChange={persistConfig}
+          onVoteDecision={handleVoteDecision}
+        />
       </div>
-    </div>
-  );
-}
 
-/**
- * Loading skeleton for terminal
- */
-function TerminalLoadingSkeleton() {
-  return (
-    <div className="space-y-2 p-4">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div
-          key={i}
-          className="flex h-12 animate-pulse items-center gap-4 rounded border border-gray-100 bg-gray-50 px-4 dark:border-gray-800 dark:bg-gray-900"
-        >
-          <div className="h-4 w-16 rounded bg-gray-200 dark:bg-gray-700" />
-          <div className="h-4 flex-1 rounded bg-gray-200 dark:bg-gray-700" />
-          <div className="h-4 w-24 rounded bg-gray-200 dark:bg-gray-700" />
-          <div className="h-4 w-16 rounded bg-gray-200 dark:bg-gray-700" />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/**
- * Empty state for terminal
- */
-function TerminalEmptyState({ filter }: { filter: TerminalFilter }) {
-  const { t } = useTranslation();
-
-  const messages: Record<TerminalFilter, string> = {
-    live: t('timeline.terminal.empty.live'),
-    opening_soon: t('timeline.terminal.empty.openingSoon'),
-    recently_closed: t('timeline.terminal.empty.recentlyClosed'),
-    all: t('timeline.terminal.empty.all'),
-  };
-
-  return (
-    <div className="flex h-64 flex-col items-center justify-center text-center">
-      <span className="mb-2 text-4xl">📊</span>
-      <p className="text-muted-foreground">{messages[filter]}</p>
+      <DecisionVoteDialogController
+        decision={voteTarget}
+        open={voteDialogOpen}
+        onOpenChange={open => {
+          setVoteDialogOpen(open);
+          if (!open) setVoteTarget(null);
+        }}
+      />
     </div>
   );
 }

@@ -37,9 +37,9 @@ export type NotificationType =
   | 'group_todo_deleted' // 1.15b: Todo deleted
   | 'group_payment_created' // 1.16: Payment created
   | 'group_payment_deleted' // 1.16: Payment deleted
-  | 'network_link_request' // 1.17: Relationship requested
-  | 'network_link_approved' // 1.17: Relationship approved
-  | 'network_link_rejected' // 1.17: Relationship rejected
+  | 'group_connection_request' // 1.17: Relationship requested
+  | 'group_connection_approved' // 1.17: Relationship approved
+  | 'group_connection_rejected' // 1.17: Relationship rejected
   | 'group_role_created' // 1.18: Role created
   | 'group_role_deleted' // 1.18: Role deleted
   | 'group_role_assigned' // 1.19: Role assigned

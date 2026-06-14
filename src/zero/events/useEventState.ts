@@ -10,8 +10,8 @@ import {
   resolveElectionSeatCount,
 } from '@/features/elections/logic/electionMode';
 import { queries } from '../queries';
-import type { NetworkLinkListRow } from '../network/queries';
-import { explodeNetworkLinksToRelationships } from '@/features/network/logic/networkLinkDerived';
+import { deriveNormalizedGroupRelationships } from '@/features/network/logic/groupConnectionDerived';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 /** A single event row from the byGroup query (flat, no relations) */
 export type EventByGroupRow = QueryRowType<typeof queries.events.byGroup>;
@@ -173,7 +173,7 @@ function mapElectionRole<T extends object>(election: T): ElectionWithDisplayRole
   const role =
     'role' in election ? (election as { role?: RoleDisplayLike | null }).role : undefined;
   const description =
-    'description' in election
+    translateText('generated.inline.0193_description_cb329146') in election
       ? stripDelegateElectionMetadata((election as { description?: string | null }).description)
       : undefined;
   const delegateAssignmentMeta =
@@ -555,10 +555,7 @@ export function useEventDelegates(eventId: string, groupId?: string) {
     queries.events.groupRelationships({ groupId })
   );
   const relationships = useMemo(
-    () =>
-      explodeNetworkLinksToRelationships(
-        (relationshipLinks ?? []) as readonly NetworkLinkListRow[]
-      ),
+    () => deriveNormalizedGroupRelationships(relationshipLinks ?? []),
     [relationshipLinks]
   );
 
@@ -681,9 +678,7 @@ export function useGroupRelationships(groupId?: string) {
   const [relationshipLinks] = useQuery(queries.events.groupRelationships({ groupId }));
 
   return {
-    relationships: explodeNetworkLinksToRelationships(
-      (relationshipLinks ?? []) as readonly NetworkLinkListRow[]
-    ),
+    relationships: deriveNormalizedGroupRelationships(relationshipLinks ?? []),
   };
 }
 

@@ -91,6 +91,7 @@ export const timelineTranslations = {
     blog: 'Blog',
     payment: 'Zahlung',
     action: 'Aktivität',
+    workflow: 'Workflow',
     user: 'Benutzer',
   },
   // Card-specific translations
@@ -259,15 +260,50 @@ export const timelineTranslations = {
   },
   // Mode selector for Following/Explore/Decisions
   modes: {
+    timeline: 'Timeline',
     following: 'Abonniert',
     explore: 'Entdecken',
     decisions: 'Entscheidungen',
   },
   // Header translations
   header: {
-    title: 'Dein politisches Ökosystem',
+    title: 'Timeline',
+    subtitle: 'Was um dich herum passiert, nach Relevanz und Nähe sortiert.',
+    decisionsSubtitle: 'Live-Abstimmungen, Wahlen und kürzlich abgeschlossene Entscheidungen.',
     filter: 'Filtern',
     settings: 'Einstellungen',
+  },
+  around: {
+    mappedCount: '{{count}} auf der Karte',
+    discoverCount: '{{count}} entdeckt',
+    noUserLocation:
+      'Füge deinem Profil einen Standort hinzu, damit nahe Aktivitäten präziser werden.',
+    empty: 'Wenn relevante Aktivitäten um dich herum entstehen, erscheinen sie hier.',
+    sections: {
+      now: 'Jetzt',
+      today: 'Heute',
+      thisWeek: 'Diese Woche',
+      later: 'Später',
+      discover: 'Entdecken',
+    },
+    reasons: {
+      subscribed: 'Gefolgt',
+      memberContext: 'Verbunden',
+      nearYou: 'In deiner Nähe',
+      activeNow: 'Jetzt aktiv',
+      popularNearby: 'Beliebt in der Nähe',
+      publicDiscovery: 'Entdecken',
+      urgentDecision: 'Dringend',
+    },
+    radius: {
+      title: 'Radius',
+      all: 'Alle Orte',
+      km10: '10 km',
+      km25: '25 km',
+      km50: '50 km',
+      km100: '100 km',
+      km250: '250 km',
+    },
   },
   // Sort options
   sort: {

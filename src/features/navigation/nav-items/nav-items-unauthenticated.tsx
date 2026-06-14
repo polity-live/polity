@@ -1,8 +1,9 @@
 import type { NavigationItem } from '@/features/navigation/types/navigation.types.tsx';
 import { docsTopicDefinitions } from '@/features/docs/logic/docsTopics.ts';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 // TanStack Router navigate function type
-type NavigateFn = (opts: { to: string }) => void;
+type NavigateFn = (opts: { to: string; hash?: string }) => void;
 
 // This function factory creates unauthenticated navigation items with router integration
 export const createNavItemsUnauthenticated = (
@@ -14,22 +15,8 @@ export const createNavItemsUnauthenticated = (
       id: 'home',
       icon: 'Home',
       label: t ? t('navigation.primary.home') : 'Home',
-      href: '/',
-      onClick: () => navigate({ to: '/' }),
-    },
-    {
-      id: 'features',
-      icon: 'Sparkles',
-      label: t ? t('navigation.primary.features') : 'Features',
-      href: '/features',
-      onClick: () => navigate({ to: '/features' }),
-    },
-    {
-      id: 'solutions',
-      icon: 'Target',
-      label: t ? t('navigation.primary.solutions') : 'Solutions',
-      href: '/solutions',
-      onClick: () => navigate({ to: '/solutions' }),
+      href: '/#home',
+      onClick: () => navigate({ to: '/', hash: 'home' }),
     },
     {
       id: 'docs',
@@ -53,18 +40,47 @@ export const createNavItemsUnauthenticated = (
       onClick: () => navigate({ to: '/support' }),
     },
     {
-      id: 'imprint',
-      icon: 'FileText',
-      label: t ? t('navigation.primary.imprint') : 'Imprint',
-      href: '/imprint',
-      onClick: () => navigate({ to: '/imprint' }),
-    },
-    {
       id: 'auth',
       icon: 'User',
-      label: 'Login',
+      label: translateText('generated.inline.0192_login_4e5a2893'),
       href: '/auth',
       onClick: () => navigate({ to: '/auth' }),
+    },
+  ];
+};
+
+export const createLandingSecondaryNavItems = (
+  navigate: NavigateFn,
+  t?: (key: string) => string
+): NavigationItem[] => {
+  return [
+    {
+      id: 'landing-home',
+      icon: 'Home',
+      label: t ? t('pages.home.publicLanding.nav.home') : 'Home',
+      href: '/#home',
+      onClick: () => navigate({ to: '/', hash: 'home' }),
+    },
+    {
+      id: 'landing-features',
+      icon: 'Sparkles',
+      label: t ? t('pages.home.publicLanding.nav.features') : 'Features',
+      href: '/#features',
+      onClick: () => navigate({ to: '/', hash: 'features' }),
+    },
+    {
+      id: 'landing-solutions',
+      icon: 'Target',
+      label: t ? t('pages.home.publicLanding.nav.solutions') : 'Solutions',
+      href: '/#solutions',
+      onClick: () => navigate({ to: '/', hash: 'solutions' }),
+    },
+    {
+      id: 'landing-imprint',
+      icon: 'FileText',
+      label: t ? t('pages.home.publicLanding.nav.imprint') : 'Imprint',
+      href: '/#imprint',
+      onClick: () => navigate({ to: '/', hash: 'imprint' }),
     },
   ];
 };
@@ -93,12 +109,34 @@ export const createDocsSecondaryNavItems = (
 
 // Backward compatibility - static version for contexts where hooks can't be used
 export const navItemsUnauthenticated: NavigationItem[] = [
-  { id: 'home', icon: 'Home', label: 'Home', href: '/' },
-  { id: 'features', icon: 'Sparkles', label: 'Features', href: '/features' },
-  { id: 'solutions', icon: 'Target', label: 'Solutions', href: '/solutions' },
-  { id: 'docs', icon: 'BookOpen', label: 'Docs', href: '/docs' },
-  { id: 'pricing', icon: 'CreditCard', label: 'Pricing', href: '/pricing' },
-  { id: 'support', icon: 'Heart', label: 'Support', href: '/support' },
-  { id: 'imprint', icon: 'FileText', label: 'Imprint', href: '/imprint' },
-  { id: 'auth', icon: 'User', label: 'Login', href: '/auth' },
+  {
+    id: 'home',
+    icon: 'Home',
+    label: translateText('generated.inline.0186_home_70f8bb9a'),
+    href: '/#home',
+  },
+  {
+    id: 'docs',
+    icon: 'BookOpen',
+    label: translateText('generated.inline.0193_docs_68a41942'),
+    href: '/docs',
+  },
+  {
+    id: 'pricing',
+    icon: 'CreditCard',
+    label: translateText('generated.inline.0194_pricing_a0d9bbad'),
+    href: '/pricing',
+  },
+  {
+    id: 'support',
+    icon: 'Heart',
+    label: translateText('generated.inline.0083_support_f32d5a3b'),
+    href: '/support',
+  },
+  {
+    id: 'auth',
+    icon: 'User',
+    label: translateText('generated.inline.0192_login_4e5a2893'),
+    href: '/auth',
+  },
 ];

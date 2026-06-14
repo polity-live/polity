@@ -2,7 +2,10 @@ import { Badge } from '@/features/shared/ui/ui/badge.tsx';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { cn } from '@/features/shared/utils/utils.ts';
 import { Popover, PopoverContent, PopoverTrigger } from '@/features/shared/ui/ui/popover.tsx';
-import type { NavigationItem, NavigationView } from '@/features/navigation/types/navigation.types.tsx';
+import type {
+  NavigationItem,
+  NavigationView,
+} from '@/features/navigation/types/navigation.types.tsx';
 import { iconMap } from '@/features/navigation/nav-items/icon-map.tsx';
 import React, { useState } from 'react';
 import { useLocation, useRouterState, Link } from '@tanstack/react-router';
@@ -20,9 +23,10 @@ export function NavItemList({
   isPrimary: boolean;
   navigationView: NavigationView;
 }) {
-  const { pathname } = useLocation();
-  const isRouterPending = useRouterState({ select: (s) => s.status === 'pending' });
-  const currentRoute = pathname ?? '/';
+  const { pathname, hash } = useLocation();
+  const isRouterPending = useRouterState({ select: s => s.status === 'pending' });
+  const normalizedHash = hash ? (hash.startsWith('#') ? hash : `#${hash}`) : '';
+  const currentRoute = `${pathname ?? '/'}${normalizedHash}`;
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [loadingItem, setLoadingItem] = useState<string | null>(null);
 
@@ -51,10 +55,11 @@ export function NavItemList({
               {navigationItems.map(item => (
                 <Link key={item.id} to={item.href || '#'} className="inline-block">
                   <Button
+                    aria-label={item.label}
                     variant="ghost"
                     disabled={loadingItem === item.id}
                     className={cn(
-                      'relative h-24 w-24 flex-shrink-0 flex-col gap-2 hover:bg-accent',
+                      'hover:bg-accent relative h-24 w-24 flex-shrink-0 flex-col gap-2',
                       isItemActive(item, currentRoute, isPrimary) &&
                         'bg-accent text-accent-foreground'
                     )}
@@ -78,7 +83,7 @@ export function NavItemList({
                     <span className="text-sm">{item.label}</span>
                     {item.badge && (
                       <Badge
-                        className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center p-0"
+                        className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center p-0"
                         variant="default"
                       >
                         {(() => {
@@ -95,10 +100,11 @@ export function NavItemList({
             navigationItems.map(item => (
               <Link key={item.id} to={item.href || '#'} className="inline-block">
                 <Button
+                  aria-label={item.label}
                   variant="ghost"
                   disabled={loadingItem === item.id}
                   className={cn(
-                    'relative h-24 w-24 flex-shrink-0 flex-col gap-2 hover:bg-accent',
+                    'hover:bg-accent relative h-24 w-24 flex-shrink-0 flex-col gap-2',
                     isItemActive(item, currentRoute, isPrimary) &&
                       'bg-accent text-accent-foreground'
                   )}
@@ -122,7 +128,7 @@ export function NavItemList({
                   <span className="text-sm">{item.label}</span>
                   {item.badge && (
                     <Badge
-                      className="absolute right-4 top-2 flex h-5 w-5 items-center justify-center p-0"
+                      className="absolute top-2 right-4 flex h-5 w-5 items-center justify-center p-0"
                       variant="default"
                     >
                       {item.badge}
@@ -147,10 +153,11 @@ export function NavItemList({
               <PopoverTrigger asChild>
                 <Link to={item.href || '#'} className="inline-block">
                   <Button
+                    aria-label={item.label}
                     variant="ghost"
                     size="icon"
                     className={cn(
-                      'relative h-12 w-12 flex-shrink-0 hover:bg-accent',
+                      'hover:bg-accent relative h-12 w-12 flex-shrink-0',
                       isItemActive(item, currentRoute, isPrimary) &&
                         'bg-accent text-accent-foreground'
                     )}
@@ -174,7 +181,7 @@ export function NavItemList({
                     })}
                     {item.badge && (
                       <Badge
-                        className="absolute right-4 top-2 flex h-5 w-5 items-center justify-center p-0"
+                        className="absolute top-2 right-4 flex h-5 w-5 items-center justify-center p-0"
                         variant="default"
                       >
                         {(() => {
@@ -204,10 +211,11 @@ export function NavItemList({
             <PopoverTrigger asChild>
               <Link to={item.href || '#'} className="inline-block">
                 <Button
+                  aria-label={item.label}
                   variant="ghost"
                   size="icon"
                   className={cn(
-                    'relative h-12 w-12 flex-shrink-0 hover:bg-accent',
+                    'hover:bg-accent relative h-12 w-12 flex-shrink-0',
                     isItemActive(item, currentRoute, isPrimary) &&
                       'bg-accent text-accent-foreground'
                   )}
@@ -229,7 +237,7 @@ export function NavItemList({
                   })}
                   {item.badge && (
                     <Badge
-                      className="absolute -right-1 -top-0 flex h-5 w-5 items-center justify-center p-0"
+                      className="absolute -top-0 -right-1 flex h-5 w-5 items-center justify-center p-0"
                       variant="default"
                     >
                       {item.badge}
@@ -259,9 +267,10 @@ export function NavItemList({
           {navigationItems.map(item => (
             <Link key={item.id} to={item.href || '#'} className="inline-block">
               <Button
+                aria-label={item.label}
                 variant="ghost"
                 className={cn(
-                  'flex h-16 min-w-16 flex-shrink-0 flex-col gap-1 px-2 hover:bg-accent',
+                  'hover:bg-accent flex h-16 min-w-16 flex-shrink-0 flex-col gap-1 px-2',
                   isItemActive(item, currentRoute, isPrimary) && 'bg-accent text-accent-foreground'
                 )}
                 onClick={e => {
@@ -284,14 +293,14 @@ export function NavItemList({
                   })}
                   {item.badge && (
                     <Badge
-                      className="absolute -right-5 -top-3 flex h-5 w-5 items-center justify-center p-0"
+                      className="absolute -top-3 -right-5 flex h-5 w-5 items-center justify-center p-0"
                       variant="default"
                     >
                       {item.badge}
                     </Badge>
                   )}
                 </div>
-                <span className="whitespace-nowrap text-center text-xs leading-tight">
+                <span className="text-center text-xs leading-tight whitespace-nowrap">
                   {item.label}
                 </span>
               </Button>
@@ -309,6 +318,7 @@ export function NavItemList({
         {navigationItems.map(item => (
           <Link key={item.id} to={item.href || '#'} className="inline-block">
             <Button
+              aria-label={item.label}
               variant="ghost"
               className={cn(
                 'h-12 w-full flex-shrink-0 justify-start gap-3 px-3',

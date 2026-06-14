@@ -36,9 +36,7 @@ export function useBlogActions() {
     (args: Parameters<typeof mutators.blogs.create>[0]) => {
       const result = zero.mutate(mutators.blogs.create(args));
       toast.success(t('features.blogs.toasts.created'));
-      onServerError(result, () =>
-        toast.error(t('features.blogs.toasts.createFailed', 'Failed to create blog'))
-      );
+      onServerError(result, () => toast.error(t('features.blogs.toasts.createFailed')));
     },
     [zero]
   );

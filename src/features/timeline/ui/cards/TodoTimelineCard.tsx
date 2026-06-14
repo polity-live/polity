@@ -2,7 +2,10 @@
 
 import { useState } from 'react';
 import { CheckSquare, Square, Users, Clock, UserPlus, Activity, UserCheck } from 'lucide-react';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Progress } from '@/features/shared/ui/ui/progress';
@@ -66,7 +69,7 @@ function getUrgencyConfig(dueDate: Date): { color: string; bgColor: string; labe
     return {
       color: 'text-red-600',
       bgColor: 'bg-red-100 dark:bg-red-900/40',
-      label: 'Overdue',
+      label: translateText('generated.inline.0533_overdue_07217c77'),
     };
   }
 
@@ -74,7 +77,7 @@ function getUrgencyConfig(dueDate: Date): { color: string; bgColor: string; labe
     return {
       color: 'text-red-600',
       bgColor: 'bg-red-100 dark:bg-red-900/40',
-      label: 'Due Today',
+      label: translateText('generated.inline.0534_due_today_e2219e75'),
     };
   }
 
@@ -82,7 +85,9 @@ function getUrgencyConfig(dueDate: Date): { color: string; bgColor: string; labe
     return {
       color: 'text-orange-600',
       bgColor: 'bg-orange-100 dark:bg-orange-900/40',
-      label: `Due in ${daysUntilDue} days`,
+      label: translateText('generated.inline.0535_due_in_daysuntildue_days_bb3b7b94', {
+        daysUntilDue: daysUntilDue,
+      }),
     };
   }
 
@@ -90,7 +95,9 @@ function getUrgencyConfig(dueDate: Date): { color: string; bgColor: string; labe
     return {
       color: 'text-yellow-600',
       bgColor: 'bg-yellow-100 dark:bg-yellow-900/40',
-      label: `Due in ${daysUntilDue} days`,
+      label: translateText('generated.inline.0535_due_in_daysuntildue_days_bb3b7b94', {
+        daysUntilDue: daysUntilDue,
+      }),
     };
   }
 
@@ -250,68 +257,72 @@ export function TodoTimelineCard({
       </TimelineCardHeader>
 
       <TimelineCardContent>
-        {todo.description && (
-          <p
-            className={cn(
-              'text-muted-foreground mb-3 line-clamp-2 text-sm',
-              todo.isCompleted && 'line-through'
-            )}
-          >
-            {todo.description}
-          </p>
-        )}
-
-        {/* Progress Bar */}
-        {progress !== undefined && (
-          <div className="mb-3">
-            <div className="mb-1 flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">{t('features.timeline.cards.progress')}</span>
-              <span className="font-medium">
-                {todo.currentValue !== undefined && todo.targetValue !== undefined
-                  ? `${todo.currentValue} / ${todo.targetValue}${todo.unit ? ` ${todo.unit}` : ''}`
-                  : `${progress}%`}
-              </span>
-            </div>
-            <Progress
-              value={progress}
-              className={cn('h-2', progress >= 100 && '[&>div]:bg-green-500')}
-            />
-          </div>
-        )}
-
-        {/* Meta Info */}
-        <div className="text-muted-foreground flex items-center gap-4 text-xs">
-          {(todo.assigneeCount !== undefined || assignments.length > 0) && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="flex cursor-help items-center gap-1">
-                  <Users className="h-3.5 w-3.5" />
-                  <span className="font-medium">{todo.assigneeCount ?? assignments.length}</span>
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>
-                  {(todo.assigneeCount ?? assignments.length) || 0}{' '}
-                  {t('features.timeline.cards.assigned')}
-                </p>
-              </TooltipContent>
-            </Tooltip>
+        <div className="mt-auto space-y-3">
+          {todo.description && (
+            <p
+              className={cn(
+                'text-muted-foreground line-clamp-2 text-sm',
+                todo.isCompleted && 'line-through'
+              )}
+            >
+              {todo.description}
+            </p>
           )}
+
+          {/* Progress Bar */}
           {progress !== undefined && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="flex cursor-help items-center gap-1">
-                  <Activity className="h-3.5 w-3.5" />
-                  <span className="font-medium">{progress}%</span>
+            <div>
+              <div className="mb-1 flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">
+                  {t('features.timeline.cards.progress')}
                 </span>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>
-                  {progress}% {t('features.timeline.cards.progress')}
-                </p>
-              </TooltipContent>
-            </Tooltip>
+                <span className="font-medium">
+                  {todo.currentValue !== undefined && todo.targetValue !== undefined
+                    ? `${todo.currentValue} / ${todo.targetValue}${todo.unit ? ` ${todo.unit}` : ''}`
+                    : `${progress}%`}
+                </span>
+              </div>
+              <Progress
+                value={progress}
+                className={cn('h-2', progress >= 100 && '[&>div]:bg-green-500')}
+              />
+            </div>
           )}
+
+          {/* Meta Info */}
+          <div className="text-muted-foreground flex items-center gap-4 text-xs">
+            {(todo.assigneeCount !== undefined || assignments.length > 0) && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="flex cursor-help items-center gap-1">
+                    <Users className="h-3.5 w-3.5" />
+                    <span className="font-medium">{todo.assigneeCount ?? assignments.length}</span>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    {(todo.assigneeCount ?? assignments.length) || 0}{' '}
+                    {t('features.timeline.cards.assigned')}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+            {progress !== undefined && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="flex cursor-help items-center gap-1">
+                    <Activity className="h-3.5 w-3.5" />
+                    <span className="font-medium">{progress}%</span>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    {progress}% {t('features.timeline.cards.progress')}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
         </div>
       </TimelineCardContent>
 

@@ -1,6 +1,11 @@
 'use client';
 
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/features/shared/ui/ui/tooltip';
 import { useTranslation } from '@/features/shared/hooks/use-translation';
 import { cn } from '@/features/shared/utils/utils';
 import { VotePhaseBadge } from './VotePhaseBadge';
@@ -54,13 +59,13 @@ function BarRow({
     <Tooltip>
       <TooltipTrigger asChild>
         <div className="flex items-center gap-2">
-          <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-muted">
+          <div className="bg-muted h-2.5 flex-1 overflow-hidden rounded-full">
             <div
               className={cn('h-full transition-all', barClass)}
               style={{ width: `${percent}%` }}
             />
           </div>
-          <span className="min-w-[60px] text-right text-xs text-muted-foreground">
+          <span className="text-muted-foreground min-w-[60px] text-right text-xs">
             {count} ({percent.toFixed(0)}%){suffix}
           </span>
         </div>
@@ -108,7 +113,7 @@ export function VoteResultsDisplay({
         {/* Phase badge + totals header */}
         <div className="flex items-center justify-between">
           <VotePhaseBadge phase={phase} />
-          <span className="text-xs text-muted-foreground">
+          <span className="text-muted-foreground text-xs">
             {isIndicationPhase
               ? `${totalIndication} ${t('features.events.agenda.indicationVotes', 'indications')}`
               : `${totalFinal} ${t('features.events.agenda.votes', 'votes')}`}
@@ -116,7 +121,7 @@ export function VoteResultsDisplay({
         </div>
 
         {/* Bar chart per option */}
-        {options.map((option) => (
+        {options.map(option => (
           <div key={option.key} className="space-y-1.5">
             <div className="flex items-center gap-1.5 text-sm font-medium">
               {option.icon}
@@ -127,8 +132,8 @@ export function VoteResultsDisplay({
               {/* Final bar */}
               {(!isIndicationPhase || showBoth) && (
                 <div className="flex items-center gap-1">
-                  <span className="w-16 text-[10px] text-muted-foreground">
-                    {t('features.events.agenda.actualShort', 'Final')}
+                  <span className="text-muted-foreground w-16 text-[10px]">
+                    {t('features.events.agenda.actualShort')}
                   </span>
                   <div className="flex-1">
                     <BarRow
@@ -136,7 +141,7 @@ export function VoteResultsDisplay({
                       count={option.finalCount}
                       total={totalFinal}
                       barClass={option.color}
-                      tooltipLabel={t('features.events.agenda.actual', 'Final')}
+                      tooltipLabel={t('features.events.agenda.actual')}
                     />
                   </div>
                 </div>
@@ -144,8 +149,8 @@ export function VoteResultsDisplay({
               {/* Indication bar */}
               {(isIndicationPhase || showBoth) && (
                 <div className="flex items-center gap-1">
-                  <span className="w-16 text-[10px] text-muted-foreground">
-                    {t('features.events.agenda.indicationShort', 'Indic.')}
+                  <span className="text-muted-foreground w-16 text-[10px]">
+                    {t('features.events.agenda.indicationShort')}
                   </span>
                   <div className="flex-1">
                     <BarRow
@@ -154,7 +159,7 @@ export function VoteResultsDisplay({
                       total={totalIndication}
                       barClass={option.lightColor}
                       suffix=" *"
-                      tooltipLabel={t('features.events.agenda.indication', 'Indication')}
+                      tooltipLabel={t('features.events.agenda.indication')}
                     />
                   </div>
                 </div>
@@ -165,25 +170,25 @@ export function VoteResultsDisplay({
 
         {/* Empty state */}
         {totalFinal === 0 && totalIndication === 0 && (
-          <div className="text-xs text-muted-foreground">
-            {t('features.events.agenda.noVotesYet', 'No votes yet')}
+          <div className="text-muted-foreground text-xs">
+            {t('features.events.agenda.noVotesYet')}
           </div>
         )}
 
         {/* Summary row */}
         {totalEligible !== undefined && totalEligible > 0 && (
-          <div className="flex justify-between border-t pt-2 text-xs text-muted-foreground">
+          <div className="text-muted-foreground flex justify-between border-t pt-2 text-xs">
             <span>
-              {t('features.events.voting.eligible', 'Eligible')}: {totalEligible}
+              {t('features.events.voting.eligible')}: {totalEligible}
             </span>
             <span>
-              {t('features.events.voting.voted', 'Voted')}:{' '}
+              {t('features.events.voting.voted')}:{' '}
               {isIndicationPhase ? totalIndication : totalFinal}
             </span>
             <span>
-              {t('features.events.voting.share', 'Share')}:{' '}
+              {t('features.events.voting.share')}:{' '}
               {Math.round(
-                ((isIndicationPhase ? totalIndication : totalFinal) / totalEligible) * 100,
+                ((isIndicationPhase ? totalIndication : totalFinal) / totalEligible) * 100
               )}
               %
             </span>
@@ -192,9 +197,17 @@ export function VoteResultsDisplay({
 
         {/* Dates */}
         {(openedAt || closedAt) && (
-          <div className="flex justify-between text-xs text-muted-foreground">
-            {openedAt && <span>{t('features.events.voting.opened', 'Opened')}: {openedAt}</span>}
-            {closedAt && <span>{t('features.events.voting.closed', 'Closed')}: {closedAt}</span>}
+          <div className="text-muted-foreground flex justify-between text-xs">
+            {openedAt && (
+              <span>
+                {t('features.events.voting.opened')}: {openedAt}
+              </span>
+            )}
+            {closedAt && (
+              <span>
+                {t('features.events.voting.closed')}: {closedAt}
+              </span>
+            )}
           </div>
         )}
       </div>

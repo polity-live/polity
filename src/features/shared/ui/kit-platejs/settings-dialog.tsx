@@ -35,6 +35,7 @@ import { Input } from '@/features/shared/ui/ui/input.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/features/shared/ui/ui/popover.tsx';
 import { cn } from '@/features/shared/utils/utils.ts';
 import { aiChatPlugin } from '@/features/shared/ui/kit-platejs/ai-kit.tsx';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface Model {
   label: string;
@@ -97,12 +98,12 @@ export function SettingsDialog() {
     <div className="group relative">
       <div className="flex items-center justify-between">
         <label
-          className="absolute top-1/2 block -translate-y-1/2 cursor-text px-1 text-sm text-muted-foreground/70 transition-all group-focus-within:pointer-events-none group-focus-within:top-0 group-focus-within:cursor-default group-focus-within:text-xs group-focus-within:font-medium group-focus-within:text-foreground has-[+input:not(:placeholder-shown)]:pointer-events-none has-[+input:not(:placeholder-shown)]:top-0 has-[+input:not(:placeholder-shown)]:cursor-default has-[+input:not(:placeholder-shown)]:text-xs has-[+input:not(:placeholder-shown)]:font-medium has-[+input:not(:placeholder-shown)]:text-foreground"
+          className="text-muted-foreground/70 group-focus-within:text-foreground has-[+input:not(:placeholder-shown)]:text-foreground absolute top-1/2 block -translate-y-1/2 cursor-text px-1 text-sm transition-all group-focus-within:pointer-events-none group-focus-within:top-0 group-focus-within:cursor-default group-focus-within:text-xs group-focus-within:font-medium has-[+input:not(:placeholder-shown)]:pointer-events-none has-[+input:not(:placeholder-shown)]:top-0 has-[+input:not(:placeholder-shown)]:cursor-default has-[+input:not(:placeholder-shown)]:text-xs has-[+input:not(:placeholder-shown)]:font-medium"
           htmlFor={label}
         >
-          <span className="inline-flex bg-background px-2">{label}</span>
+          <span className="bg-background inline-flex px-2">{label}</span>
         </label>
-        <Button asChild size="icon" variant="ghost" className="absolute right-[28px] top-0 h-full">
+        <Button asChild size="icon" variant="ghost" className="absolute top-0 right-[28px] h-full">
           <a
             className="flex items-center"
             href="https://platform.openai.com/api-keys"
@@ -110,7 +111,10 @@ export function SettingsDialog() {
             target="_blank"
           >
             <ExternalLinkIcon className="size-4" />
-            <span className="sr-only">Get {label}</span>
+            <span className="sr-only">
+              {translateText('generated.inline.1116_get_bfffd736')}
+              {label}
+            </span>
           </a>
         </Button>
       </div>
@@ -127,13 +131,16 @@ export function SettingsDialog() {
       <Button
         size="icon"
         variant="ghost"
-        className="absolute right-0 top-0 h-full"
+        className="absolute top-0 right-0 h-full"
         onClick={() => toggleKeyVisibility(service)}
         type="button"
       >
         {showKey[service] ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
         <span className="sr-only">
-          {showKey[service] ? 'Hide' : 'Show'} {label}
+          {showKey[service]
+            ? translateText('generated.inline.0137_hide_34d8b60f')
+            : translateText('generated.inline.0138_show_d97d1ee3')}{' '}
+          {label}
         </span>
       </Button>
     </div>
@@ -146,7 +153,7 @@ export function SettingsDialog() {
           size="icon"
           variant="default"
           className={cn(
-            'group fixed bottom-4 right-4 z-50 size-10 overflow-hidden',
+            'group fixed right-4 bottom-4 z-50 size-10 overflow-hidden',
             'rounded-full shadow-md hover:shadow-lg'
           )}
           // data-block-hide
@@ -156,8 +163,14 @@ export function SettingsDialog() {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-xl">Settings</DialogTitle>
-          <DialogDescription>Configure your API keys and preferences.</DialogDescription>
+          <DialogTitle className="text-xl">
+            {translateText('generated.inline.1117_settings_c7f73bb5')}
+          </DialogTitle>
+          <DialogDescription>
+            {translateText(
+              'generated.inline.1118_configure_your_api_keys_and_preferences_843203c4'
+            )}
+          </DialogDescription>
         </DialogHeader>
 
         <form className="space-y-10" onSubmit={handleSubmit}>
@@ -167,7 +180,9 @@ export function SettingsDialog() {
               <div className="size-8 rounded-full bg-purple-100 p-2 dark:bg-purple-900">
                 <Wand2Icon className="size-4 text-purple-600 dark:text-purple-400" />
               </div>
-              <h4 className="font-semibold">AI</h4>
+              <h4 className="font-semibold">
+                {translateText('generated.inline.0148_ai_560040c5')}
+              </h4>
             </div>
 
             <div className="space-y-4">
@@ -175,10 +190,10 @@ export function SettingsDialog() {
 
               <div className="group relative">
                 <label
-                  className="group-has-disabled:opacity-50 absolute start-1 top-0 z-10 block -translate-y-1/2 bg-background px-2 text-xs font-medium text-foreground"
+                  className="bg-background text-foreground absolute start-1 top-0 z-10 block -translate-y-1/2 px-2 text-xs font-medium group-has-disabled:opacity-50"
                   htmlFor="select-model"
                 >
-                  Model
+                  {translateText('generated.inline.1119_model_68c2cc7f')}
                 </label>
                 <Popover open={openModel} onOpenChange={setOpenModel}>
                   <PopoverTrigger id="select-model" asChild>
@@ -195,8 +210,12 @@ export function SettingsDialog() {
                   </PopoverTrigger>
                   <PopoverContent className="w-full p-0">
                     <Command>
-                      <CommandInput placeholder="Search model..." />
-                      <CommandEmpty>No model found.</CommandEmpty>
+                      <CommandInput
+                        placeholder={translateText('generated.inline.1120_search_model_9285447e')}
+                      />
+                      <CommandEmpty>
+                        {translateText('generated.inline.1121_no_model_found_387f665d')}
+                      </CommandEmpty>
                       <CommandList>
                         <CommandGroup>
                           {models.map(m => (
@@ -241,12 +260,14 @@ export function SettingsDialog() {
           </div> */}
 
           <Button size="lg" className="w-full" type="submit">
-            Save changes
+            {translateText('generated.inline.1122_save_changes_179359b3')}
           </Button>
         </form>
 
-        <p className="text-sm text-muted-foreground">
-          Not stored anywhere. Used only for current session requests.
+        <p className="text-muted-foreground text-sm">
+          {translateText(
+            'generated.inline.1123_not_stored_anywhere_used_only_for_current_ses_40e9429c'
+          )}
         </p>
       </DialogContent>
     </Dialog>

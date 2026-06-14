@@ -41,7 +41,7 @@ export function AgendaNavigationControls({ eventId }: AgendaNavigationControlsPr
           {/* Progress indicator */}
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">
-              {t('features.events.navigation.progress', 'Agenda Progress')}
+              {t('features.events.navigation.progress')}
             </span>
             <Badge variant="secondary">
               {currentIndex + 1} / {totalItems}
@@ -52,9 +52,9 @@ export function AgendaNavigationControls({ eventId }: AgendaNavigationControlsPr
           {/* Current item display */}
           {currentAgendaItem ? (
             <div className="flex items-center gap-2">
-              <Play className="h-4 w-4 text-primary" />
+              <Play className="text-primary h-4 w-4" />
               <span className="truncate font-medium">
-                {t('features.events.navigation.currentItem', 'Current')}: {currentAgendaItem.title}
+                {t('features.events.navigation.currentItem')}: {currentAgendaItem.title}
               </span>
               <Badge
                 variant={
@@ -69,11 +69,8 @@ export function AgendaNavigationControls({ eventId }: AgendaNavigationControlsPr
               </Badge>
             </div>
           ) : (
-            <div className="text-sm text-muted-foreground">
-              {t(
-                'features.events.navigation.notActivated',
-                'No active agenda item. Click an item to activate.'
-              )}
+            <div className="text-muted-foreground text-sm">
+              {t('features.events.navigation.notActivated')}
             </div>
           )}
 
@@ -90,7 +87,7 @@ export function AgendaNavigationControls({ eventId }: AgendaNavigationControlsPr
               ) : (
                 <ChevronLeft className="h-4 w-4" />
               )}
-              {t('features.events.navigation.previous', 'Previous')}
+              {t('features.events.navigation.previous')}
             </Button>
 
             <Button
@@ -105,7 +102,7 @@ export function AgendaNavigationControls({ eventId }: AgendaNavigationControlsPr
               ) : (
                 <CheckCircle2 className="mr-2 h-4 w-4" />
               )}
-              {t('features.events.navigation.complete', 'Complete')}
+              {t('features.events.navigation.complete')}
             </Button>
 
             <Button
@@ -114,7 +111,7 @@ export function AgendaNavigationControls({ eventId }: AgendaNavigationControlsPr
               onClick={moveToNextItem}
               disabled={!hasNextItem || isLoading}
             >
-              {t('features.events.navigation.next', 'Next')}
+              {t('features.events.navigation.next')}
               {isLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (

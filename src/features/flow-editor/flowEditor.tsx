@@ -17,6 +17,7 @@ import { Input } from '@/features/shared/ui/ui/input.tsx';
 import { Label } from '@/features/shared/ui/ui/label.tsx';
 import PositionableEdge from './PositionableEdge.tsx';
 import './PositionableEdge.css';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 // Define missing types since they're not exported
 interface Connection {
@@ -45,7 +46,11 @@ interface Edge {
   animated?: boolean;
   type?: string;
   style?: React.CSSProperties;
-  data?: { label?: string; type?: string; positionHandlers?: { x: number; y: number; active: boolean }[] };
+  data?: {
+    label?: string;
+    type?: string;
+    positionHandlers?: { x: number; y: number; active: boolean }[];
+  };
 }
 
 // Custom Group Node component
@@ -89,7 +94,7 @@ const initialNodes: Node[] = [
   {
     id: '1',
     data: {
-      label: 'Proposal Submission',
+      label: translateText('generated.inline.0118_proposal_submission_386e2a6a'),
     },
     style: { background: '#bbdefb', padding: 10, borderRadius: 5, width: 180 },
     position: { x: 250, y: 0 },
@@ -97,7 +102,7 @@ const initialNodes: Node[] = [
   {
     id: '2',
     data: {
-      label: 'Initial Review',
+      label: translateText('generated.inline.0119_initial_review_cec95fcf'),
     },
     style: { background: '#bbdefb', padding: 10, borderRadius: 5, width: 180 },
     position: { x: 250, y: 100 },
@@ -105,7 +110,7 @@ const initialNodes: Node[] = [
   {
     id: '3',
     data: {
-      label: 'Committee Assignment',
+      label: translateText('generated.inline.0120_committee_assignment_8bc00fbc'),
     },
     style: { background: '#ffe0b2', padding: 10, borderRadius: 5, width: 180 },
     position: { x: 250, y: 200 },
@@ -113,7 +118,7 @@ const initialNodes: Node[] = [
   {
     id: '4',
     data: {
-      label: 'Committee Review',
+      label: translateText('generated.inline.0121_committee_review_2fc4ec57'),
     },
     style: { background: '#bbdefb', padding: 10, borderRadius: 5, width: 180 },
     position: { x: 100, y: 300 },
@@ -121,7 +126,7 @@ const initialNodes: Node[] = [
   {
     id: '5',
     data: {
-      label: 'Budget Analysis',
+      label: translateText('generated.inline.0122_budget_analysis_6db26dd5'),
     },
     style: { background: '#bbdefb', padding: 10, borderRadius: 5, width: 180 },
     position: { x: 400, y: 300 },
@@ -129,7 +134,7 @@ const initialNodes: Node[] = [
   {
     id: '6',
     data: {
-      label: 'Committee Vote',
+      label: translateText('generated.inline.0123_committee_vote_ea9e0ee3'),
     },
     style: { background: '#ffe0b2', padding: 10, borderRadius: 5, width: 180 },
     position: { x: 250, y: 400 },
@@ -137,7 +142,7 @@ const initialNodes: Node[] = [
   {
     id: '7',
     data: {
-      label: 'Council Agenda',
+      label: translateText('generated.inline.0124_council_agenda_c7d1ce55'),
     },
     style: { background: '#bbdefb', padding: 10, borderRadius: 5, width: 180 },
     position: { x: 250, y: 500 },
@@ -145,7 +150,7 @@ const initialNodes: Node[] = [
   {
     id: '8',
     data: {
-      label: 'Public Hearing',
+      label: translateText('generated.inline.0125_public_hearing_6f510605'),
     },
     style: { background: '#bbdefb', padding: 10, borderRadius: 5, width: 180 },
     position: { x: 250, y: 600 },
@@ -153,7 +158,7 @@ const initialNodes: Node[] = [
   {
     id: '9',
     data: {
-      label: 'Council Vote',
+      label: translateText('generated.inline.0126_council_vote_3947dff9'),
     },
     style: { background: '#ffe0b2', padding: 10, borderRadius: 5, width: 180 },
     position: { x: 250, y: 700 },
@@ -161,7 +166,7 @@ const initialNodes: Node[] = [
   {
     id: '10',
     data: {
-      label: 'Mayor Signature',
+      label: translateText('generated.inline.0127_mayor_signature_c164c480'),
     },
     style: { background: '#c8e6c9', padding: 10, borderRadius: 5, width: 180 },
     position: { x: 250, y: 800 },
@@ -169,7 +174,7 @@ const initialNodes: Node[] = [
   {
     id: '11',
     data: {
-      label: 'Implementation',
+      label: translateText('generated.inline.0128_implementation_8781d615'),
     },
     style: { background: '#bbdefb', padding: 10, borderRadius: 5, width: 180 },
     position: { x: 250, y: 900 },
@@ -200,7 +205,7 @@ const initialEdges: Edge[] = [
     id: 'e3-4',
     source: '3',
     target: '4',
-    label: 'Policy Review',
+    label: translateText('generated.inline.0129_policy_review_674319c2'),
     animated: true,
     style: { strokeDasharray: '5 5' },
     type: 'positionableedge',
@@ -210,7 +215,7 @@ const initialEdges: Edge[] = [
     id: 'e3-5',
     source: '3',
     target: '5',
-    label: 'Budget Impact',
+    label: translateText('generated.inline.0130_budget_impact_d1e9449e'),
     animated: true,
     style: { strokeDasharray: '5 5' },
     type: 'positionableedge',
@@ -238,7 +243,7 @@ const initialEdges: Edge[] = [
     id: 'e6-7',
     source: '6',
     target: '7',
-    label: 'Approved by Committee',
+    label: translateText('generated.inline.0131_approved_by_committee_bd1a81e8'),
     animated: true,
     style: { strokeDasharray: '5 5' },
     type: 'positionableedge',
@@ -266,7 +271,7 @@ const initialEdges: Edge[] = [
     id: 'e9-10',
     source: '9',
     target: '10',
-    label: 'Passed',
+    label: translateText('generated.inline.0078_passed_271d60f4'),
     animated: true,
     style: { strokeDasharray: '5 5' },
     type: 'positionableedge',
@@ -276,7 +281,7 @@ const initialEdges: Edge[] = [
     id: 'e10-11',
     source: '10',
     target: '11',
-    label: 'Signed',
+    label: translateText('generated.inline.0132_signed_6e3665d8'),
     animated: true,
     style: { strokeDasharray: '5 5' },
     type: 'positionableedge',
@@ -348,7 +353,7 @@ export function FlowEditor() {
       } else {
         // In single-select mode, just select this node
         setSelectedNodes([node]);
-        setNodeLabel((node.data.label) || '');
+        setNodeLabel(node.data.label || '');
         setIsEditingNode(false);
       }
     },
@@ -429,7 +434,11 @@ export function FlowEditor() {
         padding: 10,
         zIndex: -1,
       },
-      data: { label: `Group ${nodes.length + 1}` },
+      data: {
+        label: translateText('generated.inline.0133_group_value15d3_d33a7949', {
+          value15d3: nodes.length + 1,
+        }),
+      },
     };
 
     // Update child nodes to reference the group
@@ -500,7 +509,9 @@ export function FlowEditor() {
     const newId = (nodes.length + 1).toString();
     const newNode = {
       id: newId,
-      data: { label: `New Proposal ${newId}` },
+      data: {
+        label: translateText('generated.inline.0134_new_proposal_newid_77d2f0cc', { newId: newId }),
+      },
       style: { background: '#bbdefb', padding: 10, borderRadius: 5, width: 180 },
       position: { x: 100, y: 100 },
     };
@@ -524,7 +535,7 @@ export function FlowEditor() {
   const cancelEditNode = useCallback(() => {
     if (selectedNodes.length !== 1) return;
     setIsEditingNode(false);
-    setNodeLabel((selectedNodes[0].data.label) || '');
+    setNodeLabel(selectedNodes[0].data.label || '');
   }, [selectedNodes]);
 
   // Update node properties
@@ -646,40 +657,47 @@ export function FlowEditor() {
       >
         {/* Control panels */}
         <Panel position="top-left" className="rounded bg-white p-4 shadow">
-          <h2 className="mb-2 text-lg font-bold">City Council Workflow</h2>
+          <h2 className="mb-2 text-lg font-bold">
+            {translateText('generated.inline.0528_city_council_workflow_b72c9f88')}
+          </h2>
           <p className="mb-3 text-sm text-gray-600">
-            Interactive diagram showing the proposal lifecycle in city government
+            {translateText(
+              'generated.inline.0529_interactive_diagram_showing_the_proposal_life_2110afd8'
+            )}
           </p>
           <div className="flex flex-wrap gap-2">
             {isInteractive && (
               <>
                 <Button size="sm" onClick={addProposalNode}>
-                  Add Proposal
+                  {translateText('generated.inline.0530_add_proposal_250e96f5')}
                 </Button>
                 <Button
                   size="sm"
                   variant={multiSelectMode ? 'default' : 'outline'}
                   onClick={toggleMultiSelectMode}
                 >
-                  {multiSelectMode ? 'Multi-Select: ON' : 'Multi-Select: OFF'}
+                  {multiSelectMode
+                    ? translateText('generated.inline.0076_multi_select_on_ded38fcd')
+                    : translateText('generated.inline.0077_multi_select_off_8e759b57')}
                 </Button>
                 {selectedNodes.length >= 2 && (
                   <Button size="sm" variant="secondary" onClick={createGroup}>
-                    Group Selected ({selectedNodes.length})
+                    {translateText('generated.inline.0531_group_selected_dc201db7')}
+                    {selectedNodes.length})
                   </Button>
                 )}
                 {selectedNodes.length === 1 && selectedNodes[0].type === 'group' && (
                   <Button size="sm" variant="secondary" onClick={ungroupNodes}>
-                    Ungroup
+                    {translateText('generated.inline.0532_ungroup_2b31e968')}
                   </Button>
                 )}
                 {selectedNodes.length > 0 && (
                   <Button size="sm" variant="destructive" onClick={deleteSelectedNodes}>
-                    Delete Selected
+                    {translateText('generated.inline.0533_delete_selected_76bf56ab')}
                   </Button>
                 )}
                 <Button size="sm" variant="outline" onClick={resetWorkflow}>
-                  Reset
+                  {translateText('generated.inline.0343_reset_44c57abd')}
                 </Button>
               </>
             )}
@@ -688,7 +706,9 @@ export function FlowEditor() {
               variant={isInteractive ? 'outline' : 'default'}
               onClick={() => setIsInteractive(!isInteractive)}
             >
-              {isInteractive ? 'Lock Editor' : 'Unlock Editor'}
+              {isInteractive
+                ? translateText('generated.inline.0078_lock_editor_357aaa55')
+                : translateText('generated.inline.0079_unlock_editor_b60d9fb1')}
             </Button>
           </div>
         </Panel>
@@ -698,20 +718,24 @@ export function FlowEditor() {
           <Panel position="top-right" className="w-80 rounded bg-white p-4 shadow">
             {isEditingNode ? (
               <div className="space-y-2">
-                <h3 className="text-md mb-2 font-bold">Edit Node</h3>
-                <Label htmlFor="nodeLabel">Label</Label>
+                <h3 className="text-md mb-2 font-bold">
+                  {translateText('generated.inline.0534_edit_node_1519442f')}
+                </h3>
+                <Label htmlFor="nodeLabel">
+                  {translateText('generated.inline.0535_label_74341e3c')}
+                </Label>
                 <Input
                   id="nodeLabel"
                   value={nodeLabel}
                   onChange={e => setNodeLabel(e.target.value)}
-                  placeholder="Enter node label"
+                  placeholder={translateText('generated.inline.0536_enter_node_label_4bb64c3c')}
                 />
                 <div className="flex gap-2">
                   <Button size="sm" onClick={updateNodeProperties}>
-                    Save
+                    {translateText('generated.inline.0269_save_efc007a3')}
                   </Button>
                   <Button size="sm" variant="outline" onClick={cancelEditNode}>
-                    Cancel
+                    {translateText('generated.inline.0065_cancel_77dfd213')}
                   </Button>
                 </div>
               </div>
@@ -720,10 +744,10 @@ export function FlowEditor() {
                 <h3 className="text-md font-bold">{selectedNodes[0].data.label}</h3>
                 <div className="mt-2 flex gap-2">
                   <Button size="sm" onClick={startEditingNode}>
-                    Edit Node
+                    {translateText('generated.inline.0534_edit_node_1519442f')}
                   </Button>
                   <Button size="sm" variant="destructive" onClick={deleteSelectedNodes}>
-                    Delete
+                    {translateText('generated.inline.0537_delete_f6fdbe48')}
                   </Button>
                 </div>
               </div>
@@ -734,28 +758,36 @@ export function FlowEditor() {
         {/* Edge label editor panel - only show when interactive */}
         {isInteractive && selectedEdge && (
           <Panel position="top-right" className="w-80 rounded bg-white p-4 shadow">
-            <h3 className="text-md mb-2 font-bold">Edit Edge Label</h3>
-            <p>Double click an edge to edit edge path.</p>
+            <h3 className="text-md mb-2 font-bold">
+              {translateText('generated.inline.0538_edit_edge_label_e8252be9')}
+            </h3>
+            <p>
+              {translateText(
+                'generated.inline.0539_double_click_an_edge_to_edit_edge_path_caff8e84'
+              )}
+            </p>
             <div className="space-y-2">
-              <Label htmlFor="edgeLabel">Label</Label>
+              <Label htmlFor="edgeLabel">
+                {translateText('generated.inline.0535_label_74341e3c')}
+              </Label>
               <Input
                 id="edgeLabel"
                 value={edgeLabel}
                 onChange={e => setEdgeLabel(e.target.value)}
-                placeholder="Enter edge label"
+                placeholder={translateText('generated.inline.0540_enter_edge_label_ec3a6029')}
               />
               <div className="flex flex-wrap gap-2">
                 <Button size="sm" onClick={updateEdgeLabel}>
-                  Update Label
+                  {translateText('generated.inline.0541_update_label_b571fe01')}
                 </Button>
                 <Button size="sm" variant="outline" onClick={() => setSelectedEdge(null)}>
-                  Cancel
+                  {translateText('generated.inline.0065_cancel_77dfd213')}
                 </Button>
                 <Button size="sm" variant="destructive" onClick={deleteSelectedEdge}>
-                  Delete Edge
+                  {translateText('generated.inline.0542_delete_edge_6351bded')}
                 </Button>
                 <Button size="sm" variant="outline" onClick={resetEdgeState}>
-                  Reset Edge Path
+                  {translateText('generated.inline.0543_reset_edge_path_e7f03a62')}
                 </Button>
               </div>
             </div>

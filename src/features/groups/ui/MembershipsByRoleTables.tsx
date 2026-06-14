@@ -27,7 +27,7 @@ import type {
   ParticipationRoleLike,
 } from '@/features/shared/types/participation';
 import { UserTableCell } from '@/features/shared/ui/ui/user-table-cell';
-import { getMembershipDisplayRoles } from '@/features/groups/logic/buildMembershipRightsSummary';
+import { getMembershipDisplayRoles } from '@/features/groups/logic/membershipDisplayRoles';
 import { getMembershipProvenanceDisplayLabel } from '@/features/groups/logic/membershipComposition';
 import { RoleTag } from './RoleTag';
 
@@ -77,47 +77,34 @@ export function MembershipsByRoleTables<
   showProvenanceColumns = false,
 }: MembershipsByRoleTablesProps<TRole, TParticipation>) {
   const { t } = useTranslation();
-  const directWithoutPathLabel = t(
-    'features.groups.memberships.composition.directWithoutPath',
-    'Direct / no path'
-  );
-  const roleFallbackLabel = t('components.membershipTables.roleFallback', 'Role');
+  const directWithoutPathLabel = t('features.groups.memberships.composition.directWithoutPath');
+  const roleFallbackLabel = t('components.membershipTables.roleFallback');
   const resolvedCountLabel = countLabel ?? t('components.membershipTables.members', 'members');
   const resolvedMemberDescriptionFallback =
-    memberDescriptionFallback ??
-    t(
-      'components.membershipTables.memberDescriptionFallback',
-      'Members currently assigned to this role.'
-    );
+    memberDescriptionFallback ?? t('components.membershipTables.memberDescriptionFallback');
   const resolvedDefaultRequestLabel =
-    defaultRequestLabel ?? t('components.membershipTables.defaultRequest', 'Default request');
+    defaultRequestLabel ?? t('components.membershipTables.defaultRequest');
   const resolvedDefaultInviteLabel =
-    defaultInviteLabel ?? t('components.membershipTables.defaultInvite', 'Default invite');
+    defaultInviteLabel ?? t('components.membershipTables.defaultInvite');
   const resolvedNoOtherRolesLabel =
-    noOtherRolesLabel ?? t('components.membershipTables.noOtherRoles', 'No other roles');
-  const resolvedRemoveActionLabel =
-    removeActionLabel ?? t('components.membershipTables.remove', 'Remove');
+    noOtherRolesLabel ?? t('components.membershipTables.noOtherRoles');
+  const resolvedRemoveActionLabel = removeActionLabel ?? t('components.membershipTables.remove');
   const resolvedDerivedRemoveTooltip =
-    derivedRemoveTooltip ??
-    t(
-      'components.membershipTables.derivedRemoveTooltip',
-      'Derived memberships cannot be edited directly.'
-    );
+    derivedRemoveTooltip ?? t('components.membershipTables.derivedRemoveTooltip');
   const resolvedEmptyStateLabel =
-    emptyStateLabel ??
-    t('components.membershipTables.emptyStateByRole', 'No members currently carry this role.');
+    emptyStateLabel ?? t('components.membershipTables.emptyStateByRole');
   const noUserRoleLabel = t('components.membershipTables.noUserRole', 'No user role');
   const noUserRoleDescription = t(
     'components.membershipTables.noUserRoleDescription',
-    'Members currently without any assigned group role.'
+    'Members without an assigned role.'
   );
-  const userColumnLabel = t('components.membershipTables.user', 'User');
-  const otherRolesColumnLabel = t('components.membershipTables.otherRoles', 'Other Roles');
-  const assignedRolesColumnLabel = t('components.membershipTables.assignedRoles', 'Assigned Roles');
-  const joinedColumnLabel = t('components.membershipTables.joined', 'Joined');
-  const actionsColumnLabel = t('components.membershipTables.actions', 'Actions');
-  const rightsLabel = t('components.membershipTables.rights', 'Rights');
-  const secondaryActionDefaultLabel = t('components.membershipTables.manage', 'Manage');
+  const userColumnLabel = t('components.membershipTables.user');
+  const otherRolesColumnLabel = t('components.membershipTables.otherRoles');
+  const assignedRolesColumnLabel = t('components.membershipTables.assignedRoles');
+  const joinedColumnLabel = t('components.membershipTables.joined');
+  const actionsColumnLabel = t('components.membershipTables.actions');
+  const rightsLabel = t('components.membershipTables.rights');
+  const secondaryActionDefaultLabel = t('components.membershipTables.manage');
   const notAvailableLabel = t('components.membershipTables.notAvailable', 'N/A');
   const membersWithoutRoles = members.filter(
     membership => getMembershipDisplayRoles(membership).length === 0

@@ -3,13 +3,18 @@ import { useAuth } from '@/providers/auth-provider';
 import { toast } from 'sonner';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useAmendmentState } from '@/zero/amendments/useAmendmentState';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export type CollaborationStatus = 'invited' | 'requested' | 'member' | 'admin';
 
 export function useAmendmentCollaboration(amendmentId: string) {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const { requestCollaboration: addCollaboratorAction, leaveCollaboration: removeCollaboratorAction, acceptInvitation: acceptInvitationAction } = useAmendmentActions();
+  const {
+    requestCollaboration: addCollaboratorAction,
+    leaveCollaboration: removeCollaboratorAction,
+    acceptInvitation: acceptInvitationAction,
+  } = useAmendmentActions();
 
   const {
     collaboration,
@@ -53,7 +58,11 @@ export function useAmendmentCollaboration(amendmentId: string) {
       console.error('Failed to request collaboration:', error);
       console.error('Amendment ID:', amendmentId);
       console.error('User ID:', user?.id);
-      toast.error('Failed to request collaboration. Please try again.');
+      toast.error(
+        translateText(
+          'generated.inline.0135_failed_to_request_collaboration_please_try_ag_b255ebd0'
+        )
+      );
     } finally {
       setIsLoading(false);
     }
@@ -66,12 +75,13 @@ export function useAmendmentCollaboration(amendmentId: string) {
     setIsLoading(true);
     try {
       await removeCollaboratorAction(collaboration.id);
-      if (status === 'requested') {
-      } else {
-      }
     } catch (error) {
       console.error('Failed to leave collaboration:', error);
-      toast.error('Failed to leave collaboration. Please try again.');
+      toast.error(
+        translateText(
+          'generated.inline.0136_failed_to_leave_collaboration_please_try_agai_fd2dfbeb'
+        )
+      );
     } finally {
       setIsLoading(false);
     }
@@ -86,7 +96,9 @@ export function useAmendmentCollaboration(amendmentId: string) {
       await acceptInvitationAction(collaboration.id);
     } catch (error) {
       console.error('Failed to accept invitation:', error);
-      toast.error('Failed to accept invitation. Please try again.');
+      toast.error(
+        translateText('generated.inline.0137_failed_to_accept_invitation_please_try_again_9c80b3af')
+      );
     } finally {
       setIsLoading(false);
     }

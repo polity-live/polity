@@ -13,6 +13,7 @@ import {
   User,
   ListOrdered,
   Wallet,
+  GitBranch,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -36,6 +37,7 @@ export type ContentType =
   | 'blog'
   | 'payment'
   | 'action'
+  | 'workflow'
   | 'user';
 
 export interface ContentTypeConfig {
@@ -160,6 +162,14 @@ export const CONTENT_TYPE_CONFIG: Record<ContentType, ContentTypeConfig> = {
     accentColor: 'text-slate-600 dark:text-slate-400',
     borderColor: 'border-slate-500',
   },
+  workflow: {
+    icon: GitBranch,
+    labelKey: 'features.timeline.contentTypes.workflow',
+    gradient: 'from-fuchsia-100 to-rose-100',
+    gradientDark: 'dark:from-fuchsia-900/40 dark:to-rose-900/50',
+    accentColor: 'text-fuchsia-700 dark:text-fuchsia-300',
+    borderColor: 'border-fuchsia-500',
+  },
   user: {
     icon: User,
     labelKey: 'features.timeline.contentTypes.user',
@@ -196,5 +206,6 @@ export const CONTENT_TYPE_LABELS: Record<ContentType, string> = {
   blog: 'features.timeline.contentTypes.blog',
   payment: 'features.timeline.contentTypes.payment',
   action: 'features.timeline.contentTypes.action',
+  workflow: 'features.timeline.contentTypes.workflow',
   user: 'features.timeline.contentTypes.user',
 };

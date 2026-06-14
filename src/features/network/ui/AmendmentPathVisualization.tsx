@@ -204,7 +204,7 @@ export function AmendmentPathVisualization({
         label: (
           <div className="space-y-3">
             <div className="text-[11px] font-semibold tracking-[0.18em] uppercase opacity-75">
-              {t('features.amendments.process.groupNode', 'Group')}
+              {t('features.amendments.process.groupNode')}
             </div>
             <div className="text-sm font-semibold">
               {getGroupDisplayLabel(
@@ -215,12 +215,12 @@ export function AmendmentPathVisualization({
             <div className="inline-flex items-center gap-2 rounded-full border border-current/15 bg-white/70 px-3 py-1 text-[11px] font-medium dark:bg-black/10">
               <ScrollText className="h-3.5 w-3.5" />
               {nodeState === 'approved'
-                ? t('features.amendments.process.stepApproved', 'Approved')
+                ? t('features.amendments.process.stepApproved')
                 : nodeState === 'active-next'
-                  ? t('features.amendments.process.stepActiveNext', 'Next active step')
+                  ? t('features.amendments.process.stepActiveNext')
                   : nodeState === 'rejected'
-                    ? t('features.amendments.process.stepRejected', 'Rejected')
-                    : t('features.amendments.process.stepPending', 'Pending')}
+                    ? t('features.amendments.process.stepRejected')
+                    : t('features.amendments.process.stepPending')}
             </div>
           </div>
         ),
@@ -240,15 +240,12 @@ export function AmendmentPathVisualization({
         label: (
           <div className="space-y-3">
             <div className="text-[11px] font-semibold tracking-[0.18em] uppercase opacity-75">
-              {t('features.amendments.process.eventNode', 'Event')}
+              {t('features.amendments.process.eventNode')}
             </div>
             <div className="text-sm font-semibold">
               {segment.eventId
                 ? segment.eventTitle
-                : t(
-                    'features.amendments.process.eventRequestedPending',
-                    'Event requested, pending'
-                  )}
+                : t('features.amendments.process.eventRequestedPending')}
             </div>
             <div className="flex items-center gap-2 text-xs opacity-80">
               {segment.eventId ? (
@@ -327,16 +324,16 @@ export function AmendmentPathVisualization({
                 <button
                   type="button"
                   className="flex w-full items-start justify-between gap-3 text-left"
-                  aria-label={t('features.amendments.process.pathVisualization', 'Process flow')}
+                  aria-label={t('features.amendments.process.pathVisualization')}
                 >
                   <div>
                     <p className="text-sm font-semibold">
-                      {t('features.amendments.process.pathVisualization', 'Process flow')}
+                      {t('features.amendments.process.pathVisualization')}
                     </p>
                     <p className="text-muted-foreground mt-1 text-xs">
                       {legendOpen
-                        ? t('features.amendments.process.pathLegendHideHint', 'Hide legend')
-                        : t('features.amendments.process.pathLegendShowHint', 'Show legend')}
+                        ? t('features.amendments.process.pathLegendHideHint')
+                        : t('features.amendments.process.pathLegendShowHint')}
                     </p>
                   </div>
                   {legendOpen ? (
@@ -348,32 +345,29 @@ export function AmendmentPathVisualization({
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <p className="text-muted-foreground mt-3 text-xs">
-                  {t(
-                    'features.amendments.process.pathNetworkDescription',
-                    'Groups and events share the same process-state border semantics across the amendment flow and agenda detail pages.'
-                  )}
+                  {t('features.amendments.process.pathNetworkDescription')}
                 </p>
                 <div className="mt-4 space-y-2 text-xs">
                   {[
                     {
                       id: 'approved',
-                      label: t('features.amendments.process.stepApproved', 'Approved'),
+                      label: t('features.amendments.process.stepApproved'),
                       color: getNodeStatePalette('approved').borderColor,
                     },
                     {
                       id: 'active',
-                      label: t('features.amendments.process.stepActiveNext', 'Next active step'),
+                      label: t('features.amendments.process.stepActiveNext'),
                       color: getNodeStatePalette('active-next').borderColor,
                       pulse: true,
                     },
                     {
                       id: 'pending',
-                      label: t('features.amendments.process.stepPending', 'Pending'),
+                      label: t('features.amendments.process.stepPending'),
                       color: getNodeStatePalette('pending').borderColor,
                     },
                     {
                       id: 'rejected',
-                      label: t('features.amendments.process.stepRejected', 'Rejected'),
+                      label: t('features.amendments.process.stepRejected'),
                       color: getNodeStatePalette('rejected').borderColor,
                     },
                   ].map(item => (

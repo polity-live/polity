@@ -19,6 +19,7 @@ import type {
   TText,
   TTextAlignProps,
 } from 'platejs';
+import type { TChartElement } from '@/features/charts/types';
 
 export interface MyBlockElement extends TElement, TListProps {
   id?: string;
@@ -62,10 +63,7 @@ export interface MyHrElement extends MyBlockElement {
 }
 
 export interface MyImageElement
-  extends MyBlockElement,
-    TCaptionProps,
-    TImageElement,
-    TResizableProps {
+  extends MyBlockElement, TCaptionProps, TImageElement, TResizableProps {
   children: [EmptyText];
   type: typeof KEYS.img;
 }
@@ -76,10 +74,7 @@ export interface MyLinkElement extends TLinkElement {
 }
 
 export interface MyMediaEmbedElement
-  extends MyBlockElement,
-    TCaptionProps,
-    TMediaEmbedElement,
-    TResizableProps {
+  extends MyBlockElement, TCaptionProps, TMediaEmbedElement, TResizableProps {
   children: [EmptyText];
   type: typeof KEYS.mediaEmbed;
 }
@@ -126,6 +121,7 @@ export interface RichText extends TBasicMarks, TCommentText, TFontMarks, TText {
 export type MyValue = (
   | MyBlockquoteElement
   | MyCodeBlockElement
+  | TChartElement
   | MyH1Element
   | MyH2Element
   | MyH3Element

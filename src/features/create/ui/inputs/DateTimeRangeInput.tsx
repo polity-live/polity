@@ -60,7 +60,7 @@ export function DateTimeRangeInput({
                   size="sm"
                   onClick={() => onChange('startDate', '')}
                 >
-                  {t('common.clear', 'Clear')}
+                  {t('common.clear')}
                 </Button>
               ) : null}
             </div>
@@ -92,7 +92,7 @@ export function DateTimeRangeInput({
                     size="sm"
                     onClick={() => onChange('endDate', '')}
                   >
-                    {t('common.clear', 'Clear')}
+                    {t('common.clear')}
                   </Button>
                 ) : null}
               </div>

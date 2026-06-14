@@ -4,8 +4,10 @@ import deTranslation from '@/i18n/locales/de/deTranslation.ts';
 import i18n from '@/i18n/i18n.ts';
 import { useEffect } from 'react';
 
-type TranslationValue = string | readonly string[] | TranslationTree
-interface TranslationTree { readonly [key: string]: TranslationValue }
+type TranslationValue = string | readonly string[] | TranslationTree;
+interface TranslationTree {
+  readonly [key: string]: TranslationValue;
+}
 
 const translations = {
   en: enTranslation,
@@ -38,13 +40,50 @@ function getNestedValue(obj: TranslationTree, path: string): TranslationValue {
  * Interpolate variables into a translation string.
  * Supports {{variable}} syntax for placeholders.
  */
-function interpolate(template: string, params?: Record<string, string | number | undefined | null>): string {
+function interpolate(
+  template: string,
+  params?: Record<string, string | number | undefined | null>
+): string {
   if (!params) return template;
-  
+
   return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
     const value = params[key];
     return value !== undefined && value !== null ? String(value) : match;
   });
+}
+
+function translateWithLanguage(
+  language: Language,
+  key: string,
+  paramsOrFallback?: string | Record<string, string | number | undefined | null>,
+  fallback?: string
+): string {
+  const translation = getNestedValue(translations[language], key);
+
+  const isParams = typeof paramsOrFallback === 'object' && paramsOrFallback !== null;
+  const params = isParams ? paramsOrFallback : undefined;
+  const finalFallback = isParams ? fallback : (paramsOrFallback as string | undefined);
+
+  const result = translation !== key ? translation : finalFallback || key;
+
+  if (typeof result === 'string') {
+    return interpolate(result, params);
+  }
+
+  return String(result);
+}
+
+export function translate(
+  key: string,
+  paramsOrFallback?: string | Record<string, string | number | undefined | null>,
+  fallback?: string
+): string {
+  return translateWithLanguage(
+    useLanguageStore.getState().language,
+    key,
+    paramsOrFallback,
+    fallback
+  );
 }
 
 export function useTranslation() {
@@ -64,25 +103,11 @@ export function useTranslation() {
    * @param fallback - Optional fallback string when params are provided
    */
   const t = (
-    key: string, 
+    key: string,
     paramsOrFallback?: string | Record<string, string | number | undefined | null>,
     fallback?: string
   ): string => {
-    const translation = getNestedValue(translations[language], key);
-    
-    // Determine if second argument is params object or fallback string
-    const isParams = typeof paramsOrFallback === 'object' && paramsOrFallback !== null;
-    const params = isParams ? paramsOrFallback : undefined;
-    const finalFallback = isParams ? fallback : (paramsOrFallback as string | undefined);
-    
-    const result = translation !== key ? translation : finalFallback || key;
-    
-    // Only interpolate if the result is a string
-    if (typeof result === 'string') {
-      return interpolate(result, params);
-    }
-    
-    return String(result);
+    return translateWithLanguage(language, key, paramsOrFallback, fallback);
   };
 
   const tArray = (key: string): string[] => {

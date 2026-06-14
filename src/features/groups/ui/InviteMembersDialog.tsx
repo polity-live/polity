@@ -3,15 +3,15 @@ import { Button } from '@/features/shared/ui/ui/button';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/features/shared/ui/ui/dialog';
-import { Label } from '@/features/shared/ui/ui/label';
-import { Checkbox } from '@/features/shared/ui/ui/checkbox';
+import { ChoiceField } from '@/features/shared/ui/form';
+import { ScrollableDialogContent } from '@/features/shared/ui/dialog';
+import { Panel, PanelContent, PanelHeader, PanelTitle } from '@/features/shared/ui/layout';
 import { UserSearchInput } from '@/features/create/ui/inputs/UserSearchInput';
 import { Loader2, UserPlus } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
@@ -19,6 +19,7 @@ import type { ParticipationRoleLike } from '@/features/shared/types/participatio
 import { RoleTag } from './RoleTag';
 import { GroupConflictDialog } from './GroupConflictPanel';
 import type { GroupConflictResponse } from '../logic/groupConflict';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface InviteMembersDialogProps<TRole extends ParticipationRoleLike> {
   isOpen: boolean;
@@ -67,17 +68,27 @@ export function InviteMembersDialog<TRole extends ParticipationRoleLike>({
   isInviting,
   disabled,
   disabledReason,
-  triggerLabel = 'Invite Member',
-  dialogTitle = 'Invite Members',
-  dialogDescription = 'Search and select users to invite, then choose which roles they should start with.',
-  peopleSectionDescription = 'Reuse the full user search to pick one or more invitees.',
-  userSearchLabel = 'Search users',
-  userSearchPlaceholder = 'Search users by name or handle...',
-  roleSectionTitle = 'Role type',
-  roleSectionDescription = 'Tick one or more roles for invited people. The default invite role is preselected.',
+  triggerLabel = translateText('generated.inline.0087_invite_member_b9c0e6a1'),
+  dialogTitle = translateText('generated.inline.0088_invite_members_4ee56217'),
+  dialogDescription = translateText(
+    'generated.inline.0089_search_and_select_users_to_invite_then_choose_dd41962a'
+  ),
+  peopleSectionDescription = translateText(
+    'generated.inline.0090_reuse_the_full_user_search_to_pick_one_or_mor_0bc3e1f3'
+  ),
+  userSearchLabel = translateText('generated.inline.0091_search_users_1bd6226d'),
+  userSearchPlaceholder = translateText(
+    'generated.inline.0044_search_users_by_name_or_handle_00f8d0a6'
+  ),
+  roleSectionTitle = translateText('generated.inline.0092_role_type_5a4faa8d'),
+  roleSectionDescription = translateText(
+    'generated.inline.0093_tick_one_or_more_roles_for_invited_people_the_1ac4d4b3'
+  ),
   defaultRoleFallbackName = 'Member',
-  defaultInviteLabel = 'Default invite',
-  emptyRolesLabel = 'Create a role first before inviting members.',
+  defaultInviteLabel = translateText('generated.inline.0094_default_invite_85f158c0'),
+  emptyRolesLabel = translateText(
+    'generated.inline.0095_create_a_role_first_before_inviting_members_9626758c'
+  ),
   cancelLabel = 'Cancel',
   inviteLabel = 'Invite',
   submitDisabled = false,
@@ -141,83 +152,76 @@ export function InviteMembersDialog<TRole extends ParticipationRoleLike>({
           triggerButton
         )}
       </DialogTrigger>
-      <DialogContent className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-[760px]">
+      <ScrollableDialogContent className="sm:max-w-[760px]">
         <DialogHeader>
           <DialogTitle>{dialogTitle}</DialogTitle>
           <DialogDescription>{dialogDescription}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5 py-4">
-          <div className="border-border/70 bg-muted/20 rounded-2xl border p-4">
-            <div className="mb-3 space-y-1">
-              <h3 className="text-sm font-semibold">People</h3>
+          <Panel>
+            <PanelHeader>
+              <PanelTitle>{translateText('generated.inline.0692_people_b37554f6')}</PanelTitle>
               <p className="text-muted-foreground text-sm">{peopleSectionDescription}</p>
-            </div>
-            <UserSearchInput
-              value={selectedUsers}
-              onChange={onSelectedUsersChange}
-              label={userSearchLabel}
-              placeholder={userSearchPlaceholder}
-              excludeUserId={excludeUserId}
-              excludeUserIds={excludeUserIds}
-              multi
-              disablePortal
-              showAllResults
-            />
-          </div>
+            </PanelHeader>
+            <PanelContent>
+              <UserSearchInput
+                value={selectedUsers}
+                onChange={onSelectedUsersChange}
+                label={userSearchLabel}
+                placeholder={userSearchPlaceholder}
+                excludeUserId={excludeUserId}
+                excludeUserIds={excludeUserIds}
+                multi
+                disablePortal
+                showAllResults
+              />
+            </PanelContent>
+          </Panel>
 
-          <div className="border-border/70 bg-muted/20 rounded-2xl border p-4">
-            <div className="mb-3 space-y-1">
-              <h3 className="text-sm font-semibold">{roleSectionTitle}</h3>
+          <Panel>
+            <PanelHeader>
+              <PanelTitle>{roleSectionTitle}</PanelTitle>
               <p className="text-muted-foreground text-sm">{roleSectionDescription}</p>
-            </div>
-            {roles.length > 0 ? (
-              <div className="space-y-2">
-                {roles.map(role => {
-                  const isSelected = selectedRoleIds.includes(role.id);
-
-                  return (
-                    <Label
+            </PanelHeader>
+            <PanelContent>
+              {roles.length > 0 ? (
+                <div className="space-y-2">
+                  {roles.map(role => (
+                    <ChoiceField
                       key={role.id}
-                      htmlFor={`invite-role-${role.id}`}
-                      className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
-                        isSelected ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
-                      }`}
-                    >
-                      <Checkbox
-                        id={`invite-role-${role.id}`}
-                        checked={isSelected}
-                        onCheckedChange={checked => toggleRoleSelection(role.id, checked === true)}
-                        className="mt-0.5"
-                      />
-                      <div className="space-y-1">
-                        <div className="flex flex-wrap items-center gap-2">
+                      id={`invite-role-${role.id}`}
+                      checked={selectedRoleIds.includes(role.id)}
+                      onCheckedChange={checked => toggleRoleSelection(role.id, checked)}
+                      label={
+                        <span className="flex flex-wrap items-center gap-2">
                           <RoleTag
                             roleId={role.id}
                             roleName={role.name || 'Role'}
                             className="text-xs"
                           />
                           {role.default_invite_role ? (
-                            <Badge className="border-transparent bg-gradient-to-r from-emerald-100 via-teal-100 to-cyan-100 text-emerald-950">
+                            <Badge className="border-transparent bg-emerald-100 text-emerald-950 dark:bg-emerald-500/20 dark:text-emerald-200">
                               {defaultInviteLabel}
                             </Badge>
                           ) : null}
-                        </div>
-                        <p className="text-muted-foreground text-xs">
-                          {role.description || 'No role summary yet.'}
-                        </p>
-                      </div>
-                    </Label>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-muted-foreground flex items-center gap-2 rounded-md border border-dashed px-3 py-4 text-sm">
-                <UserPlus className="h-4 w-4" />
-                {emptyRolesLabel}
-              </div>
-            )}
-          </div>
+                        </span>
+                      }
+                      description={
+                        role.description ||
+                        translateText('generated.inline.0101_no_role_summary_yet_84299aed')
+                      }
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-muted-foreground flex items-center gap-2 rounded-md border border-dashed px-3 py-4 text-sm">
+                  <UserPlus className="h-4 w-4" />
+                  {emptyRolesLabel}
+                </div>
+              )}
+            </PanelContent>
+          </Panel>
         </div>
 
         <DialogFooter>
@@ -228,21 +232,23 @@ export function InviteMembersDialog<TRole extends ParticipationRoleLike>({
             {submitConflictResponse?.conflicts.length ? (
               <GroupConflictDialog
                 response={submitConflictResponse}
-                triggerLabel="Warum?"
+                triggerLabel={translateText('generated.inline.0693_warum_194dad5c')}
                 triggerVariant="ghost"
-                title="Warum ist diese Einladung blockiert?"
+                title={translateText(
+                  'generated.inline.0694_warum_ist_diese_einladung_blockiert_e17c2345'
+                )}
               />
             ) : null}
             <Button onClick={onInvite} disabled={inviteDisabled} title={submitDisabledReason}>
               {isInviting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Inviting...
+                  {translateText('generated.inline.0113_inviting_dc7a6e8b')}
                 </>
               ) : submitConflictLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Checking...
+                  {translateText('generated.inline.0695_checking_494d0f68')}
                 </>
               ) : (
                 <>
@@ -253,7 +259,7 @@ export function InviteMembersDialog<TRole extends ParticipationRoleLike>({
             </Button>
           </div>
         </DialogFooter>
-      </DialogContent>
+      </ScrollableDialogContent>
     </Dialog>
   );
 }

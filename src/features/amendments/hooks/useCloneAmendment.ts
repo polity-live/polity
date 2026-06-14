@@ -4,9 +4,10 @@ import { toast } from 'sonner';
 import type { ReadonlyJSONValue } from '@rocicorp/zero';
 import { useAmendmentActions } from '@/zero/amendments/useAmendmentActions';
 import { useDocumentActions } from '@/zero/documents/useDocumentActions';
-import { useAgendaActions } from '@/zero/agendas/useAgendaActions';
 import type { PathWithEventSegment } from '@/features/amendments/logic/amendmentPathHelpers';
 import { notifyAmendmentCloned } from '@/features/notifications/utils/notification-helpers.ts';
+import { useCreateAmendmentPath } from './useCreateAmendmentPath';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface CloneAmendmentDocument {
   readonly content: ReadonlyJSONValue | null;
@@ -23,6 +24,7 @@ interface CloneAmendmentData {
   readonly editing_mode: string | null;
   readonly discussions: ReadonlyJSONValue | null;
   readonly image_url: string | null;
+  readonly origin_amendment_id?: string | null;
   readonly documents: readonly CloneAmendmentDocument[];
 }
 
@@ -48,18 +50,15 @@ export function useCloneAmendment(
   const [cloneDialogOpen, setCloneDialogOpen] = useState(false);
   const [isCloning, setIsCloning] = useState(false);
 
-  const {
-    createAmendment,
-    requestCollaboration: addAmendmentCollaborator,
-    createPath,
-    createPathSegment,
-  } = useAmendmentActions();
+  const { createAmendment, requestCollaboration: addAmendmentCollaborator } = useAmendmentActions();
   const { createDocument } = useDocumentActions();
-  const { createAgendaItem } = useAgendaActions();
+  const { createAmendmentPath } = useCreateAmendmentPath();
 
   const handleClone = () => {
     if (!userId) {
-      toast.error('Please log in to clone this amendment');
+      toast.error(
+        translateText('generated.inline.0151_please_log_in_to_clone_this_amendment_1b43b556')
+      );
       return;
     }
     setCloneDialogOpen(true);
@@ -67,11 +66,13 @@ export function useCloneAmendment(
 
   const handleConfirmClone = async (selection: CloneSelection) => {
     if (!userId) {
-      toast.error('Please log in to clone this amendment');
+      toast.error(
+        translateText('generated.inline.0151_please_log_in_to_clone_this_amendment_1b43b556')
+      );
       return;
     }
     if (!amendment) {
-      toast.error('Amendment data not loaded');
+      toast.error(translateText('generated.inline.0152_amendment_data_not_loaded_cc4bd6c4'));
       return;
     }
 
@@ -87,7 +88,6 @@ export function useCloneAmendment(
       const cloneId = crypto.randomUUID();
       const cloneDocumentId = crypto.randomUUID();
       const collaboratorId = crypto.randomUUID();
-      const pathId = crypto.randomUUID();
 
       const originalDocument = amendment.documents?.[0];
 
@@ -100,51 +100,22 @@ export function useCloneAmendment(
       });
       const closestEventId = eventsWithDates.length > 0 ? eventsWithDates[0].eventId : null;
 
-      // Create agenda items and votes for each event in the path when a full target was selected.
+      // Build the process path. Agenda items and votes are created by the process engine.
       const enrichedPath = [];
 
       for (const segment of selectedEventId ? pathWithEvents : []) {
-        let agendaItemId = null;
-        let amendmentVoteId = null;
         let forwardingStatus = 'previous_decision_outstanding';
 
         if (segment.eventId) {
-          agendaItemId = crypto.randomUUID();
-          amendmentVoteId = crypto.randomUUID();
-
           if (segment.eventId === closestEventId) {
             forwardingStatus = 'forward_confirmed';
           }
-
-          await createAgendaItem({
-            id: agendaItemId,
-            title: `Amendment: ${amendment.title ?? ''} (Clone)`,
-            description: amendment.reason ?? '',
-            type: 'amendment',
-            status: 'pending',
-            forwarding_status: forwardingStatus,
-            order_index: 999,
-            duration: 0,
-            scheduled_time: '',
-            start_time: 0,
-            end_time: 0,
-            activated_at: 0,
-            completed_at: 0,
-            event_id: segment.eventId,
-            amendment_id: cloneId,
-            majority_type: null,
-            time_limit: null,
-            voting_phase: null,
-          });
-
-          // TODO: Wire up to new vote model if needed
-          // Old castAmendmentVote removed with voting migration
         }
 
         enrichedPath.push({
           ...segment,
-          agendaItemId,
-          amendmentVoteId,
+          agendaItemId: null,
+          amendmentVoteId: null,
           forwardingStatus,
         });
       }
@@ -160,7 +131,9 @@ export function useCloneAmendment(
       // Create cloned amendment
       await createAmendment({
         id: cloneId,
-        title: `${amendment.title ?? ''} (Clone)`,
+        title: translateText('generated.inline.0016_valuea36c_clone_a73c56fa', {
+          valuea36c: amendment.title ?? '',
+        }),
         code: amendment.code ? `${amendment.code}-CLONE` : '',
         reason: amendment.reason ?? '',
         category: amendment.category ?? '',
@@ -168,6 +141,7 @@ export function useCloneAmendment(
         group_id: targetGroupId,
         event_id: selectedEventId,
         clone_source_id: amendmentId,
+        origin_amendment_id: amendment.origin_amendment_id ?? amendmentId,
         document_id: cloneDocumentId,
         tags: amendment.tags ?? [],
         visibility: amendment.visibility ?? 'public',
@@ -191,24 +165,15 @@ export function useCloneAmendment(
       });
 
       if (selectedEventId && enrichedPath.length > 0) {
-        await createPath({
-          id: pathId,
-          amendment_id: cloneId,
-          title: '',
-          workflow_id: workflowId,
+        await createAmendmentPath({
+          amendmentId: cloneId,
+          amendmentTitle: `${amendment.title ?? ''} (Clone)`,
+          amendmentReason: amendment.reason ?? null,
+          enrichedPath,
+          sourceGroupId: selection.sourceGroupId,
+          workflowId,
+          pathMode: selection.pathMode,
         });
-
-        for (const [index, segment] of enrichedPath.entries()) {
-          const segmentId = crypto.randomUUID();
-          await createPathSegment({
-            id: segmentId,
-            path_id: pathId,
-            group_id: segment.groupId,
-            event_id: segment.eventId ?? null,
-            order_index: index,
-            status: segment.forwardingStatus,
-          });
-        }
       }
 
       // Notify about the clone
@@ -220,12 +185,12 @@ export function useCloneAmendment(
         newAmendmentId: cloneId,
       });
 
-      toast.success('Amendment cloned successfully!');
+      toast.success(translateText('generated.inline.0153_amendment_cloned_successfully_e51bc162'));
       setCloneDialogOpen(false);
       navigate({ to: `/amendment/${cloneId}` });
     } catch (error) {
       console.error('Error cloning amendment:', error);
-      toast.error('Failed to clone amendment');
+      toast.error(translateText('generated.inline.0154_failed_to_clone_amendment_85f2f2a1'));
     } finally {
       setIsCloning(false);
     }

@@ -2,6 +2,7 @@
 
 import { useMemo, useCallback } from 'react';
 import { useAgendaState } from '@/zero/agendas/useAgendaState';
+import { useAuth } from '@/providers/auth-provider';
 import type { ElectionWithDetailsRow } from '@/zero/elections';
 import { useElectionState } from '@/zero/elections/useElectionState';
 import { useVoteState } from '@/zero/votes/useVoteState';
@@ -22,6 +23,7 @@ import {
   isRecentlyClosed,
   generateDecisionId,
 } from '../logic/decision-status';
+import { normalizeDecisionVotingPhase } from '../logic/decision-phase';
 import {
   calculateSupportPercentage,
   calculateTrend,
@@ -108,6 +110,7 @@ export function useDecisionTerminal(
   _options: UseDecisionTerminalOptions = {}
 ): UseDecisionTerminalReturn {
   void _options;
+  const { user } = useAuth();
 
   const { electionsWithDetails: electionRows, isLoading: electionsLoading } = useElectionState({
     includeElectionsWithDetails: true,
@@ -194,8 +197,8 @@ export function useDecisionTerminal(
         voteCounts.set(candidateId, (voteCounts.get(candidateId) || 0) + 1);
       }
 
-      // Determine if we're in indication phase
-      const isIndicationPhase = election.status === 'indicative';
+      const phase = normalizeDecisionVotingPhase(election.status);
+      const isIndicationPhase = phase === 'indication';
       const totalElectors = election.electors?.length;
       const totalFinalSelections = finalSelections.length;
       const totalIndicationSelections = indicativeSelections.length;
@@ -229,8 +232,8 @@ export function useDecisionTerminal(
       });
 
       const winner = [...candidateSummaries].sort((a, b) => (b.votes || 0) - (a.votes || 0))[0];
-      const isActiveByStatus = election.status === 'indicative' || election.status === 'final';
-      const closedByStatus = election.status === 'completed';
+      const isActiveByStatus = phase === 'indication' || phase === 'final_vote';
+      const closedByStatus = phase === 'closed';
       const isEnded = closedByStatus || (!isActiveByStatus && isClosed(endsAt));
       const currentSelectionCount =
         isEnded || !isIndicationPhase ? totalFinalSelections : totalIndicationSelections;
@@ -247,9 +250,13 @@ export function useDecisionTerminal(
       const status = isEnded ? 'elected' : getDecisionStatus(endsAt);
       const agendaItemId = election.agenda_item?.id;
       const agendaEventId = election.agenda_item?.event?.id;
+      const electionHref =
+        agendaItemId && agendaEventId ? `/event/${agendaEventId}/agenda/${agendaItemId}` : '#';
+      const electorId = election.electors?.find(elector => elector.user_id === user?.id)?.id;
 
       items.push({
         id: generateDecisionId('election', index + 1),
+        sourceId: election.id,
         type: 'election',
         title: election.title || 'Election',
         body: election.role?.name || election.agenda_item?.event?.title || 'Election',
@@ -267,8 +274,21 @@ export function useDecisionTerminal(
         totalMembers: totalElectors,
         turnout,
         winnerName: isEnded ? winner?.name : undefined,
-        href: `/create/election-candidate?electionId=${election.id}`,
+        href: electionHref,
         summary: election.description || undefined,
+        eventId: agendaEventId,
+        agendaItemId,
+        electionId: election.id,
+        phase,
+        ballotVisibility: election.ballot_visibility ?? null,
+        electorId,
+        canOpenVoteDialog: Boolean(agendaEventId && agendaItemId && !isEnded),
+        maxVotes: election.max_votes ?? 1,
+        electionMode:
+          election.election_mode === 'list' || election.election_mode === 'single'
+            ? election.election_mode
+            : null,
+        seatCount: election.seat_count ?? null,
         candidates: candidateSummaries,
         // Indication phase data
         isIndicationPhase,
@@ -276,8 +296,8 @@ export function useDecisionTerminal(
           agendaItemId && agendaEventId
             ? {
                 id: agendaItemId,
-                name: election.agenda_item?.event?.title || election.title || 'Election',
-                href: `/event/${agendaEventId}/agenda/${agendaItemId}`,
+                name: election.agenda_item?.title || election.title || 'Election',
+                href: electionHref,
               }
             : undefined,
       });
@@ -309,9 +329,10 @@ export function useDecisionTerminal(
             ? new Date(vote.created_at)
             : undefined;
 
-      const isIndicationPhase = vote.status === 'indicative';
-      const isActiveByStatus = isIndicationPhase || vote.status === 'final';
-      const closedByStatus = vote.status === 'closed';
+      const phase = normalizeDecisionVotingPhase(vote.status);
+      const isIndicationPhase = phase === 'indication';
+      const isActiveByStatus = phase === 'indication' || phase === 'final_vote';
+      const closedByStatus = phase === 'closed';
       const isEnded = closedByStatus || (!isActiveByStatus && isClosed(endsAt));
       const finalVotes = countVoteChoices(vote, 'final');
       const indicationVotes = countVoteChoices(vote, 'indicative');
@@ -348,6 +369,7 @@ export function useDecisionTerminal(
         : getDecisionStatus(endsAt);
       const agendaItemId = vote.agenda_item?.id;
       const agendaEventId = vote.agenda_item?.event?.id;
+      const voterId = vote.voters?.find(voter => voter.user_id === user?.id)?.id;
       const trend: TrendData =
         !isIndicationPhase && hasIndicationData
           ? calculateTrend(finalVotes, indicationVotes)
@@ -357,6 +379,7 @@ export function useDecisionTerminal(
 
       items.push({
         id: generateDecisionId('vote', index + 1),
+        sourceId: vote.id,
         type: 'vote',
         title: voteTitle,
         body: voteBody,
@@ -382,6 +405,17 @@ export function useDecisionTerminal(
               ? `/amendment/${vote.amendment.id}`
               : '#',
         summary: vote.description || undefined,
+        eventId: agendaEventId,
+        agendaItemId,
+        voteId: vote.id,
+        phase,
+        ballotVisibility: vote.ballot_visibility ?? null,
+        voterId,
+        canOpenVoteDialog: Boolean(agendaEventId && agendaItemId && !isEnded),
+        choices: (vote.choices || []).map((choice, choiceIndex) => ({
+          id: choice.id,
+          label: choice.label || `Choice ${choiceIndex + 1}`,
+        })),
         entity: vote.amendment?.id
           ? {
               id: vote.amendment.id,
@@ -414,7 +448,7 @@ export function useDecisionTerminal(
     });
 
     return items;
-  }, [agendaItemsById, electionRows, voteRows]);
+  }, [agendaItemsById, electionRows, user?.id, voteRows]);
 
   const error = null;
 

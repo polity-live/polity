@@ -25,13 +25,19 @@ export function VotePhaseBadge({ phase, className }: VotePhaseBadgeProps) {
     case 'indication':
       return (
         <Badge variant="secondary" className={cn('text-xs', className)}>
-          {t('features.events.voting.phases.indication', 'Indication')}
+          {t('features.events.voting.phases.indication')}
         </Badge>
       );
     case 'final_vote':
       return (
-        <Badge variant="default" className={cn('animate-pulse border-green-500 bg-green-600 text-xs text-white hover:bg-green-700', className)}>
-          {t('features.events.voting.phases.finalVote', 'Final Vote')}
+        <Badge
+          variant="default"
+          className={cn(
+            'animate-pulse border-green-500 bg-green-600 text-xs text-white hover:bg-green-700',
+            className
+          )}
+        >
+          {t('features.events.voting.phases.finalVote')}
         </Badge>
       );
     case 'closed':
@@ -40,7 +46,7 @@ export function VotePhaseBadge({ phase, className }: VotePhaseBadgeProps) {
           variant="outline"
           className={cn('border-green-500 text-xs text-green-600', className)}
         >
-          {t('features.events.voting.phases.closed', 'Closed')}
+          {t('features.events.voting.phases.closed')}
         </Badge>
       );
   }

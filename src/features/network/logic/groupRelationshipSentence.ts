@@ -25,11 +25,11 @@ export function getSiblingMembershipModeLabel(
 ) {
   switch (mode) {
     case 'open':
-      return t('common.network.siblingMembershipModeOpen', 'Open');
+      return t('common.network.siblingMembershipModeOpen');
     case 'elected':
-      return t('common.network.siblingMembershipModeElected', 'Elected');
+      return t('common.network.siblingMembershipModeElected');
     case 'parliament':
-      return t('common.network.siblingMembershipModeParliament', 'Parliament');
+      return t('common.network.siblingMembershipModeParliament');
     default:
       return null;
   }
@@ -56,60 +56,40 @@ export function getSiblingRelationshipPhraseText({
     }
 
     if (siblingType) {
-      return t(
-        'common.network.currentGroupAsSiblingOfWithType',
-        {
-          currentGroupName,
-          selectedGroupName,
-          siblingType,
-        },
-        '{{currentGroupName}} as sibling group ({{siblingType}}) of {{selectedGroupName}}'
-      );
-    }
-
-    return t(
-      'common.network.currentGroupAsSiblingOf',
-      {
+      return t('common.network.currentGroupAsSiblingOfWithType', {
         currentGroupName,
         selectedGroupName,
-      },
-      '{{currentGroupName}} as sibling group of {{selectedGroupName}}'
-    );
+        siblingType,
+      });
+    }
+
+    return t('common.network.currentGroupAsSiblingOf', {
+      currentGroupName,
+      selectedGroupName,
+    });
   }
 
   if (mode === 'statement') {
     if (siblingType) {
-      return t(
-        'common.network.isSiblingGroupOfWithType',
-        { siblingType },
-        'is sibling group ({{siblingType}}) of'
-      );
+      return t('common.network.isSiblingGroupOfWithType', { siblingType });
     }
 
-    return t('common.network.isSiblingGroupOf', 'is sibling group of');
+    return t('common.network.isSiblingGroupOf');
   }
 
   if (mode === 'role') {
     if (siblingType) {
-      return t(
-        'common.network.siblingGroupOfWithType',
-        { siblingType },
-        'sibling group ({{siblingType}}) of'
-      );
+      return t('common.network.siblingGroupOfWithType', { siblingType });
     }
 
-    return t('common.network.siblingGroupOf', 'sibling group of');
+    return t('common.network.siblingGroupOf');
   }
 
   if (siblingType) {
-    return t(
-      'common.network.asSiblingGroupOfWithType',
-      { siblingType },
-      'as sibling group ({{siblingType}}) of'
-    );
+    return t('common.network.asSiblingGroupOfWithType', { siblingType });
   }
 
-  return t('common.network.asSiblingGroupOf', 'as sibling group of');
+  return t('common.network.asSiblingGroupOf');
 }
 
 export function getGroupRelationshipNameText({
@@ -126,9 +106,9 @@ export function getGroupRelationshipNameText({
   const fallback =
     kind === 'current'
       ? caseStyle === 'embedded'
-        ? t('common.network.thisGroupEmbedded', 'diese Gruppe')
-        : t('common.network.thisGroup', 'Diese Gruppe')
-      : t('common.unspecified', 'andere Gruppe');
+        ? t('common.network.thisGroupEmbedded')
+        : t('common.network.thisGroup')
+      : t('common.unspecified');
   const safeName = getSafeGroupName(name, fallback);
 
   if (kind !== 'current') {
@@ -140,16 +120,8 @@ export function getGroupRelationshipNameText({
   }
 
   return caseStyle === 'embedded'
-    ? t(
-        'common.network.thisGroupWithNameEmbedded',
-        { groupName: safeName },
-        'diese Gruppe ({{groupName}})'
-      )
-    : t(
-        'common.network.thisGroupWithName',
-        { groupName: safeName },
-        'Diese Gruppe ({{groupName}})'
-      );
+    ? t('common.network.thisGroupWithNameEmbedded', { groupName: safeName })
+    : t('common.network.thisGroupWithName', { groupName: safeName });
 }
 
 export function getGroupRelationshipRightSentenceText({
@@ -170,43 +142,37 @@ export function getGroupRelationshipRightSentenceText({
     kind: 'current',
     t,
   });
+  const embeddedCurrentGroupLabel = getGroupRelationshipNameText({
+    name: currentGroupName,
+    kind: 'current',
+    caseStyle: 'embedded',
+    t,
+  });
   const selectedGroupLabel = getGroupRelationshipNameText({
     name: selectedGroupName,
     kind: 'selected',
     t,
   });
 
-  if (direction === 'incoming') {
-    return t(
-      'common.network.currentGroupHasRightIn',
-      {
-        currentGroupName: currentGroupLabel,
-        rightLabel,
-        selectedGroupName: selectedGroupLabel,
-      },
-      '{{currentGroupName}} has {{rightLabel}} in {{selectedGroupName}}'
-    );
-  }
-
-  if (direction === 'bidirectional') {
-    return t(
-      'common.network.groupsMutuallyShareRight',
-      {
-        currentGroupName: currentGroupLabel,
-        rightLabel,
-        selectedGroupName: selectedGroupLabel,
-      },
-      '{{currentGroupName}} and {{selectedGroupName}} share {{rightLabel}} mutually'
-    );
-  }
-
-  return t(
-    'common.network.currentGroupGrantsRightTo',
-    {
+  if (direction === 'current_has_right_in_partner') {
+    return t('common.network.currentGroupHasRightIn', {
       currentGroupName: currentGroupLabel,
       rightLabel,
       selectedGroupName: selectedGroupLabel,
-    },
-    '{{currentGroupName}} grants {{rightLabel}} to {{selectedGroupName}}'
-  );
+    });
+  }
+
+  if (direction === 'mutual') {
+    return t('common.network.groupsMutuallyShareRight', {
+      currentGroupName: currentGroupLabel,
+      rightLabel,
+      selectedGroupName: selectedGroupLabel,
+    });
+  }
+
+  return t('common.network.selectedGroupHasRightInCurrentGroup', {
+    currentGroupName: embeddedCurrentGroupLabel,
+    rightLabel,
+    selectedGroupName: selectedGroupLabel,
+  });
 }

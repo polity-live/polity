@@ -1,4 +1,4 @@
-import { getMembershipDisplayRoles } from '@/features/groups/logic/buildMembershipRightsSummary';
+import { getMembershipDisplayRoles } from '@/features/groups/logic/membershipDisplayRoles';
 import { getHierarchyRelationshipPair } from '@/features/network/logic/groupRelationshipOrientation';
 import type {
   ParticipationGroupLike,
@@ -473,7 +473,11 @@ function normalizeGroup(
 }
 
 function isActivePassiveVotingRelationship(relationship: MembershipCompositionRelationshipLike) {
-  return relationship.with_right === 'passiveVotingRight' && relationship.status === 'active';
+  return (
+    relationship.status === 'active' &&
+    relationship.relationship_type !== 'sibling' &&
+    relationship.with_right == null
+  );
 }
 
 function isActiveMembership(membership: MembershipWithCompositionSource) {

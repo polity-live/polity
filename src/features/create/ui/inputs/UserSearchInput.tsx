@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { toTypeaheadItems } from '@/features/shared/ui/typeahead/toTypeaheadItems';
 import { useUserState } from '@/zero/users/useUserState';
 import { CreateTypeaheadField } from '../CreateFields';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface UserSearchInputProps {
   value: string[];
@@ -24,7 +25,7 @@ export function UserSearchInput({
   onChange,
   label,
   hint,
-  placeholder = 'Search users by name or handle...',
+  placeholder = translateText('generated.inline.0044_search_users_by_name_or_handle_00f8d0a6'),
   excludeUserId,
   excludeUserIds = [],
   multi = true,

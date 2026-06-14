@@ -6,12 +6,17 @@ import { cn } from '@/features/shared/utils/utils';
 import { CommentItem, type CommentData } from './CommentItem';
 import { CommentInput } from './CommentInput';
 import { CommentSortSelect, type CommentSortBy } from './CommentSortSelect';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface CommentThreadProps {
   comments: CommentData[];
   currentUserId?: string;
   onAddComment: (text: string, parentId?: string) => Promise<void>;
-  onVote: (commentId: string, voteValue: number, existingVote?: { id: string; vote: number }) => Promise<void>;
+  onVote: (
+    commentId: string,
+    voteValue: number,
+    existingVote?: { id: string; vote: number }
+  ) => Promise<void>;
   onDelete?: (commentId: string) => Promise<void>;
   hideHeader?: boolean;
   className?: string;
@@ -39,8 +44,12 @@ export function CommentThread({
     }
     // Sort by votes (score)
     return [...topLevel].sort((a, b) => {
-      const aScore = (a.votes?.filter(v => v.vote === 1).length || 0) - (a.votes?.filter(v => v.vote === -1).length || 0);
-      const bScore = (b.votes?.filter(v => v.vote === 1).length || 0) - (b.votes?.filter(v => v.vote === -1).length || 0);
+      const aScore =
+        (a.votes?.filter(v => v.vote === 1).length || 0) -
+        (a.votes?.filter(v => v.vote === -1).length || 0);
+      const bScore =
+        (b.votes?.filter(v => v.vote === 1).length || 0) -
+        (b.votes?.filter(v => v.vote === -1).length || 0);
       return bScore - aScore;
     });
   }, [comments, sortBy]);
@@ -56,7 +65,10 @@ export function CommentThread({
         {!hideHeader && (
           <div className="flex items-center gap-2 text-sm font-medium">
             <MessageSquare className="h-4 w-4" />
-            <span>{comments.length} Comments</span>
+            <span>
+              {comments.length}
+              {translateText('generated.inline.0909_comments_fce06e20')}
+            </span>
           </div>
         )}
         <CommentSortSelect sortBy={sortBy} onSortChange={setSortBy} className="w-40" />
@@ -66,15 +78,17 @@ export function CommentThread({
       {currentUserId && (
         <CommentInput
           onSubmit={text => onAddComment(text)}
-          placeholder="Add a comment..."
+          placeholder={translateText('generated.inline.1115_add_a_comment_2339bc47')}
         />
       )}
 
       {/* Comment list */}
       <div className="space-y-4">
         {threadedComments.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">
-            No comments yet. Be the first to comment!
+          <p className="text-muted-foreground py-8 text-center text-sm">
+            {translateText(
+              'generated.inline.0395_no_comments_yet_be_the_first_to_comment_ba5c0dff'
+            )}
           </p>
         ) : (
           threadedComments.map(comment => (

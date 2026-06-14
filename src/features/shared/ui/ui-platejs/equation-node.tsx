@@ -50,7 +50,7 @@ export function EquationElement(props: PlateElementProps<TEquationElement>) {
         <PopoverTrigger asChild>
           <div
             className={cn(
-              'group flex cursor-pointer select-none items-center justify-center rounded-sm hover:bg-primary/10 data-[selected=true]:bg-primary/10',
+              'group hover:bg-primary/10 data-[selected=true]:bg-primary/10 flex cursor-pointer items-center justify-center rounded-sm select-none',
               props.element.texExpression.length === 0 ? 'bg-muted p-3 pr-9' : 'px-2 py-1'
             )}
             data-selected={selected}
@@ -60,9 +60,9 @@ export function EquationElement(props: PlateElementProps<TEquationElement>) {
             {props.element.texExpression.length > 0 ? (
               <span ref={katexRef} />
             ) : (
-              <div className="flex h-7 w-full items-center gap-2 whitespace-nowrap text-sm text-muted-foreground">
-                <RadicalIcon className="size-6 text-muted-foreground/80" />
-                <div>{t('plateJs.equation.addTex', 'Add a Tex equation')}</div>
+              <div className="text-muted-foreground flex h-7 w-full items-center gap-2 text-sm whitespace-nowrap">
+                <RadicalIcon className="text-muted-foreground/80 size-6" />
+                <div>{t('plateJs.equation.addTex')}</div>
               </div>
             )}
           </div>
@@ -70,10 +70,7 @@ export function EquationElement(props: PlateElementProps<TEquationElement>) {
 
         <EquationPopoverContent
           open={open}
-          placeholder={t(
-            'plateJs.equation.placeholder.complex',
-            'f(x) = \\begin{cases}\n  x^2, &\\quad x > 0 \\\\\n  0, &\\quad x = 0 \\\\\n  -x^2, &\\quad x < 0\n\\end{cases}'
-          )}
+          placeholder={t('plateJs.equation.placeholder.complex')}
           isInline={false}
           setOpen={setOpen}
         />
@@ -117,13 +114,13 @@ export function InlineEquationElement(props: PlateElementProps<TEquationElement>
   return (
     <PlateElement
       {...props}
-      className={cn('[&_.katex-display]:my-0! mx-1 inline-block select-none rounded-sm')}
+      className={cn('mx-1 inline-block rounded-sm select-none [&_.katex-display]:my-0!')}
     >
       <Popover open={open} onOpenChange={setOpen} modal={false}>
         <PopoverTrigger asChild>
           <div
             className={cn(
-              'after:z-1 after:absolute after:inset-0 after:-left-1 after:-top-0.5 after:h-[calc(100%)+4px] after:w-[calc(100%+8px)] after:rounded-sm after:content-[""]',
+              'after:absolute after:inset-0 after:-top-0.5 after:-left-1 after:z-1 after:h-[calc(100%)+4px] after:w-[calc(100%+8px)] after:rounded-sm after:content-[""]',
               'h-6',
               ((element.texExpression.length > 0 && open) || selected) && 'after:bg-brand/15',
               element.texExpression.length === 0 && 'text-muted-foreground after:bg-neutral-500/10'
@@ -140,7 +137,7 @@ export function InlineEquationElement(props: PlateElementProps<TEquationElement>
             {element.texExpression.length === 0 && (
               <span>
                 <RadicalIcon className="mr-1 inline-block h-[19px] w-4 py-[1.5px] align-text-bottom" />
-                {t('plateJs.equation.newEquation', 'New equation')}
+                {t('plateJs.equation.newEquation')}
               </span>
             )}
           </div>
@@ -149,7 +146,7 @@ export function InlineEquationElement(props: PlateElementProps<TEquationElement>
         <EquationPopoverContent
           className="my-auto"
           open={open}
-          placeholder={t('plateJs.equation.placeholder.simple', 'E = mc^2')}
+          placeholder={t('plateJs.equation.placeholder.simple')}
           setOpen={setOpen}
           isInline
         />
@@ -214,7 +211,7 @@ const EquationPopoverContent = ({
       />
 
       <Button variant="secondary" className="px-3" onClick={onClose}>
-        {t('plateJs.equation.done', 'Done')} <CornerDownLeftIcon className="size-3.5" />
+        {t('plateJs.equation.done')} <CornerDownLeftIcon className="size-3.5" />
       </Button>
     </PopoverContent>
   );

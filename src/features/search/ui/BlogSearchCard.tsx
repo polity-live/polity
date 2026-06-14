@@ -21,8 +21,9 @@ export function BlogSearchCard({
   const hashtags = extractHashtags(blog.blog_hashtags);
 
   // Compute context-aware blog URL
-  const blogOwnerUserId = blog.bloggers?.find(relation => relation.status === 'owner')?.user_id
-    || blog.bloggers?.find(relation => Boolean(relation.user_id))?.user_id;
+  const blogOwnerUserId =
+    blog.bloggers?.find(relation => relation.status === 'owner')?.user_id ||
+    blog.bloggers?.find(relation => Boolean(relation.user_id))?.user_id;
   const blogGroupId = blog.group_id;
   const blogUrl = blogGroupId
     ? `/group/${blogGroupId}/blog/${blog.id}`
@@ -31,7 +32,7 @@ export function BlogSearchCard({
       : `/blog/${blog.id}`;
 
   return (
-    <a href={blogUrl} className="block cursor-pointer">
+    <div className="space-y-0">
       <BlogsCard
         blog={{
           id: blog.id,
@@ -39,16 +40,15 @@ export function BlogSearchCard({
           date: blog.date || new Date(blog.created_at).toLocaleDateString(),
           supporters: supporters,
           comments: comments,
-          group_id: blogGroupId,
-          user_id: blogOwnerUserId,
         }}
         gradientClass={gradientClass}
+        href={blogUrl}
       />
       {hashtags.length > 0 && (
         <div className="px-4 pb-3">
           <HashtagDisplay hashtags={hashtags} />
         </div>
       )}
-    </a>
+    </div>
   );
 }

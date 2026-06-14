@@ -34,9 +34,13 @@ import {
 } from '@/features/shared/ui/ui/dropdown-menu.tsx';
 import { cn } from '@/features/shared/utils/utils.ts';
 import { BasicMarksKit } from '@/features/shared/ui/kit-platejs/basic-marks-kit.tsx';
-import { type TDiscussion, discussionPlugin } from '@/features/shared/ui/kit-platejs/discussion-kit.tsx';
+import {
+  type TDiscussion,
+  discussionPlugin,
+} from '@/features/shared/ui/kit-platejs/discussion-kit.tsx';
 
 import { Editor, EditorContainer } from './editor.tsx';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export interface TComment {
   id: string;
@@ -166,22 +170,22 @@ export function Comment(props: {
           <AvatarImage alt={userInfo?.name} src={userInfo?.avatarUrl} />
           <AvatarFallback>{userInfo?.name?.[0]}</AvatarFallback>
         </Avatar>
-        <h4 className="mx-2 text-sm font-semibold leading-none">
+        <h4 className="mx-2 text-sm leading-none font-semibold">
           {/* Replace to your own backend or refer to potion */}
           {userInfo?.name}
         </h4>
 
-        <div className="text-xs leading-none text-muted-foreground/80">
+        <div className="text-muted-foreground/80 text-xs leading-none">
           <span className="mr-1">{formatCommentDate(new Date(comment.createdAt))}</span>{' '}
           {comment.isEdited && <span>{t('plateJs.comment.edited')}</span>}
         </div>
 
         {isMyComment && (hovering || dropdownOpen) && (
-          <div className="absolute right-0 top-0 flex space-x-1">
+          <div className="absolute top-0 right-0 flex space-x-1">
             {index === 0 && (
               <Button
                 variant="ghost"
-                className="h-6 p-1 text-muted-foreground"
+                className="text-muted-foreground h-6 p-1"
                 onClick={onResolveComment}
                 type="button"
               >
@@ -213,7 +217,7 @@ export function Comment(props: {
       {isFirst && showDocumentContent && (
         <div className="text-subtle-foreground relative mt-1 flex pl-[32px] text-sm">
           {discussionLength > 1 && (
-            <div className="absolute left-3 top-[5px] h-full w-0.5 shrink-0 bg-muted" />
+            <div className="bg-muted absolute top-[5px] left-3 h-full w-0.5 shrink-0" />
           )}
           <div className="bg-highlight my-px w-0.5 shrink-0" />
           {documentContent && <div className="ml-2">{documentContent}</div>}
@@ -221,7 +225,7 @@ export function Comment(props: {
       )}
 
       <div className="relative my-1 pl-[26px]">
-        {!isLast && <div className="absolute left-3 top-0 h-full w-0.5 shrink-0 bg-muted" />}
+        {!isLast && <div className="bg-muted absolute top-0 left-3 h-full w-0.5 shrink-0" />}
         <Plate readOnly={!isEditing} editor={commentEditor}>
           <EditorContainer variant="comment">
             <Editor variant="comment" className="w-auto grow cursor-pointer" />
@@ -238,8 +242,8 @@ export function Comment(props: {
                   }}
                   aria-label={t('plateJs.comment.cancel')}
                 >
-                  <div className="flex size-5 shrink-0 items-center justify-center rounded-[50%] bg-primary/40">
-                    <XIcon className="size-3 stroke-[3px] text-background" />
+                  <div className="bg-primary/40 flex size-5 shrink-0 items-center justify-center rounded-[50%]">
+                    <XIcon className="text-background size-3 stroke-[3px]" />
                   </div>
                 </Button>
 
@@ -253,7 +257,7 @@ export function Comment(props: {
                   aria-label={t('plateJs.comment.save')}
                 >
                   <div className="bg-brand flex size-5 shrink-0 items-center justify-center rounded-[50%]">
-                    <CheckIcon className="size-3 stroke-[3px] text-background" />
+                    <CheckIcon className="text-background size-3 stroke-[3px]" />
                   </div>
                 </Button>
               </div>
@@ -288,7 +292,12 @@ function CommentMoreDropdown(props: {
   const selectedEditCommentRef = React.useRef<boolean>(false);
 
   const onDeleteComment = React.useCallback(() => {
-    if (!comment.id) return alert('You are operating too quickly, please try again later.');
+    if (!comment.id)
+      return alert(
+        translateText(
+          'generated.inline.1146_you_are_operating_too_quickly_please_try_agai_af71617f'
+        )
+      );
 
     // Find and update the discussion
     const updatedDiscussions = editor.getOption(discussionPlugin, 'discussions').map(discussion => {
@@ -318,7 +327,12 @@ function CommentMoreDropdown(props: {
   const onEditComment = React.useCallback(() => {
     selectedEditCommentRef.current = true;
 
-    if (!comment.id) return alert('You are operating too quickly, please try again later.');
+    if (!comment.id)
+      return alert(
+        translateText(
+          'generated.inline.1146_you_are_operating_too_quickly_please_try_agai_af71617f'
+        )
+      );
 
     setEditingId(comment.id);
   }, [comment.id, setEditingId]);
@@ -326,7 +340,7 @@ function CommentMoreDropdown(props: {
   return (
     <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen} modal={false}>
       <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
-        <Button variant="ghost" className={cn('h-6 p-1 text-muted-foreground')}>
+        <Button variant="ghost" className={cn('text-muted-foreground h-6 p-1')}>
           <MoreHorizontalIcon className="size-4" />
         </Button>
       </DropdownMenuTrigger>
@@ -512,7 +526,7 @@ export function CommentCreateForm({
 
   return (
     <div className={cn('flex w-full', className)}>
-      <div className="mr-1 mt-2 shrink-0">
+      <div className="mt-2 mr-1 shrink-0">
         {/* Replace to your own backend or refer to potion */}
         <Avatar className="size-5">
           <AvatarImage alt={userInfo?.name} src={userInfo?.avatarUrl} />
@@ -530,7 +544,7 @@ export function CommentCreateForm({
           <EditorContainer variant="comment">
             <Editor
               variant="comment"
-              className="min-h-[25px] grow pr-8 pt-0.5"
+              className="min-h-[25px] grow pt-0.5 pr-8"
               onKeyDown={e => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
@@ -545,7 +559,7 @@ export function CommentCreateForm({
             <Button
               size="icon"
               variant="ghost"
-              className="absolute bottom-0.5 right-0.5 ml-auto size-6 shrink-0"
+              className="absolute right-0.5 bottom-0.5 ml-auto size-6 shrink-0"
               disabled={commentContent.trim().length === 0}
               onClick={e => {
                 e.stopPropagation();

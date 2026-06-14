@@ -9,7 +9,10 @@ import {
   Search,
   Sparkles,
 } from 'lucide-react';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import {
@@ -167,14 +170,14 @@ function UploadContextCard({
 
           <Badge className="border-0 bg-sky-500/15 text-[10px] text-sky-700 dark:text-sky-300">
             {showImagePreview
-              ? t('common.actions.uploadImage', 'Upload Image')
+              ? t('common.actions.uploadImage')
               : formatEntityTypeLabel(attachment.entityType)}
           </Badge>
         </div>
 
         {!showImagePreview && (
           <p className="text-muted-foreground line-clamp-2 text-sm leading-6">
-            {cardPayload.fileType || t('features.messages.compose.fileFallbackLabel', 'File')} ·{' '}
+            {cardPayload.fileType || t('features.messages.compose.fileFallbackLabel')} ·{' '}
             {fileSizeLabel}
           </p>
         )}
@@ -187,7 +190,7 @@ function UploadContextCard({
             className="inline-flex items-center gap-1.5 rounded-md border border-sky-500/20 bg-sky-500/10 px-3 py-1.5 text-xs font-medium text-sky-700 transition-colors hover:bg-sky-500/15 dark:text-sky-300"
           >
             <ExternalLink className="h-3.5 w-3.5" />
-            {t('features.messages.compose.openAttachment', 'Open')}
+            {t('features.messages.compose.openAttachment')}
           </a>
           <a
             href={downloadUrl}
@@ -195,7 +198,7 @@ function UploadContextCard({
             className="border-border hover:bg-muted inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors"
           >
             <Download className="h-3.5 w-3.5" />
-            {t('features.messages.compose.downloadAttachment', 'Download')}
+            {t('features.messages.compose.downloadAttachment')}
           </a>
         </div>
       </CardContent>
@@ -206,7 +209,7 @@ function UploadContextCard({
 export function AiContextCards({
   attachments,
   contextJson,
-  contextLabel = 'input',
+  contextLabel = translateText('generated.inline.0112_input_140f86aa'),
   resolveAttachmentCardData,
   className,
 }: AiContextCardsProps) {
@@ -279,8 +282,8 @@ export function AiContextCards({
           >
             <Search className="h-3.5 w-3.5" />
             {contextLabel === 'output'
-              ? t('features.messages.ai.outputContextCardLabel', 'Output context')
-              : t('features.messages.ai.inputContextCardLabel', 'Input context')}
+              ? t('features.messages.ai.outputContextCardLabel')
+              : t('features.messages.ai.inputContextCardLabel')}
           </div>
 
           <div className="grid gap-2 p-3">
@@ -352,7 +355,7 @@ export function AiContextCards({
                 <div className="min-w-0">
                   <div className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.16em] text-emerald-700 uppercase dark:text-emerald-300">
                     <Sparkles className="h-3.5 w-3.5" />
-                    {t('features.messages.ai.skillCardLabel', 'Skill')}
+                    {t('features.messages.ai.skillCardLabel')}
                   </div>
                   <p className="text-foreground truncate text-sm font-semibold">
                     {card.attachment.title}
@@ -364,7 +367,7 @@ export function AiContextCards({
                   )}
                 </div>
                 <Badge className="border-0 bg-emerald-500/15 text-[10px] text-emerald-700 dark:text-emerald-300">
-                  {t('features.messages.ai.skillCardBadge', 'AI mode')}
+                  {t('features.messages.ai.skillCardBadge')}
                 </Badge>
               </div>
 

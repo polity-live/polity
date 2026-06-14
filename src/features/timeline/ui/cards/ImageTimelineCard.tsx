@@ -69,7 +69,11 @@ export function ImageTimelineCard({ image, onImageClick, className }: ImageTimel
   return (
     <TimelineCardBase contentType="image" className={className} href={sourceHref}>
       {/* Image Container */}
-      <div className="group relative cursor-pointer" onClick={onImageClick}>
+      <div
+        className="group relative shrink-0 cursor-pointer"
+        data-timeline-card-media
+        onClick={onImageClick}
+      >
         <img
           src={image.imageUrl}
           alt={image.caption || 'Image'}
@@ -79,7 +83,7 @@ export function ImageTimelineCard({ image, onImageClick, className }: ImageTimel
         />
 
         {/* Gradient Overlay with Caption */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-4">
+        <div className="absolute right-0 bottom-0 left-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-4">
           {image.caption && (
             <div className="mb-2 flex items-start gap-2">
               <ImageIcon className="mt-0.5 h-4 w-4 flex-shrink-0 text-white/80" />
@@ -99,7 +103,7 @@ export function ImageTimelineCard({ image, onImageClick, className }: ImageTimel
         {image.sourceType && (
           <Badge
             variant="outline"
-            className="absolute left-2 top-2 bg-white/80 text-xs dark:bg-gray-900/80"
+            className="absolute top-2 left-2 bg-white/80 text-xs dark:bg-gray-900/80"
           >
             {SOURCE_LABELS[image.sourceType] || image.sourceType}
           </Badge>
@@ -107,58 +111,60 @@ export function ImageTimelineCard({ image, onImageClick, className }: ImageTimel
       </div>
 
       <TimelineCardContent>
-        {/* Author Info */}
-        {(image.authorName || image.sourceName) && (
-          <div className="mb-2 flex items-center gap-2">
-            {image.authorAvatar ? (
-              <img
-                src={image.authorAvatar}
-                alt={image.authorName}
-                className="h-5 w-5 rounded-full object-cover"
-              />
-            ) : (
-              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-muted">
-                <User className="h-3 w-3" />
-              </div>
-            )}
-            <span className="text-xs text-muted-foreground">
-              {t('features.timeline.cards.postedBy')} {image.authorName || image.sourceName}
-            </span>
-          </div>
-        )}
+        <div className="mt-auto space-y-3">
+          {/* Author Info */}
+          {(image.authorName || image.sourceName) && (
+            <div className="flex items-center gap-2">
+              {image.authorAvatar ? (
+                <img
+                  src={image.authorAvatar}
+                  alt={image.authorName}
+                  className="h-5 w-5 rounded-full object-cover"
+                />
+              ) : (
+                <div className="bg-muted flex h-5 w-5 items-center justify-center rounded-full">
+                  <User className="h-3 w-3" />
+                </div>
+              )}
+              <span className="text-muted-foreground text-xs">
+                {t('features.timeline.cards.postedBy')} {image.authorName || image.sourceName}
+              </span>
+            </div>
+          )}
 
-        {/* Stats Bar with Tooltips */}
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          {image.likes !== undefined && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="flex cursor-help items-center gap-1">
-                  <Heart className="h-3.5 w-3.5" />
-                  {formatCount(image.likes)}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>
-                  {image.likes} {t('features.timeline.cards.likes')}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          )}
-          {image.comments !== undefined && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="flex cursor-help items-center gap-1">
-                  <MessageSquare className="h-3.5 w-3.5" />
-                  {formatCount(image.comments)}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>
-                  {image.comments} {t('features.timeline.cards.comments')}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          )}
+          {/* Stats Bar with Tooltips */}
+          <div className="text-muted-foreground flex items-center gap-3 text-xs">
+            {image.likes !== undefined && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="flex cursor-help items-center gap-1">
+                    <Heart className="h-3.5 w-3.5" />
+                    {formatCount(image.likes)}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    {image.likes} {t('features.timeline.cards.likes')}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+            {image.comments !== undefined && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="flex cursor-help items-center gap-1">
+                    <MessageSquare className="h-3.5 w-3.5" />
+                    {formatCount(image.comments)}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    {image.comments} {t('features.timeline.cards.comments')}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
         </div>
       </TimelineCardContent>
 

@@ -12,12 +12,7 @@ export function LinkToolbarButton(props: React.ComponentProps<typeof ToolbarButt
   const { t } = useTranslation();
 
   return (
-    <ToolbarButton
-      {...props}
-      {...buttonProps}
-      data-plate-focus
-      tooltip={t('plateJs.toolbar.link', 'Link')}
-    >
+    <ToolbarButton {...props} {...buttonProps} data-plate-focus tooltip={t('plateJs.toolbar.link')}>
       <Link />
     </ToolbarButton>
   );

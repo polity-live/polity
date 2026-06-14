@@ -15,7 +15,12 @@ interface VotePasswordInputProps {
 /**
  * 4-digit PIN input that auto-submits when all 4 digits are entered.
  */
-export function VotePasswordInput({ onSubmit, error, isLoading, className }: VotePasswordInputProps) {
+export function VotePasswordInput({
+  onSubmit,
+  error,
+  isLoading,
+  className,
+}: VotePasswordInputProps) {
   const { t } = useTranslation();
   const [digits, setDigits] = useState<string[]>(['', '', '', '']);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -40,12 +45,12 @@ export function VotePasswordInput({ onSubmit, error, isLoading, className }: Vot
       // Only allow single digit
       const digit = value.replace(/\D/g, '').slice(-1);
 
-      setDigits((prev) => {
+      setDigits(prev => {
         const next = [...prev];
         next[index] = digit;
 
         // Auto-submit when all 4 digits are entered
-        if (digit && index === 3 && next.every((d) => d !== '')) {
+        if (digit && index === 3 && next.every(d => d !== '')) {
           // Use setTimeout to let React update state first
           setTimeout(() => onSubmit(next.join('')), 0);
         }
@@ -58,7 +63,7 @@ export function VotePasswordInput({ onSubmit, error, isLoading, className }: Vot
         inputRefs.current[index + 1]?.focus();
       }
     },
-    [isLoading, onSubmit],
+    [isLoading, onSubmit]
   );
 
   const handleKeyDown = useCallback(
@@ -67,7 +72,7 @@ export function VotePasswordInput({ onSubmit, error, isLoading, className }: Vot
         inputRefs.current[index - 1]?.focus();
       }
     },
-    [digits],
+    [digits]
   );
 
   const handlePaste = useCallback(
@@ -90,37 +95,34 @@ export function VotePasswordInput({ onSubmit, error, isLoading, className }: Vot
         inputRefs.current[pasted.length]?.focus();
       }
     },
-    [digits, isLoading, onSubmit],
+    [digits, isLoading, onSubmit]
   );
 
   return (
     <div className={cn('space-y-3', className)}>
-      <p className="text-center text-sm text-muted-foreground">
-        {t('features.events.voting.enterPin', 'Enter your 4-digit voting PIN')}
+      <p className="text-muted-foreground text-center text-sm">
+        {t('features.events.voting.enterPin')}
       </p>
       <div className="flex justify-center gap-3" onPaste={handlePaste}>
         {digits.map((digit, i) => (
           <Input
             key={i}
-            ref={(el) => { inputRefs.current[i] = el; }}
+            ref={el => {
+              inputRefs.current[i] = el;
+            }}
             type="password"
             inputMode="numeric"
             maxLength={1}
             value={digit}
-            onChange={(e) => handleChange(i, e.target.value)}
-            onKeyDown={(e) => handleKeyDown(i, e)}
+            onChange={e => handleChange(i, e.target.value)}
+            onKeyDown={e => handleKeyDown(i, e)}
             disabled={isLoading}
-            className={cn(
-              'h-14 w-14 text-center text-2xl',
-              error && 'border-destructive',
-            )}
+            className={cn('h-14 w-14 text-center text-2xl', error && 'border-destructive')}
             autoComplete="off"
           />
         ))}
       </div>
-      {error && (
-        <p className="text-center text-sm text-destructive">{error}</p>
-      )}
+      {error && <p className="text-destructive text-center text-sm">{error}</p>}
     </div>
   );
 }

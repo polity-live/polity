@@ -34,6 +34,7 @@ interface ElectionLike {
   id: string;
   status?: string | null;
   visibility?: string | null;
+  ballot_visibility?: string | null;
   closing_duration_seconds?: number | null;
   candidates?: readonly ElectionCandidateLike[] | null;
 }
@@ -42,6 +43,7 @@ interface VoteLike {
   id: string;
   status?: string | null;
   visibility?: string | null;
+  ballot_visibility?: string | null;
   closing_duration_seconds?: number | null;
 }
 
@@ -86,7 +88,7 @@ export function useAgendaActionBar(options: UseAgendaActionBarOptions) {
     status: currentAgendaItem?.voting_phase ?? election?.status ?? vote?.status,
     electorId,
     voterId,
-    isPublic: (election?.visibility ?? vote?.visibility ?? 'public') === 'public',
+    ballotVisibility: election?.ballot_visibility ?? vote?.ballot_visibility ?? null,
   });
 
   // Speaker list membership (only active / not-completed entries block rejoining)

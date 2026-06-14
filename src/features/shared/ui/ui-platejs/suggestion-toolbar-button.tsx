@@ -18,9 +18,7 @@ export function SuggestionToolbarButton() {
       onClick={() => setOption('isSuggesting', !isSuggesting)}
       onMouseDown={e => e.preventDefault()}
       tooltip={
-        isSuggesting
-          ? t('plateJs.toolbar.turnOffSuggesting', 'Turn off suggesting')
-          : t('plateJs.toolbar.suggestionEdits', 'Suggestion edits')
+        isSuggesting ? t('plateJs.toolbar.turnOffSuggesting') : t('plateJs.toolbar.suggestionEdits')
       }
     >
       <PencilLineIcon />

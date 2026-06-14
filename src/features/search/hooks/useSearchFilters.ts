@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useSearchData } from './useSearchData';
 import { SearchFilters } from '../types/search.types';
 import { filterByQuery, matchesHashtag, matchesUserQuery, sortResults } from '../utils/searchUtils';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 type SearchData = ReturnType<typeof useSearchData>['data'];
 
@@ -99,7 +100,8 @@ export function useSearchFilters(data: SearchData | undefined, filters: SearchFi
         // Search in title, description, location, and creator name
         const matchesTitle = filterByQuery(event.title || '', query);
         const matchesDescription =
-          typeof event.description === 'string' && filterByQuery(event.description, query);
+          typeof event.description === translateText('generated.inline.0056_string_ecb25204') &&
+          filterByQuery(event.description, query);
         const matchesLocation = event.location_name && filterByQuery(event.location_name, query);
         const matchesCreator =
           filterByQuery(event.creator?.first_name, query) ||

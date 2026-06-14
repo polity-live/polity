@@ -1,0 +1,1181 @@
+-- =============================================================================
+-- 21_search_document.sql — Flattened search projection for virtualized search
+-- =============================================================================
+
+CREATE TABLE IF NOT EXISTS public.search_document (
+  id TEXT PRIMARY KEY,
+  entity_type TEXT NOT NULL,
+  entity_id UUID NOT NULL,
+  title TEXT NOT NULL,
+  subtitle TEXT,
+  summary TEXT,
+  search_text TEXT NOT NULL,
+  visibility TEXT NOT NULL DEFAULT 'public',
+  owner_user_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
+  group_id UUID REFERENCES public."group" (id) ON DELETE SET NULL,
+  image_url TEXT,
+  card_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  engagement_score INTEGER NOT NULL DEFAULT 0,
+  trending_score DOUBLE PRECISION NOT NULL DEFAULT 0
+);
+
+CREATE INDEX idx_search_document_search_text_trgm
+  ON public.search_document USING gin (search_text gin_trgm_ops);
+CREATE INDEX idx_search_document_title_trgm
+  ON public.search_document USING gin (title gin_trgm_ops);
+CREATE INDEX idx_search_document_recent
+  ON public.search_document (created_at DESC, id DESC);
+CREATE INDEX idx_search_document_engagement
+  ON public.search_document (engagement_score DESC, created_at DESC, id DESC);
+CREATE INDEX idx_search_document_trending
+  ON public.search_document (trending_score DESC, created_at DESC, id DESC);
+CREATE INDEX idx_search_document_type_recent
+  ON public.search_document (entity_type, created_at DESC, id DESC);
+CREATE INDEX idx_search_document_group
+  ON public.search_document (group_id, created_at DESC, id DESC);
+CREATE INDEX idx_search_document_owner
+  ON public.search_document (owner_user_id, created_at DESC, id DESC);
+
+ALTER TABLE public.search_document ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.search_document FOR ALL TO service_role USING (true);
+
+CREATE TABLE IF NOT EXISTS public.search_document_topic (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  document_id TEXT NOT NULL REFERENCES public.search_document (id) ON DELETE CASCADE,
+  topic TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (document_id, topic)
+);
+
+CREATE INDEX idx_search_document_topic_topic_document
+  ON public.search_document_topic (topic, document_id);
+
+ALTER TABLE public.search_document_topic ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.search_document_topic FOR ALL TO service_role USING (true);
+
+CREATE TABLE IF NOT EXISTS public.search_document_acl (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  document_id TEXT NOT NULL REFERENCES public.search_document (id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (document_id, user_id)
+);
+
+CREATE INDEX idx_search_document_acl_user_document
+  ON public.search_document_acl (user_id, document_id);
+
+ALTER TABLE public.search_document_acl ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "service_role_all" ON public.search_document_acl FOR ALL TO service_role USING (true);
+
+CREATE OR REPLACE FUNCTION public.search_document_id(entity_type TEXT, entity_id UUID)
+RETURNS TEXT
+LANGUAGE sql
+IMMUTABLE
+AS $$
+  SELECT entity_type || ':' || entity_id::text;
+$$;
+
+CREATE OR REPLACE FUNCTION public.search_document_json_text(value JSONB)
+RETURNS TEXT
+LANGUAGE sql
+IMMUTABLE
+AS $$
+  SELECT coalesce(regexp_replace(value::text, '[\[\]\{\}"_,:]+', ' ', 'g'), '');
+$$;
+
+CREATE OR REPLACE FUNCTION public.search_document_epoch_ms(value TIMESTAMPTZ)
+RETURNS BIGINT
+LANGUAGE sql
+IMMUTABLE
+AS $$
+  SELECT CASE
+    WHEN value IS NULL THEN NULL
+    ELSE floor(extract(epoch FROM value) * 1000)::bigint
+  END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.sync_search_document_topics(
+  p_document_id TEXT,
+  p_topics JSONB
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+DECLARE
+  normalized_topics JSONB;
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM public.search_document WHERE id = p_document_id
+  ) THEN
+    RETURN;
+  END IF;
+
+  normalized_topics := CASE
+    WHEN jsonb_typeof(p_topics) = 'array' THEN p_topics
+    ELSE '[]'::jsonb
+  END;
+
+  DELETE FROM public.search_document_topic
+  WHERE document_id = p_document_id;
+
+  INSERT INTO public.search_document_topic (document_id, topic)
+  SELECT DISTINCT p_document_id, lower(trim(value))
+  FROM jsonb_array_elements_text(normalized_topics) AS topic_value(value)
+  WHERE nullif(trim(value), '') IS NOT NULL
+  ON CONFLICT (document_id, topic) DO NOTHING;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.sync_user_search_document_topics(target_user_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+DECLARE
+  topics JSONB;
+BEGIN
+  SELECT coalesce(jsonb_agg(h.tag ORDER BY h.tag), '[]'::jsonb)
+  INTO topics
+  FROM public.user_hashtag AS uh
+  JOIN public.hashtag AS h ON h.id = uh.hashtag_id
+  WHERE uh.user_id = target_user_id;
+
+  PERFORM public.sync_search_document_topics(
+    public.search_document_id('user', target_user_id),
+    topics
+  );
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.sync_group_search_document_topics(target_group_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+DECLARE
+  topics JSONB;
+BEGIN
+  SELECT coalesce(jsonb_agg(h.tag ORDER BY h.tag), '[]'::jsonb)
+  INTO topics
+  FROM public.group_hashtag AS gh
+  JOIN public.hashtag AS h ON h.id = gh.hashtag_id
+  WHERE gh.group_id = target_group_id;
+
+  PERFORM public.sync_search_document_topics(
+    public.search_document_id('group', target_group_id),
+    topics
+  );
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.sync_statement_search_document_topics(target_statement_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+DECLARE
+  topics JSONB;
+BEGIN
+  SELECT coalesce(jsonb_agg(h.tag ORDER BY h.tag), '[]'::jsonb)
+  INTO topics
+  FROM public.statement_hashtag AS sh
+  JOIN public.hashtag AS h ON h.id = sh.hashtag_id
+  WHERE sh.statement_id = target_statement_id;
+
+  PERFORM public.sync_search_document_topics(
+    public.search_document_id('statement', target_statement_id),
+    topics
+  );
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.sync_blog_search_document_topics(target_blog_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+DECLARE
+  topics JSONB;
+BEGIN
+  SELECT coalesce(jsonb_agg(h.tag ORDER BY h.tag), '[]'::jsonb)
+  INTO topics
+  FROM public.blog_hashtag AS bh
+  JOIN public.hashtag AS h ON h.id = bh.hashtag_id
+  WHERE bh.blog_id = target_blog_id;
+
+  PERFORM public.sync_search_document_topics(
+    public.search_document_id('blog', target_blog_id),
+    topics
+  );
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.sync_amendment_search_document_topics(target_amendment_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+DECLARE
+  topics JSONB;
+BEGIN
+  WITH topic_values AS (
+    SELECT value AS topic
+    FROM public.amendment AS a,
+      jsonb_array_elements_text(
+        CASE WHEN jsonb_typeof(a.tags) = 'array' THEN a.tags ELSE '[]'::jsonb END
+      ) AS tag_value(value)
+    WHERE a.id = target_amendment_id
+    UNION
+    SELECT h.tag
+    FROM public.amendment_hashtag AS ah
+    JOIN public.hashtag AS h ON h.id = ah.hashtag_id
+    WHERE ah.amendment_id = target_amendment_id
+  )
+  SELECT coalesce(jsonb_agg(topic ORDER BY topic), '[]'::jsonb)
+  INTO topics
+  FROM topic_values;
+
+  PERFORM public.sync_search_document_topics(
+    public.search_document_id('amendment', target_amendment_id),
+    topics
+  );
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.sync_event_search_document_topics(target_event_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+DECLARE
+  topics JSONB;
+BEGIN
+  SELECT coalesce(jsonb_agg(h.tag ORDER BY h.tag), '[]'::jsonb)
+  INTO topics
+  FROM public.event_hashtag AS eh
+  JOIN public.hashtag AS h ON h.id = eh.hashtag_id
+  WHERE eh.event_id = target_event_id;
+
+  PERFORM public.sync_search_document_topics(
+    public.search_document_id('event', target_event_id),
+    topics
+  );
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.upsert_user_search_document()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+DECLARE
+  display_name TEXT;
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    DELETE FROM public.search_document
+    WHERE id = public.search_document_id('user', OLD.id);
+    RETURN OLD;
+  END IF;
+
+  display_name := coalesce(
+    nullif(trim(concat_ws(' ', NEW.first_name, NEW.last_name)), ''),
+    nullif(NEW.handle, ''),
+    NEW.email,
+    'User'
+  );
+
+  INSERT INTO public.search_document (
+    id,
+    entity_type,
+    entity_id,
+    title,
+    subtitle,
+    summary,
+    search_text,
+    visibility,
+    owner_user_id,
+    image_url,
+    card_payload,
+    created_at,
+    updated_at,
+    engagement_score,
+    trending_score
+  )
+  VALUES (
+    public.search_document_id('user', NEW.id),
+    'user',
+    NEW.id,
+    display_name,
+    CASE WHEN nullif(NEW.handle, '') IS NULL THEN NEW.city ELSE '@' || NEW.handle END,
+    NEW.bio,
+    concat_ws(
+      ' ',
+      display_name,
+      NEW.handle,
+      NEW.email,
+      NEW.bio,
+      NEW.city,
+      NEW.region,
+      NEW.country,
+      public.search_document_json_text(NEW.about)
+    ),
+    coalesce(NEW.visibility, 'public'),
+    NEW.id,
+    NEW.avatar,
+    jsonb_build_object(
+      'type', 'user',
+      'handle', NEW.handle,
+      'stats', jsonb_build_object(
+        'subscribers', NEW.subscriber_count,
+        'amendments', NEW.amendment_count,
+        'groups', NEW.group_count
+      )
+    ),
+    NEW.created_at,
+    NEW.updated_at,
+    coalesce(NEW.subscriber_count, 0) + coalesce(NEW.amendment_count, 0) + coalesce(NEW.group_count, 0),
+    coalesce(NEW.subscriber_count, 0)
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    title = EXCLUDED.title,
+    subtitle = EXCLUDED.subtitle,
+    summary = EXCLUDED.summary,
+    search_text = EXCLUDED.search_text,
+    visibility = EXCLUDED.visibility,
+    owner_user_id = EXCLUDED.owner_user_id,
+    image_url = EXCLUDED.image_url,
+    card_payload = EXCLUDED.card_payload,
+    created_at = EXCLUDED.created_at,
+    updated_at = EXCLUDED.updated_at,
+    engagement_score = EXCLUDED.engagement_score,
+    trending_score = EXCLUDED.trending_score;
+
+  PERFORM public.sync_user_search_document_topics(NEW.id);
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.upsert_group_search_document()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    DELETE FROM public.search_document
+    WHERE id = public.search_document_id('group', OLD.id);
+    RETURN OLD;
+  END IF;
+
+  INSERT INTO public.search_document (
+    id,
+    entity_type,
+    entity_id,
+    title,
+    subtitle,
+    summary,
+    search_text,
+    visibility,
+    owner_user_id,
+    group_id,
+    image_url,
+    card_payload,
+    created_at,
+    updated_at,
+    engagement_score,
+    trending_score
+  )
+  VALUES (
+    public.search_document_id('group', NEW.id),
+    'group',
+    NEW.id,
+    coalesce(nullif(NEW.name, ''), 'Group'),
+    concat_ws(', ', nullif(NEW.city, ''), nullif(NEW.region, ''), nullif(NEW.country, '')),
+    left(public.search_document_json_text(NEW.description), 320),
+    concat_ws(
+      ' ',
+      NEW.name,
+      public.search_document_json_text(NEW.description),
+      NEW.city,
+      NEW.region,
+      NEW.country
+    ),
+    coalesce(NEW.visibility, 'public'),
+    NEW.owner_id,
+    NEW.id,
+    NEW.image_url,
+    jsonb_build_object(
+      'type', 'group',
+      'location', concat_ws(', ', nullif(NEW.city, ''), nullif(NEW.region, ''), nullif(NEW.country, '')),
+      'stats', jsonb_build_object(
+        'members', NEW.member_count,
+        'subscribers', NEW.subscriber_count,
+        'events', NEW.event_count,
+        'amendments', NEW.amendment_count
+      )
+    ),
+    NEW.created_at,
+    NEW.updated_at,
+    coalesce(NEW.member_count, 0) + coalesce(NEW.subscriber_count, 0) + coalesce(NEW.event_count, 0) + coalesce(NEW.amendment_count, 0),
+    coalesce(NEW.subscriber_count, 0)
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    title = EXCLUDED.title,
+    subtitle = EXCLUDED.subtitle,
+    summary = EXCLUDED.summary,
+    search_text = EXCLUDED.search_text,
+    visibility = EXCLUDED.visibility,
+    owner_user_id = EXCLUDED.owner_user_id,
+    group_id = EXCLUDED.group_id,
+    image_url = EXCLUDED.image_url,
+    card_payload = EXCLUDED.card_payload,
+    created_at = EXCLUDED.created_at,
+    updated_at = EXCLUDED.updated_at,
+    engagement_score = EXCLUDED.engagement_score,
+    trending_score = EXCLUDED.trending_score;
+
+  PERFORM public.sync_group_search_document_topics(NEW.id);
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.upsert_statement_search_document()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    DELETE FROM public.search_document
+    WHERE id = public.search_document_id('statement', OLD.id);
+    RETURN OLD;
+  END IF;
+
+  INSERT INTO public.search_document (
+    id,
+    entity_type,
+    entity_id,
+    title,
+    summary,
+    search_text,
+    visibility,
+    owner_user_id,
+    group_id,
+    image_url,
+    card_payload,
+    created_at,
+    updated_at,
+    engagement_score,
+    trending_score
+  )
+  VALUES (
+    public.search_document_id('statement', NEW.id),
+    'statement',
+    NEW.id,
+    coalesce(nullif(left(NEW.text, 100), ''), 'Statement'),
+    NEW.text,
+    coalesce(NEW.text, ''),
+    coalesce(NEW.visibility, 'public'),
+    NEW.user_id,
+    NEW.group_id,
+    NEW.image_url,
+    jsonb_build_object(
+      'type', 'statement',
+      'stats', jsonb_build_object(
+        'upvotes', NEW.upvotes,
+        'comments', NEW.comment_count
+      )
+    ),
+    NEW.created_at,
+    NEW.updated_at,
+    coalesce(NEW.upvotes, 0) - coalesce(NEW.downvotes, 0) + coalesce(NEW.comment_count, 0),
+    coalesce(NEW.upvotes, 0) - coalesce(NEW.downvotes, 0)
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    title = EXCLUDED.title,
+    summary = EXCLUDED.summary,
+    search_text = EXCLUDED.search_text,
+    visibility = EXCLUDED.visibility,
+    owner_user_id = EXCLUDED.owner_user_id,
+    group_id = EXCLUDED.group_id,
+    image_url = EXCLUDED.image_url,
+    card_payload = EXCLUDED.card_payload,
+    created_at = EXCLUDED.created_at,
+    updated_at = EXCLUDED.updated_at,
+    engagement_score = EXCLUDED.engagement_score,
+    trending_score = EXCLUDED.trending_score;
+
+  PERFORM public.sync_statement_search_document_topics(NEW.id);
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.upsert_blog_search_document()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    DELETE FROM public.search_document
+    WHERE id = public.search_document_id('blog', OLD.id);
+    RETURN OLD;
+  END IF;
+
+  INSERT INTO public.search_document (
+    id,
+    entity_type,
+    entity_id,
+    title,
+    summary,
+    search_text,
+    visibility,
+    group_id,
+    image_url,
+    card_payload,
+    created_at,
+    updated_at,
+    engagement_score,
+    trending_score
+  )
+  VALUES (
+    public.search_document_id('blog', NEW.id),
+    'blog',
+    NEW.id,
+    coalesce(nullif(NEW.title, ''), 'Blog'),
+    coalesce(NEW.description, left(public.search_document_json_text(NEW.content), 320)),
+    concat_ws(' ', NEW.title, NEW.description, public.search_document_json_text(NEW.content)),
+    coalesce(NEW.visibility, 'public'),
+    NEW.group_id,
+    NEW.image_url,
+    jsonb_build_object(
+      'type', 'blog',
+      'stats', jsonb_build_object(
+        'likes', NEW.like_count,
+        'comments', NEW.comment_count,
+        'supporters', NEW.supporter_count
+      )
+    ),
+    NEW.created_at,
+    NEW.updated_at,
+    coalesce(NEW.like_count, 0) + coalesce(NEW.comment_count, 0) + coalesce(NEW.supporter_count, 0) + coalesce(NEW.upvotes, 0) - coalesce(NEW.downvotes, 0),
+    coalesce(NEW.like_count, 0) + coalesce(NEW.upvotes, 0) - coalesce(NEW.downvotes, 0)
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    title = EXCLUDED.title,
+    summary = EXCLUDED.summary,
+    search_text = EXCLUDED.search_text,
+    visibility = EXCLUDED.visibility,
+    group_id = EXCLUDED.group_id,
+    image_url = EXCLUDED.image_url,
+    card_payload = EXCLUDED.card_payload,
+    created_at = EXCLUDED.created_at,
+    updated_at = EXCLUDED.updated_at,
+    engagement_score = EXCLUDED.engagement_score,
+    trending_score = EXCLUDED.trending_score;
+
+  PERFORM public.sync_blog_search_document_topics(NEW.id);
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.upsert_amendment_search_document()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    DELETE FROM public.search_document
+    WHERE id = public.search_document_id('amendment', OLD.id);
+    RETURN OLD;
+  END IF;
+
+  INSERT INTO public.search_document (
+    id,
+    entity_type,
+    entity_id,
+    title,
+    subtitle,
+    summary,
+    search_text,
+    visibility,
+    owner_user_id,
+    group_id,
+    image_url,
+    card_payload,
+    created_at,
+    updated_at,
+    engagement_score,
+    trending_score
+  )
+  VALUES (
+    public.search_document_id('amendment', NEW.id),
+    'amendment',
+    NEW.id,
+    coalesce(nullif(NEW.title, ''), nullif(NEW.code, ''), 'Amendment'),
+    NEW.code,
+    coalesce(NEW.reason, NEW.preamble),
+    concat_ws(' ', NEW.code, NEW.title, NEW.reason, NEW.preamble, NEW.category),
+    coalesce(NEW.visibility, 'public'),
+    NEW.created_by_id,
+    NEW.group_id,
+    NEW.image_url,
+    jsonb_build_object(
+      'type', 'amendment',
+      'code', NEW.code,
+      'status', NEW.editing_mode,
+      'entity_id', NEW.id,
+      'metadata', jsonb_build_object('event_id', NEW.event_id),
+      'stats', jsonb_build_object(
+        'supporters', NEW.supporters,
+        'upvotes', NEW.upvotes,
+        'comments', NEW.comment_count
+      )
+    ),
+    NEW.created_at,
+    NEW.updated_at,
+    coalesce(NEW.supporters, 0) + coalesce(NEW.upvotes, 0) - coalesce(NEW.downvotes, 0) + coalesce(NEW.comment_count, 0),
+    coalesce(NEW.upvotes, 0) - coalesce(NEW.downvotes, 0)
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    title = EXCLUDED.title,
+    subtitle = EXCLUDED.subtitle,
+    summary = EXCLUDED.summary,
+    search_text = EXCLUDED.search_text,
+    visibility = EXCLUDED.visibility,
+    owner_user_id = EXCLUDED.owner_user_id,
+    group_id = EXCLUDED.group_id,
+    image_url = EXCLUDED.image_url,
+    card_payload = EXCLUDED.card_payload,
+    created_at = EXCLUDED.created_at,
+    updated_at = EXCLUDED.updated_at,
+    engagement_score = EXCLUDED.engagement_score,
+    trending_score = EXCLUDED.trending_score;
+
+  PERFORM public.sync_amendment_search_document_topics(NEW.id);
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.upsert_event_search_document()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    DELETE FROM public.search_document
+    WHERE id = public.search_document_id('event', OLD.id);
+    RETURN OLD;
+  END IF;
+
+  INSERT INTO public.search_document (
+    id,
+    entity_type,
+    entity_id,
+    title,
+    subtitle,
+    summary,
+    search_text,
+    visibility,
+    owner_user_id,
+    group_id,
+    image_url,
+    card_payload,
+    created_at,
+    updated_at,
+    engagement_score,
+    trending_score
+  )
+  VALUES (
+    public.search_document_id('event', NEW.id),
+    'event',
+    NEW.id,
+    coalesce(nullif(NEW.title, ''), 'Event'),
+    concat_ws(', ', nullif(NEW.location_name, ''), nullif(NEW.city, ''), nullif(NEW.country, '')),
+    left(public.search_document_json_text(NEW.description), 320),
+    concat_ws(
+      ' ',
+      NEW.title,
+      public.search_document_json_text(NEW.description),
+      NEW.event_type,
+      NEW.location_name,
+      NEW.city,
+      NEW.region,
+      NEW.country
+    ),
+    coalesce(NEW.visibility, 'public'),
+    NEW.creator_id,
+    NEW.group_id,
+    NEW.image_url,
+    jsonb_build_object(
+      'type', 'event',
+      'location', concat_ws(', ', nullif(NEW.location_name, ''), nullif(NEW.city, ''), nullif(NEW.country, '')),
+      'starts_at', public.search_document_epoch_ms(NEW.start_date),
+      'ends_at', public.search_document_epoch_ms(NEW.end_date),
+      'status', NEW.status,
+      'stats', jsonb_build_object(
+        'participants', NEW.participant_count,
+        'subscribers', NEW.subscriber_count,
+        'amendments', NEW.amendment_count
+      )
+    ),
+    NEW.created_at,
+    NEW.updated_at,
+    coalesce(NEW.participant_count, 0) + coalesce(NEW.subscriber_count, 0) + coalesce(NEW.amendment_count, 0) + coalesce(NEW.election_count, 0),
+    coalesce(NEW.participant_count, 0)
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    title = EXCLUDED.title,
+    subtitle = EXCLUDED.subtitle,
+    summary = EXCLUDED.summary,
+    search_text = EXCLUDED.search_text,
+    visibility = EXCLUDED.visibility,
+    owner_user_id = EXCLUDED.owner_user_id,
+    group_id = EXCLUDED.group_id,
+    image_url = EXCLUDED.image_url,
+    card_payload = EXCLUDED.card_payload,
+    created_at = EXCLUDED.created_at,
+    updated_at = EXCLUDED.updated_at,
+    engagement_score = EXCLUDED.engagement_score,
+    trending_score = EXCLUDED.trending_score;
+
+  PERFORM public.sync_event_search_document_topics(NEW.id);
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.upsert_todo_search_document()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    DELETE FROM public.search_document
+    WHERE id = public.search_document_id('todo', OLD.id);
+    RETURN OLD;
+  END IF;
+
+  INSERT INTO public.search_document (
+    id,
+    entity_type,
+    entity_id,
+    title,
+    subtitle,
+    summary,
+    search_text,
+    visibility,
+    owner_user_id,
+    group_id,
+    card_payload,
+    created_at,
+    updated_at,
+    engagement_score,
+    trending_score
+  )
+  VALUES (
+    public.search_document_id('todo', NEW.id),
+    'todo',
+    NEW.id,
+    coalesce(nullif(NEW.title, ''), 'Todo'),
+    NEW.status,
+    NEW.description,
+    concat_ws(' ', NEW.title, NEW.description, NEW.status, NEW.priority),
+    coalesce(NEW.visibility, 'public'),
+    NEW.creator_id,
+    NEW.group_id,
+    jsonb_build_object(
+      'type', 'todo',
+      'priority', NEW.priority,
+      'status', NEW.status,
+      'due_at', public.search_document_epoch_ms(NEW.due_date),
+      'metadata', jsonb_build_object('event_id', NEW.event_id, 'amendment_id', NEW.amendment_id)
+    ),
+    NEW.created_at,
+    NEW.updated_at,
+    CASE
+      WHEN NEW.status = 'completed' THEN 0
+      WHEN NEW.priority = 'high' THEN 3
+      WHEN NEW.priority = 'medium' THEN 2
+      ELSE 1
+    END,
+    CASE
+      WHEN NEW.due_date IS NOT NULL AND NEW.completed_at IS NULL THEN 1
+      ELSE 0
+    END
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    title = EXCLUDED.title,
+    subtitle = EXCLUDED.subtitle,
+    summary = EXCLUDED.summary,
+    search_text = EXCLUDED.search_text,
+    visibility = EXCLUDED.visibility,
+    owner_user_id = EXCLUDED.owner_user_id,
+    group_id = EXCLUDED.group_id,
+    card_payload = EXCLUDED.card_payload,
+    created_at = EXCLUDED.created_at,
+    updated_at = EXCLUDED.updated_at,
+    engagement_score = EXCLUDED.engagement_score,
+    trending_score = EXCLUDED.trending_score;
+
+  PERFORM public.sync_search_document_topics(
+    public.search_document_id('todo', NEW.id),
+    NEW.tags
+  );
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.upsert_election_search_document()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+DECLARE
+  related_group_id UUID;
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    DELETE FROM public.search_document
+    WHERE id = public.search_document_id('election', OLD.id);
+    RETURN OLD;
+  END IF;
+
+  SELECT group_id
+  INTO related_group_id
+  FROM public.role
+  WHERE id = NEW.role_id;
+
+  INSERT INTO public.search_document (
+    id,
+    entity_type,
+    entity_id,
+    title,
+    subtitle,
+    summary,
+    search_text,
+    visibility,
+    group_id,
+    card_payload,
+    created_at,
+    updated_at,
+    engagement_score,
+    trending_score
+  )
+  VALUES (
+    public.search_document_id('election', NEW.id),
+    'election',
+    NEW.id,
+    coalesce(nullif(NEW.title, ''), 'Election'),
+    NEW.status,
+    NEW.description,
+    concat_ws(' ', NEW.title, NEW.description, NEW.status, NEW.majority_type, NEW.election_mode),
+    coalesce(NEW.visibility, 'public'),
+    related_group_id,
+    jsonb_build_object(
+      'type', 'election',
+      'status', NEW.status,
+      'metadata', jsonb_build_object(
+        'role_id', NEW.role_id,
+        'agenda_item_id', NEW.agenda_item_id,
+        'election_mode', NEW.election_mode
+      )
+    ),
+    NEW.created_at,
+    NEW.updated_at,
+    coalesce(NEW.seat_count, 0) + coalesce(NEW.max_votes, 0),
+    CASE WHEN NEW.status IN ('open', 'active') THEN 1 ELSE 0 END
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    title = EXCLUDED.title,
+    subtitle = EXCLUDED.subtitle,
+    summary = EXCLUDED.summary,
+    search_text = EXCLUDED.search_text,
+    visibility = EXCLUDED.visibility,
+    group_id = EXCLUDED.group_id,
+    card_payload = EXCLUDED.card_payload,
+    created_at = EXCLUDED.created_at,
+    updated_at = EXCLUDED.updated_at,
+    engagement_score = EXCLUDED.engagement_score,
+    trending_score = EXCLUDED.trending_score;
+
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.upsert_timeline_event_search_document()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+DECLARE
+  projected_type TEXT;
+  projected_entity_id UUID;
+  score INTEGER;
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    DELETE FROM public.search_document
+    WHERE id = public.search_document_id('timeline_event', OLD.id);
+    RETURN OLD;
+  END IF;
+
+  projected_type := coalesce(NEW.content_type, NEW.entity_type, 'timeline_event');
+  projected_entity_id := coalesce(NEW.entity_id, NEW.id);
+  score := CASE
+    WHEN NEW.stats ? 'score' AND (NEW.stats ->> 'score') ~ '^-?[0-9]+$'
+      THEN (NEW.stats ->> 'score')::integer
+    ELSE 0
+  END;
+
+  INSERT INTO public.search_document (
+    id,
+    entity_type,
+    entity_id,
+    title,
+    summary,
+    search_text,
+    visibility,
+    owner_user_id,
+    group_id,
+    image_url,
+    card_payload,
+    created_at,
+    updated_at,
+    engagement_score,
+    trending_score
+  )
+  VALUES (
+    public.search_document_id('timeline_event', NEW.id),
+    projected_type,
+    projected_entity_id,
+    coalesce(nullif(NEW.title, ''), 'Timeline item'),
+    NEW.description,
+    concat_ws(
+      ' ',
+      NEW.title,
+      NEW.description,
+      NEW.event_type,
+      NEW.entity_type,
+      NEW.content_type,
+      public.search_document_json_text(NEW.metadata),
+      public.search_document_json_text(NEW.tags)
+    ),
+    'public',
+    coalesce(NEW.user_id, NEW.actor_id),
+    NEW.group_id,
+    coalesce(NEW.image_url, NEW.video_thumbnail_url),
+    jsonb_build_object(
+      'type', projected_type,
+      'status', coalesce(NEW.vote_status, NEW.election_status),
+      'ends_at', public.search_document_epoch_ms(NEW.ends_at),
+      'entity_type', NEW.entity_type,
+      'entity_id', projected_entity_id,
+      'metadata', coalesce(NEW.metadata, '{}'::jsonb),
+      'stats', coalesce(NEW.stats, '{}'::jsonb)
+    ),
+    NEW.created_at,
+    NEW.created_at,
+    score,
+    score
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    entity_type = EXCLUDED.entity_type,
+    entity_id = EXCLUDED.entity_id,
+    title = EXCLUDED.title,
+    summary = EXCLUDED.summary,
+    search_text = EXCLUDED.search_text,
+    visibility = EXCLUDED.visibility,
+    owner_user_id = EXCLUDED.owner_user_id,
+    group_id = EXCLUDED.group_id,
+    image_url = EXCLUDED.image_url,
+    card_payload = EXCLUDED.card_payload,
+    created_at = EXCLUDED.created_at,
+    updated_at = EXCLUDED.updated_at,
+    engagement_score = EXCLUDED.engagement_score,
+    trending_score = EXCLUDED.trending_score;
+
+  PERFORM public.sync_search_document_topics(
+    public.search_document_id('timeline_event', NEW.id),
+    NEW.tags
+  );
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.refresh_user_search_document_topics_from_hashtag()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+BEGIN
+  IF TG_OP IN ('UPDATE', 'DELETE') THEN
+    PERFORM public.sync_user_search_document_topics(OLD.user_id);
+  END IF;
+
+  IF TG_OP IN ('INSERT', 'UPDATE') THEN
+    PERFORM public.sync_user_search_document_topics(NEW.user_id);
+    RETURN NEW;
+  END IF;
+
+  RETURN OLD;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.refresh_group_search_document_topics_from_hashtag()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+BEGIN
+  IF TG_OP IN ('UPDATE', 'DELETE') THEN
+    PERFORM public.sync_group_search_document_topics(OLD.group_id);
+  END IF;
+
+  IF TG_OP IN ('INSERT', 'UPDATE') THEN
+    PERFORM public.sync_group_search_document_topics(NEW.group_id);
+    RETURN NEW;
+  END IF;
+
+  RETURN OLD;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.refresh_statement_search_document_topics_from_hashtag()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+BEGIN
+  IF TG_OP IN ('UPDATE', 'DELETE') THEN
+    PERFORM public.sync_statement_search_document_topics(OLD.statement_id);
+  END IF;
+
+  IF TG_OP IN ('INSERT', 'UPDATE') THEN
+    PERFORM public.sync_statement_search_document_topics(NEW.statement_id);
+    RETURN NEW;
+  END IF;
+
+  RETURN OLD;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.refresh_blog_search_document_topics_from_hashtag()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+BEGIN
+  IF TG_OP IN ('UPDATE', 'DELETE') THEN
+    PERFORM public.sync_blog_search_document_topics(OLD.blog_id);
+  END IF;
+
+  IF TG_OP IN ('INSERT', 'UPDATE') THEN
+    PERFORM public.sync_blog_search_document_topics(NEW.blog_id);
+    RETURN NEW;
+  END IF;
+
+  RETURN OLD;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.refresh_amendment_search_document_topics_from_hashtag()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+BEGIN
+  IF TG_OP IN ('UPDATE', 'DELETE') THEN
+    PERFORM public.sync_amendment_search_document_topics(OLD.amendment_id);
+  END IF;
+
+  IF TG_OP IN ('INSERT', 'UPDATE') THEN
+    PERFORM public.sync_amendment_search_document_topics(NEW.amendment_id);
+    RETURN NEW;
+  END IF;
+
+  RETURN OLD;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.refresh_event_search_document_topics_from_hashtag()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+BEGIN
+  IF TG_OP IN ('UPDATE', 'DELETE') THEN
+    PERFORM public.sync_event_search_document_topics(OLD.event_id);
+  END IF;
+
+  IF TG_OP IN ('INSERT', 'UPDATE') THEN
+    PERFORM public.sync_event_search_document_topics(NEW.event_id);
+    RETURN NEW;
+  END IF;
+
+  RETURN OLD;
+END;
+$$;
+
+CREATE OR REPLACE TRIGGER trg_search_document_user
+AFTER INSERT OR UPDATE OR DELETE ON public."user"
+FOR EACH ROW EXECUTE FUNCTION public.upsert_user_search_document();
+
+CREATE OR REPLACE TRIGGER trg_search_document_group
+AFTER INSERT OR UPDATE OR DELETE ON public."group"
+FOR EACH ROW EXECUTE FUNCTION public.upsert_group_search_document();
+
+CREATE OR REPLACE TRIGGER trg_search_document_statement
+AFTER INSERT OR UPDATE OR DELETE ON public.statement
+FOR EACH ROW EXECUTE FUNCTION public.upsert_statement_search_document();
+
+CREATE OR REPLACE TRIGGER trg_search_document_blog
+AFTER INSERT OR UPDATE OR DELETE ON public.blog
+FOR EACH ROW EXECUTE FUNCTION public.upsert_blog_search_document();
+
+CREATE OR REPLACE TRIGGER trg_search_document_amendment
+AFTER INSERT OR UPDATE OR DELETE ON public.amendment
+FOR EACH ROW EXECUTE FUNCTION public.upsert_amendment_search_document();
+
+CREATE OR REPLACE TRIGGER trg_search_document_event
+AFTER INSERT OR UPDATE OR DELETE ON public.event
+FOR EACH ROW EXECUTE FUNCTION public.upsert_event_search_document();
+
+CREATE OR REPLACE TRIGGER trg_search_document_todo
+AFTER INSERT OR UPDATE OR DELETE ON public.todo
+FOR EACH ROW EXECUTE FUNCTION public.upsert_todo_search_document();
+
+CREATE OR REPLACE TRIGGER trg_search_document_election
+AFTER INSERT OR UPDATE OR DELETE ON public.election
+FOR EACH ROW EXECUTE FUNCTION public.upsert_election_search_document();
+
+CREATE OR REPLACE TRIGGER trg_search_document_timeline_event
+AFTER INSERT OR UPDATE OR DELETE ON public.timeline_event
+FOR EACH ROW EXECUTE FUNCTION public.upsert_timeline_event_search_document();
+
+CREATE OR REPLACE TRIGGER trg_search_document_user_hashtag
+AFTER INSERT OR UPDATE OR DELETE ON public.user_hashtag
+FOR EACH ROW EXECUTE FUNCTION public.refresh_user_search_document_topics_from_hashtag();
+
+CREATE OR REPLACE TRIGGER trg_search_document_group_hashtag
+AFTER INSERT OR UPDATE OR DELETE ON public.group_hashtag
+FOR EACH ROW EXECUTE FUNCTION public.refresh_group_search_document_topics_from_hashtag();
+
+CREATE OR REPLACE TRIGGER trg_search_document_statement_hashtag
+AFTER INSERT OR UPDATE OR DELETE ON public.statement_hashtag
+FOR EACH ROW EXECUTE FUNCTION public.refresh_statement_search_document_topics_from_hashtag();
+
+CREATE OR REPLACE TRIGGER trg_search_document_blog_hashtag
+AFTER INSERT OR UPDATE OR DELETE ON public.blog_hashtag
+FOR EACH ROW EXECUTE FUNCTION public.refresh_blog_search_document_topics_from_hashtag();
+
+CREATE OR REPLACE TRIGGER trg_search_document_amendment_hashtag
+AFTER INSERT OR UPDATE OR DELETE ON public.amendment_hashtag
+FOR EACH ROW EXECUTE FUNCTION public.refresh_amendment_search_document_topics_from_hashtag();
+
+CREATE OR REPLACE TRIGGER trg_search_document_event_hashtag
+AFTER INSERT OR UPDATE OR DELETE ON public.event_hashtag
+FOR EACH ROW EXECUTE FUNCTION public.refresh_event_search_document_topics_from_hashtag();

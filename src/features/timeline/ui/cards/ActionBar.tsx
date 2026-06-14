@@ -15,7 +15,12 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/features/shared/ui/ui/tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/features/shared/ui/ui/tooltip';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,7 +29,10 @@ import {
   DropdownMenuTrigger,
 } from '@/features/shared/ui/ui/dropdown-menu';
 import { cn } from '@/features/shared/utils/utils';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 
 export interface ActionBarProps {
   /** Entity ID for actions */
@@ -67,8 +75,6 @@ export interface ActionBarProps {
  * Provides follow, discuss, react, share, and bookmark actions
  */
 export function ActionBar({
-  entityId,
-  entityType,
   isFollowing = false,
   isBookmarked = false,
   userReaction = null,
@@ -82,7 +88,6 @@ export function ActionBar({
   onReact,
   onShare,
   onBookmark,
-  onMore,
   className,
 }: ActionBarProps) {
   const { t } = useTranslation();
@@ -110,7 +115,11 @@ export function ActionBar({
                 )}
               </Button>
             </TooltipTrigger>
-            <TooltipContent>{isFollowing ? 'Unfollow' : 'Follow'}</TooltipContent>
+            <TooltipContent>
+              {isFollowing
+                ? translateText('generated.inline.0144_unfollow_e3a6fe56')
+                : translateText('generated.inline.0118_follow_66587a7a')}
+            </TooltipContent>
           </Tooltip>
         )}
 
@@ -257,16 +266,16 @@ export function ActionBar({
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={onShare}>
               <Share2 className="mr-2 h-4 w-4" />
-              Copy Link
+              {translateText('generated.inline.1157_copy_link_672d82d0')}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={onDiscuss}>
               <MessageCircle className="mr-2 h-4 w-4" />
-              View Discussion
+              {translateText('generated.inline.1158_view_discussion_131ff1c9')}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
               <HelpCircle className="mr-2 h-4 w-4" />
-              Report Issue
+              {translateText('generated.inline.1159_report_issue_0b07f35d')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

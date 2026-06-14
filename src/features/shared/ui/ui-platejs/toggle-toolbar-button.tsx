@@ -12,11 +12,7 @@ export function ToggleToolbarButton(props: React.ComponentProps<typeof ToolbarBu
   const { t } = useTranslation();
 
   return (
-    <ToolbarButton
-      {...props}
-      {...buttonProps}
-      tooltip={t('plateJs.toolbar.toggleList', 'Toggle list')}
-    >
+    <ToolbarButton {...props} {...buttonProps} tooltip={t('plateJs.toolbar.toggleList')}>
       <ListCollapseIcon />
     </ToolbarButton>
   );

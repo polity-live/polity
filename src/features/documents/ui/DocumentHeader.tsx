@@ -9,6 +9,7 @@ import { Badge } from '@/features/shared/ui/ui/badge';
 import { Loader2, Eye } from 'lucide-react';
 import { PresenceIndicators } from './PresenceIndicators';
 import type { EditorPresencePeer } from '@/features/editor';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface DocumentHeaderProps {
   title: string;
@@ -33,19 +34,19 @@ export function DocumentHeader({
             value={title}
             onChange={e => onTitleChange(e.target.value)}
             className="border-none px-0 text-2xl font-bold shadow-none focus-visible:ring-0"
-            placeholder="Untitled Document"
+            placeholder={translateText('generated.inline.0410_untitled_document_0654a04f')}
           />
         </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="text-muted-foreground flex items-center gap-2 text-xs">
           {isSaving ? (
             <>
               <Loader2 className="h-3 w-3 animate-spin" />
-              <span>Saving...</span>
+              <span>{translateText('generated.inline.0268_saving_ae7e8875')}</span>
             </>
           ) : (
             <>
               <Eye className="h-3 w-3" />
-              <span>Auto-save enabled</span>
+              <span>{translateText('generated.inline.0411_auto_save_enabled_914b94c9')}</span>
             </>
           )}
         </div>
@@ -53,7 +54,9 @@ export function DocumentHeader({
 
       <div className="flex items-center gap-4">
         <PresenceIndicators peers={onlinePeers} />
-        {isOwner && <Badge variant="outline">Owner</Badge>}
+        {isOwner && (
+          <Badge variant="outline">{translateText('generated.inline.0412_owner_89ff3122')}</Badge>
+        )}
       </div>
     </div>
   );

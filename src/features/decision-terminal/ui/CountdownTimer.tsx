@@ -74,11 +74,11 @@ function getUrgencyClasses(urgency: string): string {
     case 'critical':
       return 'text-red-600 dark:text-red-400 animate-pulse';
     case 'urgent':
-      return 'text-orange-600 dark:text-orange-400';
+      return 'text-amber-600 dark:text-amber-400';
     case 'closing':
-      return 'text-yellow-600 dark:text-yellow-400';
+      return 'text-amber-600 dark:text-amber-400';
     default:
-      return 'text-green-600 dark:text-green-400';
+      return 'text-emerald-600 dark:text-emerald-400';
   }
 }
 
@@ -119,7 +119,7 @@ export function CountdownTimer({
 
   if (timeRemaining.isExpired) {
     return (
-      <span className={cn('font-mono text-xs text-muted-foreground', className)}>
+      <span className={cn('text-muted-foreground font-mono text-xs', className)}>
         {t('timeline.terminal.ended')}
       </span>
     );
@@ -135,13 +135,11 @@ export function CountdownTimer({
     return (
       <div className={cn('flex flex-col', className)}>
         {compactLabel ? (
-          <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+          <span className="text-muted-foreground text-[9px] tracking-[1px] uppercase">
             {compactLabel}
           </span>
         ) : null}
-        <span className={cn('font-mono text-xs font-medium', urgencyClasses)}>
-          {formattedTime}
-        </span>
+        <span className={cn('font-mono text-xs font-medium', urgencyClasses)}>{formattedTime}</span>
       </div>
     );
   }
@@ -192,7 +190,7 @@ export function EndedAgo({ endedAt, className }: { endedAt: Date | string; class
   }
 
   return (
-    <span className={cn('font-mono text-xs text-muted-foreground', className)}>
+    <span className={cn('text-muted-foreground font-mono text-xs', className)}>
       {t('timeline.terminal.endedAgo', { time: timeString })}
     </span>
   );

@@ -1,3 +1,4 @@
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 export const DELEGATE_ELECTION_METADATA_PREFIX = '@delegate-election-meta ';
 
 export interface DelegateElectionAssignmentMeta {
@@ -97,7 +98,9 @@ export function buildDelegateSeatRoleDescription(args: {
   seatNumber: number;
   totalSeats: number;
 }) {
-  const eventTitle = args.eventTitle?.trim() || 'die Delegiertenversammlung';
+  const eventTitle =
+    args.eventTitle?.trim() ||
+    translateText('generated.inline.0055_die_delegiertenversammlung_9744e078');
   const sourceGroupName = args.sourceGroupName?.trim() || 'diese Gruppe';
   const targetGroupName = args.targetGroupName?.trim() || 'die Zielgruppe';
   return `Temporaires Delegiertenmandat von ${sourceGroupName} fuer ${targetGroupName} auf ${eventTitle} (Sitz ${args.seatNumber} von ${args.totalSeats}).`;

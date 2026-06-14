@@ -24,6 +24,7 @@ import { useCollaboratorMutations } from '../hooks/useCollaboratorMutations';
 import { InviteDialog } from './InviteDialog.tsx';
 import { RolesManagementCard } from './RolesManagementCard.tsx';
 import type { Collaborator } from '../hooks/useCollaborators';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface CollaboratorsViewProps {
   amendmentId: string;
@@ -103,9 +104,14 @@ export function CollaboratorsView({
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">Manage Amendment Collaborators</h1>
+        <h1 className="text-3xl font-bold">
+          {translateText('generated.inline.0097_manage_amendment_collaborators_1a87c60d')}
+        </h1>
         <p className="text-muted-foreground mt-2">
-          {amendmentTitle} - Manage collaborators, requests, and invitations
+          {amendmentTitle}
+          {translateText(
+            'generated.inline.0098_manage_collaborators_requests_and_invitations_b304a0db'
+          )}
         </p>
       </div>
 
@@ -113,7 +119,9 @@ export function CollaboratorsView({
         <EntitySearchBar
           searchQuery={searchQuery}
           onSearchQueryChange={setSearchQuery}
-          placeholder="Search collaborators by name, role, or status..."
+          placeholder={translateText(
+            'generated.inline.0099_search_collaborators_by_name_role_or_status_c0a4b06d'
+          )}
           className="mb-4"
         />
       ) : null}
@@ -122,8 +130,12 @@ export function CollaboratorsView({
         activeTab={activeTab}
         onTabChange={setActiveTab}
         showGuests={false}
-        membershipsByUserLabel="Participants by user"
-        membershipsByRoleLabel="Participants by role"
+        membershipsByUserLabel={translateText(
+          'generated.inline.0100_participants_by_user_99abf1d2'
+        )}
+        membershipsByRoleLabel={translateText(
+          'generated.inline.0101_participants_by_role_79dd6508'
+        )}
         tabBarAction={
           activeTab !== 'roles' ? (
             <InviteDialog
@@ -140,17 +152,21 @@ export function CollaboratorsView({
               requests={pendingRequests}
               onApprove={membershipId => mutations.approveRequest(membershipId)}
               onReject={membershipId => mutations.rejectRequest(membershipId)}
-              title="Pending Collaboration Requests"
-              description="Review and approve collaboration requests"
-              roleColumnLabel="Requested Role"
-              fallbackRoleLabel="Collaborator"
-              secondaryActionLabel="Decline"
+              title={translateText('generated.inline.0102_pending_collaboration_requests_59419bb4')}
+              description={translateText(
+                'generated.inline.0103_review_and_approve_collaboration_requests_0cd489d8'
+              )}
+              roleColumnLabel={translateText('generated.inline.0010_requested_role_599518e7')}
+              fallbackRoleLabel={translateText('generated.inline.0104_collaborator_794b34c1')}
+              secondaryActionLabel={translateText('generated.inline.0011_decline_b59cf9ed')}
             />
             <PendingInvitationsTable
               invitations={pendingInvitations}
               onWithdraw={membershipId => mutations.withdrawInvitation(membershipId)}
-              description="Users who have been invited to this amendment but have not accepted yet"
-              fallbackRoleLabel="Collaborator"
+              description={translateText(
+                'generated.inline.0105_users_who_have_been_invited_to_this_amendment_525eacce'
+              )}
+              fallbackRoleLabel={translateText('generated.inline.0104_collaborator_794b34c1')}
             />
             <ActiveMembersTable
               members={activeCollaborators}
@@ -162,10 +178,12 @@ export function CollaboratorsView({
               }}
               onOpenChangeRoleDialog={handleOpenChangeRoleDialog}
               onRemove={membershipId => mutations.removeCollaborator(membershipId)}
-              title="Active Collaborators"
-              description="Current amendment collaborators and administrators"
-              fallbackRoleLabel="Collaborator"
-              manageRolesLabel="Manage Roles"
+              title={translateText('generated.inline.0106_active_collaborators_6a0c51e8')}
+              description={translateText(
+                'generated.inline.0088_current_amendment_collaborators_and_administr_a73f4579'
+              )}
+              fallbackRoleLabel={translateText('generated.inline.0104_collaborator_794b34c1')}
+              manageRolesLabel={translateText('generated.inline.0012_manage_roles_5f9b8531')}
             />
           </div>
         }
@@ -179,11 +197,15 @@ export function CollaboratorsView({
             }}
             onRemoveRole={handleRemoveRoleFromByRoleView}
             onSecondaryAction={handleOpenChangeRoleDialog}
-            secondaryActionLabel="Manage Roles"
+            secondaryActionLabel={translateText('generated.inline.0012_manage_roles_5f9b8531')}
             entityType="amendment"
-            countLabel="collaborators"
-            memberDescriptionFallback="Collaborators currently assigned to this role."
-            emptyStateLabel="No collaborators currently carry this role."
+            countLabel={translateText('generated.inline.0014_collaborators_8a37fa6f')}
+            memberDescriptionFallback={translateText(
+              'generated.inline.0013_collaborators_currently_assigned_to_this_role_37977ca0'
+            )}
+            emptyStateLabel={translateText(
+              'generated.inline.0014_no_collaborators_currently_carry_this_role_c0b5b930'
+            )}
           />
         }
         rolesContent={
@@ -203,8 +225,8 @@ export function CollaboratorsView({
         membership={memberRightsMembership}
         onNavigateToUser={navigateToUser}
         entityType="amendment"
-        contextLabel="amendment"
-        fallbackRoleLabel="Collaborator"
+        contextLabel={translateText('generated.inline.0015_amendment_61b2c1cd')}
+        fallbackRoleLabel={translateText('generated.inline.0104_collaborator_794b34c1')}
       />
 
       <ChangeRoleDialog
@@ -223,7 +245,7 @@ export function CollaboratorsView({
         }
         roles={roles}
         onConfirm={handleConfirmRoleChange}
-        title="Manage Collaborator Roles"
+        title={translateText('generated.inline.0107_manage_collaborator_roles_f0c3f76e')}
       />
     </div>
   );

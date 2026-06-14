@@ -37,6 +37,7 @@ import { GroupTimelineCard } from '@/features/timeline/ui/cards/GroupTimelineCar
 import { EventTimelineCard } from '@/features/timeline/ui/cards/EventTimelineCard';
 import { UserNetworkFlow } from '@/features/network/ui/UserNetworkFlow';
 import { GroupNetworkFlow } from '@/features/network/ui/GroupNetworkFlow';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export interface TargetGroupEventSelection {
   sourceGroupId: string;
@@ -966,7 +967,9 @@ export function TargetGroupEventSelector({
         'event',
         event => event.title || 'Event',
         event => {
-          const dateLabel = formatEventWindowLabel(event.start_date) ?? 'Kein Datum';
+          const dateLabel =
+            formatEventWindowLabel(event.start_date) ??
+            translateText('generated.inline.0021_kein_datum_c1783680');
           return event.location_name ? `${dateLabel} - ${event.location_name}` : dateLabel;
         },
         undefined,
@@ -992,8 +995,10 @@ export function TargetGroupEventSelector({
               )}
               value={selectedUserId}
               onChange={(item: TypeaheadItem | null) => setSelectedUserId(item?.id ?? '')}
-              placeholder="Netzwerk einer Person auswaehlen..."
-              label="Netzwerk:"
+              placeholder={translateText(
+                'generated.inline.0176_netzwerk_einer_person_auswaehlen_3ec337aa'
+              )}
+              label={translateText('generated.inline.0177_netzwerk_9b8cf3f3')}
               disablePortal={disablePortal}
             />
           </div>
@@ -1001,10 +1006,12 @@ export function TargetGroupEventSelector({
       )}
 
       <div className="space-y-2">
-        <Label>Startgruppe</Label>
+        <Label>{translateText('generated.inline.0178_startgruppe_27591dc9')}</Label>
         {activeSourceGroups.length === 0 ? (
           <p className="text-muted-foreground text-sm">
-            Keine aktive Mitgliedschaft mit moeglichem Amendment-Start gefunden.
+            {translateText(
+              'generated.inline.0179_keine_aktive_mitgliedschaft_mit_moeglichem_am_3dc842fc'
+            )}
           </p>
         ) : (
           <TypeaheadSearch
@@ -1021,7 +1028,7 @@ export function TargetGroupEventSelector({
             )}
             value={selectedSourceGroup?.id || ''}
             onChange={handleSourceGroupSelection}
-            placeholder="Startgruppe auswaehlen..."
+            placeholder={translateText('generated.inline.0180_startgruppe_auswaehlen_2ffb380f')}
             disablePortal={disablePortal}
           />
         )}
@@ -1047,20 +1054,22 @@ export function TargetGroupEventSelector({
           <TabsList className="w-full">
             <TabsTrigger value="hierarchy" className="flex-1">
               <GitBranch className="mr-2 h-4 w-4" />
-              Hierarchie
+              {translateText('generated.inline.0181_hierarchie_b73f9b95')}
             </TabsTrigger>
             <TabsTrigger value="workflow" className="flex-1">
               <Workflow className="mr-2 h-4 w-4" />
-              Workflow
+              {translateText('generated.inline.0182_workflow_d7a48414')}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="hierarchy" className="space-y-4">
             <div className="space-y-2">
-              <Label>Zielgruppe</Label>
+              <Label>{translateText('generated.inline.0183_zielgruppe_10f54053')}</Label>
               {availableTargetGroups.length === 0 ? (
                 <p className="text-muted-foreground text-sm">
-                  Fuer diese Startgruppe gibt es keine rekursiv erreichbaren Zielgruppen.
+                  {translateText(
+                    'generated.inline.0184_fuer_diese_startgruppe_gibt_es_keine_rekursiv_5eba3922'
+                  )}
                 </p>
               ) : (
                 <TypeaheadSearch
@@ -1079,7 +1088,7 @@ export function TargetGroupEventSelector({
                   onChange={(item: TypeaheadItem | null) =>
                     handleGroupSelection(availableTargetGroups, item)
                   }
-                  placeholder="Zielgruppe suchen..."
+                  placeholder={translateText('generated.inline.0185_zielgruppe_suchen_aa7a77c8')}
                   disablePortal={disablePortal}
                 />
               )}
@@ -1087,7 +1096,7 @@ export function TargetGroupEventSelector({
 
             {selectedSourceGroup && selectedGroup && availableHierarchyPaths.length > 1 ? (
               <div className="space-y-2">
-                <Label>Route</Label>
+                <Label>{translateText('generated.inline.0186_route_4999528e')}</Label>
                 <Select
                   value={selectedHierarchyPathId}
                   onValueChange={value => {
@@ -1098,7 +1107,9 @@ export function TargetGroupEventSelector({
                   }}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Pfad auswaehlen..." />
+                    <SelectValue
+                      placeholder={translateText('generated.inline.0187_pfad_auswaehlen_42ca323f')}
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     {availableHierarchyPaths.map(pathOption => (
@@ -1109,8 +1120,9 @@ export function TargetGroupEventSelector({
                   </SelectContent>
                 </Select>
                 <p className="text-muted-foreground text-xs">
-                  Mehrere gueltige Amendment-Pfade gefunden. Hier kannst du bewusst eine Sibling-
-                  oder Detour-Route waehlen.
+                  {translateText(
+                    'generated.inline.0188_mehrere_gueltige_amendment_pfade_gefunden_hie_635b9345'
+                  )}
                 </p>
               </div>
             ) : null}
@@ -1118,7 +1130,7 @@ export function TargetGroupEventSelector({
 
           <TabsContent value="workflow" className="space-y-4">
             <div className="space-y-2">
-              <Label>Ziel-Workflow</Label>
+              <Label>{translateText('generated.inline.0189_ziel_workflow_f6a9c843')}</Label>
               <TypeaheadSearch
                 items={toTypeaheadItems(
                   reachableWorkflows,
@@ -1139,7 +1151,7 @@ export function TargetGroupEventSelector({
                   setSelectedHierarchyPathId('');
                   setPathValidationError(null);
                 }}
-                placeholder="Workflow auswaehlen..."
+                placeholder={translateText('generated.inline.0190_workflow_auswaehlen_633186d5')}
                 disablePortal={disablePortal}
               />
             </div>
@@ -1147,24 +1159,30 @@ export function TargetGroupEventSelector({
             {selectedWorkflowIdState && (
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>Workflow-Start</Label>
+                  <Label>{translateText('generated.inline.0191_workflow_start_24e8baa4')}</Label>
                   <div className="bg-muted/40 rounded-md border px-3 py-2 text-sm font-medium">
-                    {selectedWorkflowStartGroup?.name ?? 'Unbekannt'}
+                    {selectedWorkflowStartGroup?.name ??
+                      translateText('generated.inline.0028_unbekannt_d0b00a9f')}
                   </div>
                   <p className="text-muted-foreground text-xs">
-                    Die Quellgruppe erreicht diesen Startpunkt zunaechst ueber den normalen
-                    Amendment-Pfad.
+                    {translateText(
+                      'generated.inline.0192_die_quellgruppe_erreicht_diesen_startpunkt_zu_0c954787'
+                    )}
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Abgeleitete Zielgruppe</Label>
+                  <Label>
+                    {translateText('generated.inline.0193_abgeleitete_zielgruppe_28e1d067')}
+                  </Label>
                   <div className="bg-muted/40 rounded-md border px-3 py-2 text-sm font-medium">
-                    {selectedWorkflowFinalGroup?.name ?? 'Unbekannt'}
+                    {selectedWorkflowFinalGroup?.name ??
+                      translateText('generated.inline.0028_unbekannt_d0b00a9f')}
                   </div>
                   <p className="text-muted-foreground text-xs">
-                    Im Workflow-Modus wird die finale Zielgruppe aus dem letzten Workflow-Schritt
-                    abgeleitet.
+                    {translateText(
+                      'generated.inline.0194_im_workflow_modus_wird_die_finale_zielgruppe__420dcffc'
+                    )}
                   </p>
                 </div>
               </div>
@@ -1173,10 +1191,12 @@ export function TargetGroupEventSelector({
         </Tabs>
       ) : (
         <div className="space-y-2">
-          <Label>Zielgruppe</Label>
+          <Label>{translateText('generated.inline.0183_zielgruppe_10f54053')}</Label>
           {availableTargetGroups.length === 0 ? (
             <p className="text-muted-foreground text-sm">
-              Fuer diese Startgruppe gibt es keine rekursiv erreichbaren Zielgruppen.
+              {translateText(
+                'generated.inline.0184_fuer_diese_startgruppe_gibt_es_keine_rekursiv_5eba3922'
+              )}
             </p>
           ) : (
             <TypeaheadSearch
@@ -1195,7 +1215,7 @@ export function TargetGroupEventSelector({
               onChange={(item: TypeaheadItem | null) =>
                 handleGroupSelection(availableTargetGroups, item)
               }
-              placeholder="Zielgruppe suchen..."
+              placeholder={translateText('generated.inline.0185_zielgruppe_suchen_aa7a77c8')}
               disablePortal={disablePortal}
             />
           )}
@@ -1203,13 +1223,17 @@ export function TargetGroupEventSelector({
       )}
 
       <div className="space-y-2">
-        <Label>{selectedSourceGroup ? 'Netzwerk der Startgruppe' : 'Startgruppen-Netzwerk'}</Label>
+        <Label>
+          {selectedSourceGroup
+            ? translateText('generated.inline.0029_netzwerk_der_startgruppe_e8e9bbf1')
+            : translateText('generated.inline.0030_startgruppen_netzwerk_83d1c873')}
+        </Label>
         <div className="h-[28rem] min-h-[28rem] overflow-hidden rounded-md border">
           {selectedSourceGroup ? (
             <GroupNetworkFlow
               groupId={selectedSourceGroup.id}
               filterRight="amendmentRight"
-              title="Zielgruppen-Netzwerk"
+              title={translateText('generated.inline.0195_zielgruppen_netzwerk_d91c9750')}
               description={`Waehle eine erreichbare Zielgruppe ausgehend von ${selectedSourceGroup.data.name ?? 'der Startgruppe'}.`}
               onGroupClick={groupId => handleTargetGraphGroupClick(groupId)}
               showGroupDialogOnClick={false}
@@ -1220,8 +1244,10 @@ export function TargetGroupEventSelector({
             <UserNetworkFlow
               userId={selectedUserId}
               filterRight="amendmentRight"
-              title="Startgruppen-Netzwerk"
-              description="Waehle eine deiner aktiven Startgruppen aus dem Netzwerk oder ueber die Suche aus."
+              title={translateText('generated.inline.0196_startgruppen_netzwerk_83d1c873')}
+              description={translateText(
+                'generated.inline.0197_waehle_eine_deiner_aktiven_startgruppen_aus_d_058cc520'
+              )}
               onGroupClick={groupId => handleStartGraphGroupClick(groupId)}
               showGroupDialogOnClick={false}
               layoutScopeKey={`amendment-selector:${layoutScope}:user:${selectedUserId}`}
@@ -1232,11 +1258,12 @@ export function TargetGroupEventSelector({
 
       {selectedGroup && (
         <div className="space-y-2">
-          <Label>Ziel-Event</Label>
+          <Label>{translateText('generated.inline.0198_ziel_event_8f4df57f')}</Label>
           {upcomingEvents.length === 0 ? (
             <p className="text-muted-foreground text-sm">
-              Fuer die Zielgruppe gibt es noch kein passendes Event. Der Schritt kann trotzdem als
-              Event-Anfrage angelegt werden.
+              {translateText(
+                'generated.inline.0199_fuer_die_zielgruppe_gibt_es_noch_kein_passend_f6bd2a81'
+              )}
             </p>
           ) : (
             <TypeaheadSearch
@@ -1247,7 +1274,7 @@ export function TargetGroupEventSelector({
                   ? updatePathSegmentEvent(targetPathSegment.segmentKey, item)
                   : undefined
               }
-              placeholder="Event suchen..."
+              placeholder={translateText('generated.inline.0200_event_suchen_389f187f')}
               disablePortal={disablePortal}
             />
           )}
@@ -1258,7 +1285,9 @@ export function TargetGroupEventSelector({
         <div className="border-border bg-muted/30 space-y-3 rounded-md border p-3">
           <div className="flex items-center gap-2">
             <Target className="text-muted-foreground h-4 w-4" />
-            <Label className="text-sm">Prozesspfad</Label>
+            <Label className="text-sm">
+              {translateText('generated.inline.0201_prozesspfad_a9e34361')}
+            </Label>
           </div>
 
           <div className="space-y-3">
@@ -1283,19 +1312,22 @@ export function TargetGroupEventSelector({
                         {segment.requiredAfter ? (
                           <span className="inline-flex items-center gap-1">
                             <CalendarClock className="h-3 w-3" />
-                            nicht vor {formatEventWindowLabel(segment.requiredAfter)}
+                            {translateText('generated.inline.0202_nicht_vor_96c35f3c')}
+                            {formatEventWindowLabel(segment.requiredAfter)}
                           </span>
                         ) : null}
                         {segment.requiredBefore ? (
                           <span className="inline-flex items-center gap-1">
                             <CalendarClock className="h-3 w-3" />
-                            nicht nach {formatEventWindowLabel(segment.requiredBefore)}
+                            {translateText('generated.inline.0203_nicht_nach_e88cbaab')}
+                            {formatEventWindowLabel(segment.requiredBefore)}
                           </span>
                         ) : null}
                       </div>
                     </div>
                     <Badge variant={segment.eventId ? 'secondary' : 'outline'} className="text-xs">
-                      Schritt {index + 1}
+                      {translateText('generated.inline.0204_schritt_cc71ba9d')}
+                      {index + 1}
                     </Badge>
                   </div>
 
@@ -1313,13 +1345,16 @@ export function TargetGroupEventSelector({
                       onChange={(item: TypeaheadItem | null) =>
                         updatePathSegmentEvent(segment.segmentKey, item)
                       }
-                      placeholder="Event fuer diesen Schritt auswaehlen..."
+                      placeholder={translateText(
+                        'generated.inline.0205_event_fuer_diesen_schritt_auswaehlen_d72eb838'
+                      )}
                       disablePortal={disablePortal}
                     />
                   ) : (
                     <div className="text-muted-foreground rounded-md border border-dashed p-3 text-xs">
-                      Kein passendes Event gefunden. Fuer diesen Schritt wird bei der Erstellung ein
-                      `schedule_event`-Auftrag angelegt.
+                      {translateText(
+                        'generated.inline.0206_kein_passendes_event_gefunden_fuer_diesen_sch_36c2ce7b'
+                      )}
                     </div>
                   )}
                 </div>
@@ -1366,7 +1401,9 @@ export function TargetGroupEventDisplay({
   return (
     <div className="space-y-4">
       <div>
-        <h4 className="text-muted-foreground mb-2 text-sm font-semibold uppercase">Target Group</h4>
+        <h4 className="text-muted-foreground mb-2 text-sm font-semibold uppercase">
+          {translateText('generated.inline.0207_target_group_155fdbe3')}
+        </h4>
         <GroupTimelineCard
           group={{
             id: groupData.id,
@@ -1380,7 +1417,9 @@ export function TargetGroupEventDisplay({
       </div>
 
       <div>
-        <h4 className="text-muted-foreground mb-2 text-sm font-semibold uppercase">Target Event</h4>
+        <h4 className="text-muted-foreground mb-2 text-sm font-semibold uppercase">
+          {translateText('generated.inline.0208_target_event_cf4f7f67')}
+        </h4>
         {eventData ? (
           <EventTimelineCard
             event={{
@@ -1394,14 +1433,18 @@ export function TargetGroupEventDisplay({
           />
         ) : (
           <div className="text-muted-foreground border-border bg-muted/40 rounded-md border border-dashed p-4 text-sm">
-            Noch kein Ziel-Event ausgewaehlt.
+            {translateText('generated.inline.0209_noch_kein_ziel_event_ausgewaehlt_d8423180')}
           </div>
         )}
       </div>
 
       {pathWithEvents.length > 0 && (
         <div className="bg-muted text-muted-foreground rounded-md p-3 text-xs">
-          <p className="font-semibold">Amendment Path ({pathWithEvents.length} groups):</p>
+          <p className="font-semibold">
+            {translateText('generated.inline.0210_amendment_path_e39aca13')}
+            {pathWithEvents.length}
+            {translateText('generated.inline.0211_groups_81b46c7e')}
+          </p>
           <div className="mt-2 flex flex-wrap items-center gap-1">
             {pathWithEvents.map((segment, index) => (
               <div key={segment.segmentKey} className="flex items-center gap-1">

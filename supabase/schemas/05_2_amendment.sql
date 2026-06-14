@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS public.amendment (
   group_id UUID,
   event_id UUID,
   clone_source_id UUID,
+  origin_amendment_id UUID,
   document_id UUID REFERENCES public.document (id) ON DELETE SET NULL,
   supporters INTEGER NOT NULL DEFAULT 0,
   supporters_required INTEGER,
@@ -45,6 +46,7 @@ CREATE INDEX idx_amendment_created_by ON public.amendment (created_by_id);
 CREATE INDEX idx_amendment_group ON public.amendment (group_id);
 CREATE INDEX idx_amendment_event ON public.amendment (event_id);
 CREATE INDEX idx_amendment_editing_mode ON public.amendment (editing_mode);
+CREATE INDEX idx_amendment_origin ON public.amendment (origin_amendment_id);
 
 ALTER TABLE public.amendment ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "service_role_all" ON public.amendment FOR ALL TO service_role USING (true);
@@ -267,6 +269,11 @@ ALTER TABLE public.amendment
 ALTER TABLE public.amendment_path
   ADD CONSTRAINT amendment_path_process_run_fk
   FOREIGN KEY (process_run_id) REFERENCES public.amendment_process_run (id)
+  ON DELETE SET NULL;
+
+ALTER TABLE public.amendment
+  ADD CONSTRAINT amendment_origin_amendment_fk
+  FOREIGN KEY (origin_amendment_id) REFERENCES public.amendment (id)
   ON DELETE SET NULL;
 
 ALTER TABLE public.amendment_path_segment

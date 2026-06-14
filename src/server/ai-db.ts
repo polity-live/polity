@@ -9,6 +9,7 @@ import {
 } from '@/lib/ai/schemas';
 import { createClient } from '@/lib/supabase/server';
 import { decryptSecret, encryptSecret, maskSecret } from './ai-crypto';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export interface AiCredentialSummary {
   provider: AiProvider;
@@ -195,7 +196,12 @@ async function buildEventPromptContext(
       ? [
           'Agenda items:',
           ...agendaItems.map((item, index) => {
-            const label = item.title || item.type || `Agenda item ${index + 1}`;
+            const label =
+              item.title ||
+              item.type ||
+              translateText('generated.inline.0187_agenda_item_valuee0eb_b56f1b2f', {
+                valuee0eb: index + 1,
+              });
             const meta = [item.status, item.scheduled_time || item.start_time || item.end_time]
               .filter(Boolean)
               .join(' | ');
@@ -327,7 +333,11 @@ async function buildAmendmentPromptContext(
       ? [
           'Change requests:',
           ...changeRequests.map((changeRequest, index) => {
-            const title = changeRequest.title || `Change request ${index + 1}`;
+            const title =
+              changeRequest.title ||
+              translateText('generated.inline.0188_change_request_valuee0eb_54002dbb', {
+                valuee0eb: index + 1,
+              });
             const summary = [
               changeRequest.status,
               changeRequest.voting_status,

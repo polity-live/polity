@@ -15,7 +15,7 @@ import {
 import type {
   GroupConflictMembershipPreflight,
   GroupConflictPreflightInput,
-  GroupConflictNetworkLinkUpsertPreflight,
+  GroupConflictGroupConnectionUpsertPreflight,
 } from '@/features/groups/logic/groupConflictPreflight';
 import {
   detectDuplicateHierarchyPaths,
@@ -26,10 +26,10 @@ import {
 import { getHierarchyRelationshipPair } from '@/features/network/logic/groupRelationshipOrientation';
 import {
   buildDerivedGroupNetworkMetaMap,
-  explodeNetworkLinksToRelationships,
+  deriveGroupRelationships,
   type DerivedNetworkRelationshipRow,
 } from '@/zero/network/derived';
-import { normalizeMembershipRules } from '@/zero/network/membershipRules';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 type ZeroTransactionLike = Pick<ZeroTransaction, 'run' | 'mutate'>;
 type PermissionTx = Parameters<typeof can>[0];
@@ -121,18 +121,18 @@ async function buildConflictUser(tx: ZeroTransactionLike, userId: string) {
 }
 
 async function loadGroupGraphSnapshot(tx: ZeroTransactionLike) {
-  const [groups, memberships, links, rights, rules] = await Promise.all([
+  const [groups, memberships, connections, grants, rules] = await Promise.all([
     tx.run(zql.group),
     tx.run(zql.group_membership),
-    tx.run(zql.network_link),
-    tx.run(zql.network_link_right),
-    tx.run(zql.network_link_membership_rule),
+    tx.run(zql.group_connection),
+    tx.run(zql.group_right_grant),
+    tx.run(zql.group_membership_rule),
   ]);
 
   const derivedGroupMetaById = buildDerivedGroupNetworkMetaMap({
     groupIds: groups.map(group => group.id),
-    links,
-    rights,
+    connections,
+    grants,
     rules,
   });
   const groupsWithDerivedNetworkMeta = groups.map(group => ({
@@ -143,9 +143,9 @@ async function loadGroupGraphSnapshot(tx: ZeroTransactionLike) {
   return {
     groups: groupsWithDerivedNetworkMeta,
     groupsById,
-    relationships: explodeNetworkLinksToRelationships({
-      links,
-      rights,
+    relationships: deriveGroupRelationships({
+      connections,
+      grants,
       rules,
       includeInactive: true,
     }),
@@ -357,23 +357,26 @@ async function buildMembershipActivationConflicts(
         resolutions: selfService
           ? [
               {
-                label: 'Andere Untergruppe verlassen',
-                description:
-                  'Beende zuerst die aktive Mitgliedschaft in der anderen Untergruppe derselben Hierarchie.',
+                label: translateText('generated.inline.0655_andere_untergruppe_verlassen_8424bbb5'),
+                description: translateText(
+                  'generated.inline.0656_beende_zuerst_die_aktive_mitgliedschaft_in_de_563d3245'
+                ),
                 self_service: true,
                 group_id: conflictingGroupId,
               },
               {
-                label: 'Andere Gruppe waehlen',
-                description:
-                  'Ziehe die aktuelle Anfrage oder Einladung zurueck und nutze eine andere Untergruppe.',
+                label: translateText('generated.inline.0657_andere_gruppe_waehlen_886e4e05'),
+                description: translateText(
+                  'generated.inline.0658_ziehe_die_aktuelle_anfrage_oder_einladung_zur_f209d59b'
+                ),
                 self_service: true,
                 group_id: targetGroupId,
               },
               {
-                label: 'Admin kontaktieren',
-                description:
-                  'Wenn du die andere Mitgliedschaft nicht selbst beenden kannst, kontaktiere die zustaendige Gruppe.',
+                label: translateText('generated.inline.0659_admin_kontaktieren_7e504533'),
+                description: translateText(
+                  'generated.inline.0660_wenn_du_die_andere_mitgliedschaft_nicht_selbs_3df3a2f3'
+                ),
                 self_service: false,
                 group_id: conflictingGroupId,
                 required_role: 'Admin',
@@ -381,9 +384,12 @@ async function buildMembershipActivationConflicts(
             ]
           : [
               {
-                label: 'Mitgliedschaft zuerst klaeren',
-                description:
-                  'Die Person braucht vor der Aktivierung genau eine speisende Untergruppe in dieser Hierarchie.',
+                label: translateText(
+                  'generated.inline.0661_mitgliedschaft_zuerst_klaeren_d4f1a8e1'
+                ),
+                description: translateText(
+                  'generated.inline.0662_die_person_braucht_vor_der_aktivierung_genau__e776cbaa'
+                ),
                 self_service: false,
                 group_id: conflictingGroupId,
                 required_role: 'Admin',
@@ -437,23 +443,28 @@ async function buildMembershipActivationConflicts(
       resolutions: selfService
         ? [
             {
-              label: 'Andere Source-Gruppe verlassen',
-              description:
-                'Beende zuerst die aktive Mitgliedschaft in einer der anderen speisenden Gruppen.',
+              label: translateText('generated.inline.0663_andere_source_gruppe_verlassen_1b7590bc'),
+              description: translateText(
+                'generated.inline.0664_beende_zuerst_die_aktive_mitgliedschaft_in_ei_d743c119'
+              ),
               self_service: true,
               group_id: matchingSourceGroupIds[1] ?? matchingSourceGroupIds[0],
             },
             {
-              label: 'Andere Gruppe waehlen',
-              description:
-                'Nutze fuer diese Parlamentsstruktur nur eine der speisenden Gruppen gleichzeitig.',
+              label: translateText('generated.inline.0657_andere_gruppe_waehlen_886e4e05'),
+              description: translateText(
+                'generated.inline.0665_nutze_fuer_diese_parlamentsstruktur_nur_eine__06c7aa89'
+              ),
               self_service: true,
               group_id: targetGroupId,
             },
             {
-              label: 'Zustaendige Admins kontaktieren',
-              description:
-                'Falls du die andere Source-Mitgliedschaft nicht selbst beenden kannst, braucht es die andere Gruppe.',
+              label: translateText(
+                'generated.inline.0666_zustaendige_admins_kontaktieren_1f3c2d84'
+              ),
+              description: translateText(
+                'generated.inline.0667_falls_du_die_andere_source_mitgliedschaft_nic_b3b9e3b0'
+              ),
               self_service: false,
               group_id: matchingSourceGroupIds[1] ?? matchingSourceGroupIds[0],
               required_role: 'Admin',
@@ -461,9 +472,12 @@ async function buildMembershipActivationConflicts(
           ]
         : [
             {
-              label: 'Source-Mitgliedschaften klaeren',
-              description:
-                'Vor der Aktivierung muss die Person in genau einer speisenden Source-Gruppe dieser Parlamentsgruppe verbleiben.',
+              label: translateText(
+                'generated.inline.0668_source_mitgliedschaften_klaeren_9e94c7b6'
+              ),
+              description: translateText(
+                'generated.inline.0669_vor_der_aktivierung_muss_die_person_in_genau__0425c1db'
+              ),
               self_service: false,
               group_id: siblingGroup.id,
               required_role: 'Admin',
@@ -485,119 +499,55 @@ async function buildMembershipActivationConflicts(
   return buildGroupConflictResponse(dedupedConflicts);
 }
 
-export function buildDraftNetworkLinkRelationships(args: GroupConflictNetworkLinkUpsertPreflight) {
-  const createdAt = Date.now();
-  const status: RelationshipRow['status'] = 'active';
-  const membershipRules = normalizeMembershipRules(args.membership_rule);
-  const structuralRelation = args.structural_relation as RelationshipRow['structural_relation'];
-  const rows = args.rights.flatMap<RelationshipRow>(right => {
-    if (right.status === 'rejected') {
-      return [];
-    }
-
-    const rightRows: RelationshipRow[] = [];
-    const rightDirection = right.direction as RelationshipRow['right_direction'];
-
-    if (right.direction === 'forward' || right.direction === 'bidirectional') {
-      rightRows.push({
-        id: `${args.link_id ?? 'draft'}:${right.id ?? right.right_key}:forward`,
-        network_link_id: args.link_id ?? 'draft',
-        network_link_right_id: right.id ?? `${args.link_id ?? 'draft'}:${right.right_key}`,
-        group_id: args.source_group_id,
-        related_group_id: args.target_group_id,
-        relationship_type: args.structural_relation === 'sibling' ? 'sibling' : 'child',
-        with_right: right.right_key,
-        status,
-        initiator_group_id: right.initiator_group_id ?? null,
-        created_at: createdAt,
-        structural_relation: structuralRelation,
-        membership_mode: membershipRules.membership_mode,
-        membership_direction: membershipRules.membership_direction,
-        membership_role_id: membershipRules.role_id ?? null,
-        membership_source_group_ids: membershipRules.source_group_ids ?? null,
-        relationship_direction: 'forward',
-        right_direction: rightDirection,
-      });
-    }
-
-    if (right.direction === 'backward' || right.direction === 'bidirectional') {
-      rightRows.push({
-        id: `${args.link_id ?? 'draft'}:${right.id ?? right.right_key}:backward`,
-        network_link_id: args.link_id ?? 'draft',
-        network_link_right_id: right.id ?? `${args.link_id ?? 'draft'}:${right.right_key}`,
-        group_id: args.target_group_id,
-        related_group_id: args.source_group_id,
-        relationship_type: args.structural_relation === 'sibling' ? 'sibling' : 'parent',
-        with_right: right.right_key,
-        status,
-        initiator_group_id: right.initiator_group_id ?? null,
-        created_at: createdAt,
-        structural_relation: structuralRelation,
-        membership_mode: membershipRules.membership_mode,
-        membership_direction: membershipRules.membership_direction,
-        membership_role_id: membershipRules.role_id ?? null,
-        membership_source_group_ids: membershipRules.source_group_ids ?? null,
-        relationship_direction: 'backward',
-        right_direction: rightDirection,
-      });
-    }
-
-    return rightRows;
+export function buildDraftGroupConnectionRelationships(
+  args: GroupConflictGroupConnectionUpsertPreflight
+) {
+  const connectionId = args.connection_id ?? 'draft';
+  return deriveGroupRelationships({
+    connections: [
+      {
+        id: connectionId,
+        group_a_id: args.group_a_id,
+        group_b_id: args.group_b_id,
+        connection_type: args.connection_type,
+        parent_group_id: args.parent_group_id,
+        child_group_id: args.child_group_id,
+        status: 'active',
+        created_at: Date.now(),
+      },
+    ],
+    grants: args.grants
+      .filter(grant => grant.status !== 'rejected')
+      .map(grant => ({
+        id: grant.id ?? `${connectionId}:${grant.right_key}:${grant.holder_group_id}`,
+        connection_id: connectionId,
+        right_key: grant.right_key,
+        holder_group_id: grant.holder_group_id,
+        scope_group_id: grant.scope_group_id,
+        status: 'active',
+        initiator_group_id: grant.initiator_group_id ?? null,
+        created_at: Date.now(),
+      })),
+    rules: args.membership_rule
+      ? [
+          {
+            id: `${connectionId}:membership`,
+            connection_id: connectionId,
+            ...args.membership_rule,
+          },
+        ]
+      : [],
+    includeInactive: true,
   });
-
-  if (rows.length > 0 || membershipRules.membership_mode === 'none') {
-    return rows;
-  }
-
-  return [
-    {
-      id: `${args.link_id ?? 'draft'}:structural:forward`,
-      network_link_id: args.link_id ?? 'draft',
-      network_link_right_id: `${args.link_id ?? 'draft'}:structural`,
-      group_id: args.source_group_id,
-      related_group_id: args.target_group_id,
-      relationship_type: args.structural_relation === 'sibling' ? 'sibling' : 'child',
-      with_right: null,
-      status,
-      initiator_group_id: null,
-      created_at: createdAt,
-      structural_relation: structuralRelation,
-      membership_mode: membershipRules.membership_mode,
-      membership_direction: membershipRules.membership_direction,
-      membership_role_id: membershipRules.role_id ?? null,
-      membership_source_group_ids: membershipRules.source_group_ids ?? null,
-      relationship_direction: 'forward',
-      right_direction: 'forward',
-    } satisfies RelationshipRow,
-    {
-      id: `${args.link_id ?? 'draft'}:structural:backward`,
-      network_link_id: args.link_id ?? 'draft',
-      network_link_right_id: `${args.link_id ?? 'draft'}:structural`,
-      group_id: args.target_group_id,
-      related_group_id: args.source_group_id,
-      relationship_type: args.structural_relation === 'sibling' ? 'sibling' : 'parent',
-      with_right: null,
-      status,
-      initiator_group_id: null,
-      created_at: createdAt,
-      structural_relation: structuralRelation,
-      membership_mode: membershipRules.membership_mode,
-      membership_direction: membershipRules.membership_direction,
-      membership_role_id: membershipRules.role_id ?? null,
-      membership_source_group_ids: membershipRules.source_group_ids ?? null,
-      relationship_direction: 'backward',
-      right_direction: 'backward',
-    } satisfies RelationshipRow,
-  ];
 }
 
-async function buildNetworkLinkUpsertConflicts(
+async function buildGroupConnectionUpsertConflicts(
   tx: ZeroTransactionLike,
   ctx: ZeroContext,
-  args: GroupConflictNetworkLinkUpsertPreflight
+  args: GroupConflictGroupConnectionUpsertPreflight
 ): Promise<GroupConflictResponse> {
   const snapshot = await loadGroupGraphSnapshot(tx);
-  const inputRelationships = buildDraftNetworkLinkRelationships(args);
+  const inputRelationships = buildDraftGroupConnectionRelationships(args);
 
   const hierarchyRelationships = inputRelationships.filter(isHierarchyRelationship);
   const activeGroupLinks = [
@@ -605,7 +555,7 @@ async function buildNetworkLinkUpsertConflicts(
       relationship =>
         isHierarchyRelationship(relationship) &&
         isActiveGroupRelationship(relationship) &&
-        relationship.network_link_id !== (args.link_id ?? 'draft')
+        relationship.connection_id !== (args.connection_id ?? 'draft')
     ),
     ...hierarchyRelationships,
   ];
@@ -689,9 +639,10 @@ async function buildNetworkLinkUpsertConflicts(
           },
           resolutions: [
             {
-              label: 'Mitgliedschaften angleichen',
-              description:
-                'Entferne oder deaktiviere ueberlappende Mitgliedschaften in einer der konkurrierenden Untergruppen.',
+              label: translateText('generated.inline.0670_mitgliedschaften_angleichen_138832b6'),
+              description: translateText(
+                'generated.inline.0671_entferne_oder_deaktiviere_ueberlappende_mitgl_4fe5c235'
+              ),
               self_service: await hasGroupPermission(
                 tx,
                 ctx,
@@ -701,9 +652,10 @@ async function buildNetworkLinkUpsertConflicts(
               group_id: pair.parentGroupId,
             },
             {
-              label: 'Andere Gruppe kontaktieren',
-              description:
-                'Falls du die konkurrierende Untergruppe nicht selbst verwalten kannst, braucht es die zustaendige Admin-Seite.',
+              label: translateText('generated.inline.0672_andere_gruppe_kontaktieren_b2abb8ae'),
+              description: translateText(
+                'generated.inline.0673_falls_du_die_konkurrierende_untergruppe_nicht_3f8b37a2'
+              ),
               self_service: false,
               group_id: pair.childGroupId,
               required_role: 'Admin',
@@ -767,9 +719,12 @@ async function buildNetworkLinkUpsertConflicts(
           },
           resolutions: [
             {
-              label: 'Einen Pfad entfernen oder deaktivieren',
-              description:
-                'Die Verknuepfung ist erst moeglich, wenn nur noch ein aktiver Pfad zwischen Basisgruppe und Ziel-Hierarchie uebrig bleibt.',
+              label: translateText(
+                'generated.inline.0674_einen_pfad_entfernen_oder_deaktivieren_1a612b63'
+              ),
+              description: translateText(
+                'generated.inline.0675_die_verknuepfung_ist_erst_moeglich_wenn_nur_n_0af11a5e'
+              ),
               self_service: await hasGroupPermission(
                 tx,
                 ctx,
@@ -779,9 +734,12 @@ async function buildNetworkLinkUpsertConflicts(
               group_id: duplicatePathConflict.targetGroupId,
             },
             {
-              label: 'Zustaendige Gruppe kontaktieren',
-              description:
-                'Wenn du den konkurrierenden Pfad nicht selbst verwalten kannst, braucht es die Admin-Seite der betroffenen Hierarchie.',
+              label: translateText(
+                'generated.inline.0676_zustaendige_gruppe_kontaktieren_5200317b'
+              ),
+              description: translateText(
+                'generated.inline.0677_wenn_du_den_konkurrierenden_pfad_nicht_selbst_a30ea1ef'
+              ),
               self_service: false,
               group_id: duplicatePathConflict.targetGroupId,
               required_role: 'Admin',
@@ -792,23 +750,19 @@ async function buildNetworkLinkUpsertConflicts(
     }
   }
 
-  if (args.structural_relation === 'sibling') {
-    const membershipRules = normalizeMembershipRules(args.membership_rule);
+  if (args.connection_type === 'peer') {
+    const membershipRule = args.membership_rule;
     const directionalRecipients: {
       recipientGroupId: string;
       sourceGroupIds: string[];
     }[] = [];
 
-    if (
-      membershipRules.membership_mode === 'selected_source_groups' &&
-      membershipRules.membership_direction
-    ) {
+    if (membershipRule?.membership_mode === 'selected_source_groups') {
       directionalRecipients.push({
-        recipientGroupId:
-          membershipRules.membership_direction === 'forward'
-            ? args.target_group_id
-            : args.source_group_id,
-        sourceGroupIds: [...new Set((membershipRules.source_group_ids ?? []).filter(Boolean))],
+        recipientGroupId: membershipRule.member_target_group_id,
+        sourceGroupIds: [
+          ...new Set((membershipRule.eligible_origin_group_ids ?? []).filter(Boolean)),
+        ],
       });
     }
 
@@ -864,9 +818,10 @@ async function buildNetworkLinkUpsertConflicts(
         },
         resolutions: [
           {
-            label: 'Source-Gruppen bereinigen',
-            description:
-              'Entferne ueberschneidende Source-Gruppen oder klaere die Mitgliedschaften, bis jede Person nur noch in einer speisenden Gruppe landet.',
+            label: translateText('generated.inline.0678_source_gruppen_bereinigen_010e44a9'),
+            description: translateText(
+              'generated.inline.0679_entferne_ueberschneidende_source_gruppen_oder_4948994c'
+            ),
             self_service: false,
             group_id: recipientGroupId,
             required_role: 'Admin',
@@ -905,8 +860,8 @@ export async function resolveGroupConflictPreflight(
   switch (input.kind) {
     case 'membership_activation':
       return buildMembershipActivationConflicts(tx, ctx, input);
-    case 'network_link_upsert':
-      return buildNetworkLinkUpsertConflicts(tx, ctx, input);
+    case 'group_connection_upsert':
+      return buildGroupConnectionUpsertConflicts(tx, ctx, input);
   }
 }
 
@@ -938,10 +893,10 @@ export async function getMembershipActivationConflictResponse(
   return buildMembershipActivationConflicts(tx, ctx, args);
 }
 
-export async function getNetworkLinkUpsertConflictResponse(
+export async function getGroupConnectionUpsertConflictResponse(
   tx: ZeroTransactionLike,
   ctx: ZeroContext,
-  args: GroupConflictNetworkLinkUpsertPreflight
+  args: GroupConflictGroupConnectionUpsertPreflight
 ) {
-  return buildNetworkLinkUpsertConflicts(tx, ctx, args);
+  return buildGroupConnectionUpsertConflicts(tx, ctx, args);
 }

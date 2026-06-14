@@ -58,7 +58,10 @@ import { useGroupState } from '@/zero/groups/useGroupState.ts';
 import { useTodoActions } from '@/zero/todos/useTodoActions.ts';
 import { toast } from 'sonner';
 import { cn } from '@/features/shared/utils/utils.ts';
-import { useTranslation } from '@/features/shared/hooks/use-translation.ts';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import type { Todo } from '../types/todo.types';
 
 type TodoStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
@@ -271,12 +274,7 @@ export function TodoDetailDialog({
                 </Button>
               ) : null}
               <DialogClose asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label={t('common.close', 'Close')}
-                >
+                <Button type="button" variant="ghost" size="icon" aria-label={t('common.close')}>
                   <X className="h-4 w-4" />
                 </Button>
               </DialogClose>
@@ -446,7 +444,14 @@ export function TodoDetailDialog({
                 </label>
                 <div className="text-muted-foreground flex items-center gap-2 text-sm">
                   <VisibilityIcon visibility={(todo.visibility || 'private') as TodoVisibility} />
-                  <span>{visibilityLabels[(todo.visibility || 'private') as TodoVisibility]}</span>
+                  <span>
+                    {
+                      visibilityLabels[
+                        (todo.visibility ||
+                          translateText('generated.inline.0173_private_e8072179')) as TodoVisibility
+                      ]
+                    }
+                  </span>
                 </div>
               </div>
             )}
@@ -473,7 +478,7 @@ export function TodoDetailDialog({
                 <span>
                   {[todo.creator.first_name, todo.creator.last_name].filter(Boolean).join(' ') ||
                     todo.creator.email?.split('@')[0] ||
-                    'Unknown'}
+                    translateText('generated.inline.0031_unknown_bc7819b3')}
                 </span>
               </Link>
             </div>
@@ -511,7 +516,7 @@ export function TodoDetailDialog({
                             <span className="text-sm">
                               {[user.first_name, user.last_name].filter(Boolean).join(' ') ||
                                 user.email?.split('@')[0] ||
-                                'Unknown'}
+                                translateText('generated.inline.0031_unknown_bc7819b3')}
                             </span>
                           </div>
                           <Button
@@ -586,7 +591,7 @@ export function TodoDetailDialog({
                                           .filter(Boolean)
                                           .join(' ') ||
                                           user.handle ||
-                                          'Unknown'}
+                                          translateText('generated.inline.0031_unknown_bc7819b3')}
                                       </span>
                                       {user.email && (
                                         <span className="text-muted-foreground text-xs">
@@ -626,7 +631,7 @@ export function TodoDetailDialog({
                         .filter(Boolean)
                         .join(' ') ||
                         assignment.user?.email?.split('@')[0] ||
-                        'Unknown'}
+                        translateText('generated.inline.0031_unknown_bc7819b3')}
                     </span>
                   </Link>
                 ))}

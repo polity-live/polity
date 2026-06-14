@@ -15,6 +15,7 @@ describe('EVENT_ACTION_RIGHTS', () => {
       },
       { resource: 'events', action: 'manage_speakers', label: 'Manage Speakers' },
       { resource: 'events', action: 'manage_votes', label: 'Manage Votes' },
+      { resource: 'events', action: 'speak', label: 'Speak in Events' },
       { resource: 'events', action: 'active_voting', label: 'Active Voting Rights' },
       {
         resource: 'events',
@@ -27,10 +28,14 @@ describe('EVENT_ACTION_RIGHTS', () => {
       EVENT_ACTION_RIGHTS.some(right => right.resource === 'events' && right.action === 'view')
     ).toBe(false);
     expect(
-      EVENT_ACTION_RIGHTS.some(right => right.resource === 'events' && right.action === 'update')
+      EVENT_ACTION_RIGHTS.some(
+        right => right.resource === 'events' && String(right.action) === 'update'
+      )
     ).toBe(false);
     expect(
-      EVENT_ACTION_RIGHTS.some(right => right.resource === 'events' && right.action === 'delete')
+      EVENT_ACTION_RIGHTS.some(
+        right => right.resource === 'events' && String(right.action) === 'delete'
+      )
     ).toBe(false);
   });
 });

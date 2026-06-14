@@ -59,15 +59,11 @@ export function SupporterStatusBadge({
   const config = statusConfig[status];
   const Icon = config.icon;
 
-  const translationKey = `features.amendments.supportConfirmation.comparison.${
-    status === 'active' ? 'currentLabel' : status
-  }`;
-
   // Fallback translation keys
   const statusLabels: Record<SupportStatus, string> = {
-    active: t('features.amendments.supportConfirmation.comparison.currentLabel', 'Active'),
-    pending: t('features.amendments.supportConfirmation.pending', 'Pending'),
-    declined: t('common.declined', 'Declined'),
+    active: t('features.amendments.supportConfirmation.comparison.currentLabel'),
+    pending: t('features.amendments.supportConfirmation.pending'),
+    declined: t('common.declined'),
   };
 
   return (

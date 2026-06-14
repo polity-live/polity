@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { Card, CardContent } from '@/features/shared/ui/ui/card';
 import { Button } from '@/features/shared/ui/ui/button';
-import { Badge } from '@/features/shared/ui/ui/badge';
 import {
   Select,
   SelectContent,
@@ -19,6 +18,7 @@ import { ThreadCard } from './ThreadCard';
 import { CreateThreadDialog } from './CreateThreadDialog';
 import { useInfiniteScroll } from '@/features/shared/hooks/useInfiniteScroll';
 import { useAuth } from '@/providers/auth-provider';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface DiscussionsViewProps {
   amendmentId: string;
@@ -43,7 +43,9 @@ export function DiscussionsView({ amendmentId, userId }: DiscussionsViewProps) {
   if (isLoading) {
     return (
       <PageWrapper>
-        <div className="py-12 text-center">Loading discussions...</div>
+        <div className="py-12 text-center">
+          {translateText('generated.inline.0386_loading_discussions_8b32b1c7')}
+        </div>
       </PageWrapper>
     );
   }
@@ -52,9 +54,13 @@ export function DiscussionsView({ amendmentId, userId }: DiscussionsViewProps) {
     return (
       <PageWrapper>
         <div className="py-12 text-center">
-          <h1 className="mb-4 text-2xl font-bold">Amendment Not Found</h1>
+          <h1 className="mb-4 text-2xl font-bold">
+            {translateText('generated.inline.0066_amendment_not_found_3cea3d4d')}
+          </h1>
           <p className="text-muted-foreground">
-            The amendment you're looking for doesn't exist or has been removed.
+            {translateText(
+              'generated.inline.0067_the_amendment_you_re_looking_for_doesn_t_exis_f871134d'
+            )}
           </p>
         </div>
       </PageWrapper>
@@ -68,7 +74,7 @@ export function DiscussionsView({ amendmentId, userId }: DiscussionsViewProps) {
         <Link to="/amendment/$id" params={{ id: amendmentId }}>
           <Button variant="ghost" size="sm">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Amendment
+            {translateText('generated.inline.0284_back_to_amendment_7273f2de')}
           </Button>
         </Link>
       </div>
@@ -78,16 +84,22 @@ export function DiscussionsView({ amendmentId, userId }: DiscussionsViewProps) {
         <div>
           <div className="mb-2 flex items-center gap-3">
             <MessageSquare className="h-8 w-8" />
-            <h1 className="text-4xl font-bold">Discussions</h1>
+            <h1 className="text-4xl font-bold">
+              {translateText('generated.inline.0387_discussions_0474a6c6')}
+            </h1>
           </div>
           <p className="text-muted-foreground">
-            {threads.length} discussion thread{threads.length !== 1 ? 's' : ''}
+            {threads.length}
+            {translateText('generated.inline.0388_discussion_thread_28eed8a6')}
+            {threads.length !== 1 ? 's' : ''}
           </p>
         </div>
         <div className="flex items-center gap-3">
           {/* Sort selector */}
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Sort by:</span>
+            <span className="text-muted-foreground text-sm">
+              {translateText('generated.inline.0389_sort_by_9bb640e5')}
+            </span>
             <Select value={sortBy} onValueChange={(value: 'votes' | 'time') => setSortBy(value)}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue />
@@ -96,13 +108,13 @@ export function DiscussionsView({ amendmentId, userId }: DiscussionsViewProps) {
                 <SelectItem value="votes">
                   <div className="flex items-center gap-2">
                     <TrendingUp className="h-4 w-4" />
-                    <span>Top Voted</span>
+                    <span>{translateText('generated.inline.0390_top_voted_3ecc2d00')}</span>
                   </div>
                 </SelectItem>
                 <SelectItem value="time">
                   <div className="flex items-center gap-2">
                     <CalendarIcon className="h-4 w-4" />
-                    <span>Newest First</span>
+                    <span>{translateText('generated.inline.0391_newest_first_a40bb555')}</span>
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -110,7 +122,7 @@ export function DiscussionsView({ amendmentId, userId }: DiscussionsViewProps) {
           </div>
           <Button onClick={() => setIsCreateDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
-            New Thread
+            {translateText('generated.inline.0392_new_thread_66826f91')}
           </Button>
         </div>
       </div>
@@ -120,13 +132,15 @@ export function DiscussionsView({ amendmentId, userId }: DiscussionsViewProps) {
         {threads.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <MessageSquare className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-              <p className="mb-4 text-muted-foreground">
-                No discussion threads yet. Start a conversation!
+              <MessageSquare className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
+              <p className="text-muted-foreground mb-4">
+                {translateText(
+                  'generated.inline.0393_no_discussion_threads_yet_start_a_conversatio_e634e88d'
+                )}
               </p>
               <Button onClick={() => setIsCreateDialogOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />
-                Create First Thread
+                {translateText('generated.inline.0394_create_first_thread_e26d65a7')}
               </Button>
             </CardContent>
           </Card>

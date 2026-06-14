@@ -8,7 +8,12 @@ import {
   getElectionModeLabel,
   normalizeDelegateElectionMode,
 } from '@/features/elections/logic/electionMode';
-import { buildCreateEventSearchFromProcessTask } from '@/features/amendments/logic/processTaskEventScheduling';
+import {
+  buildCreateEventSearchFromProcessTask,
+  getProcessTaskSchedulingWindow,
+  getSchedulingWindowDisplayLabel,
+  isEventWithinSchedulingWindow,
+} from '@/features/amendments/logic/processTaskEventScheduling';
 import {
   createElectionFlowCorrelationId,
   logElectionFlowClient,
@@ -56,6 +61,7 @@ import {
 import { cn } from '@/features/shared/utils/utils';
 import { ProcessAgendaPreviewDialog } from '@/features/groups/ui/ProcessAgendaPreviewDialog';
 import type { DelegateElectionMode } from '../hooks/useGroupOpenAssignments';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 interface AvailableEventLike {
   id: string;
@@ -87,19 +93,19 @@ function getStatusBadge(t: TFunction, assignment: GroupOpenAssignment) {
     case 'completed':
       return (
         <Badge className="bg-emerald-600 text-white">
-          {t('features.groups.memberships.openAssignments.status.completed', 'Completed')}
+          {t('features.groups.memberships.openAssignments.status.completed')}
         </Badge>
       );
     case 'scheduled':
       return (
         <Badge variant="secondary">
-          {t('features.groups.memberships.openAssignments.status.scheduled', 'Scheduled')}
+          {t('features.groups.memberships.openAssignments.status.scheduled')}
         </Badge>
       );
     default:
       return (
         <Badge variant="outline">
-          {t('features.groups.memberships.openAssignments.status.open', 'Open')}
+          {t('features.groups.memberships.openAssignments.status.open')}
         </Badge>
       );
   }
@@ -109,42 +115,28 @@ function getAssignmentTypeBadge(t: TFunction, assignment: GroupOpenAssignment) {
   switch (assignment.kind) {
     case 'delegate_election':
       return (
-        <Badge>
-          {t(
-            'features.groups.memberships.openAssignments.type.delegateElection',
-            'Delegate election'
-          )}
-        </Badge>
+        <Badge>{t('features.groups.memberships.openAssignments.type.delegateElection')}</Badge>
       );
     case 'role_renewal':
       return (
         <Badge variant="secondary">
-          {t('features.groups.memberships.openAssignments.type.roleRenewal', 'Role renewal')}
+          {t('features.groups.memberships.openAssignments.type.roleRenewal')}
         </Badge>
       );
     case 'process_task':
       return (
         <Badge variant="outline">
           {assignment.processTaskType === 'implementation_evaluation'
-            ? t(
-                'features.groups.memberships.openAssignments.type.implementationEvaluation',
-                'Implementation review'
-              )
+            ? t('features.groups.memberships.openAssignments.type.implementationEvaluation')
             : assignment.processTaskType === 'support_confirmation'
-              ? t(
-                  'features.groups.memberships.openAssignments.type.supportConfirmation',
-                  'Support confirmation'
-                )
-              : t(
-                  'features.groups.memberships.openAssignments.type.processTask',
-                  'Amendment process'
-                )}
+              ? t('features.groups.memberships.openAssignments.type.supportConfirmation')
+              : t('features.groups.memberships.openAssignments.type.processTask')}
         </Badge>
       );
     default:
       return (
         <Badge variant="outline">
-          {t('features.groups.memberships.openAssignments.type.assignment', 'Assignment')}
+          {t('features.groups.memberships.openAssignments.type.assignment')}
         </Badge>
       );
   }
@@ -155,9 +147,70 @@ function getDefaultEventId(
   availableEvents: readonly AvailableEventLike[],
   selectedEventIds: Record<string, string>
 ) {
-  return (
-    selectedEventIds[assignment.id] || assignment.linkedEvent?.id || availableEvents[0]?.id || ''
-  );
+  const selectedEventId = selectedEventIds[assignment.id];
+  if (selectedEventId && availableEvents.some(event => event.id === selectedEventId)) {
+    return selectedEventId;
+  }
+
+  if (
+    assignment.linkedEvent?.id &&
+    availableEvents.some(event => event.id === assignment.linkedEvent?.id)
+  ) {
+    return assignment.linkedEvent.id;
+  }
+
+  return assignment.targetEvent?.id &&
+    availableEvents.some(event => event.id === assignment.targetEvent?.id)
+    ? assignment.targetEvent.id
+    : availableEvents[0]?.id || '';
+}
+
+function buildProcessTaskScheduleSource(assignment: GroupOpenAssignment, groupId: string) {
+  if (assignment.kind !== 'process_task' || !assignment.processTaskId) {
+    return null;
+  }
+
+  return {
+    id: assignment.processTaskId,
+    group_id: groupId,
+    process_run_id: assignment.processRunId ?? null,
+    step_run_id: assignment.stepRunId ?? null,
+    due_at: assignment.dueAt ?? null,
+    metadata: assignment.processTaskMetadata,
+  };
+}
+
+function getEligibleEventsForAssignment(
+  assignment: GroupOpenAssignment,
+  groupId: string,
+  availableEvents: readonly AvailableEventLike[]
+) {
+  const task = buildProcessTaskScheduleSource(assignment, groupId);
+  if (!task) {
+    return [...availableEvents];
+  }
+
+  const schedulingWindow = getProcessTaskSchedulingWindow(task);
+  return availableEvents.filter(event => isEventWithinSchedulingWindow(event, schedulingWindow));
+}
+
+function getAssignmentSchedulingWindowLabel(assignment: GroupOpenAssignment, groupId: string) {
+  const task = buildProcessTaskScheduleSource(assignment, groupId);
+  if (!task) {
+    return null;
+  }
+
+  const createEventSearch = buildCreateEventSearchFromProcessTask({
+    task,
+    groupId,
+  });
+
+  return getSchedulingWindowDisplayLabel({
+    minStartDate: createEventSearch.minStartDate ?? null,
+    minStartTime: createEventSearch.minStartTime ?? null,
+    maxStartDate: createEventSearch.maxStartDate ?? null,
+    maxStartTime: createEventSearch.maxStartTime ?? null,
+  });
 }
 
 function buildEventCard(
@@ -225,7 +278,7 @@ function EventTag({
     <Link to="/event/$id" params={{ id: event.id }} className="inline-flex hover:opacity-90">
       <TableTag entityType="event" className="max-w-full">
         <span className="truncate">
-          {label}: {event.title || 'Veranstaltung'}
+          {label}: {event.title || translateText('generated.inline.0102_veranstaltung_e6fdb4cc')}
         </span>
       </TableTag>
     </Link>
@@ -365,14 +418,9 @@ export function OpenAssignmentsPanel({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>
-            {t('features.groups.memberships.openAssignments.title', 'Open Assignments')}
-          </CardTitle>
+          <CardTitle>{t('features.groups.memberships.openAssignments.title')}</CardTitle>
           <CardDescription>
-            {t(
-              'features.groups.memberships.openAssignments.loadingDescription',
-              "Loading this group's assignments."
-            )}
+            {t('features.groups.memberships.openAssignments.loadingDescription')}
           </CardDescription>
         </CardHeader>
       </Card>
@@ -383,14 +431,9 @@ export function OpenAssignmentsPanel({
     return (
       <Card className="border-border/70 from-background to-muted/20 bg-gradient-to-b">
         <CardHeader>
-          <CardTitle>
-            {t('features.groups.memberships.openAssignments.title', 'Open Assignments')}
-          </CardTitle>
+          <CardTitle>{t('features.groups.memberships.openAssignments.title')}</CardTitle>
           <CardDescription>
-            {t(
-              'features.groups.memberships.openAssignments.emptyDescription',
-              'There are currently no open election, role, or amendment assignments.'
-            )}
+            {t('features.groups.memberships.openAssignments.emptyDescription')}
           </CardDescription>
         </CardHeader>
       </Card>
@@ -408,10 +451,7 @@ export function OpenAssignmentsPanel({
             })}
           </CardTitle>
           <CardDescription>
-            {t(
-              'features.groups.memberships.openAssignments.description',
-              'Election, role, and amendment assignments for this group in the same table format as the other membership sections.'
-            )}
+            {t('features.groups.memberships.openAssignments.description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -420,37 +460,40 @@ export function OpenAssignmentsPanel({
               <TableHeader>
                 <TableRow>
                   <TableHead>
-                    {t(
-                      'features.groups.memberships.openAssignments.columns.assignment',
-                      'Assignment'
-                    )}
+                    {t('features.groups.memberships.openAssignments.columns.assignment')}
                   </TableHead>
                   <TableHead>
-                    {t('features.groups.memberships.openAssignments.columns.type', 'Type')}
+                    {t('features.groups.memberships.openAssignments.columns.type')}
                   </TableHead>
                   <TableHead>
-                    {t('features.groups.memberships.openAssignments.columns.status', 'Status')}
+                    {t('features.groups.memberships.openAssignments.columns.status')}
                   </TableHead>
                   <TableHead>
-                    {t(
-                      'features.groups.memberships.openAssignments.columns.amendment',
-                      'Amendment'
-                    )}
+                    {t('features.groups.memberships.openAssignments.columns.amendment')}
                   </TableHead>
                   <TableHead>
-                    {t('features.groups.memberships.openAssignments.columns.events', 'Events')}
+                    {t('features.groups.memberships.openAssignments.columns.events')}
                   </TableHead>
                   <TableHead className="w-[26rem]">
-                    {t('features.groups.memberships.openAssignments.columns.action', 'Action')}
+                    {t('features.groups.memberships.openAssignments.columns.action')}
                   </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {assignmentsWithProgress.map(({ assignment, remainingSeatCount }) => {
+                  const eligibleEvents = getEligibleEventsForAssignment(
+                    assignment,
+                    groupId,
+                    availableEvents
+                  );
                   const selectedEventId = getDefaultEventId(
                     assignment,
-                    availableEvents,
+                    eligibleEvents,
                     selectedEventIds
+                  );
+                  const schedulingWindowLabel = getAssignmentSchedulingWindowLabel(
+                    assignment,
+                    groupId
                   );
                   const showAgendaPreviewButton = isAmendmentProcessAssignment(assignment);
                   const canScheduleMore =
@@ -480,32 +523,24 @@ export function OpenAssignmentsPanel({
                           {assignment.kind === 'delegate_election' ? (
                             <div className="flex flex-wrap gap-2">
                               <Badge variant="outline">
-                                {t(
-                                  'features.groups.memberships.openAssignments.seatCount',
-                                  'Seats'
-                                )}
-                                : {assignment.seatCount ?? 0}
+                                {t('features.groups.memberships.openAssignments.seatCount')}:{' '}
+                                {assignment.seatCount ?? 0}
                               </Badge>
                               <Badge variant="outline">
                                 {t(
-                                  'features.groups.memberships.openAssignments.completedSeatCount',
-                                  'Elected'
+                                  'features.groups.memberships.openAssignments.completedSeatCount'
                                 )}
                                 : {assignment.completedSeatCount ?? 0}
                               </Badge>
                               <Badge variant="outline">
                                 {t(
-                                  'features.groups.memberships.openAssignments.scheduledSeatCount',
-                                  'Scheduled'
+                                  'features.groups.memberships.openAssignments.scheduledSeatCount'
                                 )}
                                 : {assignment.scheduledSeatCount ?? 0}
                               </Badge>
                               <Badge variant="outline">
-                                {t(
-                                  'features.groups.memberships.openAssignments.openSeatCount',
-                                  'Open'
-                                )}
-                                : {remainingSeatCount}
+                                {t('features.groups.memberships.openAssignments.openSeatCount')}:{' '}
+                                {remainingSeatCount}
                               </Badge>
                               <Badge variant="outline" className="font-normal">
                                 {getElectionModeLabel(
@@ -519,8 +554,7 @@ export function OpenAssignmentsPanel({
 
                           {dueAtLabel ? (
                             <p className="text-muted-foreground text-xs">
-                              {t('features.groups.memberships.openAssignments.dueAt', 'Due')}:{' '}
-                              {dueAtLabel}
+                              {t('features.groups.memberships.openAssignments.dueAt')}: {dueAtLabel}
                             </p>
                           ) : null}
                         </div>
@@ -538,10 +572,7 @@ export function OpenAssignmentsPanel({
                           </div>
                         ) : (
                           <span className="text-muted-foreground text-sm">
-                            {t(
-                              'features.groups.memberships.openAssignments.noAmendment',
-                              'No amendment'
-                            )}
+                            {t('features.groups.memberships.openAssignments.noAmendment')}
                           </span>
                         )}
                       </TableCell>
@@ -552,8 +583,7 @@ export function OpenAssignmentsPanel({
                             <EventTag
                               event={assignment.targetEvent}
                               label={t(
-                                'features.groups.memberships.openAssignments.targetEventLabel',
-                                'Target'
+                                'features.groups.memberships.openAssignments.targetEventLabel'
                               )}
                             />
                           ) : null}
@@ -561,17 +591,13 @@ export function OpenAssignmentsPanel({
                             <EventTag
                               event={assignment.linkedEvent}
                               label={t(
-                                'features.groups.memberships.openAssignments.linkedEventLabel',
-                                'Linked'
+                                'features.groups.memberships.openAssignments.linkedEventLabel'
                               )}
                             />
                           ) : null}
                           {!assignment.targetEvent?.id && !assignment.linkedEvent?.id ? (
                             <span className="text-muted-foreground text-sm">
-                              {t(
-                                'features.groups.memberships.openAssignments.noEventLinked',
-                                'No event linked yet'
-                              )}
+                              {t('features.groups.memberships.openAssignments.noEventLinked')}
                             </span>
                           ) : null}
                         </div>
@@ -582,10 +608,7 @@ export function OpenAssignmentsPanel({
                           <div className="space-y-3">
                             <div className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-3 py-2 text-sm text-emerald-700">
                               <CheckCircle2 className="h-4 w-4" />
-                              {t(
-                                'features.groups.memberships.openAssignments.completedBanner',
-                                'Fully scheduled or completed'
-                              )}
+                              {t('features.groups.memberships.openAssignments.completedBanner')}
                             </div>
                             {showAgendaPreviewButton ? (
                               <Button
@@ -593,30 +616,33 @@ export function OpenAssignmentsPanel({
                                 className="w-full justify-center"
                                 onClick={() => setAgendaPreviewAssignmentId(assignment.id)}
                               >
-                                {t(
-                                  'features.groups.memberships.openAssignments.showAgendaItems',
-                                  'Show new agenda items'
-                                )}
+                                {t('features.groups.memberships.openAssignments.showAgendaItems')}
                               </Button>
                             ) : null}
                           </div>
-                        ) : availableEvents.length === 0 ? (
+                        ) : eligibleEvents.length === 0 ? (
                           <div className="space-y-3 rounded-lg border border-dashed p-3">
                             <p className="text-muted-foreground text-sm">
-                              {t(
-                                'features.groups.memberships.openAssignments.noEligibleEventsForGroup',
-                                {
-                                  groupName:
-                                    groupName ||
-                                    t(
-                                      'features.groups.memberships.openAssignments.thisGroup',
-                                      'this group'
-                                    ),
-                                  defaultValue:
-                                    'There is currently no upcoming or ongoing event for {{groupName}}.',
-                                }
-                              )}
+                              {availableEvents.length === 0
+                                ? t(
+                                    'features.groups.memberships.openAssignments.noEligibleEventsForGroup',
+                                    {
+                                      groupName:
+                                        groupName ||
+                                        t('features.groups.memberships.openAssignments.thisGroup'),
+                                      defaultValue:
+                                        'There is currently no upcoming or ongoing event for {{groupName}}.',
+                                    }
+                                  )
+                                : translateText(
+                                    'generated.inline.0103_keines_der_vorhandenen_events_liegt_im_erlaub_4c83a2ed'
+                                  )}
                             </p>
+                            {schedulingWindowLabel ? (
+                              <p className="text-muted-foreground text-xs">
+                                {schedulingWindowLabel}
+                              </p>
+                            ) : null}
                             <Button asChild variant="outline" className="w-full justify-center">
                               <Link
                                 to="/create/event"
@@ -638,10 +664,7 @@ export function OpenAssignmentsPanel({
                                 }
                               >
                                 <CalendarPlus2 className="mr-2 h-4 w-4" />
-                                {t(
-                                  'features.groups.memberships.openAssignments.createEvent',
-                                  'Create event'
-                                )}
+                                {t('features.groups.memberships.openAssignments.createEvent')}
                               </Link>
                             </Button>
                             {showAgendaPreviewButton ? (
@@ -650,10 +673,7 @@ export function OpenAssignmentsPanel({
                                 className="w-full justify-center"
                                 onClick={() => setAgendaPreviewAssignmentId(assignment.id)}
                               >
-                                {t(
-                                  'features.groups.memberships.openAssignments.showAgendaItems',
-                                  'Show new agenda items'
-                                )}
+                                {t('features.groups.memberships.openAssignments.showAgendaItems')}
                               </Button>
                             ) : null}
                           </div>
@@ -665,10 +685,7 @@ export function OpenAssignmentsPanel({
                                 {
                                   groupName:
                                     groupName ||
-                                    t(
-                                      'features.groups.memberships.openAssignments.thisGroup',
-                                      'this group'
-                                    ),
+                                    t('features.groups.memberships.openAssignments.thisGroup'),
                                   defaultValue:
                                     'Delegates must be elected at an upcoming or ongoing event for {{groupName}}.',
                                 }
@@ -681,19 +698,22 @@ export function OpenAssignmentsPanel({
                             >
                               <Search className="mr-2 h-4 w-4" />
                               {t(
-                                'features.groups.memberships.openAssignments.searchDelegateElectionEvent',
-                                'Find event for delegate election'
+                                'features.groups.memberships.openAssignments.searchDelegateElectionEvent'
                               )}
                             </Button>
                           </div>
                         ) : (
                           <div className="space-y-3">
+                            {schedulingWindowLabel ? (
+                              <p className="text-muted-foreground text-xs">
+                                {schedulingWindowLabel}
+                              </p>
+                            ) : null}
                             <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
                               <div className="space-y-2">
                                 <Label className="text-xs">
                                   {t(
-                                    'features.groups.memberships.openAssignments.selectEventLabel',
-                                    'Which event should this assignment be attached to?'
+                                    'features.groups.memberships.openAssignments.selectEventLabel'
                                   )}
                                 </Label>
                                 <Select
@@ -708,18 +728,16 @@ export function OpenAssignmentsPanel({
                                   <SelectTrigger>
                                     <SelectValue
                                       placeholder={t(
-                                        'features.groups.memberships.openAssignments.selectEventPlaceholder',
-                                        'Select event'
+                                        'features.groups.memberships.openAssignments.selectEventPlaceholder'
                                       )}
                                     />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {availableEvents.map(event => (
+                                    {eligibleEvents.map(event => (
                                       <SelectItem key={event.id} value={event.id}>
                                         {event.title ||
                                           t(
-                                            'features.groups.memberships.openAssignments.eventFallback',
-                                            'Event'
+                                            'features.groups.memberships.openAssignments.eventFallback'
                                           )}
                                       </SelectItem>
                                     ))}
@@ -741,21 +759,17 @@ export function OpenAssignmentsPanel({
                                   {assignment.kind === 'process_task'
                                     ? assignment.processTaskType === 'implementation_evaluation'
                                       ? t(
-                                          'features.groups.memberships.openAssignments.scheduleImplementationReview',
-                                          'Schedule review'
+                                          'features.groups.memberships.openAssignments.scheduleImplementationReview'
                                         )
                                       : assignment.processTaskType === 'support_confirmation'
                                         ? t(
-                                            'features.groups.memberships.openAssignments.scheduleConfirmation',
-                                            'Schedule confirmation'
+                                            'features.groups.memberships.openAssignments.scheduleConfirmation'
                                           )
                                         : t(
-                                            'features.groups.memberships.openAssignments.attachToEvent',
-                                            'Attach to event'
+                                            'features.groups.memberships.openAssignments.attachToEvent'
                                           )
                                     : t(
-                                        'features.groups.memberships.openAssignments.attachToEvent',
-                                        'Attach to event'
+                                        'features.groups.memberships.openAssignments.attachToEvent'
                                       )}
                                 </Button>
                               </div>
@@ -767,10 +781,7 @@ export function OpenAssignmentsPanel({
                                 className="w-full justify-center"
                                 onClick={() => setAgendaPreviewAssignmentId(assignment.id)}
                               >
-                                {t(
-                                  'features.groups.memberships.openAssignments.showAgendaItems',
-                                  'Show new agenda items'
-                                )}
+                                {t('features.groups.memberships.openAssignments.showAgendaItems')}
                               </Button>
                             ) : null}
                           </div>
@@ -789,16 +800,11 @@ export function OpenAssignmentsPanel({
         <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle>
-              {t(
-                'features.groups.memberships.openAssignments.delegateDialog.title',
-                'Find election event for delegate assignment'
-              )}
+              {t('features.groups.memberships.openAssignments.delegateDialog.title')}
             </DialogTitle>
             <DialogDescription>
               {t('features.groups.memberships.openAssignments.delegateDialog.description', {
-                groupName:
-                  groupName ||
-                  t('features.groups.memberships.openAssignments.thisGroup', 'this group'),
+                groupName: groupName || t('features.groups.memberships.openAssignments.thisGroup'),
                 defaultValue:
                   'Choose an upcoming or ongoing event for {{groupName}} where the delegate election should be created.',
               })}
@@ -827,10 +833,7 @@ export function OpenAssignmentsPanel({
                   </Badge>
                 </div>
                 <p className="text-muted-foreground mt-3 text-sm">
-                  {t(
-                    'features.groups.memberships.openAssignments.delegateDialog.targetEvent',
-                    'Target event for the delegate election:'
-                  )}
+                  {t('features.groups.memberships.openAssignments.delegateDialog.targetEvent')}
                 </p>
                 <div className="mt-3">
                   {activeDelegateAssignment.targetEvent
@@ -841,10 +844,7 @@ export function OpenAssignmentsPanel({
 
               <div className="space-y-2">
                 <Label>
-                  {t(
-                    'features.groups.memberships.openAssignments.delegateDialog.searchLabel',
-                    'Search upcoming or ongoing events'
-                  )}
+                  {t('features.groups.memberships.openAssignments.delegateDialog.searchLabel')}
                 </Label>
                 <div className="relative">
                   <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
@@ -860,8 +860,7 @@ export function OpenAssignmentsPanel({
                       });
                     }}
                     placeholder={t(
-                      'features.groups.memberships.openAssignments.delegateDialog.searchPlaceholder',
-                      'Search by title'
+                      'features.groups.memberships.openAssignments.delegateDialog.searchPlaceholder'
                     )}
                     className="pl-9"
                   />
@@ -894,10 +893,7 @@ export function OpenAssignmentsPanel({
                 </div>
               ) : (
                 <div className="text-muted-foreground rounded-xl border border-dashed p-6 text-sm">
-                  {t(
-                    'features.groups.memberships.openAssignments.delegateDialog.emptySearch',
-                    'No upcoming or ongoing events were found for the current search.'
-                  )}
+                  {t('features.groups.memberships.openAssignments.delegateDialog.emptySearch')}
                 </div>
               )}
             </div>
@@ -905,17 +901,14 @@ export function OpenAssignmentsPanel({
 
           <DialogFooter>
             <Button variant="outline" onClick={() => closeDelegateDialog(false)}>
-              {t('features.groups.memberships.openAssignments.delegateDialog.cancel', 'Cancel')}
+              {t('features.groups.memberships.openAssignments.delegateDialog.cancel')}
             </Button>
             <Button
               disabled={!delegateDialogEventId || isScheduling}
               onClick={() => void handleCreateDelegateElection()}
             >
               <Vote className="mr-2 h-4 w-4" />
-              {t(
-                'features.groups.memberships.openAssignments.delegateDialog.create',
-                'Create election'
-              )}
+              {t('features.groups.memberships.openAssignments.delegateDialog.create')}
             </Button>
           </DialogFooter>
         </DialogContent>

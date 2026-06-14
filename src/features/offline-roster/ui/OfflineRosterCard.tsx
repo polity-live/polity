@@ -54,6 +54,7 @@ import {
   UserRoundPlus,
   Users,
 } from 'lucide-react';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export interface OfflineRosterConnectedUser {
   id: string;
@@ -305,7 +306,7 @@ function ProvenanceTag({
         'hover:opacity-90'
       )}
     >
-      {group.name || fallbackLabel || 'Group'}
+      {group.name || fallbackLabel || translateText('generated.inline.0094_group_171a0606')}
     </Link>
   );
 }
@@ -317,12 +318,14 @@ export function OfflineRosterCard({
   connectedUserCandidates = [],
   showManageButton = false,
   showProvenanceColumns = false,
-  manageButtonLabel = 'Manage non signed up users',
+  manageButtonLabel = translateText('generated.inline.0132_manage_non_signed_up_users_a17fc54c'),
   tableVariant = 'default',
   fallbackRoleLabel = '-',
   manageDialogTitle,
   manageDialogDescription,
-  emptyStateLabel = 'No offline or hybrid users have been added yet.',
+  emptyStateLabel = translateText(
+    'generated.inline.0133_no_offline_or_hybrid_users_have_been_added_ye_b4634e1a'
+  ),
   onCreate,
   onImport,
   onConnect,
@@ -625,12 +628,14 @@ export function OfflineRosterCard({
         <div className="flex flex-wrap gap-2">
           <Badge variant="secondary">
             {row.attendanceStatus === 'confirmed'
-              ? 'Participation confirmed'
-              : 'Participation listed'}
+              ? translateText('generated.inline.0120_participation_confirmed_e2ee357b')
+              : translateText('generated.inline.0121_participation_listed_84952d30')}
           </Badge>
           {row.participationChannel ? (
             <Badge variant="outline">
-              {row.participationChannel === 'offline' ? 'Offline channel' : 'Online channel'}
+              {row.participationChannel === 'offline'
+                ? translateText('generated.inline.0122_offline_channel_8775eb7b')
+                : translateText('generated.inline.0123_online_channel_368ecb25')}
             </Badge>
           ) : null}
         </div>
@@ -646,7 +651,7 @@ export function OfflineRosterCard({
         {row.canViewRights ? (
           <Button type="button" size="sm" variant="ghost" onClick={() => onOpenRightsDialog?.(row)}>
             <Eye className="mr-2 h-4 w-4" />
-            Rights
+            {translateText('generated.inline.0133_rights_db94ff6b')}
           </Button>
         ) : null}
         {row.canManageRoles ? (
@@ -657,7 +662,7 @@ export function OfflineRosterCard({
             onClick={() => onOpenChangeRoleDialog?.(row)}
           >
             <ArrowUpDown className="mr-2 h-4 w-4" />
-            Manage Roles
+            {translateText('generated.inline.0947_manage_roles_5f9b8531')}
           </Button>
         ) : null}
         {row.canConfirmParticipation ? (
@@ -668,7 +673,7 @@ export function OfflineRosterCard({
             onClick={() => void handleSetParticipationStatus(row, 'confirmed')}
           >
             <Check className="mr-2 h-4 w-4" />
-            Confirm
+            {translateText('generated.inline.0948_confirm_04a21221')}
           </Button>
         ) : null}
         {row.canWithdrawParticipation ? (
@@ -678,7 +683,7 @@ export function OfflineRosterCard({
             variant="outline"
             onClick={() => void handleSetParticipationStatus(row, 'listed')}
           >
-            Withdraw confirmation
+            {translateText('generated.inline.0949_withdraw_confirmation_ed1f407d')}
           </Button>
         ) : null}
         {row.canToggleChannel ? (
@@ -688,13 +693,15 @@ export function OfflineRosterCard({
             variant="outline"
             onClick={() => void handleToggleChannel(row, nextChannel)}
           >
-            {nextChannel === 'offline' ? 'Set Offline' : 'Set Online'}
+            {nextChannel === 'offline'
+              ? translateText('generated.inline.0124_set_offline_8b45cb62')
+              : translateText('generated.inline.0125_set_online_5ac7fe77')}
           </Button>
         ) : null}
         {row.canConnect ? (
           <Button type="button" size="sm" variant="outline" onClick={() => setConnectRow(row)}>
             <Link2 className="mr-2 h-4 w-4" />
-            Connect
+            {translateText('generated.inline.0950_connect_b65463cb')}
           </Button>
         ) : null}
         {row.canEdit ? (
@@ -750,15 +757,33 @@ export function OfflineRosterCard({
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>User</TableHead>
-                      {showRolesColumn ? <TableHead>Role</TableHead> : null}
-                      {showConnectedUserColumn ? (
-                        <TableHead>Connected Active User</TableHead>
+                      <TableHead>{translateText('generated.inline.0090_user_9f8a2389')}</TableHead>
+                      {showRolesColumn ? (
+                        <TableHead>
+                          {translateText('generated.inline.0091_role_c3f104d1')}
+                        </TableHead>
                       ) : null}
-                      <TableHead>Reason why not signed up</TableHead>
-                      {showProvenanceColumns ? <TableHead>Part group</TableHead> : null}
-                      {showProvenanceColumns ? <TableHead>Base group</TableHead> : null}
-                      <TableHead className="text-right">Actions</TableHead>
+                      {showConnectedUserColumn ? (
+                        <TableHead>
+                          {translateText('generated.inline.0951_connected_active_user_0aaf89ce')}
+                        </TableHead>
+                      ) : null}
+                      <TableHead>
+                        {translateText('generated.inline.0952_reason_why_not_signed_up_3bd4bff9')}
+                      </TableHead>
+                      {showProvenanceColumns ? (
+                        <TableHead>
+                          {translateText('generated.inline.0953_part_group_b6252576')}
+                        </TableHead>
+                      ) : null}
+                      {showProvenanceColumns ? (
+                        <TableHead>
+                          {translateText('generated.inline.0954_base_group_6c9d0b40')}
+                        </TableHead>
+                      ) : null}
+                      <TableHead className="text-right">
+                        {translateText('generated.inline.0093_actions_c3cd636a')}
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -824,15 +849,39 @@ export function OfflineRosterCard({
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Active user</TableHead>
-                      <TableHead>Firstname</TableHead>
-                      <TableHead>Lastname</TableHead>
-                      <TableHead>Connected Active User</TableHead>
-                      {showRolesColumn ? <TableHead>Roles</TableHead> : null}
-                      <TableHead>Reason why not signed up</TableHead>
-                      {showProvenanceColumns ? <TableHead>Part group</TableHead> : null}
-                      {showProvenanceColumns ? <TableHead>Base group</TableHead> : null}
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead>
+                        {translateText('generated.inline.0955_active_user_7bce0daf')}
+                      </TableHead>
+                      <TableHead>
+                        {translateText('generated.inline.0956_firstname_cf23ba48')}
+                      </TableHead>
+                      <TableHead>
+                        {translateText('generated.inline.0957_lastname_639860fb')}
+                      </TableHead>
+                      <TableHead>
+                        {translateText('generated.inline.0951_connected_active_user_0aaf89ce')}
+                      </TableHead>
+                      {showRolesColumn ? (
+                        <TableHead>
+                          {translateText('generated.inline.0689_roles_47dcc27d')}
+                        </TableHead>
+                      ) : null}
+                      <TableHead>
+                        {translateText('generated.inline.0952_reason_why_not_signed_up_3bd4bff9')}
+                      </TableHead>
+                      {showProvenanceColumns ? (
+                        <TableHead>
+                          {translateText('generated.inline.0953_part_group_b6252576')}
+                        </TableHead>
+                      ) : null}
+                      {showProvenanceColumns ? (
+                        <TableHead>
+                          {translateText('generated.inline.0954_base_group_6c9d0b40')}
+                        </TableHead>
+                      ) : null}
+                      <TableHead className="text-right">
+                        {translateText('generated.inline.0093_actions_c3cd636a')}
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -842,12 +891,12 @@ export function OfflineRosterCard({
                           {row.isActiveUser ? (
                             <Badge className="bg-emerald-600 text-white hover:bg-emerald-600">
                               <CircleCheck className="mr-1 h-4 w-4" />
-                              Yes
+                              {translateText('generated.inline.0958_yes_5397e058')}
                             </Badge>
                           ) : (
                             <Badge variant="destructive">
                               <CircleX className="mr-1 h-4 w-4" />
-                              No
+                              {translateText('generated.inline.0609_no_816c52fd')}
                             </Badge>
                           )}
                         </TableCell>
@@ -866,7 +915,8 @@ export function OfflineRosterCard({
                               {row.roles && row.roles.length > 0 ? (
                                 row.roles.map(role => (
                                   <Badge key={`${row.id}-${role.id}`} variant="outline">
-                                    {role.name || 'Role'}
+                                    {role.name ||
+                                      translateText('generated.inline.0092_role_c3f104d1')}
                                   </Badge>
                                 ))
                               ) : (
@@ -915,13 +965,19 @@ export function OfflineRosterCard({
             className="space-y-4"
           >
             <TabsList>
-              <TabsTrigger value="single">Einzeluser</TabsTrigger>
-              <TabsTrigger value="csv">Csv upload</TabsTrigger>
+              <TabsTrigger value="single">
+                {translateText('generated.inline.0959_einzeluser_9d0b4724')}
+              </TabsTrigger>
+              <TabsTrigger value="csv">
+                {translateText('generated.inline.0960_csv_upload_7aa7415d')}
+              </TabsTrigger>
             </TabsList>
             <TabsContent value="single" className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="offline-single-first-name">Firstname</Label>
+                  <Label htmlFor="offline-single-first-name">
+                    {translateText('generated.inline.0956_firstname_cf23ba48')}
+                  </Label>
                   <Input
                     id="offline-single-first-name"
                     value={singleDraft.firstName}
@@ -931,7 +987,9 @@ export function OfflineRosterCard({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="offline-single-last-name">Lastname</Label>
+                  <Label htmlFor="offline-single-last-name">
+                    {translateText('generated.inline.0957_lastname_639860fb')}
+                  </Label>
                   <Input
                     id="offline-single-last-name"
                     value={singleDraft.lastName}
@@ -942,7 +1000,9 @@ export function OfflineRosterCard({
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="offline-single-reason">Reason why not signed up</Label>
+                <Label htmlFor="offline-single-reason">
+                  {translateText('generated.inline.0952_reason_why_not_signed_up_3bd4bff9')}
+                </Label>
                 <Textarea
                   id="offline-single-reason"
                   value={singleDraft.reasonNotSignedUp}
@@ -974,10 +1034,13 @@ export function OfflineRosterCard({
                 onDrop={event => void handleCsvDrop(event)}
               >
                 <Upload className="text-muted-foreground mx-auto mb-3 h-8 w-8" />
-                <p className="font-medium">Upload CSV</p>
+                <p className="font-medium">
+                  {translateText('generated.inline.0961_upload_csv_0b77a04d')}
+                </p>
                 <p className="text-muted-foreground text-sm">
-                  Drag and drop a CSV with the columns Firstname, Lastname, Reason why not signed
-                  up.
+                  {translateText(
+                    'generated.inline.0962_drag_and_drop_a_csv_with_the_columns_firstnam_8d747f0d'
+                  )}
                 </p>
                 <Button
                   type="button"
@@ -985,7 +1048,7 @@ export function OfflineRosterCard({
                   className="mt-4"
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  Choose file
+                  {translateText('generated.inline.0963_choose_file_eb7eb7a8')}
                 </Button>
                 <input
                   id={fileInputId}
@@ -1005,11 +1068,17 @@ export function OfflineRosterCard({
               {(csvFeedback.duplicates > 0 || csvFeedback.missingNames > 0) && (
                 <div className="text-muted-foreground flex flex-wrap gap-3 text-sm">
                   {csvFeedback.duplicates > 0 ? (
-                    <span>{csvFeedback.duplicates} duplicate rows were skipped.</span>
+                    <span>
+                      {csvFeedback.duplicates}
+                      {translateText('generated.inline.0964_duplicate_rows_were_skipped_3d5f6530')}
+                    </span>
                   ) : null}
                   {csvFeedback.missingNames > 0 ? (
                     <span>
-                      {csvFeedback.missingNames} rows without first and last name were skipped.
+                      {csvFeedback.missingNames}
+                      {translateText(
+                        'generated.inline.0965_rows_without_first_and_last_name_were_skipped_2fc1a545'
+                      )}
                     </span>
                   ) : null}
                 </div>
@@ -1017,14 +1086,22 @@ export function OfflineRosterCard({
 
               {csvPreviewRows.length > 0 ? (
                 <div className="space-y-2">
-                  <Label>Preview</Label>
+                  <Label>{translateText('generated.inline.0520_preview_f1fbb2b4')}</Label>
                   <ScrollArea className="h-[40vh] rounded-xl border">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Firstname</TableHead>
-                          <TableHead>Lastname</TableHead>
-                          <TableHead>Reason why not signed up</TableHead>
+                          <TableHead>
+                            {translateText('generated.inline.0956_firstname_cf23ba48')}
+                          </TableHead>
+                          <TableHead>
+                            {translateText('generated.inline.0957_lastname_639860fb')}
+                          </TableHead>
+                          <TableHead>
+                            {translateText(
+                              'generated.inline.0952_reason_why_not_signed_up_3bd4bff9'
+                            )}
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -1044,7 +1121,7 @@ export function OfflineRosterCard({
           </Tabs>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => handleCloseManageDialog(false)}>
-              Abbrechen
+              {translateText('generated.inline.0331_abbrechen_07af7cb3')}
             </Button>
             <Button
               type="button"
@@ -1058,7 +1135,7 @@ export function OfflineRosterCard({
                 manageTab === 'csv' ? void handleImportCsv() : void handleCreateSingle()
               }
             >
-              Hinzufuegen
+              {translateText('generated.inline.0966_hinzufuegen_38099f83')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1075,19 +1152,22 @@ export function OfflineRosterCard({
       >
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Connect active user</DialogTitle>
+            <DialogTitle>
+              {translateText('generated.inline.0967_connect_active_user_3b32e5de')}
+            </DialogTitle>
             <DialogDescription>
-              Search for an active platform user who should be connected to this offline roster
-              entry.
+              {translateText(
+                'generated.inline.0968_search_for_an_active_platform_user_who_should_4ddfcc2a'
+              )}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
-            <Label>Active user</Label>
+            <Label>{translateText('generated.inline.0955_active_user_7bce0daf')}</Label>
             <TypeaheadSearch
               items={connectItems}
               value={selectedConnectedUser?.id}
               onChange={item => setSelectedConnectedUser(item)}
-              placeholder="Search active users..."
+              placeholder={translateText('generated.inline.0969_search_active_users_87482496')}
             />
           </div>
           <DialogFooter>
@@ -1099,14 +1179,14 @@ export function OfflineRosterCard({
                 setSelectedConnectedUser(null);
               }}
             >
-              Cancel
+              {translateText('generated.inline.0065_cancel_77dfd213')}
             </Button>
             <Button
               type="button"
               disabled={!selectedConnectedUser || isSubmitting}
               onClick={() => void handleConnect()}
             >
-              Verknuepfen
+              {translateText('generated.inline.0970_verknuepfen_c7a633a7')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1122,14 +1202,20 @@ export function OfflineRosterCard({
       >
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Edit offline user</DialogTitle>
+            <DialogTitle>
+              {translateText('generated.inline.0971_edit_offline_user_be53ee65')}
+            </DialogTitle>
             <DialogDescription>
-              Adjust the roster entry details for this offline user.
+              {translateText(
+                'generated.inline.0972_adjust_the_roster_entry_details_for_this_offl_7fe298c6'
+              )}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="offline-edit-first-name">Firstname</Label>
+              <Label htmlFor="offline-edit-first-name">
+                {translateText('generated.inline.0956_firstname_cf23ba48')}
+              </Label>
               <Input
                 id="offline-edit-first-name"
                 value={editDraft.firstName}
@@ -1139,7 +1225,9 @@ export function OfflineRosterCard({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="offline-edit-last-name">Lastname</Label>
+              <Label htmlFor="offline-edit-last-name">
+                {translateText('generated.inline.0957_lastname_639860fb')}
+              </Label>
               <Input
                 id="offline-edit-last-name"
                 value={editDraft.lastName}
@@ -1150,7 +1238,9 @@ export function OfflineRosterCard({
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="offline-edit-reason">Reason why not signed up</Label>
+            <Label htmlFor="offline-edit-reason">
+              {translateText('generated.inline.0952_reason_why_not_signed_up_3bd4bff9')}
+            </Label>
             <Textarea
               id="offline-edit-reason"
               rows={4}
@@ -1162,10 +1252,10 @@ export function OfflineRosterCard({
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setEditRow(null)}>
-              Cancel
+              {translateText('generated.inline.0065_cancel_77dfd213')}
             </Button>
             <Button type="button" disabled={isSubmitting} onClick={() => void handleSaveEdit()}>
-              Save
+              {translateText('generated.inline.0269_save_efc007a3')}
             </Button>
           </DialogFooter>
         </DialogContent>

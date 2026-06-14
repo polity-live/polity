@@ -5,6 +5,7 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { createClient } from '@/lib/supabase/client';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 const AUTH_SERVICE_UNAVAILABLE_MESSAGE =
   'Authentication service is temporarily unavailable. Please try again in a moment.';
@@ -146,7 +147,10 @@ export const useAuthStore = create<AuthState>()(
         };
       } catch (error) {
         console.error('Failed to sign up:', error);
-        const errorMessage = normalizeAuthErrorMessage(error, 'Failed to sign up');
+        const errorMessage = normalizeAuthErrorMessage(
+          error,
+          translateText('generated.inline.0023_failed_to_sign_up_c8c619af')
+        );
         set(state => {
           state.isLoading = false;
           state.error = errorMessage;

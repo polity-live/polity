@@ -53,7 +53,7 @@ export function AlignToolbarButton(props: DropdownMenuProps) {
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false} {...props}>
       <DropdownMenuTrigger asChild>
-        <ToolbarButton pressed={open} tooltip={t('plateJs.toolbar.align', 'Align')} isDropdown>
+        <ToolbarButton pressed={open} tooltip={t('plateJs.toolbar.align')} isDropdown>
           <IconValue />
         </ToolbarButton>
       </DropdownMenuTrigger>

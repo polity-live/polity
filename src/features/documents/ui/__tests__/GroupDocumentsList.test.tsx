@@ -60,10 +60,10 @@ vi.mock('@/features/pql/ui/PqlToolbar', () => ({
 }));
 
 vi.mock('../GroupDocumentCard', () => ({
-  GroupDocumentCard: ({ onClick }: { onClick: () => void }) => (
-    <button data-testid="group-document-card" onClick={onClick} type="button">
+  GroupDocumentCard: ({ href }: { href: string }) => (
+    <a data-testid="group-document-card" href={href}>
       Open
-    </button>
+    </a>
   ),
 }));
 
@@ -90,5 +90,13 @@ describe('GroupDocumentsList', () => {
     render(<GroupDocumentsList groupId="group-1" userId="user-1" canManageDocuments />);
 
     expect(screen.queryByTestId('create-document-dialog')).not.toBeNull();
+  });
+
+  it('passes document routes to cards as hrefs', () => {
+    render(<GroupDocumentsList groupId="group-1" userId="user-1" canManageDocuments={false} />);
+
+    expect(screen.getByTestId('group-document-card').getAttribute('href')).toBe(
+      '/group/group-1/editor/doc-1'
+    );
   });
 });

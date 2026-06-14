@@ -53,7 +53,10 @@ import {
 } from '@/features/shared/ui/ui/select';
 import { Textarea } from '@/features/shared/ui/ui/textarea';
 import type { AiReasoningEffort } from '@/lib/ai/schemas';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import {
   ASSISTANT_ATTACHMENT_TYPE_OPTIONS,
   getSuggestionAnchorPosition,
@@ -79,21 +82,21 @@ const REASONING_OPTIONS: readonly {
 }[] = [
   {
     value: 'low',
-    label: 'Low',
+    label: translateText('generated.inline.0183_low_a124947c'),
     Icon: Sparkles,
     gradientClass:
       'bg-gradient-to-br from-slate-200/80 via-slate-200/60 to-slate-100/40 text-slate-700 dark:bg-slate-700/20 dark:text-slate-200',
   },
   {
     value: 'medium',
-    label: 'Medium',
+    label: translateText('generated.inline.0184_medium_d404968e'),
     Icon: Zap,
     gradientClass:
       'bg-gradient-to-br from-amber-500/20 via-orange-500/20 to-yellow-400/20 text-amber-700 dark:text-amber-200',
   },
   {
     value: 'high',
-    label: 'High',
+    label: translateText('generated.inline.0185_high_b1a5954a'),
     Icon: Brain,
     gradientClass:
       'bg-gradient-to-br from-fuchsia-500/20 via-purple-500/20 to-indigo-500/20 text-fuchsia-700 dark:text-fuchsia-200',
@@ -330,19 +333,13 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
             <div className="min-w-0">
               <div className="truncate text-sm font-medium">
                 {kind === 'search'
-                  ? t('features.messages.ai.allSearchTools', 'All search tools')
-                  : t('features.messages.ai.allCreateTools', 'All create tools')}
+                  ? t('features.messages.ai.allSearchTools')
+                  : t('features.messages.ai.allCreateTools')}
               </div>
               <div className="text-muted-foreground truncate text-xs">
                 {kind === 'search'
-                  ? t(
-                      'features.messages.ai.searchToolsDescription',
-                      'Enable or disable all search tools for this message.'
-                    )
-                  : t(
-                      'features.messages.ai.createToolsDescription',
-                      'Enable or disable all create tools for this message.'
-                    )}
+                  ? t('features.messages.ai.searchToolsDescription')
+                  : t('features.messages.ai.createToolsDescription')}
               </div>
             </div>
             <Badge variant="outline" className="text-[10px] uppercase">
@@ -370,15 +367,9 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
     );
   };
 
-  const freeRouterLabel = t('features.messages.ai.freeRouterModel', 'Free Models Router');
-  const freeRouterMessage = t(
-    'features.messages.ai.modelReliability.freeRouter',
-    'Chooses an available model from the free tier list. Works always and will always be free'
-  );
-  const reliabilityMessage = t(
-    'features.messages.ai.modelReliability.warning',
-    'Errors can occur if this model drops out of the free tier or a rate limit is reached.'
-  );
+  const freeRouterLabel = t('features.messages.ai.freeRouterModel');
+  const freeRouterMessage = t('features.messages.ai.modelReliability.freeRouter');
+  const reliabilityMessage = t('features.messages.ai.modelReliability.warning');
 
   const freeRouterModelKey = useMemo(() => {
     const labeledModel = assistantChat.models.find(
@@ -538,13 +529,13 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
     const normalizedSlug = (skillSlug.trim() || slugifySkillName(trimmedName)).trim();
 
     if (!trimmedName || !trimmedPrompt || !normalizedSlug) {
-      toast.error(t('pages.user.ai.skills.validation', 'Name, slug, and prompt are required.'));
+      toast.error(t('pages.user.ai.skills.validation'));
       return;
     }
 
     const slugTaken = assistantChat.availableSkills.some(skill => skill.slug === normalizedSlug);
     if (slugTaken) {
-      toast.error(t('pages.user.ai.skills.slugExists', 'This skill slug already exists.'));
+      toast.error(t('pages.user.ai.skills.slugExists'));
       return;
     }
 
@@ -609,7 +600,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
             {hiddenSelectedToolCount > 0 && (
               <Badge variant="outline" className="gap-1 text-xs">
                 <Wrench className="h-3 w-3" />+{hiddenSelectedToolCount}{' '}
-                {t('features.messages.ai.moreTools', 'more tools')}
+                {t('features.messages.ai.moreTools')}
               </Badge>
             )}
           </div>
@@ -665,18 +656,14 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
         {assistantChat.isUploadingAttachments && assistantChat.uploadingAttachmentName && (
           <Badge variant="secondary" className="gap-1 text-xs">
             <LoaderCircle className="h-3 w-3 animate-spin" />
-            {t('features.messages.compose.uploading', 'Uploading')}:
-            {assistantChat.uploadingAttachmentName}
+            {t('features.messages.compose.uploading')}:{assistantChat.uploadingAttachmentName}
           </Badge>
         )}
 
         <div className="relative">
           <Textarea
             ref={textareaRef}
-            placeholder={t(
-              'features.messages.ai.placeholder',
-              'Ask Aria & Kai anything. Use # for tools, / for skills, and @ for Polity context.'
-            )}
+            placeholder={t('features.messages.ai.placeholder')}
             value={messageText}
             onChange={event => {
               setMessageText(event.target.value);
@@ -738,7 +725,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                   {toolSuggestions.length > 0 && (
                     <>
                       <p className="text-muted-foreground px-2 py-1 text-xs font-medium">
-                        {t('features.messages.ai.tools', 'Tools')}
+                        {t('features.messages.ai.tools')}
                       </p>
                       {toolSuggestions.map(tool => (
                         <button
@@ -768,7 +755,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                   {skillSuggestions.length > 0 && (
                     <>
                       <p className="text-muted-foreground px-2 py-1 text-xs font-medium">
-                        {t('features.messages.ai.skills', 'Skills')}
+                        {t('features.messages.ai.skills')}
                       </p>
                       {skillSuggestions.map(skill => (
                         <button
@@ -786,7 +773,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                           </span>
                           {skill.isBuiltIn && (
                             <Badge variant="secondary" className="text-[10px] uppercase">
-                              Built-in
+                              {translateText('generated.inline.0751_built_in_20f409cc')}
                             </Badge>
                           )}
                         </button>
@@ -797,7 +784,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                   {attachmentTypeSuggestions.length > 0 && (
                     <>
                       <p className="text-muted-foreground px-2 py-1 text-xs font-medium">
-                        {t('features.messages.ai.attachTypes', 'Context types')}
+                        {t('features.messages.ai.attachTypes')}
                       </p>
                       {attachmentTypeSuggestions.map(option => (
                         <button
@@ -821,7 +808,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                   {attachmentSuggestions.length > 0 && (
                     <>
                       <p className="text-muted-foreground px-2 py-1 text-xs font-medium">
-                        {t('features.messages.ai.attachments', 'Attach context')}
+                        {t('features.messages.ai.attachments')}
                       </p>
                       {attachmentSuggestions.map(option => (
                         <button
@@ -879,22 +866,23 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                     >
                       {assistantChat.selectedModel
                         ? getModelDisplayLabel(assistantChat.selectedModel)
-                        : t('features.messages.ai.modelPlaceholder', 'Choose a model')}
+                        : t('features.messages.ai.modelPlaceholder')}
                     </span>
                     {assistantChat.selectedModel && (
                       <span className="flex flex-shrink-0 items-center gap-1.5">
                         {assistantChat.selectedModel.free && (
                           <Badge className="border-0 bg-gradient-to-r from-emerald-500/20 via-green-500/20 to-lime-500/20 text-[10px] text-emerald-800 dark:text-emerald-200">
-                            Free
+                            {translateText('generated.inline.0752_free_75f52718')}
                           </Badge>
                         )}
                         {assistantChat.selectedModel.source === 'byok' && (
                           <Badge className="border-0 bg-gradient-to-r from-slate-500/20 via-zinc-500/20 to-stone-500/20 text-[10px] text-slate-800 dark:text-slate-200">
-                            BYOK
+                            {translateText('generated.inline.0113_byok_36068183')}
                           </Badge>
                         )}
                         <Badge className="border-0 bg-gradient-to-r from-cyan-500/20 via-sky-500/20 to-blue-500/20 text-[10px] text-sky-800 dark:text-sky-200">
-                          ctx {formatContextWindow(assistantChat.selectedModel.context_window)}
+                          {translateText('generated.inline.0114_ctx_4024700f')}
+                          {formatContextWindow(assistantChat.selectedModel.context_window)}
                         </Badge>
                         {selectedModelHint && (
                           <span
@@ -931,16 +919,17 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                           <span className="flex flex-shrink-0 items-center gap-1.5">
                             {model.free && (
                               <Badge className="border-0 bg-gradient-to-r from-emerald-500/20 via-green-500/20 to-lime-500/20 text-[10px] text-emerald-800 dark:text-emerald-200">
-                                Free
+                                {translateText('generated.inline.0752_free_75f52718')}
                               </Badge>
                             )}
                             {model.source === 'byok' && (
                               <Badge className="border-0 bg-gradient-to-r from-slate-500/20 via-zinc-500/20 to-stone-500/20 text-[10px] text-slate-800 dark:text-slate-200">
-                                BYOK
+                                {translateText('generated.inline.0113_byok_36068183')}
                               </Badge>
                             )}
                             <Badge className="border-0 bg-gradient-to-r from-cyan-500/20 via-sky-500/20 to-blue-500/20 text-[10px] text-sky-800 dark:text-sky-200">
-                              ctx {formatContextWindow(model.context_window)}
+                              {translateText('generated.inline.0114_ctx_4024700f')}
+                              {formatContextWindow(model.context_window)}
                             </Badge>
                             <span
                               className={modelHintClass}
@@ -966,18 +955,15 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
               disabled={!assistantChat.selectedModel?.supports_reasoning_effort}
             >
               <SelectTrigger className="h-8">
-                <SelectValue placeholder={t('features.messages.ai.reasoning', 'Reasoning')} />
+                <SelectValue placeholder={t('features.messages.ai.reasoning')} />
               </SelectTrigger>
               <SelectContent>
                 <div className="px-3 py-2">
                   <div className="text-xs font-medium text-slate-900 dark:text-slate-100">
-                    {t('features.messages.ai.reasoningDropdownTitle', 'Reasoning effort')}
+                    {t('features.messages.ai.reasoningDropdownTitle')}
                   </div>
                   <div className="text-muted-foreground text-xs">
-                    {t(
-                      'features.messages.ai.reasoningDropdownDescription',
-                      'Choose how much thinking effort the AI should use: high, medium, or low.'
-                    )}
+                    {t('features.messages.ai.reasoningDropdownDescription')}
                   </div>
                 </div>
                 <div className="border-t border-slate-200 dark:border-slate-700" />
@@ -1001,7 +987,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
             <DropdownMenuTrigger asChild>
               <Button type="button" variant="outline" size="sm" className="h-8 px-2">
                 <Wrench className="mr-1 h-3.5 w-3.5" />
-                {t('features.messages.ai.toolSelector', 'Tools')}
+                {t('features.messages.ai.toolSelector')}
                 {assistantChat.selectedTools.length > 0
                   ? ` (${assistantChat.selectedTools.length})`
                   : ''}
@@ -1009,32 +995,26 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-96">
               <DropdownMenuLabel>
-                {t(
-                  'features.messages.ai.toolSelectorDescription',
-                  'Callable Polity tools for this message. Tools are API-backed actions, separate from skills.'
-                )}
+                {t('features.messages.ai.toolSelectorDescription')}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               {assistantChat.availableTools.length > 0 ? (
                 <>
                   {renderToolGroup(
-                    t('features.messages.ai.searchToolGroup', 'Search tools'),
+                    t('features.messages.ai.searchToolGroup'),
                     'search',
                     searchTools
                   )}
                   {searchTools.length > 0 && createTools.length > 0 && <DropdownMenuSeparator />}
                   {renderToolGroup(
-                    t('features.messages.ai.createToolGroup', 'Create tools'),
+                    t('features.messages.ai.createToolGroup'),
                     'create',
                     createTools
                   )}
                 </>
               ) : (
                 <div className="text-muted-foreground px-2 py-2 text-sm">
-                  {t(
-                    'features.messages.ai.noToolsAvailable',
-                    'No enabled tools are currently available.'
-                  )}
+                  {t('features.messages.ai.noToolsAvailable')}
                 </div>
               )}
             </DropdownMenuContent>
@@ -1044,7 +1024,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
             <DropdownMenuTrigger asChild>
               <Button type="button" variant="outline" size="sm" className="h-8 px-2">
                 <Sparkles className="mr-1 h-3.5 w-3.5" />
-                {t('features.messages.ai.skillSelector', 'Skills')}
+                {t('features.messages.ai.skillSelector')}
                 {assistantChat.selectedSkills.length > 0
                   ? ` (${assistantChat.selectedSkills.length})`
                   : ''}
@@ -1052,10 +1032,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80">
               <DropdownMenuLabel>
-                {t(
-                  'features.messages.ai.skillSelectorDescription',
-                  'Active skills for this message context'
-                )}
+                {t('features.messages.ai.skillSelectorDescription')}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               {assistantChat.availableSkills.length > 0 ? (
@@ -1075,10 +1052,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
                 ))
               ) : (
                 <div className="text-muted-foreground px-2 py-2 text-sm">
-                  {t(
-                    'features.messages.ai.noSkillsAvailable',
-                    'No enabled skills are currently available.'
-                  )}
+                  {t('features.messages.ai.noSkillsAvailable')}
                 </div>
               )}
             </DropdownMenuContent>
@@ -1090,8 +1064,8 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
             size="icon"
             onClick={() => fileInputRef.current?.click()}
             disabled={assistantChat.isUploadingAttachments}
-            title={t('features.messages.compose.uploadFiles', 'Upload documents and images')}
-            aria-label={t('features.messages.compose.uploadFiles', 'Upload documents and images')}
+            title={t('features.messages.compose.uploadFiles')}
+            aria-label={t('features.messages.compose.uploadFiles')}
           >
             {assistantChat.isUploadingAttachments ? (
               <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -1108,7 +1082,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
             className="h-8 px-2"
           >
             <Plus className="mr-1 h-3.5 w-3.5" />
-            {t('features.messages.ai.createSkill', 'Create skill')}
+            {t('features.messages.ai.createSkill')}
           </Button>
 
           <Button
@@ -1121,8 +1095,8 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
               assistantChat.isUploadingAttachments ||
               !assistantChat.selectedModel
             }
-            title={t('common.send', 'Send')}
-            aria-label={t('common.send', 'Send')}
+            title={t('common.send')}
+            aria-label={t('common.send')}
             onClick={() => {
               void handleSubmit();
             }}
@@ -1139,16 +1113,10 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
           <p className="flex items-center gap-1.5">
             <Brain className="h-3.5 w-3.5" />
             {assistantChat.isCatalogLoading
-              ? t('features.messages.ai.loadingModels', 'Loading available AI models...')
+              ? t('features.messages.ai.loadingModels')
               : assistantChat.models.length > 0
-                ? t(
-                    'features.messages.ai.helperText',
-                    'Use @ to attach Polity entities, / to switch skills, and the Tools dropdown for callable Polity APIs.'
-                  )
-                : t(
-                    'features.messages.ai.noModels',
-                    'No AI models are currently available. Add a BYOK provider key in Settings > AI or configure a free OpenRouter app key.'
-                  )}
+                ? t('features.messages.ai.helperText')
+                : t('features.messages.ai.noModels')}
           </p>
           <p className="flex items-center gap-1.5">
             {assistantChat.isThinking ? (
@@ -1156,10 +1124,7 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
             ) : (
               <Sparkles className="h-3.5 w-3.5" />
             )}
-            {t(
-              'features.messages.ai.disclaimer',
-              'AI answers can be wrong. Check critical political, legal, and procedural claims before acting on them.'
-            )}
+            {t('features.messages.ai.disclaimer')}
           </p>
         </div>
       </div>
@@ -1167,27 +1132,20 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
       <Dialog open={createSkillOpen} onOpenChange={setCreateSkillOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t('features.messages.ai.createSkill', 'Create skill')}</DialogTitle>
+            <DialogTitle>{t('features.messages.ai.createSkill')}</DialogTitle>
             <DialogDescription>
-              {t(
-                'features.messages.ai.createSkillDescription',
-                'Skills let Aria & Kai adopt a specific working mode for this conversation.'
-              )}
+              {t('features.messages.ai.createSkillDescription')}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-3">
             <div className="space-y-2">
-              <label className="text-sm font-medium">
-                {t('pages.user.ai.skills.name', 'Name')}
-              </label>
+              <label className="text-sm font-medium">{t('pages.user.ai.skills.name')}</label>
               <Input value={skillName} onChange={event => setSkillName(event.target.value)} />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">
-                {t('pages.user.ai.skills.slug', 'Slug')}
-              </label>
+              <label className="text-sm font-medium">{t('pages.user.ai.skills.slug')}</label>
               <Input
                 value={skillSlug}
                 onChange={event => setSkillSlug(event.target.value)}
@@ -1196,23 +1154,18 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">
-                {t('pages.user.ai.skills.aliases', 'Aliases')}
-              </label>
+              <label className="text-sm font-medium">{t('pages.user.ai.skills.aliases')}</label>
               <HashtagInput
                 value={parseAliases(skillAliases)}
                 onChange={aliases => setSkillAliases(aliases.join(','))}
                 showLabel={false}
-                placeholder={t(
-                  'pages.user.ai.skills.aliasesPlaceholder',
-                  'Add an alias, e.g. campaign-strategy'
-                )}
+                placeholder={t('pages.user.ai.skills.aliasesPlaceholder')}
               />
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium">
-                {t('pages.user.ai.skills.systemPrompt', 'System prompt')}
+                {t('pages.user.ai.skills.systemPrompt')}
               </label>
               <Textarea
                 value={skillPrompt}
@@ -1224,10 +1177,10 @@ export function AssistantMessageInput({ assistantChat }: AssistantMessageInputPr
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setCreateSkillOpen(false)}>
-              {t('common.cancel', 'Cancel')}
+              {t('common.cancel')}
             </Button>
             <Button type="button" onClick={handleCreateSkill}>
-              {t('common.create', 'Create')}
+              {t('common.create')}
             </Button>
           </DialogFooter>
         </DialogContent>

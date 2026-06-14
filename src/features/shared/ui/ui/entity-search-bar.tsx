@@ -3,6 +3,7 @@ import { Input } from '@/features/shared/ui/ui/input.tsx';
 import { Badge } from '@/features/shared/ui/ui/badge.tsx';
 import { Button } from '@/features/shared/ui/ui/button.tsx';
 import { cn } from '@/features/shared/utils/utils.ts';
+import { translate as translateText } from '@/features/shared/hooks/use-translation';
 
 export interface FilterOption {
   label: string;
@@ -48,7 +49,9 @@ export function EntitySearchBar({
             onClick={() => onSearchQueryChange('')}
           >
             <X className="h-3.5 w-3.5" />
-            <span className="sr-only">Clear search</span>
+            <span className="sr-only">
+              {translateText('generated.inline.1132_clear_search_67300d0f')}
+            </span>
           </Button>
         )}
       </div>

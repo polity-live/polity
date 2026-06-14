@@ -12,7 +12,10 @@ import {
 import { Badge } from '@/features/shared/ui/ui/badge';
 import { Label } from '@/features/shared/ui/ui/label';
 import { ToggleGroup, ToggleGroupItem } from '@/features/shared/ui/ui/toggle-group';
-import { useTranslation } from '@/features/shared/hooks/use-translation';
+import {
+  useTranslation,
+  translate as translateText,
+} from '@/features/shared/hooks/use-translation';
 import { Filter, Hash, Search as SearchIcon } from 'lucide-react';
 import type { AmendmentFilters } from '../hooks/useAmendmentFilters';
 
@@ -41,10 +44,10 @@ export function AmendmentSearchAndFilters({
 }: AmendmentSearchAndFiltersProps) {
   const { t } = useTranslation();
   const statusLabels: Record<string, string> = {
-    accepted: t('features.groups.common.status.acceptedApproved', 'Accepted / Approved'),
-    pending: t('features.groups.common.status.pending', 'Pending'),
-    rejected: t('features.groups.common.status.rejected', 'Rejected'),
-    withdrawn: t('features.groups.common.status.withdrawn', 'Withdrawn'),
+    accepted: t('features.groups.common.status.acceptedApproved'),
+    pending: t('features.groups.common.status.pending'),
+    rejected: t('features.groups.common.status.rejected'),
+    withdrawn: t('features.groups.common.status.withdrawn'),
   };
 
   return (
@@ -68,11 +71,12 @@ export function AmendmentSearchAndFilters({
       {hasActiveFilters && !showFilters && (
         <div className="flex items-center gap-2">
           <span className="text-muted-foreground text-sm">
-            {t('features.groups.common.filters.active', 'Active filters:')}
+            {t('features.groups.common.filters.active')}
           </span>
           {filters.statusFilter !== 'all' && (
             <Badge variant="secondary" className="cursor-pointer" onClick={onClearStatusFilter}>
-              Status: {statusLabels[filters.statusFilter] ?? filters.statusFilter}
+              {translateText('generated.inline.0643_status_11dc9e19')}
+              {statusLabels[filters.statusFilter] ?? filters.statusFilter}
               <button
                 className="hover:text-destructive ml-2"
                 onClick={e => {
@@ -106,16 +110,12 @@ export function AmendmentSearchAndFilters({
       {showFilters && (
         <Card>
           <CardHeader>
-            <CardTitle>{t('features.groups.common.filters.title', 'Filters')}</CardTitle>
-            <CardDescription>
-              {t('features.groups.common.filters.refine', 'Refine your search results')}
-            </CardDescription>
+            <CardTitle>{t('features.groups.common.filters.title')}</CardTitle>
+            <CardDescription>{t('features.groups.common.filters.refine')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="status-filter">
-                {t('features.groups.common.filters.status', 'Filter by Status')}
-              </Label>
+              <Label htmlFor="status-filter">{t('features.groups.common.filters.status')}</Label>
               <ToggleGroup
                 id="status-filter"
                 type="single"
@@ -130,44 +130,39 @@ export function AmendmentSearchAndFilters({
               >
                 <ToggleGroupItem
                   value="all"
-                  aria-label={t('features.groups.common.filters.allStatuses', 'All Statuses')}
+                  aria-label={t('features.groups.common.filters.allStatuses')}
                 >
-                  {t('features.groups.common.filters.allStatuses', 'All Statuses')}
+                  {t('features.groups.common.filters.allStatuses')}
                 </ToggleGroupItem>
                 <ToggleGroupItem
                   value="accepted"
-                  aria-label={t(
-                    'features.groups.common.status.acceptedApproved',
-                    'Accepted / Approved'
-                  )}
+                  aria-label={t('features.groups.common.status.acceptedApproved')}
                 >
-                  {t('features.groups.common.status.acceptedApproved', 'Accepted / Approved')}
+                  {t('features.groups.common.status.acceptedApproved')}
                 </ToggleGroupItem>
                 <ToggleGroupItem
                   value="pending"
-                  aria-label={t('features.groups.common.status.pending', 'Pending')}
+                  aria-label={t('features.groups.common.status.pending')}
                 >
-                  {t('features.groups.common.status.pending', 'Pending')}
+                  {t('features.groups.common.status.pending')}
                 </ToggleGroupItem>
                 <ToggleGroupItem
                   value="rejected"
-                  aria-label={t('features.groups.common.status.rejected', 'Rejected')}
+                  aria-label={t('features.groups.common.status.rejected')}
                 >
-                  {t('features.groups.common.status.rejected', 'Rejected')}
+                  {t('features.groups.common.status.rejected')}
                 </ToggleGroupItem>
                 <ToggleGroupItem
                   value="withdrawn"
-                  aria-label={t('features.groups.common.status.withdrawn', 'Withdrawn')}
+                  aria-label={t('features.groups.common.status.withdrawn')}
                 >
-                  {t('features.groups.common.status.withdrawn', 'Withdrawn')}
+                  {t('features.groups.common.status.withdrawn')}
                 </ToggleGroupItem>
               </ToggleGroup>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="hashtag-filter">
-                {t('features.groups.common.filters.hashtag', 'Filter by Hashtag')}
-              </Label>
+              <Label htmlFor="hashtag-filter">{t('features.groups.common.filters.hashtag')}</Label>
               <Input
                 id="hashtag-filter"
                 placeholder={t('features.groups.events.hashtagPlaceholder')}
@@ -176,8 +171,7 @@ export function AmendmentSearchAndFilters({
               />
               {filters.hashtagFilter && (
                 <p className="text-muted-foreground text-xs">
-                  {t('features.groups.common.filters.filteringBy', 'Filtering by:')} #
-                  {filters.hashtagFilter}
+                  {t('features.groups.common.filters.filteringBy')} #{filters.hashtagFilter}
                 </p>
               )}
             </div>
